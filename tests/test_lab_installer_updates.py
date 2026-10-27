@@ -358,12 +358,18 @@ class LabInstallerUpdatesTests(unittest.TestCase):
     def test_null_root_dump_retry_limit_never_reads_nonexistent_file(self):
         phone = LAB.Phone("synthetic-private-selector", 1)
         result = subprocess.CompletedProcess([], 0, b"", b"ERROR: null root node synthetic-private-detail")
-        with patch.object(LAB, "execute", return_value=result) as dump, patch.object(phone, "shell") as shell, patch.object(LAB.time, "sleep") as sleep:
+        with (
+            patch.object(LAB, "execute", return_value=result) as dump,
+            patch.object(phone, "shell") as shell,
+            patch.object(LAB.time, "sleep") as sleep,
+            patch.object(phone, "ui_windows", side_effect=LAB.Failure("device-ui-null-root-retry-exhausted")) as fallback,
+        ):
             with self.assertRaisesRegex(LAB.Failure, "^device-ui-null-root-retry-exhausted$"):
                 phone.ui()
         self.assertEqual(dump.call_count, 3)
         self.assertEqual([call.args for call in sleep.call_args_list], [(1,), (1,)])
         shell.assert_not_called()
+        fallback.assert_called_once_with((LAB.PACKAGE,))
 
     def test_ui_dump_retry_does_not_retry_nonzero_or_unrelated_read_failure(self):
         phone = LAB.Phone("synthetic-private-selector", 1)
@@ -390,7 +396,7 @@ class LabInstallerUpdatesTests(unittest.TestCase):
         self.assertEqual(manifest.find("application").get("{http://schemas.android.com/apk/res/android}label"), "Owner game installer")
         phone = LAB.Phone("synthetic-private-selector", 1)
         phone.owned_installer = True
-        with patch.object(phone, "ui", side_effect=[self.notification_dialog(), ET.Element("hierarchy")]), patch.object(phone, "shell") as shell:
+        with patch.object(phone, "ui_for", side_effect=[self.notification_dialog(), ET.Element("hierarchy")]), patch.object(phone, "shell") as shell:
             self.assertTrue(phone.dismiss_notification_permission())
         shell.assert_called_once_with("input", "tap", "60", "60", label="device-notification-deny")
         with patch.object(phone, "shell") as shell, patch.object(LAB.time, "sleep"), patch.object(phone, "dismiss_notification_permission") as dismiss:
@@ -400,15 +406,175 @@ class LabInstallerUpdatesTests(unittest.TestCase):
         self.assertEqual(shell.call_args_list[0].args, ("input", "keyevent", "KEYCODE_WAKEUP"))
         self.assertEqual(shell.call_args_list[2].args, ("am", "start", "-W", "-n", LAB.ACTIVITY))
 
+    @staticmethod
+    def window_document(package=None):
+        document = ET.Element("displays")
+        display = ET.SubElement(document, "display", {"id": "0"})
+        window = ET.SubElement(display, "window", {"active": "true", "focused": "true", "title": "synthetic-private-title"})
+        hierarchy = ET.SubElement(window, "hierarchy", {"rotation": "0"})
+        ET.SubElement(hierarchy, "node", {"package": package or LAB.PACKAGE, "text": "synthetic-private-text"})
+        return document
+
+    def test_window_fallback_recovers_only_unique_foreground_direct_hierarchy(self):
+        document = self.window_document()
+        other = ET.SubElement(document, "display", {"id": "2"})
+        ET.SubElement(other, "window", {"active": "true", "focused": "true"})
+        background = ET.SubElement(document.find("display"), "window", {"active": "false", "focused": "false"})
+        ET.SubElement(ET.SubElement(background, "hierarchy"), "node", {"package": "synthetic.other"})
+        selected = LAB.focused_ui_hierarchy(document, (LAB.PACKAGE,))
+        self.assertIs(selected, document.find("display/window/hierarchy"))
+        self.assertEqual(len(list(selected.iter("node"))), 1)
+
+    def test_window_fallback_refuses_missing_ambiguous_background_or_foreign_roots(self):
+        cases = []
+        wrong_schema = ET.Element("hierarchy")
+        cases.append(wrong_schema)
+        for attribute in ("active", "focused"):
+            document = self.window_document()
+            document.find("display/window").set(attribute, "false")
+            cases.append(document)
+        document = self.window_document()
+        ET.SubElement(document.find("display"), "window", {"active": "true", "focused": "false"})
+        cases.append(document)
+        document = self.window_document()
+        document.find("display").set("id", "2")
+        cases.append(document)
+        document = self.window_document()
+        window = document.find("display/window")
+        hierarchy = window.find("hierarchy")
+        window.remove(hierarchy)
+        ET.SubElement(window, "window", {"active": "false", "focused": "false"}).append(hierarchy)
+        cases.append(document)
+        cases.append(self.window_document("synthetic.other"))
+        document = self.window_document()
+        ET.SubElement(document.find("display/window/hierarchy/node"), "node", {"package": "synthetic.other"})
+        cases.append(document)
+        for document in cases:
+            with self.subTest(xml=ET.tostring(document)):
+                with self.assertRaises(LAB.Failure):
+                    LAB.focused_ui_hierarchy(document, (LAB.PACKAGE,))
+
+    def test_window_dump_runs_once_only_after_null_root_and_removes_local_xml(self):
+        phone = LAB.Phone("synthetic-private-selector", 1)
+        phone.owned_installer = True
+        null = subprocess.CompletedProcess([], 0, b"", b"ERROR: null root node")
+        success = subprocess.CompletedProcess([], 0, b"UI hierchary dumped to: synthetic-private", b"")
+        xml = ET.tostring(self.window_document(), encoding="utf-8", xml_declaration=True)
+        output = io.StringIO()
+        with (
+            patch.object(LAB, "execute", side_effect=[null, null, null, success]) as dump,
+            patch.object(phone, "shell", side_effect=[xml, b""]) as shell,
+            patch.object(LAB.time, "sleep"),
+            patch.object(phone, "ui_diagnostics") as diagnostics,
+            redirect_stdout(output),
+        ):
+            self.assertEqual(phone.ui().tag, "hierarchy")
+        self.assertEqual(dump.call_count, 4)
+        self.assertEqual(dump.call_args.args[0][-4:], ["uiautomator", "dump", "--windows", phone.ui_path])
+        self.assertEqual([call.args[0] for call in shell.call_args_list], ["cat", "rm"])
+        diagnostics.assert_not_called()
+        self.assertEqual(output.getvalue(), "INFO ui-null-root-recovered source=focused-window\n")
+
+    def test_window_dump_missing_file_or_unsupported_schema_never_means_success(self):
+        phone = LAB.Phone("synthetic-private-selector", 1)
+        phone.owned_installer = True
+        for result, document, reason in (
+            (subprocess.CompletedProcess([], 0, b"", b"ERROR: null root node"), None, "ui-window-dump-unavailable"),
+            (subprocess.CompletedProcess([], 0, b"UI hierarchy dumped to: synthetic-private", b""), LAB.Failure("device-ui-read"), "device-ui-read"),
+            (subprocess.CompletedProcess([], 0, b"UI hierarchy dumped to: synthetic-private", b""), ET.Element("hierarchy"), "ui-window-schema"),
+        ):
+            with (
+                self.subTest(reason=reason),
+                patch.object(LAB, "execute", return_value=result) as dump,
+                patch.object(phone, "read_ui_dump", side_effect=document if isinstance(document, Exception) else None, return_value=document) as read,
+                patch.object(phone, "ui_diagnostics") as diagnostics,
+            ):
+                with self.assertRaisesRegex(LAB.Failure, "^device-ui-null-root-retry-exhausted$"):
+                    phone.ui_windows((LAB.PACKAGE,))
+            dump.assert_called_once()
+            diagnostics.assert_called_once_with(reason)
+            if document is None:
+                read.assert_not_called()
+
+    def test_install_consent_window_packages_are_scoped_to_install_action(self):
+        phone = LAB.Phone("synthetic-private-selector", 1)
+        with patch.object(phone, "ui_for", return_value=ET.Element("hierarchy")) as read:
+            self.assertFalse(phone.tap_visible("Install"))
+            self.assertEqual(read.call_args.args, ((LAB.PACKAGE, "com.android.packageinstaller", "com.google.android.packageinstaller"),))
+            self.assertFalse(phone.tap_visible("Check for updates"))
+            self.assertEqual(read.call_args.args, ((LAB.PACKAGE,),))
+        for package in ("com.android.permissioncontroller", "com.android.packageinstaller", "com.google.android.packageinstaller"):
+            with self.subTest(package=package):
+                with self.assertRaises(LAB.Failure):
+                    LAB.focused_ui_hierarchy(self.window_document(package), (LAB.PACKAGE,))
+                self.assertEqual(LAB.focused_ui_hierarchy(self.window_document(package), (LAB.PACKAGE, package)).find("node").get("package"), package)
+
+    def test_null_root_environment_diagnostics_are_read_only_fixed_boolean_or_unknown(self):
+        outputs = {
+            "power": "mWakefulness=Awake\nsynthetic-private",
+            "window": "mCurrentFocus=Window{private u17 com.android.permissioncontroller/.permission.ui.GrantPermissionsActivity}\nKeyguardServiceDelegate\n  showing=true\n  showingAndNotOccluded=false\n  inputRestricted=true\n  Window #1 Window{private u17 "
+            + LAB.ACTIVITY
+            + "}\n    isOnScreen=true\n",
+            "activity": "ACTIVITY MANAGER ACTIVITIES\nActivityRecord{private u17 "
+            + LAB.ACTIVITY
+            + " t123}\nResumedActivity: ActivityRecord{private u17 com.android.permissioncontroller/.permission.ui.GrantPermissionsActivity}\n",
+            "accessibility": "ACCESSIBILITY MANAGER\ncurrentUserId=17\nsynthetic-private",
+            "instrumentation": "ACTIVITY MANAGER RUNNING PROCESSES\nsynthetic-private",
+            "user": "17\n",
+        }
+        result = LAB.ui_environment_summary(outputs)
+        for key in (
+            "display_awake",
+            "keyguard_showing",
+            "keyguard_input_restricted",
+            "test_activity_present",
+            "test_window_on_screen",
+            "permission_window_focused",
+            "test_activity_current_user",
+            "accessibility_current_user",
+        ):
+            self.assertTrue(result[key], key)
+        for key in (
+            "keyguard_showing_not_occluded",
+            "test_activity_resumed",
+            "test_window_focused",
+            "ui_automation_registered_after_dump",
+            "instrumentation_running_after_dump",
+        ):
+            self.assertFalse(result[key], key)
+        self.assertTrue(all(value is None or type(value) is bool for value in result.values()))
+        phone = LAB.Phone("synthetic-private-selector", 1)
+        output = io.StringIO()
+        with patch.object(phone, "shell", side_effect=[value.encode() for value in outputs.values()]) as shell, redirect_stdout(output):
+            phone.ui_diagnostics("ui-window-dump-unavailable")
+        self.assertEqual(
+            [call.args for call in shell.call_args_list],
+            [
+                ("dumpsys", "power"),
+                ("dumpsys", "window"),
+                ("dumpsys", "activity", "activities"),
+                ("dumpsys", "accessibility"),
+                ("dumpsys", "activity", "processes"),
+                ("am", "get-current-user"),
+            ],
+        )
+        self.assertEqual(json.loads(output.getvalue())["observed"], result)
+        for private in ("synthetic-private", "17", LAB.PACKAGE, "GrantPermissionsActivity", "t123"):
+            self.assertNotIn(private, output.getvalue())
+        with patch.object(phone, "shell", side_effect=LAB.Failure("device-ui-diagnostic-power")), redirect_stdout(io.StringIO()):
+            phone.ui_diagnostics("ui-window-dump-unavailable")
+        unknown = LAB.ui_environment_summary({})
+        self.assertTrue(all(value is False if key.endswith("_query_ok") else value is None for key, value in unknown.items()))
+
     def test_notification_dialog_does_not_act_without_prompt_or_fresh_ownership(self):
         phone = LAB.Phone("synthetic-private-selector", 1)
-        with patch.object(phone, "ui") as ui, patch.object(phone, "shell") as shell:
+        with patch.object(phone, "ui_for") as ui, patch.object(phone, "shell") as shell:
             with self.assertRaisesRegex(LAB.Failure, "notification-dialog-installer-not-owned"):
                 phone.dismiss_notification_permission()
             ui.assert_not_called()
             shell.assert_not_called()
         phone.owned_installer = True
-        with patch.object(phone, "ui", return_value=ET.Element("hierarchy")), patch.object(phone, "shell") as shell:
+        with patch.object(phone, "ui_for", return_value=ET.Element("hierarchy")), patch.object(phone, "shell") as shell:
             self.assertFalse(phone.dismiss_notification_permission())
             shell.assert_not_called()
 
@@ -420,7 +586,7 @@ class LabInstallerUpdatesTests(unittest.TestCase):
             (self.notification_dialog("Allow Owner game installer to access your camera?"), "notification-dialog-not-identified"),
             (self.notification_dialog(button="permission_allow_button"), "notification-denial-unavailable"),
         ):
-            with self.subTest(reason=reason), patch.object(phone, "ui", return_value=dialog), patch.object(phone, "shell") as shell:
+            with self.subTest(reason=reason), patch.object(phone, "ui_for", return_value=dialog), patch.object(phone, "shell") as shell:
                 with self.assertRaisesRegex(LAB.Failure, reason):
                     phone.dismiss_notification_permission()
                 shell.assert_not_called()
@@ -428,7 +594,7 @@ class LabInstallerUpdatesTests(unittest.TestCase):
     def test_notification_dialog_requires_observed_dismissal(self):
         phone = LAB.Phone("synthetic-private-selector", 1)
         phone.owned_installer = True
-        with patch.object(phone, "ui", return_value=self.notification_dialog()), patch.object(phone, "shell") as shell:
+        with patch.object(phone, "ui_for", return_value=self.notification_dialog()), patch.object(phone, "shell") as shell:
             with self.assertRaisesRegex(LAB.Failure, "notification-dialog-not-dismissed"):
                 phone.dismiss_notification_permission()
         self.assertEqual(shell.call_count, 1)

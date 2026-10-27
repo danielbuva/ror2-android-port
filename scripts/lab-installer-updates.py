@@ -419,6 +419,9 @@ class Phone:
         return json.loads(result)
 
     def ui(self):
+        return self.ui_for((PACKAGE,))
+
+    def ui_for(self, allowed_packages):
         # A newly launched Activity can report a null accessibility root while
         # uiautomator still exits 0 and creates no file. Retry only that observed
         # result, never cat a missing dump or retry unrelated command failures.
@@ -429,19 +432,65 @@ class Phone:
             if "null-root" not in (ui_output_classification(result.stdout), ui_output_classification(result.stderr)):
                 break
             if attempt == 2:
-                raise Failure("device-ui-null-root-retry-exhausted")
+                return self.ui_windows(allowed_packages)
             time.sleep(1)
+        return self.read_ui_dump("hierarchy")
+
+    def read_ui_dump(self, root):
         try:
             value = self.shell("cat", self.ui_path, label="device-ui-read")
         finally:
             self.shell("rm", "-f", self.ui_path, label="device-ui-remove")
-        start, end = value.find(b"<?xml"), value.rfind(b"</hierarchy>")
+        closing = ("</" + root + ">").encode()
+        start, end = value.find(b"<?xml"), value.rfind(closing)
         if start < 0 or end < 0:
             raise Failure("ui-hierarchy-unavailable")
-        return ET.fromstring(value[start : end + len(b"</hierarchy>")])
+        return ET.fromstring(value[start : end + len(closing)])
+
+    def ui_windows(self, allowed_packages):
+        # Android 13 DumpCommand's --windows uses getWindowsOnAllDisplays,
+        # unlike the failed single active-root query. Older binaries may ignore
+        # the option, so neither exit 0 nor a success message proves a hierarchy.
+        reason = "ui-window-fallback-unavailable"
+        try:
+            if not self.owned_installer:
+                raise Failure("ui-window-installer-not-owned")
+            result = execute(
+                [self.adb, "-s", self.serial, "shell", "uiautomator", "dump", "--windows", self.ui_path], label="device-ui-windows-dump", timeout=30
+            )
+            if result.returncode or ui_output_classification(result.stdout) != "dump-reported-written":
+                raise Failure("ui-window-dump-unavailable")
+            hierarchy = focused_ui_hierarchy(self.read_ui_dump("displays"), allowed_packages)
+            print("INFO ui-null-root-recovered source=focused-window", flush=True)
+            return hierarchy
+        except Failure as error:
+            reason = str(error)
+        except Exception:
+            reason = "ui-window-fallback-invalid"
+        self.ui_diagnostics(reason)
+        raise Failure("device-ui-null-root-retry-exhausted")
+
+    def ui_diagnostics(self, fallback_reason):
+        # Observation only: never start instrumentation, unlock, grant a
+        # permission, change accessibility settings, or export dumpsys text.
+        outputs = {}
+        for name, args in (
+            ("power", ("dumpsys", "power")),
+            ("window", ("dumpsys", "window")),
+            ("activity", ("dumpsys", "activity", "activities")),
+            ("accessibility", ("dumpsys", "accessibility")),
+            ("instrumentation", ("dumpsys", "activity", "processes")),
+            ("user", ("am", "get-current-user")),
+        ):
+            try:
+                outputs[name] = self.shell(*args, label="device-ui-diagnostic-" + name).decode(errors="replace")
+            except Exception:
+                outputs[name] = None
+        summary = ui_environment_summary(outputs)
+        print(encoded({"mode": "ui-null-root-diagnostics", "fallback_reason": fallback_reason, "observed": summary}).decode(), end="", flush=True)
 
     def tap_visible(self, label):
-        tree = self.ui()
+        tree = self.ui_for((PACKAGE, "com.android.packageinstaller", "com.google.android.packageinstaller")) if label == "Install" else self.ui()
         for node in tree.iter("node"):
             if node.get("text", "").casefold() == label.casefold() and node.get("enabled") == "true":
                 bounds = re.fullmatch(r"\[(\d+),(\d+)\]\[(\d+),(\d+)\]", node.get("bounds", ""))
@@ -496,7 +545,7 @@ class Phone:
         if not self.owned_installer:
             raise Failure("notification-dialog-installer-not-owned")
         controller = "com.android.permissioncontroller"
-        nodes = [node for node in self.ui().iter("node") if node.get("package") == controller]
+        nodes = [node for node in self.ui_for((PACKAGE, controller)).iter("node") if node.get("package") == controller]
         if not nodes:
             return False
         messages = [node.get("text", "").casefold() for node in nodes if node.get("resource-id") == controller + ":id/permission_message"]
@@ -510,7 +559,7 @@ class Phone:
             raise Failure("ui-button-bounds")
         x1, y1, x2, y2 = map(int, bounds.groups())
         self.shell("input", "tap", str((x1 + x2) // 2), str((y1 + y2) // 2), label="device-notification-deny")
-        if any(node.get("package") == controller for node in self.ui().iter("node")):
+        if any(node.get("package") == controller for node in self.ui_for((PACKAGE, controller)).iter("node")):
             raise Failure("notification-dialog-not-dismissed")
         return True
 
@@ -713,6 +762,75 @@ def acceptance(phone, config, temporary, passed):
             if "/public-tools.zip" in service.requests or phone.read("installed-release.json") != before or phone.package_hash(GAME) != rolled["sha256"]:
                 raise Failure("refused-release-mutated-installed-state")
             passed(case)
+
+
+def focused_ui_hierarchy(document, allowed_packages):
+    # AOSP Android 13 AccessibilityNodeInfoDumper.dumpWindowsToFile schema:
+    # displays/display/window/(child windows...)/DIRECT hierarchy/node.
+    # Never flatten background, child, accessibility-focused or other-display
+    # hierarchies into tap targets. DEFAULT_DISPLAY is 0.
+    if document.tag != "displays":
+        raise Failure("ui-window-schema")
+    displays = [display for display in document.findall("display") if display.get("id") == "0"]
+    if len(displays) != 1:
+        raise Failure("ui-window-default-display-unavailable")
+    windows = [window for window in displays[0].iter("window") if window.get("active") == "true" or window.get("focused") == "true"]
+    if len(windows) != 1 or windows[0].get("active") != "true" or windows[0].get("focused") != "true":
+        raise Failure("ui-window-focus-ambiguous")
+    hierarchies = windows[0].findall("hierarchy")
+    if len(hierarchies) != 1 or len(hierarchies[0].findall("node")) != 1:
+        raise Failure("ui-window-root-unavailable")
+    hierarchy = hierarchies[0]
+    package = hierarchy.find("node").get("package")
+    if package not in allowed_packages or any(node.get("package") not in (None, "", package) for node in hierarchy.iter("node")):
+        raise Failure("ui-window-package-not-allowed")
+    return hierarchy
+
+
+def ui_environment_summary(outputs):
+    """Fixed boolean/null facts; unknown fields never become negative proof."""
+    power, window, activity, accessibility, instrumentation, user = (
+        outputs.get(name) for name in ("power", "window", "activity", "accessibility", "instrumentation", "user")
+    )
+
+    def truth(text, field):
+        values = set(re.findall(r"(?<![A-Za-z])" + re.escape(field) + r"=(true|false)\b", text or ""))
+        return values == {"true"} if len(values) == 1 else None
+
+    def lines_contain(text, marker, target):
+        lines = [line for line in (text or "").splitlines() if re.search(marker, line)]
+        return any(target in line for line in lines) if lines else None
+
+    wake = re.findall(r"\bmWakefulness=(Awake|Asleep|Dozing|Dreaming)\b", power or "")
+    current_user = user.strip() if user is not None and user.strip().isdigit() else None
+    activity_users = re.findall(r"\bu(\d+)\s+" + re.escape(ACTIVITY) + r"(?=\s|\})", activity or "")
+    accessibility_user = re.search(r"\bcurrentUserId=(\d+)\b", accessibility or "")
+    activity_known = activity is not None and "ACTIVITY MANAGER ACTIVITIES" in activity
+    accessibility_known = accessibility is not None and "ACCESSIBILITY MANAGER" in accessibility
+    instrumentation_known = instrumentation is not None and "ACTIVITY MANAGER RUNNING PROCESSES" in instrumentation
+    visible = []
+    for block in re.split(r"(?m)(?=^\s*Window #\d+ )", window or ""):
+        lines = block.splitlines()
+        if lines and re.match(r"\s*Window #\d+ ", lines[0]) and PACKAGE + "/" in lines[0]:
+            visible.append(truth(block, "isOnScreen"))
+    return {
+        **{name + "_query_ok": outputs.get(name) is not None for name in ("power", "window", "activity", "accessibility", "instrumentation", "user")},
+        "display_awake": wake[0] == "Awake" if wake and len(set(wake)) == 1 else None,
+        "keyguard_showing": truth(window, "showing"),
+        "keyguard_showing_not_occluded": truth(window, "showingAndNotOccluded"),
+        "keyguard_input_restricted": truth(window, "inputRestricted"),
+        "test_activity_present": ACTIVITY in activity if activity_known else None,
+        "test_activity_resumed": lines_contain(activity, r"\b(?:mResumedActivity|ResumedActivity|topResumedActivity)\s*[:=]", ACTIVITY),
+        "test_window_focused": lines_contain(window, r"\bmCurrentFocus=", PACKAGE + "/"),
+        "test_window_on_screen": any(visible) if visible and all(value is not None for value in visible) else None,
+        "permission_window_focused": lines_contain(window, r"\bmCurrentFocus=", "com.android.permissioncontroller/"),
+        "test_activity_current_user": current_user in activity_users if current_user is not None and activity_users else None,
+        "accessibility_current_user": accessibility_user.group(1) == current_user if accessibility_user and current_user is not None else None,
+        # Snapshot is AFTER the failing dump disconnected, not a claim that its
+        # transient UiAutomation connection was absent during root acquisition.
+        "ui_automation_registered_after_dump": "Ui Automation[" in accessibility if accessibility_known else None,
+        "instrumentation_running_after_dump": "Active instrumentation:" in instrumentation if instrumentation_known else None,
+    }
 
 
 def ui_output_classification(data):
