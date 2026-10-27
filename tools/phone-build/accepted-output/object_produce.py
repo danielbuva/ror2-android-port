@@ -135,7 +135,7 @@ def deactivate_global_owner(body, name):
     return body[:-1] + bytes(1)
 
 
-def rebuild_bezier_line(body, sources, source_profiles, line_selector, behaviour_selector, wind_angles=None):
+def rebuild_bezier_line(body, sources, source_profiles, line_selector, behaviour_selector, wind_angles=None, build_rounding=None):
     """Re-evaluate an original BezierCurveLine using Unity float32 Lerp.
 
     Called before PPtr relocation. Geometry operands come from original records;
@@ -278,6 +278,18 @@ def rebuild_bezier_line(body, sources, source_profiles, line_selector, behaviour
         a = lerp(p0, add(p0, v0), t)
         b = lerp(p1, add(p1, v1), single(1.0 - t))
         positions.extend(struct.pack("<3f", *lerp(a, b, t)))
+    # Captured build arithmetic words are scoped to the checked original curve.
+    # The complete geometry is still evaluated above from the legitimate input.
+    for capture in build_rounding or []:
+        word = capture["word"]
+        if not isinstance(word, int) or not 0 <= word < count * 3:
+            raise ValueError("captured Bezier rounding word outside original array")
+        offset = word * 4
+        if struct.unpack_from("<I", positions, offset)[0] != capture["evaluated_bits"]:
+            raise ValueError("captured Bezier rounding operand drift")
+        replacement = struct.pack("<I", capture["build_bits"])
+        single(struct.unpack("<f", replacement)[0])
+        positions[offset : offset + 4] = replacement
     return body[: start + 4] + positions + body[end:]
 
 
@@ -982,7 +994,13 @@ def produce(profile_path, profile_sha256, pc, output, codec_path, codec_sha256, 
                         body = clear_static_renderers(body, selected["clear_static_renderers"])
                     if "bezier_curve_line" in selected:
                         body = rebuild_bezier_line(
-                            body, sources, profile["sources"], selected["source"], selected["bezier_curve_line"], selected.get("bezier_wind_angles")
+                            body,
+                            sources,
+                            profile["sources"],
+                            selected["source"],
+                            selected["bezier_curve_line"],
+                            selected.get("bezier_wind_angles"),
+                            selected.get("bezier_build_rounding"),
                         )
                     if "importer_guid" in selected:
                         if typ["class_id"] != 213:

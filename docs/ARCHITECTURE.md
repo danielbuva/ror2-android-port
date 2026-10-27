@@ -4915,6 +4915,16 @@ Process exit tears down producers; receipts persist. These are optional host
 reconstruction owners; phone production, installation and original runtime
 behavior remain open.
 
+Goolake source-scene selections use the same object and Shader owners through
+`recipe/owner-goolake-source-objects.json` and its shader remap profile. The
+Bezier owner evaluates original curves with captured build angles, then applies
+ten explicitly pinned build-rounding words across two curves; default arithmetic
+is unchanged. Explicit PC/SDK roots, pinned source packs and a fresh output
+directory set up production; process exit tears down producers while receipts
+persist. All 13,012 objects, both serialized members and the compressed bundle
+are host raw-exact to J850. This adds no runtime owner. Phone production,
+installation and original scene behavior remain open.
+
 Voidraid complete scene selections extend the existing object/Shader owners
 through `recipe/owner-voidraid-whole-objects.json` and matching post-processing
 and Standard profiles. Original component/GameObject dependencies retain their

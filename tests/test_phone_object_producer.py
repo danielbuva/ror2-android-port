@@ -1527,6 +1527,22 @@ class BezierCurveLineTests(unittest.TestCase):
         self.assertEqual(result[:20], records[0][10][0][:20])
         self.assertEqual(result[80:], records[0][10][0][80:])
 
+    def test_captured_build_rounding_changes_only_pinned_coordinate(self):
+        records, profiles = bezier_fixture()
+        body = records[0][10][0]
+        source = curve_sources(records, profiles)
+        bits = struct.unpack("<I", struct.pack("<f", 27.5))[0]
+        capture = [{"word": 4, "evaluated_bits": bits, "build_bits": bits + 1}]
+        result = P.rebuild_bezier_line(body, source, profiles, [0, 10], [0, 20], build_rounding=capture)
+        expected = bytearray(self.EXPECTED)
+        struct.pack_into("<I", expected, 16, bits + 1)
+        self.assertEqual(result[20:80], expected)
+        self.assertEqual(result[:20], body[:20])
+        self.assertEqual(result[80:], body[80:])
+        self.mutate(records, 31, 32, struct.pack("<f", 21))
+        with self.assertRaisesRegex(ValueError, "rounding operand drift"):
+            P.rebuild_bezier_line(body, curve_sources(records, profiles), profiles, [0, 10], [0, 20], build_rounding=capture)
+
     def test_null_endpoint_uses_original_literal_p1(self):
         records, profiles = bezier_fixture(endpoint=False)
         self.assertEqual(self.result(records, profiles)[20:80], self.EXPECTED)

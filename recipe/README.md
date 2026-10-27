@@ -4227,7 +4227,7 @@ profiles contain original selectors, hashes, checked pointer relationships,
 SDK pins and authored transformation policies. Forty-two animated wind lines
 retain three build-state angles each; all evaluated positions and original
 curve operands come from the legitimate input. Complete captured xyz arrays
-remain private and are excluded. Lakes, Lakesnight, Village and Goolake are not closed.
+remain private and are excluded. Lakes, Lakesnight and Village remain open; Goolake follows the scoped audit below.
 Skymeadow's `_ALPHAMODULATE_ON` stripping keyword records our accepted build's
 variant selection; programs still come from the pinned public SDK producer.
 Shader remap recipes select independently source-produced bodies by profile,
@@ -4261,6 +4261,23 @@ requirements. This table restores audit indexing only; no profile content change
 The original-audio owner manifest follows the authored native-waypoint progress
 and neutral-terrain recovery changes in `IntegratedWorldBoundary.cs`. Reviewed
 source hash pins only; no game-derived content, private paths or identifiers.
+
+## Goolake source-scene build-rounding selections
+
+The existing original-curve owner uses eighteen build-angle triplets and ten
+sparse accepted-build Y words on two curves. The 2026-10-27 orchestrator decision
+authorizes these lab build arithmetic values; each word pins the expected
+evaluated bits before applying the captured final float32 bits. The other
+coordinates and all curve operands still require the legitimate input. Complete
+XYZ arrays remain excluded. No asset body, shader program, private path, device
+identifier or credential is included. The shader index adapter retains the
+source-produced Sulfurpools supplier identity and dependencies. Host qualification
+is separate from phone production, installation and runtime.
+
+| Profile | SHA-256 |
+| --- | --- |
+| `owner-goolake-source-objects.json` | `6193e1a8f15a8cac28be940941f7973b9cb25099261b3805d3c735862d868609` |
+| `owner-goolake-source-lab-shader-remap.json` | `02fdd8eda8b9b3e1b20e7398c15aaf46d165852b1e7e8884430b2561d7c708a9` |
 
 ## Voidraid complete scene selections (2026-10-27)
 
