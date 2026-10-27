@@ -134,6 +134,7 @@ def stage(profile_source, sdk, destination, *, root=ROOT, owner_backend=False, r
         "owner-apk/build_owner_apk.py",
         "owner-apk/release.py",
         "owner-apk/updates.py",
+        "owner-apk/release_source.py",
         "owner-apk/public_release.py",
         "owner-apk/release_jobs.py",
         "owner-apk/game_import.py",

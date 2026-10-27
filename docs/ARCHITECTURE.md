@@ -534,6 +534,17 @@ remain installer-owned, private output/cache/key state remains owner-local, and
 no public release includes a game APK/data. [Provisioning and update flow](../tools/phone-build/owner-apk/README.md#publishing-and-checking-updates)
 separate publisher trust, private input setup and device acceptance.
 
+`owner-apk/release_source.py` owns the explicit debug-only loopback publisher
+override. The Android worker supplies its actual `FLAG_DEBUGGABLE` state; a
+release build rejects override configuration before network access. Debug setup
+adds one test public key without replacing production trust and confines HTTP
+assets to the selected loopback base. Removing the private override file restores
+normal GitHub acquisition. Signature, archive, issuance and install checks are
+unchanged, and the installer visibly labels the active test source.
+`scripts/lab-installer-updates.py` owns the synthetic lab acceptance setup,
+local signed fixture server, actual UI/session assertions and owned cleanup.
+Its runner-provided toolhost and generated binaries/keys never leave the lab.
+
 Phone installation uses the same release transaction. `owner-apk/game_import.py`
 owns bounded original-file validation, free-space estimates and resumable private
 copies; `install_inputs.py` binds the signed input/stage plan to admitted local
