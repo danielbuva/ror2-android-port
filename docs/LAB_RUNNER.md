@@ -20,7 +20,7 @@ Post on any issue or pull request (first line only):
 | `preflight`, `doctor` | `./dev preflight` / `./dev doctor` |
 | `dev <action> ...` | `./dev <action> ...` for build, install, run, logs, screenshot, crash, storage, inspect, test, check-baseline, sync-data, perf, graphics, diagnostics, lane |
 | `script <path.py> ...` | a Python file under `tools/`, `scripts/`, `recipe/` or `tests/` with the lab venv |
-| `toolhost` | builds the phone toolhost (the #163 installer host) from `ref` with the owner's local builder on the build phone, cached by commit; never installs |
+| `toolhost` | builds the phone toolhost (the #163 installer host) from `ref` as the disposable package `dev.ror2lab.installertest` with the owner's local builder on the build phone, cached by commit; never installs |
 
 With `device=<alias>` (aliases come from ignored `work/config/lab-runner.json`) the job takes the
 orchestrator's atomic device lease, refuses a battery above 85 %, actually charging at 80 % or more, or
