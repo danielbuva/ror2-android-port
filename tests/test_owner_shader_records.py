@@ -13,6 +13,42 @@ N = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(N)
 
 
+class CompilerHosting(unittest.TestCase):
+    def invoke(self, *hosting):
+        command = [
+            "shader_produce.py",
+            "--profile",
+            "profile.json",
+            "--profile-sha256",
+            "profile-pin",
+            "--pc",
+            "original",
+            "--sdk",
+            "metadata-sdk",
+            "--output",
+            "output",
+            "--codec",
+            "codec",
+            "--codec-sha256",
+            "codec-pin",
+            *hosting,
+        ]
+        with patch.object(sys, "argv", command), patch.object(N, "produce") as produce:
+            N.main()
+        return produce.call_args
+
+    def test_runner_argv_and_compiler_data_are_separate_from_metadata_sdk(self):
+        call = self.invoke("--compiler-command", '["runner", "-L", "gnu", "linux/UnityShaderCompiler"]', "--compiler-data", "linux-data")
+        self.assertEqual(call.args[3], Path("metadata-sdk"))
+        self.assertEqual(call.kwargs["compiler_command"], ["runner", "-L", "gnu", "linux/UnityShaderCompiler"])
+        self.assertEqual(call.kwargs["compiler_data"], Path("linux-data"))
+
+    def test_existing_invocation_keeps_default_compiler_host(self):
+        call = self.invoke()
+        self.assertIsNone(call.kwargs["compiler_command"])
+        self.assertIsNone(call.kwargs["compiler_data"])
+
+
 class NativeRecords(unittest.TestCase):
     def test_reflection_not_fixed_target_names(self):
         r = N.reflection(["input: 2 9", "cb: Fixture 32 1", "const: tint 0 0 0 1 4 0", "cbbind: Fixture 5", "texbind: image 7 8 0 2"])

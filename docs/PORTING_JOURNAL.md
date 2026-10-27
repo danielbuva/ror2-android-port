@@ -533,3 +533,14 @@ Readiness advances by one: 644/705 available, 639 raw-exact; 61 missing.
 Audited compact selectors preserve decoded policies; no accepted production replay.
 Host-only; phone production, installation and original scene behavior remain open.
 APK unchanged: J850 `f1550ce0ff030ea0fa7a1ab66de19d54ee7894a7ae2f5b344f993157d6713949`.
+
+## J1215 — Explicit compiler hosting for source Shader records
+
+2026-10-27. The existing Shader48 producer accepts compiler argv and a separate
+compiler data root through the existing standalone compiler session, allowing
+the acquired Linux SDK/GNU runner while Mac SDK metadata/includes stay pinned.
+Default Mac invocation and compiler/socket teardown remain unchanged.
+Evidence: `work/coordination/p1-shaders/compiler-host-adapter-v1/checks.json`;
+46 focused tests, Ruff and host preflight pass. No generated Shader output or APK
+changes; readiness unchanged. Complete phone Shader production, installation
+and runtime remain open.
