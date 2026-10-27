@@ -1981,3 +1981,11 @@ The final qualification terminals, independent comparisons, reviews and
 readiness ranking under that coordination root are retained local evidence.
 Callers consume explicit pack paths plus receipt hashes; no public producer
 reads these comparison/ranking files or an implicit run directory.
+
+## Lab runner local state (current)
+
+`work/config/lab-runner.json` maps device aliases to serials (and optionally `toolhost_builder`) for
+`scripts/lab/lab_runner.py`; serials are private, so the file stays local. The `toolhost` job calls the owner's
+local builder (default `work/coordination/lab-runner-toolhost/build.py`, written from the retained phone
+toolhost workspace and its test publisher key) and caches outputs under `work/coordination/lab-runner/toolhost/`.
+Without the builder the job refuses; nothing else reads these files. See [LAB_RUNNER](LAB_RUNNER.md).

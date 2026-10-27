@@ -3901,6 +3901,13 @@ retain the existing detection rules. GitHub caches only pinned pip downloads.
 [Timing and cache operation](DEVELOPING.md#full-host-checks-and-timing) describe
 setup, reuse and isolation.
 
+`scripts/lab/lab_runner.py` (current) owns the comment-driven lab bridge: the
+`lab-runner` workflow runs main's copy on the owner's self-hosted runner for owner
+`/lab ...` comments, gives each job its own worktree of the requested ref, takes the
+orchestrator device lease, applies the battery rule, posts a sanitized result and
+prunes. `scripts/lab/lab-runner-guard.sh` is its job-started hook, installed outside
+the repository. Setup and command reference: [LAB_RUNNER](LAB_RUNNER.md).
+
 Host CI also runs Ruff (pinned in `tools/lab-requirements.txt`, configured in `ruff.toml`):
 `ruff check` and `ruff format --check` on every Python file a change touches. `scripts/` and
 `tests/` are ruff-formatted (J518); `ruff.toml` lists the rules still off and why.
@@ -4845,6 +4852,38 @@ persisted records are host raw-exact to J850. Complete-scene and phone gates
 remain open. The existing player Shader producer also accepts repeatable
 `--authored-file` selectors for bounded authored-record production; common input
 pins remain checked and omission preserves the complete profile.
+
+Champrush complete scene selections extend the existing object/Shader owners
+through `recipe/owner-champrush-whole-objects.json` and the J1216 Shader profiles.
+`object_produce.py` admits explicit original class 114 preload roots only with
+checked source hashes, original PreloadData membership and external identity;
+component-to-GameObject admissions retain their class 1 requirement. Explicit
+current PC/SDK/tool roots, pinned profiles, source-produced packs and a fresh
+output directory set up production; process exit tears down producers while
+local receipts persist. The existing member-aware writer exposes
+`payload/whole-scene-champrush`. All 53,854 objects, both serialized members and
+the compressed bundle are host raw-exact to J850. Phone production, installation
+and original scene behavior remain open.
+
+Voidstage complete scene selections extend the existing object/Shader owners
+through `recipe/owner-voidstage-whole-objects.json`. The original Rigidbody
+retains its complete body/type and reciprocal GameObject relationship; no new
+runtime owner or import policy is introduced. Explicit current PC/SDK/tool
+roots, pinned profiles, source-produced record packs and a fresh output
+directory set up production; process exit tears down producers while local
+receipts persist. The member-aware writer exposes `payload/whole-scene-voidstage`.
+All 9,629 objects, both serialized members and the compressed bundle are host
+raw-exact to J850. Phone production, installation and scene behavior remain open.
+
+Bazaar complete scene selections extend the existing object/Shader owners through
+`recipe/owner-bazaar-whole-objects.json` and matching post-processing, Standard
+and particles profiles. Original static Bezier curves and CharacterMaster
+schema/body relationships use existing policies. Explicit current PC/SDK/tool
+roots, pinned profiles, source-produced packs and a fresh output directory set
+up production; process exit tears down producers while receipts persist.
+The member-aware writer exposes `payload/whole-scene-bazaar`. All 8,087 objects,
+both serialized members and the compressed bundle are host raw-exact to J850.
+Phone production, installation and original scene behavior remain open.
 
 Voidstage Shader selections extend the same `payload_shader_records.py` owner
 through `recipe/owner-voidstage-whole-{postprocess,standard}-shaders.json`.

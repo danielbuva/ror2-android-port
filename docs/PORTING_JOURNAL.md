@@ -581,3 +581,19 @@ The particle owner also accepts explicit recipe keyword stripping before native
 ordering; omitted policy preserves existing source selections. Focused host
 fixtures cover row removal and retained ordering. No target bytes are published.
 Complete-scene readiness, phone production and runtime remain open; no APK change.
+
+
+## J1219 — Complete source-derived Champrush, Voidstage and Bazaar scenes
+
+2026-10-27. Existing object/Shader owners reproduce three complete scenes from
+legitimate PC inputs, pinned SDK/tools and source-produced packs. Checked class
+114 original preload roots extend the existing owner; component owners stay class 1.
+All 71,570 objects, six serialized members and three compressed bundles raw-exact to J850.
+Champrush 3,177,078 B: `ae62133675e862c7782e7e4c14d0c199b03e43d64d6d8c9710aa1751abf61d53`.
+Voidstage 19,845,238 B: `b26b1419ae8e477fc7dd72e8d3a8b07c8a7ff00766f3c081d052b3792b8ff52f`.
+Bazaar 5,818,018 B: `46d50bd26421ff3d42734554de0f5711924cbc15e0fd5a58274cc5c377b01220`.
+Evidence: `work/coordination/p1-scenes-w/publication-batch-v{8,9,10}/publication-inputs.json`.
+Retained readiness after these deltas: 647/705 available, 642 raw-exact; 58 missing.
+Audited recipes publish selections only; accepted production was retained without replay.
+Host-only; phone production, installation and original scene behavior remain open.
+APK unchanged: J850 `f1550ce0ff030ea0fa7a1ab66de19d54ee7894a7ae2f5b344f993157d6713949`.
