@@ -803,3 +803,19 @@ recount, phone production and scene behaviour remain open.
 Cross-bundle sources come from the orchestrator's exact-body and pointer-only original-record
 lookup. Evidence (ignored): `work/coordination/orchestrator/scenes/habitatfall-final-v1/`. Readiness
 recount, phone production and scene behaviour remain open.
+
+## J1242 — Complete source-derived sulfurpools scene
+
+`whole-scene-sulfurpools` is host raw-exact to J850: 19,544 objects, both serialized members and the
+11,418,389-byte bundle (SHA-256 `313d77e3…`). Profiles: `recipe/owner-sulfurpools-whole-*.json`.
+Cross-bundle sources come from the orchestrator's exact-body and pointer-only original-record
+lookup. Evidence (ignored): `work/coordination/orchestrator/scenes/sulfurpools-final-v1/`. Readiness
+recount, phone production and scene behaviour remain open.
+
+## J1243 — Complete source-derived sad1 scene
+
+`whole-scene-sad1` is host raw-exact to J850: 64,308 objects, both serialized members and the
+29,831,426-byte bundle (SHA-256 `0f8a7917…`). Profiles: `recipe/owner-sad1-whole-*.json`.
+Cross-bundle sources come from the orchestrator's exact-body and pointer-only original-record
+lookup. Evidence (ignored): `work/coordination/orchestrator/scenes/sad1-final-v1/`. Readiness
+recount, phone production and scene behaviour remain open.

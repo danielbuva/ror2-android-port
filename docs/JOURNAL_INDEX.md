@@ -10,6 +10,8 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J1243](PORTING_JOURNAL.md#j1243--complete-source-derived-sad1-scene) | 2026-10-27 | Complete source-derived sad1 scene | `whole-scene-sad1` is host raw-exact to J850: 64,308 objects, both serialized members and the 29,831,426-byte bundle (SHA-256 `0f8a7917…`). |
+| [J1242](PORTING_JOURNAL.md#j1242--complete-source-derived-sulfurpools-scene) | 2026-10-27 | Complete source-derived sulfurpools scene | `whole-scene-sulfurpools` is host raw-exact to J850: 19,544 objects, both serialized members and the 11,418,389-byte bundle (SHA-256 `313d77e3…`). |
 | [J1241](PORTING_JOURNAL.md#j1241--complete-source-derived-habitatfall-scene) | 2026-10-27 | Complete source-derived habitatfall scene | `whole-scene-habitatfall` is host raw-exact to J850: 13,909 objects, both serialized members and the 6,752,461-byte bundle (SHA-256 `2944ff06…`). |
 | [J1240](PORTING_JOURNAL.md#j1240--complete-source-derived-village-scene) | 2026-10-27 | Complete source-derived village scene | `whole-scene-village` is host raw-exact to J850: 15,130 objects, both serialized members and the 8,270,153-byte bundle (SHA-256 `ccf2fe19…`). |
 | [J1239](PORTING_JOURNAL.md#j1239--complete-source-derived-sanctum-scene) | 2026-10-27 | Complete source-derived sanctum scene | `whole-scene-sanctum` is host raw-exact to J850: 53,196 objects, both serialized members and the 11,879,273-byte bundle (SHA-256 `b8e97a1f…`). |
