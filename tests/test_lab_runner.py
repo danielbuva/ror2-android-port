@@ -38,6 +38,12 @@ class ParseCommandTest(unittest.TestCase):
             with self.subTest(body=body), self.assertRaises(lab_runner.CommandError):
                 lab_runner.parse_command(body)
 
+    def test_toolhost_takes_only_a_ref(self):
+        self.assertEqual(lab_runner.parse_command("/lab toolhost ref=dani/dots-x")["job"], "toolhost")
+        for body in ("/lab toolhost device=thor", "/lab toolhost -- --out /tmp"):
+            with self.subTest(body=body), self.assertRaises(lab_runner.CommandError):
+                lab_runner.parse_command(body)
+
     def test_script_paths_inside_allowed_roots(self):
         self.assertEqual(lab_runner.parse_command("/lab script tools/catalog/check.py --json")["args"], ["tools/catalog/check.py", "--json"])
 
