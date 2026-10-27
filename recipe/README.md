@@ -4199,3 +4199,7 @@ The existing SDK 211 particle producer accepts optional `stripped_keywords` in
 an audited profile. It removes source-derived variant rows containing a declared
 keyword before native ordering; omission preserves all existing selections.
 This policy records explicit build stripping, without supplying program bytes.
+
+The original-audio owner manifest follows the authored native-waypoint progress
+and neutral-terrain recovery changes in `IntegratedWorldBoundary.cs`. Reviewed
+source hash pins only; no game-derived content, private paths or identifiers.
