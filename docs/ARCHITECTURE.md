@@ -3899,6 +3899,13 @@ retain the existing detection rules. GitHub caches only pinned pip downloads.
 [Timing and cache operation](DEVELOPING.md#full-host-checks-and-timing) describe
 setup, reuse and isolation.
 
+`scripts/lab/lab_runner.py` (current) owns the comment-driven lab bridge: the
+`lab-runner` workflow runs main's copy on the owner's self-hosted runner for owner
+`/lab ...` comments, gives each job its own worktree of the requested ref, takes the
+orchestrator device lease, applies the battery rule, posts a sanitized result and
+prunes. `scripts/lab/lab-runner-guard.sh` is its job-started hook, installed outside
+the repository. Setup and command reference: [LAB_RUNNER](LAB_RUNNER.md).
+
 Host CI also runs Ruff (pinned in `tools/lab-requirements.txt`, configured in `ruff.toml`):
 `ruff check` and `ruff format --check` on every Python file a change touches. `scripts/` and
 `tests/` are ruff-formatted (J518); `ruff.toml` lists the rules still off and why.
