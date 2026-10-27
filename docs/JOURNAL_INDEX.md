@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J1221](PORTING_JOURNAL.md#j1221--complete-source-derived-voidraid-scene) | 2026-10-27 | Complete source-derived Voidraid scene | 2026-10-27. |
 | [J1219](PORTING_JOURNAL.md#j1219--complete-source-derived-champrush-voidstage-and-bazaar-scenes) | 2026-10-27 | Complete source-derived Champrush, Voidstage and Bazaar scenes | 2026-10-27. |
 | [J1220](PORTING_JOURNAL.md#j1220--four-complete-source-derived-scene-bundles) | 2026-10-27 | Four complete source-derived scene bundles | 2026-10-27. |
 | [J1218](PORTING_JOURNAL.md#j1218--source-derived-voidstage-shader-selections) | 2026-10-26 | Source-derived Voidstage Shader selections | 2026-10-27. |
