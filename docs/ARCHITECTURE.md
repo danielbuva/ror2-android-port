@@ -1548,10 +1548,11 @@ time above 80 C, CPU/GPU peak and phase; heat below the safety limits does not
 fail gameplay. Failed supervision also aborts without retry.
 Before each stage, readable CPU/GPU/battery/skin zones must cool to at most
 50 C with the OLED asleep, with battery back to at most 35 C before every
-stage. Battery status charging (2) at level >= 80%, or level > 85%, refuses
-admission without retry; charging settings remain user-owned. The observer
-reads battery temperature, level and status through bounded dumpsys calls and
-retains them in trace rows and stage receipts. Other physical zones, including power-management,
+stage. Positive battery `current_now` at level >= 80%, or level > 85%, refuses
+admission without retry; a charging label with zero current is admitted. Charging
+settings remain user-owned. Admission records the measured sysfs current; the
+observer reads battery temperature, level and status through bounded dumpsys
+calls and retains them in trace rows and stage receipts. Other physical zones, including power-management,
 charger and USB sensors, are recorded as excluded from admission only; they
 remain sampled in raw observations and all-zone peaks. The runtime thresholds
 apply to CPU/GPU and battery. Admission discovers zone types and readable paths
