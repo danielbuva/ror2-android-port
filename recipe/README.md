@@ -4155,3 +4155,25 @@ curve, pixel, program, copied source, private path or credential is included.
 Legitimate PC files, SDK resources and receipt-pinned source-produced record
 packs remain required; generated outputs and evidence stay ignored. Phone
 production, installation and original scene behavior remain open.
+
+## Bazaar complete scene selections (2026-10-27)
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-bazaar-whole-objects.json` | `e1a7f4be014786b9871446a64b8686bd01458be4ba4050856011ec21ee6615d1` |
+| `owner-bazaar-whole-particles-shaders.json` | `5187129fe53c63b7000a6f48b742a72301afced8124c95105f7d65808b87c7ef` |
+| `owner-bazaar-whole-postprocess-shaders.json` | `9875ca04d0dae7451f5769bb4f96211e8402f3989e351c97a227a3e1cdea089d` |
+| `owner-bazaar-whole-standard-shaders.json` | `68843e3f4dd949eb5e221a3b08f8eb7bb657c43f0e1098921d5219a7d12a854d` |
+
+Manual provenance, privacy, licensing and sensitive-content audit: these profiles
+contain source selectors, hashes, checked pointer relationships and authored
+import policies only. Lossless compaction preserves every decoded selection.
+Seven original wind-disabled Bezier lines use the existing hierarchy evaluator;
+four CharacterMaster bodies and their script use the qualified aligned Boolean
+tail policy, complete schema and reciprocal component/body-prefab witnesses.
+Original dependencies select 24 post-processing records; original recursive
+materials select Standard and particles through the pinned SDK compiler.
+No original body, curve, scalar, pixel, program, copied source, private path or
+credential is included. Legitimate PC files, SDK resources and receipt-pinned
+source-produced packs remain required; outputs and evidence stay ignored.
+Phone production, installation and original scene behavior remain open.

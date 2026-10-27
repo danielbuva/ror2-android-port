@@ -4859,3 +4859,13 @@ directory set up production; process exit tears down producers while local
 receipts persist. The member-aware writer exposes `payload/whole-scene-voidstage`.
 All 9,629 objects, both serialized members and the compressed bundle are host
 raw-exact to J850. Phone production, installation and scene behavior remain open.
+
+Bazaar complete scene selections extend the existing object/Shader owners through
+`recipe/owner-bazaar-whole-objects.json` and matching post-processing, Standard
+and particles profiles. Original static Bezier curves and CharacterMaster
+schema/body relationships use existing policies. Explicit current PC/SDK/tool
+roots, pinned profiles, source-produced packs and a fresh output directory set
+up production; process exit tears down producers while receipts persist.
+The member-aware writer exposes `payload/whole-scene-bazaar`. All 8,087 objects,
+both serialized members and the compressed bundle are host raw-exact to J850.
+Phone production, installation and original scene behavior remain open.
