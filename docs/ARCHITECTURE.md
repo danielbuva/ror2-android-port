@@ -4826,3 +4826,14 @@ directory set up production; process exit tears down producers while receipts
 persist. The member-aware writer exposes `payload/whole-scene-computationalexchange`.
 All 16,208 objects, both serialized members and the compressed bundle are host
 raw-exact to J850. Phone production, installation and original behavior remain open.
+
+Champrush Shader selections extend `payload_shader_records.py` through
+`recipe/owner-champrush-whole-{postprocess,standard,particles}-shaders.json`.
+Original scene dependencies select 24 post-processing records; recursive original
+materials select Standard and particles through the existing pinned SDK compiler.
+Explicit current PC/SDK/public-tool roots, pinned profiles and fresh output set
+up production; process exit tears down producers while receipts persist. All 26
+persisted records are host raw-exact to J850. Complete-scene and phone gates
+remain open. The existing player Shader producer also accepts repeatable
+`--authored-file` selectors for bounded authored-record production; common input
+pins remain checked and omission preserves the complete profile.
