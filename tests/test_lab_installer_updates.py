@@ -20,6 +20,108 @@ SPEC.loader.exec_module(LAB)
 
 
 class LabInstallerUpdatesTests(unittest.TestCase):
+    @staticmethod
+    def private_ui_logs(root, run_name, dump=b"ERROR: could not get idle state.\n", read_error=b"cat: /synthetic/private/ui.xml: No such file or directory\n"):
+        directory = root / "work/coordination/installer-update-acceptance" / run_name
+        directory.mkdir(parents=True)
+        for sequence, category, code, stdout, stderr in ((1, "device-ui-dump", 0, dump, b""), (2, "device-ui-read", 1, b"", read_error)):
+            prefix = f"{sequence:05d}-{category}"
+            (directory / (prefix + ".json")).write_bytes(
+                LAB.encoded({"phase": "baseline-N-check", "category": category, "returncode": code, "outcome": "returned"})
+            )
+            (directory / (prefix + ".stdout.log")).write_bytes(stdout)
+            (directory / (prefix + ".stderr.log")).write_bytes(stderr)
+        return directory
+
+    def log_inspection(self, root, args):
+        output = io.StringIO()
+        with ExitStack() as stack:
+            stack.enter_context(patch.object(LAB, "ROOT", root))
+            stack.enter_context(patch.dict(os.environ, {}, clear=True))
+            for name in ("read_context", "Phone", "PrivateDiagnostics", "prepare_artifacts", "publisher_keys", "acceptance", "server"):
+                stack.enter_context(patch.object(LAB, name, side_effect=AssertionError("log inspection must not call " + name)))
+            run = stack.enter_context(patch.object(LAB.subprocess, "run", side_effect=AssertionError("log inspection must not execute a command")))
+            stack.enter_context(redirect_stdout(output))
+            code = LAB.main(["--inspect-ui-failure", *args])
+        run.assert_not_called()
+        self.assertEqual(len(output.getvalue().splitlines()), 1)
+        self.assertNotIn(str(root), output.getvalue())
+        return code, json.loads(output.getvalue())
+
+    def test_private_ui_log_summary_selects_one_run_and_only_fixed_classifications(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            first = self.private_ui_logs(root, "run-first000", dump=b"ERROR: null root node returned by UiTestAutomationBridge.\n")
+            newest = self.private_ui_logs(root, "run-newest00")
+            os.utime(first, ns=(1, 1))
+            os.utime(newest, ns=(2, 2))
+            before = {path: path.read_bytes() for path in root.rglob("*") if path.is_file()}
+            code, result = self.log_inspection(root, ["--diagnostic-run", "newest"])
+            self.assertEqual(code, 0)
+            self.assertEqual(result["selection"], "newest")
+            self.assertEqual([row["category"] for row in result["records"]], ["device-ui-dump", "device-ui-read"])
+            self.assertEqual(result["records"][0]["stdout"], "idle-timeout")
+            self.assertEqual(result["records"][0]["returncode"], "zero")
+            self.assertEqual(result["records"][1]["stderr"], "missing-file")
+            self.assertEqual(result["records"][1]["returncode"], "nonzero")
+            code, explicit = self.log_inspection(root, ["--diagnostic-run", "run-first000"])
+            self.assertEqual(code, 0)
+            self.assertEqual(explicit["selection"], "explicit")
+            self.assertEqual(explicit["records"][0]["stdout"], "null-root")
+            self.assertEqual(before, {path: path.read_bytes() for path in root.rglob("*") if path.is_file()})
+            for private in ("synthetic", "ui.xml", "run-newest00", "run-first000", "UiTestAutomationBridge"):
+                self.assertNotIn(private, json.dumps([result, explicit]))
+
+    def test_private_ui_log_classification_never_echoes_unknown_output(self):
+        for data, expected in (
+            (b"synthetic-private-error", "other-output"),
+            (b" ", "empty"),
+            (b"cat: /synthetic/private: Permission denied", "permission-denied"),
+            (b"UI hierchary dumped to: /synthetic/private", "dump-reported-written"),
+            (b"UI hierarchy dumped to: /synthetic/private", "dump-reported-written"),
+            (b"ERROR: Error while dumping window hierarchy: synthetic-private", "hierarchy-write-error"),
+            (b'<?xml version="1.0"?><hierarchy>synthetic-private</hierarchy>', "hierarchy-present"),
+        ):
+            with self.subTest(expected=expected):
+                self.assertEqual(LAB.ui_output_classification(data), expected)
+
+    def test_private_ui_log_summary_rejects_unconstrained_selection_and_other_modes(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            self.private_ui_logs(root, "run-newest00")
+            for args in (
+                [],
+                ["--diagnostic-run", "../synthetic-private"],
+                ["--diagnostic-run", str(root)],
+                ["--diagnostic-run", "newest", "--inspect-state"],
+                ["--diagnostic-run", "newest", "--allow-test-installs"],
+            ):
+                with self.subTest(args=args):
+                    code, result = self.log_inspection(root, args)
+                    self.assertEqual(code, 1)
+                    self.assertEqual(result["records"], [])
+                    self.assertNotIn("synthetic-private", json.dumps(result))
+
+    def test_private_ui_log_summary_refuses_symlinks_and_does_not_search_other_namespaces(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            parent = root / "work/coordination/installer-update-acceptance"
+            other = root / "unrelated"
+            other.mkdir()
+            parent.mkdir(parents=True)
+            (parent / "run-symlink0").symlink_to(other, target_is_directory=True)
+            for selection in ("newest", "run-symlink0"):
+                code, result = self.log_inspection(root, ["--diagnostic-run", selection])
+                self.assertEqual(code, 1)
+                self.assertEqual(result["records"], [])
+            directory = self.private_ui_logs(root, "run-newest00")
+            record = directory / "00002-device-ui-read.stderr.log"
+            record.unlink()
+            record.symlink_to(other / "not-read")
+            code, result = self.log_inspection(root, ["--diagnostic-run", "newest"])
+            self.assertEqual(code, 1)
+            self.assertEqual(result["errors"], ["log-inspection-record-unavailable"])
+
     def inspection(self, results, extra_args=(), environment=None):
         output = io.StringIO()
         with ExitStack() as stack:

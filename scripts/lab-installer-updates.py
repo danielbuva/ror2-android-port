@@ -678,6 +678,83 @@ def acceptance(phone, config, temporary, passed):
             passed(case)
 
 
+def ui_output_classification(data):
+    """Only authored classifications, never excerpts of private child output."""
+    value = data.lower()
+    for marker, label in (
+        (b"could not get idle state", "idle-timeout"),
+        (b"null root node", "null-root"),
+        (b"error while dumping window hierarchy", "hierarchy-write-error"),
+        (b"no such file or directory", "missing-file"),
+        (b"permission denied", "permission-denied"),
+        (b"ui hierchary dumped to", "dump-reported-written"),
+        (b"ui hierarchy dumped to", "dump-reported-written"),
+    ):
+        if marker in value:
+            return label
+    if b"<?xml" in value and b"</hierarchy>" in value:
+        return "hierarchy-present"
+    return "other-output" if value.strip() else "empty"
+
+
+def inspect_ui_failure(selection, *, conflicting_mode=False):
+    result = {"mode": "inspect-ui-failure", "status": "observed", "selection": "newest" if selection == "newest" else "explicit", "records": [], "errors": []}
+    try:
+        if conflicting_mode:
+            raise Failure("log-inspection-cannot-run-other-modes")
+        if selection != "newest" and (not selection or not re.fullmatch(r"run-[a-z0-9_]{8}", selection)):
+            raise Failure("log-inspection-requires-constrained-run-selection")
+        parent = ROOT / "work/coordination/installer-update-acceptance"
+        if selection == "newest":
+            # Only this driver's immediate per-run directories; no recursive
+            # search, other lab namespaces, artifacts, or arbitrary paths.
+            candidates = [path for path in parent.iterdir() if re.fullmatch(r"run-[a-z0-9_]{8}", path.name) and not path.is_symlink() and path.is_dir()]
+            if not candidates:
+                raise Failure("log-inspection-run-not-found")
+            directory = max(candidates, key=lambda path: path.stat().st_mtime_ns)
+        else:
+            directory = parent / selection
+        if directory.is_symlink() or not directory.is_dir():
+            raise Failure("log-inspection-run-not-found")
+
+        def read(name):
+            path = directory / name
+            if path.is_symlink() or not path.is_file():
+                raise Failure("log-inspection-record-unavailable")
+            return path.read_bytes()
+
+        failure_sequence = None
+        for path in sorted(directory.glob("[0-9][0-9][0-9][0-9][0-9]-device-ui-read.json")):
+            metadata = json.loads(read(path.name))
+            if metadata.get("phase") == "baseline-N-check" and metadata.get("category") == "device-ui-read":
+                if metadata.get("returncode") != 0 or metadata.get("outcome") != "returned":
+                    failure_sequence = int(path.name[:5])
+                    break
+        if failure_sequence is None or failure_sequence < 2:
+            raise Failure("log-inspection-ui-read-failure-not-found")
+        for sequence, category in ((failure_sequence - 1, "device-ui-dump"), (failure_sequence, "device-ui-read")):
+            prefix = f"{sequence:05d}-{category}"
+            metadata = json.loads(read(prefix + ".json"))
+            if metadata.get("phase") != "baseline-N-check" or metadata.get("category") != category:
+                raise Failure("log-inspection-record-mismatch")
+            outcome = metadata.get("outcome")
+            result["records"].append(
+                {
+                    "phase": "baseline-N-check",
+                    "category": category,
+                    "returncode": "zero" if metadata.get("returncode") == 0 else "nonzero" if type(metadata.get("returncode")) is int else "unavailable",
+                    "outcome": outcome if outcome in ("returned", "OSError", "TimeoutExpired") else "unknown",
+                    "stdout": ui_output_classification(read(prefix + ".stdout.log")),
+                    "stderr": ui_output_classification(read(prefix + ".stderr.log")),
+                }
+            )
+    except Exception as error:
+        result["status"] = "error"
+        result["errors"].append(str(error) if isinstance(error, Failure) else "log-inspection-local-read-error")
+    print(encoded(result).decode(), end="", flush=True)
+    return 1 if result["errors"] else 0
+
+
 def inspect_state(expected_installer_hash, timeout, *, conflicting_mode=False):
     """Observe only the two fixed packages; never adopt ownership or clean up."""
     result = {
@@ -750,7 +827,14 @@ def main(argv=None):
     parser.add_argument(
         "--expected-installer-sha256", help="Required for --inspect-state: last known installer hash, used only for comparison, never ownership"
     )
+    parser.add_argument("--inspect-ui-failure", action="store_true", help="Read-only fixed classification of this driver's retained UI dump/read failure logs")
+    parser.add_argument(
+        "--diagnostic-run", help="Required for --inspect-ui-failure: newest or one private run-directory basename; never prints paths or raw logs"
+    )
     args = parser.parse_args(argv)
+    if args.inspect_ui_failure:
+        DIAGNOSTICS = None
+        return inspect_ui_failure(args.diagnostic_run, conflicting_mode=args.inspect_state or args.host_only or args.allow_test_installs)
     if args.inspect_state:
         # This driver-only observation makes no claim about APK source identity.
         # Bypass cache/toolchain setup, private log writes and all cleanup paths.
