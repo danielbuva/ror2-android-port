@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J1218](PORTING_JOURNAL.md#j1218--source-derived-voidstage-shader-selections) | 2026-10-26 | Source-derived Voidstage Shader selections | 2026-10-27. |
 | [J1217](PORTING_JOURNAL.md#j1217--authored-shader-serialization-without-android-unitypy) | 2026-10-26 | Authored Shader serialization without Android UnityPy | 2026-10-27. |
 | [J1216](PORTING_JOURNAL.md#j1216--source-derived-champrush-shader-records) | 2026-10-26 | Source-derived Champrush Shader records | 2026-10-27. |
 | [J1215](PORTING_JOURNAL.md#j1215--explicit-compiler-hosting-for-source-shader-records) | 2026-10-26 | Explicit compiler hosting for source Shader records | 2026-10-27. |

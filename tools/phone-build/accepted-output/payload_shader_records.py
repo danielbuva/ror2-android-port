@@ -392,7 +392,7 @@ def standard_selections(original_sdk, materials, fog_keyword="FOG_LINEAR", *, ca
     return source, selections
 
 
-def particles_selections(original_sdk, materials, fog_keyword="FOG_LINEAR", *, carrier):
+def particles_selections(original_sdk, materials, fog_keyword="FOG_LINEAR", *, carrier, stripped_keywords=()):
     """Project original particle fragment order onto declared SDK runtime passes."""
     source = deepcopy(original_sdk)
     form, original = source["m_ParsedForm"], carrier["m_ParsedForm"]
@@ -406,6 +406,7 @@ def particles_selections(original_sdk, materials, fog_keyword="FOG_LINEAR", *, c
         return shader_pass["m_Type"], shader_pass["m_State"]["m_Name"], tags.get("LIGHTMODE")
 
     selections = {}
+    stripped_keywords = set(stripped_keywords)
     instancing = any(material["m_EnableInstancingVariants"] for material in materials)
     for subshader, original_subshader in zip(form["m_SubShaders"], original["m_SubShaders"], strict=True):
         runtime = []
@@ -418,6 +419,8 @@ def particles_selections(original_sdk, materials, fog_keyword="FOG_LINEAR", *, c
             for tier in original_pass["progFragment"]["m_PlayerSubPrograms"]:
                 for row in tier:
                     keys = sorted(original["m_KeywordNames"][index] for index in row["m_KeywordIndices"])
+                    if stripped_keywords.intersection(keys):
+                        continue
                     if any(key.startswith("FOG_") and key != fog_keyword for key in keys):
                         continue
                     if "INSTANCING_ON" in keys and not instancing:
@@ -525,7 +528,8 @@ def produce_standard(profile_path, profile_sha256, pc, sdk, output, codec, codec
         )
     else:
         select = particles_selections if sdk_id == 211 else standard_selections
-        source_runtime, keyword_rows = select(sdk_source, materials, fog_keyword, carrier=original)
+        options = {"stripped_keywords": profile.get("stripped_keywords", [])} if sdk_id == 211 else {}
+        source_runtime, keyword_rows = select(sdk_source, materials, fog_keyword, carrier=original, **options)
         # SDK source Standard depends on its own Legacy/VertexLit6. The original
         # PC dependency independently resolves that same named shader in its CAB.
         dependencies = original["m_Dependencies"]

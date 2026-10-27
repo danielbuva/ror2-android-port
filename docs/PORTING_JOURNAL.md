@@ -569,3 +569,15 @@ ColorGrade admission reaches the compiler with UnityPy/lz4 imports blocked.
 Evidence: `work/coordination/p1-colorgrade-phone-v1/dependency-repair-host-v4/`;
 51 focused tests, Ruff and host preflight pass. No output/APK change or readiness
 promotion. Whole-file phone production and ordinary app admission remain open.
+
+## J1218 — Source-derived Voidstage Shader selections
+
+2026-10-27. Audited profiles publish the existing owners' 24 post-processing and
+one Standard record selections from legitimate PC input and pinned public SDK.
+Retained source-guarded production persisted outputs before independent J850
+comparison; all 25 records are raw-exact, including Standard 261,528 B.
+Evidence: `work/coordination/p1-voidstage-shaders-v1/done.json`.
+The particle owner also accepts explicit recipe keyword stripping before native
+ordering; omitted policy preserves existing source selections. Focused host
+fixtures cover row removal and retained ordering. No target bytes are published.
+Complete-scene readiness, phone production and runtime remain open; no APK change.
