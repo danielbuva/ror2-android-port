@@ -683,3 +683,11 @@ scene behaviour remain open.
 Cross-bundle sources come from the orchestrator's exact-body and pointer-only original-record
 lookup. Evidence (ignored): `work/coordination/orchestrator/scenes/nest-final-v1/`. Readiness
 recount, phone production and scene behaviour remain open.
+
+## J1227 — Complete source-derived golemplains2 scene
+
+`whole-scene-golemplains2` is host raw-exact to J850: 8,785 objects, both serialized members and the
+5,904,777-byte bundle (SHA-256 `0d0140fe…`). Profiles: `recipe/owner-golemplains2-whole-*.json`.
+Cross-bundle sources come from the orchestrator's exact-body and pointer-only original-record
+lookup. Evidence (ignored): `work/coordination/orchestrator/scenes/golemplains2-final-v1/`. Readiness
+recount, phone production and scene behaviour remain open.
