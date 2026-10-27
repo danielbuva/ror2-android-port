@@ -582,7 +582,7 @@ ordering; omitted policy preserves existing source selections. Focused host
 fixtures cover row removal and retained ordering. No target bytes are published.
 Complete-scene readiness, phone production and runtime remain open; no APK change.
 
-## J1219 — Four complete source-derived scene bundles
+## J1220 — Four complete source-derived scene bundles
 
 2026-10-27. Existing object/Shader owners close Frozenwall, Villagenight and
 Foggyswamp source bundles plus Skymeadow spine from legitimate input and SDK.
@@ -592,8 +592,8 @@ Guarded production precedes independent comparison: 69,360 objects, eight
 serialized members and all four compressed bundles are raw-exact against J850.
 Evidence/output hashes: `work/coordination/p1-scenes-ss/safe-five-v1/readiness-union/done.json`;
 three new comparisons there retain Skymeadow's `wind-qualification-v1` proof.
-Retained landed union: 646/705 available; these four advance it to 650 (645 raw-exact),
-55 missing (7 APK, 48 payload). Goolake, Lakes, Lakesnight and Village remain open.
+Retained landed union: 648/705 available; these four advance it to 652 (647 raw-exact),
+53 missing (7 APK, 46 payload). Goolake, Lakes, Lakesnight and Village remain open.
 54 focused tests, Ruff, staged audit and host preflight pass; doctor Bootstrap remains blocked.
 Host-only; phone production, installation and original behavior remain open.
 

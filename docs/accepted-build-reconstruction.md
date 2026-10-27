@@ -529,14 +529,14 @@ host target after verified checkpoint continuation. This supplies existing
 receipt-pinned texture consumers; it does not close missing complete bundles.
 App-host texture dispatch reuses this producer, with device execution still open.
 
-J1219 closes Frozenwall, Villagenight and Foggyswamp source bundles and Skymeadow
+J1220 closes Frozenwall, Villagenight and Foggyswamp source bundles and Skymeadow
 spine: 69,360 persisted objects, eight serialized members and four compressed
 bundles are host raw-exact to J850. Original Bezier curve operands plus 42
 captured build-angle triplets produce geometry locally; public recipes contain
 no captured geometry arrays. Receipt-pinned Shader index reuse preserves actual
 supplier provenance. The retained landed union includes Frozenwall spine and
-advances from 646 to 650/705 available (645 raw-exact, two code comparisons,
-three drift-explained), with 55 missing (7 APK, 48 payload). Evidence:
+advances from 648 to 652/705 available (647 raw-exact, two code comparisons,
+three drift-explained), with 53 missing (7 APK, 46 payload). Evidence:
 `work/coordination/p1-scenes-ss/safe-five-v1/readiness-union/`.
 Goolake, Lakes, Lakesnight and Village source recipes remain open. Complete phone
 production, installation and original runtime behavior remain separate gates.
