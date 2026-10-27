@@ -2453,6 +2453,16 @@ No upstream implementation or captured heap bytes are included. J1091 records
 License/notices stay with the private checkout and outputs. Provenance/privacy
 audit: 2026-10-24; no runtime/content redistribution grant changes.
 
+`memory-snapshot-data-tools-root-labels.patch` is a second authored, zero-context
+transformation for the same pinned CLI, applied after the empty-array patch. It
+prints one stderr line per proven root while the crawler seeds them:
+`LAB_GC_HANDLE_ROOT <managed_object_index> <gc handle index>` and
+`LAB_STATIC_ROOT <managed_object_index> <type>.<field>`, with indexes matching
+the DuckDB export's `managed_objects`. It restores the private J1122 root-label
+adaptation for retained-root attribution; behaviour and outputs are otherwise
+unchanged. No upstream implementation or heap bytes are included.
+Provenance/privacy audit: 2026-10-27; no runtime/content redistribution grant changes.
+
 ### Lane source-restaging audit
 
 The camera recipe's `whole_catalog.py` source digest is refreshed for extracting
