@@ -300,11 +300,33 @@ class Phone:
     def shell(self, *args, **kwargs):
         return self.command("shell", *args, **kwargs)
 
+    def package_paths(self, package):
+        # Android pm path reports an absent package with either exit 0 or 1.
+        # This exception belongs only to this read-only query, not generic ADB.
+        try:
+            result = subprocess.run(
+                [str(self.adb), "-s", self.serial, "shell", "pm", "path", package],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                timeout=60,
+                check=False,
+            )
+        except (OSError, subprocess.TimeoutExpired) as error:
+            raise Failure("device-package-path-query") from error
+        if result.returncode in (0, 1) and result.stdout == b"" and result.stderr == b"":
+            return []
+        if result.returncode or result.stderr:
+            raise Failure("device-package-path-query")
+        paths = result.stdout.decode().strip().splitlines()
+        if not paths or any(not path.startswith("package:/") for path in paths):
+            raise Failure("device-package-path-shape")
+        return paths
+
     def occupied(self, package):
-        return bool(self.shell("pm", "path", package).strip())
+        return bool(self.package_paths(package))
 
     def package_hash(self, package):
-        paths = self.shell("pm", "path", package).decode().strip().splitlines()
+        paths = self.package_paths(package)
         if len(paths) != 1 or not paths[0].startswith("package:"):
             raise Failure("installed-package-shape")
         # Hash only; APK bytes never leave the lab device for readback.
@@ -343,7 +365,7 @@ class Phone:
         # Verify both installed code placement and actual app-private backing,
         # not /sdcard aliases. All outputs stay inside this lab process.
         for package in (PACKAGE, GAME) if self.alpha_hash else (PACKAGE,):
-            paths = self.shell("pm", "path", package).decode().strip().splitlines()
+            paths = self.package_paths(package)
             if len(paths) != 1 or not paths[0].startswith("package:"):
                 raise Failure("device-package-placement-unavailable")
             code = self.available(self.shell("df", "-k", paths[0][8:]))

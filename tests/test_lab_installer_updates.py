@@ -6,6 +6,7 @@ import io
 import json
 import os
 from pathlib import Path
+import subprocess
 import tempfile
 import unittest
 from unittest.mock import patch
@@ -59,6 +60,47 @@ class LabInstallerUpdatesTests(unittest.TestCase):
                 self.assertEqual(row["size"], len(files[row["name"]]))
             LAB.publish(service, files, 1)
             self.assertEqual(service.requests, [])
+
+    def test_pm_path_empty_success_or_exit_one_is_absence(self):
+        phone = LAB.Phone("synthetic-private-selector", 1)
+        for code in (0, 1):
+            with self.subTest(code=code), patch.object(LAB.subprocess, "run", return_value=subprocess.CompletedProcess([], code, b"", b"")) as run:
+                self.assertFalse(phone.occupied(LAB.GAME))
+                self.assertEqual(run.call_args.args[0][-4:], ["shell", "pm", "path", LAB.GAME])
+                with patch.object(phone, "shell") as shell:
+                    with self.assertRaisesRegex(LAB.Failure, "installed-package-shape"):
+                        phone.package_hash(LAB.GAME)
+                shell.assert_not_called()
+
+    def test_pm_path_present_package_still_requires_exact_hash_readback(self):
+        phone = LAB.Phone("synthetic-private-selector", 1)
+        result = subprocess.CompletedProcess([], 0, b"package:/synthetic/app/base.apk\n", b"")
+        with (
+            patch.object(LAB.subprocess, "run", return_value=result),
+            patch.object(phone, "shell", return_value=b"a" * 64 + b"  /synthetic/app/base.apk\n") as shell,
+        ):
+            self.assertTrue(phone.occupied(LAB.GAME))
+            self.assertEqual(phone.package_hash(LAB.GAME), "a" * 64)
+        shell.assert_called_once_with("sha256sum", "/synthetic/app/base.apk")
+
+    def test_pm_path_other_errors_never_count_as_absence_or_print_raw_error(self):
+        phone = LAB.Phone("synthetic-private-selector", 1)
+        for code, stdout, stderr in (
+            (1, b"", b"synthetic-private-error"),
+            (1, b"synthetic-private-error", b""),
+            (1, b"package:/synthetic/app/base.apk\n", b""),
+            (0, b"", b"synthetic-private-error"),
+            (2, b"", b""),
+            (0, b"synthetic-private-error", b""),
+        ):
+            with (
+                self.subTest(code=code, stdout=stdout, stderr=stderr),
+                patch.object(LAB.subprocess, "run", return_value=subprocess.CompletedProcess([], code, stdout, stderr)),
+            ):
+                with self.assertRaises(LAB.Failure) as failure:
+                    phone.occupied(LAB.GAME)
+                self.assertIn(str(failure.exception), {"device-package-path-query", "device-package-path-shape"})
+                self.assertNotIn("synthetic-private-error", str(failure.exception))
 
     def test_no_permission_setting_without_explicit_flag_and_fresh_ownership(self):
         for authorized, owned in ((False, True), (True, False), (False, False)):
