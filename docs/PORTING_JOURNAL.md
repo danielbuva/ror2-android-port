@@ -819,3 +819,11 @@ recount, phone production and scene behaviour remain open.
 Cross-bundle sources come from the orchestrator's exact-body and pointer-only original-record
 lookup. Evidence (ignored): `work/coordination/orchestrator/scenes/sad1-final-v1/`. Readiness
 recount, phone production and scene behaviour remain open.
+
+## J1244 — Complete source-derived moon scene
+
+`whole-scene-moon` is host raw-exact to J850: 17,327 objects, both serialized members and the
+14,061,361-byte bundle (SHA-256 `64866304…`). Profiles: `recipe/owner-moon-whole-*.json`.
+Cross-bundle sources come from the orchestrator's exact-body and pointer-only original-record
+lookup. Evidence (ignored): `work/coordination/orchestrator/scenes/moon-final-v1/`. Readiness
+recount, phone production and scene behaviour remain open.
