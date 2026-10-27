@@ -755,3 +755,27 @@ recount, phone production and scene behaviour remain open.
 Cross-bundle sources come from the orchestrator's exact-body and pointer-only original-record
 lookup. Evidence (ignored): `work/coordination/orchestrator/scenes/villagenight-final-v1/`. Readiness
 recount, phone production and scene behaviour remain open.
+
+## J1236 — Complete source-derived lakes scene
+
+`whole-scene-lakes` is host raw-exact to J850: 22,163 objects, both serialized members and the
+5,880,131-byte bundle (SHA-256 `fc88c7d9…`). Profiles: `recipe/owner-lakes-whole-*.json`.
+Cross-bundle sources come from the orchestrator's exact-body and pointer-only original-record
+lookup. Evidence (ignored): `work/coordination/orchestrator/scenes/lakes-final-v1/`. Readiness
+recount, phone production and scene behaviour remain open.
+
+## J1237 — Complete source-derived lakesnight scene
+
+`whole-scene-lakesnight` is host raw-exact to J850: 21,397 objects, both serialized members and the
+5,429,114-byte bundle (SHA-256 `f1252b4f…`). Profiles: `recipe/owner-lakesnight-whole-*.json`.
+Cross-bundle sources come from the orchestrator's exact-body and pointer-only original-record
+lookup. Evidence (ignored): `work/coordination/orchestrator/scenes/lakesnight-final-v1/`. Readiness
+recount, phone production and scene behaviour remain open.
+
+## J1238 — Complete source-derived artifactworld02 scene
+
+`whole-scene-artifactworld02` is host raw-exact to J850: 9,558 objects, both serialized members and the
+4,143,960-byte bundle (SHA-256 `6b5cb04c…`). Profiles: `recipe/owner-artifactworld02-whole-*.json`.
+Cross-bundle sources come from the orchestrator's exact-body and pointer-only original-record
+lookup. Evidence (ignored): `work/coordination/orchestrator/scenes/artifactworld02-final-v1/`. Readiness
+recount, phone production and scene behaviour remain open.
