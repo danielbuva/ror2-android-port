@@ -10,6 +10,8 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J1229](PORTING_JOURNAL.md#j1229--complete-source-derived-lemuriantemple-scene) | 2026-10-27 | Complete source-derived lemuriantemple scene | `whole-scene-lemuriantemple` is host raw-exact to J850: 10,928 objects, both serialized members and the 10,232,436-byte bundle (SHA-256 `dc2d5b6b…`). |
+| [J1228](PORTING_JOURNAL.md#j1228--complete-source-derived-infinitetowerworld-scene) | 2026-10-27 | Complete source-derived infinitetowerworld scene | `whole-scene-infinitetowerworld` is host raw-exact to J850: 1,750 objects, both serialized members and the 4,740,999-byte bundle (SHA-256 `236b6d1d…`). |
 | [J1227](PORTING_JOURNAL.md#j1227--complete-source-derived-golemplains2-scene) | 2026-10-27 | Complete source-derived golemplains2 scene | `whole-scene-golemplains2` is host raw-exact to J850: 8,785 objects, both serialized members and the 5,904,777-byte bundle (SHA-256 `0d0140fe…`). |
 | [J1226](PORTING_JOURNAL.md#j1226--complete-source-derived-nest-scene) | 2026-10-27 | Complete source-derived nest scene | `whole-scene-nest` is host raw-exact to J850: 33,275 objects, both serialized members and the 6,244,244-byte bundle (SHA-256 `6622cd06…`). |
 | [J1225](PORTING_JOURNAL.md#j1225--complete-source-derived-surv2-scene) | 2026-10-27 | Complete source-derived Surv2 scene | Surv2 (`whole-scene-surv2`) is host raw-exact to J850: 30,311 objects, both serialized members and the 3,784,294-byte bundle (SHA-256 `74c622c8…`). |
