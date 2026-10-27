@@ -11,7 +11,7 @@ import io
 import struct
 
 
-LIMIT = 64 * 1024 * 1024
+LIMIT = 128 * 1024 * 1024  # largest scene member today: Soul1 sharedAssets, 75 MiB
 
 
 def sha(path):
