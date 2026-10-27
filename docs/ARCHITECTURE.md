@@ -4907,3 +4907,14 @@ pinned profiles, source-produced media/Shader packs and new output directories.
 Process exit tears down producers; receipts persist. These are optional host
 reconstruction owners; phone production, installation and original runtime
 behavior remain open.
+
+Voidraid complete scene selections extend the existing object/Shader owners
+through `recipe/owner-voidraid-whole-objects.json` and matching post-processing
+and Standard profiles. Original component/GameObject dependencies retain their
+complete source body/type identities through the existing preload policies.
+Explicit current PC/SDK/tool roots, pinned profiles, source-produced record packs
+and a fresh output directory set up production; process exit tears down producers
+while local receipts persist. The member-aware writer exposes
+`payload/whole-scene-voidraid`. All 39,861 objects, both serialized members and
+the compressed bundle are host raw-exact to J850. Phone production, installation
+and original scene behavior remain open.

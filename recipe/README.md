@@ -4251,3 +4251,25 @@ requirements. This table restores audit indexing only; no profile content change
 The original-audio owner manifest follows the authored native-waypoint progress
 and neutral-terrain recovery changes in `IntegratedWorldBoundary.cs`. Reviewed
 source hash pins only; no game-derived content, private paths or identifiers.
+
+## Voidraid complete scene selections (2026-10-27)
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-voidraid-whole-objects.json` | `b417dc2dc65e32f4b80cee374b054ee5d4996d8d8dfd90ef95fa280955950af4` |
+| `owner-voidraid-whole-postprocess-shaders.json` | `c35f9e99db147a8c8e0993ef9dd5ea040270ae694f11fb620dc15639ee755b5c` |
+| `owner-voidraid-whole-standard-shaders.json` | `f97b7c1aed02021052a8bbba406d8b1fe6a8ab4000488ab969c2eb3c471270e0` |
+
+Manual provenance, privacy, licensing and sensitive-content audit: these profiles
+contain source selectors, hashes, checked pointer relationships and authored
+import policies only. Lossless compaction preserves every decoded selection.
+Original component/GameObject relationships and complete source bodies/types
+admit Billboard and Rigidbody dependencies; retained original wind records
+preserve their complete body/type identities. Original resource and
+material relationships select 24 post-processing records and Standard through
+the existing pinned SDK compiler owners. No original body, curve, scalar, pixel,
+program, copied source, private path or credential is included. Legitimate PC
+files, SDK resources and receipt-pinned source-produced record packs remain
+required. Generated outputs and evidence stay ignored. All 39,861 persisted
+objects, two serialized members and the compressed bundle are host raw-exact
+to J850; phone production, installation and original scene behavior remain open.

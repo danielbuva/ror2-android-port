@@ -611,3 +611,18 @@ Retained readiness after these deltas: 647/705 available, 642 raw-exact; 58 miss
 Audited recipes publish selections only; accepted production was retained without replay.
 Host-only; phone production, installation and original scene behavior remain open.
 APK unchanged: J850 `f1550ce0ff030ea0fa7a1ab66de19d54ee7894a7ae2f5b344f993157d6713949`.
+
+## J1221 — Complete source-derived Voidraid scene
+
+2026-10-27. Existing object/Shader owners reproduce Voidraid from legitimate PC
+files, pinned SDK/tools and source-produced packs. Audited profiles retain source
+Billboard/material identities, 21 original wind bodies and reciprocal Rigidbody
+preload membership; no new runtime or producer policy is introduced.
+All 39,861 persisted objects, two serialized members and the compressed bundle
+are raw-exact to J850: 24,586,492 B,
+`bf3984cf6845c200a5553235c704a5e75cfee917d70dc1212ca17e4e5a9c0867`.
+Evidence: `work/coordination/p1-scenes-w/publication-batch-v11/publication-inputs.json`.
+Retained worker readiness delta is +1 exact entry; all prior entries unchanged.
+54 focused host tests and host preflight pass. Accepted production was not replayed.
+Host-only; phone production, installation and original scene behavior remain open.
+APK unchanged: J850 `f1550ce0ff030ea0fa7a1ab66de19d54ee7894a7ae2f5b344f993157d6713949`.
