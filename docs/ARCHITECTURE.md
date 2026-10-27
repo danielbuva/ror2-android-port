@@ -3777,6 +3777,13 @@ its lease. Public output contains only fixed outcomes and aggregate measurements
 Host-only `inspect` reads an explicitly hash-pinned failed receipt and its recorded
 owner result, without a device command or a new capture. Inspection success never
 qualifies the failed series or turns partial menu samples into an accepted bound.
+`session_memory_candidate.py` adapts existing isolated lanes and installation
+owners to the bridge. Build is normal, source-pinned code-only production, with
+the existing space/mutex gates and private subprocess logs. Separate installation
+binds the build receipt, old owned APK and frozen payload cohort, and verifies the
+exact runtime files read-only before and after ordinary in-place installation.
+It never syncs payloads, resets data, uninstalls, or falls back to a splice/full
+build. Candidate provenance is not runtime or memory-bound qualification.
 `session_heap_growth.py` reads the selected capture receipt and exact exported
 DuckDB pair (`duckdb==1.4.4` in the pinned requirements), verifying local snapshot
 hashes and export provenance. Its `--export-dir` mode archives the pinned public
