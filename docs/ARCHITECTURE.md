@@ -4918,3 +4918,12 @@ while local receipts persist. The member-aware writer exposes
 `payload/whole-scene-voidraid`. All 39,861 objects, both serialized members and
 the compressed bundle are host raw-exact to J850. Phone production, installation
 and original scene behavior remain open.
+
+The existing `tools/phone-build/owner-code/shader.py` compiler-session owner
+checks Linux DX compiler dependencies under the acquired SDK's `Tools/`
+directory before opening IPC. The caller stages acquired files and supplies
+runner environment, compiler-data root and separate Mac metadata/includes;
+the session owns logs and process teardown. Bounded ColorGrade shell production
+on Android is byte-exact to J850, with thermal and scratch/display/lease cleanup
+receipts in `work/coordination/p1-colorgrade-phone-v1/device-source-v4/`.
+Complete-cohort production and ordinary app/install/update gates remain open.
