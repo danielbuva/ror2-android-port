@@ -4807,3 +4807,13 @@ identities supply order; the existing pinned SDK compiler supplies programs.
 Explicit PC/SDK/tool roots, pinned profiles and fresh output set up production;
 process exit tears down producers while receipts persist. The persisted
 301,384 B record is host raw-exact to J850; full-scene and phone gates remain open.
+
+Computational Exchange complete scene selections extend the existing object/Shader
+owners through `recipe/owner-computationalexchange-whole-objects.json` and the
+J1213 Standard profile. Checked original Transform ownership supplies preload
+admissions through the existing object producer. Explicit current PC/SDK/tool
+roots, pinned profiles, receipt-pinned source-produced packs and a fresh output
+directory set up production; process exit tears down producers while receipts
+persist. The member-aware writer exposes `payload/whole-scene-computationalexchange`.
+All 16,208 objects, both serialized members and the compressed bundle are host
+raw-exact to J850. Phone production, installation and original behavior remain open.

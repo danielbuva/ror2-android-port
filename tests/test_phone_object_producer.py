@@ -641,14 +641,18 @@ class ObjectProducerTests(unittest.TestCase):
                 else:
                     P.check_preload_dependencies(sources, profiles, [dependency])
 
-    def test_original_preload_rigidbody_requires_unique_reciprocal_component(self):
+    def test_original_preload_component_requires_unique_reciprocal_membership(self):
+        for kind, class_id, size in (("Rigidbody", 54, 36), ("Transform", 4, 68)):
+            self.check_preload_component(kind, class_id, size)
+
+    def check_preload_component(self, kind, class_id, size):
         for failure in (None, "class", "length", "hash", "owner", "member", "index", "duplicate", "pointer"):
-            with self.subTest(failure=failure):
+            with self.subTest(kind=kind, failure=failure):
                 components = [(0, 71), (0, 72), (0, 73), (0, 20)]
                 if failure == "duplicate":
                     components[0] = (0, 20)
                 gameobject = struct.pack("<I", len(components)) + b"".join(struct.pack("<iq", *p) for p in components)
-                rigidbody = struct.pack("<iq", 0, 99 if failure == "owner" else 19) + bytes(24)
+                rigidbody = struct.pack("<iq", 0, 99 if failure == "owner" else 19) + bytes(size - 12)
                 if failure == "length":
                     rigidbody += bytes(4)
                 preload = struct.pack("<IIiq", 0, 1, 1, 21 if failure == "pointer" else 20)
@@ -660,20 +664,20 @@ class ObjectProducerTests(unittest.TestCase):
                     "preload_sha256": digest(preload),
                     "source_pointer": [1, 21 if failure == "pointer" else 20],
                     "to": [2, 91],
-                    "rigidbody": {
+                    kind.lower(): {
                         "source": [0 if failure == "member" else 1, 20],
                         "sha256": "0" * 64 if failure == "hash" else digest(rigidbody),
                         "component_index": 2 if failure == "index" else 3,
                     },
                 }
                 bodies = [
-                    {1: (preload, typ(150)), 20: (rigidbody, typ(54))},
-                    {19: (gameobject, typ(1)), 20: (rigidbody, typ(4 if failure == "class" else 54))},
+                    {1: (preload, typ(150)), 20: (rigidbody, typ(class_id))},
+                    {19: (gameobject, typ(1)), 20: (rigidbody, typ(1 if failure == "class" else class_id))},
                 ]
                 sources = curve_sources(bodies, profiles)
                 sources[0][3]["externals"] = [{"path": "archive:/original/CAB-original"}]
                 if failure:
-                    with self.assertRaisesRegex(ValueError, "Rigidbody|relationship drift"):
+                    with self.assertRaisesRegex(ValueError, kind + "|relationship drift"):
                         P.check_preload_dependencies(sources, profiles, [dependency])
                 else:
                     P.check_preload_dependencies(sources, profiles, [dependency])

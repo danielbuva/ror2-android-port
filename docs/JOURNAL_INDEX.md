@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J1214](PORTING_JOURNAL.md#j1214--complete-source-derived-computational-exchange-scene) | 2026-10-26 | Complete source-derived Computational Exchange scene | 2026-10-27. |
 | [J1213](PORTING_JOURNAL.md#j1213--source-derived-computational-exchange-standard-shader) | 2026-10-26 | Source-derived Computational Exchange Standard Shader | 2026-10-26. |
 | [J1212](PORTING_JOURNAL.md#j1212--complete-source-derived-meridian-bundle) | 2026-10-26 | Complete source-derived Meridian bundle | 2026-10-26. |
 | [J1211](PORTING_JOURNAL.md#j1211--source-derived-complete-frozenwall-spine-scene) | 2026-10-26 | Source-derived complete Frozenwall spine scene | 2026-10-26. |
