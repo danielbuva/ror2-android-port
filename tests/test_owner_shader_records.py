@@ -56,6 +56,7 @@ class CompilerHosting(unittest.TestCase):
 class AuthoredSelection(unittest.TestCase):
     def profile(self):
         profile = {key: {"witness": key} for key in ("input_id", "source_type", "sdk", "includes_sha256", "settings", "authored_inputs")}
+        profile["authored_inputs"]["scripts/lab/shader_segments.py"] = {"sha256": "unused-native-pin"}
         profile.update(
             shaders=[
                 {"file": "second", "source": "authored-second"},
@@ -73,8 +74,11 @@ class AuthoredSelection(unittest.TestCase):
         selected = N.select_authored_files(profile, ["first", "second"])
         self.assertEqual([row["file"] for row in selected["shaders"]], ["second", "first"])
         self.assertEqual(set(selected), {"input_id", "source_type", "sdk", "includes_sha256", "settings", "authored_inputs", "shaders"})
-        for key in set(selected) - {"shaders"}:
+        for key in set(selected) - {"shaders", "authored_inputs"}:
             self.assertEqual(selected[key], profile[key])
+        self.assertNotIn("scripts/lab/shader_segments.py", selected["authored_inputs"])
+        self.assertIn("scripts/lab/shader_segments.py", profile["authored_inputs"])
+        self.assertEqual(selected["authored_inputs"]["witness"], "authored_inputs")
         self.assertIn("native_internal", profile)
         self.assertEqual(len(profile["shaders"]), 3)
 

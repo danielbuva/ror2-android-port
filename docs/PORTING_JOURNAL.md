@@ -557,3 +557,15 @@ bounded phone slice, retaining common input pins and the default complete route.
 Evidence: `work/coordination/p1-champrush-shaders-v1/done.json`.
 Complete-scene readiness, phone production, installation and runtime remain open;
 no readiness promotion or APK change.
+
+## J1217 — Authored Shader serialization without Android UnityPy
+
+2026-10-27. The existing serialized-file owner decodes original Shader48 type
+metadata and reads/writes ordered source-schema values with standard Python.
+Authored selection loads no native-recovery dependencies and omits their unused
+pins; original input, SDK, settings and authored-source checks remain enforced.
+The original 15,972 B record roundtrips exactly and matches UnityPy decoding;
+ColorGrade admission reaches the compiler with UnityPy/lz4 imports blocked.
+Evidence: `work/coordination/p1-colorgrade-phone-v1/dependency-repair-host-v4/`;
+51 focused tests, Ruff and host preflight pass. No output/APK change or readiness
+promotion. Whole-file phone production and ordinary app admission remain open.

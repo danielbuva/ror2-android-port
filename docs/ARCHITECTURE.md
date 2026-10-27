@@ -626,6 +626,11 @@ Repeatable `--authored-file` selects standalone tracked-source rows from the
 same pinned profile, retaining common input checks and excluding unrelated
 native/font/builtin/shared setup. This current bounded mode needs no generated
 private profile; the existing result file lists the produced selection.
+Authored selection excludes unused native-recovery module pins/imports. The
+existing `unity_write.py` owner decodes the original embedded Shader48 schema
+and reads/writes ordered values using Python standard-library primitives,
+including map pairs and per-node/array alignment. Native recovery routes retain
+their UnityPy dependencies; compiler and codec contexts still own teardown.
 The original native paths use the existing source emitters and
 `NativePrograms` to regenerate source from pinned PC shaders/materials through an
 explicit public d3dasm tool/hash, without retained HLSL. Variant reflection
