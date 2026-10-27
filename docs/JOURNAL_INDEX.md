@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J1223](PORTING_JOURNAL.md#j1223--retain-assisted-siren-approach-targets-through-native-detours) | 2026-10-27 | Retain assisted Siren approach targets through native detours | 2026-10-27. |
 | [J1222](PORTING_JOURNAL.md#j1222--complete-colorgrade-source-production-on-android) | 2026-10-27 | Complete ColorGrade source production on Android | 2026-10-27. |
 | [J1221](PORTING_JOURNAL.md#j1221--complete-source-derived-voidraid-scene) | 2026-10-27 | Complete source-derived Voidraid scene | 2026-10-27. |
 | [J1219](PORTING_JOURNAL.md#j1219--complete-source-derived-champrush-voidstage-and-bazaar-scenes) | 2026-10-27 | Complete source-derived Champrush, Voidstage and Bazaar scenes | 2026-10-27. |

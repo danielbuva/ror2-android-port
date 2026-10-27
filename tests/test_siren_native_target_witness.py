@@ -77,6 +77,15 @@ public static class Program
     static void Require(bool value, string message) { if (!value) throw new Exception(message); }
     public static int Main()
     {
+        // A detour passes a nearer nest before its retained goal is in range.
+        Require(!SirenEggTargetSelectionPolicy.PreferApproach(false, 40f * 40f, true, true, 89f * 89f),
+                "nearer nest stole an unfinished approach");
+        Require(SirenEggTargetSelectionPolicy.PreferApproach(true, 89f * 89f, true, false, 40f * 40f),
+                "candidate order lost the retained approach");
+        Require(SirenEggTargetSelectionPolicy.PreferApproach(false, 40f * 40f, true, false, 89f * 89f),
+                "dead or removed retained target prevented nearest replacement");
+        Require(!SirenEggTargetSelectionPolicy.PreferApproach(true, Single.NaN, true, false, 4f),
+                "retention accepted an invalid distance");
         Require(SirenEggTargetSelectionPolicy.Prefer(true, 100f, true, false, 4f), "visible target did not outrank nearer occluded target");
         Require(!SirenEggTargetSelectionPolicy.Prefer(false, Single.NaN, false, false, 0f), "NaN distance was accepted");
         Require(!SirenEggTargetSelectionPolicy.CanRequestPrimary(true, true, 167f, 60f), "out-of-range primary accepted");

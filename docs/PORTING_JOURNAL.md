@@ -638,3 +638,15 @@ Thermal worker 8.61 s, peak CPU/GPU 46.5 C, 0 s above 80 C; battery admission 27
 Scratch removal, OLED sleep, lease release and prune passed; no APK installed or changed.
 Isolated shell production with host-staged acquired inputs only; no Editor at reconstruction time.
 Full shader cohort, ordinary app production, install/update and readiness remain open.
+
+## J1223 — Retain assisted Siren approach targets through native detours
+
+2026-10-27. Existing Siren diagnostic owner retains a revalidated approach egg
+while no egg is attackable; attackable priority and native range/LOS remain.
+Stop/disposal releases the reference; unavailable targets select a replacement.
+Three focused host tests, Ruff and host preflight pass; mission acceptance stays open.
+Evidence: `work/coordination/main-port-siren-main-adopted-r9/classification.md`.
+r9 confirmed the clock repair but timed out with one egg destroyed; target changes
+were observed, repeated oscillation remains unproven. No device success claimed.
+Latest attempted APK: `456a60650fd8002ae975f94736c75aa47ed7167cf8bdbd457b5bc50f92852181`.
+The next device run tests retention without extending the existing stage budget.
