@@ -122,6 +122,9 @@ class HdiutilVolumeTests(unittest.TestCase):
         scripts.mkdir(parents=True)
         tests.mkdir()
         shutil.copy2(CI_LOCAL, scripts / "ci-local.sh")
+        shutil.copy2(ROOT / "scripts/ci-local-cache.py", scripts / "ci-local-cache.py")
+        (repo / "tools").mkdir()
+        (repo / "tools/lab-requirements.txt").write_text("")
         (scripts / "ci-hdiutil-volume.py").write_text(
             "import pathlib, sys\n"
             "pathlib.Path(sys.argv[2]).write_bytes(b'image')\n"
@@ -135,13 +138,12 @@ class HdiutilVolumeTests(unittest.TestCase):
         (tests / "test_fixture.py").write_text("import unittest\nclass Fixture(unittest.TestCase):\n def test_ok(self): self.assertTrue(True)\n")
         fakebin = self.root / "full-bin"
         fakebin.mkdir()
-        # Exercise the macOS mount branch even on Linux CI.
-        uname = fakebin / "uname"
-        uname.write_text("#!/bin/sh\nprintf 'Darwin\\n'\n")
-        uname.chmod(0o755)
         hdiutil = fakebin / "hdiutil"
         hdiutil.write_text('#!/bin/sh\nprintf \'%s\\n\' "$*" >> "$HDIUTIL_LOG"\nexit 23\n')
         hdiutil.chmod(0o755)
+        uname = fakebin / "uname"
+        uname.write_text('#!/bin/sh\nprintf "Darwin\\n"\n')
+        uname.chmod(0o755)
         sandbox = fakebin / "sandbox-exec"
         sandbox.write_text('#!/bin/sh\nshift 2\nexec "$@"\n')
         sandbox.chmod(0o755)

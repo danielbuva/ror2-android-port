@@ -4041,3 +4041,52 @@ order. No shader body, program, copied source, private path or credential is
 included. Legitimate PC input and independently acquired SDK remain required;
 generated records and evidence stay ignored. The persisted 25,056 B record is
 host raw-exact against J850; full-scene and phone gates remain separate.
+
+## Frozenwall complete spine-scene selections (2026-10-26)
+
+| Profile | SHA-256 |
+| --- | --- |
+| `owner-frozenwall-spine-objects.json` | `9cb32f87690d2b479eb778ec2e27b50d52249eff781affe93e7cee58bdc9200f` |
+| `owner-frozenwall-spine-lab-standard-shaders.json` | `c7afd2cce11237e6db2131c5eddeb7037ca360866de80ecbe75825bc5fbe5829` |
+
+Manual provenance, privacy, licensing and sensitive-content audit: these
+profiles contain original selectors, hashes, checked pointer relationships,
+SDK/public-tool pins and existing authored import policies only. Lossless JSON
+compaction preserves every decoded object selection; the separately qualified
+Standard profile is unchanged. Original renderer, skybox and local-material
+roots select reduced-spine Standard variants using the J1183/J1192 policy.
+No original body, curve, scalar payload, pixel, shader program, copied source,
+private path or credential is included. Legitimate PC files, separately acquired
+SDK and receipt-pinned source-produced media/Shader packs remain required.
+Generated outputs and evidence stay ignored. Existing ownership and
+redistribution boundaries apply; phone production and runtime remain open.
+
+## Meridian complete object selection (2026-10-26)
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-meridian-whole-objects.json` | `bc6d4093b53ea0d345855e51360dd1983f43b35f947eb9ab491eb69555c60f9f` |
+
+Manual provenance, privacy, licensing and sensitive-content audit: this profile
+contains source selectors, hashes, checked pointer relationships and authored
+import policies only. Lossless compaction preserves every decoded selection.
+No original body, curve, scalar, pixel, program, copied source, private path or
+credential is included. Legitimate PC files, SDK resources and receipt-pinned
+source-produced record packs remain required. Generated outputs and evidence
+stay ignored. Existing ownership and redistribution boundaries apply; phone
+production, installation and original scene behavior remain open.
+
+## Computational Exchange Standard selection (2026-10-26)
+
+| Profile | SHA-256 |
+| --- | --- |
+| `owner-computationalexchange-whole-standard-shaders.json` | `74d83b24333b4d44ab832629953f3150fca8833088fcb9256993cbc72b401272` |
+
+Manual provenance, privacy, licensing and sensitive-content audit: this profile
+contains original scene/material selectors, body hashes, pinned public SDK/tool
+identities and existing authored import settings only. Recursive original
+dependencies select Standard features; the existing SDK compiler supplies
+programs. No original body, program, copied source, private path or credential
+is included. Legitimate PC input and independently acquired SDK remain required;
+generated records and evidence stay ignored. The persisted 301,384 B record is
+host raw-exact to J850; complete-scene and phone gates remain separate.

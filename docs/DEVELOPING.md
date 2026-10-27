@@ -260,6 +260,44 @@ Passing an earlier tier never stands in for a later one. Acceptance limits:
 [docs/storage-strategy.md](storage-strategy.md); caching and updates:
 [docs/caching-and-updates.md](caching-and-updates.md).
 
+### Full host checks and timing
+
+The runner executes every discovered unittest test and prints the slowest tests
+and modules. Compare a serial control with a parallel run to require identical
+test IDs and pass/fail/error/skip/subtest outcomes:
+
+```sh
+python scripts/host-tests.py --workers 1 --report /tmp/host-serial.json
+python scripts/host-tests.py --workers 4 --report /tmp/host-parallel.json \
+  --compare /tmp/host-serial.json
+```
+
+Module/class fixtures remain intact;
+workers have separate temporary directories. Existing shared-project compiler
+fixtures run in one serial group, not concurrently against their shared outputs.
+Reports contain local diagnostics: review them before sharing. Neither runner
+mode replaces toolchain or device acceptance.
+
+The pre-push hook still tests the exact pushed commit with every audit, Ruff,
+journal-index, README and host-test check. `scripts/ci-local.sh [TARGET [BASE]]`
+uses a locked Git-object cache and dependency environment under the repository's
+Git common directory, but creates a new clean checkout/index/config and temporary
+workspace on every invocation. Requirements bytes and Python interpreter/ABI/
+platform identity key the dependency environment; warm reuse validates installed
+package metadata. No test result, working tree, `work/`, generated lab output or
+game material is cached. Cache setup locks are released before tests so independent
+pushes do not share a running workspace. Darwin keeps the Unity-read sandbox and
+case-sensitive temporary-volume setup/cleanup. Linux removes scratch before exit;
+macOS retains asynchronous volume cleanup. `HOST_TEST_WORKERS` controls local
+concurrency (default 2); GitHub uses 4. Set 1 to diagnose serial behavior, not to
+skip a check. Documentation-only changes still run the complete suite.
+
+GitHub caches only pip downloads using the pinned requirements, Python version
+and runner platform. It still installs/checks the requested dependencies on each
+run and uploads only its synthetic host-test outcome/timing report. The public
+index audit scans every staged blob and every decompressed recipe row; batched
+Git reads and necessary-literal regex prefilters do not exempt any content.
+
 ## Scope and distribution
 
 Repository content is original tooling, small transformations and evidence summaries,

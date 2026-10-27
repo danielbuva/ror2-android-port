@@ -1054,7 +1054,7 @@ def produce(profile_path, profile_sha256, pc, output, codec_path, codec_sha256, 
                     elif typ["class_id"] == 114:
                         typ = copy.deepcopy(typ)
                         if omit_master:
-                            if body[-4:] != bytes(4):
+                            if body[-4:] not in (bytes(4), b"\x01\0\0\0"):
                                 raise ValueError("original CharacterMaster final value drift")
                             body = body[:-4]
                             typ["tree"] = omit_character_master_field(typ["tree"], identity_owner)
