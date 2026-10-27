@@ -10,6 +10,10 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J1213](PORTING_JOURNAL.md#j1213--source-derived-computational-exchange-standard-shader) | 2026-10-26 | Source-derived Computational Exchange Standard Shader | 2026-10-26. |
+| [J1212](PORTING_JOURNAL.md#j1212--complete-source-derived-meridian-bundle) | 2026-10-26 | Complete source-derived Meridian bundle | 2026-10-26. |
+| [J1211](PORTING_JOURNAL.md#j1211--source-derived-complete-frozenwall-spine-scene) | 2026-10-26 | Source-derived complete Frozenwall spine scene | 2026-10-26. |
+| [J1210](PORTING_JOURNAL.md#j1210--source-derived-meridian-particle-shader) | 2026-10-26 | Source-derived Meridian particle Shader | 2026-10-26. |
 | [J1209](PORTING_JOURNAL.md#j1209--admit-the-qualified-charactermaster-boolean-tail) | 2026-10-26 | Admit the qualified CharacterMaster Boolean tail | 2026-10-26. |
 | [J1208](PORTING_JOURNAL.md#j1208--r58-assisted-controls-and-skill-timed-mainoutput) | 2026-10-26 | R58 assisted controls and skill-timed MainOutput | 2026-10-26. |
 | [J1207](PORTING_JOURNAL.md#j1207--complete-source-derived-skymeadow-bundle) | 2026-10-26 | Complete source-derived Skymeadow bundle | 2026-10-26. |

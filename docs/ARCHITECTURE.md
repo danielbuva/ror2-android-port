@@ -1357,13 +1357,20 @@ device receipts and the coordination lock; agents run it after each build/run ta
 (AGENTS.md "Storage hygiene").
 
 `scripts/git-hooks/pre-push` delegates committed-source checks to
-`scripts/ci-local.sh` in a fresh clone. Its support helper
+`scripts/ci-local.sh` in a fresh exact-commit checkout. `scripts/ci-local-cache.py`
+owns a locked Git-object store and interpreter/requirements-keyed dependency
+cache under Git-private `ci-cache/`; no working tree, result or lab output is
+reused. Per-run checkout/index/config and test scratch remain disposable. Linux
+runs the same host checks directly; macOS retains its Unity-read sandbox and
+optional case-sensitive volume. Its support helper
 `scripts/ci-hdiutil-volume.py` requests a 30 s timeout for each optional image
 create/attach CLI, killing and reaping only its own timed-out caller. Ordinary
 setup failure uses the existing temporary-directory fallback; an uncertain
 attach preserves the scratch image without detach/removal. Verification retains
-its original exit status. Disposable host-volume cleanup runs separately after verification,
-with phase logs in Git-private `ci-cleanup/` metadata; a failed detach preserves
+its original exit status. Linux scratch removal completes before exit so a terminated
+executor cannot strand the checkout. Disposable macOS host-volume cleanup runs
+separately after verification, with phase logs in Git-private `ci-cleanup/`
+metadata; a failed detach preserves
 the scratch directory rather than deleting a mounted volume. Cleanup never
 opens or stops an editor or uses a device. A blocked cleanup cannot hold a
 completed verification, and failing verification still refuses the push.
@@ -3866,6 +3873,17 @@ C# under `tools/` is formatted with `clang-format -i` using the repository's `.c
 identical once whitespace is removed; check that before committing a reformat. CI does not
 enforce it, because other clang-format versions format C# differently.
 
+`scripts/host-tests.py` owns full unittest discovery, module-preserving process
+isolation, per-test/module timing and explicit serial/parallel outcome comparison.
+It runs every discovered test, groups the known shared-project compiler fixtures,
+reaps worker families on failure/timeout and retains native skip/failure semantics.
+GitHub and the local hook use this owner without result caching or changed-test
+selection. `scripts/audit-public.py` streams every index blob by its staged object
+ID and validates every compressed recipe row; necessary-byte regex prefilters
+retain the existing detection rules. GitHub caches only pinned pip downloads.
+[Timing and cache operation](DEVELOPING.md#full-host-checks-and-timing) describe
+setup, reuse and isolation.
+
 Host CI also runs Ruff (pinned in `tools/lab-requirements.txt`, configured in `ruff.toml`):
 `ruff check` and `ruff format --check` on every Python file a change touches. `scripts/` and
 `tests/` are ruff-formatted (J518); `ruff.toml` lists the rules still off and why.
@@ -4751,3 +4769,41 @@ The existing member-aware writer exposes `payload/skymeadow-source-lab`.
 All 37,402 persisted objects, both serialized members and the compressed bundle
 are host raw-exact against J850. No runtime owner is added; phone production,
 installation and original scene behavior remain open.
+
+Meridian source-lab particle selections extend `payload_shader_records.py`
+through `recipe/owner-meridian-source-lab-particles-shaders.json`. Recursive
+original scene dependencies select particle materials; existing SDK 211 source
+compilation and original runtime pass/native-order policies produce the record.
+Explicit pinned PC/SDK/tool inputs and a separate output directory set up
+production; process exit tears down producers while receipts persist. The
+persisted 25,056 B Shader record is host raw-exact to J850. Full-scene assembly
+belongs to the scene owner; phone production and runtime remain open.
+
+Frozenwall complete spine-scene selections extend the existing object/Shader
+owners through `recipe/owner-frozenwall-spine-objects.json` and
+`recipe/owner-frozenwall-spine-lab-standard-shaders.json`. Original renderer,
+skybox and local-material roots select the reduced-spine Standard variants.
+Explicit current PC/SDK roots, pinned profiles/tools, receipt-pinned
+source-produced media/Shader packs and a separate output directory set up
+production; process exit tears down producers while receipts persist. The
+existing member-aware writer exposes `payload/frozenwall-spine-lab`.
+All 9,672 persisted objects, both serialized members and the compressed bundle
+are host raw-exact against J850. No runtime owner is added; phone production,
+installation and original scene behavior remain open.
+
+Meridian complete source-scene selections extend the existing object/Shader
+owners through `recipe/owner-meridian-whole-objects.json` and the separately
+qualified source-lab particle Shader profile. Explicit current PC/SDK/tool roots,
+pinned profiles, source-produced record packs and a fresh output directory set
+up production; process exit tears down producers while local receipts persist.
+The member-aware writer exposes `payload/whole-scene-meridian`. All 15,814
+objects, both serialized members and the compressed bundle are host raw-exact
+to J850. Phone production, installation and original behavior remain open.
+
+Computational Exchange Standard selections extend `payload_shader_records.py`
+through `recipe/owner-computationalexchange-whole-standard-shaders.json`.
+Recursive original material dependencies supply features and original Shader
+identities supply order; the existing pinned SDK compiler supplies programs.
+Explicit PC/SDK/tool roots, pinned profiles and fresh output set up production;
+process exit tears down producers while receipts persist. The persisted
+301,384 B record is host raw-exact to J850; full-scene and phone gates remain open.
