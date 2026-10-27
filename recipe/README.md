@@ -4564,3 +4564,34 @@ records that differ only in object references (remapped). No original body, curv
 program, copied source, private path or credential is included. All 13,909 persisted
 objects, two serialized members and the compressed bundle are host raw-exact to J850; phone
 production, installation and original scene behavior remain open.
+
+## sulfurpools complete scene selections (2026-10-27)
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-sulfurpools-whole-objects.json` | `2ddce4d098dc78a398af712f45965b4083b620325c82a68717f9b3c9c8ff0988` |
+| `owner-sulfurpools-whole-postprocess-shaders.json` | `61762abbc0faae06c53385404e3ca23924122e836127804cf6b80459536b5dac` |
+| `owner-sulfurpools-whole-standard-shaders.json` | `c896a0ef6b3abbbb4505da627a77f2ab2ce4618f2ecf4cc57de3e54a011936ae` |
+
+Manual provenance, privacy, licensing and sensitive-content audit: these profiles contain source
+selectors, hashes, checked pointer relationships and authored import policies only. Records with no
+same-scene source select byte-identical original records found by exact body hash, or original
+records that differ only in object references (remapped). No original body, curve, scalar, pixel,
+program, copied source, private path or credential is included. All 19,544 persisted
+objects, two serialized members and the compressed bundle are host raw-exact to J850; phone
+production, installation and original scene behavior remain open.
+
+## sad1 complete scene selections (2026-10-27)
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-sad1-whole-objects.json` | `f5f02d8c9daed39df7bc40c64936c26bb7e909da1a74c796604bdd67251dbc92` |
+| `owner-sad1-whole-standard-shaders.json` | `cac36fcb061334cfff290b0bc150c83ba7be4ee908050fbb4782be876e93ed80` |
+
+Manual provenance, privacy, licensing and sensitive-content audit: these profiles contain source
+selectors, hashes, checked pointer relationships and authored import policies only. Records with no
+same-scene source select byte-identical original records found by exact body hash, or original
+records that differ only in object references (remapped). No original body, curve, scalar, pixel,
+program, copied source, private path or credential is included. All 64,308 persisted
+objects, two serialized members and the compressed bundle are host raw-exact to J850; phone
+production, installation and original scene behavior remain open.
