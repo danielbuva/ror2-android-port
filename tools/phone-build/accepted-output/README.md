@@ -1113,6 +1113,14 @@ Acquire and verify the Linux compiler/plugin/runtime and public runner through
 their existing J1094/J1102 input receipts; this option does not acquire tools or
 qualify complete phone production. Omitting both options retains the Mac host.
 
+For a bounded authored slice, add repeatable `--authored-file FILE` arguments.
+ColorGrade is `--authored-file 19e91578880954efeab1111b405232b9` in the
+existing player profile. Selection preserves profile order, settings, original
+schema and every common SDK/authored/include pin, while omitting unrelated
+native, font, builtin and shared providers. The profile itself remains hash
+checked; no derived private recipe is required. Only rows naming tracked
+ShaderLab sources are admitted. Omitting this option produces the full profile.
+
 Run the producer:
 
 ```sh

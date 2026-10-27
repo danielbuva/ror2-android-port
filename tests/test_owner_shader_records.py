@@ -48,6 +48,45 @@ class CompilerHosting(unittest.TestCase):
         self.assertIsNone(call.kwargs["compiler_command"])
         self.assertIsNone(call.kwargs["compiler_data"])
 
+    def test_authored_selection_is_forwarded(self):
+        call = self.invoke("--authored-file", "first", "--authored-file", "second")
+        self.assertEqual(call.kwargs["authored_files"], ["first", "second"])
+
+
+class AuthoredSelection(unittest.TestCase):
+    def profile(self):
+        profile = {key: {"witness": key} for key in ("input_id", "source_type", "sdk", "includes_sha256", "settings", "authored_inputs")}
+        profile.update(
+            shaders=[
+                {"file": "second", "source": "authored-second"},
+                {"file": "first", "source": "authored-first"},
+                {"file": "native", "native_resource": "fixture"},
+            ],
+            native_internal={"path": "original-native"},
+            builtin={"source": "original-builtin"},
+            shared_shaders={"source": "original-shared"},
+        )
+        return profile
+
+    def test_subset_keeps_profile_order_and_common_pins_without_native_providers(self):
+        profile = self.profile()
+        selected = N.select_authored_files(profile, ["first", "second"])
+        self.assertEqual([row["file"] for row in selected["shaders"]], ["second", "first"])
+        self.assertEqual(set(selected), {"input_id", "source_type", "sdk", "includes_sha256", "settings", "authored_inputs", "shaders"})
+        for key in set(selected) - {"shaders"}:
+            self.assertEqual(selected[key], profile[key])
+        self.assertIn("native_internal", profile)
+        self.assertEqual(len(profile["shaders"]), 3)
+
+    def test_default_retains_complete_profile(self):
+        profile = self.profile()
+        self.assertIs(N.select_authored_files(profile, None), profile)
+
+    def test_unknown_and_native_files_are_rejected(self):
+        for names in ([], ["missing"], ["native"], ["first", "missing"]):
+            with self.subTest(names=names), self.assertRaises(ValueError):
+                N.select_authored_files(self.profile(), names)
+
 
 class NativeRecords(unittest.TestCase):
     def test_reflection_not_fixed_target_names(self):

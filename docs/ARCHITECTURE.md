@@ -622,6 +622,10 @@ through the existing standalone compiler session, permitting the acquired Linux
 SDK/GNU runner while the pinned Mac SDK remains metadata/include input. The
 caller supplies its acquired tool pins and runner environment; this transport
 selection does not qualify phone Shader48 production.
+Repeatable `--authored-file` selects standalone tracked-source rows from the
+same pinned profile, retaining common input checks and excluding unrelated
+native/font/builtin/shared setup. This current bounded mode needs no generated
+private profile; the existing result file lists the produced selection.
 The original native paths use the existing source emitters and
 `NativePrograms` to regenerate source from pinned PC shaders/materials through an
 explicit public d3dasm tool/hash, without retained HLSL. Variant reflection
