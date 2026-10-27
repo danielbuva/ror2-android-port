@@ -1511,6 +1511,20 @@ class BezierCurveLineTests(unittest.TestCase):
         records, profiles = bezier_fixture(endpoint=False)
         self.assertEqual(self.result(records, profiles)[20:80], self.EXPECTED)
 
+    def test_build_wind_bits_preserve_exact_rounding_and_original_renderer(self):
+        records, profiles = bezier_fixture()
+        self.mutate(records, 20, 80, bytes([1]))
+        bits = list(struct.unpack("<15I", self.EXPECTED))
+        bits[4] += 1  # One ULP that an angle fit need not reproduce.
+        source = curve_sources(records, profiles)
+        result = P.rebuild_bezier_line(records[0][10][0], source, profiles, [0, 10], [0, 20], wind_position_bits=bits)
+        self.assertEqual(result[20:80], struct.pack("<15I", *bits))
+        self.assertEqual(result[:20], records[0][10][0][:20])
+        self.assertEqual(result[80:], records[0][10][0][80:])
+        for invalid in [bits[:-1], bits + [0], [0x7FC00000] + bits[1:]]:
+            with self.assertRaises(ValueError):
+                P.rebuild_bezier_line(records[0][10][0], source, profiles, [0, 10], [0, 20], wind_position_bits=invalid)
+
     def test_rotated_scaled_parent_rebuilds_known_world_polynomial(self):
         records, profiles = bezier_fixture()
         # Exact half-turn around Z: parent TRS maps (x,y,z) to

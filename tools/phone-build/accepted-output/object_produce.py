@@ -135,11 +135,11 @@ def deactivate_global_owner(body, name):
     return body[:-1] + bytes(1)
 
 
-def rebuild_bezier_line(body, sources, source_profiles, line_selector, behaviour_selector, wind_angles=None):
+def rebuild_bezier_line(body, sources, source_profiles, line_selector, behaviour_selector, wind_angles=None, wind_position_bits=None):
     """Re-evaluate an original BezierCurveLine using Unity float32 Lerp.
 
     Called before PPtr relocation. Geometry operands come from original records;
-    optional numeric angles preserve our build wind state. Source schemas locate
+    optional numeric angles or final float32 bits preserve our build wind state. Source schemas locate
     the line array and declare the curve field contract.
     Original local TRS operands are evaluated leaf-to-root with float32 rounding.
     """
@@ -184,10 +184,16 @@ def rebuild_bezier_line(body, sources, source_profiles, line_selector, behaviour
     ):
         raise ValueError("original BezierCurveLine body layout drift")
     if curve[80] != 0:
-        if not isinstance(wind_angles, list) or len(wind_angles) != 3:
+        if wind_position_bits is not None:
+            if wind_angles is not None or not isinstance(wind_position_bits, list) or len(wind_position_bits) != count * 3:
+                raise ValueError("captured wind position count or policy differs")
+            if any(type(value) is not int or not 0 <= value <= 0xFFFFFFFF for value in wind_position_bits):
+                raise ValueError("captured wind positions require float32 bit patterns")
+        elif not isinstance(wind_angles, list) or len(wind_angles) != 3:
             raise ValueError("animated Bezier wind requires captured build angles")
-        wind_angles = tuple(single(value) for value in wind_angles)
-    elif wind_angles is not None:
+        else:
+            wind_angles = tuple(single(value) for value in wind_angles)
+    elif wind_angles is not None or wind_position_bits is not None:
         raise ValueError("captured wind requires an animated original curve")
     go_pointer = struct.unpack_from("<iq", line)
     if go_pointer != struct.unpack_from("<iq", curve) or go_pointer[0] or not go_pointer[1]:
@@ -214,6 +220,14 @@ def rebuild_bezier_line(body, sources, source_profiles, line_selector, behaviour
     script, _ = read([script_sources[0], pid], 115)
     if script_fields(script)[1] != ("BezierCurveLine", "", "RoR2.dll"):
         raise ValueError("original Bezier script identity differs")
+
+    if wind_position_bits is not None:
+        # Our accepted build's randomized, time-dependent output, captured once.
+        # Keep the original renderer, component graph and point count intact.
+        positions = struct.pack(f"<{len(wind_position_bits)}I", *wind_position_bits)
+        for value in struct.unpack(f"<{len(wind_position_bits)}f", positions):
+            single(value)
+        return body[: start + 4] + positions + body[end:]
 
     def world(identity):
         position = (0.0, 0.0, 0.0)
@@ -979,7 +993,13 @@ def produce(profile_path, profile_sha256, pc, output, codec_path, codec_sha256, 
                         body = clear_static_renderers(body, selected["clear_static_renderers"])
                     if "bezier_curve_line" in selected:
                         body = rebuild_bezier_line(
-                            body, sources, profile["sources"], selected["source"], selected["bezier_curve_line"], selected.get("bezier_wind_angles")
+                            body,
+                            sources,
+                            profile["sources"],
+                            selected["source"],
+                            selected["bezier_curve_line"],
+                            selected.get("bezier_wind_angles"),
+                            selected.get("bezier_wind_position_bits"),
                         )
                     if "importer_guid" in selected:
                         if typ["class_id"] != 213:
