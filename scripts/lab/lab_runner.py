@@ -18,8 +18,8 @@ import time
 from pathlib import Path
 
 USAGE = """`/lab <job> [ref=<branch|sha>] [device=<alias>] [-- args...]`
-jobs: `status`, `host-tests`, `preflight`, `doctor`, `dev <action> ...`, `script <repo path .py> ...`"""
-JOBS = {"status", "host-tests", "preflight", "doctor", "dev", "script"}
+jobs: `status`, `host-tests`, `preflight`, `doctor`, `dev <action> ...`, `script <repo path .py> ...`, `toolhost`"""
+JOBS = {"status", "host-tests", "preflight", "doctor", "dev", "script", "toolhost"}
 DEV_ACTIONS = {
     "build", "install", "run", "logs", "screenshot", "crash", "storage", "inspect", "test",
     "check-baseline", "sync-data", "perf", "graphics", "diagnostics", "lane", "preflight", "doctor",
@@ -29,6 +29,7 @@ REF = re.compile(r"^(?!.*\.\.)[A-Za-z0-9][A-Za-z0-9._/-]{0,199}$")
 COMMENT_LIMIT = 60000
 TAIL_LINES = 150
 JOB_TIMEOUT = 5 * 3600
+TEST_PACKAGE = "dev.ror2lab.installertest"  # disposable identity; never the lab or toolhost packages
 
 
 class CommandError(ValueError):
@@ -63,6 +64,8 @@ def parse_command(body):
             raise CommandError(f"`dev` needs an allowed action: {', '.join(sorted(DEV_ACTIONS))}")
         if any(a == "--device" or a.startswith("--device=") for a in rest):
             raise CommandError("pass the device as device=<alias>, not --device")
+    if job == "toolhost" and (rest or request["device"]):
+        raise CommandError("`toolhost` takes only ref=; its local builder chooses and leases the build phone")
     if job == "script":
         if not rest:
             raise CommandError("`script` needs a repository path")
@@ -104,7 +107,8 @@ class Runner:
         self.out.mkdir(parents=True, exist_ok=True)
         self.log = self.out / "output.log"
         config = self.repo / "work/config/lab-runner.json"
-        self.devices = json.loads(config.read_text()).get("devices", {}) if config.is_file() else {}
+        self.config = json.loads(config.read_text()) if config.is_file() else {}
+        self.devices = self.config.get("devices", {})
         self.adb = shutil.which("adb", path="/opt/homebrew/bin") or "adb"
         self.leases = self.repo / ".local/orchestrator/leases"
 
@@ -168,6 +172,20 @@ class Runner:
         (path / ".local/lab-venv").symlink_to(self.repo / ".local/lab-venv")
         return path
 
+    def toolhost(self, checkout, toolhosts):
+        """Build the phone toolhost from the checked-out commit with the owner's local builder (cached by commit)."""
+        commit = subprocess.run(["git", "rev-parse", "HEAD"], cwd=checkout, capture_output=True, text=True).stdout.strip()
+        out = toolhosts / commit
+        if (out / "signed.apk").is_file() and (out / "result.json").is_file():
+            return 0, "cached: " + toolhost_summary(out)
+        builder = self.repo / self.config.get("toolhost_builder", "work/coordination/lab-runner-toolhost/build.py")
+        if not builder.is_file():
+            raise CommandError("the local toolhost builder is not installed yet; ask the orchestrator")
+        shutil.rmtree(out, ignore_errors=True)
+        out.mkdir(parents=True)
+        code = self.run([sys.executable, str(builder), "--source", commit, "--out", str(out), "--package", TEST_PACKAGE], self.repo)
+        return code, toolhost_summary(out) + "\n" + "\n".join(self.log.read_text(errors="replace").splitlines()[-40:])
+
     def status(self):
         free = shutil.disk_usage(self.repo).free / 2**30
         alias_of = {serial: alias for alias, serial in self.devices.items()}
@@ -194,6 +212,7 @@ class Runner:
             if not serial:
                 raise CommandError(f"unknown device alias; configured: {', '.join(sorted(self.devices)) or 'none'}")
         checkout = self.worktree(request["ref"])
+        toolhosts = self.repo / "work/coordination/lab-runner/toolhost"
         lease = None
         try:
             if serial:
@@ -204,6 +223,8 @@ class Runner:
             py = str(checkout / ".local/lab-venv/bin/python")
             job, args = request["job"], request["args"]
             device_args = ["--device", serial] if serial else []
+            if job == "toolhost":
+                return self.toolhost(checkout, toolhosts)
             argv = {
                 "host-tests": [py, "scripts/host-tests.py", *args],
                 "preflight": ["./dev", "preflight", *args],
@@ -211,7 +232,10 @@ class Runner:
                 "dev": ["./dev", *args, *device_args],
                 "script": [py, *args],
             }[job]
-            code = self.run(argv, checkout, extra_env={"LAB_DEVICE_SERIAL": serial} if serial else None)
+            extra = {"LAB_TOOLHOST_ROOT": str(toolhosts)}
+            if serial:
+                extra["LAB_DEVICE_SERIAL"] = serial
+            code = self.run(argv, checkout, extra_env=extra)
             return code, None
         finally:
             if serial:
@@ -220,6 +244,11 @@ class Runner:
                 shutil.rmtree(lease, ignore_errors=True)
             self.run(["git", "-C", str(self.repo), "worktree", "remove", "--force", str(checkout)], self.repo, timeout=600)
             self.run([sys.executable, "scripts/prune-generated.py", "--apply"], self.repo, timeout=1800)
+
+
+def toolhost_summary(out):
+    result = json.loads((out / "result.json").read_text()) if (out / "result.json").is_file() else {}
+    return f"success={result.get('success')} apk_sha256={result.get('apk_sha256') or result.get('tool_apk_sha256')} dir=$LAB_TOOLHOST_ROOT/{out.name}"
 
 
 def main(env=os.environ):

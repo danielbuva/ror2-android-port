@@ -503,7 +503,7 @@ def source_record(sources, selector):
 
 
 def check_preload_dependencies(sources, source_profiles, dependencies):
-    """Admit original preload GameObjects, typed component owners and builtins."""
+    """Admit original preload GameObjects, direct managed roots and builtins."""
     for dependency in dependencies:
         preload, preload_type = source_record(sources, dependency["preload_source"])
         if preload_type["class_id"] != 150 or hashlib.sha256(preload).hexdigest() != dependency["preload_sha256"]:
@@ -525,10 +525,13 @@ def check_preload_dependencies(sources, source_profiles, dependencies):
                 raise ValueError("original preload builtin relationship drift")
             continue
         body, typ = source_record(sources, dependency["source"])
-        if typ["class_id"] != 1 or hashlib.sha256(body).hexdigest() != dependency["source_sha256"]:
+        source_class = dependency.get("source_class_id", 1)
+        if source_class not in (1, 114) or typ["class_id"] != source_class or hashlib.sha256(body).hexdigest() != dependency["source_sha256"]:
             raise ValueError("original preload GameObject drift")
         selector = dependency["source"]
         if "rigidbody" in dependency or "transform" in dependency:
+            if source_class != 1:
+                raise ValueError("original preload component owner is not a GameObject")
             kind, class_id, size = ("Rigidbody", 54, 36) if "rigidbody" in dependency else ("Transform", 4, 68)
             witness = dependency[kind.lower()]
             component_body, component_type = source_record(sources, witness["source"])

@@ -20,6 +20,7 @@ Post on any issue or pull request (first line only):
 | `preflight`, `doctor` | `./dev preflight` / `./dev doctor` |
 | `dev <action> ...` | `./dev <action> ...` for build, install, run, logs, screenshot, crash, storage, inspect, test, check-baseline, sync-data, perf, graphics, diagnostics, lane |
 | `script <path.py> ...` | a Python file under `tools/`, `scripts/`, `recipe/` or `tests/` with the lab venv |
+| `toolhost` | builds the phone toolhost (the #163 installer host) from `ref` as the disposable package `dev.ror2lab.installertest` with the owner's local builder on the build phone, cached by commit; never installs |
 
 With `device=<alias>` (aliases come from ignored `work/config/lab-runner.json`) the job takes the
 orchestrator's atomic device lease, refuses a battery above 85 %, actually charging at 80 % or more, or
@@ -27,7 +28,9 @@ at 35 C or warmer, receives `--device` (for `dev`) or `LAB_DEVICE_SERIAL` (for `
 puts the display to sleep and releases the lease. Every job ends with `prune-generated.py --apply`.
 The reply shows PASS/FAIL, the command, duration and the last 150 output lines with home paths,
 serials, storage UUIDs, emails, IPs and tokens removed. Full output: `work/coordination/lab-runner/<run>/`.
-Jobs run one at a time in comment order.
+Jobs run one at a time in comment order. Every job also gets `LAB_TOOLHOST_ROOT`: `toolhost` writes
+`<commit>/signed.apk`, `result.json` and `test-publisher.json` (the local path of the test publisher key the
+build trusts) there, so a later `script` job can install that build and sign synthetic test releases.
 
 ## Safety model
 

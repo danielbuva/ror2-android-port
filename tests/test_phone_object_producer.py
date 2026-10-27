@@ -641,6 +641,26 @@ class ObjectProducerTests(unittest.TestCase):
                 else:
                     P.check_preload_dependencies(sources, profiles, [dependency])
 
+    def test_original_preload_direct_managed_root_requires_pinned_class_and_membership(self):
+        body = b"AUTHORED MANAGED ROOT"
+        preload = struct.pack("<IIiq", 0, 1, 1, 19)
+        dependency = dict(
+            source=[1, 19],
+            source_class_id=114,
+            source_sha256=digest(body),
+            preload_source=[0, 1],
+            preload_sha256=digest(preload),
+            source_pointer=[1, 19],
+            to=[2, 91],
+        )
+        profiles = [{"member": "CAB-scene"}, {"member": "CAB-root"}]
+        sources = [(None, None, None, {"externals": [{"path": "CAB-root"}]}, None)]
+        with patch.object(P, "source_record", side_effect=lambda _, selector: (preload, typ(150)) if selector == [0, 1] else (body, typ(114))):
+            P.check_preload_dependencies(sources, profiles, [dependency])
+            for change in ({"source_class_id": 1}, {"source_sha256": "0" * 64}, {"source_pointer": [1, 20]}, {"transform": {}}):
+                with self.subTest(change=change), self.assertRaises(ValueError):
+                    P.check_preload_dependencies(sources, profiles, [dependency | change])
+
     def test_original_preload_component_requires_unique_reciprocal_membership(self):
         for kind, class_id, size in (("Rigidbody", 54, 36), ("Transform", 4, 68)):
             self.check_preload_component(kind, class_id, size)
