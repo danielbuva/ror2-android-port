@@ -4425,3 +4425,50 @@ records that differ only in object references (remapped). No original body, curv
 program, copied source, private path or credential is included. All 18,363 persisted
 objects, two serialized members and the compressed bundle are host raw-exact to J850; phone
 production, installation and original scene behavior remain open.
+
+## ancientloft complete scene selections (2026-10-27)
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-ancientloft-whole-objects.json` | `c8eafdd4432409a1e504842c47a422c3dc07cec9bf09684de83fa87b485072fc` |
+| `owner-ancientloft-whole-postprocess-shaders.json` | `b6475338fae50b70d74aba85c838fa482867b64ff1a7d7a741d3676e117c5d55` |
+| `owner-ancientloft-whole-standard-shaders.json` | `b7ade39418b5c8cbe479989e02c59a6ed43df663bdaff720d8c9d592bb89df8b` |
+
+Manual provenance, privacy, licensing and sensitive-content audit: these profiles contain source
+selectors, hashes, checked pointer relationships and authored import policies only. Records with no
+same-scene source select byte-identical original records found by exact body hash, or original
+records that differ only in object references (remapped). No original body, curve, scalar, pixel,
+program, copied source, private path or credential is included. All 19,637 persisted
+objects, two serialized members and the compressed bundle are host raw-exact to J850; phone
+production, installation and original scene behavior remain open.
+
+## arena complete scene selections (2026-10-27)
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-arena-whole-objects.json` | `77fc2d740a4f7e034865472e0af57333f2ab351d39a94d69b64f6c6e5f905968` |
+| `owner-arena-whole-postprocess-shaders.json` | `9b9ddaaddebe631b6463d9704047680a48dcb0027d6b98f5e07e7662bed3d173` |
+| `owner-arena-whole-standard-shaders.json` | `8af0c2a5ae207c60fe85d0982b99ad20c58d8ab90e028d9b2248673cdcc8973e` |
+
+Manual provenance, privacy, licensing and sensitive-content audit: these profiles contain source
+selectors, hashes, checked pointer relationships and authored import policies only. Records with no
+same-scene source select byte-identical original records found by exact body hash, or original
+records that differ only in object references (remapped). No original body, curve, scalar, pixel,
+program, copied source, private path or credential is included. All 4,777 persisted
+objects, two serialized members and the compressed bundle are host raw-exact to J850; phone
+production, installation and original scene behavior remain open.
+
+## villagenight complete scene selections (2026-10-27)
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-villagenight-whole-objects.json` | `44a8014cf5240cec0636e0437f4f1f80bfa837658df45fb79b524cc6b51f4402` |
+| `owner-villagenight-whole-postprocess-shaders.json` | `d5035b9bb42b8d63da374652ad1d827d105a7f5551f0fae39cfe1ee3a1c372e1` |
+
+Manual provenance, privacy, licensing and sensitive-content audit: these profiles contain source
+selectors, hashes, checked pointer relationships and authored import policies only. Records with no
+same-scene source select byte-identical original records found by exact body hash, or original
+records that differ only in object references (remapped). No original body, curve, scalar, pixel,
+program, copied source, private path or credential is included. All 14,033 persisted
+objects, two serialized members and the compressed bundle are host raw-exact to J850; phone
+production, installation and original scene behavior remain open.

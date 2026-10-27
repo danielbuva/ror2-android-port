@@ -731,3 +731,27 @@ recount, phone production and scene behaviour remain open.
 Cross-bundle sources come from the orchestrator's exact-body and pointer-only original-record
 lookup. Evidence (ignored): `work/coordination/orchestrator/scenes/blackbeach2-final-v1/`. Readiness
 recount, phone production and scene behaviour remain open.
+
+## J1233 — Complete source-derived ancientloft scene
+
+`whole-scene-ancientloft` is host raw-exact to J850: 19,637 objects, both serialized members and the
+6,123,578-byte bundle (SHA-256 `96c576b1…`). Profiles: `recipe/owner-ancientloft-whole-*.json`.
+Cross-bundle sources come from the orchestrator's exact-body and pointer-only original-record
+lookup. Evidence (ignored): `work/coordination/orchestrator/scenes/ancientloft-final-v1/`. Readiness
+recount, phone production and scene behaviour remain open.
+
+## J1234 — Complete source-derived arena scene
+
+`whole-scene-arena` is host raw-exact to J850: 4,777 objects, both serialized members and the
+4,521,338-byte bundle (SHA-256 `b3389af0…`). Profiles: `recipe/owner-arena-whole-*.json`.
+Cross-bundle sources come from the orchestrator's exact-body and pointer-only original-record
+lookup. Evidence (ignored): `work/coordination/orchestrator/scenes/arena-final-v1/`. Readiness
+recount, phone production and scene behaviour remain open.
+
+## J1235 — Complete source-derived villagenight scene
+
+`whole-scene-villagenight` is host raw-exact to J850: 14,033 objects, both serialized members and the
+7,091,079-byte bundle (SHA-256 `43f2f650…`). Profiles: `recipe/owner-villagenight-whole-*.json`.
+Cross-bundle sources come from the orchestrator's exact-body and pointer-only original-record
+lookup. Evidence (ignored): `work/coordination/orchestrator/scenes/villagenight-final-v1/`. Readiness
+recount, phone production and scene behaviour remain open.
