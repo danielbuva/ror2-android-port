@@ -1,0 +1,42 @@
+# Comment-driven bridge to the owner's local lab (docs/LAB_RUNNER.md).
+# Runs only on the owner's self-hosted runner and only for "/lab ..." comments by the repository owner.
+# issue_comment workflows always run main's copy of this file; the runner's job-started hook
+# (scripts/lab/lab-runner-guard.sh, installed outside the repo) refuses every other workflow and event.
+name: lab-runner
+
+on:
+  issue_comment:
+    types: [created]
+
+permissions:
+  contents: read
+  issues: write
+  pull-requests: write
+
+jobs:
+  lab:
+    if: >-
+      startsWith(github.event.comment.body, '/lab ') &&
+      github.event.comment.user.login == github.repository_owner &&
+      github.event.comment.author_association == 'OWNER'
+    runs-on: [self-hosted, macOS, ror2-lab]
+    timeout-minutes: 360
+    steps:
+      # No checkout: the job runs main's runner script against the local lab repository
+      # ($LAB_REPO, set in the runner's .env), which builds the requested ref in its own worktree.
+      - name: Run the requested lab job
+        env:
+          GH_TOKEN: ${{ github.token }}
+          LAB_COMMENT_BODY: ${{ github.event.comment.body }}
+          LAB_COMMENT_AUTHOR: ${{ github.event.comment.user.login }}
+          LAB_AUTHOR_ASSOCIATION: ${{ github.event.comment.author_association }}
+          LAB_COMMENT_ID: ${{ github.event.comment.id }}
+          LAB_ISSUE_NUMBER: ${{ github.event.issue.number }}
+          LAB_REPOSITORY_OWNER: ${{ github.repository_owner }}
+          LAB_RUN_ID: ${{ github.run_id }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          git -C "$LAB_REPO" fetch -q origin main
+          git -C "$LAB_REPO" show origin/main:scripts/lab/lab_runner.py > "$RUNNER_TEMP/lab_runner.py"
+          python3 -I "$RUNNER_TEMP/lab_runner.py"
