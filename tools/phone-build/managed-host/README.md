@@ -213,7 +213,7 @@ and explicit corrected relink. Device policy/security qualification stays open.
 
 ## Phone-only installer surface (host-qualified, not device-qualified)
 
-Installer version 2 keeps the existing signed release updater, source-only
+Installer version 3 keeps the existing signed release updater, source-only
 producers, thermal supervisor and `OwnerInstaller` PackageInstaller path. The
 Activity now prepares a signed installation plan, asks Android's Storage Access
 Framework for a folder or ZIP and retains read-only URI permission. No input URI,

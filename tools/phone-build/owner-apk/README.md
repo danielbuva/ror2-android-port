@@ -346,7 +346,7 @@ empty key map deliberately fails closed. Staging accepts an explicit
 `--release-trust` file for a maintainer-provisioned build. A key downloaded with a release is
 never trusted. Configure repository variables `PUBLISHER_KEY_ID`,
 `PUBLISHER_PUBLIC_KEY`, `PUBLIC_RELEASE_PLAN_PATH`, and optional
-`PUBLIC_MINIMUM_INSTALLER_VERSION` (default 2), and the repository secret
+`PUBLIC_MINIMUM_INSTALLER_VERSION` (default 3), and the repository secret
 `PUBLISHER_PRIVATE_KEY` with an **existing** matching publisher PEM. Protect the
 `public-release` GitHub environment and version tags. Do not put a private key in
 Git, a recipe, an artifact or a log. This implementation creates/configures no keys.
@@ -407,7 +407,7 @@ interruption recovery and save survival remain the local orchestrator's checks.
 
 ### Phone-only import and installation
 
-Installer version 2 adds a foreground-service flow: prepare the signed public
+Installer version 3 extends the version-2 foreground-service flow: prepare the signed public
 release, choose the owner's PC game directory with Android's folder picker (or
 choose a ZIP), import, then reconstruct and install. Only required files are
 copied to app-private storage. Missing paths and size/hash/version mismatches
@@ -424,7 +424,7 @@ and eight ordered `stages` (`id`, `title`, `jobs`). Stage IDs are `admission`,
 Every producer and dependency occurs once in a production stage; dependencies
 cannot follow their consumer's stage. Bindings select only admitted original
 files/directories (`.` selects the imported root). Such releases require minimum
-installer version 2. Maintainers must supply a complete reviewed source recipe;
+installer version 3 for the final alpha policy. Maintainers must supply a complete reviewed source recipe;
 this feature does not invent missing game producers or supply private replay
 packets. The assembly receipt is generated locally from verified producer outputs,
 not shipped historical target hashes or game bytes.
