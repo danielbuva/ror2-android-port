@@ -4090,3 +4090,18 @@ programs. No original body, program, copied source, private path or credential
 is included. Legitimate PC input and independently acquired SDK remain required;
 generated records and evidence stay ignored. The persisted 301,384 B record is
 host raw-exact to J850; complete-scene and phone gates remain separate.
+
+## Computational Exchange complete object selection (2026-10-26)
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-computationalexchange-whole-objects.json` | `7f76a47065416c33a1606186da9c10e9bf6bdc22cea0aaecbb2611eb29433413` |
+
+Manual provenance, privacy, licensing and sensitive-content audit: this profile
+contains source selectors, hashes, checked pointer relationships and authored
+import policies only. Lossless compaction preserves every decoded selection.
+No original body, curve, scalar, pixel, program, copied source, private path or
+credential is included. Legitimate PC files, SDK resources and receipt-pinned
+source-produced record packs remain required. Generated outputs and evidence
+stay ignored. Existing ownership and redistribution boundaries apply; phone
+production, installation and original scene behavior remain open.
