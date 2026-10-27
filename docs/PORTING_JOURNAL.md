@@ -478,6 +478,20 @@ Host preflight and 32 focused producer contracts pass; retained scene packs are
 not replayed. Host-only; full-scene readiness and phone gates remain open.
 APK unchanged: J850 `f1550ce0ff030ea0fa7a1ab66de19d54ee7894a7ae2f5b344f993157d6713949`.
 
+## J1211 — Source-derived complete Frozenwall spine scene
+
+2026-10-26. Existing object/Shader owners reproduce `payload/frozenwall-spine-lab`.
+Guarded source-only production persists before independent comparison: all
+9,672 objects, both serialized members and the compressed bundle are raw-exact
+to J850. Output: 6,475,514 B, SHA-256
+`9613a99ba65823ffcb94dba7d1233f7854256eb902cd9499eb757ca6b11df980`.
+Evidence: `work/coordination/p1-scenes-ss/frozenwall-qualification-v1/`
+(`qualification-done.json`, `readiness-union/readiness.json`).
+Retained Skymeadow union plus this entry: 643/705 available, 638 raw-exact,
+two code comparisons, three drift-explained; 62 missing (7 APK, 55 payload).
+Existing policies and independently exact Standard pack reused; no core changes.
+Host-only; phone production, installation and original scene behavior remain open.
+APK unchanged: J850 `f1550ce0ff030ea0fa7a1ab66de19d54ee7894a7ae2f5b344f993157d6713949`.
 ## J1212 — Complete source-derived Meridian bundle
 
 2026-10-26. Existing object/Shader owners reproduce Meridian from legitimate
