@@ -138,6 +138,15 @@ class HostTools:
         run(argv, label="compile-authored-resources")
 
 
+def synthetic_manifest(temporary):
+    """AAPT1 indexes -M by basename and requires AndroidManifest.xml."""
+    manifest = temporary / "AndroidManifest.xml"
+    manifest.write_text(
+        '<manifest xmlns:android="http://schemas.android.com/apk/res/android" package="dev.ror2lab.alpha" android:versionCode="1"><uses-sdk android:minSdkVersion="24" android:targetSdkVersion="30"/><application android:label="@string/app_name" android:debuggable="true" android:extractNativeLibs="true"><activity android:name="com.unity3d.player.UnityPlayerActivity" android:exported="true"><intent-filter><action android:name="android.intent.action.MAIN"/><category android:name="android.intent.category.LAUNCHER"/></intent-filter></activity></application></manifest>'
+    )
+    return manifest
+
+
 def synthetic_inputs(tools, temporary):
     """Compile tiny ORIGINAL fixtures, not Unity/game/SDK runtime implementations.
 
@@ -162,10 +171,7 @@ def synthetic_inputs(tools, temporary):
     resources = temporary / "res"
     (resources / "values").mkdir(parents=True)
     (resources / "values/strings.xml").write_text('<resources><string name="app_name">Synthetic update fixture</string></resources>')
-    manifest = temporary / "synthetic-manifest.xml"
-    manifest.write_text(
-        '<manifest xmlns:android="http://schemas.android.com/apk/res/android" package="dev.ror2lab.alpha" android:versionCode="1"><uses-sdk android:minSdkVersion="24" android:targetSdkVersion="30"/><application android:label="@string/app_name" android:debuggable="true" android:extractNativeLibs="true"><activity android:name="com.unity3d.player.UnityPlayerActivity" android:exported="true"><intent-filter><action android:name="android.intent.action.MAIN"/><category android:name="android.intent.category.LAUNCHER"/></intent-filter></activity></application></manifest>'
-    )
+    manifest = synthetic_manifest(temporary)
     packaged = temporary / "synthetic-resources.apk"
     tools.resource_apk(manifest, packaged, resources)
     with zipfile.ZipFile(packaged) as archive:

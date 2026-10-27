@@ -6,9 +6,11 @@ import io
 import json
 import os
 from pathlib import Path
+import tempfile
 import unittest
 from unittest.mock import patch
 import urllib.request
+import xml.etree.ElementTree as ET
 
 ROOT = Path(__file__).resolve().parents[1]
 SPEC = importlib.util.spec_from_file_location("lab_installer_updates", ROOT / "scripts/lab-installer-updates.py")
@@ -31,6 +33,17 @@ class LabInstallerUpdatesTests(unittest.TestCase):
         with patch.dict(os.environ, {}, clear=True):
             with self.assertRaisesRegex(LAB.Failure, "LAB_TOOLHOST_ROOT-required"):
                 LAB.read_context()
+
+    def test_synthetic_manifest_uses_aapt1_required_basename(self):
+        # Only source XML is created: no toolchain invocation, APK or key.
+        with tempfile.TemporaryDirectory() as temporary:
+            manifest = LAB.synthetic_manifest(Path(temporary))
+            self.assertEqual(manifest.name, "AndroidManifest.xml")
+            root = ET.parse(manifest).getroot()
+        android = "{http://schemas.android.com/apk/res/android}"
+        self.assertEqual(root.get("package"), LAB.GAME)
+        self.assertEqual(root.find("application").get(android + "debuggable"), "true")
+        self.assertEqual(root.find("application/activity").get(android + "name"), "com.unity3d.player.UnityPlayerActivity")
 
     def test_http_assets_metadata_and_request_observation(self):
         files = {"release.json": b'{"version":"synthetic"}', "release.sig": b"authored signature substitute", "public-tools.zip": b"not an APK"}
