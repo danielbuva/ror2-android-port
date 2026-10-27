@@ -419,7 +419,18 @@ class Phone:
         return json.loads(result)
 
     def ui(self):
-        self.shell("uiautomator", "dump", self.ui_path, timeout=30, label="device-ui-dump")
+        # A newly launched Activity can report a null accessibility root while
+        # uiautomator still exits 0 and creates no file. Retry only that observed
+        # result, never cat a missing dump or retry unrelated command failures.
+        for attempt in range(3):
+            result = execute([self.adb, "-s", self.serial, "shell", "uiautomator", "dump", self.ui_path], label="device-ui-dump", timeout=30)
+            if result.returncode:
+                raise Failure("device-ui-dump")
+            if "null-root" not in (ui_output_classification(result.stdout), ui_output_classification(result.stderr)):
+                break
+            if attempt == 2:
+                raise Failure("device-ui-null-root-retry-exhausted")
+            time.sleep(1)
         try:
             value = self.shell("cat", self.ui_path, label="device-ui-read")
         finally:
@@ -473,8 +484,35 @@ class Phone:
     def start(self):
         self.shell("input", "keyevent", "KEYCODE_WAKEUP", label="device-display-wake")
         self.shell("wm", "dismiss-keyguard", label="device-keyguard-dismiss")
-        self.shell("am", "start", "-n", ACTIVITY, label="device-installer-launch")
+        self.shell("am", "start", "-W", "-n", ACTIVITY, label="device-installer-launch")
         time.sleep(1)
+        self.dismiss_notification_permission()
+
+    def dismiss_notification_permission(self):
+        # ToolHostActivity.onCreate requests only POST_NOTIFICATIONS. This is
+        # not the separately authorized unknown-source install permission.
+        # Decline only this owned test app's notification prompt, never grant
+        # an unidentified permission or rely on localized button text.
+        if not self.owned_installer:
+            raise Failure("notification-dialog-installer-not-owned")
+        controller = "com.android.permissioncontroller"
+        nodes = [node for node in self.ui().iter("node") if node.get("package") == controller]
+        if not nodes:
+            return False
+        messages = [node.get("text", "").casefold() for node in nodes if node.get("resource-id") == controller + ":id/permission_message"]
+        if len(messages) != 1 or "owner game installer" not in messages[0] or not re.search(r"\bnotifications\b", messages[0]):
+            raise Failure("notification-dialog-not-identified")
+        buttons = [node for node in nodes if node.get("resource-id") == controller + ":id/permission_deny_button" and node.get("enabled") == "true"]
+        if len(buttons) != 1:
+            raise Failure("notification-denial-unavailable")
+        bounds = re.fullmatch(r"\[(\d+),(\d+)\]\[(\d+),(\d+)\]", buttons[0].get("bounds", ""))
+        if not bounds:
+            raise Failure("ui-button-bounds")
+        x1, y1, x2, y2 = map(int, bounds.groups())
+        self.shell("input", "tap", str((x1 + x2) // 2), str((y1 + y2) // 2), label="device-notification-deny")
+        if any(node.get("package") == controller for node in self.ui().iter("node")):
+            raise Failure("notification-dialog-not-dismissed")
+        return True
 
     def wait_state(self, expected):
         deadline = time.monotonic() + self.timeout
@@ -636,7 +674,6 @@ def acceptance(phone, config, temporary, passed):
         phone.put("import-state.json", encoded({"state": "IMPORTED", "message": "Synthetic test inputs only"}))
         set_phase("baseline-N-check")
         phone.start()
-        phone.tap("Don't allow", required=False)
         phone.check(1)
         if not any("TEST RELEASE SOURCE" in node.get("text", "") for node in phone.ui().iter("node")):
             raise Failure("debug-source-warning-not-visible")

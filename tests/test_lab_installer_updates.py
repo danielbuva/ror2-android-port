@@ -316,6 +316,123 @@ class LabInstallerUpdatesTests(unittest.TestCase):
             phone.await_install_permission()
         self.assertEqual(shell.call_args.args, ("appops", "set", LAB.PACKAGE, "REQUEST_INSTALL_PACKAGES", "allow"))
 
+    @staticmethod
+    def notification_dialog(message="Allow Owner game installer to send you notifications?", button="permission_deny_button"):
+        tree = ET.Element("hierarchy")
+        controller = "com.android.permissioncontroller"
+        ET.SubElement(tree, "node", {"package": controller, "resource-id": controller + ":id/permission_message", "text": message})
+        ET.SubElement(
+            tree,
+            "node",
+            {"package": controller, "resource-id": controller + ":id/" + button, "text": "Don’t allow", "enabled": "true", "bounds": "[20,40][100,80]"},
+        )
+        return tree
+
+    def test_null_root_dump_retries_before_reading_and_cleans_successful_dump(self):
+        phone = LAB.Phone("synthetic-private-selector", 1)
+        xml = b'<?xml version="1.0"?><hierarchy><node text="synthetic"/></hierarchy>'
+        success = subprocess.CompletedProcess([], 0, b"UI hierchary dumped to: /synthetic/private/ui.xml", b"")
+        for stdout, stderr in ((b"", b"ERROR: null root node returned by UiTestAutomationBridge."), (b"ERROR: null root node", b"")):
+            with self.subTest(stdout=stdout, stderr=stderr):
+                events = []
+
+                def execute(*args, **kwargs):
+                    events.append("dump")
+                    return subprocess.CompletedProcess([], 0, stdout, stderr) if events.count("dump") == 1 else success
+
+                def shell(*args, **kwargs):
+                    events.append(args[0])
+                    return xml if args[0] == "cat" else b""
+
+                with (
+                    patch.object(LAB, "execute", side_effect=execute) as dump,
+                    patch.object(phone, "shell", side_effect=shell) as command,
+                    patch.object(LAB.time, "sleep", side_effect=lambda seconds: events.append("wait")),
+                ):
+                    self.assertEqual(phone.ui().tag, "hierarchy")
+                self.assertEqual(events, ["dump", "wait", "dump", "cat", "rm"])
+                self.assertEqual(dump.call_count, 2)
+                self.assertEqual(command.call_args_list[-1].args, ("rm", "-f", phone.ui_path))
+                self.assertTrue(all(call.kwargs == {"label": "device-ui-dump", "timeout": 30} for call in dump.call_args_list))
+
+    def test_null_root_dump_retry_limit_never_reads_nonexistent_file(self):
+        phone = LAB.Phone("synthetic-private-selector", 1)
+        result = subprocess.CompletedProcess([], 0, b"", b"ERROR: null root node synthetic-private-detail")
+        with patch.object(LAB, "execute", return_value=result) as dump, patch.object(phone, "shell") as shell, patch.object(LAB.time, "sleep") as sleep:
+            with self.assertRaisesRegex(LAB.Failure, "^device-ui-null-root-retry-exhausted$"):
+                phone.ui()
+        self.assertEqual(dump.call_count, 3)
+        self.assertEqual([call.args for call in sleep.call_args_list], [(1,), (1,)])
+        shell.assert_not_called()
+
+    def test_ui_dump_retry_does_not_retry_nonzero_or_unrelated_read_failure(self):
+        phone = LAB.Phone("synthetic-private-selector", 1)
+        result = subprocess.CompletedProcess([], 1, b"", b"ERROR: null root node synthetic-private-detail")
+        with patch.object(LAB, "execute", return_value=result) as dump, patch.object(phone, "shell") as shell, patch.object(LAB.time, "sleep") as sleep:
+            with self.assertRaisesRegex(LAB.Failure, "^device-ui-dump$"):
+                phone.ui()
+        dump.assert_called_once()
+        shell.assert_not_called()
+        sleep.assert_not_called()
+        with (
+            patch.object(LAB, "execute", return_value=subprocess.CompletedProcess([], 0, b"UI hierarchy dumped to: /synthetic/private", b"")) as dump,
+            patch.object(phone, "shell", side_effect=[LAB.Failure("device-ui-read"), b""]) as shell,
+            patch.object(LAB.time, "sleep") as sleep,
+        ):
+            with self.assertRaisesRegex(LAB.Failure, "^device-ui-read$"):
+                phone.ui()
+        dump.assert_called_once()
+        self.assertEqual([call.args[0] for call in shell.call_args_list], ["cat", "rm"])
+        sleep.assert_not_called()
+
+    def test_notification_dialog_denied_by_scoped_resource_id_not_button_text(self):
+        manifest = ET.parse(ROOT / "tools/phone-build/managed-host/AndroidManifest.xml").getroot()
+        self.assertEqual(manifest.find("application").get("{http://schemas.android.com/apk/res/android}label"), "Owner game installer")
+        phone = LAB.Phone("synthetic-private-selector", 1)
+        phone.owned_installer = True
+        with patch.object(phone, "ui", side_effect=[self.notification_dialog(), ET.Element("hierarchy")]), patch.object(phone, "shell") as shell:
+            self.assertTrue(phone.dismiss_notification_permission())
+        shell.assert_called_once_with("input", "tap", "60", "60", label="device-notification-deny")
+        with patch.object(phone, "shell") as shell, patch.object(LAB.time, "sleep"), patch.object(phone, "dismiss_notification_permission") as dismiss:
+            phone.start()
+            phone.start()
+        self.assertEqual(dismiss.call_count, 2)
+        self.assertEqual(shell.call_args_list[0].args, ("input", "keyevent", "KEYCODE_WAKEUP"))
+        self.assertEqual(shell.call_args_list[2].args, ("am", "start", "-W", "-n", LAB.ACTIVITY))
+
+    def test_notification_dialog_does_not_act_without_prompt_or_fresh_ownership(self):
+        phone = LAB.Phone("synthetic-private-selector", 1)
+        with patch.object(phone, "ui") as ui, patch.object(phone, "shell") as shell:
+            with self.assertRaisesRegex(LAB.Failure, "notification-dialog-installer-not-owned"):
+                phone.dismiss_notification_permission()
+            ui.assert_not_called()
+            shell.assert_not_called()
+        phone.owned_installer = True
+        with patch.object(phone, "ui", return_value=ET.Element("hierarchy")), patch.object(phone, "shell") as shell:
+            self.assertFalse(phone.dismiss_notification_permission())
+            shell.assert_not_called()
+
+    def test_notification_dialog_rejects_other_apps_permissions_and_allow_button(self):
+        phone = LAB.Phone("synthetic-private-selector", 1)
+        phone.owned_installer = True
+        for dialog, reason in (
+            (self.notification_dialog("Allow another app to send you notifications?"), "notification-dialog-not-identified"),
+            (self.notification_dialog("Allow Owner game installer to access your camera?"), "notification-dialog-not-identified"),
+            (self.notification_dialog(button="permission_allow_button"), "notification-denial-unavailable"),
+        ):
+            with self.subTest(reason=reason), patch.object(phone, "ui", return_value=dialog), patch.object(phone, "shell") as shell:
+                with self.assertRaisesRegex(LAB.Failure, reason):
+                    phone.dismiss_notification_permission()
+                shell.assert_not_called()
+
+    def test_notification_dialog_requires_observed_dismissal(self):
+        phone = LAB.Phone("synthetic-private-selector", 1)
+        phone.owned_installer = True
+        with patch.object(phone, "ui", return_value=self.notification_dialog()), patch.object(phone, "shell") as shell:
+            with self.assertRaisesRegex(LAB.Failure, "notification-dialog-not-dismissed"):
+                phone.dismiss_notification_permission()
+        self.assertEqual(shell.call_count, 1)
+
     def test_occupied_alpha_refuses_before_build_and_key_creation(self):
         phone = LAB.Phone("synthetic-private-selector", 1)
         with (
