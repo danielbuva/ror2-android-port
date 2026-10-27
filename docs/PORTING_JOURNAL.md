@@ -518,3 +518,18 @@ Evidence: `work/coordination/p1-computational-standard-v1/done.json` and
 Audited selectors reuse existing Standard feature/order owners; no new compiler.
 Host-only; full-scene readiness, phone production and original behavior remain open.
 APK unchanged: J850 `f1550ce0ff030ea0fa7a1ab66de19d54ee7894a7ae2f5b344f993157d6713949`.
+
+## J1214 — Complete source-derived Computational Exchange scene
+
+2026-10-27. Existing object/Shader owners reproduce the complete scene from
+legitimate PC input, acquired SDK and receipt-pinned source-produced packs.
+Checked original Transform ownership resolves preload admissions; J1213 Standard
+is reused. Guarded production precedes independent comparison: all 16,208 objects,
+both serialized members and compressed bundle are raw-exact to J850.
+Output: 21,161,995 B, SHA-256 `e5b85a048312298cf18dfd028ed84e1695204196c1fc4b6b9266be93ddf44c4d`.
+Evidence: `work/coordination/p1-scenes-w/computational-final-host-v1/qualification-done.json`;
+retained union: `work/coordination/p1-scenes-w/publication-batch-v7/readiness-union/readiness.json`.
+Readiness advances by one: 644/705 available, 639 raw-exact; 61 missing.
+Audited compact selectors preserve decoded policies; no accepted production replay.
+Host-only; phone production, installation and original scene behavior remain open.
+APK unchanged: J850 `f1550ce0ff030ea0fa7a1ab66de19d54ee7894a7ae2f5b344f993157d6713949`.
