@@ -4380,3 +4380,18 @@ records that differ only in object references (remapped). No original body, curv
 program, copied source, private path or credential is included. All 10,928 persisted
 objects, two serialized members and the compressed bundle are host raw-exact to J850; phone
 production, installation and original scene behavior remain open.
+
+## artifactworld complete scene selections (2026-10-27)
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-artifactworld-whole-objects.json` | `4656205ad8a77ad07afe53e715a516767d7d2bc3da0c6ecfd7c231303ae1c5e9` |
+| `owner-artifactworld-whole-postprocess-shaders.json` | `06548120d24aa5d3143426b7131f2ba56110fb6d7550c60c10792265cd41b47b` |
+
+Manual provenance, privacy, licensing and sensitive-content audit: these profiles contain source
+selectors, hashes, checked pointer relationships and authored import policies only. Records with no
+same-scene source select byte-identical original records found by exact body hash, or original
+records that differ only in object references (remapped). No original body, curve, scalar, pixel,
+program, copied source, private path or credential is included. All 4,095 persisted
+objects, two serialized members and the compressed bundle are host raw-exact to J850; phone
+production, installation and original scene behavior remain open.

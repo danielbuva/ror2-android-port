@@ -707,3 +707,11 @@ recount, phone production and scene behaviour remain open.
 Cross-bundle sources come from the orchestrator's exact-body and pointer-only original-record
 lookup. Evidence (ignored): `work/coordination/orchestrator/scenes/lemuriantemple-final-v1/`. Readiness
 recount, phone production and scene behaviour remain open.
+
+## J1230 — Complete source-derived artifactworld scene
+
+`whole-scene-artifactworld` is host raw-exact to J850: 4,095 objects, both serialized members and the
+1,383,262-byte bundle (SHA-256 `5d6aa710…`). Profiles: `recipe/owner-artifactworld-whole-*.json`.
+Cross-bundle sources come from the orchestrator's exact-body and pointer-only original-record
+lookup. Evidence (ignored): `work/coordination/orchestrator/scenes/artifactworld-final-v1/`. Readiness
+recount, phone production and scene behaviour remain open.
