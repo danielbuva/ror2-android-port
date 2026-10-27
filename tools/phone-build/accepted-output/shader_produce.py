@@ -1269,7 +1269,20 @@ def produce_sdk_records(root, pc, sdk, profile, profile_sha256, output, connecti
 
 
 def produce(
-    profile_path, profile_sha256, pc, sdk, output, codec_path, codec_sha256, d3dasm_path=None, d3dasm_sha256=None, hlsl_source=None, asset_ripper_source=None
+    profile_path,
+    profile_sha256,
+    pc,
+    sdk,
+    output,
+    codec_path,
+    codec_sha256,
+    d3dasm_path=None,
+    d3dasm_sha256=None,
+    hlsl_source=None,
+    asset_ripper_source=None,
+    *,
+    compiler_command=None,
+    compiler_data=None,
 ):
     """Reproduce all selected standalone shaders from original PC/public inputs.
 
@@ -1416,7 +1429,12 @@ def produce(
             tmp_objects = {obj.path_id: obj for obj in UnityPy.load(str(relative(pc, selected["path"]))).objects if obj.assets_file.name == selected["member"]}
         core = recovery.build_native_hlsl(hlsl_source, output / "native-hlsl-tool") if "native_internal" in profile else None
         with (
-            compiler.compiler([sdk / "Tools/UnityShaderCompiler"], sdk, output / "compiler", includes=include_dirs) as connection,
+            compiler.compiler(
+                compiler_command if compiler_command is not None else [sdk / "Tools/UnityShaderCompiler"],
+                compiler_data if compiler_data is not None else sdk,
+                output / "compiler",
+                includes=include_dirs,
+            ) as connection,
             W.codec(codec_path, codec_sha256) as compress,
         ):
             if "native_internal" in profile:
@@ -1530,6 +1548,8 @@ def main():
     parser.add_argument("--d3dasm-sha256", help="expected SHA-256 of the caller-supplied public tool")
     parser.add_argument("--hlsl-source", type=Path, help="caller-supplied pinned public HLSLDecompiler Git repository; native core builds into new output")
     parser.add_argument("--asset-ripper-source", type=Path, help="caller-supplied pinned public AssetRipper Git repository; template bodies stay local")
+    parser.add_argument("--compiler-command", type=json.loads, help="explicit compiler argv as a JSON array, including an Android GNU runner when required")
+    parser.add_argument("--compiler-data", type=Path, help="acquired compiler SDK data root; --sdk still supplies the pinned metadata/includes")
     args = parser.parse_args()
     produce(
         args.profile,
@@ -1543,6 +1563,8 @@ def main():
         args.d3dasm_sha256,
         args.hlsl_source,
         args.asset_ripper_source,
+        compiler_command=args.compiler_command,
+        compiler_data=args.compiler_data,
     )
 
 

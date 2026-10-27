@@ -1102,7 +1102,18 @@ complete files plus two shared records; the terminal shared receipt records its
 `objects.bin` and `index.jsonl` hashes. Phone execution remains unqualified (J1144/J1146/J1147/J1151/J1157).
 
 Build the existing public LZ4 worker with `build_bundle_lz4.py`; its worker method
-9 selects shader HC9 while UnityFS methods 2/3 stay fast/HC12. Then run:
+9 selects shader HC9 while UnityFS methods 2/3 stay fast/HC12.
+
+For a separately acquired compiler host, pass `--compiler-command` as a JSON
+argv array (including any GNU runner prefix) and `--compiler-data` as that
+compiler's SDK data directory. `--sdk` continues to select the pinned Mac SDK
+metadata and includes. The existing compiler session appends its data, log and
+IPC arguments, inherits the caller's runner environment and owns teardown.
+Acquire and verify the Linux compiler/plugin/runtime and public runner through
+their existing J1094/J1102 input receipts; this option does not acquire tools or
+qualify complete phone production. Omitting both options retains the Mac host.
+
+Run the producer:
 
 ```sh
 python3 tools/phone-build/accepted-output/shader_produce.py \
@@ -1426,5 +1437,17 @@ receipt-pinned source-produced media/Shader packs and a separate output director
 set up production; process exit tears down producers while receipts persist.
 The existing member-aware writer exposes `payload/skymeadow-source-lab`.
 All 37,402 persisted objects, both serialized members and the compressed bundle
+are host raw-exact against J850. No runtime owner is added; phone production,
+installation and original scene behavior remain open.
+
+Frozenwall complete spine-scene selections extend the existing object/Shader
+owners through `recipe/owner-frozenwall-spine-objects.json` and
+`recipe/owner-frozenwall-spine-lab-standard-shaders.json`. Original renderer,
+skybox and local-material roots select the reduced-spine Standard variants.
+Explicit current PC/SDK roots, pinned profiles/tools, receipt-pinned
+source-produced media/Shader packs and a separate output directory set up
+production; process exit tears down producers while receipts persist. The
+existing member-aware writer exposes `payload/frozenwall-spine-lab`.
+All 9,672 persisted objects, both serialized members and the compressed bundle
 are host raw-exact against J850. No runtime owner is added; phone production,
 installation and original scene behavior remain open.

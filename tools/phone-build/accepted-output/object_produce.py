@@ -489,7 +489,7 @@ def source_record(sources, selector):
 
 
 def check_preload_dependencies(sources, source_profiles, dependencies):
-    """Admit original preload GameObjects, typed Rigidbody owners and builtins."""
+    """Admit original preload GameObjects, typed component owners and builtins."""
     for dependency in dependencies:
         preload, preload_type = source_record(sources, dependency["preload_source"])
         if preload_type["class_id"] != 150 or hashlib.sha256(preload).hexdigest() != dependency["preload_sha256"]:
@@ -514,13 +514,14 @@ def check_preload_dependencies(sources, source_profiles, dependencies):
         if typ["class_id"] != 1 or hashlib.sha256(body).hexdigest() != dependency["source_sha256"]:
             raise ValueError("original preload GameObject drift")
         selector = dependency["source"]
-        if "rigidbody" in dependency:
-            witness = dependency["rigidbody"]
-            rigidbody, rigidbody_type = source_record(sources, witness["source"])
-            if rigidbody_type["class_id"] != 54 or len(rigidbody) != 36 or hashlib.sha256(rigidbody).hexdigest() != witness["sha256"]:
-                raise ValueError("original preload Rigidbody drift")
-            if witness["source"][0] != selector[0] or struct.unpack_from("<iq", rigidbody) != (0, selector[1]):
-                raise ValueError("original preload Rigidbody GameObject drift")
+        if "rigidbody" in dependency or "transform" in dependency:
+            kind, class_id, size = ("Rigidbody", 54, 36) if "rigidbody" in dependency else ("Transform", 4, 68)
+            witness = dependency[kind.lower()]
+            component_body, component_type = source_record(sources, witness["source"])
+            if component_type["class_id"] != class_id or len(component_body) != size or hashlib.sha256(component_body).hexdigest() != witness["sha256"]:
+                raise ValueError(f"original preload {kind} drift")
+            if witness["source"][0] != selector[0] or struct.unpack_from("<iq", component_body) != (0, selector[1]):
+                raise ValueError(f"original preload {kind} GameObject drift")
             count = struct.unpack_from("<I", body)[0]
             if 4 + count * 12 > len(body):
                 raise ValueError("truncated original preload GameObject components")
@@ -528,7 +529,7 @@ def check_preload_dependencies(sources, source_profiles, dependencies):
             index = witness["component_index"]
             component = (0, witness["source"][1])
             if type(index) is not int or not 0 <= index < count or components[index] != component or components.count(component) != 1:
-                raise ValueError("original preload Rigidbody component membership drift")
+                raise ValueError(f"original preload {kind} component membership drift")
             selector = witness["source"]
         if pointers.count(pointer) != 1 or path_id != selector[1] or member != source_profiles[selector[0]]["member"]:
             raise ValueError("original preload GameObject relationship drift")
@@ -1054,7 +1055,7 @@ def produce(profile_path, profile_sha256, pc, output, codec_path, codec_sha256, 
                     elif typ["class_id"] == 114:
                         typ = copy.deepcopy(typ)
                         if omit_master:
-                            if body[-4:] != bytes(4):
+                            if body[-4:] not in (bytes(4), b"\x01\0\0\0"):
                                 raise ValueError("original CharacterMaster final value drift")
                             body = body[:-4]
                             typ["tree"] = omit_character_master_field(typ["tree"], identity_owner)

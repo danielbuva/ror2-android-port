@@ -447,7 +447,7 @@ def rewrite_managed_source(pc, profile, mutate):
             row["source_sha256"] = digest(bodies[row["source"][1]])
 
 
-def managed_fixture(root, *, omit_master=False, disable=False, plugin_order=False):
+def managed_fixture(root, *, omit_master=False, disable=False, plugin_order=False, master_value=False):
     pc, path, profile, _, original_target = fixture(root)
     source = pc / "source.bundle"
     source_layout = P.W.read_serialized(P.B.Bundle(source).member("CAB-source"))
@@ -474,7 +474,7 @@ def managed_fixture(root, *, omit_master=False, disable=False, plugin_order=Fals
     if disable:
         source_behaviour = source_behaviour[:12] + b"\x01\0\0\0" + source_behaviour[16:]
     if omit_master:
-        source_behaviour += bytes(4)
+        source_behaviour += struct.pack("<I", master_value)
     target_behaviour = source_behaviour[:16] + struct.pack("<iq", 0, 2) + source_behaviour[28:]
     if disable:
         target_behaviour = target_behaviour[:12] + bytes(1) + target_behaviour[13:]
@@ -641,14 +641,18 @@ class ObjectProducerTests(unittest.TestCase):
                 else:
                     P.check_preload_dependencies(sources, profiles, [dependency])
 
-    def test_original_preload_rigidbody_requires_unique_reciprocal_component(self):
+    def test_original_preload_component_requires_unique_reciprocal_membership(self):
+        for kind, class_id, size in (("Rigidbody", 54, 36), ("Transform", 4, 68)):
+            self.check_preload_component(kind, class_id, size)
+
+    def check_preload_component(self, kind, class_id, size):
         for failure in (None, "class", "length", "hash", "owner", "member", "index", "duplicate", "pointer"):
-            with self.subTest(failure=failure):
+            with self.subTest(kind=kind, failure=failure):
                 components = [(0, 71), (0, 72), (0, 73), (0, 20)]
                 if failure == "duplicate":
                     components[0] = (0, 20)
                 gameobject = struct.pack("<I", len(components)) + b"".join(struct.pack("<iq", *p) for p in components)
-                rigidbody = struct.pack("<iq", 0, 99 if failure == "owner" else 19) + bytes(24)
+                rigidbody = struct.pack("<iq", 0, 99 if failure == "owner" else 19) + bytes(size - 12)
                 if failure == "length":
                     rigidbody += bytes(4)
                 preload = struct.pack("<IIiq", 0, 1, 1, 21 if failure == "pointer" else 20)
@@ -660,20 +664,20 @@ class ObjectProducerTests(unittest.TestCase):
                     "preload_sha256": digest(preload),
                     "source_pointer": [1, 21 if failure == "pointer" else 20],
                     "to": [2, 91],
-                    "rigidbody": {
+                    kind.lower(): {
                         "source": [0 if failure == "member" else 1, 20],
                         "sha256": "0" * 64 if failure == "hash" else digest(rigidbody),
                         "component_index": 2 if failure == "index" else 3,
                     },
                 }
                 bodies = [
-                    {1: (preload, typ(150)), 20: (rigidbody, typ(54))},
-                    {19: (gameobject, typ(1)), 20: (rigidbody, typ(4 if failure == "class" else 54))},
+                    {1: (preload, typ(150)), 20: (rigidbody, typ(class_id))},
+                    {19: (gameobject, typ(1)), 20: (rigidbody, typ(1 if failure == "class" else class_id))},
                 ]
                 sources = curve_sources(bodies, profiles)
                 sources[0][3]["externals"] = [{"path": "archive:/original/CAB-original"}]
                 if failure:
-                    with self.assertRaisesRegex(ValueError, "Rigidbody|relationship drift"):
+                    with self.assertRaisesRegex(ValueError, kind + "|relationship drift"):
                         P.check_preload_dependencies(sources, profiles, [dependency])
                 else:
                     P.check_preload_dependencies(sources, profiles, [dependency])
@@ -733,33 +737,36 @@ class ObjectProducerTests(unittest.TestCase):
             self.assertFalse(json.loads((root / "failed/result.json").read_text())["success"])
 
     def test_character_master_omission_keeps_script_and_behaviour_schema_hashes_consistent(self):
-        with tempfile.TemporaryDirectory() as temporary:
-            root = Path(temporary)
-            pc, path, _, sdk, names, original_type, sdk_tree, derived, bodies, serialized = managed_fixture(root, omit_master=True)
-            identity = load("authored_script_identity", ROOT / "scripts/lab/script_identity.py")
-            helper = Mock(properties_hash=Mock(return_value=derived), tree_nodes=identity.tree_nodes)
-            real_module = P.module
-            with (
-                patch.object(P, "module", side_effect=lambda name, location=None: helper if name == "script_identity" else real_module(name, location)),
-                patch.object(P.W, "codec", return_value=nullcontext(literal_lz4)),
-            ):
-                result = P.produce(path, P.B.sha(path), pc, root / "produced", Path("codec"), "pin", sdk=sdk)
-            self.assertTrue(result["success"])
-            helper.properties_hash.assert_called_once_with(*names, character_master_schema(False), sdk_tree)
-            member = P.B.Bundle(root / "produced/payload/authored-target").member("CAB-target")
-            self.assertEqual(P.B.exact(member, member.size), serialized)
-            layout = P.W.read_serialized(member)
-            mb = next(kind for kind in layout["types"] if kind["class_id"] == 114)
-            self.assertEqual(mb, {**original_type, "hash": derived, "script_type": 0, "tree": character_master_schema(False)})
-            self.assertEqual([node["name"] for node in identity.tree_nodes(mb["tree"])], ["Base", "AuthoredValue"])
-            for row in layout["objects"]:
-                member.seek(layout["data_offset"] + row["offset"])
-                actual = P.B.exact(member, row["bytes"])
-                self.assertEqual(actual, bodies[row["path_id"]])
-                if row["path_id"] == 2:
-                    offset, actual_names = P.script_fields(actual)
-                    self.assertEqual(actual_names, names)
-                    self.assertEqual(actual[offset : offset + 16], derived)
+        for master_value in (False, True):
+            with tempfile.TemporaryDirectory() as temporary:
+                root = Path(temporary)
+                pc, path, _, sdk, names, original_type, sdk_tree, derived, bodies, serialized = managed_fixture(
+                    root, omit_master=True, master_value=master_value
+                )
+                identity = load("authored_script_identity", ROOT / "scripts/lab/script_identity.py")
+                helper = Mock(properties_hash=Mock(return_value=derived), tree_nodes=identity.tree_nodes)
+                real_module = P.module
+                with (
+                    patch.object(P, "module", side_effect=lambda name, location=None: helper if name == "script_identity" else real_module(name, location)),
+                    patch.object(P.W, "codec", return_value=nullcontext(literal_lz4)),
+                ):
+                    result = P.produce(path, P.B.sha(path), pc, root / "produced", Path("codec"), "pin", sdk=sdk)
+                self.assertTrue(result["success"])
+                helper.properties_hash.assert_called_once_with(*names, character_master_schema(False), sdk_tree)
+                member = P.B.Bundle(root / "produced/payload/authored-target").member("CAB-target")
+                self.assertEqual(P.B.exact(member, member.size), serialized)
+                layout = P.W.read_serialized(member)
+                mb = next(kind for kind in layout["types"] if kind["class_id"] == 114)
+                self.assertEqual(mb, {**original_type, "hash": derived, "script_type": 0, "tree": character_master_schema(False)})
+                self.assertEqual([node["name"] for node in identity.tree_nodes(mb["tree"])], ["Base", "AuthoredValue"])
+                for row in layout["objects"]:
+                    member.seek(layout["data_offset"] + row["offset"])
+                    actual = P.B.exact(member, row["bytes"])
+                    self.assertEqual(actual, bodies[row["path_id"]])
+                    if row["path_id"] == 2:
+                        offset, actual_names = P.script_fields(actual)
+                        self.assertEqual(actual_names, names)
+                        self.assertEqual(actual[offset : offset + 16], derived)
 
     def test_character_master_omission_rejects_identity_schema_class_and_value_drift(self):
         for failure, message in (
@@ -805,7 +812,7 @@ class ObjectProducerTests(unittest.TestCase):
                         layout["types"][0]["tree"] = tree
                     elif failure in ("value", "padding"):
                         body = bytearray(bodies[61])
-                        body[-4 if failure == "value" else -1] = 1
+                        body[-4 if failure == "value" else -1] = 2 if failure == "value" else 1
                         bodies[61] = bytes(body)
 
                 rewrite_managed_source(pc, profile, mutate)

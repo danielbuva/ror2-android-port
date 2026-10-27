@@ -453,3 +453,94 @@ Original teardown and terminal process/selector/pending absence/OLED sleep pass.
 CPU/GPU peak 95.5 C transient; battery at most 35 C; runtime gap at most 0.698 s.
 Evidence: `work/coordination/main-port-r58-safety-retry/controls-duration-retry/`.
 Ordinary runs, audio attribution/audibility and PC appearance remain open.
+
+## J1209 — Admit the qualified CharacterMaster Boolean tail
+
+2026-10-26. The existing object producer accepts only aligned Boolean false/true
+when omitting the measured final `CharacterMaster.isUnkillable` field.
+Original identity, schema, properties-hash and complete-output checks remain.
+Retained source-derived proof: `work/coordination/p1-scenes-w/`
+`computational-character-two-record-v1/consumed.json`; script and behaviour
+are independently raw-exact to J850. No production replay or readiness delta.
+52 focused host tests, Ruff and host preflight pass, including rejection of
+non-Boolean values and nonzero padding. Complete-scene and phone gates stay open.
+## J1210 — Source-derived Meridian particle Shader
+
+2026-10-26. Existing payload Shader owner reproduces Meridian Particles164 from
+legitimate PC scene/material dependencies and pinned public SDK 211 source.
+Guarded production persists before independent comparison: the 25,056 B record
+is raw-exact to J850, SHA-256
+`93db2650a39fb9a85edb6ebd40590454611772251d7376554ad485ab8d17783f`.
+Evidence: `work/coordination/p1-meridian-particles-v1/done.json` and
+`whole-scene-meridian-particles/independent-comparison.json` under that directory.
+Audited source selector reuses existing particle pass, buffer and ordering owners.
+Host preflight and 32 focused producer contracts pass; retained scene packs are
+not replayed. Host-only; full-scene readiness and phone gates remain open.
+APK unchanged: J850 `f1550ce0ff030ea0fa7a1ab66de19d54ee7894a7ae2f5b344f993157d6713949`.
+
+## J1211 — Source-derived complete Frozenwall spine scene
+
+2026-10-26. Existing object/Shader owners reproduce `payload/frozenwall-spine-lab`.
+Guarded source-only production persists before independent comparison: all
+9,672 objects, both serialized members and the compressed bundle are raw-exact
+to J850. Output: 6,475,514 B, SHA-256
+`9613a99ba65823ffcb94dba7d1233f7854256eb902cd9499eb757ca6b11df980`.
+Evidence: `work/coordination/p1-scenes-ss/frozenwall-qualification-v1/`
+(`qualification-done.json`, `readiness-union/readiness.json`).
+Retained Skymeadow union plus this entry: 643/705 available, 638 raw-exact,
+two code comparisons, three drift-explained; 62 missing (7 APK, 55 payload).
+Existing policies and independently exact Standard pack reused; no core changes.
+Host-only; phone production, installation and original scene behavior remain open.
+APK unchanged: J850 `f1550ce0ff030ea0fa7a1ab66de19d54ee7894a7ae2f5b344f993157d6713949`.
+## J1212 — Complete source-derived Meridian bundle
+
+2026-10-26. Existing object/Shader owners reproduce Meridian from legitimate
+PC input, acquired SDK and receipt-pinned source-produced packs. Guarded
+production persists before independent comparison: all 15,814 objects, both
+serialized members and the compressed bundle are raw-exact to J850.
+Output: 5,507,304 B, SHA-256 `5333d76ef7a6250132bfc9cec6709fc4252da7346eb2222f9c9175f9575d7a13`.
+Evidence: `work/coordination/p1-scenes-w/final-meridian-v1/whole-scene-meridian/`
+(`qualification-done.json`) and `publication-batch-v6/contribution-done.json`
+under the same scene-owner coordination root. Audited selectors reuse J1210.
+Retained union: 643/705 available, 638 raw-exact; 62 missing (7 APK, 55 payload).
+Readiness: `work/coordination/p1-meridian-scene-publication-v1/done.json`.
+Host-only; phone production, installation and original scene behavior remain open.
+APK unchanged: J850 `f1550ce0ff030ea0fa7a1ab66de19d54ee7894a7ae2f5b344f993157d6713949`.
+
+## J1213 — Source-derived Computational Exchange Standard Shader
+
+2026-10-26. Existing payload Shader owner reproduces Standard68 from legitimate
+PC scene/material dependencies and pinned SDK source. Guarded production
+persists before independent digest comparison: 301,384 B raw-exact to J850,
+SHA-256 `80ae8f64f26f1009e2d394f8111354038105512e6e75d57464b272fb7b0d7acb`.
+Evidence: `work/coordination/p1-computational-standard-v1/done.json` and
+`whole-scene-computationalexchange-standard/independent-comparison.json` there.
+Audited selectors reuse existing Standard feature/order owners; no new compiler.
+Host-only; full-scene readiness, phone production and original behavior remain open.
+APK unchanged: J850 `f1550ce0ff030ea0fa7a1ab66de19d54ee7894a7ae2f5b344f993157d6713949`.
+
+## J1214 — Complete source-derived Computational Exchange scene
+
+2026-10-27. Existing object/Shader owners reproduce the complete scene from
+legitimate PC input, acquired SDK and receipt-pinned source-produced packs.
+Checked original Transform ownership resolves preload admissions; J1213 Standard
+is reused. Guarded production precedes independent comparison: all 16,208 objects,
+both serialized members and compressed bundle are raw-exact to J850.
+Output: 21,161,995 B, SHA-256 `e5b85a048312298cf18dfd028ed84e1695204196c1fc4b6b9266be93ddf44c4d`.
+Evidence: `work/coordination/p1-scenes-w/computational-final-host-v1/qualification-done.json`;
+retained union: `work/coordination/p1-scenes-w/publication-batch-v7/readiness-union/readiness.json`.
+Readiness advances by one: 644/705 available, 639 raw-exact; 61 missing.
+Audited compact selectors preserve decoded policies; no accepted production replay.
+Host-only; phone production, installation and original scene behavior remain open.
+APK unchanged: J850 `f1550ce0ff030ea0fa7a1ab66de19d54ee7894a7ae2f5b344f993157d6713949`.
+
+## J1215 — Explicit compiler hosting for source Shader records
+
+2026-10-27. The existing Shader48 producer accepts compiler argv and a separate
+compiler data root through the existing standalone compiler session, allowing
+the acquired Linux SDK/GNU runner while Mac SDK metadata/includes stay pinned.
+Default Mac invocation and compiler/socket teardown remain unchanged.
+Evidence: `work/coordination/p1-shaders/compiler-host-adapter-v1/checks.json`;
+46 focused tests, Ruff and host preflight pass. No generated Shader output or APK
+changes; readiness unchanged. Complete phone Shader production, installation
+and runtime remain open.
