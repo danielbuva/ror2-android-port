@@ -1268,6 +1268,21 @@ def produce_sdk_records(root, pc, sdk, profile, profile_sha256, output, connecti
     return name, {"bytes": destination.stat().st_size, "sha256": sha(destination)}
 
 
+def select_authored_files(profile, filenames):
+    """Select standalone authored rows without initializing unrelated providers."""
+    if filenames is None:
+        return profile
+    wanted = set(filenames)
+    rows = [row for row in profile["shaders"] if row["file"] in wanted]
+    if not wanted or {row["file"] for row in rows} != wanted:
+        raise ValueError("authored file selection must name existing shader files")
+    if any("source" not in row for row in rows):
+        raise ValueError("authored file selection requires tracked ShaderLab sources")
+    selected = {key: profile[key] for key in ("input_id", "source_type", "sdk", "includes_sha256", "settings", "authored_inputs")}
+    selected["shaders"] = rows
+    return selected
+
+
 def produce(
     profile_path,
     profile_sha256,
@@ -1283,6 +1298,7 @@ def produce(
     *,
     compiler_command=None,
     compiler_data=None,
+    authored_files=None,
 ):
     """Reproduce all selected standalone shaders from original PC/public inputs.
 
@@ -1306,7 +1322,7 @@ def produce(
     codec_pin = {"bytes": codec_path.stat().st_size, "sha256": codec_sha256}
     checked(profile_path, profile_pin)
     checked(codec_path, codec_pin)
-    profile = json.loads(profile_path.read_text())
+    profile = select_authored_files(json.loads(profile_path.read_text()), authored_files)
     pc, sdk = Path(pc).resolve(strict=True), Path(sdk).resolve(strict=True)
     output = Path(output)
     output = output.parent.resolve(strict=True) / output.name
@@ -1550,6 +1566,11 @@ def main():
     parser.add_argument("--asset-ripper-source", type=Path, help="caller-supplied pinned public AssetRipper Git repository; template bodies stay local")
     parser.add_argument("--compiler-command", type=json.loads, help="explicit compiler argv as a JSON array, including an Android GNU runner when required")
     parser.add_argument("--compiler-data", type=Path, help="acquired compiler SDK data root; --sdk still supplies the pinned metadata/includes")
+    parser.add_argument(
+        "--authored-file",
+        action="append",
+        help="current: produce only named standalone authored files from the pinned profile; repeatable, omits native/builtin/shared cohorts",
+    )
     args = parser.parse_args()
     produce(
         args.profile,
@@ -1565,6 +1586,7 @@ def main():
         args.asset_ripper_source,
         compiler_command=args.compiler_command,
         compiler_data=args.compiler_data,
+        authored_files=args.authored_file,
     )
 
 
