@@ -29,6 +29,7 @@ REF = re.compile(r"^(?!.*\.\.)[A-Za-z0-9][A-Za-z0-9._/-]{0,199}$")
 COMMENT_LIMIT = 60000
 TAIL_LINES = 150
 JOB_TIMEOUT = 5 * 3600
+TEST_PACKAGE = "dev.ror2lab.installertest"  # disposable identity; never the lab or toolhost packages
 
 
 class CommandError(ValueError):
@@ -182,7 +183,7 @@ class Runner:
             raise CommandError("the local toolhost builder is not installed yet; ask the orchestrator")
         shutil.rmtree(out, ignore_errors=True)
         out.mkdir(parents=True)
-        code = self.run([sys.executable, str(builder), "--source", commit, "--out", str(out)], self.repo)
+        code = self.run([sys.executable, str(builder), "--source", commit, "--out", str(out), "--package", TEST_PACKAGE], self.repo)
         return code, toolhost_summary(out) + "\n" + "\n".join(self.log.read_text(errors="replace").splitlines()[-40:])
 
     def status(self):
