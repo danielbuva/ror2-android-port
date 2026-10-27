@@ -675,3 +675,11 @@ original component and an original base-type record. Wind records come from orig
 records; AkInitializer reuses the shipped schema hash. Evidence (ignored):
 `work/coordination/p1-scenes-w/surv2-final-host-v2/`. Readiness recount, phone production and
 scene behaviour remain open.
+
+## J1226 — Complete source-derived nest scene
+
+`whole-scene-nest` is host raw-exact to J850: 33,275 objects, both serialized members and the
+6,244,244-byte bundle (SHA-256 `6622cd06…`). Profiles: `recipe/owner-nest-whole-*.json`.
+Cross-bundle sources come from the orchestrator's exact-body and pointer-only original-record
+lookup. Evidence (ignored): `work/coordination/orchestrator/scenes/nest-final-v1/`. Readiness
+recount, phone production and scene behaviour remain open.
