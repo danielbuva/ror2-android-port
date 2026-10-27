@@ -10,6 +10,8 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J1232](PORTING_JOURNAL.md#j1232--complete-source-derived-blackbeach2-scene) | 2026-10-27 | Complete source-derived blackbeach2 scene | `whole-scene-blackbeach2` is host raw-exact to J850: 18,363 objects, both serialized members and the 5,285,481-byte bundle (SHA-256 `5773751b…`). |
+| [J1231](PORTING_JOURNAL.md#j1231--complete-source-derived-blackbeach-scene) | 2026-10-27 | Complete source-derived blackbeach scene | `whole-scene-blackbeach` is host raw-exact to J850: 19,098 objects, both serialized members and the 6,198,224-byte bundle (SHA-256 `e2874966…`). |
 | [J1230](PORTING_JOURNAL.md#j1230--complete-source-derived-artifactworld-scene) | 2026-10-27 | Complete source-derived artifactworld scene | `whole-scene-artifactworld` is host raw-exact to J850: 4,095 objects, both serialized members and the 1,383,262-byte bundle (SHA-256 `5d6aa710…`). |
 | [J1229](PORTING_JOURNAL.md#j1229--complete-source-derived-lemuriantemple-scene) | 2026-10-27 | Complete source-derived lemuriantemple scene | `whole-scene-lemuriantemple` is host raw-exact to J850: 10,928 objects, both serialized members and the 10,232,436-byte bundle (SHA-256 `dc2d5b6b…`). |
 | [J1228](PORTING_JOURNAL.md#j1228--complete-source-derived-infinitetowerworld-scene) | 2026-10-27 | Complete source-derived infinitetowerworld scene | `whole-scene-infinitetowerworld` is host raw-exact to J850: 1,750 objects, both serialized members and the 4,740,999-byte bundle (SHA-256 `236b6d1d…`). |
