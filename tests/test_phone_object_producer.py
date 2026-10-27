@@ -1495,6 +1495,18 @@ class BezierCurveLineTests(unittest.TestCase):
         self.assertEqual(struct.unpack_from("<iq", result, 80), (7, -1234567890123))
         self.assertEqual(records, before)
 
+    def test_captured_wind_evaluates_original_curve_without_geometry_literals(self):
+        records, profiles = bezier_fixture()
+        self.mutate(records, 20, 80, bytes([1]))
+        self.mutate(records, 20, 84, struct.pack("<6f", 0, 2, 0, 0, 0, 0))
+        source = curve_sources(records, profiles)
+        # sin(pi/2) adds two to each original Y control offset: +4*t*(1-t).
+        result = P.rebuild_bezier_line(records[0][10][0], source, profiles, [0, 10], [0, 20], [0, 1.5707963705062866, 0])
+        expected = struct.pack("<15f", 12, 26, 42, 11, 28.25, 43.5, 10, 29, 44, 9, 28.25, 43.5, 8, 26, 42)
+        self.assertEqual(result[20:80], expected)
+        self.assertEqual(result[:20], records[0][10][0][:20])
+        self.assertEqual(result[80:], records[0][10][0][80:])
+
     def test_null_endpoint_uses_original_literal_p1(self):
         records, profiles = bezier_fixture(endpoint=False)
         self.assertEqual(self.result(records, profiles)[20:80], self.EXPECTED)
