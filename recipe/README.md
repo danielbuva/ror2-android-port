@@ -4155,6 +4155,8 @@ This policy records explicit build stripping, without supplying program bytes.
 | `owner-foggyswamp-source-objects.json` | `c1c477f06c4a845cf947ab6a93229bfe8658b00440341090178916bcc2ae3129` |
 | `owner-foggyswamp-source-lab-shader-remap.json` | `5ca166d5b4f672050fd12f72f5ae29f437e21cb8f89a0f96ac2d79e7144c2b49` |
 | `owner-skymeadow-spine-objects.json` | `e650c9495f22ff2e7f74d60bf35d5e896cdf725a375a5fab0bfc45c293ab38cf` |
+| `owner-skymeadow-spine-lab-particles-shaders.json` | `cfc075285f7edbed499356558389e2d94f04889f7c8280448a7a80980f995b76` |
+| `owner-goldshores-standard-reuse-shaders.json` | `3f757ceb9f619881c1406b2f27284648c68857d780c6bcbdbf4e86452a84ad71` |
 
 Manual provenance, privacy, licensing and sensitive-content audit: object
 profiles contain original selectors, hashes, checked pointer relationships,
@@ -4181,3 +4183,13 @@ It differs from the current Goldshores profile only by omitting the later fourth
 output identity; its original material/scene selectors, SDK and compiler policy
 are identical. This audited retained profile makes the Frozenwall remap's
 supplier identity reproducible without relabelling it as Frozenwall compilation.
+
+Retained J1192 Goolake spine selections (unchanged from PR 140):
+
+| Profile | SHA-256 |
+| --- | --- |
+| `owner-goolake-spine-objects.json` | `396ec87613ecbc97e825f7680fa89800920239057a4436d6875c93cd000ad10a` |
+| `owner-goolake-spine-lab-standard-shaders.json` | `485f9a4d3477285cf2c061245ffc7c74f91a3df83dab520a0279b500f94ac918` |
+
+These retain the J1192 source-selection audit and existing original-input/SDK
+requirements. This table restores audit indexing only; no profile content changes.
