@@ -4906,7 +4906,10 @@ Frozenwall, Villagenight and Foggyswamp source selections and Skymeadow
 spine selections extend the existing `object_produce.py` and Shader owners
 through their named `recipe/owner-*-objects.json` profiles. The Bezier owner
 re-evaluates original curves with optional captured build angles; no geometry
-arrays are recipe inputs. `record_remap.py` owns index reuse: explicit pinned
+arrays are recipe inputs. `object_produce.py` also owns `missing_script_base`: a component whose script
+is absent from the build is produced from its original component truncated to the
+base MonoBehaviour fields, with an original base-type record supplying its type.
+`record_remap.py` owns index reuse: explicit pinned
 source pack receipts and `owner-*-shader-remap.json` profiles supply unchanged
 bodies/dependency provenance under destination identities. Original suppliers
 remain visible in the output receipt. Setup requires explicit PC/SDK/tool roots,
