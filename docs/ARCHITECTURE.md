@@ -617,6 +617,11 @@ codec worker and emits complete files through `unity_write`. The SDK executable
 is read as metadata only. Explicit read-only providers and a new disjoint output
 set up production; before/after pins, complete-file comparison and terminal
 success/failure receipts retain state. Compiler/codec contexts own teardown.
+The producer accepts explicit compiler argv and a separate compiler data root
+through the existing standalone compiler session, permitting the acquired Linux
+SDK/GNU runner while the pinned Mac SDK remains metadata/include input. The
+caller supplies its acquired tool pins and runner environment; this transport
+selection does not qualify phone Shader48 production.
 The original native paths use the existing source emitters and
 `NativePrograms` to regenerate source from pinned PC shaders/materials through an
 explicit public d3dasm tool/hash, without retained HLSL. Variant reflection
