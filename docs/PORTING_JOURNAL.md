@@ -544,3 +544,16 @@ Evidence: `work/coordination/p1-shaders/compiler-host-adapter-v1/checks.json`;
 46 focused tests, Ruff and host preflight pass. No generated Shader output or APK
 changes; readiness unchanged. Complete phone Shader production, installation
 and runtime remain open.
+
+## J1216 — Source-derived Champrush Shader records
+
+2026-10-27. Existing Shader owners reproduce 24 post-processing, one Standard
+and one particle record from legitimate PC input and pinned SDK/public tools.
+Guarded production persists every output before independent target comparison;
+all 26 records are raw-exact to J850, including Standard 301,384 B and particles
+25,056 B. Audited source-selection profiles contain no target program bytes.
+The player Shader producer accepts repeatable authored-file selection for a
+bounded phone slice, retaining common input pins and the default complete route.
+Evidence: `work/coordination/p1-champrush-shaders-v1/done.json`.
+Complete-scene readiness, phone production, installation and runtime remain open;
+no readiness promotion or APK change.

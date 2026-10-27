@@ -4105,3 +4105,21 @@ credential is included. Legitimate PC files, SDK resources and receipt-pinned
 source-produced record packs remain required. Generated outputs and evidence
 stay ignored. Existing ownership and redistribution boundaries apply; phone
 production, installation and original scene behavior remain open.
+
+## Champrush source Shader selections (2026-10-27)
+
+| Profile | SHA-256 |
+| --- | --- |
+| `owner-champrush-whole-postprocess-shaders.json` | `39d2fce2857346432b0a334c5d46e7e1ef174fc450bf95d364b05bb37a017444` |
+| `owner-champrush-whole-standard-shaders.json` | `8dc74a60c9cb554ec5dca9d3fc13120b7037fc5ef1b2e3c74e76ff13a612c09d` |
+| `owner-champrush-whole-particles-shaders.json` | `62f078d212e0bda8bf30b961cbfbfd3012db9770a75fa0923995d5c3e8595115` |
+
+Manual provenance, privacy, licensing and sensitive-content audit: these profiles
+contain original scene/material/Shader selectors, hashes, pinned public SDK/tool
+identities and existing authored import settings only. Original dependency
+relationships select post-processing, Standard and particle records; existing
+exporter templates and SDK compilation supply programs. No original body,
+program, copied source, private path or credential is included. Legitimate PC
+input and independently acquired SDK remain required. Generated records and
+evidence stay ignored. All 26 persisted records are host raw-exact to J850;
+complete-scene readiness and phone qualification remain separate gates.
