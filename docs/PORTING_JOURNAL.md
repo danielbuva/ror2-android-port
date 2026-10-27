@@ -626,3 +626,15 @@ Retained worker readiness delta is +1 exact entry; all prior entries unchanged.
 54 focused host tests and host preflight pass. Accepted production was not replayed.
 Host-only; phone production, installation and original scene behavior remain open.
 APK unchanged: J850 `f1550ce0ff030ea0fa7a1ab66de19d54ee7894a7ae2f5b344f993157d6713949`.
+
+## J1222 — Complete ColorGrade source production on Android
+
+2026-10-27. Existing authored Shader owner reproduced one complete J850 file on Android.
+Acquired Linux SDK tools retain `Tools/` beneath compiler-data; Mac SDK supplies metadata/includes.
+The IPC owner now rejects the observed missing DX compiler dependencies before process launch.
+Output: 7,784 B, SHA-256 `fb6f38549e1336f51e87d60672350305c745c4017a044bc50189c1c2f534e98c`.
+Evidence: `work/coordination/p1-colorgrade-phone-v1/device-source-v4/` (source `303bbfaa`).
+Thermal worker 8.61 s, peak CPU/GPU 46.5 C, 0 s above 80 C; battery admission 27 C.
+Scratch removal, OLED sleep, lease release and prune passed; no APK installed or changed.
+Isolated shell production with host-staged acquired inputs only; no Editor at reconstruction time.
+Full shader cohort, ordinary app production, install/update and readiness remain open.
