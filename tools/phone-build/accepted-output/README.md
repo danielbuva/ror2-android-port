@@ -1459,3 +1459,32 @@ existing member-aware writer exposes `payload/frozenwall-spine-lab`.
 All 9,672 persisted objects, both serialized members and the compressed bundle
 are host raw-exact against J850. No runtime owner is added; phone production,
 installation and original scene behavior remain open.
+
+Frozenwall, Villagenight and Foggyswamp source selections and Skymeadow
+spine selections extend the existing `object_produce.py` and Shader owners
+through their named `recipe/owner-*-objects.json` profiles. The Bezier owner
+re-evaluates original curves with optional captured build angles; no geometry
+arrays are recipe inputs. `record_remap.py` owns index reuse: explicit pinned
+source pack receipts and `owner-*-shader-remap.json` profiles supply unchanged
+bodies/dependency provenance under destination identities. Original suppliers
+remain visible in the output receipt. Setup requires explicit PC/SDK/tool roots,
+pinned profiles, source-produced media/Shader packs and new output directories.
+Process exit tears down producers; receipts persist. These are optional host
+reconstruction owners; phone production, installation and original runtime
+behavior remain open.
+
+Index reuse command (all paths are caller supplied):
+
+```sh
+python3 tools/phone-build/accepted-output/record_remap.py \
+  --profile recipe/owner-frozenwall-source-lab-shader-remap.json \
+  --profile-sha256 "$remap_profile_sha256" \
+  --record-pack "$source_pack" "$source_receipt_sha256" \
+  --output "$new_remap_output"
+```
+
+Pass the resulting directory and its `result.json` SHA-256 to the object
+producer's existing `--record-pack` argument. Repeat the supplier argument for
+profiles with multiple source packs. The remap profile names the public source
+profile hash; callers first produce that source profile with the existing
+Shader owner. No compilation or historical-target lookup occurs in the remapper.

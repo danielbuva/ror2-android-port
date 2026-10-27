@@ -1,0 +1,20 @@
+{
+  "input_id": "6af7ed94619fe1b4346974b4486afa03a8d1625a7820e92da0ff74d57208fe88",
+  "records": [
+    {
+      "source_profile_sha256": "3313421454be04453770f570aa4e86893631e1c9136a6760f069cff4e18bc338",
+      "source": [
+        "dampcavesimple-source-lab",
+        "BuildPlayer-dampcavesimple.sharedAssets",
+        158
+      ],
+      "destination": [
+        "foggyswamp-source-lab",
+        "BuildPlayer-foggyswamp.sharedAssets",
+        67
+      ],
+      "bytes": 301384,
+      "sha256": "80ae8f64f26f1009e2d394f8111354038105512e6e75d57464b272fb7b0d7acb"
+    }
+  ]
+}
