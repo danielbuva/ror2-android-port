@@ -715,3 +715,19 @@ recount, phone production and scene behaviour remain open.
 Cross-bundle sources come from the orchestrator's exact-body and pointer-only original-record
 lookup. Evidence (ignored): `work/coordination/orchestrator/scenes/artifactworld-final-v1/`. Readiness
 recount, phone production and scene behaviour remain open.
+
+## J1231 — Complete source-derived blackbeach scene
+
+`whole-scene-blackbeach` is host raw-exact to J850: 19,098 objects, both serialized members and the
+6,198,224-byte bundle (SHA-256 `e2874966…`). Profiles: `recipe/owner-blackbeach-whole-*.json`.
+Cross-bundle sources come from the orchestrator's exact-body and pointer-only original-record
+lookup. Evidence (ignored): `work/coordination/orchestrator/scenes/blackbeach-final-v1/`. Readiness
+recount, phone production and scene behaviour remain open.
+
+## J1232 — Complete source-derived blackbeach2 scene
+
+`whole-scene-blackbeach2` is host raw-exact to J850: 18,363 objects, both serialized members and the
+5,285,481-byte bundle (SHA-256 `5773751b…`). Profiles: `recipe/owner-blackbeach2-whole-*.json`.
+Cross-bundle sources come from the orchestrator's exact-body and pointer-only original-record
+lookup. Evidence (ignored): `work/coordination/orchestrator/scenes/blackbeach2-final-v1/`. Readiness
+recount, phone production and scene behaviour remain open.
