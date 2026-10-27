@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J1244](PORTING_JOURNAL.md#j1244--complete-source-derived-moon-scene) | 2026-10-27 | Complete source-derived moon scene | `whole-scene-moon` is host raw-exact to J850: 17,327 objects, both serialized members and the 14,061,361-byte bundle (SHA-256 `64866304…`). |
 | [J1243](PORTING_JOURNAL.md#j1243--complete-source-derived-sad1-scene) | 2026-10-27 | Complete source-derived sad1 scene | `whole-scene-sad1` is host raw-exact to J850: 64,308 objects, both serialized members and the 29,831,426-byte bundle (SHA-256 `0f8a7917…`). |
 | [J1242](PORTING_JOURNAL.md#j1242--complete-source-derived-sulfurpools-scene) | 2026-10-27 | Complete source-derived sulfurpools scene | `whole-scene-sulfurpools` is host raw-exact to J850: 19,544 objects, both serialized members and the 11,418,389-byte bundle (SHA-256 `313d77e3…`). |
 | [J1241](PORTING_JOURNAL.md#j1241--complete-source-derived-habitatfall-scene) | 2026-10-27 | Complete source-derived habitatfall scene | `whole-scene-habitatfall` is host raw-exact to J850: 13,909 objects, both serialized members and the 6,752,461-byte bundle (SHA-256 `2944ff06…`). |

@@ -4595,3 +4595,19 @@ records that differ only in object references (remapped). No original body, curv
 program, copied source, private path or credential is included. All 64,308 persisted
 objects, two serialized members and the compressed bundle are host raw-exact to J850; phone
 production, installation and original scene behavior remain open.
+
+## moon complete scene selections (2026-10-27)
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-moon-whole-objects.json` | `b189deb255fddec61d5050d6ac46ce569c497b7e684d9170728cd3fe82e62548` |
+| `owner-moon-whole-postprocess-shaders.json` | `b8820dd5ca18c6c872e54ce56187dd6c71b1ac9d8765d5e31871892fe8a39ff0` |
+| `owner-moon-whole-standard-shaders.json` | `7e07ba46e24258b743ebfb252f3fda275f03d56d13b38296878668cf5e648ebf` |
+
+Manual provenance, privacy, licensing and sensitive-content audit: these profiles contain source
+selectors, hashes, checked pointer relationships and authored import policies only. Records with no
+same-scene source select byte-identical original records found by exact body hash, or original
+records that differ only in object references (remapped). No original body, curve, scalar, pixel,
+program, copied source, private path or credential is included. All 17,327 persisted
+objects, two serialized members and the compressed bundle are host raw-exact to J850; phone
+production, installation and original scene behavior remain open.
