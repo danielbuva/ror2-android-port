@@ -626,3 +626,19 @@ Retained worker readiness delta is +1 exact entry; all prior entries unchanged.
 54 focused host tests and host preflight pass. Accepted production was not replayed.
 Host-only; phone production, installation and original scene behavior remain open.
 APK unchanged: J850 `f1550ce0ff030ea0fa7a1ab66de19d54ee7894a7ae2f5b344f993157d6713949`.
+
+## J1222 — Complete source-derived Goolake source scene
+
+2026-10-27. Existing object/Shader owners reproduce Goolake source from legitimate
+PC input, pinned SDK/tools and source-produced packs. Eighteen captured build
+angle triplets and ten checked float32 rounding words retain original curve
+operands; complete geometry arrays remain excluded and default arithmetic is unchanged.
+All 13,012 persisted objects, both serialized members and the compressed bundle
+are raw-exact to J850: 7,621,879 B,
+`167f07532fd06970536a86b15ed7612fd8368465ae16b88b2b4f547f33a6655c`.
+Evidence: `work/coordination/p1-scenes-ss/goolake-build-rounding-v1/readiness-union/done.json`.
+Retained landed union advances 653 to 654/705 available (649 raw-exact);
+51 missing (7 APK, 44 payload). No accepted production is replayed.
+55 focused tests, Ruff, staged audit and host preflight pass; cleanup exits 0.
+Host-only; phone production, installation and original behavior remain open.
+APK unchanged: J850 `f1550ce0ff030ea0fa7a1ab66de19d54ee7894a7ae2f5b344f993157d6713949`.
