@@ -4837,3 +4837,15 @@ persisted records are host raw-exact to J850. Complete-scene and phone gates
 remain open. The existing player Shader producer also accepts repeatable
 `--authored-file` selectors for bounded authored-record production; common input
 pins remain checked and omission preserves the complete profile.
+
+Champrush complete scene selections extend the existing object/Shader owners
+through `recipe/owner-champrush-whole-objects.json` and the J1216 Shader profiles.
+`object_produce.py` admits explicit original class 114 preload roots only with
+checked source hashes, original PreloadData membership and external identity;
+component-to-GameObject admissions retain their class 1 requirement. Explicit
+current PC/SDK/tool roots, pinned profiles, source-produced packs and a fresh
+output directory set up production; process exit tears down producers while
+local receipts persist. The existing member-aware writer exposes
+`payload/whole-scene-champrush`. All 53,854 objects, both serialized members and
+the compressed bundle are host raw-exact to J850. Phone production, installation
+and original scene behavior remain open.

@@ -4123,3 +4123,19 @@ program, copied source, private path or credential is included. Legitimate PC
 input and independently acquired SDK remain required. Generated records and
 evidence stay ignored. All 26 persisted records are host raw-exact to J850;
 complete-scene readiness and phone qualification remain separate gates.
+
+## Champrush complete object selection (2026-10-27)
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-champrush-whole-objects.json` | `1b2fbf67b368c857c30739458bf4b4ca95b76d0e4c7a182b844b0c222c608572` |
+
+Manual provenance, privacy, licensing and sensitive-content audit: this profile
+contains source selectors, hashes, checked pointer relationships and authored
+import policies only. Lossless compaction preserves every decoded selection.
+Eight original Timeline/Track managed roots are admitted only through pinned
+class 114 bodies and their original PreloadData membership. No original body,
+curve, scalar, pixel, program, copied source, private path or credential is
+included. Legitimate PC files, SDK resources and receipt-pinned source-produced
+record packs remain required. Generated outputs and evidence stay ignored.
+Phone production, installation and original scene behavior remain open.
