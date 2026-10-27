@@ -10,6 +10,9 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J1235](PORTING_JOURNAL.md#j1235--complete-source-derived-villagenight-scene) | 2026-10-27 | Complete source-derived villagenight scene | `whole-scene-villagenight` is host raw-exact to J850: 14,033 objects, both serialized members and the 7,091,079-byte bundle (SHA-256 `43f2f650…`). |
+| [J1234](PORTING_JOURNAL.md#j1234--complete-source-derived-arena-scene) | 2026-10-27 | Complete source-derived arena scene | `whole-scene-arena` is host raw-exact to J850: 4,777 objects, both serialized members and the 4,521,338-byte bundle (SHA-256 `b3389af0…`). |
+| [J1233](PORTING_JOURNAL.md#j1233--complete-source-derived-ancientloft-scene) | 2026-10-27 | Complete source-derived ancientloft scene | `whole-scene-ancientloft` is host raw-exact to J850: 19,637 objects, both serialized members and the 6,123,578-byte bundle (SHA-256 `96c576b1…`). |
 | [J1232](PORTING_JOURNAL.md#j1232--complete-source-derived-blackbeach2-scene) | 2026-10-27 | Complete source-derived blackbeach2 scene | `whole-scene-blackbeach2` is host raw-exact to J850: 18,363 objects, both serialized members and the 5,285,481-byte bundle (SHA-256 `5773751b…`). |
 | [J1231](PORTING_JOURNAL.md#j1231--complete-source-derived-blackbeach-scene) | 2026-10-27 | Complete source-derived blackbeach scene | `whole-scene-blackbeach` is host raw-exact to J850: 19,098 objects, both serialized members and the 6,198,224-byte bundle (SHA-256 `e2874966…`). |
 | [J1230](PORTING_JOURNAL.md#j1230--complete-source-derived-artifactworld-scene) | 2026-10-27 | Complete source-derived artifactworld scene | `whole-scene-artifactworld` is host raw-exact to J850: 4,095 objects, both serialized members and the 1,383,262-byte bundle (SHA-256 `5d6aa710…`). |
