@@ -3455,6 +3455,13 @@ cannot reset that clock. Rejected terrain keeps neutral movement and the cliff
 guard, while the unfinished native waypoint still admits the existing stalled-path
 jump/replan request. `test_siren_gameplay_route_ownership.py` executes this
 policy against the retained Siren detour failure and recovery cases.
+The assisted selector retains its approach egg across native detours and combat
+input yields, revalidating membership in the current source cohort each frame.
+An attackable egg still takes priority; a dead or removed target falls back to
+the nearest valid egg. Stop/disposal releases the retained reference. This is
+a diagnostic routing policy; native tracking, damage and mission rules remain
+owned by the original game. The ranking host fixture covers detour retention
+and replacement; device mission acceptance remains open.
 The existing aim helper can issue at most 24 linecasts per active
 sample for the inspected original egg shape; inactive selection does no witness
 work. It yields to manual control and nearby hostile combat. Native encounter start, source/stage
