@@ -4843,3 +4843,11 @@ persisted records are host raw-exact to J850. Complete-scene and phone gates
 remain open. The existing player Shader producer also accepts repeatable
 `--authored-file` selectors for bounded authored-record production; common input
 pins remain checked and omission preserves the complete profile.
+
+Voidstage Shader selections extend the same `payload_shader_records.py` owner
+through `recipe/owner-voidstage-whole-{postprocess,standard}-shaders.json`.
+Original resource/material relationships select 24 post-processing records and
+Standard; PC/SDK/tool pins and fresh outputs retain the setup and teardown above.
+All 25 persisted records are host raw-exact to J850; complete-scene and phone gates
+remain separate. SDK 211 particle profiles may declare `stripped_keywords` to
+filter source-derived rows before native ordering; omission preserves defaults.

@@ -51,6 +51,14 @@ class ParticleCarrierTests(unittest.TestCase):
         rows[10][0][0].append("CALLER")
         self.assertNotIn("CALLER", rows[10][1][0])
 
+    def test_declared_stripping_removes_rows_and_preserves_source_order(self):
+        source, carrier, materials = self.fixture()
+        before = deepcopy(carrier)
+        _, rows = S.particles_selections(source, materials, carrier=carrier, stripped_keywords=["_ALPHAMODULATE_ON"])
+        expected = [["FOG_LINEAR", "PROCEDURAL_INSTANCING_ON", "_ALPHABLEND_ON"], ["FOG_LINEAR"]]
+        self.assertEqual(rows, {10: [expected] * 3, 20: [expected] * 3})
+        self.assertEqual(carrier, before)
+
     def test_property_declaration_must_match(self):
         source, carrier, materials = self.fixture()
         carrier["m_ParsedForm"]["m_PropInfo"]["m_Props"].append({"m_Name": "_Different"})
