@@ -28,6 +28,55 @@ def declaration(source, name):
 
 
 class SirenGameplayRouteOwnershipTests(unittest.TestCase):
+    def test_siren_and_combat_navigation_share_world_clock(self):
+        if not MONO.is_file() or not CSC.is_file():
+            self.skipTest("Pinned Unity Mono/Roslyn host compiler unavailable")
+        source = (SOURCE.parent / "world/IntegratedWorldBoundary.cs").read_text()
+        context = declaration(source, "sealed class IntegratedWorldSirenContext")
+        start = context.index("public void NavigateWorldInput(")
+        adapter = context[start : context.index(";", start) + 1]
+        host = (
+            """
+using System;
+class CharacterBody {} class NovaInputBridge {} struct Vector3 {}
+class World { public float seconds; }
+class Report { public World world = new World(); }
+class Coordinator {
+    public Report r = new Report(); public float captured;
+    public void NavigateWorldInput(CharacterBody p, NovaInputBridge b, Vector3 v,
+        float d, string n, float elapsed) { captured = elapsed; }
+}
+class Adapter {
+    public Coordinator coordinator = new Coordinator();
+"""
+            + adapter
+            + """
+    static void Main() {
+        var owner = new Adapter();
+        // Siren -> ordinary combat -> Siren must not rewind shared timers.
+        foreach (float world in new float[] {700, 701, 704}) {
+            owner.coordinator.r.world.seconds = world;
+            owner.NavigateWorldInput(null, null, new Vector3(), 1,
+                "Original Vulture egg", world - 520);
+            if (owner.coordinator.captured != world)
+                throw new Exception("Siren rewound the shared navigation clock");
+        }
+    }
+}
+"""
+        )
+        with tempfile.TemporaryDirectory(prefix="siren-clock-host-") as temporary:
+            directory = Path(temporary)
+            source_path = directory / "Clock.cs"
+            executable = directory / "Clock.exe"
+            source_path.write_text(host)
+            subprocess.run([str(MONO), str(CSC), "-nologo", "-out:" + str(executable), str(source_path)], check=True)
+            subprocess.run([str(MONO), str(executable)], check=True)
+        observer = declaration(context, "public ISirenNavigationObservationReader CreateNavigationObservationReader(")
+        self.assertIn("float navigationSeconds = coordinator.r.world.seconds;", observer)
+        self.assertIn("float requestAge = navigationSeconds - session.worldPathRequested;", observer)
+        self.assertNotIn("StageElapsed", observer)
+
     def test_terrain_steering_cannot_reset_native_waypoint_progress(self):
         source = (SOURCE.parent / "world/IntegratedWorldBoundary.cs").read_text()
         route = declaration(source, "public void NavigateWorldInput(CharacterBody player, NovaInputBridge bridge, Vector3 destination,")
