@@ -4247,3 +4247,7 @@ Retained J1192 Goolake spine selections (unchanged from PR 140):
 
 These retain the J1192 source-selection audit and existing original-input/SDK
 requirements. This table restores audit indexing only; no profile content changes.
+
+The original-audio owner manifest follows the authored native-waypoint progress
+and neutral-terrain recovery changes in `IntegratedWorldBoundary.cs`. Reviewed
+source hash pins only; no game-derived content, private paths or identifiers.

@@ -238,9 +238,8 @@ class Runner:
             code = self.run(argv, checkout, extra_env=extra)
             return code, None
         finally:
-            if serial:
+            if lease:  # only a device this job leased; a refused lease belongs to another worker's live run
                 subprocess.run([self.adb, "-s", serial, "shell", "input", "keyevent", "KEYCODE_SLEEP"], capture_output=True, timeout=30)
-            if lease:
                 shutil.rmtree(lease, ignore_errors=True)
             self.run(["git", "-C", str(self.repo), "worktree", "remove", "--force", str(checkout)], self.repo, timeout=600)
             self.run([sys.executable, "scripts/prune-generated.py", "--apply"], self.repo, timeout=1800)

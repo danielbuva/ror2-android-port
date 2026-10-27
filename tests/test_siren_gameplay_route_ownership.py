@@ -28,6 +28,81 @@ def declaration(source, name):
 
 
 class SirenGameplayRouteOwnershipTests(unittest.TestCase):
+    def test_terrain_steering_cannot_reset_native_waypoint_progress(self):
+        source = (SOURCE.parent / "world/IntegratedWorldBoundary.cs").read_text()
+        route = declaration(source, "public void NavigateWorldInput(CharacterBody player, NovaInputBridge bridge, Vector3 destination,")
+        captured = route.index("var pathWaypoint = waypoint;")
+        fallback = route.index("waypoint = TerrainTravelWaypoint(")
+        progress = route.index("var pathRemaining = Vector3.Distance(position, pathWaypoint);")
+        self.assertLess(captured, fallback)
+        self.assertLess(fallback, progress)
+        # r5's ground steering changed while the same source node remained
+        # blocked. Only source-node distance/identity may reset its stall clock.
+        clock = route[progress : route.index("navigationStalledSeconds =", progress)]
+        self.assertIn("Vector3.Distance(pathWaypoint, worldNavigationProgressWaypoint)", clock)
+        self.assertIn("pathRemaining < worldNavigationProgressDistance - .5f", clock)
+        self.assertIn("worldNavigationProgressWaypoint = pathWaypoint;", clock)
+        self.assertIn("worldNavigationProgressDistance = pathRemaining;", clock)
+        self.assertNotIn("worldNavigationProgressWaypoint = waypoint;", route)
+
+    def test_rejected_terrain_does_not_disable_stalled_path_recovery(self):
+        if not MONO.is_file() or not CSC.is_file():
+            self.skipTest("Pinned Unity Mono/Roslyn host compiler unavailable")
+        source = (SOURCE.parent / "world/IntegratedWorldBoundary.cs").read_text()
+        route = declaration(source, "public void NavigateWorldInput(CharacterBody player, NovaInputBridge bridge, Vector3 destination,")
+        start = route.index("coordinator.r.world.navigationRecoveryJump =")
+        expression = route[start : route.index(";", start) + 1]
+        host = (
+            """
+using System;
+class World { public bool navigationRecoveryJump, navigationTerrainFallback;
+    public float navigationStalledSeconds, navigationObjectiveStalledSeconds; }
+class Report { public World world = new World(); }
+class Coordinator { public Report r = new Report(); }
+class Mathf { public static float Max(float a, float b) => Math.Max(a,b); }
+class RecoveryContract {
+    static void Main() {
+        var coordinator = new Coordinator();
+        float stopDistance = 1.5f;
+        // r6: terrain rejected every candidate and returned position (remaining=0),
+        // while the original waypoint was still 11.46 m away after a 29.57 s stall.
+        float pathRemaining = 11.461334f, remaining = 0;
+        coordinator.r.world.navigationTerrainFallback = true;
+        coordinator.r.world.navigationStalledSeconds = 29.576721f;
+        coordinator.r.world.navigationObjectiveStalledSeconds = 21.995178f;
+        """
+            + expression
+            + """
+        if (!coordinator.r.world.navigationRecoveryJump)
+            throw new Exception("neutral terrain suppressed unfinished-path recovery");
+        // A completed native waypoint must not manufacture a recovery jump.
+        pathRemaining = 0;
+        """
+            + expression
+            + """
+        if (coordinator.r.world.navigationRecoveryJump)
+            throw new Exception("completed path requested recovery");
+        // A healthy path must still wait for the existing stall threshold.
+        pathRemaining = 11.461334f;
+        coordinator.r.world.navigationStalledSeconds = 0;
+        coordinator.r.world.navigationObjectiveStalledSeconds = 0;
+        """
+            + expression
+            + """
+        if (coordinator.r.world.navigationRecoveryJump)
+            throw new Exception("progressing path requested recovery");
+    }
+}
+"""
+        )
+        with tempfile.TemporaryDirectory(prefix="neutral-terrain-host-") as temporary:
+            directory = Path(temporary)
+            source_path = directory / "Recovery.cs"
+            executable = directory / "Recovery.exe"
+            source_path.write_text(host)
+            subprocess.run([str(MONO), str(CSC), "-nologo", "-out:" + str(executable), str(source_path)], check=True)
+            subprocess.run([str(MONO), str(executable)], check=True)
+
     def test_native_detour_keeps_graph_input_until_waypoint_stalls(self):
         if not MONO.is_file() or not CSC.is_file():
             self.skipTest("Pinned Unity Mono/Roslyn host compiler unavailable")
