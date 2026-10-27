@@ -265,6 +265,120 @@ class SessionMemoryBatchTests(unittest.TestCase):
             self.assertNotIn(private, public)
         self.assertIn("PRIVATE", (self.work / "coordination/session-memory-batch/123/owner-output.log").read_text())
 
+    def inspection_fixture(self, *, first_failure="session 4: ready world does not report a living player with positive maxHealth"):
+        self.evidence = "work/device/synthetic-device/experiments/session-memory/synthetic-failure"
+        self.owner_result = self.root / self.evidence / "result.json"
+        self.failed_series = dict(
+            success=False,
+            apk_sha256=APK,
+            attempt="private-attempt",
+            stop="abandon-observation-contract-failed",
+            first_failure=first_failure,
+            sessions_requested=6,
+            sessions_observed=3,
+            runtime_errors=[],
+            failures=["stopped", "partial"],
+            growth=dict(
+                rows=[dict(session=i, managed_at_start=100 + i, managed_after_collection=200 + i, menu_pss_kib=300 + i) for i in (1, 2, 3)],
+                final_menu_samples=[],
+                per_session_slope_from_session_2=dict(managed_before_presentation_bytes=1),
+            ),
+        )
+        self.failed_receipt = dict(
+            success=False,
+            mode="measure",
+            apk_sha256=APK,
+            attempt_sha256=hashlib.sha256(b"private-attempt").hexdigest(),
+            sessions_requested=6,
+            error="Session memory check failed (" + first_failure + "); see " + self.evidence,
+        )
+        self.write(self.owner_result, self.failed_series)
+        self.write(self.root / self.receipt, self.failed_receipt)
+        return self.common.sha(self.root / self.receipt)
+
+    def inspect_fixture(self, digest):
+        return self.module.inspect_receipt(self.receipt, digest, APK)
+
+    def test_inspect_reports_failed_series_without_writes_or_device_calls(self):
+        digest = self.inspection_fixture()
+        before = {p: p.read_bytes() for p in self.root.rglob("*") if p.is_file()}
+        with mock.patch.object(self.common, "write", side_effect=AssertionError("inspection must not write")):
+            result = self.inspect_fixture(digest)
+        self.assertTrue(result["success"])
+        self.assertFalse(result["original_series_success"])
+        self.assertFalse(result["original_receipt_success"])
+        self.assertTrue(result["diagnostic_only"])
+        self.assertFalse(result["acceptance_available"])
+        self.assertFalse(result["memory_bound_pass"])
+        self.assertEqual(result["sessions_observed"], 3)
+        self.assertEqual(result["failed_session"], 4)
+        self.assertEqual(result["first_authored_reason"], "ready world does not report a living player with positive maxHealth")
+        self.assertEqual(result["session_samples"][1]["managed_at_start_bytes"], 102)
+        self.assertEqual(result["original_report_sha256"], digest)
+        self.assertEqual(result["owner_result_sha256"], self.common.sha(self.owner_result))
+        self.assertEqual(self.events, [])
+        self.assertEqual(before, {p: p.read_bytes() for p in self.root.rglob("*") if p.is_file()})
+
+    def test_inspect_unknown_private_reason_is_hash_only(self):
+        secret = "session 4: private-field-value /private/path"
+        digest = self.inspection_fixture(first_failure=secret)
+        result = self.inspect_fixture(digest)
+        self.assertTrue(result["success"])
+        self.assertIsNone(result["first_authored_reason"])
+        self.assertEqual(result["first_failure_sha256"], hashlib.sha256(secret.encode()).hexdigest())
+        public = json.dumps(result)
+        for private in ("private-field-value", "/private/path", "synthetic-device", "private-attempt", str(self.root), self.evidence):
+            self.assertNotIn(private, public)
+
+    def test_inspect_receipt_digest_mismatch_refuses_before_owner_read(self):
+        self.inspection_fixture()
+        self.owner_result.unlink()
+        result = self.inspect_fixture("c" * 64)
+        self.assertFalse(result["success"])
+        self.assertEqual(result["failure_phase"], "receipt-hash")
+
+    def test_inspect_attempt_link_mismatch_refuses(self):
+        digest = self.inspection_fixture()
+        self.failed_series["attempt"] = "another-private-attempt"
+        self.write(self.owner_result, self.failed_series)
+        result = self.inspect_fixture(digest)
+        self.assertFalse(result["success"])
+        self.assertEqual(result["failure_phase"], "owner-provenance")
+
+    def test_inspect_apk_link_mismatch_refuses(self):
+        digest = self.inspection_fixture()
+        self.failed_series["apk_sha256"] = "d" * 64
+        self.write(self.owner_result, self.failed_series)
+        result = self.inspect_fixture(digest)
+        self.assertFalse(result["success"])
+        self.assertEqual(result["failure_phase"], "owner-provenance")
+
+    def test_inspect_no_recorded_owner_path_does_not_search(self):
+        self.inspection_fixture()
+        self.failed_receipt["error"] = "failure without an owner result reference"
+        self.write(self.root / self.receipt, self.failed_receipt)
+        result = self.inspect_fixture(self.common.sha(self.root / self.receipt))
+        self.assertFalse(result["success"])
+        self.assertEqual(result["failure_phase"], "owner-evidence-reference")
+
+    def test_inspect_recorded_path_cannot_escape_session_evidence(self):
+        self.inspection_fixture()
+        self.failed_receipt["error"] = "Session memory check failed (private); see work/config"
+        self.write(self.root / self.receipt, self.failed_receipt)
+        result = self.inspect_fixture(self.common.sha(self.root / self.receipt))
+        self.assertFalse(result["success"])
+        self.assertEqual(result["failure_phase"], "owner-evidence-reference")
+
+    def test_inspect_cli_needs_no_runner_or_device_environment(self):
+        digest = self.inspection_fixture()
+        stream = io.StringIO()
+        with mock.patch.dict(os.environ, {}, clear=True), contextlib.redirect_stdout(stream):
+            code = self.module.main(["inspect", "--receipt", self.receipt, "--expected-receipt-sha256", digest, "--expected-apk-sha256", APK])
+        self.assertEqual(code, 0)
+        result = json.loads(stream.getvalue())
+        self.assertFalse(result["original_series_success"])
+        self.assertEqual(self.events, [])
+
 
 if __name__ == "__main__":
     unittest.main()

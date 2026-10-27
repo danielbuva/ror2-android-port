@@ -3774,6 +3774,9 @@ new ignored receipt under `work/coordination/`. Capture preserves menu-2/menu-4
 snapshot digests; only a separate no-snapshot measure can qualify the slope.
 Terminal teardown verifies idle state and sleeps the display; the bridge releases
 its lease. Public output contains only fixed outcomes and aggregate measurements.
+Host-only `inspect` reads an explicitly hash-pinned failed receipt and its recorded
+owner result, without a device command or a new capture. Inspection success never
+qualifies the failed series or turns partial menu samples into an accepted bound.
 `session_heap_growth.py` reads the selected capture receipt and exact exported
 DuckDB pair (`duckdb==1.4.4` in the pinned requirements), verifying local snapshot
 hashes and export provenance. Its `--export-dir` mode archives the pinned public

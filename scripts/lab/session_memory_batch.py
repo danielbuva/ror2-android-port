@@ -4,6 +4,7 @@ Use through /lab script with device=<alias>. The bridge owns the sole lease;
 this synchronous adapter neither acquires another lease nor changes policy.
 Private evidence stays under work/. Stdout is an explicit numeric/hash summary.
 Capture is attribution only; measure omits snapshots and the static-root walk.
+The inspect mode reads existing failed evidence without a device alias or access.
 """
 
 import argparse
@@ -71,7 +72,7 @@ def _stage_result(stage):
     return common.read(path)
 
 
-def _receipt_path(value):
+def _receipt_path(value, *, existing=False):
     relative = Path(value)
     if relative.is_absolute() or relative.parts[:2] != ("work", "coordination") or ".." in relative.parts or relative.suffix != ".json":
         raise ValueError("Use a new repository-relative JSON receipt under work/coordination")
@@ -79,9 +80,155 @@ def _receipt_path(value):
     # Resolve that authorized boundary once; reject additional nested links.
     work = common.WORK.resolve()
     path = work.joinpath(*relative.parts[1:])
-    if path != path.resolve() or path.exists():
-        raise ValueError("Receipt must be new and have no symlink components")
+    if path != path.resolve() or (not path.is_file() if existing else path.exists()):
+        raise ValueError("Receipt must have the requested existence and no nested symlinks")
     return path
+
+
+SERIES_STOPS = frozenset(
+    "deadline process-exited unexpected-session-index survivor-selection-mismatch first-failure outside-first-stage-contract "
+    "completed-session-report-unavailable completed-session-cleanup-failed offline-menu-start-control-unavailable "
+    "ordinary-menu-start-not-observed first-live-profile-baseline-unavailable abandon-observation-contract-failed "
+    "abandon-world-startup-timeout unexpected-or-unowned-end-run-confirmation abandon-control-geometry-unavailable "
+    "original-loss-occurred-before-abandon first-runtime-log-error runner-error repeated-sessions-observed".split()
+)
+# Exact public literals in session_cleanup_check's observation/cleanup contracts.
+# Runtime messages and dynamically interpolated values are deliberately excluded.
+AUTHORED_FAILURES = frozenset(
+    (
+        "abandon observation is not live session 1",
+        "world stopped being ready during observed interval",
+        "ready world does not report a living player with positive maxHealth",
+        "diagnostic input was not observed throughout the live interval",
+        "player death event occurred before abandon",
+        "player death lifecycle occurred before abandon",
+        "run ending or result occurred before abandon",
+        "profile result was applied before abandon",
+        "abandoned-session report identity differs",
+        "abandoned session did not finish successful owned cleanup",
+        "integrated world/template cleanup was not observed",
+        "source abandon action was not recorded",
+        "abandon path lacks explicit no-ending/no-result evidence",
+        "abandon path lacks explicit no-native-death evidence",
+        "abandon path lacks explicit no-profile-result evidence",
+        "abandon path changed/missed applied-run or earned-unlock counts",
+        "diagnostic assistance evidence or all-off debug options differ",
+    )
+)
+
+
+def _count(value):
+    return value if type(value) is int and value >= 0 else None
+
+
+def _failure_summary(value):
+    result = dict(first_authored_reason=None, failed_session=None, first_failure_sha256=None)
+    if not isinstance(value, str):
+        return result
+    result["first_failure_sha256"] = hashlib.sha256(value.encode()).hexdigest()
+    match = re.fullmatch(r"session (\d+)(?:: (.*)| (button|endRunButton|confirmEndRunButton))?", value, re.DOTALL)
+    if match:
+        result["failed_session"] = int(match[1])
+        value = match[2] or ("abandon-control-geometry-unavailable" if match[3] else "session-index")
+    if value in AUTHORED_FAILURES or value in SERIES_STOPS or value == "session-index":
+        result["first_authored_reason"] = value
+    return result
+
+
+def _recorded_series_file(receipt):
+    """Use exact recorded references only; never enumerate run directories."""
+    references = []
+    if isinstance(receipt.get("stage_evidence"), str):
+        references.append(receipt["stage_evidence"])
+    stage = receipt.get("stage")
+    if isinstance(stage, dict) and isinstance(stage.get("evidence"), str):
+        references.append(stage["evidence"])
+    for key in ("error", "stage_error"):
+        error = receipt.get(key)
+        if isinstance(error, str) and error.startswith("Session memory check failed (") and "); see " in error:
+            references.append(error.rsplit("); see ", 1)[1])
+    if len(set(references)) != 1:
+        raise ValueError("One unambiguous recorded session result is required")
+    relative = Path(references[0])
+    if (
+        relative.is_absolute()
+        or ".." in relative.parts
+        or len(relative.parts) not in (5, 6)
+        or relative.parts[:2] != ("work", "device")
+        or relative.parts[-3:-1] != ("experiments", "session-memory")
+    ):
+        raise ValueError("Recorded result is outside session-memory evidence")
+    work = common.WORK.resolve()
+    path = work.joinpath(*relative.parts[1:], "result.json")
+    if path != path.resolve() or not path.is_relative_to(work) or not path.is_file():
+        raise ValueError("Recorded result is missing or has nested symlinks")
+    return path
+
+
+def inspect_receipt(receipt, expected_receipt_sha256, expected_apk_sha256):
+    """Read an exact retained receipt/result; no device imports, calls or writes."""
+    public = dict(success=False, mode="inspect", diagnostic_only=True, acceptance_available=False, memory_bound_pass=False)
+    phase = "receipt-read"
+    try:
+        expected = validate_expected_apk_sha256(expected_apk_sha256)
+        if expected is None or not isinstance(expected_receipt_sha256, str) or not re.fullmatch(r"[0-9a-f]{64}", expected_receipt_sha256):
+            raise ValueError("Explicit receipt and APK hashes are required")
+        payload = _receipt_path(receipt, existing=True).read_bytes()
+        phase = "receipt-hash"
+        digest = hashlib.sha256(payload).hexdigest()
+        if digest != expected_receipt_sha256:
+            raise ValueError("Receipt bytes differ")
+        private = json.loads(payload)
+        phase = "receipt-provenance"
+        if not isinstance(private, dict) or private.get("apk_sha256") != expected or private.get("mode") not in {"capture", "measure"}:
+            raise ValueError("Receipt APK or mode differs")
+        phase = "owner-evidence-reference"
+        path = _recorded_series_file(private)
+        phase = "owner-result-read"
+        raw = path.read_bytes()
+        series = json.loads(raw)
+        phase = "owner-provenance"
+        if not isinstance(series, dict) or series.get("apk_sha256") != expected or not isinstance(series.get("attempt"), str):
+            raise ValueError("Owner result identity differs")
+        if hashlib.sha256(series["attempt"].encode()).hexdigest() != private.get("attempt_sha256"):
+            raise ValueError("Owner attempt differs")
+        if series.get("sessions_requested") != private.get("sessions_requested"):
+            raise ValueError("Owner requested-session count differs")
+        phase = "owner-summary"
+        growth = series.get("growth") or {}
+        points = []
+        for row in growth.get("rows") or []:
+            points.append(
+                {
+                    "session": _count(row.get("session")),
+                    "managed_at_start_bytes": _count(row.get("managed_at_start")),
+                    "managed_after_collection_bytes": _count(row.get("managed_after_collection")),
+                    "menu_pss_kib": _count(row.get("menu_pss_kib")),
+                }
+            )
+        final = [sample for sample in growth.get("final_menu_samples") or [] if sample.get("phase") == "before-presentation"]
+        public.update(
+            success=True,
+            original_report_sha256=digest,
+            owner_result_sha256=hashlib.sha256(raw).hexdigest(),
+            apk_sha256=expected,
+            original_series_success=series.get("success") is True,
+            original_receipt_success=private.get("success") is True,
+            capture_instrumented=private["mode"] == "capture",
+            sessions_requested=_count(series.get("sessions_requested")),
+            sessions_observed=_count(series.get("sessions_observed")),
+            runtime_error_count=len(series["runtime_errors"]) if isinstance(series.get("runtime_errors"), list) else None,
+            failure_count=len(series["failures"]) if isinstance(series.get("failures"), list) else None,
+            stop=series.get("stop") if series.get("stop") in SERIES_STOPS else "unclassified",
+            stop_sha256=hashlib.sha256(series["stop"].encode()).hexdigest() if isinstance(series.get("stop"), str) else None,
+            session_samples=points,
+            final_menu_managed_bytes=_count(final[0].get("managed")) if len(final) == 1 else None,
+            recorded_menu_slope_bytes_per_session=_number(growth.get("per_session_slope_from_session_2", {}).get("managed_before_presentation_bytes")),
+            **_failure_summary(series.get("first_failure")),
+        )
+    except Exception:
+        public["failure_phase"] = phase
+    return public
 
 
 def run(mode, expected_apk_sha256, sessions=6, *, receipt, environ=None):
@@ -225,13 +372,19 @@ def run(mode, expected_apk_sha256, sessions=6, *, receipt, environ=None):
 
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("mode", choices=("preflight", "capture", "measure"))
+    parser.add_argument("mode", choices=("preflight", "capture", "measure", "inspect"))
     parser.add_argument("--expected-apk-sha256", required=True)
     parser.add_argument("--sessions", type=int, default=6)
-    parser.add_argument("--receipt", required=True, help="New repository-relative ignored JSON receipt under work/coordination; remains local")
+    parser.add_argument("--receipt", required=True, help="Repository-relative ignored JSON receipt under work/coordination; new for runs, existing for inspect")
+    parser.add_argument("--expected-receipt-sha256", help="Required for read-only inspect; bind the existing private receipt's exact bytes")
     args = parser.parse_args(argv)
     try:
-        summary = run(args.mode, args.expected_apk_sha256, args.sessions, receipt=args.receipt)
+        if args.mode == "inspect":
+            summary = inspect_receipt(args.receipt, args.expected_receipt_sha256, args.expected_apk_sha256)
+        else:
+            if args.expected_receipt_sha256 is not None:
+                parser.error("--expected-receipt-sha256 requires inspect")
+            summary = run(args.mode, args.expected_apk_sha256, args.sessions, receipt=args.receipt)
     except BaseException:
         # A local receipt/output failure must not leak a traceback into the public tail.
         summary = dict(success=False, failure_phase="local-evidence-write")
