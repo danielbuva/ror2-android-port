@@ -626,6 +626,11 @@ Repeatable `--authored-file` selects standalone tracked-source rows from the
 same pinned profile, retaining common input checks and excluding unrelated
 native/font/builtin/shared setup. This current bounded mode needs no generated
 private profile; the existing result file lists the produced selection.
+Authored selection excludes unused native-recovery module pins/imports. The
+existing `unity_write.py` owner decodes the original embedded Shader48 schema
+and reads/writes ordered values using Python standard-library primitives,
+including map pairs and per-node/array alignment. Native recovery routes retain
+their UnityPy dependencies; compiler and codec contexts still own teardown.
 The original native paths use the existing source emitters and
 `NativePrograms` to regenerate source from pinned PC shaders/materials through an
 explicit public d3dasm tool/hash, without retained HLSL. Variant reflection
@@ -1552,10 +1557,11 @@ time above 80 C, CPU/GPU peak and phase; heat below the safety limits does not
 fail gameplay. Failed supervision also aborts without retry.
 Before each stage, readable CPU/GPU/battery/skin zones must cool to at most
 50 C with the OLED asleep, with battery back to at most 35 C before every
-stage. Battery status charging (2) at level >= 80%, or level > 85%, refuses
-admission without retry; charging settings remain user-owned. The observer
-reads battery temperature, level and status through bounded dumpsys calls and
-retains them in trace rows and stage receipts. Other physical zones, including power-management,
+stage. Positive battery `current_now` at level >= 80%, or level > 85%, refuses
+admission without retry; a charging label with zero current is admitted. Charging
+settings remain user-owned. Admission records the measured sysfs current; the
+observer reads battery temperature, level and status through bounded dumpsys
+calls and retains them in trace rows and stage receipts. Other physical zones, including power-management,
 charger and USB sensors, are recorded as excluded from admission only; they
 remain sampled in raw observations and all-zone peaks. The runtime thresholds
 apply to CPU/GPU and battery. Admission discovers zone types and readable paths
@@ -3893,6 +3899,13 @@ retain the existing detection rules. GitHub caches only pinned pip downloads.
 [Timing and cache operation](DEVELOPING.md#full-host-checks-and-timing) describe
 setup, reuse and isolation.
 
+`scripts/lab/lab_runner.py` (current) owns the comment-driven lab bridge: the
+`lab-runner` workflow runs main's copy on the owner's self-hosted runner for owner
+`/lab ...` comments, gives each job its own worktree of the requested ref, takes the
+orchestrator device lease, applies the battery rule, posts a sanitized result and
+prunes. `scripts/lab/lab-runner-guard.sh` is its job-started hook, installed outside
+the repository. Setup and command reference: [LAB_RUNNER](LAB_RUNNER.md).
+
 Host CI also runs Ruff (pinned in `tools/lab-requirements.txt`, configured in `ruff.toml`):
 `ruff check` and `ruff format --check` on every Python file a change touches. `scripts/` and
 `tests/` are ruff-formatted (J518); `ruff.toml` lists the rules still off and why.
@@ -4869,3 +4882,11 @@ up production; process exit tears down producers while receipts persist.
 The member-aware writer exposes `payload/whole-scene-bazaar`. All 8,087 objects,
 both serialized members and the compressed bundle are host raw-exact to J850.
 Phone production, installation and original scene behavior remain open.
+
+Voidstage Shader selections extend the same `payload_shader_records.py` owner
+through `recipe/owner-voidstage-whole-{postprocess,standard}-shaders.json`.
+Original resource/material relationships select 24 post-processing records and
+Standard; PC/SDK/tool pins and fresh outputs retain the setup and teardown above.
+All 25 persisted records are host raw-exact to J850; complete-scene and phone gates
+remain separate. SDK 211 particle profiles may declare `stripped_keywords` to
+filter source-derived rows before native ordering; omission preserves defaults.

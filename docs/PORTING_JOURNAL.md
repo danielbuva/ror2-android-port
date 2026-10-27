@@ -557,3 +557,43 @@ bounded phone slice, retaining common input pins and the default complete route.
 Evidence: `work/coordination/p1-champrush-shaders-v1/done.json`.
 Complete-scene readiness, phone production, installation and runtime remain open;
 no readiness promotion or APK change.
+
+## J1217 — Authored Shader serialization without Android UnityPy
+
+2026-10-27. The existing serialized-file owner decodes original Shader48 type
+metadata and reads/writes ordered source-schema values with standard Python.
+Authored selection loads no native-recovery dependencies and omits their unused
+pins; original input, SDK, settings and authored-source checks remain enforced.
+The original 15,972 B record roundtrips exactly and matches UnityPy decoding;
+ColorGrade admission reaches the compiler with UnityPy/lz4 imports blocked.
+Evidence: `work/coordination/p1-colorgrade-phone-v1/dependency-repair-host-v4/`;
+51 focused tests, Ruff and host preflight pass. No output/APK change or readiness
+promotion. Whole-file phone production and ordinary app admission remain open.
+
+## J1218 — Source-derived Voidstage Shader selections
+
+2026-10-27. Audited profiles publish the existing owners' 24 post-processing and
+one Standard record selections from legitimate PC input and pinned public SDK.
+Retained source-guarded production persisted outputs before independent J850
+comparison; all 25 records are raw-exact, including Standard 261,528 B.
+Evidence: `work/coordination/p1-voidstage-shaders-v1/done.json`.
+The particle owner also accepts explicit recipe keyword stripping before native
+ordering; omitted policy preserves existing source selections. Focused host
+fixtures cover row removal and retained ordering. No target bytes are published.
+Complete-scene readiness, phone production and runtime remain open; no APK change.
+
+
+## J1219 — Complete source-derived Champrush, Voidstage and Bazaar scenes
+
+2026-10-27. Existing object/Shader owners reproduce three complete scenes from
+legitimate PC inputs, pinned SDK/tools and source-produced packs. Checked class
+114 original preload roots extend the existing owner; component owners stay class 1.
+All 71,570 objects, six serialized members and three compressed bundles raw-exact to J850.
+Champrush 3,177,078 B: `ae62133675e862c7782e7e4c14d0c199b03e43d64d6d8c9710aa1751abf61d53`.
+Voidstage 19,845,238 B: `b26b1419ae8e477fc7dd72e8d3a8b07c8a7ff00766f3c081d052b3792b8ff52f`.
+Bazaar 5,818,018 B: `46d50bd26421ff3d42734554de0f5711924cbc15e0fd5a58274cc5c377b01220`.
+Evidence: `work/coordination/p1-scenes-w/publication-batch-v{8,9,10}/publication-inputs.json`.
+Retained readiness after these deltas: 647/705 available, 642 raw-exact; 58 missing.
+Audited recipes publish selections only; accepted production was retained without replay.
+Host-only; phone production, installation and original scene behavior remain open.
+APK unchanged: J850 `f1550ce0ff030ea0fa7a1ab66de19d54ee7894a7ae2f5b344f993157d6713949`.

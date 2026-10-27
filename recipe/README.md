@@ -4177,3 +4177,25 @@ No original body, curve, scalar, pixel, program, copied source, private path or
 credential is included. Legitimate PC files, SDK resources and receipt-pinned
 source-produced packs remain required; outputs and evidence stay ignored.
 Phone production, installation and original scene behavior remain open.
+
+## Voidstage source Shader selections (2026-10-27)
+
+| Profile | SHA-256 |
+| --- | --- |
+| `owner-voidstage-whole-postprocess-shaders.json` | `5d34926684243892ae14bec7cb22e402fcfae94ef65dc09619a8107fc378c5df` |
+| `owner-voidstage-whole-standard-shaders.json` | `7c40fe5f02ed72235f6f1e32deccf5ef2d7c98f9c8afe10e4c7e27180544adca` |
+
+Manual provenance, privacy, licensing and sensitive-content audit: these profiles
+contain original scene/material/Shader selectors, hashes, pinned public SDK/tool
+identities and existing authored settings only. Original resource relationships
+select 24 post-processing records; recursive original materials select Standard.
+Programs come from the existing exporter-template and pinned SDK compiler owners.
+No target bytes, copied game source, private paths or credentials are included.
+Legitimate PC input and independently acquired SDK remain required. Generated
+outputs and evidence stay ignored. All 25 persisted records are host raw-exact
+to J850; complete-scene readiness and phone qualification remain separate.
+
+The existing SDK 211 particle producer accepts optional `stripped_keywords` in
+an audited profile. It removes source-derived variant rows containing a declared
+keyword before native ordering; omission preserves all existing selections.
+This policy records explicit build stripping, without supplying program bytes.
