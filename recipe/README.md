@@ -4320,3 +4320,18 @@ owner. No original body, curve, scalar, pixel, program, copied source, private p
 or credential is included. All 30,311 persisted objects, two serialized members and
 the compressed bundle are host raw-exact to J850; phone production, installation
 and original scene behavior remain open.
+
+## nest complete scene selections (2026-10-27)
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-nest-whole-objects.json` | `88de6a4e782772ad993fcbaed674e1e1ac260ad69fb373fa91619d4afd94acf4` |
+| `owner-nest-whole-standard-shaders.json` | `d893a55491d862b8ce31d4d75b8939cc92ba1fcd45f338e967d9e435bf3a7212` |
+
+Manual provenance, privacy, licensing and sensitive-content audit: these profiles contain source
+selectors, hashes, checked pointer relationships and authored import policies only. Records with no
+same-scene source select byte-identical original records found by exact body hash, or original
+records that differ only in object references (remapped). No original body, curve, scalar, pixel,
+program, copied source, private path or credential is included. All 33,275 persisted
+objects, two serialized members and the compressed bundle are host raw-exact to J850; phone
+production, installation and original scene behavior remain open.
