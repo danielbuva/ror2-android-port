@@ -1099,7 +1099,8 @@ d3dasm tool. No retained HLSL is consumed. Builtin and shared source records use
 schema. The same command emits the 44-object builtin file and the two-record
 `shared-shaders` object pack for the existing mixed-file writer. There are 369
 complete files plus two shared records; the terminal shared receipt records its
-`objects.bin` and `index.jsonl` hashes. Phone execution remains unqualified (J1144/J1146/J1147/J1151/J1157).
+`objects.bin` and `index.jsonl` hashes. The full cohort remains phone-unqualified (J1144/J1146/J1147/J1151/J1157);
+the bounded ColorGrade phone result is recorded below.
 
 Build the existing public LZ4 worker with `build_bundle_lz4.py`; its worker method
 9 selects shader HC9 while UnityFS methods 2/3 stay fast/HC12.
@@ -1112,6 +1113,25 @@ IPC arguments, inherits the caller's runner environment and owns teardown.
 Acquire and verify the Linux compiler/plugin/runtime and public runner through
 their existing J1094/J1102 input receipts; this option does not acquire tools or
 qualify complete phone production. Omitting both options retains the Mac host.
+
+Preserve the acquired Linux SDK layout: `--compiler-data LINUX_DATA` must
+contain `Tools/UnityShaderCompiler`, `Tools/libdxcompiler.so`,
+`Tools/D3DCompiler_47.dll` and `Tools/glslang.so`. Point the GNU runner at
+`LINUX_DATA/Tools/UnityShaderCompiler` and include `LINUX_DATA/Tools` in its
+`LD_LIBRARY_PATH` alongside the acquired GNU runtime libraries. The existing
+IPC owner rejects missing DX compiler dependencies before launch. A flattened
+`shader/` directory fails the compiler's relative `Tools/D3DCompiler_47.dll`
+lookup even after IPC initialization. Keep Mac metadata/includes in `--sdk`.
+
+The bounded ColorGrade producer ran on Android without the Editor and persisted
+7,784 B, SHA-256
+`fb6f38549e1336f51e87d60672350305c745c4017a044bc50189c1c2f534e98c`,
+raw-exact to J850. Local evidence:
+`work/coordination/p1-colorgrade-phone-v1/device-source-v4/`.
+The thermal worker completed in 8.61 s, peak CPU/GPU 46.5 C and 0 s above 80 C;
+scratch removal, display sleep, lease release and prune passed. This is isolated
+shell production, with acquired SDK/runtime inputs staged by the host. Ordinary
+app production, complete cohort, installation/update and readiness stay open.
 
 For a bounded authored slice, add repeatable `--authored-file FILE` arguments.
 ColorGrade is `--authored-file 19e91578880954efeab1111b405232b9` in the

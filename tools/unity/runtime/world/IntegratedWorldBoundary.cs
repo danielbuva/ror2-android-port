@@ -2443,12 +2443,12 @@ public sealed partial class PortSession
             }
             public ISirenNavigationObservationReader CreateNavigationObservationReader(CharacterBody player, NovaInputBridge bridge)
             {
-                float stageSeconds = StageElapsed;
-                float requestAge = stageSeconds - session.worldPathRequested;
+                float navigationSeconds = coordinator.r.world.seconds;
+                float requestAge = navigationSeconds - session.worldPathRequested;
                 bool requestExists = session.worldPathRequestId > 0 && session.worldPathRequested >= 0 &&
                                      !string.IsNullOrEmpty(session.worldPathRequestReason) &&
                                      coordinator.worldPathFollower.nodeGraph != null &&
-                                     IntegratedWorldSession.Finite(stageSeconds) && IntegratedWorldSession.Finite(requestAge) && requestAge >= 0;
+                                     IntegratedWorldSession.Finite(navigationSeconds) && IntegratedWorldSession.Finite(requestAge) && requestAge >= 0;
                 return new SirenNavigationObservationApi(player, bridge, coordinator.worldPathFollower,
                     session.worldPathRequestId, requestExists, session.worldPathRequested, requestAge,
                     session.worldPathRequestReason, coordinator.r.world == null ? null : coordinator.r.world.movementState);
@@ -2459,10 +2459,12 @@ public sealed partial class PortSession
             public bool IsCurrentSourceEgg(CharacterBody candidate) => coordinator.IsCurrentSirenDiagnosticEgg(candidate);
             public bool ShouldYieldToExistingWorldCombat(CharacterBody player) => coordinator.r.combatPerformanceFocus
                                                                                   || coordinator.HasNearbyHostileDirectorThreat(player);
+            // StageElapsed owns the bounded egg-input budget. Shared navigation timers
+            // use the world clock, including frames yielded to ordinary combat input.
             public void NavigateWorldInput(CharacterBody player, NovaInputBridge bridge, Vector3 target, float stopDistance,
                                            string targetName, float elapsed) => coordinator.NavigateWorldInput(player, bridge, target,
                                                                                                                stopDistance, targetName,
-                                                                                                               elapsed);
+                                                                                                               coordinator.r.world.seconds);
             public Vector3 WorldCombatAimPoint(CharacterBody target, Vector3 origin,
                                                out bool visible) => coordinator.WorldCombatAimPoint(target, origin, out visible);
         }
