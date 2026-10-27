@@ -28,6 +28,23 @@ def declaration(source, name):
 
 
 class SirenGameplayRouteOwnershipTests(unittest.TestCase):
+    def test_terrain_steering_cannot_reset_native_waypoint_progress(self):
+        source = (SOURCE.parent / "world/IntegratedWorldBoundary.cs").read_text()
+        route = declaration(source, "public void NavigateWorldInput(CharacterBody player, NovaInputBridge bridge, Vector3 destination,")
+        captured = route.index("var pathWaypoint = waypoint;")
+        fallback = route.index("waypoint = TerrainTravelWaypoint(")
+        progress = route.index("var pathRemaining = Vector3.Distance(position, pathWaypoint);")
+        self.assertLess(captured, fallback)
+        self.assertLess(fallback, progress)
+        # r5's ground steering changed while the same source node remained
+        # blocked. Only source-node distance/identity may reset its stall clock.
+        clock = route[progress : route.index("navigationStalledSeconds =", progress)]
+        self.assertIn("Vector3.Distance(pathWaypoint, worldNavigationProgressWaypoint)", clock)
+        self.assertIn("pathRemaining < worldNavigationProgressDistance - .5f", clock)
+        self.assertIn("worldNavigationProgressWaypoint = pathWaypoint;", clock)
+        self.assertIn("worldNavigationProgressDistance = pathRemaining;", clock)
+        self.assertNotIn("worldNavigationProgressWaypoint = waypoint;", route)
+
     def test_native_detour_keeps_graph_input_until_waypoint_stalls(self):
         if not MONO.is_file() or not CSC.is_file():
             self.skipTest("Pinned Unity Mono/Roslyn host compiler unavailable")

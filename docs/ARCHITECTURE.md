@@ -3449,7 +3449,9 @@ The existing `IntegratedWorldSession` navigator preserves a reachable,
 unfinished multi-waypoint native detour while its waypoints progress, even if
 straight-line distance to the objective stalls. Its `NavigationRecoveryPolicy`
 still admits terrain recovery for a blocked waypoint or an unreachable,
-finished or short path. `test_siren_gameplay_route_ownership.py` executes this
+finished or short path. Native waypoint identity and distance retain their
+own progress clock across temporary terrain steering; changing ground targets
+cannot reset that clock. `test_siren_gameplay_route_ownership.py` executes this
 policy against the retained Siren detour failure and recovery cases.
 The existing aim helper can issue at most 24 linecasts per active
 sample for the inspected original egg shape; inactive selection does no witness
