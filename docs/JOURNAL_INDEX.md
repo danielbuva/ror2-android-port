@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J1225](PORTING_JOURNAL.md#j1225--complete-source-derived-surv2-scene) | 2026-10-27 | Complete source-derived Surv2 scene | Surv2 (`whole-scene-surv2`) is host raw-exact to J850: 30,311 objects, both serialized members and the 3,784,294-byte bundle (SHA-256 `74c622c8…`). |
 | [J1223](PORTING_JOURNAL.md#j1223--retain-assisted-siren-approach-targets-through-native-detours) | 2026-10-27 | Retain assisted Siren approach targets through native detours | 2026-10-27. |
 | [J1222](PORTING_JOURNAL.md#j1222--complete-colorgrade-source-production-on-android) | 2026-10-27 | Complete ColorGrade source production on Android | 2026-10-27. |
 | [J1224](PORTING_JOURNAL.md#j1224--complete-source-derived-goolake-source-scene) | 2026-10-27 | Complete source-derived Goolake source scene | 2026-10-27. |

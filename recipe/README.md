@@ -4300,3 +4300,23 @@ files, SDK resources and receipt-pinned source-produced record packs remain
 required. Generated outputs and evidence stay ignored. All 39,861 persisted
 objects, two serialized members and the compressed bundle are host raw-exact
 to J850; phone production, installation and original scene behavior remain open.
+
+## Surv2 complete scene selections (2026-10-27)
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-surv2-whole-objects.json` | `1e9e78edbba4c72e4265119bd32bef9257d5369dd08e461d3731736cb1915292` |
+| `owner-surv2-whole-standard-shaders.json` | `f090d85dc37a5b23a2d6ca3a3005b0d78d7d5b3a6ff824c06828ab5566fca259` |
+
+Manual provenance, privacy, licensing and sensitive-content audit: these profiles
+contain source selectors, hashes, checked pointer relationships, build-assigned
+identity/order constants (IDs only) and authored import policies only. Three
+SpeedTree wind records select byte-identical original Black Beach records; the
+Rewired helper component whose script is absent from the build uses the new
+`missing_script_base` policy (original component truncated to the base fields,
+original base MonoBehaviour type); the AkInitializer instance reuses the shipped
+script schema hash. Standard is selected through the existing pinned SDK compiler
+owner. No original body, curve, scalar, pixel, program, copied source, private path
+or credential is included. All 30,311 persisted objects, two serialized members and
+the compressed bundle are host raw-exact to J850; phone production, installation
+and original scene behavior remain open.

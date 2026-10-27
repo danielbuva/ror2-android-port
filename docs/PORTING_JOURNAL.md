@@ -665,3 +665,13 @@ r9 confirmed the clock repair but timed out with one egg destroyed; target chang
 were observed, repeated oscillation remains unproven. No device success claimed.
 Latest attempted APK: `456a60650fd8002ae975f94736c75aa47ed7167cf8bdbd457b5bc50f92852181`.
 The next device run tests retention without extending the existing stage budget.
+
+## J1225 — Complete source-derived Surv2 scene
+
+Surv2 (`whole-scene-surv2`) is host raw-exact to J850: 30,311 objects, both serialized members
+and the 3,784,294-byte bundle (SHA-256 `74c622c8…`). Profiles: `recipe/owner-surv2-whole-*.json`.
+New producer policy `missing_script_base` derives a build-missing-script MonoBehaviour from its
+original component and an original base-type record. Wind records come from original Black Beach
+records; AkInitializer reuses the shipped schema hash. Evidence (ignored):
+`work/coordination/p1-scenes-w/surv2-final-host-v2/`. Readiness recount, phone production and
+scene behaviour remain open.
