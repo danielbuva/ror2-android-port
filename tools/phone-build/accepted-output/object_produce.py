@@ -135,11 +135,12 @@ def deactivate_global_owner(body, name):
     return body[:-1] + bytes(1)
 
 
-def rebuild_bezier_line(body, sources, source_profiles, line_selector, behaviour_selector):
-    """Re-evaluate one original nonanimated BezierCurveLine using Unity float32 Lerp.
+def rebuild_bezier_line(body, sources, source_profiles, line_selector, behaviour_selector, wind_angles=None):
+    """Re-evaluate an original BezierCurveLine using Unity float32 Lerp.
 
-    Called before PPtr relocation. All operands are read from original records;
-    source schemas locate the line array and declare the curve field contract.
+    Called before PPtr relocation. Geometry operands come from original records;
+    optional numeric angles preserve our build wind state. Source schemas locate
+    the line array and declare the curve field contract.
     Original local TRS operands are evaluated leaf-to-root with float32 rounding.
     """
     import math
@@ -183,7 +184,11 @@ def rebuild_bezier_line(body, sources, source_profiles, line_selector, behaviour
     ):
         raise ValueError("original BezierCurveLine body layout drift")
     if curve[80] != 0:
-        raise ValueError("animated Bezier wind is not qualified")
+        if not isinstance(wind_angles, list) or len(wind_angles) != 3:
+            raise ValueError("animated Bezier wind requires captured build angles")
+        wind_angles = tuple(single(value) for value in wind_angles)
+    elif wind_angles is not None:
+        raise ValueError("captured wind requires an animated original curve")
     go_pointer = struct.unpack_from("<iq", line)
     if go_pointer != struct.unpack_from("<iq", curve) or go_pointer[0] or not go_pointer[1]:
         raise ValueError("original curve/line GameObject differs")
@@ -251,6 +256,15 @@ def rebuild_bezier_line(body, sources, source_profiles, line_selector, behaviour
         raise ValueError("original Bezier endTransform escapes source scene")
     p1 = world(end_id) if end_id else struct.unpack_from("<3f", curve, 44)
     v0, v1 = struct.unpack_from("<3f", curve, 32), struct.unpack_from("<3f", curve, 56)
+
+    if wind_angles is not None:
+        magnitude = struct.unpack_from("<3f", curve, 84)
+        frequency = struct.unpack_from("<3f", curve, 96)
+        delta = tuple(single(single(single(math.pi / 180) * endpoint) * rate) for endpoint, rate in zip((p1[0], p1[2], p1[1]), frequency))
+        v0 = tuple(single(value + single(single(math.sin(angle)) * scale)) for value, angle, scale in zip(v0, wind_angles, magnitude))
+        v1 = tuple(
+            single(value + single(single(math.sin(single(angle + step))) * scale)) for value, angle, step, scale in zip(v1, wind_angles, delta, magnitude)
+        )
 
     def add(a, b):
         return tuple(single(x + y) for x, y in zip(a, b))
@@ -967,7 +981,9 @@ def produce(profile_path, profile_sha256, pc, output, codec_path, codec_sha256, 
                             raise ValueError("static-renderer removal requires original OcclusionCullingSettings")
                         body = clear_static_renderers(body, selected["clear_static_renderers"])
                     if "bezier_curve_line" in selected:
-                        body = rebuild_bezier_line(body, sources, profile["sources"], selected["source"], selected["bezier_curve_line"])
+                        body = rebuild_bezier_line(
+                            body, sources, profile["sources"], selected["source"], selected["bezier_curve_line"], selected.get("bezier_wind_angles")
+                        )
                     if "importer_guid" in selected:
                         if typ["class_id"] != 213:
                             raise ValueError("Sprite importer policy requires an original Sprite")

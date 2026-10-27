@@ -3754,8 +3754,6 @@ generated records stay ignored. Phone and runtime qualification remain open.
 | `owner-village-spine-lab-standard-shaders.json` | `fed66e3f3f11e27ce2f7d281ce2f1f0e26a19ccc1b9c59feb528aa4e51be7e47` |
 | `owner-shipgraveyard-spine-objects.json` | `a62dd18b06ae62970984089ddd31fe11d26c4e2081432029a7e16ee0a4195b24` |
 | `owner-shipgraveyard-spine-lab-standard-shaders.json` | `27c295f0fc7dfed9f6cb1009829f0698943ea3fde79096a235d1b4846e28d393` |
-| `owner-goolake-spine-objects.json` | `396ec87613ecbc97e825f7680fa89800920239057a4436d6875c93cd000ad10a` |
-| `owner-goolake-spine-lab-standard-shaders.json` | `485f9a4d3477285cf2c061245ffc7c74f91a3df83dab520a0279b500f94ac918` |
 | `owner-golemplains-spine-objects.json` | `88350424b9e313ec47bacdf8210d962aa9cafeda2fc1610c01d4ce5a881382e0` |
 | `owner-golemplains-spine-lab-standard-shaders.json` | `84cca571218bc56551f82813e3aeb01b45e27dc1b48441365181155849743665` |
 | `owner-blackbeach-spine-objects.json` | `18adebc9c4b4dc9aaa8aa4ea1f54ea23b91d4787a8904801534035382d3f97a1` |
@@ -4199,6 +4197,56 @@ The existing SDK 211 particle producer accepts optional `stripped_keywords` in
 an audited profile. It removes source-derived variant rows containing a declared
 keyword before native ordering; omission preserves all existing selections.
 This policy records explicit build stripping, without supplying program bytes.
+
+## Four scene source selections and Shader index reuse (2026-10-27)
+
+| Profile | SHA-256 |
+| --- | --- |
+| `owner-frozenwall-source-objects.json` | `c14602ed5360bdf2bce5fbf1c5b283798ce1141c81cfdd049acd913564e6313e` |
+| `owner-frozenwall-source-lab-shader-remap.json` | `7dfbdb627abd591fdb29b89135362be539efff15b5b854bbc7d680cc6fa59f3d` |
+| `owner-villagenight-source-objects.json` | `f66f0fa9e4743dcd8094c9ae1be7b8bdd373d583133a5979c8075971e480c423` |
+| `owner-villagenight-source-lab-shader-remap.json` | `99f4c31e05205ea7f7f63f9c19dd64c0f1b3ffd53099c05ff0a4cac72fc8d126` |
+| `owner-foggyswamp-source-objects.json` | `c1c477f06c4a845cf947ab6a93229bfe8658b00440341090178916bcc2ae3129` |
+| `owner-foggyswamp-source-lab-shader-remap.json` | `5ca166d5b4f672050fd12f72f5ae29f437e21cb8f89a0f96ac2d79e7144c2b49` |
+| `owner-skymeadow-spine-objects.json` | `e650c9495f22ff2e7f74d60bf35d5e896cdf725a375a5fab0bfc45c293ab38cf` |
+| `owner-skymeadow-spine-lab-particles-shaders.json` | `cfc075285f7edbed499356558389e2d94f04889f7c8280448a7a80980f995b76` |
+| `owner-goldshores-standard-reuse-shaders.json` | `3f757ceb9f619881c1406b2f27284648c68857d780c6bcbdbf4e86452a84ad71` |
+
+Manual provenance, privacy, licensing and sensitive-content audit: object
+profiles contain original selectors, hashes, checked pointer relationships,
+SDK pins and authored transformation policies. Forty-two animated wind lines
+retain three build-state angles each; all evaluated positions and original
+curve operands come from the legitimate input. Complete captured xyz arrays
+remain private and are excluded. Lakes, Lakesnight, Village and Goolake are not closed.
+Skymeadow's `_ALPHAMODULATE_ON` stripping keyword records our accepted build's
+variant selection; programs still come from the pinned public SDK producer.
+Shader remap recipes select independently source-produced bodies by profile,
+identity, length and hash. `record_remap.py` changes destination index identities
+only, retaining the source dependency rows and supplier receipt provenance;
+none is claimed as compilation from its destination scene. No asset body,
+program, pixel, copied source, private path, device identifier or credential
+is included. Legitimate PC input and independently acquired SDK remain required.
+Outputs and qualification evidence stay ignored; phone qualification remains open.
+
+Skymeadow particle profile SHA-256: `cfc075285f7edbed499356558389e2d94f04889f7c8280448a7a80980f995b76`.
+
+`owner-goldshores-standard-reuse-shaders.json` preserves the previously qualified
+three-output Standard supplier profile, SHA-256
+`3f757ceb9f619881c1406b2f27284648c68857d780c6bcbdbf4e86452a84ad71`.
+It differs from the current Goldshores profile only by omitting the later fourth
+output identity; its original material/scene selectors, SDK and compiler policy
+are identical. This audited retained profile makes the Frozenwall remap's
+supplier identity reproducible without relabelling it as Frozenwall compilation.
+
+Retained J1192 Goolake spine selections (unchanged from PR 140):
+
+| Profile | SHA-256 |
+| --- | --- |
+| `owner-goolake-spine-objects.json` | `396ec87613ecbc97e825f7680fa89800920239057a4436d6875c93cd000ad10a` |
+| `owner-goolake-spine-lab-standard-shaders.json` | `485f9a4d3477285cf2c061245ffc7c74f91a3df83dab520a0279b500f94ac918` |
+
+These retain the J1192 source-selection audit and existing original-input/SDK
+requirements. This table restores audit indexing only; no profile content changes.
 
 The original-audio owner manifest follows the authored native-waypoint progress
 and neutral-terrain recovery changes in `IntegratedWorldBoundary.cs`. Reviewed

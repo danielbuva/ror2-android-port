@@ -4894,3 +4894,16 @@ Standard; PC/SDK/tool pins and fresh outputs retain the setup and teardown above
 All 25 persisted records are host raw-exact to J850; complete-scene and phone gates
 remain separate. SDK 211 particle profiles may declare `stripped_keywords` to
 filter source-derived rows before native ordering; omission preserves defaults.
+
+Frozenwall, Villagenight and Foggyswamp source selections and Skymeadow
+spine selections extend the existing `object_produce.py` and Shader owners
+through their named `recipe/owner-*-objects.json` profiles. The Bezier owner
+re-evaluates original curves with optional captured build angles; no geometry
+arrays are recipe inputs. `record_remap.py` owns index reuse: explicit pinned
+source pack receipts and `owner-*-shader-remap.json` profiles supply unchanged
+bodies/dependency provenance under destination identities. Original suppliers
+remain visible in the output receipt. Setup requires explicit PC/SDK/tool roots,
+pinned profiles, source-produced media/Shader packs and new output directories.
+Process exit tears down producers; receipts persist. These are optional host
+reconstruction owners; phone production, installation and original runtime
+behavior remain open.
