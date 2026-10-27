@@ -4849,3 +4849,13 @@ local receipts persist. The existing member-aware writer exposes
 `payload/whole-scene-champrush`. All 53,854 objects, both serialized members and
 the compressed bundle are host raw-exact to J850. Phone production, installation
 and original scene behavior remain open.
+
+Voidstage complete scene selections extend the existing object/Shader owners
+through `recipe/owner-voidstage-whole-objects.json`. The original Rigidbody
+retains its complete body/type and reciprocal GameObject relationship; no new
+runtime owner or import policy is introduced. Explicit current PC/SDK/tool
+roots, pinned profiles, source-produced record packs and a fresh output
+directory set up production; process exit tears down producers while local
+receipts persist. The member-aware writer exposes `payload/whole-scene-voidstage`.
+All 9,629 objects, both serialized members and the compressed bundle are host
+raw-exact to J850. Phone production, installation and scene behavior remain open.

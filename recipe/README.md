@@ -4139,3 +4139,19 @@ curve, scalar, pixel, program, copied source, private path or credential is
 included. Legitimate PC files, SDK resources and receipt-pinned source-produced
 record packs remain required. Generated outputs and evidence stay ignored.
 Phone production, installation and original scene behavior remain open.
+
+## Voidstage complete object selection (2026-10-27)
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-voidstage-whole-objects.json` | `1c45133b5df7083d5343beed4b79deeabd71b8b400b6762c31272302f5a78978` |
+
+Manual provenance, privacy, licensing and sensitive-content audit: this profile
+contains source selectors, hashes, checked pointer relationships and authored
+import policies only. Lossless compaction preserves every decoded selection.
+The original Rigidbody is admitted through its reciprocal GameObject component
+relationship and complete source body/type identity. No original body, scalar,
+curve, pixel, program, copied source, private path or credential is included.
+Legitimate PC files, SDK resources and receipt-pinned source-produced record
+packs remain required; generated outputs and evidence stay ignored. Phone
+production, installation and original scene behavior remain open.
