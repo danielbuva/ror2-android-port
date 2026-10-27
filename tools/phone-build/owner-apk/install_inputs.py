@@ -70,12 +70,21 @@ def verified_file(repo, index, name):
 def input_description(plan, manifest):
     """Bound the entire cross-language UI document, not only its input JSON."""
     importer = module("install_game_import", HERE / "game_import.py")
-    manifest = importer.validate_manifest(manifest)
+    catalog = importer.validate_catalog(manifest)
+    manifest = catalog["supported"][0]
     manifest_sha256 = hashlib.sha256(UPDATES.RELEASE.signed_bytes(manifest)).hexdigest()
     description = {
         "schema": 1,
         "manifest": manifest,
         "manifest_sha256": manifest_sha256,
+        "catalog": catalog,
+        "catalog_sha256": hashlib.sha256(UPDATES.RELEASE.signed_bytes(catalog)).hexdigest(),
+        "supported_versions": [
+            {"manifest": row, "manifest_sha256": hashlib.sha256(UPDATES.RELEASE.signed_bytes(row)).hexdigest()} for row in catalog["supported"]
+        ],
+        "recognized_versions": [
+            {"manifest": row, "manifest_sha256": hashlib.sha256(UPDATES.RELEASE.signed_bytes(row)).hexdigest()} for row in catalog["recognized"]
+        ],
         "workspace_bytes": plan["workspace_bytes"],
         "import_root": "import",
         "stages": plan["stages"],
@@ -97,7 +106,9 @@ def describe(index, repo, inputs):
 def prepare(index, repo, inputs):
     """Rehash admitted originals; generate private paths, never trust UI receipts."""
     description = describe(index, repo, inputs)
-    manifest = description["manifest"]
+    importer = module("install_game_import", HERE / "game_import.py")
+    imported_root = UPDATES.within(inputs, "import/files", exists=True)
+    manifest = importer.select_version(importer.FolderSource(imported_root), description["catalog"])
     hashes = {}
     names = set()
     for row in manifest["files"]:
@@ -125,6 +136,14 @@ def prepare(index, repo, inputs):
             raise ValueError("binding does not select admitted original files: " + name)
         bindings[name] = "import/files" + ("/" + relative if relative != "." else "")
         UPDATES.within(inputs, bindings[name], exists=True)
+    UPDATES.write_json(
+        UPDATES.within(inputs, "input-selection.json"),
+        {
+            "game_version": manifest["game_version"],
+            "manifest_sha256": hashlib.sha256(UPDATES.RELEASE.signed_bytes(manifest)).hexdigest(),
+            "catalog_sha256": description["catalog_sha256"],
+        },
+    )
     UPDATES.write_json(UPDATES.within(inputs, "input-hashes.json"), hashes)
     return {"manifest": "work/install/assembly.json", "key_directory": "signing/owner", "input_hashes": "input-hashes.json", "bindings": bindings}
 

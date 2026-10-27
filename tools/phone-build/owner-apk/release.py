@@ -10,6 +10,12 @@ from pathlib import Path, PurePosixPath
 import os
 import re
 import tempfile
+import importlib.util
+
+
+_spec = importlib.util.spec_from_file_location("owner_alpha_policy", Path(__file__).with_name("alpha_policy.py"))
+ALPHA = importlib.util.module_from_spec(_spec)
+_spec.loader.exec_module(ALPHA)
 
 
 def signed_bytes(release):
@@ -23,8 +29,17 @@ def digest(path):
 
 
 def validate(release, installer_version, application_id, installed_version):
-    if not isinstance(release, dict) or set(release) != {"version", "version_code", "application_id", "minimum_installer_version", "bundle_sha256", "entries"}:
+    if not isinstance(release, dict) or set(release) - {"data_schema"} != {
+        "version",
+        "version_code",
+        "application_id",
+        "minimum_installer_version",
+        "bundle_sha256",
+        "entries",
+    }:
         raise ValueError("explicit release fields required")
+    if "data_schema" in release:
+        ALPHA.data_schema(release["data_schema"])
     if not isinstance(release["version"], str) or not release["version"].strip():
         raise ValueError("release version required")
     if not isinstance(release["application_id"], str) or not re.fullmatch(r"[A-Za-z][A-Za-z0-9_]*(?:\.[A-Za-z][A-Za-z0-9_]*)+", release["application_id"]):
@@ -94,17 +109,22 @@ def rebuild(release, *, installer_version, application_id, installed_version, in
     return {"rebuilt": changed, "reused": sorted(set(rows) - set(changed)), "outputs": {name: str(root / name) for name in rows}}
 
 
-def sign_release(owner, release, signing_request, output, *, installer_version, application_id, installed_version):
+def sign_release(owner, release, signing_request, output, *, installer_version, application_id, installed_version, install_version_code=None):
     """Sign an assembled release with the existing owner; never replace lost keys.
 
     The installer supplies actual installed identity/version and assembles using
-    release.version_code before calling. Installation remains its responsibility.
+    a separately issued install_version_code before calling. Installation remains
+    its responsibility; publisher ordering is never Android install ordering.
     """
-    validate(release, installer_version, application_id, installed_version)
+    validate(release, installer_version, application_id, 0 if install_version_code is not None else installed_version)
+    if install_version_code is not None:
+        ALPHA.identity(application_id)
+        if ALPHA.code(install_version_code) <= ALPHA.code(installed_version, zero=True):
+            raise ValueError("issued install version must increase")
     request = dict(signing_request)
     keys = Path(request["key_directory"])
     if installed_version and not all((keys / name).is_file() for name in ("owner.p12", "password")):
-        raise ValueError("owner key lost: export saves and reinstall; update refused")
+        raise ValueError("owner key lost: restore the same private key; update refused")
     output = Path(output)
     output.parent.mkdir(parents=True, exist_ok=True)
     descriptor, temporary = tempfile.mkstemp(prefix=output.name + "-request-", suffix=".json", dir=output.parent)

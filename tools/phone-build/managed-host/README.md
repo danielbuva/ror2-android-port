@@ -259,3 +259,55 @@ API compilation do not establish real SAF-provider behavior, Android process-dea
 or reboot behavior, notification delivery, battery/thermal measurements, actual
 PackageInstaller consent, a complete signed release recipe or a playable game.
 Those remain device/release acceptance gates. This work creates no APK or key.
+
+## Alpha update, rollback and profile-retention boundary
+
+Installer version 3 selects only `dev.ror2lab.alpha` in the final UI. The existing
+`OwnerInstaller` session path remains authoritative, including its Android 12+
+request for no extra user action on eligible same-key updates; Android may still
+require confirmation. Repeated clicks or activity recreation do not create a
+second session. `OwnerAlphaInstall` adds exact installed APK/code/certificate
+readback and an installer-private ownership receipt; an occupied unowned identity
+or changed signer is refused without uninstalling. A signed issued-version row
+binds source, accepted input, toolchain, payload, APK and certificate. Dispatch
+consumes the code durably: a failed/cancelled session requires a newly issued
+higher-code build rather than a downgrade or reused code.
+
+The rollback button rebuilds the previous verified installed release with the
+same owner key and a higher Android code. Publisher release numbering is separate
+from installed/issued codes. `installed-release.json` and
+`previous-installed-release.json` retain whole signed release manifests and
+private signed-APK references, not copies of game data. Only verified successful
+installation rotates these references. The UI reports retained APK bytes,
+installer-filesystem free bytes and schema/key eligibility; release operations
+prune older unreferenced generated APK artifacts while protecting current,
+previous and the active ready build. Android chooses install placement; observed
+installer free space does not certify the final game's data backing.
+
+Before an update/rollback, the certificate-bound game provider at
+`dev.ror2lab.alpha.retention` snapshots the allowlisted Android-local profile and
+settings under the **game UID**, freezes game launch, and returns a token, schema
+and byte count. The installer and game are different UIDs/signers: the installer
+never opens game-private files. `pending-install.json` retains the transaction
+before session commit. The target release must read the snapshot's schema.
+After exact installed identity readback, the foreground service verifies the
+snapshot against live data, restores only if necessary, verifies again, publishes
+the installed receipt, then releases the game launch freeze. A cancelled/failed
+session verifies/restores the prior installation before releasing it. Recovery
+failure keeps the token/freeze and exposes an explicit recovery button; fully
+stop the game and resolve space/permission errors before retrying. No failure
+path silently adopts another identity, clears data, or uninstalls. A certificate-bound
+read-only `status` call also proves a previously released token. If the installer
+died after release and gameplay has since resumed, recovery rechecks the installed
+APK/code/certificate and signed issue ledger, then finalizes only the pending
+receipt. It never restores an old snapshot over that newer legitimate gameplay.
+An active token still requires the full verify/restore/verify/release sequence;
+an unknown token or changed identity remains blocked. Snapshots
+remain private in the game's no-backup storage; current and previous verified
+snapshots are retained by its retention owner, separate from release artifacts.
+
+`test_owner_alpha_installer.py` executes these orchestration/refusal paths with
+synthetic streams and a provider double, alongside the original session tests.
+Full source compilation against `android.jar` is not device acceptance: ordinary
+PackageInstaller callbacks, actual installed storage/backing and real game
+profile/settings across cold starts still require explicit device qualification.

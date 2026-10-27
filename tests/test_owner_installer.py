@@ -12,6 +12,8 @@ SOURCE = ROOT / "tools/phone-build/managed-host/OwnerInstaller.java"
 STATE_SOURCE = SOURCE.with_name("OwnerUpdateState.java")
 
 STUBS = {
+    "dev/ror2lab/phonebuildhostfixture/OwnerBuildService.java": """package dev.ror2lab.phonebuildhostfixture;public class OwnerBuildService {public static boolean isRunning(){return false;}public static void launch(android.content.Context c,String action){OwnerInstaller.finishVerification(c);}}""",
+    "dev/ror2lab/phonebuildhostfixture/OwnerAlphaInstall.java": """package dev.ror2lab.phonebuildhostfixture; public class OwnerAlphaInstall {public static final String PACKAGE="dev.ror2lab.alpha";public static boolean pending(android.content.Context c){return false;}public static void prepare(android.content.Context c,java.io.File f,String h,android.content.pm.PackageInfo n,android.content.pm.PackageInfo o){}public static void complete(android.content.Context c,android.content.pm.PackageInfo p){}public static boolean recover(android.content.Context c){return false;}}""",
     "dev/ror2lab/phonebuildhostfixture/ToolHostActivity.java": """package dev.ror2lab.phonebuildhostfixture;
 public class ToolHostActivity {public static String checkpointState;public static void updateInstallCheckpoint(android.content.Context c,String state,String message){checkpointState=state;}}""",
     "android/os/Build.java": "package android.os; public class Build { public static class VERSION { public static int SDK_INT=33; } }",
@@ -132,7 +134,7 @@ public class Harness {
         c=new Context();OwnerInstaller.install(c,apk,hash);c.manager.installer.info=null;
         OwnerInstaller.reconcile(c);check(OwnerInstaller.state(c).equals("ERROR"));
         c=new Context();OwnerInstaller.install(c,apk,hash);i=new Intent();i.code=-1;
-        receiver.onReceive(c,i);check(OwnerInstaller.state(c).equals("ERROR") && c.started==null);
+        receiver.onReceive(c,i);check(OwnerInstaller.state(c).equals("AWAITING_CONFIRMATION") && c.started==null);
         OwnerUpdateState state=new OwnerUpdateState();check(state.canCheck() && !state.canBuild() && !state.canInstall());
         state.beginCheck();check(state.busy() && !state.canCheck());
         try {state.beginCheck();throw new AssertionError();}catch(IllegalStateException expected){}

@@ -35,15 +35,15 @@ jobs:
           RELEASE_PLAN: ${{ vars.PUBLIC_RELEASE_PLAN_PATH }}
           PUBLISHER_KEY_ID: ${{ vars.PUBLISHER_KEY_ID }}
           PUBLISHER_PUBLIC_KEY: ${{ vars.PUBLISHER_PUBLIC_KEY }}
-          MINIMUM_INSTALLER_VERSION: ${{ vars.PUBLIC_MINIMUM_INSTALLER_VERSION || '2' }}
+          MINIMUM_INSTALLER_VERSION: ${{ vars.PUBLIC_MINIMUM_INSTALLER_VERSION || '3' }}
         shell: bash
         run: |
           set -euo pipefail
-          [[ "$RELEASE_TAG" =~ ^owner-v([1-9][0-9]*)$ ]] || { echo 'Expected owner-v<positive Android versionCode>'; exit 1; }
+          [[ "$RELEASE_TAG" =~ ^owner-v([1-9][0-9]*)$ ]] || { echo 'Expected owner-v<positive publisher release code>'; exit 1; }
           code="${BASH_REMATCH[1]}"
-          (( ${#code} <= 10 )) && (( code <= 2100000000 )) || { echo 'Invalid Android versionCode'; exit 1; }
+          (( ${#code} <= 10 )) && (( code <= 2100000000 )) || { echo 'Invalid publisher release code'; exit 1; }
           [[ -n "$RELEASE_PLAN" && -n "$PUBLISHER_KEY_ID" && -n "$PUBLISHER_PUBLIC_KEY" ]] || { echo 'Release plan and publisher trust provisioning are required'; exit 1; }
-          [[ "$MINIMUM_INSTALLER_VERSION" =~ ^[1-9][0-9]*$ ]] && (( ${#MINIMUM_INSTALLER_VERSION} <= 10 )) && (( MINIMUM_INSTALLER_VERSION <= 2100000000 )) || { echo 'Invalid minimum installer version'; exit 1; }
+          [[ "$MINIMUM_INSTALLER_VERSION" =~ ^[1-9][0-9]*$ ]] && (( ${#MINIMUM_INSTALLER_VERSION} <= 10 )) && (( MINIMUM_INSTALLER_VERSION >= 3 && MINIMUM_INSTALLER_VERSION <= 2100000000 )) || { echo 'Invalid minimum installer version'; exit 1; }
           echo "RELEASE_VERSION_CODE=$code" >> "$GITHUB_ENV"
           echo "RELEASE_MINIMUM_INSTALLER_VERSION=$MINIMUM_INSTALLER_VERSION" >> "$GITHUB_ENV"
           umask 077
@@ -52,6 +52,7 @@ jobs:
         run: |
           python scripts/audit-public.py
           python -m unittest discover -s tests -p 'test_phone_release.py' -v
+          python -m unittest discover -s tests -p 'test_alpha_release_policy.py' -v
           python -m unittest discover -s tests -p 'test_public_release.py' -v
           python -m unittest discover -s tests -p 'test_phone_updates.py' -v
           python -m unittest discover -s tests -p 'test_phone_game_import.py' -v

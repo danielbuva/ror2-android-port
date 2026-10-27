@@ -550,6 +550,23 @@ checkpoints; PackageInstaller alone establishes installation success.
 [User flow and storage behavior](../tools/phone-build/owner-apk/README.md#phone-only-import-and-installation)
 remain separate from complete game/device qualification.
 
+Alpha packaging extends these owners rather than adding an installer/signing
+pipeline. `owner-apk/alpha_policy.py` owns fixed alpha identity, durable issued
+codes and retained-release admission; publisher source order is separate from
+Android install order. `updates.py` forwards rollback through the existing binary
+manifest/APK/signing owners with a new issued code. Managed-host
+`OwnerAlphaInstall` owns occupied-package receipts, current/previous references,
+pre-install backup and idempotent recovery finalization. `ProfileStore` and
+`ProfileRetentionProvider` keep bounded whitelisted profile/settings snapshots
+inside the game's UID, with pinned installer-certificate control calls and a
+durable launch/released-state gate. Setup pins the public installer certificate
+and supported schema during owner assembly; teardown preserves only bounded
+verified archives/receipts and refuses unfinished recovery. Existing import
+owners also identify complete supported/recognized fingerprints before copying;
+unknown or ambiguous versions never become accepted output. The
+[alpha matrix](ALPHA_POLICY.md#final-flow-acceptance-contract) separates these
+host contracts from actual Binder/session/native cold-start phone evidence.
+
 `tools/phone-build/package-assemblies/` owns a separate current experimental
 host producer for the four retained Unity package assemblies and their required
 Burst managed post-processing. It validates explicit owner SDK/package inputs,

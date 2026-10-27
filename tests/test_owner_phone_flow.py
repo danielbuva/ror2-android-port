@@ -71,6 +71,21 @@ public class Harness {
         refuses("case-aliased",()->new OwnerInputImport(new File(root,"manifestcase"),Arrays.asList(row("A",one),row("a",one)),0,new Watch()));
         File linked=new File(root,"linked");linked.mkdirs();Files.createSymbolicLink(new File(linked,"files").toPath(),privateRoot.toPath());
         refuses("links",()->new OwnerInputImport(linked,manifest,0,new Watch()).tree(source));
+        String pinA="aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", pinB="bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb";
+        byte[] newer="new-one".getBytes("UTF-8"), ancient="ancient-one".getBytes("UTF-8");
+        List<OwnerInputImport.Version> versions=Arrays.asList(
+            new OwnerInputImport.Version("v1",pinA,manifest,true),
+            new OwnerInputImport.Version("v2",pinB,Arrays.asList(row("Data/a.bin",newer),row("Data/b.bin",two)),true),
+            new OwnerInputImport.Version("v0",pinB,Arrays.asList(row("Data/a.bin",ancient),row("Data/b.bin",two)),false));
+        Source versionSource=new Source(); versionSource.values.put("Data/a.bin",one);versionSource.values.put("Data/b.bin",two);versionSource.values.put("extra",new byte[]{9});
+        check(OwnerInputImport.identifyTree(versionSource,versions,new Watch()).name.equals("v1"));check(versionSource.opens==2);
+        versionSource.values.put("Data/a.bin",newer);check(OwnerInputImport.identifyTree(versionSource,versions,new Watch()).name.equals("v2"));
+        versionSource.values.put("Data/a.bin",ancient);refuses("Found version: v0",()->OwnerInputImport.identifyTree(versionSource,versions,new Watch()));
+        versionSource.values.put("Data/a.bin",new byte[]{8,9});refuses("Found version: unknown",()->OwnerInputImport.identifyTree(versionSource,versions,new Watch()));
+        check(OwnerInputImport.identifyZip(new ByteArrayInputStream(zip(new String[]{"Data/a.bin","Data/b.bin"},new byte[][]{one,two})),versions,new Watch()).name.equals("v1"));
+        refuses("Found version: v0",()->OwnerInputImport.identifyZip(new ByteArrayInputStream(zip(new String[]{"Data/a.bin","Data/b.bin"},new byte[][]{ancient,two})),versions,new Watch()));
+        refuses("Found version: unknown",()->OwnerInputImport.identifyZip(new ByteArrayInputStream(zip(new String[]{"Data/a.bin"},new byte[][]{one})),versions,new Watch()));
+        Watch versionCancelled=new Watch();versionCancelled.cancel=true;refuses("cancelled",()->OwnerInputImport.identifyTree(versionSource,versions,versionCancelled));
         check(watch.checks>0); System.out.println("phone import contracts PASS " + cases);
     }
 }
@@ -106,7 +121,7 @@ class OwnerPhoneFlowTests(unittest.TestCase):
         self.assertEqual(service.attrib[android + "name"], ".OwnerBuildService")
         self.assertEqual(service.attrib[android + "exported"], "false")
         self.assertEqual(service.attrib[android + "stopWithTask"], "false")
-        self.assertEqual(manifest.attrib[android + "versionCode"], "2")
+        self.assertEqual(manifest.attrib[android + "versionCode"], "3")
         permissions = {row.attrib[android + "name"] for row in manifest.findall("uses-permission")}
         self.assertTrue({"android.permission.FOREGROUND_SERVICE", "android.permission.WAKE_LOCK"} <= permissions)
         self.assertNotIn("android.permission.RECEIVE_BOOT_COMPLETED", permissions)
@@ -115,6 +130,9 @@ class OwnerPhoneFlowTests(unittest.TestCase):
         self.assertIn("startForeground(NOTIFICATION", service_source)
         self.assertIn("worker.executeUpdate(action)", service_source)
         self.assertIn("worker.cancel()", service_source)
+        self.assertIn('path.startsWith("Checking version:")', service_source)
+        self.assertIn('validating ? "VALIDATING" : "IMPORTING"', service_source)
+        self.assertIn("if (!validating && total > 0)", service_source)
         self.assertIn("wakeLock.release()", service_source)
         self.assertIn('"interrupted", true', service_source)
         activity = (SOURCE / "ToolHostActivity.java").read_text()
@@ -126,6 +144,7 @@ class OwnerPhoneFlowTests(unittest.TestCase):
         self.assertIn("takePersistableUriPermission", ui)
         self.assertIn("releasePersistableUriPermission", ui)
         self.assertIn("first_failure", ui)
+        self.assertIn('if (state.optLong("total", 0) > 0)', ui)
         self.assertIn('"--control"', activity)
         self.assertIn('"--status"', activity)
         self.assertNotIn(".toString());\n        else detail.append", ui)

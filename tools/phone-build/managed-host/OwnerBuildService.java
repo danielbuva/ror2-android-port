@@ -78,10 +78,10 @@ public final class OwnerBuildService extends Service {
         }
         if (running) return START_NOT_STICKY;
         pending = false;
-        if (!("release-check".equals(action) || "install-prepare".equals(action) || "release-build".equals(action) || "import".equals(action) || "install".equals(action))) {
+        if (!("release-check".equals(action) || "install-prepare".equals(action) || "release-build".equals(action) || "import".equals(action) || "install".equals(action) || "release-rollback".equals(action) || "profile-recover".equals(action) || "install-verify".equals(action))) {
             stopSelf(startId); return START_NOT_STICKY;
         }
-        if (OwnerInstaller.busy(this)) { stopSelf(startId); return START_NOT_STICKY; }
+        if ((OwnerInstaller.busy(this) && !"install-verify".equals(action)) || (OwnerAlphaInstall.pending(this) && !"profile-recover".equals(action) && !"install-verify".equals(action))) { stopSelf(startId); return START_NOT_STICKY; }
         // Clear a previous generation before exposing an active job; fresh pause/cancel must not be lost.
         File staleControl = new File(getFilesDir(), "owner-input/update-control.json");
         if (staleControl.exists() && !staleControl.delete()) {
@@ -95,22 +95,22 @@ public final class OwnerBuildService extends Service {
         wakeLock.acquire(); handler.post(refresh);
         thread = new Thread(new Runnable() { public void run() {
             try {
-                if ("import".equals(action) || "release-build".equals(action)) requireBatteryAdmission();
+                if ("import".equals(action) || "release-build".equals(action) || "release-rollback".equals(action)) requireBatteryAdmission();
                 if ("import".equals(action)) importFiles();
+                else if ("install-verify".equals(action)) OwnerInstaller.finishVerification(OwnerBuildService.this);
+                else if ("profile-recover".equals(action)) OwnerInstaller.recoverProfiles(OwnerBuildService.this);
                 else if ("install".equals(action)) {
                     ToolHostActivity.installPrepared(OwnerBuildService.this);
-                    if (wakeLock != null && wakeLock.isHeld()) wakeLock.release();
-                    while (!destroyed && OwnerInstaller.busy(OwnerBuildService.this)) Thread.sleep(500);
+                    awaitInstallation();
                 }
                 else {
                     worker = new ToolHostActivity.Worker(getApplicationContext()); worker.executeUpdate(action);
                     File status = new File(getFilesDir(), "owner-input/update-state.json");
-                    if ("release-build".equals(action) && !destroyed && !"cancel".equals(importControl) && status.isFile()
+                    if (("release-build".equals(action) || "release-rollback".equals(action)) && !destroyed && !"cancel".equals(importControl) && status.isFile()
                         && "READY".equals(ToolHostActivity.readJson(status).optString("state"))) {
                         if (Build.VERSION.SDK_INT < 26 || getPackageManager().canRequestPackageInstalls()) {
                             ToolHostActivity.installPrepared(OwnerBuildService.this);
-                            if (wakeLock != null && wakeLock.isHeld()) wakeLock.release();
-                            while (!destroyed && OwnerInstaller.busy(OwnerBuildService.this)) Thread.sleep(500);
+                            awaitInstallation();
                         } else ToolHostActivity.updateStatus(OwnerBuildService.this, "READY", "Reconstruction verified. Tap Install to allow installation in Android, then tap Install again to continue.");
                     }
                 }
@@ -125,6 +125,17 @@ public final class OwnerBuildService extends Service {
             }
         } }, "owner-phone-installer"); thread.start();
         return START_NOT_STICKY;
+    }
+    private void awaitInstallation() throws Exception {
+        if (wakeLock != null && wakeLock.isHeld()) wakeLock.release();
+        while (!destroyed && OwnerInstaller.busy(this)) {
+            String phase = OwnerInstaller.state(this);
+            if ("VERIFYING_PROFILE".equals(phase) || "RECOVERING_PROFILE".equals(phase)) {
+                if (wakeLock != null && !wakeLock.isHeld()) wakeLock.acquire();
+                try { OwnerInstaller.finishVerification(this); }
+                finally { if (wakeLock != null && wakeLock.isHeld()) wakeLock.release(); }
+            } else Thread.sleep(500);
+        }
     }
     private void requireBatteryAdmission() throws Exception {
         Intent battery = registerReceiver(null, new IntentFilter(Intent.ACTION_BATTERY_CHANGED));
@@ -155,8 +166,12 @@ public final class OwnerBuildService extends Service {
                 long now = SystemClock.elapsedRealtime();
                 if (now - lastImportProgress < 250 && complete != total) return;
                 lastImportProgress = now;
-                ToolHostActivity.writeJson(new File(getFilesDir(), "owner-input/import-state.json"), new JSONObject().put("state", "IMPORTING").put("message", "Importing " + path)
-                    .put("completed", complete).put("total", total).put("elapsed_seconds", (now - started) / 1000));
+                boolean validating = path.startsWith("Checking version:");
+                JSONObject progress = new JSONObject().put("state", validating ? "VALIDATING" : "IMPORTING")
+                    .put("message", validating ? path : "Importing " + path).put("elapsed_seconds", (now - started) / 1000);
+                // Identification reports a phase, not copied bytes (tree counts are files).
+                if (!validating && total > 0) progress.put("completed", complete).put("total", total);
+                ToolHostActivity.writeJson(new File(getFilesDir(), "owner-input/import-state.json"), progress);
             }
         }, inputAccess);
     }
