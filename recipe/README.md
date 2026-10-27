@@ -4518,3 +4518,49 @@ records that differ only in object references (remapped). No original body, curv
 program, copied source, private path or credential is included. All 9,558 persisted
 objects, two serialized members and the compressed bundle are host raw-exact to J850; phone
 production, installation and original scene behavior remain open.
+
+## sanctum complete scene selections (2026-10-27)
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-sanctum-whole-objects.json` | `a7bc05d8521f836851d9ca4b716117f181bb04685abcab65ddca7edfe4eb5e2e` |
+| `owner-sanctum-whole-standard-shaders.json` | `88c5c39bf784598465300df7eb5db3b6381c0ab4b422391d5246fb3fb1505b4e` |
+
+Manual provenance, privacy, licensing and sensitive-content audit: these profiles contain source
+selectors, hashes, checked pointer relationships and authored import policies only. Records with no
+same-scene source select byte-identical original records found by exact body hash, or original
+records that differ only in object references (remapped). No original body, curve, scalar, pixel,
+program, copied source, private path or credential is included. All 53,196 persisted
+objects, two serialized members and the compressed bundle are host raw-exact to J850; phone
+production, installation and original scene behavior remain open.
+
+## village complete scene selections (2026-10-27)
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-village-whole-objects.json` | `d04b581a8a982c151149618891dbcabe99b78c1431b2771604d28c9a126b9d78` |
+| `owner-village-whole-postprocess-shaders.json` | `ba9165c68cff85d15c9fb59da28af85b9ebcfcc4d76ad0c10b97e9337bf55ebc` |
+| `owner-village-whole-standard-shaders.json` | `488bb81b2c81c9073dd61f93381f4ba7b500556e6d814992090a23a17020c66d` |
+
+Manual provenance, privacy, licensing and sensitive-content audit: these profiles contain source
+selectors, hashes, checked pointer relationships and authored import policies only. Records with no
+same-scene source select byte-identical original records found by exact body hash, or original
+records that differ only in object references (remapped). No original body, curve, scalar, pixel,
+program, copied source, private path or credential is included. All 15,130 persisted
+objects, two serialized members and the compressed bundle are host raw-exact to J850; phone
+production, installation and original scene behavior remain open.
+
+## habitatfall complete scene selections (2026-10-27)
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-habitatfall-whole-objects.json` | `88d76b380e653281c1931c90beb75e8ff5fdc62d7842c93b592a0e1faf493fa9` |
+| `owner-habitatfall-whole-postprocess-shaders.json` | `cfba6254c4b88f3c248018a346b1050615425fd1bfd4bed0d848ef86be6a9b6d` |
+
+Manual provenance, privacy, licensing and sensitive-content audit: these profiles contain source
+selectors, hashes, checked pointer relationships and authored import policies only. Records with no
+same-scene source select byte-identical original records found by exact body hash, or original
+records that differ only in object references (remapped). No original body, curve, scalar, pixel,
+program, copied source, private path or credential is included. All 13,909 persisted
+objects, two serialized members and the compressed bundle are host raw-exact to J850; phone
+production, installation and original scene behavior remain open.

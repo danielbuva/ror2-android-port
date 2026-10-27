@@ -10,6 +10,9 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J1241](PORTING_JOURNAL.md#j1241--complete-source-derived-habitatfall-scene) | 2026-10-27 | Complete source-derived habitatfall scene | `whole-scene-habitatfall` is host raw-exact to J850: 13,909 objects, both serialized members and the 6,752,461-byte bundle (SHA-256 `2944ff06…`). |
+| [J1240](PORTING_JOURNAL.md#j1240--complete-source-derived-village-scene) | 2026-10-27 | Complete source-derived village scene | `whole-scene-village` is host raw-exact to J850: 15,130 objects, both serialized members and the 8,270,153-byte bundle (SHA-256 `ccf2fe19…`). |
+| [J1239](PORTING_JOURNAL.md#j1239--complete-source-derived-sanctum-scene) | 2026-10-27 | Complete source-derived sanctum scene | `whole-scene-sanctum` is host raw-exact to J850: 53,196 objects, both serialized members and the 11,879,273-byte bundle (SHA-256 `b8e97a1f…`). |
 | [J1238](PORTING_JOURNAL.md#j1238--complete-source-derived-artifactworld02-scene) | 2026-10-27 | Complete source-derived artifactworld02 scene | `whole-scene-artifactworld02` is host raw-exact to J850: 9,558 objects, both serialized members and the 4,143,960-byte bundle (SHA-256 `6b5cb04c…`). |
 | [J1237](PORTING_JOURNAL.md#j1237--complete-source-derived-lakesnight-scene) | 2026-10-27 | Complete source-derived lakesnight scene | `whole-scene-lakesnight` is host raw-exact to J850: 21,397 objects, both serialized members and the 5,429,114-byte bundle (SHA-256 `f1252b4f…`). |
 | [J1236](PORTING_JOURNAL.md#j1236--complete-source-derived-lakes-scene) | 2026-10-27 | Complete source-derived lakes scene | `whole-scene-lakes` is host raw-exact to J850: 22,163 objects, both serialized members and the 5,880,131-byte bundle (SHA-256 `fc88c7d9…`). |

@@ -779,3 +779,27 @@ recount, phone production and scene behaviour remain open.
 Cross-bundle sources come from the orchestrator's exact-body and pointer-only original-record
 lookup. Evidence (ignored): `work/coordination/orchestrator/scenes/artifactworld02-final-v1/`. Readiness
 recount, phone production and scene behaviour remain open.
+
+## J1239 — Complete source-derived sanctum scene
+
+`whole-scene-sanctum` is host raw-exact to J850: 53,196 objects, both serialized members and the
+11,879,273-byte bundle (SHA-256 `b8e97a1f…`). Profiles: `recipe/owner-sanctum-whole-*.json`.
+Cross-bundle sources come from the orchestrator's exact-body and pointer-only original-record
+lookup. Evidence (ignored): `work/coordination/orchestrator/scenes/sanctum-final-v1/`. Readiness
+recount, phone production and scene behaviour remain open.
+
+## J1240 — Complete source-derived village scene
+
+`whole-scene-village` is host raw-exact to J850: 15,130 objects, both serialized members and the
+8,270,153-byte bundle (SHA-256 `ccf2fe19…`). Profiles: `recipe/owner-village-whole-*.json`.
+Cross-bundle sources come from the orchestrator's exact-body and pointer-only original-record
+lookup. Evidence (ignored): `work/coordination/orchestrator/scenes/village-final-v1/`. Readiness
+recount, phone production and scene behaviour remain open.
+
+## J1241 — Complete source-derived habitatfall scene
+
+`whole-scene-habitatfall` is host raw-exact to J850: 13,909 objects, both serialized members and the
+6,752,461-byte bundle (SHA-256 `2944ff06…`). Profiles: `recipe/owner-habitatfall-whole-*.json`.
+Cross-bundle sources come from the orchestrator's exact-body and pointer-only original-record
+lookup. Evidence (ignored): `work/coordination/orchestrator/scenes/habitatfall-final-v1/`. Readiness
+recount, phone production and scene behaviour remain open.
