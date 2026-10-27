@@ -1,8 +1,10 @@
 import os
 import subprocess
 import sys
+import tempfile
 import unittest
 from pathlib import Path
+from unittest import mock
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts/lab"))
@@ -70,6 +72,20 @@ class OwnerGateTest(unittest.TestCase):
     def test_non_owner_comment_is_refused_before_any_work(self):
         env = {"LAB_REPO": "/nonexistent", "LAB_REPOSITORY_OWNER": "owner", "LAB_COMMENT_AUTHOR": "someone", "LAB_AUTHOR_ASSOCIATION": "NONE"}
         self.assertEqual(lab_runner.main(env), 3)
+
+
+class RefusedLeaseTest(unittest.TestCase):
+    def test_refused_lease_never_touches_the_busy_device(self):
+        with tempfile.TemporaryDirectory() as repo:
+            runner = lab_runner.Runner(repo, {"LAB_RUN_ID": "t"})
+            runner.devices = {"nova-b": "SERIAL"}
+            runner.worktree = lambda ref: Path(repo)
+            runner.run = lambda *a, **k: 0
+            (Path(repo) / ".local/orchestrator/leases/SERIAL").mkdir(parents=True)
+            with mock.patch.object(lab_runner.subprocess, "run") as run:
+                with self.assertRaises(lab_runner.CommandError):
+                    runner.execute(lab_runner.parse_command("/lab script device=nova-b -- scripts/x.py"))
+            self.assertFalse(any("KEYCODE_SLEEP" in call.args[0] for call in run.call_args_list if call.args))
 
 
 class GuardHookTest(unittest.TestCase):
