@@ -691,3 +691,19 @@ recount, phone production and scene behaviour remain open.
 Cross-bundle sources come from the orchestrator's exact-body and pointer-only original-record
 lookup. Evidence (ignored): `work/coordination/orchestrator/scenes/golemplains2-final-v1/`. Readiness
 recount, phone production and scene behaviour remain open.
+
+## J1228 — Complete source-derived infinitetowerworld scene
+
+`whole-scene-infinitetowerworld` is host raw-exact to J850: 1,750 objects, both serialized members and the
+4,740,999-byte bundle (SHA-256 `236b6d1d…`). Profiles: `recipe/owner-infinitetowerworld-whole-*.json`.
+Cross-bundle sources come from the orchestrator's exact-body and pointer-only original-record
+lookup. Evidence (ignored): `work/coordination/orchestrator/scenes/infinitetowerworld-final-v1/`. Readiness
+recount, phone production and scene behaviour remain open.
+
+## J1229 — Complete source-derived lemuriantemple scene
+
+`whole-scene-lemuriantemple` is host raw-exact to J850: 10,928 objects, both serialized members and the
+10,232,436-byte bundle (SHA-256 `dc2d5b6b…`). Profiles: `recipe/owner-lemuriantemple-whole-*.json`.
+Cross-bundle sources come from the orchestrator's exact-body and pointer-only original-record
+lookup. Evidence (ignored): `work/coordination/orchestrator/scenes/lemuriantemple-final-v1/`. Readiness
+recount, phone production and scene behaviour remain open.

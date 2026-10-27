@@ -4350,3 +4350,33 @@ records that differ only in object references (remapped). No original body, curv
 program, copied source, private path or credential is included. All 8,785 persisted
 objects, two serialized members and the compressed bundle are host raw-exact to J850; phone
 production, installation and original scene behavior remain open.
+
+## infinitetowerworld complete scene selections (2026-10-27)
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-infinitetowerworld-whole-objects.json` | `a8de58752f2aedb7002a5c6c4374d1571f2b3b550e938fcada8232d247276d07` |
+| `owner-infinitetowerworld-whole-postprocess-shaders.json` | `059dace6493a024715bc044fea3882e291d7953bc56dac352a34350f64c7c860` |
+
+Manual provenance, privacy, licensing and sensitive-content audit: these profiles contain source
+selectors, hashes, checked pointer relationships and authored import policies only. Records with no
+same-scene source select byte-identical original records found by exact body hash, or original
+records that differ only in object references (remapped). No original body, curve, scalar, pixel,
+program, copied source, private path or credential is included. All 1,750 persisted
+objects, two serialized members and the compressed bundle are host raw-exact to J850; phone
+production, installation and original scene behavior remain open.
+
+## lemuriantemple complete scene selections (2026-10-27)
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-lemuriantemple-whole-objects.json` | `79266e44ce1cfc9cbe121331cf9930997abeb70701134f745386f00b07e456b4` |
+| `owner-lemuriantemple-whole-standard-shaders.json` | `e5514bfd15dd13dc5353be2fa50a2166d20463891406f9ba3043a6f7b7614f78` |
+
+Manual provenance, privacy, licensing and sensitive-content audit: these profiles contain source
+selectors, hashes, checked pointer relationships and authored import policies only. Records with no
+same-scene source select byte-identical original records found by exact body hash, or original
+records that differ only in object references (remapped). No original body, curve, scalar, pixel,
+program, copied source, private path or credential is included. All 10,928 persisted
+objects, two serialized members and the compressed bundle are host raw-exact to J850; phone
+production, installation and original scene behavior remain open.
