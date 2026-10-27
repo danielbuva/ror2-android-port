@@ -1280,6 +1280,11 @@ def select_authored_files(profile, filenames):
         raise ValueError("authored file selection requires tracked ShaderLab sources")
     selected = {key: profile[key] for key in ("input_id", "source_type", "sdk", "includes_sha256", "settings", "authored_inputs")}
     selected["shaders"] = rows
+    selected["authored_inputs"] = {
+        name: pin
+        for name, pin in profile["authored_inputs"].items()
+        if not name.startswith("scripts/lab/shader_") and name != "tools/phone-build/accepted-output/shader_sdk.py"
+    }
     return selected
 
 
@@ -1306,23 +1311,23 @@ def produce(
     are explicit pinned Git object trees; expected file hashes compare only fully
     persisted independent output. No retained generated source/body is read.
     """
-    import UnityPy
-    from UnityPy.helpers.TypeTreeHelper import write_typetree
-    from UnityPy.streams import EndianBinaryWriter
-
     root = Path(__file__).resolve().parents[3]
     sys.path.insert(0, str(root / "scripts/lab"))
-    import shader_source as sources
-    import shader_recovery as recovery
-    from shader_segments import read_segments
-    from shader_programs import NativePrograms
-
     profile_path, codec_path = Path(profile_path).absolute(), Path(codec_path).absolute()
     profile_pin = {"bytes": profile_path.stat().st_size, "sha256": profile_sha256}
     codec_pin = {"bytes": codec_path.stat().st_size, "sha256": codec_sha256}
     checked(profile_path, profile_pin)
     checked(codec_path, codec_pin)
     profile = select_authored_files(json.loads(profile_path.read_text()), authored_files)
+    # Authored ShaderLab does not need native D3D recovery or UnityPy on Android.
+    native = any(key in profile for key in ("native_ui", "native_materials", "native_internal", "native_intersection", "tmp_dummy", "tmp_mobile", "builtin"))
+    if native:
+        import UnityPy
+        import shader_source as sources
+        import shader_recovery as recovery
+        from shader_segments import read_segments
+        from shader_programs import NativePrograms
+
     pc, sdk = Path(pc).resolve(strict=True), Path(sdk).resolve(strict=True)
     output = Path(output)
     output = output.parent.resolve(strict=True) / output.name
@@ -1385,10 +1390,12 @@ def produce(
     native_type = layout["types"][selected["type_id"]]
     if native_type["class_id"] != 48:
         raise ValueError("original schema provider is not Shader48")
-    environment = UnityPy.load(str(source_path))
-    obj = next(row for row in environment.objects if (row.assets_file.name, row.path_id) == (source["member"], source["path_id"]))
-    node = obj.serialized_type.node
-    original_form = obj.read_typetree()["m_ParsedForm"]
+    node = W.shader_node(native_type["tree"])
+    source_member = W.B.Bundle(source_path).member(source["member"])
+    source_member.seek(layout["data_offset"] + selected["offset"])
+    original_form = W.read_shader_body(node, W.B.exact(source_member, selected["bytes"]))["m_ParsedForm"]
+    if "native_intersection" in profile:
+        environment = UnityPy.load(str(source_path))
     registry = original_form["m_KeywordNames"][:4], original_form["m_KeywordFlags"][:4]
     sdk_image = (sdk / "MacOS/Unity").read_bytes()
     compile_keywords = platform_keywords(sdk_image, profile["settings"])
@@ -1512,9 +1519,7 @@ def produce(
                     original, _, kind, typ = native_sources[shader["native_resource"]]
                 tree = construct(node, text, pre, compiled_passes, compress, registry, original, kind == "ui-alpha", kind == "intersection")
                 externals = fallback_externals(tree, names_to_files)
-                body_writer = EndianBinaryWriter(endian="<")
-                write_typetree(tree, node, body_writer)
-                body = body_writer.bytes
+                body = W.write_shader_body(node, tree)
                 destination = output / name
                 destination.parent.mkdir(parents=True, exist_ok=True)
                 standalone = {
