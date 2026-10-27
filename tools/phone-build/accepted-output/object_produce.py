@@ -1020,6 +1020,16 @@ def produce(profile_path, profile_sha256, pc, output, codec_path, codec_sha256, 
                         if selected["disable_original_behaviour"] is not True or typ["class_id"] != 114 or body[12:16] != b"\x01\0\0\0":
                             raise ValueError("disabled original behaviour requires an enabled MonoBehaviour")
                         body = body[:12] + bytes(1) + body[13:]
+                    if "missing_script_base" in selected:
+                        # A component whose script is absent from the build keeps only the base
+                        # MonoBehaviour fields; Unity serializes it with the base (script-less) type.
+                        base = selected["missing_script_base"]
+                        if typ["class_id"] != 114 or set(base) != {"bytes", "type_source"} or not 0 < base["bytes"] <= len(body):
+                            raise ValueError("missing-script base requires an original MonoBehaviour")
+                        _, base_type = source_record(sources, base["type_source"])
+                        if base_type["class_id"] != 114 or int(base_type["script_type"]) != -1:
+                            raise ValueError("missing-script base requires the original base MonoBehaviour type")
+                        body, typ = body[: base["bytes"]], copy.deepcopy(base_type)
                     if "plugin_import_default_execution_order" in selected:
                         if selected["plugin_import_default_execution_order"] is not True or typ["class_id"] != 115:
                             raise ValueError("plugin import order requires an original MonoScript")
