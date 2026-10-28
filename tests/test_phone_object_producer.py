@@ -29,6 +29,27 @@ RECORD_FIXTURE = load("record_bundle_fixture", ROOT / "tests/test_phone_record_p
 
 
 class ProducedRecordRelocationTests(unittest.TestCase):
+    def test_surface_projection_resizes_strings_and_preserves_unselected_bytes(self):
+        schema = FIXTURE.node(
+            "Base",
+            children=[
+                FIXTURE.node("before", 4, kind="UInt32"),
+                FIXTURE.node("impactEffectPrefab", 12, kind="PPtr<GameObject>"),
+                FIXTURE.text("impactSoundString"),
+                FIXTURE.node("middle", 4, kind="float"),
+                FIXTURE.text("materialSwitchString"),
+                FIXTURE.node("footstepEffectPrefab", 12, kind="PPtr<GameObject>"),
+                FIXTURE.node("after", 4, kind="UInt32"),
+            ],
+        )
+        before, middle, after = struct.pack("<I", 0x01020304), struct.pack("<I", 0x80000000), struct.pack("<I", 0xF00DF00D)
+        body = before + struct.pack("<iq", 1, 11) + FIXTURE.M.padded_string("ImpactName") + middle
+        body += FIXTURE.M.padded_string("SurfaceName") + struct.pack("<iq", 2, 29) + after
+        stream = io.BytesIO(RECORD_FIXTURE.serialized(body, schema, class_id=114))
+        stream.size = len(stream.getvalue())
+        tree = P.W.read_serialized(stream)["types"][0]["tree"]
+        self.assertEqual(P.omit_surface_effects(body, tree), before + bytes(16) + middle + bytes(16) + after)
+
     def test_schema_pointer_only_and_external_file_check(self):
         schema = FIXTURE.node(
             "Base",

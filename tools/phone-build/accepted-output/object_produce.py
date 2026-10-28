@@ -175,6 +175,36 @@ def deactivate_global_owner(body, name):
     return body[:-1] + bytes(1)
 
 
+def omit_surface_effects(body, tree):
+    """Apply the authored SurfaceDef effect and sound omissions to source spans."""
+    records = module("record_produce")
+    root = records.SCHEMA.type_tree(io.BytesIO(tree))
+    _, spans = records.fields(body, root)
+    replacements = []
+    for name in ("impactEffectPrefab", "footstepEffectPrefab", "impactSoundString", "materialSwitchString"):
+        nodes = [node for node in root.children if node.name == name]
+        if len(nodes) != 1:
+            raise ValueError("original SurfaceDef field absent or ambiguous")
+        node = nodes[0]
+        start, end = spans[name,]
+        if name.endswith("Prefab"):
+            if not node.kind.startswith("PPtr<") or end - start != 12:
+                raise ValueError("original SurfaceDef effect is not a PPtr")
+            replacement = bytes(12)
+        else:
+            if node.kind != "string":
+                raise ValueError("original SurfaceDef sound field is not a string")
+            replacement = bytes(4)
+        replacements.append((start, end, replacement))
+    result, cursor = bytearray(), 0
+    for start, end, replacement in sorted(replacements):
+        result.extend(body[cursor:start])
+        result.extend(replacement)
+        cursor = end
+    result.extend(body[cursor:])
+    return bytes(result)
+
+
 def normalize_exported_prefab_name(body):
     """Apply the pinned exporter's filename projection to a prefab root name."""
     stream = io.BytesIO(body)
@@ -1150,6 +1180,13 @@ def produce(profile_path, profile_sha256, pc, output, codec_path, codec_sha256, 
                         if typ["class_id"] == 114:
                             body, schema = legacy_animate_fields(body, typ["tree"], identity_owner)
                             typ = {**typ, "tree": schema}
+                    if "surface_effect_omissions" in selected:
+                        if selected["surface_effect_omissions"] is not True or typ["class_id"] != 114 or "properties_hash" not in selected or sdk_tree is None:
+                            raise ValueError("surface omissions require original SurfaceDef script properties")
+                        script, _ = source_record(sources, selected["properties_hash"]["script"])
+                        if script_fields(script)[1] != ("SurfaceDef", "RoR2", "RoR2.dll"):
+                            raise ValueError("surface omissions require original SurfaceDef")
+                        body = omit_surface_effects(body, typ["tree"])
                     body = remap(body, selected.get("references", []))
                     if "keyword_policy" in selected:
                         if typ["class_id"] != 21 or selected["keyword_policy"] not in ("dummy-shader-demote-valid", "dummy-shader-sort-invalid"):

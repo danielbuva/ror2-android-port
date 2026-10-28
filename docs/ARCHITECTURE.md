@@ -95,7 +95,10 @@ source strings in ordinal order; the original demotion policy retains its source
 order. `normalize_exported_prefab_name` projects original prefab root names through
 the pinned exporter's filename rules, preserving components, layer, tag and
 activation. Named original character/teleporter roots also use the existing
-authored suppression policy. Explicit record-pack directory/receipt pins supply already
+authored suppression policy. The named `surface_effect_omissions` projection
+applies the four effect/sound omissions from `recipe/asset-transforms.json` to
+original SurfaceDef schema spans, preserving all other source bytes and deriving
+its SDK script metadata. Explicit record-pack directory/receipt pins supply already
 produced texture bodies and resources; the owner verifies them before/after,
 assembles resource extents, and generates each asset's rooted container preloads.
 It calls the existing `player_data.py` Sprite crop/importer helpers only when
