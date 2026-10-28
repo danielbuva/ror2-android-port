@@ -4611,3 +4611,20 @@ records that differ only in object references (remapped). No original body, curv
 program, copied source, private path or credential is included. All 17,327 persisted
 objects, two serialized members and the compressed bundle are host raw-exact to J850; phone
 production, installation and original scene behavior remain open.
+
+## ITDampcave complete scene selections (2026-10-28)
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-itdampcave-whole-objects.json` | `e3d76295e12d466ce3df0b14c1777bd3664138d1dd70bdd153550b29ca1eb01c` |
+| `owner-itdampcave-whole-standard-shaders.json` | `7e75aae25547a660a9cc3e398d340304d3ed3d4a8cc148ab6d25d9425a4dea2b` |
+| `owner-itdampcave-whole-postprocess-shaders.json` | `da89a96ec3490c8042443ef4d795735fec8475ccb500a73cd0f077f6e802e311` |
+
+Manual provenance, privacy, licensing and sensitive-content audit: these profiles contain
+original-input selectors, hashes, checked pointer relationships and authored import policies.
+Post-processing selections follow the original Dampcavesimple resource supplying these records;
+Standard selections retain ITDampcave's recursive material dependencies. SDK and public-tool
+pins supply compilation. No original body, scalar array, pixel, program, copied source,
+private path or credential is included. All 18,225 persisted objects, both serialized members
+and the compressed bundle are host raw-exact to J850. Phone production, installation and
+original scene behavior remain open.

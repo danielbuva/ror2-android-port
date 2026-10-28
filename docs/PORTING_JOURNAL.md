@@ -827,3 +827,16 @@ recount, phone production and scene behaviour remain open.
 Cross-bundle sources come from the orchestrator's exact-body and pointer-only original-record
 lookup. Evidence (ignored): `work/coordination/orchestrator/scenes/moon-final-v1/`. Readiness
 recount, phone production and scene behaviour remain open.
+
+## J1245 — Complete source-derived ITDampcave scene
+
+2026-10-28. Existing object/Shader owners reproduce `whole-scene-itdampcave` from
+legitimate PC inputs, pinned SDK/public tools and source-produced packs. Post-processing
+selections follow their original Dampcavesimple supplier; Standard retains scene materials.
+All 18,225 objects, both serialized members and the 13,228,473 B compressed bundle are raw-exact
+to J850: `1c77a880d8a26a281be554194522a763ad6516fb3d0fb0ae10229878a359a690`.
+Profiles: `recipe/owner-itdampcave-whole-*.json`; evidence (ignored):
+`work/coordination/orchestrator/scenes/itdampcave-final-v2/qualification-done.json`.
+Retained qualifications and merged recipes recount to 675/705 available, 670 raw-exact;
+30 entries remain. No passed production is replayed. Phone production, installation
+and original scene behavior remain open; accepted APK unchanged.
