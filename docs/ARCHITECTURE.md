@@ -5195,3 +5195,15 @@ player/record-pack receipts and a fresh output directory. Process exit releases
 file handles; receipts persist. All 363 objects, both members and the
 compressed bundle are host raw-exact to J850. Phone production, installation and
 original game behavior remain open.
+
+`recipe/owner-commando-objects.json` completes `commando-prefab-lab` in the current
+original-object writer. Explicit native Sprite, animation/controller, original
+record and Shader profiles provide its remaining records; existing hierarchy,
+generic, mesh, texture, avatar and player/Objective suppliers are reused by pinned
+receipts. Original curve-bearing MonoScripts retain their editor property hashes
+with runtime identity/schema checks. The container derives grouped preload closure
+from produced records and source GUIDs, including checked external component
+owners. Setup takes original PC/SDK roots, explicit record packs and fresh output;
+process exit releases source/codec handles and keeps receipts. All 75,378 objects,
+both members and the compressed bundle are host raw-exact to J850. This introduces
+no runtime owner; full phone production, installation and gameplay remain open.

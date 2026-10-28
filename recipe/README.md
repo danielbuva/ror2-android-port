@@ -4920,5 +4920,56 @@ Reviewed pinned AssetRipper `1ac666f` MonoScriptExtensions identity comparison
 and AnimationCurveExtensions' versioned curve boundary alongside the acquired
 SDK and original metadata. Editor-only curve details need no new recovery when
 the legitimate MonoScript already supplies their property identity. Provenance,
-privacy, licensing and sensitive-content audit: 2026-10-28. No original hash,
+privacy, licensing and sensitive-content audit: 2026-10-28. No script-property hash literal,
 curve value, node table, program, private path or device identifier is tracked.
+
+## Complete Commando source selections (2026-10-28)
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-commando-objects.json` | `84fc4e68b52ba80ca101333b0b9e4735b5f3dc96db468f73a7086cbcdd457605` |
+| `owner-commando-reused-records.json` | `5440ce0007c9d69c6f5bd82f500a97caae8fffe1ed1b6dc7f76be96ad45ee37f` |
+| `owner-commando-original-sprites-1.json` | `503c9feb21cf0865a6429c4a5d51f5b97ee2767b8235e9454635041bf1efb09f` |
+| `owner-commando-sdk-shaders.json` | `9d109f1048dbc1bdddbae266dd4fee798be5328ef759226611262adbcf8e3ede` |
+| `owner-commando-native-sprites-2.json` | `12f487a6c66e4645820a8a73b4e597fd9134b906ccf68bc7a323ae0bd2b9b594` |
+| `owner-commando-original-sprites-2.json` | `d55cfe90cacd5f8b27924b2a7f6f790f2231bb81c2f0c22e7c31676ddb65fe16` |
+| `owner-commando-shader-context.json` | `9aa18a1fc48f4bb406cb52b585aa4fa2f24956a5b8807c327ac5495ed30e8452` |
+| `owner-commando-native-sprites-3.json` | `e42a307b1f0bf64785ccc9334f2ac765d4ae9308bb1dcf84ded24f4cae23a45c` |
+| `owner-commando-animation-records.json` | `ca92c2afe7d58f52372fe036e7997c0edbe58d015e7deb25fad0880c348ad1d9` |
+| `owner-commando-dummy-shaders-1.json` | `fe854ab6c532125f223378d66bfd7ec221d96b1067f2130009500407f1c520bc` |
+| `owner-commando-native-sprites-1.json` | `2e60a186dce679c50288a4d09f57e77eb05ec2880060a0fd1902080a604e11ef` |
+| `owner-commando-fallback-shaders.json` | `2104145b499f7e7cb6489d7589f19d29368f10415b6575e7dec832c73172300f` |
+| `owner-commando-particle-shader.json` | `8dd5f5febaca10abdec83d1f0a5ef8bfedc8af0aa3a28e0121bb1532dfecc671` |
+| `owner-commando-dummy-shaders-2.json` | `5863b4e8e6549a2ba3d23b4b45ce6b68b3e323b3fd55eb4d7f27813774896176` |
+| `owner-commando-crosshair-sprite.json` | `b4a02c56fca0af8926914d20e9fee2a7f12ea59f4bb7a4fa2f4a76eee52eefe3` |
+| `owner-commando-dummy-shaders-3.json` | `28f54e8e82c93611267028655bf5abdb838166ca154ef8af68c7eff32cb057a7` |
+
+These profiles complete `commando-prefab-lab` through the existing original-object,
+record, Sprite, SDK Shader, template Shader and record-remap owners. All 75,378
+persisted objects, the serialized/resource members and the 87,954,431-byte bundle
+are host raw-exact to J850 (`50a6af87…`). Profile bytes are preserved exactly so
+explicit record-provider receipt hashes remain reproducible.
+
+Production starts with original selectors and the acquired SDK. The animation,
+original Sprite and crosshair profiles use `record_produce.py`; native Sprite
+profiles use `sprite_produce.py` with its source-pixel request generator and the
+repository's exact-SDK fixture. SDK/fallback/particle Shader profiles use
+`shader_prefab.py`, dummy profiles use `payload_shader_records.py`, and the context
+profile uses `shader_context.py` with the explicit existing Barrier source pack.
+`record_remap.py` extracts the reused records from the already-qualified original/
+SDK player and Objective providers. `object_produce.py` takes the full object
+profile, these independently produced packs and the existing hierarchy, generic,
+mesh, texture and avatar providers as explicit receipt-pinned CLI inputs. No
+retained run directory is an implicit supplier; generators and required local
+SDK/fixture inputs remain described in `docs/LOCAL_STATE.md`.
+
+Manual provenance, privacy, licensing and sensitive-content audit: the profiles
+contain original selectors, hashes, minimal GUID/root/pointer relationships and
+authored transformation policies. Native Sprite geometry is generated locally
+from original pixels; curves, poses, programs, textures and original bodies are
+never embedded in recipes. Original script hashes retain their original identity
+and unchanged schema; grouped preloads derive from the produced typed graph.
+No original code, game-derived body, scalar/geometry/program table, private path,
+device identifier, credential or redistribution payload is published. Phone
+production of the complete bundle, installation and gameplay readiness remain
+open; host byte equality is the only closure here.
