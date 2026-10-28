@@ -41,6 +41,32 @@ def tos_entry(value):
 
 
 class ControllerRecords(unittest.TestCase):
+    def test_state_order_relocates_direct_destinations_and_preserves_selector_values(self):
+        transition = F.node("data", children=[integer("m_DestinationState"), integer("retained")])
+        state = F.node("data", children=[F.node("data", children=[integer("m_FullPathID"), F.array("m_TransitionConstantArray", transition)])])
+        machine = F.node(
+            "data",
+            children=[
+                F.node(
+                    "data",
+                    children=[F.array("m_StateConstantArray", state), integer("m_DefaultState"), F.array("m_AnyStateTransitionConstantArray", transition)],
+                )
+            ],
+        )
+        schema = F.node("Base", children=[F.node("m_Controller", children=[F.array("m_StateMachineArray", machine)])])
+
+        def record(identity, destination, retained):
+            return struct.pack("<I", identity) + vector([struct.pack("<II", destination, retained)])
+
+        first, second, third = record(101, 1, 313), record(202, 0xFFFFFFFF, 919), record(303, 30001, 717)
+        body = vector([vector([first, second, third]) + struct.pack("<I", 1) + vector([struct.pack("<II", 2, 411)])])
+        expected = vector([vector([third, record(101, 2, 313), second]) + struct.pack("<I", 2) + vector([struct.pack("<II", 0, 411)])])
+        stream = io.BytesIO(C.serialized(body, schema, 91))
+        stream.size = len(stream.getvalue())
+        tree = A.W.read_serialized(stream)["types"][0]["tree"]
+        root = A.SCHEMA.type_tree(io.BytesIO(tree))
+        self.assertEqual(A.transform_generic(body, 91, {"controller_state_order": {"0": [2, 0, 1]}}, root), expected)
+
     def test_exported_mask_omission_preserves_controller_fields_and_allocation_size(self):
         item = F.node("data", children=[integer("path_hash"), F.node("weight", 4, kind="float")])
         mask = F.node("m_SkeletonMask", children=[F.node("data", children=[F.array("m_Data", item)])])

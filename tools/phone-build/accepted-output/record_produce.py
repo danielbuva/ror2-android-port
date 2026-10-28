@@ -953,6 +953,40 @@ def controller_loop_states(body, root, states, read_clip):
     return bytes(result)
 
 
+def controller_state_order(body, root, selections):
+    """Relocate original state records and their checked local index references."""
+    _, spans = fields(body, root)
+    result, changes = bytearray(body), []
+    machines = ("m_Controller", "m_StateMachineArray", "Array")
+    count = struct.unpack_from("<I", body, spans[machines][0])[0]
+    for machine, order in selections.items():
+        if not isinstance(machine, str) or not machine.isdecimal() or str(int(machine)) != machine or not 0 <= int(machine) < count:
+            raise ValueError("invalid original controller state machine")
+        prefix = machines + (machine, "data")
+        array = prefix + ("m_StateConstantArray", "Array")
+        start, end = spans[array]
+        states = struct.unpack_from("<I", body, start)[0]
+        if not isinstance(order, list) or any(type(index) is not int for index in order) or sorted(order) != list(range(states)):
+            raise ValueError("controller state order must be an original-state bijection")
+        inverse = {old: new for new, old in enumerate(order)}
+        for path, (offset, finish) in spans.items():
+            if path[: len(prefix)] != prefix or path[-1] not in ("m_DefaultState", "m_DestinationState", "m_Destination"):
+                continue
+            if finish - offset != 4:
+                raise ValueError("original controller state index extent drift")
+            value = struct.unpack_from("<I", result, offset)[0]
+            # High values select entry/exit state machines or unavailable states;
+            # only local state indices move with the original state array.
+            if value in inverse:
+                struct.pack_into("<I", result, offset, inverse[value])
+        ranges = [spans[array + (str(index),)] for index in range(states)]
+        chunks = b"".join(result[ranges[index][0] : ranges[index][1]] for index in order)
+        changes.append((start, end, struct.pack("<I", states) + chunks))
+    for start, end, replacement in sorted(changes, reverse=True):
+        result[start:end] = replacement
+    return bytes(result)
+
+
 def controller_clear_skeleton_masks(body, root):
     """Apply the pinned exporter's omitted layer masks and native allocation size."""
     _, spans = fields(body, root)
@@ -1015,6 +1049,7 @@ def transform_generic(body, class_id, selected, root=None, read_clip=None):
         "controller_opposed_angles",
         "controller_behaviour_order",
         "controller_clear_skeleton_masks",
+        "controller_state_order",
         "canonical",
     } or (selected.get("demote_keywords") and class_id != 21):
         raise ValueError("unknown generic object operation")
@@ -1028,6 +1063,8 @@ def transform_generic(body, class_id, selected, root=None, read_clip=None):
         if selected["controller_clear_skeleton_masks"] is not True:
             raise ValueError("unqualified controller skeleton mask policy")
         body = controller_clear_skeleton_masks(body, root)
+    if "controller_state_order" in selected:
+        body = controller_state_order(body, root, selected["controller_state_order"])
     if "controller_loop_states" in selected:
         body = controller_loop_states(body, root, selected["controller_loop_states"], read_clip)
     if "controller_clip_order" in selected:
