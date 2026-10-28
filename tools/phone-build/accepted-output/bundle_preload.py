@@ -7,11 +7,20 @@ and container bodies are never inputs.
 
 import io
 import hashlib
+import importlib.util
+from pathlib import Path
 import re
 import struct
 
-import object_produce as O
-import record_produce as A
+
+def module(name):
+    spec = importlib.util.spec_from_file_location("_preload_" + name, Path(__file__).with_name(name + ".py"))
+    value = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(value)
+    return value
+
+
+O, A = module("object_produce"), module("record_produce")
 
 
 def pointers(body, typ, schemas):

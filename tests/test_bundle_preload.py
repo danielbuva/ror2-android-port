@@ -5,6 +5,7 @@ import importlib
 import io
 from pathlib import Path
 import struct
+import subprocess
 import sys
 from types import SimpleNamespace as Node
 import unittest
@@ -23,6 +24,16 @@ def pointer(name):
 
 
 class BundlePreloadTests(unittest.TestCase):
+    def test_owner_loads_with_isolated_standard_library_only_python(self):
+        path = Path(P.__file__).resolve()
+        code = (
+            "import importlib.util; s=importlib.util.spec_from_file_location('isolated_preload',"
+            + repr(str(path))
+            + "); m=importlib.util.module_from_spec(s); s.loader.exec_module(m)"
+        )
+        result = subprocess.run([sys.executable, "-I", "-S", "-c", code], capture_output=True, text=True)
+        self.assertEqual(result.returncode, 0, result.stderr)
+
     def test_only_schema_declared_pointers_form_graph_edges(self):
         root = node("Root", size=24, children=(pointer("owner"), node("opaque", size=12)))
         body = struct.pack("<iqiq", 0, -19, 1, 999)
