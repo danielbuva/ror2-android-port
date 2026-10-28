@@ -4926,6 +4926,18 @@ Process exit tears down producers; receipts persist. These are optional host
 reconstruction owners; phone production, installation and original runtime
 behavior remain open.
 
+The same remap owner can extract selected bodies from source-produced player
+serialized files. The supplier receipt pins its profile, relative file, size and
+hash; selected class, path ID, size and body hash must also match. Output index
+rows retain this file provenance. No player producer is rerun for extraction.
+For independently produced records, the object owner optionally applies
+`record_references`: the original type schema must identify every edited extent
+as a PPtr, each prior value must match, and destination external slots must
+exist. Scene preload dependencies follow these relocations. Existing
+`references` metadata keeps its previous meaning for produced records. Explicit
+supplier receipts and a fresh output directory set up reuse; process exit
+releases file handles and the resulting receipts persist.
+
 Goolake source-scene selections use the same object and Shader owners through
 `recipe/owner-goolake-source-objects.json` and its shader remap profile. The
 Bezier owner evaluates original curves with captured build angles, then applies

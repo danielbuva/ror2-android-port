@@ -25,6 +25,37 @@ def load(name, path):
 
 P = load("object_producer", ROOT / "tools/phone-build/accepted-output/object_produce.py")
 FIXTURE = load("object_bundle_fixture", ROOT / "tests/test_phone_mesh_producer.py")
+RECORD_FIXTURE = load("record_bundle_fixture", ROOT / "tests/test_phone_record_producer.py")
+
+
+class ProducedRecordRelocationTests(unittest.TestCase):
+    def test_schema_pointer_only_and_external_file_check(self):
+        schema = FIXTURE.node(
+            "Base",
+            children=[
+                FIXTURE.node("scalar", 4, kind="UInt32"),
+                FIXTURE.node("pointer", children=[FIXTURE.node("m_FileID", 4, kind="int"), FIXTURE.node("m_PathID", 8, kind="SInt64")], kind="PPtr<Shader>"),
+            ],
+        )
+        body = struct.pack("<Iiq", 17, 1, 6)
+        stream = io.BytesIO(RECORD_FIXTURE.serialized(body, schema, class_id=21))
+        stream.size = len(stream.getvalue())
+        typ = P.W.read_serialized(stream)["types"][0]
+        reference = {"offset": 4, "from": [1, 6], "to": [2, 6]}
+        self.assertEqual(P.remap_record(body, typ, [reference], ["old", "new"]), struct.pack("<Iiq", 17, 2, 6))
+        with self.assertRaisesRegex(ValueError, "schema PPtr"):
+            P.remap_record(body, typ, [dict(reference, offset=0)], ["old", "new"])
+        with self.assertRaisesRegex(ValueError, "absent external"):
+            P.remap_record(body, typ, [reference], ["old"])
+        with self.assertRaisesRegex(ValueError, "identity drift"):
+            P.remap_record(body, typ, [dict(reference, **{"from": [1, 7]})], ["old", "new"])
+
+    def test_preload_uses_relocated_dependency(self):
+        bundle = {"preload_dependencies": [], "dependencies": []}
+        member = {"name": "scene", "externals": ["old", "new"], "objects": [{"path_id": 9, "record_references": [{"offset": 4, "from": [1, 6], "to": [2, 6]}]}]}
+        packed = {("scene", 9): (None, {"dependencies": [{"to": [1, 6], "source": {"member": "original", "path_id": 42}}]})}
+        selected = {"externals": ["old", "new"]}
+        self.assertEqual(P.preload_data(bundle, selected, [member], packed), struct.pack("<IIiqIB", 0, 1, 2, 6, 0, 0))
 
 
 def digest(data):

@@ -59,6 +59,20 @@ def remap(body, references):
     return bytes(result)
 
 
+def remap_record(body, typ, references, externals):
+    """Relocate produced bodies only at PPtrs declared by the original schema."""
+    records = module("record_produce")
+    _, spans = records.fields(body, records.SCHEMA.type_tree(io.BytesIO(typ["tree"])))
+    pointers = {start for key, (start, end) in spans.items() if end - start == 12 and key + ("m_FileID",) in spans and key + ("m_PathID",) in spans}
+    for reference in references:
+        if reference["offset"] not in pointers:
+            raise ValueError("produced record relocation is not a schema PPtr")
+        file_id, _ = reference["to"]
+        if not 0 <= file_id <= len(externals):
+            raise ValueError("produced record relocation has an absent external file")
+    return remap(body, references)
+
+
 def demote_material_keywords(body):
     """Retain original keywords as invalid for the qualified dummy shader.
 
@@ -364,7 +378,15 @@ def preload_data(bundle, selected, members, packed=None):
     for member in members:
         for row in member["objects"]:
             dependencies = packed.get((member["name"], row["path_id"]), (None, {}))[1].get("dependencies", []) if packed else []
-            for reference in [*row.get("references", []), *dependencies]:
+            relocations = row.get("record_references", [])
+            moved = {}
+            for reference in relocations:
+                original = tuple(reference["from"])
+                if original in moved and moved[original] != reference["to"]:
+                    raise ValueError("ambiguous produced dependency relocation")
+                moved[original] = reference["to"]
+            dependencies = [{**ref, "to": moved.get(tuple(ref["to"]), ref["to"])} for ref in dependencies]
+            for reference in [*row.get("references", []), *relocations, *dependencies]:
                 file_id, path_id = reference["to"]
                 if not file_id or not path_id:
                     continue
@@ -968,6 +990,8 @@ def produce(profile_path, profile_sha256, pc, output, codec_path, codec_sha256, 
                     body = record_extent(directory / "objects.bin", row)
                     source, identity = selected["type_source"]
                     typ = sources[source][3]["types"][sources[source][4][identity]["type_id"]]
+                    if "record_references" in selected:
+                        body = remap_record(body, typ, selected["record_references"], selected_member["externals"])
                     if "resource" in row:
                         resource = row["resource"]
                         extent = resource["stream"]

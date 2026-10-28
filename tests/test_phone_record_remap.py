@@ -11,9 +11,50 @@ ROOT = Path(__file__).resolve().parents[1]
 spec = importlib.util.spec_from_file_location("record_remap", ROOT / "tools/phone-build/accepted-output/record_remap.py")
 R = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(R)
+spec = importlib.util.spec_from_file_location("remap_fixture", ROOT / "tests/test_phone_record_producer.py")
+F = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(F)
 
 
 class RecordRemapTests(unittest.TestCase):
+    def test_serialized_supplier_extracts_selected_record_and_rejects_drift(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            supplier = root / "supplier"
+            supplier.mkdir()
+            body = b"authored script body"
+            path = supplier / "registry.assets"
+            path.write_bytes(F.serialized(body, F.F.node("Base", len(body), kind="UInt8"), class_id=115))
+            receipt = {
+                "success": True,
+                "input_id": R.O.M.INPUT_ID,
+                "profile_sha256": "b" * 64,
+                "files": {path.name: {"bytes": path.stat().st_size, "sha256": R.O.B.sha(path)}},
+            }
+            (supplier / "result.json").write_text(json.dumps(receipt))
+            selected = {
+                "source_profile_sha256": "b" * 64,
+                "source": [path.name, 77],
+                "class_id": 115,
+                "bytes": len(body),
+                "sha256": hashlib.sha256(body).hexdigest(),
+                "destination": ["bundle", "member", 99],
+            }
+            profile = root / "profile.json"
+            profile.write_text(json.dumps({"input_id": receipt["input_id"], "records": [selected]}))
+            R.produce(profile, R.O.B.sha(profile), [], root / "output", [(supplier, R.O.B.sha(supplier / "result.json"))])
+            self.assertEqual((root / "output/objects.bin").read_bytes(), body)
+            row = json.loads((root / "output/index.jsonl").read_text())
+            self.assertEqual(row["source_produced"]["file_sha256"], receipt["files"][path.name]["sha256"])
+            self.assertEqual(row["path_id"], 99)
+            with self.assertRaisesRegex(ValueError, "class or size"):
+                R.serialized_records(supplier, receipt, dict(selected, class_id=21))
+            with self.assertRaises(ValueError):
+                R.serialized_records(supplier, receipt, dict(selected, source=["../registry.assets", 77]))
+            path.write_bytes(path.read_bytes() + b"drift")
+            with self.assertRaisesRegex(ValueError, "file drift"):
+                R.serialized_records(supplier, receipt, selected)
+
     def test_remapped_shader_retains_body_dependencies_and_supplier_receipt(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
