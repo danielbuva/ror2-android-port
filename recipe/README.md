@@ -4870,3 +4870,20 @@ authored transformations include no game pixel, geometry, physics polygon,
 program, copied source, SDK binary, private path or device identifier. Generated
 images, native outputs and device comparisons remain ignored. The original
 legitimate input and acquired SDK remain required.
+
+## Prefab Shader transformation provenance
+
+`shader_prefab.py` composes existing source generation, standalone compilation
+and SDK record serialization. It selects no-scene runtime axes from SDK
+declarations, particle features from acquired default materials and native
+particle order from original Shader metadata. Dummy forms use original
+properties and pinned public exporter templates; inherited SDK snippet order
+owns fallback keyword registration. SDK dependency traversal maps only named
+destination relationships. Complete body pins verify results without supplying
+programs or accepted keyword tables.
+
+Provenance, privacy, licensing and sensitive-content review: 2026-10-28. Public
+code contains no game properties, ShaderLab expressions, program bytes, SDK
+binaries/includes, private paths or device identifiers. Generated source and
+records stay ignored; legitimate original input and the acquired SDK remain
+required. The compiler/codec owners retain their cleanup and failure evidence.

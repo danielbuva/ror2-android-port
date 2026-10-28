@@ -765,6 +765,19 @@ object-pack placement. The API returns the typed tree, raw record stream and
 serialized body and retains private diagnostics. Complete-file and phone gates
 remain independent of partial SDK-record qualification.
 
+`shader_prefab.py` owns standalone prefab Shader records. Original Shader forms
+and acquired SDK snippets supply runtime passes and no-scene keyword axes; SDK
+default materials select particle features while original fragment rows retain
+native ordering. Original dummy properties and pinned public exporter templates
+supply game placeholder forms. Fallback keyword registration follows serialized
+SDK snippet order, including inherited snippets, and SDK dependency traversal
+maps to declared destination identities. Existing compiler, SDK serializer and
+codec owners produce all programs and framing. Setup requires pinned original,
+SDK, template and profile providers with new disjoint output. Teardown reaps
+compiler/codec children; failure preserves diagnostics. Input pins, body hashes
+and reread extents qualify each record. Complete-file and device gates remain
+separate; no accepted program or keyword table is an input.
+
 `shader_context.py` owns metadata-only context changes on explicit qualified
 source-produced Shader packs. It retains every program and unrelated body byte.
 Original Shader metadata and pinned public dummy templates, or acquired SDK

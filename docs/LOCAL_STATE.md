@@ -2,6 +2,13 @@
 
 ## Shader context record providers
 
+The current `shader_prefab.py` action requires original Shader objects, the
+acquired SDK's builtin Shader/default-material metadata and compiler/includes,
+and pinned public exporter templates for dummy forms. Profiles declare source
+and destination identities plus output hashes. Generated ShaderLab, compiler
+responses and record packs remain ignored; retained diagnostic folders and
+accepted bodies supply no production input.
+
 The current `shader_context.py` action consumes an explicitly supplied successful
 source-produced record pack and receipt hash. Its original Shader selectors,
 acquired SDK files/includes, public dummy-template revision and settings are
