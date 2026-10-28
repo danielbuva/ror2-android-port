@@ -327,6 +327,8 @@ diagnostic with `SpriteNativeFixture.cs`. It references source PNGs by path/hash
 in a fresh ignored project. Under the editor mutex, the pinned Unity MCP invokes
 `Tools/P1/Run Sprite Native Fixture`; created textures and sprites are destroyed
 after each item. Float-bit geometry and the terminal result stay private. The
+fixture also emits UVs, bounds and native rect/pivot/border properties for source
+record assembly, without sampling an accepted record.
 fixture is separate from phone production and complete-bundle qualification.
 Audited
 `recipe/owner-animation-clips.json`, `recipe/owner-animator-controllers.json`,

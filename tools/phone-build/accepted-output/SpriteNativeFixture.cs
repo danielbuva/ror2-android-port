@@ -21,7 +21,8 @@ public static class SpriteNativeFixture
     {
         public string id;
         public int width, height;
-        public int[] vertex_xy_bits, triangles;
+        public int[] vertex_xy_bits, uv_bits, triangles;
+        public int[] rect_bits, pivot_pixel_bits, border_bits, texture_rect_bits, texture_offset_bits, bounds_bits;
         public Shape[] physics;
     }
     [Serializable] public sealed class Results
@@ -32,6 +33,7 @@ public static class SpriteNativeFixture
     }
 
     static int Bits(float value) { return BitConverter.ToInt32(BitConverter.GetBytes(value), 0); }
+    static int[] Values(params float[] values) { return Array.ConvertAll(values, Bits); }
     static int[] Points(IList<Vector2> points)
     {
         var output = new int[points.Count * 2];
@@ -71,8 +73,18 @@ public static class SpriteNativeFixture
                     sprite.GetPhysicsShape(index, points);
                     shapes[index] = new Shape { xy_bits = Points(points) };
                 }
+                Rect rect = sprite.rect, textureRect = sprite.textureRect;
+                Vector2 pivot = sprite.pivot, textureOffset = sprite.textureRectOffset;
+                Vector4 border = sprite.border;
+                Bounds bounds = sprite.bounds;
                 results.Add(new Result { id = item.id, width = texture.width, height = texture.height,
-                    vertex_xy_bits = Points(sprite.vertices), triangles = Array.ConvertAll(sprite.triangles, v => (int)v), physics = shapes });
+                    vertex_xy_bits = Points(sprite.vertices), uv_bits = Points(sprite.uv),
+                    rect_bits = Values(rect.x, rect.y, rect.width, rect.height), pivot_pixel_bits = Values(pivot.x, pivot.y),
+                    border_bits = Values(border.x, border.y, border.z, border.w),
+                    texture_rect_bits = Values(textureRect.x, textureRect.y, textureRect.width, textureRect.height),
+                    texture_offset_bits = Values(textureOffset.x, textureOffset.y),
+                    bounds_bits = Values(bounds.center.x, bounds.center.y, bounds.center.z, bounds.extents.x, bounds.extents.y, bounds.extents.z),
+                    triangles = Array.ConvertAll(sprite.triangles, v => (int)v), physics = shapes });
             }
             finally
             {
