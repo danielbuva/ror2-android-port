@@ -357,6 +357,13 @@ Every body and persisted record-pack extent must match its expected hash.
 Source files are rechecked and new outputs must lie outside the original input.
 The SDK fixture supplies the explicit native output; complete-bundle and full
 phone-production qualification remain separate gates.
+The existing `record_produce.py` generic record-pack path also admits original
+Sprite records through the same `importer_guid` and `crop_rectangle_offset`
+fields as `object_produce.py`. It delegates to `player_data.sprite_crop` and
+`sprite_key` before pointer relocation. This standalone Sprite asset projection
+preserves original geometry, UVs and physics; it requires no runtime constructor
+output. The explicit importer identity comes from the Sprite `.asset.meta`
+relationship, distinct from the texture `.png.meta` used for native re-import.
 Audited
 `recipe/owner-animation-clips.json`, `recipe/owner-animator-controllers.json`,
 `recipe/owner-material-records.json`, `recipe/owner-gameobjects.json`,

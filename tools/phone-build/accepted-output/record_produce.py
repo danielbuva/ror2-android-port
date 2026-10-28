@@ -1150,6 +1150,8 @@ def transform_generic(body, class_id, selected, root=None, read_clip=None):
         "controller_state_order",
         "controller_clear_null_motion",
         "canonical",
+        "importer_guid",
+        "crop_rectangle_offset",
     } or (selected.get("demote_keywords") and class_id != 21):
         raise ValueError("unknown generic object operation")
     if any(key.startswith("controller_") or key == "canonical" for key in selected) and (class_id != 91 or root is None):
@@ -1184,6 +1186,13 @@ def transform_generic(body, class_id, selected, root=None, read_clip=None):
         body = controller_tos(body, root, selected["controller_tos"])
     if "controller_behaviour_order" in selected:
         body = controller_singleton_behaviours(body, root, selected["controller_behaviour_order"])
+    if "importer_guid" in selected or "crop_rectangle_offset" in selected:
+        if class_id != 213 or "importer_guid" not in selected:
+            raise ValueError("Sprite import operations require an original Sprite and importer GUID")
+        sprites = O.module("player_data")
+        if "crop_rectangle_offset" in selected:
+            body = sprites.sprite_crop(body, selected["crop_rectangle_offset"])
+        body = sprites.sprite_key(body, selected["importer_guid"])
     result = O.remap(body, selected.get("references", []))
     return O.demote_material_keywords(result) if selected.get("demote_keywords") else result
 
@@ -1289,6 +1298,7 @@ def produce(profile_path, profile_sha256, pc, output):
                             198,
                             199,
                             205,
+                            213,
                             215,
                             222,
                             223,

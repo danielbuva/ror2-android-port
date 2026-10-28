@@ -31,8 +31,8 @@ def fixture():
             node("m_Offset", 8),
             node("m_Border", 16),
             node("m_PixelsToUnits", 4),
-            node("m_Extrude", 4),
             node("m_Pivot", 8),
+            node("m_Extrude", 4),
             node("flags", 4),
             node("key", 24),
             node("atlas", 16),
@@ -54,7 +54,7 @@ def fixture():
         ],
     )
     channels = bytes([0, 0, 0, 3, 1, 0, 0, 2])
-    body = F.vector(b"test", 4) + struct.pack("<4f2f4ffI2fI", 0, 0, 16, 8, 0, 0, 0, 0, 0, 0, 2, 1, 0.5, 0.5, 7)
+    body = F.vector(b"test", 4) + struct.pack("<4f2f4ff2fII", 0, 0, 16, 8, 0, 0, 0, 0, 0, 0, 2, 0.5, 0.5, 1, 7)
     body += bytes(40) + struct.pack("<iq", 2, 1234) + bytes(12)
     body += F.vector(struct.pack("<II", 6, 4) + b"B" * 40, 1) + F.vector(bytes(12), 12)
     body += struct.pack("<I", 4) + F.vector(channels, 2) + F.vector(bytes(80), 80)
@@ -74,6 +74,26 @@ def fixture():
 
 
 class SpriteNativeRecordTests(unittest.TestCase):
+    def test_record_pack_original_sprite_crop_preserves_native_geometry(self):
+        body, root, _ = fixture()
+        _, spans = S.A.fields(body, root)
+        original = bytearray(body)
+        crop_offset = spans[("m_RD", "textureRect")][0]
+        struct.pack_into("<4f", original, crop_offset, 2.25, 3.5, 8, 4)
+        struct.pack_into("<2f", original, spans[("m_RD", "textureRectOffset")][0], 2, 1)
+        pointer = spans[("m_RD", "texture")][0]
+        selected = {"importer_guid": "1" * 32, "crop_rectangle_offset": crop_offset, "references": [{"offset": pointer, "from": [2, 1234], "to": [0, 99]}]}
+        result = S.A.transform_generic(bytes(original), 213, selected)
+        field = lambda data, path: data[slice(*spans[path])]
+        self.assertEqual(field(result, ("m_Rect",)), struct.pack("<4f", 2.25, 3.5, 8, 4))
+        self.assertEqual(field(result, ("m_Pivot",)), struct.pack("<2f", 0.75, 0.75))
+        self.assertEqual(field(result, ("m_Offset",)), struct.pack("<2f", 2, 1))
+        self.assertEqual(field(result, ("m_RD", "textureRectOffset")), bytes(8))
+        self.assertEqual(field(result, ("m_RD", "texture")), struct.pack("<iq", 0, 99))
+        self.assertEqual(field(result, ("key",)), bytes([0x11]) * 16 + struct.pack("<q", 21300000))
+        for path in (("m_RD", "m_VertexData"), ("m_RD", "m_IndexBuffer"), ("m_PhysicsShape",), ("tail",)):
+            self.assertEqual(field(result, path), field(original, path))
+
     def test_original_crop_recovers_asymmetric_standalone_border(self):
         body, root, _ = fixture()
         _, spans = S.A.fields(body, root)
