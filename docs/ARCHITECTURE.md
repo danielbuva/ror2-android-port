@@ -4947,3 +4947,12 @@ the session owns logs and process teardown. Bounded ColorGrade shell production
 on Android is byte-exact to J850, with thermal and scratch/display/lease cleanup
 receipts in `work/coordination/p1-colorgrade-phone-v1/device-source-v4/`.
 Complete-cohort production and ordinary app/install/update gates remain open.
+
+ITDampcave complete scene selections use the existing object/Shader owners through
+`recipe/owner-itdampcave-whole-objects.json` and matching post-processing/Standard
+profiles. Original Dampcavesimple resources supply post-processing identities;
+ITDampcave materials supply Standard features. Explicit original/SDK/tool roots,
+pinned profiles, source-produced record packs and a fresh output directory set up
+production; process exit tears down producers while receipts persist. The writer
+exposes `payload/whole-scene-itdampcave`, host raw-exact to J850 for all 18,225 objects,
+both serialized members and the compressed bundle. Phone and runtime gates remain open.
