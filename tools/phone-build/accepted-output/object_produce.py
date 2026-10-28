@@ -474,8 +474,12 @@ def aligned_string(stream, value):
     W.padding(stream, 4)
 
 
-def asset_bundle(selected, identities):
+def asset_bundle(selected, identities, records=None, sources=None):
     """Build Unity's release AssetBundle metadata, without target body literals."""
+    if "asset_groups" in selected:
+        if records is None or sources is None:
+            raise ValueError("grouped prefab container requires produced graph records")
+        return module("bundle_preload").produce(selected, records, sources)
     stream = io.BytesIO()
     aligned_string(stream, selected["name"])
     scene = "scene_path" in selected
@@ -1158,7 +1162,12 @@ def produce(profile_path, profile_sha256, pc, output, codec_path, codec_sha256, 
             identities = [
                 row["path_id"] for row in selected_member["objects"] if "source" in row or "record" in row or row.get("generate") == "DefaultMaterial"
             ]
-            for selected in selected_member["objects"]:
+            object_order = (
+                sorted(selected_member["objects"], key=lambda row: row.get("generate") == "AssetBundle")
+                if "asset_groups" in selected_bundle
+                else selected_member["objects"]
+            )
+            for selected in object_order:
                 if "record" in selected:
                     directory, row = packed[selected_member["name"], selected["path_id"]]
                     body = record_extent(directory / "objects.bin", row)
@@ -1320,7 +1329,7 @@ def produce(profile_path, profile_sha256, pc, output, codec_path, codec_sha256, 
                     else:
                         if selected.get("generate", "AssetBundle") != "AssetBundle" or typ["class_id"] != 142:
                             raise ValueError("bundle container requires original AssetBundle type")
-                        body = asset_bundle(selected_bundle, identities)
+                        body = asset_bundle(selected_bundle, identities, member_records, sources)
                 if "properties_hash" in selected:
                     if sdk_tree is None:
                         raise ValueError("script properties require SDK metadata")

@@ -765,6 +765,19 @@ object-pack placement. The API returns the typed tree, raw record stream and
 serialized body and retains private diagnostics. Complete-file and phone gates
 remain independent of partial SDK-record qualification.
 
+`bundle_preload.py` owns grouped prefab container derivation inside the current
+`object_produce.py` writer. Asset paths, GUIDs and imported root identities name
+minimal source relationships. The writer processes the container after all
+other objects; typed source-produced bodies supply pointer closure across every
+root in an imported asset group. Checked original component back-links and
+GameObject membership supply external owners. SDK resource identities and
+serialized member names determine file order; Unity GUID words determine group
+order. Subassets share one preload range while container paths sort ordinally.
+No accepted preload array or body is an input. Existing source/body/input hash
+checks, new output ownership and failed receipts remain in the parent writer.
+The bounded reader/writer ceiling is 256 MiB for the observed 175 MB Commando
+serialized member and 148 MB resource member; block caching remains bounded.
+
 `shader_prefab.py` owns standalone prefab Shader records. Original Shader forms
 and acquired SDK snippets supply runtime passes and no-scene keyword axes; SDK
 default materials select particle features while original fragment rows retain

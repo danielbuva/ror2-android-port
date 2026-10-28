@@ -4887,3 +4887,22 @@ code contains no game properties, ShaderLab expressions, program bytes, SDK
 binaries/includes, private paths or device identifiers. Generated source and
 records stay ignored; legitimate original input and the acquired SDK remain
 required. The compiler/codec owners retain their cleanup and failure evidence.
+
+## Grouped prefab container transformation provenance
+
+`bundle_preload.py` derives preload closure from typed source-produced objects.
+Profiles name asset paths, original or authored importer GUIDs and imported
+root identities; those relationships group subassets and determine Unity GUID
+ordering. Original component selectors, whole/body pins, GameObject back-links
+and membership validate external owner relationships. Resource identities and
+serialized member names determine file order. Existing bundle framing writes
+shared preload ranges and sorted container entries after producing all objects.
+No accepted container/preload array or game content table is supplied.
+
+Prior art: pinned AssetRipper `1ac666f` AssetBundleExtensions separates bundle
+name from collection name, and Pass103 PPtrNodeHelper enumerates dependencies
+with their field paths. Existing typed readers provide that boundary; current
+source metadata and comparison evidence determine native grouping/order.
+Provenance, privacy, licensing and sensitive-content review: 2026-10-28. Public
+code contains format rules and identity relationships only, with no copied
+upstream implementation, original bodies, private paths or device identifiers.

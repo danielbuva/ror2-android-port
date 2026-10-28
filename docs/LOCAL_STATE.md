@@ -2,6 +2,11 @@
 
 ## Shader context record providers
 
+Grouped prefab containers require source asset GUID/root relationships and
+original selectors for external component ownership. `bundle_preload.py` reads
+already-produced typed records through the existing bundle writer; no accepted
+preload table, native container body or retained run folder supplies data.
+
 The current `shader_prefab.py` action requires original Shader objects, the
 acquired SDK's builtin Shader/default-material metadata and compiler/includes,
 and pinned public exporter templates for dummy forms. Profiles declare source
