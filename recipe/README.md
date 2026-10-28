@@ -4169,9 +4169,9 @@ production, installation and original scene behavior remain open.
 | Recipe | SHA-256 |
 | --- | --- |
 | `owner-bazaar-whole-objects.json` | `e1a7f4be014786b9871446a64b8686bd01458be4ba4050856011ec21ee6615d1` |
-| `owner-bazaar-whole-particles-shaders.json` | `5187129fe53c63b7000a6f48b742a72301afced8124c95105f7d65808b87c7ef` |
-| `owner-bazaar-whole-postprocess-shaders.json` | `9875ca04d0dae7451f5769bb4f96211e8402f3989e351c97a227a3e1cdea089d` |
-| `owner-bazaar-whole-standard-shaders.json` | `68843e3f4dd949eb5e221a3b08f8eb7bb657c43f0e1098921d5219a7d12a854d` |
+| `owner-bazaar-whole-particles-shaders.json` | `33d92f822a2304108864bd07d4c91c1c2df4550898e2bcff0d71a9e68cb013d4` |
+| `owner-bazaar-whole-postprocess-shaders.json` | `201ec49da0c3c758946200846089e3b508070d329437adf1111f8e9de00588a6` |
+| `owner-bazaar-whole-standard-shaders.json` | `9f9fdd13a55e2a63eff8412af49922b7bc8c88f16bec5e6603fe91371bced7d1` |
 
 Manual provenance, privacy, licensing and sensitive-content audit: these profiles
 contain source selectors, hashes, checked pointer relationships and authored
@@ -4284,8 +4284,8 @@ is separate from phone production, installation and runtime.
 | Recipe | SHA-256 |
 | --- | --- |
 | `owner-voidraid-whole-objects.json` | `b417dc2dc65e32f4b80cee374b054ee5d4996d8d8dfd90ef95fa280955950af4` |
-| `owner-voidraid-whole-postprocess-shaders.json` | `c35f9e99db147a8c8e0993ef9dd5ea040270ae694f11fb620dc15639ee755b5c` |
-| `owner-voidraid-whole-standard-shaders.json` | `f97b7c1aed02021052a8bbba406d8b1fe6a8ab4000488ab969c2eb3c471270e0` |
+| `owner-voidraid-whole-postprocess-shaders.json` | `0e32bb35568d9913c8c3c85bcea8dc4416e3bc1697b39552acb1953768ffa6d6` |
+| `owner-voidraid-whole-standard-shaders.json` | `5f6a306dfb6118d06fed41f78e59453e2af739f60a07c23e856f6fa322f79a00` |
 
 Manual provenance, privacy, licensing and sensitive-content audit: these profiles
 contain source selectors, hashes, checked pointer relationships and authored
@@ -4306,7 +4306,7 @@ to J850; phone production, installation and original scene behavior remain open.
 | Recipe | SHA-256 |
 | --- | --- |
 | `owner-surv2-whole-objects.json` | `1e9e78edbba4c72e4265119bd32bef9257d5369dd08e461d3731736cb1915292` |
-| `owner-surv2-whole-standard-shaders.json` | `f090d85dc37a5b23a2d6ca3a3005b0d78d7d5b3a6ff824c06828ab5566fca259` |
+| `owner-surv2-whole-standard-shaders.json` | `46994cb9bfd6c2361be78bb9fc3186db5320eb0400dcb8cf793097b7980c8c9f` |
 
 Manual provenance, privacy, licensing and sensitive-content audit: these profiles
 contain source selectors, hashes, checked pointer relationships, build-assigned
@@ -4326,7 +4326,7 @@ and original scene behavior remain open.
 | Recipe | SHA-256 |
 | --- | --- |
 | `owner-nest-whole-objects.json` | `88de6a4e782772ad993fcbaed674e1e1ac260ad69fb373fa91619d4afd94acf4` |
-| `owner-nest-whole-standard-shaders.json` | `d893a55491d862b8ce31d4d75b8939cc92ba1fcd45f338e967d9e435bf3a7212` |
+| `owner-nest-whole-standard-shaders.json` | `2bf9a8d7b3569a141729fda0c6777dabd29b729602fceb33f7363a0559e39e8e` |
 
 Manual provenance, privacy, licensing and sensitive-content audit: these profiles contain source
 selectors, hashes, checked pointer relationships and authored import policies only. Records with no
@@ -4341,7 +4341,7 @@ production, installation and original scene behavior remain open.
 | Recipe | SHA-256 |
 | --- | --- |
 | `owner-golemplains2-whole-objects.json` | `4170f596493029d58dec8dd4156c9464d438a58c25a3c162b62061ce72f02715` |
-| `owner-golemplains2-whole-standard-shaders.json` | `c16753df6000c6a7354c2ac024f9a0896abb957512ce55875a0c89c5095c7616` |
+| `owner-golemplains2-whole-standard-shaders.json` | `2dd1f714cf9414c5ee0807f4b6fcacd952b5e1120a20c42f6630b53d62e75ee7` |
 
 Manual provenance, privacy, licensing and sensitive-content audit: these profiles contain source
 selectors, hashes, checked pointer relationships and authored import policies only. Records with no
@@ -4356,7 +4356,7 @@ production, installation and original scene behavior remain open.
 | Recipe | SHA-256 |
 | --- | --- |
 | `owner-infinitetowerworld-whole-objects.json` | `a8de58752f2aedb7002a5c6c4374d1571f2b3b550e938fcada8232d247276d07` |
-| `owner-infinitetowerworld-whole-postprocess-shaders.json` | `059dace6493a024715bc044fea3882e291d7953bc56dac352a34350f64c7c860` |
+| `owner-infinitetowerworld-whole-postprocess-shaders.json` | `09ba0ea50f22a4f11e1f71ed9c2a0f47a015beb3da3277d24197c985d848dfc7` |
 
 Manual provenance, privacy, licensing and sensitive-content audit: these profiles contain source
 selectors, hashes, checked pointer relationships and authored import policies only. Records with no
@@ -4371,7 +4371,7 @@ production, installation and original scene behavior remain open.
 | Recipe | SHA-256 |
 | --- | --- |
 | `owner-lemuriantemple-whole-objects.json` | `79266e44ce1cfc9cbe121331cf9930997abeb70701134f745386f00b07e456b4` |
-| `owner-lemuriantemple-whole-standard-shaders.json` | `e5514bfd15dd13dc5353be2fa50a2166d20463891406f9ba3043a6f7b7614f78` |
+| `owner-lemuriantemple-whole-standard-shaders.json` | `f0cc93f619a2c154c8d2f2a3cefab1d5e12b23062342b0aafd9f27742921359a` |
 
 Manual provenance, privacy, licensing and sensitive-content audit: these profiles contain source
 selectors, hashes, checked pointer relationships and authored import policies only. Records with no
@@ -4386,7 +4386,7 @@ production, installation and original scene behavior remain open.
 | Recipe | SHA-256 |
 | --- | --- |
 | `owner-artifactworld-whole-objects.json` | `4656205ad8a77ad07afe53e715a516767d7d2bc3da0c6ecfd7c231303ae1c5e9` |
-| `owner-artifactworld-whole-postprocess-shaders.json` | `06548120d24aa5d3143426b7131f2ba56110fb6d7550c60c10792265cd41b47b` |
+| `owner-artifactworld-whole-postprocess-shaders.json` | `5b16a509c3c80f18b5519edf82440870a80aa7be1f37e1d2a68c4588d9a9bfc7` |
 
 Manual provenance, privacy, licensing and sensitive-content audit: these profiles contain source
 selectors, hashes, checked pointer relationships and authored import policies only. Records with no
@@ -4401,7 +4401,7 @@ production, installation and original scene behavior remain open.
 | Recipe | SHA-256 |
 | --- | --- |
 | `owner-blackbeach-whole-objects.json` | `c2708a4bebe83c5e56a87762e0f2ab4793e89b7e144f58d23bcf65897f1c34e4` |
-| `owner-blackbeach-whole-standard-shaders.json` | `c9adfc0c1560a3fade3d9368d0e4dd8b67d2d657b2c1096694169fc806d62243` |
+| `owner-blackbeach-whole-standard-shaders.json` | `46a25f83086a97208cddc989e0a3b41ad73bcb8027aa1a725f2940b1c9648889` |
 
 Manual provenance, privacy, licensing and sensitive-content audit: these profiles contain source
 selectors, hashes, checked pointer relationships and authored import policies only. Records with no
@@ -4416,7 +4416,7 @@ production, installation and original scene behavior remain open.
 | Recipe | SHA-256 |
 | --- | --- |
 | `owner-blackbeach2-whole-objects.json` | `5dd9af8c497db3c77e3f2fa786f507a9cd2e1c88c8af5d63bf54ba373930e61e` |
-| `owner-blackbeach2-whole-standard-shaders.json` | `2612c263eb8e4a236aec00007cbc78c9d71fb02fe0bc3db0db74781253369313` |
+| `owner-blackbeach2-whole-standard-shaders.json` | `130bf7ef5a8f58d4f006d111a0b36047f9283a26f40e2068dd882c1a73567145` |
 
 Manual provenance, privacy, licensing and sensitive-content audit: these profiles contain source
 selectors, hashes, checked pointer relationships and authored import policies only. Records with no
@@ -4431,8 +4431,8 @@ production, installation and original scene behavior remain open.
 | Recipe | SHA-256 |
 | --- | --- |
 | `owner-ancientloft-whole-objects.json` | `c8eafdd4432409a1e504842c47a422c3dc07cec9bf09684de83fa87b485072fc` |
-| `owner-ancientloft-whole-postprocess-shaders.json` | `b6475338fae50b70d74aba85c838fa482867b64ff1a7d7a741d3676e117c5d55` |
-| `owner-ancientloft-whole-standard-shaders.json` | `b7ade39418b5c8cbe479989e02c59a6ed43df663bdaff720d8c9d592bb89df8b` |
+| `owner-ancientloft-whole-postprocess-shaders.json` | `32a3485299c8c3047294cf1de4d2b406226b43f424271362dbc83c77fcc3fc3d` |
+| `owner-ancientloft-whole-standard-shaders.json` | `ef097dd4722843134f5cdf22971ac7061f57bd24d1a2897d294f5966ac161a5f` |
 
 Manual provenance, privacy, licensing and sensitive-content audit: these profiles contain source
 selectors, hashes, checked pointer relationships and authored import policies only. Records with no
@@ -4447,8 +4447,8 @@ production, installation and original scene behavior remain open.
 | Recipe | SHA-256 |
 | --- | --- |
 | `owner-arena-whole-objects.json` | `77fc2d740a4f7e034865472e0af57333f2ab351d39a94d69b64f6c6e5f905968` |
-| `owner-arena-whole-postprocess-shaders.json` | `9b9ddaaddebe631b6463d9704047680a48dcb0027d6b98f5e07e7662bed3d173` |
-| `owner-arena-whole-standard-shaders.json` | `8af0c2a5ae207c60fe85d0982b99ad20c58d8ab90e028d9b2248673cdcc8973e` |
+| `owner-arena-whole-postprocess-shaders.json` | `5b443240a415e018a88d54105bc2ee0992037c22dfdec1f67784d88e52582dcd` |
+| `owner-arena-whole-standard-shaders.json` | `d69d7c952ad0e89f16db8cedf8f8eef1a6e704b6547a885932ac48573bd6aa19` |
 
 Manual provenance, privacy, licensing and sensitive-content audit: these profiles contain source
 selectors, hashes, checked pointer relationships and authored import policies only. Records with no
@@ -4463,7 +4463,7 @@ production, installation and original scene behavior remain open.
 | Recipe | SHA-256 |
 | --- | --- |
 | `owner-villagenight-whole-objects.json` | `44a8014cf5240cec0636e0437f4f1f80bfa837658df45fb79b524cc6b51f4402` |
-| `owner-villagenight-whole-postprocess-shaders.json` | `d5035b9bb42b8d63da374652ad1d827d105a7f5551f0fae39cfe1ee3a1c372e1` |
+| `owner-villagenight-whole-postprocess-shaders.json` | `1b255324e3fb5112e7928faf8814ca90be2b83b39e63b80fe1a19a801a9a46e5` |
 
 Manual provenance, privacy, licensing and sensitive-content audit: these profiles contain source
 selectors, hashes, checked pointer relationships and authored import policies only. Records with no
@@ -4478,7 +4478,7 @@ production, installation and original scene behavior remain open.
 | Recipe | SHA-256 |
 | --- | --- |
 | `owner-lakes-whole-objects.json` | `7916752404e6c4395ae6730101b1ed1290b995f675d7129f6c57ef994ef13758` |
-| `owner-lakes-whole-standard-shaders.json` | `37958c98873791055b24424e6ae8de97929662275c7705795df071f9f81f8520` |
+| `owner-lakes-whole-standard-shaders.json` | `d18b02e1cefc5667436a0ea7ba06a5977ca832b93712d30017244c3189dd274e` |
 
 Manual provenance, privacy, licensing and sensitive-content audit: these profiles contain source
 selectors, hashes, checked pointer relationships and authored import policies only. Records with no
@@ -4493,7 +4493,7 @@ production, installation and original scene behavior remain open.
 | Recipe | SHA-256 |
 | --- | --- |
 | `owner-lakesnight-whole-objects.json` | `d99f7132bc86f8cfb0a2aa91aa1cc24a0120838989faddf3b66539366cb27c05` |
-| `owner-lakesnight-whole-standard-shaders.json` | `a004c6a6d1b16271feb9410d38d3c58abd69e507dd557f6424f65d7ddf260afa` |
+| `owner-lakesnight-whole-standard-shaders.json` | `efd2ca4d71f06b8bd226bc3e5d28dc10a1e86df0e4d5fea6ad894f0d358ef6ad` |
 
 Manual provenance, privacy, licensing and sensitive-content audit: these profiles contain source
 selectors, hashes, checked pointer relationships and authored import policies only. Records with no
@@ -4508,8 +4508,8 @@ production, installation and original scene behavior remain open.
 | Recipe | SHA-256 |
 | --- | --- |
 | `owner-artifactworld02-whole-objects.json` | `d2d16e304c97c277030a20590277f7433d85a534468ad7adc35e01b2c69137b5` |
-| `owner-artifactworld02-whole-postprocess-shaders.json` | `64f3c92392bd53eada40d58a50a6349b0a3ba92933098a43ab53f0b91d5f6673` |
-| `owner-artifactworld02-whole-standard-shaders.json` | `7c47b7ec1c58c5c0415d4c10943a512d5251dda9bb4d70073908129606cd1f5f` |
+| `owner-artifactworld02-whole-postprocess-shaders.json` | `3944ced88ae1cb7b1016273a89813cb809cfbd3405afc85ec5eb373bd55a770f` |
+| `owner-artifactworld02-whole-standard-shaders.json` | `ca901e27ae0730fa23f779e9c91ca1769524edf08bc8ef8338e37ef61f99e742` |
 
 Manual provenance, privacy, licensing and sensitive-content audit: these profiles contain source
 selectors, hashes, checked pointer relationships and authored import policies only. Records with no
@@ -4524,7 +4524,7 @@ production, installation and original scene behavior remain open.
 | Recipe | SHA-256 |
 | --- | --- |
 | `owner-sanctum-whole-objects.json` | `a7bc05d8521f836851d9ca4b716117f181bb04685abcab65ddca7edfe4eb5e2e` |
-| `owner-sanctum-whole-standard-shaders.json` | `88c5c39bf784598465300df7eb5db3b6381c0ab4b422391d5246fb3fb1505b4e` |
+| `owner-sanctum-whole-standard-shaders.json` | `c49b3d36b1f96376233e5cfc94f769ffa10bc30551342cc30151f270bf5fdfdd` |
 
 Manual provenance, privacy, licensing and sensitive-content audit: these profiles contain source
 selectors, hashes, checked pointer relationships and authored import policies only. Records with no
@@ -4539,8 +4539,8 @@ production, installation and original scene behavior remain open.
 | Recipe | SHA-256 |
 | --- | --- |
 | `owner-village-whole-objects.json` | `d04b581a8a982c151149618891dbcabe99b78c1431b2771604d28c9a126b9d78` |
-| `owner-village-whole-postprocess-shaders.json` | `ba9165c68cff85d15c9fb59da28af85b9ebcfcc4d76ad0c10b97e9337bf55ebc` |
-| `owner-village-whole-standard-shaders.json` | `488bb81b2c81c9073dd61f93381f4ba7b500556e6d814992090a23a17020c66d` |
+| `owner-village-whole-postprocess-shaders.json` | `6acba1001463127e7ff4e6370bec0d831b264e18231448823b82d4db41a16fd2` |
+| `owner-village-whole-standard-shaders.json` | `d42f0a98fe480671a06d4d2f32e989c32bc5483b34ac6debf7da36ad28a61533` |
 
 Manual provenance, privacy, licensing and sensitive-content audit: these profiles contain source
 selectors, hashes, checked pointer relationships and authored import policies only. Records with no
@@ -4555,7 +4555,7 @@ production, installation and original scene behavior remain open.
 | Recipe | SHA-256 |
 | --- | --- |
 | `owner-habitatfall-whole-objects.json` | `88d76b380e653281c1931c90beb75e8ff5fdc62d7842c93b592a0e1faf493fa9` |
-| `owner-habitatfall-whole-postprocess-shaders.json` | `cfba6254c4b88f3c248018a346b1050615425fd1bfd4bed0d848ef86be6a9b6d` |
+| `owner-habitatfall-whole-postprocess-shaders.json` | `9b29fa479de844429a1871f73a2a8c3c13f01812074d4bad29a0946b8d006dcb` |
 
 Manual provenance, privacy, licensing and sensitive-content audit: these profiles contain source
 selectors, hashes, checked pointer relationships and authored import policies only. Records with no
@@ -4570,8 +4570,8 @@ production, installation and original scene behavior remain open.
 | Recipe | SHA-256 |
 | --- | --- |
 | `owner-sulfurpools-whole-objects.json` | `2ddce4d098dc78a398af712f45965b4083b620325c82a68717f9b3c9c8ff0988` |
-| `owner-sulfurpools-whole-postprocess-shaders.json` | `61762abbc0faae06c53385404e3ca23924122e836127804cf6b80459536b5dac` |
-| `owner-sulfurpools-whole-standard-shaders.json` | `c896a0ef6b3abbbb4505da627a77f2ab2ce4618f2ecf4cc57de3e54a011936ae` |
+| `owner-sulfurpools-whole-postprocess-shaders.json` | `d7e3732878e026b42250b7dfad829ce1e78fbda754b29b7abcf0a2160fd92bb5` |
+| `owner-sulfurpools-whole-standard-shaders.json` | `30df15708ee410e6331c033fa4f7efadd5414be18ad4c361bceb87c62dcd45ab` |
 
 Manual provenance, privacy, licensing and sensitive-content audit: these profiles contain source
 selectors, hashes, checked pointer relationships and authored import policies only. Records with no
@@ -4586,7 +4586,7 @@ production, installation and original scene behavior remain open.
 | Recipe | SHA-256 |
 | --- | --- |
 | `owner-sad1-whole-objects.json` | `f5f02d8c9daed39df7bc40c64936c26bb7e909da1a74c796604bdd67251dbc92` |
-| `owner-sad1-whole-standard-shaders.json` | `cac36fcb061334cfff290b0bc150c83ba7be4ee908050fbb4782be876e93ed80` |
+| `owner-sad1-whole-standard-shaders.json` | `9e8f88ff014b935b7ca0360bd666d1be7e5fedf7e960e0a0f9848dbe6ce87c5e` |
 
 Manual provenance, privacy, licensing and sensitive-content audit: these profiles contain source
 selectors, hashes, checked pointer relationships and authored import policies only. Records with no
@@ -4601,8 +4601,8 @@ production, installation and original scene behavior remain open.
 | Recipe | SHA-256 |
 | --- | --- |
 | `owner-moon-whole-objects.json` | `b189deb255fddec61d5050d6ac46ce569c497b7e684d9170728cd3fe82e62548` |
-| `owner-moon-whole-postprocess-shaders.json` | `b8820dd5ca18c6c872e54ce56187dd6c71b1ac9d8765d5e31871892fe8a39ff0` |
-| `owner-moon-whole-standard-shaders.json` | `7e07ba46e24258b743ebfb252f3fda275f03d56d13b38296878668cf5e648ebf` |
+| `owner-moon-whole-postprocess-shaders.json` | `0dea5e8f940a372425605b5873629e0c1be0cdbca17a293e0d18c0082b1f47e1` |
+| `owner-moon-whole-standard-shaders.json` | `eda74a93c5df8e0632bf843b6288a43b916eab13a7848d9a7c44aeeaa910fe38` |
 
 Manual provenance, privacy, licensing and sensitive-content audit: these profiles contain source
 selectors, hashes, checked pointer relationships and authored import policies only. Records with no
@@ -4617,8 +4617,8 @@ production, installation and original scene behavior remain open.
 | Recipe | SHA-256 |
 | --- | --- |
 | `owner-itdampcave-whole-objects.json` | `e3d76295e12d466ce3df0b14c1777bd3664138d1dd70bdd153550b29ca1eb01c` |
-| `owner-itdampcave-whole-standard-shaders.json` | `7e75aae25547a660a9cc3e398d340304d3ed3d4a8cc148ab6d25d9425a4dea2b` |
-| `owner-itdampcave-whole-postprocess-shaders.json` | `da89a96ec3490c8042443ef4d795735fec8475ccb500a73cd0f077f6e802e311` |
+| `owner-itdampcave-whole-standard-shaders.json` | `635e5d70180edb9e26a94a2cd9e8de88b5d5b4137fce933fa87417890b73701e` |
+| `owner-itdampcave-whole-postprocess-shaders.json` | `96b22c526b8f9e222e6efd88d18240f67e9ceca3853c28c9022c9a6513a478c4` |
 
 Manual provenance, privacy, licensing and sensitive-content audit: these profiles contain
 original-input selectors, hashes, checked pointer relationships and authored import policies.
@@ -4634,8 +4634,8 @@ original scene behavior remain open.
 | Recipe | SHA-256 |
 | --- | --- |
 | `owner-itfrozenwall-whole-objects.json` | `029c4800ff7880eb1b42f279538625a150dd4f6280fa9ae11c7477156a7e2a22` |
-| `owner-itfrozenwall-whole-postprocess-shaders.json` | `b0c351a89e476374058b515a39bdfd3fa68a651a8a204e7009852a5454b505aa` |
-| `owner-itfrozenwall-whole-standard-shaders.json` | `d4a9cb594f31fce08dd421a6890dd2eb3166f14af4ef26af37c5750a6dbeecd2` |
+| `owner-itfrozenwall-whole-postprocess-shaders.json` | `486f1393c2f9d9202b8bdd27a31f881a00ae49ecccc52f580e3c1347038825c3` |
+| `owner-itfrozenwall-whole-standard-shaders.json` | `fc4e6333a0dcbccdad913325ffedb6c346421215a71d46de7cf3f486a5bb176d` |
 
 Manual provenance, privacy, licensing and sensitive-content audit: these profiles contain
 original-input selectors, hashes, checked pointer relationships and authored import policies.
@@ -4651,8 +4651,8 @@ to J850. Phone production, installation and original scene behavior remain open.
 | Recipe | SHA-256 |
 | --- | --- |
 | `owner-soul1-whole-objects.json` | `704048d30efaa1838baa181cce3db709fa189f2afc4cd1602da49dac1dd65a04` |
-| `owner-soul1-whole-postprocess-shaders.json` | `a4110b8fac3d4a8590b8e8eb6d7f4081f9b6382b280e1bb76377646b0779b780` |
-| `owner-soul1-whole-standard-shaders.json` | `8a508845826a13019f3bc09830eb420143aa128d6a0864440701254bc1834387` |
+| `owner-soul1-whole-postprocess-shaders.json` | `d8f7e95a047bee50d7e97d8e6bb106b58699f1c15ce425ce3ef25fba365e9200` |
+| `owner-soul1-whole-standard-shaders.json` | `9797dd28c9122624409ba61fdec33c0c22a9ce69fcad7f46aefb49bc29ee9c70` |
 
 Manual provenance, privacy, licensing and sensitive-content audit: these profiles contain
 original-input selectors, hashes, checked pointer relationships and authored import policies.
@@ -4661,3 +4661,26 @@ admissions retain original scene membership and source identity checks. No origi
 scalar array, pixel, program, copied source, private path or credential is included. All
 290,159 objects, both serialized members and the compressed bundle are host raw-exact
 to J850. Phone production, installation and original scene behavior remain open.
+
+## Solutionalhaunt complete scene selections (2026-10-28)
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-solutionalhaunt-whole-objects.json` | `d321ca690b8b4eacb28db58b468d5f3d8ffed4b030f8d74e94368ce25e98238e` |
+| `owner-solutionalhaunt-whole-standard-shaders.json` | `cdf672c1eb408908a4dfe1fa58560fdaf4166fcd989e87e1dcbdc74df756391d` |
+| `owner-solutionalhaunt-director-records.json` | `743873197658b5f034584dd5b5a8931c0b32fe8e56850cf35eb1d18c67308cc7` |
+
+Manual provenance, privacy, licensing and sensitive-content audit: profiles contain original
+input selectors, file/body hashes, checked references, source schema selectors and authored
+import policies. Original PC player MonoScripts and pinned original CLR metadata supply
+added trigger identity and fields; original native prototypes supply transfer flags. Original
+preload roots retain direct membership or reciprocal Animator/GameObject ownership. The
+Director profile uses the existing PropertyName importer. No original body, type-tree blob,
+scalar array, program, copied source, private path or credential is included. All 31,264
+objects, both serialized members and the compressed bundle are host raw-exact to J850.
+Phone production, installation and original scene behavior remain open.
+
+Shader profile publication preserves qualified file bytes because object selections refer
+to their SHA-256 identities. The 37 existing whole-scene Shader audit rows above now retain
+their qualified representations; structured profile contents and produced records are
+unchanged. Their original provenance/privacy/licensing audits remain applicable.

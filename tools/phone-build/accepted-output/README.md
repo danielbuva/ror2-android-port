@@ -130,6 +130,9 @@ field name/type. Original native base and pointer prototypes supply transfer
 flags and common-string encoding. The owner checks the resulting properties
 hash, derives the script ID and rechecks consumed assemblies. Recipes contain
 selectors and assembly hashes; generated type trees stay in owner output.
+This optional CLR policy needs the `dnfile`/`pefile` dependencies pinned in
+`tools/lab-requirements.txt`; invoke it from that configured Python environment
+without `-S`. Other object policies retain their existing stdlib-only path.
 
 `object_produce.py` currently qualifies the complete pickup-droplet and
 player-death-effect bundles from original PC records. The audited recipe contains original selectors, checked
