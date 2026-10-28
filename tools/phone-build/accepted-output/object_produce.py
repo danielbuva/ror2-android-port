@@ -998,7 +998,9 @@ def produce(profile_path, profile_sha256, pc, output, codec_path, codec_sha256, 
         sprites = module("player_data") if any("importer_guid" in row for member in selected_members for row in member["objects"]) else None
         for selected_member in selected_members:
             member_records = []
-            identities = [row["path_id"] for row in selected_member["objects"] if "source" in row or "record" in row]
+            identities = [
+                row["path_id"] for row in selected_member["objects"] if "source" in row or "record" in row or row.get("generate") == "DefaultMaterial"
+            ]
             for selected in selected_member["objects"]:
                 if "record" in selected:
                     directory, row = packed[selected_member["name"], selected["path_id"]]
