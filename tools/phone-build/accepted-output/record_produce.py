@@ -523,7 +523,7 @@ def normalize_quaternion(values):
     return [f32(value * inverse) for value in values]
 
 
-def root_average(body, root):
+def root_average(body, root, use_atan2=False):
     """Integrate original generic root curves over twenty native sample intervals."""
 
     def f32(value):
@@ -666,7 +666,8 @@ def root_average(body, root):
             inverse = conjugate(previous)
             delta_rotation = multiply(inverse, rotation)
             ratio = f32(delta_rotation[1] / delta_rotation[3])
-            angle = f32(f32(2 * f32(math.atan(ratio))) / step)
+            phase = f32(math.atan2(delta_rotation[1], delta_rotation[3])) if use_atan2 else f32(math.atan(ratio))
+            angle = f32(f32(2 * phase) / step)
             delta = rotate(inverse, [f32(a - b) for a, b in zip(position, previous_position)])
             if mirror:
                 angle, delta[0] = -angle, -delta[0]
@@ -698,11 +699,14 @@ def transform(body, root, selected):
         "layout",
         "normalize_root_quaternions",
         "root_average",
+        "root_average_atan2",
     }:
         raise ValueError("unknown AnimationClip operation")
     canonical = selected.get("canonical")
     if canonical not in (None, "zero-and-nan", "nan"):
         raise ValueError("unknown AnimationClip canonical policy")
+    if "root_average_atan2" in selected and (selected["root_average_atan2"] is not True or selected.get("root_average") is not True):
+        raise ValueError("atan2 projection requires source root-average integration")
     if not selected:
         return body
     result, spans = fields(body, root, canonical)
@@ -775,7 +779,7 @@ def transform(body, root, selected):
     for start, end, data in sorted(changes, reverse=True):
         result[start:end] = data
     result = layout_clip(bytes(result), root, selected["layout"]) if "layout" in selected else bytes(result)
-    return root_average(result, root) if selected.get("root_average") else result
+    return root_average(result, root, use_atan2=selected.get("root_average_atan2", False)) if selected.get("root_average") else result
 
 
 def reorder_controller_clips(body, root, order):

@@ -322,11 +322,15 @@ class AnimationProducerTests(unittest.TestCase):
         _, spans = A.fields(body, schema)
         angular = spans[("m_MuscleClip", "m_AverageAngularSpeed")][0]
         self.assertAlmostEqual(struct.unpack_from("<f", result, angular)[0], math.pi / 2, places=5)
+        projected = A.transform(body, schema, {"root_average": True, "root_average_atan2": True})
+        self.assertAlmostEqual(struct.unpack_from("<f", projected, angular)[0], math.pi / 2, places=5)
         speed = spans[("m_MuscleClip", "m_AverageSpeed")][0]
         self.assertEqual(struct.unpack_from("<3f", result, speed), (0, 0, 0))
         changed = bytearray(body)
         changed[spans[("m_MuscleClip", "m_Mirror")][0]] = 1
         self.assertAlmostEqual(struct.unpack_from("<f", A.root_average(bytes(changed), schema), angular)[0], -math.pi / 2, places=5)
+        mirrored = A.transform(bytes(changed), schema, {"root_average": True, "root_average_atan2": True})
+        self.assertAlmostEqual(struct.unpack_from("<f", mirrored, angular)[0], -math.pi / 2, places=5)
 
     def test_binding_reorder_sorts_complete_source_keys_by_the_new_curve_index(self):
         body, schema = layout_fixture()

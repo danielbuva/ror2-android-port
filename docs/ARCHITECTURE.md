@@ -335,7 +335,10 @@ whole stream keys, delta ranges and root indices; dense curves retain the
 measured import endpoint/signed-zero rules. Root rotations derive from original
 indexed delta endpoints using ARM reciprocal-square-root arithmetic.
 Root average motion samples original channels at 20 intervals and applies the
-original orientation, loop and mirror masks. Duplicate bindings may collapse
+original orientation, loop and mirror masks. The explicit `root_average_atan2`
+projection derives yaw directly from the original relative quaternion's two
+heading components before float32 rounding; existing ratio projections retain
+their arithmetic. Duplicate bindings may collapse
 only when complete source entries, channel values and delta endpoints agree;
 finite streamed keys remain, with selected permutations restricted to equal
 curve indices. Unknown material-path bindings derive their attribute from the
