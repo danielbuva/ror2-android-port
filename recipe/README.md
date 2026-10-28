@@ -4818,3 +4818,20 @@ All 363 persisted objects, both members and the 3,337,229-byte
 compressed presentation bundle are host raw-exact to J850. Evidence stays ignored
 under `work/coordination/orchestrator/presentation-native-final-v1/`. Phone
 production, installation and original game behavior remain open.
+
+## Root-motion float math provenance
+
+The bounded `small_atan2f` projection in `record_produce.py` adapts the
+positive-x, small-argument branches of FreeBSD msun's
+[s_atanf.c](https://github.com/freebsd/freebsd-src/blob/389ae8e4fabeaf1c655f8116b1a1402e597fa515/lib/msun/src/s_atanf.c)
+and
+[e_atan2f.c](https://github.com/freebsd/freebsd-src/blob/389ae8e4fabeaf1c655f8116b1a1402e597fa515/lib/msun/src/e_atan2f.c).
+The original Sun permission notice is retained beside the routine. Its five
+polynomial coefficients are public numerical-library constants. Native host
+`atan2f` served only as a local diagnostic reference; production uses portable
+float32 operations and original clip samples. The explicit projection preserves
+existing root-average arithmetic for other selections.
+
+Provenance, privacy, licensing and sensitive-content review: 2026-10-28. No game
+coefficient, pose, curve, program, pixel, private identifier or SDK binary is
+included. Raw comparisons and native-reference diagnostics remain ignored.

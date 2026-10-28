@@ -338,7 +338,10 @@ Root average motion samples original channels at 20 intervals and applies the
 original orientation, loop and mirror masks. The explicit `root_average_atan2`
 projection derives yaw directly from the original relative quaternion's two
 heading components before float32 rounding; existing ratio projections retain
-their arithmetic. Duplicate bindings may collapse
+their arithmetic. `root_average_small_atan2f` instead uses the portable fdlibm
+float polynomial in its admitted positive-x, small-ratio interval. The routine's
+Sun permission notice is retained in the owner; it introduces no platform-library
+dependency or game-derived coefficient. Duplicate bindings may collapse
 only when complete source entries, channel values and delta endpoints agree;
 finite streamed keys remain, with selected permutations restricted to equal
 curve indices. Unknown material-path bindings derive their attribute from the

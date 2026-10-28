@@ -523,7 +523,33 @@ def normalize_quaternion(values):
     return [f32(value * inverse) for value in values]
 
 
-def root_average(body, root, use_atan2=False):
+# Adapted from FreeBSD msun s_atanf.c / e_atan2f.c, Sun's fdlibm.
+# Copyright (C) 1993 by Sun Microsystems, Inc. All rights reserved.
+# Developed at SunPro, a Sun Microsystems, Inc. business.
+# Permission to use, copy, modify, and distribute this software is freely
+# granted, provided that this notice is preserved.
+def small_atan2f(y, x):
+    """Portable fdlibm float arithmetic for the admitted positive-x yaw interval."""
+
+    def f32(value):
+        return struct.unpack("<f", struct.pack("<f", value))[0]
+
+    if not math.isfinite(x) or not math.isfinite(y) or x <= 0:
+        raise ValueError("root yaw is outside the positive-x atan2f domain")
+    value = f32(y / x)
+    if abs(value) >= 0.4375:
+        raise ValueError("root yaw is outside the small atan2f interval")
+    if abs(value) < 2**-12:
+        return value
+    coefficients = [f32(v) for v in (3.3333328366e-01, -1.9999158382e-01, 1.4253635705e-01, -1.0648017377e-01, 6.1687607318e-02)]
+    z = f32(value * value)
+    w = f32(z * z)
+    odd = f32(z * f32(coefficients[0] + f32(w * f32(coefficients[2] + f32(w * coefficients[4])))))
+    even = f32(w * f32(coefficients[1] + f32(w * coefficients[3])))
+    return f32(value - f32(value * f32(odd + even)))
+
+
+def root_average(body, root, use_atan2=False, use_small_atan2f=False):
     """Integrate original generic root curves over twenty native sample intervals."""
 
     def f32(value):
@@ -665,8 +691,12 @@ def root_average(body, root, use_atan2=False):
         if previous is not None:
             inverse = conjugate(previous)
             delta_rotation = multiply(inverse, rotation)
-            ratio = f32(delta_rotation[1] / delta_rotation[3])
-            phase = f32(math.atan2(delta_rotation[1], delta_rotation[3])) if use_atan2 else f32(math.atan(ratio))
+            if use_small_atan2f:
+                phase = small_atan2f(delta_rotation[1], delta_rotation[3])
+            elif use_atan2:
+                phase = f32(math.atan2(delta_rotation[1], delta_rotation[3]))
+            else:
+                phase = f32(math.atan(f32(delta_rotation[1] / delta_rotation[3])))
             angle = f32(f32(2 * phase) / step)
             delta = rotate(inverse, [f32(a - b) for a, b in zip(position, previous_position)])
             if mirror:
@@ -700,6 +730,7 @@ def transform(body, root, selected):
         "normalize_root_quaternions",
         "root_average",
         "root_average_atan2",
+        "root_average_small_atan2f",
     }:
         raise ValueError("unknown AnimationClip operation")
     canonical = selected.get("canonical")
@@ -707,6 +738,10 @@ def transform(body, root, selected):
         raise ValueError("unknown AnimationClip canonical policy")
     if "root_average_atan2" in selected and (selected["root_average_atan2"] is not True or selected.get("root_average") is not True):
         raise ValueError("atan2 projection requires source root-average integration")
+    if "root_average_small_atan2f" in selected and (
+        selected["root_average_small_atan2f"] is not True or selected.get("root_average") is not True or selected.get("root_average_atan2")
+    ):
+        raise ValueError("small atan2f requires its own source root-average projection")
     if not selected:
         return body
     result, spans = fields(body, root, canonical)
@@ -779,7 +814,11 @@ def transform(body, root, selected):
     for start, end, data in sorted(changes, reverse=True):
         result[start:end] = data
     result = layout_clip(bytes(result), root, selected["layout"]) if "layout" in selected else bytes(result)
-    return root_average(result, root, use_atan2=selected.get("root_average_atan2", False)) if selected.get("root_average") else result
+    return (
+        root_average(result, root, use_atan2=selected.get("root_average_atan2", False), use_small_atan2f=selected.get("root_average_small_atan2f", False))
+        if selected.get("root_average")
+        else result
+    )
 
 
 def reorder_controller_clips(body, root, order):

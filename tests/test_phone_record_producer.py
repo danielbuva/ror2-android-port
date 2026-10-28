@@ -232,6 +232,11 @@ def root_motion_fixture(turn=False):
 
 
 class AnimationProducerTests(unittest.TestCase):
+    def test_bounded_float_yaw_preserves_the_single_precision_library_rounding(self):
+        self.assertEqual(struct.pack("<f", A.small_atan2f(0.000732421875, 1.25)).hex(), "9999193a")
+        self.assertEqual(struct.pack("<f", A.small_atan2f(-0.000732421875, 1.25)).hex(), "999919ba")
+        self.assertEqual(struct.pack("<f", A.small_atan2f(-0.0, 1.25)).hex(), "00000080")
+
     def test_director_reimport_sorts_signed_keys_with_their_references(self):
         # Fixed CRC32 vectors cover signed ordering, alignment changes and null PPtrs.
         entry = F.node("data", children=[F.text("first"), F.node("second", 12, kind="PPtr<Object>")])
