@@ -1,5 +1,15 @@
 # Local state dependency inventory
 
+## Optional native Sprite source fixture
+
+`sprite_native_fixture.py --request` consumes a caller-supplied private JSON
+configuration naming legitimate source PNG paths/hashes and source Sprite
+constructor parameters. These image/parameter inputs remain ignored local state;
+they are required only for this optional SDK diagnostic. The public stager
+generates every project file and references images without copying them. Native
+geometry, editor logs and comparison receipts remain ignored evidence. Neither
+the fixture nor reconstruction implicitly reads a dated evidence directory.
+
 ## Barrier and Goldshores source payloads
 
 The optional Barrier generator reads current legitimate originals, tracked

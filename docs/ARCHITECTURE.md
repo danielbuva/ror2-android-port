@@ -322,6 +322,12 @@ pinned exporter's filename suffix before deriving the path CRC from source text.
 no motion, retaining its state and remapping that tree's indices to the native
 unavailable sentinel. Its size adjustment derives from the original subtree and
 the admitted native array layout.
+`scripts/lab/sprite_native_fixture.py` stages the current SDK-only Sprite runtime
+diagnostic with `SpriteNativeFixture.cs`. It references source PNGs by path/hash
+in a fresh ignored project. Under the editor mutex, the pinned Unity MCP invokes
+`Tools/P1/Run Sprite Native Fixture`; created textures and sprites are destroyed
+after each item. Float-bit geometry and the terminal result stay private. The
+fixture is separate from phone production and complete-bundle qualification.
 Audited
 `recipe/owner-animation-clips.json`, `recipe/owner-animator-controllers.json`,
 `recipe/owner-material-records.json`, `recipe/owner-gameobjects.json`,
