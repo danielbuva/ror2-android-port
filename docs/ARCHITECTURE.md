@@ -269,7 +269,15 @@ and terminal receipt. Setup verifies source pins/capacity, processing checks
 every object and re-reads persisted extents, and failure/exit retain outputs
 and end the process. [Its lifecycle and qualified scope](../tools/phone-build/accepted-output/README.md#produce-meshes-directly-from-original-pc-bundles)
 remain separate from bundle assembly, the private replay receiver and current
-game builds; two mesh cases are excluded and no runtime owner is added.
+game builds; two mesh cases are excluded from that immutable cohort profile.
+The separate `recipe/owner-compressed-tangent-mesh.json` selects one formerly
+excluded MercSwordSwipe record through the same setup/teardown. The optional
+`unity_mesh.normalize_packed_tangents` operation reconstructs negative Z-squared
+vectors, normalizes XY with float32 arithmetic and derives packing bounds and
+integers from the original fields. Authored mesh fixtures cover the operation;
+guarded tracked-CLI output is host raw-exact for the additional record. Complete
+Commando assembly and phone production remain separate gates; no runtime owner
+is added.
 `scripts/lab/script_identity.py` additionally owns current pure managed script
 properties-hash derivation. Callers supply original PC and exact SDK embedded
 type metadata plus original script identity; the helper composes the SDK native

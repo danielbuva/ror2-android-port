@@ -4742,3 +4742,21 @@ SDK/exporter owners. Qualified Shader profile bytes preserve object pack referen
 No original body, curve, scalar array, pixel, program, copied source, private path or credential
 is included. All 58,555 objects, six serialized members and three compressed bundles are
 host raw-exact to J850. Phone production, installation and original behavior remain open.
+
+## Compressed tangent normalization selection (2026-10-28)
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-compressed-tangent-mesh.json` | `85902c2e2ab235eba9e7bcd46de5baf6957c862bc6126f9ed355dcb7c47bb7a9` |
+
+Manual provenance, privacy, licensing and sensitive-content audit: this profile contains
+one original file/body selector, hashes, a destination relationship and the authored
+`repair_negative_z` policy. Original compressed XY fields reconstruct a negative Z-squared
+case; float32 normalization derives the new packing bounds and integers. No target float,
+geometry, byte patch, original body, private path or credential is included. The original
+mesh cohort profile remains immutable. Consulted pinned AssetRipper `1ac666f`
+`CompressedMeshExtensions.GetTangents` and `PackedFloatVectorExtensions.Unpack` for the
+normalization observation; implementation is independently authored. Guarded tracked-CLI
+production persists before comparison and matches the one 1,564 B MercSwordSwipe mesh.
+This record does not close a file readiness entry; complete Commando assembly and phone
+production remain open. Generated outputs and raw comparison evidence remain ignored.
