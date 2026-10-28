@@ -1943,5 +1943,42 @@ class ReflectionProbeImportTests(unittest.TestCase):
                 P.custom_reflection_probe(malformed, typ)
 
 
+class FieldlessScriptMetadataTests(unittest.TestCase):
+    def test_owned_script_properties_prove_base_only_schema(self):
+        def pointer(name):
+            return FIXTURE.node(name, kind="PPtr<Object>", children=[FIXTURE.node("m_FileID", 4, kind="int"), FIXTURE.node("m_PathID", 8, kind="SInt64")])
+
+        fields = [pointer("m_GameObject"), FIXTURE.node("m_Enabled", 1, kind="UInt8", meta=0x4000), pointer("m_Script"), FIXTURE.node("m_Name", 4, kind="int")]
+
+        def metadata(children):
+            stream = io.BytesIO(RECORD_FIXTURE.serialized(b"", FIXTURE.node("Base", kind="MonoBehaviour", children=children), class_id=114))
+            stream.size = len(stream.getvalue())
+            return P.W.read_serialized(stream)["types"][0]
+
+        typ = metadata(fields)
+        sdk_tree = metadata(fields + [FIXTURE.node("m_EditorClassIdentifier", 4, kind="int")])["tree"]
+        body = struct.pack("<iqB3xiqI", 0, 41, 1, 0, 99, 0)
+        names = ("AuthoredBoundary", "Fixture", "Authored.dll")
+        properties = LEGACY_IDENTITY.properties_hash(*names, typ["tree"], sdk_tree)
+        stream = io.BytesIO()
+        P.aligned_string(stream, "Display Name")
+        stream.write(bytes(4) + properties)
+        for value in names:
+            P.aligned_string(stream, value)
+        script = stream.getvalue()
+        derived = P.fieldless_script_type(body, typ, script, sdk_tree, LEGACY_IDENTITY)
+        self.assertEqual(derived["tree"], typ["tree"])
+        self.assertEqual(derived["hash"], properties)
+        self.assertEqual(derived["script_id"], LEGACY_IDENTITY.md4("".join(names).encode()))
+        changed = bytearray(script)
+        changed[P.script_fields(script)[0]] ^= 1
+        with self.assertRaisesRegex(ValueError, "properties"):
+            P.fieldless_script_type(body, typ, bytes(changed), sdk_tree, LEGACY_IDENTITY)
+        with self.assertRaisesRegex(ValueError, "custom fields"):
+            P.fieldless_script_type(body, metadata(fields + [FIXTURE.node("custom", 4, kind="int")]), script, sdk_tree, LEGACY_IDENTITY)
+        with self.assertRaisesRegex(ValueError, "base component"):
+            P.fieldless_script_type(body + bytes(4), typ, script, sdk_tree, LEGACY_IDENTITY)
+
+
 if __name__ == "__main__":
     unittest.main()

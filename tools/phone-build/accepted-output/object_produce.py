@@ -742,6 +742,21 @@ def script_fields(body):
     return offset, (string(), string(), string())
 
 
+def fieldless_script_type(body, typ, script, sdk_tree, identity_owner):
+    """Derive a fieldless component's metadata from its qualified MonoScript."""
+    if typ["class_id"] != 114 or len(body) != 32 or body[28:] != bytes(4):
+        raise ValueError("fieldless script requires the original empty-name base component")
+    nodes = identity_owner.tree_nodes(typ["tree"])
+    fields = [n["name"] for n in nodes if n["level"] == 1]
+    if fields != ["m_GameObject", "m_Enabled", "m_Script", "m_Name"]:
+        raise ValueError("fieldless script prototype has custom fields")
+    offset, names = script_fields(script)
+    properties = identity_owner.properties_hash(*names, typ["tree"], sdk_tree)
+    if properties != script[offset : offset + 16]:
+        raise ValueError("fieldless schema differs from produced MonoScript properties")
+    return {**typ, "hash": properties, "script_id": identity_owner.md4("".join(names).encode())}
+
+
 def copy_original_bundle(profile, profile_sha256, pc, output):
     """Preserve prepare.py's original Windows bundle copy without a project."""
     if set(profile) != {"input_id", "original_bundle"}:
@@ -1159,6 +1174,23 @@ def produce(profile_path, profile_sha256, pc, output, codec_path, codec_sha256, 
                         typ["hash"] = value
                     else:
                         raise ValueError("script properties require MonoScript or MonoBehaviour")
+                if "fieldless_script_record" in selected:
+                    if sdk_tree is None or selected["fieldless_script_record"] is not True:
+                        raise ValueError("fieldless script record requires the named SDK policy")
+                    if typ["class_id"] != 114 or len(body) < 28:
+                        raise ValueError("fieldless script record requires a MonoBehaviour")
+                    file_id, script_id = struct.unpack_from("<iq", body, 16)
+                    scripts = [s for s in selected_member["objects"] if s["path_id"] == script_id and "record" in s]
+                    if file_id or len(scripts) != 1:
+                        raise ValueError("fieldless script requires a local produced MonoScript record")
+                    script_selection = scripts[0]
+                    _, script_type = source_record(sources, script_selection["type_source"])
+                    directory, script_row = packed[selected_member["name"], script_id]
+                    script = record_extent(directory / "objects.bin", script_row)
+                    if script_type["class_id"] != 115 or hashlib.sha256(script).hexdigest() != script_selection["sha256"]:
+                        raise ValueError("fieldless MonoScript record identity differs")
+                    typ = fieldless_script_type(body, typ, script, sdk_tree, identity_owner)
+                    receipt.setdefault("fieldless_script_records", {})[str(script_id)] = script_selection["sha256"]
                 if "managed_pointer_schema" in selected:
                     if sdk_tree is None or typ["class_id"] != 114:
                         raise ValueError("managed pointer schema requires SDK and MonoBehaviour")

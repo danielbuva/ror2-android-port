@@ -4938,6 +4938,17 @@ exist. Scene preload dependencies follow these relocations. Existing
 supplier receipts and a fresh output directory set up reuse; process exit
 releases file handles and the resulting receipts persist.
 
+For a base-only authored MonoBehaviour, the object owner's
+`fieldless_script_record` policy derives type identity from a local qualified
+MonoScript record. The original 32-byte prototype must have only native base
+fields; its SDK-derived properties hash must equal the produced script's
+embedded hash. The source tree and body are preserved, while class, namespace
+and assembly derive the script ID. This adds no runtime component behavior.
+The shared SDK Shader owner also accepts the standalone Legacy particle shader
+(SDK ID 207) through an explicit prefab/no-fog scope. Original and SDK names,
+properties and absent dependencies must agree; declared SDK variants supply
+the programs through the existing compiler API.
+
 Goolake source-scene selections use the same object and Shader owners through
 `recipe/owner-goolake-source-objects.json` and its shader remap profile. The
 Bezier owner evaluates original curves with captured build angles, then applies
