@@ -1058,7 +1058,7 @@ def module(name, path):
     return loaded
 
 
-def sdk_scene_variants(snippet, material_keywords=None):
+def sdk_scene_variants(snippet, material_keywords=None, *, retain_instancing=False):
     """Declared SDK alternatives retained by the pinned fresh mono Lab scene."""
     rejected = {
         "FOG_LINEAR",
@@ -1077,6 +1077,8 @@ def sdk_scene_variants(snippet, material_keywords=None):
         "STEREO_CUBEMAP_RENDER_ON",
         "UNITY_SINGLE_PASS_STEREO",
     }
+    if retain_instancing:
+        rejected.remove("INSTANCING_ON")
     axes = []
     for group in ("m_VariantsUserGlobal", "m_VariantsUserLocal"):
         merged = []

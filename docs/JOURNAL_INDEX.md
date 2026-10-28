@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J1252](PORTING_JOURNAL.md#j1252--complete-source-derived-commando-bundle) | 2026-10-28 | Complete source-derived Commando bundle | `commando-prefab-lab` is host raw-exact to J850: 75,378 persisted objects, both serialized/resource members and the 87,954,431-byte bundle (SHA-256 `50a6af87…`… |
 | [J1251](PORTING_JOURNAL.md#j1251--complete-source-derived-presentation-native-bundle) | 2026-10-28 | Complete source-derived presentation native bundle | 2026-10-28. |
 | [J1250](PORTING_JOURNAL.md#j1250--complete-source-derived-objective-native-bundle) | 2026-10-28 | Complete source-derived Objective native bundle | 2026-10-28. |
 | [J1249](PORTING_JOURNAL.md#j1249--complete-lakes-lakesnight-and-village-source-bundles) | 2026-10-28 | Complete Lakes, Lakesnight and Village source bundles | 2026-10-28. |

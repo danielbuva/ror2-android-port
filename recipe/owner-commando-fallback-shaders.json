@@ -1,0 +1,256 @@
+{
+  "input_id": "6af7ed94619fe1b4346974b4486afa03a8d1625a7820e92da0ff74d57208fe88",
+  "sdk": {
+    "MacOS/Unity": {
+      "bytes": 79453472,
+      "sha256": "906123118e45d56c6bcf20f3776ed2373417553042500714023daeb9e53058e8"
+    },
+    "Tools/UnityShaderCompiler": {
+      "bytes": 12603248,
+      "sha256": "4f4e5be21d27dd7541fa9385ea480b15816e70ddaa83b516df0ab60b819142b5"
+    },
+    "Resources/unity_builtin_extra": {
+      "bytes": 133069551,
+      "sha256": "db99888b83efb4ec35e6ce219de78c951fc37bc0129712579131360312cc4f8e"
+    }
+  },
+  "includes_sha256": "163fad0ca42bd98ea1628888dedd01d91fcbb9f6bda60a8120f9b453cc565144",
+  "settings": {
+    "color_space": 1,
+    "caching_preprocessor": true,
+    "tier0": {
+      "standardShaderQuality": 0,
+      "renderingPath": 3,
+      "hdrMode": 1,
+      "realtimeGICPUUsage": 25,
+      "useReflectionProbeBoxProjection": 0,
+      "useReflectionProbeBlending": 0,
+      "useHDR": 1,
+      "useDetailNormalMap": 0,
+      "useCascadedShadowMaps": 0,
+      "prefer32BitShadowMaps": 0,
+      "enableLPPV": 0,
+      "useDitherMaskForAlphaBlendedShadows": 0
+    },
+    "virtual_texturing": 0,
+    "vulkan_pretransform": 0,
+    "shader_precision_model": 0,
+    "deferred_reflections": 1
+  },
+  "exporter_revision": "1ac666f47d8e9dedf96afb0b914c70d7656151ea",
+  "template_inputs": {
+    "Templates.json": {
+      "bytes": 640,
+      "sha256": "b046b777ec15bc92caaea19558a438e041f2ce174cdbeb6bb570055e2eb557cc"
+    },
+    "Default.txt": {
+      "bytes": 655,
+      "sha256": "f719eed3344dcbee3c438803a7518fe548b8906f6e18020f3b4b26d47293f266"
+    },
+    "SingleTexture.txt": {
+      "bytes": 942,
+      "sha256": "7b7ae955e72eb9d5b0c084aed0749ae21846098236abd4f30281d162738c9371"
+    },
+    "SingleColor.txt": {
+      "bytes": 652,
+      "sha256": "63c072b5e86316be6d0c8a5ce72cdc4a3bfc3c06df6efcc1bc02495240654f63"
+    },
+    "TransparentDiffuse.txt": {
+      "bytes": 969,
+      "sha256": "ceed4bd0bd18e0e2a56a1399ff37e13b1fe9a569e45b145ef6ad851425cfdc0a"
+    }
+  },
+  "shader_links": [
+    {
+      "sdk_shader": 6,
+      "to": [
+        3,
+        6
+      ]
+    },
+    {
+      "sdk_shader": 7,
+      "to": [
+        3,
+        7
+      ]
+    },
+    {
+      "sdk_shader": 50,
+      "to": [
+        0,
+        3464988009001945076
+      ]
+    },
+    {
+      "sdk_shader": 51,
+      "to": [
+        0,
+        3115971018399462371
+      ]
+    }
+  ],
+  "records": [
+    {
+      "kind": "dummy",
+      "original": {
+        "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-base-shaders_shader_assets_all_45ab8c24dd5dcd99e5cb60900de0231b.bundle",
+        "member": "CAB-779f6fd4edc30ec27d018e8344a8081e",
+        "path_id": 3671293666148614723,
+        "bytes": 2601960,
+        "sha256": "bd1acda75caf15bcb9014dc14e7a0fc5680419e39d61cf24baca429509c12906",
+        "body_sha256": "9120ddc119439420b580301ac7b9e4b8c18bece689a5aad2ccb437eb947470b3"
+      },
+      "source_filename": "Assets/RoR2/Base/Shaders/Deferred/HGSnowTopped.shader",
+      "template": "TransparentDiffuse",
+      "fallback_sdk_shader": 7,
+      "outputs": [
+        {
+          "bundle": "commando-prefab-lab",
+          "member": "CAB-b0611b01bbffecd06329c6d6eecf278c",
+          "path_id": -4092580972471450954,
+          "bytes": 7468,
+          "sha256": "8491826d4ff143fb4aa76eb07d60b08d6bf833b2317d3c1be458a4ec1baced7c"
+        }
+      ]
+    },
+    {
+      "kind": "dummy",
+      "original": {
+        "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-base-shaders_shader_assets_all_45ab8c24dd5dcd99e5cb60900de0231b.bundle",
+        "member": "CAB-779f6fd4edc30ec27d018e8344a8081e",
+        "path_id": -672892918411883786,
+        "bytes": 2601960,
+        "sha256": "bd1acda75caf15bcb9014dc14e7a0fc5680419e39d61cf24baca429509c12906",
+        "body_sha256": "2561039ab44564806896a36a7fa5ed076f0566cad7bfbb643afe163d39b2f30b"
+      },
+      "source_filename": "Assets/RoR2/Base/Shaders/Speedtree Override/SpeedTreeBillboard.shader",
+      "template": "TransparentDiffuse",
+      "fallback_sdk_shader": 50,
+      "outputs": [
+        {
+          "bundle": "commando-prefab-lab",
+          "member": "CAB-b0611b01bbffecd06329c6d6eecf278c",
+          "path_id": -1703899413830726600,
+          "bytes": 5156,
+          "sha256": "5c807f9388396573ab4bd054f0ac6ecf34b0f9105a5f134b013740288c9d4203"
+        }
+      ]
+    },
+    {
+      "kind": "dummy",
+      "original": {
+        "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-base-shaders_shader_assets_all_45ab8c24dd5dcd99e5cb60900de0231b.bundle",
+        "member": "CAB-779f6fd4edc30ec27d018e8344a8081e",
+        "path_id": -1760900174542561015,
+        "bytes": 2601960,
+        "sha256": "bd1acda75caf15bcb9014dc14e7a0fc5680419e39d61cf24baca429509c12906",
+        "body_sha256": "4735c547a2dcf50cad42ea7226ac0e9d359212f57c011165c5db412460511f86"
+      },
+      "source_filename": "Assets/RoR2/Base/Shaders/Environment/HGWaterfall.shader",
+      "template": "TransparentDiffuse",
+      "fallback_sdk_shader": 7,
+      "outputs": [
+        {
+          "bundle": "commando-prefab-lab",
+          "member": "CAB-b0611b01bbffecd06329c6d6eecf278c",
+          "path_id": -118659606023311509,
+          "bytes": 5420,
+          "sha256": "e565df0ce2b80fa69275dfa61cd71f7d68b39a5916b27e7b04889c064b5b718f"
+        }
+      ]
+    },
+    {
+      "kind": "dummy",
+      "original": {
+        "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-base-shaders_shader_assets_all_45ab8c24dd5dcd99e5cb60900de0231b.bundle",
+        "member": "CAB-779f6fd4edc30ec27d018e8344a8081e",
+        "path_id": -197252232775272061,
+        "bytes": 2601960,
+        "sha256": "bd1acda75caf15bcb9014dc14e7a0fc5680419e39d61cf24baca429509c12906",
+        "body_sha256": "4e0aa8271cb0d2fb8ef242b7bbaee70743a64c0d0343620d26d9a9f37d65db0c"
+      },
+      "source_filename": "Assets/RoR2/Base/Shaders/Deferred/HGStandard.shader",
+      "template": "TransparentDiffuse",
+      "fallback_sdk_shader": 7,
+      "outputs": [
+        {
+          "bundle": "commando-prefab-lab",
+          "member": "CAB-b0611b01bbffecd06329c6d6eecf278c",
+          "path_id": 5161927701771667371,
+          "bytes": 10240,
+          "sha256": "fc559d7743a4ffff155ea9b7907c69b40806fdc6374231dd51bc21c716cdbd92"
+        }
+      ]
+    },
+    {
+      "kind": "dummy",
+      "original": {
+        "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-base-shaders_shader_assets_all_45ab8c24dd5dcd99e5cb60900de0231b.bundle",
+        "member": "CAB-779f6fd4edc30ec27d018e8344a8081e",
+        "path_id": -8989458460904117762,
+        "bytes": 2601960,
+        "sha256": "bd1acda75caf15bcb9014dc14e7a0fc5680419e39d61cf24baca429509c12906",
+        "body_sha256": "7da06d535c5ccf3a4d99c5c427e101ad9f9c847115e75e45af5075724629f0d0"
+      },
+      "source_filename": "Assets/RoR2/Base/Shaders/Environment/HGGrass.shader",
+      "template": "TransparentDiffuse",
+      "fallback_sdk_shader": 7,
+      "outputs": [
+        {
+          "bundle": "commando-prefab-lab",
+          "member": "CAB-b0611b01bbffecd06329c6d6eecf278c",
+          "path_id": 6375380381522064308,
+          "bytes": 5180,
+          "sha256": "1ee0b2cebbfe4d1188e3c697f9279664e47cdf03852ef2d98e7ff6e7da0792d0"
+        }
+      ]
+    },
+    {
+      "kind": "dummy",
+      "original": {
+        "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-base-shaders_shader_assets_all_45ab8c24dd5dcd99e5cb60900de0231b.bundle",
+        "member": "CAB-779f6fd4edc30ec27d018e8344a8081e",
+        "path_id": -8684109817920462965,
+        "bytes": 2601960,
+        "sha256": "bd1acda75caf15bcb9014dc14e7a0fc5680419e39d61cf24baca429509c12906",
+        "body_sha256": "6b19b891bef0939b0d24b3dab11d626c97ff06cda2e4f8043ee86788b42563d9"
+      },
+      "source_filename": "Assets/RoR2/Base/Shaders/Speedtree Override/SpeedTreeCustom.shader",
+      "template": "TransparentDiffuse",
+      "fallback_sdk_shader": 50,
+      "outputs": [
+        {
+          "bundle": "commando-prefab-lab",
+          "member": "CAB-b0611b01bbffecd06329c6d6eecf278c",
+          "path_id": 7127148501076925575,
+          "bytes": 5400,
+          "sha256": "ad16e30532322c500173a48f3b089dffc0313c98c723eeb9a262a5c4a6552907"
+        }
+      ]
+    },
+    {
+      "kind": "dummy",
+      "original": {
+        "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-base-shaders_shader_assets_all_45ab8c24dd5dcd99e5cb60900de0231b.bundle",
+        "member": "CAB-779f6fd4edc30ec27d018e8344a8081e",
+        "path_id": -704325499538927933,
+        "bytes": 2601960,
+        "sha256": "bd1acda75caf15bcb9014dc14e7a0fc5680419e39d61cf24baca429509c12906",
+        "body_sha256": "2c7152cc3c200e6045ed11544c7e3c500a29bcd4de813fd26311d59b67f5a7f9"
+      },
+      "source_filename": "Assets/RoR2/Base/Shaders/FX/HGOpaqueCloudRemap.shader",
+      "template": "SingleTexture",
+      "fallback_sdk_shader": 51,
+      "outputs": [
+        {
+          "bundle": "commando-prefab-lab",
+          "member": "CAB-b0611b01bbffecd06329c6d6eecf278c",
+          "path_id": 9131360246909011192,
+          "bytes": 6484,
+          "sha256": "8cb3556f27d6bd9b2f1729b16c2f3b9944a5facd81231c59f648d977393d51ff"
+        }
+      ]
+    }
+  ]
+}

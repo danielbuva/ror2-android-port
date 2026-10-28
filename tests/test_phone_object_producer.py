@@ -29,6 +29,118 @@ RECORD_FIXTURE = load("record_bundle_fixture", ROOT / "tests/test_phone_record_p
 
 
 class ProducedRecordRelocationTests(unittest.TestCase):
+    def test_empty_renderer_keeps_native_fields_and_changes_only_authored_flags(self):
+        schema = FIXTURE.node(
+            "Base",
+            children=[
+                FIXTURE.node("m_Enabled", 1, kind="UInt8"),
+                FIXTURE.node("m_CastShadows", 1, kind="UInt8"),
+                FIXTURE.node("m_ReceiveShadows", 1, kind="UInt8"),
+                FIXTURE.node("m_DynamicOccludee", 1, kind="UInt8"),
+                FIXTURE.array("m_Materials", FIXTURE.node("data", 12, kind="PPtr<Material>")),
+                FIXTURE.node("retained", 4, kind="float"),
+            ],
+        )
+        body = bytes([1, 1, 1, 1]) + bytes(4) + struct.pack("<I", 0x80000000)
+        stream = io.BytesIO(RECORD_FIXTURE.serialized(body, schema, class_id=23))
+        stream.size = len(stream.getvalue())
+        tree = P.W.read_serialized(stream)["types"][0]["tree"]
+        self.assertEqual(P.empty_mesh_renderer(body, tree), bytes(3) + body[3:])
+
+    def test_original_editor_script_hash_requires_unchanged_runtime_identity_and_schema(self):
+        identity = P.module("script_identity", ROOT / "scripts/lab/script_identity.py")
+        stream = io.BytesIO()
+        P.aligned_string(stream, "AuthoredCurve")
+        stream.write(bytes(4))
+        expected = bytes(range(16))
+        stream.write(expected)
+        for text in ("AuthoredCurve", "Lab", "Fixture.dll"):
+            P.aligned_string(stream, text)
+        script = stream.getvalue()
+        metadata = {"class_id": 114, "script_id": identity.md4(b"AuthoredCurveLabFixture.dll"), "tree": b"same-source-schema"}
+        self.assertEqual(P.original_script_properties(script, {"class_id": 115}, metadata, metadata.copy(), identity), expected)
+        for changed in ({**metadata, "tree": b"projected-schema"}, {**metadata, "script_id": bytes(16)}, {**metadata, "class_id": 115}):
+            with self.subTest(changed=changed), self.assertRaisesRegex(ValueError, "unchanged runtime identity/schema"):
+                P.original_script_properties(script, {"class_id": 115}, metadata, changed, identity)
+
+    def test_run_presence_projection_retains_source_metadata_before_zero_counters(self):
+        identity = P.module("script_identity", ROOT / "scripts/lab/script_identity.py")
+        schema = FIXTURE.node(
+            "Base",
+            kind="MonoBehaviour",
+            children=[
+                FIXTURE.node("retained", 4, kind="float"),
+                FIXTURE.node("cachedActiveCount", 4, kind="int"),
+                FIXTURE.node("cachedInActiveCount", 4, kind="int"),
+            ],
+        )
+        stream = io.BytesIO(RECORD_FIXTURE.serialized(bytes(12), schema, class_id=114))
+        stream.size = len(stream.getvalue())
+        tree = P.W.read_serialized(stream)["types"][0]["tree"]
+        source = identity.tree_nodes(tree)
+        projected = identity.tree_nodes(P.omit_run_presence_counters(tree, identity))
+        self.assertEqual(projected, source[:2])
+        self.assertEqual(P.omit_run_presence_counters(tree, identity), identity._tree(source[:2], common_strings=True))
+        with self.assertRaisesRegex(ValueError, "counter schema drift"):
+            P.omit_run_presence_counters(tree.replace(b"cachedActiveCount", b"cachedOtherXCount"), identity)
+
+    def test_director_deck_selects_source_spans_and_defaults_only_authored_omissions(self):
+        card = FIXTURE.node(
+            "data",
+            children=[
+                FIXTURE.node("spawnCard", 12, kind="PPtr<SpawnCard>"),
+                FIXTURE.node("selectionWeight", 4, kind="UInt32"),
+                FIXTURE.text("requiredUnlockable"),
+                FIXTURE.node("isExclusivelyElite", 4, kind="UInt32"),
+                FIXTURE.node("eliteDef", 12, kind="PPtr<EliteDef>"),
+            ],
+        )
+        category = FIXTURE.node("data", children=[FIXTURE.text("name"), FIXTURE.array("cards", card), FIXTURE.node("selectionWeight", 4, kind="float")])
+        schema = FIXTURE.node(
+            "Base",
+            children=[
+                FIXTURE.node("before", 4),
+                FIXTURE.text("m_Name"),
+                FIXTURE.node("middle", 4),
+                FIXTURE.array("categories", category),
+                FIXTURE.node("after", 4),
+            ],
+        )
+        text = FIXTURE.M.padded_string
+        first_card = struct.pack("<iqI", 1, 101, 7) + text("Old") + bytes(16)
+        second_card = struct.pack("<iqI", 2, 202, 0x11223344) + text("Locked") + bytes(16)
+        source = b"HEAD" + text("Deck") + b"MID!" + struct.pack("<I", 2)
+        source += text("First") + struct.pack("<I", 1) + first_card + struct.pack("<f", 0.5)
+        source += text("Second") + struct.pack("<I", 1) + second_card + struct.pack("<f", 0.75) + b"TAIL"
+        stream = io.BytesIO(RECORD_FIXTURE.serialized(source, schema, class_id=114))
+        stream.size = len(stream.getvalue())
+        tree = P.W.read_serialized(stream)["types"][0]["tree"]
+        selection = [{"source_index": 1, "cards": [{"source_index": 0, "omit_fields": ["requiredUnlockable"]}], "omit_weight": True}]
+        expected = b"HEAD" + text("Android supported Deck") + b"MID!" + struct.pack("<I", 1)
+        expected += text("Second") + struct.pack("<I", 1) + struct.pack("<iqI", 2, 202, 0x11223344) + bytes(24) + b"TAIL"
+        self.assertEqual(P.rebuild_director_deck(source, tree, selection), expected)
+
+    def test_surface_projection_resizes_strings_and_preserves_unselected_bytes(self):
+        schema = FIXTURE.node(
+            "Base",
+            children=[
+                FIXTURE.node("before", 4, kind="UInt32"),
+                FIXTURE.node("impactEffectPrefab", 12, kind="PPtr<GameObject>"),
+                FIXTURE.text("impactSoundString"),
+                FIXTURE.node("middle", 4, kind="float"),
+                FIXTURE.text("materialSwitchString"),
+                FIXTURE.node("footstepEffectPrefab", 12, kind="PPtr<GameObject>"),
+                FIXTURE.node("after", 4, kind="UInt32"),
+            ],
+        )
+        before, middle, after = struct.pack("<I", 0x01020304), struct.pack("<I", 0x80000000), struct.pack("<I", 0xF00DF00D)
+        body = before + struct.pack("<iq", 1, 11) + FIXTURE.M.padded_string("ImpactName") + middle
+        body += FIXTURE.M.padded_string("SurfaceName") + struct.pack("<iq", 2, 29) + after
+        stream = io.BytesIO(RECORD_FIXTURE.serialized(body, schema, class_id=114))
+        stream.size = len(stream.getvalue())
+        tree = P.W.read_serialized(stream)["types"][0]["tree"]
+        self.assertEqual(P.omit_surface_effects(body, tree), before + bytes(16) + middle + bytes(16) + after)
+
     def test_schema_pointer_only_and_external_file_check(self):
         schema = FIXTURE.node(
             "Base",
@@ -1138,7 +1250,19 @@ class ObjectProducerTests(unittest.TestCase):
                 self.assertEqual(P.W.read_serialized(emitted.member(member))["engine"], "2021.3.33f1")
 
     def test_global_owner_suppression_checks_original_identity_and_active_tail(self):
-        for name in ("SceneInfo", "Director", "GameManager", "RoR2Application"):
+        for name in (
+            "SceneInfo",
+            "Director",
+            "GameManager",
+            "RoR2Application",
+            "BeetleBody",
+            "BeetleGuardBody",
+            "BeetleGuardMaster",
+            "BeetleQueen2Body",
+            "CommandoBody",
+            "PlayerMaster",
+            "Teleporter1",
+        ):
             encoded = name.encode()
             original = struct.pack("<IiqII", 1, 0, 713, 9, len(encoded)) + encoded + bytes(-len(encoded) % 4) + struct.pack("<HB", 17, 1)
             self.assertEqual(P.deactivate_global_owner(original, name), original[:-1] + bytes(1))
@@ -1150,6 +1274,22 @@ class ObjectProducerTests(unittest.TestCase):
             ):
                 with self.subTest(name=name, selected=selected), self.assertRaises(ValueError):
                     P.deactivate_global_owner(body, selected)
+
+    def test_exported_prefab_name_preserves_components_layer_tag_and_activation(self):
+        def string(value):
+            encoded = value.encode()
+            return struct.pack("<I", len(encoded)) + encoded + bytes(-len(encoded) % 4)
+
+        prefix = struct.pack("<IiqI", 1, 0, 713, 8)
+        tail = struct.pack("<HB", 6, 1)
+        original = prefix + string("  Variant, One(Clone)  ") + tail
+        expected = prefix + string("Variant_ One") + tail
+        self.assertEqual(P.normalize_exported_prefab_name(original), expected)
+        director = prefix + string("Director") + tail
+        self.assertEqual(
+            P.normalize_exported_prefab_name(director, "EnemyClosure/FastDirector.prefab"),
+            prefix + string("FastDirector") + tail,
+        )
 
     def test_original_windows_bundle_copy_needs_no_codec_or_comparison_supplier(self):
         with tempfile.TemporaryDirectory() as temporary:
@@ -1349,6 +1489,9 @@ class ObjectProducerTests(unittest.TestCase):
         self.assertEqual(P.demote_material_keywords(original), expected)
         self.assertEqual(len(original), len(expected))
         self.assertEqual(P.demote_material_keywords(expected), expected)
+        ordered = prefix + struct.pack("<II", 0, 3) + first + third + second + suffix
+        self.assertEqual(P.demote_material_keywords(original, sort_invalid=True), ordered)
+        self.assertEqual(P.demote_material_keywords(ordered, sort_invalid=True), ordered)
         with self.assertRaises((ValueError, EOFError)):
             P.demote_material_keywords(prefix + struct.pack("<I", 100000))
 

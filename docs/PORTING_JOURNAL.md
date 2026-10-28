@@ -921,3 +921,14 @@ Profiles: `recipe/owner-presentation-*.json`.
 Evidence (ignored): `work/coordination/orchestrator/presentation-native-final-v1/`.
 Readiness becomes 688/705 available, 683 raw-exact, 17 missing. Passed producers are not replayed.
 Phone production, installation and game behavior remain open; accepted APK unchanged.
+
+## J1252 — Complete source-derived Commando bundle
+
+`commando-prefab-lab` is host raw-exact to J850: 75,378 persisted objects, both
+serialized/resource members and the 87,954,431-byte bundle (SHA-256 `50a6af87…`).
+`recipe/owner-commando-*.json` completes original/native Sprite and Shader records,
+retains unchanged editor script identities and derives grouped container preloads
+from the produced graph. All production persisted before independent comparison;
+accepted bodies and unselected private inputs were denied to the tracked CLI.
+Evidence (ignored): `work/coordination/orchestrator/commando-native-final-v4/`.
+Complete phone production, installation and gameplay remain open.

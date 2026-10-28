@@ -4818,3 +4818,158 @@ All 363 persisted objects, both members and the 3,337,229-byte
 compressed presentation bundle are host raw-exact to J850. Evidence stays ignored
 under `work/coordination/orchestrator/presentation-native-final-v1/`. Phone
 production, installation and original game behavior remain open.
+
+## Root-motion float math provenance
+
+The bounded `small_atan2f` projection in `record_produce.py` adapts the
+positive-x, small-argument branches of FreeBSD msun's
+[s_atanf.c](https://github.com/freebsd/freebsd-src/blob/389ae8e4fabeaf1c655f8116b1a1402e597fa515/lib/msun/src/s_atanf.c)
+and
+[e_atan2f.c](https://github.com/freebsd/freebsd-src/blob/389ae8e4fabeaf1c655f8116b1a1402e597fa515/lib/msun/src/e_atan2f.c).
+The original Sun permission notice is retained beside the routine. Its five
+polynomial coefficients are public numerical-library constants. Native host
+`atan2f` served only as a local diagnostic reference; production uses portable
+float32 operations and original clip samples. The explicit projection preserves
+existing root-average arithmetic for other selections.
+
+Provenance, privacy, licensing and sensitive-content review: 2026-10-28. No game
+coefficient, pose, curve, program, pixel, private identifier or SDK binary is
+included. Raw comparisons and native-reference diagnostics remain ignored.
+
+## Shader context transformation provenance
+
+`shader_context.py` reuses explicitly qualified source-produced Shader records
+while deriving editor pass identities from original dummy properties or SDK
+snippets, compiler capabilities, settings and common includes. It delegates the
+existing public source generator and pass-key algorithm. Checked schema spans
+limit changes to editor identities; compiled programs and unrelated data remain
+source-produced. Profile/provider/input/extent hashes guard the resulting pack.
+This accommodates the observed Gamma/SDK33 to Linear/SDK45 metadata-context
+difference without recompiling identical programs or supplying accepted keys.
+
+Provenance, privacy, licensing and sensitive-content review: 2026-10-28. No target
+pass-key table, program, SDK include, copied source, private path, device identity
+or game property values are included. Generated source, records and diagnostics
+remain ignored; legitimate original input and acquired SDK remain required.
+
+## Native Sprite transformation provenance
+
+`sprite_produce.py` reconstructs native Sprite inputs from the user's original
+Sprite/Texture2D records. It reuses the audited public block decoder and existing
+source crop arithmetic. Its PNG writer only packages decoded source pixels;
+`SpriteNativeFixture.cs` calls the exact SDK's runtime constructor to derive
+mesh and fallback physics data. `sprite_native_record.py` retains original
+serialization, zero-UV convention, references and unrelated fields, deriving
+new stream allocations from native vertex/index counts. Importer GUIDs and
+pointer mappings name only required source/build relationships. The native
+provider and every resulting record are hash-checked; exported images and
+accepted body/geometry tables are not production suppliers.
+
+Provenance, privacy, licensing and sensitive-content review: 2026-10-28. These
+authored transformations include no game pixel, geometry, physics polygon,
+program, copied source, SDK binary, private path or device identifier. Generated
+images, native outputs and device comparisons remain ignored. The original
+legitimate input and acquired SDK remain required.
+
+## Prefab Shader transformation provenance
+
+`shader_prefab.py` composes existing source generation, standalone compilation
+and SDK record serialization. It selects no-scene runtime axes from SDK
+declarations, particle features from acquired default materials and native
+particle order from original Shader metadata. Dummy forms use original
+properties and pinned public exporter templates; inherited SDK snippet order
+owns fallback keyword registration. SDK dependency traversal maps only named
+destination relationships. Complete body pins verify results without supplying
+programs or accepted keyword tables.
+
+Provenance, privacy, licensing and sensitive-content review: 2026-10-28. Public
+code contains no game properties, ShaderLab expressions, program bytes, SDK
+binaries/includes, private paths or device identifiers. Generated source and
+records stay ignored; legitimate original input and the acquired SDK remain
+required. The compiler/codec owners retain their cleanup and failure evidence.
+
+## Grouped prefab container transformation provenance
+
+`bundle_preload.py` derives preload closure from typed source-produced objects.
+Profiles name asset paths, original or authored importer GUIDs and imported
+root identities; those relationships group subassets and determine Unity GUID
+ordering. Original component selectors, whole/body pins, GameObject back-links
+and membership validate external owner relationships. Resource identities and
+serialized member names determine file order. Existing bundle framing writes
+shared preload ranges and sorted container entries after producing all objects.
+No accepted container/preload array or game content table is supplied.
+
+Prior art: pinned AssetRipper `1ac666f` AssetBundleExtensions separates bundle
+name from collection name, and Pass103 PPtrNodeHelper enumerates dependencies
+with their field paths. Existing typed readers provide that boundary; current
+source metadata and comparison evidence determine native grouping/order.
+Provenance, privacy, licensing and sensitive-content review: 2026-10-28. Public
+code contains format rules and identity relationships only, with no copied
+upstream implementation, original bodies, private paths or device identifiers.
+
+## Unchanged script metadata provenance
+
+`object_produce.py` may retain the editor properties hash embedded in the
+original MonoScript when its identity and runtime schema match the selected
+MonoBehaviour exactly. Profiles select original records and the retention
+policy; no accepted hashes or replacement schemas are inputs. Schema omission
+policies still derive their own hashes. RunPresence's existing counter omission
+now emits Unity common-string type labels, preserving its decoded field tree.
+
+Reviewed pinned AssetRipper `1ac666f` MonoScriptExtensions identity comparison
+and AnimationCurveExtensions' versioned curve boundary alongside the acquired
+SDK and original metadata. Editor-only curve details need no new recovery when
+the legitimate MonoScript already supplies their property identity. Provenance,
+privacy, licensing and sensitive-content audit: 2026-10-28. No script-property hash literal,
+curve value, node table, program, private path or device identifier is tracked.
+
+## Complete Commando source selections (2026-10-28)
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-commando-objects.json` | `84fc4e68b52ba80ca101333b0b9e4735b5f3dc96db468f73a7086cbcdd457605` |
+| `owner-commando-reused-records.json` | `5440ce0007c9d69c6f5bd82f500a97caae8fffe1ed1b6dc7f76be96ad45ee37f` |
+| `owner-commando-original-sprites-1.json` | `503c9feb21cf0865a6429c4a5d51f5b97ee2767b8235e9454635041bf1efb09f` |
+| `owner-commando-sdk-shaders.json` | `9d109f1048dbc1bdddbae266dd4fee798be5328ef759226611262adbcf8e3ede` |
+| `owner-commando-native-sprites-2.json` | `12f487a6c66e4645820a8a73b4e597fd9134b906ccf68bc7a323ae0bd2b9b594` |
+| `owner-commando-original-sprites-2.json` | `d55cfe90cacd5f8b27924b2a7f6f790f2231bb81c2f0c22e7c31676ddb65fe16` |
+| `owner-commando-shader-context.json` | `9aa18a1fc48f4bb406cb52b585aa4fa2f24956a5b8807c327ac5495ed30e8452` |
+| `owner-commando-native-sprites-3.json` | `e42a307b1f0bf64785ccc9334f2ac765d4ae9308bb1dcf84ded24f4cae23a45c` |
+| `owner-commando-animation-records.json` | `ca92c2afe7d58f52372fe036e7997c0edbe58d015e7deb25fad0880c348ad1d9` |
+| `owner-commando-dummy-shaders-1.json` | `fe854ab6c532125f223378d66bfd7ec221d96b1067f2130009500407f1c520bc` |
+| `owner-commando-native-sprites-1.json` | `2e60a186dce679c50288a4d09f57e77eb05ec2880060a0fd1902080a604e11ef` |
+| `owner-commando-fallback-shaders.json` | `2104145b499f7e7cb6489d7589f19d29368f10415b6575e7dec832c73172300f` |
+| `owner-commando-particle-shader.json` | `8dd5f5febaca10abdec83d1f0a5ef8bfedc8af0aa3a28e0121bb1532dfecc671` |
+| `owner-commando-dummy-shaders-2.json` | `5863b4e8e6549a2ba3d23b4b45ce6b68b3e323b3fd55eb4d7f27813774896176` |
+| `owner-commando-crosshair-sprite.json` | `b4a02c56fca0af8926914d20e9fee2a7f12ea59f4bb7a4fa2f4a76eee52eefe3` |
+| `owner-commando-dummy-shaders-3.json` | `28f54e8e82c93611267028655bf5abdb838166ca154ef8af68c7eff32cb057a7` |
+
+These profiles complete `commando-prefab-lab` through the existing original-object,
+record, Sprite, SDK Shader, template Shader and record-remap owners. All 75,378
+persisted objects, the serialized/resource members and the 87,954,431-byte bundle
+are host raw-exact to J850 (`50a6af87…`). Profile bytes are preserved exactly so
+explicit record-provider receipt hashes remain reproducible.
+
+Production starts with original selectors and the acquired SDK. The animation,
+original Sprite and crosshair profiles use `record_produce.py`; native Sprite
+profiles use `sprite_produce.py` with its source-pixel request generator and the
+repository's exact-SDK fixture. SDK/fallback/particle Shader profiles use
+`shader_prefab.py`, dummy profiles use `payload_shader_records.py`, and the context
+profile uses `shader_context.py` with the explicit existing Barrier source pack.
+`record_remap.py` extracts the reused records from the already-qualified original/
+SDK player and Objective providers. `object_produce.py` takes the full object
+profile, these independently produced packs and the existing hierarchy, generic,
+mesh, texture and avatar providers as explicit receipt-pinned CLI inputs. No
+retained run directory is an implicit supplier; generators and required local
+SDK/fixture inputs remain described in `docs/LOCAL_STATE.md`.
+
+Manual provenance, privacy, licensing and sensitive-content audit: the profiles
+contain original selectors, hashes, minimal GUID/root/pointer relationships and
+authored transformation policies. Native Sprite geometry is generated locally
+from original pixels; curves, poses, programs, textures and original bodies are
+never embedded in recipes. Original script hashes retain their original identity
+and unchanged schema; grouped preloads derive from the produced typed graph.
+No original code, game-derived body, scalar/geometry/program table, private path,
+device identifier, credential or redistribution payload is published. Phone
+production of the complete bundle, installation and gameplay readiness remain
+open; host byte equality is the only closure here.
