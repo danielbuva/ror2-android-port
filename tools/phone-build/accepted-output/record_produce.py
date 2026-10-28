@@ -953,6 +953,32 @@ def controller_loop_states(body, root, states, read_clip):
     return bytes(result)
 
 
+def controller_clear_skeleton_masks(body, root):
+    """Apply the pinned exporter's omitted layer masks and native allocation size."""
+    _, spans = fields(body, root)
+    removals, memory = [], 0
+    for path, (start, end) in spans.items():
+        if len(path) != 9 or path[:3] != ("m_Controller", "m_LayerArray", "Array") or path[4:] != ("data", "m_SkeletonMask", "data", "m_Data", "Array"):
+            continue
+        count = struct.unpack_from("<I", body, start)[0]
+        if end - start != 4 + count * 8:
+            raise ValueError("original controller skeleton mask extent drift")
+        if count:
+            removals.append((start, end))
+            # Each native mask entry occupies 8 bytes, with a 24-byte allocation
+            # header for a nonempty array on the admitted 64-bit platforms.
+            memory += count * 8 + 24
+    offset, end = spans[("m_ControllerSize",)]
+    size = struct.unpack_from("<I", body, offset)[0]
+    if end - offset != 4 or size < memory:
+        raise ValueError("original controller allocation size drift")
+    result = bytearray(body)
+    struct.pack_into("<I", result, offset, size - memory)
+    for start, end in sorted(removals, reverse=True):
+        result[start:end] = bytes(4)
+    return bytes(result)
+
+
 def director_exposed_names(body, root):
     """Reimport AssetRipper decimal PropertyName strings and retain their PPtrs."""
     _, located = fields(body, root)
@@ -988,6 +1014,7 @@ def transform_generic(body, class_id, selected, root=None, read_clip=None):
         "controller_tos",
         "controller_opposed_angles",
         "controller_behaviour_order",
+        "controller_clear_skeleton_masks",
         "canonical",
     } or (selected.get("demote_keywords") and class_id != 21):
         raise ValueError("unknown generic object operation")
@@ -997,6 +1024,10 @@ def transform_generic(body, class_id, selected, root=None, read_clip=None):
         if selected["director_exposed_names"] is not True or class_id != 320 or root is None:
             raise ValueError("exposed-name import requires original PlayableDirector schema")
         body = director_exposed_names(body, root)
+    if "controller_clear_skeleton_masks" in selected:
+        if selected["controller_clear_skeleton_masks"] is not True:
+            raise ValueError("unqualified controller skeleton mask policy")
+        body = controller_clear_skeleton_masks(body, root)
     if "controller_loop_states" in selected:
         body = controller_loop_states(body, root, selected["controller_loop_states"], read_clip)
     if "controller_clip_order" in selected:

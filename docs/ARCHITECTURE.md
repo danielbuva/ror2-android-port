@@ -309,7 +309,11 @@ needed hash policy, persist outputs and own setup/teardown. J1124 qualifies one
 source-only EffectManagerHelper case; complete content and phone qualification
 remain separate. Original script-file-ID derivation remains unchanged.
 `record_produce.py` owns source-only AnimationClip and generic object-record
-production through the same object-pack interface. Audited
+production through the same object-pack interface.
+Its `controller_clear_skeleton_masks` policy follows the pinned
+exporter's omitted layer masks: it removes original mask entries and subtracts
+their native allocation sizes, preserving all other controller fields.
+Audited
 `recipe/owner-animation-clips.json`, `recipe/owner-animator-controllers.json`,
 `recipe/owner-material-records.json`, `recipe/owner-gameobjects.json`,
 `recipe/owner-transforms.json`, `recipe/owner-generic-records.json` and

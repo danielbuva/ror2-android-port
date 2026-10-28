@@ -41,6 +41,23 @@ def tos_entry(value):
 
 
 class ControllerRecords(unittest.TestCase):
+    def test_exported_mask_omission_preserves_controller_fields_and_allocation_size(self):
+        item = F.node("data", children=[integer("path_hash"), F.node("weight", 4, kind="float")])
+        mask = F.node("m_SkeletonMask", children=[F.node("data", children=[F.array("m_Data", item)])])
+        layer = F.node("data", children=[F.node("data", children=[integer("retained"), mask])])
+        schema = F.node(
+            "Base",
+            children=[integer("m_ControllerSize"), F.node("m_Controller", children=[F.array("m_LayerArray", layer)]), integer("tail")],
+        )
+        mask_body = vector([struct.pack("<If", 71, 0.25), struct.pack("<If", 89, 0.75)])
+        body = struct.pack("<I", 1000) + vector([struct.pack("<I", 17) + mask_body, struct.pack("<II", 29, 0)]) + struct.pack("<I", 0xAABBCCDD)
+        expected = struct.pack("<I", 960) + vector([struct.pack("<II", 17, 0), struct.pack("<II", 29, 0)]) + struct.pack("<I", 0xAABBCCDD)
+        stream = io.BytesIO(C.serialized(body, schema, 91))
+        stream.size = len(stream.getvalue())
+        tree = A.W.read_serialized(stream)["types"][0]["tree"]
+        root = A.SCHEMA.type_tree(io.BytesIO(tree))
+        self.assertEqual(A.transform_generic(body, 91, {"controller_clear_skeleton_masks": True}, root), expected)
+
     def test_tos_selects_source_rows_rebuilds_export_name_and_crc(self):
         text = F.node("second", children=[F.array("chars", F.node("data", 1, kind="char"))], meta=0x4000)
         entry = F.node("data", children=[integer("first"), text])
