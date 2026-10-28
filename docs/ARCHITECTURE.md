@@ -269,7 +269,15 @@ and terminal receipt. Setup verifies source pins/capacity, processing checks
 every object and re-reads persisted extents, and failure/exit retain outputs
 and end the process. [Its lifecycle and qualified scope](../tools/phone-build/accepted-output/README.md#produce-meshes-directly-from-original-pc-bundles)
 remain separate from bundle assembly, the private replay receiver and current
-game builds; two mesh cases are excluded and no runtime owner is added.
+game builds; two mesh cases are excluded from that immutable cohort profile.
+The separate `recipe/owner-compressed-tangent-mesh.json` selects one formerly
+excluded MercSwordSwipe record through the same setup/teardown. The optional
+`unity_mesh.normalize_packed_tangents` operation reconstructs negative Z-squared
+vectors, normalizes XY with float32 arithmetic and derives packing bounds and
+integers from the original fields. Authored mesh fixtures cover the operation;
+guarded tracked-CLI output is host raw-exact for the additional record. Complete
+Commando assembly and phone production remain separate gates; no runtime owner
+is added.
 `scripts/lab/script_identity.py` additionally owns current pure managed script
 properties-hash derivation. Callers supply original PC and exact SDK embedded
 type metadata plus original script identity; the helper composes the SDK native
@@ -4918,6 +4926,34 @@ Process exit tears down producers; receipts persist. These are optional host
 reconstruction owners; phone production, installation and original runtime
 behavior remain open.
 
+The same remap owner can extract selected bodies from source-produced player
+serialized files. The supplier receipt pins its profile, relative file, size and
+hash; selected class, path ID, size and body hash must also match. Output index
+rows retain this file provenance. No player producer is rerun for extraction.
+For independently produced records, the object owner optionally applies
+`record_references`: the original type schema must identify every edited extent
+as a PPtr, each prior value must match, and destination external slots must
+exist. Scene preload dependencies follow these relocations. Existing
+`references` metadata keeps its previous meaning for produced records. Explicit
+supplier receipts and a fresh output directory set up reuse; process exit
+releases file handles and the resulting receipts persist.
+
+For a base-only authored MonoBehaviour, the object owner's
+`fieldless_script_record` policy derives type identity from a local qualified
+MonoScript record. The original 32-byte prototype must have only native base
+fields; its SDK-derived properties hash must equal the produced script's
+embedded hash. The source tree and body are preserved, while class, namespace
+and assembly derive the script ID. This adds no runtime component behavior.
+The shared SDK Shader owner also accepts the standalone Legacy particle shader
+(SDK ID 207) through an explicit prefab/no-fog scope. Original and SDK names,
+properties and absent dependencies must agree; declared SDK variants supply
+the programs through the existing compiler API.
+
+The object owner's optional `resource_alignment` map selects 16-byte trailing
+zero alignment for named `.resS` members. Resource extents and their offsets
+remain source-produced; the default packing policy is unchanged. This handles
+the measured native bundle padding after its final extent.
+
 Goolake source-scene selections use the same object and Shader owners through
 `recipe/owner-goolake-source-objects.json` and its shader remap profile. The
 Bezier owner evaluates original curves with captured build angles, then applies
@@ -5011,3 +5047,12 @@ original/SDK/tool roots, pinned profiles, source-produced packs and fresh output
 set up production; process exit releases producers while receipts persist. The writer exposes
 `payload/{lakes,lakesnight,village}-source-lab`. All 58,555 objects, six serialized members
 and three compressed bundles are host raw-exact to J850. Phone/runtime gates remain open.
+
+`recipe/owner-objective-support-objects.json` completes the native Objective
+bundle through the existing object owner. The native alias, reused-record and
+Legacy particle Shader recipes supply independently qualified records. Setup
+requires explicit original PC/SDK roots, pinned record-pack receipts and a fresh
+output directory; process exit releases source handles and receipts persist.
+All 1,623 objects, every member and the compressed bundle are host
+raw-exact to J850. This adds no runtime owner; phone production, installation and
+original game behavior remain open.

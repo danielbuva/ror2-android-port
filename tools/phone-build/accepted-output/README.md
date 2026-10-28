@@ -377,6 +377,15 @@ halfway away from zero. Source schema controls field extents, including nested
 alignment. The reader qualifies little-endian serialized v22 and UnityFS 7/8
 from Unity 2021.3 with raw/LZ4 compression; other compression is refused.
 
+The separate audited `owner-compressed-tangent-mesh.json` profile adds the
+MercSwordSwipe record through this CLI without changing the original cohort's
+identity. Its `packed_tangents: repair_negative_z` operation unpacks original
+XY values, reconstructs Z squared, normalizes XY when Z squared is negative,
+then derives the packing bounds and integer stream using float32 arithmetic.
+The recipe supplies no replacement floats or packed bytes. This additional
+record is host raw-exact; complete Commando assembly and phone production
+remain open.
+
 The process checks every selected original file before/after use, bounds reads
 and decompressed blocks to 64 MiB, retains two blocks and requires all generated
 object hashes to match. It writes `objects.bin`, `resources.bin`, their

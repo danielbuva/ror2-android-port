@@ -896,3 +896,16 @@ Profiles: `recipe/owner-{lakes,lakesnight,village}-source-*.json`.
 Evidence (ignored): `work/coordination/orchestrator/scenes/<bundle>-final-v1/`.
 Readiness becomes 686/705 available, 681 raw-exact, 19 missing. Passed runs are not replayed.
 Phone production, installation and original scene behavior remain open; accepted APK unchanged.
+
+## J1250 — Complete source-derived Objective native bundle
+
+2026-10-28. The object owner completes `objective-support-lab`: 1,623 objects,
+every member and the 543,216-byte compressed bundle are raw-exact to J850.
+Bundle SHA-256: `9c5b5a14c4bd719710e624f5e6695e0240c3343b6ec36703466402d59da4b6ac`.
+Original co-owned records, checked component edits, reusable qualified record packs,
+SDK default materials and the SDK Legacy particle Shader supply the complete file.
+Fieldless authored components derive type identity from qualified MonoScripts and SDK schema.
+Profiles: `recipe/owner-objective-*.json`, `recipe/owner-native-alias-records.json`.
+Evidence (ignored): `work/coordination/orchestrator/objective-native-final-v5/`.
+Readiness becomes 687/705 available, 682 raw-exact, 18 missing. Passed runs are not replayed.
+Phone production, installation and game behavior remain open; accepted APK unchanged.

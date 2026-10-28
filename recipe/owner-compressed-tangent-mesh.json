@@ -1,0 +1,33 @@
+{
+  "input_id": "6af7ed94619fe1b4346974b4486afa03a8d1625a7820e92da0ff74d57208fe88",
+  "bundles": [
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-base-merc_assets_all_a0ed07dff73d15de2ae313c0812f5387.bundle",
+      "sha256": "dc80f84b617b475ce76e7fe811f95ae29e80606ab6bb4707321afa9c6d6c5af6",
+      "members": [
+        {
+          "name": "CAB-9eb9ee5c7c7aeb088ce50567818f6e24",
+          "meshes": [
+            {
+              "path_id": 4884074166052002665,
+              "sha256": "c89aa52e8aae69de45b9ee8267f16ae46a0522470d5f538062b56e6dd216aee8",
+              "outputs": [
+                {
+                  "bundle": "commando-prefab-lab",
+                  "member": "CAB-b0611b01bbffecd06329c6d6eecf278c",
+                  "path_id": 6333371878072831462,
+                  "bytes": 1564,
+                  "sha256": "b0bcd34bc21a3cb5c43c871dc497970e9630ece27d4ed5481aca739899fa5404",
+                  "ops": {
+                    "packed_tangents": "repair_negative_z"
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "excluded": []
+}

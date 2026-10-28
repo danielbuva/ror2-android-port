@@ -25,6 +25,37 @@ def load(name, path):
 
 P = load("object_producer", ROOT / "tools/phone-build/accepted-output/object_produce.py")
 FIXTURE = load("object_bundle_fixture", ROOT / "tests/test_phone_mesh_producer.py")
+RECORD_FIXTURE = load("record_bundle_fixture", ROOT / "tests/test_phone_record_producer.py")
+
+
+class ProducedRecordRelocationTests(unittest.TestCase):
+    def test_schema_pointer_only_and_external_file_check(self):
+        schema = FIXTURE.node(
+            "Base",
+            children=[
+                FIXTURE.node("scalar", 4, kind="UInt32"),
+                FIXTURE.node("pointer", children=[FIXTURE.node("m_FileID", 4, kind="int"), FIXTURE.node("m_PathID", 8, kind="SInt64")], kind="PPtr<Shader>"),
+            ],
+        )
+        body = struct.pack("<Iiq", 17, 1, 6)
+        stream = io.BytesIO(RECORD_FIXTURE.serialized(body, schema, class_id=21))
+        stream.size = len(stream.getvalue())
+        typ = P.W.read_serialized(stream)["types"][0]
+        reference = {"offset": 4, "from": [1, 6], "to": [2, 6]}
+        self.assertEqual(P.remap_record(body, typ, [reference], ["old", "new"]), struct.pack("<Iiq", 17, 2, 6))
+        with self.assertRaisesRegex(ValueError, "schema PPtr"):
+            P.remap_record(body, typ, [dict(reference, offset=0)], ["old", "new"])
+        with self.assertRaisesRegex(ValueError, "absent external"):
+            P.remap_record(body, typ, [reference], ["old"])
+        with self.assertRaisesRegex(ValueError, "identity drift"):
+            P.remap_record(body, typ, [dict(reference, **{"from": [1, 7]})], ["old", "new"])
+
+    def test_preload_uses_relocated_dependency(self):
+        bundle = {"preload_dependencies": [], "dependencies": []}
+        member = {"name": "scene", "externals": ["old", "new"], "objects": [{"path_id": 9, "record_references": [{"offset": 4, "from": [1, 6], "to": [2, 6]}]}]}
+        packed = {("scene", 9): (None, {"dependencies": [{"to": [1, 6], "source": {"member": "original", "path_id": 42}}]})}
+        selected = {"externals": ["old", "new"]}
+        self.assertEqual(P.preload_data(bundle, selected, [member], packed), struct.pack("<IIiqIB", 0, 1, 2, 6, 0, 0))
 
 
 def digest(data):
@@ -1224,6 +1255,31 @@ class ObjectProducerTests(unittest.TestCase):
             self.assertEqual(P.B.exact(emitted.member("CAB-target.resS"), 16), bytes(8) + b"AUTHORED")
             self.assertEqual(P.B.sha(pc / "source.bundle"), before)
 
+    def test_optional_native_resource_padding_preserves_source_extent(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            pc, path, pack, profile, row, serialized = packed_fixture(root)
+            row["resource"]["stream"]["offset"] = 9
+            (pack / "index.jsonl").write_text(json.dumps(row) + "\n")
+            receipt = json.loads((pack / "result.json").read_text())
+            receipt["outputs"]["index.jsonl"] = {"bytes": (pack / "index.jsonl").stat().st_size, "sha256": P.B.sha(pack / "index.jsonl")}
+            (pack / "result.json").write_text(json.dumps(receipt))
+            resource = bytes(9) + b"AUTHORED" + bytes(15)
+            expected = io.BytesIO()
+            P.W.write_bundle(
+                expected,
+                [("CAB-target", 4, len(serialized), lambda: io.BytesIO(serialized)), ("CAB-target.resS", 0, 32, lambda: io.BytesIO(resource))],
+                literal_lz4,
+            )
+            profile["bundle"].update(resource_alignment={"CAB-target.resS": 16}, bytes=len(expected.getvalue()), sha256=digest(expected.getvalue()))
+            path.write_text(json.dumps(profile))
+            with patch.object(P.W, "codec", return_value=nullcontext(literal_lz4)):
+                result = P.produce(path, P.B.sha(path), pc, root / "padded", Path("codec"), "pin", [(pack, P.B.sha(pack / "result.json"))])
+            self.assertTrue(result["success"])
+            member = P.B.Bundle(root / "padded/payload/authored-target").member("CAB-target.resS")
+            self.assertEqual(member.read(), resource)
+            self.assertEqual((pack / "resources.bin").read_bytes(), b"AUTHORED")
+
     def test_pack_receipts_outputs_identities_and_extents_are_checked(self):
         for failure in ("receipt", "failed", "profile", "output", "extent", "missing", "duplicate", "foreign-resource"):
             with self.subTest(failure=failure), tempfile.TemporaryDirectory() as temporary:
@@ -1910,6 +1966,43 @@ class ReflectionProbeImportTests(unittest.TestCase):
         for malformed in [body[:-1], body + b"UNOWNED"]:
             with self.assertRaises((ValueError, struct.error)):
                 P.custom_reflection_probe(malformed, typ)
+
+
+class FieldlessScriptMetadataTests(unittest.TestCase):
+    def test_owned_script_properties_prove_base_only_schema(self):
+        def pointer(name):
+            return FIXTURE.node(name, kind="PPtr<Object>", children=[FIXTURE.node("m_FileID", 4, kind="int"), FIXTURE.node("m_PathID", 8, kind="SInt64")])
+
+        fields = [pointer("m_GameObject"), FIXTURE.node("m_Enabled", 1, kind="UInt8", meta=0x4000), pointer("m_Script"), FIXTURE.node("m_Name", 4, kind="int")]
+
+        def metadata(children):
+            stream = io.BytesIO(RECORD_FIXTURE.serialized(b"", FIXTURE.node("Base", kind="MonoBehaviour", children=children), class_id=114))
+            stream.size = len(stream.getvalue())
+            return P.W.read_serialized(stream)["types"][0]
+
+        typ = metadata(fields)
+        sdk_tree = metadata(fields + [FIXTURE.node("m_EditorClassIdentifier", 4, kind="int")])["tree"]
+        body = struct.pack("<iqB3xiqI", 0, 41, 1, 0, 99, 0)
+        names = ("AuthoredBoundary", "Fixture", "Authored.dll")
+        properties = LEGACY_IDENTITY.properties_hash(*names, typ["tree"], sdk_tree)
+        stream = io.BytesIO()
+        P.aligned_string(stream, "Display Name")
+        stream.write(bytes(4) + properties)
+        for value in names:
+            P.aligned_string(stream, value)
+        script = stream.getvalue()
+        derived = P.fieldless_script_type(body, typ, script, sdk_tree, LEGACY_IDENTITY)
+        self.assertEqual(derived["tree"], typ["tree"])
+        self.assertEqual(derived["hash"], properties)
+        self.assertEqual(derived["script_id"], LEGACY_IDENTITY.md4("".join(names).encode()))
+        changed = bytearray(script)
+        changed[P.script_fields(script)[0]] ^= 1
+        with self.assertRaisesRegex(ValueError, "properties"):
+            P.fieldless_script_type(body, typ, bytes(changed), sdk_tree, LEGACY_IDENTITY)
+        with self.assertRaisesRegex(ValueError, "custom fields"):
+            P.fieldless_script_type(body, metadata(fields + [FIXTURE.node("custom", 4, kind="int")]), script, sdk_tree, LEGACY_IDENTITY)
+        with self.assertRaisesRegex(ValueError, "base component"):
+            P.fieldless_script_type(body + bytes(4), typ, script, sdk_tree, LEGACY_IDENTITY)
 
 
 if __name__ == "__main__":

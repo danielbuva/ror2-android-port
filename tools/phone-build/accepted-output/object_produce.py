@@ -59,6 +59,20 @@ def remap(body, references):
     return bytes(result)
 
 
+def remap_record(body, typ, references, externals):
+    """Relocate produced bodies only at PPtrs declared by the original schema."""
+    records = module("record_produce")
+    _, spans = records.fields(body, records.SCHEMA.type_tree(io.BytesIO(typ["tree"])))
+    pointers = {start for key, (start, end) in spans.items() if end - start == 12 and key + ("m_FileID",) in spans and key + ("m_PathID",) in spans}
+    for reference in references:
+        if reference["offset"] not in pointers:
+            raise ValueError("produced record relocation is not a schema PPtr")
+        file_id, _ = reference["to"]
+        if not 0 <= file_id <= len(externals):
+            raise ValueError("produced record relocation has an absent external file")
+    return remap(body, references)
+
+
 def demote_material_keywords(body):
     """Retain original keywords as invalid for the qualified dummy shader.
 
@@ -364,7 +378,15 @@ def preload_data(bundle, selected, members, packed=None):
     for member in members:
         for row in member["objects"]:
             dependencies = packed.get((member["name"], row["path_id"]), (None, {}))[1].get("dependencies", []) if packed else []
-            for reference in [*row.get("references", []), *dependencies]:
+            relocations = row.get("record_references", [])
+            moved = {}
+            for reference in relocations:
+                original = tuple(reference["from"])
+                if original in moved and moved[original] != reference["to"]:
+                    raise ValueError("ambiguous produced dependency relocation")
+                moved[original] = reference["to"]
+            dependencies = [{**ref, "to": moved.get(tuple(ref["to"]), ref["to"])} for ref in dependencies]
+            for reference in [*row.get("references", []), *relocations, *dependencies]:
                 file_id, path_id = reference["to"]
                 if not file_id or not path_id:
                     continue
@@ -720,6 +742,21 @@ def script_fields(body):
     return offset, (string(), string(), string())
 
 
+def fieldless_script_type(body, typ, script, sdk_tree, identity_owner):
+    """Derive a fieldless component's metadata from its qualified MonoScript."""
+    if typ["class_id"] != 114 or len(body) != 32 or body[28:] != bytes(4):
+        raise ValueError("fieldless script requires the original empty-name base component")
+    nodes = identity_owner.tree_nodes(typ["tree"])
+    fields = [n["name"] for n in nodes if n["level"] == 1]
+    if fields != ["m_GameObject", "m_Enabled", "m_Script", "m_Name"]:
+        raise ValueError("fieldless script prototype has custom fields")
+    offset, names = script_fields(script)
+    properties = identity_owner.properties_hash(*names, typ["tree"], sdk_tree)
+    if properties != script[offset : offset + 16]:
+        raise ValueError("fieldless schema differs from produced MonoScript properties")
+    return {**typ, "hash": properties, "script_id": identity_owner.md4("".join(names).encode())}
+
+
 def copy_original_bundle(profile, profile_sha256, pc, output):
     """Preserve prepare.py's original Windows bundle copy without a project."""
     if set(profile) != {"input_id", "original_bundle"}:
@@ -961,13 +998,17 @@ def produce(profile_path, profile_sha256, pc, output, codec_path, codec_sha256, 
         sprites = module("player_data") if any("importer_guid" in row for member in selected_members for row in member["objects"]) else None
         for selected_member in selected_members:
             member_records = []
-            identities = [row["path_id"] for row in selected_member["objects"] if "source" in row or "record" in row]
+            identities = [
+                row["path_id"] for row in selected_member["objects"] if "source" in row or "record" in row or row.get("generate") == "DefaultMaterial"
+            ]
             for selected in selected_member["objects"]:
                 if "record" in selected:
                     directory, row = packed[selected_member["name"], selected["path_id"]]
                     body = record_extent(directory / "objects.bin", row)
                     source, identity = selected["type_source"]
                     typ = sources[source][3]["types"][sources[source][4][identity]["type_id"]]
+                    if "record_references" in selected:
+                        body = remap_record(body, typ, selected["record_references"], selected_member["externals"])
                     if "resource" in row:
                         resource = row["resource"]
                         extent = resource["stream"]
@@ -1135,6 +1176,23 @@ def produce(profile_path, profile_sha256, pc, output, codec_path, codec_sha256, 
                         typ["hash"] = value
                     else:
                         raise ValueError("script properties require MonoScript or MonoBehaviour")
+                if "fieldless_script_record" in selected:
+                    if sdk_tree is None or selected["fieldless_script_record"] is not True:
+                        raise ValueError("fieldless script record requires the named SDK policy")
+                    if typ["class_id"] != 114 or len(body) < 28:
+                        raise ValueError("fieldless script record requires a MonoBehaviour")
+                    file_id, script_id = struct.unpack_from("<iq", body, 16)
+                    scripts = [s for s in selected_member["objects"] if s["path_id"] == script_id and "record" in s]
+                    if file_id or len(scripts) != 1:
+                        raise ValueError("fieldless script requires a local produced MonoScript record")
+                    script_selection = scripts[0]
+                    _, script_type = source_record(sources, script_selection["type_source"])
+                    directory, script_row = packed[selected_member["name"], script_id]
+                    script = record_extent(directory / "objects.bin", script_row)
+                    if script_type["class_id"] != 115 or hashlib.sha256(script).hexdigest() != script_selection["sha256"]:
+                        raise ValueError("fieldless MonoScript record identity differs")
+                    typ = fieldless_script_type(body, typ, script, sdk_tree, identity_owner)
+                    receipt.setdefault("fieldless_script_records", {})[str(script_id)] = script_selection["sha256"]
                 if "managed_pointer_schema" in selected:
                     if sdk_tree is None or typ["class_id"] != 114:
                         raise ValueError("managed pointer schema requires SDK and MonoBehaviour")
@@ -1175,6 +1233,10 @@ def produce(profile_path, profile_sha256, pc, output, codec_path, codec_sha256, 
                     raise ValueError("overlapping produced resource extents")
                 data.extend(bytes(offset - len(data)))
                 data.extend(extent)
+            if name in selected_bundle.get("resource_alignment", {}):
+                if selected_bundle["resource_alignment"][name] != 16 or not name.endswith(".resS"):
+                    raise ValueError("unqualified native resource alignment")
+                data.extend(bytes(-len(data) % 16))
             members.append((name, 0, len(data), lambda data=data: io.BytesIO(data)))
         with W.codec(codec_path, codec_sha256) as compress, bundle_path.open("xb") as stream:
             W.write_bundle(stream, members, compress, engine=engine)

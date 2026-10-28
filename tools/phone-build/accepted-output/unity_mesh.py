@@ -8,6 +8,7 @@ literals from an Android target.
 
 import io
 import importlib.util
+import math
 from pathlib import Path
 import struct
 
@@ -233,6 +234,36 @@ def padded_string(value):
     return struct.pack("<I", len(data)) + data + bytes(-len(data) % 4)
 
 
+def normalize_packed_tangents(data, count, bits, minimum, extent):
+    """Reconstruct negative-Z tangent pairs on the unit circle and repack XY.
+
+    Source packed fields and float32 operations determine every value. This is
+    the native compressed-vector repair, not tangent generation from geometry.
+    """
+    if not 0 < count <= LIMIT or count % 2 or not 0 < bits <= 24 or len(data) != (count * bits + 7) // 8 or not extent > 0:
+        raise ValueError("invalid packed tangent vector")
+
+    def f(value):
+        return struct.unpack("<f", struct.pack("<f", value))[0]
+
+    mask = (1 << bits) - 1
+    packed = int.from_bytes(data, "little")
+    denominator = f(f(1.0 / extent) * mask)
+    values = [f(f(((packed >> (i * bits)) & mask) / denominator) + minimum) for i in range(count)]
+    normalized = []
+    for x, y in zip(values[::2], values[1::2], strict=True):
+        zsqr = f(f(1 - f(x * x)) - f(y * y))
+        if zsqr < 0:
+            length = f(math.sqrt(f(f(x * x) + f(y * y))))
+            x, y = f(x / length), f(y / length)
+        normalized.extend((x, y))
+    minimum = min(normalized)
+    extent = f(max(normalized) - minimum)
+    integers = [int(f(f(f(value - minimum) / extent) * mask) + 0.5) for value in normalized]
+    packed = sum(value << (i * bits) for i, value in enumerate(integers))
+    return minimum, extent, packed.to_bytes(len(data), "little")
+
+
 def transform(body, root, ops, vertex_stream=None):
     fields = spans(body, root)
     edits = {}
@@ -256,6 +287,7 @@ def transform(body, root, ops, vertex_stream=None):
         "vertex_compression",
         "channel_dimensions",
         "stream_destination",
+        "packed_tangents",
     }
     if set(ops) - allowed:
         raise ValueError("unknown mesh operation")
@@ -274,6 +306,21 @@ def transform(body, root, ops, vertex_stream=None):
             replace((key,), bytes(4))
     if "m_Name" in ops:
         replace(("m_Name",), padded_string(ops["m_Name"]))
+    if "packed_tangents" in ops:
+        if ops["packed_tangents"] != "repair_negative_z":
+            raise ValueError("unknown packed tangent normalization")
+        prefix = ("m_CompressedMesh", "m_Tangents")
+        data_path = next(path for path in fields if path[:3] == prefix + ("m_Data",) and path[-1] == "payload")
+        minimum, extent, data = normalize_packed_tangents(
+            field(*data_path),
+            struct.unpack("<I", field(*prefix, "m_NumItems"))[0],
+            field(*prefix, "m_BitSize")[0],
+            struct.unpack("<f", field(*prefix, "m_Start"))[0],
+            struct.unpack("<f", field(*prefix, "m_Range"))[0],
+        )
+        replace(prefix + ("m_Start",), struct.pack("<f", minimum))
+        replace(prefix + ("m_Range",), struct.pack("<f", extent))
+        replace(data_path, data)
     vertex_key = ("m_VertexData", "m_DataSize")
     # Generic array spelling comes from the input's embedded type tree.
     channel_key = next(path for path in fields if path[:2] == ("m_VertexData", "m_Channels") and path[-1] == "payload")
