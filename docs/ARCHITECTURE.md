@@ -345,6 +345,18 @@ native results or an error to app-scoped files. The runner reports its actual
 runtime path and waits for an atomically delivered request. The device coordinator owns
 installation, source transfer, evidence collection, uninstall and display sleep;
 the fixture does not install itself or touch the lab player's package.
+`sprite_produce.py` owns current original-input native Sprite record batches.
+Its `prepare` action checks original Sprite/Texture2D schemas, hashes and local
+texture relationships, then uses `texture_produce.source_rgba` and the pinned
+public pixel decoder to generate lossless PNGs and constructor requests. No
+exported image supplies production pixels. Crop-derived pivot and original
+constructor settings retain the qualified native API contract. Its `produce`
+action rereads original records, admits explicit hash-pinned exact-SDK native
+output, and applies importer identities and qualified pointer relationships.
+Every body and persisted record-pack extent must match its expected hash.
+Source files are rechecked and new outputs must lie outside the original input.
+The SDK fixture supplies the explicit native output; complete-bundle and full
+phone-production qualification remain separate gates.
 Audited
 `recipe/owner-animation-clips.json`, `recipe/owner-animator-controllers.json`,
 `recipe/owner-material-records.json`, `recipe/owner-gameobjects.json`,

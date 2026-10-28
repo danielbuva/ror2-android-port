@@ -4835,3 +4835,22 @@ existing root-average arithmetic for other selections.
 Provenance, privacy, licensing and sensitive-content review: 2026-10-28. No game
 coefficient, pose, curve, program, pixel, private identifier or SDK binary is
 included. Raw comparisons and native-reference diagnostics remain ignored.
+
+## Native Sprite transformation provenance
+
+`sprite_produce.py` reconstructs native Sprite inputs from the user's original
+Sprite/Texture2D records. It reuses the audited public block decoder and existing
+source crop arithmetic. Its PNG writer only packages decoded source pixels;
+`SpriteNativeFixture.cs` calls the exact SDK's runtime constructor to derive
+mesh and fallback physics data. `sprite_native_record.py` retains original
+serialization, zero-UV convention, references and unrelated fields, deriving
+new stream allocations from native vertex/index counts. Importer GUIDs and
+pointer mappings name only required source/build relationships. The native
+provider and every resulting record are hash-checked; exported images and
+accepted body/geometry tables are not production suppliers.
+
+Provenance, privacy, licensing and sensitive-content review: 2026-10-28. These
+authored transformations include no game pixel, geometry, physics polygon,
+program, copied source, SDK binary, private path or device identifier. Generated
+images, native outputs and device comparisons remain ignored. The original
+legitimate input and acquired SDK remain required.
