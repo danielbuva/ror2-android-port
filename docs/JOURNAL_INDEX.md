@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J1251](PORTING_JOURNAL.md#j1251--complete-source-derived-presentation-native-bundle) | 2026-10-28 | Complete source-derived presentation native bundle | 2026-10-28. |
 | [J1250](PORTING_JOURNAL.md#j1250--complete-source-derived-objective-native-bundle) | 2026-10-28 | Complete source-derived Objective native bundle | 2026-10-28. |
 | [J1249](PORTING_JOURNAL.md#j1249--complete-lakes-lakesnight-and-village-source-bundles) | 2026-10-28 | Complete Lakes, Lakesnight and Village source bundles | 2026-10-28. |
 | [J1248](PORTING_JOURNAL.md#j1248--complete-five-source-derived-animation-and-goolake-scenes) | 2026-10-28 | Complete five source-derived animation and Goolake scenes | 2026-10-28. |

@@ -5056,3 +5056,13 @@ output directory; process exit releases source handles and receipts persist.
 All 1,623 objects, every member and the compressed bundle are host
 raw-exact to J850. This adds no runtime owner; phone production, installation and
 original game behavior remain open.
+
+`recipe/owner-presentation-objects.json` completes `android-presentation-lab`
+through the existing object owner and `owner-presentation-reused-records.json`.
+The remap owner extracts 358 qualified player Shader records and two generated
+material manifests without recompilation; the existing RGB owner supplies two
+textures. Setup requires explicit original PC input, pinned source-produced
+player/record-pack receipts and a fresh output directory. Process exit releases
+file handles; receipts persist. All 363 objects, both members and the
+compressed bundle are host raw-exact to J850. Phone production, installation and
+original game behavior remain open.

@@ -909,3 +909,15 @@ Profiles: `recipe/owner-objective-*.json`, `recipe/owner-native-alias-records.js
 Evidence (ignored): `work/coordination/orchestrator/objective-native-final-v5/`.
 Readiness becomes 687/705 available, 682 raw-exact, 18 missing. Passed runs are not replayed.
 Phone production, installation and game behavior remain open; accepted APK unchanged.
+
+## J1251 — Complete source-derived presentation native bundle
+
+2026-10-28. `android-presentation-lab` is host raw-exact to J850: 363 objects,
+both members and the 3,337,229-byte compressed bundle.
+Bundle SHA-256: `bf43d8f2f39dd382d556ad49709423b5890301e1c4cbeb6a29e87b51148ce633`.
+The existing object/remap owners reuse 358 qualified player Shader records,
+two generated material manifests and two qualified RGB texture records.
+Profiles: `recipe/owner-presentation-*.json`.
+Evidence (ignored): `work/coordination/orchestrator/presentation-native-final-v1/`.
+Readiness becomes 688/705 available, 683 raw-exact, 17 missing. Passed producers are not replayed.
+Phone production, installation and game behavior remain open; accepted APK unchanged.
