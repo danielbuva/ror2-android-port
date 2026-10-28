@@ -92,6 +92,8 @@ class ControllerRecords(unittest.TestCase):
         body = vector([tos_entry("Base Layer"), tos_entry(original), tos_entry("unused")]) + struct.pack("<I", 0x12345678)
         expected = vector([tos_entry("Assets/WholeGame/Art/Walk.anim Walk(Clone) "), tos_entry("Base Layer")]) + body[-4:]
         self.assertEqual(A.transform_generic(body, 91, {"controller_tos": [[1, True], [0, False]]}, schema), expected)
+        collision = vector([tos_entry("Assets/WholeGame/Art/Walk_0.anim Walk(Clone) "), tos_entry("Base Layer")]) + body[-4:]
+        self.assertEqual(A.transform_generic(body, 91, {"controller_tos": [[1, True, 0], [0, False]]}, schema), collision)
         self.assertEqual(A.exported_clip_tos("Assets/Example.animIdle(Instance)"), "Assets/WholeGame/Idle.animIdle(Instance)")
         for selection in ([[1, True], [1, False]], [[3, False]], [[True, False]], [[0, 1]]):
             with self.subTest(selection=selection), self.assertRaises(ValueError):

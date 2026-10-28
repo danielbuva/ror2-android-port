@@ -316,6 +316,8 @@ their native allocation sizes, preserving all other controller fields.
 `controller_state_order` relocates whole original state records using checked
 source-index bijections. Default states and direct transition destinations move
 with those records; selector and entry/exit indices retain their source values.
+TOS export selections may also name a checked collision ordinal, applying the
+pinned exporter's filename suffix before deriving the path CRC from source text.
 Audited
 `recipe/owner-animation-clips.json`, `recipe/owner-animator-controllers.json`,
 `recipe/owner-material-records.json`, `recipe/owner-gameobjects.json`,

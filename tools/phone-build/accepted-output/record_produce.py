@@ -804,7 +804,7 @@ def reorder_controller_clips(body, root, order):
     return bytes(result)
 
 
-def exported_clip_tos(value):
+def exported_clip_tos(value, collision_index=None):
     """Rebuild the qualified export path from an original clip-path TOS entry."""
     if not value.startswith("Assets/"):
         raise ValueError("not an original clip asset path")
@@ -813,6 +813,10 @@ def exported_clip_tos(value):
         raise ValueError("missing original clip name")
     name = clip_name.replace("(Clone)", "").replace("(Instance)", "").strip()
     name = re.sub(r"[/:,\[\]\x00-\x1f]", "_", name)
+    if collision_index is not None:
+        if type(collision_index) is not int or not 0 <= collision_index < 2**31 - 1:
+            raise ValueError("invalid original export filename collision index")
+        name += f"_{collision_index}"
     if not name or len((name + ".anim").encode()) > 240:
         raise ValueError("unqualified export filename")
     directory = value[: match.start()].rsplit("/", 1)[0]
@@ -823,12 +827,21 @@ def controller_tos(body, root, selection):
     _, spans = fields(body, root)
     start, end = spans[("m_TOS",)]
     count = struct.unpack_from("<I", body, start)[0]
+    if any(len(row) not in (2, 3) for row in selection):
+        raise ValueError("invalid original controller TOS selection")
     if len({row[0] for row in selection}) != len(selection) or any(
-        type(i) is not int or not 0 <= i < count or type(rebuild) is not bool for i, rebuild in selection
+        type(row[0]) is not int
+        or not 0 <= row[0] < count
+        or type(row[1]) is not bool
+        or len(row) == 3
+        and (not row[1] or type(row[2]) is not int or not 0 <= row[2] < 2**31 - 1)
+        for row in selection
     ):
         raise ValueError("invalid original controller TOS selection")
     rows = []
-    for index, rebuild in selection:
+    for selected in selection:
+        index, rebuild = selected[:2]
+        collision_index = selected[2] if len(selected) == 3 else None
         a, b = spans[("m_TOS", "Array", str(index))]
         raw = body[a:b]
         key, size = struct.unpack_from("<II", raw)
@@ -836,7 +849,7 @@ def controller_tos(body, root, selection):
         if zlib.crc32(value.encode()) != key:
             raise ValueError("original TOS CRC drift")
         if rebuild:
-            encoded = exported_clip_tos(value).encode("utf-8")
+            encoded = exported_clip_tos(value, collision_index).encode("utf-8")
             raw = struct.pack("<II", zlib.crc32(encoded), len(encoded)) + encoded
             raw += bytes(-len(raw) % 4)
         rows.append(raw)
