@@ -341,7 +341,8 @@ The optional `--android` staging path adds `SpriteNativeFixtureBuild.cs` and
 `SpriteNativeFixtureRunner.cs`. The pinned MCP build menu schedules an isolated
 ARM64 development APK for the separate disposable package
 `dev.ror2lab.spritefixture`. Its runner reads explicit source inputs and writes
-native results or an error to app-private files. The device coordinator owns
+native results or an error to app-scoped files. The runner reports its actual
+runtime path and waits for an atomically delivered request. The device coordinator owns
 installation, source transfer, evidence collection, uninstall and display sleep;
 the fixture does not install itself or touch the lab player's package.
 Audited
