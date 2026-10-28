@@ -98,7 +98,11 @@ activation. Named original character/teleporter roots also use the existing
 authored suppression policy. The named `surface_effect_omissions` projection
 applies the four effect/sound omissions from `recipe/asset-transforms.json` to
 original SurfaceDef schema spans, preserving all other source bytes and deriving
-its SDK script metadata. Explicit record-pack directory/receipt pins supply already
+its SDK script metadata. `director_deck` selects original category/card spans for
+the authored `recipe/deck-transforms.json` decks. Original weights and restrictions
+remain source-owned; explicit omissions use managed defaults, with non-elite
+source defaults checked before emission. No generated YAML supplies the body.
+Explicit record-pack directory/receipt pins supply already
 produced texture bodies and resources; the owner verifies them before/after,
 assembles resource extents, and generates each asset's rooted container preloads.
 It calls the existing `player_data.py` Sprite crop/importer helpers only when

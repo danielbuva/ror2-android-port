@@ -175,6 +175,65 @@ def deactivate_global_owner(body, name):
     return body[:-1] + bytes(1)
 
 
+def rebuild_director_deck(body, tree, categories):
+    """Select source category/card spans with the authored deck's default omissions."""
+    records = module("record_produce")
+    _, spans = records.fields(body, records.SCHEMA.type_tree(io.BytesIO(tree)))
+    name_start, name_end = spans["m_Name",]
+    name_size = struct.unpack_from("<I", body, name_start)[0]
+    name = body[name_start + 4 : name_start + 4 + name_size].decode("utf-8")
+    category_start, category_end = spans["categories",]
+    result = io.BytesIO()
+    result.write(body[:name_start])
+    aligned_string(result, "Android supported " + name)
+    result.write(body[name_end:category_start])
+    result.write(struct.pack("<I", len(categories)))
+    omitted_fields = {
+        "spawnDistance",
+        "preventOverhead",
+        "minimumStageCompletions",
+        "requiredUnlockable",
+        "forbiddenUnlockable",
+        "requiredUnlockableDef",
+        "forbiddenUnlockableDef",
+    }
+    for category in categories:
+        path = ("categories", "Array", str(category["source_index"]))
+        start, end = spans[path]
+        cards_start, cards_end = spans[path + ("cards",)]
+        result.write(body[start:cards_start])
+        result.write(struct.pack("<I", len(category["cards"])))
+        for card in category["cards"]:
+            card_path = path + ("cards", "Array", str(card["source_index"]))
+            card_start, card_end = spans[card_path]
+            for field in ("isExclusivelyElite", "eliteDef"):
+                first, last = spans[card_path + (field,)]
+                if body[first:last] != bytes(last - first):
+                    raise ValueError("authored director deck requires original non-elite defaults")
+            replacements = []
+            if not set(card["omit_fields"]) <= omitted_fields:
+                raise ValueError("unknown authored director card omission")
+            for field in card["omit_fields"]:
+                first, last = spans[card_path + (field,)]
+                data = bytes(4) if field in ("requiredUnlockable", "forbiddenUnlockable") else bytes(last - first)
+                replacements.append((first, last, data))
+            cursor = card_start
+            for first, last, data in sorted(replacements):
+                result.write(body[cursor:first])
+                result.write(data)
+                cursor = last
+            result.write(body[cursor:card_end])
+        tail = body[cards_end:end]
+        if category["omit_weight"]:
+            first, last = spans[path + ("selectionWeight",)]
+            if (first, last) != (cards_end, end) or last - first != 4:
+                raise ValueError("original director category weight layout drift")
+            tail = bytes(4)
+        result.write(tail)
+    result.write(body[category_end:])
+    return result.getvalue()
+
+
 def omit_surface_effects(body, tree):
     """Apply the authored SurfaceDef effect and sound omissions to source spans."""
     records = module("record_produce")
@@ -1180,6 +1239,13 @@ def produce(profile_path, profile_sha256, pc, output, codec_path, codec_sha256, 
                         if typ["class_id"] == 114:
                             body, schema = legacy_animate_fields(body, typ["tree"], identity_owner)
                             typ = {**typ, "tree": schema}
+                    if "director_deck" in selected:
+                        if typ["class_id"] != 114 or "properties_hash" not in selected or sdk_tree is None:
+                            raise ValueError("director deck requires original script properties")
+                        script, _ = source_record(sources, selected["properties_hash"]["script"])
+                        if script_fields(script)[1] != ("DirectorCardCategorySelection", "RoR2", "RoR2.dll"):
+                            raise ValueError("director deck requires original DirectorCardCategorySelection")
+                        body = rebuild_director_deck(body, typ["tree"], selected["director_deck"])
                     if "surface_effect_omissions" in selected:
                         if selected["surface_effect_omissions"] is not True or typ["class_id"] != 114 or "properties_hash" not in selected or sdk_tree is None:
                             raise ValueError("surface omissions require original SurfaceDef script properties")

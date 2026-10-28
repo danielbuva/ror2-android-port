@@ -29,6 +29,42 @@ RECORD_FIXTURE = load("record_bundle_fixture", ROOT / "tests/test_phone_record_p
 
 
 class ProducedRecordRelocationTests(unittest.TestCase):
+    def test_director_deck_selects_source_spans_and_defaults_only_authored_omissions(self):
+        card = FIXTURE.node(
+            "data",
+            children=[
+                FIXTURE.node("spawnCard", 12, kind="PPtr<SpawnCard>"),
+                FIXTURE.node("selectionWeight", 4, kind="UInt32"),
+                FIXTURE.text("requiredUnlockable"),
+                FIXTURE.node("isExclusivelyElite", 4, kind="UInt32"),
+                FIXTURE.node("eliteDef", 12, kind="PPtr<EliteDef>"),
+            ],
+        )
+        category = FIXTURE.node("data", children=[FIXTURE.text("name"), FIXTURE.array("cards", card), FIXTURE.node("selectionWeight", 4, kind="float")])
+        schema = FIXTURE.node(
+            "Base",
+            children=[
+                FIXTURE.node("before", 4),
+                FIXTURE.text("m_Name"),
+                FIXTURE.node("middle", 4),
+                FIXTURE.array("categories", category),
+                FIXTURE.node("after", 4),
+            ],
+        )
+        text = FIXTURE.M.padded_string
+        first_card = struct.pack("<iqI", 1, 101, 7) + text("Old") + bytes(16)
+        second_card = struct.pack("<iqI", 2, 202, 0x11223344) + text("Locked") + bytes(16)
+        source = b"HEAD" + text("Deck") + b"MID!" + struct.pack("<I", 2)
+        source += text("First") + struct.pack("<I", 1) + first_card + struct.pack("<f", 0.5)
+        source += text("Second") + struct.pack("<I", 1) + second_card + struct.pack("<f", 0.75) + b"TAIL"
+        stream = io.BytesIO(RECORD_FIXTURE.serialized(source, schema, class_id=114))
+        stream.size = len(stream.getvalue())
+        tree = P.W.read_serialized(stream)["types"][0]["tree"]
+        selection = [{"source_index": 1, "cards": [{"source_index": 0, "omit_fields": ["requiredUnlockable"]}], "omit_weight": True}]
+        expected = b"HEAD" + text("Android supported Deck") + b"MID!" + struct.pack("<I", 1)
+        expected += text("Second") + struct.pack("<I", 1) + struct.pack("<iqI", 2, 202, 0x11223344) + bytes(24) + b"TAIL"
+        self.assertEqual(P.rebuild_director_deck(source, tree, selection), expected)
+
     def test_surface_projection_resizes_strings_and_preserves_unselected_bytes(self):
         schema = FIXTURE.node(
             "Base",
