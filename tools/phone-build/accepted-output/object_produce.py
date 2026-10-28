@@ -883,7 +883,7 @@ def omit_run_presence_counters(tree, identity_owner):
         ("cachedInActiveCount", "int", 1, 4),
     ]:
         raise ValueError("original RunPresence cached counter schema drift")
-    return identity_owner._tree(nodes[:-2])
+    return identity_owner._tree(nodes[:-2], common_strings=True)
 
 
 def script_fields(body):
@@ -901,6 +901,22 @@ def script_fields(body):
     offset = stream.tell()
     B.exact(stream, 16)
     return offset, (string(), string(), string())
+
+
+def original_script_properties(script, script_type, behaviour_type, current_type, identity_owner):
+    """Retain the original editor hash only for the same unchanged script schema."""
+    offset, names = script_fields(script)
+    identity = identity_owner.md4("".join(names).encode())
+    if (
+        script_type["class_id"] != 115
+        or behaviour_type["class_id"] != 114
+        or current_type["class_id"] != 114
+        or behaviour_type["script_id"] != identity
+        or current_type["script_id"] != identity
+        or behaviour_type["tree"] != current_type["tree"]
+    ):
+        raise ValueError("original script properties require matching unchanged runtime identity/schema")
+    return script[offset : offset + 16]
 
 
 def fieldless_script_type(body, typ, script, sdk_tree, identity_owner):
@@ -1337,7 +1353,8 @@ def produce(profile_path, profile_sha256, pc, output, codec_path, codec_sha256, 
                     omit_master = selected.get("omit_character_master_unkillable", False)
                     omit_alpha = selected.get("omit_animate_shader_alpha_legacy_fields", False)
                     omit_presence = selected.get("omit_run_presence_counters", False)
-                    key = tuple(selectors["script"]), tuple(selectors["behaviour"]), omit_master, omit_alpha, omit_presence
+                    preserve_original = selected.get("preserve_original_script_hash", False)
+                    key = tuple(selectors["script"]), tuple(selectors["behaviour"]), omit_master, omit_alpha, omit_presence, preserve_original
                     if key not in properties:
                         script, script_type = source_record(sources, selectors["script"])
                         original_behaviour, behaviour_type = source_record(sources, selectors["behaviour"])
@@ -1358,8 +1375,18 @@ def produce(profile_path, profile_sha256, pc, output, codec_path, codec_sha256, 
                             if omit_presence is not True or names != ("RunPresence", "RoR2", "RoR2.dll"):
                                 raise ValueError("cached counter omission requires original RunPresence")
                             schema = omit_run_presence_counters(schema, identity_owner)
-                        properties[key] = identity_owner.properties_hash(*names, schema, sdk_tree)
+                        if preserve_original:
+                            if preserve_original is not True or omit_master or omit_alpha or omit_presence:
+                                raise ValueError("original script hash cannot accompany schema projection")
+                            properties[key] = original_script_properties(script, script_type, behaviour_type, typ, identity_owner)
+                        else:
+                            properties[key] = identity_owner.properties_hash(*names, schema, sdk_tree)
                     value = properties[key]
+                    if preserve_original:
+                        script, script_type = source_record(sources, selectors["script"])
+                        _, behaviour_type = source_record(sources, selectors["behaviour"])
+                        if original_script_properties(script, script_type, behaviour_type, typ, identity_owner) != value:
+                            raise ValueError("original script hash cache identity drift")
                     if typ["class_id"] == 115:
                         offset, _ = script_fields(body)
                         body = body[:offset] + value + body[offset + 16 :]

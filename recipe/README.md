@@ -4906,3 +4906,19 @@ source metadata and comparison evidence determine native grouping/order.
 Provenance, privacy, licensing and sensitive-content review: 2026-10-28. Public
 code contains format rules and identity relationships only, with no copied
 upstream implementation, original bodies, private paths or device identifiers.
+
+## Unchanged script metadata provenance
+
+`object_produce.py` may retain the editor properties hash embedded in the
+original MonoScript when its identity and runtime schema match the selected
+MonoBehaviour exactly. Profiles select original records and the retention
+policy; no accepted hashes or replacement schemas are inputs. Schema omission
+policies still derive their own hashes. RunPresence's existing counter omission
+now emits Unity common-string type labels, preserving its decoded field tree.
+
+Reviewed pinned AssetRipper `1ac666f` MonoScriptExtensions identity comparison
+and AnimationCurveExtensions' versioned curve boundary alongside the acquired
+SDK and original metadata. Editor-only curve details need no new recovery when
+the legitimate MonoScript already supplies their property identity. Provenance,
+privacy, licensing and sensitive-content audit: 2026-10-28. No original hash,
+curve value, node table, program, private path or device identifier is tracked.

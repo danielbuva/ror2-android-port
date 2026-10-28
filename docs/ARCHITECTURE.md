@@ -765,6 +765,14 @@ object-pack placement. The API returns the typed tree, raw record stream and
 serialized body and retains private diagnostics. Complete-file and phone gates
 remain independent of partial SDK-record qualification.
 
+The existing object writer can retain an original MonoScript's editor property
+hash for an unchanged MonoBehaviour schema (`preserve_original_script_hash`).
+The original MonoScript class, runtime script identity and exact schema must
+agree; omission policies continue through the existing derived-hash path.
+This preserves editor-only curve metadata already present in legitimate input
+without reconstructing it from the release tree. RunPresence's omitted counter
+schema uses Unity common-string encoding, retaining the same decoded fields.
+
 `bundle_preload.py` owns grouped prefab container derivation inside the current
 `object_produce.py` writer. Asset paths, GUIDs and imported root identities name
 minimal source relationships. The writer processes the container after all

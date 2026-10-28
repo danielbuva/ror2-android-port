@@ -47,6 +47,22 @@ class ProducedRecordRelocationTests(unittest.TestCase):
         tree = P.W.read_serialized(stream)["types"][0]["tree"]
         self.assertEqual(P.empty_mesh_renderer(body, tree), bytes(3) + body[3:])
 
+    def test_original_editor_script_hash_requires_unchanged_runtime_identity_and_schema(self):
+        identity = P.module("script_identity", ROOT / "scripts/lab/script_identity.py")
+        stream = io.BytesIO()
+        P.aligned_string(stream, "AuthoredCurve")
+        stream.write(bytes(4))
+        expected = bytes(range(16))
+        stream.write(expected)
+        for text in ("AuthoredCurve", "Lab", "Fixture.dll"):
+            P.aligned_string(stream, text)
+        script = stream.getvalue()
+        metadata = {"class_id": 114, "script_id": identity.md4(b"AuthoredCurveLabFixture.dll"), "tree": b"same-source-schema"}
+        self.assertEqual(P.original_script_properties(script, {"class_id": 115}, metadata, metadata.copy(), identity), expected)
+        for changed in ({**metadata, "tree": b"projected-schema"}, {**metadata, "script_id": bytes(16)}, {**metadata, "class_id": 115}):
+            with self.subTest(changed=changed), self.assertRaisesRegex(ValueError, "unchanged runtime identity/schema"):
+                P.original_script_properties(script, {"class_id": 115}, metadata, changed, identity)
+
     def test_run_presence_projection_retains_source_metadata_before_zero_counters(self):
         identity = P.module("script_identity", ROOT / "scripts/lab/script_identity.py")
         schema = FIXTURE.node(
@@ -64,6 +80,7 @@ class ProducedRecordRelocationTests(unittest.TestCase):
         source = identity.tree_nodes(tree)
         projected = identity.tree_nodes(P.omit_run_presence_counters(tree, identity))
         self.assertEqual(projected, source[:2])
+        self.assertEqual(P.omit_run_presence_counters(tree, identity), identity._tree(source[:2], common_strings=True))
         with self.assertRaisesRegex(ValueError, "counter schema drift"):
             P.omit_run_presence_counters(tree.replace(b"cachedActiveCount", b"cachedOtherXCount"), identity)
 
