@@ -4836,6 +4836,22 @@ Provenance, privacy, licensing and sensitive-content review: 2026-10-28. No game
 coefficient, pose, curve, program, pixel, private identifier or SDK binary is
 included. Raw comparisons and native-reference diagnostics remain ignored.
 
+## Shader context transformation provenance
+
+`shader_context.py` reuses explicitly qualified source-produced Shader records
+while deriving editor pass identities from original dummy properties or SDK
+snippets, compiler capabilities, settings and common includes. It delegates the
+existing public source generator and pass-key algorithm. Checked schema spans
+limit changes to editor identities; compiled programs and unrelated data remain
+source-produced. Profile/provider/input/extent hashes guard the resulting pack.
+This accommodates the observed Gamma/SDK33 to Linear/SDK45 metadata-context
+difference without recompiling identical programs or supplying accepted keys.
+
+Provenance, privacy, licensing and sensitive-content review: 2026-10-28. No target
+pass-key table, program, SDK include, copied source, private path, device identity
+or game property values are included. Generated source, records and diagnostics
+remain ignored; legitimate original input and acquired SDK remain required.
+
 ## Native Sprite transformation provenance
 
 `sprite_produce.py` reconstructs native Sprite inputs from the user's original

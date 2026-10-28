@@ -765,6 +765,19 @@ object-pack placement. The API returns the typed tree, raw record stream and
 serialized body and retains private diagnostics. Complete-file and phone gates
 remain independent of partial SDK-record qualification.
 
+`shader_context.py` owns metadata-only context changes on explicit qualified
+source-produced Shader packs. It retains every program and unrelated body byte.
+Original Shader metadata and pinned public dummy templates, or acquired SDK
+snippets, supply source and include identities. The standalone compiler session
+supplies capabilities and preprocessing only; `shader_produce.editor_hash`
+derives the current source/settings/common-include pass keys. Only checked
+16-byte editor-key slots and declared pointer relationships change. Original,
+SDK, profile and provider-receipt pins are checked before and after; expected
+body hashes and reread extents qualify the new record pack. Setup requires new
+disjoint output and explicit read-only providers. Failure preserves diagnostics;
+the existing compiler context reaps its child/socket. No program compilation,
+target-key table or retained preprocessing artifact is a production supplier.
+
 `payload_shader_records.py` owns the bounded Barrier and Rootjungle
 post-processing Shader record packs and the three bounded Standard contexts. Its
 audited `recipe/owner-barrier-shaders.json` selects current original native
