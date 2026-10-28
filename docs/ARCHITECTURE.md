@@ -4963,3 +4963,13 @@ pinned profiles, source-produced record packs and a fresh output directory set u
 production; process exit tears down producers while receipts persist. The writer
 exposes `payload/whole-scene-itdampcave`, host raw-exact to J850 for all 18,225 objects,
 both serialized members and the compressed bundle. Phone and runtime gates remain open.
+
+ITFrozenwall and Soul1 complete scene selections use `object_produce.py` and the
+existing Shader owners through `recipe/owner-{itfrozenwall,soul1}-whole-objects.json`
+and matching Shader profiles. ITFrozenwall selects its original TMP font material;
+Soul1 admits the original scene's two vehicle-seat preload roots. Explicit original/
+SDK/tool roots, pinned profiles, source-produced packs and fresh output directories
+set up production; process exit tears down producers while receipts persist. The
+writer exposes `payload/whole-scene-{itfrozenwall,soul1}`. All 298,886 objects,
+four serialized members and both compressed bundles are host raw-exact to J850.
+Phone production, installation and original behavior remain open.

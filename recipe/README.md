@@ -4628,3 +4628,36 @@ pins supply compilation. No original body, scalar array, pixel, program, copied 
 private path or credential is included. All 18,225 persisted objects, both serialized members
 and the compressed bundle are host raw-exact to J850. Phone production, installation and
 original scene behavior remain open.
+
+## itfrozenwall complete scene selections (2026-10-28)
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-itfrozenwall-whole-objects.json` | `029c4800ff7880eb1b42f279538625a150dd4f6280fa9ae11c7477156a7e2a22` |
+| `owner-itfrozenwall-whole-postprocess-shaders.json` | `b0c351a89e476374058b515a39bdfd3fa68a651a8a204e7009852a5454b505aa` |
+| `owner-itfrozenwall-whole-standard-shaders.json` | `d4a9cb594f31fce08dd421a6890dd2eb3166f14af4ef26af37c5750a6dbeecd2` |
+
+Manual provenance, privacy, licensing and sensitive-content audit: these profiles contain
+original-input selectors, hashes, checked pointer relationships and authored import policies.
+Original material keywords use the existing dummy-shader demotion policy. Explicit preload
+admissions retain original scene membership and source identity checks. No original object body,
+scalar array, pixel, program, copied source, private path or credential is included. All
+8,727 objects, both serialized members and the compressed bundle are host raw-exact
+to J850. Phone production, installation and original scene behavior remain open.
+
+
+## soul1 complete scene selections (2026-10-28)
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-soul1-whole-objects.json` | `704048d30efaa1838baa181cce3db709fa189f2afc4cd1602da49dac1dd65a04` |
+| `owner-soul1-whole-postprocess-shaders.json` | `a4110b8fac3d4a8590b8e8eb6d7f4081f9b6382b280e1bb76377646b0779b780` |
+| `owner-soul1-whole-standard-shaders.json` | `8a508845826a13019f3bc09830eb420143aa128d6a0864440701254bc1834387` |
+
+Manual provenance, privacy, licensing and sensitive-content audit: these profiles contain
+original-input selectors, hashes, checked pointer relationships and authored import policies.
+Original material keywords use the existing dummy-shader demotion policy. Explicit preload
+admissions retain original scene membership and source identity checks. No original object body,
+scalar array, pixel, program, copied source, private path or credential is included. All
+290,159 objects, both serialized members and the compressed bundle are host raw-exact
+to J850. Phone production, installation and original scene behavior remain open.

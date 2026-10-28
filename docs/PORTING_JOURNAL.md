@@ -841,3 +841,17 @@ Retained qualifications and merged recipes recount to 675/705 available, 670 raw
 30 entries remain. Local CI now uses a 4 GiB fixture volume so the producers' 2 GiB
 reserve can pass after APFS formatting. Phone production, installation and original
 scene behavior remain open; accepted APK unchanged.
+
+## J1246 — Complete ITFrozenwall and Soul1 reconstruction
+
+2026-10-28. Existing object/Shader owners reproduce both scenes from original PC
+inputs and pinned SDK/public tools. ITFrozenwall selects the original TMP font material
+with the shipped keyword policy; Soul1 retains two original vehicle-seat preload roots.
+ITFrozenwall: 8,727 objects, 9,737,890 B, `098361746690148fdc334512ce54f682bf83fb7b2e1aa4c778b98d0ce45d1000`.
+Soul1: 290,159 objects, 47,651,790 B, `8d4b8944c6b4d27412a4918d69cd88a6f3433f70853ad2fd69f3be6018b2c7fe`.
+All objects, four serialized members and both compressed bundles are raw-exact to J850.
+Profiles: `recipe/owner-{itfrozenwall,soul1}-whole-*.json`; evidence (ignored):
+`work/coordination/orchestrator/scenes/{itfrozenwall-final-v2,soul1-final-v1}/`.
+Readiness becomes 677/705 available, 672 raw-exact, 28 missing. The object owner also
+accepts hash-pinned original native files with identity-checked original schema suppliers;
+authored full-bundle fixtures pass. Phone production, installation and runtime remain open.
