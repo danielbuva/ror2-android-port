@@ -4760,3 +4760,37 @@ normalization observation; implementation is independently authored. Guarded tra
 production persists before comparison and matches the one 1,564 B MercSwordSwipe mesh.
 This record does not close a file readiness entry; complete Commando assembly and phone
 production remain open. Generated outputs and raw comparison evidence remain ignored.
+
+## Objective native bundle selections (2026-10-28)
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-native-alias-records.json` | `4f041c4fdb4b9b928c1301fb8fa207e060ad94cc4b1e40ad8e1ef43c5b54aab2` |
+| `owner-objective-reused-records.json` | `59af5ea81ad9473f39c27cbd88e9f34b5be866c49a915bf479de10cbff27ad29` |
+| `owner-objective-legacy-particle-shader.json` | `0c8c53f8075478878bf812b6bb89df9a34b44bc034d09bc928cb813e2b008304` |
+| `owner-objective-support-objects.json` | `2fdab523dc067eebf70709078ad08b6c854baf3a2fdbd86ee28ce5230f7774cc` |
+
+Manual provenance, privacy, licensing and sensitive-content audit: these profiles
+contain original source selectors, expected hashes, checked pointer/component
+relationships and authored transformation policies. Native aliases retain the
+original class, script, schema and all nonpointer bytes; duplicate source
+fingerprints are permitted only when checked relocation reproduces the selected
+record. The qualified alias cohort also supplies future Commando/Labgeometry
+assembly; it does not close those complete bundles.
+
+Reused records select receipt-pinned, source-produced player/Shader outputs;
+no earlier producer was replayed. The object owner checks schema-declared
+relocations and derives fieldless authored component metadata from a produced
+MonoScript and the pinned SDK base. Default materials reuse SDK declarations and
+original Shader properties. Sprite GUIDs name the local standalone import;
+coordinates remain derived from original crop data. The Legacy particle Shader
+uses the explicitly pinned SDK source and prefab/no-fog variant policy. Bundle
+preload order records authored build relationships; an explicit 16-byte resource
+alignment policy supplies only measured zero padding after the final extent. No original scalar/geometry
+array, program, pixel, copied source, private path, device identifier or credential
+is included. Original legitimate PC input and the acquired SDK remain required.
+
+All 1,623 persisted objects, every member and the 543,216-byte
+compressed Objective bundle are host raw-exact to J850. Evidence stays ignored
+under `work/coordination/orchestrator/objective-native-final-v5/`. Phone production,
+installation and original game behavior remain open.

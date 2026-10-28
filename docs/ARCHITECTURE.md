@@ -5047,3 +5047,12 @@ original/SDK/tool roots, pinned profiles, source-produced packs and fresh output
 set up production; process exit releases producers while receipts persist. The writer exposes
 `payload/{lakes,lakesnight,village}-source-lab`. All 58,555 objects, six serialized members
 and three compressed bundles are host raw-exact to J850. Phone/runtime gates remain open.
+
+`recipe/owner-objective-support-objects.json` completes the native Objective
+bundle through the existing object owner. The native alias, reused-record and
+Legacy particle Shader recipes supply independently qualified records. Setup
+requires explicit original PC/SDK roots, pinned record-pack receipts and a fresh
+output directory; process exit releases source handles and receipts persist.
+All 1,623 objects, every member and the compressed bundle are host
+raw-exact to J850. This adds no runtime owner; phone production, installation and
+original game behavior remain open.
