@@ -4991,3 +4991,14 @@ Explicit original/SDK/tool roots, pinned profiles, source-produced packs and fre
 set up production; process exit releases producers/CLR metadata while receipts persist.
 The writer exposes `payload/whole-scene-solutionalhaunt`, raw-exact to J850 for all 31,264
 objects, both serialized members and the compressed bundle. Phone/runtime gates remain open.
+
+Intro, Outro, PromoRailgunner, Voidoutro and Goolake complete selections use
+`object_produce.py`, the existing animation/Director record owners and Shader owners through
+`recipe/owner-{intro,outro,promorailgunner,voidoutro,goolake}-*.json`. Original named Timeline
+records retain their native script identity and checked pointer relationships; the existing
+properties-hash owner accounts for build schema identity. Goolake retains the original
+Dampcave Rigidbody/GameObject preload witness. Explicit original/SDK/tool roots, pinned
+profiles, source-produced packs and fresh output directories set up production; process
+exit releases producers while receipts persist. The writer exposes the five corresponding
+`payload/whole-scene-*` bundles. All objects, ten serialized members and five compressed
+bundles are host raw-exact to J850. Phone production and original runtime remain open.
