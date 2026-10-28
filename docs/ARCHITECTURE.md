@@ -328,8 +328,22 @@ in a fresh ignored project. Under the editor mutex, the pinned Unity MCP invokes
 `Tools/P1/Run Sprite Native Fixture`; created textures and sprites are destroyed
 after each item. Float-bit geometry and the terminal result stay private. The
 fixture also emits UVs, bounds and native rect/pivot/border properties for source
-record assembly, without sampling an accepted record.
-fixture is separate from phone production and complete-bundle qualification.
+record assembly, without sampling an accepted record. `sprite_native_record.py`
+assembles diagnostic records from those native results and original embedded
+schemas, preserving original references, channel metadata and submesh bounds.
+Its admitted position/zero-UV streams derive allocation and padding from vertex
+counts. Pivot and border recovery use the original render crop with the existing
+standalone import arithmetic. Native constructor output supplies triangles and
+physics polygons. These diagnostics remain separate from phone production and
+complete-bundle qualification; they consume explicitly supplied inputs and have
+no implicit lookup of retained evidence.
+The optional `--android` staging path adds `SpriteNativeFixtureBuild.cs` and
+`SpriteNativeFixtureRunner.cs`. The pinned MCP build menu schedules an isolated
+ARM64 development APK for the separate disposable package
+`dev.ror2lab.spritefixture`. Its runner reads explicit source inputs and writes
+native results or an error to app-private files. The device coordinator owns
+installation, source transfer, evidence collection, uninstall and display sleep;
+the fixture does not install itself or touch the lab player's package.
 Audited
 `recipe/owner-animation-clips.json`, `recipe/owner-animator-controllers.json`,
 `recipe/owner-material-records.json`, `recipe/owner-gameobjects.json`,

@@ -9,6 +9,11 @@ they are required only for this optional SDK diagnostic. The public stager
 generates every project file and references images without copying them. Native
 geometry, editor logs and comparison receipts remain ignored evidence. Neither
 the fixture nor reconstruction implicitly reads a dated evidence directory.
+The optional `--android` diagnostic uses the same explicit request and PNGs,
+transferred into its disposable package's private files by the owning device
+coordinator. These are diagnostic inputs, not a replacement for the original
+pixel decoder in phone reconstruction. The public stager generates its runtime
+runner and editor build entry point; no project file is supplied by local state.
 
 ## Barrier and Goldshores source payloads
 

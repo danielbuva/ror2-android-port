@@ -35,7 +35,7 @@ def sha(path):
     return hashlib.sha256(Path(path).read_bytes()).hexdigest()
 
 
-def stage(root, request_path, output):
+def stage(root, request_path, output, *, android=False):
     root, request_path, output = (Path(p).resolve() for p in (root, request_path, output))
     output.relative_to(root / "work")
     if output.exists():
@@ -71,6 +71,9 @@ def stage(root, request_path, output):
     shutil.copyfile(root / SOURCE, project / "Assets/SpriteNativeFixture.cs")
     shutil.copyfile(root / BOOTSTRAP, project / "Assets/Editor/BootstrapMcp.cs")
     (project / "Assets/Editor/SpriteNativeFixtureMenu.cs").write_text(MENU)
+    if android:
+        for name, directory in (("SpriteNativeFixtureRunner.cs", "Assets"), ("SpriteNativeFixtureBuild.cs", "Assets/Editor")):
+            shutil.copyfile(root / Path(SOURCE).with_name(name), project / directory / name)
     manifest = json.loads((root / "smoke/Packages/manifest.json").read_text())
     for name in ("imageconversion", "physics2d", "jsonserialize"):
         manifest["dependencies"]["com.unity.modules." + name] = "1.0.0"
@@ -86,6 +89,8 @@ def stage(root, request_path, output):
         "items": len(request["items"]),
         "scope": "current exact-editor diagnostic; no phone or bundle qualification",
     }
+    if android:
+        receipt.update(package="dev.ror2lab.spritefixture", scope="current disposable Android diagnostic; no bundle qualification")
     (output / "stage-result.json").write_text(json.dumps(receipt, indent=2) + "\n")
     return receipt
 
@@ -94,8 +99,9 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--request", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument("--android", action="store_true", help="Stage the separate current ARM64 SDK diagnostic; does not build or install")
     args = parser.parse_args()
-    print(json.dumps(stage(ROOT, args.request, args.output)))
+    print(json.dumps(stage(ROOT, args.request, args.output, android=args.android)))
 
 
 if __name__ == "__main__":

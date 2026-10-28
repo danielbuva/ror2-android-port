@@ -15,7 +15,12 @@ spec.loader.exec_module(F)
 
 class SpriteNativeFixtureTests(unittest.TestCase):
     def prepare(self, root):
-        for name in (F.SOURCE, F.BOOTSTRAP):
+        for name in (
+            F.SOURCE,
+            F.BOOTSTRAP,
+            "tools/phone-build/accepted-output/SpriteNativeFixtureRunner.cs",
+            "tools/phone-build/accepted-output/SpriteNativeFixtureBuild.cs",
+        ):
             path = root / name
             path.parent.mkdir(parents=True, exist_ok=True)
             path.write_bytes((ROOT / name).read_bytes())
@@ -61,6 +66,17 @@ class SpriteNativeFixtureTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "hash changed"):
                 F.stage(root, request, root / "work/refused")
             self.assertFalse((root / "work/refused").exists())
+
+    def test_android_fixture_has_a_separate_package_and_no_embedded_images(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            request, _ = self.prepare(root)
+            result = F.stage(root, request, root / "work/android", android=True)
+            project = Path(result["project"])
+            self.assertEqual(result["package"], "dev.ror2lab.spritefixture")
+            self.assertTrue((project / "Assets/SpriteNativeFixtureRunner.cs").is_file())
+            self.assertTrue((project / "Assets/Editor/SpriteNativeFixtureBuild.cs").is_file())
+            self.assertEqual(list(project.rglob("*.png")), [])
 
 
 if __name__ == "__main__":
