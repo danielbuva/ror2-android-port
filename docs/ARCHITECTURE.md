@@ -105,6 +105,9 @@ source defaults checked before emission. No generated YAML supplies the body.
 The named `omit_run_presence_counters` policy removes the original RunPresence
 schema's two trailing cached counters after checking their zero values; all
 preceding source fields and SDK-derived script identity remain owned here.
+The `empty_mesh_renderer` projection consumes an original renderer with an empty
+material array and applies the existing authored constructor's three disabled
+flags, retaining every other source field and native type identity.
 Explicit record-pack directory/receipt pins supply already
 produced texture bodies and resources; the owner verifies them before/after,
 assembles resource extents, and generates each asset's rooted container preloads.

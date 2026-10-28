@@ -234,6 +234,23 @@ def rebuild_director_deck(body, tree, categories):
     return result.getvalue()
 
 
+def empty_mesh_renderer(body, tree):
+    """Project an original empty renderer through the authored adapter flags."""
+    records = module("record_produce")
+    _, spans = records.fields(body, records.SCHEMA.type_tree(io.BytesIO(tree)))
+    start, end = spans[("m_Materials", "Array")]
+    if body[start:end] != bytes(4):
+        raise ValueError("empty renderer requires an original empty material array")
+    result = bytearray(body)
+    for name in ("#349", "m_CastShadows", "m_ReceiveShadows"):
+        # m_Enabled uses Unity's common-string offset 349 in release schemas.
+        start, end = spans[("m_Enabled" if name == "#349" and ("m_Enabled",) in spans else name,)]
+        if end - start != 1 or body[start] not in (0, 1):
+            raise ValueError("original empty renderer flag schema drift")
+        result[start] = 0
+    return bytes(result)
+
+
 def omit_surface_effects(body, tree):
     """Apply the authored SurfaceDef effect and sound omissions to source spans."""
     records = module("record_produce")
@@ -1264,6 +1281,10 @@ def produce(profile_path, profile_sha256, pc, output, codec_path, codec_sha256, 
                         if script_fields(script)[1] != ("SurfaceDef", "RoR2", "RoR2.dll"):
                             raise ValueError("surface omissions require original SurfaceDef")
                         body = omit_surface_effects(body, typ["tree"])
+                    if "empty_mesh_renderer" in selected:
+                        if selected["empty_mesh_renderer"] is not True or typ["class_id"] != 23:
+                            raise ValueError("empty renderer requires an original MeshRenderer")
+                        body = empty_mesh_renderer(body, typ["tree"])
                     body = remap(body, selected.get("references", []))
                     if "keyword_policy" in selected:
                         if typ["class_id"] != 21 or selected["keyword_policy"] not in ("dummy-shader-demote-valid", "dummy-shader-sort-invalid"):

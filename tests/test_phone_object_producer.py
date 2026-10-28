@@ -29,6 +29,24 @@ RECORD_FIXTURE = load("record_bundle_fixture", ROOT / "tests/test_phone_record_p
 
 
 class ProducedRecordRelocationTests(unittest.TestCase):
+    def test_empty_renderer_keeps_native_fields_and_changes_only_authored_flags(self):
+        schema = FIXTURE.node(
+            "Base",
+            children=[
+                FIXTURE.node("m_Enabled", 1, kind="UInt8"),
+                FIXTURE.node("m_CastShadows", 1, kind="UInt8"),
+                FIXTURE.node("m_ReceiveShadows", 1, kind="UInt8"),
+                FIXTURE.node("m_DynamicOccludee", 1, kind="UInt8"),
+                FIXTURE.array("m_Materials", FIXTURE.node("data", 12, kind="PPtr<Material>")),
+                FIXTURE.node("retained", 4, kind="float"),
+            ],
+        )
+        body = bytes([1, 1, 1, 1]) + bytes(4) + struct.pack("<I", 0x80000000)
+        stream = io.BytesIO(RECORD_FIXTURE.serialized(body, schema, class_id=23))
+        stream.size = len(stream.getvalue())
+        tree = P.W.read_serialized(stream)["types"][0]["tree"]
+        self.assertEqual(P.empty_mesh_renderer(body, tree), bytes(3) + body[3:])
+
     def test_run_presence_projection_retains_source_metadata_before_zero_counters(self):
         identity = P.module("script_identity", ROOT / "scripts/lab/script_identity.py")
         schema = FIXTURE.node(
