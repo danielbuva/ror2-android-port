@@ -123,6 +123,17 @@ If that original file omits type trees, an explicit `type_source` selects the
 schema from an original bundle. Its class, native hash, script identity and
 stripping fields must match the native record before the schema can be used.
 
+The optional `managed_pointer_schema` policy derives a build-added script type
+with one object-reference field. Its original MonoScript supplies class identity
+and the expected properties hash; pinned original CLR assemblies supply the
+field name/type. Original native base and pointer prototypes supply transfer
+flags and common-string encoding. The owner checks the resulting properties
+hash, derives the script ID and rechecks consumed assemblies. Recipes contain
+selectors and assembly hashes; generated type trees stay in owner output.
+This optional CLR policy needs the `dnfile`/`pefile` dependencies pinned in
+`tools/lab-requirements.txt`; invoke it from that configured Python environment
+without `-S`. Other object policies retain their existing stdlib-only path.
+
 `object_produce.py` currently qualifies the complete pickup-droplet and
 player-death-effect bundles from original PC records. The audited recipe contains original selectors, checked
 PPtr relationships, destination identities/dependencies and comparison hashes.

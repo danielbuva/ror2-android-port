@@ -1,3 +1,4 @@
+import hashlib
 import json
 import re
 import subprocess
@@ -10,6 +11,20 @@ GUID_REF = re.compile(r"^\{fileID: -?\d+, guid: [0-9a-f]{32}, type: 3\}$")
 
 
 class RecipeAuditTests(unittest.TestCase):
+    def test_published_whole_scene_shader_digests_match_object_pack_references(self):
+        references = {}
+        for shader in RECIPE.glob("owner-*-whole-*-shaders.json"):
+            scene = shader.stem.partition("-whole-")[0].removeprefix("owner-")
+            objects = RECIPE / f"owner-{scene}-whole-objects.json"
+            if not objects.exists():
+                continue
+            if scene not in references:
+                profile = json.loads(objects.read_text())
+                references[scene] = {row["record"] for member in profile["bundle"]["members"] for row in member["objects"] if "record" in row}
+                del profile
+            with self.subTest(recipe=shader.name):
+                self.assertIn(hashlib.sha256(shader.read_bytes()).hexdigest(), references[scene])
+
     def test_every_recipe_is_listed_in_the_audit_record(self):
         record = (RECIPE / "README.md").read_text()
         for path in (*RECIPE.glob("*.json"), *RECIPE.glob("*.jsonl.gz")):

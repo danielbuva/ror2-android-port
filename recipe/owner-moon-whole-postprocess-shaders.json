@@ -1,1 +1,371 @@
-{"input_id":"6af7ed94619fe1b4346974b4486afa03a8d1625a7820e92da0ff74d57208fe88","sdk":{"MacOS/Unity":{"bytes":79453472,"sha256":"906123118e45d56c6bcf20f3776ed2373417553042500714023daeb9e53058e8"},"Tools/UnityShaderCompiler":{"bytes":12603248,"sha256":"4f4e5be21d27dd7541fa9385ea480b15816e70ddaa83b516df0ab60b819142b5"}},"includes_sha256":"163fad0ca42bd98ea1628888dedd01d91fcbb9f6bda60a8120f9b453cc565144","settings":{"color_space":1,"caching_preprocessor":true,"tier0":{"standardShaderQuality":0,"renderingPath":3,"hdrMode":1,"realtimeGICPUUsage":25,"useReflectionProbeBoxProjection":0,"useReflectionProbeBlending":0,"useHDR":1,"useDetailNormalMap":0,"useCascadedShadowMaps":0,"prefer32BitShadowMaps":0,"enableLPPV":0,"useDitherMaskForAlphaBlendedShadows":0},"virtual_texturing":0,"vulkan_pretransform":0,"shader_precision_model":0,"deferred_reflections":1},"exporter_revision":"1ac666f47d8e9dedf96afb0b914c70d7656151ea","template_inputs":{"Templates.json":{"bytes":640,"sha256":"b046b777ec15bc92caaea19558a438e041f2ce174cdbeb6bb570055e2eb557cc"},"Default.txt":{"bytes":655,"sha256":"f719eed3344dcbee3c438803a7518fe548b8906f6e18020f3b4b26d47293f266"},"SingleTexture.txt":{"bytes":942,"sha256":"7b7ae955e72eb9d5b0c084aed0749ae21846098236abd4f30281d162738c9371"}},"source":{"path":"Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-base-moon_scenes_all_e50c66f15bff8198c75145361add837f.bundle","bytes":9692621,"sha256":"f2b07aae923787fb013852b3b25296cf16b697789d3575f42bc87c27d8c91f59","member":"CAB-c65c397721d90cc1ee9078b02585fe5b.sharedAssets"},"shaders":[{"path_id":95,"source_sha256":"86afe053feb5cfb0cecbdf0d9c4e87531629ba82d24c6fee7de6843c21bdaa03","source_filename":"Assets/WholeGame/Shader/Hidden_PostProcessing_Bloom_43.shader","template":"Default","outputs":[{"bundle":"whole-scene-moon","member":"BuildPlayer-moon.sharedAssets","path_id":197}]},{"path_id":113,"source_sha256":"2ec9ee30a6d40a9af55b7859aee06afa6db3c75fba1f0c9d77d4ea53f7b89ffc","source_filename":"Assets/WholeGame/Shader/Hidden_PostProcessing_Copy_43.shader","template":"Default","outputs":[{"bundle":"whole-scene-moon","member":"BuildPlayer-moon.sharedAssets","path_id":176}]},{"path_id":94,"source_sha256":"7b05fd151bb038fd1e4bd34a31f27bf2dfd967f7a5ece571ef253872c40ba8e1","source_filename":"Assets/WholeGame/Shader/Hidden_PostProcessing_CopyStd_43.shader","template":"SingleTexture","outputs":[{"bundle":"whole-scene-moon","member":"BuildPlayer-moon.sharedAssets","path_id":192}]},{"path_id":108,"source_sha256":"555c4d7552e8408b0bb06ff4d40567da80609da58b0b3bea6a92698f1935017f","source_filename":"Assets/WholeGame/Shader/Hidden_PostProcessing_CopyStdFromTexArray_43.shader","template":"SingleTexture","outputs":[{"bundle":"whole-scene-moon","member":"BuildPlayer-moon.sharedAssets","path_id":186}]},{"path_id":96,"source_sha256":"bc1038773fe2ea3309a889fed7862a63e1ea65df51c555b5eb0f6e2ed4c2b0a9","source_filename":"Assets/WholeGame/Shader/Hidden_PostProcessing_CopyStdFromDoubleWide_43.shader","template":"SingleTexture","outputs":[{"bundle":"whole-scene-moon","member":"BuildPlayer-moon.sharedAssets","path_id":188}]},{"path_id":99,"source_sha256":"25a081c0b04cf45ebd5c6b30fa0b6a342d030a29dddd39942951d72b68562fbd","source_filename":"Assets/WholeGame/Shader/Hidden_PostProcessing_DiscardAlpha_43.shader","template":"Default","outputs":[{"bundle":"whole-scene-moon","member":"BuildPlayer-moon.sharedAssets","path_id":178}]},{"path_id":98,"source_sha256":"8cb03d6187e1271d5556dee7513a115cfe27faba8796aa8f1b9bbf191d43487b","source_filename":"Assets/WholeGame/Shader/Hidden_PostProcessing_DepthOfField_43.shader","template":"Default","outputs":[{"bundle":"whole-scene-moon","member":"BuildPlayer-moon.sharedAssets","path_id":175}]},{"path_id":92,"source_sha256":"694fa8c5cf7700358a0cf7d0b6eeff1bdd10a6af5af150bfbc34c7fdf81a5de8","source_filename":"Assets/WholeGame/Shader/Hidden_PostProcessing_FinalPass_43.shader","template":"Default","outputs":[{"bundle":"whole-scene-moon","member":"BuildPlayer-moon.sharedAssets","path_id":190}]},{"path_id":100,"source_sha256":"e5483f30788daa883bf38572b4c9162b038d2e6749d3e7354dc8c3bfae1a12e3","source_filename":"Assets/WholeGame/Shader/Hidden_PostProcessing_GrainBaker_43.shader","template":"Default","outputs":[{"bundle":"whole-scene-moon","member":"BuildPlayer-moon.sharedAssets","path_id":187}]},{"path_id":104,"source_sha256":"48c1201fba8e93e7d227c70dcdab2d1b0732f44d6c9313da8a4ba44ba06dab32","source_filename":"Assets/WholeGame/Shader/Hidden_PostProcessing_MotionBlur_43.shader","template":"Default","outputs":[{"bundle":"whole-scene-moon","member":"BuildPlayer-moon.sharedAssets","path_id":183}]},{"path_id":111,"source_sha256":"9e05d1646e17465840f5e1ae5231c6491dd4d8e84ea5071da57948d209babaab","source_filename":"Assets/WholeGame/Shader/Hidden_PostProcessing_TemporalAntialiasing_43.shader","template":"Default","outputs":[{"bundle":"whole-scene-moon","member":"BuildPlayer-moon.sharedAssets","path_id":181}]},{"path_id":105,"source_sha256":"1271b8ac752119f289ec1a0f36406b6fa230f4b92d0ecd853d5b6f1a63f86621","source_filename":"Assets/WholeGame/Shader/Hidden_PostProcessing_SubpixelMorphologicalAntialiasing_43.shader","template":"Default","outputs":[{"bundle":"whole-scene-moon","member":"BuildPlayer-moon.sharedAssets","path_id":196}]},{"path_id":106,"source_sha256":"d1579dedc685a5625a85888426d93f895abbe5837129fc9971aa8b423161a80f","source_filename":"Assets/WholeGame/Shader/Hidden_PostProcessing_Texture2DLerp_43.shader","template":"Default","outputs":[{"bundle":"whole-scene-moon","member":"BuildPlayer-moon.sharedAssets","path_id":179}]},{"path_id":93,"source_sha256":"227949053576d175cc2ec9fb2cb7a248ae7a781b656f2abf814eeb804abb0fb9","source_filename":"Assets/WholeGame/Shader/Hidden_PostProcessing_Uber_43.shader","template":"Default","outputs":[{"bundle":"whole-scene-moon","member":"BuildPlayer-moon.sharedAssets","path_id":189}]},{"path_id":109,"source_sha256":"462e0a995972bc54e0d4785aac3606082df1fb8a2079d3b9f04e9788624573c2","source_filename":"Assets/WholeGame/Shader/Hidden_PostProcessing_Lut2DBaker_43.shader","template":"Default","outputs":[{"bundle":"whole-scene-moon","member":"BuildPlayer-moon.sharedAssets","path_id":185}]},{"path_id":101,"source_sha256":"4407d7d277535db8b972e9bfaf1864ada837ae0b23b16ab3e718301e262fd464","source_filename":"Assets/WholeGame/Shader/Hidden_PostProcessing_Debug_LightMeter_43.shader","template":"Default","outputs":[{"bundle":"whole-scene-moon","member":"BuildPlayer-moon.sharedAssets","path_id":191}]},{"path_id":115,"source_sha256":"0c0c3dad6dc3bba809bfb40386cd794eba83849da499f5fb1417f26e6b55c97d","source_filename":"Assets/WholeGame/Shader/Hidden_PostProcessing_Debug_Histogram_43.shader","template":"Default","outputs":[{"bundle":"whole-scene-moon","member":"BuildPlayer-moon.sharedAssets","path_id":182}]},{"path_id":114,"source_sha256":"9a993599564c7cf7dde6fd9d886fb5431983a324dcbffd60c0cd190c9b0ebfa4","source_filename":"Assets/WholeGame/Shader/Hidden_PostProcessing_Debug_Waveform_43.shader","template":"Default","outputs":[{"bundle":"whole-scene-moon","member":"BuildPlayer-moon.sharedAssets","path_id":180}]},{"path_id":97,"source_sha256":"d49bbe62c88069696cfa7105101ca62ac2e3c5fde8b11f1ac51f2868281ebe77","source_filename":"Assets/WholeGame/Shader/Hidden_PostProcessing_Debug_Vectorscope_43.shader","template":"Default","outputs":[{"bundle":"whole-scene-moon","member":"BuildPlayer-moon.sharedAssets","path_id":194}]},{"path_id":110,"source_sha256":"5b56e2a0dd024a5343927c70af95bd7bf10c584630ebc6c485ae6db6a87d052c","source_filename":"Assets/WholeGame/Shader/Hidden_PostProcessing_Debug_Overlays_43.shader","template":"Default","outputs":[{"bundle":"whole-scene-moon","member":"BuildPlayer-moon.sharedAssets","path_id":195}]},{"path_id":107,"source_sha256":"9ab3cbbf5374f73e469f683a1d9b1cdf49b1e856c02882943c10e6340a47ceb0","source_filename":"Assets/WholeGame/Shader/Hidden_PostProcessing_DeferredFog_43.shader","template":"Default","outputs":[{"bundle":"whole-scene-moon","member":"BuildPlayer-moon.sharedAssets","path_id":174}]},{"path_id":103,"source_sha256":"db9773579302ab3883da12ad860e7ef44689925ddac046a6b13dd961f6058523","source_filename":"Assets/WholeGame/Shader/Hidden_PostProcessing_ScalableAO_43.shader","template":"Default","outputs":[{"bundle":"whole-scene-moon","member":"BuildPlayer-moon.sharedAssets","path_id":193}]},{"path_id":102,"source_sha256":"b713c89879be88025aeff337058f453878a547c3e0d6f1c4a613858306a56cc8","source_filename":"Assets/WholeGame/Shader/Hidden_PostProcessing_MultiScaleVO_43.shader","template":"Default","outputs":[{"bundle":"whole-scene-moon","member":"BuildPlayer-moon.sharedAssets","path_id":184}]},{"path_id":112,"source_sha256":"7f7463a06c095ec69496b34f3c373c227a27b9586a24fe4b5dc3e4bf7d33cc0d","source_filename":"Assets/WholeGame/Shader/Hidden_PostProcessing_ScreenSpaceReflections_43.shader","template":"Default","outputs":[{"bundle":"whole-scene-moon","member":"BuildPlayer-moon.sharedAssets","path_id":177}]}]}
+{
+  "input_id": "6af7ed94619fe1b4346974b4486afa03a8d1625a7820e92da0ff74d57208fe88",
+  "sdk": {
+    "MacOS/Unity": {
+      "bytes": 79453472,
+      "sha256": "906123118e45d56c6bcf20f3776ed2373417553042500714023daeb9e53058e8"
+    },
+    "Tools/UnityShaderCompiler": {
+      "bytes": 12603248,
+      "sha256": "4f4e5be21d27dd7541fa9385ea480b15816e70ddaa83b516df0ab60b819142b5"
+    }
+  },
+  "includes_sha256": "163fad0ca42bd98ea1628888dedd01d91fcbb9f6bda60a8120f9b453cc565144",
+  "settings": {
+    "color_space": 1,
+    "caching_preprocessor": true,
+    "tier0": {
+      "standardShaderQuality": 0,
+      "renderingPath": 3,
+      "hdrMode": 1,
+      "realtimeGICPUUsage": 25,
+      "useReflectionProbeBoxProjection": 0,
+      "useReflectionProbeBlending": 0,
+      "useHDR": 1,
+      "useDetailNormalMap": 0,
+      "useCascadedShadowMaps": 0,
+      "prefer32BitShadowMaps": 0,
+      "enableLPPV": 0,
+      "useDitherMaskForAlphaBlendedShadows": 0
+    },
+    "virtual_texturing": 0,
+    "vulkan_pretransform": 0,
+    "shader_precision_model": 0,
+    "deferred_reflections": 1
+  },
+  "exporter_revision": "1ac666f47d8e9dedf96afb0b914c70d7656151ea",
+  "template_inputs": {
+    "Templates.json": {
+      "bytes": 640,
+      "sha256": "b046b777ec15bc92caaea19558a438e041f2ce174cdbeb6bb570055e2eb557cc"
+    },
+    "Default.txt": {
+      "bytes": 655,
+      "sha256": "f719eed3344dcbee3c438803a7518fe548b8906f6e18020f3b4b26d47293f266"
+    },
+    "SingleTexture.txt": {
+      "bytes": 942,
+      "sha256": "7b7ae955e72eb9d5b0c084aed0749ae21846098236abd4f30281d162738c9371"
+    }
+  },
+  "source": {
+    "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-base-moon_scenes_all_e50c66f15bff8198c75145361add837f.bundle",
+    "bytes": 9692621,
+    "sha256": "f2b07aae923787fb013852b3b25296cf16b697789d3575f42bc87c27d8c91f59",
+    "member": "CAB-c65c397721d90cc1ee9078b02585fe5b.sharedAssets"
+  },
+  "shaders": [
+    {
+      "path_id": 95,
+      "source_sha256": "86afe053feb5cfb0cecbdf0d9c4e87531629ba82d24c6fee7de6843c21bdaa03",
+      "source_filename": "Assets/WholeGame/Shader/Hidden_PostProcessing_Bloom_43.shader",
+      "template": "Default",
+      "outputs": [
+        {
+          "bundle": "whole-scene-moon",
+          "member": "BuildPlayer-moon.sharedAssets",
+          "path_id": 197
+        }
+      ]
+    },
+    {
+      "path_id": 113,
+      "source_sha256": "2ec9ee30a6d40a9af55b7859aee06afa6db3c75fba1f0c9d77d4ea53f7b89ffc",
+      "source_filename": "Assets/WholeGame/Shader/Hidden_PostProcessing_Copy_43.shader",
+      "template": "Default",
+      "outputs": [
+        {
+          "bundle": "whole-scene-moon",
+          "member": "BuildPlayer-moon.sharedAssets",
+          "path_id": 176
+        }
+      ]
+    },
+    {
+      "path_id": 94,
+      "source_sha256": "7b05fd151bb038fd1e4bd34a31f27bf2dfd967f7a5ece571ef253872c40ba8e1",
+      "source_filename": "Assets/WholeGame/Shader/Hidden_PostProcessing_CopyStd_43.shader",
+      "template": "SingleTexture",
+      "outputs": [
+        {
+          "bundle": "whole-scene-moon",
+          "member": "BuildPlayer-moon.sharedAssets",
+          "path_id": 192
+        }
+      ]
+    },
+    {
+      "path_id": 108,
+      "source_sha256": "555c4d7552e8408b0bb06ff4d40567da80609da58b0b3bea6a92698f1935017f",
+      "source_filename": "Assets/WholeGame/Shader/Hidden_PostProcessing_CopyStdFromTexArray_43.shader",
+      "template": "SingleTexture",
+      "outputs": [
+        {
+          "bundle": "whole-scene-moon",
+          "member": "BuildPlayer-moon.sharedAssets",
+          "path_id": 186
+        }
+      ]
+    },
+    {
+      "path_id": 96,
+      "source_sha256": "bc1038773fe2ea3309a889fed7862a63e1ea65df51c555b5eb0f6e2ed4c2b0a9",
+      "source_filename": "Assets/WholeGame/Shader/Hidden_PostProcessing_CopyStdFromDoubleWide_43.shader",
+      "template": "SingleTexture",
+      "outputs": [
+        {
+          "bundle": "whole-scene-moon",
+          "member": "BuildPlayer-moon.sharedAssets",
+          "path_id": 188
+        }
+      ]
+    },
+    {
+      "path_id": 99,
+      "source_sha256": "25a081c0b04cf45ebd5c6b30fa0b6a342d030a29dddd39942951d72b68562fbd",
+      "source_filename": "Assets/WholeGame/Shader/Hidden_PostProcessing_DiscardAlpha_43.shader",
+      "template": "Default",
+      "outputs": [
+        {
+          "bundle": "whole-scene-moon",
+          "member": "BuildPlayer-moon.sharedAssets",
+          "path_id": 178
+        }
+      ]
+    },
+    {
+      "path_id": 98,
+      "source_sha256": "8cb03d6187e1271d5556dee7513a115cfe27faba8796aa8f1b9bbf191d43487b",
+      "source_filename": "Assets/WholeGame/Shader/Hidden_PostProcessing_DepthOfField_43.shader",
+      "template": "Default",
+      "outputs": [
+        {
+          "bundle": "whole-scene-moon",
+          "member": "BuildPlayer-moon.sharedAssets",
+          "path_id": 175
+        }
+      ]
+    },
+    {
+      "path_id": 92,
+      "source_sha256": "694fa8c5cf7700358a0cf7d0b6eeff1bdd10a6af5af150bfbc34c7fdf81a5de8",
+      "source_filename": "Assets/WholeGame/Shader/Hidden_PostProcessing_FinalPass_43.shader",
+      "template": "Default",
+      "outputs": [
+        {
+          "bundle": "whole-scene-moon",
+          "member": "BuildPlayer-moon.sharedAssets",
+          "path_id": 190
+        }
+      ]
+    },
+    {
+      "path_id": 100,
+      "source_sha256": "e5483f30788daa883bf38572b4c9162b038d2e6749d3e7354dc8c3bfae1a12e3",
+      "source_filename": "Assets/WholeGame/Shader/Hidden_PostProcessing_GrainBaker_43.shader",
+      "template": "Default",
+      "outputs": [
+        {
+          "bundle": "whole-scene-moon",
+          "member": "BuildPlayer-moon.sharedAssets",
+          "path_id": 187
+        }
+      ]
+    },
+    {
+      "path_id": 104,
+      "source_sha256": "48c1201fba8e93e7d227c70dcdab2d1b0732f44d6c9313da8a4ba44ba06dab32",
+      "source_filename": "Assets/WholeGame/Shader/Hidden_PostProcessing_MotionBlur_43.shader",
+      "template": "Default",
+      "outputs": [
+        {
+          "bundle": "whole-scene-moon",
+          "member": "BuildPlayer-moon.sharedAssets",
+          "path_id": 183
+        }
+      ]
+    },
+    {
+      "path_id": 111,
+      "source_sha256": "9e05d1646e17465840f5e1ae5231c6491dd4d8e84ea5071da57948d209babaab",
+      "source_filename": "Assets/WholeGame/Shader/Hidden_PostProcessing_TemporalAntialiasing_43.shader",
+      "template": "Default",
+      "outputs": [
+        {
+          "bundle": "whole-scene-moon",
+          "member": "BuildPlayer-moon.sharedAssets",
+          "path_id": 181
+        }
+      ]
+    },
+    {
+      "path_id": 105,
+      "source_sha256": "1271b8ac752119f289ec1a0f36406b6fa230f4b92d0ecd853d5b6f1a63f86621",
+      "source_filename": "Assets/WholeGame/Shader/Hidden_PostProcessing_SubpixelMorphologicalAntialiasing_43.shader",
+      "template": "Default",
+      "outputs": [
+        {
+          "bundle": "whole-scene-moon",
+          "member": "BuildPlayer-moon.sharedAssets",
+          "path_id": 196
+        }
+      ]
+    },
+    {
+      "path_id": 106,
+      "source_sha256": "d1579dedc685a5625a85888426d93f895abbe5837129fc9971aa8b423161a80f",
+      "source_filename": "Assets/WholeGame/Shader/Hidden_PostProcessing_Texture2DLerp_43.shader",
+      "template": "Default",
+      "outputs": [
+        {
+          "bundle": "whole-scene-moon",
+          "member": "BuildPlayer-moon.sharedAssets",
+          "path_id": 179
+        }
+      ]
+    },
+    {
+      "path_id": 93,
+      "source_sha256": "227949053576d175cc2ec9fb2cb7a248ae7a781b656f2abf814eeb804abb0fb9",
+      "source_filename": "Assets/WholeGame/Shader/Hidden_PostProcessing_Uber_43.shader",
+      "template": "Default",
+      "outputs": [
+        {
+          "bundle": "whole-scene-moon",
+          "member": "BuildPlayer-moon.sharedAssets",
+          "path_id": 189
+        }
+      ]
+    },
+    {
+      "path_id": 109,
+      "source_sha256": "462e0a995972bc54e0d4785aac3606082df1fb8a2079d3b9f04e9788624573c2",
+      "source_filename": "Assets/WholeGame/Shader/Hidden_PostProcessing_Lut2DBaker_43.shader",
+      "template": "Default",
+      "outputs": [
+        {
+          "bundle": "whole-scene-moon",
+          "member": "BuildPlayer-moon.sharedAssets",
+          "path_id": 185
+        }
+      ]
+    },
+    {
+      "path_id": 101,
+      "source_sha256": "4407d7d277535db8b972e9bfaf1864ada837ae0b23b16ab3e718301e262fd464",
+      "source_filename": "Assets/WholeGame/Shader/Hidden_PostProcessing_Debug_LightMeter_43.shader",
+      "template": "Default",
+      "outputs": [
+        {
+          "bundle": "whole-scene-moon",
+          "member": "BuildPlayer-moon.sharedAssets",
+          "path_id": 191
+        }
+      ]
+    },
+    {
+      "path_id": 115,
+      "source_sha256": "0c0c3dad6dc3bba809bfb40386cd794eba83849da499f5fb1417f26e6b55c97d",
+      "source_filename": "Assets/WholeGame/Shader/Hidden_PostProcessing_Debug_Histogram_43.shader",
+      "template": "Default",
+      "outputs": [
+        {
+          "bundle": "whole-scene-moon",
+          "member": "BuildPlayer-moon.sharedAssets",
+          "path_id": 182
+        }
+      ]
+    },
+    {
+      "path_id": 114,
+      "source_sha256": "9a993599564c7cf7dde6fd9d886fb5431983a324dcbffd60c0cd190c9b0ebfa4",
+      "source_filename": "Assets/WholeGame/Shader/Hidden_PostProcessing_Debug_Waveform_43.shader",
+      "template": "Default",
+      "outputs": [
+        {
+          "bundle": "whole-scene-moon",
+          "member": "BuildPlayer-moon.sharedAssets",
+          "path_id": 180
+        }
+      ]
+    },
+    {
+      "path_id": 97,
+      "source_sha256": "d49bbe62c88069696cfa7105101ca62ac2e3c5fde8b11f1ac51f2868281ebe77",
+      "source_filename": "Assets/WholeGame/Shader/Hidden_PostProcessing_Debug_Vectorscope_43.shader",
+      "template": "Default",
+      "outputs": [
+        {
+          "bundle": "whole-scene-moon",
+          "member": "BuildPlayer-moon.sharedAssets",
+          "path_id": 194
+        }
+      ]
+    },
+    {
+      "path_id": 110,
+      "source_sha256": "5b56e2a0dd024a5343927c70af95bd7bf10c584630ebc6c485ae6db6a87d052c",
+      "source_filename": "Assets/WholeGame/Shader/Hidden_PostProcessing_Debug_Overlays_43.shader",
+      "template": "Default",
+      "outputs": [
+        {
+          "bundle": "whole-scene-moon",
+          "member": "BuildPlayer-moon.sharedAssets",
+          "path_id": 195
+        }
+      ]
+    },
+    {
+      "path_id": 107,
+      "source_sha256": "9ab3cbbf5374f73e469f683a1d9b1cdf49b1e856c02882943c10e6340a47ceb0",
+      "source_filename": "Assets/WholeGame/Shader/Hidden_PostProcessing_DeferredFog_43.shader",
+      "template": "Default",
+      "outputs": [
+        {
+          "bundle": "whole-scene-moon",
+          "member": "BuildPlayer-moon.sharedAssets",
+          "path_id": 174
+        }
+      ]
+    },
+    {
+      "path_id": 103,
+      "source_sha256": "db9773579302ab3883da12ad860e7ef44689925ddac046a6b13dd961f6058523",
+      "source_filename": "Assets/WholeGame/Shader/Hidden_PostProcessing_ScalableAO_43.shader",
+      "template": "Default",
+      "outputs": [
+        {
+          "bundle": "whole-scene-moon",
+          "member": "BuildPlayer-moon.sharedAssets",
+          "path_id": 193
+        }
+      ]
+    },
+    {
+      "path_id": 102,
+      "source_sha256": "b713c89879be88025aeff337058f453878a547c3e0d6f1c4a613858306a56cc8",
+      "source_filename": "Assets/WholeGame/Shader/Hidden_PostProcessing_MultiScaleVO_43.shader",
+      "template": "Default",
+      "outputs": [
+        {
+          "bundle": "whole-scene-moon",
+          "member": "BuildPlayer-moon.sharedAssets",
+          "path_id": 184
+        }
+      ]
+    },
+    {
+      "path_id": 112,
+      "source_sha256": "7f7463a06c095ec69496b34f3c373c227a27b9586a24fe4b5dc3e4bf7d33cc0d",
+      "source_filename": "Assets/WholeGame/Shader/Hidden_PostProcessing_ScreenSpaceReflections_43.shader",
+      "template": "Default",
+      "outputs": [
+        {
+          "bundle": "whole-scene-moon",
+          "member": "BuildPlayer-moon.sharedAssets",
+          "path_id": 177
+        }
+      ]
+    }
+  ]
+}

@@ -4955,6 +4955,15 @@ verification. The original PC player registry can therefore supply MonoScripts
 absent from Addressables bundles. Explicit original roots, pinned selectors,
 fresh output and process-exit teardown retain the existing owner lifecycle.
 
+`script_identity.pointer_script_schema` supports the object owner's explicit
+`managed_pointer_schema` policy for a build-added class with one object-reference
+field. An original MonoScript, pinned original CLR assemblies and original native
+base/pointer prototypes supply identity, field semantics and transfer flags.
+Setup uses explicit original/SDK roots and symbolic source selectors. The owner
+checks properties against the original MonoScript, rechecks input pins and
+releases CLR metadata on exit; receipts retain consumed assembly hashes. No
+generated tree or original implementation becomes a recipe input or runtime owner.
+
 ITDampcave complete scene selections use the existing object/Shader owners through
 `recipe/owner-itdampcave-whole-objects.json` and matching post-processing/Standard
 profiles. Original Dampcavesimple resources supply post-processing identities;
@@ -4973,3 +4982,12 @@ set up production; process exit tears down producers while receipts persist. The
 writer exposes `payload/whole-scene-{itfrozenwall,soul1}`. All 298,886 objects,
 four serialized members and both compressed bundles are host raw-exact to J850.
 Phone production, installation and original behavior remain open.
+
+Solutionalhaunt complete scene selections use `object_produce.py`, the existing Director
+record importer and Standard Shader owner through `recipe/owner-solutionalhaunt-*.json`.
+Original PC registry/CLR inputs derive added trigger schemas; an original 56 B Animator
+and reciprocal GameObject membership extend the existing preload component witnesses.
+Explicit original/SDK/tool roots, pinned profiles, source-produced packs and fresh output
+set up production; process exit releases producers/CLR metadata while receipts persist.
+The writer exposes `payload/whole-scene-solutionalhaunt`, raw-exact to J850 for all 31,264
+objects, both serialized members and the compressed bundle. Phone/runtime gates remain open.

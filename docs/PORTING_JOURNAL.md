@@ -855,3 +855,17 @@ Profiles: `recipe/owner-{itfrozenwall,soul1}-whole-*.json`; evidence (ignored):
 Readiness becomes 677/705 available, 672 raw-exact, 28 missing. The object owner also
 accepts hash-pinned original native files with identity-checked original schema suppliers;
 authored full-bundle fixtures pass. Phone production, installation and runtime remain open.
+
+## J1247 — Complete source-derived Solutionalhaunt reconstruction
+
+2026-10-28. Original PC registry scripts, pinned CLR fields and native prototypes derive
+added trigger schemas; original prefab/Animator witnesses retain the scene's preload roots.
+The existing Director importer and Standard Shader owner complete the selection.
+All 31,264 objects, both serialized members and the 10,431,889 B bundle are raw-exact to J850:
+`0687b3e7c0904fbd372e536785fefdcbadad73444ca52d8c8aad86c12577a0dd`. Profiles: `recipe/owner-solutionalhaunt-*.json`.
+Evidence (ignored): `work/coordination/orchestrator/scenes/solutionalhaunt-final-v2/`.
+Readiness becomes 678/705 available, 673 raw-exact, 27 missing. Restore the qualified
+byte representations of 37 Shader profiles so their digests match object pack references;
+profile semantics and previously qualified outputs are unchanged. No passed run is replayed.
+Focused schema/object contracts and publication-reference checks pass. Phone production,
+installation and original runtime behavior remain open; accepted APK unchanged.

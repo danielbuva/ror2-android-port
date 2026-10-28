@@ -556,10 +556,12 @@ def check_preload_dependencies(sources, source_profiles, dependencies):
         if source_class not in (1, 114) or typ["class_id"] != source_class or hashlib.sha256(body).hexdigest() != dependency["source_sha256"]:
             raise ValueError("original preload GameObject drift")
         selector = dependency["source"]
-        if "rigidbody" in dependency or "transform" in dependency:
+        if any(kind in dependency for kind in ("rigidbody", "transform", "animator")):
             if source_class != 1:
                 raise ValueError("original preload component owner is not a GameObject")
-            kind, class_id, size = ("Rigidbody", 54, 36) if "rigidbody" in dependency else ("Transform", 4, 68)
+            kind, class_id, size = (
+                ("Rigidbody", 54, 36) if "rigidbody" in dependency else ("Animator", 95, 56) if "animator" in dependency else ("Transform", 4, 68)
+            )
             witness = dependency[kind.lower()]
             component_body, component_type = source_record(sources, witness["source"])
             if component_type["class_id"] != class_id or len(component_body) != size or hashlib.sha256(component_body).hexdigest() != witness["sha256"]:
@@ -1133,6 +1135,19 @@ def produce(profile_path, profile_sha256, pc, output, codec_path, codec_sha256, 
                         typ["hash"] = value
                     else:
                         raise ValueError("script properties require MonoScript or MonoBehaviour")
+                if "managed_pointer_schema" in selected:
+                    if sdk_tree is None or typ["class_id"] != 114:
+                        raise ValueError("managed pointer schema requires SDK and MonoBehaviour")
+                    policy = selected["managed_pointer_schema"]
+                    script, script_type = source_record(sources, policy["script"])
+                    _, base_type = source_record(sources, policy["base"])
+                    _, pointer_type = source_record(sources, policy["pointer"])
+                    if script_type["class_id"] != 115 or base_type["class_id"] != 114 or pointer_type["class_id"] != 114:
+                        raise ValueError("managed pointer schema selectors have wrong classes")
+                    derived, inputs = identity_owner.pointer_script_schema(pc, policy["managed"], script, base_type["tree"], pointer_type["tree"], sdk_tree)
+                    typ = copy.deepcopy(base_type)
+                    typ.update(derived)
+                    receipt.setdefault("managed_schema_inputs", {}).update(inputs)
                 if len(body) != selected["bytes"] or hashlib.sha256(body).hexdigest() != selected["sha256"]:
                     raise ValueError("produced object differs from accepted hash")
                 member_records.append({"path_id": selected["path_id"], "body": body, "type": typ, "member": selected_member["name"]})
