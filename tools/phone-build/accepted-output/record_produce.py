@@ -1000,6 +1000,48 @@ def controller_state_order(body, root, selections):
     return bytes(result)
 
 
+def controller_clear_null_motion(body, root):
+    """Import a single original unavailable clip leaf as a null state motion."""
+    _, spans = fields(body, root)
+    result, removals, memory = bytearray(body), [], 0
+    for path, (start, end) in spans.items():
+        if len(path) != 11 or path[:3] != ("m_Controller", "m_StateMachineArray", "Array") or path[-2:] != ("m_BlendTreeConstantArray", "Array"):
+            continue
+        if struct.unpack_from("<I", body, start)[0] != 1:
+            continue
+        nodes = path + ("0", "data", "m_NodeArray", "Array")
+        if struct.unpack_from("<I", body, spans[nodes][0])[0] != 1:
+            continue
+        leaf = nodes + ("0", "data")
+        clip, children = spans[leaf + ("m_ClipID",)][0], spans[leaf + ("m_ChildIndices",)][0]
+        if struct.unpack_from("<I", body, clip)[0] != 0xFFFFFFFF or struct.unpack_from("<I", body, children)[0]:
+            continue
+        arrays = [p for p in spans if p[: len(path)] == path and p != path and p[-1] == "Array"]
+        if any(struct.unpack_from("<I", body, spans[p][0])[0] for p in arrays if p != nodes):
+            raise ValueError("original null-motion leaf contains unsupported array data")
+        # Native inline arrays use 16-byte headers; the release serialization
+        # stores their 4-byte counts. The outer state array header is retained.
+        memory += end - start - 4 + 12 * len(arrays)
+        removals.append((start, end))
+        left, right = spans[path[:-2] + ("m_BlendTreeConstantIndexArray",)]
+        count = struct.unpack_from("<I", body, left)[0]
+        if right - left != 4 + count * 4:
+            raise ValueError("original null-motion index extent drift")
+        for index in range(count):
+            offset = left + 4 + index * 4
+            if struct.unpack_from("<I", body, offset)[0] not in (0, 0xFFFFFFFF):
+                raise ValueError("original null-motion index does not select its sole tree")
+            struct.pack_into("<I", result, offset, 0xFFFFFFFF)
+    offset = spans[("m_ControllerSize",)][0]
+    size = struct.unpack_from("<I", body, offset)[0]
+    if size < memory:
+        raise ValueError("original null-motion allocation size drift")
+    struct.pack_into("<I", result, offset, size - memory)
+    for start, end in sorted(removals, reverse=True):
+        result[start:end] = bytes(4)
+    return bytes(result)
+
+
 def controller_clear_skeleton_masks(body, root):
     """Apply the pinned exporter's omitted layer masks and native allocation size."""
     _, spans = fields(body, root)
@@ -1063,6 +1105,7 @@ def transform_generic(body, class_id, selected, root=None, read_clip=None):
         "controller_behaviour_order",
         "controller_clear_skeleton_masks",
         "controller_state_order",
+        "controller_clear_null_motion",
         "canonical",
     } or (selected.get("demote_keywords") and class_id != 21):
         raise ValueError("unknown generic object operation")
@@ -1078,6 +1121,10 @@ def transform_generic(body, class_id, selected, root=None, read_clip=None):
         body = controller_clear_skeleton_masks(body, root)
     if "controller_state_order" in selected:
         body = controller_state_order(body, root, selected["controller_state_order"])
+    if "controller_clear_null_motion" in selected:
+        if selected["controller_clear_null_motion"] is not True:
+            raise ValueError("unqualified controller null-motion policy")
+        body = controller_clear_null_motion(body, root)
     if "controller_loop_states" in selected:
         body = controller_loop_states(body, root, selected["controller_loop_states"], read_clip)
     if "controller_clip_order" in selected:

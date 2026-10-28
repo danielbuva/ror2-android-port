@@ -41,6 +41,31 @@ def tos_entry(value):
 
 
 class ControllerRecords(unittest.TestCase):
+    def test_null_motion_retains_state_and_replaces_the_removed_tree_index(self):
+        leaf = F.node(
+            "data",
+            children=[
+                F.node(
+                    "data", children=[integer("m_ClipID"), F.array("m_ChildIndices", integer("data")), F.array("extras", integer("data")), integer("retained")]
+                )
+            ],
+        )
+        tree = F.node("data", children=[F.node("data", children=[F.array("m_NodeArray", leaf)])])
+        state = F.node(
+            "data", children=[F.node("data", children=[F.array("m_BlendTreeConstantArray", tree), F.array("m_BlendTreeConstantIndexArray", integer("data"))])]
+        )
+        machine = F.node("data", children=[F.node("data", children=[F.array("m_StateConstantArray", state)])])
+        schema = F.node(
+            "Base", children=[integer("m_ControllerSize"), F.node("m_Controller", children=[F.array("m_StateMachineArray", machine)]), integer("tail")]
+        )
+        motion = vector([vector([struct.pack("<IIII", 0xFFFFFFFF, 0, 0, 37)])])
+        body = struct.pack("<I", 1000) + vector([vector([motion + vector([bytes(4)])])]) + struct.pack("<I", 71)
+        expected = struct.pack("<I", 944) + vector([vector([bytes(4) + vector([struct.pack("<I", 0xFFFFFFFF)])])]) + body[-4:]
+        stream = io.BytesIO(C.serialized(body, schema, 91))
+        stream.size = len(stream.getvalue())
+        root = A.SCHEMA.type_tree(io.BytesIO(A.W.read_serialized(stream)["types"][0]["tree"]))
+        self.assertEqual(A.transform_generic(body, 91, {"controller_clear_null_motion": True}, root), expected)
+
     def test_state_order_relocates_direct_destinations_and_preserves_selector_values(self):
         transition = F.node("data", children=[integer("m_DestinationState"), integer("retained")])
         state = F.node("data", children=[F.node("data", children=[integer("m_FullPathID"), F.array("m_TransitionConstantArray", transition)])])

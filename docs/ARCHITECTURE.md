@@ -318,6 +318,10 @@ source-index bijections. Default states and direct transition destinations move
 with those records; selector and entry/exit indices retain their source values.
 TOS export selections may also name a checked collision ordinal, applying the
 pinned exporter's filename suffix before deriving the path CRC from source text.
+`controller_clear_null_motion` imports an original sole unavailable clip leaf as
+no motion, retaining its state and remapping that tree's indices to the native
+unavailable sentinel. Its size adjustment derives from the original subtree and
+the admitted native array layout.
 Audited
 `recipe/owner-animation-clips.json`, `recipe/owner-animator-controllers.json`,
 `recipe/owner-material-records.json`, `recipe/owner-gameobjects.json`,
