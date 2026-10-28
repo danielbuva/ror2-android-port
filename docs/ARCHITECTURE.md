@@ -90,7 +90,12 @@ bundles through those writers. New disjoint output, pinned PC files/recipe/
 codec and capacity checks set up the process; persisted output and unchanged
 inputs precede a complete/failed receipt. The qualified dummy material moves
 its original valid keywords into the invalid list without introducing strings
-or material values. Explicit record-pack directory/receipt pins supply already
+or material values. The explicit `dummy-shader-sort-invalid` policy sorts those
+source strings in ordinal order; the original demotion policy retains its source
+order. `normalize_exported_prefab_name` projects original prefab root names through
+the pinned exporter's filename rules, preserving components, layer, tag and
+activation. Named original character/teleporter roots also use the existing
+authored suppression policy. Explicit record-pack directory/receipt pins supply already
 produced texture bodies and resources; the owner verifies them before/after,
 assembles resource extents, and generates each asset's rooted container preloads.
 It calls the existing `player_data.py` Sprite crop/importer helpers only when

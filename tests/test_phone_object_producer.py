@@ -1138,7 +1138,19 @@ class ObjectProducerTests(unittest.TestCase):
                 self.assertEqual(P.W.read_serialized(emitted.member(member))["engine"], "2021.3.33f1")
 
     def test_global_owner_suppression_checks_original_identity_and_active_tail(self):
-        for name in ("SceneInfo", "Director", "GameManager", "RoR2Application"):
+        for name in (
+            "SceneInfo",
+            "Director",
+            "GameManager",
+            "RoR2Application",
+            "BeetleBody",
+            "BeetleGuardBody",
+            "BeetleGuardMaster",
+            "BeetleQueen2Body",
+            "CommandoBody",
+            "PlayerMaster",
+            "Teleporter1",
+        ):
             encoded = name.encode()
             original = struct.pack("<IiqII", 1, 0, 713, 9, len(encoded)) + encoded + bytes(-len(encoded) % 4) + struct.pack("<HB", 17, 1)
             self.assertEqual(P.deactivate_global_owner(original, name), original[:-1] + bytes(1))
@@ -1150,6 +1162,17 @@ class ObjectProducerTests(unittest.TestCase):
             ):
                 with self.subTest(name=name, selected=selected), self.assertRaises(ValueError):
                     P.deactivate_global_owner(body, selected)
+
+    def test_exported_prefab_name_preserves_components_layer_tag_and_activation(self):
+        def string(value):
+            encoded = value.encode()
+            return struct.pack("<I", len(encoded)) + encoded + bytes(-len(encoded) % 4)
+
+        prefix = struct.pack("<IiqI", 1, 0, 713, 8)
+        tail = struct.pack("<HB", 6, 1)
+        original = prefix + string("  Variant, One(Clone)  ") + tail
+        expected = prefix + string("Variant_ One") + tail
+        self.assertEqual(P.normalize_exported_prefab_name(original), expected)
 
     def test_original_windows_bundle_copy_needs_no_codec_or_comparison_supplier(self):
         with tempfile.TemporaryDirectory() as temporary:
@@ -1349,6 +1372,9 @@ class ObjectProducerTests(unittest.TestCase):
         self.assertEqual(P.demote_material_keywords(original), expected)
         self.assertEqual(len(original), len(expected))
         self.assertEqual(P.demote_material_keywords(expected), expected)
+        ordered = prefix + struct.pack("<II", 0, 3) + first + third + second + suffix
+        self.assertEqual(P.demote_material_keywords(original, sort_invalid=True), ordered)
+        self.assertEqual(P.demote_material_keywords(ordered, sort_invalid=True), ordered)
         with self.assertRaises((ValueError, EOFError)):
             P.demote_material_keywords(prefix + struct.pack("<I", 100000))
 

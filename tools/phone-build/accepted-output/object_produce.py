@@ -73,19 +73,21 @@ def remap_record(body, typ, references, externals):
     return remap(body, references)
 
 
-def demote_material_keywords(body):
+def demote_material_keywords(body, *, sort_invalid=False):
     """Retain original keywords as invalid for the qualified dummy shader.
 
     The authored dummy shader declares no material keywords. Preserve the
-    original valid-then-invalid order, every keyword string and all other
+    original valid-then-invalid order by default, every keyword string and all other
     original material values; no shader/material payload comes from a recipe.
     """
     stream = io.BytesIO(body)
 
     def string():
+        start = stream.tell()
         size = B.unpack(stream, "<I")[0]
-        B.exact(stream, size)
+        label = B.exact(stream, size).decode("utf-8")
         B.exact(stream, -stream.tell() % 4)
+        return label, body[start : stream.tell()]
 
     string()  # Original material name.
     B.exact(stream, 12)  # Shader PPtr, relocated separately.
@@ -93,18 +95,15 @@ def demote_material_keywords(body):
     valid_count = B.unpack(stream, "<I")[0]
     if valid_count > len(body) // 4:
         raise ValueError("invalid material keyword count")
-    valid_start = stream.tell()
-    for _ in range(valid_count):
-        string()
-    valid_end = stream.tell()
+    keywords = [string() for _ in range(valid_count)]
     invalid_count = B.unpack(stream, "<I")[0]
     if invalid_count > len(body) // 4:
         raise ValueError("invalid material keyword count")
-    invalid_start = stream.tell()
-    for _ in range(invalid_count):
-        string()
+    keywords.extend(string() for _ in range(invalid_count))
     end = stream.tell()
-    return body[:start] + struct.pack("<II", 0, valid_count + invalid_count) + body[valid_start:valid_end] + body[invalid_start:end] + body[end:]
+    if sort_invalid:
+        keywords.sort(key=lambda item: item[0].encode("utf-16-be"))
+    return body[:start] + struct.pack("<II", 0, valid_count + invalid_count) + b"".join(chunk for _, chunk in keywords) + body[end:]
 
 
 def remove_components(body, removals):
@@ -144,8 +143,20 @@ def clear_static_renderers(body, expected):
 
 
 def deactivate_global_owner(body, name):
-    """Apply source_scene_candidate's named global-root suppression."""
-    if name not in {"SceneInfo", "Director", "GameManager", "RoR2Application"}:
+    """Apply authored scene and prefab root suppression."""
+    if name not in {
+        "SceneInfo",
+        "Director",
+        "GameManager",
+        "RoR2Application",
+        "BeetleBody",
+        "BeetleGuardBody",
+        "BeetleGuardMaster",
+        "BeetleQueen2Body",
+        "CommandoBody",
+        "PlayerMaster",
+        "Teleporter1",
+    }:
         raise ValueError("unknown original global owner")
     stream = io.BytesIO(body)
     count = B.unpack(stream, "<I")[0]
@@ -162,6 +173,29 @@ def deactivate_global_owner(body, name):
     if original != name or active != b"\x01" or stream.tell() != len(body):
         raise ValueError("global suppression requires the named active original GameObject")
     return body[:-1] + bytes(1)
+
+
+def normalize_exported_prefab_name(body):
+    """Apply the pinned exporter's filename projection to a prefab root name."""
+    stream = io.BytesIO(body)
+    count = B.unpack(stream, "<I")[0]
+    if count > len(body) // 12:
+        raise ValueError("truncated original prefab components")
+    B.exact(stream, count * 12 + 4)
+    start = stream.tell()
+    size = B.unpack(stream, "<I")[0]
+    name = B.exact(stream, size).decode("utf-8")
+    B.exact(stream, -stream.tell() % 4)
+    tail = B.exact(stream, 3)
+    if stream.tell() != len(body):
+        raise ValueError("original prefab GameObject tail drift")
+    name = name.replace("(Clone)", "").replace("(Instance)", "").strip() or "GameObject"
+    name = "".join("_" if char in ",[]:/" or ord(char) < 32 else char for char in name)
+    result = io.BytesIO()
+    result.write(body[:start])
+    aligned_string(result, name)
+    result.write(tail)
+    return result.getvalue()
 
 
 def rebuild_bezier_line(body, sources, source_profiles, line_selector, behaviour_selector, wind_angles=None, build_rounding=None):
@@ -1079,6 +1113,10 @@ def produce(profile_path, profile_sha256, pc, output, codec_path, codec_sha256, 
                         if selected["inactive_map_zone"] is not True or typ["class_id"] != 1 or not body or body[-1] != 1:
                             raise ValueError("inactive MapZone policy requires an active original GameObject")
                         body = body[:-1] + bytes(1)
+                    if "normalize_exported_prefab_name" in selected:
+                        if typ["class_id"] != 1 or selected["normalize_exported_prefab_name"] is not True:
+                            raise ValueError("exported prefab name requires an original GameObject")
+                        body = normalize_exported_prefab_name(body)
                     if "inactive_global_owner" in selected:
                         if typ["class_id"] != 1:
                             raise ValueError("global suppression requires an original GameObject")
@@ -1114,9 +1152,9 @@ def produce(profile_path, profile_sha256, pc, output, codec_path, codec_sha256, 
                             typ = {**typ, "tree": schema}
                     body = remap(body, selected.get("references", []))
                     if "keyword_policy" in selected:
-                        if typ["class_id"] != 21 or selected["keyword_policy"] != "dummy-shader-demote-valid":
+                        if typ["class_id"] != 21 or selected["keyword_policy"] not in ("dummy-shader-demote-valid", "dummy-shader-sort-invalid"):
                             raise ValueError("unqualified material keyword policy")
-                        body = demote_material_keywords(body)
+                        body = demote_material_keywords(body, sort_invalid=selected["keyword_policy"] == "dummy-shader-sort-invalid")
                 else:
                     source = selected["type_source"]
                     if isinstance(source, list):
