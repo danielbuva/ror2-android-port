@@ -838,5 +838,6 @@ to J850: `1c77a880d8a26a281be554194522a763ad6516fb3d0fb0ae10229878a359a690`.
 Profiles: `recipe/owner-itdampcave-whole-*.json`; evidence (ignored):
 `work/coordination/orchestrator/scenes/itdampcave-final-v2/qualification-done.json`.
 Retained qualifications and merged recipes recount to 675/705 available, 670 raw-exact;
-30 entries remain. No passed production is replayed. Phone production, installation
-and original scene behavior remain open; accepted APK unchanged.
+30 entries remain. Local CI now uses a 4 GiB fixture volume so the producers' 2 GiB
+reserve can pass after APFS formatting. Phone production, installation and original
+scene behavior remain open; accepted APK unchanged.
