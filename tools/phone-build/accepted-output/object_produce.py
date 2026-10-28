@@ -1233,6 +1233,10 @@ def produce(profile_path, profile_sha256, pc, output, codec_path, codec_sha256, 
                     raise ValueError("overlapping produced resource extents")
                 data.extend(bytes(offset - len(data)))
                 data.extend(extent)
+            if name in selected_bundle.get("resource_alignment", {}):
+                if selected_bundle["resource_alignment"][name] != 16 or not name.endswith(".resS"):
+                    raise ValueError("unqualified native resource alignment")
+                data.extend(bytes(-len(data) % 16))
             members.append((name, 0, len(data), lambda data=data: io.BytesIO(data)))
         with W.codec(codec_path, codec_sha256) as compress, bundle_path.open("xb") as stream:
             W.write_bundle(stream, members, compress, engine=engine)

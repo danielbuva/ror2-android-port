@@ -1255,6 +1255,31 @@ class ObjectProducerTests(unittest.TestCase):
             self.assertEqual(P.B.exact(emitted.member("CAB-target.resS"), 16), bytes(8) + b"AUTHORED")
             self.assertEqual(P.B.sha(pc / "source.bundle"), before)
 
+    def test_optional_native_resource_padding_preserves_source_extent(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            pc, path, pack, profile, row, serialized = packed_fixture(root)
+            row["resource"]["stream"]["offset"] = 9
+            (pack / "index.jsonl").write_text(json.dumps(row) + "\n")
+            receipt = json.loads((pack / "result.json").read_text())
+            receipt["outputs"]["index.jsonl"] = {"bytes": (pack / "index.jsonl").stat().st_size, "sha256": P.B.sha(pack / "index.jsonl")}
+            (pack / "result.json").write_text(json.dumps(receipt))
+            resource = bytes(9) + b"AUTHORED" + bytes(15)
+            expected = io.BytesIO()
+            P.W.write_bundle(
+                expected,
+                [("CAB-target", 4, len(serialized), lambda: io.BytesIO(serialized)), ("CAB-target.resS", 0, 32, lambda: io.BytesIO(resource))],
+                literal_lz4,
+            )
+            profile["bundle"].update(resource_alignment={"CAB-target.resS": 16}, bytes=len(expected.getvalue()), sha256=digest(expected.getvalue()))
+            path.write_text(json.dumps(profile))
+            with patch.object(P.W, "codec", return_value=nullcontext(literal_lz4)):
+                result = P.produce(path, P.B.sha(path), pc, root / "padded", Path("codec"), "pin", [(pack, P.B.sha(pack / "result.json"))])
+            self.assertTrue(result["success"])
+            member = P.B.Bundle(root / "padded/payload/authored-target").member("CAB-target.resS")
+            self.assertEqual(member.read(), resource)
+            self.assertEqual((pack / "resources.bin").read_bytes(), b"AUTHORED")
+
     def test_pack_receipts_outputs_identities_and_extents_are_checked(self):
         for failure in ("receipt", "failed", "profile", "output", "extent", "missing", "duplicate", "foreign-resource"):
             with self.subTest(failure=failure), tempfile.TemporaryDirectory() as temporary:

@@ -4949,6 +4949,11 @@ The shared SDK Shader owner also accepts the standalone Legacy particle shader
 properties and absent dependencies must agree; declared SDK variants supply
 the programs through the existing compiler API.
 
+The object owner's optional `resource_alignment` map selects 16-byte trailing
+zero alignment for named `.resS` members. Resource extents and their offsets
+remain source-produced; the default packing policy is unchanged. This handles
+the measured native bundle padding after its final extent.
+
 Goolake source-scene selections use the same object and Shader owners through
 `recipe/owner-goolake-source-objects.json` and its shader remap profile. The
 Bezier owner evaluates original curves with captured build angles, then applies
