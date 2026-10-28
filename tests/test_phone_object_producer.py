@@ -722,7 +722,7 @@ class ObjectProducerTests(unittest.TestCase):
                     P.check_preload_dependencies(sources, profiles, [dependency | change])
 
     def test_original_preload_component_requires_unique_reciprocal_membership(self):
-        for kind, class_id, size in (("Rigidbody", 54, 36), ("Transform", 4, 68)):
+        for kind, class_id, size in (("Rigidbody", 54, 36), ("Transform", 4, 68), ("Animator", 95, 56)):
             self.check_preload_component(kind, class_id, size)
 
     def check_preload_component(self, kind, class_id, size):

@@ -4955,6 +4955,15 @@ verification. The original PC player registry can therefore supply MonoScripts
 absent from Addressables bundles. Explicit original roots, pinned selectors,
 fresh output and process-exit teardown retain the existing owner lifecycle.
 
+`script_identity.pointer_script_schema` supports the object owner's explicit
+`managed_pointer_schema` policy for a build-added class with one object-reference
+field. An original MonoScript, pinned original CLR assemblies and original native
+base/pointer prototypes supply identity, field semantics and transfer flags.
+Setup uses explicit original/SDK roots and symbolic source selectors. The owner
+checks properties against the original MonoScript, rechecks input pins and
+releases CLR metadata on exit; receipts retain consumed assembly hashes. No
+generated tree or original implementation becomes a recipe input or runtime owner.
+
 ITDampcave complete scene selections use the existing object/Shader owners through
 `recipe/owner-itdampcave-whole-objects.json` and matching post-processing/Standard
 profiles. Original Dampcavesimple resources supply post-processing identities;
