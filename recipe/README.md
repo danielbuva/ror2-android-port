@@ -4684,3 +4684,40 @@ Shader profile publication preserves qualified file bytes because object selecti
 to their SHA-256 identities. The 37 existing whole-scene Shader audit rows above now retain
 their qualified representations; structured profile contents and produced records are
 unchanged. Their original provenance/privacy/licensing audits remain applicable.
+
+## Intro, Outro, PromoRailgunner, Voidoutro and Goolake complete selections (2026-10-28)
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-intro-whole-objects.json` | `1b489277f5e0f1c36ed62ebd2d312be59b7227aaa18d840caf47b26c83d1bc30` |
+| `owner-intro-whole-standard-shaders.json` | `8de2632786c035a1f4d14f17e7b1b791161a262a49a0cb79a28c1de0f6f76537` |
+| `owner-intro-whole-postprocess-shaders.json` | `8bdbbacfabe38d510fe51281eb539ee090520b95815500268fce92fb88c2899b` |
+| `owner-intro-director-records.json` | `48c603ad0fc7e48fd392b9a3ca98b7b1099c8fbc051d8dbee0e34410397a5caf` |
+| `owner-outro-whole-objects.json` | `f7222172230ff961dcf9df9e01cfaf3c49c5cca77451cddec66a79d0754a6a86` |
+| `owner-outro-whole-standard-shaders.json` | `071612d2d698a5a9a888e8011c2b9ba61c2e2849fca43be01fe990914b500586` |
+| `owner-outro-whole-postprocess-shaders.json` | `ac901312c73648ff7a69474cd46cc96e9c1e5c8f156e3a0b17c58a3e6ded587e` |
+| `owner-outro-director-records.json` | `c197ee4c189c077d4bed6f829ffec2f840e5390c55fc85f960907a49df5292f2` |
+| `owner-promorailgunner-whole-objects.json` | `cd701336853ba2f7d6fbdc31993536aa8aa945322bd173da6c5d2bdb190d9717` |
+| `owner-promorailgunner-whole-standard-shaders.json` | `83f35d4aa060d96397cb805364bf8ef8e8ff4bed36a89ebde6b960c7ac88ec0c` |
+| `owner-promorailgunner-whole-postprocess-shaders.json` | `151995096acce879007a27a352a880c65c363d20a3b5b03552a6d9b5d9dddcbe` |
+| `owner-promorailgunner-director-records.json` | `8650ff9af49eb78e9f742ee8ae64a9c2af36dad4334ef8b89d05c24ea700f216` |
+| `owner-voidoutro-whole-objects.json` | `3214fac0283fc9d8b03ab9c43e0d2ffc19682e92b2b5dee7fa2945561befb4dd` |
+| `owner-voidoutro-whole-standard-shaders.json` | `cc29702a3737f8da1448b653838914a9934f6f7b7bfdda69e5c6e929718a9aec` |
+| `owner-voidoutro-whole-postprocess-shaders.json` | `a4f65b9fe72339efb40bda7db0fb422abd365aa6881c9f051ffc65051b6b37b3` |
+| `owner-voidoutro-whole-particles-shaders.json` | `864c09f923538e53efb9a8223779f1804ca826122f184ea6c051d772d4dd918a` |
+| `owner-voidoutro-director-records.json` | `68dcef75464391ddda32bd0a848ad8d99954d3a9e46377fc7073d33b545ee71e` |
+| `owner-goolake-whole-objects.json` | `e6a07d5d74992bce4e5886bc5121db3d12374b86143a78b1c52f63cd2d11185d` |
+| `owner-goolake-whole-standard-shaders.json` | `447916fb9ecf8b3cb4985f7f7cc6c28c80d4d937f0b7785f8c85b813c1ecf2ec` |
+
+Manual provenance, privacy, licensing and sensitive-content audit: profiles contain original
+input selectors, file/body hashes, checked pointer relationships and authored import policies.
+The existing animation packs supply clips/controllers; original Timeline assets retain their
+script identity and differ only through checked references and the shipped properties-hash
+owner. Director profiles use the existing PropertyName importer. Goolake retains the original
+Dampcave Rigidbody/GameObject preload witness. Voidoutro uses the existing explicit
+`_ALPHAMODULATE_ON` stripping policy qualified for Skymeadow spine; original keyword order
+and compiled programs remain source-derived. Shader and Director profile bytes preserve the
+qualified digests used by the object selections. No original body, curve, scalar array, pixel,
+program, copied source, private path or credential is included. Every object, all ten serialized
+members and all five compressed bundles are host raw-exact to J850. Phone production,
+installation and original scene behavior remain open.

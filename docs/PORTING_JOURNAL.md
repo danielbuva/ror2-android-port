@@ -869,3 +869,18 @@ byte representations of 37 Shader profiles so their digests match object pack re
 profile semantics and previously qualified outputs are unchanged. No passed run is replayed.
 Focused schema/object contracts and publication-reference checks pass. Phone production,
 installation and original runtime behavior remain open; accepted APK unchanged.
+
+## J1248 — Complete five source-derived animation and Goolake scenes
+
+2026-10-28. Existing clip, Timeline/Director and Shader owners complete five bundles;
+Goolake also retains the original Dampcave Rigidbody preload witness. All objects,
+ten serialized members and compressed bundles are raw-exact to J850:
+intro: 3,604 objects, 2,229,711 B, `ee47abd2d4dc8002f7e0e2f245719799823f17f465bb9a7071e9ac7493665e03`.
+outro: 16,303 objects, 10,967,929 B, `1711e810050fcf57896abc837f07913d4a7ca7bc1e51fa8a976b3ac177b747d0`.
+promorailgunner: 6,248 objects, 5,712,543 B, `9d1e5f4f8a9806aae1e211a9ac2fb36a50d125f77b2d5f006869980362e4f1e7`.
+voidoutro: 72,668 objects, 23,690,268 B, `54893863a2b8ad76fdc8758b092c54e47936614407e2ff9edd359bf1dd680eb1`.
+goolake: 13,043 objects, 7,660,602 B, `ab9807e93f62dd10a3ae489238d3a4a98e4dc23363a00d55a8d4b53220716e30`.
+Profiles: `recipe/owner-{intro,outro,promorailgunner,voidoutro,goolake}-*.json`.
+Evidence (ignored): `work/coordination/orchestrator/scenes/<name>-final-v*/` (Voidoutro v2; others v1).
+Readiness becomes 683/705 available, 678 raw-exact, 22 missing. Passed runs are not replayed.
+Phone production, installation and original scene behavior remain open; accepted APK unchanged.
