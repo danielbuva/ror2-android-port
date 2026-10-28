@@ -4948,6 +4948,13 @@ on Android is byte-exact to J850, with thermal and scratch/display/lease cleanup
 receipts in `work/coordination/p1-colorgrade-phone-v1/device-source-v4/`.
 Complete-cohort production and ordinary app/install/update gates remain open.
 
+The existing `object_produce.py` source reader also accepts an original native
+serialized file with its filename as the member identity. Original file/body
+hashes and type metadata retain the input contract, including before/after
+verification. The original PC player registry can therefore supply MonoScripts
+absent from Addressables bundles. Explicit original roots, pinned selectors,
+fresh output and process-exit teardown retain the existing owner lifecycle.
+
 ITDampcave complete scene selections use the existing object/Shader owners through
 `recipe/owner-itdampcave-whole-objects.json` and matching post-processing/Standard
 profiles. Original Dampcavesimple resources supply post-processing identities;
