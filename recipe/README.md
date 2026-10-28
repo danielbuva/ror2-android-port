@@ -4721,3 +4721,24 @@ qualified digests used by the object selections. No original body, curve, scalar
 program, copied source, private path or credential is included. Every object, all ten serialized
 members and all five compressed bundles are host raw-exact to J850. Phone production,
 installation and original scene behavior remain open.
+
+## Lakes, Lakesnight and Village source-scene selections (2026-10-28)
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-lakes-source-objects.json` | `06038b6c2f1b2430468a34982217335895b20abb9ba56144eba52177cffcbfe0` |
+| `owner-lakes-source-lab-standard-shaders.json` | `5c07fb48414eca3d3842b2c0e8a8a096345dc4e7b2ef994ee8f56dc9e230bb28` |
+| `owner-lakesnight-source-objects.json` | `32be87ed851edb32a1deb0e59c92b287662a65a27e03657f4fdaab8022f97ffd` |
+| `owner-lakesnight-source-lab-standard-shaders.json` | `5c3dc310f61866139b766abe07c4d796bd229673240b8c55d54fea5eefcdac60` |
+| `owner-village-source-objects.json` | `8aa6fe590e0cf1d983f9538ca27077e193cd0ea77e44727b5ac4891773ee13de` |
+| `owner-village-source-lab-standard-shaders.json` | `ae4698a1b89b659349a047b7262e944030fa47cabc3dafee68dd5a96f51cd24c` |
+| `owner-village-source-lab-postprocess-shaders.json` | `8d75bbdda25d9975348060f716d92386d6b211e21aefe887f7c15523e607f5f5` |
+
+Manual provenance, privacy, licensing and sensitive-content audit: profiles contain original
+input selectors, file/body hashes, checked pointer relationships, SDK/tool pins and authored
+import policies only. Retained source selections now use the shipped generic original-body,
+component, properties-hash and animated-wind owners. Shader programs come from the existing
+SDK/exporter owners. Qualified Shader profile bytes preserve object pack reference digests.
+No original body, curve, scalar array, pixel, program, copied source, private path or credential
+is included. All 58,555 objects, six serialized members and three compressed bundles are
+host raw-exact to J850. Phone production, installation and original behavior remain open.
