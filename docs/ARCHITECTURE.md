@@ -5002,3 +5002,12 @@ profiles, source-produced packs and fresh output directories set up production; 
 exit releases producers while receipts persist. The writer exposes the five corresponding
 `payload/whole-scene-*` bundles. All objects, ten serialized members and five compressed
 bundles are host raw-exact to J850. Phone production and original runtime remain open.
+
+Lakes, Lakesnight and Village source-scene selections use `object_produce.py` and the
+existing Shader owners through `recipe/owner-{lakes,lakesnight,village}-source-objects.json`
+and corresponding `owner-*-source-lab-*-shaders.json` profiles. Retained original selectors
+use the shipped component, properties-hash and animated-wind import policies. Explicit
+original/SDK/tool roots, pinned profiles, source-produced packs and fresh output directories
+set up production; process exit releases producers while receipts persist. The writer exposes
+`payload/{lakes,lakesnight,village}-source-lab`. All 58,555 objects, six serialized members
+and three compressed bundles are host raw-exact to J850. Phone/runtime gates remain open.

@@ -884,3 +884,15 @@ Profiles: `recipe/owner-{intro,outro,promorailgunner,voidoutro,goolake}-*.json`.
 Evidence (ignored): `work/coordination/orchestrator/scenes/<name>-final-v*/` (Voidoutro v2; others v1).
 Readiness becomes 683/705 available, 678 raw-exact, 22 missing. Passed runs are not replayed.
 Phone production, installation and original scene behavior remain open; accepted APK unchanged.
+
+## J1249 — Complete Lakes, Lakesnight and Village source bundles
+
+2026-10-28. Existing object/Shader owners complete retained original source selections;
+all 58,555 objects, six serialized members and compressed bundles are raw-exact to J850:
+lakes-source-lab: 5,872,064 B, `cc6cb6cd9274319c0d952c383ab669d9c0f27813edeaef7d19245b4f55b09359`.
+lakesnight-source-lab: 5,425,855 B, `602777da9d968b225fc5e0a3b0d6c96007b56cf7a8a1eb86b9bf943ed57017c9`.
+village-source-lab: 8,266,359 B, `27535c91a67e7a006c0018aea29404b8cac06e8342a068418e2c8f51028cce4f`.
+Profiles: `recipe/owner-{lakes,lakesnight,village}-source-*.json`.
+Evidence (ignored): `work/coordination/orchestrator/scenes/<bundle>-final-v1/`.
+Readiness becomes 686/705 available, 681 raw-exact, 19 missing. Passed runs are not replayed.
+Phone production, installation and original scene behavior remain open; accepted APK unchanged.
