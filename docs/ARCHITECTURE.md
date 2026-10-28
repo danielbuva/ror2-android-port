@@ -102,6 +102,9 @@ its SDK script metadata. `director_deck` selects original category/card spans fo
 the authored `recipe/deck-transforms.json` decks. Original weights and restrictions
 remain source-owned; explicit omissions use managed defaults, with non-elite
 source defaults checked before emission. No generated YAML supplies the body.
+The named `omit_run_presence_counters` policy removes the original RunPresence
+schema's two trailing cached counters after checking their zero values; all
+preceding source fields and SDK-derived script identity remain owned here.
 Explicit record-pack directory/receipt pins supply already
 produced texture bodies and resources; the owner verifies them before/after,
 assembles resource extents, and generates each asset's rooted container preloads.

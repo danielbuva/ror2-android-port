@@ -29,6 +29,26 @@ RECORD_FIXTURE = load("record_bundle_fixture", ROOT / "tests/test_phone_record_p
 
 
 class ProducedRecordRelocationTests(unittest.TestCase):
+    def test_run_presence_projection_retains_source_metadata_before_zero_counters(self):
+        identity = P.module("script_identity", ROOT / "scripts/lab/script_identity.py")
+        schema = FIXTURE.node(
+            "Base",
+            kind="MonoBehaviour",
+            children=[
+                FIXTURE.node("retained", 4, kind="float"),
+                FIXTURE.node("cachedActiveCount", 4, kind="int"),
+                FIXTURE.node("cachedInActiveCount", 4, kind="int"),
+            ],
+        )
+        stream = io.BytesIO(RECORD_FIXTURE.serialized(bytes(12), schema, class_id=114))
+        stream.size = len(stream.getvalue())
+        tree = P.W.read_serialized(stream)["types"][0]["tree"]
+        source = identity.tree_nodes(tree)
+        projected = identity.tree_nodes(P.omit_run_presence_counters(tree, identity))
+        self.assertEqual(projected, source[:2])
+        with self.assertRaisesRegex(ValueError, "counter schema drift"):
+            P.omit_run_presence_counters(tree.replace(b"cachedActiveCount", b"cachedOtherXCount"), identity)
+
     def test_director_deck_selects_source_spans_and_defaults_only_authored_omissions(self):
         card = FIXTURE.node(
             "data",

@@ -848,6 +848,17 @@ def omit_character_master_field(tree, identity_owner):
     return struct.pack("<II", count - 1, length - len(suffix)) + tree[8 : end - 32] + tree[end : -len(suffix)]
 
 
+def omit_run_presence_counters(tree, identity_owner):
+    """Retain the original RunPresence fields preceding its two cached counters."""
+    nodes = identity_owner.tree_nodes(tree)
+    if [(n["name"], n["type"], n["level"], n["size"]) for n in nodes[-2:]] != [
+        ("cachedActiveCount", "int", 1, 4),
+        ("cachedInActiveCount", "int", 1, 4),
+    ]:
+        raise ValueError("original RunPresence cached counter schema drift")
+    return identity_owner._tree(nodes[:-2])
+
+
 def script_fields(body):
     """Read original release MonoScript identity and its properties-hash extent."""
     stream = io.BytesIO(body)
@@ -1285,7 +1296,8 @@ def produce(profile_path, profile_sha256, pc, output, codec_path, codec_sha256, 
                     selectors = selected["properties_hash"]
                     omit_master = selected.get("omit_character_master_unkillable", False)
                     omit_alpha = selected.get("omit_animate_shader_alpha_legacy_fields", False)
-                    key = tuple(selectors["script"]), tuple(selectors["behaviour"]), omit_master, omit_alpha
+                    omit_presence = selected.get("omit_run_presence_counters", False)
+                    key = tuple(selectors["script"]), tuple(selectors["behaviour"]), omit_master, omit_alpha, omit_presence
                     if key not in properties:
                         script, script_type = source_record(sources, selectors["script"])
                         original_behaviour, behaviour_type = source_record(sources, selectors["behaviour"])
@@ -1302,6 +1314,10 @@ def produce(profile_path, profile_sha256, pc, output, codec_path, codec_sha256, 
                                 raise ValueError("legacy schema requires original AnimateShaderAlpha")
                             _, schema = legacy_animate_fields(original_behaviour, schema, identity_owner)
                             schema = legacy_animate_hash_tree(schema, sdk_tree, identity_owner)
+                        if omit_presence:
+                            if omit_presence is not True or names != ("RunPresence", "RoR2", "RoR2.dll"):
+                                raise ValueError("cached counter omission requires original RunPresence")
+                            schema = omit_run_presence_counters(schema, identity_owner)
                         properties[key] = identity_owner.properties_hash(*names, schema, sdk_tree)
                     value = properties[key]
                     if typ["class_id"] == 115:
@@ -1314,6 +1330,11 @@ def produce(profile_path, profile_sha256, pc, output, codec_path, codec_sha256, 
                                 raise ValueError("original CharacterMaster final value drift")
                             body = body[:-4]
                             typ["tree"] = omit_character_master_field(typ["tree"], identity_owner)
+                        if omit_presence:
+                            if body[-8:] != bytes(8):
+                                raise ValueError("original RunPresence cached counters must be zero")
+                            body = body[:-8]
+                            typ["tree"] = omit_run_presence_counters(typ["tree"], identity_owner)
                         typ["hash"] = value
                     else:
                         raise ValueError("script properties require MonoScript or MonoBehaviour")
