@@ -281,7 +281,7 @@ def omit_surface_effects(body, tree):
     return bytes(result)
 
 
-def normalize_exported_prefab_name(body):
+def normalize_exported_prefab_name(body, authored_root=None):
     """Apply the pinned exporter's filename projection to a prefab root name."""
     stream = io.BytesIO(body)
     count = B.unpack(stream, "<I")[0]
@@ -295,6 +295,12 @@ def normalize_exported_prefab_name(body):
     tail = B.exact(stream, 3)
     if stream.tell() != len(body):
         raise ValueError("original prefab GameObject tail drift")
+    if authored_root is not None:
+        # nova_bridge.stage_enemy_spine extracts one original scene director
+        # into this authored prefab; Unity uses the prefab filename at its root.
+        if authored_root != "EnemyClosure/FastDirector.prefab" or name != "Director":
+            raise ValueError("unknown authored prefab root or original name")
+        name = "FastDirector"
     name = name.replace("(Clone)", "").replace("(Instance)", "").strip() or "GameObject"
     name = "".join("_" if char in ",[]:/" or ord(char) < 32 else char for char in name)
     result = io.BytesIO()
@@ -1234,6 +1240,10 @@ def produce(profile_path, profile_sha256, pc, output, codec_path, codec_sha256, 
                         if typ["class_id"] != 1 or selected["normalize_exported_prefab_name"] is not True:
                             raise ValueError("exported prefab name requires an original GameObject")
                         body = normalize_exported_prefab_name(body)
+                    if "authored_prefab_root" in selected:
+                        if typ["class_id"] != 1 or selected["authored_prefab_root"] != "EnemyClosure/FastDirector.prefab":
+                            raise ValueError("authored prefab root requires the named original GameObject")
+                        body = normalize_exported_prefab_name(body, selected["authored_prefab_root"])
                     if "inactive_global_owner" in selected:
                         if typ["class_id"] != 1:
                             raise ValueError("global suppression requires an original GameObject")

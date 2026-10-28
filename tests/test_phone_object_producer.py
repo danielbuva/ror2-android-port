@@ -1268,6 +1268,11 @@ class ObjectProducerTests(unittest.TestCase):
         original = prefix + string("  Variant, One(Clone)  ") + tail
         expected = prefix + string("Variant_ One") + tail
         self.assertEqual(P.normalize_exported_prefab_name(original), expected)
+        director = prefix + string("Director") + tail
+        self.assertEqual(
+            P.normalize_exported_prefab_name(director, "EnemyClosure/FastDirector.prefab"),
+            prefix + string("FastDirector") + tail,
+        )
 
     def test_original_windows_bundle_copy_needs_no_codec_or_comparison_supplier(self):
         with tempfile.TemporaryDirectory() as temporary:

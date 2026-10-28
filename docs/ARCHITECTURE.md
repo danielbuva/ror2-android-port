@@ -95,7 +95,10 @@ source strings in ordinal order; the original demotion policy retains its source
 order. `normalize_exported_prefab_name` projects original prefab root names through
 the pinned exporter's filename rules, preserving components, layer, tag and
 activation. Named original character/teleporter roots also use the existing
-authored suppression policy. The named `surface_effect_omissions` projection
+authored suppression policy. `authored_prefab_root` also projects the selected
+original scene Director to the already-authored `EnemyClosure/FastDirector.prefab`
+root name, preserving the component selection, layer, tag and activation.
+The named `surface_effect_omissions` projection
 applies the four effect/sound omissions from `recipe/asset-transforms.json` to
 original SurfaceDef schema spans, preserving all other source bytes and deriving
 its SDK script metadata. `director_deck` selects original category/card spans for
