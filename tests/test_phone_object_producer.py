@@ -159,6 +159,66 @@ def fixture(root):
     return pc, path, profile, bodies, target.getvalue()
 
 
+class NativeSerializedSourceTests(unittest.TestCase):
+    def test_stripped_native_metadata_uses_only_an_identical_original_schema(self):
+        for wrong_schema in (False, True):
+            with self.subTest(wrong_schema=wrong_schema), tempfile.TemporaryDirectory() as temporary:
+                root = Path(temporary)
+                pc, path, profile, _, _ = fixture(root)
+                original = P.B.Bundle(pc / "source.bundle").member("CAB-source")
+                metadata = P.W.read_serialized(original)
+                bodies = {}
+                for row in metadata["objects"]:
+                    original.seek(metadata["data_offset"] + row["offset"])
+                    bodies[row["path_id"]] = P.B.exact(original, row["bytes"])
+                metadata["trees"] = False
+                for typ in metadata["types"]:
+                    typ.pop("tree", None)
+                    typ.pop("dependencies", None)
+                native = pc / "registry.assets"
+                with native.open("wb") as stream:
+                    P.W.write_serialized(stream, metadata, lambda row: io.BytesIO(bodies[row["path_id"]]))
+                profile["sources"].append({"path": native.name, "member": native.name, "sha256": P.B.sha(native)})
+                for selected in profile["objects"]:
+                    if "source" in selected:
+                        selected["type_source"] = list(selected["source"])
+                        selected["source"][0] = 1
+                if wrong_schema:
+                    profile["objects"][2]["type_source"] = [0, 61]
+                path.write_text(json.dumps(profile))
+                if wrong_schema:
+                    with self.assertRaisesRegex(ValueError, "native source schema identity differs"):
+                        produce(path, P.B.sha(path), pc, root / "output")
+                else:
+                    self.assertTrue(produce(path, P.B.sha(path), pc, root / "output")["success"])
+
+    def test_complete_bundle_uses_hash_pinned_native_original_records(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            pc, path, profile, _, _ = fixture(root)
+            original = P.B.Bundle(pc / "source.bundle").member("CAB-source")
+            native = pc / "registry.assets"
+            native.write_bytes(original.read())
+            profile["sources"] = [{"path": native.name, "member": native.name, "sha256": P.B.sha(native)}]
+            path.write_text(json.dumps(profile))
+            result = produce(path, P.B.sha(path), pc, root / "output")
+            self.assertTrue(result["success"])
+            self.assertEqual(P.B.sha(root / "output/payload/authored-target"), profile["bundle"]["sha256"])
+            native.write_bytes(native.read_bytes() + b"drift")
+            with self.assertRaisesRegex(ValueError, "original object bundle drift"):
+                produce(path, P.B.sha(path), pc, root / "drift-output")
+
+    def test_native_member_name_must_match_the_original_file(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            pc, _, _, _, _ = fixture(root)
+            original = P.B.Bundle(pc / "source.bundle").member("CAB-source")
+            native = pc / "registry.assets"
+            native.write_bytes(original.read())
+            with self.assertRaisesRegex(ValueError, "member identity differs"):
+                P.source_member(native, "unrelated-member")
+
+
 def packed_fixture(root):
     pc, profile_path, profile, bodies, serialized = fixture(root)
     directory = root / "record-pack"

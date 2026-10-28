@@ -29,6 +29,21 @@ W, M = module("unity_write"), module("mesh_produce")
 B = W.B
 
 
+def source_member(path, member):
+    """Open an original bundle member or its named native serialized file."""
+    with path.open("rb") as stream:
+        signature = stream.read(8)
+        if signature != b"UnityFS\0":
+            if member != path.name:
+                raise ValueError("native serialized source member identity differs")
+            stream.seek(0)
+            raw = B.exact(stream, path.stat().st_size)
+            result = io.BytesIO(raw)
+            result.size = len(raw)
+            return result
+    return B.Bundle(path).member(member)
+
+
 def remap(body, references):
     """Replace checked 12-byte PPtrs; preserve every other source byte."""
     result = bytearray(body)
@@ -931,7 +946,7 @@ def produce(profile_path, profile_sha256, pc, output, codec_path, codec_sha256, 
             before = path.stat()
             if B.sha(path) != selected["sha256"]:
                 raise ValueError("original object bundle drift")
-            member = B.Bundle(path).member(selected["member"])
+            member = source_member(path, selected["member"])
             metadata = W.read_serialized(member)
             sources.append((path, before, member, metadata, {row["path_id"]: row for row in metadata["objects"]}))
         check_preload_dependencies(sources, profile["sources"], selected_bundle.get("preload_dependencies", []))
@@ -972,6 +987,15 @@ def produce(profile_path, profile_sha256, pc, output, codec_path, codec_sha256, 
                     if hashlib.sha256(body).hexdigest() != selected["source_sha256"]:
                         raise ValueError("original object body drift")
                     typ = metadata["types"][row["type_id"]]
+                    if "type_source" in selected:
+                        _, schema = source_record(sources, selected["type_source"])
+                        if (
+                            typ.get("tree")
+                            or not schema.get("tree")
+                            or any(typ.get(key) != schema.get(key) for key in ("class_id", "stripped", "script_type", "hash", "script"))
+                        ):
+                            raise ValueError("native source schema identity differs")
+                        typ = schema
                     if "custom_reflection_probe" in selected:
                         if selected["custom_reflection_probe"] is not True:
                             raise ValueError("custom reflection projection requires the named source policy")

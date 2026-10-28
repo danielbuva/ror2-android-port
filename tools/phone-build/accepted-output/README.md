@@ -114,6 +114,15 @@ production or phone qualification.
 
 ## Produce the first complete source-only bundle
 
+Original object sources may select a UnityFS member or a native serialized
+file from the owner's PC installation. Native selections name the file itself
+as `member`; the existing source-file hash, object-body hash, type metadata and
+before/after input checks apply. This lets a scene select MonoScripts from the
+original PC player registry when no Addressables bundle references those scripts.
+If that original file omits type trees, an explicit `type_source` selects the
+schema from an original bundle. Its class, native hash, script identity and
+stripping fields must match the native record before the schema can be used.
+
 `object_produce.py` currently qualifies the complete pickup-droplet and
 player-death-effect bundles from original PC records. The audited recipe contains original selectors, checked
 PPtr relationships, destination identities/dependencies and comparison hashes.
