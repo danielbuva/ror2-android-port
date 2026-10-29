@@ -1156,6 +1156,8 @@ def produce(
     manager_shaders=None,
     manager_startup=None,
     sdk_binary=None,
+    scene_profile=None,
+    scene_environment=None,
 ):
     """Write a new target tree; never use target bytes as a source provider."""
     profile_path = Path(profile_path)
@@ -1285,6 +1287,28 @@ def produce(
             result["registry_inputs"] = {str(path): {"bytes": pin[0], "sha256": pin[1]} for path, pin in registry_pins}
         elif "shared_defaults" in profile:
             raise ValueError("shared defaults require the source registry")
+        if scene_profile is not None:
+            if "registry" not in profile or "shared_defaults" not in profile or scene_environment is None:
+                raise ValueError("source default scene requires registry, shared defaults and native source environment")
+            scene = OBJECTS.module("_player_scene", Path(__file__).with_name("player_scene.py"))
+            registry_file = output / (TARGET + profile["registry"]["file"])
+            shared_file = output / (TARGET + profile["shared_defaults"]["file"])
+            produced_scene = scene.produce(
+                scene_profile[0],
+                scene_profile[1],
+                pc,
+                sdk,
+                editor_resources,
+                (registry_file, sha(registry_file)),
+                (shared_file, sha(shared_file)),
+                scene_environment,
+                output / "default-scene-source",
+            )
+            for name, row in produced_scene["files"].items():
+                shutil.copyfile(output / "default-scene-source" / name, output / (TARGET + name))
+                checked(output / (TARGET + name), (row["bytes"], row["sha256"]))
+                result["files"][TARGET + name] = row
+            result["default_scene"] = produced_scene
         if ui_profile is not None:
             if "registry" not in profile or ugui_source is None:
                 raise ValueError("source UI requires the generated registry and exact SDK UGUI source")
@@ -1384,6 +1408,12 @@ def main():
     parser.add_argument("--manager-shaders", nargs=2, metavar=("DIRECTORY", "RECEIPT_SHA256"), help="complete source-produced player Shader directory")
     parser.add_argument("--manager-startup", nargs=2, metavar=("RECEIPT", "SHA256"), help="public startup metadata receipt supplying build identity")
     parser.add_argument("--sdk-binary", type=Path, help="exact acquired ARM64 SDK executable; required for manager metadata selection")
+    parser.add_argument(
+        "--scene-profile", nargs=2, metavar=("PROFILE", "SHA256"), help="current source default-scene phase; native lighting compatibility remains open"
+    )
+    for name in ("scene-environment-result", "scene-environment-request", "scene-environment-bundle"):
+        parser.add_argument("--" + name, nargs=2, metavar=("PATH", "SHA256"), help="explicit native source environment phase input")
+    parser.add_argument("--scene-environment-images", type=Path, help="source capture face/mip directory")
     parser.add_argument("--ugui-source", type=Path, help="exact SDK com.unity.ugui Runtime/UI/Core source directory; required for source Menu")
     parser.add_argument(
         "--record-pack",
@@ -1403,6 +1433,11 @@ def main():
     )
     parser.add_argument("--output", type=Path, required=True, help="new private target-tree root; parent must exist")
     args = parser.parse_args()
+    scene_inputs = (args.scene_environment_result, args.scene_environment_request, args.scene_environment_images, args.scene_environment_bundle)
+    if any(value is not None for value in scene_inputs) and not all(value is not None for value in scene_inputs):
+        parser.error("supply all four source environment inputs together")
+    if bool(args.scene_profile) != all(value is not None for value in scene_inputs):
+        parser.error("source scene profile and complete native environment must be supplied together")
     produce(
         args.profile,
         args.profile_sha256,
@@ -1425,6 +1460,8 @@ def main():
         args.manager_shaders,
         args.manager_startup,
         args.sdk_binary,
+        args.scene_profile,
+        scene_inputs if args.scene_profile is not None else None,
     )
 
 

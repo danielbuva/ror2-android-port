@@ -1777,3 +1777,40 @@ Source UI Sprites may share one complete original texture. The UI media owner
 freshly derives its complete serialized texture for each use and permits reuse
 inside the new output tree only when file size and SHA-256 agree. A conflicting
 file or redirected path refuses generation; Sprite files remain exclusive.
+
+## Source default player scene
+
+Current `player_scene.py` constructs all 16 default-scene objects from original
+native records, public Bootstrap/Lab authoring and explicit source environment
+outputs. The original native fields and SDK declarations supply defaults; the
+producer rebinds references by provider name and allocates independent local IDs.
+It checks the actual source registry's fieldless `LabDiagnostics` properties,
+shared material names, native Cube identity and all direct references. SDK tag
+numbers are derived from the paired permitted Android code/symbol files; symbol
+files with NOBITS text never supply instruction bytes.
+
+The guarded host API emits a complete candidate. All 16 native/script type
+identities match the independent SDK reference. Thirteen records match all fields
+and relationships after reference translation; the diagnostics reference binds
+the actual source registry. Two lighting records retain generated native Android
+half-float reflection data and final ambient values. Historical raw-exactness,
+lighting equivalence and native scene loading remain unqualified.
+
+Select `--scene-profile PROFILE SHA256` on `player_data.py`, together with:
+
+- `--scene-environment-result RESULT_JSON SHA256`
+- `--scene-environment-request REQUEST_JSON SHA256`
+- `--scene-environment-bundle MATERIAL_BUNDLE SHA256`
+- `--scene-environment-images FACE_MIP_DIRECTORY`
+
+Registry/shared-default phases and the supplied SDK are required. The parent uses
+its fresh registry/shared files, retains the new `default-scene-source/` phase and
+copies/rechecks `level0`. The standalone `player_scene.py --help` exposes the same
+inputs with explicit registry/shared-file hashes. Source bundle uniforms and
+keywords must match the legitimate default sky, with complete finite face/mip
+extents, native HDR decode and request policy checked before construction.
+Readers and SDK mappings close at exit; failures retain their new output. Keep
+all generated media, records and receipts private. The host-built diagnostic
+outputs used to qualify this API are never required public converter inputs;
+phone-built tool construction and complete APK/install/update qualification remain
+open. The existing assembler gains no acceptance exemption from this feature.

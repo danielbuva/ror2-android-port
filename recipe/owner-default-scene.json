@@ -1,0 +1,183 @@
+{
+  "schema": "owner-default-scene-v1",
+  "input_id": "6af7ed94619fe1b4346974b4486afa03a8d1625a7820e92da0ff74d57208fe88",
+  "public_inputs": {
+    "player": {
+      "path": "recipe/owner-player-data.json",
+      "bytes": 174575,
+      "sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767"
+    },
+    "bootstrap": {
+      "path": "smoke/Assets/Bootstrap.unity",
+      "bytes": 5763,
+      "sha256": "a6a4f756cfc225edd41984638c4eea35cdfc3818291f976db5e03e0278ec465a"
+    },
+    "build": {
+      "path": "android/Assets/Editor/LabBuild.cs",
+      "bytes": 50114,
+      "sha256": "9cfd0aec4dd17c33c291bf8ee218b197e626a27d1182c385e337bfe09ea6b700"
+    },
+    "environment": {
+      "path": "tools/phone-build/environment/RuntimeEnvironmentProducer.cs",
+      "bytes": 11647,
+      "sha256": "60193d48b973edeea9fc100797d5b73d14d298e9d9a46e44d6262126027e0c45"
+    },
+    "scene_owner": {
+      "path": "tools/phone-build/accepted-output/player_scene.py",
+      "bytes": 19181,
+      "sha256": "b6479c45f3377c6e47393baded094b071469396d37a78eb3565ff4f5daf7f943"
+    },
+    "scene_sdk": {
+      "path": "tools/phone-build/accepted-output/scene_sdk.py",
+      "bytes": 5106,
+      "sha256": "bbd1c09f9b22b1fc6c48f39f0c214827bc49103b06c7e0d710bb3306766bae7e"
+    },
+    "sdk_arguments": {
+      "path": "tools/phone-build/accepted-output/manager_sdk.py",
+      "bytes": 5800,
+      "sha256": "0e774e6f31776c149df6a96bb08440d879354e2926becd4ee45bd75258806569"
+    }
+  },
+  "sdk": {
+    "code": {
+      "path": "Variations/il2cpp/Development/Libs/arm64-v8a/libunity.so",
+      "bytes": 60927416,
+      "sha256": "69e63737c6aa6a2159831b7d274a31b6dec3b42f6b23fd9d368ba97f655ac4af"
+    },
+    "symbols": {
+      "path": "Variations/il2cpp/Development/Symbols/arm64-v8a/libunity.sym.so",
+      "bytes": 59901112,
+      "sha256": "61bc0070c4a4378ed02a83e8e17405b3733f392a9639b17150faae78dcace403"
+    },
+    "default": {
+      "path": "Data/unity default resources",
+      "bytes": 4222168,
+      "sha256": "fcbf1c513378f79a04c9250fb1efc466f5a7d5ca9d93af961daa3e0b957859f3"
+    }
+  },
+  "sources": {
+    "scene": {
+      "path": "Risk of Rain 2_Data/level0",
+      "bytes": 32896,
+      "sha256": "86b614465595334d10d26d0e781daef8ebf43cf427b857c739e40c89251a44e2"
+    },
+    "shapes": {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-base-wispgraveyard_scenes_all_aed6652e1c5ce7a88e35d4bd65a3aed0.bundle",
+      "member": "CAB-4efe3d317b4c29113b78eb95d4f0d4b7",
+      "sha256": "76ca19b1b14aa738d9c7a3c94d34a5dc676cf4281bee6240f739febbcb323dae"
+    },
+    "shared": {
+      "path": "Risk of Rain 2_Data/sharedassets0.assets",
+      "bytes": 506080,
+      "sha256": "3d735244606be616f3ce8ed90a644d04afc9ecbe44cdc9823fb2ed8b6c081f77"
+    }
+  },
+  "templates": [
+    {
+      "class_id": 1,
+      "source": "scene",
+      "path_id": 2
+    },
+    {
+      "class_id": 4,
+      "source": "scene",
+      "path_id": 67
+    },
+    {
+      "class_id": 20,
+      "source": "scene",
+      "path_id": 71
+    },
+    {
+      "class_id": 23,
+      "source": "shapes",
+      "path_id": 35286
+    },
+    {
+      "class_id": 33,
+      "source": "shapes",
+      "path_id": 43500
+    },
+    {
+      "class_id": 65,
+      "source": "shapes",
+      "path_id": 52221
+    },
+    {
+      "class_id": 89,
+      "source": "scene",
+      "path_id": 1
+    },
+    {
+      "class_id": 104,
+      "source": "scene",
+      "path_id": 73
+    },
+    {
+      "class_id": 108,
+      "source": "scene",
+      "path_id": 74
+    },
+    {
+      "class_id": 157,
+      "source": "scene",
+      "path_id": 75
+    },
+    {
+      "class_id": 196,
+      "source": "scene",
+      "path_id": 76
+    }
+  ],
+  "environment": {
+    "width": 128,
+    "material": "Assets/SourceSky.mat",
+    "light_euler": [
+      35,
+      40,
+      0
+    ]
+  },
+  "material_id": 2,
+  "skybox_id": 3,
+  "nodes": [
+    {
+      "name": "Lab Camera",
+      "tag": "MainCamera",
+      "components": [
+        "Camera",
+        "MonoBehaviour"
+      ],
+      "background": [
+        0.04,
+        0.06,
+        0.09,
+        1
+      ]
+    },
+    {
+      "name": "Lab Light",
+      "components": [
+        "Light"
+      ],
+      "euler": [
+        35,
+        40,
+        0
+      ]
+    },
+    {
+      "name": "G1 reference cube",
+      "components": [
+        "MeshFilter",
+        "BoxCollider",
+        "MeshRenderer"
+      ],
+      "position": [
+        3,
+        0,
+        0
+      ]
+    }
+  ]
+}
