@@ -220,6 +220,7 @@ visual parity is claimed. Manual provenance/privacy review: 2026-10-24.
 | `owner-rgb-mip-textures.json` | Complete ETC1 mip-chain target cohort | Original/destination selectors, field/pixel extents, hashes, full mip counts and source JPEG/normal relationships. | No pixels, vectors, encoded blocks, SDK bytes or target frames; audit below, 2026-10-24. | Existing texture owner, native pixel/mip helper and public ETC/JPEG/Unity Crunch tools; J1110 qualifies the full host cohort, Android pending. |
 | `owner-rgba-mip-textures.json` | Full RGBA mip-chain target cohort | Original/destination selectors, field/resource extents, source import relationships and hashes. | No pixels, block literals, serialized templates or SDK bytes; audit below, 2026-10-25. | Existing texture owner plus explicit SDK/public EAC tools; J1128 host qualification, Android open. |
 | `owner-cubemap-textures.json` | 110 source-derived Cubemaps | Original face-chain selectors, field/resource extents, import relationships and hashes. | No pixels, encoded blocks, target body templates or native-probe fallback; audit below, 2026-10-25. | Existing texture owner and pinned public/SDK tools; J1128 host qualification, Android open. |
+| `owner-source-baked-reflections.json` | Two original baked HDR probes | Original record/stream selectors, hashes and storage relationships; retains all original mip bytes. | No pixels, blocks, serialized templates, private settings or generated target supplier; audit below, 2026-10-29. | Existing texture owner, opt-in `cube-preserve`; device native format support required; full-file admission open. |
 | `owner-avatars.json` | Private replay Avatar bodies (J1075) | Minimum original/destination identities, hashes, source extents and source-entry permutations. | No strings, poses, rig/geometry values, target literals or byte frames; full audit above, 2026-10-24. | Explicit PC-input-only `avatar_produce.py`; no current game-build consumer. |
 | `owner-meshes.json` | Protected mesh bodies in the private replay packet, for the included cohort only (J1070) | Original bundle/object/resource selectors, destination identities/hashes and authored import/conversion settings. | No geometry arrays, collision data, target byte frames or float literals; full audit above, 2026-10-24. Two cases remain excluded. | Explicit original-input-only `mesh_produce.py`; no current game-build consumer. |
 | `shader-postprocessing-bloom-candidate.json` | Exported one-pass Bloom and exact source-camera CopyStd placeholders | Accepted-input source/meta/resource identities, official Unity package/license hashes and pass contracts; authored camera staging pin refreshed without changing camera transforms. | Authored selection metadata only; upstream source and generated content stay local under Unity Companion License. Manual audit 2026-10-23 described above. | `shader_postprocessing_bloom`, whole-catalog preparation and catalog replay comparison; default off. |
@@ -5052,3 +5053,25 @@ canonical graph digests explicitly replace incidental exporter YAML hashes;
 the complete public profile and producer hashes bind graph provenance.
 Evidence: `work/coordination/orchestrator/stage-context-public-v2/`.
 Complete phone production and runtime compatibility remain open.
+
+## Original baked reflection retention audit (2026-10-29)
+
+`owner-source-baked-reflections.json` selects two original BC6H Cubemaps from
+the accepted legitimate installation using the existing texture profile shape.
+`cube-preserve` verifies six complete face/mip chains and retains their bytes,
+format, color space, usage and mip count. Output hashes describe independently
+rewrapped source records, not captured J850 pixels. Native Android loading,
+17,825,760 sampled float components across compressed/lossless controls and HDR
+decode vectors pass (J1260); complete scene relationships and file admission
+remain open. The qualified 110-record historical profile is unchanged.
+
+Provenance, privacy, licensing and sensitive-content audit: selectors, extents,
+hashes and minimum storage/identity relationships only. No pixel/block arrays,
+serialized body/type templates, proprietary implementation, SDK bytes, private
+settings/paths, device identifiers or credentials are published. Original input
+hashes are rechecked before success. No game/SDK redistribution, ownership,
+authentication or entitlement success is granted. Pinned AssetRipper
+TextureConverter/ExrWriter informs face/chain ownership; its exporter does not
+regenerate baked lighting. The operation consumes no codec or private fixture;
+all generated packs, APKs and raw observations stay ignored. Native BC6H support
+must be established before selecting this profile on another device.

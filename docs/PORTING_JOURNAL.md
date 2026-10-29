@@ -1027,3 +1027,18 @@ Evidence (ignored): `work/coordination/orchestrator/installer-acceptance-integra
 Ruff and 101 focused host contracts pass. No APK, phone run, key provisioning or
 release publication occurs in this integration. Host reconstruction stays 693/705;
 complete source production and the real game install/update experience remain open.
+
+## J1260 — Retain original baked HDR face and mip chains
+
+2026-10-29 UTC. The texture owner's opt-in `cube-preserve` retains BC6H/RGBAHalf
+format, color metadata and every original face/mip byte. A public recipe selects
+two original baked probes; existing 110-record production/admission is unchanged.
+Native Android IL2CPP/Vulkan loads both compressed probes and lossless controls;
+all 17,825,760 sampled float components and HDR decode vectors match the source.
+Public production independently matches both tested native bodies/resources.
+Evidence: `work/coordination/orchestrator/native-hdr-phone-abi-v6/` and
+`work/coordination/orchestrator/native-hdr-preservation-v2/`.
+SDK-only disposable probe APK: `a7357aac6670c2a73975a31b79dedb0ed9d412655011fe308b1dfe45ee01e4e3`.
+40 host checks pass (three unavailable-codec controls skip); owned probe removed,
+display asleep, lease released. Source-format support, complete scene links and
+functional file admission remain gates; readiness stays 693/705 (685 raw-exact).
