@@ -115,6 +115,8 @@ class OwnerSigningTests(unittest.TestCase):
                     Path(argv[argv.index("-keystore") + 1]).write_bytes(b"independent durable key witness")
                 elif Path(argv[0]).name == "zipalign" and "-c" not in argv:
                     shutil.copyfile(argv[-2], argv[-1])
+                elif "verify" in argv:
+                    kwargs["stdout"].write(("Signer #1 certificate SHA-256 digest: " + "a" * 64 + "\n").encode())
                 elif "sign" in argv:
                     target = Path(argv[argv.index("--out") + 1])
                     shutil.copyfile(argv[-1], target)
@@ -132,6 +134,8 @@ class OwnerSigningTests(unittest.TestCase):
                 request.write_text(json.dumps(second_request))
                 second = OWNER.sign(request, root / "second")
             self.assertTrue(first["success"] and second["success"])
+            self.assertEqual(first["signer_sha256"], "a" * 64)
+            self.assertEqual(second["signer_sha256"], first["signer_sha256"])
             self.assertTrue(first["new_owner_key"])
             self.assertFalse(second["new_owner_key"])
             self.assertEqual(sum("-genkeypair" in argv for argv in calls), 1)

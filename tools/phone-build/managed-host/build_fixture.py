@@ -273,6 +273,7 @@ try:
         classes,
         source / "ToolHostActivity.java",
         source / "OwnerInstaller.java",
+        source / "OwnerAlphaInstall.java",
         source / "OwnerUpdateState.java",
         source / "OwnerBuildService.java",
         source / "OwnerInputImport.java",

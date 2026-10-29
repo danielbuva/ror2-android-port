@@ -214,8 +214,9 @@ class OrchestrationTests(unittest.TestCase):
             release = {
                 "version": "synthetic-1",
                 "version_code": 2,
-                "application_id": "dev.ror2lab.synthetic",
-                "minimum_installer_version": 2,
+                "application_id": "dev.ror2lab.alpha",
+                "data_schema": {"writes": 1, "reads": [1]},
+                "minimum_installer_version": 3,
                 "bundle_sha256": "a" * 64,
                 "entries": {"payload/synthetic.txt": U.public().entry_dependencies(index, "payload/synthetic.txt")},
             }
@@ -223,7 +224,15 @@ class OrchestrationTests(unittest.TestCase):
             request = inputs / "update-request.json"
             U.write_json(
                 request,
-                {"action": "install-prepare", "application_id": release["application_id"], "installed_version": installed_version, "installer_version": 2},
+                {
+                    "action": "install-prepare",
+                    "application_id": release["application_id"],
+                    "installed_version": installed_version,
+                    "installed_release_version": installed_version,
+                    "installer_version": 3,
+                    "installer_package": "dev.ror2lab.phonebuildhostfixture",
+                    "installer_signer_sha256": "c" * 64,
+                },
             )
             U.write_json(
                 runtime / "release-trust.json",
@@ -237,6 +246,18 @@ class OrchestrationTests(unittest.TestCase):
             def modules(name, path):
                 return SimpleNamespace(Dispatcher=dispatch) if name == "owner_update_jobs" else module(name, path)
 
+            if installed_version:
+                U.ALPHA.reserve(
+                    inputs / "work/releases",
+                    installed_version=0,
+                    binding={
+                        "source_sha256": "a" * 64,
+                        "input_sha256": "b" * 64,
+                        "toolchain_sha256": "c" * 64,
+                        "publisher_version_code": 1,
+                        "purpose": "update",
+                    },
+                )
             attempts = []
             is_file = Path.is_file
 
@@ -265,6 +286,7 @@ class OrchestrationTests(unittest.TestCase):
                 patch.object(U.public(), "verify_envelope", return_value=release),
                 patch.object(U, "module", side_effect=modules),
                 patch.object(U, "assemble_sign", side_effect=assemble),
+                patch.object(U, "toolchain_identity", return_value="d" * 64),
                 patch.object(U.shutil, "disk_usage", return_value=SimpleNamespace(free=10 * 1024**3)),
                 patch.object(Path, "is_file", simulated_key_presence),
             ):
@@ -281,7 +303,15 @@ class OrchestrationTests(unittest.TestCase):
                 )
                 U.write_json(
                     request,
-                    {"action": "release-build", "application_id": release["application_id"], "installed_version": installed_version, "installer_version": 2},
+                    {
+                        "action": "release-build",
+                        "application_id": release["application_id"],
+                        "installed_version": installed_version,
+                        "installed_release_version": installed_version,
+                        "installer_version": 3,
+                        "installer_package": "dev.ror2lab.phonebuildhostfixture",
+                        "installer_signer_sha256": "c" * 64,
+                    },
                 )
                 with self.assertRaisesRegex(ValueError, "signing boundary"):
                     U.run(request, runtime, native, transport=Mock())
@@ -300,7 +330,15 @@ class OrchestrationTests(unittest.TestCase):
                 )
                 U.write_json(
                     request,
-                    {"action": "release-check", "application_id": release["application_id"], "installed_version": installed_version, "installer_version": 2},
+                    {
+                        "action": "release-check",
+                        "application_id": release["application_id"],
+                        "installed_version": installed_version,
+                        "installed_release_version": installed_version,
+                        "installer_version": 3,
+                        "installer_package": "dev.ror2lab.phonebuildhostfixture",
+                        "installer_signer_sha256": "c" * 64,
+                    },
                 )
                 U.run(request, runtime, native, transport=Mock())
                 self.assertEqual(json.loads((inputs / "update-state.json").read_text())["state"], "UPDATE_AVAILABLE")

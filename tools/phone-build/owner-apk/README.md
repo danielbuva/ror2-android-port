@@ -346,7 +346,7 @@ empty key map deliberately fails closed. Staging accepts an explicit
 `--release-trust` file for a maintainer-provisioned build. A key downloaded with a release is
 never trusted. Configure repository variables `PUBLISHER_KEY_ID`,
 `PUBLISHER_PUBLIC_KEY`, `PUBLIC_RELEASE_PLAN_PATH`, and optional
-`PUBLIC_MINIMUM_INSTALLER_VERSION` (default 2), and the repository secret
+`PUBLIC_MINIMUM_INSTALLER_VERSION` (default 3), and the repository secret
 `PUBLISHER_PRIVATE_KEY` with an **existing** matching publisher PEM. Protect the
 `public-release` GitHub environment and version tags. Do not put a private key in
 Git, a recipe, an artifact or a log. This implementation creates/configures no keys.
@@ -407,7 +407,7 @@ interruption recovery and save survival remain the local orchestrator's checks.
 
 ### Phone-only import and installation
 
-Installer version 2 adds a foreground-service flow: prepare the signed public
+Installer version 3 extends the version-2 foreground-service flow: prepare the signed public
 release, choose the owner's PC game directory with Android's folder picker (or
 choose a ZIP), import, then reconstruct and install. Only required files are
 copied to app-private storage. Missing paths and size/hash/version mismatches
@@ -424,7 +424,7 @@ and eight ordered `stages` (`id`, `title`, `jobs`). Stage IDs are `admission`,
 Every producer and dependency occurs once in a production stage; dependencies
 cannot follow their consumer's stage. Bindings select only admitted original
 files/directories (`.` selects the imported root). Such releases require minimum
-installer version 2. Maintainers must supply a complete reviewed source recipe;
+installer version 3 for the final alpha policy. Maintainers must supply a complete reviewed source recipe;
 this feature does not invent missing game producers or supply private replay
 packets. The assembly receipt is generated locally from verified producer outputs,
 not shipped historical target hashes or game bytes.
@@ -447,6 +447,47 @@ unprotected. Successful reconstruction hands off to the existing Android package
 session; Android may request installation consent. Updates keep the same package
 and on-device key and never clear saves. If that key is lost, export saves before
 an explicit uninstall/reinstall; the app refuses to silently replace it.
+
+
+### Alpha policy, rollback and retention
+
+Installer v3 consumes only signed alpha releases for `dev.ror2lab.alpha`, with
+minimum installer 3 and explicit `data_schema: {writes: 1, reads: [1]}` in the
+reviewed publication plan. The signed release body owns that declaration.
+`alpha_policy.py` separates publisher ordering from owner-local issued Android
+codes; every attempt burns a durable code before dispatch, and missing state,
+reuse, downgrade or exhaustion refuses. Ready receipts bind source, originals,
+toolchain, output APK/payload and certificate. An occupied identity also requires
+its independently verified local installed receipt; laboratory migration is not
+implicit. `release-rollback` uses the previous signed APK reference, checks
+compatibility, rewrites only the version and calls the same retained-key signer.
+[Policy](../../../docs/ALPHA_POLICY.md#local-retention-and-rollback-storage)
+defines exact storage retention, profile files, pruning and phone gates.
+
+The required-input JSON may remain one schema-1 manifest or use schema 2 with
+`supported` and `recognized` arrays of schema-1 complete inventories. Recognition
+never grants support. Folder/ZIP streams are fingerprinted before copying;
+ambiguous, incomplete, changed or unknown input reports the found state,
+supported labels and next action, without guessing from names. Native and Python
+validation share the existing import owners; the pipeline rechecks private files.
+
+`ProfileStore.java` performs bounded byte-preserving backup/restore.
+`ProfileRetentionProvider` exposes control only at the alpha `.retention`
+authority, authenticated by Binder UID, exact installer package and the actual
+installer public certificate pinned during the owner build. Different game and
+installer keys are supported; no shared UID or broad file provider is assumed.
+The embedded `owner-bootstrap/retention-policy.json` has `schema`,
+`installer_package`, `installer_certificate_sha256`, and `data_schema`.
+The Unity activity is unexported; its bootstrap and certificate-checked control
+provider are exported. Unity launch is blocked during recovery, and Android
+Auto Backup is disabled.
+
+The installer calls `snapshot` with explicit user intent and the current schema,
+then `status`/`verify`/`restore`/`release` with the returned snapshot token/schema.
+Only the game process reads profile bytes. A released-token status is historical
+proof, not current byte equality: recovery first verifies the actual installed
+APK and issued receipt, then finalizes without overwriting subsequent gameplay.
+All native decoding, migration and cold-start acceptance remain game/phone gates.
 
 The legacy J850 comparison profile retains its narrow startup/context regeneration
 policies. The public `owner-source-output-v1` assembly receipt instead requires

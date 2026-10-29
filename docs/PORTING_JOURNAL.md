@@ -1001,3 +1001,16 @@ Canonical synthetic fixture roots preserve strict symbolic-link checks on macOS.
 Evidence (ignored): `work/coordination/orchestrator/installer-integration-v1/`.
 No APK generated or phone used. Host reconstruction remains 693/705; a complete
 public producer plan, device install/update and saved-data survival remain open.
+
+## J1258 — Integrate owned alpha updates, rollback and profile retention
+
+2026-10-29. Existing alpha/release owners now compose with current public source
+assembly: durable owner-issued versions, same-key forward-version rollback,
+original-input fingerprinting and a certificate-bound profile-retention provider.
+Backup bytes stay inside the game UID; recovery gates Unity launch until verified.
+Source-output pins and the historical J850 metadata boundary remain strict.
+Synthetic fixture roots and test imports support host and module execution.
+Focused Python/Java retention, installer, corruption and interruption contracts pass.
+Evidence (ignored): `work/coordination/orchestrator/alpha-integration-v1/`.
+No APK or phone execution. Host reconstruction stays 693/705; complete producer
+plan, native profile/update survival and phone acceptance remain open.

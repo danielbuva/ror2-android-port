@@ -41,7 +41,9 @@ def string_pool(strings, utf8):
     )
 
 
-def patch(data, wire, *, version_code=None, application_id=None):
+def patch(data, wire, *, version_code=None, application_id=None, retention=False):
+    if type(retention) is not bool or (retention and (application_id != "dev.ror2lab.alpha" or version_code is None)):
+        raise ValueError("retention requires explicit alpha identity and issued version")
     if version_code is not None and (type(version_code) is not int or not 1 <= version_code <= 2100000000):
         raise ValueError("owner version code must be between 1 and 2100000000")
     if application_id is not None and (
@@ -226,6 +228,79 @@ def patch(data, wire, *, version_code=None, application_id=None):
     changed = prefix + b"".join(raw for _, raw in existing) + original[offset + count * stride :]
     struct.pack_into("<I", changed, 4, len(changed))
     activities[0]["start"] = bytes(changed)
+    if retention:
+
+        def android_attributes(node):
+            raw = node["start"]
+            header = struct.unpack_from("<H", raw, 2)[0]
+            relative, stride, count = struct.unpack_from("<HHH", raw, header + 8)
+            return [(at, struct.unpack_from("<IIIHBBI", raw, at)) for at in (header + relative + i * stride for i in range(count))]
+
+        for node in (applications[0], activities[0]):
+            forbidden = {"backupAgent", "process"} if node is applications[0] else {"process"}
+            if any(row[0] == android and strings[row[1]] in forbidden for _, row in android_attributes(node)):
+                raise ValueError("alpha retention refuses custom backup agents or a separate Unity process")
+        if any(isinstance(node, dict) and node.get("tag") == "activity-alias" for node in applications[0]["children"]):
+            raise ValueError("alpha retention refuses activity aliases that could bypass the launch gate")
+
+        def attribute_id(text, resource):
+            key = index(text)
+            resources.extend([0] * max(0, key + 1 - len(resources)))
+            if resources[key] not in (0, resource):
+                raise ValueError("retention attribute resource differs")
+            resources[key] = resource
+            return key
+
+        allow_backup = attribute_id("allowBackup", 16843392)
+        authorities = attribute_id("authorities", 16842776)
+        multiprocess = attribute_id("multiprocess", 16842771)
+        grant = attribute_id("grantUriPermissions", 16842779)
+        attribute_id("name", 16842755)
+        raw = applications[0]["start"]
+        header = struct.unpack_from("<H", raw, 2)[0]
+        relative, stride, count = struct.unpack_from("<HHH", raw, header + 8)
+        offset = header + relative
+        rows = [(i, raw[offset + i * stride : offset + (i + 1) * stride]) for i in range(count)]
+        backup_rows = [i for i, row in rows if struct.unpack_from("<II", row) == (android, allow_backup)]
+        if len(backup_rows) > 1:
+            raise ValueError("duplicate backup attribute")
+        backup = struct.pack("<IIIHBBI", android, allow_backup, NONE, 8, 0, 0x12, 0)
+        rows = [(i, backup if i in backup_rows else row) for i, row in rows]
+        if not backup_rows:
+            rows.append((-1, backup))
+        rows.sort(key=lambda item: resources[struct.unpack_from("<I", item[1], 4)[0]])
+        prefix = bytearray(raw[:offset])
+        struct.pack_into("<H", prefix, header + 12, len(rows))
+        for special in (header + 14, header + 16, header + 18):
+            previous = struct.unpack_from("<H", prefix, special)[0]
+            if previous:
+                struct.pack_into("<H", prefix, special, next(i + 1 for i, row in enumerate(rows) if row[0] == previous - 1))
+        changed = prefix + b"".join(row for _, row in rows) + raw[offset + count * stride :]
+        struct.pack_into("<I", changed, 4, len(changed))
+        applications[0]["start"] = bytes(changed)
+        provider = index("provider")
+        provider_name = index("dev.ror2owner.bootstrap.ProfileRetentionProvider")
+        authority = index(application_id + ".retention")
+        for node in applications[0]["children"]:
+            if isinstance(node, dict) and node.get("tag") == "provider":
+                if any(
+                    row[0] == android
+                    and row[5] == 3
+                    and (
+                        (row[1] == name and strings[row[6]] == strings[provider_name])
+                        or (row[1] == authorities and strings[authority].lower() in [value.strip().lower() for value in strings[row[6]].split(";")])
+                    )
+                    for _, row in android_attributes(node)
+                ):
+                    raise ValueError("retention provider collides with existing component")
+        values = [(name, 3, provider_name), (exported, 0x12, 1), (multiprocess, 0x12, 0), (authorities, 3, authority), (grant, 0x12, 0)]
+        attrs = b"".join(
+            struct.pack("<IIIHBBI", android, key, value if kind == 3 else NONE, 8, 0, kind, value)
+            for key, kind, value in sorted(values, key=lambda item: resources[item[0]])
+        )
+        opening = struct.pack("<HHIII", 0x102, 16, 36 + len(attrs), 1, NONE) + struct.pack("<IIHHHHHH", NONE, provider, 20, 20, len(values), 0, 0, 0) + attrs
+        closing = struct.pack("<HHIIIII", 0x103, 16, 24, 1, NONE, NONE, provider)
+        applications[0]["children"].append({"start": opening, "children": [], "end": closing})
     pool = string_pool(strings, bool(struct.unpack_from("<I", data, start + 16)[0] & 0x100))
     resource_map = struct.pack("<HHI", 0x180, 8, 8 + 4 * len(resources)) + struct.pack("<" + "I" * len(resources), *resources)
 
@@ -236,3 +311,51 @@ def patch(data, wire, *, version_code=None, application_id=None):
 
     body = b"".join(encode(n) for n in roots)
     return struct.pack("<HHI", 3, 8, len(body) + 8) + body
+
+
+def reversion(data, wire, *, version_code, application_id="dev.ror2lab.alpha"):
+    """Change only an existing alpha's literal version, preserving bootstrap/data.
+
+    Used for same-key forward-version rollback. This is not the bootstrap patch
+    operation and cannot change identity or allow an Android downgrade.
+    """
+    if application_id != "dev.ror2lab.alpha" or type(version_code) is not int or not 1 <= version_code <= 2100000000:
+        raise ValueError("bounded positive alpha versionCode required")
+    if len(data) < 8 or struct.unpack_from("<HHI", data) != (3, 8, len(data)):
+        raise ValueError("invalid complete binary Android manifest")
+    chunks = list(wire._chunks(data, 8, len(data)))
+    pools = [row for row in chunks if row[0] == 1]
+    if len(pools) != 1:
+        raise ValueError("one manifest string pool required")
+    strings = wire._strings(data, *pools[0][1:])
+    packages, versions, manifests = [], [], 0
+    for kind, start, header, size in chunks:
+        if kind != 0x102:
+            continue
+        if header != 16 or size < 36:
+            raise ValueError("invalid manifest element")
+        _, tag, relative, stride, count = struct.unpack_from("<IIHHH", data, start + header)
+        if tag >= len(strings) or stride != 20 or relative < 20 or header + relative + count * stride > size:
+            raise ValueError("invalid manifest attribute table")
+        if strings[tag] != "manifest":
+            continue
+        manifests += 1
+        for i in range(count):
+            at = start + header + relative + i * stride
+            ns, name, _, value_size, reserved, atype, value = struct.unpack_from("<IIIHBBI", data, at)
+            if name >= len(strings) or value_size != 8 or reserved:
+                raise ValueError("invalid manifest attribute")
+            if ns == NONE and strings[name] == "package":
+                if atype != 3 or value >= len(strings):
+                    raise ValueError("literal alpha package required")
+                packages.append(strings[value])
+            if ns < len(strings) and strings[ns] == ANDROID and strings[name] == "versionCode":
+                if atype not in (0x10, 0x11):
+                    raise ValueError("literal alpha version required")
+                versions.append((at, value))
+    if manifests != 1 or packages != [application_id] or len(versions) != 1 or version_code <= versions[0][1]:
+        raise ValueError("retained alpha identity/version differs; forward version required")
+    changed = bytearray(data)
+    struct.pack_into("<I", changed, versions[0][0] + 8, NONE)
+    struct.pack_into("<I", changed, versions[0][0] + 16, version_code)
+    return bytes(changed)

@@ -62,7 +62,8 @@ def release_body():
         "version": "alpha-2",
         "version_code": 2,
         "application_id": "dev.ror2lab.alpha",
-        "minimum_installer_version": 1,
+        "minimum_installer_version": 3,
+        "data_schema": {"writes": 1, "reads": [1]},
         "bundle_sha256": "f" * 64,
         "entries": {"apk/example.txt": {"recipe_sha256": "a" * 64, "producer_sha256": "b" * 64}},
     }
@@ -251,7 +252,75 @@ class PublicBundleTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "lacks installer/assembly/toolchain"):
             PUBLIC.validate_publication(Path(self.temporary.name) / "public.zip", body)
 
+    def test_production_identity_installer_and_native_schema_refuse_before_key_access(self):
+        body = release_body()
+        PUBLIC.validate_alpha_release(body)
+        for change in (
+            {"application_id": "dev.ror2lab.arm64"},
+            {"minimum_installer_version": 2},
+            {"data_schema": {"writes": 2, "reads": [1, 2]}},
+            {"data_schema": {"writes": 1, "reads": [1, 2]}},
+            {"data_schema": {"writes": True, "reads": [1]}},
+            {"data_schema": None},
+        ):
+            value = dict(body, **change)
+            with self.subTest(change=change), patch.object(PUBLIC.subprocess, "run") as run:
+                with self.assertRaises(ValueError):
+                    PUBLIC.sign_envelope(value, "unused", "NOT-PROVISIONED", b"no public material needed")
+                run.assert_not_called()
+                with self.assertRaises(ValueError):
+                    PUBLIC.validate_publication(Path(self.temporary.name) / "absent.zip", value)
+
+    def test_schema_has_one_signed_authority_and_required_source_closure(self):
+        required = {"tools/phone-build/owner-apk/" + name for name in ("alpha_policy.py", "ProfileStore.java", "ProfileRetentionProvider.java")}
+        required.add("tools/phone-build/managed-host/OwnerAlphaInstall.java")
+        self.assertTrue(required <= PUBLIC.PUBLISHING_SOURCE_FILES)
+        self.plan["data_schema"] = {"writes": 1, "reads": [1]}
+        result = self.build()
+        body = dict(release_body(), entries=result["entries"])
+        PUBLIC.validate_bundle_index(result["index"], body)
+        duplicated = dict(result["index"], data_schema={"writes": 2, "reads": [2]})
+        with self.assertRaisesRegex(ValueError, "index schema"):
+            PUBLIC.validate_bundle_index(duplicated, body)
+        self.plan["data_schema"] = {"writes": 2, "reads": [2]}
+        with self.assertRaisesRegex(ValueError, "migration"):
+            self.build("unsupported.zip")
+        self.assertFalse((Path(self.temporary.name) / "unsupported.zip").exists())
+
+    def test_cli_missing_or_broader_schema_refuses_before_creating_output(self):
+        for position, schema in enumerate((None, {"writes": 2, "reads": [1, 2]})):
+            if schema is not None:
+                self.plan["data_schema"] = schema
+            (self.root / "plan.json").write_text(json.dumps(self.plan))
+            self.commit()
+            output = Path(self.temporary.name) / ("rejected-" + str(position))
+            args = [
+                "public_release.py",
+                "--repository",
+                str(self.root),
+                "--plan",
+                "plan.json",
+                "--output",
+                str(output),
+                "--version",
+                "alpha",
+                "--version-code",
+                "2",
+                "--key-id",
+                "unused",
+                "--signing-key",
+                "NOT-PROVISIONED",
+                "--public-key",
+                "NOT-PROVISIONED",
+            ]
+            with patch.object(sys, "argv", args), patch.object(PUBLIC, "sign_envelope") as sign:
+                with self.assertRaises(ValueError):
+                    PUBLIC.main()
+                sign.assert_not_called()
+            self.assertFalse(output.exists())
+
     def test_cli_emits_detached_signature_assets_not_envelope(self):
+        self.plan["data_schema"] = {"writes": 1, "reads": [1]}
         (self.root / "plan.json").write_text(json.dumps(self.plan))
         self.commit()
         public = Path(self.temporary.name) / "public.pem"
@@ -289,7 +358,12 @@ class PublicBundleTests(unittest.TestCase):
         validate.assert_called_once()
         self.assertEqual(set(path.name for path in output.iterdir()), {"release.json", "release.sig", "public-tools.zip"})
         self.assertEqual(PUBLIC.load_json((output / "release.json").read_bytes())["version_code"], 2)
-        self.assertNotIn("signature", PUBLIC.load_json((output / "release.json").read_bytes()))
+        body = PUBLIC.load_json((output / "release.json").read_bytes())
+        self.assertEqual(body["data_schema"], {"writes": 1, "reads": [1]})
+        self.assertEqual(body["minimum_installer_version"], 3)
+        with zipfile.ZipFile(output / "public-tools.zip") as archive:
+            self.assertNotIn("data_schema", PUBLIC.load_json(archive.read("bundle-index.json")))
+        self.assertNotIn("signature", body)
         self.assertEqual(PUBLIC.load_json((output / "release.sig").read_bytes())["key_id"], "test-public-vector")
 
 

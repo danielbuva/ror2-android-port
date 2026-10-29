@@ -28,7 +28,7 @@ public final class ToolHostActivity extends Activity {
     private final OwnerUpdateState model = new OwnerUpdateState();
     private final android.os.Handler handler = new android.os.Handler(android.os.Looper.getMainLooper());
     private TextView statusView;
-    private Button checkButton, prepareButton, treeButton, zipButton, importButton, buildButton, installButton, pauseButton, resumeButton, cancelButton, retryButton;
+    private Button checkButton, rollbackButton, recoveryButton, prepareButton, treeButton, zipButton, importButton, buildButton, installButton, pauseButton, resumeButton, cancelButton, retryButton;
     private static final int PICK_TREE = 120, PICK_ZIP = 121;
     private String flowDetail = "";
     private final Runnable refresh = new Runnable() { public void run() { refreshStatus(); handler.postDelayed(this, 500); } };
@@ -46,6 +46,8 @@ public final class ToolHostActivity extends Activity {
         scroll.addView(layout);
         statusView = new TextView(this); layout.addView(statusView);
         checkButton = button(layout, "Check for updates", new Runnable() { public void run() { startUpdate("release-check"); } });
+        rollbackButton = button(layout, "Rebuild and install previous release (same key)", new Runnable() { public void run() { startUpdate("release-rollback"); } });
+        recoveryButton = button(layout, "Recover and verify retained profile/settings", new Runnable() { public void run() { OwnerBuildService.launch(ToolHostActivity.this, "profile-recover"); } });
         prepareButton = button(layout, "Prepare signed installation plan", new Runnable() { public void run() { startUpdate("install-prepare"); } });
         treeButton = button(layout, "Choose game folder", new Runnable() { public void run() { pickSource(true); } });
         zipButton = button(layout, "Choose game ZIP", new Runnable() { public void run() { pickSource(false); } });
@@ -110,10 +112,13 @@ public final class ToolHostActivity extends Activity {
     private void resume(boolean retry) {
         if (OwnerBuildService.isRunning()) { control(retry ? "retry" : "resume"); return; }
         if (OwnerInstaller.busy(this)) return;
-        if (retry && "ERROR".equals(OwnerInstaller.state(this))) { installReady(); return; }
+        if (retry && "ERROR".equals(OwnerInstaller.state(this))) {
+            String previousBuild = getSharedPreferences(OwnerBuildService.PREFERENCES, 0).getString("last_build_action", "release-build");
+            startUpdate(previousBuild); return;
+        }
         String previous = OwnerBuildService.action(this);
         if ("import".equals(previous)) startImport();
-        else if ("release-build".equals(previous)) startUpdate("release-build");
+        else if ("release-build".equals(previous) || "release-rollback".equals(previous)) startUpdate(previous);
         else if ("install-prepare".equals(previous) || "release-check".equals(previous)) startUpdate(previous);
         // Installation always requires the separate explicit Install button, including after reboot.
     }
@@ -153,18 +158,28 @@ public final class ToolHostActivity extends Activity {
         JSONObject trust;
         try (InputStream input = app.getAssets().open("release-trust.json")) { trust = readJson(input); }
         String packageName = trust.getString("application_id");
-        long installed = 0;
-        try { installed = OwnerInstaller.version(app.getPackageManager().getPackageInfo(packageName, 0)); }
-        catch (android.content.pm.PackageManager.NameNotFoundException absent) { /* first install */ }
-        long installer = OwnerInstaller.version(app.getPackageManager().getPackageInfo(app.getPackageName(), 0));
+        if (!OwnerAlphaInstall.PACKAGE.equals(packageName)) throw new IOException("Final owner flow requires dev.ror2lab.alpha");
+        long installed = 0, published = 0;
+        try {
+            android.content.pm.PackageInfo actual = app.getPackageManager().getPackageInfo(packageName, android.content.pm.PackageManager.GET_SIGNATURES);
+            installed = OwnerInstaller.version(actual);
+            JSONObject owned = OwnerAlphaInstall.owned(app, actual, false);
+            published = owned.getJSONObject("release").getLong("version_code");
+        } catch (android.content.pm.PackageManager.NameNotFoundException absent) { /* first install */ }
+        android.content.pm.PackageInfo installer = app.getPackageManager().getPackageInfo(app.getPackageName(), android.content.pm.PackageManager.GET_SIGNATURES);
         return new JSONObject().put("action", action).put("application_id", packageName)
-            .put("installed_version", installed).put("installer_version", installer);
+            .put("installed_version", installed).put("installed_release_version", published)
+            .put("installer_version", OwnerInstaller.version(installer))
+            .put("installer_package", app.getPackageName()).put("installer_signer_sha256", OwnerInstaller.signer(installer));
     }
+
     private void startUpdate(final String action) {
         final Context app = getApplicationContext();
-        if (OwnerBuildService.isRunning() || OwnerInstaller.busy(app)) return;
+        if (OwnerBuildService.isRunning() || OwnerInstaller.busy(app) || OwnerAlphaInstall.pending(app)) return;
         try {
-            recordInstalledRelease(); OwnerInstaller.clearTerminalStatus(app);
+            OwnerInstaller.clearTerminalStatus(app);
+            if ("release-build".equals(action) || "release-rollback".equals(action))
+                if (!getSharedPreferences(OwnerBuildService.PREFERENCES, 0).edit().putString("last_build_action", action).commit()) throw new IOException("Could not retain explicit build action");
             writeJson(new File(getFilesDir(), "owner-input/update-request.json"), installedRequest(app, action));
             updateStatus(app, "release-check".equals(action) ? "CHECKING" : "BUILDING", "install-prepare".equals(action) ? "Verifying the signed installation plan…" : "Starting local release work…");
             OwnerBuildService.launch(app, action);
@@ -217,9 +232,9 @@ public final class ToolHostActivity extends Activity {
             File file = new File(app.getFilesDir(), "owner-input/install-checkpoint.json");
             if (!file.isFile() || "IDLE".equals(state)) return;
             JSONObject checkpoint = readJson(file);
-            String phase = "INSTALLED".equals(state) ? "complete" : "ERROR".equals(state) ? "failed" : "AWAITING_CONFIRMATION".equals(state) ? "awaiting_consent" : "running";
+            String phase = "INSTALLED".equals(state) ? "complete" : ("ERROR".equals(state) || "RECOVERY_REQUIRED".equals(state)) ? "failed" : "AWAITING_CONFIRMATION".equals(state) ? "awaiting_consent" : "running";
             checkpoint.put("status", phase).put("current_stage", "install").put("updated_at", System.currentTimeMillis() / 1000.0);
-            checkpoint.put("first_failure", "ERROR".equals(state) ? new JSONObject().put("stage", "install").put("reason", message) : JSONObject.NULL);
+            checkpoint.put("first_failure", ("ERROR".equals(state) || "RECOVERY_REQUIRED".equals(state)) ? new JSONObject().put("stage", "install").put("reason", message) : JSONObject.NULL);
             JSONArray stages = checkpoint.getJSONArray("stages");
             for (int i = 0; i < stages.length(); i++) {
                 JSONObject stage = stages.getJSONObject(i);
@@ -230,28 +245,6 @@ public final class ToolHostActivity extends Activity {
             JSONObject progress = update.isFile() ? readJson(update) : new JSONObject();
             writeJson(update, progress.put("pipeline", checkpoint).put("state", state).put("message", message));
         } catch (Exception ignored) { /* PackageInstaller's durable identity/status remains authoritative. */ }
-    }
-    private void recordInstalledRelease() throws Exception {
-        if (!"INSTALLED".equals(OwnerInstaller.state(this))) return;
-        File readyFile = new File(getFilesDir(), "owner-input/owner-apk-ready.json");
-        if (!readyFile.isFile()) return;
-        JSONObject ready = readJson(readyFile);
-        if (!ready.has("release")) return;
-        android.content.pm.PackageInfo actual = getPackageManager().getPackageInfo(ready.getString("application_id"), android.content.pm.PackageManager.GET_SIGNATURES);
-        if (OwnerInstaller.version(actual) != ready.getLong("version_code") ||
-            !OwnerInstaller.signer(actual).equals(getSharedPreferences(OwnerInstaller.STATUS, 0).getString("signer", ""))) return;
-        JSONObject release = ready.getJSONObject("release");
-        File receiptFile = new File(getFilesDir(), "owner-input/installed-release.json");
-        if (receiptFile.isFile()) {
-            JSONObject previous = readJson(receiptFile);
-            if (previous.optLong("version_code") == OwnerInstaller.version(actual) &&
-                previous.optString("application_id").equals(actual.packageName) &&
-                previous.optString("bundle_sha256").equals(release.getString("bundle_sha256")) &&
-                previous.optString("signer_sha256").equals(OwnerInstaller.signer(actual))) return;
-        }
-        writeJson(receiptFile, new JSONObject()
-            .put("application_id", actual.packageName).put("version_code", OwnerInstaller.version(actual))
-            .put("bundle_sha256", release.getString("bundle_sha256")).put("release", release).put("signer_sha256", OwnerInstaller.signer(actual)));
     }
     private void refreshStatus() {
         if (statusView == null) return;
@@ -274,10 +267,11 @@ public final class ToolHostActivity extends Activity {
             String installation = OwnerInstaller.state(this);
             if (!OwnerBuildService.isRunning() && OwnerInstaller.busy(this)) { OwnerInstaller.reconcile(this); installation = OwnerInstaller.state(this); }
             if (OwnerInstaller.busy(this)) model.observe(installation, OwnerInstaller.status(this));
-            else if (!OwnerBuildService.isRunning() && (model.phase() == OwnerUpdateState.Phase.READY || model.phase() == OwnerUpdateState.Phase.INSTALLING || model.phase() == OwnerUpdateState.Phase.AWAITING_CONFIRMATION)) {
-                if ("INSTALLED".equals(installation)) { recordInstalledRelease(); model.observe(installation, OwnerInstaller.status(this)); }
-                else if ("ERROR".equals(installation)) model.observe("ERROR", OwnerInstaller.status(this));
+            else if (!OwnerBuildService.isRunning() && (model.phase() == OwnerUpdateState.Phase.READY || model.phase() == OwnerUpdateState.Phase.INSTALLING || model.phase() == OwnerUpdateState.Phase.AWAITING_CONFIRMATION || model.phase() == OwnerUpdateState.Phase.VERIFYING_PROFILE || model.phase() == OwnerUpdateState.Phase.RECOVERING_PROFILE)) {
+                if ("INSTALLED".equals(installation)) { model.observe(installation, OwnerInstaller.status(this)); }
+                else if ("ERROR".equals(installation) || "RECOVERY_REQUIRED".equals(installation)) model.observe(installation, OwnerInstaller.status(this));
             }
+            if (OwnerAlphaInstall.pending(this) && !OwnerInstaller.busy(this) && !OwnerBuildService.isRunning()) model.observe("RECOVERY_REQUIRED", OwnerInstaller.status(this));
             // A killed worker is not still running. Rechecking safely rediscovers the release/cache.
             if (!OwnerBuildService.isRunning() && model.busy() && !OwnerInstaller.busy(this)) model.observe("ERROR", "Work is not running. Tap Resume to revalidate retained checkpoints.");
         } catch (Exception error) { model.observe("ERROR", error.getMessage()); }
@@ -285,6 +279,9 @@ public final class ToolHostActivity extends Activity {
     }
     private String phoneProgress() throws Exception {
         StringBuilder detail = new StringBuilder();
+        detail.append("\n\n").append(OwnerAlphaInstall.rollbackStatus(this));
+        detail.append("\nInstaller-private filesystem free: ").append(getFilesDir().getUsableSpace()).append(" bytes. Android chooses installation placement; no storage is reconfigured.");
+        if (OwnerAlphaInstall.pending(this)) detail.append("\nProfile/settings snapshot transaction retained in game-private storage. Recovery is required before another operation if installation stops.");
         File imported = new File(getFilesDir(), "owner-input/import-state.json");
         if (imported.isFile()) {
             JSONObject state = readJson(imported);
@@ -295,7 +292,7 @@ public final class ToolHostActivity extends Activity {
                 for (int i = 0; i < Math.min(20, extras.length()); i++) detail.append("\n  ").append(extras.getString(i));
                 if (extras.length() > 20) detail.append("\n  … and ").append(extras.length() - 20).append(" more");
             }
-            if (state.has("total")) detail.append("\n").append(state.optLong("completed")).append(" / ").append(state.optLong("total")).append(" bytes");
+            if (state.optLong("total", 0) > 0) detail.append("\n").append(state.optLong("completed")).append(" / ").append(state.optLong("total")).append(" bytes");
             if (state.has("elapsed_seconds")) detail.append(" · ").append(state.optLong("elapsed_seconds")).append(" s");
         }
         File update = new File(getFilesDir(), "owner-input/update-state.json");
@@ -353,14 +350,16 @@ public final class ToolHostActivity extends Activity {
         String phase = model.phase() == OwnerUpdateState.Phase.ERROR ? "FAILED" : model.phase().toString().replace('_', ' ');
         try { flowDetail = phoneProgress(); } catch (Exception error) { flowDetail = "\nPrivate progress unavailable: " + error.getMessage(); }
         statusView.setText(phase + "\n" + model.message() + flowDetail);
-        boolean idle = !OwnerBuildService.isRunning() && !OwnerInstaller.busy(this);
+        boolean idle = !OwnerBuildService.isRunning() && !OwnerInstaller.busy(this) && !OwnerAlphaInstall.pending(this);
+        rollbackButton.setEnabled(idle && OwnerAlphaInstall.canRollback(this));
+        recoveryButton.setEnabled(!OwnerBuildService.isRunning() && !OwnerInstaller.busy(this) && OwnerAlphaInstall.pending(this));
         prepareButton.setEnabled(idle); treeButton.setEnabled(idle); zipButton.setEnabled(idle);
         importButton.setEnabled(idle && new File(getFilesDir(), "owner-input/install-inputs.json").isFile());
         pauseButton.setEnabled(OwnerBuildService.isRunning() && !OwnerInstaller.busy(this)); cancelButton.setEnabled(OwnerBuildService.isRunning() && !OwnerInstaller.busy(this));
         resumeButton.setEnabled(!OwnerInstaller.busy(this)); retryButton.setEnabled(idle && model.phase() == OwnerUpdateState.Phase.ERROR);
-        checkButton.setEnabled(!OwnerBuildService.isRunning() && model.canCheck());
+        checkButton.setEnabled(idle && model.canCheck());
         buildButton.setEnabled(idle && (model.canBuild() || new File(getFilesDir(), "owner-input/import-state.json").isFile()));
-        installButton.setEnabled(!OwnerBuildService.isRunning() && model.canInstall());
+        installButton.setEnabled(idle && model.canInstall());
     }
     private static File readyApk(Context app) throws Exception {
         File report=new File(app.getFilesDir(),"tool-host-report.json");
@@ -548,7 +547,7 @@ public final class ToolHostActivity extends Activity {
                 report.put("ownerBackend",child("owner-backend",backend,root,nativeDir,links));
                 File ready=new File(getFilesDir(),"owner-input/owner-apk-ready.json");
                 JSONObject job=new JSONObject(text(ownerJob));
-                if((job.has("signing")||job.has("packaging")||"release-build".equals(updateAction))&&ready.isFile()) {
+                if((job.has("signing")||job.has("packaging")||("release-build".equals(updateAction) || "release-rollback".equals(updateAction)))&&ready.isFile()) {
                     JSONObject apk=new JSONObject(text(ready)); File file=new File(apk.getString("apk")).getCanonicalFile();
                     if(!file.getPath().startsWith(getFilesDir().getCanonicalPath()+"/")||!hash(file).equals(apk.getString("sha256")))throw new IOException("owner APK output drift");
                     report.put("ownerApk",apk);
@@ -583,16 +582,16 @@ public final class ToolHostActivity extends Activity {
                     File status = new File(getFilesDir(), "owner-input/update-state.json");
                     JSONObject prior = status.isFile() ? readJson(status) : new JSONObject();
                     if ("cancelled".equals(cooling.optString("status")) || cancelled) {
-                        if ("release-build".equals(updateAction)) reconcileBuildStop(app, "CANCELLED", "Cancelled. Verified stage checkpoints are retained; tap Resume when ready.");
+                        if (("release-build".equals(updateAction) || "release-rollback".equals(updateAction))) reconcileBuildStop(app, "CANCELLED", "Cancelled. Verified stage checkpoints are retained; tap Resume when ready.");
                         else updateStatus(app, "CANCELLED", "Cancelled. Retained public downloads can be verified on retry.");
-                    } else if ("release-build".equals(updateAction)) reconcileBuildStop(app, "ERROR", cooling.has("error") ? cooling.optString("error") : prior.optString("message", error.toString()));
+                    } else if (("release-build".equals(updateAction) || "release-rollback".equals(updateAction))) reconcileBuildStop(app, "ERROR", cooling.has("error") ? cooling.optString("error") : prior.optString("message", error.toString()));
                     else if (!"ERROR".equals(prior.optString("state"))) updateStatus(app, "ERROR", cooling.has("error") ? cooling.optString("error") : error.toString());
                 } catch (Exception ignored) { updateStatus(app, "ERROR", error.toString()); }
             }
         }
         try {
             writeJson(new File(getFilesDir(), updateAction == null ? "tool-host-report.json" : "update-tool-report.json"), report);
-            if ("release-build".equals(updateAction) && report.getBoolean("success") && report.has("ownerApk"))
+            if (("release-build".equals(updateAction) || "release-rollback".equals(updateAction)) && report.getBoolean("success") && report.has("ownerApk"))
                 writeJson(new File(getFilesDir(), "tool-host-report.json"), report);
         } catch(Exception error) { if (updateAction != null) updateStatus(app, "ERROR", "Could not retain build result: " + error.getMessage()); }
     }

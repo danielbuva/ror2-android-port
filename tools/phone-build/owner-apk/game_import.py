@@ -92,6 +92,117 @@ def validate_manifest(manifest):
     return {"schema": 1, "game_version": version, "files": [result[name] for name in sorted(result)]}
 
 
+def validate_catalog(value):
+    """Reviewed complete fingerprints only; recognition never grants support."""
+    if isinstance(value, dict) and value.get("schema") == 1:
+        return {"schema": 2, "supported": [validate_manifest(value)], "recognized": []}
+    if not isinstance(value, dict) or set(value) != {"schema", "supported", "recognized"} or type(value["schema"]) is not int or value["schema"] != 2:
+        raise ValueError("input version catalog schema 2 required")
+    if (
+        not isinstance(value["supported"], list)
+        or not 1 <= len(value["supported"]) <= 8
+        or not isinstance(value["recognized"], list)
+        or len(value["recognized"]) > 8
+    ):
+        raise ValueError("one to eight supported and at most eight recognition inventories required")
+    result, versions, inventories = {"schema": 2}, set(), set()
+    for kind in ("supported", "recognized"):
+        result[kind] = []
+        for supplied in value[kind]:
+            manifest = validate_manifest(supplied)
+            version = manifest["game_version"]
+            inventory = hashlib.sha256(_encoded(manifest["files"])).hexdigest()
+            if version in versions or inventory in inventories:
+                raise ValueError("duplicate version or indistinguishable input fingerprints")
+            versions.add(version)
+            inventories.add(inventory)
+            result[kind].append(manifest)
+        result[kind].sort(key=lambda item: item["game_version"])
+    return result
+
+
+class VersionRefusal(ValueError):
+    def __init__(self, report):
+        self.report = report
+        super().__init__(version_message(report))
+
+
+def version_message(report):
+    found = report.get("found_version") or "unknown (no complete reviewed fingerprint matched)"
+    return (
+        "Found version: "
+        + found
+        + ". Supported versions: "
+        + ", ".join(report["supported_versions"])
+        + ". "
+        + (
+            "The selected files match a supported reviewed inventory."
+            if report["status"] == "supported"
+            else "Input refused. Select a complete, unmodified supported PC installation or ask the release maintainer to review this version. Filenames and version labels are not proof; do not rename files to bypass this check."
+        )
+    )
+
+
+def identify_version(source, catalog, *, control=None, progress=None):
+    """One read per candidate path, no copies/writes and no label-based guesses."""
+    catalog = validate_catalog(catalog)
+    candidates = catalog["supported"] + catalog["recognized"]
+    wanted = {}
+    for manifest in candidates:
+        for row in manifest["files"]:
+            wanted.setdefault(row["path"], set()).add(row["bytes"])
+    observed = {}
+
+    def checkpoint():
+        action = control() if control else None
+        if action in {"pause", "cancel"}:
+            raise _Stopped(action)
+        if action not in {None, "continue"}:
+            raise ValueError("invalid version-check control")
+
+    for index, (name, sizes) in enumerate(sorted(wanted.items())):
+        checkpoint()
+        if name not in source.inventory:
+            continue
+        known_size = source.inventory[name]
+        if known_size is not None and known_size not in sizes:
+            observed[name] = {"bytes": known_size, "sha256": None}
+            continue
+        maximum, count, digest = max(sizes), 0, hashlib.sha256()
+        with source.open(name) as stream:
+            while True:
+                checkpoint()
+                chunk = stream.read(min(CHUNK, maximum - count + 1))
+                if not chunk:
+                    break
+                count += len(chunk)
+                if count > maximum:
+                    break
+                digest.update(chunk)
+        observed[name] = {"bytes": count, "sha256": digest.hexdigest() if count <= maximum else None}
+        if progress:
+            progress({"status": "identifying", "current_path": name, "completed_files": index + 1, "total_files": len(wanted)})
+    matched = [m for m in candidates if all(observed.get(r["path"]) == {"bytes": r["bytes"], "sha256": r["sha256"]} for r in m["files"])]
+    result = {"status": "unknown", "found_version": None, "supported_versions": [m["game_version"] for m in catalog["supported"]], "manifest": None}
+    if len(matched) > 1:
+        result.update(status="ambiguous", found_version="ambiguous (multiple complete fingerprints matched)")
+    elif matched:
+        manifest = matched[0]
+        if manifest in catalog["supported"]:
+            result.update(status="supported", found_version=manifest["game_version"], manifest=manifest)
+        else:
+            result.update(status="unsupported", found_version=manifest["game_version"])
+    result["message"] = version_message(result)
+    return result
+
+
+def select_version(source, catalog, **kwargs):
+    result = identify_version(source, catalog, **kwargs)
+    if result["status"] != "supported":
+        raise VersionRefusal(result)
+    return result["manifest"]
+
+
 def _pairs(items):
     result = {}
     for key, value in items:

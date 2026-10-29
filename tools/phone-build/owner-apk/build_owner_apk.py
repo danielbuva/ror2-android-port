@@ -450,7 +450,12 @@ def sign(request_path, output):
             raise ValueError("owner signing changed an APK content entry")
         if before != {name: sha(path) for name, path in inputs.items()} or key_before != sha(key) or password_before != sha(password):
             raise ValueError("owner signing input/key changed")
-        result.update(success=True, signed=True, apk_sha256=sha(signed), apk_bytes=signed.stat().st_size)
+        certificates = re.findall(
+            r"^Signer #\d+ certificate SHA-256 digest: ([0-9a-fA-F]{64})\s*$", (output / "verify-signature.log").read_text(), re.MULTILINE
+        )
+        if len(certificates) != 1:
+            raise ValueError("one verified owner signing certificate required")
+        result.update(success=True, signed=True, apk_sha256=sha(signed), apk_bytes=signed.stat().st_size, signer_sha256=certificates[0].lower())
         return result
     except Exception as error:
         result.update(error_type=type(error).__name__, error=str(error))
@@ -460,11 +465,78 @@ def sign(request_path, output):
         (output / "result.json").write_text(json.dumps(result, indent=2) + "\n")
 
 
+def reversion(source, output, *, wire_helper, version_code, expected_sha256):
+    """Reassemble one hash-verified retained APK with only a new manifest code.
+
+    Obsolete signatures are dropped, then the caller uses this owner's sign().
+    Payload/resources stay byte-identical; no game-data tree or new key is made.
+    """
+    source, output = Path(source), Path(output)
+    if not source.is_absolute() or source.resolve(strict=True) != source or not source.is_file() or sha(source) != expected_sha256:
+        raise ValueError("retained APK reference/hash differs")
+    if output.exists() or output.is_symlink() or output.resolve() == source:
+        raise ValueError("fresh rollback assembly output required")
+    if shutil.disk_usage(output.parent).free < 3 * source.stat().st_size + 2 * 1024**3:
+        raise ValueError("insufficient space for retained rollback and signing reserve")
+    wire = module("owner_rollback_wire", Path(wire_helper))
+    with zipfile.ZipFile(source) as original:
+        rows = original.infolist()
+        if len({row.filename for row in rows}) != len(rows) or sum(row.filename == "AndroidManifest.xml" for row in rows) != 1:
+            raise ValueError("retained APK has duplicate/missing manifest entries")
+        manifest = original.getinfo("AndroidManifest.xml")
+        if manifest.file_size > 16 * 1024**2:
+            raise ValueError("retained manifest exceeds bound")
+        changed = MANIFEST.reversion(original.read(manifest), wire, version_code=version_code)
+        try:
+            with zipfile.ZipFile(output, "x", allowZip64=False) as target:
+                for row in rows:
+                    if ASSEMBLY.obsolete_signature(row.filename):
+                        continue
+                    if row.filename == "AndroidManifest.xml":
+                        target.writestr(row, changed)
+                    else:
+                        with original.open(row) as incoming, target.open(row, "w") as outgoing:
+                            shutil.copyfileobj(incoming, outgoing, 65536)
+            if sha(source) != expected_sha256:
+                raise ValueError("retained APK changed during rollback reconstruction")
+        except Exception:
+            output.unlink(missing_ok=True)
+            raise
+    return {"unsigned": str(output), "sha256": sha(output)}
+
+
+def retention_policy(value):
+    """An owner build binds the control-only bridge to its actual installer."""
+    if (
+        not isinstance(value, dict)
+        or set(value) != {"schema", "installer_package", "installer_certificate_sha256", "data_schema"}
+        or type(value["schema"]) is not int
+        or value["schema"] != 1
+    ):
+        raise ValueError("explicit owner retention trust policy required")
+    package, certificate = value["installer_package"], value["installer_certificate_sha256"]
+    if not isinstance(package, str) or not re.fullmatch(r"[A-Za-z][A-Za-z0-9_]*(?:\.[A-Za-z][A-Za-z0-9_]*)+", package) or package == "dev.ror2lab.alpha":
+        raise ValueError("separate trusted installer package required")
+    if not isinstance(certificate, str) or not re.fullmatch(r"[0-9a-f]{64}", certificate):
+        raise ValueError("actual installer public certificate SHA-256 required")
+    policy = value["data_schema"]
+    alpha = module("build_alpha_policy", SOURCE / "alpha_policy.py")
+    alpha.data_schema(policy)
+    if policy != {"writes": 1, "reads": [1]}:
+        raise ValueError("native retention migration is unavailable; only contract 1 is supported")
+    return value
+
+
 def build(request_path, output):
     request = json.loads(Path(request_path).read_text())
     fields = {"manifest", "manifest_sha256", "targets", "frontend", "java", "android_jar", "d8_jar", "wire_helper"}
-    if set(request) - {"version_code", "application_id", "code", "javac", "drift", "startup_metadata", "stage_contexts"} != fields:
+    if set(request) - {"version_code", "application_id", "code", "javac", "drift", "retention_policy", "startup_metadata", "stage_contexts"} != fields:
         raise ValueError("unsupported owner APK request/profile")
+    policy = retention_policy(request["retention_policy"]) if request.get("retention_policy") is not None else None
+    if (request.get("application_id") == "dev.ror2lab.alpha") != (policy is not None):
+        raise ValueError("alpha builds require their bound profile-retention policy")
+    if policy is not None and "version_code" not in request:
+        raise ValueError("alpha builds require an explicit issued versionCode")
     code = code_paths(request)
     version_code = request.get("version_code")
     if "version_code" in request and (type(version_code) is not int or not 1 <= version_code <= 2100000000):
@@ -500,7 +572,16 @@ def build(request_path, output):
         wire = module("_owner_wire", roots["wire_helper"])
         tracked = [
             SOURCE / n
-            for n in ("PayloadStore.java", "PayloadBootstrapActivity.java", "index.html", "owner-host.js", "binary_manifest.py", "build_owner_apk.py")
+            for n in (
+                "PayloadStore.java",
+                "PayloadBootstrapActivity.java",
+                "ProfileStore.java",
+                "ProfileRetentionProvider.java",
+                "index.html",
+                "owner-host.js",
+                "binary_manifest.py",
+                "build_owner_apk.py",
+            )
         ]
         tracked += [roots["frontend"] / n for n in ("app.js", "controller.js", "style.css", "background.png")]
         tracked += [Path(PACKET.__file__), Path(ASSEMBLY.__file__)]
@@ -543,6 +624,8 @@ def build(request_path, output):
                 classes,
                 SOURCE / "PayloadStore.java",
                 SOURCE / "PayloadBootstrapActivity.java",
+                SOURCE / "ProfileStore.java",
+                SOURCE / "ProfileRetentionProvider.java",
             ],
             "javac",
         )
@@ -575,7 +658,7 @@ def build(request_path, output):
         manifest_bytes = manifest_source.read_bytes()
         if "AndroidManifest.xml" in code and hashlib.sha256(manifest_bytes).hexdigest() != code["AndroidManifest.xml"]["sha256"]:
             raise ValueError("owner APK source bytes differ")
-        patched = MANIFEST.patch(manifest_bytes, wire, version_code=version_code, application_id=request.get("application_id"))
+        patched = MANIFEST.patch(manifest_bytes, wire, version_code=version_code, application_id=request.get("application_id"), retention=policy is not None)
         (output / "AndroidManifest.xml").write_bytes(patched)
         payload = [row for name, row in content.items() if name.startswith("payload/")]
         index = {
@@ -636,6 +719,8 @@ def build(request_path, output):
             for name in ("index.html", "owner-host.js"):
                 entry("assets/owner-bootstrap/ui/" + name, source=SOURCE / name)
             entry("assets/owner-bootstrap/payload-index.json", data=index_bytes)
+            if policy is not None:
+                entry("assets/owner-bootstrap/retention-policy.json", data=(json.dumps(policy, sort_keys=True, separators=(",", ":")) + "\n").encode())
             for row in payload:
                 entry(
                     "assets/owner-bootstrap/data/" + row["path"][8:],

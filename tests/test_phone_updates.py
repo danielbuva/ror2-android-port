@@ -69,9 +69,10 @@ def archive_fixture(contents, entries):
     bundle = buffer.getvalue()
     release = {
         "version": "authored-2",
+        "data_schema": {"writes": 1, "reads": [1]},
         "version_code": 2,
         "application_id": "dev.ror2lab.alpha",
-        "minimum_installer_version": 1,
+        "minimum_installer_version": 3,
         "bundle_sha256": sha(bundle),
         "entries": {name: P.entry_dependencies(index, name) for name in entries},
     }
@@ -141,7 +142,13 @@ class UpdateTests(unittest.TestCase):
         self.inputs, self.runtime, self.native = [self.root / name for name in ("inputs", "runtime", "native")]
         for path in (self.inputs, self.runtime, self.native):
             path.mkdir()
-        self.request = {"action": "release-check", "application_id": "dev.ror2lab.alpha", "installed_version": 1, "installer_version": 1}
+        self.request = {
+            "action": "release-check",
+            "application_id": "dev.ror2lab.alpha",
+            "installed_version": 1,
+            "installed_release_version": 1,
+            "installer_version": 3,
+        }
         U.write_json(self.inputs / "update-request.json", self.request)
         U.write_json(
             self.runtime / "release-trust.json",
@@ -171,7 +178,8 @@ class UpdateTests(unittest.TestCase):
             self.assertNotIn("/public-tools.zip", server.requests)
             self.assertEqual(set(server.requests), {"/latest", "/release.json", "/release.sig"})
             self.assertFalse((self.inputs / "installed-release.json").exists())
-            self.request["installed_version"] = 2
+            self.request["installed_version"] = 8
+            self.request["installed_release_version"] = 2
             U.write_json(self.inputs / "update-request.json", self.request)
             self.assertEqual(self.run_check(server)["state"], "UP_TO_DATE")
 
@@ -186,7 +194,7 @@ class UpdateTests(unittest.TestCase):
             self.assertFalse((self.inputs / "release-candidate.json").exists())
 
     def test_context_refuses_rollback_package_and_installer_upgrade(self):
-        for field, value in (("installed_version", 3), ("application_id", "other.package"), ("installer_version", 0)):
+        for field, value in (("installed_release_version", 3), ("application_id", "other.package"), ("installer_version", 0)):
             request = dict(self.request, **{field: value})
             with self.subTest(field=field), self.assertRaises(ValueError):
                 U.verify_context(self.release, request)
@@ -301,7 +309,7 @@ class UpdateTests(unittest.TestCase):
         with self.assertRaises(__import__("subprocess").CalledProcessError):
             U.RELEASE.rebuild(
                 release,
-                installer_version=1,
+                installer_version=3,
                 application_id=release["application_id"],
                 installed_version=1,
                 input_sha256="c" * 64,
@@ -449,7 +457,7 @@ u.run({str(self.inputs / "update-request.json")!r},{str(self.runtime)!r},{str(se
             contents[path] = encoded({"schema": 1, "script": SCRIPT, "arguments": ["${output}", name], "outputs": {"payload/" + name: "complete"}})
             entries["payload/" + name] = {"recipe_files": [path], "producer_files": [SCRIPT], "job": path}
         options = dict(
-            installer_version=1, application_id=self.release["application_id"], installed_version=1, input_sha256="c" * 64, root=self.inputs / "cache"
+            installer_version=3, application_id=self.release["application_id"], installed_version=1, input_sha256="c" * 64, root=self.inputs / "cache"
         )
         for revision in range(3):
             if revision == 1:

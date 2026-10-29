@@ -63,7 +63,7 @@ class InstallInputTests(unittest.TestCase):
         imported = self.import_fixture()
         INPUTS.prepare(self.index, self.repo, self.inputs)
         imported.write_bytes(b"changed")
-        with self.assertRaisesRegex(ValueError, "input differs"):
+        with self.assertRaisesRegex(ValueError, "Found version: unknown.*Supported versions: synthetic-v1"):
             INPUTS.prepare(self.index, self.repo, self.inputs)
         imported.write_bytes(b"example")
         (self.repo / "recipe/inputs.json").write_text("{}")

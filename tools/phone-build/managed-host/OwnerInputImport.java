@@ -33,6 +33,98 @@ public final class OwnerInputImport {
         public final List<String> extra = new ArrayList<>();
         public long bytes;
     }
+    public static final class Version {
+        public final String name, manifestSha256;
+        public final List<Required> files;
+        public final boolean supported;
+        public Version(String name, String manifestSha256, List<Required> files, boolean supported) throws IOException {
+            if (name == null || name.isEmpty() || name.length() > 128 || !manifestSha256.matches("[0-9a-f]{64}") || files.isEmpty() || files.size() > 100000)
+                throw new IOException("Invalid reviewed version inventory");
+            List<String> names = new ArrayList<>(); for (Required row : files) names.add(row.path); validatePaths(names);
+            this.name = name; this.manifestSha256 = manifestSha256; this.files = files; this.supported = supported;
+        }
+    }
+    public static final class VersionRefused extends IOException {
+        public final String found;
+        public final List<String> supported;
+        VersionRefused(String found, List<String> supported) {
+            super("Found version: " + found + ". Supported versions: " + supported + ". Input refused. Select a complete, unmodified supported PC installation or ask the release maintainer to review this version. Filenames and labels are not proof.");
+            this.found = found; this.supported = supported;
+        }
+    }
+    private static Map<String, Set<Long>> wanted(List<Version> versions) throws IOException {
+        if (versions.isEmpty() || versions.size() > 16) throw new IOException("Bounded reviewed version catalog required");
+        Map<String, Set<Long>> result = new TreeMap<>(); Set<String> labels = new HashSet<>(); boolean supported = false;
+        for (Version version : versions) {
+            if (!labels.add(version.name)) throw new IOException("Duplicate reviewed version label"); supported |= version.supported;
+            for (Required row : version.files) { Set<Long> sizes = result.get(row.path); if (sizes == null) { sizes = new HashSet<>(); result.put(row.path, sizes); } sizes.add(row.bytes); }
+        }
+        if (!supported || result.size() > 100000) throw new IOException("Supported bounded inventory required");
+        return result;
+    }
+    private static Version select(List<Version> versions, Map<String, Required> observed) throws IOException {
+        List<Version> matched = new ArrayList<>(); List<String> supported = new ArrayList<>();
+        for (Version version : versions) {
+            if (version.supported) supported.add(version.name); boolean equal = true;
+            for (Required row : version.files) { Required found = observed.get(row.path); if (found == null || row.bytes != found.bytes || !row.sha256.equals(found.sha256)) { equal = false; break; } }
+            if (equal) matched.add(version);
+        }
+        Collections.sort(supported);
+        if (matched.size() == 1 && matched.get(0).supported) return matched.get(0);
+        throw new VersionRefused(matched.isEmpty() ? "unknown (no complete reviewed fingerprint matched)" : matched.size() > 1 ? "ambiguous (multiple complete fingerprints matched)" : matched.get(0).name, supported);
+    }
+    private static Required fingerprint(String name, InputStream input, long maximum, Observer observer) throws Exception {
+        MessageDigest hash = MessageDigest.getInstance("SHA-256"); byte[] buffer = new byte[65536]; long size = 0;
+        while (true) { observer.checkpoint(); int limit = size == maximum ? 1 : (int)Math.min(buffer.length, maximum - size); int count = input.read(buffer, 0, limit); if (count < 0) break;
+            if (count > maximum - size) return null; size += count; hash.update(buffer, 0, count); }
+        return new Required(name, size, hex(hash.digest()));
+    }
+    public static Version identifyTree(Source source, List<Version> versions, Observer observer) throws Exception {
+        Map<String, Set<Long>> wanted = wanted(versions); Map<String, Long> inventory = source.inventory(); validatePaths(inventory.keySet());
+        Map<String, Required> observed = new HashMap<>();
+        for (Map.Entry<String, Set<Long>> row : wanted.entrySet()) { observer.checkpoint(); Long size = inventory.get(row.getKey());
+            if (size != null && (size < 0 || row.getValue().contains(size))) try (InputStream input = source.open(row.getKey())) {
+                if (input == null) throw new IOException("Selected input unavailable"); Required value = fingerprint(row.getKey(), input, Collections.max(row.getValue()), observer); if (value != null) observed.put(row.getKey(), value);
+            }
+            observer.progress("Checking version: " + row.getKey(), 0, 0);
+        }
+        return select(versions, observed);
+    }
+    private static final class ZipNames {
+        final Set<String> seen = new HashSet<>(), files = new HashSet<>(), directories = new HashSet<>();
+        final Map<String, String> nodes = new HashMap<>();
+        String accept(ZipEntry entry) throws IOException {
+            String name = entry.getName(), normalized = entry.isDirectory() && name.endsWith("/") ? name.substring(0, name.length()-1) : name;
+            safePath(normalized); if (!seen.add(name) || seen.size() > 100000) throw new IOException("Duplicate or excessive ZIP entries");
+            String key = pathKey(normalized), node = "";
+            for (String part : normalized.split("/")) { node = node.isEmpty() ? part : node + "/" + part;
+                String old = nodes.put(pathKey(node), node); if (old != null && !old.equals(node)) throw new IOException("Case-aliased ZIP entry");
+                if (!node.equals(normalized)) { if (files.contains(pathKey(node))) throw new IOException("ZIP file/directory collision"); directories.add(pathKey(node)); }
+            }
+            if (entry.isDirectory()) { if (files.contains(key)) throw new IOException("ZIP file/directory collision"); directories.add(key); }
+            else if (!files.add(key) || directories.contains(key)) throw new IOException("Duplicate or file/directory ZIP entry");
+            return name;
+        }
+    }
+    public static Version identifyZip(InputStream source, List<Version> versions, Observer observer) throws Exception {
+        Map<String, Set<Long>> wanted = wanted(versions); Map<String, Required> observed = new HashMap<>();
+        long budget = MARGIN; for (Set<Long> sizes : wanted.values()) budget = Math.addExact(budget, Collections.max(sizes));
+        long consumed = 0; ZipNames names = new ZipNames(); byte[] buffer = new byte[65536];
+        try (ZipInputStream zip = new ZipInputStream(source)) { ZipEntry entry;
+            while ((entry = zip.getNextEntry()) != null) { observer.checkpoint(); String name = names.accept(entry);
+                if (entry.isDirectory()) { if (zip.read() != -1) throw new IOException("ZIP directory contains unexpected data"); zip.closeEntry(); continue; }
+                Set<Long> sizes = wanted.get(name); long count = 0; MessageDigest hash = sizes == null ? null : MessageDigest.getInstance("SHA-256"); int length;
+                while ((length = zip.read(buffer)) != -1) { observer.checkpoint(); consumed = Math.addExact(consumed, length); count = Math.addExact(count, length);
+                    if (consumed > budget) throw new IOException("ZIP data exceeds safe version-check budget; choose the game folder instead");
+                    if (hash != null) hash.update(buffer, 0, length);
+                }
+                if (sizes != null && sizes.contains(count)) observed.put(name, new Required(name, count, hex(hash.digest())));
+                zip.closeEntry(); observer.progress("Checking version: " + name, 0, 0);
+            }
+        }
+        return select(versions, observed);
+    }
+
     private final File root;
     private final LinkedHashMap<String, Required> required = new LinkedHashMap<>();
     private final long total, workspace;
@@ -170,28 +262,16 @@ public final class OwnerInputImport {
     public Result zip(InputStream source) throws Exception {
         capacity(); Result result = new Result(); Set<String> seen = new HashSet<>();
         long skipped = 0; final long maximumSkipped = Math.max(total, MARGIN);
-        Set<String> fileNames = new HashSet<>(), directoryNames = new HashSet<>(); Map<String, String> nodes = new HashMap<>();
+        ZipNames names = new ZipNames();
         try (ZipInputStream zip = new ZipInputStream(source)) {
             ZipEntry entry; byte[] scratch = new byte[65536];
             while ((entry = zip.getNextEntry()) != null) {
-                observer.checkpoint(); String name = entry.getName();
-                String normalized = entry.isDirectory() && name.endsWith("/") ? name.substring(0, name.length() - 1) : name;
-                safePath(normalized); String key = pathKey(normalized), node = "";
-                for (String part : normalized.split("/")) {
-                    node = node.isEmpty() ? part : node + "/" + part;
-                    String old = nodes.put(pathKey(node), node);
-                    if (old != null && !old.equals(node)) throw new IOException("Case-aliased ZIP entry");
-                    if (!node.equals(normalized)) { if (fileNames.contains(pathKey(node))) throw new IOException("ZIP file/directory collision"); directoryNames.add(pathKey(node)); }
-                }
-                if (entry.isDirectory()) { if (fileNames.contains(key)) throw new IOException("ZIP file/directory collision"); directoryNames.add(key); }
-                else { if (!fileNames.add(key) || directoryNames.contains(key)) throw new IOException("Duplicate or file/directory ZIP entry"); }
+                observer.checkpoint(); String name = names.accept(entry);
                 if (entry.isDirectory()) {
-                    safePath(name.endsWith("/") ? name.substring(0, name.length() - 1) : name);
-                    if (!seen.add(name) || seen.size() > 100000) throw new IOException("Duplicate or excessive ZIP entries");
                     if (zip.read() != -1) throw new IOException("ZIP directory contains unexpected data");
                     zip.closeEntry(); continue;
                 }
-                safePath(name); if (!seen.add(name) || seen.size() > 100000) throw new IOException("Duplicate or excessive ZIP entries");
+                seen.add(name);
                 Required row = required.get(name);
                 if (row != null) {
                     if (entry.getSize() >= 0 && entry.getSize() != row.bytes) throw new IOException("Version mismatch (size): " + name);

@@ -46,6 +46,7 @@ class ManagedHostStageTests(unittest.TestCase):
         self.assertEqual(json.loads((self.destination / "stage-receipt.json").read_text()), result)
         for name in (
             "OwnerInstaller.java",
+            "OwnerAlphaInstall.java",
             "OwnerUpdateState.java",
             "OwnerBuildService.java",
             "OwnerInputImport.java",
@@ -53,7 +54,18 @@ class ManagedHostStageTests(unittest.TestCase):
             "release-trust.json",
         ):
             self.assertIn(name, result["files"])
-        for name in ("release.py", "updates.py", "public_release.py", "release_jobs.py", "game_import.py", "install_flow.py", "install_inputs.py"):
+        for name in (
+            "release.py",
+            "updates.py",
+            "public_release.py",
+            "release_jobs.py",
+            "game_import.py",
+            "install_flow.py",
+            "install_inputs.py",
+            "alpha_policy.py",
+            "ProfileStore.java",
+            "ProfileRetentionProvider.java",
+        ):
             self.assertIn("repo/tools/phone-build/owner-apk/" + name, result["files"])
         trust = json.loads((self.destination / "release-trust.json").read_text())
         self.assertEqual(trust["keys"], {})
