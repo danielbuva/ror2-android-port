@@ -1475,6 +1475,13 @@ def produce(profile_path, profile_sha256, pc, output, codec_path, codec_sha256, 
                         typ["hash"] = value
                     else:
                         raise ValueError("script properties require MonoScript or MonoBehaviour")
+                if "fieldless_script_source" in selected:
+                    if sdk_tree is None:
+                        raise ValueError("fieldless script source requires SDK metadata")
+                    script, script_type = source_record(sources, selected["fieldless_script_source"])
+                    if script_type["class_id"] != 115:
+                        raise ValueError("fieldless script source must be an original MonoScript")
+                    typ = fieldless_script_type(body, typ, script, sdk_tree, identity_owner)
                 if "fieldless_script_record" in selected:
                     if sdk_tree is None or selected["fieldless_script_record"] is not True:
                         raise ValueError("fieldless script record requires the named SDK policy")

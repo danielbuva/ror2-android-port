@@ -513,6 +513,15 @@ no codec or SDK is consumed. Existing input/profile/body/resource hash gates,
 checkpoint ownership and teardown apply. Native BC6H support is a device gate;
 this profile is not automatically selected by accepted-file admission. Complete
 scene relationships and functional file admission remain open.
+Complete original-lighting alternatives for Promo and Snowy Forest use
+`owner-<stage>-source-lighting-objects.json` and the corresponding texture,
+shader and (Promo only) Timeline recipes. The existing object owner emits
+complete scene containers from original records and receipt-pinned source packs.
+Both native metadata/script identities and every nonlighting object match J850;
+the three reflection chains and RenderSettings retain original source data.
+Setup/teardown and bounded readers remain with the existing owners. Native BC6H
+support is required. These opt-in outputs have distinct complete-file hashes;
+historical admission stays strict and full game-runtime qualification is open.
 The same owner supports the source Alpha8 cohort through
 `recipe/owner-alpha-textures.json`: canonical original bodies/pixels are reused
 with explicit target names, storage extents and unchanged-field admission.
@@ -5191,6 +5200,10 @@ MonoScript record. The original 32-byte prototype must have only native base
 fields; its SDK-derived properties hash must equal the produced script's
 embedded hash. The source tree and body are preserved, while class, namespace
 and assembly derive the script ID. This adds no runtime component behavior.
+Its `fieldless_script_source` counterpart selects an original MonoScript and
+uses the same SDK/schema/empty-component checks to derive both metadata hashes.
+It repairs a rebound fieldless component's cached identity without changing its
+body or adding fields; ordinary components cannot opt into this projection.
 The shared SDK Shader owner also accepts the standalone Legacy particle shader
 (SDK ID 207) through an explicit prefab/no-fog scope. Original and SDK names,
 properties and absent dependencies must agree; declared SDK variants supply

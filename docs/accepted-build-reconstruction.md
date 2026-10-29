@@ -9,8 +9,8 @@ are never required public inputs. Raw-exact results, generated metadata and
 device acceptance are reported separately. Historical replay results below
 retain their original byte-exact meaning.
 J1254 supplies the two incidental startup files through a public producer;
-current host readiness is 692/705 available (685 raw-exact, two generated
-metadata), with 13 source files still missing. Complete phone acceptance remains
+current historical host readiness is 693/705 available (685 raw-exact, three
+generated metadata/context files), with 12 reference entries still missing. Complete phone acceptance remains
 open; the daily snapshot retains its earlier count until its next refresh.
 The current source Menu producer now emits its complete 591-object graph and
 standalone media through the player-data path. Its type identities/hashes match
@@ -582,3 +582,17 @@ masking fields or trusting a target-derived graph. Host availability becomes
 two code comparisons and three explained input differences; 12 files remain.
 Complete phone generation, installation, launch and data-preserving updates remain
 open. Evidence: `work/coordination/orchestrator/stage-context-public-v2/`.
+
+J1261 adds complete opt-in original-lighting alternatives for Promo and Snowy
+Forest. Public source production runs with historical outputs, exported projects
+and preparation captures denied as inputs. Of 30,149 objects, 30,141 are
+historically raw-exact; the other eight preserve original reflection chains and
+RenderSettings. Every native/script identity, script table and external-file
+identity matches J850. Source material/probe/sky relationships remain checked.
+Snowy's rebound empty component derives its correct cached script identity from
+the original MonoScript and SDK; no historical identifier is a literal input.
+These two source artifacts are separate from the unchanged historical 693/705
+count. Native BC6H support, complete phone generation, full game-runtime behavior
+and final source-output assembly/install/update qualification remain gates.
+Evidence: `work/coordination/orchestrator/scenes/promo-source-complete-v1/` and
+`work/coordination/orchestrator/scenes/snowy-source-complete-v2/`.

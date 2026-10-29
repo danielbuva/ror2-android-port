@@ -5075,3 +5075,31 @@ TextureConverter/ExrWriter informs face/chain ownership; its exporter does not
 regenerate baked lighting. The operation consumes no codec or private fixture;
 all generated packs, APKs and raw observations stay ignored. Native BC6H support
 must be established before selecting this profile on another device.
+
+## Complete original-lighting scene alternatives audit (2026-10-29)
+
+J1261: `owner-promovoidsurvivor-source-lighting-objects.json` and
+`owner-snowyforest-source-lighting-objects.json` select complete source records,
+types, hash expectations and minimum relocated relationships. Their companion
+`source-lighting-textures`, `standard-shaders` and `postprocess-shaders` profiles
+select original reflections and existing source shader transformations. Promo's
+`owner-promovoidsurvivor-timeline-records.json` additionally declares imported
+unbound track relationships; null bindings introduce no animation/event data.
+All other required packs use existing public mesh, texture and animation recipes;
+producer/recipe closure is listed in the accepted-output README.
+
+Provenance, privacy, licensing and sensitive-content audit: all nine new profiles
+contain source selectors, identifiers, field extents, reconstruction policy and
+hashes only. The complete object profiles contain no floating-point literals or
+long encoded strings. They contain no pixels, geometry/curve/coefficient arrays,
+serialized body/type templates, proprietary implementation, SDK bytes, private
+paths/settings, device/account identifiers, credentials or signing material.
+Original reflection and ambient data are read from legitimate game records.
+All producer inputs are public recipes, the owner's installation, permitted SDK
+and pinned public tooling; every required source-pack profile is published.
+Guarded complete-file production denies target bundles, exports and preparation
+captures. Independent comparison checks every object/type, all resource bytes
+and native references. Native BC6H is an explicit device capability gate; full
+game-runtime qualification and historical raw-exact admission remain open.
+Existing source/tool licensing applies; no redistribution, ownership,
+authentication or entitlement success is granted. Generated outputs stay ignored.

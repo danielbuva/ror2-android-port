@@ -1042,3 +1042,18 @@ SDK-only disposable probe APK: `a7357aac6670c2a73975a31b79dedb0ed9d412655011fe30
 40 host checks pass (three unavailable-codec controls skip); owned probe removed,
 display asleep, lease released. Source-format support, complete scene links and
 functional file admission remain gates; readiness stays 693/705 (685 raw-exact).
+
+## J1261 — Produce complete original-lighting scene alternatives
+
+2026-10-29 UTC. Promo and Snowy Forest now have complete public source recipes;
+three reflection chains and RenderSettings retain their original lighting data.
+Of 30,149 objects, 30,141 remain raw-exact; all native/script identities, script
+and external tables match J850. Reflection resources and links match originals.
+Generic imported-null Timeline bindings and source fieldless-script identity
+complete their existing owners. No historical artifact supplies produced bytes.
+Evidence root: `work/coordination/orchestrator/scenes/`, outputs
+`promo-source-complete-v1/` and `snowy-source-complete-v2/`; source-read guards pass.
+Promo SHA `4fe1d8a6652c299b665789c1b0b3077a4526dbc54c63b4f03f84797426c32374`;
+Snowy SHA `55cdbfce846fa1a4866c3c2b3f3257c2203fc96bb055a374cec615cd622c12dd`.
+90 focused host checks pass. Native BC6H support and full game-runtime/phone
+production remain gates; historical readiness stays 693/705 (685 raw-exact).
