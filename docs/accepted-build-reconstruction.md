@@ -12,6 +12,12 @@ J1254 supplies the two incidental startup files through a public producer;
 current host readiness is 692/705 available (685 raw-exact, two generated
 metadata), with 13 source files still missing. Complete phone acceptance remains
 open; the daily snapshot retains its earlier count until its next refresh.
+The current source Menu producer now emits its complete 591-object graph and
+standalone media through the player-data path. Its type identities/hashes match
+J850, but current alignment and an original store-button Sprite differ from that
+reference. Those genuine differences remain visible and do not advance the
+historical readiness count; complete phone installation/update acceptance stays
+open.
 
 
 The host-qualified [release update contract](../tools/phone-build/owner-apk/README.md#public-release-updates)

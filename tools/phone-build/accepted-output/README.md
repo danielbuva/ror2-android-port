@@ -1603,3 +1603,30 @@ producer's existing `--record-pack` argument. Repeat the supplier argument for
 profiles with multiple source packs. The remap profile names the public source
 profile hash; callers first produce that source profile with the existing
 Shader owner. No compilation or historical-target lookup occurs in the remapper.
+
+## Source Menu player data
+
+`player_data.py --ui-profile recipe/owner-player-menu.json PROFILE_SHA256
+--ugui-source SDK_UGUI_CORE` adds the current source Menu and any missing original
+Sprite/texture dependencies to the existing player-data command. Keep its normal
+registry, code-request, managed-production, SDK and record/texture inputs. The SDK
+directory is the exact editor's `com.unity.ugui/Runtime/UI/Core`; four pinned source
+files supply constructor defaults. This is a current experimental producer.
+
+The parent generates its registry first; the UI owner receives that value rather
+than a separate registry packet. It reads original UI/scripts/English data and
+public player supplier recipes, preserves asset identities and resolves every
+nonzero pointer. Native schemas may cross original files only with matching
+class IDs/hashes. Common-string names use the pinned parser's vocabulary; no
+class-database schema supplies content. Original Sprite copies require matching
+render keys and geometry. Missing atlas-free Sprites get independently named
+standalone files, retaining original geometry/filter/color-space and decoded mips.
+
+`ui-source/` contains private object/schema receipts; the parent result includes
+`ui.resources`, whose file/root-ID pair belongs to the future manager producer.
+There is no implicit timestamped input or current Unity-project dependency.
+Source Menu production covers 591 objects with independently generated local IDs.
+All type identities/hashes match J850; two genuine differences remain explicit:
+current SubmenuLegend alignment and the retained original store-button Sprite
+where J850 has null. This producer does not exempt either difference from final
+compatibility review, qualify a phone run or increase the raw-exact count.
