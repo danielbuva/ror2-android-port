@@ -64,6 +64,15 @@ Original missing standalone Sprite dependencies are emitted with source geometry
 and decoded mip pixels. No accepted target/cache supplies content. Current Menu
 source production is complete; its two genuine J850 field differences and full
 phone/runtime acceptance remain open.
+`player_hud.py` owns current source HUD construction through the optional
+player-data `--hud-profile PROFILE SHA256` phase. It clones original hierarchies
+in separate pointer namespaces, applies the public RecoveredHudBuilder bindings
+and derives synthetic component schemas from source-produced managed metadata.
+The parent passes its fresh registry; original/SDK script hashes must agree.
+Setup requires the audited HUD recipe and a new parent output tree; bounded
+readers close at exit and `hud-source/` retains schemas, providers and root IDs.
+Standalone Sprite media uses the shared UI owner. Current source hierarchies stay
+intact; historical graph differences and phone/runtime compatibility remain open.
 `stage_contexts.py` owns original-record population and identity context production.
 `recipe/owner-stage-contexts.json` pins original scenes/catalog/pool suppliers and
 selects the existing global-root suppression policy. The shared

@@ -1669,6 +1669,23 @@ current SubmenuLegend alignment and the retained original store-button Sprite
 where J850 has null. This producer does not exempt either difference from final
 compatibility review, qualify a phone run or increase the raw-exact count.
 
+## Source HUD player data
+
+Add `--hud-profile recipe/owner-player-hud.json PROFILE_SHA256` to the existing
+player-data command with its registry, managed-production and exact SDK inputs.
+This current experimental phase derives the RecoveredHudBuilder hierarchy from
+original HUD, run-info, item-icon and crosshair roots. No cached prefab, historical
+HUD file or saved ID map is required. Clone-local references, authored bindings,
+font/material normalization and component filtering follow the public builder.
+Original script properties must match the freshly produced registry; SDK editor
+curve metadata affects only the existing checked hash projection.
+
+The parent result exposes `hud.resources` for manager construction; `hud-source/`
+retains private object/schema/provider receipts. Readers close on exit. The complete
+source graph has 2,021 objects with independently allocated local IDs. Original
+hierarchy differences from J850 remain explicit; host pointer/schema checks do
+not qualify Android loading, gameplay or complete phone production.
+
 ## Complete original-lighting scene alternatives
 
 The opt-in profiles `owner-promovoidsurvivor-source-lighting-objects.json` and

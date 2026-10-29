@@ -1081,3 +1081,18 @@ This fixes an observed HUD emission failure; the source-only prototype now emits
 Evidence: `work/coordination/orchestrator/hud-source-constructor-v1/emission-v6/result.json`.
 The full public HUD producer, its difference from J850's 1,902 objects and native
 phone qualification remain open. Historical readiness stays 693/705.
+
+## J1264 — Generate the complete source HUD through the player-data owner
+
+2026-10-29. Public HUD phase constructs 2,021 objects from four original roots,
+public RecoveredHudBuilder policy and source-derived script/SDK metadata.
+Guarded public API excludes historical HUD/private prototype inputs; no denied reads.
+Native output SHA-256: `edb8beef5045bdec3e851e9d80b5180d860ab75c97d64d69871725f801c8b59a`.
+Independent binary checks close 6,648 pointers and validate 5,236 nonnull typed
+references; source schema/script identities match the generated registry.
+Evidence: `work/coordination/orchestrator/hud-public-source-v1/` and
+`work/coordination/orchestrator/hud-source-constructor-v1/emitted-pointer-{closure,types}.json`.
+Prior art: pinned EditorKit typed GameObject/component lookup; AssetRipper's
+custom MonoBehaviour PPtr marker distinguishes type spelling from inheritance.
+Historical 1,902-object hierarchy differs; no omissions or count exemption added.
+Host-only: readiness stays 693/705; native HUD, complete phone APK/install/update remain open.

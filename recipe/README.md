@@ -5115,3 +5115,17 @@ and native references. Native BC6H is an explicit device capability gate; full
 game-runtime qualification and historical raw-exact admission remain open.
 Existing source/tool licensing applies; no redistribution, ownership,
 authentication or entitlement success is granted. Generated outputs stay ignored.
+
+## Source HUD profile
+
+`owner-player-hud.json` SHA-256
+`471b7f74f5e9143c0dfe7bba03c5138389a019d9f55b40fa581f881f75bd2241`
+selects four original UI roots, original script/dependency members and five existing
+public texture recipes. `player_hud.py` derives all hierarchy, fields, schemas,
+geometry, pixels and relationships locally through the public HUD constructor.
+Manual provenance/privacy/licensing/sensitive-content review: identifiers, hashes
+and minimum source relationships only; no captured target IDs, prefab/body/field
+value tables, protected implementation, SDK bytes, private settings or credentials.
+Generated outputs and evidence stay ignored. Public-input evidence:
+`work/coordination/orchestrator/hud-public-source-v1/`. Historical graph differences,
+complete phone production and native runtime acceptance remain open.
