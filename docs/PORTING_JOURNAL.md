@@ -1188,3 +1188,16 @@ All 74 object, 69 player and 4 preload checks pass; new bounded-I/O checks pass.
 Prior art: existing native stream writer and original typed preload graph owner.
 This host control contains no game/SDK data. Readiness remains 693/705; complete
 whole-game reconstruction, phone APK and installation/update acceptance remain open.
+
+## J1271 — Emit grouped preload pointers without retaining the complete list
+
+2026-10-29. The existing container owner writes each derived group directly into
+its native record, retaining group ranges and the current closure instead of a
+second complete pointer list. Native ordering, ranges, hashes and source checks
+remain strict. A four-million-entry authored control is byte-identical to the
+previous writer; peak host RSS falls from 383 MB to 95 MB.
+Output SHA-256: `37f27b9201216b2ae7773909dcbae1fac1de039f04b3bcb1a346627ac48ab15a`.
+Evidence (ignored): `work/coordination/orchestrator/preload-stream-benchmark-v1/`.
+All 78 focused preload/object contracts, Ruff and host preflight pass.
+Complete source bundle production and phone memory/runtime acceptance remain open;
+historical reconstruction readiness stays 693/705 available, 685 raw-exact.
