@@ -183,6 +183,13 @@ def check(request):
     if not isinstance(drift, dict):
         raise ValueError("drift must map content target paths to pinned proofs")
     targets = Path(request["targets"]).resolve()
+    startup = {}
+    if "startup_metadata" in request:
+        supplied = request["startup_metadata"]
+        producer = module("_owner_startup", SOURCE.parent / "accepted-output/startup_metadata.py")
+        startup = producer.verify(supplied["path"], supplied["sha256"])
+        if set(startup) & set(drift):
+            raise ValueError("startup metadata cannot also claim input drift")
     entries, omitted = [], []
     for target in profile["targets"]:
         name = target["path"]
@@ -221,6 +228,12 @@ def check(request):
                 row.update(bytes=path.stat().st_size, sha256=sha(path))
                 equal = row["bytes"] == target["bytes"] and row["sha256"] == target["sha256"]
                 row.update(status="ready" if produced or equal else "mismatch", target_equal=equal)
+                if name in startup:
+                    item = startup[name]
+                    if (row["bytes"], row["sha256"]) != (item["bytes"], item["sha256"]):
+                        raise ValueError("assembly startup bytes differ from regenerated metadata")
+                    if not equal:
+                        row["status"] = "generated-metadata"
                 if name in drift:
                     if produced or equal:
                         raise ValueError("drift proof requires changed content, not code or exact output")
@@ -234,13 +247,16 @@ def check(request):
         raise ValueError("produced code cohort not present in target profile")
     if set(drift) - {row["path"] for row in entries if row["owner"] != "code"}:
         raise ValueError("drift proof target not in content selection")
-    blocked = [row["path"] for row in entries if row["status"] not in ("ready", "drift-explained")]
+    if set(startup) - {row["path"] for row in entries if row["owner"] != "code"}:
+        raise ValueError("startup metadata target not in content selection")
+    blocked = [row["path"] for row in entries if row["status"] not in ("ready", "drift-explained", "generated-metadata")]
     return {
         "assembly_ready": not blocked,
         "selection": "produced-code-and-sdk" if len(code) > len(CODE_ENTRIES) else "produced-code" if code else "replay-control",
         "blocked_entries": blocked,
         "exact_count": sum(row.get("target_equal") is True and row["status"] == "ready" for row in entries),
         "drift_explained_count": sum(row["status"] == "drift-explained" for row in entries),
+        "generated_metadata_count": sum(row["status"] == "generated-metadata" for row in entries),
         "code_comparison_required": [row["path"] for row in entries if row["owner"] == "code" and row.get("target_equal") is False],
         "entries": entries,
         "omitted_entries": omitted,

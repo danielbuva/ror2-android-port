@@ -5004,3 +5004,14 @@ credential or redistribution payload is published. Public helper dependencies
 retain their notices; the separately acquired SDK and legitimate game remain
 required. Evidence: `work/coordination/orchestrator/labgeometry-native-final-v2/`.
 Phone production of the complete bundle, installation and game behavior remain open.
+
+## Public startup metadata policy
+
+`startup_metadata.py` derives app/build identifiers from complete source inventory,
+public settings, toolchain and producer hashes. Its five boot options are authored
+converter policy and public PlayerSettings, with no development connection fields.
+Manual provenance/privacy/licensing review: no historical identifier, private
+configuration, target byte span, game content, SDK implementation or credential
+is embedded. No identity used for ownership, authentication, signing or saved-data
+placement is replaced. Outputs/receipts remain ignored; host qualification is
+recorded under `work/coordination/orchestrator/public-startup-metadata-v2/`.

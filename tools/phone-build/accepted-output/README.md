@@ -1,5 +1,30 @@
 # Accepted-output reconstruction support
 
+## Public startup metadata
+
+`startup_metadata.py` is the current source producer for `boot.config` and
+`unity_app_guid`. Run it with `--input-manifest OWNER_INVENTORY`,
+`--settings PUBLIC_PLAYER_SETTINGS`, `--toolchain PUBLIC_TOOLCHAIN` and
+`--output NEW_PRIVATE_DIRECTORY`. The public smoke PlayerSettings and
+`environment/toolchain.json` supply the current authored settings/toolchain.
+It reads no accepted APK, project cache, historical UUID or connection setting.
+The caller remains responsible for admitting the legitimate game inventory.
+
+The producer preserves HDR/fullscreen/safe-area settings, requires incremental
+GC, uses a 3 ms GC slice and disables debugger waiting. Development connection
+discovery is omitted. Distinct app/build identifiers derive from complete input
+hashes plus producer identity; relocating unchanged files preserves them. The
+product, package and signing identities used for data-preserving updates remain
+unchanged. The build GUID in the receipt is reserved for the future manager
+producer; this command does not generate `globalgamemanagers`.
+
+The owner APK request may supply `startup_metadata: {"path": "RECEIPT",
+"sha256": "RECEIPT_SHA256"}`. Admission rehashes inputs, regenerates complete
+expected bytes and checks both persisted outputs and selected assembly inputs.
+It covers only these two paths, reports `generated_metadata_count` separately
+and never increments raw-exact counts for differing files. This is a host
+production contract; complete phone production, launch and updates remain open.
+
 `phone_decode.py` is the current experimental Android shell receiver for one
 complete, pinned accepted-output profile. It preserves native IL2CPP code and
 Android content by reproducing their exact bytes. It runs no game, Unity Editor,

@@ -944,3 +944,17 @@ Profiles: `recipe/owner-labgeometry-*.json`; accepted inputs denied during produ
 Evidence (ignored): `work/coordination/orchestrator/labgeometry-native-final-v2/`.
 Readiness becomes 690/705 available, 685 raw-exact, 15 missing. No passed run replayed.
 Complete phone production, installation and game behavior remain open.
+
+## J1254 — Generate public startup metadata without private build settings
+
+2026-10-29. `startup_metadata.py` produces `boot.config` and `unity_app_guid`
+from legitimate inventory, public settings/toolchain and producer hashes.
+All five retained boot options match J850; five development connection fields
+are omitted. App/build UUIDs are independently reproducible and path independent.
+APK admission regenerates both complete files; only these paths may use the
+new generated-metadata status. Code/asset/relationship checks remain strict.
+Boot SHA-256: `a47b7e3410d29b9af85dd7d21782353ebc547891e58a1f681753feedd41e9756`.
+Evidence (ignored): `work/coordination/orchestrator/public-startup-metadata-v2/`.
+Host readiness: 692/705 available, 685 raw-exact, two generated metadata, 13 missing.
+Ruff, 21 focused host tests and preflight pass. Complete phone generation,
+installation, launch, data-preserving updates and runtime compatibility remain open.
