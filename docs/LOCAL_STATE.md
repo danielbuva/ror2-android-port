@@ -2071,3 +2071,13 @@ selected new output root. Tracked `player_hud.py` and `owner-player-hud.json`
 produce them from original game/SDK and source-produced managed/registry values.
 The generated root ID feeds future manager construction. No timestamped source
 folder, cached prefab or historical HUD is a required build input.
+
+### Source native manager receipts
+
+The optional player-data manager phase writes `managers-source/{fields.json,
+roots.json,result.json}` and native `globalgamemanagers` in the selected new output
+root. Tracked manager owners and `owner-player-managers.json` generate these from
+original game/SDK, public settings and explicit source-phase inputs. The selected
+Shader directory and startup receipt remain required local phase state generated
+by their public owners; no historical manager or timestamped discovery snapshot
+is required. Both player/Shader outputs feed final APK assembly.

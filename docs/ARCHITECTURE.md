@@ -73,6 +73,18 @@ Setup requires the audited HUD recipe and a new parent output tree; bounded
 readers close at exit and `hud-source/` retains schemas, providers and root IDs.
 Standalone Sprite media uses the shared UI owner. Current source hierarchies stay
 intact; historical graph differences and phone/runtime compatibility remain open.
+`player_managers.py` owns the optional complete source manager phase selected by
+player-data `--manager-profile`. `manager_settings.py` projects public settings
+over original native schemas; `manager_sdk.py` reads bounded SDK resource
+registrations and Android shader selection; `manager_graph.py` owns resource
+roots, binary/schema reads and direct dependency closure, including script edges.
+Setup requires fresh Menu/HUD/context/registry player outputs, a complete pinned
+source Shader phase, public startup receipt and permitted exact SDK inputs.
+Readers close at scope exit; no process survives. `managers-source/` retains
+native fields, roots, policy and provider receipts. The output is a complete
+native `globalgamemanagers` candidate with a fresh script-hash map and public
+Personal capability policy. Historical cache/UI differences and full phone/native
+runtime acceptance remain open; this introduces no gameplay/runtime owner.
 `stage_contexts.py` owns original-record population and identity context production.
 `recipe/owner-stage-contexts.json` pins original scenes/catalog/pool suppliers and
 selects the existing global-root suppression policy. The shared

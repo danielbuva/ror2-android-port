@@ -1096,3 +1096,19 @@ Prior art: pinned EditorKit typed GameObject/component lookup; AssetRipper's
 custom MonoBehaviour PPtr marker distinguishes type spelling from inheritance.
 Historical 1,902-object hierarchy differs; no omissions or count exemption added.
 Host-only: readiness stays 693/705; native HUD, complete phone APK/install/update remain open.
+
+## J1265 — Generate complete native player managers from source phases
+
+2026-10-29. Public manager owner emits all 18 native records, 389 resource roots,
+2,714 dependency entries and 564 shader names from original/SDK/public inputs.
+Guarded public API excludes historical managers and private discovery snapshots;
+zero denied reads. Output SHA-256:
+`8fef5f35b72ea8379a11e30a584a250b7cb2c08df674a5bccb48a032a7bc2cd6`.
+Same validated candidate closes 13,190 pointers across 560 produced/SDK files;
+18 native type hashes, 2,769 required script properties and shader associations match.
+Graphics fields match J850 after reference-number translation; 13 settings are raw-exact.
+Public Personal/on-demand policy and startup identity replace private editor state;
+fresh hash cache omits 148 unused zero historical rows; UI differences remain explicit.
+Evidence: `work/coordination/orchestrator/manager-public-source-v4/`.
+Prior art: pinned AssetRipper ResourceManager path projection; exact SDK governs native expansion.
+Host-only; readiness stays 693/705; full phone APK, native runtime and install/update remain open.

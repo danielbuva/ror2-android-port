@@ -1152,6 +1152,10 @@ def produce(
     ugui_source=None,
     stage_context_profile=None,
     hud_profile=None,
+    manager_profile=None,
+    manager_shaders=None,
+    manager_startup=None,
+    sdk_binary=None,
 ):
     """Write a new target tree; never use target bytes as a source provider."""
     profile_path = Path(profile_path)
@@ -1307,6 +1311,24 @@ def produce(
                 checked(output / (TARGET + name), (row["bytes"], row["sha256"]))
                 result["files"][TARGET + name] = dict(row, source_role="original-stage-contexts")
             result["stage_contexts"] = produced_contexts
+        if manager_profile is not None:
+            if any(value is None for value in (ui_profile, hud_profile, stage_context_profile, manager_shaders, manager_startup, sdk_binary)):
+                raise ValueError("source managers require UI, HUD, stage, Shader, startup and SDK phases")
+            managers = OBJECTS.module("_player_managers", Path(__file__).with_name("player_managers.py"))
+            produced_managers = managers.produce(
+                manager_profile[0],
+                manager_profile[1],
+                pc,
+                sdk,
+                builtin_extra,
+                sdk_binary,
+                manager_shaders,
+                manager_startup,
+                profile,
+                output / TARGET,
+            )
+            result["managers"] = produced_managers
+            result["files"].update({TARGET + name: row for name, row in produced_managers["files"].items()})
         # Re-read persisted files and their providers before declaring success.
         for name, pin in expected.items():
             checked(output / (TARGET + name), pin)
@@ -1353,6 +1375,15 @@ def main():
         "--hud-profile", nargs=2, metavar=("PROFILE", "SHA256"), help="current source HUD profile; requires registry and managed source outputs"
     )
     parser.add_argument("--stage-context-profile", nargs=2, metavar=("PROFILE", "SHA256"), help="current original-record stage context profile")
+    parser.add_argument(
+        "--manager-profile",
+        nargs=2,
+        metavar=("PROFILE", "SHA256"),
+        help="current complete native manager phase; requires Menu, HUD, stage, Shader and startup phases",
+    )
+    parser.add_argument("--manager-shaders", nargs=2, metavar=("DIRECTORY", "RECEIPT_SHA256"), help="complete source-produced player Shader directory")
+    parser.add_argument("--manager-startup", nargs=2, metavar=("RECEIPT", "SHA256"), help="public startup metadata receipt supplying build identity")
+    parser.add_argument("--sdk-binary", type=Path, help="exact acquired ARM64 SDK executable; required for manager metadata selection")
     parser.add_argument("--ugui-source", type=Path, help="exact SDK com.unity.ugui Runtime/UI/Core source directory; required for source Menu")
     parser.add_argument(
         "--record-pack",
@@ -1390,6 +1421,10 @@ def main():
         args.ugui_source,
         args.stage_context_profile,
         args.hud_profile,
+        args.manager_profile,
+        args.manager_shaders,
+        args.manager_startup,
+        args.sdk_binary,
     )
 
 
