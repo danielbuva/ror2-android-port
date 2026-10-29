@@ -5180,3 +5180,24 @@ All output remains ignored. Host-built diagnostic inputs qualify the API only;
 phone-built tool construction, native scene loading and lighting compatibility
 remain open. Historical readiness is unchanged. Evidence:
 `work/coordination/orchestrator/default-scene-public-v2/`.
+
+## Moon2 source spine lighting
+
+| Profile | Scope | Provenance and privacy audit | Owner/evidence |
+| --- | --- | --- | --- |
+| `owner-moon2-spine-source-lighting-objects.json` | Complete 30,450-record legacy Moon2 scene | Original selectors, relationships, named lab activation policy and hashes only. | `object_produce.py`; J1268, host source candidate; full phone/runtime gate open. |
+| `owner-moon2-spine-source-lighting-textures.json` | Original baked reflection, complete face/mip chain | Original record/resource selectors, layout extents and hashes only. | `texture_produce.py`, `cube-preserve`; J1268. |
+
+2026-10-29 provenance/privacy/licensing/sensitive-content audit: both profiles
+contain no serialized bodies/types, pixels, protected implementation, numeric
+lighting/material data, private paths/settings, account/device identifiers or
+signing material. The object policy has no floating-point literals. Original
+lighting and sky material relationships come from the legitimate input; all
+required record-pack profiles are public and listed in the accepted-output README.
+Native/script metadata and all 30,447 other bodies remain strict against J850.
+The preload table preserves all historical dependencies and adds the original sky
+material; source activation policy retains existing lab suppression. Guarded
+production denies accepted bundles and preparation captures. SDK/tool licensing
+and ownership/entitlement boundaries remain unchanged; no runtime distribution
+or authentication success is granted. Generated outputs stay ignored. Complete
+phone/game-runtime and install/update acceptance remain open.

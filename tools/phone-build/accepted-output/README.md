@@ -1747,6 +1747,30 @@ metadata identity from its original MonoScript, using the existing fieldless
 schema/SDK checks. It addresses Snowy's imported empty component without
 changing its serialized body. Other component layouts are rejected.
 
+## Complete Moon2 source spine
+
+The opt-in `owner-moon2-spine-source-lighting-objects.json` reconstructs the
+complete legacy Moon2 spine scene with original RenderSettings, the external
+original sky material and all original baked reflection faces/mips. Its preload
+table retains every historical dependency and adds that sky material. All 30,450
+native/script identities and 30,447 record bodies match J850. This is a source
+alternative; historical exact-file admission and full phone/runtime gates remain
+separate. Existing phone HDR controls qualify native BC6H sampling; this complete
+scene has not yet been run on the phone.
+
+Supply freshly produced packs for `owner-meshes.json`, `owner-alpha-textures.json`,
+`owner-material-records.json`, `owner-gameobjects.json`, `owner-generic-records.json`,
+`owner-transforms.json`, `owner-hierarchy-records-1.jsonl.gz`,
+`owner-sulfurpools-whole-standard-shaders.json`,
+`owner-testotherbrother-skybox-shaders.json` and
+`owner-moon2-spine-source-lighting-textures.json`. Use the same complete-object
+CLI and explicit receipt hashes described above. No private provider directory
+is selected implicitly. `record_source: [bundle, member, path_id]` selects a
+checked pack record in another namespace; content/type/reference gates still
+apply, and changing a streamed member requires resource reconstruction.
+`inactive_scene_object` names an original GameObject whose active flag is cleared;
+it retains the legacy lab's existing group suppression policy.
+
 ## Source bundle manifest
 
 The current `bundle_manifest.py` producer emits a native UnityFS manifest from

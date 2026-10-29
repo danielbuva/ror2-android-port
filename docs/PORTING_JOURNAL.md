@@ -1142,3 +1142,18 @@ SDK tag IDs are derived; evidence: `work/coordination/orchestrator/default-scene
 Prior art: pinned AssetRipper native schemas/PPtr identities; SDK/public scene policy.
 Readiness stays 693/705. Native load/lighting, phone-built tool and complete
 APK/install/update acceptance remain open; host-built diagnostics are no public input.
+
+## J1268 — Reconstruct the complete Moon2 source spine scene
+
+2026-10-29. Public object/texture recipes reconstruct all 30,450 legacy lab records.
+30,447 bodies and every native/script identity match J850; original RenderSettings
+and baked reflection replace historical lighting, with their sky material binding.
+All 76,607 non-null pointers are checked; every local pointer resolves. The preload
+retains all historical dependencies and adds the original sky material dependency.
+Guarded public production denies accepted bundles/captures; no denied reads.
+Output SHA-256: `5dd13a3f56b24694b9e11f7d68ccb14f346741de603431003cb26c0c8e7e21cb`.
+Evidence: `work/coordination/orchestrator/moon2-source-complete-v1/`.
+General owners add checked record namespace reuse and named source activation.
+Prior art: pinned EditorKit typed identity lookup; existing native schema/PPtr owners.
+Host checks pass; source candidate only. Readiness remains 693/705; full phone
+APK, native scene consumption and data-preserving install/update remain open.
