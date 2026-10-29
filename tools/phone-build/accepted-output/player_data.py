@@ -1151,6 +1151,7 @@ def produce(
     ui_profile=None,
     ugui_source=None,
     stage_context_profile=None,
+    hud_profile=None,
 ):
     """Write a new target tree; never use target bytes as a source provider."""
     profile_path = Path(profile_path)
@@ -1289,6 +1290,15 @@ def produce(
             )
             result["ui"] = produced_ui
             result["files"].update({TARGET + name: row for name, row in produced_ui["files"].items()})
+        if hud_profile is not None:
+            if "registry" not in profile:
+                raise ValueError("source HUD requires the generated registry")
+            hud = OBJECTS.module("_player_hud", Path(__file__).with_name("player_hud.py"))
+            produced_hud = hud.produce(
+                hud_profile[0], hud_profile[1], pc, profile, builtin_extra, editor_resources, managed_production, registry, output / TARGET
+            )
+            result["hud"] = produced_hud
+            result["files"].update({TARGET + name: row for name, row in produced_hud["files"].items()})
         if stage_context_profile is not None:
             contexts = OBJECTS.module("_player_stage_contexts", Path(__file__).with_name("stage_contexts.py"))
             produced_contexts = contexts.produce(stage_context_profile[0], stage_context_profile[1], pc, output / "stage-context-source")
@@ -1339,6 +1349,9 @@ def main():
     )
     parser.add_argument("--managed-production", type=Path, help="successful source-produced managed directory; required for registry")
     parser.add_argument("--ui-profile", nargs=2, metavar=("PROFILE", "SHA256"), help="current source Menu profile; requires registry and SDK UGUI source")
+    parser.add_argument(
+        "--hud-profile", nargs=2, metavar=("PROFILE", "SHA256"), help="current source HUD profile; requires registry and managed source outputs"
+    )
     parser.add_argument("--stage-context-profile", nargs=2, metavar=("PROFILE", "SHA256"), help="current original-record stage context profile")
     parser.add_argument("--ugui-source", type=Path, help="exact SDK com.unity.ugui Runtime/UI/Core source directory; required for source Menu")
     parser.add_argument(
@@ -1376,6 +1389,7 @@ def main():
         args.ui_profile,
         args.ugui_source,
         args.stage_context_profile,
+        args.hud_profile,
     )
 
 

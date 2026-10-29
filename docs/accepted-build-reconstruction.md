@@ -20,6 +20,14 @@ historical readiness count; complete phone installation/update acceptance stays
 open.
 
 
+The public HUD phase emits its complete 2,021-object source graph and media
+without historical HUD artifacts. All 6,648 pointers close and 5,236 nonnull typed
+references match their target classes; script properties match the generated
+registry. Its 119-object difference from J850 includes original hierarchy changes,
+so historical exactness and native runtime acceptance remain open. J1264 records
+the public-input proof; readiness stays 693/705.
+
+
 The host-qualified [release update contract](../tools/phone-build/owner-apk/README.md#public-release-updates)
 covers signed public-tool acquisition, per-entry incremental reuse, existing-key
 signing and session installation. Publisher trust and a reviewed complete release

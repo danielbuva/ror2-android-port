@@ -2062,3 +2062,12 @@ read statically, never executed on Android. Stage `obj_material.py` and
 `scripts/lab/phone_registry.py` with the object owner. No accepted output or
 retained run folder is an implicit supplier. Full host evidence remains ignored
 under `work/coordination/orchestrator/labgeometry-native-final-v2/`.
+
+### Source HUD phase receipts
+
+The optional public player-data HUD phase generates `hud-source/{objects.json,
+schema-*.tree,result.json}` and its native HUD/media files inside the explicitly
+selected new output root. Tracked `player_hud.py` and `owner-player-hud.json`
+produce them from original game/SDK and source-produced managed/registry values.
+The generated root ID feeds future manager construction. No timestamped source
+folder, cached prefab or historical HUD is a required build input.
