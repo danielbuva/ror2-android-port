@@ -190,6 +190,13 @@ def check(request):
         startup = producer.verify(supplied["path"], supplied["sha256"])
         if set(startup) & set(drift):
             raise ValueError("startup metadata cannot also claim input drift")
+    contexts = {}
+    if "stage_contexts" in request:
+        supplied = request["stage_contexts"]
+        producer = module("_owner_stage_contexts", SOURCE.parent / "accepted-output/stage_contexts.py")
+        contexts = producer.verify(supplied["path"], supplied["sha256"])
+        if set(contexts) & (set(drift) | set(startup)):
+            raise ValueError("source stage contexts cannot also claim another content policy")
     entries, omitted = [], []
     for target in profile["targets"]:
         name = target["path"]
@@ -234,6 +241,12 @@ def check(request):
                         raise ValueError("assembly startup bytes differ from regenerated metadata")
                     if not equal:
                         row["status"] = "generated-metadata"
+                if name in contexts:
+                    item = contexts[name]
+                    if (row["bytes"], row["sha256"]) != (item["bytes"], item["sha256"]):
+                        raise ValueError("assembly stage context bytes differ from regenerated source")
+                    if not equal:
+                        row["status"] = "generated-stage-contexts"
                 if name in drift:
                     if produced or equal:
                         raise ValueError("drift proof requires changed content, not code or exact output")
@@ -249,13 +262,16 @@ def check(request):
         raise ValueError("drift proof target not in content selection")
     if set(startup) - {row["path"] for row in entries if row["owner"] != "code"}:
         raise ValueError("startup metadata target not in content selection")
-    blocked = [row["path"] for row in entries if row["status"] not in ("ready", "drift-explained", "generated-metadata")]
+    if set(contexts) - {row["path"] for row in entries if row["owner"] != "code"}:
+        raise ValueError("stage context target not in content selection")
+    blocked = [row["path"] for row in entries if row["status"] not in ("ready", "drift-explained", "generated-metadata", "generated-stage-contexts")]
     return {
         "assembly_ready": not blocked,
         "selection": "produced-code-and-sdk" if len(code) > len(CODE_ENTRIES) else "produced-code" if code else "replay-control",
         "blocked_entries": blocked,
         "exact_count": sum(row.get("target_equal") is True and row["status"] == "ready" for row in entries),
         "drift_explained_count": sum(row["status"] == "drift-explained" for row in entries),
+        "generated_stage_context_count": sum(row["status"] == "generated-stage-contexts" for row in entries),
         "generated_metadata_count": sum(row["status"] == "generated-metadata" for row in entries),
         "code_comparison_required": [row["path"] for row in entries if row["owner"] == "code" and row.get("target_equal") is False],
         "entries": entries,
@@ -391,7 +407,7 @@ def sign(request_path, output):
 def build(request_path, output):
     request = json.loads(Path(request_path).read_text())
     fields = {"manifest", "manifest_sha256", "targets", "frontend", "java", "android_jar", "d8_jar", "wire_helper"}
-    if set(request) - {"version_code", "code", "javac", "drift"} != fields or request["manifest_sha256"] != PROFILE:
+    if set(request) - {"version_code", "code", "javac", "drift", "startup_metadata", "stage_contexts"} != fields or request["manifest_sha256"] != PROFILE:
         raise ValueError("unsupported owner APK request/profile")
     code = code_paths(request)
     version_code = request.get("version_code")
@@ -436,11 +452,15 @@ def build(request_path, output):
             tracked.append(SOURCE.parent / "accepted-output/sdk_package.py")
         tracked += [roots[k] for k in ("java", "android_jar", "d8_jar", "wire_helper", "manifest")]
         tracked += [Path(row["path"]) for row in code.values()]
+        generated_receipts = [request[name] for name in ("startup_metadata", "stage_contexts") if name in request]
+        tracked += [Path(pin["path"]) for pin in generated_receipts]
         drift_evidence = [pin for row in readiness["entries"] for pin in row.get("drift_evidence", [])]
         tracked += [Path(pin["path"]) for pin in drift_evidence]
         if "javac" in roots:
             tracked.append(roots["javac"])
         result["inputs"] = {str(p): {"bytes": p.stat().st_size, "sha256": sha(p)} for p in tracked}
+        if any(result["inputs"][pin["path"]]["sha256"] != pin["sha256"] for pin in generated_receipts):
+            raise ValueError("generated content receipt changed after readiness check")
         if any(result["inputs"][pin["path"]]["sha256"] != pin["sha256"] for pin in drift_evidence):
             raise ValueError("drift evidence changed after readiness check")
         # Availability and qualification are checked above. Bind assembly to the

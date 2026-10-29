@@ -64,6 +64,19 @@ Original missing standalone Sprite dependencies are emitted with source geometry
 and decoded mip pixels. No accepted target/cache supplies content. Current Menu
 source production is complete; its two genuine J850 field differences and full
 phone/runtime acceptance remain open.
+`stage_contexts.py` owns original-record population and identity context production.
+`recipe/owner-stage-contexts.json` pins original scenes/catalog/pool suppliers and
+selects the existing global-root suppression policy. The shared
+`scripts/lab/source_identity_metadata.py:from_records` owns paths, root shapes,
+identity ordering and toggle groups for binary and desktop YAML adapters.
+Setup requires a new private output directory and original installation; bounded
+readers close per supplier/stage and recheck source hashes before success.
+The player-data `--stage-context-profile PROFILE SHA256` option copies its fresh
+file into the player tree and retains its receipt. Provenance hashes declare
+original serialized members or canonical source graphs, binding public policy
+and producer hashes; desktop YAML receipt checks remain unchanged. APK admission
+regenerates the entire named context file and counts it separately from raw-exact
+files. Complete phone generation and runtime acceptance remain open.
 `startup_metadata.py` owns public `boot.config` and `unity_app_guid` generation.
 Setup pins the owner's inventory, public PlayerSettings and exact toolchain;
 their hashes and producer version generate relocatable build identifiers.

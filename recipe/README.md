@@ -5032,3 +5032,23 @@ source hashes and authored policy only, with no copied game/SDK code, asset body
 pixel/geometry table, private path, connection value or credential. Outputs and
 receipts remain ignored. Genuine J850 field differences and phone/runtime
 acceptance remain open; evidence: `work/coordination/orchestrator/menu-public-source-v1/`.
+
+## Original-record stage contexts
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-stage-contexts.json` | `e9098b415c66f74530b23aac1206443f0932daf7619b6c6ad192ef6e254ea807` |
+
+The recipe selects 23 original scene members, population component IDs, original
+catalog pool suppliers and TextAsset type metadata. Four required global roots
+and an optional camera use the existing authored suppression policy. It contains
+only minimum input identities/hashes and authored policy: no exported scene,
+accepted context, game field-value table, protected implementation, SDK body,
+private configuration, device identifier or credential. All policy values,
+identity/toggle graphs and catalog keys are read from legitimate source records.
+Manual provenance/privacy/licensing review: source selectors do not substitute
+for owning the game; generated files and receipts remain ignored. Member and
+canonical graph digests explicitly replace incidental exporter YAML hashes;
+the complete public profile and producer hashes bind graph provenance.
+Evidence: `work/coordination/orchestrator/stage-context-public-v2/`.
+Complete phone production and runtime compatibility remain open.
