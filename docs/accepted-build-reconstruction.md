@@ -524,8 +524,10 @@ phone comparison or installation is qualified.
 
 [J1171](history/journal-J1-J1177/PORTING_JOURNAL.md#j1171--identical-input-scene-exports-change-historical-yaml-identity-hashes)
 confirms exporter GUID entropy in identical-input scene YAML repeats. The
-WholeStageContexts full-digest gate remains open; semantic agreement and
-comparison-only GUID normalization do not qualify its final file.
+WholeStageContexts remains non-exact to that historical YAML provenance. The
+current public original-record producer described below uses independently
+verifiable source provenance under the updated input contract; the historical
+raw-exact counter remains unchanged.
 
 J1185 completes source-derived Conduit Canyon through the existing owners:
 607/705 files available (602 raw-exact, two code comparisons, three drift-explained),
@@ -559,3 +561,13 @@ three drift-explained), with 53 missing (7 APK, 46 payload). Evidence:
 `work/coordination/p1-scenes-ss/safe-five-v1/readiness-union/`.
 Goolake, Lakes, Lakesnight and Village source recipes remain open. Complete phone
 production, installation and original runtime behavior remain separate gates.
+
+J1256 adds the public original-record WholeStageContexts producer and narrow APK
+admission. All runtime fields in 23 population contexts and three identity/toggle
+graphs match J850; 26 incidental exporter hashes use explicit member/graph
+provenance. The complete named file is regenerated during admission, without
+masking fields or trusting a target-derived graph. Host availability becomes
+693/705: 685 raw-exact, two generated startup files, one generated source context,
+two code comparisons and three explained input differences; 12 files remain.
+Complete phone generation, installation, launch and data-preserving updates remain
+open. Evidence: `work/coordination/orchestrator/stage-context-public-v2/`.

@@ -972,3 +972,18 @@ Evidence (ignored): `work/coordination/orchestrator/menu-public-source-v1/`.
 Guard denials: zero; 72 focused tests, Ruff and preflight pass. All 21 source
 suppliers/1,474 references resolve. Historical readiness stays 692/705 available,
 685 raw-exact, 13 missing; complete phone/runtime/install/update gates remain open.
+
+## J1256 — Generate original-record stage contexts with public provenance
+
+2026-10-29. `stage_contexts.py` reads 23 original scene members and source catalog
+pool owners; the shared metadata owner builds three exact identity/toggle graphs.
+All population, activation, scene ID, hierarchy and toggle fields match J850.
+The 26 historical exporter hashes become explicit serialized-member/canonical-graph
+provenance, bound to original inputs and public policy/producer hashes.
+No exported YAML, private intermediate or accepted output is a producer input.
+The player-data option emits the file; APK admission regenerates its complete
+bytes and counts only this named file separately from raw-exact content.
+Output SHA-256: `cdf978ee3df648e1f49473087aee5a55e784bab23afc0fe307163fa8ec95aa9d`.
+Evidence (ignored): `work/coordination/orchestrator/stage-context-public-v2/`.
+Host readiness: 693/705 available, 685 raw-exact, 12 missing. Ruff, 88 focused
+host tests and preflight pass; complete phone/runtime/install/update gates remain open.
