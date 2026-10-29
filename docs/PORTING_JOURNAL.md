@@ -1069,3 +1069,15 @@ Source Labgeometry cohort output SHA-256
 Evidence: `work/coordination/orchestrator/manifest-source-v2/produced/result.json`.
 This ships the producer, not the complete 114 bundle result. Historical readiness
 stays 693/705; full source manifest/catalog, phone APK and native runtime remain open.
+
+## J1263 — Reuse source textures shared by UI Sprites
+
+2026-10-29. The source UI media owner accepts a shared texture only after freshly
+serializing and matching its complete file size/SHA-256; conflicting bytes and
+redirected paths refuse generation. Sprite outputs retain exclusive creation.
+Ten focused UI contracts pass, including collision and unchanged-file checks.
+This fixes an observed HUD emission failure; the source-only prototype now emits
+2,021 objects, SHA-256 `edb8beef5045bdec3e851e9d80b5180d860ab75c97d64d69871725f801c8b59a`.
+Evidence: `work/coordination/orchestrator/hud-source-constructor-v1/emission-v6/result.json`.
+The full public HUD producer, its difference from J850's 1,902 objects and native
+phone qualification remain open. Historical readiness stays 693/705.

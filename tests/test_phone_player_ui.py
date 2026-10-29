@@ -122,6 +122,26 @@ class PlayerUiTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "hash/size"):
                 U.sdk_defaults(source, root, pins)
 
+    def test_shared_texture_output_requires_complete_freshly_derived_byte_equality(self):
+        tree = U.S._tree([U.S._node("Texture2D", "Base", -1, 0), U.S._node("int", "value", 4)])
+        obj = N(node=U.node_from_tree(tree), typ=dict(class_id=28, stripped=0, script_type=-1, hash=bytes(16), tree=tree))
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            name = "a" * 32
+            U.write_object(root, name, obj, dict(value=17), [], reuse_existing=True)
+            original = (root / name).read_bytes()
+            U.write_object(root, name, obj, dict(value=17), [], reuse_existing=True)
+            self.assertEqual((root / name).read_bytes(), original)
+            with self.assertRaisesRegex(ValueError, "shared UI media bytes differ"):
+                U.write_object(root, name, obj, dict(value=18), [], reuse_existing=True)
+            self.assertEqual((root / name).read_bytes(), original)
+            with self.assertRaises(FileExistsError):
+                U.write_object(root, name, obj, dict(value=17), [])
+            alias = "b" * 32
+            (root / alias).symlink_to(root / name)
+            with self.assertRaisesRegex(ValueError, "redirected"):
+                U.write_object(root, alias, obj, dict(value=17), [], reuse_existing=True)
+
     def test_bounded_source_reader_round_trips_an_authored_native_record(self):
         fields = [U.S._node("GameObject", "Base", -1, 0), U.S._node("int", "value", 4)]
         tree = U.S._tree(fields)
