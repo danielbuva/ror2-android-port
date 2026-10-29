@@ -805,6 +805,14 @@ workspace ownership receipt and permitted Python interpreter. No timestamped
 run path is embedded in the producer or a current build; see its
 [setup/lifecycle](../tools/phone-build/accepted-output/README.md#produce-meshes-directly-from-original-pc-bundles).
 
+The optional source OBJ operation also requires an explicitly selected native
+helper build directory. Tracked `build_mesh_obj.py` generates its executable,
+receipt and notices from separately acquired pinned public MikkTSpace and
+Apple BSD sort sources plus authored `mesh_obj.c`. The recipe pins these
+source identities; the producer verifies the selected helper's receipt and
+executable. These rebuildable tools remain ignored and contain no game data.
+No retained imported model or timestamped fixture output is a production input.
+
 Independent bundle/player slices use tracked `object_produce.py` and
 `player_data.py` with their audited recipes and explicitly selected owner PC,
 SDK, converter and native codec inputs. They generate private packs/layout,

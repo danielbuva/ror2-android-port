@@ -299,6 +299,15 @@ integers from the original fields. Authored mesh fixtures cover the operation;
 guarded tracked-CLI output is host raw-exact for the additional record. Complete
 Commando assembly and phone production remain separate gates; no runtime owner
 is added.
+The same mesh owner accepts a current static OBJ import operation through
+`obj_mesh.py`. Original float32 attributes feed separately acquired public
+MikkTSpace through authored `mesh_obj.c`; robust normalization, the 16-vertex
+cache order, first-use vertex order and a computed UV-density statistic supply
+the new streams. `build_mesh_obj.py` pins public MikkTSpace and Apple BSD sort
+sources, preserves their notices and emits the native helper receipt. Setup
+checks that receipt and helper hash; processing and teardown recheck both.
+This adds no Editor input, saved model or vertex/metric table. Host Mesh-body
+evidence remains separate from complete-bundle and Android qualification.
 `scripts/lab/script_identity.py` additionally owns current pure managed script
 properties-hash derivation. Callers supply original PC and exact SDK embedded
 type metadata plus original script identity; the helper composes the SDK native
