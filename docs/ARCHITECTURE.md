@@ -506,6 +506,13 @@ public ETC and SDK RGBA encoders share the same pack/checkpoint contract. The
 native pixel helper owns BC6 byte conversion and HDR export-half/DoubleLDR mip
 handling. Source identity and unresolved native reflections remain explicit
 gates; no target pixel fallback is available.
+The opt-in `cube-preserve` operation retains original BC6H/RGBAHalf face/mip
+bytes, format, color space and usage with per-face CompleteImageSize. The audited
+`recipe/owner-source-baked-reflections.json` selects two original baked probes;
+no codec or SDK is consumed. Existing input/profile/body/resource hash gates,
+checkpoint ownership and teardown apply. Native BC6H support is a device gate;
+this profile is not automatically selected by accepted-file admission. Complete
+scene relationships and functional file admission remain open.
 The same owner supports the source Alpha8 cohort through
 `recipe/owner-alpha-textures.json`: canonical original bodies/pixels are reused
 with explicit target names, storage extents and unchanged-field admission.

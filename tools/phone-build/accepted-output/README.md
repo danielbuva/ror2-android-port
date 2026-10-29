@@ -1134,6 +1134,17 @@ production. Android cohort qualification remains open.
 
 ## Produce source-derived cubemaps
 
+For original baked HDR probes, the opt-in
+`recipe/owner-source-baked-reflections.json` uses `cube-preserve` with the same
+texture producer/output contract and no codecs or SDK input. It retains every
+original compressed face/mip byte and native format, color space and usage;
+only output naming/storage changes. BC6H must be supported by the selected
+Android runtime. Two source probes pass native Android IL2CPP/Vulkan loading,
+every-mip sampling and HDR decode comparison (J1260). This is a source-fidelity
+alternative, not a J850 raw-exact admission or a complete scene qualification.
+RGBAHalf source chains can also be retained; no format conversion is performed.
+
+
 J1128 qualifies the complete 110-record profile on the host.
 Use the existing texture producer with `recipe/owner-cubemap-textures.json`,
 SHA-256
