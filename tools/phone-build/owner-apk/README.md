@@ -488,3 +488,10 @@ Only the game process reads profile bytes. A released-token status is historical
 proof, not current byte equality: recovery first verifies the actual installed
 APK and issued receipt, then finalizes without overwriting subsequent gameplay.
 All native decoding, migration and cold-start acceptance remain game/phone gates.
+
+The legacy J850 comparison profile retains its narrow startup/context regeneration
+policies. The public `owner-source-output-v1` assembly receipt instead requires
+every output to match its complete local producer pins; historical metadata
+exceptions cannot override those pins. Both routes use the same assembler and
+retained signing key. Real phone installation and saved-data survival remain
+acceptance gates.

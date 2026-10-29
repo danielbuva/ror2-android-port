@@ -47,7 +47,7 @@ def zipped(entries):
 class GameImportTests(unittest.TestCase):
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory()
-        self.root = Path(self.temp.name)
+        self.root = Path(self.temp.name).resolve()
         self.private = self.root / "private"
         self.contents = {"authored/header.txt": b"synthetic header\n", "authored/content.bin": b"authored bytes only\n" * 80, "empty": b""}
         self.manifest = manifest(self.contents)

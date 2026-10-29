@@ -101,7 +101,7 @@ class OwnerPhoneFlowTests(unittest.TestCase):
                 self.skipTest("Java compiler absent")
             compiler = Path(found)
         with tempfile.TemporaryDirectory() as temporary:
-            root = Path(temporary)
+            root = Path(temporary).resolve()
             harness = root / "Harness.java"
             harness.write_text(HARNESS)
             compile_result = subprocess.run(

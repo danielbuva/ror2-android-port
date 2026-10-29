@@ -52,6 +52,39 @@ reproduction and framed emission. It verifies supplied target/profile/PC/SDK
 inputs without generating independent Android target information. `assemble.py`
 owns hash-bound unsigned APK assembly and required uncompressed/aligned resource
 storage; canonical alignment and owner signing follow separately.
+`player_ui.py` owns current source Menu graph normalization, deterministic local
+IDs, SDK component construction and typed links to the existing player suppliers.
+The optional player-data `--ui-profile` selects its audited source recipe;
+`--ugui-source` supplies the exact SDK's constructor declarations. The parent
+passes its freshly derived registry value. Original type trees and matching
+native class/hash schemas drive bounded record reads; SDK built-in UI uses the
+existing runtime projection. Readers/CLR metadata close at scope exit; new
+outputs and `ui-source/` receipts retain the graph, schemas and resource root IDs.
+Original missing standalone Sprite dependencies are emitted with source geometry
+and decoded mip pixels. No accepted target/cache supplies content. Current Menu
+source production is complete; its two genuine J850 field differences and full
+phone/runtime acceptance remain open.
+`stage_contexts.py` owns original-record population and identity context production.
+`recipe/owner-stage-contexts.json` pins original scenes/catalog/pool suppliers and
+selects the existing global-root suppression policy. The shared
+`scripts/lab/source_identity_metadata.py:from_records` owns paths, root shapes,
+identity ordering and toggle groups for binary and desktop YAML adapters.
+Setup requires a new private output directory and original installation; bounded
+readers close per supplier/stage and recheck source hashes before success.
+The player-data `--stage-context-profile PROFILE SHA256` option copies its fresh
+file into the player tree and retains its receipt. Provenance hashes declare
+original serialized members or canonical source graphs, binding public policy
+and producer hashes; desktop YAML receipt checks remain unchanged. APK admission
+regenerates the entire named context file and counts it separately from raw-exact
+files. Complete phone generation and runtime acceptance remain open.
+`startup_metadata.py` owns public `boot.config` and `unity_app_guid` generation.
+Setup pins the owner's inventory, public PlayerSettings and exact toolchain;
+their hashes and producer version generate relocatable build identifiers.
+It retains fullscreen, safe-area and HDR settings, uses a 3 ms incremental GC
+slice and omits development connections. New output/receipt directories own all
+state; there are no retained processes. APK admission regenerates these two
+files and counts them separately from raw-exact output; all other content checks
+remain strict. Complete phone production and runtime qualification remain open.
 `unity_write.py` owns current experimental bounded UnityFS 7/8 and
 serialized-v22 construction from explicit type metadata, object bodies and
 resource streams. Object table order and physical body order remain independent.
@@ -70,6 +103,13 @@ Wispgraveyard, Sky Meadow, Solusweb, Ancient Loft, AI Test and Testscene slices.
 It also owns the retained Barrier and three Goldshores payloads, the complete
 Wispgraveyard source-scene variant and the unchanged original Windows
 comparison-bundle copy.
+Its optional `obj-standard-lambert-linear` material policy delegates to
+`obj_material.py`: original Mesh names, selected SDK Shader declarations and
+SDK FBX static defaults determine the material. Setup requires separately pinned
+SDK builtin-extra and FBX-library inputs. Bounded static initializer propagation
+uses `phone_registry.MachO` with explicit dylib admission; it executes no SDK
+code and retains no native state. Output is a normal object body consumed by
+the existing bundle writer. Complete bundle and phone gates remain separate.
 Audited profiles `recipe/owner-pickup-objects.json`,
 `recipe/owner-death-effect-objects.json`,
 `recipe/owner-teleport-material-objects.json`, `recipe/owner-objective-ui-objects.json`,
@@ -90,7 +130,28 @@ bundles through those writers. New disjoint output, pinned PC files/recipe/
 codec and capacity checks set up the process; persisted output and unchanged
 inputs precede a complete/failed receipt. The qualified dummy material moves
 its original valid keywords into the invalid list without introducing strings
-or material values. Explicit record-pack directory/receipt pins supply already
+or material values. The explicit `dummy-shader-sort-invalid` policy sorts those
+source strings in ordinal order; the original demotion policy retains its source
+order. `normalize_exported_prefab_name` projects original prefab root names through
+the pinned exporter's filename rules, preserving components, layer, tag and
+activation. Named original character/teleporter roots also use the existing
+authored suppression policy. `authored_prefab_root` also projects the selected
+original scene Director to the already-authored `EnemyClosure/FastDirector.prefab`
+root name, preserving the component selection, layer, tag and activation.
+The named `surface_effect_omissions` projection
+applies the four effect/sound omissions from `recipe/asset-transforms.json` to
+original SurfaceDef schema spans, preserving all other source bytes and deriving
+its SDK script metadata. `director_deck` selects original category/card spans for
+the authored `recipe/deck-transforms.json` decks. Original weights and restrictions
+remain source-owned; explicit omissions use managed defaults, with non-elite
+source defaults checked before emission. No generated YAML supplies the body.
+The named `omit_run_presence_counters` policy removes the original RunPresence
+schema's two trailing cached counters after checking their zero values; all
+preceding source fields and SDK-derived script identity remain owned here.
+The `empty_mesh_renderer` projection consumes an original renderer with an empty
+material array and applies the existing authored constructor's three disabled
+flags, retaining every other source field and native type identity.
+Explicit record-pack directory/receipt pins supply already
 produced texture bodies and resources; the owner verifies them before/after,
 assembles resource extents, and generates each asset's rooted container preloads.
 It calls the existing `player_data.py` Sprite crop/importer helpers only when
@@ -269,7 +330,24 @@ and terminal receipt. Setup verifies source pins/capacity, processing checks
 every object and re-reads persisted extents, and failure/exit retain outputs
 and end the process. [Its lifecycle and qualified scope](../tools/phone-build/accepted-output/README.md#produce-meshes-directly-from-original-pc-bundles)
 remain separate from bundle assembly, the private replay receiver and current
-game builds; two mesh cases are excluded and no runtime owner is added.
+game builds; two mesh cases are excluded from that immutable cohort profile.
+The separate `recipe/owner-compressed-tangent-mesh.json` selects one formerly
+excluded MercSwordSwipe record through the same setup/teardown. The optional
+`unity_mesh.normalize_packed_tangents` operation reconstructs negative Z-squared
+vectors, normalizes XY with float32 arithmetic and derives packing bounds and
+integers from the original fields. Authored mesh fixtures cover the operation;
+guarded tracked-CLI output is host raw-exact for the additional record. Complete
+Commando assembly and phone production remain separate gates; no runtime owner
+is added.
+The same mesh owner accepts a current static OBJ import operation through
+`obj_mesh.py`. Original float32 attributes feed separately acquired public
+MikkTSpace through authored `mesh_obj.c`; robust normalization, the 16-vertex
+cache order, first-use vertex order and a computed UV-density statistic supply
+the new streams. `build_mesh_obj.py` pins public MikkTSpace and Apple BSD sort
+sources, preserves their notices and emits the native helper receipt. Setup
+checks that receipt and helper hash; processing and teardown recheck both.
+This adds no Editor input, saved model or vertex/metric table. Host Mesh-body
+evidence remains separate from complete-bundle and Android qualification.
 `scripts/lab/script_identity.py` additionally owns current pure managed script
 properties-hash derivation. Callers supply original PC and exact SDK embedded
 type metadata plus original script identity; the helper composes the SDK native
@@ -280,7 +358,62 @@ needed hash policy, persist outputs and own setup/teardown. J1124 qualifies one
 source-only EffectManagerHelper case; complete content and phone qualification
 remain separate. Original script-file-ID derivation remains unchanged.
 `record_produce.py` owns source-only AnimationClip and generic object-record
-production through the same object-pack interface. Audited
+production through the same object-pack interface.
+Its `controller_clear_skeleton_masks` policy follows the pinned
+exporter's omitted layer masks: it removes original mask entries and subtracts
+their native allocation sizes, preserving all other controller fields.
+`controller_state_order` relocates whole original state records using checked
+source-index bijections. Default states and direct transition destinations move
+with those records; selector and entry/exit indices retain their source values.
+TOS export selections may also name a checked collision ordinal, applying the
+pinned exporter's filename suffix before deriving the path CRC from source text.
+`controller_clear_null_motion` imports an original sole unavailable clip leaf as
+no motion, retaining its state and remapping that tree's indices to the native
+unavailable sentinel. Its size adjustment derives from the original subtree and
+the admitted native array layout.
+`scripts/lab/sprite_native_fixture.py` stages the current SDK-only Sprite runtime
+diagnostic with `SpriteNativeFixture.cs`. It references source PNGs by path/hash
+in a fresh ignored project. Under the editor mutex, the pinned Unity MCP invokes
+`Tools/P1/Run Sprite Native Fixture`; created textures and sprites are destroyed
+after each item. Float-bit geometry and the terminal result stay private. The
+fixture also emits UVs, bounds and native rect/pivot/border properties for source
+record assembly, without sampling an accepted record. `sprite_native_record.py`
+assembles diagnostic records from those native results and original embedded
+schemas, preserving original references, channel metadata and submesh bounds.
+Its admitted position/zero-UV streams derive allocation and padding from vertex
+counts. Pivot and border recovery use the original render crop with the existing
+standalone import arithmetic. Native constructor output supplies triangles and
+physics polygons. These diagnostics remain separate from phone production and
+complete-bundle qualification; they consume explicitly supplied inputs and have
+no implicit lookup of retained evidence.
+The optional `--android` staging path adds `SpriteNativeFixtureBuild.cs` and
+`SpriteNativeFixtureRunner.cs`. The pinned MCP build menu schedules an isolated
+ARM64 development APK for the separate disposable package
+`dev.ror2lab.spritefixture`. Its runner reads explicit source inputs and writes
+native results or an error to app-scoped files. The runner reports its actual
+runtime path and waits for an atomically delivered request. The device coordinator owns
+installation, source transfer, evidence collection, uninstall and display sleep;
+the fixture does not install itself or touch the lab player's package.
+`sprite_produce.py` owns current original-input native Sprite record batches.
+Its `prepare` action checks original Sprite/Texture2D schemas, hashes and local
+texture relationships, then uses `texture_produce.source_rgba` and the pinned
+public pixel decoder to generate lossless PNGs and constructor requests. No
+exported image supplies production pixels. Crop-derived pivot and original
+constructor settings retain the qualified native API contract. Its `produce`
+action rereads original records, admits explicit hash-pinned exact-SDK native
+output, and applies importer identities and qualified pointer relationships.
+Every body and persisted record-pack extent must match its expected hash.
+Source files are rechecked and new outputs must lie outside the original input.
+The SDK fixture supplies the explicit native output; complete-bundle and full
+phone-production qualification remain separate gates.
+The existing `record_produce.py` generic record-pack path also admits original
+Sprite records through the same `importer_guid` and `crop_rectangle_offset`
+fields as `object_produce.py`. It delegates to `player_data.sprite_crop` and
+`sprite_key` before pointer relocation. This standalone Sprite asset projection
+preserves original geometry, UVs and physics; it requires no runtime constructor
+output. The explicit importer identity comes from the Sprite `.asset.meta`
+relationship, distinct from the texture `.png.meta` used for native re-import.
+Audited
 `recipe/owner-animation-clips.json`, `recipe/owner-animator-controllers.json`,
 `recipe/owner-material-records.json`, `recipe/owner-gameobjects.json`,
 `recipe/owner-transforms.json`, `recipe/owner-generic-records.json` and
@@ -293,7 +426,13 @@ whole stream keys, delta ranges and root indices; dense curves retain the
 measured import endpoint/signed-zero rules. Root rotations derive from original
 indexed delta endpoints using ARM reciprocal-square-root arithmetic.
 Root average motion samples original channels at 20 intervals and applies the
-original orientation, loop and mirror masks. Duplicate bindings may collapse
+original orientation, loop and mirror masks. The explicit `root_average_atan2`
+projection derives yaw directly from the original relative quaternion's two
+heading components before float32 rounding; existing ratio projections retain
+their arithmetic. `root_average_small_atan2f` instead uses the portable fdlibm
+float polynomial in its admitted positive-x, small-ratio interval. The routine's
+Sun permission notice is retained in the owner; it introduces no platform-library
+dependency or game-derived coefficient. Duplicate bindings may collapse
 only when complete source entries, channel values and delta endpoints agree;
 finite streamed keys remain, with selected permutations restricted to equal
 curve indices. Unknown material-path bindings derive their attribute from the
@@ -673,6 +812,20 @@ codec worker and emits complete files through `unity_write`. The SDK executable
 is read as metadata only. Explicit read-only providers and a new disjoint output
 set up production; before/after pins, complete-file comparison and terminal
 success/failure receipts retain state. Compiler/codec contexts own teardown.
+The producer accepts explicit compiler argv and a separate compiler data root
+through the existing standalone compiler session, permitting the acquired Linux
+SDK/GNU runner while the pinned Mac SDK remains metadata/include input. The
+caller supplies its acquired tool pins and runner environment; this transport
+selection does not qualify phone Shader48 production.
+Repeatable `--authored-file` selects standalone tracked-source rows from the
+same pinned profile, retaining common input checks and excluding unrelated
+native/font/builtin/shared setup. This current bounded mode needs no generated
+private profile; the existing result file lists the produced selection.
+Authored selection excludes unused native-recovery module pins/imports. The
+existing `unity_write.py` owner decodes the original embedded Shader48 schema
+and reads/writes ordered values using Python standard-library primitives,
+including map pairs and per-node/array alignment. Native recovery routes retain
+their UnityPy dependencies; compiler and codec contexts still own teardown.
 The original native paths use the existing source emitters and
 `NativePrograms` to regenerate source from pinned PC shaders/materials through an
 explicit public d3dasm tool/hash, without retained HLSL. Variant reflection
@@ -716,6 +869,53 @@ The caller creates private output and owns compiler/codec contexts and final
 object-pack placement. The API returns the typed tree, raw record stream and
 serialized body and retains private diagnostics. Complete-file and phone gates
 remain independent of partial SDK-record qualification.
+
+The existing object writer can retain an original MonoScript's editor property
+hash for an unchanged MonoBehaviour schema (`preserve_original_script_hash`).
+The original MonoScript class, runtime script identity and exact schema must
+agree; omission policies continue through the existing derived-hash path.
+This preserves editor-only curve metadata already present in legitimate input
+without reconstructing it from the release tree. RunPresence's omitted counter
+schema uses Unity common-string encoding, retaining the same decoded fields.
+
+`bundle_preload.py` owns grouped prefab container derivation inside the current
+`object_produce.py` writer. Asset paths, GUIDs and imported root identities name
+minimal source relationships. The writer processes the container after all
+other objects; typed source-produced bodies supply pointer closure across every
+root in an imported asset group. Checked original component back-links and
+GameObject membership supply external owners. SDK resource identities and
+serialized member names determine file order; Unity GUID words determine group
+order. Subassets share one preload range while container paths sort ordinally.
+No accepted preload array or body is an input. Existing source/body/input hash
+checks, new output ownership and failed receipts remain in the parent writer.
+The bounded reader/writer ceiling is 256 MiB for the observed 175 MB Commando
+serialized member and 148 MB resource member; block caching remains bounded.
+
+`shader_prefab.py` owns standalone prefab Shader records. Original Shader forms
+and acquired SDK snippets supply runtime passes and no-scene keyword axes; SDK
+default materials select particle features while original fragment rows retain
+native ordering. Original dummy properties and pinned public exporter templates
+supply game placeholder forms. Fallback keyword registration follows serialized
+SDK snippet order, including inherited snippets, and SDK dependency traversal
+maps to declared destination identities. Existing compiler, SDK serializer and
+codec owners produce all programs and framing. Setup requires pinned original,
+SDK, template and profile providers with new disjoint output. Teardown reaps
+compiler/codec children; failure preserves diagnostics. Input pins, body hashes
+and reread extents qualify each record. Complete-file and device gates remain
+separate; no accepted program or keyword table is an input.
+
+`shader_context.py` owns metadata-only context changes on explicit qualified
+source-produced Shader packs. It retains every program and unrelated body byte.
+Original Shader metadata and pinned public dummy templates, or acquired SDK
+snippets, supply source and include identities. The standalone compiler session
+supplies capabilities and preprocessing only; `shader_produce.editor_hash`
+derives the current source/settings/common-include pass keys. Only checked
+16-byte editor-key slots and declared pointer relationships change. Original,
+SDK, profile and provider-receipt pins are checked before and after; expected
+body hashes and reread extents qualify the new record pack. Setup requires new
+disjoint output and explicit read-only providers. Failure preserves diagnostics;
+the existing compiler context reaps its child/socket. No program compilation,
+target-key table or retained preprocessing artifact is a production supplier.
 
 `payload_shader_records.py` owns the bounded Barrier and Rootjungle
 post-processing Shader record packs and the three bounded Standard contexts. Its
@@ -1599,10 +1799,11 @@ time above 80 C, CPU/GPU peak and phase; heat below the safety limits does not
 fail gameplay. Failed supervision also aborts without retry.
 Before each stage, readable CPU/GPU/battery/skin zones must cool to at most
 50 C with the OLED asleep, with battery back to at most 35 C before every
-stage. Battery status charging (2) at level >= 80%, or level > 85%, refuses
-admission without retry; charging settings remain user-owned. The observer
-reads battery temperature, level and status through bounded dumpsys calls and
-retains them in trace rows and stage receipts. Other physical zones, including power-management,
+stage. Positive battery `current_now` at level >= 80%, or level > 85%, refuses
+admission without retry; a charging label with zero current is admitted. Charging
+settings remain user-owned. Admission records the measured sysfs current; the
+observer reads battery temperature, level and status through bounded dumpsys
+calls and retains them in trace rows and stage receipts. Other physical zones, including power-management,
 charger and USB sensors, are recorded as excluded from admission only; they
 remain sampled in raw observations and all-zone peaks. The runtime thresholds
 apply to CPU/GPU and battery. Admission discovers zone types and readable paths
@@ -3490,8 +3691,19 @@ The existing `IntegratedWorldSession` navigator preserves a reachable,
 unfinished multi-waypoint native detour while its waypoints progress, even if
 straight-line distance to the objective stalls. Its `NavigationRecoveryPolicy`
 still admits terrain recovery for a blocked waypoint or an unreachable,
-finished or short path. `test_siren_gameplay_route_ownership.py` executes this
+finished or short path. Native waypoint identity and distance retain their
+own progress clock across temporary terrain steering; changing ground targets
+cannot reset that clock. Rejected terrain keeps neutral movement and the cliff
+guard, while the unfinished native waypoint still admits the existing stalled-path
+jump/replan request. `test_siren_gameplay_route_ownership.py` executes this
 policy against the retained Siren detour failure and recovery cases.
+The assisted selector retains its approach egg across native detours and combat
+input yields, revalidating membership in the current source cohort each frame.
+An attackable egg still takes priority; a dead or removed target falls back to
+the nearest valid egg. Stop/disposal releases the retained reference. This is
+a diagnostic routing policy; native tracking, damage and mission rules remain
+owned by the original game. The ranking host fixture covers detour retention
+and replacement; device mission acceptance remains open.
 The existing aim helper can issue at most 24 linecasts per active
 sample for the inspected original egg shape; inactive selection does no witness
 work. It yields to manual control and nearby hostile combat. Native encounter start, source/stage
@@ -3939,6 +4151,13 @@ ID and validates every compressed recipe row; necessary-byte regex prefilters
 retain the existing detection rules. GitHub caches only pinned pip downloads.
 [Timing and cache operation](DEVELOPING.md#full-host-checks-and-timing) describe
 setup, reuse and isolation.
+
+`scripts/lab/lab_runner.py` (current) owns the comment-driven lab bridge: the
+`lab-runner` workflow runs main's copy on the owner's self-hosted runner for owner
+`/lab ...` comments, gives each job its own worktree of the requested ref, takes the
+orchestrator device lease, applies the battery rule, posts a sanitized result and
+prunes. `scripts/lab/lab-runner-guard.sh` is its job-started hook, installed outside
+the repository. Setup and command reference: [LAB_RUNNER](LAB_RUNNER.md).
 
 Host CI also runs Ruff (pinned in `tools/lab-requirements.txt`, configured in `ruff.toml`):
 `ruff check` and `ruff format --check` on every Python file a change touches. `scripts/` and
@@ -4863,3 +5082,243 @@ identities supply order; the existing pinned SDK compiler supplies programs.
 Explicit PC/SDK/tool roots, pinned profiles and fresh output set up production;
 process exit tears down producers while receipts persist. The persisted
 301,384 B record is host raw-exact to J850; full-scene and phone gates remain open.
+
+Computational Exchange complete scene selections extend the existing object/Shader
+owners through `recipe/owner-computationalexchange-whole-objects.json` and the
+J1213 Standard profile. Checked original Transform ownership supplies preload
+admissions through the existing object producer. Explicit current PC/SDK/tool
+roots, pinned profiles, receipt-pinned source-produced packs and a fresh output
+directory set up production; process exit tears down producers while receipts
+persist. The member-aware writer exposes `payload/whole-scene-computationalexchange`.
+All 16,208 objects, both serialized members and the compressed bundle are host
+raw-exact to J850. Phone production, installation and original behavior remain open.
+
+Champrush Shader selections extend `payload_shader_records.py` through
+`recipe/owner-champrush-whole-{postprocess,standard,particles}-shaders.json`.
+Original scene dependencies select 24 post-processing records; recursive original
+materials select Standard and particles through the existing pinned SDK compiler.
+Explicit current PC/SDK/public-tool roots, pinned profiles and fresh output set
+up production; process exit tears down producers while receipts persist. All 26
+persisted records are host raw-exact to J850. Complete-scene and phone gates
+remain open. The existing player Shader producer also accepts repeatable
+`--authored-file` selectors for bounded authored-record production; common input
+pins remain checked and omission preserves the complete profile.
+
+Champrush complete scene selections extend the existing object/Shader owners
+through `recipe/owner-champrush-whole-objects.json` and the J1216 Shader profiles.
+`object_produce.py` admits explicit original class 114 preload roots only with
+checked source hashes, original PreloadData membership and external identity;
+component-to-GameObject admissions retain their class 1 requirement. Explicit
+current PC/SDK/tool roots, pinned profiles, source-produced packs and a fresh
+output directory set up production; process exit tears down producers while
+local receipts persist. The existing member-aware writer exposes
+`payload/whole-scene-champrush`. All 53,854 objects, both serialized members and
+the compressed bundle are host raw-exact to J850. Phone production, installation
+and original scene behavior remain open.
+
+Voidstage complete scene selections extend the existing object/Shader owners
+through `recipe/owner-voidstage-whole-objects.json`. The original Rigidbody
+retains its complete body/type and reciprocal GameObject relationship; no new
+runtime owner or import policy is introduced. Explicit current PC/SDK/tool
+roots, pinned profiles, source-produced record packs and a fresh output
+directory set up production; process exit tears down producers while local
+receipts persist. The member-aware writer exposes `payload/whole-scene-voidstage`.
+All 9,629 objects, both serialized members and the compressed bundle are host
+raw-exact to J850. Phone production, installation and scene behavior remain open.
+
+Bazaar complete scene selections extend the existing object/Shader owners through
+`recipe/owner-bazaar-whole-objects.json` and matching post-processing, Standard
+and particles profiles. Original static Bezier curves and CharacterMaster
+schema/body relationships use existing policies. Explicit current PC/SDK/tool
+roots, pinned profiles, source-produced packs and a fresh output directory set
+up production; process exit tears down producers while receipts persist.
+The member-aware writer exposes `payload/whole-scene-bazaar`. All 8,087 objects,
+both serialized members and the compressed bundle are host raw-exact to J850.
+Phone production, installation and original scene behavior remain open.
+
+Voidstage Shader selections extend the same `payload_shader_records.py` owner
+through `recipe/owner-voidstage-whole-{postprocess,standard}-shaders.json`.
+Original resource/material relationships select 24 post-processing records and
+Standard; PC/SDK/tool pins and fresh outputs retain the setup and teardown above.
+All 25 persisted records are host raw-exact to J850; complete-scene and phone gates
+remain separate. SDK 211 particle profiles may declare `stripped_keywords` to
+filter source-derived rows before native ordering; omission preserves defaults.
+
+Frozenwall, Villagenight and Foggyswamp source selections and Skymeadow
+spine selections extend the existing `object_produce.py` and Shader owners
+through their named `recipe/owner-*-objects.json` profiles. The Bezier owner
+re-evaluates original curves with optional captured build angles; no geometry
+arrays are recipe inputs. `object_produce.py` also owns `missing_script_base`: a component whose script
+is absent from the build is produced from its original component truncated to the
+base MonoBehaviour fields, with an original base-type record supplying its type.
+`record_remap.py` owns index reuse: explicit pinned
+source pack receipts and `owner-*-shader-remap.json` profiles supply unchanged
+bodies/dependency provenance under destination identities. Original suppliers
+remain visible in the output receipt. Setup requires explicit PC/SDK/tool roots,
+pinned profiles, source-produced media/Shader packs and new output directories.
+Process exit tears down producers; receipts persist. These are optional host
+reconstruction owners; phone production, installation and original runtime
+behavior remain open.
+
+The same remap owner can extract selected bodies from source-produced player
+serialized files. The supplier receipt pins its profile, relative file, size and
+hash; selected class, path ID, size and body hash must also match. Output index
+rows retain this file provenance. No player producer is rerun for extraction.
+For independently produced records, the object owner optionally applies
+`record_references`: the original type schema must identify every edited extent
+as a PPtr, each prior value must match, and destination external slots must
+exist. Scene preload dependencies follow these relocations. Existing
+`references` metadata keeps its previous meaning for produced records. Explicit
+supplier receipts and a fresh output directory set up reuse; process exit
+releases file handles and the resulting receipts persist.
+
+For a base-only authored MonoBehaviour, the object owner's
+`fieldless_script_record` policy derives type identity from a local qualified
+MonoScript record. The original 32-byte prototype must have only native base
+fields; its SDK-derived properties hash must equal the produced script's
+embedded hash. The source tree and body are preserved, while class, namespace
+and assembly derive the script ID. This adds no runtime component behavior.
+The shared SDK Shader owner also accepts the standalone Legacy particle shader
+(SDK ID 207) through an explicit prefab/no-fog scope. Original and SDK names,
+properties and absent dependencies must agree; declared SDK variants supply
+the programs through the existing compiler API.
+
+The object owner's optional `resource_alignment` map selects 16-byte trailing
+zero alignment for named `.resS` members. Resource extents and their offsets
+remain source-produced; the default packing policy is unchanged. This handles
+the measured native bundle padding after its final extent.
+
+Goolake source-scene selections use the same object and Shader owners through
+`recipe/owner-goolake-source-objects.json` and its shader remap profile. The
+Bezier owner evaluates original curves with captured build angles, then applies
+ten explicitly pinned build-rounding words across two curves; default arithmetic
+is unchanged. Explicit PC/SDK roots, pinned source packs and a fresh output
+directory set up production; process exit tears down producers while receipts
+persist. All 13,012 objects, both serialized members and the compressed bundle
+are host raw-exact to J850. This adds no runtime owner. Phone production,
+installation and original scene behavior remain open.
+
+Voidraid complete scene selections extend the existing object/Shader owners
+through `recipe/owner-voidraid-whole-objects.json` and matching post-processing
+and Standard profiles. Original component/GameObject dependencies retain their
+complete source body/type identities through the existing preload policies.
+Explicit current PC/SDK/tool roots, pinned profiles, source-produced record packs
+and a fresh output directory set up production; process exit tears down producers
+while local receipts persist. The member-aware writer exposes
+`payload/whole-scene-voidraid`. All 39,861 objects, both serialized members and
+the compressed bundle are host raw-exact to J850. Phone production, installation
+and original scene behavior remain open.
+
+The existing `tools/phone-build/owner-code/shader.py` compiler-session owner
+checks Linux DX compiler dependencies under the acquired SDK's `Tools/`
+directory before opening IPC. The caller stages acquired files and supplies
+runner environment, compiler-data root and separate Mac metadata/includes;
+the session owns logs and process teardown. Bounded ColorGrade shell production
+on Android is byte-exact to J850, with thermal and scratch/display/lease cleanup
+receipts in `work/coordination/p1-colorgrade-phone-v1/device-source-v4/`.
+Complete-cohort production and ordinary app/install/update gates remain open.
+
+The existing `object_produce.py` source reader also accepts an original native
+serialized file with its filename as the member identity. Original file/body
+hashes and type metadata retain the input contract, including before/after
+verification. The original PC player registry can therefore supply MonoScripts
+absent from Addressables bundles. Explicit original roots, pinned selectors,
+fresh output and process-exit teardown retain the existing owner lifecycle.
+
+`script_identity.pointer_script_schema` supports the object owner's explicit
+`managed_pointer_schema` policy for a build-added class with one object-reference
+field. An original MonoScript, pinned original CLR assemblies and original native
+base/pointer prototypes supply identity, field semantics and transfer flags.
+Setup uses explicit original/SDK roots and symbolic source selectors. The owner
+checks properties against the original MonoScript, rechecks input pins and
+releases CLR metadata on exit; receipts retain consumed assembly hashes. No
+generated tree or original implementation becomes a recipe input or runtime owner.
+
+ITDampcave complete scene selections use the existing object/Shader owners through
+`recipe/owner-itdampcave-whole-objects.json` and matching post-processing/Standard
+profiles. Original Dampcavesimple resources supply post-processing identities;
+ITDampcave materials supply Standard features. Explicit original/SDK/tool roots,
+pinned profiles, source-produced record packs and a fresh output directory set up
+production; process exit tears down producers while receipts persist. The writer
+exposes `payload/whole-scene-itdampcave`, host raw-exact to J850 for all 18,225 objects,
+both serialized members and the compressed bundle. Phone and runtime gates remain open.
+
+ITFrozenwall and Soul1 complete scene selections use `object_produce.py` and the
+existing Shader owners through `recipe/owner-{itfrozenwall,soul1}-whole-objects.json`
+and matching Shader profiles. ITFrozenwall selects its original TMP font material;
+Soul1 admits the original scene's two vehicle-seat preload roots. Explicit original/
+SDK/tool roots, pinned profiles, source-produced packs and fresh output directories
+set up production; process exit tears down producers while receipts persist. The
+writer exposes `payload/whole-scene-{itfrozenwall,soul1}`. All 298,886 objects,
+four serialized members and both compressed bundles are host raw-exact to J850.
+Phone production, installation and original behavior remain open.
+
+Solutionalhaunt complete scene selections use `object_produce.py`, the existing Director
+record importer and Standard Shader owner through `recipe/owner-solutionalhaunt-*.json`.
+Original PC registry/CLR inputs derive added trigger schemas; an original 56 B Animator
+and reciprocal GameObject membership extend the existing preload component witnesses.
+Explicit original/SDK/tool roots, pinned profiles, source-produced packs and fresh output
+set up production; process exit releases producers/CLR metadata while receipts persist.
+The writer exposes `payload/whole-scene-solutionalhaunt`, raw-exact to J850 for all 31,264
+objects, both serialized members and the compressed bundle. Phone/runtime gates remain open.
+
+Intro, Outro, PromoRailgunner, Voidoutro and Goolake complete selections use
+`object_produce.py`, the existing animation/Director record owners and Shader owners through
+`recipe/owner-{intro,outro,promorailgunner,voidoutro,goolake}-*.json`. Original named Timeline
+records retain their native script identity and checked pointer relationships; the existing
+properties-hash owner accounts for build schema identity. Goolake retains the original
+Dampcave Rigidbody/GameObject preload witness. Explicit original/SDK/tool roots, pinned
+profiles, source-produced packs and fresh output directories set up production; process
+exit releases producers while receipts persist. The writer exposes the five corresponding
+`payload/whole-scene-*` bundles. All objects, ten serialized members and five compressed
+bundles are host raw-exact to J850. Phone production and original runtime remain open.
+
+Lakes, Lakesnight and Village source-scene selections use `object_produce.py` and the
+existing Shader owners through `recipe/owner-{lakes,lakesnight,village}-source-objects.json`
+and corresponding `owner-*-source-lab-*-shaders.json` profiles. Retained original selectors
+use the shipped component, properties-hash and animated-wind import policies. Explicit
+original/SDK/tool roots, pinned profiles, source-produced packs and fresh output directories
+set up production; process exit releases producers while receipts persist. The writer exposes
+`payload/{lakes,lakesnight,village}-source-lab`. All 58,555 objects, six serialized members
+and three compressed bundles are host raw-exact to J850. Phone/runtime gates remain open.
+
+`recipe/owner-objective-support-objects.json` completes the native Objective
+bundle through the existing object owner. The native alias, reused-record and
+Legacy particle Shader recipes supply independently qualified records. Setup
+requires explicit original PC/SDK roots, pinned record-pack receipts and a fresh
+output directory; process exit releases source handles and receipts persist.
+All 1,623 objects, every member and the compressed bundle are host
+raw-exact to J850. This adds no runtime owner; phone production, installation and
+original game behavior remain open.
+
+`recipe/owner-presentation-objects.json` completes `android-presentation-lab`
+through the existing object owner and `owner-presentation-reused-records.json`.
+The remap owner extracts 358 qualified player Shader records and two generated
+material manifests without recompilation; the existing RGB owner supplies two
+textures. Setup requires explicit original PC input, pinned source-produced
+player/record-pack receipts and a fresh output directory. Process exit releases
+file handles; receipts persist. All 363 objects, both members and the
+compressed bundle are host raw-exact to J850. Phone production, installation and
+original game behavior remain open.
+
+`recipe/owner-commando-objects.json` completes `commando-prefab-lab` in the current
+original-object writer. Explicit native Sprite, animation/controller, original
+record and Shader profiles provide its remaining records; existing hierarchy,
+generic, mesh, texture, avatar and player/Objective suppliers are reused by pinned
+receipts. Original curve-bearing MonoScripts retain their editor property hashes
+with runtime identity/schema checks. The container derives grouped preload closure
+from produced records and source GUIDs, including checked external component
+owners. Setup takes original PC/SDK roots, explicit record packs and fresh output;
+process exit releases source/codec handles and keeps receipts. All 75,378 objects,
+both members and the compressed bundle are host raw-exact to J850. This introduces
+no runtime owner; full phone production, installation and gameplay remain open.
+
+`recipe/owner-labgeometry-{meshes,shaders,objects}.json` completes `labgeometry`
+through the existing Mesh, Shader, alias and object owners. `ModelGameObject`
+constructs the default imported OBJ hierarchy from original Mesh names, the
+authored asset path and explicit component relationships; native source schemas
+validate each body. The grouped container derives all preloads from the produced
+graph. Setup takes original PC/SDK roots, explicit receipt-pinned provider packs,
+the public-source Mesh helper and a fresh output directory. Process exit releases
+file/codec handles; receipts persist. All 10 objects, the member and compressed
+bundle are host raw-exact to J850. Complete phone production remains open.

@@ -179,7 +179,7 @@ class AlphaBuildPolicyTests(unittest.TestCase):
 
     def test_alpha_build_missing_issued_version_refuses_before_output_or_dispatch(self):
         with tempfile.TemporaryDirectory() as temporary:
-            root = Path(temporary)
+            root = Path(temporary).resolve()
             request = {name: str(root / "unused" / name) for name in ("manifest", "targets", "frontend", "java", "android_jar", "d8_jar", "wire_helper")}
             request.update(manifest_sha256="a" * 64, application_id=ALPHA, retention_policy=POLICY)
             path, output = root / "request.json", root / "output"

@@ -206,10 +206,13 @@ def _shift(nodes, delta):
     return [dict(node, level=node["level"] + delta) for node in nodes]
 
 
-def _tree(nodes):
+def _tree(nodes, common_strings=False):
     strings, offsets, entries = bytearray(), {}, []
+    common = {value: 0x80000000 + key for key, value in COMMON.items()} if common_strings else {}
 
     def offset(value):
+        if value in common:
+            return common[value]
         if value not in offsets:
             offsets[value] = len(strings)
             strings.extend(value.encode() + b"\0")
@@ -772,18 +775,19 @@ class _RegistryTypes:
         walk(("type", assembly, row), "")
         return result
 
-    def script_hash(self, identity, schemas):
+    def script_schema(self, identity, schemas):
+        """Return the source-derived editor transfer tree for a concrete object."""
         assembly, namespace, class_name = identity
         pe = self.load(assembly)
         found = [row for row in pe.net.mdtables.TypeDef.rows if _type_name(row) == (namespace, class_name)]
         if not found:
-            return bytes(16)
+            return None
         if len(found) != 1:
             raise ValueError("ambiguous registry source class")
         row = found[0]
         hierarchy, is_object = self.hierarchy(assembly, row)
         if not is_object or row.Flags.tdAbstract or "`" in class_name:
-            return bytes(16)
+            return None
         if identity in schemas:
             trees = schemas[identity]
             if len({properties_hash(class_name, namespace, assembly, tree, self.native) for tree in trees}) != 1:
@@ -799,7 +803,70 @@ class _RegistryTypes:
             tree = _tree(self.editor_curves(nodes))
         else:
             tree = _tree(self.base + self.custom_fields(hierarchy))
+        return tree
+
+    def script_hash(self, identity, schemas):
+        tree = self.script_schema(identity, schemas)
+        if tree is None:
+            return bytes(16)
+        assembly, namespace, class_name = identity
         return properties_hash(class_name, namespace, assembly, tree, self.native)
+
+
+def pointer_script_schema(pc, managed, script, base_tree, pointer_tree, sdk_tree):
+    """Derive a one-pointer script schema from pinned CLR and native inputs."""
+    pc = Path(pc).resolve(strict=True)
+    relative = PurePosixPath(managed["path"])
+    if relative.is_absolute() or ".." in relative.parts or "\\" in managed["path"]:
+        raise ValueError("unsafe script schema managed root")
+    directory = (pc / relative).resolve(strict=True)
+    if not directory.is_relative_to(pc):
+        raise ValueError("script schema managed root leaves original input")
+    pins = {}
+
+    def pin(path, provider=None):
+        path = Path(path).resolve(strict=True)
+        if path.parent != directory or path.name not in managed["files"]:
+            raise ValueError("unadmitted script schema assembly")
+        with path.open("rb") as stream:
+            actual = hashlib.file_digest(stream, "sha256").hexdigest()
+        if actual != managed["files"][path.name]:
+            raise ValueError("script schema assembly drift")
+        pins[str(path.relative_to(pc))] = actual
+
+    identity = _script_record(script)["identity"]
+    assembly, namespace, class_name = identity
+    base = tree_nodes(base_tree)
+    native_names = {n["name"] for n in tree_nodes(sdk_tree) if n["level"] == 1}
+    if any(n["level"] == 1 and n["name"] not in native_names for n in base):
+        raise ValueError("script schema base has custom fields")
+    prototype = [n for field, nodes in _fields(tree_nodes(pointer_tree)).items() if field not in native_names for n in nodes]
+    if len(prototype) != 3 or not prototype[0]["type"].startswith("PPtr<") or [n["name"] for n in prototype[1:]] != ["m_FileID", "m_PathID"]:
+        raise ValueError("script schema prototype is not one original pointer")
+    with closing(_RegistryTypes(directory, {}, pin, b"", {})) as clr:
+        found = [row for row in clr.load(assembly).net.mdtables.TypeDef.rows if _type_name(row) == (namespace, class_name)]
+        if len(found) != 1:
+            raise ValueError("script schema original class identity differs")
+        hierarchy, is_object = clr.hierarchy(assembly, found[0])
+        if not is_object:
+            raise ValueError("script schema class is not a Unity object")
+        custom = clr.custom_fields(hierarchy)
+    if len(custom) != 3 or not custom[0]["type"].startswith("PPtr<$"):
+        raise ValueError("script schema CLR fields are not one object pointer")
+    release = copy.deepcopy(prototype)
+    for original, generated in zip(release, custom, strict=True):
+        if any(original[key] != generated[key] for key in ("level", "flags", "size", "version")):
+            raise ValueError("script schema pointer transfer differs")
+        original.update(type=generated["type"], name=generated["name"])
+    tree = _tree(base + release, common_strings=True)
+    properties = properties_hash(class_name, namespace, assembly, tree, sdk_tree)
+    if properties != _script_record(script)["properties"]:
+        raise ValueError("script schema differs from original script properties")
+    for path, expected in list(pins.items()):
+        pin(pc / path)
+        if pins[path] != expected:
+            raise ValueError("script schema assembly changed during production")
+    return {"tree": tree, "hash": properties, "script_id": md4((class_name + namespace + assembly).encode())}, pins
 
 
 def _script_record(body):

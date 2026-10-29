@@ -59,7 +59,7 @@ class UnknownVersionTests(unittest.TestCase):
 
     def test_unknown_size_reads_are_bounded_and_never_copy_or_modify_source(self):
         with tempfile.TemporaryDirectory() as temporary:
-            root = Path(temporary)
+            root = Path(temporary).resolve()
             game = root / "Data/game.txt"
             game.parent.mkdir()
             game.write_bytes(b"unknown data")

@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """Run synthetic update acceptance through the real Android installer UI.
 
-Run only through /lab with device=nova-b. No game, existing alpha installation,
+Run only through /lab with an explicitly authorized device alias.
+No game, existing alpha installation,
 production key, arbitrary private directory, or remote release is used. The
 runner toolhost job builds the exact-ref public tool APK; this script validates
 that receipt and uses a fresh independent test publisher key.

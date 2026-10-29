@@ -7,7 +7,7 @@ import subprocess
 import tempfile
 import unittest
 
-from test_owner_installer import STUBS
+from tests.test_owner_installer import STUBS
 
 ROOT = Path(__file__).resolve().parents[1]
 SOURCE = ROOT / "tools/phone-build/managed-host"
@@ -160,7 +160,7 @@ class AlphaInstallerTests(unittest.TestCase):
             "public class PackageInfo {", "public class PackageInfo {public ApplicationInfo applicationInfo=new ApplicationInfo();"
         )
         with tempfile.TemporaryDirectory() as temporary:
-            root = Path(temporary)
+            root = Path(temporary).resolve()
             sources = []
             for name, value in stubs.items():
                 path = root / name

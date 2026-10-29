@@ -1058,7 +1058,7 @@ def module(name, path):
     return loaded
 
 
-def sdk_scene_variants(snippet, material_keywords=None):
+def sdk_scene_variants(snippet, material_keywords=None, *, retain_instancing=False):
     """Declared SDK alternatives retained by the pinned fresh mono Lab scene."""
     rejected = {
         "FOG_LINEAR",
@@ -1077,6 +1077,8 @@ def sdk_scene_variants(snippet, material_keywords=None):
         "STEREO_CUBEMAP_RENDER_ON",
         "UNITY_SINGLE_PASS_STEREO",
     }
+    if retain_instancing:
+        rejected.remove("INSTANCING_ON")
     axes = []
     for group in ("m_VariantsUserGlobal", "m_VariantsUserLocal"):
         merged = []
@@ -1268,8 +1270,42 @@ def produce_sdk_records(root, pc, sdk, profile, profile_sha256, output, connecti
     return name, {"bytes": destination.stat().st_size, "sha256": sha(destination)}
 
 
+def select_authored_files(profile, filenames):
+    """Select standalone authored rows without initializing unrelated providers."""
+    if filenames is None:
+        return profile
+    wanted = set(filenames)
+    rows = [row for row in profile["shaders"] if row["file"] in wanted]
+    if not wanted or {row["file"] for row in rows} != wanted:
+        raise ValueError("authored file selection must name existing shader files")
+    if any("source" not in row for row in rows):
+        raise ValueError("authored file selection requires tracked ShaderLab sources")
+    selected = {key: profile[key] for key in ("input_id", "source_type", "sdk", "includes_sha256", "settings", "authored_inputs")}
+    selected["shaders"] = rows
+    selected["authored_inputs"] = {
+        name: pin
+        for name, pin in profile["authored_inputs"].items()
+        if not name.startswith("scripts/lab/shader_") and name != "tools/phone-build/accepted-output/shader_sdk.py"
+    }
+    return selected
+
+
 def produce(
-    profile_path, profile_sha256, pc, sdk, output, codec_path, codec_sha256, d3dasm_path=None, d3dasm_sha256=None, hlsl_source=None, asset_ripper_source=None
+    profile_path,
+    profile_sha256,
+    pc,
+    sdk,
+    output,
+    codec_path,
+    codec_sha256,
+    d3dasm_path=None,
+    d3dasm_sha256=None,
+    hlsl_source=None,
+    asset_ripper_source=None,
+    *,
+    compiler_command=None,
+    compiler_data=None,
+    authored_files=None,
 ):
     """Reproduce all selected standalone shaders from original PC/public inputs.
 
@@ -1277,23 +1313,23 @@ def produce(
     are explicit pinned Git object trees; expected file hashes compare only fully
     persisted independent output. No retained generated source/body is read.
     """
-    import UnityPy
-    from UnityPy.helpers.TypeTreeHelper import write_typetree
-    from UnityPy.streams import EndianBinaryWriter
-
     root = Path(__file__).resolve().parents[3]
     sys.path.insert(0, str(root / "scripts/lab"))
-    import shader_source as sources
-    import shader_recovery as recovery
-    from shader_segments import read_segments
-    from shader_programs import NativePrograms
-
     profile_path, codec_path = Path(profile_path).absolute(), Path(codec_path).absolute()
     profile_pin = {"bytes": profile_path.stat().st_size, "sha256": profile_sha256}
     codec_pin = {"bytes": codec_path.stat().st_size, "sha256": codec_sha256}
     checked(profile_path, profile_pin)
     checked(codec_path, codec_pin)
-    profile = json.loads(profile_path.read_text())
+    profile = select_authored_files(json.loads(profile_path.read_text()), authored_files)
+    # Authored ShaderLab does not need native D3D recovery or UnityPy on Android.
+    native = any(key in profile for key in ("native_ui", "native_materials", "native_internal", "native_intersection", "tmp_dummy", "tmp_mobile", "builtin"))
+    if native:
+        import UnityPy
+        import shader_source as sources
+        import shader_recovery as recovery
+        from shader_segments import read_segments
+        from shader_programs import NativePrograms
+
     pc, sdk = Path(pc).resolve(strict=True), Path(sdk).resolve(strict=True)
     output = Path(output)
     output = output.parent.resolve(strict=True) / output.name
@@ -1356,10 +1392,12 @@ def produce(
     native_type = layout["types"][selected["type_id"]]
     if native_type["class_id"] != 48:
         raise ValueError("original schema provider is not Shader48")
-    environment = UnityPy.load(str(source_path))
-    obj = next(row for row in environment.objects if (row.assets_file.name, row.path_id) == (source["member"], source["path_id"]))
-    node = obj.serialized_type.node
-    original_form = obj.read_typetree()["m_ParsedForm"]
+    node = W.shader_node(native_type["tree"])
+    source_member = W.B.Bundle(source_path).member(source["member"])
+    source_member.seek(layout["data_offset"] + selected["offset"])
+    original_form = W.read_shader_body(node, W.B.exact(source_member, selected["bytes"]))["m_ParsedForm"]
+    if "native_intersection" in profile:
+        environment = UnityPy.load(str(source_path))
     registry = original_form["m_KeywordNames"][:4], original_form["m_KeywordFlags"][:4]
     sdk_image = (sdk / "MacOS/Unity").read_bytes()
     compile_keywords = platform_keywords(sdk_image, profile["settings"])
@@ -1416,7 +1454,12 @@ def produce(
             tmp_objects = {obj.path_id: obj for obj in UnityPy.load(str(relative(pc, selected["path"]))).objects if obj.assets_file.name == selected["member"]}
         core = recovery.build_native_hlsl(hlsl_source, output / "native-hlsl-tool") if "native_internal" in profile else None
         with (
-            compiler.compiler([sdk / "Tools/UnityShaderCompiler"], sdk, output / "compiler", includes=include_dirs) as connection,
+            compiler.compiler(
+                compiler_command if compiler_command is not None else [sdk / "Tools/UnityShaderCompiler"],
+                compiler_data if compiler_data is not None else sdk,
+                output / "compiler",
+                includes=include_dirs,
+            ) as connection,
             W.codec(codec_path, codec_sha256) as compress,
         ):
             if "native_internal" in profile:
@@ -1478,9 +1521,7 @@ def produce(
                     original, _, kind, typ = native_sources[shader["native_resource"]]
                 tree = construct(node, text, pre, compiled_passes, compress, registry, original, kind == "ui-alpha", kind == "intersection")
                 externals = fallback_externals(tree, names_to_files)
-                body_writer = EndianBinaryWriter(endian="<")
-                write_typetree(tree, node, body_writer)
-                body = body_writer.bytes
+                body = W.write_shader_body(node, tree)
                 destination = output / name
                 destination.parent.mkdir(parents=True, exist_ok=True)
                 standalone = {
@@ -1530,6 +1571,13 @@ def main():
     parser.add_argument("--d3dasm-sha256", help="expected SHA-256 of the caller-supplied public tool")
     parser.add_argument("--hlsl-source", type=Path, help="caller-supplied pinned public HLSLDecompiler Git repository; native core builds into new output")
     parser.add_argument("--asset-ripper-source", type=Path, help="caller-supplied pinned public AssetRipper Git repository; template bodies stay local")
+    parser.add_argument("--compiler-command", type=json.loads, help="explicit compiler argv as a JSON array, including an Android GNU runner when required")
+    parser.add_argument("--compiler-data", type=Path, help="acquired compiler SDK data root; --sdk still supplies the pinned metadata/includes")
+    parser.add_argument(
+        "--authored-file",
+        action="append",
+        help="current: produce only named standalone authored files from the pinned profile; repeatable, omits native/builtin/shared cohorts",
+    )
     args = parser.parse_args()
     produce(
         args.profile,
@@ -1543,6 +1591,9 @@ def main():
         args.d3dasm_sha256,
         args.hlsl_source,
         args.asset_ripper_source,
+        compiler_command=args.compiler_command,
+        compiler_data=args.compiler_data,
+        authored_files=args.authored_file,
     )
 
 

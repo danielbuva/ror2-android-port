@@ -1,0 +1,114 @@
+{
+  "input_id": "6af7ed94619fe1b4346974b4486afa03a8d1625a7820e92da0ff74d57208fe88",
+  "sdk": {
+    "MacOS/Unity": {
+      "bytes": 79453472,
+      "sha256": "906123118e45d56c6bcf20f3776ed2373417553042500714023daeb9e53058e8"
+    },
+    "Tools/UnityShaderCompiler": {
+      "bytes": 12603248,
+      "sha256": "4f4e5be21d27dd7541fa9385ea480b15816e70ddaa83b516df0ab60b819142b5"
+    },
+    "Resources/unity_builtin_extra": {
+      "bytes": 133069551,
+      "sha256": "db99888b83efb4ec35e6ce219de78c951fc37bc0129712579131360312cc4f8e"
+    }
+  },
+  "includes_sha256": "163fad0ca42bd98ea1628888dedd01d91fcbb9f6bda60a8120f9b453cc565144",
+  "settings": {
+    "color_space": 1,
+    "caching_preprocessor": true,
+    "tier0": {
+      "standardShaderQuality": 0,
+      "renderingPath": 3,
+      "hdrMode": 1,
+      "realtimeGICPUUsage": 25,
+      "useReflectionProbeBoxProjection": 0,
+      "useReflectionProbeBlending": 0,
+      "useHDR": 1,
+      "useDetailNormalMap": 0,
+      "useCascadedShadowMaps": 0,
+      "prefer32BitShadowMaps": 0,
+      "enableLPPV": 0,
+      "useDitherMaskForAlphaBlendedShadows": 0
+    },
+    "virtual_texturing": 0,
+    "vulkan_pretransform": 0,
+    "shader_precision_model": 0,
+    "deferred_reflections": 1
+  },
+  "exporter_revision": "1ac666f47d8e9dedf96afb0b914c70d7656151ea",
+  "template_inputs": {
+    "Templates.json": {
+      "bytes": 640,
+      "sha256": "b046b777ec15bc92caaea19558a438e041f2ce174cdbeb6bb570055e2eb557cc"
+    },
+    "Default.txt": {
+      "bytes": 655,
+      "sha256": "f719eed3344dcbee3c438803a7518fe548b8906f6e18020f3b4b26d47293f266"
+    },
+    "SingleTexture.txt": {
+      "bytes": 942,
+      "sha256": "7b7ae955e72eb9d5b0c084aed0749ae21846098236abd4f30281d162738c9371"
+    }
+  },
+  "source_type": {
+    "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-base-shaders_shader_assets_all_45ab8c24dd5dcd99e5cb60900de0231b.bundle",
+    "member": "CAB-779f6fd4edc30ec27d018e8344a8081e",
+    "path_id": -658352061839041481,
+    "bytes": 2601960,
+    "sha256": "bd1acda75caf15bcb9014dc14e7a0fc5680419e39d61cf24baca429509c12906",
+    "body_sha256": "5ec0f1928b14c19032bccdb6731ef79b0bce4b14f844e3d23d5f132f6eea0a01"
+  },
+  "provider_profile_sha256": "f06ddd41e78e653169631a49d11df6b3901a422b5bcf65062a2897ae5b3818bb",
+  "provider_bundle": "barrier-effect-lab",
+  "records": [
+    {
+      "kind": "dummy",
+      "source_record": {
+        "member": "CAB-ad06aa33a47d6983e36dda9ff33ebde2",
+        "path_id": -6362973405072239269,
+        "bytes": 6624,
+        "sha256": "cb38a427e4ac58e5a7c2d67fad8b107d895adddb4843e173d41f695468356964"
+      },
+      "outputs": [
+        {
+          "bundle": "commando-prefab-lab",
+          "member": "CAB-b0611b01bbffecd06329c6d6eecf278c",
+          "path_id": -7654450177102856894,
+          "bytes": 6624,
+          "sha256": "3192ead491ae51f3474b1aea5d74dc8b5fde48caca1c72da266a6a135d08b63a"
+        }
+      ],
+      "original": {
+        "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-base-shaders_shader_assets_all_45ab8c24dd5dcd99e5cb60900de0231b.bundle",
+        "member": "CAB-779f6fd4edc30ec27d018e8344a8081e",
+        "path_id": -658352061839041481,
+        "bytes": 2601960,
+        "sha256": "bd1acda75caf15bcb9014dc14e7a0fc5680419e39d61cf24baca429509c12906",
+        "body_sha256": "5ec0f1928b14c19032bccdb6731ef79b0bce4b14f844e3d23d5f132f6eea0a01"
+      },
+      "source_filename": "Assets/RoR2/Base/Shaders/FX/HGCloudRemap.shader",
+      "template": "SingleTexture"
+    },
+    {
+      "kind": "sdk",
+      "source_record": {
+        "member": "CAB-ad06aa33a47d6983e36dda9ff33ebde2",
+        "path_id": -4404651390618690416,
+        "bytes": 14624,
+        "sha256": "7ebbddb9d1e1f4edb0635448e6f95c7fb399d06c17ec61b0c489dbe2ee0a34ff"
+      },
+      "outputs": [
+        {
+          "bundle": "commando-prefab-lab",
+          "member": "CAB-b0611b01bbffecd06329c6d6eecf278c",
+          "path_id": -4404651390618690416,
+          "bytes": 14624,
+          "sha256": "546f5be2677f2a3175e0ece3a5d7f34962d63f56b3744b1b2e199b07731e6b44"
+        }
+      ],
+      "sdk_shader": 34
+    }
+  ]
+}

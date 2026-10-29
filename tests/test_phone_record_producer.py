@@ -232,6 +232,11 @@ def root_motion_fixture(turn=False):
 
 
 class AnimationProducerTests(unittest.TestCase):
+    def test_bounded_float_yaw_preserves_the_single_precision_library_rounding(self):
+        self.assertEqual(struct.pack("<f", A.small_atan2f(0.000732421875, 1.25)).hex(), "9999193a")
+        self.assertEqual(struct.pack("<f", A.small_atan2f(-0.000732421875, 1.25)).hex(), "999919ba")
+        self.assertEqual(struct.pack("<f", A.small_atan2f(-0.0, 1.25)).hex(), "00000080")
+
     def test_director_reimport_sorts_signed_keys_with_their_references(self):
         # Fixed CRC32 vectors cover signed ordering, alignment changes and null PPtrs.
         entry = F.node("data", children=[F.text("first"), F.node("second", 12, kind="PPtr<Object>")])
@@ -322,11 +327,15 @@ class AnimationProducerTests(unittest.TestCase):
         _, spans = A.fields(body, schema)
         angular = spans[("m_MuscleClip", "m_AverageAngularSpeed")][0]
         self.assertAlmostEqual(struct.unpack_from("<f", result, angular)[0], math.pi / 2, places=5)
+        projected = A.transform(body, schema, {"root_average": True, "root_average_atan2": True})
+        self.assertAlmostEqual(struct.unpack_from("<f", projected, angular)[0], math.pi / 2, places=5)
         speed = spans[("m_MuscleClip", "m_AverageSpeed")][0]
         self.assertEqual(struct.unpack_from("<3f", result, speed), (0, 0, 0))
         changed = bytearray(body)
         changed[spans[("m_MuscleClip", "m_Mirror")][0]] = 1
         self.assertAlmostEqual(struct.unpack_from("<f", A.root_average(bytes(changed), schema), angular)[0], -math.pi / 2, places=5)
+        mirrored = A.transform(bytes(changed), schema, {"root_average": True, "root_average_atan2": True})
+        self.assertAlmostEqual(struct.unpack_from("<f", mirrored, angular)[0], -math.pi / 2, places=5)
 
     def test_binding_reorder_sorts_complete_source_keys_by_the_new_curve_index(self):
         body, schema = layout_fixture()

@@ -332,8 +332,10 @@ First request `/lab toolhost ref=<branch>`; the runner builds the separate
 `dev.ror2lab.installertest` package and caches it by source commit. Then run
 `/lab script ref=<branch> -- scripts/lab-installer-updates.py --host-only`
 to prepare synthetic fixtures without a phone. The phone command is
-`/lab script ref=<branch> device=nova-b -- scripts/lab-installer-updates.py`.
-Only after the owner explicitly approves enabling unknown-source installation
+`/lab script ref=<branch> device=<authorized-alias> -- scripts/lab-installer-updates.py`.
+The runner supplies the leased device serial; this script never selects a phone
+from a remembered identifier. Its toolhost builder must use an available authorized
+device too. Only after the owner explicitly approves enabling unknown-source installation
 for that disposable package may the invocation add `--allow-test-installs`.
 
 The script resolves `LAB_TOOLHOST_ROOT` and `scripts/env.sh` on the lab host;
