@@ -5078,6 +5078,18 @@ must be established before selecting this profile on another device.
 
 ## Complete original-lighting scene alternatives audit (2026-10-29)
 
+| Recipe | Scope | Tracked information | Boundaries | Owner and evidence |
+| --- | --- | --- | --- | --- |
+| `owner-promovoidsurvivor-source-lighting-objects.json` | Complete source lighting scene | Original selectors, checked relationships, public policy and hashes. | No body/type/pixel/program literals or private inputs; audit below, 2026-10-29. | `object_produce.py`; J1261 host complete-file qualification, phone/runtime gate open. |
+| `owner-promovoidsurvivor-source-lighting-textures.json` | Three original BC6H reflection chains | Original selectors, checked relationships, public policy and hashes. | No body/type/pixel/program literals or private inputs; audit below, 2026-10-29. | `texture_produce.py`; J1261 host complete-file qualification, phone/runtime gate open. |
+| `owner-promovoidsurvivor-standard-shaders.json` | Original Standard Shader | Original selectors, checked relationships, public policy and hashes. | No body/type/pixel/program literals or private inputs; audit below, 2026-10-29. | `payload_shader_records.py`; J1261 host complete-file qualification, phone/runtime gate open. |
+| `owner-promovoidsurvivor-postprocess-shaders.json` | Original post-processing Shaders | Original selectors, checked relationships, public policy and hashes. | No body/type/pixel/program literals or private inputs; audit below, 2026-10-29. | `payload_shader_records.py`; J1261 host complete-file qualification, phone/runtime gate open. |
+| `owner-snowyforest-source-lighting-objects.json` | Complete source lighting scene | Original selectors, checked relationships, public policy and hashes. | No body/type/pixel/program literals or private inputs; audit below, 2026-10-29. | `object_produce.py`; J1261 host complete-file qualification, phone/runtime gate open. |
+| `owner-snowyforest-source-lighting-textures.json` | Three original BC6H reflection chains | Original selectors, checked relationships, public policy and hashes. | No body/type/pixel/program literals or private inputs; audit below, 2026-10-29. | `texture_produce.py`; J1261 host complete-file qualification, phone/runtime gate open. |
+| `owner-snowyforest-standard-shaders.json` | Original Standard Shader | Original selectors, checked relationships, public policy and hashes. | No body/type/pixel/program literals or private inputs; audit below, 2026-10-29. | `payload_shader_records.py`; J1261 host complete-file qualification, phone/runtime gate open. |
+| `owner-snowyforest-postprocess-shaders.json` | Original post-processing Shaders | Original selectors, checked relationships, public policy and hashes. | No body/type/pixel/program literals or private inputs; audit below, 2026-10-29. | `payload_shader_records.py`; J1261 host complete-file qualification, phone/runtime gate open. |
+| `owner-promovoidsurvivor-timeline-records.json` | Complete imported Director record | Original selectors, binding identities, authored null relationships and hashes. | No curve/pose/event/body literal or private inputs; audit below, 2026-10-29. | `record_produce.py`; J1261 full-file host qualification, phone/runtime gate open. |
+
 J1261: `owner-promovoidsurvivor-source-lighting-objects.json` and
 `owner-snowyforest-source-lighting-objects.json` select complete source records,
 types, hash expectations and minimum relocated relationships. Their companion
