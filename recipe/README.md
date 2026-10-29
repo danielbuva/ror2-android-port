@@ -5018,6 +5018,10 @@ recorded under `work/coordination/orchestrator/public-startup-metadata-v2/`.
 
 ## Source Menu profile
 
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-player-menu.json` | `c4b96578385df9882b4253dd37f5eb50e5aadafef423205a358deff966a3361c` |
+
 `owner-player-menu.json` selects minimum original UI/script/dependency members,
 the original prefab root, public English tokens and authored hide/action policies.
 It pins four separately supplied SDK UGUI source files and existing public texture
