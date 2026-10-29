@@ -31,7 +31,7 @@ class IssuedVersionsTests(unittest.TestCase):
     def setUp(self):
         self.temporary = tempfile.TemporaryDirectory()
         self.addCleanup(self.temporary.cleanup)
-        self.root = Path(self.temporary.name)
+        self.root = Path(self.temporary.name).resolve()
         self.binding = {"source_sha256": "a" * 64, "input_sha256": "b" * 64, "toolchain_sha256": "c" * 64, "publisher_version_code": 50, "purpose": "update"}
 
     def reserve(self, installed=0, **binding):
@@ -117,7 +117,7 @@ class RetentionTests(unittest.TestCase):
     def setUp(self):
         self.temporary = tempfile.TemporaryDirectory()
         self.addCleanup(self.temporary.cleanup)
-        self.inputs = Path(self.temporary.name)
+        self.inputs = Path(self.temporary.name).resolve()
 
     def receipt(self, name, version):
         path = self.inputs / "work/releases" / name / "signing/signed.apk"

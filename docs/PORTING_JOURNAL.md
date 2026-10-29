@@ -518,3 +518,499 @@ Evidence: `work/coordination/p1-computational-standard-v1/done.json` and
 Audited selectors reuse existing Standard feature/order owners; no new compiler.
 Host-only; full-scene readiness, phone production and original behavior remain open.
 APK unchanged: J850 `f1550ce0ff030ea0fa7a1ab66de19d54ee7894a7ae2f5b344f993157d6713949`.
+
+## J1214 — Complete source-derived Computational Exchange scene
+
+2026-10-27. Existing object/Shader owners reproduce the complete scene from
+legitimate PC input, acquired SDK and receipt-pinned source-produced packs.
+Checked original Transform ownership resolves preload admissions; J1213 Standard
+is reused. Guarded production precedes independent comparison: all 16,208 objects,
+both serialized members and compressed bundle are raw-exact to J850.
+Output: 21,161,995 B, SHA-256 `e5b85a048312298cf18dfd028ed84e1695204196c1fc4b6b9266be93ddf44c4d`.
+Evidence: `work/coordination/p1-scenes-w/computational-final-host-v1/qualification-done.json`;
+retained union: `work/coordination/p1-scenes-w/publication-batch-v7/readiness-union/readiness.json`.
+Readiness advances by one: 644/705 available, 639 raw-exact; 61 missing.
+Audited compact selectors preserve decoded policies; no accepted production replay.
+Host-only; phone production, installation and original scene behavior remain open.
+APK unchanged: J850 `f1550ce0ff030ea0fa7a1ab66de19d54ee7894a7ae2f5b344f993157d6713949`.
+
+## J1215 — Explicit compiler hosting for source Shader records
+
+2026-10-27. The existing Shader48 producer accepts compiler argv and a separate
+compiler data root through the existing standalone compiler session, allowing
+the acquired Linux SDK/GNU runner while Mac SDK metadata/includes stay pinned.
+Default Mac invocation and compiler/socket teardown remain unchanged.
+Evidence: `work/coordination/p1-shaders/compiler-host-adapter-v1/checks.json`;
+46 focused tests, Ruff and host preflight pass. No generated Shader output or APK
+changes; readiness unchanged. Complete phone Shader production, installation
+and runtime remain open.
+
+## J1216 — Source-derived Champrush Shader records
+
+2026-10-27. Existing Shader owners reproduce 24 post-processing, one Standard
+and one particle record from legitimate PC input and pinned SDK/public tools.
+Guarded production persists every output before independent target comparison;
+all 26 records are raw-exact to J850, including Standard 301,384 B and particles
+25,056 B. Audited source-selection profiles contain no target program bytes.
+The player Shader producer accepts repeatable authored-file selection for a
+bounded phone slice, retaining common input pins and the default complete route.
+Evidence: `work/coordination/p1-champrush-shaders-v1/done.json`.
+Complete-scene readiness, phone production, installation and runtime remain open;
+no readiness promotion or APK change.
+
+## J1217 — Authored Shader serialization without Android UnityPy
+
+2026-10-27. The existing serialized-file owner decodes original Shader48 type
+metadata and reads/writes ordered source-schema values with standard Python.
+Authored selection loads no native-recovery dependencies and omits their unused
+pins; original input, SDK, settings and authored-source checks remain enforced.
+The original 15,972 B record roundtrips exactly and matches UnityPy decoding;
+ColorGrade admission reaches the compiler with UnityPy/lz4 imports blocked.
+Evidence: `work/coordination/p1-colorgrade-phone-v1/dependency-repair-host-v4/`;
+51 focused tests, Ruff and host preflight pass. No output/APK change or readiness
+promotion. Whole-file phone production and ordinary app admission remain open.
+
+## J1218 — Source-derived Voidstage Shader selections
+
+2026-10-27. Audited profiles publish the existing owners' 24 post-processing and
+one Standard record selections from legitimate PC input and pinned public SDK.
+Retained source-guarded production persisted outputs before independent J850
+comparison; all 25 records are raw-exact, including Standard 261,528 B.
+Evidence: `work/coordination/p1-voidstage-shaders-v1/done.json`.
+The particle owner also accepts explicit recipe keyword stripping before native
+ordering; omitted policy preserves existing source selections. Focused host
+fixtures cover row removal and retained ordering. No target bytes are published.
+Complete-scene readiness, phone production and runtime remain open; no APK change.
+
+## J1220 — Four complete source-derived scene bundles
+
+2026-10-27. Existing object/Shader owners close Frozenwall, Villagenight and
+Foggyswamp source bundles plus Skymeadow spine from legitimate input and SDK.
+Original curves plus 42 captured angle triplets replace private geometry arrays;
+receipt-pinned Shader index reuse retains original supplier provenance.
+Guarded production precedes independent comparison: 69,360 objects, eight
+serialized members and all four compressed bundles are raw-exact against J850.
+Evidence/output hashes: `work/coordination/p1-scenes-ss/safe-five-v1/readiness-union/done.json`;
+three new comparisons there retain Skymeadow's `wind-qualification-v1` proof.
+Retained landed union: 648/705 available; these four advance it to 652 (647 raw-exact),
+53 missing (7 APK, 46 payload). Goolake, Lakes, Lakesnight and Village remain open.
+54 focused tests, Ruff, staged audit and host preflight pass; doctor Bootstrap remains blocked.
+Host-only; phone production, installation and original behavior remain open.
+
+## J1219 — Complete source-derived Champrush, Voidstage and Bazaar scenes
+
+2026-10-27. Existing object/Shader owners reproduce three complete scenes from
+legitimate PC inputs, pinned SDK/tools and source-produced packs. Checked class
+114 original preload roots extend the existing owner; component owners stay class 1.
+All 71,570 objects, six serialized members and three compressed bundles raw-exact to J850.
+Champrush 3,177,078 B: `ae62133675e862c7782e7e4c14d0c199b03e43d64d6d8c9710aa1751abf61d53`.
+Voidstage 19,845,238 B: `b26b1419ae8e477fc7dd72e8d3a8b07c8a7ff00766f3c081d052b3792b8ff52f`.
+Bazaar 5,818,018 B: `46d50bd26421ff3d42734554de0f5711924cbc15e0fd5a58274cc5c377b01220`.
+Evidence: `work/coordination/p1-scenes-w/publication-batch-v{8,9,10}/publication-inputs.json`.
+Retained readiness after these deltas: 647/705 available, 642 raw-exact; 58 missing.
+Audited recipes publish selections only; accepted production was retained without replay.
+Host-only; phone production, installation and original scene behavior remain open.
+APK unchanged: J850 `f1550ce0ff030ea0fa7a1ab66de19d54ee7894a7ae2f5b344f993157d6713949`.
+
+## J1221 — Complete source-derived Voidraid scene
+
+2026-10-27. Existing object/Shader owners reproduce Voidraid from legitimate PC
+files, pinned SDK/tools and source-produced packs. Audited profiles retain source
+Billboard/material identities, 21 original wind bodies and reciprocal Rigidbody
+preload membership; no new runtime or producer policy is introduced.
+All 39,861 persisted objects, two serialized members and the compressed bundle
+are raw-exact to J850: 24,586,492 B,
+`bf3984cf6845c200a5553235c704a5e75cfee917d70dc1212ca17e4e5a9c0867`.
+Evidence: `work/coordination/p1-scenes-w/publication-batch-v11/publication-inputs.json`.
+Retained worker readiness delta is +1 exact entry; all prior entries unchanged.
+54 focused host tests and host preflight pass. Accepted production was not replayed.
+Host-only; phone production, installation and original scene behavior remain open.
+APK unchanged: J850 `f1550ce0ff030ea0fa7a1ab66de19d54ee7894a7ae2f5b344f993157d6713949`.
+
+## J1224 — Complete source-derived Goolake source scene
+
+2026-10-27. Existing object/Shader owners reproduce Goolake source from legitimate
+PC input, pinned SDK/tools and source-produced packs. Eighteen captured build
+angle triplets and ten checked float32 rounding words retain original curve
+operands; complete geometry arrays remain excluded and default arithmetic is unchanged.
+All 13,012 persisted objects, both serialized members and the compressed bundle
+are raw-exact to J850: 7,621,879 B,
+`167f07532fd06970536a86b15ed7612fd8368465ae16b88b2b4f547f33a6655c`.
+Evidence: `work/coordination/p1-scenes-ss/goolake-build-rounding-v1/readiness-union/done.json`.
+Retained landed union advances 653 to 654/705 available (649 raw-exact);
+51 missing (7 APK, 44 payload). No accepted production is replayed.
+55 focused tests, Ruff, staged audit and host preflight pass; cleanup exits 0.
+Host-only; phone production, installation and original behavior remain open.
+APK unchanged: J850 `f1550ce0ff030ea0fa7a1ab66de19d54ee7894a7ae2f5b344f993157d6713949`.
+## J1222 — Complete ColorGrade source production on Android
+
+2026-10-27. Existing authored Shader owner reproduced one complete J850 file on Android.
+Acquired Linux SDK tools retain `Tools/` beneath compiler-data; Mac SDK supplies metadata/includes.
+The IPC owner now rejects the observed missing DX compiler dependencies before process launch.
+Output: 7,784 B, SHA-256 `fb6f38549e1336f51e87d60672350305c745c4017a044bc50189c1c2f534e98c`.
+Evidence: `work/coordination/p1-colorgrade-phone-v1/device-source-v4/` (source `303bbfaa`).
+Thermal worker 8.61 s, peak CPU/GPU 46.5 C, 0 s above 80 C; battery admission 27 C.
+Scratch removal, OLED sleep, lease release and prune passed; no APK installed or changed.
+Isolated shell production with host-staged acquired inputs only; no Editor at reconstruction time.
+Full shader cohort, ordinary app production, install/update and readiness remain open.
+
+## J1223 — Retain assisted Siren approach targets through native detours
+
+2026-10-27. Existing Siren diagnostic owner retains a revalidated approach egg
+while no egg is attackable; attackable priority and native range/LOS remain.
+Stop/disposal releases the reference; unavailable targets select a replacement.
+Three focused host tests, Ruff and host preflight pass; mission acceptance stays open.
+Evidence: `work/coordination/main-port-siren-main-adopted-r9/classification.md`.
+r9 confirmed the clock repair but timed out with one egg destroyed; target changes
+were observed, repeated oscillation remains unproven. No device success claimed.
+Latest attempted APK: `456a60650fd8002ae975f94736c75aa47ed7167cf8bdbd457b5bc50f92852181`.
+The next device run tests retention without extending the existing stage budget.
+
+## J1225 — Complete source-derived Surv2 scene
+
+Surv2 (`whole-scene-surv2`) is host raw-exact to J850: 30,311 objects, both serialized members
+and the 3,784,294-byte bundle (SHA-256 `74c622c8…`). Profiles: `recipe/owner-surv2-whole-*.json`.
+New producer policy `missing_script_base` derives a build-missing-script MonoBehaviour from its
+original component and an original base-type record. Wind records come from original Black Beach
+records; AkInitializer reuses the shipped schema hash. Evidence (ignored):
+`work/coordination/p1-scenes-w/surv2-final-host-v2/`. Readiness recount, phone production and
+scene behaviour remain open.
+
+## J1226 — Complete source-derived nest scene
+
+`whole-scene-nest` is host raw-exact to J850: 33,275 objects, both serialized members and the
+6,244,244-byte bundle (SHA-256 `6622cd06…`). Profiles: `recipe/owner-nest-whole-*.json`.
+Cross-bundle sources come from the orchestrator's exact-body and pointer-only original-record
+lookup. Evidence (ignored): `work/coordination/orchestrator/scenes/nest-final-v1/`. Readiness
+recount, phone production and scene behaviour remain open.
+
+## J1227 — Complete source-derived golemplains2 scene
+
+`whole-scene-golemplains2` is host raw-exact to J850: 8,785 objects, both serialized members and the
+5,904,777-byte bundle (SHA-256 `0d0140fe…`). Profiles: `recipe/owner-golemplains2-whole-*.json`.
+Cross-bundle sources come from the orchestrator's exact-body and pointer-only original-record
+lookup. Evidence (ignored): `work/coordination/orchestrator/scenes/golemplains2-final-v1/`. Readiness
+recount, phone production and scene behaviour remain open.
+
+## J1228 — Complete source-derived infinitetowerworld scene
+
+`whole-scene-infinitetowerworld` is host raw-exact to J850: 1,750 objects, both serialized members and the
+4,740,999-byte bundle (SHA-256 `236b6d1d…`). Profiles: `recipe/owner-infinitetowerworld-whole-*.json`.
+Cross-bundle sources come from the orchestrator's exact-body and pointer-only original-record
+lookup. Evidence (ignored): `work/coordination/orchestrator/scenes/infinitetowerworld-final-v1/`. Readiness
+recount, phone production and scene behaviour remain open.
+
+## J1229 — Complete source-derived lemuriantemple scene
+
+`whole-scene-lemuriantemple` is host raw-exact to J850: 10,928 objects, both serialized members and the
+10,232,436-byte bundle (SHA-256 `dc2d5b6b…`). Profiles: `recipe/owner-lemuriantemple-whole-*.json`.
+Cross-bundle sources come from the orchestrator's exact-body and pointer-only original-record
+lookup. Evidence (ignored): `work/coordination/orchestrator/scenes/lemuriantemple-final-v1/`. Readiness
+recount, phone production and scene behaviour remain open.
+
+## J1230 — Complete source-derived artifactworld scene
+
+`whole-scene-artifactworld` is host raw-exact to J850: 4,095 objects, both serialized members and the
+1,383,262-byte bundle (SHA-256 `5d6aa710…`). Profiles: `recipe/owner-artifactworld-whole-*.json`.
+Cross-bundle sources come from the orchestrator's exact-body and pointer-only original-record
+lookup. Evidence (ignored): `work/coordination/orchestrator/scenes/artifactworld-final-v1/`. Readiness
+recount, phone production and scene behaviour remain open.
+
+## J1231 — Complete source-derived blackbeach scene
+
+`whole-scene-blackbeach` is host raw-exact to J850: 19,098 objects, both serialized members and the
+6,198,224-byte bundle (SHA-256 `e2874966…`). Profiles: `recipe/owner-blackbeach-whole-*.json`.
+Cross-bundle sources come from the orchestrator's exact-body and pointer-only original-record
+lookup. Evidence (ignored): `work/coordination/orchestrator/scenes/blackbeach-final-v1/`. Readiness
+recount, phone production and scene behaviour remain open.
+
+## J1232 — Complete source-derived blackbeach2 scene
+
+`whole-scene-blackbeach2` is host raw-exact to J850: 18,363 objects, both serialized members and the
+5,285,481-byte bundle (SHA-256 `5773751b…`). Profiles: `recipe/owner-blackbeach2-whole-*.json`.
+Cross-bundle sources come from the orchestrator's exact-body and pointer-only original-record
+lookup. Evidence (ignored): `work/coordination/orchestrator/scenes/blackbeach2-final-v1/`. Readiness
+recount, phone production and scene behaviour remain open.
+
+## J1233 — Complete source-derived ancientloft scene
+
+`whole-scene-ancientloft` is host raw-exact to J850: 19,637 objects, both serialized members and the
+6,123,578-byte bundle (SHA-256 `96c576b1…`). Profiles: `recipe/owner-ancientloft-whole-*.json`.
+Cross-bundle sources come from the orchestrator's exact-body and pointer-only original-record
+lookup. Evidence (ignored): `work/coordination/orchestrator/scenes/ancientloft-final-v1/`. Readiness
+recount, phone production and scene behaviour remain open.
+
+## J1234 — Complete source-derived arena scene
+
+`whole-scene-arena` is host raw-exact to J850: 4,777 objects, both serialized members and the
+4,521,338-byte bundle (SHA-256 `b3389af0…`). Profiles: `recipe/owner-arena-whole-*.json`.
+Cross-bundle sources come from the orchestrator's exact-body and pointer-only original-record
+lookup. Evidence (ignored): `work/coordination/orchestrator/scenes/arena-final-v1/`. Readiness
+recount, phone production and scene behaviour remain open.
+
+## J1235 — Complete source-derived villagenight scene
+
+`whole-scene-villagenight` is host raw-exact to J850: 14,033 objects, both serialized members and the
+7,091,079-byte bundle (SHA-256 `43f2f650…`). Profiles: `recipe/owner-villagenight-whole-*.json`.
+Cross-bundle sources come from the orchestrator's exact-body and pointer-only original-record
+lookup. Evidence (ignored): `work/coordination/orchestrator/scenes/villagenight-final-v1/`. Readiness
+recount, phone production and scene behaviour remain open.
+
+## J1236 — Complete source-derived lakes scene
+
+`whole-scene-lakes` is host raw-exact to J850: 22,163 objects, both serialized members and the
+5,880,131-byte bundle (SHA-256 `fc88c7d9…`). Profiles: `recipe/owner-lakes-whole-*.json`.
+Cross-bundle sources come from the orchestrator's exact-body and pointer-only original-record
+lookup. Evidence (ignored): `work/coordination/orchestrator/scenes/lakes-final-v1/`. Readiness
+recount, phone production and scene behaviour remain open.
+
+## J1237 — Complete source-derived lakesnight scene
+
+`whole-scene-lakesnight` is host raw-exact to J850: 21,397 objects, both serialized members and the
+5,429,114-byte bundle (SHA-256 `f1252b4f…`). Profiles: `recipe/owner-lakesnight-whole-*.json`.
+Cross-bundle sources come from the orchestrator's exact-body and pointer-only original-record
+lookup. Evidence (ignored): `work/coordination/orchestrator/scenes/lakesnight-final-v1/`. Readiness
+recount, phone production and scene behaviour remain open.
+
+## J1238 — Complete source-derived artifactworld02 scene
+
+`whole-scene-artifactworld02` is host raw-exact to J850: 9,558 objects, both serialized members and the
+4,143,960-byte bundle (SHA-256 `6b5cb04c…`). Profiles: `recipe/owner-artifactworld02-whole-*.json`.
+Cross-bundle sources come from the orchestrator's exact-body and pointer-only original-record
+lookup. Evidence (ignored): `work/coordination/orchestrator/scenes/artifactworld02-final-v1/`. Readiness
+recount, phone production and scene behaviour remain open.
+
+## J1239 — Complete source-derived sanctum scene
+
+`whole-scene-sanctum` is host raw-exact to J850: 53,196 objects, both serialized members and the
+11,879,273-byte bundle (SHA-256 `b8e97a1f…`). Profiles: `recipe/owner-sanctum-whole-*.json`.
+Cross-bundle sources come from the orchestrator's exact-body and pointer-only original-record
+lookup. Evidence (ignored): `work/coordination/orchestrator/scenes/sanctum-final-v1/`. Readiness
+recount, phone production and scene behaviour remain open.
+
+## J1240 — Complete source-derived village scene
+
+`whole-scene-village` is host raw-exact to J850: 15,130 objects, both serialized members and the
+8,270,153-byte bundle (SHA-256 `ccf2fe19…`). Profiles: `recipe/owner-village-whole-*.json`.
+Cross-bundle sources come from the orchestrator's exact-body and pointer-only original-record
+lookup. Evidence (ignored): `work/coordination/orchestrator/scenes/village-final-v1/`. Readiness
+recount, phone production and scene behaviour remain open.
+
+## J1241 — Complete source-derived habitatfall scene
+
+`whole-scene-habitatfall` is host raw-exact to J850: 13,909 objects, both serialized members and the
+6,752,461-byte bundle (SHA-256 `2944ff06…`). Profiles: `recipe/owner-habitatfall-whole-*.json`.
+Cross-bundle sources come from the orchestrator's exact-body and pointer-only original-record
+lookup. Evidence (ignored): `work/coordination/orchestrator/scenes/habitatfall-final-v1/`. Readiness
+recount, phone production and scene behaviour remain open.
+
+## J1242 — Complete source-derived sulfurpools scene
+
+`whole-scene-sulfurpools` is host raw-exact to J850: 19,544 objects, both serialized members and the
+11,418,389-byte bundle (SHA-256 `313d77e3…`). Profiles: `recipe/owner-sulfurpools-whole-*.json`.
+Cross-bundle sources come from the orchestrator's exact-body and pointer-only original-record
+lookup. Evidence (ignored): `work/coordination/orchestrator/scenes/sulfurpools-final-v1/`. Readiness
+recount, phone production and scene behaviour remain open.
+
+## J1243 — Complete source-derived sad1 scene
+
+`whole-scene-sad1` is host raw-exact to J850: 64,308 objects, both serialized members and the
+29,831,426-byte bundle (SHA-256 `0f8a7917…`). Profiles: `recipe/owner-sad1-whole-*.json`.
+Cross-bundle sources come from the orchestrator's exact-body and pointer-only original-record
+lookup. Evidence (ignored): `work/coordination/orchestrator/scenes/sad1-final-v1/`. Readiness
+recount, phone production and scene behaviour remain open.
+
+## J1244 — Complete source-derived moon scene
+
+`whole-scene-moon` is host raw-exact to J850: 17,327 objects, both serialized members and the
+14,061,361-byte bundle (SHA-256 `64866304…`). Profiles: `recipe/owner-moon-whole-*.json`.
+Cross-bundle sources come from the orchestrator's exact-body and pointer-only original-record
+lookup. Evidence (ignored): `work/coordination/orchestrator/scenes/moon-final-v1/`. Readiness
+recount, phone production and scene behaviour remain open.
+
+## J1245 — Complete source-derived ITDampcave scene
+
+2026-10-28. Existing object/Shader owners reproduce `whole-scene-itdampcave` from
+legitimate PC inputs, pinned SDK/public tools and source-produced packs. Post-processing
+selections follow their original Dampcavesimple supplier; Standard retains scene materials.
+All 18,225 objects, both serialized members and the 13,228,473 B compressed bundle are raw-exact
+to J850: `1c77a880d8a26a281be554194522a763ad6516fb3d0fb0ae10229878a359a690`.
+Profiles: `recipe/owner-itdampcave-whole-*.json`; evidence (ignored):
+`work/coordination/orchestrator/scenes/itdampcave-final-v2/qualification-done.json`.
+Retained qualifications and merged recipes recount to 675/705 available, 670 raw-exact;
+30 entries remain. Local CI now uses a 4 GiB fixture volume so the producers' 2 GiB
+reserve can pass after APFS formatting. Phone production, installation and original
+scene behavior remain open; accepted APK unchanged.
+
+## J1246 — Complete ITFrozenwall and Soul1 reconstruction
+
+2026-10-28. Existing object/Shader owners reproduce both scenes from original PC
+inputs and pinned SDK/public tools. ITFrozenwall selects the original TMP font material
+with the shipped keyword policy; Soul1 retains two original vehicle-seat preload roots.
+ITFrozenwall: 8,727 objects, 9,737,890 B, `098361746690148fdc334512ce54f682bf83fb7b2e1aa4c778b98d0ce45d1000`.
+Soul1: 290,159 objects, 47,651,790 B, `8d4b8944c6b4d27412a4918d69cd88a6f3433f70853ad2fd69f3be6018b2c7fe`.
+All objects, four serialized members and both compressed bundles are raw-exact to J850.
+Profiles: `recipe/owner-{itfrozenwall,soul1}-whole-*.json`; evidence (ignored):
+`work/coordination/orchestrator/scenes/{itfrozenwall-final-v2,soul1-final-v1}/`.
+Readiness becomes 677/705 available, 672 raw-exact, 28 missing. The object owner also
+accepts hash-pinned original native files with identity-checked original schema suppliers;
+authored full-bundle fixtures pass. Phone production, installation and runtime remain open.
+
+## J1247 — Complete source-derived Solutionalhaunt reconstruction
+
+2026-10-28. Original PC registry scripts, pinned CLR fields and native prototypes derive
+added trigger schemas; original prefab/Animator witnesses retain the scene's preload roots.
+The existing Director importer and Standard Shader owner complete the selection.
+All 31,264 objects, both serialized members and the 10,431,889 B bundle are raw-exact to J850:
+`0687b3e7c0904fbd372e536785fefdcbadad73444ca52d8c8aad86c12577a0dd`. Profiles: `recipe/owner-solutionalhaunt-*.json`.
+Evidence (ignored): `work/coordination/orchestrator/scenes/solutionalhaunt-final-v2/`.
+Readiness becomes 678/705 available, 673 raw-exact, 27 missing. Restore the qualified
+byte representations of 37 Shader profiles so their digests match object pack references;
+profile semantics and previously qualified outputs are unchanged. No passed run is replayed.
+Focused schema/object contracts and publication-reference checks pass. Phone production,
+installation and original runtime behavior remain open; accepted APK unchanged.
+
+## J1248 — Complete five source-derived animation and Goolake scenes
+
+2026-10-28. Existing clip, Timeline/Director and Shader owners complete five bundles;
+Goolake also retains the original Dampcave Rigidbody preload witness. All objects,
+ten serialized members and compressed bundles are raw-exact to J850:
+intro: 3,604 objects, 2,229,711 B, `ee47abd2d4dc8002f7e0e2f245719799823f17f465bb9a7071e9ac7493665e03`.
+outro: 16,303 objects, 10,967,929 B, `1711e810050fcf57896abc837f07913d4a7ca7bc1e51fa8a976b3ac177b747d0`.
+promorailgunner: 6,248 objects, 5,712,543 B, `9d1e5f4f8a9806aae1e211a9ac2fb36a50d125f77b2d5f006869980362e4f1e7`.
+voidoutro: 72,668 objects, 23,690,268 B, `54893863a2b8ad76fdc8758b092c54e47936614407e2ff9edd359bf1dd680eb1`.
+goolake: 13,043 objects, 7,660,602 B, `ab9807e93f62dd10a3ae489238d3a4a98e4dc23363a00d55a8d4b53220716e30`.
+Profiles: `recipe/owner-{intro,outro,promorailgunner,voidoutro,goolake}-*.json`.
+Evidence (ignored): `work/coordination/orchestrator/scenes/<name>-final-v*/` (Voidoutro v2; others v1).
+Readiness becomes 683/705 available, 678 raw-exact, 22 missing. Passed runs are not replayed.
+Phone production, installation and original scene behavior remain open; accepted APK unchanged.
+
+## J1249 — Complete Lakes, Lakesnight and Village source bundles
+
+2026-10-28. Existing object/Shader owners complete retained original source selections;
+all 58,555 objects, six serialized members and compressed bundles are raw-exact to J850:
+lakes-source-lab: 5,872,064 B, `cc6cb6cd9274319c0d952c383ab669d9c0f27813edeaef7d19245b4f55b09359`.
+lakesnight-source-lab: 5,425,855 B, `602777da9d968b225fc5e0a3b0d6c96007b56cf7a8a1eb86b9bf943ed57017c9`.
+village-source-lab: 8,266,359 B, `27535c91a67e7a006c0018aea29404b8cac06e8342a068418e2c8f51028cce4f`.
+Profiles: `recipe/owner-{lakes,lakesnight,village}-source-*.json`.
+Evidence (ignored): `work/coordination/orchestrator/scenes/<bundle>-final-v1/`.
+Readiness becomes 686/705 available, 681 raw-exact, 19 missing. Passed runs are not replayed.
+Phone production, installation and original scene behavior remain open; accepted APK unchanged.
+
+## J1250 — Complete source-derived Objective native bundle
+
+2026-10-28. The object owner completes `objective-support-lab`: 1,623 objects,
+every member and the 543,216-byte compressed bundle are raw-exact to J850.
+Bundle SHA-256: `9c5b5a14c4bd719710e624f5e6695e0240c3343b6ec36703466402d59da4b6ac`.
+Original co-owned records, checked component edits, reusable qualified record packs,
+SDK default materials and the SDK Legacy particle Shader supply the complete file.
+Fieldless authored components derive type identity from qualified MonoScripts and SDK schema.
+Profiles: `recipe/owner-objective-*.json`, `recipe/owner-native-alias-records.json`.
+Evidence (ignored): `work/coordination/orchestrator/objective-native-final-v5/`.
+Readiness becomes 687/705 available, 682 raw-exact, 18 missing. Passed runs are not replayed.
+Phone production, installation and game behavior remain open; accepted APK unchanged.
+
+## J1251 — Complete source-derived presentation native bundle
+
+2026-10-28. `android-presentation-lab` is host raw-exact to J850: 363 objects,
+both members and the 3,337,229-byte compressed bundle.
+Bundle SHA-256: `bf43d8f2f39dd382d556ad49709423b5890301e1c4cbeb6a29e87b51148ce633`.
+The existing object/remap owners reuse 358 qualified player Shader records,
+two generated material manifests and two qualified RGB texture records.
+Profiles: `recipe/owner-presentation-*.json`.
+Evidence (ignored): `work/coordination/orchestrator/presentation-native-final-v1/`.
+Readiness becomes 688/705 available, 683 raw-exact, 17 missing. Passed producers are not replayed.
+Phone production, installation and game behavior remain open; accepted APK unchanged.
+
+## J1252 — Complete source-derived Commando bundle
+
+`commando-prefab-lab` is host raw-exact to J850: 75,378 persisted objects, both
+serialized/resource members and the 87,954,431-byte bundle (SHA-256 `50a6af87…`).
+`recipe/owner-commando-*.json` completes original/native Sprite and Shader records,
+retains unchanged editor script identities and derives grouped container preloads
+from the produced graph. All production persisted before independent comparison;
+accepted bodies and unselected private inputs were denied to the tracked CLI.
+Evidence (ignored): `work/coordination/orchestrator/commando-native-final-v4/`.
+Complete phone production, installation and gameplay remain open.
+
+## J1253 — Complete source-derived Labgeometry bundle
+
+2026-10-29. `labgeometry` is host raw-exact to J850: all 10 persisted objects,
+the serialized member and the 108,365-byte compressed bundle.
+SHA-256: `09ca79f4bd661a2fbdc035b37ffe699a991e21b411ede81e27ffc822e456bcac`.
+Original geometry, public Mikk/BSD sort, SDK Shader compilation and static SDK
+material defaults supply the records; hierarchy/preloads derive from source identities.
+Profiles: `recipe/owner-labgeometry-*.json`; accepted inputs denied during production.
+Evidence (ignored): `work/coordination/orchestrator/labgeometry-native-final-v2/`.
+Readiness becomes 690/705 available, 685 raw-exact, 15 missing. No passed run replayed.
+Complete phone production, installation and game behavior remain open.
+
+## J1254 — Generate public startup metadata without private build settings
+
+2026-10-29. `startup_metadata.py` produces `boot.config` and `unity_app_guid`
+from legitimate inventory, public settings/toolchain and producer hashes.
+All five retained boot options match J850; five development connection fields
+are omitted. App/build UUIDs are independently reproducible and path independent.
+APK admission regenerates both complete files; only these paths may use the
+new generated-metadata status. Code/asset/relationship checks remain strict.
+Boot SHA-256: `a47b7e3410d29b9af85dd7d21782353ebc547891e58a1f681753feedd41e9756`.
+Evidence (ignored): `work/coordination/orchestrator/public-startup-metadata-v2/`.
+Host readiness: 692/705 available, 685 raw-exact, two generated metadata, 13 missing.
+Ruff, 21 focused host tests and preflight pass. Complete phone generation,
+installation, launch, data-preserving updates and runtime compatibility remain open.
+
+## J1255 — Generate the complete source Menu through the player-data owner
+
+2026-10-29. Optional `--ui-profile`/`--ugui-source` emits the 591-object Menu
+and its original standalone media using public recipes, original files and SDK data.
+The parent passes its freshly generated registry; no private graph/ID packet is read.
+All type identities/hashes match J850; 589 objects are relationship/field equivalent.
+Current alignment and a retained original store-button Sprite remain genuine
+reference differences, with no nulling override or new acceptance exemption.
+Menu SHA-256: `0bb1050b370ba1d3409da4362e072a920130e0d34da52d94e7a7d13d9a37b601`.
+Evidence (ignored): `work/coordination/orchestrator/menu-public-source-v1/`.
+Guard denials: zero; 72 focused tests, Ruff and preflight pass. All 21 source
+suppliers/1,474 references resolve. Historical readiness stays 692/705 available,
+685 raw-exact, 13 missing; complete phone/runtime/install/update gates remain open.
+
+## J1256 — Generate original-record stage contexts with public provenance
+
+2026-10-29. `stage_contexts.py` reads 23 original scene members and source catalog
+pool owners; the shared metadata owner builds three exact identity/toggle graphs.
+All population, activation, scene ID, hierarchy and toggle fields match J850.
+The 26 historical exporter hashes become explicit serialized-member/canonical-graph
+provenance, bound to original inputs and public policy/producer hashes.
+No exported YAML, private intermediate or accepted output is a producer input.
+The player-data option emits the file; APK admission regenerates its complete
+bytes and counts only this named file separately from raw-exact content.
+Output SHA-256: `cdf978ee3df648e1f49473087aee5a55e784bab23afc0fe307163fa8ec95aa9d`.
+Evidence (ignored): `work/coordination/orchestrator/stage-context-public-v2/`.
+Host readiness: 693/705 available, 685 raw-exact, 12 missing. Ruff, 88 focused
+host tests and preflight pass; complete phone/runtime/install/update gates remain open.
+
+## J1257 — Integrate resumable public phone installation and updates
+
+2026-10-29. Existing installer/release owners now compose source import, verified
+resumption, foreground progress, signed tool acquisition, local production,
+retained owner signing and Android installation sessions on current main.
+First installation generates `owner-source-output-v1` from complete local
+producer outputs; no private historical replay profile is required.
+All source output pins remain mandatory; legacy J850 metadata policies stay
+restricted to the historical comparison profile. Original files are untouched.
+Canonical synthetic fixture roots preserve strict symbolic-link checks on macOS.
+Evidence (ignored): `work/coordination/orchestrator/installer-integration-v1/`.
+No APK generated or phone used. Host reconstruction remains 693/705; a complete
+public producer plan, device install/update and saved-data survival remain open.
+
+## J1258 — Integrate owned alpha updates, rollback and profile retention
+
+2026-10-29. Existing alpha/release owners now compose with current public source
+assembly: durable owner-issued versions, same-key forward-version rollback,
+original-input fingerprinting and a certificate-bound profile-retention provider.
+Backup bytes stay inside the game UID; recovery gates Unity launch until verified.
+Source-output pins and the historical J850 metadata boundary remain strict.
+Synthetic fixture roots and test imports support host and module execution.
+Focused Python/Java retention, installer, corruption and interruption contracts pass.
+Evidence (ignored): `work/coordination/orchestrator/alpha-integration-v1/`.
+No APK or phone execution. Host reconstruction stays 693/705; complete producer
+plan, native profile/update survival and phone acceptance remain open.

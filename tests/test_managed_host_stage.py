@@ -157,7 +157,7 @@ class ManagedHostStageTests(unittest.TestCase):
 class ManagedHostMetadataTests(unittest.TestCase):
     def test_network_extensions_are_explicit_pinned_inputs_before_any_build(self):
         with tempfile.TemporaryDirectory() as temporary:
-            root = Path(temporary)
+            root = Path(temporary).resolve()
             extra = {"natives": {}, "links": {}}
             for target, link in stage.UPDATE_NETWORK_MODULES.items():
                 path = root / Path(link).name

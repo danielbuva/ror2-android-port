@@ -219,6 +219,7 @@ def dependency_inventory(python: Path) -> dict:
 
 def validate_environment_paths(path: Path) -> None:
     # Venv's lib64 -> lib is legitimate; no directory link may leave the cache.
+    path = path.resolve(strict=True)
     for directory, directories, _ in os.walk(path):
         for name in directories:
             entry = Path(directory) / name

@@ -1148,6 +1148,9 @@ def produce(
     code_request=None,
     managed_production=None,
     record_packs=(),
+    ui_profile=None,
+    ugui_source=None,
+    stage_context_profile=None,
 ):
     """Write a new target tree; never use target bytes as a source provider."""
     profile_path = Path(profile_path)
@@ -1277,6 +1280,23 @@ def produce(
             result["registry_inputs"] = {str(path): {"bytes": pin[0], "sha256": pin[1]} for path, pin in registry_pins}
         elif "shared_defaults" in profile:
             raise ValueError("shared defaults require the source registry")
+        if ui_profile is not None:
+            if "registry" not in profile or ugui_source is None:
+                raise ValueError("source UI requires the generated registry and exact SDK UGUI source")
+            ui = OBJECTS.module("_player_ui", Path(__file__).with_name("player_ui.py"))
+            produced_ui = ui.produce(
+                ui_profile[0], ui_profile[1], pc, profile, builtin_extra, editor_resources, ugui_source, managed_production, registry, output / TARGET
+            )
+            result["ui"] = produced_ui
+            result["files"].update({TARGET + name: row for name, row in produced_ui["files"].items()})
+        if stage_context_profile is not None:
+            contexts = OBJECTS.module("_player_stage_contexts", Path(__file__).with_name("stage_contexts.py"))
+            produced_contexts = contexts.produce(stage_context_profile[0], stage_context_profile[1], pc, output / "stage-context-source")
+            for name, row in produced_contexts["files"].items():
+                shutil.copyfile(output / "stage-context-source" / name, output / (TARGET + name))
+                checked(output / (TARGET + name), (row["bytes"], row["sha256"]))
+                result["files"][TARGET + name] = dict(row, source_role="original-stage-contexts")
+            result["stage_contexts"] = produced_contexts
         # Re-read persisted files and their providers before declaring success.
         for name, pin in expected.items():
             checked(output / (TARGET + name), pin)
@@ -1318,6 +1338,9 @@ def main():
         "--code-request", type=Path, help="existing original-input code request, with target.source and source_inputs.packages; required for registry"
     )
     parser.add_argument("--managed-production", type=Path, help="successful source-produced managed directory; required for registry")
+    parser.add_argument("--ui-profile", nargs=2, metavar=("PROFILE", "SHA256"), help="current source Menu profile; requires registry and SDK UGUI source")
+    parser.add_argument("--stage-context-profile", nargs=2, metavar=("PROFILE", "SHA256"), help="current original-record stage context profile")
+    parser.add_argument("--ugui-source", type=Path, help="exact SDK com.unity.ugui Runtime/UI/Core source directory; required for source Menu")
     parser.add_argument(
         "--record-pack",
         nargs=2,
@@ -1350,6 +1373,9 @@ def main():
         args.code_request,
         args.managed_production,
         args.record_pack,
+        args.ui_profile,
+        args.ugui_source,
+        args.stage_context_profile,
     )
 
 

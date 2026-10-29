@@ -2443,12 +2443,12 @@ public sealed partial class PortSession
             }
             public ISirenNavigationObservationReader CreateNavigationObservationReader(CharacterBody player, NovaInputBridge bridge)
             {
-                float stageSeconds = StageElapsed;
-                float requestAge = stageSeconds - session.worldPathRequested;
+                float navigationSeconds = coordinator.r.world.seconds;
+                float requestAge = navigationSeconds - session.worldPathRequested;
                 bool requestExists = session.worldPathRequestId > 0 && session.worldPathRequested >= 0 &&
                                      !string.IsNullOrEmpty(session.worldPathRequestReason) &&
                                      coordinator.worldPathFollower.nodeGraph != null &&
-                                     IntegratedWorldSession.Finite(stageSeconds) && IntegratedWorldSession.Finite(requestAge) && requestAge >= 0;
+                                     IntegratedWorldSession.Finite(navigationSeconds) && IntegratedWorldSession.Finite(requestAge) && requestAge >= 0;
                 return new SirenNavigationObservationApi(player, bridge, coordinator.worldPathFollower,
                     session.worldPathRequestId, requestExists, session.worldPathRequested, requestAge,
                     session.worldPathRequestReason, coordinator.r.world == null ? null : coordinator.r.world.movementState);
@@ -2459,10 +2459,12 @@ public sealed partial class PortSession
             public bool IsCurrentSourceEgg(CharacterBody candidate) => coordinator.IsCurrentSirenDiagnosticEgg(candidate);
             public bool ShouldYieldToExistingWorldCombat(CharacterBody player) => coordinator.r.combatPerformanceFocus
                                                                                   || coordinator.HasNearbyHostileDirectorThreat(player);
+            // StageElapsed owns the bounded egg-input budget. Shared navigation timers
+            // use the world clock, including frames yielded to ordinary combat input.
             public void NavigateWorldInput(CharacterBody player, NovaInputBridge bridge, Vector3 target, float stopDistance,
                                            string targetName, float elapsed) => coordinator.NavigateWorldInput(player, bridge, target,
                                                                                                                stopDistance, targetName,
-                                                                                                               elapsed);
+                                                                                                               coordinator.r.world.seconds);
             public Vector3 WorldCombatAimPoint(CharacterBody target, Vector3 origin,
                                                out bool visible) => coordinator.WorldCombatAimPoint(target, origin, out visible);
         }
@@ -2933,6 +2935,10 @@ public sealed partial class PortSession
                 coordinator.r.world.navigationWaypoints = 0;
                 coordinator.r.world.navigationPath = new NavigationPathPoint[0];
             }
+            // Recovery steering must not replace the source waypoint used to
+            // measure path progress. Its moving ground samples otherwise reset
+            // the stall clock while the same native path node remains blocked.
+            var pathWaypoint = waypoint;
             bool stalled = worldNavigationHasProgress && elapsed - worldNavigationProgressAt > 3 &&
                            Vector3.Distance(waypoint, worldNavigationProgressWaypoint) < .5f &&
                            Vector3.Distance(destination, worldNavigationProgressDestination) < 2;
@@ -2994,14 +3000,14 @@ public sealed partial class PortSession
             // Walking in a circle is not progress toward the source waypoint. The real
             // Wetland return capture does this at full speed, so source frustration stays
             // zero. Recovery requests a normal player jump; source physics owns the result.
-            var remaining = Vector3.Distance(position, waypoint);
-            if (!worldNavigationHasProgress || Vector3.Distance(waypoint, worldNavigationProgressWaypoint) > .5f ||
-                Vector3.Distance(destination, worldNavigationProgressDestination) > 2 || remaining < worldNavigationProgressDistance - .5f)
+            var pathRemaining = Vector3.Distance(position, pathWaypoint);
+            if (!worldNavigationHasProgress || Vector3.Distance(pathWaypoint, worldNavigationProgressWaypoint) > .5f ||
+                Vector3.Distance(destination, worldNavigationProgressDestination) > 2 || pathRemaining < worldNavigationProgressDistance - .5f)
             {
                 worldNavigationHasProgress = true;
-                worldNavigationProgressWaypoint = waypoint;
+                worldNavigationProgressWaypoint = pathWaypoint;
                 worldNavigationProgressDestination = destination;
-                worldNavigationProgressDistance = remaining;
+                worldNavigationProgressDistance = pathRemaining;
                 worldNavigationProgressAt = elapsed;
             }
             coordinator.r.world.navigationStalledSeconds = elapsed - worldNavigationProgressAt;
@@ -3019,8 +3025,11 @@ public sealed partial class PortSession
             coordinator.r.world.navigationObjectiveStalledSeconds = elapsed - worldNavigationObjectiveProgressAt;
             coordinator.r.world.navigationObjectiveProgressDistance = worldNavigationObjectiveDistance;
             coordinator.r.world.navigationProgressDistance = worldNavigationProgressDistance;
+            // A rejected terrain sample intentionally returns the current position.
+            // Its zero steering distance must not disable the existing stalled-path
+            // jump/replan request while the native waypoint remains unfinished.
             coordinator.r.world.navigationRecoveryJump =
-                remaining > Mathf.Max(1, stopDistance) &&
+                pathRemaining > Mathf.Max(1, stopDistance) &&
                 (coordinator.r.world.navigationStalledSeconds > 3 ||
                  (coordinator.r.world.navigationTerrainFallback && coordinator.r.world.navigationObjectiveStalledSeconds > 3));
             bool jump = (coordinator.r.world.navigationJump || coordinator.worldLocalNavigator.jumpSpeed > 0 ||

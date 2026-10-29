@@ -108,6 +108,24 @@ def bundle(members, tail=False):
 
 
 class MeshProducerTests(unittest.TestCase):
+    def test_packed_tangent_repair_reconstructs_unit_pairs_and_retains_other_fields(self):
+        body, schema, _ = authored_mesh()
+        packed = ((1023 << 20) | (1023 << 30)).to_bytes(5, "little")
+        tangent = node(
+            "m_Tangents",
+            children=[node("m_NumItems", 4), node("m_Range", 4), node("m_Start", 4), array("m_Data", node("data", 1)), node("m_BitSize", 1, meta=0x4000)],
+        )
+        schema.children.append(node("m_CompressedMesh", children=[tangent]))
+        suffix = struct.pack("<Iff", 4, 2.0, -1.0) + vector(packed, 5) + bytes((10, 0, 0, 0))
+        source = body + suffix
+        # The authored pairs (-1,-1) and (1,1) reconstruct negative Z squared.
+        # Repair produces +/-1/sqrt(2), retaining their original quantized endpoints.
+        expected = body + struct.pack("<Iff", 4, 1.4142135381698608, -0.7071067690849304) + suffix[12:]
+        actual, external = M.transform(source, schema, {"packed_tangents": "repair_negative_z"})
+        self.assertEqual(expected, actual)
+        self.assertIsNone(external)
+        self.assertEqual(source, M.transform(source, schema, {})[0])
+
     def test_fixed_struct_array_honors_descendant_padding(self):
         shape = node("data", 10, children=[node("first", 4), node("count", 4), node("normal", 1), node("tangent", 1, meta=0x4000)])
         schema = node("Base", children=[array("shapes", shape), node("marker", 4)])
