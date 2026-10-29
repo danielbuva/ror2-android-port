@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J1268](PORTING_JOURNAL.md#j1268--reconstruct-the-complete-moon2-source-spine-scene) | 2026-10-29 | Reconstruct the complete Moon2 source spine scene | 2026-10-29. |
 | [J1267](PORTING_JOURNAL.md#j1267--construct-the-complete-source-default-scene-candidate) | 2026-10-29 | Construct the complete source default-scene candidate | 2026-10-29. |
 | [J1266](PORTING_JOURNAL.md#j1266--generate-source-sky-lighting-with-the-native-android-renderer) | 2026-10-29 | Generate source sky lighting with the native Android renderer | 2026-10-29. |
 | [J1265](PORTING_JOURNAL.md#j1265--generate-complete-native-player-managers-from-source-phases) | 2026-10-29 | Generate complete native player managers from source phases | 2026-10-29. |

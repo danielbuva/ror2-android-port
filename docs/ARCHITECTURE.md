@@ -576,6 +576,15 @@ the three reflection chains and RenderSettings retain original source data.
 Setup/teardown and bounded readers remain with the existing owners. Native BC6H
 support is required. These opt-in outputs have distinct complete-file hashes;
 historical admission stays strict and full game-runtime qualification is open.
+Moon2's legacy spine alternative uses `owner-moon2-spine-source-lighting-objects.json`
+and its texture recipe. The existing object owner preserves 30,447 other bodies
+and all native/script identities, binding the original external sky material and baked
+reflection. Explicit identity relocations retain every external preload dependency.
+`record_source: [bundle, member, path_id]` reuses receipt-checked records across
+namespaces; streamed records require the same member or resource reconstruction.
+`inactive_scene_object` applies named source activation policy to existing lab groups.
+Readers, output ownership and teardown stay with the object/texture owners; full
+phone/game-runtime admission remains open.
 The same owner supports the source Alpha8 cohort through
 `recipe/owner-alpha-textures.json`: canonical original bodies/pixels are reused
 with explicit target names, storage extents and unchanged-field admission.

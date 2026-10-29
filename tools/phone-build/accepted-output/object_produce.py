@@ -158,6 +158,13 @@ def deactivate_global_owner(body, name):
         "Teleporter1",
     }:
         raise ValueError("unknown original global owner")
+    return deactivate_named_gameobject(body, name)
+
+
+def deactivate_named_gameobject(body, name):
+    """Apply an explicit scene activation policy after checking the source name."""
+    if not isinstance(name, str) or not name:
+        raise ValueError("inactive scene object requires its original name")
     stream = io.BytesIO(body)
     count = B.unpack(stream, "<I")[0]
     if count > len(body) // 12:
@@ -656,17 +663,36 @@ def record_packs(members, supplied, bundle):
         raise ValueError("missing source-produced record pack")
     check_record_packs(providers)
     for profile, (directory, _, _) in providers.items():
-        wanted = {(member, row["path_id"]) for member, row in selections if row.get("record") == profile}
+        wanted = {}
+        for member, row in selections:
+            if row.get("record") != profile:
+                continue
+            source = row.get("record_source", [bundle["name"], member, row["path_id"]])
+            if (
+                not isinstance(source, list)
+                or len(source) != 3
+                or any(not isinstance(value, str) or not value for value in source[:2])
+                or type(source[2]) is not int
+            ):
+                raise ValueError("invalid produced record source identity")
+            wanted.setdefault(tuple(source), []).append((member, row["path_id"]))
+        found = set()
         with (directory / "index.jsonl").open() as index:
             for line in index:
                 row = json.loads(line)
-                key = row["member"], row["path_id"]
-                if row["bundle"] != bundle["name"] or key not in wanted:
+                identity = row["bundle"], row["member"], row["path_id"]
+                if identity not in wanted:
                     continue
-                if key in records:
+                if identity in found:
                     raise ValueError("duplicate produced record identity")
-                records[key] = directory, row
-        if not wanted <= records.keys():
+                found.add(identity)
+                for key in wanted[identity]:
+                    if key in records:
+                        raise ValueError("duplicate produced record destination")
+                    if "resource" in row and key[0] != row["member"]:
+                        raise ValueError("streamed record relocation requires resource reconstruction")
+                    records[key] = directory, row
+        if found != wanted.keys():
             raise ValueError("produced record missing")
     return records, providers
 
@@ -1339,6 +1365,10 @@ def produce(profile_path, profile_sha256, pc, output, codec_path, codec_sha256, 
                         if typ["class_id"] != 1:
                             raise ValueError("global suppression requires an original GameObject")
                         body = deactivate_global_owner(body, selected["inactive_global_owner"])
+                    if "inactive_scene_object" in selected:
+                        if typ["class_id"] != 1:
+                            raise ValueError("scene activation policy requires an original GameObject")
+                        body = deactivate_named_gameobject(body, selected["inactive_scene_object"])
                     if "disable_original_behaviour" in selected:
                         if selected["disable_original_behaviour"] is not True or typ["class_id"] != 114 or body[12:16] != b"\x01\0\0\0":
                             raise ValueError("disabled original behaviour requires an enabled MonoBehaviour")

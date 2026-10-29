@@ -1,5 +1,12 @@
 # Local state dependency inventory
 
+The optional Moon2 source spine object/texture recipes use only the legitimate
+installation, permitted pinned SDK, public codec and caller-supplied generated
+record packs with receipt hashes. Existing public mesh/texture/record/shader
+owners generate every pack; no retained run folder or private output is required.
+The accepted-output README lists the complete recipe closure. Generated scene,
+resource and comparison evidence stay ignored; full phone consumption is open.
+
 ## Shader context record providers
 
 Grouped prefab containers require source asset GUID/root relationships and

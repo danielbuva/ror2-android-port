@@ -29,6 +29,42 @@ RECORD_FIXTURE = load("record_bundle_fixture", ROOT / "tests/test_phone_record_p
 
 
 class ProducedRecordRelocationTests(unittest.TestCase):
+    def test_scene_activation_checks_original_name_and_only_clears_active_byte(self):
+        source = io.BytesIO()
+        source.write(struct.pack("<IiqI", 1, 0, 19, 4))
+        P.aligned_string(source, "Authored scene group")
+        source.write(struct.pack("<HB", 6, 1))
+        body = source.getvalue()
+        self.assertEqual(P.deactivate_named_gameobject(body, "Authored scene group"), body[:-1] + bytes(1))
+        for name, data in (("another group", body), ("Authored scene group", body[:-1] + bytes(1))):
+            with self.subTest(name=name), self.assertRaises(ValueError):
+                P.deactivate_named_gameobject(data, name)
+
+    def test_record_source_reuses_a_checked_pack_in_multiple_namespaces(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            pack = Path(temporary)
+            body = b"AUTHORED SHADER"
+            (pack / "objects.bin").write_bytes(body)
+            record = dict(bundle="source", member="source-file", path_id=9, offset=0, bytes=len(body), sha256=hashlib.sha256(body).hexdigest())
+            (pack / "index.jsonl").write_text(json.dumps(record) + "\n")
+            outputs = {name: dict(bytes=(pack / name).stat().st_size, sha256=P.B.sha(pack / name)) for name in ("objects.bin", "index.jsonl")}
+            receipt = dict(success=True, input_id=P.M.INPUT_ID, profile_sha256="a" * 64, outputs=outputs)
+            (pack / "result.json").write_text(json.dumps(receipt))
+            selected = [dict(name="destination", objects=[dict(path_id=i, record="a" * 64, record_source=["source", "source-file", 9]) for i in (4, 5)])]
+            records, _ = P.record_packs(selected, [(pack, P.B.sha(pack / "result.json"))], dict(name="other"))
+            self.assertEqual(set(records), {("destination", 4), ("destination", 5)})
+            self.assertEqual(P.record_extent(pack / "objects.bin", records["destination", 4][1]), body)
+            selected[0]["objects"][0]["record_source"][2] = 10
+            with self.assertRaisesRegex(ValueError, "record missing"):
+                P.record_packs(selected, [(pack, P.B.sha(pack / "result.json"))], dict(name="other"))
+            selected[0]["objects"][0]["record_source"][2] = 9
+            record["resource"] = dict(stream=dict(path="archive:/source-file/source.resS", offset=0, size=0))
+            (pack / "index.jsonl").write_text(json.dumps(record) + "\n")
+            receipt["outputs"]["index.jsonl"] = dict(bytes=(pack / "index.jsonl").stat().st_size, sha256=P.B.sha(pack / "index.jsonl"))
+            (pack / "result.json").write_text(json.dumps(receipt))
+            with self.assertRaisesRegex(ValueError, "resource reconstruction"):
+                P.record_packs(selected, [(pack, P.B.sha(pack / "result.json"))], dict(name="other"))
+
     def test_empty_renderer_keeps_native_fields_and_changes_only_authored_flags(self):
         schema = FIXTURE.node(
             "Base",
