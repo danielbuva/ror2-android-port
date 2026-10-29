@@ -1,5 +1,24 @@
 # Accepted-output reconstruction support
 
+## Source stage contexts
+
+`stage_contexts.py --profile recipe/owner-stage-contexts.json --profile-sha256 SHA
+--pc ORIGINAL_INSTALLATION --output NEW_PRIVATE_DIRECTORY` is the current
+original-record producer for WholeStageContexts. It derives all 23 population
+contexts and three identity/toggle graphs from source scenes and the original
+catalog, using bounded member readers. No accepted file, exported YAML or private
+intermediate is an input. The existing desktop YAML adapter shares its metadata
+algorithm; its actual YAML receipt contract is preserved.
+
+Per-stage provenance hashes cover original serialized members. Identity graph
+hashes additionally bind the public profile and producer, and declare their
+representation explicitly. Runtime fields remain unchanged. The player-data
+owner accepts `--stage-context-profile PROFILE SHA256`; the APK request accepts
+`stage_contexts: {"path": "PRODUCER_RESULT_JSON", "sha256": "SHA256"}`. Admission
+regenerates and hashes the complete file, covers only its named target path and
+reports `generated_stage_context_count` separately. It cannot admit changed game
+code, other assets or managers. Full phone and runtime acceptance remain open.
+
 ## Public startup metadata
 
 `startup_metadata.py` is the current source producer for `boot.config` and

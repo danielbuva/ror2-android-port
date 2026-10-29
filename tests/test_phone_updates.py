@@ -137,7 +137,7 @@ class FakeGitHub:
 class UpdateTests(unittest.TestCase):
     def setUp(self):
         self.temporary = tempfile.TemporaryDirectory()
-        self.root = Path(self.temporary.name)
+        self.root = Path(self.temporary.name).resolve()
         self.inputs, self.runtime, self.native = [self.root / name for name in ("inputs", "runtime", "native")]
         for path in (self.inputs, self.runtime, self.native):
             path.mkdir()

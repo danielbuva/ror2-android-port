@@ -1150,6 +1150,7 @@ def produce(
     record_packs=(),
     ui_profile=None,
     ugui_source=None,
+    stage_context_profile=None,
 ):
     """Write a new target tree; never use target bytes as a source provider."""
     profile_path = Path(profile_path)
@@ -1288,6 +1289,14 @@ def produce(
             )
             result["ui"] = produced_ui
             result["files"].update({TARGET + name: row for name, row in produced_ui["files"].items()})
+        if stage_context_profile is not None:
+            contexts = OBJECTS.module("_player_stage_contexts", Path(__file__).with_name("stage_contexts.py"))
+            produced_contexts = contexts.produce(stage_context_profile[0], stage_context_profile[1], pc, output / "stage-context-source")
+            for name, row in produced_contexts["files"].items():
+                shutil.copyfile(output / "stage-context-source" / name, output / (TARGET + name))
+                checked(output / (TARGET + name), (row["bytes"], row["sha256"]))
+                result["files"][TARGET + name] = dict(row, source_role="original-stage-contexts")
+            result["stage_contexts"] = produced_contexts
         # Re-read persisted files and their providers before declaring success.
         for name, pin in expected.items():
             checked(output / (TARGET + name), pin)
@@ -1330,6 +1339,7 @@ def main():
     )
     parser.add_argument("--managed-production", type=Path, help="successful source-produced managed directory; required for registry")
     parser.add_argument("--ui-profile", nargs=2, metavar=("PROFILE", "SHA256"), help="current source Menu profile; requires registry and SDK UGUI source")
+    parser.add_argument("--stage-context-profile", nargs=2, metavar=("PROFILE", "SHA256"), help="current original-record stage context profile")
     parser.add_argument("--ugui-source", type=Path, help="exact SDK com.unity.ugui Runtime/UI/Core source directory; required for source Menu")
     parser.add_argument(
         "--record-pack",
@@ -1365,6 +1375,7 @@ def main():
         args.record_pack,
         args.ui_profile,
         args.ugui_source,
+        args.stage_context_profile,
     )
 
 

@@ -20,7 +20,7 @@ class InstallInputTests(unittest.TestCase):
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory()
         self.addCleanup(self.temp.cleanup)
-        self.root = Path(self.temp.name)
+        self.root = Path(self.temp.name).resolve()
         self.repo, self.inputs = self.root / "repo", self.root / "private"
         self.repo.mkdir()
         self.inputs.mkdir()
@@ -172,6 +172,11 @@ class InstallInputTests(unittest.TestCase):
         }
         with patch.object(OWNER.PACKET, "profile", side_effect=AssertionError("private packet must not be read")):
             self.assertTrue(OWNER.check(request)["assembly_ready"])
+            for option in ("startup_metadata", "stage_contexts"):
+                request[option] = {"path": "unused", "sha256": "0" * 64}
+                with self.assertRaisesRegex(ValueError, "source assembly requires exact output pins"):
+                    OWNER.check(request)
+                request.pop(option)
             outputs["apk/" + sorted(names)[0]].write_bytes(b"changed")
             self.assertFalse(OWNER.check(request)["assembly_ready"])
         request["code"].pop(sorted(names)[0])

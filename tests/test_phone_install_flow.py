@@ -38,7 +38,7 @@ class CheckpointTests(unittest.TestCase):
     def setUp(self):
         self.temporary = tempfile.TemporaryDirectory()
         self.addCleanup(self.temporary.cleanup)
-        self.root = Path(self.temporary.name)
+        self.root = Path(self.temporary.name).resolve()
         self.tick = 0.0
         self.options = dict(emit=lambda _: None, clock=lambda: self.tick)
 
@@ -158,7 +158,7 @@ class OrchestrationTests(unittest.TestCase):
 
     def exercise(self, installed_version):
         with tempfile.TemporaryDirectory() as temporary:
-            root = Path(temporary)
+            root = Path(temporary).resolve()
             inputs, runtime, native, repo = [root / name for name in ("inputs", "runtime", "native", "repo")]
             for directory in (inputs, runtime, native, repo):
                 directory.mkdir()
@@ -310,7 +310,7 @@ class SupervisedControlTests(unittest.TestCase):
     def supervise(self, temperatures, actions, finish=None):
         temporary = tempfile.TemporaryDirectory()
         self.addCleanup(temporary.cleanup)
-        root = Path(temporary.name)
+        root = Path(temporary.name).resolve()
         control, status, receipt = [root / name for name in ("control.json", "status.json", "receipt.json")]
         tick = [0.0]
         child, family = Mock(returncode=None), Mock()

@@ -447,3 +447,10 @@ unprotected. Successful reconstruction hands off to the existing Android package
 session; Android may request installation consent. Updates keep the same package
 and on-device key and never clear saves. If that key is lost, export saves before
 an explicit uninstall/reinstall; the app refuses to silently replace it.
+
+The legacy J850 comparison profile retains its narrow startup/context regeneration
+policies. The public `owner-source-output-v1` assembly receipt instead requires
+every output to match its complete local producer pins; historical metadata
+exceptions cannot override those pins. Both routes use the same assembler and
+retained signing key. Real phone installation and saved-data survival remain
+acceptance gates.
