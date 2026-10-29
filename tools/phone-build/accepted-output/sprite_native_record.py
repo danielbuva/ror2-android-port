@@ -55,9 +55,9 @@ def source_parameters(body, root):
     }
 
 
-def assemble(body, root, native, importer_guid):
+def assemble(body, root, native, importer_guid, *, parameters=None):
     """Preserve original references and rebuild the admitted native streams."""
-    parameters = source_parameters(body, root)
+    parameters = source_parameters(body, root) if parameters is None else parameters
     _, spans = A.fields(body, root)
     changes = []
 
@@ -71,14 +71,17 @@ def assemble(body, root, native, importer_guid):
 
     rect = struct.unpack("<4f", words(native["rect_bits"]))
     pivot = parameters["pivot"]
+    pixel_pivot = struct.unpack("<2f", words(native["pivot_pixel_bits"]))
+    center = [f32(rect[i + 2] * 0.5) for i in range(2)]
+    offset = [f32(pixel_pivot[i] - center[i]) for i in range(2)]
     put(("m_Rect",), words(native["rect_bits"]))
-    put(("m_Offset",), struct.pack("<2f", *(f32(f32(pivot[i] - 0.5) * rect[i + 2]) for i in range(2))))
+    put(("m_Offset",), struct.pack("<2f", *offset))
     put(("m_Pivot",), struct.pack("<2f", *pivot))
     put(("m_Border",), struct.pack("<4f", *parameters["border"]))
     put(("m_RD", "textureRect"), words(native["texture_rect_bits"]))
     put(("m_RD", "textureRectOffset"), words(native["texture_offset_bits"]))
     scale = struct.unpack("<i", struct.pack("<f", parameters["pixels_per_unit"]))[0]
-    x, y = native["pivot_pixel_bits"]
+    x, y = (struct.unpack("<i", struct.pack("<f", f32(offset[i] + center[i])))[0] for i in range(2))
     put(("m_RD", "uvTransform"), words([scale, x, scale, y]))
 
     positions, indices = native["vertex_xy_bits"], native["triangles"]

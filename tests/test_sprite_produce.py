@@ -93,6 +93,57 @@ def fixture(directory):
 
 
 class SpriteProduceTests(unittest.TestCase):
+    def test_single_image_import_uses_pixel_extent_instead_of_rounded_source_rect(self):
+        body, root, _ = S.fixture()
+        _, spans = P.A.fields(body, root)
+        revised = bytearray(body)
+        width = struct.unpack("<f", struct.pack("<I", 0x41800001))[0]
+        for path in (("m_Rect",), ("m_RD", "textureRect")):
+            struct.pack_into("<f", revised, spans[path][0] + 8, width)
+        body = bytes(revised)
+        texture = F.vector(b"test", 4) + struct.pack("<ii", 16, 8)
+        texture_root = F.node("Base", children=[F.text("m_Name"), F.node("m_Width", 4), F.node("m_Height", 4)])
+        original = P.constructor_parameters({}, body, root, texture, texture_root, 16, 8)
+        self.assertGreater(original["rect"][2], 16)
+        imported = P.constructor_parameters({"texture_importer": "single"}, body, root, texture, texture_root, 16, 8)
+        self.assertEqual(imported["rect"], [0, 0, 16, 8])
+        self.assertEqual(imported["pivot"], [0.5, 0.5])
+        self.assertEqual(body, bytes(revised))
+
+    def test_multiple_image_import_uses_render_rectangle(self):
+        body, root, _ = S.fixture()
+        _, spans = P.A.fields(body, root)
+        revised = bytearray(body)
+        struct.pack_into("<4f", revised, spans[("m_RD", "textureRect")][0], 1, 0, 15, 8)
+        texture = F.vector(b"test", 4) + struct.pack("<ii", 16, 8)
+        texture_root = F.node("Base", children=[F.text("m_Name"), F.node("m_Width", 4), F.node("m_Height", 4)])
+        parameters = P.constructor_parameters({"texture_importer": "multiple"}, bytes(revised), root, texture, texture_root, 16, 8)
+        self.assertEqual(parameters["rect"], [1, 0, 15, 8])
+        self.assertAlmostEqual(parameters["pivot"][0], 8 / 15)
+
+    def test_single_import_normalizes_crop_before_selecting_full_image(self):
+        body, root, _ = S.fixture()
+        _, spans = P.A.fields(body, root)
+        revised = bytearray(body)
+        struct.pack_into("<4f", revised, spans[("m_RD", "textureRect")][0], 2, 1, 8, 4)
+        struct.pack_into("<2f", revised, spans[("m_RD", "textureRectOffset")][0], 2, 1)
+        texture = F.vector(b"test", 4) + struct.pack("<ii", 16, 8)
+        texture_root = F.node("Base", children=[F.text("m_Name"), F.node("m_Width", 4), F.node("m_Height", 4)])
+        parameters = P.constructor_parameters({"texture_importer": "single"}, bytes(revised), root, texture, texture_root, 16, 8)
+        self.assertEqual(parameters["rect"], [0, 0, 16, 8])
+        self.assertEqual(parameters["pivot"], [0.75, 0.75])
+
+    def test_single_image_import_requires_source_identity_and_matching_image_size(self):
+        body, root, _ = S.fixture()
+        texture = F.vector(b"test", 4) + struct.pack("<ii", 16, 8)
+        texture_root = F.node("Base", children=[F.text("m_Name"), F.node("m_Width", 4), F.node("m_Height", 4)])
+        with self.assertRaisesRegex(ValueError, "source/native image extent differs"):
+            P.constructor_parameters({"texture_importer": "single"}, body, root, texture, texture_root, 17, 8)
+        with self.assertRaisesRegex(ValueError, "does not select single-image"):
+            P.constructor_parameters({"texture_importer": "single"}, body, root, F.vector(b"nope", 4) + texture[8:], texture_root, 16, 8)
+        with self.assertRaisesRegex(ValueError, "named source policy"):
+            P.constructor_parameters({"texture_importer": "unknown"}, body, root, texture, texture_root, 16, 8)
+
     def test_original_pixels_and_native_output_produce_exact_persisted_pack(self):
         with tempfile.TemporaryDirectory() as temporary:
             directory = Path(temporary)

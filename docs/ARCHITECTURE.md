@@ -465,6 +465,11 @@ exported image supplies production pixels. Crop-derived pivot and original
 constructor settings retain the qualified native API contract. Its `produce`
 action rereads original records, admits explicit hash-pinned exact-SDK native
 output, and applies importer identities and qualified pointer relationships.
+The named `texture_importer` modes re-derive parameters during record assembly.
+After the pinned exporter's crop/pivot/border normalization, `single` checks
+matching original names and uses the decoded image extent; `multiple` uses the
+render-data rectangle. Both retain the normalized pivot/border. Dimensions agree with the
+original Texture2D; body/type checks remain independent.
 Every body and persisted record-pack extent must match its expected hash.
 Source files are rechecked and new outputs must lie outside the original input.
 The SDK fixture supplies the explicit native output; complete-bundle and full
