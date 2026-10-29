@@ -1127,3 +1127,18 @@ Evidence: `work/coordination/orchestrator/runtime-default-environment-v2/phone-v
 Prior art: pinned AssetRipper copies existing probes; SDK native APIs generate these.
 Readiness stays 693/705; phone-built helper, complete scene/APK and updates remain open.
 This host-built diagnostic is no public input.
+
+## J1267 — Construct the complete source default-scene candidate
+
+2026-10-29. Public scene owner emits 16 objects and closes 24 direct references
+from original native records, public Lab policy and explicit source lighting.
+Guarded API denies historical/prototype/reference inputs; zero denied reads.
+All 16 native/script type identities match the independent SDK reference;
+13 records match fields/relationships after reference translation, and the
+fieldless diagnostics binds the actual source registry. Two lighting records
+retain native Android HDR/ambient differences; compatibility is not inferred.
+Output SHA-256: `f24b7428e3b5ab4dc63a5b86ec069e2ce68247c85414d40c500914f15916e27e`.
+SDK tag IDs are derived; evidence: `work/coordination/orchestrator/default-scene-public-v2/`.
+Prior art: pinned AssetRipper native schemas/PPtr identities; SDK/public scene policy.
+Readiness stays 693/705. Native load/lighting, phone-built tool and complete
+APK/install/update acceptance remain open; host-built diagnostics are no public input.

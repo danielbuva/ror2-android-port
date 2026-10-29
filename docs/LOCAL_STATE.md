@@ -2081,3 +2081,15 @@ original game/SDK, public settings and explicit source-phase inputs. The selecte
 Shader directory and startup receipt remain required local phase state generated
 by their public owners; no historical manager or timestamped discovery snapshot
 is required. Both player/Shader outputs feed final APK assembly.
+
+### Source default-scene phase
+
+`player_scene.py` and `owner-default-scene.json` generate the optional
+`default-scene-source/{level0,result.json,objects.json,schema-*.tree}` phase.
+Registry and shared materials come from their existing public player owners.
+Environment result/request, face/mip files and matching material bundle are
+explicit generated inputs; the native environment source and SDK diagnostic
+fixture describe their generation. Retained diagnostic files are evidence,
+never implicit historical suppliers. Phone-built tool construction and native
+lighting/load acceptance remain open. The parent copies and rechecks the phase's
+`level0` in its new APK-data tree. No timestamped directory is read by production.

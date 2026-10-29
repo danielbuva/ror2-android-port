@@ -96,6 +96,18 @@ build; `RuntimeEnvironmentTool.cs` reads one private request and starts the owne
 Phone-built tool construction, reflection/ambient compatibility, generated-Cubemap
 admission and complete default-scene production remain open. This library has no
 game-runtime or APK-assembly consumer.
+`player_scene.py` owns the optional source default-scene phase. It selects original
+native records through `owner-default-scene.json`, projects public camera/GI and
+Lab authoring policy, binds the fresh registry/shared file and writes `level0`.
+`scene_sdk.py` reads paired ARM64 SDK code/symbol files to derive native tag
+registrations; shared `manager_sdk.py` owns constant argument decoding. Source
+schemas, SDK Cube identity, material parameters and every direct reference are
+checked. Setup supplies explicit environment result/request/bundle/image inputs
+and a new output; teardown closes readers/maps, retaining records, schemas and
+provider receipts under `default-scene-source/`. The player-data parent consumes
+its own fresh registry/shared outputs and adds the produced file. Native HDR,
+ambient and default-scene loading compatibility remain open; no raw-exact
+historical closure or game-runtime owner is added.
 `stage_contexts.py` owns original-record population and identity context production.
 `recipe/owner-stage-contexts.json` pins original scenes/catalog/pool suppliers and
 selects the existing global-root suppression policy. The shared

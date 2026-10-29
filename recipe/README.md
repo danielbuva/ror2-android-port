@@ -5157,3 +5157,26 @@ arrays retain their lexical representation. Dependencies retain their licenses.
 Evidence: `work/coordination/orchestrator/manager-public-source-v4/`.
 Independent build identity, unused historical hash-cache entries and current UI
 graph differences remain explicit; full phone/runtime acceptance remains open.
+
+## Source default-scene profile
+
+| Recipe | Source | Audit | Consumer |
+| --- | --- | --- | --- |
+| `owner-default-scene.json` | Original native record selectors, public Lab scene policy and exact SDK/source pins. | Identifiers, hashes and authored configuration only; audit below, 2026-10-29. | `player_scene.py`; native lighting/load qualification remains open. |
+
+Profile SHA-256: `c02e13f130379c3d33eaf35260f28cc09173cd4e33179f6771013a0585c44a6d`.
+This profile names the minimum original native suppliers and the public camera,
+light and primitive policy. Built-in tag numbers and Cube identity are read from
+the supplied SDK; local object IDs follow independent construction order. Native
+schemas and fieldless diagnostics properties must match the source registry.
+
+Manual provenance/privacy/licensing/sensitive-content review: no serialized game
+body, native field dump, historical IDs, baked pixels/coefficients, SDK code or
+registration table, private configuration, credential or signing input is stored.
+The explicit environment inputs are generated phase outputs, with request,
+material, face/mip and source-owner checks. The material is compared with the
+legitimate default sky's parameters; no protected parameter table is published.
+All output remains ignored. Host-built diagnostic inputs qualify the API only;
+phone-built tool construction, native scene loading and lighting compatibility
+remain open. Historical readiness is unchanged. Evidence:
+`work/coordination/orchestrator/default-scene-public-v2/`.

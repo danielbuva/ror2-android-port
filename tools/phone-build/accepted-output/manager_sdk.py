@@ -52,7 +52,8 @@ def argument(image, before, register, depth=0):
         if word & 0x7F800000 == 0x52800000:
             return ((word >> 5) & 65535) << (((word >> 21) & 3) * 16)
         if word & 0x7FE0FFE0 == 0x2A0003E0:
-            return argument(image, pc, (word >> 16) & 31, depth + 1)
+            copied = (word >> 16) & 31
+            return 0 if copied == 31 else argument(image, pc, copied, depth + 1)
         raise ValueError("unsupported constant SDK argument write")
     raise ValueError("SDK argument has no bounded definition")
 
