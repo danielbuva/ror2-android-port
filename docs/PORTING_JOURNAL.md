@@ -1057,3 +1057,15 @@ Promo SHA `4fe1d8a6652c299b665789c1b0b3077a4526dbc54c63b4f03f84797426c32374`;
 Snowy SHA `55cdbfce846fa1a4866c3c2b3f3257c2203fc96bb055a374cec615cd622c12dd`.
 90 focused host checks pass. Native BC6H support and full game-runtime/phone
 production remain gates; historical readiness stays 693/705 (685 raw-exact).
+
+## J1262 — Generate native bundle manifests from produced content
+
+2026-10-29. The current public manifest owner derives native class schemas/hashes,
+build indices and cache versions independently; actual produced Android files
+supply dependency edges. Missing dependencies refuse output; cycles are retained.
+Five host contracts independently parse native tables and check cache invalidation.
+Source Labgeometry cohort output SHA-256
+`51c03363d9f5ecd4d6db00c9e5ed5c641ebd6c6c357428ca89f930499b473b60`.
+Evidence: `work/coordination/orchestrator/manifest-source-v2/produced/result.json`.
+This ships the producer, not the complete 114 bundle result. Historical readiness
+stays 693/705; full source manifest/catalog, phone APK and native runtime remain open.

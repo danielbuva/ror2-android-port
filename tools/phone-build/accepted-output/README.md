@@ -1702,3 +1702,29 @@ with its explicit hash. Profile `record` hashes identify the required packs.
 metadata identity from its original MonoScript, using the existing fieldless
 schema/SDK checks. It addresses Snowy's imported empty component without
 changing its serialized body. Other component layouts are rejected.
+
+## Source bundle manifest
+
+The current `bundle_manifest.py` producer emits a native UnityFS manifest from
+actual produced Android bundles. It reads each bundle's native dependency
+records through the existing catalog owner and refuses missing dependencies.
+It uses public native wire declarations, deterministic local indices and the
+first 128 bits of each complete file's SHA-256 as its cache version. These are
+converter-owned versions, distinct from Unity Editor's historical build-cache
+hashes. Native asset identities and dependency relationships are preserved.
+
+```sh
+python3 tools/phone-build/accepted-output/bundle_manifest.py \
+  --inputs work/produced-bundle-inputs.json --output work/source-bundle-manifest
+```
+
+The private input JSON has schema `owner-produced-bundle-inputs-v1` and a
+`bundles` array. Every row supplies `name`, `path`, `sha256` and `bytes` for a
+produced file; relative paths resolve beside the input JSON. The caller owns
+complete build-population selection. No accepted output, `.manifest` sidecar,
+private build ID or precomputed hash is required. Output is a new directory
+with `generated-android-data` and `result.json`; inputs are rehashed before
+success. Keep these generated files ignored. Native hashes and wire values
+are independently checked with the pinned public format parser. Full production
+and native runtime qualification remain open; this output is not admitted as
+historically raw-exact.

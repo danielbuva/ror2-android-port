@@ -85,6 +85,16 @@ slice and omits development connections. New output/receipt directories own all
 state; there are no retained processes. APK admission regenerates these two
 files and counts them separately from raw-exact output; all other content checks
 remain strict. Complete phone production and runtime qualification remain open.
+`bundle_manifest.py` owns source-generated native `generated-android-data`
+manifest bundles. Explicit hash/size-pinned produced files supply dependency
+records through `whole_catalog.produced_bundle_metadata`; incomplete graphs
+are refused. Public native format declarations derive both native type hashes.
+Sorted local indices and SHA-256 prefixes provide independent build identities
+and cache versions; original asset identities and dependency edges are retained.
+Setup requires an explicit input manifest and a new output directory. Inputs
+are rechecked, no child process survives, and output/result receipts persist.
+This is an opt-in source alternative; historical admission and complete phone
+production/runtime qualification remain separate.
 `unity_write.py` owns current experimental bounded UnityFS 7/8 and
 serialized-v22 construction from explicit type metadata, object bodies and
 resource streams. Object table order and physical body order remain independent.
