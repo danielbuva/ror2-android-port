@@ -5201,3 +5201,27 @@ production denies accepted bundles and preparation captures. SDK/tool licensing
 and ownership/entitlement boundaries remain unchanged; no runtime distribution
 or authentication success is granted. Generated outputs stay ignored. Complete
 phone/game-runtime and install/update acceptance remain open.
+
+## Snowy Forest source and spine lab lighting
+
+| Profile | Scope | Provenance and privacy audit | Owner/evidence |
+| --- | --- | --- | --- |
+| `owner-snowyforest-source-lab-lighting-objects.json` | Complete 15,933-record source lab | Original selectors/relationships, existing lab policy and hashes only. | `object_produce.py`; J1269, phone/runtime gate open. |
+| `owner-snowyforest-source-lab-lighting-textures.json` | Three original reflection chains | Original selectors, storage extents and hashes only. | `texture_produce.py`, `cube-preserve`; J1269. |
+| `owner-snowyforest-spine-lab-lighting-objects.json` | Complete 14,001-record spine lab | Original selectors/relationships, existing lab policy and hashes only. | `object_produce.py`; J1269, phone/runtime gate open. |
+| `owner-snowyforest-spine-lab-lighting-textures.json` | Three original reflection chains | Original selectors, storage extents and hashes only. | `texture_produce.py`, `cube-preserve`; J1269. |
+
+2026-10-29 provenance/privacy/licensing/sensitive-content audit: all four profiles
+contain no body/type templates, pixels, material/lighting coefficient literals,
+protected implementation, private paths/configuration, account/device identifiers
+or signing material. Object policies contain no floating-point literals. Source
+lighting is read from the legitimate installation; every other record, native/
+script identity, external identity and script table remains strict against J850.
+The existing public pack owners and qualified Snowy Shader profiles supply all
+other records; checked namespace aliases preserve each lab's local relationships.
+No private generated artifact is required. Guarded production denies historical
+bundles and preparation captures; independent full-file comparison verifies source
+reflection faces/mips and native relationships. Existing tool/SDK licensing and
+ownership/entitlement boundaries apply. No redistribution or authentication
+success is granted. Full phone/game-runtime and install/update acceptance remain
+open; generated outputs and raw evidence stay ignored.

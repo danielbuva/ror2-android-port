@@ -1157,3 +1157,19 @@ General owners add checked record namespace reuse and named source activation.
 Prior art: pinned EditorKit typed identity lookup; existing native schema/PPtr owners.
 Host checks pass; source candidate only. Readiness remains 693/705; full phone
 APK, native scene consumption and data-preserving install/update remain open.
+
+## J1269 — Reconstruct both complete Snowy Forest source lighting labs
+
+2026-10-29. Public recipes emit the 15,933-record source and 14,001-record spine labs.
+All native/script identities, external identities and script tables match J850;
+15,929/13,997 bodies match. Four records per file preserve original reflections
+and RenderSettings, including each variant's original sky/probe bindings.
+All source reflection fields and face/mip bytes pass independent full-file checks.
+Guarded public production denies historical bundles and preparation captures.
+Source SHA-256: `31806506c1d5d5159919bf7bdf4db34a22835abe399f5104926c654b41d93e22`.
+Spine SHA-256: `6428e55accc9e611bedd8f27d4b8a8ca053b0b755ede71f1292c47f870ec46b1`.
+Evidence: `work/coordination/orchestrator/scenes/snowy-{source,spine}-lab-complete-v2/`.
+Existing source schemas, PPtr owners and qualified Shader packs are reused.
+Prior art: pinned AssetRipper native metadata; existing original reflection owner.
+Host recipe/privacy checks pass. Readiness stays 693/705; complete phone APK,
+native scene consumption and data-preserving installation/update remain open.
