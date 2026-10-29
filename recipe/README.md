@@ -5133,3 +5133,27 @@ value tables, protected implementation, SDK bytes, private settings or credentia
 Generated outputs and evidence stay ignored. Public-input evidence:
 `work/coordination/orchestrator/hud-public-source-v1/`. Historical graph differences,
 complete phone production and native runtime acceptance remain open.
+
+## Source native manager profile
+
+| Recipe | Source | Audit | Consumer |
+| --- | --- | --- | --- |
+| `owner-player-managers.json` | Original manager selection, public settings/source pins and authored startup/capability policy. | Identifiers, hashes and public policy only; audit below, 2026-10-29. | `player_managers.py`; J1265 host-only, native runtime gate open. |
+
+Profile SHA-256: `0ec07f8658fb40f22cf3d8db4ea3e2878888d94aa9f184a756b9475626d24350`.
+The recipe pins original manager metadata, public project/settings owners and
+existing shader/context/copy recipes. It disables paid capability flags, retains
+on-demand shader loading and selects the SDK's default dynamic batching for the
+empty public platform override. This declares converter behavior; it grants no
+SDK rights and asserts no ownership, authentication or entitlement success.
+
+Manual provenance/privacy/licensing/sensitive-content review: source selectors,
+hashes and authored configuration only. No captured manager body, target graph,
+private connection/license value, game field table, SDK implementation/table,
+credential or signing material is published. Original records, supplied SDK and
+fresh source-phase outputs provide every serialized value and relationship.
+PyYAML 6.0.3's pure Python SafeLoader reads public settings; digit-only encoded
+arrays retain their lexical representation. Dependencies retain their licenses.
+Evidence: `work/coordination/orchestrator/manager-public-source-v4/`.
+Independent build identity, unused historical hash-cache entries and current UI
+graph differences remain explicit; full phone/runtime acceptance remains open.

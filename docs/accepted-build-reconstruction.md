@@ -28,6 +28,14 @@ so historical exactness and native runtime acceptance remain open. J1264 records
 the public-input proof; readiness stays 693/705.
 
 
+The complete source manager phase now emits all 18 native managers through the
+public player-data path. Its 13,190 nonzero references resolve; native type hashes,
+required script properties and shader associations retain their strict checks.
+Build identity is independently generated; the fresh script cache contains actual
+emitted identities. J1265 records the guarded public-input result. This source
+candidate does not advance historical readiness or qualify native game behavior.
+
+
 The host-qualified [release update contract](../tools/phone-build/owner-apk/README.md#public-release-updates)
 covers signed public-tool acquisition, per-entry incremental reuse, existing-key
 signing and session installation. Publisher trust and a reviewed complete release

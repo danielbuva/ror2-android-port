@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J1265](PORTING_JOURNAL.md#j1265--generate-complete-native-player-managers-from-source-phases) | 2026-10-29 | Generate complete native player managers from source phases | 2026-10-29. |
 | [J1264](PORTING_JOURNAL.md#j1264--generate-the-complete-source-hud-through-the-player-data-owner) | 2026-10-29 | Generate the complete source HUD through the player-data owner | 2026-10-29. |
 | [J1263](PORTING_JOURNAL.md#j1263--reuse-source-textures-shared-by-ui-sprites) | 2026-10-29 | Reuse source textures shared by UI Sprites | 2026-10-29. |
 | [J1262](PORTING_JOURNAL.md#j1262--generate-native-bundle-manifests-from-produced-content) | 2026-10-29 | Generate native bundle manifests from produced content | 2026-10-29. |

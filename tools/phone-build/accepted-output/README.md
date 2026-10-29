@@ -1686,6 +1686,33 @@ source graph has 2,021 objects with independently allocated local IDs. Original
 hierarchy differences from J850 remain explicit; host pointer/schema checks do
 not qualify Android loading, gameplay or complete phone production.
 
+## Source native player managers
+
+Add `--manager-profile recipe/owner-player-managers.json PROFILE_SHA256`,
+`--manager-shaders SHADER_OUTPUT RECEIPT_SHA256`,
+`--manager-startup STARTUP_RECEIPT SHA256` and `--sdk-binary SDK_ARM64_EXECUTABLE`
+to the player-data command. Menu, HUD, stage-context, registry and ordinary
+player-data inputs remain required. The Shader directory is the complete
+`shader_produce.py` output; its receipt must bind the selected public profile and
+all 369 player files. Keep both source phases when assembling the final APK:
+manager references name the Shader phase files without copying those outputs.
+
+This current experimental owner emits all 18 native managers. Public settings
+and existing input/tier policies replace editor state. SDK declarations derive
+internal shader expansion; all nonzero resource pointers are followed, including
+script references and cycles. UI manifests must reproduce their emitted bodies.
+Native structural fallback uses the existing pinned parser's declarations and
+strict full-body reads. PyYAML 6.0.3 SafeLoader is a pure Python dependency;
+encoded numeric arrays retain their original text before typed projection.
+
+`managers-source/` retains private fields, roots and pinned providers. The parent
+result includes `managers.files`; normal source-file and schema checks remain
+strict. The public policy disables paid capability flags without asserting SDK
+rights, generates build identity through the startup owner, and derives script
+hashes from actual produced MonoScripts. Unused historical cache rows and current
+UI graphs are reported separately. Host emission is complete; combined phone
+production, installation/update/save retention and native gameplay remain open.
+
 ## Complete original-lighting scene alternatives
 
 The opt-in profiles `owner-promovoidsurvivor-source-lighting-objects.json` and
