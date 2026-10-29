@@ -1112,3 +1112,18 @@ fresh hash cache omits 148 unused zero historical rows; UI differences remain ex
 Evidence: `work/coordination/orchestrator/manager-public-source-v4/`.
 Prior art: pinned AssetRipper ResourceManager path projection; exact SDK governs native expansion.
 Host-only; readiness stays 693/705; full phone APK, native runtime and install/update remain open.
+
+## J1266 — Generate source sky lighting with the native Android renderer
+
+2026-10-29. Separate SDK-built IL2CPP ARM64/Vulkan tool captures 48 half-float
+reflection face/mip images and 27 final ambient coefficients on Main Nova.
+Source material properties/keywords independently match the SDK default exactly;
+no historical Cubemap, ambient array or game output supplies the capture.
+Ambient differs from the desktop source reference by at most 0.000162162;
+reflection encoding/filter equivalence and serialized-Cubemap admission remain open.
+Owned state and resources are released; placement, uninstall and display sleep pass.
+Diagnostic APK SHA-256: `2f86e51defad30de4c4d7869f69bd02eba665c2098b4bb93756dd651406b8a52`.
+Evidence: `work/coordination/orchestrator/runtime-default-environment-v2/phone-v1/`.
+Prior art: pinned AssetRipper copies existing probes; SDK native APIs generate these.
+Readiness stays 693/705; phone-built helper, complete scene/APK and updates remain open.
+This host-built diagnostic is no public input.
