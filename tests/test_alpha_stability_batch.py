@@ -306,6 +306,9 @@ class GameThermalOwnerTests(unittest.TestCase):
         self.device.serial = SERIAL
         self.device.read_receipt.return_value = dict(apk_sha256=HASH, serial=SERIAL, package="dev.ror2lab.arm64", package_path="package:/fixture/base.apk")
         self.owner = batch._GameThermalOwner(self.device, HASH, Path(self.temp.name) / "thermal.jsonl", float("inf"))
+        current = mock.patch.object(self.owner, "battery_current", return_value=0)
+        self.current = current.start()
+        self.addCleanup(current.stop)
 
     def test_actual_gap_and_unknown_read_are_hard_refusals(self):
         self.owner.runtime_zones = [("cpu-0", "/thermal_zone0/temp")]
@@ -536,8 +539,9 @@ class GameThermalOwnerTests(unittest.TestCase):
                 self.assertEqual(row["maximum_zone_celsius"], 70)
 
     def test_battery_cooldown_and_charge_admission(self):
-        for level, status, refused in ((80, 2, True), (86, 4, True), (85, 4, False), (79, 2, False)):
-            with self.subTest(level=level, status=status):
+        for level, status, current, refused in ((80, 2, 0, False), (80, 2, 1, True), (80, 4, 1, True), (86, 4, 0, True), (85, 4, -1, False), (79, 2, 1, False)):
+            with self.subTest(level=level, status=status, current=current):
+                self.current.return_value = current
                 self.device.cmd.return_value = "cpu-0 49000 /thermal_zone0/temp"
                 self.device.sh.side_effect = [f"temperature: {temp}\nlevel: {level}\nstatus: {status}" for temp in (351, 350)]
                 with mock.patch.object(batch.time, "sleep") as sleep:

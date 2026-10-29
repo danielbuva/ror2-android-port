@@ -523,7 +523,33 @@ def normalize_quaternion(values):
     return [f32(value * inverse) for value in values]
 
 
-def root_average(body, root):
+# Adapted from FreeBSD msun s_atanf.c / e_atan2f.c, Sun's fdlibm.
+# Copyright (C) 1993 by Sun Microsystems, Inc. All rights reserved.
+# Developed at SunPro, a Sun Microsystems, Inc. business.
+# Permission to use, copy, modify, and distribute this software is freely
+# granted, provided that this notice is preserved.
+def small_atan2f(y, x):
+    """Portable fdlibm float arithmetic for the admitted positive-x yaw interval."""
+
+    def f32(value):
+        return struct.unpack("<f", struct.pack("<f", value))[0]
+
+    if not math.isfinite(x) or not math.isfinite(y) or x <= 0:
+        raise ValueError("root yaw is outside the positive-x atan2f domain")
+    value = f32(y / x)
+    if abs(value) >= 0.4375:
+        raise ValueError("root yaw is outside the small atan2f interval")
+    if abs(value) < 2**-12:
+        return value
+    coefficients = [f32(v) for v in (3.3333328366e-01, -1.9999158382e-01, 1.4253635705e-01, -1.0648017377e-01, 6.1687607318e-02)]
+    z = f32(value * value)
+    w = f32(z * z)
+    odd = f32(z * f32(coefficients[0] + f32(w * f32(coefficients[2] + f32(w * coefficients[4])))))
+    even = f32(w * f32(coefficients[1] + f32(w * coefficients[3])))
+    return f32(value - f32(value * f32(odd + even)))
+
+
+def root_average(body, root, use_atan2=False, use_small_atan2f=False):
     """Integrate original generic root curves over twenty native sample intervals."""
 
     def f32(value):
@@ -665,8 +691,13 @@ def root_average(body, root):
         if previous is not None:
             inverse = conjugate(previous)
             delta_rotation = multiply(inverse, rotation)
-            ratio = f32(delta_rotation[1] / delta_rotation[3])
-            angle = f32(f32(2 * f32(math.atan(ratio))) / step)
+            if use_small_atan2f:
+                phase = small_atan2f(delta_rotation[1], delta_rotation[3])
+            elif use_atan2:
+                phase = f32(math.atan2(delta_rotation[1], delta_rotation[3]))
+            else:
+                phase = f32(math.atan(f32(delta_rotation[1] / delta_rotation[3])))
+            angle = f32(f32(2 * phase) / step)
             delta = rotate(inverse, [f32(a - b) for a, b in zip(position, previous_position)])
             if mirror:
                 angle, delta[0] = -angle, -delta[0]
@@ -698,11 +729,19 @@ def transform(body, root, selected):
         "layout",
         "normalize_root_quaternions",
         "root_average",
+        "root_average_atan2",
+        "root_average_small_atan2f",
     }:
         raise ValueError("unknown AnimationClip operation")
     canonical = selected.get("canonical")
     if canonical not in (None, "zero-and-nan", "nan"):
         raise ValueError("unknown AnimationClip canonical policy")
+    if "root_average_atan2" in selected and (selected["root_average_atan2"] is not True or selected.get("root_average") is not True):
+        raise ValueError("atan2 projection requires source root-average integration")
+    if "root_average_small_atan2f" in selected and (
+        selected["root_average_small_atan2f"] is not True or selected.get("root_average") is not True or selected.get("root_average_atan2")
+    ):
+        raise ValueError("small atan2f requires its own source root-average projection")
     if not selected:
         return body
     result, spans = fields(body, root, canonical)
@@ -775,7 +814,11 @@ def transform(body, root, selected):
     for start, end, data in sorted(changes, reverse=True):
         result[start:end] = data
     result = layout_clip(bytes(result), root, selected["layout"]) if "layout" in selected else bytes(result)
-    return root_average(result, root) if selected.get("root_average") else result
+    return (
+        root_average(result, root, use_atan2=selected.get("root_average_atan2", False), use_small_atan2f=selected.get("root_average_small_atan2f", False))
+        if selected.get("root_average")
+        else result
+    )
 
 
 def reorder_controller_clips(body, root, order):
@@ -804,7 +847,7 @@ def reorder_controller_clips(body, root, order):
     return bytes(result)
 
 
-def exported_clip_tos(value):
+def exported_clip_tos(value, collision_index=None):
     """Rebuild the qualified export path from an original clip-path TOS entry."""
     if not value.startswith("Assets/"):
         raise ValueError("not an original clip asset path")
@@ -813,6 +856,10 @@ def exported_clip_tos(value):
         raise ValueError("missing original clip name")
     name = clip_name.replace("(Clone)", "").replace("(Instance)", "").strip()
     name = re.sub(r"[/:,\[\]\x00-\x1f]", "_", name)
+    if collision_index is not None:
+        if type(collision_index) is not int or not 0 <= collision_index < 2**31 - 1:
+            raise ValueError("invalid original export filename collision index")
+        name += f"_{collision_index}"
     if not name or len((name + ".anim").encode()) > 240:
         raise ValueError("unqualified export filename")
     directory = value[: match.start()].rsplit("/", 1)[0]
@@ -823,12 +870,21 @@ def controller_tos(body, root, selection):
     _, spans = fields(body, root)
     start, end = spans[("m_TOS",)]
     count = struct.unpack_from("<I", body, start)[0]
+    if any(len(row) not in (2, 3) for row in selection):
+        raise ValueError("invalid original controller TOS selection")
     if len({row[0] for row in selection}) != len(selection) or any(
-        type(i) is not int or not 0 <= i < count or type(rebuild) is not bool for i, rebuild in selection
+        type(row[0]) is not int
+        or not 0 <= row[0] < count
+        or type(row[1]) is not bool
+        or len(row) == 3
+        and (not row[1] or type(row[2]) is not int or not 0 <= row[2] < 2**31 - 1)
+        for row in selection
     ):
         raise ValueError("invalid original controller TOS selection")
     rows = []
-    for index, rebuild in selection:
+    for selected in selection:
+        index, rebuild = selected[:2]
+        collision_index = selected[2] if len(selected) == 3 else None
         a, b = spans[("m_TOS", "Array", str(index))]
         raw = body[a:b]
         key, size = struct.unpack_from("<II", raw)
@@ -836,7 +892,7 @@ def controller_tos(body, root, selection):
         if zlib.crc32(value.encode()) != key:
             raise ValueError("original TOS CRC drift")
         if rebuild:
-            encoded = exported_clip_tos(value).encode("utf-8")
+            encoded = exported_clip_tos(value, collision_index).encode("utf-8")
             raw = struct.pack("<II", zlib.crc32(encoded), len(encoded)) + encoded
             raw += bytes(-len(raw) % 4)
         rows.append(raw)
@@ -953,6 +1009,108 @@ def controller_loop_states(body, root, states, read_clip):
     return bytes(result)
 
 
+def controller_state_order(body, root, selections):
+    """Relocate original state records and their checked local index references."""
+    _, spans = fields(body, root)
+    result, changes = bytearray(body), []
+    machines = ("m_Controller", "m_StateMachineArray", "Array")
+    count = struct.unpack_from("<I", body, spans[machines][0])[0]
+    for machine, order in selections.items():
+        if not isinstance(machine, str) or not machine.isdecimal() or str(int(machine)) != machine or not 0 <= int(machine) < count:
+            raise ValueError("invalid original controller state machine")
+        prefix = machines + (machine, "data")
+        array = prefix + ("m_StateConstantArray", "Array")
+        start, end = spans[array]
+        states = struct.unpack_from("<I", body, start)[0]
+        if not isinstance(order, list) or any(type(index) is not int for index in order) or sorted(order) != list(range(states)):
+            raise ValueError("controller state order must be an original-state bijection")
+        inverse = {old: new for new, old in enumerate(order)}
+        for path, (offset, finish) in spans.items():
+            if path[: len(prefix)] != prefix or path[-1] not in ("m_DefaultState", "m_DestinationState", "m_Destination"):
+                continue
+            if finish - offset != 4:
+                raise ValueError("original controller state index extent drift")
+            value = struct.unpack_from("<I", result, offset)[0]
+            # High values select entry/exit state machines or unavailable states;
+            # only local state indices move with the original state array.
+            if value in inverse:
+                struct.pack_into("<I", result, offset, inverse[value])
+        ranges = [spans[array + (str(index),)] for index in range(states)]
+        chunks = b"".join(result[ranges[index][0] : ranges[index][1]] for index in order)
+        changes.append((start, end, struct.pack("<I", states) + chunks))
+    for start, end, replacement in sorted(changes, reverse=True):
+        result[start:end] = replacement
+    return bytes(result)
+
+
+def controller_clear_null_motion(body, root):
+    """Import a single original unavailable clip leaf as a null state motion."""
+    _, spans = fields(body, root)
+    result, removals, memory = bytearray(body), [], 0
+    for path, (start, end) in spans.items():
+        if len(path) != 11 or path[:3] != ("m_Controller", "m_StateMachineArray", "Array") or path[-2:] != ("m_BlendTreeConstantArray", "Array"):
+            continue
+        if struct.unpack_from("<I", body, start)[0] != 1:
+            continue
+        nodes = path + ("0", "data", "m_NodeArray", "Array")
+        if struct.unpack_from("<I", body, spans[nodes][0])[0] != 1:
+            continue
+        leaf = nodes + ("0", "data")
+        clip, children = spans[leaf + ("m_ClipID",)][0], spans[leaf + ("m_ChildIndices",)][0]
+        if struct.unpack_from("<I", body, clip)[0] != 0xFFFFFFFF or struct.unpack_from("<I", body, children)[0]:
+            continue
+        arrays = [p for p in spans if p[: len(path)] == path and p != path and p[-1] == "Array"]
+        if any(struct.unpack_from("<I", body, spans[p][0])[0] for p in arrays if p != nodes):
+            raise ValueError("original null-motion leaf contains unsupported array data")
+        # Native inline arrays use 16-byte headers; the release serialization
+        # stores their 4-byte counts. The outer state array header is retained.
+        memory += end - start - 4 + 12 * len(arrays)
+        removals.append((start, end))
+        left, right = spans[path[:-2] + ("m_BlendTreeConstantIndexArray",)]
+        count = struct.unpack_from("<I", body, left)[0]
+        if right - left != 4 + count * 4:
+            raise ValueError("original null-motion index extent drift")
+        for index in range(count):
+            offset = left + 4 + index * 4
+            if struct.unpack_from("<I", body, offset)[0] not in (0, 0xFFFFFFFF):
+                raise ValueError("original null-motion index does not select its sole tree")
+            struct.pack_into("<I", result, offset, 0xFFFFFFFF)
+    offset = spans[("m_ControllerSize",)][0]
+    size = struct.unpack_from("<I", body, offset)[0]
+    if size < memory:
+        raise ValueError("original null-motion allocation size drift")
+    struct.pack_into("<I", result, offset, size - memory)
+    for start, end in sorted(removals, reverse=True):
+        result[start:end] = bytes(4)
+    return bytes(result)
+
+
+def controller_clear_skeleton_masks(body, root):
+    """Apply the pinned exporter's omitted layer masks and native allocation size."""
+    _, spans = fields(body, root)
+    removals, memory = [], 0
+    for path, (start, end) in spans.items():
+        if len(path) != 9 or path[:3] != ("m_Controller", "m_LayerArray", "Array") or path[4:] != ("data", "m_SkeletonMask", "data", "m_Data", "Array"):
+            continue
+        count = struct.unpack_from("<I", body, start)[0]
+        if end - start != 4 + count * 8:
+            raise ValueError("original controller skeleton mask extent drift")
+        if count:
+            removals.append((start, end))
+            # Each native mask entry occupies 8 bytes, with a 24-byte allocation
+            # header for a nonempty array on the admitted 64-bit platforms.
+            memory += count * 8 + 24
+    offset, end = spans[("m_ControllerSize",)]
+    size = struct.unpack_from("<I", body, offset)[0]
+    if end - offset != 4 or size < memory:
+        raise ValueError("original controller allocation size drift")
+    result = bytearray(body)
+    struct.pack_into("<I", result, offset, size - memory)
+    for start, end in sorted(removals, reverse=True):
+        result[start:end] = bytes(4)
+    return bytes(result)
+
+
 def director_exposed_names(body, root):
     """Reimport AssetRipper decimal PropertyName strings and retain their PPtrs."""
     _, located = fields(body, root)
@@ -988,7 +1146,12 @@ def transform_generic(body, class_id, selected, root=None, read_clip=None):
         "controller_tos",
         "controller_opposed_angles",
         "controller_behaviour_order",
+        "controller_clear_skeleton_masks",
+        "controller_state_order",
+        "controller_clear_null_motion",
         "canonical",
+        "importer_guid",
+        "crop_rectangle_offset",
     } or (selected.get("demote_keywords") and class_id != 21):
         raise ValueError("unknown generic object operation")
     if any(key.startswith("controller_") or key == "canonical" for key in selected) and (class_id != 91 or root is None):
@@ -997,6 +1160,16 @@ def transform_generic(body, class_id, selected, root=None, read_clip=None):
         if selected["director_exposed_names"] is not True or class_id != 320 or root is None:
             raise ValueError("exposed-name import requires original PlayableDirector schema")
         body = director_exposed_names(body, root)
+    if "controller_clear_skeleton_masks" in selected:
+        if selected["controller_clear_skeleton_masks"] is not True:
+            raise ValueError("unqualified controller skeleton mask policy")
+        body = controller_clear_skeleton_masks(body, root)
+    if "controller_state_order" in selected:
+        body = controller_state_order(body, root, selected["controller_state_order"])
+    if "controller_clear_null_motion" in selected:
+        if selected["controller_clear_null_motion"] is not True:
+            raise ValueError("unqualified controller null-motion policy")
+        body = controller_clear_null_motion(body, root)
     if "controller_loop_states" in selected:
         body = controller_loop_states(body, root, selected["controller_loop_states"], read_clip)
     if "controller_clip_order" in selected:
@@ -1013,6 +1186,13 @@ def transform_generic(body, class_id, selected, root=None, read_clip=None):
         body = controller_tos(body, root, selected["controller_tos"])
     if "controller_behaviour_order" in selected:
         body = controller_singleton_behaviours(body, root, selected["controller_behaviour_order"])
+    if "importer_guid" in selected or "crop_rectangle_offset" in selected:
+        if class_id != 213 or "importer_guid" not in selected:
+            raise ValueError("Sprite import operations require an original Sprite and importer GUID")
+        sprites = O.module("player_data")
+        if "crop_rectangle_offset" in selected:
+            body = sprites.sprite_crop(body, selected["crop_rectangle_offset"])
+        body = sprites.sprite_key(body, selected["importer_guid"])
     result = O.remap(body, selected.get("references", []))
     return O.demote_material_keywords(result) if selected.get("demote_keywords") else result
 
@@ -1118,6 +1298,7 @@ def produce(profile_path, profile_sha256, pc, output):
                             198,
                             199,
                             205,
+                            213,
                             215,
                             222,
                             223,

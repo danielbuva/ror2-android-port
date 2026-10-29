@@ -1,5 +1,30 @@
 # Accepted-output reconstruction support
 
+## Public startup metadata
+
+`startup_metadata.py` is the current source producer for `boot.config` and
+`unity_app_guid`. Run it with `--input-manifest OWNER_INVENTORY`,
+`--settings PUBLIC_PLAYER_SETTINGS`, `--toolchain PUBLIC_TOOLCHAIN` and
+`--output NEW_PRIVATE_DIRECTORY`. The public smoke PlayerSettings and
+`environment/toolchain.json` supply the current authored settings/toolchain.
+It reads no accepted APK, project cache, historical UUID or connection setting.
+The caller remains responsible for admitting the legitimate game inventory.
+
+The producer preserves HDR/fullscreen/safe-area settings, requires incremental
+GC, uses a 3 ms GC slice and disables debugger waiting. Development connection
+discovery is omitted. Distinct app/build identifiers derive from complete input
+hashes plus producer identity; relocating unchanged files preserves them. The
+product, package and signing identities used for data-preserving updates remain
+unchanged. The build GUID in the receipt is reserved for the future manager
+producer; this command does not generate `globalgamemanagers`.
+
+The owner APK request may supply `startup_metadata: {"path": "RECEIPT",
+"sha256": "RECEIPT_SHA256"}`. Admission rehashes inputs, regenerates complete
+expected bytes and checks both persisted outputs and selected assembly inputs.
+It covers only these two paths, reports `generated_metadata_count` separately
+and never increments raw-exact counts for differing files. This is a host
+production contract; complete phone production, launch and updates remain open.
+
 `phone_decode.py` is the current experimental Android shell receiver for one
 complete, pinned accepted-output profile. It preserves native IL2CPP code and
 Android content by reproducing their exact bytes. It runs no game, Unity Editor,
@@ -113,6 +138,36 @@ host RSS. This is an accepted-record roundtrip control, not PC-input-only
 production or phone qualification.
 
 ## Produce the first complete source-only bundle
+
+Original object sources may select a UnityFS member or a native serialized
+file from the owner's PC installation. Native selections name the file itself
+as `member`; the existing source-file hash, object-body hash, type metadata and
+before/after input checks apply. This lets a scene select MonoScripts from the
+original PC player registry when no Addressables bundle references those scripts.
+If that original file omits type trees, an explicit `type_source` selects the
+schema from an original bundle. Its class, native hash, script identity and
+stripping fields must match the native record before the schema can be used.
+
+The optional `managed_pointer_schema` policy derives a build-added script type
+with one object-reference field. Its original MonoScript supplies class identity
+and the expected properties hash; pinned original CLR assemblies supply the
+field name/type. Original native base and pointer prototypes supply transfer
+flags and common-string encoding. The owner checks the resulting properties
+hash, derives the script ID and rechecks consumed assemblies. Recipes contain
+selectors and assembly hashes; generated type trees stay in owner output.
+This optional CLR policy needs the `dnfile`/`pefile` dependencies pinned in
+`tools/lab-requirements.txt`; invoke it from that configured Python environment
+without `-S`. Other object policies retain their existing stdlib-only path.
+
+`object_produce.py` also has an experimental `DefaultMaterial` selection with
+`model_import: "obj-standard-lambert-linear"`. It requires `model_mesh_source`,
+`sdk_shader_path_id` and pinned `sdk_source` / `fbx_source` paths relative to the
+explicit SDK root. `obj_material.py` reads Standard property declarations and
+the FBX library's named static defaults without loading native code. This
+attribute-only OBJ policy assumes opaque Lambert shading and linear color;
+it does not accept arbitrary authored model material parameters. Stage
+`obj_material.py` and `scripts/lab/phone_registry.py` with the existing producer
+dependencies. No target material body or property-value table is an input.
 
 `object_produce.py` currently qualifies the complete pickup-droplet and
 player-death-effect bundles from original PC records. The audited recipe contains original selectors, checked
@@ -357,6 +412,15 @@ halfway away from zero. Source schema controls field extents, including nested
 alignment. The reader qualifies little-endian serialized v22 and UnityFS 7/8
 from Unity 2021.3 with raw/LZ4 compression; other compression is refused.
 
+The separate audited `owner-compressed-tangent-mesh.json` profile adds the
+MercSwordSwipe record through this CLI without changing the original cohort's
+identity. Its `packed_tangents: repair_negative_z` operation unpacks original
+XY values, reconstructs Z squared, normalizes XY when Z squared is negative,
+then derives the packing bounds and integer stream using float32 arithmetic.
+The recipe supplies no replacement floats or packed bytes. This additional
+record is host raw-exact; complete Commando assembly and phone production
+remain open.
+
 The process checks every selected original file before/after use, bounds reads
 and decompressed blocks to 64 MiB, retains two blocks and requires all generated
 object hashes to match. It writes `objects.bin`, `resources.bin`, their
@@ -364,6 +428,37 @@ object hashes to match. It writes `objects.bin`, `resources.bin`, their
 are re-read; failed outputs are retained. It requires expected object capacity
 plus 2 GiB free before starting. Peak RSS uses the platform's native
 `resource.getrusage` units. Exit tears down the only producer process.
+
+The current optional `obj_import: static-triangles` operation imports the
+admitted static float32 position/normal/tangent/UV0 layout. `obj_mesh.py` owns
+source-derived tangent generation, robust normalization, the 16-vertex cache
+order, first-use vertex order and the UV-density calculation. Its profile's
+top-level `obj_import` pins the authored helper source and public providers;
+`--obj-helper` selects a separately built helper directory. Receipt and binary
+hashes are checked before and after calls. No retained model or captured
+geometry/metric value supplies production.
+
+Acquire unchanged `mikktspace.c` and `mikktspace.h` from
+[MikkTSpace at 3e895b49](https://github.com/mmikk/MikkTSpace/tree/3e895b49d05ea07e4c2133156cfa94369e19e409),
+and `qsort.c` and `heapsort.c` from `stdlib/FreeBSD/` in
+[Apple Libc at 71bbe350](https://github.com/apple-oss-distributions/Libc/tree/71bbe350ab79eef58113991d817ccc6165061a64).
+Keep them in explicit private provider directories. The builder checks all
+four file hashes and retains the source-header licenses with its output:
+
+```sh
+python3 tools/phone-build/accepted-output/build_mesh_obj.py \
+  --mikk PINNED_MIKK_DIRECTORY --libc PINNED_LIBC_DIRECTORY \
+  --compiler C_COMPILER --output NEW_PRIVATE_HELPER_DIRECTORY
+```
+
+For the existing Android native Clang 21 provider, also pass
+`--android-tool-root NATIVE_TOOL_ROOT`. Stage `obj_mesh.py` beside the existing
+mesh owner and pass its helper build directory using `--obj-helper`.
+The helper reads bounded binary requests on stdin and emits tangents or area
+ordering on stdout; it opens no game files. The original importer's Boolean
+area comparator is preserved using the pinned portable BSD implementation,
+including its heap-sort fallback. Native helper outputs remain private.
+Host Mesh-body equality does not qualify a complete bundle or Android execution.
 
 These game-derived packs remain private. They are inputs for a future bundle
 assembler, not UnityFS bundles, a replacement private replay packet, or an APK.
@@ -1099,10 +1194,49 @@ d3dasm tool. No retained HLSL is consumed. Builtin and shared source records use
 schema. The same command emits the 44-object builtin file and the two-record
 `shared-shaders` object pack for the existing mixed-file writer. There are 369
 complete files plus two shared records; the terminal shared receipt records its
-`objects.bin` and `index.jsonl` hashes. Phone execution remains unqualified (J1144/J1146/J1147/J1151/J1157).
+`objects.bin` and `index.jsonl` hashes. The full cohort remains phone-unqualified (J1144/J1146/J1147/J1151/J1157);
+the bounded ColorGrade phone result is recorded below.
 
 Build the existing public LZ4 worker with `build_bundle_lz4.py`; its worker method
-9 selects shader HC9 while UnityFS methods 2/3 stay fast/HC12. Then run:
+9 selects shader HC9 while UnityFS methods 2/3 stay fast/HC12.
+
+For a separately acquired compiler host, pass `--compiler-command` as a JSON
+argv array (including any GNU runner prefix) and `--compiler-data` as that
+compiler's SDK data directory. `--sdk` continues to select the pinned Mac SDK
+metadata and includes. The existing compiler session appends its data, log and
+IPC arguments, inherits the caller's runner environment and owns teardown.
+Acquire and verify the Linux compiler/plugin/runtime and public runner through
+their existing J1094/J1102 input receipts; this option does not acquire tools or
+qualify complete phone production. Omitting both options retains the Mac host.
+
+Preserve the acquired Linux SDK layout: `--compiler-data LINUX_DATA` must
+contain `Tools/UnityShaderCompiler`, `Tools/libdxcompiler.so`,
+`Tools/D3DCompiler_47.dll` and `Tools/glslang.so`. Point the GNU runner at
+`LINUX_DATA/Tools/UnityShaderCompiler` and include `LINUX_DATA/Tools` in its
+`LD_LIBRARY_PATH` alongside the acquired GNU runtime libraries. The existing
+IPC owner rejects missing DX compiler dependencies before launch. A flattened
+`shader/` directory fails the compiler's relative `Tools/D3DCompiler_47.dll`
+lookup even after IPC initialization. Keep Mac metadata/includes in `--sdk`.
+
+The bounded ColorGrade producer ran on Android without the Editor and persisted
+7,784 B, SHA-256
+`fb6f38549e1336f51e87d60672350305c745c4017a044bc50189c1c2f534e98c`,
+raw-exact to J850. Local evidence:
+`work/coordination/p1-colorgrade-phone-v1/device-source-v4/`.
+The thermal worker completed in 8.61 s, peak CPU/GPU 46.5 C and 0 s above 80 C;
+scratch removal, display sleep, lease release and prune passed. This is isolated
+shell production, with acquired SDK/runtime inputs staged by the host. Ordinary
+app production, complete cohort, installation/update and readiness stay open.
+
+For a bounded authored slice, add repeatable `--authored-file FILE` arguments.
+ColorGrade is `--authored-file 19e91578880954efeab1111b405232b9` in the
+existing player profile. Selection preserves profile order, settings, original
+schema and every common SDK/authored/include pin, while omitting unrelated
+native, font, builtin and shared providers. The profile itself remains hash
+checked; no derived private recipe is required. Only rows naming tracked
+ShaderLab sources are admitted. Omitting this option produces the full profile.
+
+Run the producer:
 
 ```sh
 python3 tools/phone-build/accepted-output/shader_produce.py \
@@ -1428,3 +1562,71 @@ The existing member-aware writer exposes `payload/skymeadow-source-lab`.
 All 37,402 persisted objects, both serialized members and the compressed bundle
 are host raw-exact against J850. No runtime owner is added; phone production,
 installation and original scene behavior remain open.
+
+Frozenwall complete spine-scene selections extend the existing object/Shader
+owners through `recipe/owner-frozenwall-spine-objects.json` and
+`recipe/owner-frozenwall-spine-lab-standard-shaders.json`. Original renderer,
+skybox and local-material roots select the reduced-spine Standard variants.
+Explicit current PC/SDK roots, pinned profiles/tools, receipt-pinned
+source-produced media/Shader packs and a separate output directory set up
+production; process exit tears down producers while receipts persist. The
+existing member-aware writer exposes `payload/frozenwall-spine-lab`.
+All 9,672 persisted objects, both serialized members and the compressed bundle
+are host raw-exact against J850. No runtime owner is added; phone production,
+installation and original scene behavior remain open.
+
+Frozenwall, Villagenight and Foggyswamp source selections and Skymeadow
+spine selections extend the existing `object_produce.py` and Shader owners
+through their named `recipe/owner-*-objects.json` profiles. The Bezier owner
+re-evaluates original curves with optional captured build angles; no geometry
+arrays are recipe inputs. `record_remap.py` owns index reuse: explicit pinned
+source pack receipts and `owner-*-shader-remap.json` profiles supply unchanged
+bodies/dependency provenance under destination identities. Original suppliers
+remain visible in the output receipt. Setup requires explicit PC/SDK/tool roots,
+pinned profiles, source-produced media/Shader packs and new output directories.
+Process exit tears down producers; receipts persist. These are optional host
+reconstruction owners; phone production, installation and original runtime
+behavior remain open.
+
+Index reuse command (all paths are caller supplied):
+
+```sh
+python3 tools/phone-build/accepted-output/record_remap.py \
+  --profile recipe/owner-frozenwall-source-lab-shader-remap.json \
+  --profile-sha256 "$remap_profile_sha256" \
+  --record-pack "$source_pack" "$source_receipt_sha256" \
+  --output "$new_remap_output"
+```
+
+Pass the resulting directory and its `result.json` SHA-256 to the object
+producer's existing `--record-pack` argument. Repeat the supplier argument for
+profiles with multiple source packs. The remap profile names the public source
+profile hash; callers first produce that source profile with the existing
+Shader owner. No compilation or historical-target lookup occurs in the remapper.
+
+## Source Menu player data
+
+`player_data.py --ui-profile recipe/owner-player-menu.json PROFILE_SHA256
+--ugui-source SDK_UGUI_CORE` adds the current source Menu and any missing original
+Sprite/texture dependencies to the existing player-data command. Keep its normal
+registry, code-request, managed-production, SDK and record/texture inputs. The SDK
+directory is the exact editor's `com.unity.ugui/Runtime/UI/Core`; four pinned source
+files supply constructor defaults. This is a current experimental producer.
+
+The parent generates its registry first; the UI owner receives that value rather
+than a separate registry packet. It reads original UI/scripts/English data and
+public player supplier recipes, preserves asset identities and resolves every
+nonzero pointer. Native schemas may cross original files only with matching
+class IDs/hashes. Common-string names use the pinned parser's vocabulary; no
+class-database schema supplies content. Original Sprite copies require matching
+render keys and geometry. Missing atlas-free Sprites get independently named
+standalone files, retaining original geometry/filter/color-space and decoded mips.
+
+`ui-source/` contains private object/schema receipts; the parent result includes
+`ui.resources`, whose file/root-ID pair belongs to the future manager producer.
+There is no implicit timestamped input or current Unity-project dependency.
+Source Menu production covers 591 objects with independently generated local IDs.
+All type identities/hashes match J850; two genuine differences remain explicit:
+current SubmenuLegend alignment and the retained original store-button Sprite
+where J850 has null. This producer does not exempt either difference from final
+compatibility review, qualify a phone run or increase the raw-exact count.

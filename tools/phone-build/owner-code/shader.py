@@ -195,6 +195,18 @@ class Connection:
 @contextmanager
 def compiler(command, sdk_data, output, *, includes=(), redirects=None, env=None, timeout=120):
     """Run only an explicitly supplied compiler; logs stay in owned output."""
+    # A GNU runner keeps the actual compiler as its final command argument.
+    # Linux SDK disassembly opens Tools/D3DCompiler_47.dll relative to sdk_data;
+    # libdxcompiler.so is also required before the compiler can start its IPC.
+    executable = Path(command[-1])
+    if executable.is_file():
+        with executable.open("rb") as source:
+            linux = source.read(4) == b"\x7fELF"
+        if linux:
+            for name in ("libdxcompiler.so", "D3DCompiler_47.dll"):
+                dependency = Path(sdk_data) / "Tools" / name
+                if not dependency.is_file():
+                    raise FileNotFoundError(f"Linux shader SDK requires {dependency}; preserve Editor/Data/Tools beneath compiler-data")
     output = Path(output).resolve()
     output.mkdir()
     with socket.socket() as server, (output / "process.log").open("wb") as log:

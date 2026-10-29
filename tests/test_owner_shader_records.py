@@ -13,6 +13,85 @@ N = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(N)
 
 
+class CompilerHosting(unittest.TestCase):
+    def invoke(self, *hosting):
+        command = [
+            "shader_produce.py",
+            "--profile",
+            "profile.json",
+            "--profile-sha256",
+            "profile-pin",
+            "--pc",
+            "original",
+            "--sdk",
+            "metadata-sdk",
+            "--output",
+            "output",
+            "--codec",
+            "codec",
+            "--codec-sha256",
+            "codec-pin",
+            *hosting,
+        ]
+        with patch.object(sys, "argv", command), patch.object(N, "produce") as produce:
+            N.main()
+        return produce.call_args
+
+    def test_runner_argv_and_compiler_data_are_separate_from_metadata_sdk(self):
+        call = self.invoke("--compiler-command", '["runner", "-L", "gnu", "linux/UnityShaderCompiler"]', "--compiler-data", "linux-data")
+        self.assertEqual(call.args[3], Path("metadata-sdk"))
+        self.assertEqual(call.kwargs["compiler_command"], ["runner", "-L", "gnu", "linux/UnityShaderCompiler"])
+        self.assertEqual(call.kwargs["compiler_data"], Path("linux-data"))
+
+    def test_existing_invocation_keeps_default_compiler_host(self):
+        call = self.invoke()
+        self.assertIsNone(call.kwargs["compiler_command"])
+        self.assertIsNone(call.kwargs["compiler_data"])
+
+    def test_authored_selection_is_forwarded(self):
+        call = self.invoke("--authored-file", "first", "--authored-file", "second")
+        self.assertEqual(call.kwargs["authored_files"], ["first", "second"])
+
+
+class AuthoredSelection(unittest.TestCase):
+    def profile(self):
+        profile = {key: {"witness": key} for key in ("input_id", "source_type", "sdk", "includes_sha256", "settings", "authored_inputs")}
+        profile["authored_inputs"]["scripts/lab/shader_segments.py"] = {"sha256": "unused-native-pin"}
+        profile.update(
+            shaders=[
+                {"file": "second", "source": "authored-second"},
+                {"file": "first", "source": "authored-first"},
+                {"file": "native", "native_resource": "fixture"},
+            ],
+            native_internal={"path": "original-native"},
+            builtin={"source": "original-builtin"},
+            shared_shaders={"source": "original-shared"},
+        )
+        return profile
+
+    def test_subset_keeps_profile_order_and_common_pins_without_native_providers(self):
+        profile = self.profile()
+        selected = N.select_authored_files(profile, ["first", "second"])
+        self.assertEqual([row["file"] for row in selected["shaders"]], ["second", "first"])
+        self.assertEqual(set(selected), {"input_id", "source_type", "sdk", "includes_sha256", "settings", "authored_inputs", "shaders"})
+        for key in set(selected) - {"shaders", "authored_inputs"}:
+            self.assertEqual(selected[key], profile[key])
+        self.assertNotIn("scripts/lab/shader_segments.py", selected["authored_inputs"])
+        self.assertIn("scripts/lab/shader_segments.py", profile["authored_inputs"])
+        self.assertEqual(selected["authored_inputs"]["witness"], "authored_inputs")
+        self.assertIn("native_internal", profile)
+        self.assertEqual(len(profile["shaders"]), 3)
+
+    def test_default_retains_complete_profile(self):
+        profile = self.profile()
+        self.assertIs(N.select_authored_files(profile, None), profile)
+
+    def test_unknown_and_native_files_are_rejected(self):
+        for names in ([], ["missing"], ["native"], ["first", "missing"]):
+            with self.subTest(names=names), self.assertRaises(ValueError):
+                N.select_authored_files(self.profile(), names)
+
+
 class NativeRecords(unittest.TestCase):
     def test_reflection_not_fixed_target_names(self):
         r = N.reflection(["input: 2 9", "cb: Fixture 32 1", "const: tint 0 0 0 1 4 0", "cbbind: Fixture 5", "texbind: image 7 8 0 2"])

@@ -1,5 +1,24 @@
 # Reconstruct the accepted Android build from owner inputs
 
+The public converter targets functional native Android compatibility from
+legitimate game files, permitted SDK inputs and public recipes. J850 remains
+strict for code, asset identities, serialized relationships and runtime
+compatibility. Incidental build identifiers and development connections may be
+generated or omitted through named source producers; private historical values
+are never required public inputs. Raw-exact results, generated metadata and
+device acceptance are reported separately. Historical replay results below
+retain their original byte-exact meaning.
+J1254 supplies the two incidental startup files through a public producer;
+current host readiness is 692/705 available (685 raw-exact, two generated
+metadata), with 13 source files still missing. Complete phone acceptance remains
+open; the daily snapshot retains its earlier count until its next refresh.
+The current source Menu producer now emits its complete 591-object graph and
+standalone media through the player-data path. Its type identities/hashes match
+J850, but current alignment and an original store-button Sprite differ from that
+reference. Those genuine differences remain visible and do not advance the
+historical readiness count; complete phone installation/update acceptance stays
+open.
+
 
 The host-qualified [release update contract](../tools/phone-build/owner-apk/README.md#public-release-updates)
 covers signed public-tool acquisition, per-entry incremental reuse, existing-key
@@ -539,3 +558,15 @@ The complete single-mip RGBA source pack now has Android shell evidence
 host target after verified checkpoint continuation. This supplies existing
 receipt-pinned texture consumers; it does not close missing complete bundles.
 App-host texture dispatch reuses this producer, with device execution still open.
+
+J1220 closes Frozenwall, Villagenight and Foggyswamp source bundles and Skymeadow
+spine: 69,360 persisted objects, eight serialized members and four compressed
+bundles are host raw-exact to J850. Original Bezier curve operands plus 42
+captured build-angle triplets produce geometry locally; public recipes contain
+no captured geometry arrays. Receipt-pinned Shader index reuse preserves actual
+supplier provenance. The retained landed union includes Frozenwall spine and
+advances from 648 to 652/705 available (647 raw-exact, two code comparisons,
+three drift-explained), with 53 missing (7 APK, 46 payload). Evidence:
+`work/coordination/p1-scenes-ss/safe-five-v1/readiness-union/`.
+Goolake, Lakes, Lakesnight and Village source recipes remain open. Complete phone
+production, installation and original runtime behavior remain separate gates.
