@@ -311,3 +311,39 @@ synthetic streams and a provider double, alongside the original session tests.
 Full source compilation against `android.jar` is not device acceptance: ordinary
 PackageInstaller callbacks, actual installed storage/backing and real game
 profile/settings across cold starts still require explicit device qualification.
+
+## Explicit debug release source
+
+Only a debuggable installer accepts an explicitly provisioned private
+`owner-input/debug-release-source.json` containing `enabled: true`, `base_url`,
+`key_id` and `public_key`. The base is an explicit loopback HTTP address and port
+reached through the lab's reverse tunnel; `latest.json` and all three signed
+release assets stay within that base. The extra publisher public key cannot
+replace a production key. The UI labels the test source prominently.
+
+Release builds reject this configuration, including partial configuration,
+before contacting any server. Debuggability is read from Android application
+flags, not from the configuration. Removing the file restores the pinned
+production source and trust. No signature, version, ownership, same-key,
+rollback or profile-retention check is bypassed.
+
+The synthetic acceptance entrypoint is `scripts/lab-installer-updates.py`.
+First request `/lab toolhost ref=<branch>`; the runner builds the separate
+`dev.ror2lab.installertest` package and caches it by source commit. Then run
+`/lab script ref=<branch> -- scripts/lab-installer-updates.py --host-only`
+to prepare synthetic fixtures without a phone. The phone command is
+`/lab script ref=<branch> device=<authorized-alias> -- scripts/lab-installer-updates.py`.
+The runner supplies the leased device serial; this script never selects a phone
+from a remembered identifier. Its toolhost builder must use an available authorized
+device too. Only after the owner explicitly approves enabling unknown-source installation
+for that disposable package may the invocation add `--allow-test-installs`.
+
+The script resolves `LAB_TOOLHOST_ROOT` and `scripts/env.sh` on the lab host;
+it requires Android platform 33, build-tools 34.0.0 and the configured NDK/JDK.
+It refuses existing alpha/test packages, uses only original synthetic inputs,
+creates throwaway publisher keys outside the checkout, and exercises the real
+checker, rebuild, signing, retention and PackageInstaller path. It never reads
+the builder's private test-publisher key. Results are fixed PASS/FAIL case lines;
+raw subprocess output, private selectors, keys and APKs stay on the lab host.
+Cleanup removes only this run's hash-verified packages and reverse tunnel and
+verifies package absence. A host-only result is not phone acceptance.

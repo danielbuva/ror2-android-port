@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J1259](PORTING_JOURNAL.md#j1259--integrate-the-synthetic-phone-update-acceptance-runner) | 2026-10-29 | Integrate the synthetic phone update acceptance runner | 2026-10-29. |
 | [J1258](PORTING_JOURNAL.md#j1258--integrate-owned-alpha-updates-rollback-and-profile-retention) | 2026-10-29 | Integrate owned alpha updates, rollback and profile retention | 2026-10-29. |
 | [J1257](PORTING_JOURNAL.md#j1257--integrate-resumable-public-phone-installation-and-updates) | 2026-10-29 | Integrate resumable public phone installation and updates | 2026-10-29. |
 | [J1256](PORTING_JOURNAL.md#j1256--generate-original-record-stage-contexts-with-public-provenance) | 2026-10-29 | Generate original-record stage contexts with public provenance | 2026-10-29. |

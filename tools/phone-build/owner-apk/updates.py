@@ -36,6 +36,7 @@ def module(name, path):
 
 
 RELEASE = module("owner_update_release", HERE / "release.py")
+SOURCE = module("owner_update_source", HERE / "release_source.py")
 ALPHA = RELEASE.ALPHA
 
 
@@ -530,7 +531,7 @@ def prepare_rollback(inputs, runtime, native, request, trust, config, emit):
     return ready
 
 
-def _run(request_file, runtime, native, *, transport=None):
+def _run(request_file, runtime, native, *, transport=None, debuggable=False):
     request_file, runtime, native = (Path(value).resolve(strict=True) for value in (request_file, runtime, native))
     inputs = request_file.parent
     flow = None
@@ -564,9 +565,22 @@ def _run(request_file, runtime, native, *, transport=None):
             raise ValueError("explicit trusted installer action/context required")
         ALPHA.identity(request["application_id"])
         trust = public().load_json((runtime / "release-trust.json").read_bytes())
-        if set(trust) != {"repository", "application_id", "keys"} or trust["application_id"] != request["application_id"] or not trust["keys"]:
+        if (
+            set(trust) != {"repository", "application_id", "keys"}
+            or trust["application_id"] != request["application_id"]
+            or not isinstance(trust["keys"], dict)
+        ):
             raise ValueError("publisher trust is not provisioned in this installer")
-        transport = transport or GitHubTransport(trust["repository"])
+        override_path = inputs / "debug-release-source.json"
+        override = None
+        if override_path.exists():
+            if debuggable is not True:
+                raise ValueError("test release source and publisher key are forbidden in release builds")
+            override = public().load_json(override_path.read_bytes())
+        trust, debug_transport = SOURCE.configure(trust, override, debuggable=debuggable, validate_public_key=public().public_numbers)
+        if not trust["keys"]:
+            raise ValueError("publisher trust is not provisioned in this installer")
+        transport = debug_transport or transport or GitHubTransport(trust["repository"])
         context = {key: request[key] for key in ("application_id", "installed_version", "installer_version")}
         cache = within(inputs, "work/releases/cache")
         candidate_path = inputs / "release-candidate.json"
@@ -724,7 +738,7 @@ def _run(request_file, runtime, native, *, transport=None):
         raise
 
 
-def run(request_file, runtime, native, *, transport=None):
+def run(request_file, runtime, native, *, transport=None, debuggable=False):
     """Hold an OS-owned lock across children; process death releases it safely."""
     lock = Path(request_file).resolve(strict=True).parent / ".release-update.lock"
     if lock.is_symlink():
@@ -737,7 +751,7 @@ def run(request_file, runtime, native, *, transport=None):
         previous = os.environ.get("ROR2_OWNER_UPDATE_LOCK_FD")
         os.environ["ROR2_OWNER_UPDATE_LOCK_FD"] = str(stream.fileno())
         try:
-            _run(request_file, runtime, native, transport=transport)
+            _run(request_file, runtime, native, transport=transport, debuggable=debuggable)
         finally:
             if previous is None:
                 os.environ.pop("ROR2_OWNER_UPDATE_LOCK_FD", None)
@@ -746,4 +760,4 @@ def run(request_file, runtime, native, *, transport=None):
 
 
 if __name__ == "__main__":
-    run(*sys.argv[1:])
+    run(*sys.argv[1:], debuggable=os.environ.get("ROR2_INSTALLER_DEBUGGABLE") == "1")

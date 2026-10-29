@@ -97,6 +97,7 @@ PUBLISHING_SOURCE_FILES = {
             "ProfileRetentionProvider.java",
             "public_release.py",
             "updates.py",
+            "release_source.py",
             "release_jobs.py",
             "install_inputs.py",
             "install_flow.py",

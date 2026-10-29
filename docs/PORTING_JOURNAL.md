@@ -1014,3 +1014,16 @@ Focused Python/Java retention, installer, corruption and interruption contracts 
 Evidence (ignored): `work/coordination/orchestrator/alpha-integration-v1/`.
 No APK or phone execution. Host reconstruction stays 693/705; complete producer
 plan, native profile/update survival and phone acceptance remain open.
+
+## J1259 — Integrate the synthetic phone update acceptance runner
+
+2026-10-29. The existing debug-only local release source and acceptance driver
+now compose with current installation, rollback and profile-retention owners.
+It exercises real Android sessions with authored fixtures and independent test
+publisher trust; production builds reject the local source before network use.
+The runner supplies an explicitly authorized leased serial, without a fixed alias.
+Actual device acceptance remains open; prior null-root UI failures are retained.
+Evidence (ignored): `work/coordination/orchestrator/installer-acceptance-integration-v1/`.
+Ruff and 101 focused host contracts pass. No APK, phone run, key provisioning or
+release publication occurs in this integration. Host reconstruction stays 693/705;
+complete source production and the real game install/update experience remain open.

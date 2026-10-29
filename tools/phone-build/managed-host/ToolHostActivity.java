@@ -155,6 +155,8 @@ public final class ToolHostActivity extends Activity {
         catch (Exception ignored) { /* Worker report retains the underlying failure if storage is unavailable. */ }
     }
     private static JSONObject installedRequest(Context app, String action) throws Exception {
+        if (new File(app.getFilesDir(), "owner-input/debug-release-source.json").exists() && !debuggable(app))
+            throw new IOException("Test release source and publisher key are forbidden in release builds");
         JSONObject trust;
         try (InputStream input = app.getAssets().open("release-trust.json")) { trust = readJson(input); }
         String packageName = trust.getString("application_id");
@@ -279,6 +281,15 @@ public final class ToolHostActivity extends Activity {
     }
     private String phoneProgress() throws Exception {
         StringBuilder detail = new StringBuilder();
+        File debugSource = new File(getFilesDir(), "owner-input/debug-release-source.json");
+        if (debugSource.exists()) {
+            if (!debuggable(this)) detail.append("\n\nTEST RELEASE OVERRIDE REJECTED — installer is not debuggable.");
+            else {
+                JSONObject override = readJson(debugSource);
+                detail.append("\n\nTEST RELEASE SOURCE — additional test publisher trust requested. NOT A PRODUCTION RELEASE.\n")
+                    .append(override.optString("base_url", "Invalid override; release work will refuse."));
+            }
+        }
         detail.append("\n\n").append(OwnerAlphaInstall.rollbackStatus(this));
         detail.append("\nInstaller-private filesystem free: ").append(getFilesDir().getUsableSpace()).append(" bytes. Android chooses installation placement; no storage is reconfigured.");
         if (OwnerAlphaInstall.pending(this)) detail.append("\nProfile/settings snapshot transaction retained in game-private storage. Recovery is required before another operation if installation stops.");
@@ -390,6 +401,9 @@ public final class ToolHostActivity extends Activity {
         public int update(Uri uri,ContentValues values,String where,String[] args){throw new UnsupportedOperationException();}
         public int delete(Uri uri,String where,String[] args){throw new UnsupportedOperationException();}
     }
+    private static boolean debuggable(Context app) {
+        return (app.getApplicationInfo().flags & android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE) != 0;
+    }
     public static class Runner extends Instrumentation {
         public void onCreate(Bundle arguments) { super.onCreate(arguments); start(); }
         public void onStart() {
@@ -468,6 +482,8 @@ public final class ToolHostActivity extends Activity {
         command.addAll(arguments);
         ProcessBuilder builder=new ProcessBuilder(command).directory(directory).redirectErrorStream(true).redirectOutput(output);
         Map<String,String> env=builder.environment();
+        // Always overwrite inherited values; private request/override JSON cannot enable this.
+        env.put("ROR2_INSTALLER_DEBUGGABLE", debuggable(app) ? "1" : "0");
         File systemCa = new File(directory, "system-ca.pem");
         if (systemCa.isFile()) {
             env.put("SSL_CERT_FILE", systemCa.getCanonicalPath());
