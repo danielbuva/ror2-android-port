@@ -5244,3 +5244,17 @@ The authored producer preserves that ordering and native pixel-pivot rounding.
 Provenance/privacy review: original paths and GUIDs are reconstruction identities;
 all game-derived PNGs, native geometry, records and device evidence stay ignored.
 This adds no entitlement adapter, SDK redistribution or complete-game claim.
+
+### Whole-game source records (J1273)
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-whole-game-source-records.json` | `56209ed460cf480fda51214d16a549e04223c19c89c9149c8b489ee908f925eb` |
+
+Audit: minimum original bundle/member/object and MonoScript selectors, input and
+output hashes, checked pointer relationships and native type identity hashes.
+The 159 unchanged managed records use the existing SDK properties-hash rule;
+39 native records retain their original type and nonpointer bytes. No game field
+payload, type tree, source implementation, private configuration, SDK binary or
+generated body is included. All 198 persisted bodies and native type identities
+match J850; complete whole-game bundle and phone/runtime acceptance remain open.

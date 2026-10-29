@@ -10,6 +10,7 @@ from pathlib import Path
 import struct
 import tempfile
 import unittest
+from unittest.mock import Mock, patch
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -232,6 +233,32 @@ def root_motion_fixture(turn=False):
 
 
 class AnimationProducerTests(unittest.TestCase):
+    def test_managed_type_hash_uses_original_script_binding_and_sdk_schema(self):
+        identity = A.O.module("script_identity", ROOT / "scripts/lab/script_identity.py")
+        schema = F.node("Base", children=[F.node("m_Script", 12, kind="PPtr<MonoScript>"), F.node("retained", 4, kind="float")])
+        names = ("AuthoredComponent", "Fixture", "Fixture.dll")
+        stream = io.BytesIO()
+        A.O.aligned_string(stream, "Authored script")
+        stream.write(bytes(20))
+        for name in names:
+            A.O.aligned_string(stream, name)
+        body = struct.pack("<iqI", 1, 99, 0x80000000)
+        typ = {"class_id": 114, "script_id": identity.md4("".join(names).encode()), "tree": b"original-schema"}
+        script = ({"member": "source-scripts", "path_id": 99}, stream.getvalue(), {"class_id": 115})
+        helper = Mock(md4=identity.md4, properties_hash=Mock(return_value=b"NATIVE HASH HERE"))
+        metadata = {"externals": [{"path": "archive:/source-scripts/source-scripts"}]}
+        with patch.object(A.SCHEMA, "type_tree", return_value=schema):
+            value = A.managed_record_hash(body, typ, metadata, "source-component", script, b"sdk-schema", helper)
+            self.assertEqual(value, b"NATIVE HASH HERE")
+            helper.properties_hash.assert_called_once_with(*names, b"original-schema", b"sdk-schema")
+            common_schema = F.node("Base", children=[F.node("#490", 12, kind="PPtr<MonoScript>"), F.node("retained", 4, kind="float")])
+            with patch.object(A.SCHEMA, "type_tree", return_value=common_schema):
+                self.assertEqual(A.managed_record_hash(body, typ, metadata, "source-component", script, b"sdk-schema", helper), value)
+            with self.assertRaisesRegex(ValueError, "original PPtr"):
+                A.managed_record_hash(struct.pack("<iqI", 1, 100, 0), typ, metadata, "source-component", script, b"sdk-schema", helper)
+            with self.assertRaisesRegex(ValueError, "script identity"):
+                A.managed_record_hash(body, {**typ, "script_id": bytes(16)}, metadata, "source-component", script, b"sdk-schema", helper)
+
     def test_bounded_float_yaw_preserves_the_single_precision_library_rounding(self):
         self.assertEqual(struct.pack("<f", A.small_atan2f(0.000732421875, 1.25)).hex(), "9999193a")
         self.assertEqual(struct.pack("<f", A.small_atan2f(-0.000732421875, 1.25)).hex(), "999919ba")
@@ -504,7 +531,7 @@ class AnimationProducerTests(unittest.TestCase):
     def test_generic_packs_retain_all_nonpointer_bytes(self):
         body, schema = fixture()
         expected = body[:-16] + struct.pack("<iq", 7, -999) + body[-4:]
-        for class_id in (1, 4, 23, 33, 64, 65, 91, 104, 108, 114, 135, 136, 137, 198, 199, 205, 215, 222, 223, 224, 225):
+        for class_id in (1, 4, 23, 33, 54, 64, 65, 91, 95, 104, 108, 114, 120, 135, 136, 137, 156, 198, 199, 205, 215, 221, 222, 223, 224, 225):
             transform = {"references": [{"offset": len(body) - 16, "from": [3, 1234567], "to": [7, -999]}]}
             with tempfile.TemporaryDirectory() as temporary:
                 root = Path(temporary)

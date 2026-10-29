@@ -422,6 +422,13 @@ source-only EffectManagerHelper case; complete content and phone qualification
 remain separate. Original script-file-ID derivation remains unchanged.
 `record_produce.py` owns source-only AnimationClip and generic object-record
 production through the same object-pack interface.
+Its optional SDK input derives unchanged managed type hashes through the existing
+script-identity owner. Original component PPtrs select hash-pinned original
+MonoScripts; original schemas and SDK metadata determine the hash. A recipe may
+require `native_type_hash` for each output. The pack retains that identity and
+`object_produce.py` checks it after its own source type projection, before bundle
+emission. Source readers close per supplier, script caches expire at process exit
+and input pins are rechecked; no new runtime owner is added.
 Its `controller_clear_skeleton_masks` policy follows the pinned
 exporter's omitted layer masks: it removes original mask entries and subtracts
 their native allocation sizes, preserving all other controller fields.

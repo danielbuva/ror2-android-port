@@ -1293,9 +1293,11 @@ def produce(profile_path, profile_sha256, pc, output, codec_path, codec_sha256, 
                 else selected_member["objects"]
             )
             for selected in object_order:
+                record_type_hash = None
                 if "record" in selected:
                     directory, row = packed[selected_member["name"], selected["path_id"]]
                     body = record_extent(directory / "objects.bin", row)
+                    record_type_hash = row.get("native_type_hash")
                     source, identity = selected["type_source"]
                     typ = sources[source][3]["types"][sources[source][4][identity]["type_id"]]
                     if "record_references" in selected:
@@ -1560,6 +1562,8 @@ def produce(profile_path, profile_sha256, pc, output, codec_path, codec_sha256, 
                     receipt.setdefault("managed_schema_inputs", {}).update(inputs)
                 if len(body) != selected["bytes"] or hashlib.sha256(body).hexdigest() != selected["sha256"]:
                     raise ValueError("produced object differs from accepted hash")
+                if record_type_hash is not None and typ["hash"].hex() != record_type_hash:
+                    raise ValueError("produced record native type identity differs")
                 member_records.append(stage.append(selected_member["name"], selected["path_id"], body, typ))
             layout, _ = make_layout(
                 selected_member, member_records, [member["name"] for member in selected_members] if scene else (), engine, include_bodies=False

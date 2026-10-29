@@ -1557,6 +1557,31 @@ class ObjectProducerTests(unittest.TestCase):
             self.assertEqual(P.B.exact(emitted.member("CAB-target.resS"), 16), bytes(8) + b"AUTHORED")
             self.assertEqual(P.B.sha(pc / "source.bundle"), before)
 
+    def test_bundle_checks_record_native_type_after_source_projection(self):
+        for mismatch in (False, True):
+            with self.subTest(mismatch=mismatch), tempfile.TemporaryDirectory() as temporary:
+                root = Path(temporary)
+                pc, path, pack, profile, row, _ = packed_fixture(root)
+                source_index, source_id = profile["objects"][0]["type_source"]
+                source = profile["sources"][source_index]
+                with P.source_member(pc / source["path"], source["member"]) as member:
+                    metadata = P.W.read_serialized(member)
+                obj = next(obj for obj in metadata["objects"] if obj["path_id"] == source_id)
+                native_hash = metadata["types"][obj["type_id"]]["hash"].hex()
+                row["native_type_hash"] = "ff" * 16 if mismatch else native_hash
+                (pack / "index.jsonl").write_text(json.dumps(row) + "\n")
+                receipt = json.loads((pack / "result.json").read_text())
+                receipt["outputs"]["index.jsonl"] = {"bytes": (pack / "index.jsonl").stat().st_size, "sha256": P.B.sha(pack / "index.jsonl")}
+                (pack / "result.json").write_text(json.dumps(receipt))
+                with patch.object(P.W, "codec", return_value=nullcontext(literal_lz4)):
+                    if mismatch:
+                        with self.assertRaisesRegex(ValueError, "native type identity"):
+                            P.produce(path, P.B.sha(path), pc, root / "complete", Path("codec"), "pin", [(pack, P.B.sha(pack / "result.json"))])
+                    else:
+                        self.assertTrue(
+                            P.produce(path, P.B.sha(path), pc, root / "complete", Path("codec"), "pin", [(pack, P.B.sha(pack / "result.json"))])["success"]
+                        )
+
     def test_optional_native_resource_padding_preserves_source_extent(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
