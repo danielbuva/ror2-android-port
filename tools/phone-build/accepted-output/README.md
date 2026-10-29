@@ -1771,6 +1771,24 @@ apply, and changing a streamed member requires resource reconstruction.
 `inactive_scene_object` names an original GameObject whose active flag is cleared;
 it retains the legacy lab's existing group suppression policy.
 
+## Complete Snowy Forest source and spine labs
+
+The opt-in `owner-snowyforest-{source,spine}-lab-lighting-objects.json` profiles
+produce the complete legacy lab files with original reflections/RenderSettings
+and strict native/script identities. All other bodies, external identities and
+script tables match J850. Each lab preserves its own original sky/probe binding;
+local IDs are not shared between variants.
+
+Generate `owner-meshes.json`, `owner-snowyforest-standard-shaders.json` and the
+matching `owner-snowyforest-<variant>-lab-lighting-textures.json` pack. The source
+lab also requires `owner-uncompressed-textures.json`, `owner-rgba-mip-textures.json`,
+`owner-alpha-textures.json` and `owner-snowyforest-postprocess-shaders.json` packs.
+Supply each freshly generated receipt hash to the existing complete-object CLI.
+Shader namespace aliases reuse the qualified programs; no private recipe/body or
+historical output supplies content. Outputs have new complete-file hashes;
+historical exact-file admission and complete phone/runtime qualification remain
+separate.
+
 ## Source bundle manifest
 
 The current `bundle_manifest.py` producer emits a native UnityFS manifest from

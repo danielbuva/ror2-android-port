@@ -6,6 +6,9 @@ record packs with receipt hashes. Existing public mesh/texture/record/shader
 owners generate every pack; no retained run folder or private output is required.
 The accepted-output README lists the complete recipe closure. Generated scene,
 resource and comparison evidence stay ignored; full phone consumption is open.
+Snowy Forest's source/spine lab lighting recipes use the same explicit-input
+contract and existing public mesh, texture and Snowy Shader owners. No additional
+private setup or retained run directory supplies either complete lab file.
 
 ## Shader context record providers
 

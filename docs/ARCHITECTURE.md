@@ -585,6 +585,12 @@ namespaces; streamed records require the same member or resource reconstruction.
 `inactive_scene_object` applies named source activation policy to existing lab groups.
 Readers, output ownership and teardown stay with the object/texture owners; full
 phone/game-runtime admission remains open.
+Snowy Forest's source/spine lab variants use the four
+`owner-snowyforest-{source,spine}-lab-lighting-{objects,textures}.json` recipes
+through these same owners. Existing qualified Snowy Shader packs are reused with
+checked namespace bindings; source reflection/ambient fields and every original
+face/mip are retained. Public setup is in the accepted-output README; all other
+records and native identities remain strict. Full phone consumption remains open.
 The same owner supports the source Alpha8 cohort through
 `recipe/owner-alpha-textures.json`: canonical original bodies/pixels are reused
 with explicit target names, storage extents and unchanged-field admission.
