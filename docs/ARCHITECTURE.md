@@ -52,6 +52,18 @@ reproduction and framed emission. It verifies supplied target/profile/PC/SDK
 inputs without generating independent Android target information. `assemble.py`
 owns hash-bound unsigned APK assembly and required uncompressed/aligned resource
 storage; canonical alignment and owner signing follow separately.
+`player_ui.py` owns current source Menu graph normalization, deterministic local
+IDs, SDK component construction and typed links to the existing player suppliers.
+The optional player-data `--ui-profile` selects its audited source recipe;
+`--ugui-source` supplies the exact SDK's constructor declarations. The parent
+passes its freshly derived registry value. Original type trees and matching
+native class/hash schemas drive bounded record reads; SDK built-in UI uses the
+existing runtime projection. Readers/CLR metadata close at scope exit; new
+outputs and `ui-source/` receipts retain the graph, schemas and resource root IDs.
+Original missing standalone Sprite dependencies are emitted with source geometry
+and decoded mip pixels. No accepted target/cache supplies content. Current Menu
+source production is complete; its two genuine J850 field differences and full
+phone/runtime acceptance remain open.
 `startup_metadata.py` owns public `boot.config` and `unity_app_guid` generation.
 Setup pins the owner's inventory, public PlayerSettings and exact toolchain;
 their hashes and producer version generate relocatable build identifiers.

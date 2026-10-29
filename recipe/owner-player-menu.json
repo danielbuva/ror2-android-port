@@ -1,0 +1,94 @@
+{
+  "schema": "owner-source-menu-v1",
+  "input_id": "6af7ed94619fe1b4346974b4486afa03a8d1625a7820e92da0ff74d57208fe88",
+  "file": "974d3403001904c3d83f41d5f2c3bad4",
+  "source": {
+    "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-base-ui_assets_all_5fb4a28e453c573571102591a1fcff71.bundle",
+    "bytes": 3722877,
+    "sha256": "7a73b50fc657c48e14501e1b7f1840b815bcf48a5e255e7c6373d6ba3fe0ed6b",
+    "member": "CAB-f70ea1e2c52c46b488c162a7fb6206df"
+  },
+  "scripts_source": {
+    "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/calmwater_monoscripts_a69c140580dd1456807433bb923cc5ba.bundle",
+    "bytes": 87323,
+    "sha256": "68aee1b2d2633c3ce1713cc44238025f750d3ae0aa66f42e748d421b19178022",
+    "member": "CAB-29d1a7582c548fe5e49f4c4c7a96e47e"
+  },
+  "root_path_id": -5377355766890441412,
+  "root_name": "Menu",
+  "text_identity": "RoR2:RoR2.UI.HGTextMeshProUGUI",
+  "buttons": [
+    {
+      "name": "GenericMenuButton (Singleplayer)",
+      "token": "TITLE_SINGLEPLAYER",
+      "suffix": " (A)"
+    },
+    {
+      "name": "GenericMenuButton (Quit)",
+      "token": "SUBMENU_QUIT",
+      "suffix": ""
+    }
+  ],
+  "hidden_names": [
+    "FadePanel",
+    "MiscOptionsPanel",
+    "MiscInfo",
+    "SteamBuildLabel (1)",
+    "TextPanel",
+    "PatchNotesPanel",
+    "PublicTestPanel",
+    "GenericGlyphAndDescription",
+    "GenericGlyphAndDescription (3)"
+  ],
+  "enabled_names": [
+    "ButtonPanel (JUICED)"
+  ],
+  "sdk_ui_sources": {
+    "Selectable.cs": {
+      "bytes": 50136,
+      "sha256": "aa2703fa92ae0ec0386e309dcd06c3646c581ccc756f16a7735a19ab8fcb1a30"
+    },
+    "Navigation.cs": {
+      "bytes": 11088,
+      "sha256": "3f5f9ed35844271735eaacc5468bc7bf80e33ba74103313f75d7be0b6fe16a20"
+    },
+    "Button.cs": {
+      "bytes": 6376,
+      "sha256": "e8f00d2c3b759c08408c97c75084e065a2a539662783b7f5835fae5d937e9e26"
+    },
+    "AnimationTriggers.cs": {
+      "bytes": 5967,
+      "sha256": "5684afec6b809a93e2da0d6365e6fd464651de1fc535cda05217ad5b67413a01"
+    }
+  },
+  "texture_profiles": [
+    {
+      "path": "owner-uncompressed-textures.json",
+      "sha256": "e526418b4cf1e5f1903b18a2cb9305c719255724a2bce104d75fb1c0b3f813f5"
+    },
+    {
+      "path": "owner-alpha-textures.json",
+      "sha256": "fa23bc2cdc71234e3a5d4a084519a63bb59c6ef321e790fb964c295c8bd1d51a"
+    },
+    {
+      "path": "owner-rgba-textures.json",
+      "sha256": "76e596c4ec3049e471f292d42b2b623092e05596a1a756be66ff08e73bbe6f96"
+    },
+    {
+      "path": "owner-rgb-textures.json",
+      "sha256": "2c4c1c416f676d09a93f987d1ea9f1ecda46aa279baee5799a196beec59fc4ed"
+    },
+    {
+      "path": "owner-rgba-mip-textures.json",
+      "sha256": "723c4e641349941a172aef28d6a4b23eee2954c5390cd7257a75a54cd0bf66fd"
+    }
+  ],
+  "extra_sources": [
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-base-ui-largesplashes_assets_all_56327e2d08847298e3700f4a245c524f.bundle",
+      "bytes": 1484129,
+      "sha256": "bff1047789490bb835a709c5c813a0dd0a4f78b638e6e67949f7d49390216206",
+      "member": "CAB-bcf7bde6b5741a325ea476ea3f6c3fe9"
+    }
+  ]
+}

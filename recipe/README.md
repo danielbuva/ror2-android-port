@@ -5015,3 +5015,20 @@ configuration, target byte span, game content, SDK implementation or credential
 is embedded. No identity used for ownership, authentication, signing or saved-data
 placement is replaced. Outputs/receipts remain ignored; host qualification is
 recorded under `work/coordination/orchestrator/public-startup-metadata-v2/`.
+
+## Source Menu profile
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-player-menu.json` | `c4b96578385df9882b4253dd37f5eb50e5aadafef423205a358deff966a3361c` |
+
+`owner-player-menu.json` selects minimum original UI/script/dependency members,
+the original prefab root, public English tokens and authored hide/action policies.
+It pins four separately supplied SDK UGUI source files and existing public texture
+recipes. `player_ui.py` derives all component values, geometry, pixels, script
+metadata and references locally; no saved prefab or historical ID map is supplied.
+Manual provenance/privacy/licensing review: the profile contains identifiers,
+source hashes and authored policy only, with no copied game/SDK code, asset body,
+pixel/geometry table, private path, connection value or credential. Outputs and
+receipts remain ignored. Genuine J850 field differences and phone/runtime
+acceptance remain open; evidence: `work/coordination/orchestrator/menu-public-source-v1/`.

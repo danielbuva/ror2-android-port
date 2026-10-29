@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J1255](PORTING_JOURNAL.md#j1255--generate-the-complete-source-menu-through-the-player-data-owner) | 2026-10-29 | Generate the complete source Menu through the player-data owner | 2026-10-29. |
 | [J1254](PORTING_JOURNAL.md#j1254--generate-public-startup-metadata-without-private-build-settings) | 2026-10-29 | Generate public startup metadata without private build settings | 2026-10-29. |
 | [J1253](PORTING_JOURNAL.md#j1253--complete-source-derived-labgeometry-bundle) | 2026-10-28 | Complete source-derived Labgeometry bundle | 2026-10-29. |
 | [J1252](PORTING_JOURNAL.md#j1252--complete-source-derived-commando-bundle) | 2026-10-28 | Complete source-derived Commando bundle | `commando-prefab-lab` is host raw-exact to J850: 75,378 persisted objects, both serialized/resource members and the 87,954,431-byte bundle (SHA-256 `50a6af87…`… |

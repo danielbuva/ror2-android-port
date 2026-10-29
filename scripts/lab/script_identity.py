@@ -775,18 +775,19 @@ class _RegistryTypes:
         walk(("type", assembly, row), "")
         return result
 
-    def script_hash(self, identity, schemas):
+    def script_schema(self, identity, schemas):
+        """Return the source-derived editor transfer tree for a concrete object."""
         assembly, namespace, class_name = identity
         pe = self.load(assembly)
         found = [row for row in pe.net.mdtables.TypeDef.rows if _type_name(row) == (namespace, class_name)]
         if not found:
-            return bytes(16)
+            return None
         if len(found) != 1:
             raise ValueError("ambiguous registry source class")
         row = found[0]
         hierarchy, is_object = self.hierarchy(assembly, row)
         if not is_object or row.Flags.tdAbstract or "`" in class_name:
-            return bytes(16)
+            return None
         if identity in schemas:
             trees = schemas[identity]
             if len({properties_hash(class_name, namespace, assembly, tree, self.native) for tree in trees}) != 1:
@@ -802,6 +803,13 @@ class _RegistryTypes:
             tree = _tree(self.editor_curves(nodes))
         else:
             tree = _tree(self.base + self.custom_fields(hierarchy))
+        return tree
+
+    def script_hash(self, identity, schemas):
+        tree = self.script_schema(identity, schemas)
+        if tree is None:
+            return bytes(16)
+        assembly, namespace, class_name = identity
         return properties_hash(class_name, namespace, assembly, tree, self.native)
 
 

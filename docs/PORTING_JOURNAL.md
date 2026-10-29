@@ -958,3 +958,17 @@ Evidence (ignored): `work/coordination/orchestrator/public-startup-metadata-v2/`
 Host readiness: 692/705 available, 685 raw-exact, two generated metadata, 13 missing.
 Ruff, 21 focused host tests and preflight pass. Complete phone generation,
 installation, launch, data-preserving updates and runtime compatibility remain open.
+
+## J1255 — Generate the complete source Menu through the player-data owner
+
+2026-10-29. Optional `--ui-profile`/`--ugui-source` emits the 591-object Menu
+and its original standalone media using public recipes, original files and SDK data.
+The parent passes its freshly generated registry; no private graph/ID packet is read.
+All type identities/hashes match J850; 589 objects are relationship/field equivalent.
+Current alignment and a retained original store-button Sprite remain genuine
+reference differences, with no nulling override or new acceptance exemption.
+Menu SHA-256: `0bb1050b370ba1d3409da4362e072a920130e0d34da52d94e7a7d13d9a37b601`.
+Evidence (ignored): `work/coordination/orchestrator/menu-public-source-v1/`.
+Guard denials: zero; 72 focused tests, Ruff and preflight pass. All 21 source
+suppliers/1,474 references resolve. Historical readiness stays 692/705 available,
+685 raw-exact, 13 missing; complete phone/runtime/install/update gates remain open.
