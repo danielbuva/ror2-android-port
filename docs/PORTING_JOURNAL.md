@@ -987,3 +987,17 @@ Output SHA-256: `cdf978ee3df648e1f49473087aee5a55e784bab23afc0fe307163fa8ec95aa9
 Evidence (ignored): `work/coordination/orchestrator/stage-context-public-v2/`.
 Host readiness: 693/705 available, 685 raw-exact, 12 missing. Ruff, 88 focused
 host tests and preflight pass; complete phone/runtime/install/update gates remain open.
+
+## J1257 — Integrate resumable public phone installation and updates
+
+2026-10-29. Existing installer/release owners now compose source import, verified
+resumption, foreground progress, signed tool acquisition, local production,
+retained owner signing and Android installation sessions on current main.
+First installation generates `owner-source-output-v1` from complete local
+producer outputs; no private historical replay profile is required.
+All source output pins remain mandatory; legacy J850 metadata policies stay
+restricted to the historical comparison profile. Original files are untouched.
+Canonical synthetic fixture roots preserve strict symbolic-link checks on macOS.
+Evidence (ignored): `work/coordination/orchestrator/installer-integration-v1/`.
+No APK generated or phone used. Host reconstruction remains 693/705; a complete
+public producer plan, device install/update and saved-data survival remain open.

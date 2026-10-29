@@ -48,6 +48,14 @@ try:
     for p in source.rglob("*"):
         if p.is_file():
             bind(p)
+    plan = json.loads((source / "python-native-plan.json").read_text())
+    extra_tools = source / "backend-tools.json"
+    extra = json.loads(extra_tools.read_text()) if extra_tools.exists() else None
+    spec = importlib.util.spec_from_file_location("fixture_staging", source / "stage.py")
+    staging = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(staging)
+    # Refuse before any native/Java/APK build, not at the first phone download.
+    staging.validate_update_network(extra)
     binary = out / "libtoolhost.so"
     run(
         "native-build",
@@ -98,7 +106,6 @@ try:
             target,
         )
         native_files[filename] = target
-    plan = json.loads((source / "python-native-plan.json").read_text())
     for row in plan["natives"]:
         path = (toolroot / "python/usr" if row["root"] == "python" else native) / row["path"]
         if sha(path) != row["sha256"]:
@@ -108,8 +115,6 @@ try:
         native_files[row["target"]] = path
     # Optional caller-supplied native build tools are installed by PackageManager,
     # never executed from writable assets. Every extra input is hash-bound.
-    extra_tools = source / "backend-tools.json"
-    extra = json.loads(extra_tools.read_text()) if extra_tools.exists() else None
     if extra:
         for name, row in extra["natives"].items():
             path = Path(row["path"])
@@ -215,6 +220,7 @@ try:
             copy(p, assets / "python/lib/python3.14" / p.relative_to(toolroot / "python/usr/lib/python3.14"))
     copy(toolroot / "python/usr/lib/python3.14/LICENSE.txt", assets / "notices/Python-LICENSE.txt")
     copy(source / "run_profile.py", assets / "run_profile.py")
+    copy(source / "release-trust.json", assets / "release-trust.json")
     for p in (source / "repo").rglob("*"):
         if p.is_file():
             copy(p, assets / "repo" / p.relative_to(source / "repo"))
@@ -266,6 +272,11 @@ try:
         "-d",
         classes,
         source / "ToolHostActivity.java",
+        source / "OwnerInstaller.java",
+        source / "OwnerUpdateState.java",
+        source / "OwnerBuildService.java",
+        source / "OwnerInputImport.java",
+        source / "OwnerInputSource.java",
     )
     jar = out / "classes.jar"
     with zipfile.ZipFile(jar, "w", zipfile.ZIP_DEFLATED) as z:
@@ -275,10 +286,12 @@ try:
     dex.mkdir()
     run("dex", java, "-cp", source / "d8.jar", "com.android.tools.r8.D8", "--min-api", "24", "--lib", source / "android.jar", "--output", dex, jar)
     unsigned = out / "unsigned.apk"
-    spec = importlib.util.spec_from_file_location("fixture_staging", source / "stage.py")
-    staging = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(staging)
-    staging.tool_manifest(source / "AndroidManifest.xml", out / "AndroidManifest.xml", extra.get("package") if extra else None)
+    staging.tool_manifest(
+        source / "AndroidManifest.xml",
+        out / "AndroidManifest.xml",
+        extra.get("package") if extra else None,
+        game_package=json.loads((source / "release-trust.json").read_text())["application_id"],
+    )
     run("aapt", packaging / "bin/aapt", "package", "-f", "-M", out / "AndroidManifest.xml", "-I", source / "android.jar", "-F", unsigned)
     with zipfile.ZipFile(unsigned, "a", zipfile.ZIP_DEFLATED) as z:
         z.write(dex / "classes.dex", "classes.dex")

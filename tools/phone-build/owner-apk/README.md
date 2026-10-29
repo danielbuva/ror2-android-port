@@ -287,15 +287,18 @@ No existing lab key is shipped or silently selected by this producer.
 
 ## Public release updates
 
-`release.py` owns the current host-qualified release contract and incremental
-cache. The installer owns download, trust-key provisioning, signature verification,
-producer dispatch and PackageInstaller; complete phone updates remain open.
-Release assets are `release.json` and `public-tools.zip`, containing only public
-recipes, producers, installer and permitted toolchain material. Neither asset
-contains an APK, original inputs or game-derived outputs.
+`release.py` owns the incremental cache; `public_release.py` owns publisher
+metadata, signatures and committed-source bundles. `updates.py` owns GitHub
+acquisition, verification and rebuild orchestration; `release_jobs.py` dispatches
+existing source-only producers. Release assets are `release.json`, detached
+`release.sig`, and `public-tools.zip`. The bundle contains reviewed public
+recipes, producer/installer source and toolchain descriptions, never an APK,
+original input, native executable or generated game data. Native tools remain
+in the installed tool host; incompatible tool changes require a newer installer.
 
-`release.json` contains a `release` object and a `signature` object. The release
-fields are `version` (display text), `version_code` (positive Android integer),
+`release.json` contains the release body; `release.sig` contains the detached
+signature metadata. Internally the verifier combines them into the PR #117
+`{release, signature}` envelope. The release fields are `version` (display text), `version_code` (positive Android integer),
 `application_id`, `minimum_installer_version`, `bundle_sha256` (public-tools.zip),
 and `entries`. Each entry key is its relative `apk/` or `payload/` output path;
 its value has `recipe_sha256` and `producer_sha256`. Each hash binds the complete
@@ -333,3 +336,121 @@ Losing the key requires exporting saves and an explicit reinstall/reimport path;
 a replacement key cannot update an existing installation. Never clear game data
 as part of an update. The final alpha identity remains `dev.ror2lab.alpha`;
 current disposable lab packaging retains its separately qualified identity.
+
+
+### Publishing and checking updates
+
+A maintainer provisions the existing publisher public SPKI PEM in the installer's
+`managed-host/release-trust.json` (`keys` maps `key_id` to PEM). The committed
+empty key map deliberately fails closed. Staging accepts an explicit
+`--release-trust` file for a maintainer-provisioned build. A key downloaded with a release is
+never trusted. Configure repository variables `PUBLISHER_KEY_ID`,
+`PUBLISHER_PUBLIC_KEY`, `PUBLIC_RELEASE_PLAN_PATH`, and optional
+`PUBLIC_MINIMUM_INSTALLER_VERSION` (default 2), and the repository secret
+`PUBLISHER_PRIVATE_KEY` with an **existing** matching publisher PEM. Protect the
+`public-release` GitHub environment and version tags. Do not put a private key in
+Git, a recipe, an artifact or a log. This implementation creates/configures no keys.
+
+The installer build also requires the matching Python 3.14 distribution's
+`_socket` and `_ssl` modules in its existing caller-pinned `backend-tools.json`:
+`natives` targets `libpyext__socket.so` and `libpyext__ssl.so` each carry a canonical
+provider `path` and `sha256`; `links` maps
+`python/lib/python3.14/lib-dynload/_socket.cpython-314-aarch64-linux-android.so`
+and the corresponding `_ssl` path to those targets. Missing or mismatched
+providers refuse before compilation. Android's default Java trust manager supplies
+public TLS roots to Python; no trust-all mode or downloaded trust roots are used.
+
+Push an authorized `owner-v<versionCode>` tag to run `public-release.yml`.
+It audits public source, runs synthetic tests, builds a deterministic ZIP from
+committed regular Git blobs only, signs the canonical manifest, verifies the
+result and publishes exactly the three assets above. Dirty working-tree bytes and untracked files are never included; symlinks
+and binary outputs are refused. No release is published by opening a PR.
+The reviewed plan at `PUBLIC_RELEASE_PLAN_PATH` has `schema: 1`, extra public
+`files`, and `entries` mapping each final output to `recipe_files`,
+`producer_files`, and a `job` JSON path. Each closure must include its transitive
+configuration, imports and prerequisite jobs. The builder hashes these closures;
+it does not guess them or turn an incomplete producer inventory into a release.
+See `public_release.py` and synthetic `test_public_release.py` for the exact contract.
+
+On the phone, **Check for updates** obtains GitHub's latest published release,
+verifies its detached signature and package/version/minimum-installer policy,
+and reports changed entries. **Download and rebuild update** verifies the ZIP
+and every indexed member before running any acquired source. Complete outputs
+are reused only when their dependency, original-input and output hashes agree.
+Source-only jobs use the installed Python/native tool host, never a shell or a
+native executable downloaded in the bundle. Failed/interrupted work retains
+completed cache entries and can be retried. Missing producers fail explicitly.
+
+The owner-private `owner-input/update-config.json` selects the existing assembly
+`manifest`, durable `key_directory`, optional `input_hashes` (default
+`input-hashes.json`), named private `bindings`, and optional qualified `drift`
+receipts. Paths stay within that owner directory. The input hash inventory pins
+immutable originals/tools, not generated `work/config/local.json` or
+`work/inventory/files.json`; those two bookkeeping paths are explicitly refused.
+Existing source owners separately validate accepted original-file inventories.
+The private update configuration contains no publisher key.
+Job schema 1 names an existing producer `script`, argument array, complete
+`outputs` map and optional `request`, prerequisite `needs` and named `artifacts`;
+`release_jobs.py` defines substitutions and checks dependency membership.
+Provision legitimate inputs through the existing owner-input flow, not releases.
+
+**Install owner-built update** reuses PR #119's `OwnerInstaller` session owner.
+It checks the actual package, increasing version and retained signing certificate,
+streams/hash-checks the APK, and observes Android's terminal callback while visible.
+Android 12+ requests `USER_ACTION_NOT_REQUIRED` with the required permission;
+Android can still require confirmation. Only successful package-manager readback
+advances `installed-release.json`. Updates never uninstall or clear game data.
+If the owner key is lost, stop: export saves through the game's supported path,
+explicitly reinstall with a new key, then restore saves. There is no automatic
+uninstall or save export. Host tests use synthetic data; phone install/update,
+interruption recovery and save survival remain the local orchestrator's checks.
+
+### Phone-only import and installation
+
+Installer version 2 adds a foreground-service flow: prepare the signed public
+release, choose the owner's PC game directory with Android's folder picker (or
+choose a ZIP), import, then reconstruct and install. Only required files are
+copied to app-private storage. Missing paths and size/hash/version mismatches
+block admission; extra files are reported and left untouched. Nothing from the
+selected folder/archive is uploaded. ZIP paths, duplicates and expanded lengths
+are checked before accepting output; other archive formats must be extracted by
+the owner first. A revoked picker grant requires selecting the source again.
+
+The signed bundle's optional `install_plan` has schema 1, `required_inputs`
+(a bundled JSON with `schema: 1`, `game_version`, and `files` rows containing
+`path`, `bytes`, `sha256`), `workspace_bytes`, `configuration: {bindings: ...}`,
+and eight ordered `stages` (`id`, `title`, `jobs`). Stage IDs are `admission`,
+`staging`, `assembly`, `textures`, `native`, `apk`, `signing`, `install`.
+Every producer and dependency occurs once in a production stage; dependencies
+cannot follow their consumer's stage. Bindings select only admitted original
+files/directories (`.` selects the imported root). Such releases require minimum
+installer version 2. Maintainers must supply a complete reviewed source recipe;
+this feature does not invent missing game producers or supply private replay
+packets. The assembly receipt is generated locally from verified producer outputs,
+not shipped historical target hashes or game bytes.
+
+Before import, the app estimates missing input bytes plus the release's declared
+peak reconstruction workspace, a 5% input margin and a 2 GiB reserve. Existing
+assembly/tool reserve checks still apply. Completed imports and stage results are
+rehash-checked on resume; an incomplete file is restarted, not trusted. Space can
+change while running, so failures retain completed work and report the first
+failing stage. Cancel stops work without deleting original files, completed
+checkpoints, saves or the durable signing key. Retry reuses only verified results.
+
+A foreground notification keeps the operation visible when the activity closes.
+After process death or reboot, open the app and explicitly resume; reboot does
+not launch an installation. The UI shows stage progress, elapsed time and the
+existing thermal supervisor's battery/temperature observations. User pause is
+combined with thermal pause; resume never bypasses cooling, battery-health
+admission or existing cutoffs. Sensor loss is a failure, not permission to run
+unprotected. Successful reconstruction hands off to the existing Android package
+session; Android may request installation consent. Updates keep the same package
+and on-device key and never clear saves. If that key is lost, export saves before
+an explicit uninstall/reinstall; the app refuses to silently replace it.
+
+The legacy J850 comparison profile retains its narrow startup/context regeneration
+policies. The public `owner-source-output-v1` assembly receipt instead requires
+every output to match its complete local producer pins; historical metadata
+exceptions cannot override those pins. Both routes use the same assembler and
+retained signing key. Real phone installation and saved-data survival remain
+acceptance gates.

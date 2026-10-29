@@ -21,8 +21,19 @@ open.
 
 
 The host-qualified [release update contract](../tools/phone-build/owner-apk/README.md#public-release-updates)
-now covers per-entry incremental reuse and existing-key signing. Installer trust
-provisioning, complete phone production and installed-game update retention remain open.
+covers signed public-tool acquisition, per-entry incremental reuse, existing-key
+signing and session installation. Publisher trust and a reviewed complete release
+plan require maintainer provisioning; complete phone production and installed-game
+update/save retention still require device qualification. No APK or game data
+is published by the release workflow.
+The [phone import/stage flow](../tools/phone-build/owner-apk/README.md#phone-only-import-and-installation)
+adds SAF folder/ZIP admission, private resumable copies, foreground checkpoints,
+unchanged thermal supervision and the existing session-install handoff. Public
+recipes bind required originals; assembly hashes are computed on the phone from
+verified source-produced outputs. No PC, Unity, private replay packet or supplied
+game APK is part of this flow. A complete published producer plan and real-phone
+qualification remain release gates, not conclusions from synthetic host tests.
+
 Assessment and implementation evidence: 2026-10-23. **Complete private
 accepted-output reconstruction now works on Android without Unity Editor or game
 compilation.** A pinned delta/frame package plus verified owner PC and SDK inputs

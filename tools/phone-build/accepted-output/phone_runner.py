@@ -167,26 +167,76 @@ def boot_clock():
     return time.clock_gettime(getattr(time, "CLOCK_BOOTTIME", time.CLOCK_MONOTONIC))
 
 
-def run(command, receipt, *, profile="nova", timeout=86400, sensor=read_zones, clock=boot_clock, wait=time.sleep, cancelled=lambda: False):
+def run(
+    command, receipt, *, profile="nova", timeout=86400, sensor=read_zones, clock=boot_clock, wait=time.sleep, cancelled=lambda: False, control=None, status=None
+):
     policy = ThermalDutyCycle(profile)
     started = clock()
     child = family = None
     result = dict(success=False, workers=2)
     pause_clock = Path(str(receipt) + ".pause.json")
+    manual_paused, stopped_since, stopped_seconds = False, None, 0.0
+    control_id = None
+
+    def atomic(path, value):
+        path = Path(path)
+        if path.is_symlink():
+            raise ValueError("supervisor state cannot be a symlink")
+        temporary = path.with_suffix(path.suffix + ".tmp")
+        with temporary.open("w") as stream:
+            json.dump(value, stream, allow_nan=False)
+            stream.write("\n")
+        temporary.replace(path)
+
+    def read_control():
+        nonlocal control_id, manual_paused
+        if control is None or not Path(control).exists():
+            return
+        if Path(control).is_symlink() or Path(control).stat().st_size > 4096:
+            raise ValueError("invalid supervisor control file")
+        value = json.loads(Path(control).read_text())
+        if value.get("id") is None or value.get("action") not in {"pause", "resume", "cancel", "retry"}:
+            raise ValueError("explicit identified pipeline control required")
+        if value["id"] == control_id:
+            return
+        control_id = value["id"]
+        if value["action"] == "cancel":
+            raise InterruptedError("producer cancelled")
+        manual_paused = value["action"] == "pause"
 
     def write_clock():
         # Same clock and wire contract as owner-code/native.py::wait_active.
-        value = dict(paused_seconds=policy.pause_seconds, paused_at=policy.since)
-        temporary = pause_clock.with_suffix(".tmp")
-        temporary.write_text(json.dumps(value) + "\n")
-        temporary.replace(pause_clock)
+        value = dict(paused_seconds=stopped_seconds, paused_at=stopped_since)
+        atomic(pause_clock, value)
 
+    def report(zones, state):
+        if status is not None:
+            value = dict(
+                status=state,
+                manual_paused=manual_paused,
+                thermal_paused=policy.paused,
+                elapsed_seconds=clock() - started,
+                updated_at=time.time(),
+                control_id=control_id,
+                zones={name: {"kind": kind, "celsius": value} for name, (kind, value) in zones.items()},
+            )
+            for kind in ("cpu", "gpu", "battery", "skin"):
+                values = [value for observed, value in zones.values() if observed == kind]
+                value[kind + "_celsius"] = max(values) if values else None
+            value.update(policy.receipt(clock()))
+            if "error" in result:
+                value["error"] = result["error"]
+            atomic(status, value)
+
+    zones = {}
     try:
         if not math.isfinite(timeout) or timeout <= 0:
             raise ValueError("positive finite wall deadline required")
         if cancelled():
             raise InterruptedError("producer cancelled")
-        policy.observe(sensor(), clock(), admission=True)
+        read_control()
+        zones = sensor()
+        policy.observe(zones, clock(), admission=True)
         write_clock()
         cpus = efficiency_cpus()
         result["affinity_cpus"] = sorted(cpus)
@@ -202,18 +252,28 @@ def run(command, receipt, *, profile="nova", timeout=86400, sensor=read_zones, c
             tick = clock()
             if cancelled():
                 raise InterruptedError("producer cancelled")
+            read_control()
             if tick - started > timeout:
                 raise TimeoutError("producer wall deadline")
-            action = policy.observe(sensor(), tick)
+            zones = sensor()
+            policy.observe(zones, tick)
             if clock() - tick > 1:
                 raise RuntimeError("thermal sensor read above 1 s")
             family.discover()
-            if action is not None:
+            should_stop = policy.paused or manual_paused
+            if should_stop and stopped_since is None:
+                stopped_since = tick
                 write_clock()
-                family.send(action)
-            # Refresh STOP for independently sessioned descendants while paused.
-            elif policy.paused:
                 family.send(signal.SIGSTOP)
+            elif not should_stop and stopped_since is not None:
+                stopped_seconds += tick - stopped_since
+                stopped_since = None
+                write_clock()
+                family.send(signal.SIGCONT)
+            # Refresh STOP for independently sessioned descendants while paused.
+            elif should_stop:
+                family.send(signal.SIGSTOP)
+            report(zones, "paused" if should_stop else "running")
             if child.poll() is not None:
                 result["returncode"] = child.returncode
                 if child.returncode:
@@ -232,6 +292,7 @@ def run(command, receipt, *, profile="nova", timeout=86400, sensor=read_zones, c
             except BaseException as error:
                 result.update(success=False, cleanup_error=str(error))
         result.update(policy.receipt(clock()), seconds=clock() - started)
+        report(zones, "complete" if result["success"] else "cancelled" if result.get("error") == "producer cancelled" else "failed")
         Path(receipt).write_text(json.dumps(result, indent=2) + "\n")
     return result
 
@@ -241,6 +302,8 @@ def main():
     parser.add_argument("--profile", choices=("nova", "thor"), default="nova")
     parser.add_argument("--receipt", required=True)
     parser.add_argument("--timeout", type=float, default=86400)
+    parser.add_argument("--control", help="private atomic pause/resume/cancel command JSON")
+    parser.add_argument("--status", help="private live telemetry JSON for the installer")
     parser.add_argument("command", nargs=argparse.REMAINDER)
     args = parser.parse_args()
     command = args.command[1:] if args.command[:1] == ["--"] else args.command
@@ -249,7 +312,20 @@ def main():
     stopped = []
     for number in (signal.SIGTERM, signal.SIGINT, signal.SIGHUP):
         signal.signal(number, lambda number, frame: stopped.append(number))
-    return 0 if run(command, args.receipt, profile=args.profile, timeout=args.timeout, clock=boot_clock, cancelled=lambda: bool(stopped))["success"] else 1
+    return (
+        0
+        if run(
+            command,
+            args.receipt,
+            profile=args.profile,
+            timeout=args.timeout,
+            clock=boot_clock,
+            cancelled=lambda: bool(stopped),
+            control=args.control,
+            status=args.status,
+        )["success"]
+        else 1
+    )
 
 
 if __name__ == "__main__":

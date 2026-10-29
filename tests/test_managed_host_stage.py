@@ -27,7 +27,7 @@ class ManagedHostStageTests(unittest.TestCase):
             source_head="authored fixture", public_profile_source_hashes={"source.py": hashlib.sha256((self.profile / "source.py").read_bytes()).hexdigest()}
         )
         self.sdk = self.root / "sdk"
-        for name in ("platforms/android-30/android.jar", "build-tools/34.0.0/lib/d8.jar", "build-tools/34.0.0/lib/apksigner.jar"):
+        for name in ("platforms/android-33/android.jar", "build-tools/34.0.0/lib/d8.jar", "build-tools/34.0.0/lib/apksigner.jar"):
             path = self.sdk / name
             path.parent.mkdir(exist_ok=True, parents=True)
             path.write_bytes(b"authored jar placeholder; never executed")
@@ -44,6 +44,20 @@ class ManagedHostStageTests(unittest.TestCase):
         for name, expected in result["files"].items():
             self.assertEqual(hashlib.sha256((self.destination / name).read_bytes()).hexdigest(), expected)
         self.assertEqual(json.loads((self.destination / "stage-receipt.json").read_text()), result)
+        for name in (
+            "OwnerInstaller.java",
+            "OwnerUpdateState.java",
+            "OwnerBuildService.java",
+            "OwnerInputImport.java",
+            "OwnerInputSource.java",
+            "release-trust.json",
+        ):
+            self.assertIn(name, result["files"])
+        for name in ("release.py", "updates.py", "public_release.py", "release_jobs.py", "game_import.py", "install_flow.py", "install_inputs.py"):
+            self.assertIn("repo/tools/phone-build/owner-apk/" + name, result["files"])
+        trust = json.loads((self.destination / "release-trust.json").read_text())
+        self.assertEqual(trust["keys"], {})
+        self.assertEqual(trust["application_id"], "dev.ror2lab.alpha")
 
     def test_public_source_drift_refuses_before_creating_output(self):
         (self.profile / "source.py").write_bytes(b"unexpected source\n")
@@ -94,12 +108,66 @@ class ManagedHostStageTests(unittest.TestCase):
         self.assertEqual(provider.attrib[android + "exported"], "false")
         self.assertEqual(provider.attrib[android + "grantUriPermissions"], "true")
         self.assertEqual(source.read_bytes(), before)
-        with self.assertRaisesRegex(ValueError, "separate lab tool"):
-            stage.tool_manifest(source, self.root / "refused.xml", "dev.ror2lab.arm64")
+        receiver = value.find("application/receiver")
+        self.assertEqual(receiver.attrib[android + "name"], "dev.ror2lab.phonebuildhostfixture.OwnerInstaller$Result")
+        self.assertEqual(receiver.attrib[android + "exported"], "false")
+        service = value.find("application/service")
+        self.assertEqual(service.attrib[android + "name"], "dev.ror2lab.phonebuildhostfixture.OwnerBuildService")
+        self.assertEqual(service.attrib[android + "exported"], "false")
+        self.assertEqual(service.attrib[android + "stopWithTask"], "false")
+        permissions = {node.attrib[android + "name"] for node in value.findall("uses-permission")}
+        self.assertIn("android.permission.UPDATE_PACKAGES_WITHOUT_USER_ACTION", permissions)
+        self.assertIn("dev.ror2lab.alpha", {node.attrib[android + "name"] for node in value.findall("queries/package")})
+        self.assertNotIn("android.permission.QUERY_ALL_PACKAGES", permissions)
+        for package in ("dev.ror2lab.arm64", "dev.ror2lab.alpha"):
+            with self.assertRaisesRegex(ValueError, "separate lab tool"):
+                stage.tool_manifest(source, self.root / "refused.xml", package)
         self.assertFalse((self.root / "refused.xml").exists())
+
+    def test_manifest_queries_only_configured_game_without_broad_visibility(self):
+        output = self.root / "configured-manifest.xml"
+        stage.tool_manifest(stage.SOURCE / "AndroidManifest.xml", output, "dev.ror2lab.authoredtool", game_package="example.authored.game")
+        value = ET.parse(output).getroot()
+        android = "{http://schemas.android.com/apk/res/android}"
+        self.assertEqual([node.attrib[android + "name"] for node in value.findall("queries/package")], ["example.authored.game"])
+        with self.assertRaisesRegex(ValueError, "separate lab tool"):
+            stage.tool_manifest(stage.SOURCE / "AndroidManifest.xml", output, "dev.ror2lab.authoredtool", game_package="dev.ror2lab.authoredtool")
+
+    def test_explicit_build_time_public_trust_is_staged_not_downloaded(self):
+        trust = self.root / "public-trust.json"
+        value = {"repository": "example/repository", "application_id": "dev.ror2lab.alpha", "keys": {"test": "PUBLIC KEY FIXTURE ONLY"}}
+        trust.write_text(json.dumps(value))
+        result = stage.stage(self.profile, self.sdk, self.destination, root=self.root, release_trust=trust)
+        self.assertEqual(json.loads((self.destination / "release-trust.json").read_text()), value)
+        self.assertEqual(result["files"]["release-trust.json"], hashlib.sha256(trust.read_bytes()).hexdigest())
 
 
 class ManagedHostMetadataTests(unittest.TestCase):
+    def test_network_extensions_are_explicit_pinned_inputs_before_any_build(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary).resolve()
+            extra = {"natives": {}, "links": {}}
+            for target, link in stage.UPDATE_NETWORK_MODULES.items():
+                path = root / Path(link).name
+                path.write_bytes(b"authored module placeholder; never executed")
+                extra["natives"][target] = {"path": str(path), "sha256": hashlib.sha256(path.read_bytes()).hexdigest()}
+                extra["links"][link] = target
+            stage.validate_update_network(extra)
+            for missing in (None, {"natives": {}, "links": {}}):
+                with self.assertRaisesRegex(ValueError, "Installer HTTPS requires"):
+                    stage.validate_update_network(missing)
+            target, link = next(iter(stage.UPDATE_NETWORK_MODULES.items()))
+            extra["links"][link] = "wrong.so"
+            with self.assertRaisesRegex(ValueError, "Python link"):
+                stage.validate_update_network(extra)
+            extra["links"][link] = target
+            Path(extra["natives"][target]["path"]).write_bytes(b"drift")
+            with self.assertRaisesRegex(ValueError, "provider drift"):
+                stage.validate_update_network(extra)
+        builder = (stage.SOURCE / "build_fixture.py").read_text()
+        self.assertLess(builder.index("staging.validate_update_network(extra)"), builder.index('"native-build"'))
+        self.assertIn('plan["links"].update(extra["links"])', builder)
+
     def test_supplied_native_manifest_loads_and_rejects_escape_before_staging(self):
         metadata = stage.load_metadata()
         self.assertTrue(metadata["public_profile_source_hashes"])

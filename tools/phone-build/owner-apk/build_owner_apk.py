@@ -11,6 +11,7 @@ import importlib.util
 import json
 import os
 from pathlib import Path
+import re
 import secrets
 import shutil
 import struct
@@ -173,16 +174,71 @@ def explain_drift(pins, row):
     return evidence
 
 
+def validate_source_payload(names, sizes=None):
+    """Match the existing Android bootstrap's payload bounds before building."""
+    payload = [name for name in names if name.startswith("payload/")]
+    if not 1 <= len(payload) <= 512 or any(not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9_.-]{0,179}", name[8:]) for name in payload):
+        raise ValueError("source payload must match Android bootstrap names/count")
+    if sizes is not None and (any(sizes[name] > 2 * 1024**3 - 1 for name in payload) or sum(sizes[name] for name in payload) > 4 * 1024**3):
+        raise ValueError("source payload exceeds Android bootstrap size bounds")
+
+
+def assembly_profile(request):
+    """Accept legacy qualification profiles or locally hashed source-only output.
+
+    The latter is a production receipt, not a claim of byte parity with a
+    historical game. The signed release dispatcher owns provenance and coverage.
+    """
+    expected = request["manifest_sha256"]
+    path = Path(request["manifest"])
+    if expected == PROFILE:
+        return PACKET.profile(path, PROFILE)[1]
+    if not isinstance(expected, str) or len(expected) != 64 or any(c not in "0123456789abcdef" for c in expected) or sha(path) != expected:
+        raise ValueError("source assembly profile pin differs")
+    value = json.loads(path.read_text())
+    if not isinstance(value, dict) or set(value) != {"schema", "release_sha256", "targets"} or value["schema"] != "owner-source-output-v1":
+        raise ValueError("unsupported owner APK request/profile")
+    digest = value["release_sha256"]
+    if not isinstance(digest, str) or len(digest) != 64 or any(c not in "0123456789abcdef" for c in digest):
+        raise ValueError("signed release identity required")
+    if not isinstance(value["targets"], list) or not value["targets"] or request.get("drift"):
+        raise ValueError("nonempty source output receipt required; no historical drift")
+    names = set()
+    for row in value["targets"]:
+        if not isinstance(row, dict) or set(row) != {"path", "bytes", "sha256"}:
+            raise ValueError("explicit source output pins required")
+        name, digest = row["path"], row["sha256"]
+        if not isinstance(name, str) or not name.startswith(("apk/", "payload/")) or "\\" in name or ":" in name or any(ord(c) < 32 for c in name):
+            raise ValueError("canonical source output path required")
+        PACKET.safe(Path("."), name)
+        if (
+            name in names
+            or type(row["bytes"]) is not int
+            or row["bytes"] < 0
+            or not isinstance(digest, str)
+            or len(digest) != 64
+            or any(c not in "0123456789abcdef" for c in digest)
+        ):
+            raise ValueError("invalid/duplicate source output pin")
+        names.add(name)
+    validate_source_payload(names, {row["path"]: row["bytes"] for row in value["targets"]})
+    sdk = module("source_assembly_sdk", SOURCE.parent / "accepted-output/sdk_package.py")
+    required = {"apk/" + name for name in CODE_ENTRIES | sdk.SDK_ENTRIES}
+    if not required <= names or set(code_paths(request)) != CODE_ENTRIES | sdk.SDK_ENTRIES:
+        raise ValueError("source-only assembly requires complete code and SDK cohort")
+    return value
+
+
 def check(request):
     """Inventory final assembly inputs; byte equality never establishes provenance."""
-    if request["manifest_sha256"] != PROFILE:
-        raise ValueError("unsupported owner APK request/profile")
-    _, profile = PACKET.profile(Path(request["manifest"]), PROFILE)
+    profile = assembly_profile(request)
     code = code_paths(request)
     drift = request.get("drift", {})
     if not isinstance(drift, dict):
         raise ValueError("drift must map content target paths to pinned proofs")
     targets = Path(request["targets"]).resolve()
+    if request["manifest_sha256"] != PROFILE and {"startup_metadata", "stage_contexts"} & request.keys():
+        raise ValueError("source assembly requires exact output pins without historical metadata policies")
     startup = {}
     if "startup_metadata" in request:
         supplied = request["startup_metadata"]
@@ -234,7 +290,7 @@ def check(request):
             else:
                 row.update(bytes=path.stat().st_size, sha256=sha(path))
                 equal = row["bytes"] == target["bytes"] and row["sha256"] == target["sha256"]
-                row.update(status="ready" if produced or equal else "mismatch", target_equal=equal)
+                row.update(status="ready" if equal or (produced and request["manifest_sha256"] == PROFILE) else "mismatch", target_equal=equal)
                 if name in startup:
                     item = startup[name]
                     if (row["bytes"], row["sha256"]) != (item["bytes"], item["sha256"]):
@@ -295,7 +351,7 @@ def sign(request_path, output):
         raise ValueError("canonical durable key directory separate from build output required")
     if shutil.disk_usage(output.parent).free < 2 * inputs["unsigned"].stat().st_size + 2 * 1024**3:
         raise RuntimeError("owner signing storage reserve unavailable")
-    keys.mkdir(mode=0o700, exist_ok=True)
+    keys.mkdir(mode=0o700, parents=True, exist_ok=True)
     if keys.stat().st_mode & 0o077:
         raise ValueError("owner key directory must be private")
     key, password = keys / "owner.p12", keys / "password"
@@ -407,7 +463,7 @@ def sign(request_path, output):
 def build(request_path, output):
     request = json.loads(Path(request_path).read_text())
     fields = {"manifest", "manifest_sha256", "targets", "frontend", "java", "android_jar", "d8_jar", "wire_helper"}
-    if set(request) - {"version_code", "code", "javac", "drift", "startup_metadata", "stage_contexts"} != fields or request["manifest_sha256"] != PROFILE:
+    if set(request) - {"version_code", "application_id", "code", "javac", "drift", "startup_metadata", "stage_contexts"} != fields:
         raise ValueError("unsupported owner APK request/profile")
     code = code_paths(request)
     version_code = request.get("version_code")
@@ -425,7 +481,7 @@ def build(request_path, output):
     result = {
         "schema": 1,
         "success": False,
-        "profile": PROFILE,
+        "profile": request["manifest_sha256"],
         "installs": 0,
         "editor_actions": 0,
         "game_compilations": 0,
@@ -438,7 +494,7 @@ def build(request_path, output):
             raise ValueError("owner APK inputs incomplete; see readiness.json for every blocked entry")
         code = code_sources(request)
         roots = {key: path.resolve(strict=True) for key, path in roots.items()}
-        _, profile = PACKET.profile(roots["manifest"], PROFILE)
+        profile = assembly_profile(request)
         if sha(roots["frontend"] / "background.png") != ART:
             raise ValueError("approved launcher art pin differs")
         wire = module("_owner_wire", roots["wire_helper"])
@@ -519,10 +575,14 @@ def build(request_path, output):
         manifest_bytes = manifest_source.read_bytes()
         if "AndroidManifest.xml" in code and hashlib.sha256(manifest_bytes).hexdigest() != code["AndroidManifest.xml"]["sha256"]:
             raise ValueError("owner APK source bytes differ")
-        patched = MANIFEST.patch(manifest_bytes, wire, version_code=version_code)
+        patched = MANIFEST.patch(manifest_bytes, wire, version_code=version_code, application_id=request.get("application_id"))
         (output / "AndroidManifest.xml").write_bytes(patched)
         payload = [row for name, row in content.items() if name.startswith("payload/")]
-        index = {"schema": 1, "profile": PROFILE, "files": [{"name": r["path"][8:], "bytes": r["bytes"], "sha256": r["sha256"]} for r in payload]}
+        index = {
+            "schema": 1,
+            "profile": request["manifest_sha256"],
+            "files": [{"name": r["path"][8:], "bytes": r["bytes"], "sha256": r["sha256"]} for r in payload],
+        }
         index_bytes = (json.dumps(index, sort_keys=True, separators=(",", ":")) + "\n").encode()
         next_dex = "classes" + str(1 + sum(n.endswith(".dex") and n.startswith("classes") for n in apk_rows)) + ".dex"
         if next_dex in apk_rows:
@@ -608,6 +668,7 @@ def build(request_path, output):
             signed=False,
             device_qualified=False,
             requested_version_code=version_code,
+            requested_application_id=request.get("application_id"),
         )
         return result
     except Exception as error:
