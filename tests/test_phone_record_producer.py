@@ -255,6 +255,23 @@ class AnimationProducerTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "PlayableDirector"):
             A.transform_generic(body, 91, {"director_exposed_names": True}, schema)
 
+    def test_director_import_adds_null_track_relationships_after_pointer_relocation(self):
+        pointer = lambda name: F.node(name, children=[F.node("m_FileID", 4, kind="int"), F.node("m_PathID", 8, kind="SInt64")])
+        entry = F.node("data", children=[pointer("key"), pointer("value")])
+        schema = F.node("Base", children=[F.node("prefix", 4), F.array("m_SceneBindings", entry), F.node("suffix", 4)])
+        bindings = [struct.pack("<iqiq", 2, -91, 0, 54), struct.pack("<iqiq", 3, 77, 0, 0)]
+        body = struct.pack("<II", 0x12345678, 2) + b"".join(bindings) + struct.pack("<I", 0x87654321)
+        policy = {
+            "references": [{"offset": 8, "from": [2, -91], "to": [1, 101]}],
+            "director_unbound_tracks": [{"index": 0, "key": [1, 103]}, {"index": 2, "key": [1, 104]}],
+        }
+        made = A.transform_generic(body, 320, policy, schema)
+        expected = struct.pack("<II", 0x12345678, 4) + struct.pack("<iqiq", 1, 103, 0, 0) + struct.pack("<iqiq", 1, 101, 0, 54)
+        expected += struct.pack("<iqiq", 1, 104, 0, 0) + bindings[1] + struct.pack("<I", 0x87654321)
+        self.assertEqual(expected, made)
+        with self.assertRaisesRegex(ValueError, "PlayableDirector"):
+            A.transform_generic(body, 91, policy, schema)
+
     def test_empty_dense_metadata_uses_original_clip_stop_and_rate(self):
         body, schema = layout_fixture()
         _, spans = A.fields(body, schema)

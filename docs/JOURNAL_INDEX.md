@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J1261](PORTING_JOURNAL.md#j1261--produce-complete-original-lighting-scene-alternatives) | 2026-10-29 | Produce complete original-lighting scene alternatives | 2026-10-29 UTC. |
 | [J1260](PORTING_JOURNAL.md#j1260--retain-original-baked-hdr-face-and-mip-chains) | 2026-10-29 | Retain original baked HDR face and mip chains | 2026-10-29 UTC. |
 | [J1259](PORTING_JOURNAL.md#j1259--integrate-the-synthetic-phone-update-acceptance-runner) | 2026-10-29 | Integrate the synthetic phone update acceptance runner | 2026-10-29. |
 | [J1258](PORTING_JOURNAL.md#j1258--integrate-owned-alpha-updates-rollback-and-profile-retention) | 2026-10-29 | Integrate owned alpha updates, rollback and profile retention | 2026-10-29. |

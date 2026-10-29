@@ -5075,3 +5075,43 @@ TextureConverter/ExrWriter informs face/chain ownership; its exporter does not
 regenerate baked lighting. The operation consumes no codec or private fixture;
 all generated packs, APKs and raw observations stay ignored. Native BC6H support
 must be established before selecting this profile on another device.
+
+## Complete original-lighting scene alternatives audit (2026-10-29)
+
+| Recipe | Scope | Tracked information | Boundaries | Owner and evidence |
+| --- | --- | --- | --- | --- |
+| `owner-promovoidsurvivor-source-lighting-objects.json` | Complete source lighting scene | Original selectors, checked relationships, public policy and hashes. | No body/type/pixel/program literals or private inputs; audit below, 2026-10-29. | `object_produce.py`; J1261 host complete-file qualification, phone/runtime gate open. |
+| `owner-promovoidsurvivor-source-lighting-textures.json` | Three original BC6H reflection chains | Original selectors, checked relationships, public policy and hashes. | No body/type/pixel/program literals or private inputs; audit below, 2026-10-29. | `texture_produce.py`; J1261 host complete-file qualification, phone/runtime gate open. |
+| `owner-promovoidsurvivor-standard-shaders.json` | Original Standard Shader | Original selectors, checked relationships, public policy and hashes. | No body/type/pixel/program literals or private inputs; audit below, 2026-10-29. | `payload_shader_records.py`; J1261 host complete-file qualification, phone/runtime gate open. |
+| `owner-promovoidsurvivor-postprocess-shaders.json` | Original post-processing Shaders | Original selectors, checked relationships, public policy and hashes. | No body/type/pixel/program literals or private inputs; audit below, 2026-10-29. | `payload_shader_records.py`; J1261 host complete-file qualification, phone/runtime gate open. |
+| `owner-snowyforest-source-lighting-objects.json` | Complete source lighting scene | Original selectors, checked relationships, public policy and hashes. | No body/type/pixel/program literals or private inputs; audit below, 2026-10-29. | `object_produce.py`; J1261 host complete-file qualification, phone/runtime gate open. |
+| `owner-snowyforest-source-lighting-textures.json` | Three original BC6H reflection chains | Original selectors, checked relationships, public policy and hashes. | No body/type/pixel/program literals or private inputs; audit below, 2026-10-29. | `texture_produce.py`; J1261 host complete-file qualification, phone/runtime gate open. |
+| `owner-snowyforest-standard-shaders.json` | Original Standard Shader | Original selectors, checked relationships, public policy and hashes. | No body/type/pixel/program literals or private inputs; audit below, 2026-10-29. | `payload_shader_records.py`; J1261 host complete-file qualification, phone/runtime gate open. |
+| `owner-snowyforest-postprocess-shaders.json` | Original post-processing Shaders | Original selectors, checked relationships, public policy and hashes. | No body/type/pixel/program literals or private inputs; audit below, 2026-10-29. | `payload_shader_records.py`; J1261 host complete-file qualification, phone/runtime gate open. |
+| `owner-promovoidsurvivor-timeline-records.json` | Complete imported Director record | Original selectors, binding identities, authored null relationships and hashes. | No curve/pose/event/body literal or private inputs; audit below, 2026-10-29. | `record_produce.py`; J1261 full-file host qualification, phone/runtime gate open. |
+
+J1261: `owner-promovoidsurvivor-source-lighting-objects.json` and
+`owner-snowyforest-source-lighting-objects.json` select complete source records,
+types, hash expectations and minimum relocated relationships. Their companion
+`source-lighting-textures`, `standard-shaders` and `postprocess-shaders` profiles
+select original reflections and existing source shader transformations. Promo's
+`owner-promovoidsurvivor-timeline-records.json` additionally declares imported
+unbound track relationships; null bindings introduce no animation/event data.
+All other required packs use existing public mesh, texture and animation recipes;
+producer/recipe closure is listed in the accepted-output README.
+
+Provenance, privacy, licensing and sensitive-content audit: all nine new profiles
+contain source selectors, identifiers, field extents, reconstruction policy and
+hashes only. The complete object profiles contain no floating-point literals or
+long encoded strings. They contain no pixels, geometry/curve/coefficient arrays,
+serialized body/type templates, proprietary implementation, SDK bytes, private
+paths/settings, device/account identifiers, credentials or signing material.
+Original reflection and ambient data are read from legitimate game records.
+All producer inputs are public recipes, the owner's installation, permitted SDK
+and pinned public tooling; every required source-pack profile is published.
+Guarded complete-file production denies target bundles, exports and preparation
+captures. Independent comparison checks every object/type, all resource bytes
+and native references. Native BC6H is an explicit device capability gate; full
+game-runtime qualification and historical raw-exact admission remain open.
+Existing source/tool licensing applies; no redistribution, ownership,
+authentication or entitlement success is granted. Generated outputs stay ignored.

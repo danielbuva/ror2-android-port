@@ -1085,6 +1085,21 @@ class ObjectProducerTests(unittest.TestCase):
                     P.produce(path, P.B.sha(path), pc, root / "failed", Path("codec"), "pin", sdk=sdk)
                 self.assertFalse(json.loads((root / "failed/result.json").read_text())["success"])
 
+    def test_fieldless_script_source_cannot_reidentify_a_component_with_payload(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            pc, path, profile, sdk, _, _, _, derived, _, _ = managed_fixture(root)
+            selected = next(row for row in profile["objects"] if row["path_id"] == -7)
+            selected["fieldless_script_source"] = [0, 51]
+            path.write_text(json.dumps(profile))
+            helper = Mock(properties_hash=Mock(return_value=derived))
+            real_module = P.module
+            with (
+                patch.object(P, "module", side_effect=lambda name, location=None: helper if name == "script_identity" else real_module(name, location)),
+                self.assertRaisesRegex(ValueError, "empty-name base component"),
+            ):
+                P.produce(path, P.B.sha(path), pc, root / "failed", Path("codec"), "pin", sdk=sdk)
+
     def test_original_behaviour_disable_preserves_all_other_emitted_bytes(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)

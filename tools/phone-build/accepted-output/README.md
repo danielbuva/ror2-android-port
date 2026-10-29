@@ -406,6 +406,14 @@ and that full bundle are host byte-exact; phone/runtime gates remain open.
 
 ## Produce meshes directly from original PC bundles
 
+The generic `record_produce.py` Director transform also accepts
+`director_unbound_tracks: [{"index": POSITION, "key": [FILE_ID, PATH_ID]}]`.
+These minimum imported-track relationships add null bindings after the existing
+`references` relocation; positions address the resulting binding list in ascending
+order. Existing source bindings and playback state remain intact. This operation
+requires an original PlayableDirector schema and supplies no Timeline parameters
+or serialized binding-body literals. Complete-scene qualification remains separate.
+
 `mesh_produce.py`, `unity_bundle.py` and `unity_mesh.py` own current experimental
 PC-input-only mesh production. They use Python 3.11+ standard-library modules
 on the host and Android, with no Editor, UnityPy, SDK or target-content input:
@@ -1660,3 +1668,37 @@ All type identities/hashes match J850; two genuine differences remain explicit:
 current SubmenuLegend alignment and the retained original store-button Sprite
 where J850 has null. This producer does not exempt either difference from final
 compatibility review, qualify a phone run or increase the raw-exact count.
+
+## Complete original-lighting scene alternatives
+
+The opt-in profiles `owner-promovoidsurvivor-source-lighting-objects.json` and
+`owner-snowyforest-source-lighting-objects.json` produce complete scene files
+through `object_produce.py`. Their four changed records preserve the original
+three BC6H reflection chains and RenderSettings; every other object body, all
+native/script metadata, script tables and external identities match J850.
+Native BC6H support is required. Complete phone production and game-runtime
+qualification remain open; historical raw-exact admission does not accept these
+new file hashes. The explicit source-output assembly route can pin source
+artifacts once its remaining complete input set is available.
+
+Generate the following packs from the user's game/SDK inputs, then supply each
+pack directory and its freshly generated receipt hash using `--record-pack`.
+No retained packet, historical bundle or private generated file is an input.
+
+| Producer | Shared public recipe |
+| --- | --- |
+| `mesh_produce.py` | `owner-meshes.json` |
+| `texture_produce.py` | `owner-uncompressed-textures.json`, `owner-rgba-mip-textures.json`, `owner-alpha-textures.json` |
+| `record_produce.py` | `owner-animation-clips.json` |
+| `texture_produce.py` | Per-scene `owner-<stage>-source-lighting-textures.json` |
+| `payload_shader_records.py` | Per-scene `owner-<stage>-standard-shaders.json` and `owner-<stage>-postprocess-shaders.json` |
+| `record_produce.py` | Promo's `owner-promovoidsurvivor-timeline-records.json` |
+
+The existing producer help documents codec, permitted SDK and pinned public
+AssetRipper source inputs. Full scene production additionally consumes the
+object profile, legitimate installation, SDK and canonical bundle codec, each
+with its explicit hash. Profile `record` hashes identify the required packs.
+`fieldless_script_source: [source_index, path_id]` derives a fieldless component's
+metadata identity from its original MonoScript, using the existing fieldless
+schema/SDK checks. It addresses Snowy's imported empty component without
+changing its serialized body. Other component layouts are rejected.
