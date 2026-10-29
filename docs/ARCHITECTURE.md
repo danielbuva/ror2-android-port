@@ -70,6 +70,13 @@ Wispgraveyard, Sky Meadow, Solusweb, Ancient Loft, AI Test and Testscene slices.
 It also owns the retained Barrier and three Goldshores payloads, the complete
 Wispgraveyard source-scene variant and the unchanged original Windows
 comparison-bundle copy.
+Its optional `obj-standard-lambert-linear` material policy delegates to
+`obj_material.py`: original Mesh names, selected SDK Shader declarations and
+SDK FBX static defaults determine the material. Setup requires separately pinned
+SDK builtin-extra and FBX-library inputs. Bounded static initializer propagation
+uses `phone_registry.MachO` with explicit dylib admission; it executes no SDK
+code and retains no native state. Output is a normal object body consumed by
+the existing bundle writer. Complete bundle and phone gates remain separate.
 Audited profiles `recipe/owner-pickup-objects.json`,
 `recipe/owner-death-effect-objects.json`,
 `recipe/owner-teleport-material-objects.json`, `recipe/owner-objective-ui-objects.json`,

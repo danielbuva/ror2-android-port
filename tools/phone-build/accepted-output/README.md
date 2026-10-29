@@ -134,6 +134,16 @@ This optional CLR policy needs the `dnfile`/`pefile` dependencies pinned in
 `tools/lab-requirements.txt`; invoke it from that configured Python environment
 without `-S`. Other object policies retain their existing stdlib-only path.
 
+`object_produce.py` also has an experimental `DefaultMaterial` selection with
+`model_import: "obj-standard-lambert-linear"`. It requires `model_mesh_source`,
+`sdk_shader_path_id` and pinned `sdk_source` / `fbx_source` paths relative to the
+explicit SDK root. `obj_material.py` reads Standard property declarations and
+the FBX library's named static defaults without loading native code. This
+attribute-only OBJ policy assumes opaque Lambert shading and linear color;
+it does not accept arbitrary authored model material parameters. Stage
+`obj_material.py` and `scripts/lab/phone_registry.py` with the existing producer
+dependencies. No target material body or property-value table is an input.
+
 `object_produce.py` currently qualifies the complete pickup-droplet and
 player-death-effect bundles from original PC records. The audited recipe contains original selectors, checked
 PPtr relationships, destination identities/dependencies and comparison hashes.

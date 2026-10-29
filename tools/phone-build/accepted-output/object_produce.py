@@ -1097,6 +1097,33 @@ def default_material(selected, sources, sdk, output):
         definition = metadata["types"][row["type_id"]]
         stream.seek(metadata["data_offset"] + row["offset"])
         body = B.exact(stream, row["bytes"])
+    if selected.get("model_import") == "obj-standard-lambert-linear":
+        with path.open("rb") as stream:
+            shader_row = next(row for row in metadata["objects"] if row["path_id"] == selected["sdk_shader_path_id"])
+            shader_type = metadata["types"][shader_row["type_id"]]
+            stream.seek(metadata["data_offset"] + shader_row["offset"])
+            shader = B.exact(stream, shader_row["bytes"])
+        if definition["class_id"] != 21 or shader_type["class_id"] != 48:
+            raise ValueError("model material requires SDK Material and Shader")
+        schema = M._mesh
+        spans = schema.spans(body, schema.type_tree(io.BytesIO(definition["tree"])))
+        start, end = spans["m_Shader",]
+        if struct.unpack("<iq", body[start:end]) != (0, selected["sdk_shader_path_id"]):
+            raise ValueError("SDK material/shader relationship differs")
+        mesh_body, mesh_type = source_record(sources, selected["model_mesh_source"])
+        if mesh_type["class_id"] != 43:
+            raise ValueError("model material requires original Mesh")
+        fbx_source = selected["fbx_source"]
+        fbx_path = M.safe_input(sdk.resolve(strict=True), fbx_source["path"])
+        if B.sha(fbx_path) != fbx_source["sha256"]:
+            raise ValueError("SDK FBX metadata drift")
+        model = module("obj_material")
+        body = model.material(body, definition, shader, shader_type, mesh_body, mesh_type, model.fbx_defaults(fbx_path.read_bytes()), schema)
+        if B.sha(fbx_path) != fbx_source["sha256"] or B.sha(path) != source["sha256"]:
+            raise ValueError("SDK model material inputs changed during production")
+        return remap(body, selected.get("references", []))
+    if "model_import" in selected:
+        raise ValueError("unqualified model material policy")
     shader, shader_type = source_record(sources, selected["shader_source"])
     if definition["class_id"] != 21 or shader_type["class_id"] != 48:
         raise ValueError("default material requires SDK Material and original Shader")
