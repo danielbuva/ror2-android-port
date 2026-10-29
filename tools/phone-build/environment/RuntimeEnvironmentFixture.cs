@@ -18,6 +18,8 @@ public static class RuntimeEnvironmentFixture
     }
 
     [MenuItem("Tools/P1/Build Runtime Environment Fixture")]
+    public static void Begin() { EditorApplication.delayCall += Build; }
+
     public static void Build()
     {
         string output = Directory.GetParent(Directory.GetParent(Application.dataPath).FullName).FullName;
@@ -42,7 +44,11 @@ public static class RuntimeEnvironmentFixture
             PlayerSettings.SetUseDefaultGraphicsAPIs(BuildTarget.Android, false);
             PlayerSettings.SetGraphicsAPIs(BuildTarget.Android, new[] { GraphicsDeviceType.Vulkan });
             EditorUserBuildSettings.buildAppBundle = false;
-            var sky = new Material(Shader.Find("Skybox/Procedural"));
+            var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
+            var defaultSky = RenderSettings.skybox;
+            if (!defaultSky || !defaultSky.shader || defaultSky.shader.name != "Skybox/Procedural")
+                throw new Exception("SDK default scene sky is unavailable");
+            var sky = new Material(defaultSky);
             AssetDatabase.CreateAsset(sky, "Assets/SourceSky.mat");
             AssetDatabase.SaveAssets();
             string built = Path.Combine(output, "built");
@@ -52,7 +58,6 @@ public static class RuntimeEnvironmentFixture
             }, BuildAssetBundleOptions.ChunkBasedCompression, BuildTarget.Android);
             if (!manifest) throw new Exception("SDK source sky bundle failed");
             receipt.bundle = Path.Combine(built, "source-sky");
-            var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
             RenderSettings.skybox = null;
             RenderSettings.ambientMode = AmbientMode.Flat;
             RenderSettings.ambientLight = Color.black;
