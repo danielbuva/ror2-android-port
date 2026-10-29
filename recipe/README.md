@@ -5118,6 +5118,10 @@ authentication or entitlement success is granted. Generated outputs stay ignored
 
 ## Source HUD profile
 
+| Recipe | Source | Audit | Consumer |
+| --- | --- | --- | --- |
+| `owner-player-hud.json` | Original UI/script/dependency selectors and existing texture recipes. | Identifiers, hashes and source relationships only; audit below, 2026-10-29. | `player_hud.py`; J1264 host-only, native runtime gate open. |
+
 `owner-player-hud.json` SHA-256
 `471b7f74f5e9143c0dfe7bba03c5138389a019d9f55b40fa581f881f75bd2241`
 selects four original UI roots, original script/dependency members and five existing
