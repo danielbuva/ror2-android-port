@@ -1747,6 +1747,20 @@ metadata identity from its original MonoScript, using the existing fieldless
 schema/SDK checks. It addresses Snowy's imported empty component without
 changing its serialized body. Other component layouts are rejected.
 
+## Bounded complete object output
+
+Complete object production now spools checked bodies and resource extents through
+`object_stream.py`. Existing profiles and CLI arguments are unchanged. Native
+metadata and small body prefixes remain resident; serialized bodies, resource
+padding and final UnityFS blocks stream from owned temporary files. All source,
+record, serialized-member and complete-bundle hash checks still apply. Individual
+records retain the 256 MiB bound; the aggregate member bound is 8 GiB. The output
+must be new and have room for temporary serialized/resource files, the body spool
+and final artifacts. Temporary storage closes/removes on failure as well as success;
+failed result receipts and completed output evidence remain in the caller's tree.
+The authored 257 MiB canonical control is a host memory/I/O result; full phone
+conversion and native game consumption remain open.
+
 ## Complete Moon2 source spine
 
 The opt-in `owner-moon2-spine-source-lighting-objects.json` reconstructs the

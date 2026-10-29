@@ -1173,3 +1173,18 @@ Existing source schemas, PPtr owners and qualified Shader packs are reused.
 Prior art: pinned AssetRipper native metadata; existing original reflection owner.
 Host recipe/privacy checks pass. Readiness stays 693/705; complete phone APK,
 native scene consumption and data-preserving installation/update remain open.
+
+## J1270 — Stream complete source object bundles through owned disk storage
+
+2026-10-29. The object owner spools checked bodies and streams serialized members,
+resources and canonical UnityFS output; graph readers request one body at a time.
+Native metadata/prefixes stay resident. All source/body/member/bundle hash gates
+remain; individual records keep the 256 MiB bound, aggregate members allow 8 GiB.
+An authored 259-record control emits 269,484,236 body bytes with canonical equality,
+47,415,296-byte peak process RSS and complete temporary-store cleanup.
+Control SHA-256: `d4fa0f11e45f57b4f5b929dc6dd0e1ad68c25592977efff0a453a91e7460eb9b`.
+Evidence: `work/coordination/orchestrator/whole-game-stream-benchmark-v1/`.
+All 74 object, 69 player and 4 preload checks pass; new bounded-I/O checks pass.
+Prior art: existing native stream writer and original typed preload graph owner.
+This host control contains no game/SDK data. Readiness remains 693/705; complete
+whole-game reconstruction, phone APK and installation/update acceptance remain open.

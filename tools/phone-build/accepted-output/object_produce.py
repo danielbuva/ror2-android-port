@@ -581,41 +581,55 @@ def json_layout(value):
     return value
 
 
-def make_layout(selected, records, scene_members=(), engine="2021.3.45f2"):
+def make_layout(selected, records, scene_members=(), engine="2021.3.45f2", *, include_bodies=True):
     """Canonical release order: script records first, then remaining path IDs."""
     local_scripts = sorted(row["path_id"] for row in records if row["type"]["class_id"] == 115)
+    local_script_ids = set(local_scripts)
+
+    def prefix(row):
+        return row["prefix"] if "body_bytes" in row else row["body"]
+
     scripts = (
-        sorted({pointer for row in records if row["type"]["class_id"] == 114 if (pointer := struct.unpack_from("<iq", row["body"], 16)) != (0, 0)})
+        sorted({pointer for row in records if row["type"]["class_id"] == 114 if (pointer := struct.unpack_from("<iq", prefix(row), 16)) != (0, 0)})
         if scene_members
         else [(0, identity) for identity in local_scripts]
     )
-    physical = sorted(records, key=lambda row: (row["path_id"] not in local_scripts, row["path_id"]))
+    script_indices = {pointer: index for index, pointer in enumerate(scripts)}
+    physical = sorted(records, key=lambda row: (row["path_id"] not in local_script_ids, row["path_id"]))
     types, objects, bodies = [], [], {}
+    type_indices, identities = {}, set()
     offset = 0
     for row in physical:
         typ = copy.deepcopy(row["type"])
+        data = prefix(row)
+        size = row["body_bytes"] if "body_bytes" in row else len(data)
         null_script = False
         if typ["class_id"] == 114:
-            file_id, script = struct.unpack_from("<iq", row["body"], 16)
+            file_id, script = struct.unpack_from("<iq", data, 16)
             if (file_id, script) == (0, 0):
-                if not scene_members or len(row["body"]) != 32 or typ["script_type"] != -1 or typ["hash"] != bytes(16) or typ["script_id"] != bytes(16):
+                if not scene_members or size != 32 or typ["script_type"] != -1 or typ["hash"] != bytes(16) or typ["script_id"] != bytes(16):
                     raise ValueError("original null-script MonoBehaviour metadata drift")
                 null_script = True
             else:
-                if (file_id and not scene_members) or (not file_id and script not in local_scripts) or not 0 <= file_id <= len(selected["externals"]):
+                if (file_id and not scene_members) or (not file_id and script not in local_script_ids) or not 0 <= file_id <= len(selected["externals"]):
                     raise ValueError("MonoBehaviour script absent from produced bundle")
-                typ["script_type"] = scripts.index((file_id, script))
+                typ["script_type"] = script_indices[file_id, script]
         # Unity retains an individual type slot for each missing-script component.
-        if null_script or typ not in types:
+        type_key = tuple((key, tuple(value) if isinstance(value, list) else value) for key, value in sorted(typ.items()))
+        if null_script or type_key not in type_indices:
             types.append(typ)
-        type_id = len(types) - 1 if null_script else types.index(typ)
+            if not null_script:
+                type_indices[type_key] = len(types) - 1
+        type_id = len(types) - 1 if null_script else type_indices[type_key]
         offset = (offset + 7) // 8 * 8
         identity = row["path_id"]
-        if identity in bodies:
+        if identity in identities:
             raise ValueError("duplicate produced object identity")
-        bodies[identity] = row["body"]
-        objects.append({"path_id": identity, "offset": offset, "bytes": len(row["body"]), "type_id": type_id})
-        offset += len(row["body"])
+        identities.add(identity)
+        if include_bodies:
+            bodies[identity] = row["body"]
+        objects.append({"path_id": identity, "offset": offset, "bytes": size, "type_id": type_id})
+        offset += size
     # Unity's native resources live outside the AssetBundles.
     native = {"Resources/unity_builtin_extra": 0x0F, "Library/unity default resources": 0x0E}
     externals = [
@@ -1220,15 +1234,18 @@ def produce(profile_path, profile_sha256, pc, output, codec_path, codec_sha256, 
     if engine not in ("2021.3.45f2", "2021.3.33f1"):
         raise ValueError("unqualified source bundle engine")
     selected_members = selected_bundle["members"] if scene else [{**selected_bundle, "name": selected_bundle["member"], "objects": profile["objects"]}]
+    streaming = module("object_stream")
     expected = sum(row["bytes"] for member in selected_members for row in member["objects"])
-    if not 0 < expected <= B.LIMIT:
+    if not 0 < expected <= streaming.MAX_MEMBER_BYTES or any(not 0 <= row["bytes"] <= B.LIMIT for member in selected_members for row in member["objects"]):
         raise ValueError("object bundle exceeds bounded producer capacity")
     if shutil.disk_usage(parent).free < expected + 2 * 1024**3:
         raise ValueError("insufficient object output capacity")
     output.mkdir()
     started = time.monotonic()
     receipt = {"success": False, "input_id": M.INPUT_ID, "profile_sha256": profile_sha256, "objects": 0, "object_bytes": 0}
+    stage = None
     try:
+        stage = streaming.Store(output)
         sdk_path, sdk_tree = None, None
         if "sdk" in profile:
             if sdk is None:
@@ -1290,11 +1307,10 @@ def produce(profile_path, profile_sha256, pc, output, codec_path, codec_sha256, 
                         name = extent["path"].removeprefix(prefix)
                         if not extent["path"].startswith(prefix) or Path(name).name != name or name == selected_member["name"]:
                             raise ValueError("produced resource belongs to another bundle")
-                        data = record_extent(directory / "resources.bin", resource)
-                        offset, end = extent["offset"], extent["offset"] + len(data)
-                        if extent["size"] != len(data) or offset < 0 or end > B.LIMIT:
+                        offset, end = extent["offset"], extent["offset"] + resource["bytes"]
+                        if extent["size"] != resource["bytes"] or offset < 0 or end > streaming.MAX_MEMBER_BYTES:
                             raise ValueError("produced resource exceeds bounded bundle capacity")
-                        resources.setdefault(name, []).append((offset, data))
+                        resources.setdefault(name, []).append((offset, directory / "resources.bin", resource))
                 elif "source" in selected:
                     source, identity = selected["source"]
                     _, _, member, metadata, objects = sources[source]
@@ -1544,17 +1560,22 @@ def produce(profile_path, profile_sha256, pc, output, codec_path, codec_sha256, 
                     receipt.setdefault("managed_schema_inputs", {}).update(inputs)
                 if len(body) != selected["bytes"] or hashlib.sha256(body).hexdigest() != selected["sha256"]:
                     raise ValueError("produced object differs from accepted hash")
-                member_records.append({"path_id": selected["path_id"], "body": body, "type": typ, "member": selected_member["name"]})
-            layout, bodies = make_layout(selected_member, member_records, [member["name"] for member in selected_members] if scene else (), engine)
-            serialized = io.BytesIO()
-            W.write_serialized(serialized, layout, lambda row: io.BytesIO(bodies[row["path_id"]]))
-            serialized_bytes = serialized.getvalue()
-            if hashlib.sha256(serialized_bytes).hexdigest() != selected_member["serialized_sha256"]:
+                member_records.append(stage.append(selected_member["name"], selected["path_id"], body, typ))
+            layout, _ = make_layout(
+                selected_member, member_records, [member["name"] for member in selected_members] if scene else (), engine, include_bodies=False
+            )
+            by_identity = {row["path_id"]: row for row in member_records}
+            serialized_path = stage.allocate()
+            with serialized_path.open("xb") as serialized:
+                W.write_serialized(serialized, layout, lambda row: stage.reader(by_identity[row["path_id"]]))
+            if B.sha(serialized_path) != selected_member["serialized_sha256"]:
                 raise ValueError("produced serialized structure differs from accepted hash")
-            layout["data_offset"] = struct.unpack_from(">q", serialized_bytes, 32)[0]
-            layout["bytes"] = len(serialized_bytes)
+            with serialized_path.open("rb") as serialized:
+                serialized.seek(32)
+                layout["data_offset"] = B.unpack(serialized, ">q")[0]
+            layout["bytes"] = serialized_path.stat().st_size
             layouts.append({"name": selected_member["name"], **layout} if scene else layout)
-            members.append((selected_member["name"], 4, len(serialized_bytes), lambda data=serialized_bytes: io.BytesIO(data)))
+            members.append((selected_member["name"], 4, layout["bytes"], lambda path=serialized_path: path.open("rb")))
             records.extend(sorted(member_records, key=lambda row: row["path_id"]))
         payload = output / "payload"
         payload.mkdir()
@@ -1563,24 +1584,20 @@ def produce(profile_path, profile_sha256, pc, output, codec_path, codec_sha256, 
             raise ValueError("invalid output bundle name")
         bundle_path = payload / name
         for name, extents in resources.items():
-            data = bytearray()
-            for offset, extent in sorted(extents):
-                if offset < len(data):
-                    raise ValueError("overlapping produced resource extents")
-                data.extend(bytes(offset - len(data)))
-                data.extend(extent)
+            alignment = 0
             if name in selected_bundle.get("resource_alignment", {}):
                 if selected_bundle["resource_alignment"][name] != 16 or not name.endswith(".resS"):
                     raise ValueError("unqualified native resource alignment")
-                data.extend(bytes(-len(data) % 16))
-            members.append((name, 0, len(data), lambda data=data: io.BytesIO(data)))
+                alignment = 16
+            resource_path = stage.allocate()
+            size = streaming.resource(resource_path, extents, alignment, W, B.LIMIT)
+            members.append((name, 0, size, lambda path=resource_path: path.open("rb")))
         with W.codec(codec_path, codec_sha256) as compress, bundle_path.open("xb") as stream:
             W.write_bundle(stream, members, compress, engine=engine)
         if bundle_path.stat().st_size != selected_bundle["bytes"] or B.sha(bundle_path) != selected_bundle["sha256"]:
             raise ValueError("produced UnityFS differs from accepted hash")
         with (output / "objects.bin").open("xb") as data, (output / "index.jsonl").open("x") as index:
             for row in records:
-                body = row["body"]
                 index.write(
                     json.dumps(
                         {
@@ -1588,16 +1605,16 @@ def produce(profile_path, profile_sha256, pc, output, codec_path, codec_sha256, 
                             "member": row["member"],
                             "path_id": row["path_id"],
                             "offset": data.tell(),
-                            "bytes": len(body),
-                            "sha256": hashlib.sha256(body).hexdigest(),
+                            "bytes": row["body_bytes"],
+                            "sha256": row["sha256"],
                         },
                         sort_keys=True,
                     )
                     + "\n"
                 )
-                data.write(body)
+                W.copy(stage.reader(row), data, row["body_bytes"])
                 receipt["objects"] += 1
-                receipt["object_bytes"] += len(body)
+                receipt["object_bytes"] += row["body_bytes"]
         (output / "layout.json").write_text(json.dumps(json_layout({"members": layouts} if scene else layouts[0]), sort_keys=True, indent=2) + "\n")
         for selected, (path, before, _, _, _) in zip(profile["sources"], sources, strict=True):
             after = path.stat()
@@ -1606,8 +1623,8 @@ def produce(profile_path, profile_sha256, pc, output, codec_path, codec_sha256, 
         check_record_packs(providers)
         if sdk_path is not None and B.sha(sdk_path) != profile["sdk"]["sha256"]:
             raise ValueError("SDK script metadata changed during production")
-        with (output / "objects.bin").open("rb") as data:
-            for line in (output / "index.jsonl").read_text().splitlines():
+        with (output / "objects.bin").open("rb") as data, (output / "index.jsonl").open() as index:
+            for line in index:
                 row = json.loads(line)
                 data.seek(row["offset"])
                 if hashlib.sha256(B.exact(data, row["bytes"])).hexdigest() != row["sha256"]:
@@ -1625,6 +1642,8 @@ def produce(profile_path, profile_sha256, pc, output, codec_path, codec_sha256, 
         receipt["error"] = type(error).__name__ + ": " + str(error)
         raise
     finally:
+        if stage is not None:
+            stage.close()
         receipt["seconds"] = time.monotonic() - started
         (output / "result.json").write_text(json.dumps(receipt, indent=2) + "\n")
 
