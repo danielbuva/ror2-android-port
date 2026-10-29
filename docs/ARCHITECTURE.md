@@ -52,6 +52,15 @@ reproduction and framed emission. It verifies supplied target/profile/PC/SDK
 inputs without generating independent Android target information. `assemble.py`
 owns hash-bound unsigned APK assembly and required uncompressed/aligned resource
 storage; canonical alignment and owner signing follow separately.
+`object_produce.py` emits complete source object bundles through
+`object_stream.py`, which owns checked-body spooling, lazy graph reads and bounded
+resource copying. Setup requires a new caller-owned output and the existing
+hash-bound source/profile/pack inputs. The producer retains small body prefixes
+and native metadata, streams canonical serialized members and resources, verifies
+all existing hashes, then closes/removes its temporary store on success or failure.
+Profile/native metadata remains resident. The aggregate member bound is 8 GiB;
+individual records retain the existing 256 MiB bound. An authored 257 MiB control
+matches canonical bytes with bounded payload memory; full phone production is open.
 `player_ui.py` owns current source Menu graph normalization, deterministic local
 IDs, SDK component construction and typed links to the existing player suppliers.
 The optional player-data `--ui-profile` selects its audited source recipe;

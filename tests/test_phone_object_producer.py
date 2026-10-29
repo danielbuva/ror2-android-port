@@ -776,6 +776,85 @@ def managed_fixture(root, *, omit_master=False, disable=False, plugin_order=Fals
 
 
 class ObjectProducerTests(unittest.TestCase):
+    def test_streamed_aggregate_exceeds_single_record_bound_and_remains_canonical(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            pc, path, profile, bodies, serialized = fixture(root)
+            stream = io.BytesIO(serialized)
+            stream.size = len(serialized)
+            layout = P.W.read_serialized(stream)
+            layout.pop("data_offset")
+            layout.pop("bytes")
+            clone_body = bodies[-7]
+            offset = (max(row["offset"] + row["bytes"] for row in layout["objects"]) + 7) // 8 * 8
+            original_selection = profile["objects"][0]
+            for identity in range(100, 10100):
+                layout["objects"].append(dict(path_id=identity, offset=offset, bytes=len(clone_body), type_id=1))
+                profile["objects"].append({**copy.deepcopy(original_selection), "path_id": identity})
+                offset += len(clone_body)
+            profile["bundle"]["assets"] = [dict(path="Assets/Authored.prefab", root=-7, preload=[[0, -7], [0, 2], [1, 88]])]
+            expected = io.BytesIO()
+            P.W.write_serialized(expected, layout, lambda row: io.BytesIO(bodies.get(row["path_id"], clone_body)))
+            data = expected.getvalue()
+            complete = io.BytesIO()
+            P.W.write_bundle(complete, [("CAB-target", 4, len(data), lambda: io.BytesIO(data))], literal_lz4)
+            profile["bundle"].update(serialized_sha256=digest(data), bytes=len(complete.getvalue()), sha256=digest(complete.getvalue()))
+            path.write_text(json.dumps(profile))
+            with patch.object(P.B, "LIMIT", 128 * 1024), patch.object(P.W, "codec", return_value=nullcontext(literal_lz4)):
+                result = P.produce(path, P.B.sha(path), pc, root / "streamed", Path("codec"), "pin")
+            self.assertTrue(result["success"])
+            self.assertGreater(result["object_bytes"], 128 * 1024)
+            self.assertEqual((root / "streamed/payload/authored-target").read_bytes(), complete.getvalue())
+            self.assertEqual(result["objects"], 10003)
+            self.assertFalse(list((root / "streamed").glob("native-stream-*")))
+
+    def test_streamed_resource_reads_are_bounded_and_preserve_padding_and_hashes(self):
+        storage = P.module("object_stream")
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            source = root / "source"
+            block = bytes(range(256)) * 32
+            digestor = hashlib.sha256()
+            with source.open("wb") as stream:
+                for _ in range(256):
+                    stream.write(block)
+                    digestor.update(block)
+            size = source.stat().st_size
+            extent = dict(offset=0, bytes=size, sha256=digestor.hexdigest())
+            real_open = Path.open
+            reads = []
+
+            class Bounded:
+                def __enter__(self):
+                    self.file = real_open(source, "rb")
+                    return self
+
+                def __exit__(self, *args):
+                    self.file.close()
+
+                def seek(self, offset):
+                    return self.file.seek(offset)
+
+                def read(self, count):
+                    self_test.assertGreater(count, 0)
+                    self_test.assertLessEqual(count, 128 * 1024)
+                    reads.append(count)
+                    return self.file.read(count)
+
+            self_test = self
+
+            def open_file(path, *args, **kwargs):
+                return Bounded() if path == source else real_open(path, *args, **kwargs)
+
+            with patch.object(Path, "open", open_file):
+                count = storage.resource(root / "resource", [(7, source, extent)], 16, P.W, P.B.LIMIT)
+            result = (root / "resource").read_bytes()
+            self.assertEqual(count, (7 + size + 15) // 16 * 16)
+            self.assertEqual(result[:7], bytes(7))
+            self.assertEqual(hashlib.sha256(result[7 : 7 + size]).hexdigest(), digestor.hexdigest())
+            self.assertEqual(result[7 + size :], bytes(count - 7 - size))
+            self.assertGreater(len(reads), 1)
+
     def test_model_hierarchy_derives_names_and_requires_produced_components(self):
         schema = FIXTURE.node(
             "Base",
@@ -1309,6 +1388,7 @@ class ObjectProducerTests(unittest.TestCase):
                 with self.assertRaisesRegex(ValueError, message):
                     P.produce(path, P.B.sha(path), pc, root / "failed", Path("codec"), "pin", [(pack, P.B.sha(pack / "result.json"))])
                 self.assertFalse(json.loads((root / "failed/result.json").read_text())["success"])
+                self.assertFalse(list((root / "failed").glob("native-stream-*")))
 
     def test_named_global_owner_suppression_emits_the_complete_scene(self):
         with tempfile.TemporaryDirectory() as temporary:

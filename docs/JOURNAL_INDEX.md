@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J1270](PORTING_JOURNAL.md#j1270--stream-complete-source-object-bundles-through-owned-disk-storage) | 2026-10-29 | Stream complete source object bundles through owned disk storage | 2026-10-29. |
 | [J1269](PORTING_JOURNAL.md#j1269--reconstruct-both-complete-snowy-forest-source-lighting-labs) | 2026-10-29 | Reconstruct both complete Snowy Forest source lighting labs | 2026-10-29. |
 | [J1268](PORTING_JOURNAL.md#j1268--reconstruct-the-complete-moon2-source-spine-scene) | 2026-10-29 | Reconstruct the complete Moon2 source spine scene | 2026-10-29. |
 | [J1267](PORTING_JOURNAL.md#j1267--construct-the-complete-source-default-scene-candidate) | 2026-10-29 | Construct the complete source default-scene candidate | 2026-10-29. |

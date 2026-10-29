@@ -1,5 +1,11 @@
 # Local state dependency inventory
 
+The complete source object producer's `object_stream.py` creates and removes a
+temporary store inside the explicit caller output. Checked body/resource data is
+generated from the existing public source/SDK/record-pack inputs; no retained
+scratch directory or historical output is required. Result receipts, object/index
+files and the final bundle retain the existing output contract.
+
 The optional Moon2 source spine object/texture recipes use only the legitimate
 installation, permitted pinned SDK, public codec and caller-supplied generated
 record packs with receipt hashes. Existing public mesh/texture/record/shader
