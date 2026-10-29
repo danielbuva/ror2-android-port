@@ -55,9 +55,9 @@ def source_parameters(body, root):
     }
 
 
-def assemble(body, root, native, importer_guid):
+def assemble(body, root, native, importer_guid, *, parameters=None):
     """Preserve original references and rebuild the admitted native streams."""
-    parameters = source_parameters(body, root)
+    parameters = source_parameters(body, root) if parameters is None else parameters
     _, spans = A.fields(body, root)
     changes = []
 

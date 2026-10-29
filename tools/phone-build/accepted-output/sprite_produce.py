@@ -133,6 +133,49 @@ def source_pixels(texture, root, bundle, decoder):
     return T.source_rgba(pixels, width, height, fmt, {"pixels": str(decoder)}), width, height
 
 
+def constructor_parameters(selected, body, root, texture, texture_root, width, height):
+    """Recover original parameters or the named texture importer mode.
+
+    AssetRipper's TextureExportCollection selects Single when the source Sprite
+    and Texture names agree and its original/render rectangles agree. Unity's
+    single-image import uses the decoded image extent, rather than a potentially
+    rounded rectangle retained in the original bundle.
+    """
+    parameters = N.source_parameters(body, root)
+    if "texture_importer" not in selected:
+        return parameters
+    mode = selected["texture_importer"]
+    if mode not in ("single", "multiple"):
+        raise ValueError("texture import requires a named source policy")
+    _, spans = A.fields(body, root)
+    _, texture_spans = A.fields(texture, texture_root)
+
+    def raw(data, fields, path):
+        start, end = fields[path]
+        return data[start:end]
+
+    def name(data):
+        size = struct.unpack_from("<I", data)[0]
+        if size > len(data) - 4:
+            raise ValueError("invalid source image name")
+        return data[4 : 4 + size]
+
+    dimensions = tuple(struct.unpack("<i", raw(texture, texture_spans, (key,)))[0] for key in ("m_Width", "m_Height"))
+    if dimensions != (width, height) or min(dimensions) <= 0:
+        raise ValueError("source/native image extent differs")
+    if mode == "multiple":
+        parameters["rect"] = list(struct.unpack("<4f", raw(body, spans, ("m_RD", "textureRect"))))
+        return parameters
+    if name(body) != name(texture) or raw(body, spans, ("m_Rect",)) != raw(body, spans, ("m_RD", "textureRect")):
+        raise ValueError("original Sprite does not select single-image import")
+    parameters.update(
+        rect=[0, 0, width, height],
+        pivot=list(struct.unpack("<2f", raw(body, spans, ("m_Pivot",)))),
+        border=list(struct.unpack("<4f", raw(body, spans, ("m_Border",)))),
+    )
+    return parameters
+
+
 def prepare(profile_path, profile_pin, pc, decoder, decoder_pin, output):
     value = profile(profile_path, profile_pin)
     if B.sha(decoder) != decoder_pin:
@@ -145,12 +188,13 @@ def prepare(profile_path, profile_pin, pc, decoder, decoder_pin, output):
             rgba, width, height = source_pixels(texture, texture_root, bundle, decoder)
             path = output / (str(len(items)) + ".png")
             path.write_bytes(png_rgba(rgba, width, height))
-            parameters = N.source_parameters(body, root)
+            parameters = constructor_parameters(selected, body, root, texture, texture_root, width, height)
             _, spans = A.fields(body, root)
             # The constructor keeps the original border; import recovery belongs
             # to the record assembler, as in the qualified runtime fixture.
             start, _ = spans[("m_Border",)]
-            parameters["border"] = struct.unpack_from("<4f", body, start)
+            if "texture_importer" not in selected:
+                parameters["border"] = struct.unpack_from("<4f", body, start)
             extrude = struct.unpack_from("<I", body, spans[("m_Extrude",)][0])[0]
             settings = struct.unpack_from("<I", body, spans[("m_RD", "settingsRaw")][0])[0]
             items.append(dict(id=selected["id"], png=str(path.resolve()), sha256=B.sha(path), **parameters, extrude=extrude, mesh_type=(settings >> 6) & 1))
@@ -184,8 +228,10 @@ def produce(profile_path, profile_pin, pc, native_path, native_pin, output):
     receipt = {"success": False, "input_id": M.INPUT_ID, "profile_sha256": profile_pin, "native_sha256": native_pin, "objects": 0, "object_bytes": 0}
     try:
         with (output / "objects.bin").open("xb") as data, (output / "index.jsonl").open("x") as index:
-            for selected, body, root, _, _, _ in original_records(value, pc):
-                made = N.assemble(body, root, results[selected["id"]], selected["importer_guid"])
+            for selected, body, root, texture, texture_root, _ in original_records(value, pc):
+                item = results[selected["id"]]
+                parameters = constructor_parameters(selected, body, root, texture, texture_root, item.get("width"), item.get("height"))
+                made = N.assemble(body, root, item, selected["importer_guid"], parameters=parameters)
                 for target in selected["outputs"]:
                     result = A.O.remap(made, target["references"])
                     if len(result) != target["bytes"] or hashlib.sha256(result).hexdigest() != target["sha256"]:

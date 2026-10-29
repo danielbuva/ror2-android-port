@@ -74,6 +74,15 @@ def fixture():
 
 
 class SpriteNativeRecordTests(unittest.TestCase):
+    def test_source_importer_parameters_are_used_for_header_and_native_geometry(self):
+        body, root, native = fixture()
+        parameters = S.source_parameters(body, root)
+        parameters["pivot"] = [0.25, 0.75]
+        made = S.assemble(body, root, native, "1" * 32, parameters=parameters)
+        _, spans = S.A.fields(made, root)
+        self.assertEqual(struct.unpack_from("<2f", made, spans[("m_Pivot",)][0]), (0.25, 0.75))
+        self.assertEqual(struct.unpack_from("<2f", made, spans[("m_Offset",)][0]), (-4, 2))
+
     def test_record_pack_original_sprite_crop_preserves_native_geometry(self):
         body, root, _ = fixture()
         _, spans = S.A.fields(body, root)
