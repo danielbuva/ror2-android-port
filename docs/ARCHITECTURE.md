@@ -52,6 +52,14 @@ reproduction and framed emission. It verifies supplied target/profile/PC/SDK
 inputs without generating independent Android target information. `assemble.py`
 owns hash-bound unsigned APK assembly and required uncompressed/aligned resource
 storage; canonical alignment and owner signing follow separately.
+`startup_metadata.py` owns public `boot.config` and `unity_app_guid` generation.
+Setup pins the owner's inventory, public PlayerSettings and exact toolchain;
+their hashes and producer version generate relocatable build identifiers.
+It retains fullscreen, safe-area and HDR settings, uses a 3 ms incremental GC
+slice and omits development connections. New output/receipt directories own all
+state; there are no retained processes. APK admission regenerates these two
+files and counts them separately from raw-exact output; all other content checks
+remain strict. Complete phone production and runtime qualification remain open.
 `unity_write.py` owns current experimental bounded UnityFS 7/8 and
 serialized-v22 construction from explicit type metadata, object bodies and
 resource streams. Object table order and physical body order remain independent.

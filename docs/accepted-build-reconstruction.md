@@ -1,5 +1,18 @@
 # Reconstruct the accepted Android build from owner inputs
 
+The public converter targets functional native Android compatibility from
+legitimate game files, permitted SDK inputs and public recipes. J850 remains
+strict for code, asset identities, serialized relationships and runtime
+compatibility. Incidental build identifiers and development connections may be
+generated or omitted through named source producers; private historical values
+are never required public inputs. Raw-exact results, generated metadata and
+device acceptance are reported separately. Historical replay results below
+retain their original byte-exact meaning.
+J1254 supplies the two incidental startup files through a public producer;
+current host readiness is 692/705 available (685 raw-exact, two generated
+metadata), with 13 source files still missing. Complete phone acceptance remains
+open; the daily snapshot retains its earlier count until its next refresh.
+
 
 The host-qualified [release update contract](../tools/phone-build/owner-apk/README.md#public-release-updates)
 now covers per-entry incremental reuse and existing-key signing. Installer trust
