@@ -106,7 +106,11 @@ def produce(selected, records, sources):
     groups = sorted(selected["asset_groups"], key=lambda row: guid_key(row["guid"]))
     if not groups or len({row["guid"] for row in groups}) != len(groups) or len({row["path"].lower() for row in groups}) != len(groups):
         raise ValueError("Prefab asset grouping requires unique source paths and GUIDs")
-    preloads, containers = [], []
+    stream = io.BytesIO()
+    O.aligned_string(stream, selected["name"])
+    count_offset = stream.tell()
+    stream.write(bytes(4))
+    preload_count, containers = 0, []
     for group in groups:
         roots = group["roots"]
         if not roots or len(set(roots)) != len(roots):
@@ -115,13 +119,14 @@ def produce(selected, records, sources):
         if any(file_id not in ranks for file_id, _ in dependencies):
             raise ValueError("Prefab preload references an absent serialized file")
         ordered = sorted(dependencies, key=lambda pointer: (ranks[pointer[0]], pointer[1]))
-        containers.extend((group["path"].lower(), len(preloads), len(ordered), root) for root in roots)
-        preloads.extend(ordered)
-    stream = io.BytesIO()
-    O.aligned_string(stream, selected["name"])
-    stream.write(struct.pack("<I", len(preloads)))
-    for pointer in preloads:
-        stream.write(struct.pack("<iq", *pointer))
+        containers.extend((group["path"].lower(), preload_count, len(ordered), root) for root in roots)
+        for pointer in ordered:
+            stream.write(struct.pack("<iq", *pointer))
+        preload_count += len(ordered)
+    end = stream.tell()
+    stream.seek(count_offset)
+    stream.write(struct.pack("<I", preload_count))
+    stream.seek(end)
     stream.write(struct.pack("<I", len(containers)))
     for path, start, count, root in sorted(containers, key=lambda row: row[0]):
         O.aligned_string(stream, path)

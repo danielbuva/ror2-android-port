@@ -980,6 +980,8 @@ root in an imported asset group. Checked original component back-links and
 GameObject membership supply external owners. SDK resource identities and
 serialized member names determine file order; Unity GUID words determine group
 order. Subassets share one preload range while container paths sort ordinally.
+Each group writes its ordered pointers directly into the native record; only
+the current closure and container ranges remain alongside the output bytes.
 No accepted preload array or body is an input. Existing source/body/input hash
 checks, new output ownership and failed receipts remain in the parent writer.
 The bounded reader/writer ceiling is 256 MiB for the observed 175 MB Commando
