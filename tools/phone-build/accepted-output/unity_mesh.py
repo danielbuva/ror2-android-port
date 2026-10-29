@@ -264,7 +264,7 @@ def normalize_packed_tangents(data, count, bits, minimum, extent):
     return minimum, extent, packed.to_bytes(len(data), "little")
 
 
-def transform(body, root, ops, vertex_stream=None):
+def transform(body, root, ops, vertex_stream=None, obj_import=None):
     fields = spans(body, root)
     edits = {}
 
@@ -288,6 +288,7 @@ def transform(body, root, ops, vertex_stream=None):
         "channel_dimensions",
         "stream_destination",
         "packed_tangents",
+        "obj_import",
     }
     if set(ops) - allowed:
         raise ValueError("unknown mesh operation")
@@ -327,6 +328,14 @@ def transform(body, root, ops, vertex_stream=None):
     data_key = next(path for path in fields if path[:2] == vertex_key and path[-1] == "payload")
     data = field(*data_key) if vertex_stream is None else vertex_stream
     channels = field(*channel_key)
+    imported = "obj_import" in ops
+    if imported:
+        if ops["obj_import"] != "static-triangles" or obj_import is None or "vertex_compression" in ops or "stream_destination" in ops:
+            raise ValueError("unsupported source OBJ import policy")
+        index_path = next(path for path in fields if path[0] == "m_IndexBuffer" and path[-1] == "payload")
+        data, indices, metric = obj_import(data, field(*index_path))
+        replace(index_path, indices)
+        replace(("m_MeshMetrics[0]",), struct.pack("<f", metric))
     if "vertex_compression" in ops:
         if ops["vertex_compression"] != "normal_tangent_half":
             raise ValueError("unknown vertex conversion")
@@ -344,7 +353,7 @@ def transform(body, root, ops, vertex_stream=None):
     destination = ops.get("stream_destination")
     if destination is not None:
         replace(("m_StreamData",), struct.pack("<QI", destination["offset"], destination["size"]) + padded_string(destination["path"]))
-    if vertex_stream is not None or "vertex_compression" in ops:
+    if vertex_stream is not None or "vertex_compression" in ops or imported:
         # Relocated streamed outputs retain a resource stream instead of inline bytes.
         inline = data if destination is None or destination["size"] == 0 else b""
         replace(vertex_key, struct.pack("<I", len(inline)) + inline + bytes(-len(inline) % 4))

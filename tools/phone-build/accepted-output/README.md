@@ -134,6 +134,16 @@ This optional CLR policy needs the `dnfile`/`pefile` dependencies pinned in
 `tools/lab-requirements.txt`; invoke it from that configured Python environment
 without `-S`. Other object policies retain their existing stdlib-only path.
 
+`object_produce.py` also has an experimental `DefaultMaterial` selection with
+`model_import: "obj-standard-lambert-linear"`. It requires `model_mesh_source`,
+`sdk_shader_path_id` and pinned `sdk_source` / `fbx_source` paths relative to the
+explicit SDK root. `obj_material.py` reads Standard property declarations and
+the FBX library's named static defaults without loading native code. This
+attribute-only OBJ policy assumes opaque Lambert shading and linear color;
+it does not accept arbitrary authored model material parameters. Stage
+`obj_material.py` and `scripts/lab/phone_registry.py` with the existing producer
+dependencies. No target material body or property-value table is an input.
+
 `object_produce.py` currently qualifies the complete pickup-droplet and
 player-death-effect bundles from original PC records. The audited recipe contains original selectors, checked
 PPtr relationships, destination identities/dependencies and comparison hashes.
@@ -393,6 +403,37 @@ object hashes to match. It writes `objects.bin`, `resources.bin`, their
 are re-read; failed outputs are retained. It requires expected object capacity
 plus 2 GiB free before starting. Peak RSS uses the platform's native
 `resource.getrusage` units. Exit tears down the only producer process.
+
+The current optional `obj_import: static-triangles` operation imports the
+admitted static float32 position/normal/tangent/UV0 layout. `obj_mesh.py` owns
+source-derived tangent generation, robust normalization, the 16-vertex cache
+order, first-use vertex order and the UV-density calculation. Its profile's
+top-level `obj_import` pins the authored helper source and public providers;
+`--obj-helper` selects a separately built helper directory. Receipt and binary
+hashes are checked before and after calls. No retained model or captured
+geometry/metric value supplies production.
+
+Acquire unchanged `mikktspace.c` and `mikktspace.h` from
+[MikkTSpace at 3e895b49](https://github.com/mmikk/MikkTSpace/tree/3e895b49d05ea07e4c2133156cfa94369e19e409),
+and `qsort.c` and `heapsort.c` from `stdlib/FreeBSD/` in
+[Apple Libc at 71bbe350](https://github.com/apple-oss-distributions/Libc/tree/71bbe350ab79eef58113991d817ccc6165061a64).
+Keep them in explicit private provider directories. The builder checks all
+four file hashes and retains the source-header licenses with its output:
+
+```sh
+python3 tools/phone-build/accepted-output/build_mesh_obj.py \
+  --mikk PINNED_MIKK_DIRECTORY --libc PINNED_LIBC_DIRECTORY \
+  --compiler C_COMPILER --output NEW_PRIVATE_HELPER_DIRECTORY
+```
+
+For the existing Android native Clang 21 provider, also pass
+`--android-tool-root NATIVE_TOOL_ROOT`. Stage `obj_mesh.py` beside the existing
+mesh owner and pass its helper build directory using `--obj-helper`.
+The helper reads bounded binary requests on stdin and emits tangents or area
+ordering on stdout; it opens no game files. The original importer's Boolean
+area comparator is preserved using the pinned portable BSD implementation,
+including its heap-sort fallback. Native helper outputs remain private.
+Host Mesh-body equality does not qualify a complete bundle or Android execution.
 
 These game-derived packs remain private. They are inputs for a future bundle
 assembler, not UnityFS bundles, a replacement private replay packet, or an APK.

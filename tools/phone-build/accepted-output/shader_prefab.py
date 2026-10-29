@@ -41,7 +41,7 @@ def keyword_registry(source, seed):
     return names, flags
 
 
-def prefab_selections(source):
+def prefab_selections(source, *, retain_instancing=True):
     """Keep no-scene runtime axes, including source instancing alternatives."""
     snippets = dict(source["m_CompileInfo"]["m_Snippets"])
     selections = {}
@@ -56,7 +56,7 @@ def prefab_selections(source):
         for row in sub["m_Passes"]:
             if row["m_Type"] == 0:
                 identity = row["m_State"]["gpuProgramID"]
-                selections[identity] = [P.sdk_scene_variants(snippets[identity], set(), retain_instancing=True) for _ in range(3)]
+                selections[identity] = [P.sdk_scene_variants(snippets[identity], set(), retain_instancing=retain_instancing) for _ in range(3)]
     return selections
 
 
@@ -182,14 +182,22 @@ def produce(profile_path, profile_pin, pc, sdk, asset_ripper, codec, codec_pin, 
                     runtime = sdk_source(identity)
                     if any(source["m_ParsedForm"][key] != runtime["m_ParsedForm"][key] for key in ("m_Name", "m_PropInfo")):
                         raise ValueError("Prefab original/SDK Shader properties differ")
-                    if identity == 211:
+                    if "sdk_material" in selected:
                         material = next(
                             obj
                             for obj in UnityPy.load(str(sdk / "Resources/unity_builtin_extra")).objects
                             if obj.path_id == selected["sdk_material"] and obj.type.name == "Material"
                         )
-                        runtime, selections = particle_selections(runtime, source, material.read_typetree())
+                        material = material.read_typetree()
+                        if material["m_Shader"] != {"m_FileID": 0, "m_PathID": identity}:
+                            raise ValueError("Prefab SDK material shader differs")
+                        if identity == 211:
+                            runtime, selections = particle_selections(runtime, source, material)
+                        else:
+                            selections = prefab_selections(runtime, retain_instancing=bool(material["m_EnableInstancingVariants"]))
                     else:
+                        if identity == 211:
+                            raise ValueError("Prefab particle shader requires its SDK material")
                         selections = prefab_selections(runtime)
                     runtime["m_Dependencies"] = pointers(chain(identity)[1:])
                     leaf = output / str(ordinal)

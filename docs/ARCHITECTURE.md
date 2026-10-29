@@ -70,6 +70,13 @@ Wispgraveyard, Sky Meadow, Solusweb, Ancient Loft, AI Test and Testscene slices.
 It also owns the retained Barrier and three Goldshores payloads, the complete
 Wispgraveyard source-scene variant and the unchanged original Windows
 comparison-bundle copy.
+Its optional `obj-standard-lambert-linear` material policy delegates to
+`obj_material.py`: original Mesh names, selected SDK Shader declarations and
+SDK FBX static defaults determine the material. Setup requires separately pinned
+SDK builtin-extra and FBX-library inputs. Bounded static initializer propagation
+uses `phone_registry.MachO` with explicit dylib admission; it executes no SDK
+code and retains no native state. Output is a normal object body consumed by
+the existing bundle writer. Complete bundle and phone gates remain separate.
 Audited profiles `recipe/owner-pickup-objects.json`,
 `recipe/owner-death-effect-objects.json`,
 `recipe/owner-teleport-material-objects.json`, `recipe/owner-objective-ui-objects.json`,
@@ -299,6 +306,15 @@ integers from the original fields. Authored mesh fixtures cover the operation;
 guarded tracked-CLI output is host raw-exact for the additional record. Complete
 Commando assembly and phone production remain separate gates; no runtime owner
 is added.
+The same mesh owner accepts a current static OBJ import operation through
+`obj_mesh.py`. Original float32 attributes feed separately acquired public
+MikkTSpace through authored `mesh_obj.c`; robust normalization, the 16-vertex
+cache order, first-use vertex order and a computed UV-density statistic supply
+the new streams. `build_mesh_obj.py` pins public MikkTSpace and Apple BSD sort
+sources, preserves their notices and emits the native helper receipt. Setup
+checks that receipt and helper hash; processing and teardown recheck both.
+This adds no Editor input, saved model or vertex/metric table. Host Mesh-body
+evidence remains separate from complete-bundle and Android qualification.
 `scripts/lab/script_identity.py` additionally owns current pure managed script
 properties-hash derivation. Callers supply original PC and exact SDK embedded
 type metadata plus original script identity; the helper composes the SDK native
@@ -5207,3 +5223,13 @@ owners. Setup takes original PC/SDK roots, explicit record packs and fresh outpu
 process exit releases source/codec handles and keeps receipts. All 75,378 objects,
 both members and the compressed bundle are host raw-exact to J850. This introduces
 no runtime owner; full phone production, installation and gameplay remain open.
+
+`recipe/owner-labgeometry-{meshes,shaders,objects}.json` completes `labgeometry`
+through the existing Mesh, Shader, alias and object owners. `ModelGameObject`
+constructs the default imported OBJ hierarchy from original Mesh names, the
+authored asset path and explicit component relationships; native source schemas
+validate each body. The grouped container derives all preloads from the produced
+graph. Setup takes original PC/SDK roots, explicit receipt-pinned provider packs,
+the public-source Mesh helper and a fresh output directory. Process exit releases
+file/codec handles; receipts persist. All 10 objects, the member and compressed
+bundle are host raw-exact to J850. Complete phone production remains open.

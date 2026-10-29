@@ -79,6 +79,7 @@ class PrefabShaderTests(unittest.TestCase):
         }
         rows = S.prefab_selections(source)
         self.assertEqual(rows, {11: [[[], ["SOFTPARTICLES_ON"], ["INSTANCING_ON"], ["INSTANCING_ON", "SOFTPARTICLES_ON"]]] * 3})
+        self.assertEqual(S.prefab_selections(deepcopy(source), retain_instancing=False), {11: [[[], ["SOFTPARTICLES_ON"]]] * 3})
         self.assertEqual(len(source["m_ParsedForm"]["m_SubShaders"][0]["m_Passes"]), 1)
         self.assertEqual(S.P.sdk_scene_variants(source_snippet, set()), [[], ["SOFTPARTICLES_ON"]])
 
