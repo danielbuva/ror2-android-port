@@ -1728,3 +1728,8 @@ success. Keep these generated files ignored. Native hashes and wire values
 are independently checked with the pinned public format parser. Full production
 and native runtime qualification remain open; this output is not admitted as
 historically raw-exact.
+
+Source UI Sprites may share one complete original texture. The UI media owner
+freshly derives its complete serialized texture for each use and permits reuse
+inside the new output tree only when file size and SHA-256 agree. A conflicting
+file or redirected path refuses generation; Sprite files remain exclusive.

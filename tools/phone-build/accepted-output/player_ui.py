@@ -395,7 +395,7 @@ def component_records(store, ui, scripts, graph, records, extras, native, manage
     return result
 
 
-def write_object(output, name, obj, fields, externals):
+def write_object(output, name, obj, fields, externals, *, reuse_existing=False):
     require(re.fullmatch("[a-f0-9]{32}", name) is not None, "unsafe UI player filename")
     body = encode(fields, obj.node)
     typ = {**obj.typ, "script_type": -1}
@@ -410,8 +410,20 @@ def write_object(output, name, obj, fields, externals):
         ref_types=[],
         user="",
     )
-    with (output / name).open("xb") as stream:
+    if reuse_existing:
+        stream = io.BytesIO()
         W.write_serialized(stream, layout, lambda _: io.BytesIO(body))
+        data = stream.getvalue()
+        path = output / name
+        try:
+            with path.open("xb") as destination:
+                destination.write(data)
+        except FileExistsError:
+            require(not path.is_symlink() and path.is_file(), "redirected UI media output")
+            require(path.stat().st_size == len(data) and P.sha(path) == hashlib.sha256(data).hexdigest(), "shared UI media bytes differ")
+    else:
+        with (output / name).open("xb") as stream:
+            W.write_serialized(stream, layout, lambda _: io.BytesIO(body))
 
 
 def sprite_media(store, asset, obj, output):
@@ -448,7 +460,7 @@ def sprite_media(store, asset, obj, output):
     texture_name = uuid.uuid5(uuid.NAMESPACE_URL, "ror2lab/source-player/" + member + "/" + str(pid)).hex
     sprite_name = uuid.uuid5(uuid.NAMESPACE_URL, "ror2lab/source-player/" + asset.name + "/" + str(obj.path_id)).hex
     sprite["m_RD"]["texture"] = dict(m_FileID=1, m_PathID=1)
-    write_object(output, texture_name, texture_obj, texture, [])
+    write_object(output, texture_name, texture_obj, texture, [], reuse_existing=True)
     write_object(output, sprite_name, obj, sprite, [texture_name])
     return {(member, pid): (texture_name, 1, ""), (asset.name, obj.path_id): (sprite_name, 1, "")}
 
