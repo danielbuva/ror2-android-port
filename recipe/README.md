@@ -5228,6 +5228,10 @@ open; generated outputs and raw evidence stay ignored.
 
 ### Whole-game native Sprite imports (J1272)
 
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-whole-game-native-sprites.json` | `100f834f8665f79b3075668d18e4b2f35866a6204753fddbad0125f95765d7d4` |
+
 `owner-whole-game-native-sprites.json` (SHA-256
 `100f834f8665f79b3075668d18e4b2f35866a6204753fddbad0125f95765d7d4`)
 selects 757 original Sprite/Texture2D pairs and their minimum importer GUIDs,
