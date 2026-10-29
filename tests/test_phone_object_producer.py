@@ -740,6 +740,37 @@ def managed_fixture(root, *, omit_master=False, disable=False, plugin_order=Fals
 
 
 class ObjectProducerTests(unittest.TestCase):
+    def test_model_hierarchy_derives_names_and_requires_produced_components(self):
+        schema = FIXTURE.node(
+            "Base",
+            children=[
+                FIXTURE.array("m_Component", FIXTURE.node("data", 12, kind="PPtr<Component>")),
+                FIXTURE.node("m_Layer", 4, kind="UInt32"),
+                FIXTURE.text("m_Name"),
+                FIXTURE.node("m_Tag", 2, kind="UInt16"),
+                FIXTURE.node("m_IsActive", 1, kind="bool"),
+            ],
+        )
+        stream = io.BytesIO(RECORD_FIXTURE.serialized(bytes(4) + bytes(4) + bytes(4) + bytes(3), schema, class_id=1))
+        stream.size = len(stream.getvalue())
+        definition = P.W.read_serialized(stream)["types"][0]
+        name = io.BytesIO()
+        P.aligned_string(name, "InventedMesh")
+        mesh = name.getvalue()
+        stream = io.BytesIO(RECORD_FIXTURE.serialized(mesh, FIXTURE.node("Base", children=[FIXTURE.text("m_Name")]), class_id=43))
+        stream.size = len(stream.getvalue())
+        mesh_type = P.W.read_serialized(stream)["types"][0]
+        selected = {"model_mesh_source": [0, 7], "model_node": "mesh", "components": [9, -17]}
+        with patch.object(P, "source_record", return_value=(mesh, mesh_type)):
+            for node, expected in (("mesh", "InventedMesh_0"), ("root", "InventedFile")):
+                selected.update(model_node=node, model_asset="Assets/Recovered/InventedFile.obj")
+                result = P.model_game_object(selected, [], definition, [9, -17])
+                name = io.BytesIO()
+                P.aligned_string(name, expected)
+                self.assertEqual(struct.pack("<IiqiqI", 2, 0, 9, 0, -17, 0) + name.getvalue() + struct.pack("<HB", 0, 1), result)
+            with self.assertRaisesRegex(ValueError, "produced components"):
+                P.model_game_object(selected, [], definition, [9])
+
     def test_default_material_uses_pinned_sdk_and_existing_player_helper(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)

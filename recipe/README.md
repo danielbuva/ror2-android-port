@@ -4973,3 +4973,34 @@ No original code, game-derived body, scalar/geometry/program table, private path
 device identifier, credential or redistribution payload is published. Phone
 production of the complete bundle, installation and gameplay readiness remain
 open; host byte equality is the only closure here.
+
+## Labgeometry source selections (2026-10-29)
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-labgeometry-meshes.json` | `6725e325f560e5ac2e75c39b8e0c06de72aaf9dbace3e7ac663180c74ad454da` |
+| `owner-labgeometry-shaders.json` | `020afc23cb7a813b74a01d870f1f085d1d6c5c9e841f5acdfd512e03d36cd223` |
+| `owner-labgeometry-objects.json` | `0c35f4a9c60b8bd0267300a35e850d6f3fffa33ff731dd7c03a8108c583e5825` |
+
+All 10 objects, the serialized member and the 108,365-byte `labgeometry` bundle
+are host raw-exact to J850 (`09ca79f4bd66…`). `mesh_produce.py` regenerates the
+static OBJ mesh from original geometry through separately acquired pinned public
+MikkTSpace and Apple BSD sort sources; `build_mesh_obj.py` builds that helper.
+`shader_prefab.py` compiles the SDK Standard Shader with its explicitly selected
+SDK material's instancing setting. `object_produce.py` consumes those packs and
+`owner-native-alias-records.json`, constructs default OBJ hierarchy nodes, derives
+the Lambert material from original/SDK metadata, and derives grouped preloads
+from the produced graph. Pass all provider directories and receipts explicitly.
+The model material reads the supplied SDK FBX library statically without loading
+native SDK code. Generated outputs and comparison evidence remain ignored.
+
+Manual provenance, privacy, licensing and sensitive-content audit: these profiles
+contain minimum original asset/type identities, importer/root/PPtr relationships,
+expected hashes and authored transformation policies. Source attributes and SDK
+property declarations/defaults determine geometry, tangents, material values and
+programs locally. No copied game/SDK source, native instruction sequence, protected
+body, property-value table, vertex/program array, private path, device identifier,
+credential or redistribution payload is published. Public helper dependencies
+retain their notices; the separately acquired SDK and legitimate game remain
+required. Evidence: `work/coordination/orchestrator/labgeometry-native-final-v2/`.
+Phone production of the complete bundle, installation and game behavior remain open.

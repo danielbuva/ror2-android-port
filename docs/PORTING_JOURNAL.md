@@ -932,3 +932,15 @@ from the produced graph. All production persisted before independent comparison;
 accepted bodies and unselected private inputs were denied to the tracked CLI.
 Evidence (ignored): `work/coordination/orchestrator/commando-native-final-v4/`.
 Complete phone production, installation and gameplay remain open.
+
+## J1253 — Complete source-derived Labgeometry bundle
+
+2026-10-29. `labgeometry` is host raw-exact to J850: all 10 persisted objects,
+the serialized member and the 108,365-byte compressed bundle.
+SHA-256: `09ca79f4bd661a2fbdc035b37ffe699a991e21b411ede81e27ffc822e456bcac`.
+Original geometry, public Mikk/BSD sort, SDK Shader compilation and static SDK
+material defaults supply the records; hierarchy/preloads derive from source identities.
+Profiles: `recipe/owner-labgeometry-*.json`; accepted inputs denied during production.
+Evidence (ignored): `work/coordination/orchestrator/labgeometry-native-final-v2/`.
+Readiness becomes 690/705 available, 685 raw-exact, 15 missing. No passed run replayed.
+Complete phone production, installation and game behavior remain open.

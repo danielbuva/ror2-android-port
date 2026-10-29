@@ -5223,3 +5223,13 @@ owners. Setup takes original PC/SDK roots, explicit record packs and fresh outpu
 process exit releases source/codec handles and keeps receipts. All 75,378 objects,
 both members and the compressed bundle are host raw-exact to J850. This introduces
 no runtime owner; full phone production, installation and gameplay remain open.
+
+`recipe/owner-labgeometry-{meshes,shaders,objects}.json` completes `labgeometry`
+through the existing Mesh, Shader, alias and object owners. `ModelGameObject`
+constructs the default imported OBJ hierarchy from original Mesh names, the
+authored asset path and explicit component relationships; native source schemas
+validate each body. The grouped container derives all preloads from the produced
+graph. Setup takes original PC/SDK roots, explicit receipt-pinned provider packs,
+the public-source Mesh helper and a fresh output directory. Process exit releases
+file/codec handles; receipts persist. All 10 objects, the member and compressed
+bundle are host raw-exact to J850. Complete phone production remains open.

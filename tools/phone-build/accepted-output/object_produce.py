@@ -1082,6 +1082,43 @@ def plugin_import_order(body):
     return body[: offset - 4] + bytes(4) + body[offset:]
 
 
+def model_game_object(selected, sources, definition, identities):
+    """Construct default OBJ hierarchy nodes from source names and relationships."""
+    mesh, mesh_type = source_record(sources, selected["model_mesh_source"])
+    if mesh_type["class_id"] != 43:
+        raise ValueError("model hierarchy requires original Mesh")
+    schema = M._mesh
+    root = schema.type_tree(io.BytesIO(definition["tree"]))
+    if [node.name for node in root.children] != ["m_Component", "m_Layer", "m_Name", "m_Tag", "m_IsActive"]:
+        raise ValueError("model GameObject source schema differs")
+    if [root.children[i].size for i in (1, 3, 4)] != [4, 2, 1]:
+        raise ValueError("model GameObject source field sizes differ")
+    components = selected["components"]
+    if not 1 <= len(components) <= 32 or len(set(components)) != len(components) or any(identity not in identities for identity in components):
+        raise ValueError("model hierarchy requires distinct produced components")
+    if selected["model_node"] == "mesh":
+        start, end = schema.spans(mesh, schema.type_tree(io.BytesIO(mesh_type["tree"])))["m_Name",]
+        stream = io.BytesIO(mesh[start:end])
+        name = B.exact(stream, B.unpack(stream, "<I")[0]).decode("utf-8") + "_0"
+    elif selected["model_node"] == "root":
+        path = selected["model_asset"]
+        if not path.startswith("Assets/") or Path(path).suffix != ".obj" or ".." in Path(path).parts:
+            raise ValueError("model root requires an authored OBJ asset path")
+        name = Path(path).stem
+    else:
+        raise ValueError("unqualified model hierarchy node")
+    result = io.BytesIO()
+    result.write(struct.pack("<I", len(components)))
+    for identity in components:
+        result.write(struct.pack("<iq", 0, identity))
+    result.write(struct.pack("<I", 0))  # Default constructor layer.
+    aligned_string(result, name)
+    result.write(struct.pack("<HB", 0, 1))  # Untagged and active.
+    body = result.getvalue()
+    schema.spans(body, root)  # The original native schema must consume it all.
+    return body
+
+
 def default_material(selected, sources, sdk, output):
     """Reuse the player owner's SDK Material / original Shader projection."""
     if sdk is None:
@@ -1203,7 +1240,9 @@ def produce(profile_path, profile_sha256, pc, output, codec_path, codec_sha256, 
         for selected_member in selected_members:
             member_records = []
             identities = [
-                row["path_id"] for row in selected_member["objects"] if "source" in row or "record" in row or row.get("generate") == "DefaultMaterial"
+                row["path_id"]
+                for row in selected_member["objects"]
+                if "source" in row or "record" in row or row.get("generate") in ("DefaultMaterial", "ModelGameObject")
             ]
             object_order = (
                 sorted(selected_member["objects"], key=lambda row: row.get("generate") == "AssetBundle")
@@ -1369,6 +1408,10 @@ def produce(profile_path, profile_sha256, pc, output, codec_path, codec_sha256, 
                         if typ["class_id"] != 21:
                             raise ValueError("default material requires original Material type")
                         body = default_material(selected, sources, sdk, output)
+                    elif selected.get("generate") == "ModelGameObject":
+                        if typ["class_id"] != 1:
+                            raise ValueError("model hierarchy requires original GameObject type")
+                        body = model_game_object(selected, sources, typ, identities)
                     else:
                         if selected.get("generate", "AssetBundle") != "AssetBundle" or typ["class_id"] != 142:
                             raise ValueError("bundle container requires original AssetBundle type")
