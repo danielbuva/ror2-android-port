@@ -85,6 +85,16 @@ native fields, roots, policy and provider receipts. The output is a complete
 native `globalgamemanagers` candidate with a fresh script-hash map and public
 Personal capability policy. Historical cache/UI differences and full phone/native
 runtime acceptance remain open; this introduces no gameplay/runtime owner.
+`tools/phone-build/environment/RuntimeEnvironmentProducer.cs` is the experimental
+source library for an owner-built native converter tool player. It owns SDK-sky
+ambient/reflection rendering, face/mip readback and output receipts, restoring
+render state and releasing owned objects/bundles on exit. Its caller owns a new
+output directory and player/device lifetime. Exact-SDK API compilation passes;
+`RuntimeEnvironmentFixture.cs` owns a separate exact-editor diagnostic APK/bundle
+build; `RuntimeEnvironmentTool.cs` reads one private request and starts the owner.
+Phone-built tool construction, device qualification, generated-Cubemap admission
+and complete default-scene production remain open. This library has no game-runtime
+or APK-assembly consumer.
 `stage_contexts.py` owns original-record population and identity context production.
 `recipe/owner-stage-contexts.json` pins original scenes/catalog/pool suppliers and
 selects the existing global-root suppression policy. The shared
