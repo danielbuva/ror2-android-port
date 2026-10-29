@@ -1201,3 +1201,18 @@ Evidence (ignored): `work/coordination/orchestrator/preload-stream-benchmark-v1/
 All 78 focused preload/object contracts, Ruff and host preflight pass.
 Complete source bundle production and phone memory/runtime acceptance remain open;
 historical reconstruction readiness stays 693/705 available, 685 raw-exact.
+
+## J1272 — Reconstruct 757 whole-game Sprite imports with native Android geometry
+
+2026-10-29. The existing Sprite owner now normalizes source crop/pivot/border
+before selecting Single or Multiple import, and retains native pixel-pivot
+rounding for offsets and UV transforms. The audited recipe supplies 757 original
+Sprite/Texture pairs and minimum asset identities; no pixel/geometry cache input.
+Main Nova generates all constructor results; 113 unchanged results are reused.
+All 757 persisted records match J850 exactly (1,668,020 bytes).
+Output SHA-256: `04986bcd49a5299941838288bec4fb33cce1a64c851ddc41808ca72446f69cc2`.
+Evidence: `work/coordination/orchestrator/whole-game-native-sprite-phone-v5/`
+and `whole-game-native-sprite-records-v6/`; owned utility removed/display asleep.
+All 16 focused Sprite contracts and Ruff pass; source pixels remain input-derived.
+Historical readiness stays 693/705; complete bundle, phone-built utility and full
+phone APK/installation/update acceptance remain open.

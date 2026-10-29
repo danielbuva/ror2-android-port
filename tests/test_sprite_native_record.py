@@ -78,10 +78,36 @@ class SpriteNativeRecordTests(unittest.TestCase):
         body, root, native = fixture()
         parameters = S.source_parameters(body, root)
         parameters["pivot"] = [0.25, 0.75]
+        native["pivot_pixel_bits"] = [struct.unpack("<i", struct.pack("<f", value))[0] for value in (4, 6)]
         made = S.assemble(body, root, native, "1" * 32, parameters=parameters)
         _, spans = S.A.fields(made, root)
         self.assertEqual(struct.unpack_from("<2f", made, spans[("m_Pivot",)][0]), (0.25, 0.75))
         self.assertEqual(struct.unpack_from("<2f", made, spans[("m_Offset",)][0]), (-4, 2))
+
+    def test_offset_uses_native_pixel_pivot_before_center_subtraction(self):
+        body, root, native = fixture()
+        bit = lambda value: struct.unpack("<i", struct.pack("<f", value))[0]
+        native["rect_bits"] = list(map(bit, (0, 0, 1000, 1000)))
+        native["pivot_pixel_bits"] = list(map(bit, (499.9999694824219, 500)))
+        parameters = S.source_parameters(body, root)
+        parameters["pivot"] = [0.4999999701976776, 0.5]
+        made = S.assemble(body, root, native, "1" * 32, parameters=parameters)
+        _, spans = S.A.fields(made, root)
+        self.assertEqual(struct.unpack_from("<2f", made, spans[("m_Offset",)][0]), (-0.000030517578125, 0))
+
+    def test_uv_pivot_recomposes_the_rounded_offset(self):
+        body, root, native = fixture()
+        bit = lambda value: struct.unpack("<i", struct.pack("<f", value))[0]
+        native["rect_bits"] = list(map(bit, (0, 0, 128, 128)))
+        pixel = S.f32(S.f32(0.03) * 128)
+        native["pivot_pixel_bits"] = list(map(bit, (pixel, 64)))
+        parameters = S.source_parameters(body, root)
+        parameters["pivot"] = [S.f32(0.03), 0.5]
+        made = S.assemble(body, root, native, "1" * 32, parameters=parameters)
+        _, spans = S.A.fields(made, root)
+        uv = struct.unpack_from("<4f", made, spans[("m_RD", "uvTransform")][0])
+        self.assertEqual(uv[1], S.f32(S.f32(pixel - 64) + 64))
+        self.assertNotEqual(uv[1], pixel)
 
     def test_record_pack_original_sprite_crop_preserves_native_geometry(self):
         body, root, _ = fixture()

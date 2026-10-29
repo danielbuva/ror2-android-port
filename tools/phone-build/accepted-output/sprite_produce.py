@@ -136,10 +136,10 @@ def source_pixels(texture, root, bundle, decoder):
 def constructor_parameters(selected, body, root, texture, texture_root, width, height):
     """Recover original parameters or the named texture importer mode.
 
-    AssetRipper's TextureExportCollection selects Single when the source Sprite
-    and Texture names agree and its original/render rectangles agree. Unity's
-    single-image import uses the decoded image extent, rather than a potentially
-    rounded rectangle retained in the original bundle.
+    The pinned SpriteProcessor first normalizes crop, pivot and border. Its
+    TextureExportCollection then selects Single for matching Sprite/Texture
+    names; the normalized rectangle already equals the render rectangle.
+    Single uses the decoded image extent with those normalized parameters.
     """
     parameters = N.source_parameters(body, root)
     if "texture_importer" not in selected:
@@ -166,13 +166,9 @@ def constructor_parameters(selected, body, root, texture, texture_root, width, h
     if mode == "multiple":
         parameters["rect"] = list(struct.unpack("<4f", raw(body, spans, ("m_RD", "textureRect"))))
         return parameters
-    if name(body) != name(texture) or raw(body, spans, ("m_Rect",)) != raw(body, spans, ("m_RD", "textureRect")):
+    if name(body) != name(texture):
         raise ValueError("original Sprite does not select single-image import")
-    parameters.update(
-        rect=[0, 0, width, height],
-        pivot=list(struct.unpack("<2f", raw(body, spans, ("m_Pivot",)))),
-        border=list(struct.unpack("<4f", raw(body, spans, ("m_Border",)))),
-    )
+    parameters["rect"] = [0, 0, width, height]
     return parameters
 
 

@@ -5225,3 +5225,18 @@ reflection faces/mips and native relationships. Existing tool/SDK licensing and
 ownership/entitlement boundaries apply. No redistribution or authentication
 success is granted. Full phone/game-runtime and install/update acceptance remain
 open; generated outputs and raw evidence stay ignored.
+
+### Whole-game native Sprite imports (J1272)
+
+`owner-whole-game-native-sprites.json` (SHA-256
+`100f834f8665f79b3075668d18e4b2f35866a6204753fddbad0125f95765d7d4`)
+selects 757 original Sprite/Texture2D pairs and their minimum importer GUIDs,
+output identities, pointer relationships and comparison hashes. It contains no
+pixels, geometry, physics contours, native output or private configuration.
+The existing public pixel decoder and exact SDK constructor generate those
+outputs locally. The pinned AssetRipper `1ac666f` SpriteProcessor normalizes
+crop/pivot/border before TextureExportCollection selects the importer mode.
+The authored producer preserves that ordering and native pixel-pivot rounding.
+Provenance/privacy review: original paths and GUIDs are reconstruction identities;
+all game-derived PNGs, native geometry, records and device evidence stay ignored.
+This adds no entitlement adapter, SDK redistribution or complete-game claim.

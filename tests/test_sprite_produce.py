@@ -121,6 +121,18 @@ class SpriteProduceTests(unittest.TestCase):
         self.assertEqual(parameters["rect"], [1, 0, 15, 8])
         self.assertAlmostEqual(parameters["pivot"][0], 8 / 15)
 
+    def test_single_import_normalizes_crop_before_selecting_full_image(self):
+        body, root, _ = S.fixture()
+        _, spans = P.A.fields(body, root)
+        revised = bytearray(body)
+        struct.pack_into("<4f", revised, spans[("m_RD", "textureRect")][0], 2, 1, 8, 4)
+        struct.pack_into("<2f", revised, spans[("m_RD", "textureRectOffset")][0], 2, 1)
+        texture = F.vector(b"test", 4) + struct.pack("<ii", 16, 8)
+        texture_root = F.node("Base", children=[F.text("m_Name"), F.node("m_Width", 4), F.node("m_Height", 4)])
+        parameters = P.constructor_parameters({"texture_importer": "single"}, bytes(revised), root, texture, texture_root, 16, 8)
+        self.assertEqual(parameters["rect"], [0, 0, 16, 8])
+        self.assertEqual(parameters["pivot"], [0.75, 0.75])
+
     def test_single_image_import_requires_source_identity_and_matching_image_size(self):
         body, root, _ = S.fixture()
         texture = F.vector(b"test", 4) + struct.pack("<ii", 16, 8)

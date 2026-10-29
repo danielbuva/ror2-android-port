@@ -466,9 +466,9 @@ constructor settings retain the qualified native API contract. Its `produce`
 action rereads original records, admits explicit hash-pinned exact-SDK native
 output, and applies importer identities and qualified pointer relationships.
 The named `texture_importer` modes re-derive parameters during record assembly.
-`single` checks matching original names/rectangles and uses the decoded image
-extent and original pivot/border; `multiple` uses the original render-data
-rectangle and crop-derived pivot/border. Native dimensions must agree with the
+After the pinned exporter's crop/pivot/border normalization, `single` checks
+matching original names and uses the decoded image extent; `multiple` uses the
+render-data rectangle. Both retain the normalized pivot/border. Dimensions agree with the
 original Texture2D; body/type checks remain independent.
 Every body and persisted record-pack extent must match its expected hash.
 Source files are rechecked and new outputs must lie outside the original input.
