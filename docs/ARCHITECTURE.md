@@ -4891,6 +4891,12 @@ teardown and local receipts follow the existing contract above. The existing
 `record_produce.py` Director path derives exposed-reference names from original
 asset identity; it adds no runtime state. Its host contract is qualified separately
 from complete Conduit assembly, which remains open.
+The same Director owner admits `director_unbound_tracks`: explicit imported-track
+PPtrs and binding positions add native null bindings after source pointer
+relocation. Original bindings, exposed references and playback state remain
+source-derived. Setup uses the original schema and minimum authored relationship
+metadata; it retains no state beyond the existing record-pack lifetime. A complete
+Director record is a separate contract from whole-scene byte equality.
 
 J1185 adds Conduit Canyon object/Standard selections and Fungal Standard/postprocess
 selections to those owners. Existing Standard scene validation derives enabled fog

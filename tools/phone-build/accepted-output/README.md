@@ -406,6 +406,14 @@ and that full bundle are host byte-exact; phone/runtime gates remain open.
 
 ## Produce meshes directly from original PC bundles
 
+The generic `record_produce.py` Director transform also accepts
+`director_unbound_tracks: [{"index": POSITION, "key": [FILE_ID, PATH_ID]}]`.
+These minimum imported-track relationships add null bindings after the existing
+`references` relocation; positions address the resulting binding list in ascending
+order. Existing source bindings and playback state remain intact. This operation
+requires an original PlayableDirector schema and supplies no Timeline parameters
+or serialized binding-body literals. Complete-scene qualification remains separate.
+
 `mesh_produce.py`, `unity_bundle.py` and `unity_mesh.py` own current experimental
 PC-input-only mesh production. They use Python 3.11+ standard-library modules
 on the host and Android, with no Editor, UnityPy, SDK or target-content input:

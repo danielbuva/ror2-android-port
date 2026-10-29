@@ -1136,11 +1136,47 @@ def director_exposed_names(body, root):
     return body[:start] + struct.pack("<I", count) + b"".join(row for _, row in sorted(entries, key=lambda row: row[0])) + body[end:]
 
 
+def director_unbound_tracks(body, root, selected):
+    """Add explicit imported track relationships with native null bindings.
+
+    The profile supplies only destination PPtrs and their binding positions.
+    Original bindings and all other Director state remain source-owned.
+    """
+    _, located = fields(body, root)
+    prefix = ("m_SceneBindings", "Array")
+    start, end = located[prefix]
+    count = struct.unpack_from("<I", body, start)[0]
+    entries = []
+    keys = set()
+    for index in range(count):
+        left, right = located[prefix + (str(index),)]
+        if right - left != 24 or located[prefix + (str(index), "key")] != (left, left + 12) or located[prefix + (str(index), "value")] != (left + 12, right):
+            raise ValueError("original Director binding schema differs")
+        entries.append(body[left:right])
+        keys.add(struct.unpack_from("<iq", body, left))
+    previous = -1
+    for row in selected:
+        if set(row) != {"index", "key"}:
+            raise ValueError("unbound track requires only position and PPtr")
+        index, key = row["index"], tuple(row["key"])
+        if type(index) is not int or not previous < index <= len(entries) or len(key) != 2 or any(type(value) is not int for value in key):
+            raise ValueError("invalid imported Director track relationship")
+        if key[0] < 0 or not key[1] or key in keys:
+            raise ValueError("imported Director track must be distinct and nonnull")
+        entries.insert(index, struct.pack("<iqiq", *key, 0, 0))
+        keys.add(key)
+        previous = index
+    result = body[:start] + struct.pack("<I", len(entries)) + b"".join(entries) + body[end:]
+    fields(result, root)
+    return result
+
+
 def transform_generic(body, class_id, selected, root=None, read_clip=None):
     if set(selected) - {
         "references",
         "demote_keywords",
         "director_exposed_names",
+        "director_unbound_tracks",
         "controller_clip_order",
         "controller_loop_states",
         "controller_tos",
@@ -1194,6 +1230,10 @@ def transform_generic(body, class_id, selected, root=None, read_clip=None):
             body = sprites.sprite_crop(body, selected["crop_rectangle_offset"])
         body = sprites.sprite_key(body, selected["importer_guid"])
     result = O.remap(body, selected.get("references", []))
+    if "director_unbound_tracks" in selected:
+        if class_id != 320 or root is None:
+            raise ValueError("unbound tracks require original PlayableDirector schema")
+        result = director_unbound_tracks(result, root, selected["director_unbound_tracks"])
     return O.demote_material_keywords(result) if selected.get("demote_keywords") else result
 
 
