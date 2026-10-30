@@ -1269,7 +1269,7 @@ def profile_bundles(path):
         yield from profile["bundles"]
 
 
-def managed_record_hash(body, typ, metadata, member, script, sdk_tree, identity_owner):
+def managed_record_hash(body, typ, metadata, member, script, sdk_tree, identity_owner, *, preserve_original=False):
     """Derive an unchanged managed record's native hash from original schema."""
     if typ["class_id"] != 114 or sdk_tree is None:
         raise ValueError("managed record properties require MonoBehaviour and pinned SDK")
@@ -1289,6 +1289,8 @@ def managed_record_hash(body, typ, metadata, member, script, sdk_tree, identity_
     _, names = O.script_fields(script_body)
     if typ["script_id"] != identity_owner.md4("".join(names).encode()):
         raise ValueError("managed record script identity differs from original schema")
+    if preserve_original:
+        return O.original_script_properties(script_body, script_type, typ, typ, identity_owner)
     return identity_owner.properties_hash(*names, typ["tree"], sdk_tree)
 
 
@@ -1410,14 +1412,17 @@ def produce(profile_path, profile_sha256, pc, output, sdk=None):
                             74,
                             91,
                             95,
+                            96,
                             104,
                             108,
                             114,
+                            119,
                             120,
                             135,
                             136,
                             137,
                             156,
+                            193,
                             198,
                             199,
                             205,
@@ -1429,19 +1434,30 @@ def produce(profile_path, profile_sha256, pc, output, sdk=None):
                             224,
                             225,
                             320,
+                            330,
                         ):
                             raise ValueError("unqualified original object class")
                         member.seek(metadata["data_offset"] + obj["offset"])
                         body = B.exact(member, obj["bytes"])
                         if hashlib.sha256(body).hexdigest() != selected["sha256"]:
                             raise ValueError("original object-record body drift")
+                        if "preserve_original_script_hash" in selected:
+                            if selected["preserve_original_script_hash"] is not True or "properties_hash" not in selected:
+                                raise ValueError("original managed hash requires explicit script properties")
                         if "properties_hash" in selected:
                             if set(selected["properties_hash"]) != {"script"}:
                                 raise ValueError("unknown managed record hash policy")
                             if identity_owner is None:
                                 identity_owner = O.module("script_identity", Path(__file__).resolve().parents[3] / "scripts/lab/script_identity.py")
                             value = managed_record_hash(
-                                body, typ, metadata, selected_member["name"], original_script(selected["properties_hash"]["script"]), sdk_tree, identity_owner
+                                body,
+                                typ,
+                                metadata,
+                                selected_member["name"],
+                                original_script(selected["properties_hash"]["script"]),
+                                sdk_tree,
+                                identity_owner,
+                                preserve_original=selected.get("preserve_original_script_hash", False),
                             )
                             typ = {**typ, "hash": value}
                         root = None

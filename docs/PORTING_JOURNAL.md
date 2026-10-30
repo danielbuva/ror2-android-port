@@ -1255,3 +1255,18 @@ phone APK/installation/update acceptance remain open.
 - Whole-game unresolved records fall to 1,772, including 25 Shaders. Historical
   readiness stays 693/705 available, 685 raw-exact. Complete bundle, phone
   production, original rendering/gameplay and install/update remain open.
+
+## J1276 — Reconstruct 1,345 whole-game hierarchy and component records
+2026-10-30.
+- Proven original roots and unique reciprocal child-name paths resolve 587 GOs;
+  1,237 native records retain exact state, plus 108 source-bound managed records.
+- The generic producer admits four more native classes and delegates original
+  script-hash retention to the existing unchanged-schema owner.
+- All 464,181 persisted body bytes and required native type hashes match J850.
+- Evidence: `work/coordination/orchestrator/whole-game-hierarchy-publication-v1/`.
+- Qualified index SHA-256: `a21bac34429efe11878d61b79988a95982cb4b81317a76297b37aa3104a086ae`.
+- Source component ownership, SDK/native hashes, generic pack tests, Ruff and
+  preflight pass. No target pose/scalar input or runtime mechanism is added.
+- Whole-game unresolved records fall to 427; historical readiness stays
+  693/705 available, 685 raw-exact. Complete bundle, phone production, original
+  gameplay and data-preserving installation/update remain open.
