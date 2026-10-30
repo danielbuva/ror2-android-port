@@ -436,6 +436,14 @@ require `native_type_hash` for each output. The pack retains that identity and
 `object_produce.py` checks it after its own source type projection, before bundle
 emission. Source readers close per supplier, script caches expire at process exit
 and input pins are rechecked; no new runtime owner is added.
+`script_identity.OriginalScriptFields` scopes original CLR metadata under the
+existing pinned managed-directory contract. Its current/inherited declarations
+and serialized-name aliases govern `prune_absent_script_fields` in both record
+and complete-object producers. The object owner removes whole absent fields,
+protects SDK native fields and verifies retained bytes/alignment; SDK properties
+hashing follows projection. Packed schemas are projected before pointer relocation.
+Setup requires explicit original DLL hashes and the existing original script/SDK
+bindings. DLL pins are rechecked before success and CLR readers close at exit.
 The optional `preserve_original_script_hash` selection delegates to the object
 owner's existing unchanged-schema check after verifying the actual original
 MonoScript binding. The hierarchy path recipes select original records using

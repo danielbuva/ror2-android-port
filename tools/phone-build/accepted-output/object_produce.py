@@ -926,6 +926,41 @@ def omit_run_presence_counters(tree, identity_owner):
     return identity_owner._tree(nodes[:-2], common_strings=True)
 
 
+def project_current_script_fields(body, tree, declared, sdk_tree, identity_owner):
+    """Omit whole source fields absent from current declarations and prior names."""
+    nodes = identity_owner.tree_nodes(tree)
+    groups = identity_owner._fields(nodes)
+    if len(groups) != sum(node["level"] == 1 for node in nodes):
+        raise ValueError("ambiguous original root field names")
+    native = identity_owner.tree_nodes(sdk_tree)
+    end = next(i for i, node in enumerate(native) if node["level"] == 1 and node["name"] == "m_EditorClassIdentifier")
+    protected = {node["name"] for node in native[: end + 1] if node["level"] == 1} | declared
+    removed = [name for name in groups if name not in protected]
+    if not removed:
+        return body, tree, []
+    schema = M._mesh
+    # Expand common labels for the field-span walk; native hash generation keeps
+    # the original node names, flags and types through the shared tree encoder.
+    spans = schema.spans(body, schema.type_tree(io.BytesIO(identity_owner._tree(nodes))))
+    kept, result = [nodes[0]], bytearray()
+    for name, group in groups.items():
+        if name in removed:
+            continue
+        start, stop = spans[name,]
+        if len(result) % 4 != start % 4:
+            raise ValueError("stale field omission changes retained field alignment")
+        result.extend(body[start:stop])
+        kept.extend(group)
+    result = bytes(result)
+    revised = schema.spans(result, schema.type_tree(io.BytesIO(identity_owner._tree(kept))))
+    for name in groups:
+        if name not in removed:
+            old, new = spans[name,], revised[name,]
+            if body[old[0] : old[1]] != result[new[0] : new[1]]:
+                raise ValueError("stale field omission changes retained field bytes")
+    return result, identity_owner._tree(kept, common_strings=True), removed
+
+
 def script_fields(body):
     """Read original release MonoScript identity and its properties-hash extent."""
     stream = io.BytesIO(body)
@@ -1222,7 +1257,7 @@ def produce(profile_path, profile_sha256, pc, output, codec_path, codec_sha256, 
         raise ValueError("object serialization requires the pinned codec")
     scene = "members" in profile["bundle"]
     required = {"input_id", "sources", "bundle"} | (set() if scene else {"objects"})
-    if set(profile) - {"sdk"} != required or profile["input_id"] != M.INPUT_ID:
+    if set(profile) - {"sdk", "managed"} != required or profile["input_id"] != M.INPUT_ID:
         raise ValueError("unknown object input profile")
     pc = pc.resolve(strict=True)
     parent = output.parent.resolve(strict=True)
@@ -1244,6 +1279,7 @@ def produce(profile_path, profile_sha256, pc, output, codec_path, codec_sha256, 
     started = time.monotonic()
     receipt = {"success": False, "input_id": M.INPUT_ID, "profile_sha256": profile_sha256, "objects": 0, "object_bytes": 0}
     stage = None
+    runtime_fields = None
     try:
         stage = streaming.Store(output)
         sdk_path, sdk_tree = None, None
@@ -1300,6 +1336,16 @@ def produce(profile_path, profile_sha256, pc, output, codec_path, codec_sha256, 
                     record_type_hash = row.get("native_type_hash")
                     source, identity = selected["type_source"]
                     typ = sources[source][3]["types"][sources[source][4][identity]["type_id"]]
+                    if selected.get("prune_absent_script_fields") and typ["class_id"] == 114:
+                        if identity_owner is None or "managed" not in profile or "properties_hash" not in selected:
+                            raise ValueError("current record schema requires SDK, original assemblies and script binding")
+                        if runtime_fields is None:
+                            runtime_fields = identity_owner.OriginalScriptFields(pc, profile["managed"])
+                        selectors = selected["properties_hash"]
+                        script, _ = source_record(sources, selectors["script"])
+                        original, original_type = source_record(sources, selectors["behaviour"])
+                        _, tree, _ = project_current_script_fields(original, original_type["tree"], runtime_fields.names(script), sdk_tree, identity_owner)
+                        typ = {**typ, "tree": tree}
                     if "record_references" in selected:
                         body = remap_record(body, typ, selected["record_references"], selected_member["externals"])
                     if "resource" in row:
@@ -1471,8 +1517,15 @@ def produce(profile_path, profile_sha256, pc, output, codec_path, codec_sha256, 
                     omit_master = selected.get("omit_character_master_unkillable", False)
                     omit_alpha = selected.get("omit_animate_shader_alpha_legacy_fields", False)
                     omit_presence = selected.get("omit_run_presence_counters", False)
+                    prune_absent = selected.get("prune_absent_script_fields", False)
                     preserve_original = selected.get("preserve_original_script_hash", False)
-                    key = tuple(selectors["script"]), tuple(selectors["behaviour"]), omit_master, omit_alpha, omit_presence, preserve_original
+                    if prune_absent and (
+                        prune_absent is not True or preserve_original or omit_master or omit_alpha or omit_presence or "managed" not in profile
+                    ):
+                        raise ValueError("current script projection requires pinned assemblies and exclusive SDK schema policy")
+                    if prune_absent and runtime_fields is None:
+                        runtime_fields = identity_owner.OriginalScriptFields(pc, profile["managed"])
+                    key = tuple(selectors["script"]), tuple(selectors["behaviour"]), omit_master, omit_alpha, omit_presence, preserve_original, prune_absent
                     if key not in properties:
                         script, script_type = source_record(sources, selectors["script"])
                         original_behaviour, behaviour_type = source_record(sources, selectors["behaviour"])
@@ -1493,6 +1546,10 @@ def produce(profile_path, profile_sha256, pc, output, codec_path, codec_sha256, 
                             if omit_presence is not True or names != ("RunPresence", "RoR2", "RoR2.dll"):
                                 raise ValueError("cached counter omission requires original RunPresence")
                             schema = omit_run_presence_counters(schema, identity_owner)
+                        if prune_absent:
+                            if behaviour_type["script_id"] != identity_owner.md4("".join(names).encode()):
+                                raise ValueError("current script projection differs from original schema identity")
+                            _, schema, _ = project_current_script_fields(original_behaviour, schema, runtime_fields.names(script), sdk_tree, identity_owner)
                         if preserve_original:
                             if preserve_original is not True or omit_master or omit_alpha or omit_presence:
                                 raise ValueError("original script hash cannot accompany schema projection")
@@ -1520,6 +1577,19 @@ def produce(profile_path, profile_sha256, pc, output, codec_path, codec_sha256, 
                                 raise ValueError("original RunPresence cached counters must be zero")
                             body = body[:-8]
                             typ["tree"] = omit_run_presence_counters(typ["tree"], identity_owner)
+                        if prune_absent:
+                            script, _ = source_record(sources, selectors["script"])
+                            original, original_type = source_record(sources, selectors["behaviour"])
+                            projected, tree, _ = project_current_script_fields(
+                                original if "record" in selected else body,
+                                original_type["tree"] if "record" in selected else typ["tree"],
+                                runtime_fields.names(script),
+                                sdk_tree,
+                                identity_owner,
+                            )
+                            if "record" not in selected:
+                                body = projected
+                            typ["tree"] = tree
                         typ["hash"] = value
                     else:
                         raise ValueError("script properties require MonoScript or MonoBehaviour")
@@ -1640,12 +1710,17 @@ def produce(profile_path, profile_sha256, pc, output, codec_path, codec_sha256, 
         receipt["serialized_sha256"] = (
             {member["name"]: member["serialized_sha256"] for member in selected_members} if scene else selected_bundle["serialized_sha256"]
         )
+        if runtime_fields is not None:
+            runtime_fields.verify()
+            receipt["managed_field_inputs"] = dict(runtime_fields.pins)
         receipt["success"] = True
         return receipt
     except Exception as error:
         receipt["error"] = type(error).__name__ + ": " + str(error)
         raise
     finally:
+        if runtime_fields is not None:
+            runtime_fields.close()
         if stage is not None:
             stage.close()
         receipt["seconds"] = time.monotonic() - started

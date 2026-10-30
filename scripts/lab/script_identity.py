@@ -336,6 +336,8 @@ def _compact_metadata(pe, coded):
                 identity = _type_name(owner.row)
         if identity in {("UnityEngine", "SerializeField"), ("UnityEngine", "SerializeReference")}:
             attributes["Field", parent.row_index].add(identity)
+        elif identity == ("UnityEngine.Serialization", "FormerlySerializedAsAttribute"):
+            attributes["Field", parent.row_index].add((*identity, bytes(row.Value.value)))
     exported = [
         N(
             TypeName=str(row.TypeName),
@@ -528,6 +530,29 @@ class _RegistryTypes:
         return not (field.Flags.fdStatic or field.Flags.fdInitOnly or field.Flags.fdNotSerialized) and (
             field.Flags.fdPublic or bool({("UnityEngine", "SerializeField"), ("UnityEngine", "SerializeReference")} & attributes)
         )
+
+    def declared_field_names(self, class_name, namespace, assembly):
+        found = [row for row in self.load(assembly).net.mdtables.TypeDef.rows if _type_name(row) == (namespace, class_name)]
+        if len(found) != 1:
+            raise ValueError("current script CLR identity is absent or ambiguous")
+        hierarchy, is_object = self.hierarchy(assembly, found[0], arguments=False)
+        if not is_object:
+            raise ValueError("current script CLR hierarchy is not a Unity object")
+        names = set()
+        for owner, row in hierarchy:
+            for index in row.FieldList:
+                names.add(str(index.row.Name))
+                for attribute in self.attributes[owner]["Field", index.row_index]:
+                    if attribute[:2] != ("UnityEngine.Serialization", "FormerlySerializedAsAttribute"):
+                        continue
+                    blob = attribute[2]
+                    if len(blob) < 5 or blob[:2] != b"\x01\0" or blob[2] == 255:
+                        raise ValueError("unsupported original serialized-name alias")
+                    length, start = self.compressed(blob, 2)
+                    if start + length + 2 != len(blob) or blob[-2:] != bytes(2):
+                        raise ValueError("unsupported original serialized-name alias arguments")
+                    names.add(blob[start : start + length].decode("utf-8"))
+        return names
 
     def custom_fields(self, hierarchy, depth=0):
         result = []
@@ -811,6 +836,42 @@ class _RegistryTypes:
             return bytes(16)
         assembly, namespace, class_name = identity
         return properties_hash(class_name, namespace, assembly, tree, self.native)
+
+
+class OriginalScriptFields:
+    """Scoped original CLR declarations under the existing pinned managed contract."""
+
+    def __init__(self, pc, managed):
+        self.pc = Path(pc).resolve(strict=True)
+        relative = PurePosixPath(managed["path"])
+        if relative.is_absolute() or ".." in relative.parts or "\\" in managed["path"]:
+            raise ValueError("unsafe original script field root")
+        self.directory = (self.pc / relative).resolve(strict=True)
+        if not self.directory.is_relative_to(self.pc):
+            raise ValueError("original script field root leaves game input")
+        self.files, self.pins = managed["files"], {}
+        self.clr = _RegistryTypes(self.directory, {}, self.pin, None, {})
+
+    def pin(self, path, provider=None):
+        path = Path(path).resolve(strict=True)
+        if path.parent != self.directory or path.name not in self.files:
+            raise ValueError("unadmitted original script field assembly")
+        with path.open("rb") as stream:
+            actual = hashlib.file_digest(stream, "sha256").hexdigest()
+        if actual != self.files[path.name]:
+            raise ValueError("original script field assembly drift")
+        self.pins[str(path.relative_to(self.pc))] = actual
+
+    def names(self, script):
+        assembly, namespace, class_name = _script_record(script)["identity"]
+        return self.clr.declared_field_names(class_name, namespace, assembly)
+
+    def verify(self):
+        for path in list(self.pins):
+            self.pin(self.pc / path)
+
+    def close(self):
+        self.clr.close()
 
 
 def pointer_script_schema(pc, managed, script, base_tree, pointer_tree, sdk_tree):

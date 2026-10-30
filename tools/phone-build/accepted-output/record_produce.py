@@ -1279,7 +1279,7 @@ def profile_bundles(path):
                 yield source
     else:
         profile = json.loads(path.read_text())
-        if set(profile) - {"sdk"} != {"input_id", "bundles"} or profile["input_id"] != M.INPUT_ID:
+        if set(profile) - {"sdk", "managed"} != {"input_id", "bundles"} or profile["input_id"] != M.INPUT_ID:
             raise ValueError("unknown object-record input")
         yield from profile["bundles"]
 
@@ -1330,6 +1330,7 @@ def produce(profile_path, profile_sha256, pc, output, sdk=None):
     output.mkdir()
     started = time.monotonic()
     receipt = {"success": False, "input_id": M.INPUT_ID, "profile_sha256": profile_sha256, "objects": 0, "object_bytes": 0}
+    runtime_fields = None
     try:
         sdk_path, sdk_tree = None, None
         if not str(profile_path).endswith(".jsonl.gz") and "sdk" in (profile := json.loads(profile_path.read_text())):
@@ -1459,6 +1460,12 @@ def produce(profile_path, profile_sha256, pc, output, sdk=None):
                         if "preserve_original_script_hash" in selected:
                             if selected["preserve_original_script_hash"] is not True or "properties_hash" not in selected:
                                 raise ValueError("original managed hash requires explicit script properties")
+                        if "prune_absent_script_fields" in selected and (
+                            selected["prune_absent_script_fields"] is not True
+                            or "properties_hash" not in selected
+                            or selected.get("preserve_original_script_hash")
+                        ):
+                            raise ValueError("current script projection requires SDK properties and unchanged original binding")
                         if "properties_hash" in selected:
                             if set(selected["properties_hash"]) != {"script"}:
                                 raise ValueError("unknown managed record hash policy")
@@ -1474,6 +1481,18 @@ def produce(profile_path, profile_sha256, pc, output, sdk=None):
                                 identity_owner,
                                 preserve_original=selected.get("preserve_original_script_hash", False),
                             )
+                            if selected.get("prune_absent_script_fields"):
+                                if "managed" not in profile:
+                                    raise ValueError("current script projection requires pinned original assemblies")
+                                if runtime_fields is None:
+                                    runtime_fields = identity_owner.OriginalScriptFields(pc, profile["managed"])
+                                script_body = original_script(selected["properties_hash"]["script"])[1]
+                                body, tree, removed = O.project_current_script_fields(
+                                    body, typ["tree"], runtime_fields.names(script_body), sdk_tree, identity_owner
+                                )
+                                typ = {**typ, "tree": tree}
+                                value = identity_owner.properties_hash(*O.script_fields(script_body)[1], tree, sdk_tree)
+                                receipt.setdefault("pruned_script_fields", {})[str(obj["path_id"])] = removed
                             typ = {**typ, "hash": value}
                         root = None
                         if typ["class_id"] in (74, 91, 320):
@@ -1515,6 +1534,9 @@ def produce(profile_path, profile_sha256, pc, output, sdk=None):
                 raise ValueError("original managed script changed during production")
         if sdk_path is not None and B.sha(sdk_path) != profile["sdk"]["sha256"]:
             raise ValueError("SDK script metadata changed during production")
+        if runtime_fields is not None:
+            runtime_fields.verify()
+            receipt["managed_field_inputs"] = dict(runtime_fields.pins)
         receipt["outputs"] = {name: {"bytes": (output / name).stat().st_size, "sha256": B.sha(output / name)} for name in ("objects.bin", "index.jsonl")}
         receipt["success"] = True
         return receipt
@@ -1522,6 +1544,8 @@ def produce(profile_path, profile_sha256, pc, output, sdk=None):
         receipt["error"] = type(error).__name__ + ": " + str(error)
         raise
     finally:
+        if runtime_fields is not None:
+            runtime_fields.close()
         receipt["seconds"] = time.monotonic() - started
         (output / "result.json").write_text(json.dumps(receipt, indent=2) + "\n")
 
