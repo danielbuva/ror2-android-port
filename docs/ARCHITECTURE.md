@@ -350,6 +350,13 @@ The code owner's existing request supplies the immutable authored source root
 and packages root, with the existing flat input-hash manifest. The identity owner
 returns source-sorted script IDs, native layout and bodies; `player_data.py`
 writes them through the existing serialized writer and rechecks all providers.
+`script_registry.py` exposes that same phase independently, using the existing
+registry recipe, game/SDK inputs, code request and managed production. It writes
+one serialized registry and a provider-pinned receipt into a new caller-owned
+directory; the existing identity owner closes CLR/SDK readers before return.
+`record_remap.py` consumes the receipt through its serialized-supplier interface,
+preserving native type hashes as well as body and source provenance. No accepted
+player file or private schema packet is required by this route.
 `shared_defaults` uses those source script IDs, original RenderSettings with a
 hash-matched original Wisp schema, SDK Material/resource records and the shader
 owner's standard record pack. Its Cube and diagnostics preloads follow the

@@ -1297,3 +1297,17 @@ phone APK/installation/update acceptance remain open.
 - Whole-game unresolved records fall to 372; historical readiness stays
   693/705 available, 685 raw-exact. Complete bundle, phone production, gameplay
   and data-preserving installation/update remain open.
+
+## J1279 — Route six remaining MonoScripts from the source registry
+2026-10-30.
+- `script_registry.py` exposes the existing registry owner independently and
+  writes a serialized file/receipt after rechecking all source-provider pins.
+- Fresh production emits 2,753 scripts; six whole-game records are selected
+  through the existing serialized remapper, retaining provenance/native hashes.
+- All 504 persisted body bytes and required native type hashes match J850; no
+  historical player, private schema or precomputed body is a required input.
+- Evidence: `work/coordination/orchestrator/whole-game-registry-records-v1/`.
+- Record pack SHA-256: `97e5a22902e458d71a9950677436912030c6679bcb464b7ebd6f9cfac6222191`.
+- Remaining whole-game records fall to 366 with no MonoScripts left. Historical
+  readiness stays 693/705 available, 685 raw-exact; complete phone production,
+  native gameplay and data-preserving installation/update remain open.

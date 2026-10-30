@@ -26,9 +26,12 @@ def serialized_records(directory, receipt, selected):
         if len(matches) != 1:
             raise ValueError("serialized supplier identity differs")
         original = matches[0]
-        class_id = metadata["types"][original["type_id"]]["class_id"]
+        definition = metadata["types"][original["type_id"]]
+        class_id = definition["class_id"]
         if class_id != selected["class_id"] or original["bytes"] != selected["bytes"]:
             raise ValueError("serialized supplier class or size differs")
+        if "native_type_hash" in selected and selected["native_type_hash"] != definition["hash"].hex():
+            raise ValueError("serialized supplier native type differs")
         stream.seek(metadata["data_offset"] + original["offset"])
         body = O.B.exact(stream, original["bytes"])
     if hashlib.sha256(body).hexdigest() != selected["sha256"]:
@@ -39,6 +42,7 @@ def serialized_records(directory, receipt, selected):
         "bytes": len(body),
         "sha256": selected["sha256"],
         "class_id": class_id,
+        "native_type_hash": definition["hash"].hex(),
         "source_produced": {"profile_sha256": receipt["profile_sha256"], "file": relative, "path_id": identity, "file_sha256": pin["sha256"]},
     }
     return row, body

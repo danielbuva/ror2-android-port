@@ -5456,3 +5456,18 @@ Existing filename and public adapter-append policies also apply. No new omission
 policy, original body/scalar/type tree, implementation or private setting is
 included. All 38 persisted records and native type hashes match J850. Complete
 bundle, phone production, gameplay and installation/update remain open.
+
+### Whole-game source registry records (J1279)
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-whole-game-registry-records.json` | `70e07b47f45255014324c4b166e1f52edaa0263b770ea6cf9f6f63bea31c5955` |
+
+Audit: existing public registry-profile hash, generated file/object selectors,
+output identities, body hashes and native type hashes. `script_registry.py`
+exposes the existing original/SDK/authored registry owner as a standalone phase;
+`record_remap.py` consumes its fresh successful receipt. No historical player
+file, private schema, generated body, original implementation or private setting
+is included or required publicly. All six persisted MonoScripts match J850.
+Generated registry IDs supply record selection, never original-asset identity
+witnesses. Complete bundle, phone production and runtime acceptance remain open.

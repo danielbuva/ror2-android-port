@@ -47,6 +47,9 @@ class RecordRemapTests(unittest.TestCase):
             row = json.loads((root / "output/index.jsonl").read_text())
             self.assertEqual(row["source_produced"]["file_sha256"], receipt["files"][path.name]["sha256"])
             self.assertEqual(row["path_id"], 99)
+            self.assertEqual(row["native_type_hash"], bytes(16).hex())
+            with self.assertRaisesRegex(ValueError, "native type"):
+                R.serialized_records(supplier, receipt, dict(selected, native_type_hash="ff" * 16))
             with self.assertRaisesRegex(ValueError, "class or size"):
                 R.serialized_records(supplier, receipt, dict(selected, class_id=21))
             with self.assertRaises(ValueError):

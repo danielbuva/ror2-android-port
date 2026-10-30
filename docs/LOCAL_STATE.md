@@ -872,6 +872,8 @@ The complete player script registry additionally requires the code owner's
 explicit original-input request, immutable authored source tree, successful
 managed-production directory and original package importer inputs. Reuse its
 existing `source_inputs.packages` and adjacent flat `input-hashes.json` contract.
+The standalone `script_registry.py` phase accepts these same inputs and writes
+a new caller-selected registry/receipt directory for serialized-record consumers.
 Besides the unchanged compiler sources, retain original adjacent source metas
 and the importer-only TestRunner 1.1.33 and pinned MCP runtime source/asmdef/meta
 sets. SDK archives or the documented public acquisitions supply these inputs;
