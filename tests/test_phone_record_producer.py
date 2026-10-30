@@ -601,6 +601,27 @@ class AnimationProducerTests(unittest.TestCase):
                 with self.assertRaisesRegex(ValueError, "generic object operation"):
                     A.produce(path, A.B.sha(path), pc, root / "operation-drift")
 
+    def test_prefab_policies_preserve_components_and_native_tail(self):
+        name = b" Beam/[Demo] (Clone) "
+        encoded = struct.pack("<I", len(name)) + name
+        body = struct.pack("<IiqiqI", 2, 0, 11, 0, 22, 5) + encoded + bytes(-len(encoded) % 4) + b"\x07\x00\x01"
+        projected = struct.pack("<I", 11) + b"Beam__Demo_" + bytes(1)
+        expected = struct.pack("<IiqiqiqI", 3, 0, 101, 0, 303, 0, 202, 5) + projected + b"\x07\x00\x01"
+        policy = {
+            "normalize_exported_prefab_name": True,
+            "append_components": [303],
+            "references": [
+                {"offset": 4, "from": [0, 11], "to": [0, 101]},
+                {"offset": 16, "from": [0, 22], "to": [0, 303]},
+                {"offset": 28, "from": [0, 303], "to": [0, 202]},
+            ],
+        }
+        self.assertEqual(A.transform_generic(body, 1, policy), expected)
+        with self.assertRaisesRegex(ValueError, "filename projection"):
+            A.transform_generic(body, 114, policy)
+        with self.assertRaisesRegex(ValueError, "component append"):
+            A.transform_generic(body, 114, {"append_components": [303]})
+
     def test_generic_material_policy_relocates_before_demoting_original_keywords(self):
         prefix = struct.pack("<I", 4) + b"Demo" + struct.pack("<iq", 2, 77)
         keyword = struct.pack("<I", 3) + b"ONE\0"

@@ -1039,6 +1039,10 @@ bindings and the pinned SDK base schema. Output index rows retain checked
 `native_type_hash` values; complete-bundle assembly verifies these after source
 type projection. This recipe adds no original fields or generated body templates.
 Native `owner-whole-game-hierarchy-path-records.json` needs no SDK input.
+`owner-whole-game-prefab-policy-records.json` uses the same CLI without `--sdk`.
+It delegates existing prefab filename and component-append operations, retaining
+the complete ordered original component list and native tail. Appended components
+must be supplied by the existing public adapter recipes at bundle assembly.
 `recipe/owner-whole-game-material-compute-records.json` uses the same CLI without
 `--sdk`. It reuses the named material keyword policies and the existing class 72
 DXBC shell projection. Compute declarations remain source-owned; these shells

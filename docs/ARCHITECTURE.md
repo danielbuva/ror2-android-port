@@ -435,6 +435,10 @@ MonoScript binding. The hierarchy path recipes select original records using
 proven roots and unique reciprocal child paths; output state remains exact.
 Generic record admission also includes native classes 96, 119, 193 and 330,
 preserving their original schemas and every nonpointer byte.
+The prefab-policy record recipe delegates the existing exported-name projection
+and component append to the object owner. Original component order and ownership
+remain checked; appended adapters come from existing public source production.
+These pack operations add no runtime owner or complete-bundle acceptance.
 Its generic path also delegates named material keyword policies and explicit
 ComputeShader shell production to the existing object owner. Original schemas,
 renderer/program preconditions and native type hashes remain checked. Compute
