@@ -1325,3 +1325,17 @@ phone APK/installation/update acceptance remain open.
 - Inheritance/alias, retained-value, input-drift and producer fixtures pass.
 - Whole-game unresolved records fall to 361; historical readiness remains
   693/705 available, 685 raw-exact. Complete phone/gameplay/install/update open.
+
+## J1281 — Reconstruct 16 whole-game components from qualified pointer edges
+2026-10-30.
+- Explicit component PPtr mappings in qualified original GameObject recipes
+  resolve duplicate identities; append/reordering cases are excluded.
+- Actual original/target script names and reciprocal owners agree; all retained
+  fields, native type identity and 800 persisted body bytes match J850.
+- The existing generic record producer emits eight TinkerableObjectAttributes,
+  four MeridianReportBossFinalPosition, two AnimationEvents and two GenericSkill.
+- Evidence: `work/coordination/orchestrator/whole-game-go-edges-production-v1/`.
+- Record pack SHA-256: `f17cfdf6934e280192d6fa227bd1ce2c3b2f1285ac35aa5df4e97c642a98aa0f`.
+- Source-identity proofs are retained in `whole-game-go-edges-v1/proofs.json`.
+- Whole-game unresolved records fall to 345; historical readiness remains
+  693/705 available, 685 raw-exact. Full phone/gameplay/install/update gates open.

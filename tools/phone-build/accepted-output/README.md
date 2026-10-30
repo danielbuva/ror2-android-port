@@ -1057,6 +1057,9 @@ bindings and the pinned SDK base schema. Output index rows retain checked
 `native_type_hash` values; complete-bundle assembly verifies these after source
 type projection. This recipe adds no original fields or generated body templates.
 Native `owner-whole-game-hierarchy-path-records.json` needs no SDK input.
+`owner-whole-game-component-edge-records.json` also uses the same CLI without
+`--sdk`. It selects unchanged native records through qualified GameObject pointer
+relationships, with actual script identity and ownership checked at qualification.
 `owner-whole-game-current-script-fields.json` additionally selects the generic
 `prune_absent_script_fields` policy. Its `managed` directory/file hashes pin
 original CLR declarations. Fields still declared by the current type or its
