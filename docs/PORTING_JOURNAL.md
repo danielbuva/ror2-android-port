@@ -1241,3 +1241,17 @@ phone APK/installation/update acceptance remain open.
   remain unchanged. Compute shells add no executable Android compute support.
 - Whole-game unresolved records fall to 1,889; readiness stays 693/705 available,
   685 raw-exact. Complete bundle, phone production and install/update remain open.
+
+## J1275 — Reconstruct 117 whole-game Shader records through existing source owners
+2026-10-30.
+- Ship 81 simple, 31 fallback and five SDK Shader records; all 565,120 persisted
+  bytes match J850. Source properties, SDK declarations and public templates
+  supply content; output asset identities and dependency relationships stay strict.
+- Stable source-derived filenames close 55 records without historical export files.
+- Evidence: `work/coordination/orchestrator/whole-game-shader-publication-v1/`;
+  source runs: `whole-game-shader-cohort-v1/`, `whole-game-shader-cohort-v2/`.
+- Qualified index SHA-256: `8f3b7b8e9e86bcc7b2bf5bb39569e6c641acf91e6457c948095d7ac744af27c2`.
+- Reuse the two passing earlier samples; no successful compiler job was replayed.
+- Whole-game unresolved records fall to 1,772, including 25 Shaders. Historical
+  readiness stays 693/705 available, 685 raw-exact. Complete bundle, phone
+  production, original rendering/gameplay and install/update remain open.

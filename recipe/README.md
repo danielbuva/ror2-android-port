@@ -5273,3 +5273,138 @@ field payload, type tree, shader program, SDK binary or private setting is
 included. All 154 persisted bodies and native type identities match J850. These
 compute shells supply no executable Android programs; complete bundle, phone
 production and runtime acceptance remain open.
+
+### Whole-game Shader records (J1275)
+
+`S` uses `payload_shader_records.py`; `F` uses `shader_prefab.py`. Each row
+pins a current original-input recipe.
+
+| Recipe | Producer | SHA-256 |
+| --- | --- | --- |
+| `owner-whole-game-shader-02b1e6e9370c8791.json` | S | `8836fb1f617dffbe8d680d89b65f9f08f3eeeeb7d36165c6672715a560f1a6a7` |
+| `owner-whole-game-shader-034fed06a241cf53.json` | S | `f62f49a8ff904e9b2d0d0bf2eca472979d816b55b6331125a36683fbeea7f419` |
+| `owner-whole-game-shader-070de82e6cf2da18.json` | S | `c8a480b49bd0f9812bad3eec1aea092b6090de99ff3b41ed6f5505f6809e6303` |
+| `owner-whole-game-shader-084c4240de06f760.json` | F | `4b0f783b9e833b1ce3b106748c2f93dc78b68a17a53e03347c51b86824360d28` |
+| `owner-whole-game-shader-0df842e9796d40b4.json` | S | `3c34f73582757fa0f134d182758b868075672b318f585f66b7a1540e12f37655` |
+| `owner-whole-game-shader-10f3b27d64b264f8.json` | F | `2d9cd4121d21a90c5cc48795ecf841218630a26520700c4272885339f3269d79` |
+| `owner-whole-game-shader-10f74c3751e9b1f2.json` | F | `e0ebd197a4531f9d4097ad802418c1cd74abba4f50fd36685a0e484972a964af` |
+| `owner-whole-game-shader-11736e6914b2b1ef.json` | F | `7dc4506be2f2869022f7c8a7f57c3688e3c2051a1e16fd0da5f0a00d24b036b2` |
+| `owner-whole-game-shader-12652c99b63bc31d.json` | F | `abfbd18b76936902712ec7bb1fc289e1c2702c7255f37fef11dcc30b58bdfaaa` |
+| `owner-whole-game-shader-126d20ddf6885aed.json` | S | `b5488e0638fe5606ba792583a88144f2b2a4eda80acf459b41ac709e5814f5df` |
+| `owner-whole-game-shader-15d4d911b3052355.json` | S | `e8e440603607959e8839d9775e6df180f921722fc6dc6b908cd3c62e8b803e9b` |
+| `owner-whole-game-shader-166772aece563fbc.json` | F | `c1d1350c6a239ec8786fd2c046d52fccdf19a42302da6f79c106d93a9b5d72b1` |
+| `owner-whole-game-shader-1984988ea199266a.json` | S | `57b9c27e3e1e25633b75f7faa1d020312bfe9d98fde10a9252f8ba10bb5ba000` |
+| `owner-whole-game-shader-1bd2823582554650.json` | F | `74dab9a770fd152fd52e0a35e0de7815884895a487801032138bfbf50d901bc5` |
+| `owner-whole-game-shader-230d1be6fa62d96e.json` | S | `44b014060425d4d0af11aaf5775e34e523163df213bea6a345cfd2c04d388b27` |
+| `owner-whole-game-shader-27d7abe9ab1b41d1.json` | F | `686b6c303fb2b6bc6a8a00e82e99137c8b2923cae7fbbe6652ff96cd47d24f0c` |
+| `owner-whole-game-shader-2df5ef09fd9b26c1.json` | S | `9ffbfd92669c5fa28e9eb7fdedb4067bc21393764fab664d6e0a293573d2a8cf` |
+| `owner-whole-game-shader-2f323612215e6871.json` | S | `749766d14872e0a0b1e6cf58b80a08640d7aa892622497c4bfdfbc2a5b69047e` |
+| `owner-whole-game-shader-2fc6e0eb1fd573dd.json` | S | `f07df0521f86d0f0fbbdce4ff7a20afc507e970082599f615f7ebf91d0222ee8` |
+| `owner-whole-game-shader-32f48bde88df56b8.json` | F | `a4d3f6af4b4ff6e1b84af01a49ce8747af733ae3045ccd374e7b802b231fd8b7` |
+| `owner-whole-game-shader-3793415a1ec890af.json` | S | `ed25c5bc3e8730c3c6d36a73b3426aaf034a41ce568aebabb875c917bf0d2f25` |
+| `owner-whole-game-shader-37eb61b60069d459.json` | S | `cb5e6313db4569720ab791844a409f92ad7bc222da9933c9e7e6636f4053dff1` |
+| `owner-whole-game-shader-3aed6d462ae09235.json` | S | `9778f90ebb6e6ac5b80bfc5f312f645d406bac9f1f836315113644b99a0ef8f5` |
+| `owner-whole-game-shader-3b722ab249c06fa5.json` | S | `bb2176e1c3e46163fdd6050f15dd6280f491bae6bb47e610477412ba9670810f` |
+| `owner-whole-game-shader-3b7c0a2b60b39dda.json` | F | `1337459d0dfa3ee635efcd7058b856b339455b2484e6394fe638cdf77fc06e85` |
+| `owner-whole-game-shader-3f03f5d706422ed7.json` | S | `dd8b96a606ff190116b828e62cfdb7a7d224e43bdde8c60124955bef5c8d973d` |
+| `owner-whole-game-shader-42f9d38d37a8f1ec.json` | F | `022870c0efd48d1a432574e819205b4a8f9eec7bc8182309715264fc21035207` |
+| `owner-whole-game-shader-449a91aa35081072.json` | F | `6487629edcf43d14de1f128bd13c465fde13e0102348e40eec3edb68bf27ad94` |
+| `owner-whole-game-shader-44c69ea486cdbc3b.json` | S | `caf2b43ddf57b91b8fa1ddc1df64ef7997d2a1ca0a2b811b9b8d7097017d3c98` |
+| `owner-whole-game-shader-46e4508af657c584.json` | S | `e3abab9523adea39a74937fd4337676cac1bcd48a6210e26b60740df8872b07a` |
+| `owner-whole-game-shader-49a2f29f9f475e6b.json` | S | `55910b35c106656f779bbc0b21a2b5e145dceeca408ca169c4f2f3b8a2e1d429` |
+| `owner-whole-game-shader-4e49d851def9ed88.json` | S | `8b929175cd9e7993bea09a6ea4f1c80639a072276ae109bbda8c89a39abb0766` |
+| `owner-whole-game-shader-515983f7190a3b0b.json` | S | `1e26e58df3f8af6a0af8d467a888bbb0aa71997bd6f51851c3ad59421845d9b9` |
+| `owner-whole-game-shader-532c55ed3d24cfac.json` | S | `75c47dbafe164e6c994765c7f5fafdfca09ee015fb7b676ddb099d7d69d5b444` |
+| `owner-whole-game-shader-53780e664f859ed3.json` | F | `f1b2ecf574b7308c17849add035b90d1de4e0984468e2d992753729b9818fe68` |
+| `owner-whole-game-shader-599a14580b0459cf.json` | F | `2cf40f6bcb29af0b96617a8c68027b0a7ad647ba08555d1aae02f0440778afa6` |
+| `owner-whole-game-shader-5b0b82f27f82e1cc.json` | F | `85de14ec662ff04f2f719fefc7586fc4588165fd213694237ba101f7744274b8` |
+| `owner-whole-game-shader-5bb1fd1123fbd18d.json` | S | `d868ada915a9b5298b2a537a240ba568886e61346144a3ff97619345e5d7e010` |
+| `owner-whole-game-shader-5bce32ea30c543fc.json` | S | `087011fa075d7e8f33599d7358cd6d09674dd9e4dd87e9e1f4acfe020fcfb4cb` |
+| `owner-whole-game-shader-5c02866f0f89ee19.json` | S | `e973dc0196c0511c7b0b9669de24749fb3eedb470181faf5e95bbc086d44573f` |
+| `owner-whole-game-shader-5d2dbb5ed3989742.json` | S | `ec1d6b0e0a3180033d67a8df695557d9d6c3b9efddc1fbc650918cf38e3af628` |
+| `owner-whole-game-shader-60a0ecc9c15294f6.json` | F | `6910ff79bd51333ba184f59e25811c722471a69ea76452f026f774a720d62e16` |
+| `owner-whole-game-shader-61725b5f506b57f4.json` | S | `0ab6fe88a01ba25de793686f2adcf492a37da2cc706ce266034eb01b7a7d2862` |
+| `owner-whole-game-shader-6175a41c51b80943.json` | F | `c51defb638df6e48b1aa9a2e002a3fc70cfb74fde98619d38ae8ef1a230c8649` |
+| `owner-whole-game-shader-61ac51f1a6278c21.json` | S | `3554a7cd18def14f7b52888fb7b48da51edb8e87aad9866a90059fc35b8d7d4f` |
+| `owner-whole-game-shader-647566a51860cd88.json` | S | `6875a4c6c8ee04b7e7144f7a347cb96bb2b23abf1c5c3b6e0f9047c30325cde2` |
+| `owner-whole-game-shader-6533208cff9364ae.json` | F | `e412281d1c8a3aa59c0cc68d22736ee9dcb83e3c61db4741bb929df5940e9033` |
+| `owner-whole-game-shader-65bc6451e47df640.json` | S | `e371df649843974d305c3cdccddb304b07c90046b5ebd465182ab43e2aaa2d08` |
+| `owner-whole-game-shader-66151dfc1e50de53.json` | S | `2d84d58f7d47935778465e51e700624760655abba854ff45d565d24e6191cc31` |
+| `owner-whole-game-shader-67be9f5752370119.json` | F | `5d3c4fe68faf768fb0e3f836b45f06aa8bb047e0c06f3cbda846ca655f2a85f6` |
+| `owner-whole-game-shader-68f9cbdffccc4c63.json` | S | `a06fa73e159192f12252e06d708c60162df24aee63462e2b0f6ccc0f91e25bd6` |
+| `owner-whole-game-shader-7824188d699af013.json` | S | `8f2ea997c8a74fe9805518cb903b52fcb45af25be87118248c470ba7105b7b06` |
+| `owner-whole-game-shader-78a1f9d5c3679a16.json` | S | `16f699b51dd21ee56035e3fb3be212dbd6d4269e726895434e12a13e2b817c6b` |
+| `owner-whole-game-shader-7972df511852774c.json` | F | `8f31da18f6f1f9e0de4c522c3f514a054294286bfdc64ef17b18ae33d17ce55c` |
+| `owner-whole-game-shader-7c853f6e8c0bd51f.json` | S | `adf72ac044d178fdccc6bf3290d34978aa5c5ac1da0be44a7e35e0c6e8078a71` |
+| `owner-whole-game-shader-7db3c9aecbd21e4b.json` | S | `0051ec36f18c04bb0911bf3847601a7d9fc35ba16d5b3f864269a539200a6bbf` |
+| `owner-whole-game-shader-7e5cc8e11f2d0296.json` | S | `8c801a8b02d46838e1c36478ed0c041947ab155f181a2597ff96962e2ce10ae1` |
+| `owner-whole-game-shader-7eb41628e2e25ec9.json` | S | `df63557b3756f601e5fa7a41f9c4040f05684f569ae24a321f0d7cb8f96ec0b5` |
+| `owner-whole-game-shader-7f501270ae51a30e.json` | F | `7439b2746491e7d8c15ba180be3e59fbfc7126ff5f7c4d4a782ee5acf423686b` |
+| `owner-whole-game-shader-81ed6ad28b4bac31.json` | S | `fa585c2aaa18000b55afbbeffb35410581498e0c4e467643485e7642298afab3` |
+| `owner-whole-game-shader-86a15f60b1145c37.json` | S | `afa44a467fd0cce88273435b4d5f823e676a20e6605b0f70fd3e255133999c68` |
+| `owner-whole-game-shader-87a2b9f5418f0dab.json` | S | `5a639d38e1b7d061ce92b1d1bb29e0443b205d5c73b8c3035a6c859f44ccc015` |
+| `owner-whole-game-shader-883cabdb92759697.json` | F | `3bb8a9f77bb65c849481da320555075288c26611228376956fe7b5b077699e40` |
+| `owner-whole-game-shader-89800c6dd864f5e9.json` | F | `9b317c0f7418ab90bd4f6a07da30867d2a8752a84ad3100b783e6ab1043beca7` |
+| `owner-whole-game-shader-8be7ae4b8896070d.json` | S | `820449891b33e8a55a93acf4391781fcb09c10322b75f48713f8f809ee84e3b8` |
+| `owner-whole-game-shader-8c4ce654e8d23f5a.json` | S | `ed3e44f9cdfbdce038de525d91a84ebfe13dc3a5b3e7746d667a7c0cbf6d873e` |
+| `owner-whole-game-shader-8cb5d4399b6e0722.json` | S | `7838fb4f5e80a5698d29723034e6e329ce9ae67c0e871d9121385ce5cf0a24f0` |
+| `owner-whole-game-shader-8e83f5a7d3e231ef.json` | S | `f5523849d3906eaa47d6e1fb6cc02974188b3edd4b3e0fe241a3b128359cc160` |
+| `owner-whole-game-shader-912669ffb1c93663.json` | S | `81a699079fd1a0393b2862de219e2a990babef4cdb82951835cee53b9121bed6` |
+| `owner-whole-game-shader-912e0b52dc8a3d2f.json` | F | `e6f89bbc05c6647a4e26f6f6003ce13ea1fed7b030c3e4db6790eaeb6745360b` |
+| `owner-whole-game-shader-91f604b3530fd829.json` | S | `9b0e7bfdbe9a389c465d9de396595d5d9851bbd567776f7506f744b380dd58c2` |
+| `owner-whole-game-shader-94add932987060ed.json` | F | `1485be301a50f119811fef8262c6bf920003130d11a8b560a27821d7858daf63` |
+| `owner-whole-game-shader-959647ed2410089f.json` | S | `c7af35876140f4b5f8f1aef02f4aa42a37c4178e4918bd96fdec8ffa5a4c1de8` |
+| `owner-whole-game-shader-9eccc184552cae8e.json` | S | `1bb137d2ec26900106b902be2c03a5847b6390e6bdde5582723a387faaf37d69` |
+| `owner-whole-game-shader-a056d464c41f7d17.json` | F | `12a6d2b609bcb494e6a8984f35e96cf2efd3b7cee68009b1c8c92c3243f662d6` |
+| `owner-whole-game-shader-a1fd6d502a9658bf.json` | S | `db7379bdaf304a499e71041b1b60b3754defd0a0c3b7246133c8689fe21952c7` |
+| `owner-whole-game-shader-a4e447b7dfb74c41.json` | S | `175316b5e34ea3e87c8dd5c8289711c608ef60e18a303bef61dc9adc7d373bb6` |
+| `owner-whole-game-shader-a52e461039bea821.json` | S | `57cc02d680d51a84da5c9f1466b4c61d43cc3eb978d2e59fe7aaac0a34bf7361` |
+| `owner-whole-game-shader-a54e3b741e838107.json` | S | `af6411444d5a281f131b76c02364b99065a2576b6b21b8e4d9fba389fd31348d` |
+| `owner-whole-game-shader-a806534dcc01a1a7.json` | S | `98260e278d094661fe5c31d4614aa5f28fe812b7d9c498c1d4cf2ed25b6c5eea` |
+| `owner-whole-game-shader-a991b143408c77f2.json` | S | `6baab3633db358d559b5fd714432fd7f7248b67d7cb2173d919205218255a413` |
+| `owner-whole-game-shader-abccadfad647c15c.json` | S | `31881d452b080037f1f159de6b96e89d6b69a5ad2c59ee429d24ae1443b5ca01` |
+| `owner-whole-game-shader-ad2a3ce1f02f5aff.json` | S | `7a6c544676a44065e831b0252be49d8d8e22050ed4f011d647e9c60abd423248` |
+| `owner-whole-game-shader-b0a7072e58e7bb60.json` | S | `5ce596f3513b6706061d09802a263999456519a907b8371246ef2b59c1081629` |
+| `owner-whole-game-shader-bae2f7d5ab826699.json` | S | `bf31e263b7ad3845ad5899049aa671da35e174049dae6f47bff2f35f55f3ea6b` |
+| `owner-whole-game-shader-bcdadc4fbcfeaebf.json` | F | `39f4c887d6e5e3b22c00ce8aa6b1fe2a55b72fac69922040a184c09714dc5ebe` |
+| `owner-whole-game-shader-be20eb501f634e8e.json` | F | `67ad72e8ac19098fdadee189639091ca59f8b292c219dd1b953570acadd2e965` |
+| `owner-whole-game-shader-be57447e98fc3b40.json` | S | `7e7a5cacf40033befe6b16702500e1468b2e62edde45c8b6aba718785cff5e69` |
+| `owner-whole-game-shader-bfeb1f932a13aced.json` | F | `b196abe89141308011bb18a6ee526b0c5074d8a2db78c370994c6e5190f8f878` |
+| `owner-whole-game-shader-c241bea3e672b193.json` | S | `157211392a7254863700cec25f3a642bd2ecd7e99654111b7388d6423c422dde` |
+| `owner-whole-game-shader-c653b61cdd6dc6df.json` | S | `62cd44dffb53c8b2e22ed0e87f73bc00654dffcecf63054a7ef52b54d7340d84` |
+| `owner-whole-game-shader-c904328f54247fc9.json` | F | `e7b1939cfea0a5d3b394cbc0ddc3afab2b442cbb4960cdbaffa3b0237c6518ea` |
+| `owner-whole-game-shader-ca1c6d4095d4ad7c.json` | S | `5d822f76119459e41702fef923bc890b92c65d4ccf69e1a83d2e6fc25917baa3` |
+| `owner-whole-game-shader-ca8387e579aae81f.json` | S | `cd09951bdcfaffbf9d442749ff2987fc292cbf037e9f033c939082a92a89b52b` |
+| `owner-whole-game-shader-cf3f9db0e1a2625a.json` | F | `e8ea662985bbefbf9b41a13a7ba208d8c0f80bacf4bfa3b2c7940054caf4d182` |
+| `owner-whole-game-shader-cfd807c65f3d3888.json` | F | `be016feb77d43ec03e55eca956f88d7673683dfa96eaa1e5a4b890f6879bbf9b` |
+| `owner-whole-game-shader-d2733c05837824d2.json` | F | `2821e63904943a0510b5f1f1603098476686730a665fa641d5d7298292d3e638` |
+| `owner-whole-game-shader-d3950d734eb81efc.json` | S | `c90ff2c9c26b11eed1acc81e8a54dd35026b3864fbc8c97c6c2e6cb774e94020` |
+| `owner-whole-game-shader-d77ffe1926f7e966.json` | S | `eae26f7fd04f2fa3844c82473bdb9f50f44c7ae191093c5081ddc747b80f480a` |
+| `owner-whole-game-shader-d99b3943ed2ab6cf.json` | S | `9528b8d6e5146636fa6809a23843462010c190b13bc68b0b18b862fe9999523d` |
+| `owner-whole-game-shader-da8e7363437ccb77.json` | S | `e7bdd609152432e9dbbbad337dc9e8bb741e417bf3189b7ffd2637c2ee4e3dee` |
+| `owner-whole-game-shader-db075d25d0d1688a.json` | S | `73eae1f4914f3c9a6810cfb0a4d2d5eed25ea49428167c706fcf51868d2aa205` |
+| `owner-whole-game-shader-dbe1e9b11eb1e5b9.json` | S | `bfa575f6d3eaaa525e3330a8fa8fb2a8f093b9e9a3e3631ef03c2e90ddb99638` |
+| `owner-whole-game-shader-e31bc85cbb80f18a.json` | F | `d00c55cdb8fbd4f85b39035983e2a3ef9bb2f91ccb05ac118d39a847b2d3248a` |
+| `owner-whole-game-shader-e45cf7013b5e74de.json` | S | `2ca60fbb87b20a811c96e36748978f1be3db0838675ebcde96805a5f1e96c18f` |
+| `owner-whole-game-shader-e52d452d03e22b87.json` | S | `4e49934feaf1cd7cde6e256a3500dc73f178a2d95fbebb8520f557251d068924` |
+| `owner-whole-game-shader-e77d203538848225.json` | S | `6ac65d0b90f4a1b5db06775f2e82c386ca2a2e4264caa3c111bc70d9b153df13` |
+| `owner-whole-game-shader-ec030340227418cb.json` | S | `f0ad144b328da31ab57f54fa04fade5db9f294311ba3854c7d0e03e3996be51d` |
+| `owner-whole-game-shader-ec366ea0ed0b7448.json` | F | `c64bf3bb9d0b14e55299b3ac809878e614ffecb2cc14510945d1b98955c22673` |
+| `owner-whole-game-shader-f175a9cf5b433cd2.json` | S | `e54faed8fb2dbf0d907a1b171d9258964fc1ab9c5b5e878b93f9c2ea504a975f` |
+| `owner-whole-game-shader-f978fab9f2141531.json` | S | `1715c187362b9525667ffa6fd3990da69c8e7da6c7acca442efa4be431102f89` |
+| `owner-whole-game-shader-f97c130db51c09fc.json` | S | `8ab987a48bbeecb882f02731cbb7e039159fe261ab3a2996cbcddec36a4eac84` |
+| `owner-whole-game-shader-f9aad7ffaaec4f02.json` | S | `7cbfaa43683177149a67cda64df5ff103cb336d4a08249d2a18c5bddd3ecf4b8` |
+| `owner-whole-game-shader-f9d89be4f62e7908.json` | F | `a96411a5a7c4140b5ec0ddb4b22deda1916eb07c5a378e24b74dd6ce01b0e190` |
+| `owner-whole-game-shader-fa41fb006744e15d.json` | S | `be3cdb08776e57f4ed5186ed8af6175e10140d1d2125d187e5eb1b605709f46d` |
+| `owner-whole-game-shader-facfd5c8e5f9eae1.json` | S | `85c7ac4e2e8ea815c908ab3bd94e9c3f1ded8f463971976cecf10c75d82fa41b` |
+| `owner-whole-game-shader-fff9ac02cfd7c247.json` | S | `ba02c7fa98df94ca68a2410d729ee6071065e64bb2a1553b1a014479deba4e92` |
+
+Audit: original bundle/member/Shader selectors and hashes, permitted SDK and
+public-template pins, authored compiler settings, logical source filenames and
+minimum output/PPtr relationships. No original property payload, program, type
+tree, generated output or private setting is included. Original properties and
+SDK fallback declarations supply keyword tables and dependencies. Stable logical
+filenames may derive from original identities, without historical export files.
+All 117 persisted records match J850; complete bundle, phone production and
+original rendering/gameplay acceptance remain open. Template licenses stay with
+local producer output; no third-party implementation is copied into these recipes.

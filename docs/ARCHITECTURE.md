@@ -1017,6 +1017,13 @@ compiler/codec children; failure preserves diagnostics. Input pins, body hashes
 and reread extents qualify each record. Complete-file and device gates remain
 separate; no accepted program or keyword table is an input.
 
+The existing Shader owners also supply `owner-whole-game-shader-*.json`; the
+recipe audit table identifies each producer. SDK declarations derive fallback
+keyword registries and dependency chains; explicit PPtrs retain output identities.
+Logical compiler filenames may derive from original asset identities, without
+historical export files. Complete bundle and phone rendering acceptance remain
+separate.
+
 `shader_context.py` owns metadata-only context changes on explicit qualified
 source-produced Shader packs. It retains every program and unrelated body byte.
 Original Shader metadata and pinned public dummy templates, or acquired SDK

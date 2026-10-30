@@ -1880,3 +1880,15 @@ all generated media, records and receipts private. The host-built diagnostic
 outputs used to qualify this API are never required public converter inputs;
 phone-built tool construction and complete APK/install/update qualification remain
 open. The existing assembler gains no acceptance exemption from this feature.
+
+## Whole-game Shader records
+
+`recipe/owner-whole-game-shader-*.json` uses the existing source Shader owners.
+The [recipe audit table](../../../recipe/README.md#whole-game-shader-records-j1275)
+marks `S` for `payload_shader_records.py` (`--pc`) and `F` for `shader_prefab.py`
+(`--pc-root`). Supply the pinned SDK, public exporter templates, codec and a new
+private output to the selected CLI. SDK declarations derive fallback keyword
+tables and dependencies. Logical compiler filenames may derive from original
+asset identities; historical export files are not public conversion inputs.
+The 117 persisted records match J850. Complete bundle, phone production and
+original rendering/gameplay acceptance remain open.
