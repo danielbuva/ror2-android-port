@@ -1270,3 +1270,16 @@ phone APK/installation/update acceptance remain open.
 - Whole-game unresolved records fall to 427; historical readiness stays
   693/705 available, 685 raw-exact. Complete bundle, phone production, original
   gameplay and data-preserving installation/update remain open.
+
+## J1277 — Reconstruct 17 whole-game prefab records with existing policies
+2026-10-30.
+- The generic record owner delegates existing prefab filename and component-append
+  projections; 12 filename-only roots and five authored-adapter roots match J850.
+- Actual script identities and reciprocal owners retain every original component
+  in order; no omission, scalar change or runtime mechanism is added.
+- All 2,775 persisted body bytes and required native type hashes are exact.
+- Evidence: `work/coordination/orchestrator/whole-game-prefab-policies-v1/`.
+- Record pack SHA-256: `0429650e7cb777fb7c044a41bfdaf14460779abfbe596f9b9c0568cb6f011885`.
+- Whole-game unresolved records fall to 410; historical readiness stays
+  693/705 available, 685 raw-exact. Complete bundle, phone production, gameplay
+  and data-preserving installation/update remain open.

@@ -5425,3 +5425,18 @@ implementation, private setting or generated body is included. The 1,237 native
 and 108 managed records match J850 after persisted extent checks. The original
 script hash applies only to unchanged runtime identity/schema. Complete bundle,
 phone production, gameplay and installation/update acceptance remain open.
+
+### Whole-game prefab policies (J1277)
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-whole-game-prefab-policy-records.json` | `b8ddb04666bca02764ab2ea5ca46427d6e288e4db78c7f2444908036ca400992` |
+
+Audit: minimum original bundle/member/object selectors, source/output hashes,
+checked PPtr relationships and existing filename/component-append policies.
+Actual MonoScript identities and reciprocal owners retain the complete ordered
+original component sequence; five roots additionally list an already-produced
+public SilentProjectileBoundary. No component is omitted. No original body,
+scalar, type tree, source implementation or private setting is included. All
+17 persisted records and native type hashes match J850. Complete bundle, phone
+production, gameplay and data-preserving installation/update remain open.

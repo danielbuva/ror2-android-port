@@ -1190,8 +1190,18 @@ def transform_generic(body, class_id, selected, root=None, read_clip=None, sourc
         "canonical",
         "importer_guid",
         "crop_rectangle_offset",
+        "normalize_exported_prefab_name",
+        "append_components",
     } or (selected.get("demote_keywords") and class_id != 21):
         raise ValueError("unknown generic object operation")
+    if "normalize_exported_prefab_name" in selected:
+        if class_id != 1 or selected["normalize_exported_prefab_name"] is not True:
+            raise ValueError("prefab filename projection requires original GameObject")
+        body = O.normalize_exported_prefab_name(body)
+    if "append_components" in selected:
+        if class_id != 1:
+            raise ValueError("component append requires original GameObject")
+        body = O.append_components(body, selected["append_components"])
     if "keyword_policy" in selected:
         if class_id != 21 or selected["keyword_policy"] not in ("dummy-shader-demote-valid", "dummy-shader-sort-invalid"):
             raise ValueError("keyword policy requires original Material and named dummy import")
