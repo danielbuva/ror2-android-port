@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J1276](PORTING_JOURNAL.md#j1276--reconstruct-1345-whole-game-hierarchy-and-component-records) | 2026-10-29 | Reconstruct 1,345 whole-game hierarchy and component records | 2026-10-30. |
 | [J1275](PORTING_JOURNAL.md#j1275--reconstruct-117-whole-game-shader-records-through-existing-source-owners) | 2026-10-29 | Reconstruct 117 whole-game Shader records through existing source owners | 2026-10-30. |
 | [J1274](PORTING_JOURNAL.md#j1274--reconstruct-154-whole-game-material-and-compute-records) | 2026-10-29 | Reconstruct 154 whole-game material and compute records | 2026-10-30. |
 | [J1273](PORTING_JOURNAL.md#j1273--reconstruct-198-whole-game-source-records-with-checked-native-types) | 2026-10-29 | Reconstruct 198 whole-game source records with checked native types | 2026-10-29. |

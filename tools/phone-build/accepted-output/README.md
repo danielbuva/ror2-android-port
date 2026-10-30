@@ -1031,10 +1031,14 @@ python3 -I -S -B tools/phone-build/accepted-output/record_produce.py \
 ```
 
 For `recipe/owner-whole-game-source-records.json`, add `--sdk EXACT_SDK_ROOT`.
-Its managed records derive native type hashes from original component/script
+The same option serves `owner-whole-game-path-managed-records.json` and
+`owner-whole-game-path-original-hash-records.json`; the latter retains original
+script hashes only for unchanged identity/schema. These managed records derive
+native type hashes from original component/script
 bindings and the pinned SDK base schema. Output index rows retain checked
 `native_type_hash` values; complete-bundle assembly verifies these after source
 type projection. This recipe adds no original fields or generated body templates.
+Native `owner-whole-game-hierarchy-path-records.json` needs no SDK input.
 `recipe/owner-whole-game-material-compute-records.json` uses the same CLI without
 `--sdk`. It reuses the named material keyword policies and the existing class 72
 DXBC shell projection. Compute declarations remain source-owned; these shells

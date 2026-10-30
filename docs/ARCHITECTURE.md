@@ -429,6 +429,12 @@ require `native_type_hash` for each output. The pack retains that identity and
 `object_produce.py` checks it after its own source type projection, before bundle
 emission. Source readers close per supplier, script caches expire at process exit
 and input pins are rechecked; no new runtime owner is added.
+The optional `preserve_original_script_hash` selection delegates to the object
+owner's existing unchanged-schema check after verifying the actual original
+MonoScript binding. The hierarchy path recipes select original records using
+proven roots and unique reciprocal child paths; output state remains exact.
+Generic record admission also includes native classes 96, 119, 193 and 330,
+preserving their original schemas and every nonpointer byte.
 Its generic path also delegates named material keyword policies and explicit
 ComputeShader shell production to the existing object owner. Original schemas,
 renderer/program preconditions and native type hashes remain checked. Compute

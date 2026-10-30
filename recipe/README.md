@@ -5408,3 +5408,20 @@ filenames may derive from original identities, without historical export files.
 All 117 persisted records match J850; complete bundle, phone production and
 original rendering/gameplay acceptance remain open. Template licenses stay with
 local producer output; no third-party implementation is copied into these recipes.
+
+### Whole-game hierarchy path records (J1276)
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-whole-game-hierarchy-path-records.json` | `dd7494d9c69e9da37fc5c6ce7da58a343213f685840942d1e1044fc3ebc83d41` |
+| `owner-whole-game-path-managed-records.json` | `829c9316236c8b791a1eec0c08a607f3ea538af5befe93532b81b610da6292fe` |
+| `owner-whole-game-path-original-hash-records.json` | `2b20c132dfdba8209757581a3a18ac6961d7fbaf7f0158e094f5f0593fe856eb` |
+
+Audit: minimum original bundle/member/object/MonoScript selectors and hashes,
+checked PPtr relationships, native type hashes and existing SDK/original-script
+hash policies. Original roots and unique reciprocal child-name paths establish
+identity; only exact native state is admitted. No pose, scalar, type tree, source
+implementation, private setting or generated body is included. The 1,237 native
+and 108 managed records match J850 after persisted extent checks. The original
+script hash applies only to unchanged runtime identity/schema. Complete bundle,
+phone production, gameplay and installation/update acceptance remain open.

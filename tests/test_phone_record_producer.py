@@ -239,7 +239,8 @@ class AnimationProducerTests(unittest.TestCase):
         names = ("AuthoredComponent", "Fixture", "Fixture.dll")
         stream = io.BytesIO()
         A.O.aligned_string(stream, "Authored script")
-        stream.write(bytes(20))
+        original_hash = b"ORIGINAL HASH!!!"
+        stream.write(bytes(4) + original_hash)
         for name in names:
             A.O.aligned_string(stream, name)
         body = struct.pack("<iqI", 1, 99, 0x80000000)
@@ -251,6 +252,9 @@ class AnimationProducerTests(unittest.TestCase):
             value = A.managed_record_hash(body, typ, metadata, "source-component", script, b"sdk-schema", helper)
             self.assertEqual(value, b"NATIVE HASH HERE")
             helper.properties_hash.assert_called_once_with(*names, b"original-schema", b"sdk-schema")
+            self.assertEqual(
+                A.managed_record_hash(body, typ, metadata, "source-component", script, b"sdk-schema", helper, preserve_original=True), original_hash
+            )
             common_schema = F.node("Base", children=[F.node("#490", 12, kind="PPtr<MonoScript>"), F.node("retained", 4, kind="float")])
             with patch.object(A.SCHEMA, "type_tree", return_value=common_schema):
                 self.assertEqual(A.managed_record_hash(body, typ, metadata, "source-component", script, b"sdk-schema", helper), value)
@@ -531,7 +535,38 @@ class AnimationProducerTests(unittest.TestCase):
     def test_generic_packs_retain_all_nonpointer_bytes(self):
         body, schema = fixture()
         expected = body[:-16] + struct.pack("<iq", 7, -999) + body[-4:]
-        for class_id in (1, 4, 23, 33, 54, 64, 65, 91, 95, 104, 108, 114, 120, 135, 136, 137, 156, 198, 199, 205, 215, 221, 222, 223, 224, 225):
+        for class_id in (
+            1,
+            4,
+            23,
+            33,
+            54,
+            64,
+            65,
+            91,
+            95,
+            96,
+            104,
+            108,
+            114,
+            119,
+            120,
+            135,
+            136,
+            137,
+            156,
+            193,
+            198,
+            199,
+            205,
+            215,
+            221,
+            222,
+            223,
+            224,
+            225,
+            330,
+        ):
             transform = {"references": [{"offset": len(body) - 16, "from": [3, 1234567], "to": [7, -999]}]}
             with tempfile.TemporaryDirectory() as temporary:
                 root = Path(temporary)
