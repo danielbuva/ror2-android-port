@@ -1192,8 +1192,13 @@ def transform_generic(body, class_id, selected, root=None, read_clip=None, sourc
         "crop_rectangle_offset",
         "normalize_exported_prefab_name",
         "append_components",
+        "remove_components",
     } or (selected.get("demote_keywords") and class_id != 21):
         raise ValueError("unknown generic object operation")
+    if "remove_components" in selected:
+        if class_id != 1:
+            raise ValueError("component omissions require original GameObject")
+        body = O.remove_components(body, selected["remove_components"])
     if "normalize_exported_prefab_name" in selected:
         if class_id != 1 or selected["normalize_exported_prefab_name"] is not True:
             raise ValueError("prefab filename projection requires original GameObject")
