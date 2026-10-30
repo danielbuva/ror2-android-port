@@ -334,6 +334,24 @@ The CLR reader projects compact metadata and releases PE/SDK/witness state;
 J1169 qualifies the complete host cohort below 500 MiB. Complete registry
 production on a phone remains open until its own guarded replay passes.
 
+`script_registry.py` is the current standalone entry point for the same registry
+phase. It needs the registry recipe, original game root, exact SDK editor resources,
+code request and managed production described above; it needs no texture packs,
+converter output or accepted player file:
+
+```sh
+python3 -I -B tools/phone-build/accepted-output/script_registry.py \
+  --profile recipe/owner-player-registry.json --profile-sha256 RECIPE_SHA256 \
+  --pc ORIGINAL_PC_ROOT --editor-resources "OWNER_SDK_RESOURCES/unity editor resources" \
+  --code-request ORIGINAL_INPUT_CODE_REQUEST.json \
+  --managed-production SOURCE_PRODUCED_MANAGED_DIRECTORY --output NEW_PRIVATE_OUTPUT
+```
+
+It writes `globalgamemanagers.assets` and a receipt after rechecking provider pins.
+`record_remap.py --serialized-producer DIRECTORY RECEIPT_SHA256` can select its
+records under bundle identities, retaining source provenance and native type
+hashes. Complete phone production and runtime acceptance remain open.
+
 Each texture directory is an existing producer's `objects.bin`, `resources.bin`,
 `index.jsonl` and successful `result.json`; pass the hash of that receipt. The
 profile selects producer profile hashes and bundle/member/path IDs, never
