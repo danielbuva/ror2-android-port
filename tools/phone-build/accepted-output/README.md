@@ -1035,6 +1035,10 @@ Its managed records derive native type hashes from original component/script
 bindings and the pinned SDK base schema. Output index rows retain checked
 `native_type_hash` values; complete-bundle assembly verifies these after source
 type projection. This recipe adds no original fields or generated body templates.
+`recipe/owner-whole-game-material-compute-records.json` uses the same CLI without
+`--sdk`. It reuses the named material keyword policies and the existing class 72
+DXBC shell projection. Compute declarations remain source-owned; these shells
+provide no executable Android compute programs or new runtime fallback.
 
 Use `recipe/owner-animator-controllers.json` for the qualified controller
 cohort, `recipe/owner-material-records.json` for materials,

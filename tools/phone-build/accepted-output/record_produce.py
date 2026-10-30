@@ -1171,10 +1171,12 @@ def director_unbound_tracks(body, root, selected):
     return result
 
 
-def transform_generic(body, class_id, selected, root=None, read_clip=None):
+def transform_generic(body, class_id, selected, root=None, read_clip=None, source_type=None):
     if set(selected) - {
         "references",
         "demote_keywords",
+        "keyword_policy",
+        "strip_compute_programs",
         "director_exposed_names",
         "director_unbound_tracks",
         "controller_clip_order",
@@ -1190,6 +1192,13 @@ def transform_generic(body, class_id, selected, root=None, read_clip=None):
         "crop_rectangle_offset",
     } or (selected.get("demote_keywords") and class_id != 21):
         raise ValueError("unknown generic object operation")
+    if "keyword_policy" in selected:
+        if class_id != 21 or selected["keyword_policy"] not in ("dummy-shader-demote-valid", "dummy-shader-sort-invalid"):
+            raise ValueError("keyword policy requires original Material and named dummy import")
+    if "strip_compute_programs" in selected:
+        if selected["strip_compute_programs"] is not True or class_id != 72 or source_type is None:
+            raise ValueError("compute projection requires original ComputeShader schema")
+        body = O.strip_compute_programs(body, source_type)
     if any(key.startswith("controller_") or key == "canonical" for key in selected) and (class_id != 91 or root is None):
         raise ValueError("controller operations require original controller schema")
     if "director_exposed_names" in selected:
@@ -1234,7 +1243,9 @@ def transform_generic(body, class_id, selected, root=None, read_clip=None):
         if class_id != 320 or root is None:
             raise ValueError("unbound tracks require original PlayableDirector schema")
         result = director_unbound_tracks(result, root, selected["director_unbound_tracks"])
-    return O.demote_material_keywords(result) if selected.get("demote_keywords") else result
+    if selected.get("demote_keywords") or "keyword_policy" in selected:
+        return O.demote_material_keywords(result, sort_invalid=selected.get("keyword_policy") == "dummy-shader-sort-invalid")
+    return result
 
 
 def profile_bundles(path):
@@ -1395,6 +1406,7 @@ def produce(profile_path, profile_sha256, pc, output, sdk=None):
                             54,
                             64,
                             65,
+                            72,
                             74,
                             91,
                             95,
@@ -1443,7 +1455,7 @@ def produce(profile_path, profile_sha256, pc, output, sdk=None):
                             if typ["class_id"] == 74:
                                 result = transform(body, root, operations)
                             else:
-                                result = transform_generic(body, typ["class_id"], operations, root, read_controller_clip)
+                                result = transform_generic(body, typ["class_id"], operations, root, read_controller_clip, typ)
                             digest = hashlib.sha256(result).hexdigest()
                             if digest != target["sha256"] or len(result) != target["bytes"]:
                                 raise ValueError("produced object record differs from accepted hash")

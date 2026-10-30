@@ -5258,3 +5258,18 @@ The 159 unchanged managed records use the existing SDK properties-hash rule;
 payload, type tree, source implementation, private configuration, SDK binary or
 generated body is included. All 198 persisted bodies and native type identities
 match J850; complete whole-game bundle and phone/runtime acceptance remain open.
+
+### Whole-game material and compute records (J1274)
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-whole-game-material-compute-records.json` | `578cd86236afa06d1df29ad4ecba50e86e0e2487702bd2c65ceb057e3ae146a2` |
+
+Audit: minimum original bundle/member/object selectors, hashes, checked pointer
+relationships and existing named import policies only. The 130 materials retain
+all original keyword strings and native values; the 24 compute records use the
+existing checked DXBC-shell policy, retaining declarations and keywords. No game
+field payload, type tree, shader program, SDK binary or private setting is
+included. All 154 persisted bodies and native type identities match J850. These
+compute shells supply no executable Android programs; complete bundle, phone
+production and runtime acceptance remain open.
