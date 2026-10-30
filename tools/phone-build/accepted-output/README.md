@@ -1030,6 +1030,12 @@ python3 -I -S -B tools/phone-build/accepted-output/record_produce.py \
   --pc ORIGINAL_PC_ROOT --output NEW_PRIVATE_OUTPUT
 ```
 
+For `recipe/owner-whole-game-source-records.json`, add `--sdk EXACT_SDK_ROOT`.
+Its managed records derive native type hashes from original component/script
+bindings and the pinned SDK base schema. Output index rows retain checked
+`native_type_hash` values; complete-bundle assembly verifies these after source
+type projection. This recipe adds no original fields or generated body templates.
+
 Use `recipe/owner-animator-controllers.json` for the qualified controller
 cohort, `recipe/owner-material-records.json` for materials,
 `recipe/owner-gameobjects.json` / `recipe/owner-transforms.json` for hierarchy

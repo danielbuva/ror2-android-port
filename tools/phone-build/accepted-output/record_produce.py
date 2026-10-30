@@ -1253,12 +1253,40 @@ def profile_bundles(path):
                 yield source
     else:
         profile = json.loads(path.read_text())
-        if set(profile) != {"input_id", "bundles"} or profile["input_id"] != M.INPUT_ID:
+        if set(profile) - {"sdk"} != {"input_id", "bundles"} or profile["input_id"] != M.INPUT_ID:
             raise ValueError("unknown object-record input")
         yield from profile["bundles"]
 
 
-def produce(profile_path, profile_sha256, pc, output):
+def managed_record_hash(body, typ, metadata, member, script, sdk_tree, identity_owner):
+    """Derive an unchanged managed record's native hash from original schema."""
+    if typ["class_id"] != 114 or sdk_tree is None:
+        raise ValueError("managed record properties require MonoBehaviour and pinned SDK")
+    root = SCHEMA.type_tree(io.BytesIO(typ["tree"]))
+    _, spans = fields(body, root)
+    script_spans = [extent for path, extent in spans.items() if path in (("m_Script",), ("#490",))]
+    if len(script_spans) != 1:
+        raise ValueError("original managed script field is absent or ambiguous")
+    start, end = script_spans[0]
+    if end - start != 12:
+        raise ValueError("original managed script field differs")
+    file_id, path_id = struct.unpack_from("<iq", body, start)
+    source_member = metadata["externals"][file_id - 1]["path"].split("/")[-1] if file_id else member
+    selected, script_body, script_type = script
+    if path_id == 0 or selected["path_id"] != path_id or selected["member"] != source_member or script_type["class_id"] != 115:
+        raise ValueError("managed record script source differs from original PPtr")
+    _, names = O.script_fields(script_body)
+    if typ["script_id"] != identity_owner.md4("".join(names).encode()):
+        raise ValueError("managed record script identity differs from original schema")
+    return identity_owner.properties_hash(*names, typ["tree"], sdk_tree)
+
+
+def check_native_type(typ, target):
+    if "native_type_hash" in target and target["native_type_hash"] != typ["hash"].hex():
+        raise ValueError("produced record native type identity differs")
+
+
+def produce(profile_path, profile_sha256, pc, output, sdk=None):
     if B.sha(profile_path) != profile_sha256:
         raise ValueError("object-record profile drift")
     pc = pc.resolve(strict=True)
@@ -1275,6 +1303,45 @@ def produce(profile_path, profile_sha256, pc, output):
     started = time.monotonic()
     receipt = {"success": False, "input_id": M.INPUT_ID, "profile_sha256": profile_sha256, "objects": 0, "object_bytes": 0}
     try:
+        sdk_path, sdk_tree = None, None
+        if not str(profile_path).endswith(".jsonl.gz") and "sdk" in (profile := json.loads(profile_path.read_text())):
+            if sdk is None:
+                raise ValueError("managed record properties require pinned owner SDK")
+            sdk_path = M.safe_input(sdk.resolve(strict=True), profile["sdk"]["path"])
+            if B.sha(sdk_path) != profile["sdk"]["sha256"] or output.is_relative_to(sdk.resolve()):
+                raise ValueError("SDK script metadata drift or output overlap")
+            with sdk_path.open("rb") as stream:
+                stream.size = sdk_path.stat().st_size
+                metadata = W.read_serialized(stream)
+            obj = next(row for row in metadata["objects"] if row["path_id"] == profile["sdk"]["path_id"])
+            typ = metadata["types"][obj["type_id"]]
+            if typ["class_id"] != 114:
+                raise ValueError("SDK script base is not MonoBehaviour")
+            sdk_tree = typ["tree"]
+        identity_owner = None
+        scripts, script_inputs = {}, {}
+
+        def original_script(selected):
+            key = selected["bundle"], selected["member"], selected["path_id"], selected["sha256"]
+            if key not in scripts:
+                path = M.safe_input(pc, selected["bundle"])
+                if path not in script_inputs:
+                    before = path.stat()
+                    if B.sha(path) != selected["bundle_sha256"]:
+                        raise ValueError("original managed script bundle drift")
+                    script_inputs[path] = before.st_size, before.st_mtime_ns, selected["bundle_sha256"]
+                if script_inputs[path][2] != selected["bundle_sha256"]:
+                    raise ValueError("original managed script bundle pin differs")
+                with O.source_member(path, selected["member"]) as member:
+                    metadata = W.read_serialized(member)
+                    obj = next(row for row in metadata["objects"] if row["path_id"] == selected["path_id"])
+                    member.seek(metadata["data_offset"] + obj["offset"])
+                    body = B.exact(member, obj["bytes"])
+                if hashlib.sha256(body).hexdigest() != selected["sha256"]:
+                    raise ValueError("original managed script body drift")
+                scripts[key] = selected, body, metadata["types"][obj["type_id"]]
+            return scripts[key]
+
         with (output / "objects.bin").open("xb") as data, (output / "index.jsonl").open("x") as index:
             for source in profile_bundles(profile_path):
                 path = M.safe_input(pc, source["path"])
@@ -1325,21 +1392,26 @@ def produce(profile_path, profile_sha256, pc, output):
                             21,
                             23,
                             33,
+                            54,
                             64,
                             65,
                             74,
                             91,
+                            95,
                             104,
                             108,
                             114,
+                            120,
                             135,
                             136,
                             137,
+                            156,
                             198,
                             199,
                             205,
                             213,
                             215,
+                            221,
                             222,
                             223,
                             224,
@@ -1351,12 +1423,22 @@ def produce(profile_path, profile_sha256, pc, output):
                         body = B.exact(member, obj["bytes"])
                         if hashlib.sha256(body).hexdigest() != selected["sha256"]:
                             raise ValueError("original object-record body drift")
+                        if "properties_hash" in selected:
+                            if set(selected["properties_hash"]) != {"script"}:
+                                raise ValueError("unknown managed record hash policy")
+                            if identity_owner is None:
+                                identity_owner = O.module("script_identity", Path(__file__).resolve().parents[3] / "scripts/lab/script_identity.py")
+                            value = managed_record_hash(
+                                body, typ, metadata, selected_member["name"], original_script(selected["properties_hash"]["script"]), sdk_tree, identity_owner
+                            )
+                            typ = {**typ, "hash": value}
                         root = None
                         if typ["class_id"] in (74, 91, 320):
                             if obj["type_id"] not in trees:
                                 trees[obj["type_id"]] = SCHEMA.type_tree(io.BytesIO(typ["tree"]))
                             root = trees[obj["type_id"]]
                         for target in selected["outputs"]:
+                            check_native_type(typ, target)
                             operations = target.get("transform", {})
                             if typ["class_id"] == 74:
                                 result = transform(body, root, operations)
@@ -1367,6 +1449,8 @@ def produce(profile_path, profile_sha256, pc, output):
                                 raise ValueError("produced object record differs from accepted hash")
                             row = {key: target[key] for key in ("bundle", "member", "path_id", "bytes", "sha256")}
                             row["offset"] = data.tell()
+                            if "native_type_hash" in target:
+                                row["native_type_hash"] = typ["hash"].hex()
                             data.write(result)
                             index.write(json.dumps(row, sort_keys=True) + "\n")
                             receipt["objects"] += 1
@@ -1382,6 +1466,12 @@ def produce(profile_path, profile_sha256, pc, output):
                     raise ValueError("persisted object-record extent drift")
         if B.sha(profile_path) != profile_sha256:
             raise ValueError("object-record profile changed during production")
+        for path, (size, mtime, digest) in script_inputs.items():
+            after = path.stat()
+            if (after.st_size, after.st_mtime_ns) != (size, mtime) or B.sha(path) != digest:
+                raise ValueError("original managed script changed during production")
+        if sdk_path is not None and B.sha(sdk_path) != profile["sdk"]["sha256"]:
+            raise ValueError("SDK script metadata changed during production")
         receipt["outputs"] = {name: {"bytes": (output / name).stat().st_size, "sha256": B.sha(output / name)} for name in ("objects.bin", "index.jsonl")}
         receipt["success"] = True
         return receipt
@@ -1399,8 +1489,9 @@ def main():
     parser.add_argument("--profile-sha256", required=True)
     parser.add_argument("--pc", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument("--sdk", type=Path, help="pinned owner SDK root for original managed type hashes")
     args = parser.parse_args()
-    produce(args.profile, args.profile_sha256, args.pc, args.output)
+    produce(args.profile, args.profile_sha256, args.pc, args.output, args.sdk)
 
 
 if __name__ == "__main__":

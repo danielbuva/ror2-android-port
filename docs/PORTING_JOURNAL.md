@@ -1216,3 +1216,16 @@ and `whole-game-native-sprite-records-v6/`; owned utility removed/display asleep
 All 16 focused Sprite contracts and Ruff pass; source pixels remain input-derived.
 Historical readiness stays 693/705; complete bundle, phone-built utility and full
 phone APK/installation/update acceptance remain open.
+
+## J1273 — Reconstruct 198 whole-game source records with checked native types
+2026-10-29.
+- Ship the source-record recipe for 159 unchanged managed and 39 native objects.
+- Derive managed properties from original component/script bindings and the SDK;
+  pack indices retain native type hashes, checked again during bundle assembly.
+- Evidence: `work/coordination/orchestrator/whole-game-managed-frontier-production-v2/`;
+  all 198 persisted bodies and native type identities match J850 (719,404 B).
+- Pack SHA-256: `339caf11fbe10c17c19cac7938ab9673b6c86007cb46a8149d9474ce9b9780a7`.
+- Focused producer tests pass; the original schema's common-string script field
+  is covered, along with a mismatched pack type at complete-bundle emission.
+- Whole-game unresolved records fall to 2,043; readiness stays 693/705 available,
+  685 raw-exact. Complete bundle, phone production and install/update remain open.
