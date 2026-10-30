@@ -1057,6 +1057,14 @@ bindings and the pinned SDK base schema. Output index rows retain checked
 `native_type_hash` values; complete-bundle assembly verifies these after source
 type projection. This recipe adds no original fields or generated body templates.
 Native `owner-whole-game-hierarchy-path-records.json` needs no SDK input.
+`owner-whole-game-current-script-fields.json` additionally selects the generic
+`prune_absent_script_fields` policy. Its `managed` directory/file hashes pin
+original CLR declarations. Fields still declared by the current type or its
+ancestors, prior serialized names and SDK native fields remain protected; only
+whole absent fields can be omitted. Retained values/alignment and the original
+script binding stay checked, followed by SDK-derived native hash verification.
+It uses the same CLI with `--sdk`; the complete-object owner supports the same
+policy when assembling these records. This does not relax existing zero checks.
 `owner-whole-game-prefab-policy-records.json` uses the same CLI without `--sdk`.
 It delegates existing prefab filename and component-append operations, retaining
 the complete ordered original component list and native tail. Appended components

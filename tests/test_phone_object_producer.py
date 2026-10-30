@@ -29,6 +29,18 @@ RECORD_FIXTURE = load("record_bundle_fixture", ROOT / "tests/test_phone_record_p
 
 
 class ProducedRecordRelocationTests(unittest.TestCase):
+    def test_absent_field_projection_preserves_live_values_and_serialized_aliases(self):
+        identity = P.module("script_identity", ROOT / "scripts/lab/script_identity.py")
+        nodes = [identity._node("MonoBehaviour", "Base", -1, level=0)] + [identity._node("int", name, 4) for name in ("m_Base", "live", "stale", "tail")]
+        sdk = identity._tree(nodes[:2] + [identity._node("string", "m_EditorClassIdentifier", -1)])
+        body = struct.pack("<4I", 17, 0x80000000, 37, 99)
+        tree = identity._tree(nodes)
+        made, revised, removed = P.project_current_script_fields(body, tree, {"live", "tail"}, sdk, identity)
+        self.assertEqual(made, struct.pack("<3I", 17, 0x80000000, 99))
+        self.assertEqual(removed, ["stale"])
+        self.assertEqual([v["name"] for v in identity.tree_nodes(revised)[1:]], ["m_Base", "live", "tail"])
+        self.assertEqual(P.project_current_script_fields(body, tree, {"live", "stale", "tail"}, sdk, identity), (body, tree, []))
+
     def test_scene_activation_checks_original_name_and_only_clears_active_byte(self):
         source = io.BytesIO()
         source.write(struct.pack("<IiqI", 1, 0, 19, 4))

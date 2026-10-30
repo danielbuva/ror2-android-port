@@ -1311,3 +1311,17 @@ phone APK/installation/update acceptance remain open.
 - Remaining whole-game records fall to 366 with no MonoScripts left. Historical
   readiness stays 693/705 available, 685 raw-exact; complete phone production,
   native gameplay and data-preserving installation/update remain open.
+
+## J1280 — Project stale serialized fields from current original CLR declarations
+2026-10-30.
+- A shared generic projection checks current/inherited fields and prior-name
+  aliases, retaining SDK native fields and every retained field's bytes/alignment.
+- Original MonoScript binding and DLL pins govern selection; SDK hashes remain
+  strict. Existing zero-counter policies are unchanged. No runtime code changes.
+- Five RunPresence records, including nonzero stale counters, now match J850 in
+  all 412 persisted body bytes and required native type hashes.
+- Evidence: `work/coordination/orchestrator/whole-game-current-fields-production-v1/`.
+- Record pack SHA-256: `dc9ee445a84892e251861753f92bc74c31ee7cfbb3b05d2e1c256b4b0d3bb537`.
+- Inheritance/alias, retained-value, input-drift and producer fixtures pass.
+- Whole-game unresolved records fall to 361; historical readiness remains
+  693/705 available, 685 raw-exact. Complete phone/gameplay/install/update open.

@@ -17,6 +17,36 @@ spec.loader.exec_module(S)
 
 
 class PointerSchemaTests(unittest.TestCase):
+    def test_original_field_context_rechecks_pinned_assemblies(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary).resolve()
+            directory = root / "Managed"
+            directory.mkdir()
+            assembly = directory / "Fixture.dll"
+            assembly.write_bytes(b"authored original metadata")
+            managed = {"path": "Managed", "files": {assembly.name: hashlib.sha256(assembly.read_bytes()).hexdigest()}}
+
+            class CLR:
+                def __init__(self, directory, providers, pin, native, templates):
+                    self.pin = pin
+
+                def declared_field_names(self, *names):
+                    self.pin(assembly)
+                    return {"live"}
+
+                def close(self):
+                    pass
+
+            script = S._script_body(("Fixture.dll", "Fixture", "Current"), bytes(16))
+            with patch.object(S, "_RegistryTypes", CLR):
+                fields = S.OriginalScriptFields(root, managed)
+                self.assertEqual(fields.names(script), {"live"})
+                fields.verify()
+                assembly.write_bytes(b"changed metadata")
+                with self.assertRaisesRegex(ValueError, "assembly drift"):
+                    fields.verify()
+                fields.close()
+
     def fixture(self, root):
         directory = root / "Managed"
         directory.mkdir()

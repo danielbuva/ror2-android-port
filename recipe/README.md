@@ -5471,3 +5471,19 @@ file, private schema, generated body, original implementation or private setting
 is included or required publicly. All six persisted MonoScripts match J850.
 Generated registry IDs supply record selection, never original-asset identity
 witnesses. Complete bundle, phone production and runtime acceptance remain open.
+
+### Whole-game current script fields (J1280)
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-whole-game-current-script-fields.json` | `f38fbaede09af8041eb9e9678a7db03f1b2f0781e3be9fbb84d9502541ca095c` |
+
+Audit: original bundle/member/object/MonoScript selectors and hashes, SDK/native
+type pins, original managed-assembly hashes and checked PPtr relationships.
+The generic projection omits only whole source fields absent from current CLR
+declarations, inherited fields and serialized-name aliases. SDK native fields
+remain protected; retained bytes/alignment and script identity stay checked.
+No original implementation, field value, type tree, target template or private
+setting is included. Five persisted RunPresence records match J850; their stale
+counters are absent from the current original assembly. Complete bundle, phone
+production, gameplay and installation/update acceptance remain open.
