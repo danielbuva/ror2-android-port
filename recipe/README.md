@@ -5440,3 +5440,19 @@ public SilentProjectileBoundary. No component is omitted. No original body,
 scalar, type tree, source implementation or private setting is included. All
 17 persisted records and native type hashes match J850. Complete bundle, phone
 production, gameplay and data-preserving installation/update remain open.
+
+### Whole-game existing presentation policies (J1278)
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-whole-game-existing-presentation-records.json` | `c488c434588e1cefe832e467141f8cf4e224edd89a2fd30520f2a6194a78a6df` |
+
+Audit: minimum original bundle/member/object selectors, source/output hashes,
+checked PPtr relationships and component omission indices/identities. Existing
+`sanitize_optional_content` policy selects optional audio, decal and particle-tail
+components by original MonoScript assembly/importer identity. Retained components
+keep their original order and reciprocal owners; ambiguous duplicates are excluded.
+Existing filename and public adapter-append policies also apply. No new omission
+policy, original body/scalar/type tree, implementation or private setting is
+included. All 38 persisted records and native type hashes match J850. Complete
+bundle, phone production, gameplay and installation/update remain open.

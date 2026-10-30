@@ -1,0 +1,5160 @@
+{
+  "input_id": "6af7ed94619fe1b4346974b4486afa03a8d1625a7820e92da0ff74d57208fe88",
+  "bundles": [
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-base-artifactkey_assets_all_123b50d42155fc23d65f9c78d3f493c9.bundle",
+      "sha256": "e773d295249988ef85bc9f6b41623475905956d27d56482e20f7bb476d41139f",
+      "members": [
+        {
+          "name": "CAB-68d074a94832a1fa3d32d8ad43d45856",
+          "objects": [
+            {
+              "path_id": 2100485626331030605,
+              "class_id": 1,
+              "sha256": "42e604d8a084cba918844e337e52e82c0d6a148b91ba2569591329356fb9923b",
+              "outputs": [
+                {
+                  "bundle": "whole-game-content",
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "path_id": -1625827333114235931,
+                  "bytes": 71,
+                  "sha256": "3daa6147a3c10516a2af2c1985594895f2618b90c2c2d9ea0b2d9a32f8ebe253",
+                  "transform": {
+                    "remove_components": [
+                      {
+                        "index": 1,
+                        "path_id": -1421767853663886259
+                      },
+                      {
+                        "index": 2,
+                        "path_id": -4628334290797763507
+                      }
+                    ],
+                    "references": [
+                      {
+                        "offset": 4,
+                        "from": [
+                          0,
+                          -7435890643115416499
+                        ],
+                        "to": [
+                          0,
+                          -5913571446942643953
+                        ]
+                      },
+                      {
+                        "offset": 16,
+                        "from": [
+                          0,
+                          7319933503628600397
+                        ],
+                        "to": [
+                          0,
+                          2622509142347769697
+                        ]
+                      },
+                      {
+                        "offset": 28,
+                        "from": [
+                          0,
+                          5039853608028824653
+                        ],
+                        "to": [
+                          0,
+                          -8049297156477552669
+                        ]
+                      }
+                    ]
+                  },
+                  "native_type_hash": "86e34eb8ee7642b089fb98c9d81dd9b0"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-base-beetleguard_assets_all_9bf614c8a49623590507accdb53ef999.bundle",
+      "sha256": "a67a3d4d557e645b0ff2621ca1f2178a7c5016dc909b611351912b11f69ee22b",
+      "members": [
+        {
+          "name": "CAB-a67b31e48e76d5d99de2a36c3de4c911",
+          "objects": [
+            {
+              "path_id": 6256234311543776875,
+              "class_id": 1,
+              "sha256": "cb526503c76e7c7fba156b70acc188cfafa98800a9406fd2e96bbdffff6fe31d",
+              "outputs": [
+                {
+                  "bundle": "whole-game-content",
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "path_id": -7279759615761085897,
+                  "bytes": 111,
+                  "sha256": "f2d4df6935f4ef18b0abf733f15f7a988bfb8542be18b7ed119cd2f4cf33a336",
+                  "transform": {
+                    "remove_components": [
+                      {
+                        "index": 4,
+                        "path_id": -5010045808512768405
+                      },
+                      {
+                        "index": 5,
+                        "path_id": -6950497224196594069
+                      },
+                      {
+                        "index": 6,
+                        "path_id": -5974813959213914517
+                      },
+                      {
+                        "index": 10,
+                        "path_id": 3518487775705065067
+                      }
+                    ],
+                    "references": [
+                      {
+                        "offset": 4,
+                        "from": [
+                          0,
+                          -464442810398316949
+                        ],
+                        "to": [
+                          0,
+                          -9033236822954776176
+                        ]
+                      },
+                      {
+                        "offset": 16,
+                        "from": [
+                          0,
+                          8687113723455432299
+                        ],
+                        "to": [
+                          0,
+                          6405801353812394781
+                        ]
+                      },
+                      {
+                        "offset": 28,
+                        "from": [
+                          0,
+                          -7662404821651593621
+                        ],
+                        "to": [
+                          0,
+                          8707531344261410729
+                        ]
+                      },
+                      {
+                        "offset": 40,
+                        "from": [
+                          0,
+                          -4939528283508873621
+                        ],
+                        "to": [
+                          0,
+                          -8181194548558569779
+                        ]
+                      },
+                      {
+                        "offset": 52,
+                        "from": [
+                          0,
+                          -1077069294600362389
+                        ],
+                        "to": [
+                          0,
+                          -2826915780206633991
+                        ]
+                      },
+                      {
+                        "offset": 64,
+                        "from": [
+                          0,
+                          -398290283076295061
+                        ],
+                        "to": [
+                          0,
+                          -2230362061789043837
+                        ]
+                      },
+                      {
+                        "offset": 76,
+                        "from": [
+                          0,
+                          3967533110377014891
+                        ],
+                        "to": [
+                          0,
+                          4556673104980265908
+                        ]
+                      }
+                    ]
+                  },
+                  "native_type_hash": "86e34eb8ee7642b089fb98c9d81dd9b0"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-base-brother_static_assets_all_05eeaadd2c2fa00674104ebfedb598e7.bundle",
+      "sha256": "476d4c9ba1002c19b06ee7d7ba8b17d8b48026abd484ee7990443ecb63a72d33",
+      "members": [
+        {
+          "name": "CAB-f6ec265570c0972363ebeb4162baadc1",
+          "objects": [
+            {
+              "path_id": -4625865301553262010,
+              "class_id": 1,
+              "sha256": "46ca6617b7124773225cb86357314c56f169750d09dc2855a0439e32bf53b6d7",
+              "outputs": [
+                {
+                  "bundle": "whole-game-content",
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "path_id": 2092783123816231610,
+                  "bytes": 107,
+                  "sha256": "c792a4fa981576868f051b4c1d5facdf3f1ba0ef3f0be388e894ce30b1410429",
+                  "transform": {
+                    "remove_components": [
+                      {
+                        "index": 6,
+                        "path_id": -8500351363386781114
+                      }
+                    ],
+                    "normalize_exported_prefab_name": true,
+                    "references": [
+                      {
+                        "offset": 4,
+                        "from": [
+                          0,
+                          -4572678533341130170
+                        ],
+                        "to": [
+                          0,
+                          2531485693235305540
+                        ]
+                      },
+                      {
+                        "offset": 16,
+                        "from": [
+                          0,
+                          -736406124962655674
+                        ],
+                        "to": [
+                          0,
+                          5575894497702721979
+                        ]
+                      },
+                      {
+                        "offset": 28,
+                        "from": [
+                          0,
+                          2292656884325798470
+                        ],
+                        "to": [
+                          0,
+                          8782075528912146196
+                        ]
+                      },
+                      {
+                        "offset": 40,
+                        "from": [
+                          0,
+                          -462522475044810170
+                        ],
+                        "to": [
+                          0,
+                          1631795463875041852
+                        ]
+                      },
+                      {
+                        "offset": 52,
+                        "from": [
+                          0,
+                          7948177876993692230
+                        ],
+                        "to": [
+                          0,
+                          6087772480972408726
+                        ]
+                      },
+                      {
+                        "offset": 64,
+                        "from": [
+                          0,
+                          -6449064525928672698
+                        ],
+                        "to": [
+                          0,
+                          -1765723579160382738
+                        ]
+                      }
+                    ]
+                  },
+                  "native_type_hash": "86e34eb8ee7642b089fb98c9d81dd9b0"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-base-brotherhaunt_assets_all_e8f96cfc3a55c7aa3bc79ab1f9dfc61b.bundle",
+      "sha256": "6b89d2d36ac4a891069ffc5f8c6e9a16c58204aad33520aa8d5cce4b6d651e89",
+      "members": [
+        {
+          "name": "CAB-2b9bb18c340fb6eb2dfc50b61a4f885a",
+          "objects": [
+            {
+              "path_id": 6719361327953308013,
+              "class_id": 1,
+              "sha256": "a075471b2941181ad2b801c7e81a4ae77410d799417810d983728e1d7d65d2fe",
+              "outputs": [
+                {
+                  "bundle": "whole-game-content",
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "path_id": -4208162558723466971,
+                  "bytes": 151,
+                  "sha256": "a9937d82fa4f6cae800f2877911d8fad93353f9154891f54b8140747a507b050",
+                  "transform": {
+                    "remove_components": [
+                      {
+                        "index": 7,
+                        "path_id": -8074981966630065811
+                      }
+                    ],
+                    "normalize_exported_prefab_name": true,
+                    "references": [
+                      {
+                        "offset": 4,
+                        "from": [
+                          0,
+                          9128514388988029293
+                        ],
+                        "to": [
+                          0,
+                          3070406537642093002
+                        ]
+                      },
+                      {
+                        "offset": 16,
+                        "from": [
+                          0,
+                          -1173231541261276819
+                        ],
+                        "to": [
+                          0,
+                          -7626081276708599634
+                        ]
+                      },
+                      {
+                        "offset": 28,
+                        "from": [
+                          0,
+                          -219832149776111251
+                        ],
+                        "to": [
+                          0,
+                          -446998564995720615
+                        ]
+                      },
+                      {
+                        "offset": 40,
+                        "from": [
+                          0,
+                          1906270144237758829
+                        ],
+                        "to": [
+                          0,
+                          -4006700843698260325
+                        ]
+                      },
+                      {
+                        "offset": 52,
+                        "from": [
+                          0,
+                          3461077339337550189
+                        ],
+                        "to": [
+                          0,
+                          -424606212714638328
+                        ]
+                      },
+                      {
+                        "offset": 64,
+                        "from": [
+                          0,
+                          6549954757257947501
+                        ],
+                        "to": [
+                          0,
+                          -6170433380851438193
+                        ]
+                      },
+                      {
+                        "offset": 76,
+                        "from": [
+                          0,
+                          -7969835614673999507
+                        ],
+                        "to": [
+                          0,
+                          8432254338837341626
+                        ]
+                      },
+                      {
+                        "offset": 88,
+                        "from": [
+                          0,
+                          8729204634701162861
+                        ],
+                        "to": [
+                          0,
+                          -4390250667275443563
+                        ]
+                      },
+                      {
+                        "offset": 100,
+                        "from": [
+                          0,
+                          -89406072584115859
+                        ],
+                        "to": [
+                          0,
+                          2435051526259728438
+                        ]
+                      }
+                    ]
+                  },
+                  "native_type_hash": "86e34eb8ee7642b089fb98c9d81dd9b0"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-base-loader_static_assets_all_7fe04282a87253efb17dce017a82b23e.bundle",
+      "sha256": "a99a0be1772aec8dac455418afdd20055aea0d008737e31a8424cd2675d317fa",
+      "members": [
+        {
+          "name": "CAB-bc497e33121eac3d7e0d327de31cd321",
+          "objects": [
+            {
+              "path_id": -8139516822374647118,
+              "class_id": 1,
+              "sha256": "d20a11629c91e80c2914e9c0af91a194d37efc65cc1865d2681b2db033ec5f0b",
+              "outputs": [
+                {
+                  "bundle": "whole-game-content",
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "path_id": -8779909300490955134,
+                  "bytes": 195,
+                  "sha256": "2dabda0fdab3f22fe2d3938027bd61a5e9482f7bd34e75122ba607b8ded208bf",
+                  "transform": {
+                    "remove_components": [
+                      {
+                        "index": 13,
+                        "path_id": -134823246241596750
+                      },
+                      {
+                        "index": 14,
+                        "path_id": 1857403361632451250
+                      },
+                      {
+                        "index": 15,
+                        "path_id": 1019930020583832242
+                      },
+                      {
+                        "index": 16,
+                        "path_id": 1019336011517065906
+                      }
+                    ],
+                    "append_components": [
+                      -5086947078383283561
+                    ],
+                    "references": [
+                      {
+                        "offset": 4,
+                        "from": [
+                          0,
+                          1008162282944395954
+                        ],
+                        "to": [
+                          0,
+                          6530494907372962911
+                        ]
+                      },
+                      {
+                        "offset": 16,
+                        "from": [
+                          0,
+                          7340412028598024882
+                        ],
+                        "to": [
+                          0,
+                          -5086947078383283561
+                        ]
+                      },
+                      {
+                        "offset": 28,
+                        "from": [
+                          0,
+                          -4487616376179656014
+                        ],
+                        "to": [
+                          0,
+                          3688553181547293728
+                        ]
+                      },
+                      {
+                        "offset": 40,
+                        "from": [
+                          0,
+                          7461831693536393906
+                        ],
+                        "to": [
+                          0,
+                          -4617009109250607706
+                        ]
+                      },
+                      {
+                        "offset": 52,
+                        "from": [
+                          0,
+                          -7939349491851068750
+                        ],
+                        "to": [
+                          0,
+                          -8640284343233225977
+                        ]
+                      },
+                      {
+                        "offset": 64,
+                        "from": [
+                          0,
+                          -5677470063745893710
+                        ],
+                        "to": [
+                          0,
+                          -8758735321877633774
+                        ]
+                      },
+                      {
+                        "offset": 76,
+                        "from": [
+                          0,
+                          8633498058383948466
+                        ],
+                        "to": [
+                          0,
+                          -3635506323713522518
+                        ]
+                      },
+                      {
+                        "offset": 88,
+                        "from": [
+                          0,
+                          -3895481482556343630
+                        ],
+                        "to": [
+                          0,
+                          -1042773829915556457
+                        ]
+                      },
+                      {
+                        "offset": 100,
+                        "from": [
+                          0,
+                          -6893748954510525774
+                        ],
+                        "to": [
+                          0,
+                          -120386513807003239
+                        ]
+                      },
+                      {
+                        "offset": 112,
+                        "from": [
+                          0,
+                          5631135554218031794
+                        ],
+                        "to": [
+                          0,
+                          7761102750549404405
+                        ]
+                      },
+                      {
+                        "offset": 124,
+                        "from": [
+                          0,
+                          4543847541486451378
+                        ],
+                        "to": [
+                          0,
+                          -666210147867960221
+                        ]
+                      },
+                      {
+                        "offset": 136,
+                        "from": [
+                          0,
+                          6530107994913831602
+                        ],
+                        "to": [
+                          0,
+                          9200152029169029224
+                        ]
+                      },
+                      {
+                        "offset": 148,
+                        "from": [
+                          0,
+                          -3284791082567599438
+                        ],
+                        "to": [
+                          0,
+                          3373860676347637656
+                        ]
+                      },
+                      {
+                        "offset": 160,
+                        "from": [
+                          0,
+                          -5086947078383283561
+                        ],
+                        "to": [
+                          0,
+                          28900378004953252
+                        ]
+                      }
+                    ]
+                  },
+                  "native_type_hash": "86e34eb8ee7642b089fb98c9d81dd9b0"
+                }
+              ]
+            },
+            {
+              "path_id": 7792586648449008436,
+              "class_id": 1,
+              "sha256": "d7457c1631b33701c99d52b1782c1048b018680e37c250f413de3347d278588f",
+              "outputs": [
+                {
+                  "bundle": "whole-game-content",
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "path_id": -6052821675043753233,
+                  "bytes": 235,
+                  "sha256": "5c5ef407a43d534f9776244d3896030473f6ca17d58a2b0f5286e556aefad999",
+                  "transform": {
+                    "remove_components": [
+                      {
+                        "index": 13,
+                        "path_id": -2325769642222992588
+                      },
+                      {
+                        "index": 14,
+                        "path_id": 6392737552228238132
+                      },
+                      {
+                        "index": 15,
+                        "path_id": -6081384596730789068
+                      },
+                      {
+                        "index": 16,
+                        "path_id": 781399137207534388
+                      }
+                    ],
+                    "append_components": [
+                      7727392643217616062
+                    ],
+                    "references": [
+                      {
+                        "offset": 4,
+                        "from": [
+                          0,
+                          -8496626988585827532
+                        ],
+                        "to": [
+                          0,
+                          1824532193700691122
+                        ]
+                      },
+                      {
+                        "offset": 16,
+                        "from": [
+                          0,
+                          -4930761825890974924
+                        ],
+                        "to": [
+                          0,
+                          7727392643217616062
+                        ]
+                      },
+                      {
+                        "offset": 28,
+                        "from": [
+                          0,
+                          -8149530852885445836
+                        ],
+                        "to": [
+                          0,
+                          738721607802881109
+                        ]
+                      },
+                      {
+                        "offset": 40,
+                        "from": [
+                          0,
+                          -3886835646556716236
+                        ],
+                        "to": [
+                          0,
+                          4743950441153671315
+                        ]
+                      },
+                      {
+                        "offset": 52,
+                        "from": [
+                          0,
+                          5016160728399364916
+                        ],
+                        "to": [
+                          0,
+                          -7985948741611279972
+                        ]
+                      },
+                      {
+                        "offset": 64,
+                        "from": [
+                          0,
+                          2368294475979375412
+                        ],
+                        "to": [
+                          0,
+                          4017690725889366167
+                        ]
+                      },
+                      {
+                        "offset": 76,
+                        "from": [
+                          0,
+                          6370795550955684660
+                        ],
+                        "to": [
+                          0,
+                          2931401728782602526
+                        ]
+                      },
+                      {
+                        "offset": 88,
+                        "from": [
+                          0,
+                          -2091092898138668236
+                        ],
+                        "to": [
+                          0,
+                          -5652768445607557539
+                        ]
+                      },
+                      {
+                        "offset": 100,
+                        "from": [
+                          0,
+                          -1290699162265042124
+                        ],
+                        "to": [
+                          0,
+                          5705944430976537511
+                        ]
+                      },
+                      {
+                        "offset": 112,
+                        "from": [
+                          0,
+                          -5864878209769979084
+                        ],
+                        "to": [
+                          0,
+                          2832826638456406175
+                        ]
+                      },
+                      {
+                        "offset": 124,
+                        "from": [
+                          0,
+                          -7197672553591979212
+                        ],
+                        "to": [
+                          0,
+                          -8060565562887159637
+                        ]
+                      },
+                      {
+                        "offset": 136,
+                        "from": [
+                          0,
+                          8602442633760490292
+                        ],
+                        "to": [
+                          0,
+                          6091194419279943623
+                        ]
+                      },
+                      {
+                        "offset": 148,
+                        "from": [
+                          0,
+                          8450693625220121396
+                        ],
+                        "to": [
+                          0,
+                          5921908911062440409
+                        ]
+                      },
+                      {
+                        "offset": 160,
+                        "from": [
+                          0,
+                          -1267010972987538636
+                        ],
+                        "to": [
+                          0,
+                          -9152063215244037287
+                        ]
+                      },
+                      {
+                        "offset": 172,
+                        "from": [
+                          0,
+                          1672383732582269748
+                        ],
+                        "to": [
+                          0,
+                          7174610171706894822
+                        ]
+                      },
+                      {
+                        "offset": 184,
+                        "from": [
+                          0,
+                          -5320729622050618572
+                        ],
+                        "to": [
+                          0,
+                          8714358440760809
+                        ]
+                      },
+                      {
+                        "offset": 196,
+                        "from": [
+                          0,
+                          7727392643217616062
+                        ],
+                        "to": [
+                          0,
+                          -6356248728920287846
+                        ]
+                      }
+                    ]
+                  },
+                  "native_type_hash": "86e34eb8ee7642b089fb98c9d81dd9b0"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-base-treebot_assets_all_1b6d921eeb378158fe1cee3668b777d7.bundle",
+      "sha256": "94e8a145472138a1703fe2a0e49ac828c6574d228db7cbe4713aadb85fd4f738",
+      "members": [
+        {
+          "name": "CAB-c97042a7ed54f503f1555b4a52a7d875",
+          "objects": [
+            {
+              "path_id": -8447040533606777094,
+              "class_id": 1,
+              "sha256": "73532fa2b0468ee1ad0a8591331d23b01eacfa9afeb339041d79ec23942b73b5",
+              "outputs": [
+                {
+                  "bundle": "whole-game-content",
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "path_id": 3998093859325820673,
+                  "bytes": 83,
+                  "sha256": "a19259d5a922d1a6e15bac2598ac1d817c463c5330b6a475ff19eda98074253d",
+                  "transform": {
+                    "remove_components": [
+                      {
+                        "index": 3,
+                        "path_id": -2474393550691844358
+                      },
+                      {
+                        "index": 4,
+                        "path_id": 2684023884073647866
+                      },
+                      {
+                        "index": 6,
+                        "path_id": 7929078521763708666
+                      },
+                      {
+                        "index": 7,
+                        "path_id": -3657510190220263686
+                      }
+                    ],
+                    "references": [
+                      {
+                        "offset": 4,
+                        "from": [
+                          0,
+                          -6273905340421062918
+                        ],
+                        "to": [
+                          0,
+                          4646386287499478480
+                        ]
+                      },
+                      {
+                        "offset": 16,
+                        "from": [
+                          0,
+                          -2063013709305823494
+                        ],
+                        "to": [
+                          0,
+                          5429499307833074126
+                        ]
+                      },
+                      {
+                        "offset": 28,
+                        "from": [
+                          0,
+                          5503868463656255226
+                        ],
+                        "to": [
+                          0,
+                          -4608977937455371724
+                        ]
+                      },
+                      {
+                        "offset": 40,
+                        "from": [
+                          0,
+                          4677853369273073402
+                        ],
+                        "to": [
+                          0,
+                          -4405228037242757451
+                        ]
+                      }
+                    ]
+                  },
+                  "native_type_hash": "86e34eb8ee7642b089fb98c9d81dd9b0"
+                }
+              ]
+            },
+            {
+              "path_id": 4877039373056377579,
+              "class_id": 1,
+              "sha256": "6829e6c760c04e4734a9adf56b1c8bb492460e7951724880f879c5c28f360c5f",
+              "outputs": [
+                {
+                  "bundle": "whole-game-content",
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "path_id": 5251829532696057972,
+                  "bytes": 91,
+                  "sha256": "ca3c40a55a4af078c2f4c3ae10e94a32ce85795f5ec434e72677685e0e20235f",
+                  "transform": {
+                    "remove_components": [
+                      {
+                        "index": 4,
+                        "path_id": 8483831171420947179
+                      }
+                    ],
+                    "references": [
+                      {
+                        "offset": 4,
+                        "from": [
+                          0,
+                          -2624653850577501461
+                        ],
+                        "to": [
+                          0,
+                          -5425892801802431384
+                        ]
+                      },
+                      {
+                        "offset": 16,
+                        "from": [
+                          0,
+                          -619462659196353813
+                        ],
+                        "to": [
+                          0,
+                          7208435170626524991
+                        ]
+                      },
+                      {
+                        "offset": 28,
+                        "from": [
+                          0,
+                          5552814137503089387
+                        ],
+                        "to": [
+                          0,
+                          8322484647415725577
+                        ]
+                      },
+                      {
+                        "offset": 40,
+                        "from": [
+                          0,
+                          -6031325833715547413
+                        ],
+                        "to": [
+                          0,
+                          6498770741765643758
+                        ]
+                      }
+                    ]
+                  },
+                  "native_type_hash": "86e34eb8ee7642b089fb98c9d81dd9b0"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-base-utility_assets_all_f2a29d43d8dc594de4630b2e7d3b2101.bundle",
+      "sha256": "320c7a96357ebaa9a560f26796ec2d78b52d42ae4715fbde302d6bf7a005751a",
+      "members": [
+        {
+          "name": "CAB-b2c9d4a446413446239f90220ec076d6",
+          "objects": [
+            {
+              "path_id": 1010670214949722010,
+              "class_id": 1,
+              "sha256": "da413f0a31930d6b4a39fc6a9147f72a766a10235c3ca854eab17adfbe8c37a1",
+              "outputs": [
+                {
+                  "bundle": "whole-game-content",
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "path_id": -2476932119627307152,
+                  "bytes": 51,
+                  "sha256": "d632c15729bbbb70eb7b0cd1873c12e6ddbf09ebf50dcc06816dbfc540b957e1",
+                  "transform": {
+                    "remove_components": [
+                      {
+                        "index": 2,
+                        "path_id": -4796927319271975014
+                      }
+                    ],
+                    "references": [
+                      {
+                        "offset": 4,
+                        "from": [
+                          0,
+                          6752002830358566810
+                        ],
+                        "to": [
+                          0,
+                          -2761409707427059560
+                        ]
+                      },
+                      {
+                        "offset": 16,
+                        "from": [
+                          0,
+                          3422025956535457690
+                        ],
+                        "to": [
+                          0,
+                          5316697959728007432
+                        ]
+                      }
+                    ]
+                  },
+                  "native_type_hash": "86e34eb8ee7642b089fb98c9d81dd9b0"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-dlc1-voidsurvivor_assets_all_80375e44229ea2d389f73db0ca71d10e.bundle",
+      "sha256": "140a56ebba268fab1529089988f75c6abd4e57a3b9a13393bd9cdd540e20137a",
+      "members": [
+        {
+          "name": "CAB-fc0a044a5eae31724558806a49fad075",
+          "objects": [
+            {
+              "path_id": -1079072940938635570,
+              "class_id": 1,
+              "sha256": "8e139f46348478bb0d0c2cc7ca7e135b83c04d161cad7d15040a815896d05543",
+              "outputs": [
+                {
+                  "bundle": "whole-game-content",
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "path_id": -6707506425656186136,
+                  "bytes": 87,
+                  "sha256": "2c4cec76f6df05829140ddd3da877d9b5e535715500b89c5021105eefad157ca",
+                  "transform": {
+                    "remove_components": [
+                      {
+                        "index": 3,
+                        "path_id": 6674998495423157966
+                      }
+                    ],
+                    "references": [
+                      {
+                        "offset": 4,
+                        "from": [
+                          0,
+                          -6050774699572537650
+                        ],
+                        "to": [
+                          0,
+                          -6917238793625431492
+                        ]
+                      },
+                      {
+                        "offset": 16,
+                        "from": [
+                          0,
+                          846723272699008718
+                        ],
+                        "to": [
+                          0,
+                          7241886954412674650
+                        ]
+                      },
+                      {
+                        "offset": 28,
+                        "from": [
+                          0,
+                          5067150076894435022
+                        ],
+                        "to": [
+                          0,
+                          -8383497746055985939
+                        ]
+                      }
+                    ]
+                  },
+                  "native_type_hash": "86e34eb8ee7642b089fb98c9d81dd9b0"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-dlc2-child_assets_all_91a8b74f07562aa62fe8713710001e97.bundle",
+      "sha256": "d462a3b579c958351a9b43c9203e8b5893681fab5086dd657d62eead4f67debd",
+      "members": [
+        {
+          "name": "CAB-70a83ae023b3252c59ffb51fa7d7d060",
+          "objects": [
+            {
+              "path_id": -7874590809663570678,
+              "class_id": 1,
+              "sha256": "075b41cf23407fbdfb0372263c22cefb0cfbb87186019dbe2fd02a313effaafe",
+              "outputs": [
+                {
+                  "bundle": "whole-game-content",
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "path_id": -3057255929246951859,
+                  "bytes": 87,
+                  "sha256": "e4f31931d2ec9c71ce5dd326e0f179929240a1f3dcd171a7d95d8db606b51435",
+                  "transform": {
+                    "remove_components": [
+                      {
+                        "index": 4,
+                        "path_id": -7611959323771962102
+                      }
+                    ],
+                    "references": [
+                      {
+                        "offset": 4,
+                        "from": [
+                          0,
+                          -1118574826249421558
+                        ],
+                        "to": [
+                          0,
+                          -8961820912680802178
+                        ]
+                      },
+                      {
+                        "offset": 16,
+                        "from": [
+                          0,
+                          2902901680842767626
+                        ],
+                        "to": [
+                          0,
+                          3708755932576801282
+                        ]
+                      },
+                      {
+                        "offset": 28,
+                        "from": [
+                          0,
+                          6194390870097427722
+                        ],
+                        "to": [
+                          0,
+                          8860959887617140193
+                        ]
+                      },
+                      {
+                        "offset": 40,
+                        "from": [
+                          0,
+                          -2279188267534222070
+                        ],
+                        "to": [
+                          0,
+                          4917511069606297386
+                        ]
+                      }
+                    ]
+                  },
+                  "native_type_hash": "86e34eb8ee7642b089fb98c9d81dd9b0"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-dlc2-falsesonboss_static_assets_all_ebbdb55e9081a053cdcf1a13a60c96e4.bundle",
+      "sha256": "76a55c1c3bcb0dbd520a4e160ab91c25843a08ef6be799bb8cf19277e8362814",
+      "members": [
+        {
+          "name": "CAB-a88d10c33fd3e3d28ab3ac961751c012",
+          "objects": [
+            {
+              "path_id": -8194973203371976526,
+              "class_id": 1,
+              "sha256": "fea87741a5f4cc799a6abc92f34aaaae95f465c2d7b9d2d3fba060dc4dc7f70b",
+              "outputs": [
+                {
+                  "bundle": "whole-game-content",
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "path_id": 1834371583504324813,
+                  "bytes": 487,
+                  "sha256": "1aa34c2472777fa6169c5a22c66fc82f359d14673c33837c7a6d5f55b682c939",
+                  "transform": {
+                    "remove_components": [
+                      {
+                        "index": 35,
+                        "path_id": 4153978426012932274
+                      }
+                    ],
+                    "references": [
+                      {
+                        "offset": 4,
+                        "from": [
+                          0,
+                          4820809620916607154
+                        ],
+                        "to": [
+                          0,
+                          -7144534108493936085
+                        ]
+                      },
+                      {
+                        "offset": 16,
+                        "from": [
+                          0,
+                          -2870447866672179022
+                        ],
+                        "to": [
+                          0,
+                          8990368242658551604
+                        ]
+                      },
+                      {
+                        "offset": 28,
+                        "from": [
+                          0,
+                          8665473118395832498
+                        ],
+                        "to": [
+                          0,
+                          -1743066955506661227
+                        ]
+                      },
+                      {
+                        "offset": 40,
+                        "from": [
+                          0,
+                          -3921875594812319566
+                        ],
+                        "to": [
+                          0,
+                          -9165501567314301852
+                        ]
+                      },
+                      {
+                        "offset": 52,
+                        "from": [
+                          0,
+                          -1378363843210635086
+                        ],
+                        "to": [
+                          0,
+                          737056739002128648
+                        ]
+                      },
+                      {
+                        "offset": 64,
+                        "from": [
+                          0,
+                          7994255695493011634
+                        ],
+                        "to": [
+                          0,
+                          -6369067156549586251
+                        ]
+                      },
+                      {
+                        "offset": 76,
+                        "from": [
+                          0,
+                          3417455043233716402
+                        ],
+                        "to": [
+                          0,
+                          -7029459201691381334
+                        ]
+                      },
+                      {
+                        "offset": 88,
+                        "from": [
+                          0,
+                          7514998646884276402
+                        ],
+                        "to": [
+                          0,
+                          -8211567420918458619
+                        ]
+                      },
+                      {
+                        "offset": 100,
+                        "from": [
+                          0,
+                          62965180607371442
+                        ],
+                        "to": [
+                          0,
+                          -4135899566860266015
+                        ]
+                      },
+                      {
+                        "offset": 112,
+                        "from": [
+                          0,
+                          614668217841293490
+                        ],
+                        "to": [
+                          0,
+                          -8366407282073108552
+                        ]
+                      },
+                      {
+                        "offset": 124,
+                        "from": [
+                          0,
+                          5264213660420413618
+                        ],
+                        "to": [
+                          0,
+                          -7450375337539760658
+                        ]
+                      },
+                      {
+                        "offset": 136,
+                        "from": [
+                          0,
+                          7287409842917939378
+                        ],
+                        "to": [
+                          0,
+                          5451666496475859783
+                        ]
+                      },
+                      {
+                        "offset": 148,
+                        "from": [
+                          0,
+                          1096345117306198194
+                        ],
+                        "to": [
+                          0,
+                          2076240245386538087
+                        ]
+                      },
+                      {
+                        "offset": 160,
+                        "from": [
+                          0,
+                          -7105492494288414542
+                        ],
+                        "to": [
+                          0,
+                          1537494058170090741
+                        ]
+                      },
+                      {
+                        "offset": 172,
+                        "from": [
+                          0,
+                          -8548526404058408782
+                        ],
+                        "to": [
+                          0,
+                          4930792274636793317
+                        ]
+                      },
+                      {
+                        "offset": 184,
+                        "from": [
+                          0,
+                          -8295874749664847694
+                        ],
+                        "to": [
+                          0,
+                          4287578630879479079
+                        ]
+                      },
+                      {
+                        "offset": 196,
+                        "from": [
+                          0,
+                          7336451231135832242
+                        ],
+                        "to": [
+                          0,
+                          -6481065611939707080
+                        ]
+                      },
+                      {
+                        "offset": 208,
+                        "from": [
+                          0,
+                          6693857259591768242
+                        ],
+                        "to": [
+                          0,
+                          -7903256322221001144
+                        ]
+                      },
+                      {
+                        "offset": 220,
+                        "from": [
+                          0,
+                          -574020708915144526
+                        ],
+                        "to": [
+                          0,
+                          6179438468911360072
+                        ]
+                      },
+                      {
+                        "offset": 232,
+                        "from": [
+                          0,
+                          3827661401341958322
+                        ],
+                        "to": [
+                          0,
+                          -1708770782267376624
+                        ]
+                      },
+                      {
+                        "offset": 244,
+                        "from": [
+                          0,
+                          -5079218447792269134
+                        ],
+                        "to": [
+                          0,
+                          1787774688174305662
+                        ]
+                      },
+                      {
+                        "offset": 256,
+                        "from": [
+                          0,
+                          -3427021420526495566
+                        ],
+                        "to": [
+                          0,
+                          1404357637044257729
+                        ]
+                      },
+                      {
+                        "offset": 268,
+                        "from": [
+                          0,
+                          6001606184117934258
+                        ],
+                        "to": [
+                          0,
+                          333811350207432049
+                        ]
+                      },
+                      {
+                        "offset": 280,
+                        "from": [
+                          0,
+                          836702837517850802
+                        ],
+                        "to": [
+                          0,
+                          2536870835051746679
+                        ]
+                      },
+                      {
+                        "offset": 292,
+                        "from": [
+                          0,
+                          8170338106261248178
+                        ],
+                        "to": [
+                          0,
+                          -3172780672315885048
+                        ]
+                      },
+                      {
+                        "offset": 304,
+                        "from": [
+                          0,
+                          2135536606234089650
+                        ],
+                        "to": [
+                          0,
+                          7497635032731810547
+                        ]
+                      },
+                      {
+                        "offset": 316,
+                        "from": [
+                          0,
+                          5082876158144354482
+                        ],
+                        "to": [
+                          0,
+                          -8465605030412853223
+                        ]
+                      },
+                      {
+                        "offset": 328,
+                        "from": [
+                          0,
+                          2327370205244692658
+                        ],
+                        "to": [
+                          0,
+                          7801641221565010672
+                        ]
+                      },
+                      {
+                        "offset": 340,
+                        "from": [
+                          0,
+                          1923821018582227122
+                        ],
+                        "to": [
+                          0,
+                          -3520328676645303398
+                        ]
+                      },
+                      {
+                        "offset": 352,
+                        "from": [
+                          0,
+                          5213889697596053682
+                        ],
+                        "to": [
+                          0,
+                          -166088288712131137
+                        ]
+                      },
+                      {
+                        "offset": 364,
+                        "from": [
+                          0,
+                          -5110524338469332814
+                        ],
+                        "to": [
+                          0,
+                          7774313609498465364
+                        ]
+                      },
+                      {
+                        "offset": 376,
+                        "from": [
+                          0,
+                          -286462900815456078
+                        ],
+                        "to": [
+                          0,
+                          -939958040892691604
+                        ]
+                      },
+                      {
+                        "offset": 388,
+                        "from": [
+                          0,
+                          -2749794361031255886
+                        ],
+                        "to": [
+                          0,
+                          1529657216575850228
+                        ]
+                      },
+                      {
+                        "offset": 400,
+                        "from": [
+                          0,
+                          -46158942359578446
+                        ],
+                        "to": [
+                          0,
+                          337465066566914573
+                        ]
+                      },
+                      {
+                        "offset": 412,
+                        "from": [
+                          0,
+                          8679156156105693362
+                        ],
+                        "to": [
+                          0,
+                          6355605229181888327
+                        ]
+                      },
+                      {
+                        "offset": 424,
+                        "from": [
+                          0,
+                          2397924782664063154
+                        ],
+                        "to": [
+                          0,
+                          6840973148878524747
+                        ]
+                      },
+                      {
+                        "offset": 436,
+                        "from": [
+                          0,
+                          3422655555689388210
+                        ],
+                        "to": [
+                          0,
+                          -6893415955281494964
+                        ]
+                      }
+                    ]
+                  },
+                  "native_type_hash": "86e34eb8ee7642b089fb98c9d81dd9b0"
+                }
+              ]
+            },
+            {
+              "path_id": -5178779963442144792,
+              "class_id": 1,
+              "sha256": "d1e0c842253763e7058b9b8d44bc305ff05d34850fc0dc89c50e3742afeec744",
+              "outputs": [
+                {
+                  "bundle": "whole-game-content",
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "path_id": -1287575550167396690,
+                  "bytes": 491,
+                  "sha256": "53c77270b5dc8fb6d8e77b1ce6bd5a27236af122ee49d7084c6b90a887c75140",
+                  "transform": {
+                    "remove_components": [
+                      {
+                        "index": 35,
+                        "path_id": -4322616262070904344
+                      }
+                    ],
+                    "references": [
+                      {
+                        "offset": 4,
+                        "from": [
+                          0,
+                          -3429855034724263448
+                        ],
+                        "to": [
+                          0,
+                          -1892227359552779176
+                        ]
+                      },
+                      {
+                        "offset": 16,
+                        "from": [
+                          0,
+                          5952511278584355304
+                        ],
+                        "to": [
+                          0,
+                          588877295791087847
+                        ]
+                      },
+                      {
+                        "offset": 28,
+                        "from": [
+                          0,
+                          -4818833679275009560
+                        ],
+                        "to": [
+                          0,
+                          700209242919305519
+                        ]
+                      },
+                      {
+                        "offset": 40,
+                        "from": [
+                          0,
+                          -106007147539473944
+                        ],
+                        "to": [
+                          0,
+                          5558853803666669273
+                        ]
+                      },
+                      {
+                        "offset": 52,
+                        "from": [
+                          0,
+                          1995283447685765608
+                        ],
+                        "to": [
+                          0,
+                          -5321577596155768883
+                        ]
+                      },
+                      {
+                        "offset": 64,
+                        "from": [
+                          0,
+                          1635856774685252072
+                        ],
+                        "to": [
+                          0,
+                          -6358655774524386600
+                        ]
+                      },
+                      {
+                        "offset": 76,
+                        "from": [
+                          0,
+                          -7381374039073302040
+                        ],
+                        "to": [
+                          0,
+                          -6774107983130117398
+                        ]
+                      },
+                      {
+                        "offset": 88,
+                        "from": [
+                          0,
+                          -3356280001331537432
+                        ],
+                        "to": [
+                          0,
+                          -1645041391413934789
+                        ]
+                      },
+                      {
+                        "offset": 100,
+                        "from": [
+                          0,
+                          -6187689417191663128
+                        ],
+                        "to": [
+                          0,
+                          -5102171171478063338
+                        ]
+                      },
+                      {
+                        "offset": 112,
+                        "from": [
+                          0,
+                          8967699918603409896
+                        ],
+                        "to": [
+                          0,
+                          318337938448197134
+                        ]
+                      },
+                      {
+                        "offset": 124,
+                        "from": [
+                          0,
+                          -5372696715798259224
+                        ],
+                        "to": [
+                          0,
+                          2870552663790455096
+                        ]
+                      },
+                      {
+                        "offset": 136,
+                        "from": [
+                          0,
+                          -2087933837593093656
+                        ],
+                        "to": [
+                          0,
+                          5431858970944980539
+                        ]
+                      },
+                      {
+                        "offset": 148,
+                        "from": [
+                          0,
+                          2525341337545136616
+                        ],
+                        "to": [
+                          0,
+                          -4615896949472901357
+                        ]
+                      },
+                      {
+                        "offset": 160,
+                        "from": [
+                          0,
+                          -7493288547511576088
+                        ],
+                        "to": [
+                          0,
+                          7706850291744123864
+                        ]
+                      },
+                      {
+                        "offset": 172,
+                        "from": [
+                          0,
+                          -8208371114709034520
+                        ],
+                        "to": [
+                          0,
+                          5685682923122469941
+                        ]
+                      },
+                      {
+                        "offset": 184,
+                        "from": [
+                          0,
+                          7634188556772366824
+                        ],
+                        "to": [
+                          0,
+                          7292622730820876932
+                        ]
+                      },
+                      {
+                        "offset": 196,
+                        "from": [
+                          0,
+                          -1877235183608407576
+                        ],
+                        "to": [
+                          0,
+                          1528826130760285875
+                        ]
+                      },
+                      {
+                        "offset": 208,
+                        "from": [
+                          0,
+                          5577035443048077800
+                        ],
+                        "to": [
+                          0,
+                          6330018254497242164
+                        ]
+                      },
+                      {
+                        "offset": 220,
+                        "from": [
+                          0,
+                          -4095933240451278360
+                        ],
+                        "to": [
+                          0,
+                          -5804715819509823420
+                        ]
+                      },
+                      {
+                        "offset": 232,
+                        "from": [
+                          0,
+                          -2390008353663362584
+                        ],
+                        "to": [
+                          0,
+                          -6026243141562601609
+                        ]
+                      },
+                      {
+                        "offset": 244,
+                        "from": [
+                          0,
+                          4825183989706512872
+                        ],
+                        "to": [
+                          0,
+                          -4221685619158495569
+                        ]
+                      },
+                      {
+                        "offset": 256,
+                        "from": [
+                          0,
+                          3410726320618133992
+                        ],
+                        "to": [
+                          0,
+                          -313223904461969629
+                        ]
+                      },
+                      {
+                        "offset": 268,
+                        "from": [
+                          0,
+                          -5513749002814694936
+                        ],
+                        "to": [
+                          0,
+                          5253994529477194465
+                        ]
+                      },
+                      {
+                        "offset": 280,
+                        "from": [
+                          0,
+                          -2847389395701605912
+                        ],
+                        "to": [
+                          0,
+                          6073397967246413375
+                        ]
+                      },
+                      {
+                        "offset": 292,
+                        "from": [
+                          0,
+                          3378361962252720616
+                        ],
+                        "to": [
+                          0,
+                          6669649154442656271
+                        ]
+                      },
+                      {
+                        "offset": 304,
+                        "from": [
+                          0,
+                          5612920135313644008
+                        ],
+                        "to": [
+                          0,
+                          -228718226544244768
+                        ]
+                      },
+                      {
+                        "offset": 316,
+                        "from": [
+                          0,
+                          6755702597860579816
+                        ],
+                        "to": [
+                          0,
+                          2893517711446421219
+                        ]
+                      },
+                      {
+                        "offset": 328,
+                        "from": [
+                          0,
+                          3982057836099590632
+                        ],
+                        "to": [
+                          0,
+                          -915472860016430341
+                        ]
+                      },
+                      {
+                        "offset": 340,
+                        "from": [
+                          0,
+                          2797548453664119272
+                        ],
+                        "to": [
+                          0,
+                          1366813277722176994
+                        ]
+                      },
+                      {
+                        "offset": 352,
+                        "from": [
+                          0,
+                          -5068938555124491800
+                        ],
+                        "to": [
+                          0,
+                          4879364494852947864
+                        ]
+                      },
+                      {
+                        "offset": 364,
+                        "from": [
+                          0,
+                          4672222217934789096
+                        ],
+                        "to": [
+                          0,
+                          -6456757802428018799
+                        ]
+                      },
+                      {
+                        "offset": 376,
+                        "from": [
+                          0,
+                          -3712718319282693656
+                        ],
+                        "to": [
+                          0,
+                          7511887502101921213
+                        ]
+                      },
+                      {
+                        "offset": 388,
+                        "from": [
+                          0,
+                          -2728401512005576216
+                        ],
+                        "to": [
+                          0,
+                          1797849816789869838
+                        ]
+                      },
+                      {
+                        "offset": 400,
+                        "from": [
+                          0,
+                          -8510610634897565208
+                        ],
+                        "to": [
+                          0,
+                          -7403359219135730099
+                        ]
+                      },
+                      {
+                        "offset": 412,
+                        "from": [
+                          0,
+                          1357151315792746984
+                        ],
+                        "to": [
+                          0,
+                          -3584925085124270277
+                        ]
+                      },
+                      {
+                        "offset": 424,
+                        "from": [
+                          0,
+                          2852162128131906024
+                        ],
+                        "to": [
+                          0,
+                          -7569907697776849647
+                        ]
+                      },
+                      {
+                        "offset": 436,
+                        "from": [
+                          0,
+                          4886344336420887016
+                        ],
+                        "to": [
+                          0,
+                          896347907761702299
+                        ]
+                      }
+                    ]
+                  },
+                  "native_type_hash": "86e34eb8ee7642b089fb98c9d81dd9b0"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-dlc2_static_assets_all_5c127335589289065cc3bde2e74c440a.bundle",
+      "sha256": "4e605be31a245f666a4fbffec59589c026500ddd71017f5d85c799395a4274c2",
+      "members": [
+        {
+          "name": "CAB-1b62cd26012e3ab48b5644e4166647a8",
+          "objects": [
+            {
+              "path_id": -6596182645048230853,
+              "class_id": 1,
+              "sha256": "ffe1b26af2f76a0bea8c1f7b3f0d3c5432b0a253de68969ebc9cba650e7bfa56",
+              "outputs": [
+                {
+                  "bundle": "whole-game-content",
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "path_id": -6812657818710912921,
+                  "bytes": 63,
+                  "sha256": "6846f333ac01d73f5b5ef0c372bb8351324c0cceee1b32410074cf0f3958091b",
+                  "transform": {
+                    "remove_components": [
+                      {
+                        "index": 3,
+                        "path_id": -1237317116640314309
+                      }
+                    ],
+                    "references": [
+                      {
+                        "offset": 4,
+                        "from": [
+                          0,
+                          -1200633809408246725
+                        ],
+                        "to": [
+                          0,
+                          4724656682495064073
+                        ]
+                      },
+                      {
+                        "offset": 16,
+                        "from": [
+                          0,
+                          -8640865232805446597
+                        ],
+                        "to": [
+                          0,
+                          7438380769281872131
+                        ]
+                      },
+                      {
+                        "offset": 28,
+                        "from": [
+                          0,
+                          1248678369484258363
+                        ],
+                        "to": [
+                          0,
+                          921937594022377787
+                        ]
+                      }
+                    ]
+                  },
+                  "native_type_hash": "86e34eb8ee7642b089fb98c9d81dd9b0"
+                }
+              ]
+            },
+            {
+              "path_id": -6131792747201971141,
+              "class_id": 1,
+              "sha256": "cbbef510f063bab34391d723f1c959eb27644d0a2d403052eb306adf1134fc17",
+              "outputs": [
+                {
+                  "bundle": "whole-game-content",
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "path_id": -948369985938943652,
+                  "bytes": 43,
+                  "sha256": "63db42bdcce4311aa8c13de39b269349ea21521ad757142df61b1d69edbeeb31",
+                  "transform": {
+                    "remove_components": [
+                      {
+                        "index": 1,
+                        "path_id": -3032451712304497605
+                      },
+                      {
+                        "index": 2,
+                        "path_id": 725954813584260155
+                      }
+                    ],
+                    "references": [
+                      {
+                        "offset": 4,
+                        "from": [
+                          0,
+                          -1365794751149589445
+                        ],
+                        "to": [
+                          0,
+                          -4093827745192644517
+                        ]
+                      }
+                    ]
+                  },
+                  "native_type_hash": "86e34eb8ee7642b089fb98c9d81dd9b0"
+                }
+              ]
+            },
+            {
+              "path_id": -1913118922340668696,
+              "class_id": 1,
+              "sha256": "caadecc5dbe179e67b975f93e0266353e09752defeaaf80558d007700cd4de70",
+              "outputs": [
+                {
+                  "bundle": "whole-game-content",
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "path_id": -106299914736321925,
+                  "bytes": 43,
+                  "sha256": "d9759793688490101b1d760ba1240d3b7aba7049b79b2928bee7809e0644b54b",
+                  "transform": {
+                    "remove_components": [
+                      {
+                        "index": 1,
+                        "path_id": -3818465075920606488
+                      }
+                    ],
+                    "references": [
+                      {
+                        "offset": 4,
+                        "from": [
+                          0,
+                          -8013070011256509720
+                        ],
+                        "to": [
+                          0,
+                          8033841875637864037
+                        ]
+                      }
+                    ]
+                  },
+                  "native_type_hash": "86e34eb8ee7642b089fb98c9d81dd9b0"
+                }
+              ]
+            },
+            {
+              "path_id": -1368093858624935192,
+              "class_id": 1,
+              "sha256": "8bce8d7763d48b71c4fbfc0147a51689c9dff8e7bcf59c21abb1c412fbb9732f",
+              "outputs": [
+                {
+                  "bundle": "whole-game-content",
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "path_id": -4231653034579657651,
+                  "bytes": 43,
+                  "sha256": "8b7592b14a74bb4d6382a8378863b023f0bb53b9026214a03c98df05fcd2e2a8",
+                  "transform": {
+                    "remove_components": [
+                      {
+                        "index": 1,
+                        "path_id": 8471290241711106792
+                      },
+                      {
+                        "index": 2,
+                        "path_id": -1549318510837011736
+                      }
+                    ],
+                    "references": [
+                      {
+                        "offset": 4,
+                        "from": [
+                          0,
+                          -6390712975584761112
+                        ],
+                        "to": [
+                          0,
+                          419108510327031760
+                        ]
+                      }
+                    ]
+                  },
+                  "native_type_hash": "86e34eb8ee7642b089fb98c9d81dd9b0"
+                }
+              ]
+            },
+            {
+              "path_id": -739183744275334085,
+              "class_id": 1,
+              "sha256": "796a63b28c3339b87b0592476c3552b245915cc4d038e289659f53bbfbd1c70f",
+              "outputs": [
+                {
+                  "bundle": "whole-game-content",
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "path_id": -3056887447593414695,
+                  "bytes": 43,
+                  "sha256": "c7fe2aab864fd64887ce5fad965de9f70de3da0814c45f21f88e6524d55a7e0c",
+                  "transform": {
+                    "remove_components": [
+                      {
+                        "index": 1,
+                        "path_id": 1767299340864568379
+                      }
+                    ],
+                    "references": [
+                      {
+                        "offset": 4,
+                        "from": [
+                          0,
+                          5693230033537252411
+                        ],
+                        "to": [
+                          0,
+                          4244838075515844552
+                        ]
+                      }
+                    ]
+                  },
+                  "native_type_hash": "86e34eb8ee7642b089fb98c9d81dd9b0"
+                }
+              ]
+            },
+            {
+              "path_id": 867796780966722619,
+              "class_id": 1,
+              "sha256": "94dde196e08de9c96fc8ab12be4ac9f88dae1ebc22bed0edb5a903f12b845101",
+              "outputs": [
+                {
+                  "bundle": "whole-game-content",
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "path_id": 8449397408469338331,
+                  "bytes": 43,
+                  "sha256": "964b76ca7518d34fb506012cb44bb2a9ddc2c6a3b49c0d5c0e552aff890af8fb",
+                  "transform": {
+                    "remove_components": [
+                      {
+                        "index": 1,
+                        "path_id": 3997569166518369339
+                      }
+                    ],
+                    "references": [
+                      {
+                        "offset": 4,
+                        "from": [
+                          0,
+                          -253135530390012869
+                        ],
+                        "to": [
+                          0,
+                          -7689388305919596467
+                        ]
+                      }
+                    ]
+                  },
+                  "native_type_hash": "86e34eb8ee7642b089fb98c9d81dd9b0"
+                }
+              ]
+            },
+            {
+              "path_id": 2771699055125293800,
+              "class_id": 1,
+              "sha256": "d1985197a4340b54522c50394cbbdbe21355a2e176ce675fafbaee6d08bf807a",
+              "outputs": [
+                {
+                  "bundle": "whole-game-content",
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "path_id": 1744553418504212292,
+                  "bytes": 43,
+                  "sha256": "4c5daa5bab52cbc9e0b70c917a9a2e617b6c1df0c3c90e61cc920b5b5cb2ce74",
+                  "transform": {
+                    "remove_components": [
+                      {
+                        "index": 1,
+                        "path_id": -7642951685632726296
+                      }
+                    ],
+                    "references": [
+                      {
+                        "offset": 4,
+                        "from": [
+                          0,
+                          -4248759487519823128
+                        ],
+                        "to": [
+                          0,
+                          -3454203902686220967
+                        ]
+                      }
+                    ]
+                  },
+                  "native_type_hash": "86e34eb8ee7642b089fb98c9d81dd9b0"
+                }
+              ]
+            },
+            {
+              "path_id": 3782628519827303144,
+              "class_id": 1,
+              "sha256": "dc24c341631504e34f03f61ecafeb1a791082220a1011f167d7cbf7ff282b626",
+              "outputs": [
+                {
+                  "bundle": "whole-game-content",
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "path_id": 1667523615364310984,
+                  "bytes": 43,
+                  "sha256": "5479e216c9708514506943e9d30881d1432c26fd762d77933f988e28814adacc",
+                  "transform": {
+                    "remove_components": [
+                      {
+                        "index": 1,
+                        "path_id": 8223494364242143976
+                      }
+                    ],
+                    "references": [
+                      {
+                        "offset": 4,
+                        "from": [
+                          0,
+                          -6056919625240778008
+                        ],
+                        "to": [
+                          0,
+                          3255203577203304823
+                        ]
+                      }
+                    ]
+                  },
+                  "native_type_hash": "86e34eb8ee7642b089fb98c9d81dd9b0"
+                }
+              ]
+            },
+            {
+              "path_id": 3956036896745438267,
+              "class_id": 1,
+              "sha256": "97bee98829c23c2ea4fd2127f0edde5851100e91a25062f64bdafe773d07ec6e",
+              "outputs": [
+                {
+                  "bundle": "whole-game-content",
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "path_id": -7698572510443226100,
+                  "bytes": 43,
+                  "sha256": "9d989535e6301665141c17ecb885e602f0a4087ecbb11ab0969c4d92ce5e41a9",
+                  "transform": {
+                    "remove_components": [
+                      {
+                        "index": 1,
+                        "path_id": 1592715600163945531
+                      }
+                    ],
+                    "references": [
+                      {
+                        "offset": 4,
+                        "from": [
+                          0,
+                          -2788691474586944453
+                        ],
+                        "to": [
+                          0,
+                          -5900839420167731260
+                        ]
+                      }
+                    ]
+                  },
+                  "native_type_hash": "86e34eb8ee7642b089fb98c9d81dd9b0"
+                }
+              ]
+            },
+            {
+              "path_id": 4119207048578099944,
+              "class_id": 1,
+              "sha256": "dd85e0feb712231875fecd812548e783198b607609f6e1a33ee1715f623c0f28",
+              "outputs": [
+                {
+                  "bundle": "whole-game-content",
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "path_id": 4177471980744770909,
+                  "bytes": 43,
+                  "sha256": "ca0b3fed4c09d3c9e6f1769dad90a302cd6c1f794dc07af929d0ea51f76099fb",
+                  "transform": {
+                    "remove_components": [
+                      {
+                        "index": 1,
+                        "path_id": -6471078340786230552
+                      },
+                      {
+                        "index": 2,
+                        "path_id": 2547923693037841128
+                      }
+                    ],
+                    "references": [
+                      {
+                        "offset": 4,
+                        "from": [
+                          0,
+                          8062392816235014888
+                        ],
+                        "to": [
+                          0,
+                          7768916553731384219
+                        ]
+                      }
+                    ]
+                  },
+                  "native_type_hash": "86e34eb8ee7642b089fb98c9d81dd9b0"
+                }
+              ]
+            },
+            {
+              "path_id": 4235502910966557416,
+              "class_id": 1,
+              "sha256": "379acb3a4fede1cfadec6b8987a658fa39a8222db95ded040abc436e12d09b63",
+              "outputs": [
+                {
+                  "bundle": "whole-game-content",
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "path_id": -7068147130864246931,
+                  "bytes": 63,
+                  "sha256": "a34044b4e31162f6286a64ccbd45a3e9341a200bfacdf824dea6ae5e6b2a64b5",
+                  "transform": {
+                    "remove_components": [
+                      {
+                        "index": 3,
+                        "path_id": -8773019011933115672
+                      }
+                    ],
+                    "references": [
+                      {
+                        "offset": 4,
+                        "from": [
+                          0,
+                          -7152360961757386008
+                        ],
+                        "to": [
+                          0,
+                          -4778095373725094887
+                        ]
+                      },
+                      {
+                        "offset": 16,
+                        "from": [
+                          0,
+                          -1642620197058614552
+                        ],
+                        "to": [
+                          0,
+                          1159212820385412195
+                        ]
+                      },
+                      {
+                        "offset": 28,
+                        "from": [
+                          0,
+                          6978213093350533864
+                        ],
+                        "to": [
+                          0,
+                          -5491892546612290070
+                        ]
+                      }
+                    ]
+                  },
+                  "native_type_hash": "86e34eb8ee7642b089fb98c9d81dd9b0"
+                }
+              ]
+            },
+            {
+              "path_id": 9175918852956273723,
+              "class_id": 1,
+              "sha256": "a3be1088523a259193014e2d1af0ac809b874b2f86187efe1dc5ba3b668948da",
+              "outputs": [
+                {
+                  "bundle": "whole-game-content",
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "path_id": -3400543877820427209,
+                  "bytes": 43,
+                  "sha256": "b8196c8973dce44f2028d2fd2f572474841cb5feb9449022ec78542de952e991",
+                  "transform": {
+                    "remove_components": [
+                      {
+                        "index": 1,
+                        "path_id": 7635523249805835323
+                      },
+                      {
+                        "index": 2,
+                        "path_id": 1993728577280851003
+                      }
+                    ],
+                    "references": [
+                      {
+                        "offset": 4,
+                        "from": [
+                          0,
+                          7627289790702271547
+                        ],
+                        "to": [
+                          0,
+                          9173209370381761168
+                        ]
+                      }
+                    ]
+                  },
+                  "native_type_hash": "86e34eb8ee7642b089fb98c9d81dd9b0"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-dlc3-accesscodesnode_static_assets_all_c74c0c69ba53117df25e0bbcae444dab.bundle",
+      "sha256": "02a0f68a36df997c37895263711e7dfd0edf88c4643461336ee4528e87a25e85",
+      "members": [
+        {
+          "name": "CAB-275585f4e93280ba1ecb67f7e9af1a83",
+          "objects": [
+            {
+              "path_id": 6607700149010959767,
+              "class_id": 1,
+              "sha256": "ecc76eb487a7c84522884de2ffc87724426867dde3f7ad69933709077c078548",
+              "outputs": [
+                {
+                  "bundle": "whole-game-content",
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "path_id": 7305277037873337950,
+                  "bytes": 239,
+                  "sha256": "6b7443f85034a642bcefbe34ed432d03a45d573d7d012a59ddcc786d34a13df7",
+                  "transform": {
+                    "remove_components": [
+                      {
+                        "index": 3,
+                        "path_id": -4406770312156672617
+                      },
+                      {
+                        "index": 11,
+                        "path_id": -4973960869918929513
+                      }
+                    ],
+                    "references": [
+                      {
+                        "offset": 4,
+                        "from": [
+                          0,
+                          -4070571436354695785
+                        ],
+                        "to": [
+                          0,
+                          3743275566113010679
+                        ]
+                      },
+                      {
+                        "offset": 16,
+                        "from": [
+                          0,
+                          -2377761729222341225
+                        ],
+                        "to": [
+                          0,
+                          3178374133246383220
+                        ]
+                      },
+                      {
+                        "offset": 28,
+                        "from": [
+                          0,
+                          5350039286027193751
+                        ],
+                        "to": [
+                          0,
+                          1672862070638160695
+                        ]
+                      },
+                      {
+                        "offset": 40,
+                        "from": [
+                          0,
+                          4866610750570892695
+                        ],
+                        "to": [
+                          0,
+                          -4608166163555078659
+                        ]
+                      },
+                      {
+                        "offset": 52,
+                        "from": [
+                          0,
+                          8428659482591432087
+                        ],
+                        "to": [
+                          0,
+                          -5950426498056729792
+                        ]
+                      },
+                      {
+                        "offset": 64,
+                        "from": [
+                          0,
+                          -9134532259874140777
+                        ],
+                        "to": [
+                          0,
+                          -8222922313118307806
+                        ]
+                      },
+                      {
+                        "offset": 76,
+                        "from": [
+                          0,
+                          1715124941802376599
+                        ],
+                        "to": [
+                          0,
+                          3394050373585569156
+                        ]
+                      },
+                      {
+                        "offset": 88,
+                        "from": [
+                          0,
+                          6843598314559442327
+                        ],
+                        "to": [
+                          0,
+                          1769060659361028933
+                        ]
+                      },
+                      {
+                        "offset": 100,
+                        "from": [
+                          0,
+                          8147696591061585303
+                        ],
+                        "to": [
+                          0,
+                          -296322917763795608
+                        ]
+                      },
+                      {
+                        "offset": 112,
+                        "from": [
+                          0,
+                          -4008066617785840233
+                        ],
+                        "to": [
+                          0,
+                          1454188633225951881
+                        ]
+                      },
+                      {
+                        "offset": 124,
+                        "from": [
+                          0,
+                          -1559473186341515881
+                        ],
+                        "to": [
+                          0,
+                          7738550411880903010
+                        ]
+                      },
+                      {
+                        "offset": 136,
+                        "from": [
+                          0,
+                          1842745598086745495
+                        ],
+                        "to": [
+                          0,
+                          -654296387328838958
+                        ]
+                      },
+                      {
+                        "offset": 148,
+                        "from": [
+                          0,
+                          -5829449138360152681
+                        ],
+                        "to": [
+                          0,
+                          -6028519812358997952
+                        ]
+                      },
+                      {
+                        "offset": 160,
+                        "from": [
+                          0,
+                          -7483894500445713001
+                        ],
+                        "to": [
+                          0,
+                          -6027487228734331079
+                        ]
+                      },
+                      {
+                        "offset": 172,
+                        "from": [
+                          0,
+                          -7014025843830747753
+                        ],
+                        "to": [
+                          0,
+                          -8263914348807126939
+                        ]
+                      },
+                      {
+                        "offset": 184,
+                        "from": [
+                          0,
+                          1101348386211827095
+                        ],
+                        "to": [
+                          0,
+                          -7409976944126814550
+                        ]
+                      },
+                      {
+                        "offset": 196,
+                        "from": [
+                          0,
+                          -3057408533603218025
+                        ],
+                        "to": [
+                          0,
+                          -8736077193843245354
+                        ]
+                      }
+                    ]
+                  },
+                  "native_type_hash": "86e34eb8ee7642b089fb98c9d81dd9b0"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-dlc3-items-masterbattery_assets_all_2fc90e6de783508dceabc112975f0dc0.bundle",
+      "sha256": "261c79aed0e04f2523e06aca0ed5835a41aebeeaf242a93a90fabc5b7e171731",
+      "members": [
+        {
+          "name": "CAB-8fcc7d1d7a4ca5810a8fe47124db13bd",
+          "objects": [
+            {
+              "path_id": -1267163370110638066,
+              "class_id": 1,
+              "sha256": "00ccf564c23261db077ae4f176b9047a29c242d1d762a0aa8573913d8f400e42",
+              "outputs": [
+                {
+                  "bundle": "whole-game-content",
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "path_id": -5212783065602054567,
+                  "bytes": 59,
+                  "sha256": "62c842b858377a6c7feceb028ab9f60ff91f1c1c1a79c5778c8908faef25ac61",
+                  "transform": {
+                    "remove_components": [
+                      {
+                        "index": 1,
+                        "path_id": 6790701001415469070
+                      },
+                      {
+                        "index": 2,
+                        "path_id": -4618185248600938482
+                      },
+                      {
+                        "index": 3,
+                        "path_id": -145400516916205554
+                      }
+                    ],
+                    "references": [
+                      {
+                        "offset": 4,
+                        "from": [
+                          0,
+                          -1640029803783772146
+                        ],
+                        "to": [
+                          0,
+                          8113613214555647328
+                        ]
+                      }
+                    ]
+                  },
+                  "native_type_hash": "86e34eb8ee7642b089fb98c9d81dd9b0"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-dlc4-acolyte_static_assets_all_caa50420c95c7828d114318b3e6c0d83.bundle",
+      "sha256": "d462b1d745e040158b32823a01d073d1dd1766348f21cbc6a9ad12612f680505",
+      "members": [
+        {
+          "name": "CAB-b78ad15f8a156b09a64aede311b64f06",
+          "objects": [
+            {
+              "path_id": -5926139461226785565,
+              "class_id": 1,
+              "sha256": "2179b1e548d321a291769a76536f4be4d0ec812de7887ceca99322ab4ff91e7c",
+              "outputs": [
+                {
+                  "bundle": "whole-game-content",
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "path_id": 8696668040292033473,
+                  "bytes": 519,
+                  "sha256": "f36d3cf4944302a0c721402eb91e866769b5252a846268ebadbb0a9daf24eb41",
+                  "transform": {
+                    "remove_components": [
+                      {
+                        "index": 40,
+                        "path_id": 4184444969126991075
+                      }
+                    ],
+                    "references": [
+                      {
+                        "offset": 4,
+                        "from": [
+                          0,
+                          2657093697623037155
+                        ],
+                        "to": [
+                          0,
+                          -6784829748752238317
+                        ]
+                      },
+                      {
+                        "offset": 16,
+                        "from": [
+                          0,
+                          320486582591362275
+                        ],
+                        "to": [
+                          0,
+                          146594800184799237
+                        ]
+                      },
+                      {
+                        "offset": 28,
+                        "from": [
+                          0,
+                          -5267327364044876573
+                        ],
+                        "to": [
+                          0,
+                          6236727599226086380
+                        ]
+                      },
+                      {
+                        "offset": 40,
+                        "from": [
+                          0,
+                          6921102933062128867
+                        ],
+                        "to": [
+                          0,
+                          3538228556782444875
+                        ]
+                      },
+                      {
+                        "offset": 52,
+                        "from": [
+                          0,
+                          1848347985042543843
+                        ],
+                        "to": [
+                          0,
+                          342624488836126745
+                        ]
+                      },
+                      {
+                        "offset": 64,
+                        "from": [
+                          0,
+                          -3975735067861510941
+                        ],
+                        "to": [
+                          0,
+                          4205964280722573473
+                        ]
+                      },
+                      {
+                        "offset": 76,
+                        "from": [
+                          0,
+                          -5219253987813681949
+                        ],
+                        "to": [
+                          0,
+                          2820659642935898115
+                        ]
+                      },
+                      {
+                        "offset": 88,
+                        "from": [
+                          0,
+                          4677911568539981027
+                        ],
+                        "to": [
+                          0,
+                          -2540396757519830689
+                        ]
+                      },
+                      {
+                        "offset": 100,
+                        "from": [
+                          0,
+                          5692532923387024611
+                        ],
+                        "to": [
+                          0,
+                          7248404071593285622
+                        ]
+                      },
+                      {
+                        "offset": 112,
+                        "from": [
+                          0,
+                          4351261640060376291
+                        ],
+                        "to": [
+                          0,
+                          -6439937558294758433
+                        ]
+                      },
+                      {
+                        "offset": 124,
+                        "from": [
+                          0,
+                          -639778099958573853
+                        ],
+                        "to": [
+                          0,
+                          -7395126556052338570
+                        ]
+                      },
+                      {
+                        "offset": 136,
+                        "from": [
+                          0,
+                          1545482249570882787
+                        ],
+                        "to": [
+                          0,
+                          -6088485009093939542
+                        ]
+                      },
+                      {
+                        "offset": 148,
+                        "from": [
+                          0,
+                          3025290291148428515
+                        ],
+                        "to": [
+                          0,
+                          -8552626484990980436
+                        ]
+                      },
+                      {
+                        "offset": 160,
+                        "from": [
+                          0,
+                          -7905436069536983837
+                        ],
+                        "to": [
+                          0,
+                          -6273970373863355460
+                        ]
+                      },
+                      {
+                        "offset": 172,
+                        "from": [
+                          0,
+                          -830530404425526045
+                        ],
+                        "to": [
+                          0,
+                          1159675377388871507
+                        ]
+                      },
+                      {
+                        "offset": 184,
+                        "from": [
+                          0,
+                          -3027280432282463005
+                        ],
+                        "to": [
+                          0,
+                          4892521691386452696
+                        ]
+                      },
+                      {
+                        "offset": 196,
+                        "from": [
+                          0,
+                          2748236330572387555
+                        ],
+                        "to": [
+                          0,
+                          8827848910237792306
+                        ]
+                      },
+                      {
+                        "offset": 208,
+                        "from": [
+                          0,
+                          6024818046075147491
+                        ],
+                        "to": [
+                          0,
+                          -199809454238472937
+                        ]
+                      },
+                      {
+                        "offset": 220,
+                        "from": [
+                          0,
+                          8358283956010423523
+                        ],
+                        "to": [
+                          0,
+                          -3369945232301732334
+                        ]
+                      },
+                      {
+                        "offset": 232,
+                        "from": [
+                          0,
+                          7767719173889660131
+                        ],
+                        "to": [
+                          0,
+                          -2912221223124222395
+                        ]
+                      },
+                      {
+                        "offset": 244,
+                        "from": [
+                          0,
+                          -7008353308238080797
+                        ],
+                        "to": [
+                          0,
+                          2296584620763643394
+                        ]
+                      },
+                      {
+                        "offset": 256,
+                        "from": [
+                          0,
+                          969841971406116067
+                        ],
+                        "to": [
+                          0,
+                          3835376986477353072
+                        ]
+                      },
+                      {
+                        "offset": 268,
+                        "from": [
+                          0,
+                          3000751233015747811
+                        ],
+                        "to": [
+                          0,
+                          -3406530926173364677
+                        ]
+                      },
+                      {
+                        "offset": 280,
+                        "from": [
+                          0,
+                          2852454561340593379
+                        ],
+                        "to": [
+                          0,
+                          4691189031529069010
+                        ]
+                      },
+                      {
+                        "offset": 292,
+                        "from": [
+                          0,
+                          8819956174284788963
+                        ],
+                        "to": [
+                          0,
+                          7046120384887290345
+                        ]
+                      },
+                      {
+                        "offset": 304,
+                        "from": [
+                          0,
+                          -5921725028727450397
+                        ],
+                        "to": [
+                          0,
+                          1980125830196385830
+                        ]
+                      },
+                      {
+                        "offset": 316,
+                        "from": [
+                          0,
+                          -5025497172438543133
+                        ],
+                        "to": [
+                          0,
+                          819425171642605207
+                        ]
+                      },
+                      {
+                        "offset": 328,
+                        "from": [
+                          0,
+                          566845488948843747
+                        ],
+                        "to": [
+                          0,
+                          -8618090153595249109
+                        ]
+                      },
+                      {
+                        "offset": 340,
+                        "from": [
+                          0,
+                          -1099569239223429917
+                        ],
+                        "to": [
+                          0,
+                          -8269307700251048581
+                        ]
+                      },
+                      {
+                        "offset": 352,
+                        "from": [
+                          0,
+                          6175586855556224227
+                        ],
+                        "to": [
+                          0,
+                          6171870681906908787
+                        ]
+                      },
+                      {
+                        "offset": 364,
+                        "from": [
+                          0,
+                          -5287358748135451421
+                        ],
+                        "to": [
+                          0,
+                          1488822028196730371
+                        ]
+                      },
+                      {
+                        "offset": 376,
+                        "from": [
+                          0,
+                          6018993442443039971
+                        ],
+                        "to": [
+                          0,
+                          5808401250211023941
+                        ]
+                      },
+                      {
+                        "offset": 388,
+                        "from": [
+                          0,
+                          6114134404066186467
+                        ],
+                        "to": [
+                          0,
+                          3014312553150901594
+                        ]
+                      },
+                      {
+                        "offset": 400,
+                        "from": [
+                          0,
+                          -8954036713954929437
+                        ],
+                        "to": [
+                          0,
+                          306240156915172842
+                        ]
+                      },
+                      {
+                        "offset": 412,
+                        "from": [
+                          0,
+                          6251966064827569379
+                        ],
+                        "to": [
+                          0,
+                          2840396154444283173
+                        ]
+                      },
+                      {
+                        "offset": 424,
+                        "from": [
+                          0,
+                          -7672457184797322013
+                        ],
+                        "to": [
+                          0,
+                          6632780553663645861
+                        ]
+                      },
+                      {
+                        "offset": 436,
+                        "from": [
+                          0,
+                          -96202811112745757
+                        ],
+                        "to": [
+                          0,
+                          9115514283515843765
+                        ]
+                      },
+                      {
+                        "offset": 448,
+                        "from": [
+                          0,
+                          -4224358465460103965
+                        ],
+                        "to": [
+                          0,
+                          -6763701773826627
+                        ]
+                      },
+                      {
+                        "offset": 460,
+                        "from": [
+                          0,
+                          7226135191741600995
+                        ],
+                        "to": [
+                          0,
+                          19748876968635614
+                        ]
+                      },
+                      {
+                        "offset": 472,
+                        "from": [
+                          0,
+                          -7842197759154514717
+                        ],
+                        "to": [
+                          0,
+                          -3019444605801539914
+                        ]
+                      },
+                      {
+                        "offset": 484,
+                        "from": [
+                          0,
+                          6240895907984053475
+                        ],
+                        "to": [
+                          0,
+                          1461211030940703173
+                        ]
+                      }
+                    ]
+                  },
+                  "native_type_hash": "86e34eb8ee7642b089fb98c9d81dd9b0"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-dlc4-lynxarcher_assets_all_848f9751f8bcc12d50c321bffac96210.bundle",
+      "sha256": "78e0dd771724abe1a53d2a2739d09df70290321b4c63905a98b5d8db1c5657e1",
+      "members": [
+        {
+          "name": "CAB-300a2b47613001943c04a6fd0eeff6be",
+          "objects": [
+            {
+              "path_id": 1611474505356931319,
+              "class_id": 1,
+              "sha256": "3104f06125c0d86f295b90a411e7b030dbe21d6dfa5c4d0cb009cb82f4c89c47",
+              "outputs": [
+                {
+                  "bundle": "whole-game-content",
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "path_id": 422895938654946571,
+                  "bytes": 83,
+                  "sha256": "b914c6ebd9420379d6bc5d3e29972596c82c6020201c7a93460e8032243e6fc9",
+                  "transform": {
+                    "remove_components": [
+                      {
+                        "index": 3,
+                        "path_id": -2696371950865420041
+                      }
+                    ],
+                    "references": [
+                      {
+                        "offset": 4,
+                        "from": [
+                          0,
+                          2468809160489365751
+                        ],
+                        "to": [
+                          0,
+                          -4094675472807247766
+                        ]
+                      },
+                      {
+                        "offset": 16,
+                        "from": [
+                          0,
+                          2524693067662422263
+                        ],
+                        "to": [
+                          0,
+                          3797018465836250230
+                        ]
+                      },
+                      {
+                        "offset": 28,
+                        "from": [
+                          0,
+                          1353466196250980599
+                        ],
+                        "to": [
+                          0,
+                          4818800467714928565
+                        ]
+                      },
+                      {
+                        "offset": 40,
+                        "from": [
+                          0,
+                          -4956807336622558985
+                        ],
+                        "to": [
+                          0,
+                          1554461876193118017
+                        ]
+                      }
+                    ]
+                  },
+                  "native_type_hash": "86e34eb8ee7642b089fb98c9d81dd9b0"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-dlc4-lynxghostturret_assets_all_ca9572542f2d6d5cde19503ff0a77918.bundle",
+      "sha256": "a83d5c7bce57462c883d51f67e4c92dd1fc29e9834854075e1775bf9f971dbdb",
+      "members": [
+        {
+          "name": "CAB-c65fb8f788da0a37f1e8f5bd43957249",
+          "objects": [
+            {
+              "path_id": -2422744316297821896,
+              "class_id": 1,
+              "sha256": "0669585391dc7607133770e106e26fd7071e6a5c9080f5589acdff368a776ad9",
+              "outputs": [
+                {
+                  "bundle": "whole-game-content",
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "path_id": 2132665348267530863,
+                  "bytes": 67,
+                  "sha256": "9e8a4a305f58ec52d7b55519b69d6dcdecdf38648396c205a729d7c28870abb5",
+                  "transform": {
+                    "remove_components": [
+                      {
+                        "index": 3,
+                        "path_id": 5858569305944998200
+                      }
+                    ],
+                    "references": [
+                      {
+                        "offset": 4,
+                        "from": [
+                          0,
+                          -2258849490192449224
+                        ],
+                        "to": [
+                          0,
+                          8191894849196523224
+                        ]
+                      },
+                      {
+                        "offset": 16,
+                        "from": [
+                          0,
+                          6483809879118299448
+                        ],
+                        "to": [
+                          0,
+                          -1219448474719055022
+                        ]
+                      },
+                      {
+                        "offset": 28,
+                        "from": [
+                          0,
+                          -6940989416773861064
+                        ],
+                        "to": [
+                          0,
+                          -6109871586169869944
+                        ]
+                      }
+                    ]
+                  },
+                  "native_type_hash": "86e34eb8ee7642b089fb98c9d81dd9b0"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-dlc4-totem_static_assets_all_4a2af41aec80d9d79082c6e8c39bf44a.bundle",
+      "sha256": "7f79976c239f77291e7ffa925cf5c7d07fc2658a08be03515ff80a858f73cc38",
+      "members": [
+        {
+          "name": "CAB-46a29da4b27851abc72fa66d14643401",
+          "objects": [
+            {
+              "path_id": 4926730073025355428,
+              "class_id": 1,
+              "sha256": "d18f898a191f564d10c79bf082ec248eaa7f87c5c8c02bc412d2f8c688f028ff",
+              "outputs": [
+                {
+                  "bundle": "whole-game-content",
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "path_id": 8202070556977362774,
+                  "bytes": 91,
+                  "sha256": "b05adb8696b1fa30764e7a63f47480bbc07f642291606fa9b0ad5d971c8f32f2",
+                  "transform": {
+                    "remove_components": [
+                      {
+                        "index": 3,
+                        "path_id": 1775032192821239460
+                      },
+                      {
+                        "index": 4,
+                        "path_id": -7325146392954528092
+                      },
+                      {
+                        "index": 5,
+                        "path_id": 7800737184995090084
+                      }
+                    ],
+                    "references": [
+                      {
+                        "offset": 4,
+                        "from": [
+                          0,
+                          -3704629729599611228
+                        ],
+                        "to": [
+                          0,
+                          -3364167230885810755
+                        ]
+                      },
+                      {
+                        "offset": 16,
+                        "from": [
+                          0,
+                          -2211605358476583260
+                        ],
+                        "to": [
+                          0,
+                          -3538054513660573021
+                        ]
+                      },
+                      {
+                        "offset": 28,
+                        "from": [
+                          0,
+                          -2149013478252732764
+                        ],
+                        "to": [
+                          0,
+                          -8949047458222439634
+                        ]
+                      },
+                      {
+                        "offset": 40,
+                        "from": [
+                          0,
+                          2903317002725301924
+                        ],
+                        "to": [
+                          0,
+                          -4787200052340753498
+                        ]
+                      },
+                      {
+                        "offset": 52,
+                        "from": [
+                          0,
+                          6561426641780809380
+                        ],
+                        "to": [
+                          0,
+                          3668953543468877620
+                        ]
+                      }
+                    ]
+                  },
+                  "native_type_hash": "86e34eb8ee7642b089fb98c9d81dd9b0"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-dlc4-ultima_static_assets_all_a675fa6cf931f2f24bb69c1200ac6d4b.bundle",
+      "sha256": "4dabd6030e8e1e787a8998bcf64af26c4a8d8175662e5eaa2a8a9be578e829df",
+      "members": [
+        {
+          "name": "CAB-9d5fbd31bf3a654c49e73fdca5f392f1",
+          "objects": [
+            {
+              "path_id": 1874683392506298482,
+              "class_id": 1,
+              "sha256": "6f70f9a6f4568dcd02d16acd4e3ec9d1ac6a13ba98771d9a01b4da5eeccaa1b6",
+              "outputs": [
+                {
+                  "bundle": "whole-game-content",
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "path_id": 3715299827676636798,
+                  "bytes": 231,
+                  "sha256": "70f687fe8f90aca4497e01a1c855c6e5d40f0b2f04d897fda6c144aa1e584977",
+                  "transform": {
+                    "remove_components": [
+                      {
+                        "index": 15,
+                        "path_id": 728736358775619698
+                      },
+                      {
+                        "index": 16,
+                        "path_id": 4081175159292330098
+                      },
+                      {
+                        "index": 17,
+                        "path_id": -6262422073608667022
+                      },
+                      {
+                        "index": 18,
+                        "path_id": 2315801423700263026
+                      },
+                      {
+                        "index": 19,
+                        "path_id": -6912175371493605262
+                      }
+                    ],
+                    "references": [
+                      {
+                        "offset": 4,
+                        "from": [
+                          0,
+                          -1901751772048162702
+                        ],
+                        "to": [
+                          0,
+                          635525300751937416
+                        ]
+                      },
+                      {
+                        "offset": 16,
+                        "from": [
+                          0,
+                          -2621894732408586126
+                        ],
+                        "to": [
+                          0,
+                          -5781578773981522616
+                        ]
+                      },
+                      {
+                        "offset": 28,
+                        "from": [
+                          0,
+                          6579421575878901874
+                        ],
+                        "to": [
+                          0,
+                          8156994231699707576
+                        ]
+                      },
+                      {
+                        "offset": 40,
+                        "from": [
+                          0,
+                          -6092918998447390606
+                        ],
+                        "to": [
+                          0,
+                          -2215890745167080905
+                        ]
+                      },
+                      {
+                        "offset": 52,
+                        "from": [
+                          0,
+                          6051017232044753010
+                        ],
+                        "to": [
+                          0,
+                          -5756866832988037676
+                        ]
+                      },
+                      {
+                        "offset": 64,
+                        "from": [
+                          0,
+                          -3944752046430453646
+                        ],
+                        "to": [
+                          0,
+                          9110587135598220632
+                        ]
+                      },
+                      {
+                        "offset": 76,
+                        "from": [
+                          0,
+                          2959926660687888498
+                        ],
+                        "to": [
+                          0,
+                          30814431602650938
+                        ]
+                      },
+                      {
+                        "offset": 88,
+                        "from": [
+                          0,
+                          -8003569182701223822
+                        ],
+                        "to": [
+                          0,
+                          -1788884569062742416
+                        ]
+                      },
+                      {
+                        "offset": 100,
+                        "from": [
+                          0,
+                          3841960234692477042
+                        ],
+                        "to": [
+                          0,
+                          -518802133778715076
+                        ]
+                      },
+                      {
+                        "offset": 112,
+                        "from": [
+                          0,
+                          200711322081722482
+                        ],
+                        "to": [
+                          0,
+                          -8035194546148799263
+                        ]
+                      },
+                      {
+                        "offset": 124,
+                        "from": [
+                          0,
+                          -3550920764731916174
+                        ],
+                        "to": [
+                          0,
+                          -216721903472687240
+                        ]
+                      },
+                      {
+                        "offset": 136,
+                        "from": [
+                          0,
+                          1326016870794821746
+                        ],
+                        "to": [
+                          0,
+                          2651976088650659205
+                        ]
+                      },
+                      {
+                        "offset": 148,
+                        "from": [
+                          0,
+                          3918401447840546930
+                        ],
+                        "to": [
+                          0,
+                          -8478418728134360262
+                        ]
+                      },
+                      {
+                        "offset": 160,
+                        "from": [
+                          0,
+                          -8045712246488203150
+                        ],
+                        "to": [
+                          0,
+                          3565681928599574820
+                        ]
+                      },
+                      {
+                        "offset": 172,
+                        "from": [
+                          0,
+                          2870071296089292914
+                        ],
+                        "to": [
+                          0,
+                          8721590572764563705
+                        ]
+                      },
+                      {
+                        "offset": 184,
+                        "from": [
+                          0,
+                          667021781124677746
+                        ],
+                        "to": [
+                          0,
+                          -8910169770782726652
+                        ]
+                      }
+                    ]
+                  },
+                  "native_type_hash": "86e34eb8ee7642b089fb98c9d81dd9b0"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-dlc4-wake_static_assets_all_61a271efd3f07a9b89a6806340a1cd8b.bundle",
+      "sha256": "fa2fb0cb08608203f404bf088c4187e32e74e1623c3176840f7005c86af3bf1e",
+      "members": [
+        {
+          "name": "CAB-032b3d33e00b29f79c3c9625c17a15ef",
+          "objects": [
+            {
+              "path_id": 313698217409473140,
+              "class_id": 1,
+              "sha256": "6a681e6f115fac5aea775ab88a0ff6807452c7b8a87e7be503c497240d729e49",
+              "outputs": [
+                {
+                  "bundle": "whole-game-content",
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "path_id": -8201671371299881889,
+                  "bytes": 227,
+                  "sha256": "d9050b3764cf862aa9d548acfc0fae46f7c473d2fe1063064b0e3e4da8ca42e6",
+                  "transform": {
+                    "remove_components": [
+                      {
+                        "index": 15,
+                        "path_id": -1017323711761192332
+                      },
+                      {
+                        "index": 16,
+                        "path_id": 3027425263040293492
+                      },
+                      {
+                        "index": 17,
+                        "path_id": 6744037969701923444
+                      },
+                      {
+                        "index": 18,
+                        "path_id": -2557240846053643660
+                      },
+                      {
+                        "index": 19,
+                        "path_id": 3774503311218338420
+                      }
+                    ],
+                    "references": [
+                      {
+                        "offset": 4,
+                        "from": [
+                          0,
+                          1610918388294773364
+                        ],
+                        "to": [
+                          0,
+                          -300776117615356603
+                        ]
+                      },
+                      {
+                        "offset": 16,
+                        "from": [
+                          0,
+                          -8409833830240785804
+                        ],
+                        "to": [
+                          0,
+                          -4150689310033268348
+                        ]
+                      },
+                      {
+                        "offset": 28,
+                        "from": [
+                          0,
+                          4887973059796757108
+                        ],
+                        "to": [
+                          0,
+                          -4749060663694638352
+                        ]
+                      },
+                      {
+                        "offset": 40,
+                        "from": [
+                          0,
+                          1761417806379969140
+                        ],
+                        "to": [
+                          0,
+                          3725872456429868921
+                        ]
+                      },
+                      {
+                        "offset": 52,
+                        "from": [
+                          0,
+                          1553027474868955764
+                        ],
+                        "to": [
+                          0,
+                          1884206599681042820
+                        ]
+                      },
+                      {
+                        "offset": 64,
+                        "from": [
+                          0,
+                          -6173135306845361548
+                        ],
+                        "to": [
+                          0,
+                          6795320348040297573
+                        ]
+                      },
+                      {
+                        "offset": 76,
+                        "from": [
+                          0,
+                          -1691073746894624140
+                        ],
+                        "to": [
+                          0,
+                          -1535534127202909446
+                        ]
+                      },
+                      {
+                        "offset": 88,
+                        "from": [
+                          0,
+                          -1602219202684425612
+                        ],
+                        "to": [
+                          0,
+                          6773395691016737371
+                        ]
+                      },
+                      {
+                        "offset": 100,
+                        "from": [
+                          0,
+                          1724129307159128692
+                        ],
+                        "to": [
+                          0,
+                          1589984238173124320
+                        ]
+                      },
+                      {
+                        "offset": 112,
+                        "from": [
+                          0,
+                          1017837416955472500
+                        ],
+                        "to": [
+                          0,
+                          -2341867172882960719
+                        ]
+                      },
+                      {
+                        "offset": 124,
+                        "from": [
+                          0,
+                          -4844301769141491084
+                        ],
+                        "to": [
+                          0,
+                          7845071692064852273
+                        ]
+                      },
+                      {
+                        "offset": 136,
+                        "from": [
+                          0,
+                          -7786815479214216588
+                        ],
+                        "to": [
+                          0,
+                          2583527190030688662
+                        ]
+                      },
+                      {
+                        "offset": 148,
+                        "from": [
+                          0,
+                          5431945643486702196
+                        ],
+                        "to": [
+                          0,
+                          2774862960369233196
+                        ]
+                      },
+                      {
+                        "offset": 160,
+                        "from": [
+                          0,
+                          -2447770903012087180
+                        ],
+                        "to": [
+                          0,
+                          6536737265403699824
+                        ]
+                      },
+                      {
+                        "offset": 172,
+                        "from": [
+                          0,
+                          -5726895186911073676
+                        ],
+                        "to": [
+                          0,
+                          -3405393836435865271
+                        ]
+                      },
+                      {
+                        "offset": 184,
+                        "from": [
+                          0,
+                          -4483657982120990092
+                        ],
+                        "to": [
+                          0,
+                          3714217749719832109
+                        ]
+                      }
+                    ]
+                  },
+                  "native_type_hash": "86e34eb8ee7642b089fb98c9d81dd9b0"
+                }
+              ]
+            },
+            {
+              "path_id": 847203175043595706,
+              "class_id": 1,
+              "sha256": "e1e721b740a8fd5c419fd72c02c88f62b17a7f7973c280368db5112f92f997a5",
+              "outputs": [
+                {
+                  "bundle": "whole-game-content",
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "path_id": 1183721725562412391,
+                  "bytes": 87,
+                  "sha256": "3affd19bc338e5930f0964064471d1d2bf312c8d544976288ee024e90e904157",
+                  "transform": {
+                    "remove_components": [
+                      {
+                        "index": 3,
+                        "path_id": 6965154202835123642
+                      },
+                      {
+                        "index": 4,
+                        "path_id": 1390389716345388474
+                      },
+                      {
+                        "index": 5,
+                        "path_id": 671208816047586746
+                      }
+                    ],
+                    "references": [
+                      {
+                        "offset": 4,
+                        "from": [
+                          0,
+                          -5216029388469273158
+                        ],
+                        "to": [
+                          0,
+                          6976179428493490813
+                        ]
+                      },
+                      {
+                        "offset": 16,
+                        "from": [
+                          0,
+                          -9094775149517308486
+                        ],
+                        "to": [
+                          0,
+                          -4954958615672772745
+                        ]
+                      },
+                      {
+                        "offset": 28,
+                        "from": [
+                          0,
+                          -1779256403926221382
+                        ],
+                        "to": [
+                          0,
+                          275346749833168535
+                        ]
+                      },
+                      {
+                        "offset": 40,
+                        "from": [
+                          0,
+                          2535499937422081466
+                        ],
+                        "to": [
+                          0,
+                          5240385036133571533
+                        ]
+                      },
+                      {
+                        "offset": 52,
+                        "from": [
+                          0,
+                          3857724863063293370
+                        ],
+                        "to": [
+                          0,
+                          -644082800789843537
+                        ]
+                      }
+                    ]
+                  },
+                  "native_type_hash": "86e34eb8ee7642b089fb98c9d81dd9b0"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-dlc4_static_assets_all_0697ff54b6972e7083342648968fda1a.bundle",
+      "sha256": "41e13315987059fdc06089f66e02a4e8958a807886aee13c183f5e9eb1831b86",
+      "members": [
+        {
+          "name": "CAB-9a62a3c3d5e29edc0f59db4d01a2119e",
+          "objects": [
+            {
+              "path_id": -7030335832599292620,
+              "class_id": 1,
+              "sha256": "c7e873b1a43ebc286ae4112af98a36fadf6e7789ab444d7eda405cb7d9695789",
+              "outputs": [
+                {
+                  "bundle": "whole-game-content",
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "path_id": -7740016099781835614,
+                  "bytes": 235,
+                  "sha256": "2a5a52fcaf70096353d34051bb5a9b5849d586eee891141d821c3d1d72351e7c",
+                  "transform": {
+                    "remove_components": [
+                      {
+                        "index": 15,
+                        "path_id": -2334430411838515916
+                      },
+                      {
+                        "index": 16,
+                        "path_id": -4057151257444870860
+                      },
+                      {
+                        "index": 17,
+                        "path_id": -2148975332840434380
+                      },
+                      {
+                        "index": 18,
+                        "path_id": -752883548215569100
+                      },
+                      {
+                        "index": 19,
+                        "path_id": -3077211197695781580
+                      }
+                    ],
+                    "references": [
+                      {
+                        "offset": 4,
+                        "from": [
+                          0,
+                          8719161244687865140
+                        ],
+                        "to": [
+                          0,
+                          570578700444774124
+                        ]
+                      },
+                      {
+                        "offset": 16,
+                        "from": [
+                          0,
+                          2263149588377244980
+                        ],
+                        "to": [
+                          0,
+                          -5265255631386009687
+                        ]
+                      },
+                      {
+                        "offset": 28,
+                        "from": [
+                          0,
+                          7395016455405638964
+                        ],
+                        "to": [
+                          0,
+                          884558861500640375
+                        ]
+                      },
+                      {
+                        "offset": 40,
+                        "from": [
+                          0,
+                          -2143396743393897164
+                        ],
+                        "to": [
+                          0,
+                          888151393018131677
+                        ]
+                      },
+                      {
+                        "offset": 52,
+                        "from": [
+                          0,
+                          -9028724385889839820
+                        ],
+                        "to": [
+                          0,
+                          1862054999285901405
+                        ]
+                      },
+                      {
+                        "offset": 64,
+                        "from": [
+                          0,
+                          -3658265661266782924
+                        ],
+                        "to": [
+                          0,
+                          -6605156593728313058
+                        ]
+                      },
+                      {
+                        "offset": 76,
+                        "from": [
+                          0,
+                          -5328704262274476748
+                        ],
+                        "to": [
+                          0,
+                          1560868012370329942
+                        ]
+                      },
+                      {
+                        "offset": 88,
+                        "from": [
+                          0,
+                          8856963653852665140
+                        ],
+                        "to": [
+                          0,
+                          -6321910103306798922
+                        ]
+                      },
+                      {
+                        "offset": 100,
+                        "from": [
+                          0,
+                          -3666925532244404940
+                        ],
+                        "to": [
+                          0,
+                          -2706192975826185608
+                        ]
+                      },
+                      {
+                        "offset": 112,
+                        "from": [
+                          0,
+                          1353755287420736820
+                        ],
+                        "to": [
+                          0,
+                          -8414459754042049718
+                        ]
+                      },
+                      {
+                        "offset": 124,
+                        "from": [
+                          0,
+                          -407141333328194252
+                        ],
+                        "to": [
+                          0,
+                          7508418208196300796
+                        ]
+                      },
+                      {
+                        "offset": 136,
+                        "from": [
+                          0,
+                          2713355328839750964
+                        ],
+                        "to": [
+                          0,
+                          7891895750733259333
+                        ]
+                      },
+                      {
+                        "offset": 148,
+                        "from": [
+                          0,
+                          -8655370204151605964
+                        ],
+                        "to": [
+                          0,
+                          -7795858263344433281
+                        ]
+                      },
+                      {
+                        "offset": 160,
+                        "from": [
+                          0,
+                          -7893766199262833356
+                        ],
+                        "to": [
+                          0,
+                          4473936379558509716
+                        ]
+                      },
+                      {
+                        "offset": 172,
+                        "from": [
+                          0,
+                          7800691605061965108
+                        ],
+                        "to": [
+                          0,
+                          7933546954801766618
+                        ]
+                      },
+                      {
+                        "offset": 184,
+                        "from": [
+                          0,
+                          342330099139351860
+                        ],
+                        "to": [
+                          0,
+                          4300660052084899062
+                        ]
+                      }
+                    ]
+                  },
+                  "native_type_hash": "86e34eb8ee7642b089fb98c9d81dd9b0"
+                }
+              ]
+            },
+            {
+              "path_id": -1603148565875235121,
+              "class_id": 1,
+              "sha256": "f924e60f7e25ef603c51ae37c23dc06fd70f32f2401a0ccf4d32b73378709a21",
+              "outputs": [
+                {
+                  "bundle": "whole-game-content",
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "path_id": -6893658747976765716,
+                  "bytes": 235,
+                  "sha256": "fc00f3b1801e6cba28374e6ebf4b78902472870c62a06005719987539762283b",
+                  "transform": {
+                    "remove_components": [
+                      {
+                        "index": 15,
+                        "path_id": 199929032225351375
+                      },
+                      {
+                        "index": 16,
+                        "path_id": -4586980605022869809
+                      },
+                      {
+                        "index": 17,
+                        "path_id": 595087753275533007
+                      },
+                      {
+                        "index": 18,
+                        "path_id": 4119062902248662735
+                      },
+                      {
+                        "index": 19,
+                        "path_id": 1387477964198799055
+                      }
+                    ],
+                    "references": [
+                      {
+                        "offset": 4,
+                        "from": [
+                          0,
+                          -5062797936466368817
+                        ],
+                        "to": [
+                          0,
+                          -8900605183317908580
+                        ]
+                      },
+                      {
+                        "offset": 16,
+                        "from": [
+                          0,
+                          6323101163537327823
+                        ],
+                        "to": [
+                          0,
+                          -6399410918908236415
+                        ]
+                      },
+                      {
+                        "offset": 28,
+                        "from": [
+                          0,
+                          7751708258317854415
+                        ],
+                        "to": [
+                          0,
+                          8319183467310194070
+                        ]
+                      },
+                      {
+                        "offset": 40,
+                        "from": [
+                          0,
+                          2810423503123539663
+                        ],
+                        "to": [
+                          0,
+                          -374755169144773313
+                        ]
+                      },
+                      {
+                        "offset": 52,
+                        "from": [
+                          0,
+                          -7203197583211141425
+                        ],
+                        "to": [
+                          0,
+                          -8208922476382565401
+                        ]
+                      },
+                      {
+                        "offset": 64,
+                        "from": [
+                          0,
+                          -1155042596695677233
+                        ],
+                        "to": [
+                          0,
+                          2652733348159712561
+                        ]
+                      },
+                      {
+                        "offset": 76,
+                        "from": [
+                          0,
+                          -4039843276909943089
+                        ],
+                        "to": [
+                          0,
+                          5345959225658463298
+                        ]
+                      },
+                      {
+                        "offset": 88,
+                        "from": [
+                          0,
+                          -3196541139242555697
+                        ],
+                        "to": [
+                          0,
+                          3326235188541557643
+                        ]
+                      },
+                      {
+                        "offset": 100,
+                        "from": [
+                          0,
+                          -4681233037325539633
+                        ],
+                        "to": [
+                          0,
+                          4906120281463649301
+                        ]
+                      },
+                      {
+                        "offset": 112,
+                        "from": [
+                          0,
+                          1218269100152940239
+                        ],
+                        "to": [
+                          0,
+                          -8291103800163834093
+                        ]
+                      },
+                      {
+                        "offset": 124,
+                        "from": [
+                          0,
+                          -5564224434057812273
+                        ],
+                        "to": [
+                          0,
+                          6137759902014311501
+                        ]
+                      },
+                      {
+                        "offset": 136,
+                        "from": [
+                          0,
+                          -5275053058371787057
+                        ],
+                        "to": [
+                          0,
+                          -5060571036950183511
+                        ]
+                      },
+                      {
+                        "offset": 148,
+                        "from": [
+                          0,
+                          -5800369054601025841
+                        ],
+                        "to": [
+                          0,
+                          3633208543654051402
+                        ]
+                      },
+                      {
+                        "offset": 160,
+                        "from": [
+                          0,
+                          -7299368918903724337
+                        ],
+                        "to": [
+                          0,
+                          -169071176408927347
+                        ]
+                      },
+                      {
+                        "offset": 172,
+                        "from": [
+                          0,
+                          1837389457012188879
+                        ],
+                        "to": [
+                          0,
+                          -7575570110066794128
+                        ]
+                      },
+                      {
+                        "offset": 184,
+                        "from": [
+                          0,
+                          -191262141224032561
+                        ],
+                        "to": [
+                          0,
+                          787902258669852428
+                        ]
+                      }
+                    ]
+                  },
+                  "native_type_hash": "86e34eb8ee7642b089fb98c9d81dd9b0"
+                }
+              ]
+            },
+            {
+              "path_id": 2493444879929474609,
+              "class_id": 1,
+              "sha256": "91bd461d314a268069497d25bdf4fe24efa02dd7d484ee279d6317abe0847ffe",
+              "outputs": [
+                {
+                  "bundle": "whole-game-content",
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "path_id": -5278076967115919234,
+                  "bytes": 111,
+                  "sha256": "4a35cb6324e4abed82ba459a4142ae7cd4448d80a486b9005d5dd3fec7f54ca7",
+                  "transform": {
+                    "remove_components": [
+                      {
+                        "index": 7,
+                        "path_id": -3118203322539803087
+                      }
+                    ],
+                    "references": [
+                      {
+                        "offset": 4,
+                        "from": [
+                          0,
+                          -1323469537219215823
+                        ],
+                        "to": [
+                          0,
+                          2082942497703315721
+                        ]
+                      },
+                      {
+                        "offset": 16,
+                        "from": [
+                          0,
+                          6696350180529438257
+                        ],
+                        "to": [
+                          0,
+                          -7473476542308907961
+                        ]
+                      },
+                      {
+                        "offset": 28,
+                        "from": [
+                          0,
+                          -8987064651324948943
+                        ],
+                        "to": [
+                          0,
+                          762287674404035949
+                        ]
+                      },
+                      {
+                        "offset": 40,
+                        "from": [
+                          0,
+                          8287584680862449201
+                        ],
+                        "to": [
+                          0,
+                          3190779481099029991
+                        ]
+                      },
+                      {
+                        "offset": 52,
+                        "from": [
+                          0,
+                          1355795827856997937
+                        ],
+                        "to": [
+                          0,
+                          -3878324211841756664
+                        ]
+                      },
+                      {
+                        "offset": 64,
+                        "from": [
+                          0,
+                          -8492925615105802703
+                        ],
+                        "to": [
+                          0,
+                          -4843666046672535620
+                        ]
+                      },
+                      {
+                        "offset": 76,
+                        "from": [
+                          0,
+                          5495724301027540529
+                        ],
+                        "to": [
+                          0,
+                          9053401497369724059
+                        ]
+                      }
+                    ]
+                  },
+                  "native_type_hash": "86e34eb8ee7642b089fb98c9d81dd9b0"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-junk-brotherglass_static_assets_all_7e987b42fe077f4908a8cc820ce49577.bundle",
+      "sha256": "ba3ef08f422365d5e609d3e4b1a4ab6d1cdbfe547765e66b44c94bcd2d83b5ac",
+      "members": [
+        {
+          "name": "CAB-989e84d62685c537c25d99c74b465999",
+          "objects": [
+            {
+              "path_id": 1721233765809213005,
+              "class_id": 1,
+              "sha256": "3e16a424ad85a2b3cea2b0c0401701656744943b718e754c30a5d449791b11f0",
+              "outputs": [
+                {
+                  "bundle": "whole-game-content",
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "path_id": -3603411201057625738,
+                  "bytes": 463,
+                  "sha256": "bc84e1215deb7a34aaf0229cf58f1eca520de1f7a07b90424c6ce5d4d9a1346d",
+                  "transform": {
+                    "remove_components": [
+                      {
+                        "index": 32,
+                        "path_id": 6105392639331487309
+                      }
+                    ],
+                    "references": [
+                      {
+                        "offset": 4,
+                        "from": [
+                          0,
+                          -7676486314218336691
+                        ],
+                        "to": [
+                          0,
+                          -717838642569899252
+                        ]
+                      },
+                      {
+                        "offset": 16,
+                        "from": [
+                          0,
+                          -2866167878201618867
+                        ],
+                        "to": [
+                          0,
+                          7919495039338855827
+                        ]
+                      },
+                      {
+                        "offset": 28,
+                        "from": [
+                          0,
+                          -2282347340929216947
+                        ],
+                        "to": [
+                          0,
+                          -3158030294196155933
+                        ]
+                      },
+                      {
+                        "offset": 40,
+                        "from": [
+                          0,
+                          7200034880197709389
+                        ],
+                        "to": [
+                          0,
+                          -3762223922753503221
+                        ]
+                      },
+                      {
+                        "offset": 52,
+                        "from": [
+                          0,
+                          -3005599353811612083
+                        ],
+                        "to": [
+                          0,
+                          8569233491112355365
+                        ]
+                      },
+                      {
+                        "offset": 64,
+                        "from": [
+                          0,
+                          -6608422532392464819
+                        ],
+                        "to": [
+                          0,
+                          4128112055230050374
+                        ]
+                      },
+                      {
+                        "offset": 76,
+                        "from": [
+                          0,
+                          1087873888196120141
+                        ],
+                        "to": [
+                          0,
+                          -8461445476307478226
+                        ]
+                      },
+                      {
+                        "offset": 88,
+                        "from": [
+                          0,
+                          1058477951345446477
+                        ],
+                        "to": [
+                          0,
+                          4171340175713526289
+                        ]
+                      },
+                      {
+                        "offset": 100,
+                        "from": [
+                          0,
+                          -3090616271171531187
+                        ],
+                        "to": [
+                          0,
+                          6042820919203149617
+                        ]
+                      },
+                      {
+                        "offset": 112,
+                        "from": [
+                          0,
+                          8433138863304363597
+                        ],
+                        "to": [
+                          0,
+                          8078119564124376200
+                        ]
+                      },
+                      {
+                        "offset": 124,
+                        "from": [
+                          0,
+                          -4550046548950561203
+                        ],
+                        "to": [
+                          0,
+                          7900365209150478991
+                        ]
+                      },
+                      {
+                        "offset": 136,
+                        "from": [
+                          0,
+                          2116619407749238349
+                        ],
+                        "to": [
+                          0,
+                          -2817284405493624828
+                        ]
+                      },
+                      {
+                        "offset": 148,
+                        "from": [
+                          0,
+                          -6998851250525876659
+                        ],
+                        "to": [
+                          0,
+                          3934812894223436113
+                        ]
+                      },
+                      {
+                        "offset": 160,
+                        "from": [
+                          0,
+                          -6552038683520643507
+                        ],
+                        "to": [
+                          0,
+                          -4182399242343174824
+                        ]
+                      },
+                      {
+                        "offset": 172,
+                        "from": [
+                          0,
+                          8006274993891397197
+                        ],
+                        "to": [
+                          0,
+                          -898166966645108961
+                        ]
+                      },
+                      {
+                        "offset": 184,
+                        "from": [
+                          0,
+                          -3768011026123502003
+                        ],
+                        "to": [
+                          0,
+                          -5791996090092308427
+                        ]
+                      },
+                      {
+                        "offset": 196,
+                        "from": [
+                          0,
+                          -1950848231043084723
+                        ],
+                        "to": [
+                          0,
+                          -8045039421574940247
+                        ]
+                      },
+                      {
+                        "offset": 208,
+                        "from": [
+                          0,
+                          -6303325787329114547
+                        ],
+                        "to": [
+                          0,
+                          5340376688094893943
+                        ]
+                      },
+                      {
+                        "offset": 220,
+                        "from": [
+                          0,
+                          -3455079681004188083
+                        ],
+                        "to": [
+                          0,
+                          866215174235085696
+                        ]
+                      },
+                      {
+                        "offset": 232,
+                        "from": [
+                          0,
+                          -2082247322870198707
+                        ],
+                        "to": [
+                          0,
+                          -1357139097438766267
+                        ]
+                      },
+                      {
+                        "offset": 244,
+                        "from": [
+                          0,
+                          -7402531362852483507
+                        ],
+                        "to": [
+                          0,
+                          2545978898759133233
+                        ]
+                      },
+                      {
+                        "offset": 256,
+                        "from": [
+                          0,
+                          6956665731876736589
+                        ],
+                        "to": [
+                          0,
+                          -5857149779868759537
+                        ]
+                      },
+                      {
+                        "offset": 268,
+                        "from": [
+                          0,
+                          2949981367381806669
+                        ],
+                        "to": [
+                          0,
+                          -820620209469899746
+                        ]
+                      },
+                      {
+                        "offset": 280,
+                        "from": [
+                          0,
+                          226933988132146765
+                        ],
+                        "to": [
+                          0,
+                          5113364205795220951
+                        ]
+                      },
+                      {
+                        "offset": 292,
+                        "from": [
+                          0,
+                          -1035030963164328371
+                        ],
+                        "to": [
+                          0,
+                          1609318802514475707
+                        ]
+                      },
+                      {
+                        "offset": 304,
+                        "from": [
+                          0,
+                          -2674974806815125939
+                        ],
+                        "to": [
+                          0,
+                          -5417218057293999125
+                        ]
+                      },
+                      {
+                        "offset": 316,
+                        "from": [
+                          0,
+                          -2905415217212010931
+                        ],
+                        "to": [
+                          0,
+                          7443228384944129293
+                        ]
+                      },
+                      {
+                        "offset": 328,
+                        "from": [
+                          0,
+                          -2776482314906874291
+                        ],
+                        "to": [
+                          0,
+                          -6124058234917952148
+                        ]
+                      },
+                      {
+                        "offset": 340,
+                        "from": [
+                          0,
+                          6065247224982097485
+                        ],
+                        "to": [
+                          0,
+                          -830158325084430243
+                        ]
+                      },
+                      {
+                        "offset": 352,
+                        "from": [
+                          0,
+                          5885425502875897421
+                        ],
+                        "to": [
+                          0,
+                          2711771094354170499
+                        ]
+                      },
+                      {
+                        "offset": 364,
+                        "from": [
+                          0,
+                          7557353051088178765
+                        ],
+                        "to": [
+                          0,
+                          -5887059827939862639
+                        ]
+                      },
+                      {
+                        "offset": 376,
+                        "from": [
+                          0,
+                          -6741238211399037363
+                        ],
+                        "to": [
+                          0,
+                          379472833751552276
+                        ]
+                      },
+                      {
+                        "offset": 388,
+                        "from": [
+                          0,
+                          5593773570757774925
+                        ],
+                        "to": [
+                          0,
+                          -2025697868433392224
+                        ]
+                      },
+                      {
+                        "offset": 400,
+                        "from": [
+                          0,
+                          -360519663126098355
+                        ],
+                        "to": [
+                          0,
+                          -306413068740045572
+                        ]
+                      },
+                      {
+                        "offset": 412,
+                        "from": [
+                          0,
+                          7418227610796052045
+                        ],
+                        "to": [
+                          0,
+                          -1231090030671360486
+                        ]
+                      },
+                      {
+                        "offset": 424,
+                        "from": [
+                          0,
+                          4139925079528132173
+                        ],
+                        "to": [
+                          0,
+                          1186475574463439979
+                        ]
+                      }
+                    ]
+                  },
+                  "native_type_hash": "86e34eb8ee7642b089fb98c9d81dd9b0"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -622,6 +622,25 @@ class AnimationProducerTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "component append"):
             A.transform_generic(body, 114, {"append_components": [303]})
 
+    def test_prefab_omissions_check_original_identity_before_append_and_remap(self):
+        tail = struct.pack("<II", 5, 4) + b"Demo" + b"\x07\x00\x01"
+        body = struct.pack("<Iiqiqiq", 3, 0, 11, 0, 88, 0, 22) + tail
+        policy = {
+            "remove_components": [{"index": 1, "path_id": 88}],
+            "append_components": [303],
+            "references": [
+                {"offset": 16, "from": [0, 22], "to": [0, 303]},
+                {"offset": 28, "from": [0, 303], "to": [0, 22]},
+            ],
+        }
+        expected = struct.pack("<Iiqiqiq", 3, 0, 11, 0, 303, 0, 22) + tail
+        self.assertEqual(A.transform_generic(body, 1, policy), expected)
+        with self.assertRaisesRegex(ValueError, "component omissions"):
+            A.transform_generic(body, 114, policy)
+        policy["remove_components"][0]["path_id"] = 99
+        with self.assertRaisesRegex(ValueError, "component identity drift"):
+            A.transform_generic(body, 1, policy)
+
     def test_generic_material_policy_relocates_before_demoting_original_keywords(self):
         prefix = struct.pack("<I", 4) + b"Demo" + struct.pack("<iq", 2, 77)
         keyword = struct.pack("<I", 3) + b"ONE\0"

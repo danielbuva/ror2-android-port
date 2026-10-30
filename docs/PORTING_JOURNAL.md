@@ -1283,3 +1283,17 @@ phone APK/installation/update acceptance remain open.
 - Whole-game unresolved records fall to 410; historical readiness stays
   693/705 available, 685 raw-exact. Complete bundle, phone production, gameplay
   and data-preserving installation/update remain open.
+
+## J1278 — Reconstruct 38 whole-game records under existing presentation policy
+2026-10-30.
+- The generic record producer delegates checked GameObject omissions to the
+  existing object owner; public optional-content policy supplies selection.
+- Actual original script identities select audio/decal/particle-tail omissions;
+  retained component order and reciprocal owners remain checked. One duplicate
+  identity case stays unresolved. No runtime behavior or omission rule is added.
+- All 5,450 persisted body bytes and required native type hashes match J850.
+- Evidence: `work/coordination/orchestrator/whole-game-existing-omissions-production-v1/`.
+- Record pack SHA-256: `70f842ae4f45149b7cefce154e4f767ececd97555a3a6c9f029f7b33607260da`.
+- Whole-game unresolved records fall to 372; historical readiness stays
+  693/705 available, 685 raw-exact. Complete bundle, phone production, gameplay
+  and data-preserving installation/update remain open.

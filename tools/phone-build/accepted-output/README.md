@@ -1043,6 +1043,9 @@ Native `owner-whole-game-hierarchy-path-records.json` needs no SDK input.
 It delegates existing prefab filename and component-append operations, retaining
 the complete ordered original component list and native tail. Appended components
 must be supplied by the existing public adapter recipes at bundle assembly.
+`owner-whole-game-existing-presentation-records.json` also delegates checked
+component omissions to the object owner, applying the existing optional-content
+policy with original component indices and IDs. It uses the same CLI and no SDK.
 `recipe/owner-whole-game-material-compute-records.json` uses the same CLI without
 `--sdk`. It reuses the named material keyword policies and the existing class 72
 DXBC shell projection. Compute declarations remain source-owned; these shells

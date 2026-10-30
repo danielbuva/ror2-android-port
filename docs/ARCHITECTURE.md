@@ -439,6 +439,10 @@ The prefab-policy record recipe delegates the existing exported-name projection
 and component append to the object owner. Original component order and ownership
 remain checked; appended adapters come from existing public source production.
 These pack operations add no runtime owner or complete-bundle acceptance.
+The existing-presentation recipe additionally delegates checked component
+omissions to that owner. `sanitize_optional_content` supplies the existing policy;
+actual original script identities select omissions, while retained component
+order and reciprocal ownership remain checked. Ambiguous duplicates are excluded.
 Its generic path also delegates named material keyword policies and explicit
 ComputeShader shell production to the existing object owner. Original schemas,
 renderer/program preconditions and native type hashes remain checked. Compute
