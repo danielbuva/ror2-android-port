@@ -578,6 +578,16 @@ class AnimationProducerTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "generic object operation"):
             A.transform_generic(body, 91, selected)
 
+    def test_named_material_keyword_policy_keeps_source_text_and_ordinal_order(self):
+        prefix = struct.pack("<I", 4) + b"Demo" + struct.pack("<iq", 2, 77)
+        keyword = lambda text: struct.pack("<I", len(text)) + text + bytes(-len(text) % 4)
+        valid, invalid = [keyword(b"ZZ"), keyword(b"AA")], [keyword(b"MM")]
+        suffix = b"RETAIN ALL MATERIAL VALUES"
+        body = prefix + struct.pack("<I", 2) + b"".join(valid) + struct.pack("<I", 1) + b"".join(invalid) + suffix
+        for policy, order in [("dummy-shader-demote-valid", valid + invalid), ("dummy-shader-sort-invalid", [valid[1], invalid[0], valid[0]])]:
+            expected = prefix + struct.pack("<II", 0, 3) + b"".join(order) + suffix
+            self.assertEqual(A.transform_generic(body, 21, {"keyword_policy": policy}), expected)
+
     def test_compressed_profile_streams_groups_and_rejects_unbounded_or_incomplete_rows(self):
         header = json.dumps({"input_id": A.M.INPUT_ID}).encode() + b"\n"
         group = {"path": "authored.bundle", "sha256": "authored", "members": []}

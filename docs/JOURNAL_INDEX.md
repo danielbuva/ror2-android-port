@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J1274](PORTING_JOURNAL.md#j1274--reconstruct-154-whole-game-material-and-compute-records) | 2026-10-29 | Reconstruct 154 whole-game material and compute records | 2026-10-30. |
 | [J1273](PORTING_JOURNAL.md#j1273--reconstruct-198-whole-game-source-records-with-checked-native-types) | 2026-10-29 | Reconstruct 198 whole-game source records with checked native types | 2026-10-29. |
 | [J1272](PORTING_JOURNAL.md#j1272--reconstruct-757-whole-game-sprite-imports-with-native-android-geometry) | 2026-10-29 | Reconstruct 757 whole-game Sprite imports with native Android geometry | 2026-10-29. |
 | [J1271](PORTING_JOURNAL.md#j1271--emit-grouped-preload-pointers-without-retaining-the-complete-list) | 2026-10-29 | Emit grouped preload pointers without retaining the complete list | 2026-10-29. |

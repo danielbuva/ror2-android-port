@@ -1229,3 +1229,15 @@ phone APK/installation/update acceptance remain open.
   is covered, along with a mismatched pack type at complete-bundle emission.
 - Whole-game unresolved records fall to 2,043; readiness stays 693/705 available,
   685 raw-exact. Complete bundle, phone production and install/update remain open.
+
+## J1274 — Reconstruct 154 whole-game material and compute records
+2026-10-30.
+- Ship 130 materials and 24 compute records through the generic record producer,
+  delegating to the existing keyword-order and checked DXBC-shell policies.
+- All 154 persisted bodies and native type identities match J850 (290,220 B).
+- Evidence: `work/coordination/orchestrator/whole-game-catalog-policy-production-v1/`.
+- Pack SHA-256: `72c9a2882f50233b520a64ed3b41e90a9a3c7cdc88677ade077588dc0a485998`.
+- Authored material ordering and complete compute-pack contracts pass; originals
+  remain unchanged. Compute shells add no executable Android compute support.
+- Whole-game unresolved records fall to 1,889; readiness stays 693/705 available,
+  685 raw-exact. Complete bundle, phone production and install/update remain open.
