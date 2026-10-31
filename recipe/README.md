@@ -6059,7 +6059,7 @@ All twelve persisted records are raw-exact to J850, 716 bytes. Saved public
 residual 75 to 63 includes the merged controller closures. Complete bundle,
 phone production, installation/update and runtime gates remain open.
 
-### Whole-game shrine component relationships (J1317)
+### Whole-game shrine component relationships (J1318)
 
 | Recipe | SHA-256 |
 | --- | --- |

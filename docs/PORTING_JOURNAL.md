@@ -1770,7 +1770,7 @@ Saved public residual 75 → 63 includes merged controller closures. Readiness
 stays 693/705 available, 685 raw-exact. Complete bundle, phone production,
 installation/update and original runtime remain open. Host-only; no APK/device claim.
 
-## J1317 — Reconstruct whole-game shrine component relationships
+## J1318 — Reconstruct whole-game shrine component relationships
 
 2026-10-31. Existing source recipes select ShrineCombatPoison through its typed
 original prefab path and both CombatDirectors through the complete sixteen-slot
