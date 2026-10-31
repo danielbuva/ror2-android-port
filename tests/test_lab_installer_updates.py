@@ -373,6 +373,23 @@ class LabInstallerUpdatesTests(unittest.TestCase):
         shell.assert_not_called()
         fallback.assert_called_once_with((LAB.PACKAGE,))
 
+    def test_idle_timeout_never_reads_or_retries_a_missing_dump(self):
+        phone = LAB.Phone("synthetic-private-selector", 1)
+        for stdout, stderr in ((b"", b"ERROR: could not get idle state."), (b"ERROR: could not get idle state.", b"")):
+            with (
+                self.subTest(stdout=stdout),
+                patch.object(LAB, "execute", return_value=subprocess.CompletedProcess([], 0, stdout, stderr)) as dump,
+                patch.object(phone, "shell") as shell,
+                patch.object(phone, "ui_windows") as fallback,
+                patch.object(LAB.time, "sleep") as sleep,
+            ):
+                with self.assertRaisesRegex(LAB.Failure, "^device-ui-idle-timeout$"):
+                    phone.ui()
+            dump.assert_called_once()
+            shell.assert_not_called()
+            fallback.assert_not_called()
+            sleep.assert_not_called()
+
     def test_ui_dump_retry_does_not_retry_nonzero_or_unrelated_read_failure(self):
         phone = LAB.Phone("synthetic-private-selector", 1)
         result = subprocess.CompletedProcess([], 1, b"", b"ERROR: null root node synthetic-private-detail")

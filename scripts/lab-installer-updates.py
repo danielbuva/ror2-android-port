@@ -431,6 +431,10 @@ class Phone:
             result = execute([self.adb, "-s", self.serial, "shell", "uiautomator", "dump", self.ui_path], label="device-ui-dump", timeout=30)
             if result.returncode:
                 raise Failure("device-ui-dump")
+            # Both AOSP dump modes wait for idle before acquiring any root.
+            # Timeout exits 0 without writing XML; never read a stale/missing file.
+            if "idle-timeout" in (ui_output_classification(result.stdout), ui_output_classification(result.stderr)):
+                raise Failure("device-ui-idle-timeout")
             if "null-root" not in (ui_output_classification(result.stdout), ui_output_classification(result.stderr)):
                 break
             if attempt == 2:
