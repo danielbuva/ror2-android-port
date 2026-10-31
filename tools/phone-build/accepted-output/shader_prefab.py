@@ -89,7 +89,14 @@ def prefab_selections(source, *, retain_instancing=True, material_keywords=None,
                     variants = P.sdk_scene_variants(snippet, set(), retain_instancing=retain_instancing)
                 else:
                     # Retain the default and actual material feature combinations.
-                    admitted = {frozenset(), *(frozenset(keys & features) for keys in material_keywords)}
+                    defaults = frozenset(
+                        axis[0]
+                        for group in ("m_VariantsUserGlobal", "m_VariantsUserLocal")
+                        for stage in range(7)
+                        for axis in snippet[group + str(stage)]
+                        if axis and axis[0].strip("_") and axis[0] in features
+                    )
+                    admitted = {defaults, *(frozenset(keys & features) for keys in material_keywords)}
                     variants = [
                         variant
                         for variant in P.sdk_scene_variants(snippet, retain_instancing=retain_instancing)
@@ -99,7 +106,10 @@ def prefab_selections(source, *, retain_instancing=True, material_keywords=None,
                     declared = set().union(*(set(keys) for keys in variants))
                     # Vertex records include vertex-only runtime alternatives
                     # absent from original fragment records (e.g. vertex lights).
-                    variants = A.original_feature_order(carrier, sub_index, original_passes.index(row), row, declared, variants, stage="progVertex")
+                    try:
+                        variants = A.original_feature_order(carrier, sub_index, original_passes.index(row), row, declared, variants, stage="progVertex")
+                    except ValueError:
+                        variants = A.original_sdk_axis_order(carrier, sub_index, row, declared, variants, snippet)
                 selections[identity] = [deepcopy(variants) for _ in range(3)]
     return selections
 
@@ -313,7 +323,9 @@ def produce(profile_path, profile_pin, pc, sdk, asset_ripper, codec, codec_pin, 
                         common,
                         compress,
                         leaf,
-                        native_order={i: rows[0] for i, rows in selections.items()} if identity == 211 or "materials" in selected else None,
+                        native_order={i: list(dict.fromkeys(tuple(keys) for keys in rows[0])) for i, rows in selections.items()}
+                        if identity == 211 or "materials" in selected
+                        else None,
                     )
                 elif selected["kind"] == "dummy":
                     filename = selected["source_filename"]

@@ -6484,3 +6484,20 @@ relationships and authored transformations ship; no Shader text, programs,
 accepted-output patches or private paths. Independent public production is
 J850 raw-exact for one 130,700-byte record. Complete bundle, phone production,
 installation/update and runtime remain open.
+
+### Whole-game overlapping SDK Shader axes
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-whole-game-overlapping-axis-shader.json` | `59aa3ad7423237bb0a86edb4aa355d4efa89c3632b5192d7323353f9b2a339fc` |
+
+Audit: 2026-10-31. Eleven pinned original Materials supply observed feature
+combinations; acquired SDK declarations supply defaults and cross-stage axes.
+Original vertex records supply the remaining first-seen contexts. Duplicate
+serialized identities remain intact; native compilation interns first occurrences.
+Pinned AssetRipper 1ac666 DummyShaderTextExporter:49–78 informs template/property
+and fallback contracts but provides no stage-order solution. Only selectors,
+hashes, relationships and authored transformations ship; no Shader text, programs,
+accepted-output patches or private paths. Independent production reproduces one
+J850 record, 1,322,972 bytes. Complete bundle, phone production, installation/update
+and original runtime remain open.

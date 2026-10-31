@@ -5,6 +5,7 @@ The retained J131 bundle uses Gamma/default Android tiers and the acquired
 2021.3.45f2 compiler; neither Editor nor the old compiler is executed.
 """
 
+from collections import Counter
 from copy import deepcopy
 from itertools import product
 import argparse
@@ -354,6 +355,45 @@ def original_stage_lift(original_pass, names, features, selected):
         raise ValueError("source stage lift does not cover selected identities uniquely")
     lookup = {frozenset(k): k for k in selected}
     return [lookup[k] for k in answer]
+
+
+def original_sdk_axis_order(carrier, subshader_index, shader_pass, features, selected, snippet):
+    """Expand overlapping SDK stage axes over first-seen original contexts.
+
+    Shared keywords can produce the same identity more than once. Keep those
+    serialized rows; native compilation interns only their first occurrence.
+    """
+    axes = []
+    for group in ("m_VariantsUserGlobal", "m_VariantsUserLocal"):
+        for stage in range(7):
+            for axis in snippet[group + str(stage)]:
+                if axis not in axes:
+                    axes.append(axis)
+    names = [{key for key in axis if key.strip("_")} for axis in axes]
+    crossed = [i for i, axis in enumerate(names) if any(i != j and axis & other for j, other in enumerate(names))]
+    if not crossed:
+        raise ValueError("SDK declarations have no overlapping stage axes")
+    crossed = list(range(min(crossed), max(crossed) + 1))
+    excluded = set().union(*(names[i] for i in crossed))
+    axis_rows = [frozenset(key for key in keys if key.strip("_")) for keys in product(*(axes[i] for i in crossed))]
+    form = carrier["m_ParsedForm"]
+
+    def identity(row):
+        tags = {key.upper(): value.upper() for key, value in row["m_State"]["m_Tags"]["tags"]}
+        return row["m_State"]["m_Name"], tags.get("LIGHTMODE")
+
+    original = next(row for row in form["m_SubShaders"][subshader_index]["m_Passes"] if identity(row) == identity(shader_pass))
+    wanted = {frozenset(keys) - excluded for keys in selected}
+    base = []
+    for tier in original["progVertex"]["m_PlayerSubPrograms"]:
+        for row in tier:
+            keys = (frozenset(form["m_KeywordNames"][i] for i in row["m_KeywordIndices"]) & features) - excluded
+            if keys in wanted and keys not in base:
+                base.append(keys)
+    answer = [keys | axis for axis in axis_rows for keys in base if keys | axis in {frozenset(row) for row in selected}]
+    if Counter(answer) != Counter(map(frozenset, selected)):
+        raise ValueError("SDK source axis multiplicity differs")
+    return [sorted(keys) for keys in answer]
 
 
 def original_feature_order(carrier, subshader_index, pass_index, shader_pass, features, selected, *, stage="progFragment"):
