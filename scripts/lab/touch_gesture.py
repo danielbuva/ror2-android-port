@@ -87,7 +87,7 @@ def compile_tool(source=None):
         ]
         for index, command in enumerate(commands):
             if index == 1:
-                command.extend(str(path) for path in sorted(classes.glob("*.class")))
+                command.extend(str(path) for path in sorted(classes.rglob("*.class")))
             result = subprocess.run(command, capture_output=True, text=True, timeout=60)
             (directory / ("compile-%d.log" % index)).write_text(result.stdout + result.stderr)
             if result.returncode:
@@ -145,7 +145,9 @@ def run(target, expected_apk_sha256=None):
     output.mkdir(parents=True, exist_ok=False)
     write(output / "request.json", value)
     write(output / "binding.json", dict(apk_sha256=expected, pid=value["pid"], uid=int(match[1]), dex_sha256=sha(dex), request_sha256=sha(request)))
-    prefix = "/data/local/tmp/ror2lab-touch-" + uuid.uuid4().hex
+    # read_receipt validates the external path against freshly queried storage.
+    runtime = device.read_receipt("runtime.json")["persistentDataPath"]
+    prefix = runtime + "/ror2lab-touch-" + uuid.uuid4().hex
     remote = (prefix + ".dex", prefix + ".json")
     if any(_remote_path_state(device, path) != "absent" for path in remote):
         raise RuntimeError("Temporary touch target already exists; preserve it")

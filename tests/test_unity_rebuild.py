@@ -37,6 +37,9 @@ class UnityRebuildTests(unittest.TestCase):
         identity = patch("build.build_source_identity", return_value=dict(commit="synthetic", clean_paths=[]))
         identity.start()
         self.addCleanup(identity.stop)
+        observer = self.root / "tools/android-write-interruption/LabPendingWriteStop.java"
+        observer.parent.mkdir(parents=True)
+        observer.write_text("// Test-only observer source fixture\n")
         self.input_id = "a" * 64
         write(self.work / "config/accepted-input.json", dict(input_id=self.input_id))
         write(self.work / "config/reconstruction.json", dict(projects=["work/export"]))

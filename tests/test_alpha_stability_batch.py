@@ -180,6 +180,25 @@ class AlphaStabilityBatchTests(unittest.TestCase):
         self.assertTrue(result["lease_released"])
         self.assertFalse(self.lease.exists())
 
+    def test_gameplay_only_runs_fresh_heaps_and_sustained_without_claiming_settings(self):
+        self.args["gameplay_only"] = True
+        events, result = self.run_case()
+        self.assertEqual([event[0] for event in events if isinstance(event, tuple)], ["memory", "sustained"])
+        self.assertEqual([stage["name"] for stage in result["stages"]], ["session-memory", "session-sustained"])
+        self.assertEqual(result["scope"], "gameplay-only")
+        self.assertTrue(result["success"])
+        self.assertTrue(result["lease_released"])
+        self.assertTrue(result["terminal_readback"]["oled_asleep"])
+        self.assertNotIn("prior_settings_batch", result)
+
+    def test_gameplay_only_still_stops_and_cleans_up_at_first_gameplay_failure(self):
+        self.args["gameplay_only"] = True
+        events, result = self.run_case(fail_at="memory")
+        self.assertEqual([event[0] for event in events if isinstance(event, tuple)], ["memory"])
+        self.assertFalse(result["success"])
+        self.assertTrue(result["lease_released"])
+        self.assertEqual(result["scope"], "gameplay-only")
+
     def prior_settings(self, apk=HASH, success=True):
         source = self.root / "prior.json"
         source.write_text(
@@ -449,6 +468,7 @@ class GameThermalOwnerTests(unittest.TestCase):
             self.owner.sample(all_zones=True)
 
     def test_cooling_hysteresis_excludes_wait_from_game_attempt(self):
+        self.owner.battery_current_now = 0
         self.owner.battery = dict(celsius=34, level=80, status=4)
         self.owner.battery_zone_celsius = 34
         self.device.display.return_value = True
@@ -543,16 +563,26 @@ class GameThermalOwnerTests(unittest.TestCase):
             with self.subTest(level=level, status=status, current=current):
                 self.current.return_value = current
                 self.device.cmd.return_value = "cpu-0 49000 /thermal_zone0/temp"
-                self.device.sh.side_effect = [f"temperature: {temp}\nlevel: {level}\nstatus: {status}" for temp in (351, 350)]
+                observations = iter((351, 350))
+                self.device.sh.side_effect = lambda *a, **k: f"temperature: {next(observations, 350)}\nlevel: {level}\nstatus: {status}"
                 with mock.patch.object(batch.time, "sleep") as sleep:
                     if refused:
                         with self.assertRaisesRegex(RuntimeError, "charge separation/limit"):
                             self.owner.cool()
-                        sleep.assert_not_called()
+                        self.assertEqual(sleep.call_args_list, [] if level > 85 else [mock.call(10), mock.call(10)])
                     else:
                         self.owner.cool()
                         sleep.assert_called_once_with(batch.THERMAL_INTERVAL_SECONDS)
                         self.assertEqual(self.owner.admission_battery, dict(celsius=35, level=level, status=status))
+
+    def test_transient_positive_current_does_not_refuse_admission(self):
+        self.device.cmd.return_value = "cpu-0 49000 /thermal_zone0/temp"
+        for readings in ([1, 0], [1, 1, -1]):
+            with self.subTest(readings=readings), mock.patch.object(batch.time, "sleep") as sleep:
+                self.current.side_effect = readings
+                self.owner.cool()
+                self.assertEqual(sleep.call_args_list, [mock.call(10)] * (len(readings) - 1))
+                self.assertEqual(self.owner.admission_battery["level"], 80)
 
     def test_runtime_battery_service_boundary_is_recorded(self):
         self.owner.runtime_zones = [("cpu-0", "/thermal_zone0/temp")]

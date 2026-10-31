@@ -155,6 +155,7 @@ class _GameThermalOwner:
         self.peak_cpu_gpu_celsius = None
         self.battery = None
         self.admission_battery = None
+        self.battery_current_now = None
         self.battery_zone_celsius = None
 
     def battery_current(self):
@@ -182,7 +183,8 @@ class _GameThermalOwner:
             self.battery = battery_observation(self.device.sh("dumpsys", "battery", timeout=0.7))
             observation["battery"] = self.battery
             if all_zones:
-                observation["battery_current_now"] = self.battery_current()
+                self.battery_current_now = self.battery_current()
+                observation["battery_current_now"] = self.battery_current_now
             at = time.monotonic()
             gap = at - self.previous if self.previous is not None else at - before
             self.previous = at
@@ -246,7 +248,7 @@ class _GameThermalOwner:
         if at >= self.deadline:
             raise RuntimeError("Three-hour alpha driver deadline reached")
         if all_zones:
-            if self.battery["level"] > 85 or (self.battery["level"] >= 80 and observation["battery_current_now"] > 0):
+            if self.battery["level"] > 85:
                 raise RuntimeError("Battery charge separation/limit admission refused; report without retry")
             self.hot_core_zones.clear()
             if maximum > 80:
@@ -301,8 +303,16 @@ class _GameThermalOwner:
         if not self.device.display(False):
             raise RuntimeError("Thermal cooldown requires verified OLED sleep")
         self.previous = None  # No heavy job during display/idle setup.
+        charging_samples = 0
         while True:
             maximum = self.sample(all_zones=True)
+            if self.battery["level"] >= 80 and self.battery_current_now > 0:
+                charging_samples += 1
+                if charging_samples == 3:
+                    raise RuntimeError("Battery charge separation/limit admission refused; report without retry")
+                time.sleep(10)
+                continue
+            charging_samples = 0
             if maximum <= 50 and max(self.battery["celsius"], self.battery_zone_celsius) <= 35:
                 self.admission_battery = self.battery.copy()
                 break
@@ -467,7 +477,7 @@ def _prior_settings_batch(path, expected):
     return dict(path=str(source), sha256=hashlib.sha256(raw).hexdigest(), stage=passed[0])
 
 
-def check_alpha_stability_batch(*, device_serial, expected_apk_sha256, canonical_root, done_file, prior_settings_batch=None):
+def check_alpha_stability_batch(*, device_serial, expected_apk_sha256, canonical_root, done_file, prior_settings_batch=None, gameplay_only=False):
     """Run fixed stages synchronously; publish terminal status on success or failure."""
     root = Path(canonical_root).expanduser().resolve()
     if not (root / ".git").is_dir():
@@ -476,7 +486,7 @@ def check_alpha_stability_batch(*, device_serial, expected_apk_sha256, canonical
     done = Path(done_file).expanduser()
     if not done.is_absolute() or done != done.resolve() or not done.is_relative_to(work) or done.exists():
         raise ValueError("Use a new absolute --done-file under canonical ignored work/")
-    result = dict(success=False, driver_pid=os.getpid(), stages=[], lease_released=False)
+    result = dict(success=False, driver_pid=os.getpid(), stages=[], lease_released=False, scope="gameplay-only" if gameplay_only else "full-stability-batch")
     token = uuid.uuid4().hex
     owner = dict(
         workstream="alpha-stability-batch",
@@ -497,6 +507,8 @@ def check_alpha_stability_batch(*, device_serial, expected_apk_sha256, canonical
         if expected is None:
             raise ValueError("alpha-stability-batch requires --expected-apk-sha256")
         result["apk_sha256"] = expected
+        if gameplay_only and prior_settings_batch is not None:
+            raise ValueError("Choose gameplay-only or retained settings evidence, not both")
         if prior_settings_batch is not None:
             result["prior_settings_batch"] = _prior_settings_batch(prior_settings_batch, expected)
         result["host_capture_budget"] = _host_capture_budget(root)
@@ -529,7 +541,7 @@ def check_alpha_stability_batch(*, device_serial, expected_apk_sha256, canonical
             ("session-memory", memory.check_session_memory, dict(sessions=3, memory_snapshots=True)),
             ("session-sustained", sustained.check_session_sustained, {}),
         ):
-            if name == "settings-write-interrupt" and prior_settings_batch is not None:
+            if name == "settings-write-interrupt" and (gameplay_only or prior_settings_batch is not None):
                 continue
             result["active_stage"] = name
             if name == "session-memory":
