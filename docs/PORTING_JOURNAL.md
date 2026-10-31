@@ -1717,7 +1717,7 @@ Public saved residual 93 → 82 by exact output identity/hash coverage.
 Readiness stays 693/705 available, 685 raw-exact; complete bundle, phone production
 and original runtime remain open. Host-only; no APK/device claim.
 
-## J1311 — Reconstruct empty-TerrainData detail Shaders
+## J1312 — Reconstruct empty-TerrainData detail Shaders
 
 2026-10-31. Extend the existing Shader owner with pinned original TerrainData
 usage: three default Shader pointers and zero detail prototypes justify the
