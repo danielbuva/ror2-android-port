@@ -11,6 +11,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
 | [J1313](PORTING_JOURNAL.md#j1313--reconstruct-duplicate-clip-name-controller-relationships) | 2026-10-31 | Reconstruct duplicate clip-name controller relationships | 2026-10-31. |
+| [J1314](PORTING_JOURNAL.md#j1314--reconstruct-whole-game-controller-owned-managed-identity) | 2026-10-31 | Reconstruct whole-game controller-owned managed identity | 2026-10-31. |
 | [J1312](PORTING_JOURNAL.md#j1312--reconstruct-empty-terraindata-detail-shaders) | 2026-10-31 | Reconstruct empty-TerrainData detail Shaders | 2026-10-31. |
 | [J1310](PORTING_JOURNAL.md#j1310--reconstruct-whole-game-terraindata-preload-shaders) | 2026-10-31 | Reconstruct whole-game TerrainData preload Shaders | 2026-10-31. |
 | [J1308](PORTING_JOURNAL.md#j1308--resolve-whole-game-inserted-component-managed-identities) | 2026-10-31 | Resolve whole-game inserted-component managed identities | 2026-10-31. |
