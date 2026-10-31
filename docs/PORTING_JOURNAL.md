@@ -1690,3 +1690,16 @@ All five persisted records raw-exact to J850, 360 bytes; record-pack SHA-256
 Public saved residual 101 → 96 before parallel Director closures. Readiness stays
 693/705 available, 685 raw-exact; complete bundle, phone production and runtime
 acceptance remain open. Host-only; no APK/device claim.
+
+## J1310 — Reconstruct whole-game TerrainData preload Shaders
+
+2026-10-31. Publish eleven original Shader selections witnessed by the shipped
+Title TerrainData's preload pointer edges; unchanged SDK Shader owner preserves
+original names, properties and schema. No target-derived production input.
+Evidence: `work/coordination/p1-wholegame-1031/terrain-public-v1/terminal.json`;
+source witness notes: adjacent `../shader-provenance-20261031.md`.
+All eleven persisted records independently raw-exact to J850, 79,656 bytes.
+Pack SHA-256: `02f7cff022cafda7e9b3ee03babfc07451da9b44823077c7a5910104bbd4c3c5`.
+Public saved residual 93 → 82 by exact output identity/hash coverage.
+Readiness stays 693/705 available, 685 raw-exact; complete bundle, phone production
+and original runtime remain open. Host-only; no APK/device claim.
