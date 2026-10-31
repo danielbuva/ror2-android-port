@@ -1330,6 +1330,12 @@ def controller_clear_skeleton_masks(body, root):
     if end - offset != 4 or size < memory:
         raise ValueError("original controller allocation size drift")
     result = bytearray(body)
+    # Exact-editor BuildAsset uses FullBodyMask for every null layer mask.
+    # The pinned exporter omits AvatarMask references for all recreated layers.
+    for path, (start, end) in spans.items():
+        if len(path) == 7 and path[:3] == ("m_Controller", "m_LayerArray", "Array") and path[4:6] == ("data", "m_BodyMask"):
+            word = {"word0": 0xFFFFFFFF, "word1": 0xFFFFFFFF, "word2": (1 << 19) - 1}[path[-1]]
+            struct.pack_into("<I", result, start, word)
     struct.pack_into("<I", result, offset, size - memory)
     for start, end in sorted(removals, reverse=True):
         result[start:end] = bytes(4)
@@ -1815,6 +1821,7 @@ def produce(profile_path, profile_sha256, pc, output, sdk=None):
                             114,
                             119,
                             120,
+                            128,
                             135,
                             136,
                             137,

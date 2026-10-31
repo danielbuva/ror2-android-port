@@ -6401,3 +6401,68 @@ The point-sound timeout owner source pin admits the authored session dispatcher
 that calls the unchanged original timeout method while its application owner is
 inactive. Original timeout configuration, clock and pool behavior remain source-owned.
 The recipe contains only the authored-source hash; no original code or runtime data.
+
+### Whole-game Acolyte null AvatarMask defaults
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-animator-controllers.json` | `b6b9c1e95887a702b1cffda99b2f4e980c7f6bfadddb8bb5b45b7c32933a4154` |
+
+Audit: 2026-10-31. The existing mask-omission policy restores the native full
+83-bit human mask and removes skeleton entries when exported AvatarMasks are
+null. Pinned AssetRipper 813fed1597 AnimatorControllerProcessor.InitializeLayer
+leaves recreated masks null; exact-editor BuildAsset/GetMask/FullBodyMask
+tracing establishes the default independently of accepted output. Only source
+selectors, relationships, hashes and policies ship; no controller body, target
+patch, generated data or private path is included. One independently persisted
+record matches J850 raw-exact, 23,108 bytes. Complete bundle, phone production,
+installation/update and runtime remain open.
+
+### Whole-game BeetleQueen ghost FX managed records
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-whole-game-path-managed-records.json` | `da13fa261b0f5933a675ed5a8ec60a308cf3ed3e7becde684d89c0414ada01ac` |
+
+Audit: 2026-10-31. Existing record production selects the original
+BeetleQueenAcidGhost/FX components through the already qualified root and unique
+reciprocal Transform hierarchy. Pinned AssetRipper GameObjectExtensions
+FetchComponents/GetTransform supplies hierarchy observation prior art.
+Original script/type identity and scalar bytes remain unchanged; only checked
+PPtrs relocate, including the omitted component's null reference. Recipes hold
+source/destination selectors, hashes and pointer relationships; no scalar patch,
+protected body, generated data or private path ships. Two independently persisted
+records match J850 raw-exact, 216 bytes. Complete bundle, phone production,
+installation/update and original runtime remain open.
+
+### Whole-game Billboard material-feature Shader
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-whole-game-billboard-shader.json` | `e1c4e3a399233ded23e25eb36fdb01cf899c0947c849cd4adc3b2147f79765f7` |
+
+Audit: 2026-10-31. Six original published Material witnesses retain the default
+and observed feature combinations separately. Original vertex-stage keyword
+records order retained variants, including vertex-only runtime alternatives;
+the existing SDK native-order mechanism governs compiled-program interning.
+Pinned AssetRipper 1ac666 SimpleShaderExporter/DummyShaderTextExporter supplies
+exporter prior art but no permutation authority. Only selectors, hashes,
+relationships and policies ship; no Shader text, program, target patch or private
+path is included. Persisted public output is J850 raw-exact, 292,980 bytes.
+Complete bundle, phone production, installation/update and runtime remain open.
+
+### Whole-game original Noto Font
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-whole-game-font-records.json` | `6bbe62c89e40b8660d8f4bba1d9fae670ecc4c02f25e768eb004ee246401aa6b` |
+
+Audit: 2026-10-31. J1113's pinned original Noto Font supplies the complete
+FontData and native schema. Published original Material/Texture relationships
+identify the two relocated pointers. Pinned AssetRipper FontExtensions
+TryGetFontMaterial/TryGetFontTexture/GetFontExtension supplies observation prior
+art. The existing generic record owner admits Font class 128 and preserves all
+nonpointer bytes. Only selectors, hashes and checked relationships ship; no font
+bytes, generated data, scalar patches or private paths are included. Independent
+public production reproduces one J850 record, 16,412,474 bytes. Complete bundle,
+phone production, installation/update and original runtime remain open.

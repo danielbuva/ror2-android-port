@@ -2050,3 +2050,59 @@ Restores the qualified VoidSurvivor selector's malformed profile nesting.
 Saved selector residual 17 → 15; coverage subtraction, no accepted output rerun.
 Readiness stays 693/705 available, 685 raw-exact. Complete bundle, phone production,
 installation/update and original runtime remain open. No APK claim.
+
+## J1338 — Restore native null AvatarMask defaults for Acolyte
+
+2026-10-31. Existing controller mask-omission policy restores full 83-bit human
+masks alongside skeleton removal for exported null AvatarMasks.
+Prior art: pinned AssetRipper 813fed1597 InitializeLayer leaves masks null;
+exact-editor source-only BuildAsset/GetMask/FullBodyMask traces prove defaults.
+Evidence: `work/coordination/p1-scenes-w/acolyte-mask-public-20261031/done.json`.
+One persisted record independently raw-exact to J850, 23,108 bytes; pack SHA-256
+`893cfd6c3ad58c221b0f76136e86abfa9eb4b40273666e34abdf281685c823a3`.
+Qualification/production wall 63.196 s; host-only, no thermal measurement.
+Saved selector residual 15 → 14; coverage subtraction, no accepted output rerun.
+Readiness stays 693/705 available, 685 raw-exact. Complete bundle, phone production,
+installation/update and original runtime remain open. No APK claim.
+
+## J1340 — Recover BeetleQueen ghost FX managed records from their hierarchy
+
+2026-10-31. Existing path-managed record owner selects two original components
+through BeetleQueenAcidGhost/FX reciprocal hierarchy; only PPtrs relocate.
+Prior art: pinned AssetRipper GameObjectExtensions FetchComponents/GetTransform
+preserves component/hierarchy relationships; script/type and scalars are unchanged.
+Evidence: `work/coordination/p1-scenes-w/managed-fx-public-20261031/done.json`.
+Two persisted records independently raw-exact to J850, 216 bytes; pack SHA-256
+`29493995419aa8e4feb95223562223c11a986bcddf2e26937f381480013bcac7`.
+Production/qualification wall 57.588 s; host-only, no thermal measurement.
+Saved selector residual 14 → 12 before concurrent shader work; no output rerun.
+Readiness stays 693/705 available, 685 raw-exact. Complete bundle, phone production,
+installation/update and original runtime remain open. No APK claim.
+## J1339 — Reconstruct Billboard material-feature Shader ordering
+
+2026-10-31. Existing prefab Shader owner retains default and witnessed Material
+feature combinations, ordered by original vertex records and native interning.
+Prior art: pinned AssetRipper 1ac666 SimpleShaderExporter/DummyShaderTextExporter;
+original stage metadata supplies permutation authority absent from exporters.
+Evidence: `work/coordination/p1-wholegame-1031/shader-direct-material-native-order-v7/done.json`.
+One persisted record is raw-exact to J850, 292,980 bytes; pack SHA-256
+`059a1227b9b483c61ed54bbad373ba243edaa8161eabd749d4639bfdb2c03d73`.
+Production 32.004 s, qualification 36.730 s, peak RSS 558,596,096 bytes;
+local job output 8,914,110 bytes. Host-only; no device thermal measurement.
+Merged selector residual 14 → 13; subtraction only, no complete output rerun.
+Readiness stays 693/705 available, 685 raw-exact. Complete bundle, phone
+production, installation/update and original runtime remain open. No APK claim.
+
+## J1341 — Reconstruct whole-game original Noto Font
+
+2026-10-31. Generic native record production admits Font class 128; the audited
+original Noto recipe preserves FontData and relocates published Material/Texture
+relationships. Pinned AssetRipper FontExtensions supplies observation prior art.
+Evidence: `work/coordination/p1-wholegame-1031/font-public-v3/done.json`.
+One independently persisted record is raw-exact to J850, 16,412,474 bytes; SHA-256
+`78df32cae9a626e7f64856eac7ed9f7561ddc36c8ca1e93440255c71ba833fa4`.
+Production 0.683 s, qualification 4.374 s, peak RSS 335,839,232 bytes;
+local output 16,415,930 bytes. Host-only; no device heat measurement.
+Merged-selector residual 11 → 10; subtraction only, no complete output rerun.
+Readiness stays 693/705 available, 685 raw-exact. Complete bundle, phone
+production, installation/update and original runtime remain open. No APK claim.

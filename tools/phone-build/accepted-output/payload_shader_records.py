@@ -291,8 +291,8 @@ def standard_material(selected, original, sdk_objects):
     return value
 
 
-def original_feature_order(carrier, subshader_index, pass_index, shader_pass, features, selected):
-    """Order retained material identities by original fragment records."""
+def original_feature_order(carrier, subshader_index, pass_index, shader_pass, features, selected, *, stage="progFragment"):
+    """Order retained material identities by original stage records."""
     form = carrier["m_ParsedForm"]
     original_pass = form["m_SubShaders"][subshader_index]["m_Passes"][pass_index]
 
@@ -304,13 +304,13 @@ def original_feature_order(carrier, subshader_index, pass_index, shader_pass, fe
         raise ValueError("Standard original/SDK carrier pass differs")
     wanted = {frozenset(keys) for keys in selected}
     ranks = {}
-    for tier in original_pass["progFragment"]["m_PlayerSubPrograms"]:
+    for tier in original_pass[stage]["m_PlayerSubPrograms"]:
         for row in tier:
             keys = frozenset(form["m_KeywordNames"][index] for index in row["m_KeywordIndices"]) & features
             if keys in wanted and keys not in ranks:
                 ranks[keys] = len(ranks)
     if set(ranks) != wanted:
-        raise ValueError("Standard original fragment records do not cover retained material identities")
+        raise ValueError("original stage records do not cover retained material identities")
     return sorted(selected, key=lambda keys: ranks[frozenset(keys)])
 
 

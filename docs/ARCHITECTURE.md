@@ -458,6 +458,8 @@ The optional `preserve_original_script_hash` selection delegates to the object
 owner's existing unchanged-schema check after verifying the actual original
 MonoScript binding. The hierarchy path recipes select original records using
 proven roots and unique reciprocal child paths; output state remains exact.
+The path-managed profile also selects BeetleQueenAcidGhost/FX components via
+the original root/child hierarchy, preserving script identity and scalar bytes.
 The generic path also delegates `inactive_scene_object` to the object owner's
 named-active-source check. `owner-whole-game-activation-records.json` selects
 three original HUD roots under existing authored activation policies, preserving
@@ -531,8 +533,10 @@ renderer/program preconditions and native type hashes remain checked. Compute
 shells retain declarations and keywords; they contain no executable Android
 compute programs. The material/compute recipe adds no runtime behavior.
 Its `controller_clear_skeleton_masks` policy follows the pinned
-exporter's omitted layer masks: it removes original mask entries and subtracts
-their native allocation sizes, preserving all other controller fields.
+exporter's omitted layer masks: it removes original skeleton mask entries and
+subtracts their native allocation sizes. Exact-editor `BuildAsset` applies the
+full 83-bit human mask to every layer whose exported AvatarMask is null; the
+same operation restores that default while preserving other controller fields.
 `controller_state_order` relocates whole original state records using checked
 source-index bijections. Default states and direct transition destinations move
 with those records; selector and entry/exit indices retain their source values.
@@ -5695,3 +5699,18 @@ Setup requires pinned original/SDK/template/codec inputs and a fresh output pack
 existing compiler/codec teardown releases processes and receipts persist.
 One record is host raw-exact to J850; complete bundle and phone/runtime gates
 remain open. This introduces no runtime owner.
+
+`owner-whole-game-billboard-shader.json` extends the existing `shader_prefab.py`
+owner with original Material feature combinations and vertex-stage variant order.
+The existing SDK compiler native-order mechanism preserves source program
+interning. Setup pins original Shader/Material bundles, SDK/tool inputs and a
+fresh record pack; process exit releases source/compiler handles and receipts
+persist. One record is host raw-exact to J850; complete bundle and phone/runtime
+gates remain open. No runtime owner is added.
+
+`owner-whole-game-font-records.json` selects the original Noto Font through the
+existing `record_produce.py` generic native owner. Published Material/Texture
+relationships relocate its two checked pointers while FontData and native schema
+remain source-owned. Setup pins original PC input and creates a fresh record
+pack; scoped readers close on process exit and receipts persist. This adds no
+runtime owner; complete bundle and phone/runtime acceptance remain open.
