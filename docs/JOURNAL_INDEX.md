@@ -10,8 +10,8 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
-| [J1353](PORTING_JOURNAL.md#j1353--supply-source-derived-bundle-canvasrenderer-providers) | 2026-10-31 | Supply source-derived bundle CanvasRenderer providers | 2026-10-31. |
 | [J1353](PORTING_JOURNAL.md#j1353--capture-the-requested-final-menu-heap) | 2026-10-31 | Capture the requested final menu heap | 2026-10-31. |
+| [J1354](PORTING_JOURNAL.md#j1354--supply-source-derived-bundle-canvasrenderer-providers) | 2026-10-31 | Supply source-derived bundle CanvasRenderer providers | 2026-10-31. |
 | [J1352](PORTING_JOURNAL.md#j1352--extend-source-derived-bundle-material-providers) | 2026-10-31 | Extend source-derived bundle Material providers | 2026-10-31. |
 | [J1351](PORTING_JOURNAL.md#j1351--supply-source-derived-bundle-material-providers) | 2026-10-31 | Supply source-derived bundle Material providers | 2026-10-31. |
 | [J1350](PORTING_JOURNAL.md#j1350--restore-original-console-retention-default-at-composed-startup) | 2026-10-31 | Restore original Console retention default at composed startup | 2026-10-31. |
