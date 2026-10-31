@@ -1389,3 +1389,16 @@ play, physical input and genuine filled-filesystem recovery remain open.
 - Record pack SHA-256: `c3d5816e68a8a2e5bf85337b9c5248c4b4291626fc906919524622afcc62beeb`.
 - Whole-game unresolved records fall from 345 to 280. Historical readiness stays
   693/705 available, 685 raw-exact; phone/gameplay/install/update gates remain open.
+
+## J1286 — Reconstruct 24 whole-game controllers from source relationships
+2026-10-31.
+- Existing controller owner consumes selected original clip/state/TOS and PPtr
+  relationships under the J1143 provenance policy; no target value template.
+- All 358 persisted controller records (1,227,116 bytes) match J850 raw-exact,
+  including 24 additions; the prior 334 recipe outputs remain unchanged.
+- Evidence: `work/coordination/p1-scenes-w/wholegame-controllers-20261031/`
+  `public-production-done-v2.json`; source selection limits are in `notes.md`.
+- Record pack SHA-256: `f0caf106c4e68c1bc25e2f29b8e9ae652d7c52fd2addbbb3c73969a694dba848`.
+- This batch reduces the post-J1285 unresolved set from 280 to 256; parallel
+  whole-game work is counted separately. Final-file readiness remains 693/705
+  available, 685 raw-exact; phone/gameplay/install/update gates remain open.

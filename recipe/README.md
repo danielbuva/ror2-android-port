@@ -5526,3 +5526,21 @@ the existing producer; target pixels or geometry never supply production input.
 No pixels, contours, geometry, native output, original implementation or private
 configuration is published. Exact-SDK host constructor output and every persisted
 record extent match J850. Complete bundle and phone/install/update gates stay open.
+
+### Whole-game selected controller relationships (J1286)
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-animator-controllers.json` | `28724ccbb02362eb2f5814bc8d3718a3171e5ed6976fdbfe0eb16317a4fe1411` |
+
+Audit: 2026-10-31. This extends the J1143 source-relationship policy with 24
+whole-game controllers. Profiles select original objects, clip/state ordinals,
+checked PPtr relationships and source TOS entries; the existing owner enforces
+bijections and regenerates strings from the original source. Selected FullPathID
+relationships qualify these records; they do not establish a generic state-order
+inference algorithm. Pinned AssetRipper controller behaviour ranges, hierarchy
+mask omissions and BlendTree leaf/child indices remain the prior art. No target
+scalar, string, body, type template, original implementation or private setting
+is included. All 358 persisted controller records match J850, including the
+24 additions; existing 334 outputs are unchanged. Generated bodies remain local.
+Complete bundle, phone production and install/update acceptance stay open.
