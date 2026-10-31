@@ -268,11 +268,16 @@ class LabInstallerUpdatesTests(unittest.TestCase):
                 self.assertNotIn(private, json.dumps([result, explicit]))
 
     def test_private_ui_log_summary_observes_failed_dump_without_inventing_a_read(self):
-        for category, code, outcome, stderr, classification in (
-            ("device-ui-dump", 1, "returned", b"ERROR: null root node synthetic-private", "null-root"),
-            ("device-ui-windows-dump", 1, "returned", b"Permission denied: synthetic-private", "permission-denied"),
-            ("device-ui-dump", None, "TimeoutExpired", b"synthetic-private", "other-output"),
-            ("device-ui-dump", None, "OSError", b"", "empty"),
+        for category, code, outcome, stderr, classification, termination in (
+            ("device-ui-dump", 1, "returned", b"ERROR: null root node synthetic-private", "null-root", "exit-nonzero"),
+            ("device-ui-windows-dump", 1, "returned", b"Permission denied: synthetic-private", "permission-denied", "exit-nonzero"),
+            ("device-ui-dump", None, "TimeoutExpired", b"synthetic-private", "other-output", "unavailable"),
+            ("device-ui-dump", None, "OSError", b"", "empty", "unavailable"),
+            ("device-ui-dump", -9, "returned", b"", "empty", "signal-SIGKILL"),
+            ("device-ui-windows-dump", -15, "returned", b"", "empty", "signal-SIGTERM"),
+            ("device-ui-dump", -999, "returned", b"", "empty", "signal-other"),
+            ("device-ui-dump", 137, "returned", b"", "empty", "exit-nonzero"),
+            ("device-ui-dump", "synthetic-private", "returned", b"", "empty", "unavailable"),
         ):
             with self.subTest(category=category, outcome=outcome), tempfile.TemporaryDirectory() as temporary:
                 root = Path(temporary)
@@ -290,7 +295,8 @@ class LabInstallerUpdatesTests(unittest.TestCase):
                 self.assertEqual(len(result["records"]), 1)
                 self.assertEqual(result["records"][0]["category"], category)
                 self.assertEqual(result["records"][0]["outcome"], outcome)
-                self.assertEqual(result["records"][0]["returncode"], "nonzero" if code == 1 else "unavailable")
+                self.assertEqual(result["records"][0]["returncode"], "nonzero" if type(code) is int else "unavailable")
+                self.assertEqual(result["records"][0]["termination"], termination)
                 self.assertEqual(result["records"][0]["stderr"], classification)
                 self.assertEqual(before, {path: path.read_bytes() for path in directory.iterdir()})
                 self.assertNotIn("synthetic-private", json.dumps(result))

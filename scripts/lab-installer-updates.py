@@ -1060,11 +1060,27 @@ def inspect_ui_failure(selection, *, conflicting_mode=False, update_failure=Fals
             if metadata.get("phase") != "baseline-N-check" or metadata.get("category") != category:
                 raise Failure("log-inspection-record-mismatch")
             outcome = metadata.get("outcome")
+            returncode = metadata.get("returncode")
+            termination = "unavailable"
+            if type(returncode) is int:
+                # subprocess uses negative POSIX signal numbers for the local
+                # child. Do not infer a signal from a remote shell exit (128+N).
+                termination = "exit-zero" if returncode == 0 else "exit-nonzero"
+                if returncode < 0:
+                    termination = {
+                        -1: "signal-SIGHUP",
+                        -2: "signal-SIGINT",
+                        -6: "signal-SIGABRT",
+                        -9: "signal-SIGKILL",
+                        -11: "signal-SIGSEGV",
+                        -15: "signal-SIGTERM",
+                    }.get(returncode, "signal-other")
             result["records"].append(
                 {
                     "phase": "baseline-N-check",
                     "category": category,
                     "returncode": "zero" if metadata.get("returncode") == 0 else "nonzero" if type(metadata.get("returncode")) is int else "unavailable",
+                    "termination": termination,
                     "outcome": outcome if outcome in ("returned", "OSError", "TimeoutExpired") else "unknown",
                     "stdout": ui_output_classification(read(prefix + ".stdout.log")),
                     "stderr": ui_output_classification(read(prefix + ".stderr.log")),
