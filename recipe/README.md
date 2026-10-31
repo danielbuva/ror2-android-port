@@ -5695,6 +5695,24 @@ Both persisted records (2,856 bytes) match J850 raw-exact; 11 other witnessed
 materials still differ after existing policies and are excluded. Complete bundle,
 phone production, gameplay and install/update acceptance remain open.
 
+### Whole-game original MeshFilter ownership (J1296)
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-whole-game-meshfilter-records.json` | `4518372445d82bbdfaabfe197fed2fed9f54155c22e0fe7cdbc0dd78d16871f9` |
+
+Audit: 2026-10-31. Existing public GameObject source selections and the unique
+original MeshFilter class slot identify fourteen records. Reciprocal component
+ownership and both original pointer endpoints are checked against existing public
+suppliers, resolving external mesh members explicitly. Pinned EditorKit
+AddressablesPathDictionaryCache supplies GameObject/type component lookup
+knowledge. The existing generic record owner preserves schemas and all nonpointer
+bytes and relocates checked GameObject/mesh identities. This profile contains only
+original selectors, input/output hashes, native type identities and pointer
+relationships; no object bodies, scalar templates, game implementation or private
+paths are published. All fourteen persisted records (336 bytes) match J850
+raw-exact. Complete-file, phone production and install/update gates remain open.
+
 ### Whole-game reciprocal managed ownership (J1295)
 
 `owner-whole-game-path-managed-records.json` SHA-256:
