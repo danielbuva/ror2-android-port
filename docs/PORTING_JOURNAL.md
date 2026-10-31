@@ -2135,3 +2135,18 @@ capacity 4, all emitter slots clear, versus the earlier retained queue count 22.
 Capture wall 965 s; CPU/GPU peak 78.1 C, above 80 C for 0 s; battery 32 → 35 C.
 Snapshots hash-verified in cold storage; app stopped, selectors/scratch removed, OLED asleep.
 Ordinary repeated-session memory, physical controls and sustained performance remain open.
+
+## J1344 — Reconstruct whole-game overlapping SDK Shader axes
+
+2026-10-31. Existing Shader owners derive default features and overlapping SDK
+axes over original vertex contexts, preserving duplicate tier identities while
+interning native programs in first-seen order. Eleven original Materials select features.
+Prior art: pinned AssetRipper 1ac666 DummyShaderTextExporter:49–78; SDK declarations.
+Evidence: `work/coordination/p1-wholegame-1031/shader018-axis-public-v7/done.json`.
+One independently persisted record is J850 raw-exact, 1,322,972 bytes; SHA-256
+`8b3ac8bbaff20b0b759c4086f59030119f7083a1f694121e82de753eeccf996f`.
+Production 151.589 s, qualification 157.135 s, peak RSS 1,057,062,912 bytes;
+local job output 31,568,383 bytes. Host-only; no device heat measurement.
+Merged-selector residual 9 → 8; subtraction only, no complete output rerun.
+Readiness stays 693/705 available, 685 raw-exact. Complete bundle, phone
+production, installation/update and original runtime remain open. No APK claim.

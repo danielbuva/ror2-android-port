@@ -54,6 +54,22 @@ class PrefabShaderTests(unittest.TestCase):
         actual = S.A.original_feature_order(carrier, 0, 0, row, {"C", "F", "V"}, selected, stage="progVertex")
         self.assertEqual(actual, [[], ["F", "V"], ["V"], ["C", "F"], ["C"], ["C", "F", "V"], ["C", "V"], ["F"]])
 
+    def test_overlapping_stage_axes_keep_defaults_and_duplicate_tier_rows(self):
+        declaration = snippet([["P", "C"], ["__", "INSTANCING_ON"]], runtime="INSTANCING_ON")
+        declaration["m_VariantsUserGlobal1"] = [["__", "C"]]
+        row = {"m_Type": 0, "m_State": {"gpuProgramID": 11, "m_Name": "MAIN", "m_Tags": {"tags": []}}}
+        source = {
+            "m_CompileInfo": {"m_Snippets": [(11, declaration)]},
+            "m_ParsedForm": {"m_KeywordNames": [], "m_SubShaders": [{"m_Passes": [row]}]},
+        }
+        carrier = deepcopy(source)
+        original = carrier["m_ParsedForm"]["m_SubShaders"][0]["m_Passes"][0]
+        for stage in ("progVertex", "progFragment"):
+            original[stage] = {"m_PlayerSubPrograms": [[{"m_KeywordIndices": []}]]}
+        actual = S.prefab_selections(source, material_keywords=[{"C"}, {"P", "C"}], carrier=carrier)[11]
+        expected = [["P"], ["C", "P"], ["INSTANCING_ON", "P"], ["C", "INSTANCING_ON", "P"], ["C"], ["C"], ["C", "INSTANCING_ON"], ["C", "INSTANCING_ON"]]
+        self.assertEqual(actual, [expected] * 3)
+
     def test_material_features_preserve_combinations_without_union(self):
         source = {
             "m_CompileInfo": {"m_Snippets": [(11, snippet([["__", "A"], ["__", "B"]]))]},

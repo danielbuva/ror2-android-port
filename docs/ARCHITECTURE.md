@@ -5724,3 +5724,13 @@ remain source-owned. Setup pins original Shader/Material bundles, SDK/tool
 inputs and a fresh output pack; scoped source/compiler processes close on exit
 and receipts persist. One record is host raw-exact to J850; complete bundle and
 phone/runtime acceptance remain open. No runtime owner is added.
+
+`owner-whole-game-overlapping-axis-shader.json` extends the existing
+`shader_prefab.py`/`payload_shader_records.py` owners with SDK-declared default
+features and overlapping cross-stage axes over original vertex contexts.
+Serialized tier rows retain duplicate identities; the existing SDK compiler
+receives first-seen unique native identities. Eleven original Material witnesses
+select feature combinations. Setup pins original Shader/Material bundles,
+SDK/tool inputs and a fresh output pack; scoped source/compiler processes close
+on exit and receipts persist. One record is host raw-exact to J850; complete
+bundle and phone/runtime acceptance remain open. No runtime owner is added.
