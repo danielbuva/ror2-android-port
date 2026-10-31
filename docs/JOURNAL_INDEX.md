@@ -13,6 +13,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 | [J1308](PORTING_JOURNAL.md#j1308--resolve-whole-game-inserted-component-managed-identities) | 2026-10-31 | Resolve whole-game inserted-component managed identities | 2026-10-31. |
 | [J1306](PORTING_JOURNAL.md#j1306--source-ordered-whole-game-standard-fallback-shader-records) | 2026-10-31 | Source-ordered whole-game Standard fallback Shader records | 2026-10-31. |
 | [J1303](PORTING_JOURNAL.md#j1303--publish-original-whole-game-meridian-material-relationships) | 2026-10-31 | Publish original whole-game Meridian Material relationships | 2026-10-31. |
+| [J1305](PORTING_JOURNAL.md#j1305--reconstruct-whole-game-original-director-ownership) | 2026-10-31 | Reconstruct whole-game original Director ownership | 2026-10-31. |
 | [J1304](PORTING_JOURNAL.md#j1304--reconstruct-whole-game-original-lodgroup-ownership) | 2026-10-31 | Reconstruct whole-game original LODGroup ownership | 2026-10-31. |
 | [J1302](PORTING_JOURNAL.md#j1302--reconstruct-whole-game-original-billboard-ownership) | 2026-10-31 | Reconstruct whole-game original Billboard ownership | 2026-10-31. |
 | [J1301](PORTING_JOURNAL.md#j1301--reconstruct-whole-game-original-transform-ownership) | 2026-10-31 | Reconstruct whole-game original Transform ownership | 2026-10-31. |
