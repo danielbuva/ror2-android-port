@@ -1800,7 +1800,7 @@ Saved public residual 63 → 60 before parallel closures. Readiness stays
 693/705 available, 685 raw-exact. Complete bundle, phone production, installation/
 update and original runtime remain open. Host-only; no APK/device claim.
 
-## J1319 — Reconstruct whole-game missing-script base component
+## J1320 — Reconstruct whole-game missing-script base component
 
 2026-10-31. Shared J1225 policy emits the original Rewired Switch component's
 32-byte base through the generic record owner, retaining the complete original

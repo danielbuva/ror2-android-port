@@ -10,7 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
-| [J1319](PORTING_JOURNAL.md#j1319--reconstruct-whole-game-missing-script-base-component) | 2026-10-31 | Reconstruct whole-game missing-script base component | 2026-10-31. |
+| [J1320](PORTING_JOURNAL.md#j1320--reconstruct-whole-game-missing-script-base-component) | 2026-10-31 | Reconstruct whole-game missing-script base component | 2026-10-31. |
 | [J1318](PORTING_JOURNAL.md#j1318--reconstruct-whole-game-shrine-component-relationships) | 2026-10-31 | Reconstruct whole-game shrine component relationships | 2026-10-31. |
 | [J1319](PORTING_JOURNAL.md#j1319--reconstruct-whole-game-native-component-and-material-suppliers) | 2026-10-31 | Reconstruct whole-game native component and Material suppliers | 2026-10-31. |
 | [J1316](PORTING_JOURNAL.md#j1316--reconstruct-whole-game-controller-state-range-managed-records) | 2026-10-31 | Reconstruct whole-game controller state-range managed records | 2026-10-31. |
