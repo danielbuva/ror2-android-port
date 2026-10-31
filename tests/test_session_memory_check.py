@@ -74,7 +74,8 @@ class SessionMemoryCheckTests(unittest.TestCase):
 
                 stack.enter_context(mock.patch.object(memory.cleanup, "_stop_process", side_effect=stop))
                 with self.assertRaisesRegex(RuntimeError, "Session memory check failed"):
-                    check_session_memory(sessions=3, expected_apk_sha256="0" * 64)
+                    check_session_memory(sessions=12, memory_snapshots=True, expected_apk_sha256="0" * 64)
+                self.assertEqual(json.loads((out / "selection.json").read_text())["diagnosticCompletedMemorySnapshotFinalSession"], 13)
                 if report_pid == "123":
                     self.assertEqual(json.loads((out / "last-current-report.json").read_text()), report)
                 self.assertFalse(json.loads((out / "result.json").read_text())["success"])

@@ -120,7 +120,7 @@ p.add_argument("--sessions", type=int, help="Current: session-memory-check/root-
 p.add_argument(
     "--memory-snapshots",
     action="store_true",
-    help="Current: session-memory-check only; capture private native/managed heaps at menus 2/4, allocating and pausing; separate from ordinary growth/performance",
+    help="Current: session-memory-check only; capture private native/managed heaps at menu 2 and the final menu, allocating and pausing; separate from ordinary growth/performance",
 )
 p.add_argument("--skill-variants", help="Current: ignored local JSON for one base-survivor skill or cleanup check; per-run native skill catalog indices only")
 p.add_argument(
