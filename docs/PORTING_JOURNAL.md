@@ -1729,3 +1729,16 @@ Pack SHA-256: `a456aa01ded4ed2e1ab28a3c8b31cd468238a3d7ec288ccaac8d6a1b275f6089`
 Public saved residual 82 → 79; readiness stays 693/705 available, 685 raw-exact.
 Complete bundle, phone production, installation and runtime gates remain open.
 Host-only; no APK/device claim.
+
+## J1314 — Reconstruct whole-game controller-owned managed identity
+
+2026-10-31. Extend the existing managed record recipe with one original
+VoidRaidCrab controller-owned behaviour. Qualified controller behaviour order
+witnesses identity; original native schema and nonpointer bytes remain intact.
+Evidence: `work/coordination/p1-wholegame-1031/controller-managed-public-v1/terminal.json`;
+source relationship witness: adjacent `../controller-managed-v1/witnesses.json`.
+Persisted record raw-exact to J850, 60 bytes; pack SHA-256
+`06bdf03a6e8d17db5d1a3cfbfa5f3635f02bd986a90506668c0b92ff11fac92f`.
+Saved public residual 79 → 78 before parallel controller closures. Readiness stays
+693/705 available, 685 raw-exact; complete bundle, phone production and runtime
+acceptance remain open. Host-only; no APK/device claim.
