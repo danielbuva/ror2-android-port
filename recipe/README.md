@@ -6234,3 +6234,22 @@ no controller body, generated content or private path is included. One persisted
 record independently matches J850 raw-exact, 2,020 bytes. Final-file readiness
 stays 693/705 available, 685 raw-exact. Complete bundle, phone production,
 installation/update and runtime gates remain open.
+
+
+### Whole-game False Son synchronized behaviour controller
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-animator-controllers.json` | `6ca5a23b0f40b8067a3fa02a1d62c18ce0ea676484b724a913c05898535b509d` |
+
+Audit: 2026-10-31. Original False Son layer/state keys select synchronized
+behaviour overrides omitted by pinned AssetRipper 813fed15
+AnimatorControllerProcessor.cs:93-138. The existing controller owner retains
+source index order, compacts surviving ranges and preserves pointer identities;
+its existing first-tree motion and clip policies apply. Only source selectors,
+hashes, policies and checked pointer relationships ship; no controller body,
+generated content, target byte patch or private path is included.
+One persisted controller independently matches J850 raw-exact, 2,420 bytes.
+Authored fixtures cover range compaction independently of game inputs.
+Final-file readiness stays 693/705 available, 685 raw-exact. Complete bundle,
+phone production, installation/update and runtime gates remain open.
