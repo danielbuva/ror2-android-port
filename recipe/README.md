@@ -6253,3 +6253,19 @@ One persisted controller independently matches J850 raw-exact, 2,420 bytes.
 Authored fixtures cover range compaction independently of game inputs.
 Final-file readiness stays 693/705 available, 685 raw-exact. Complete bundle,
 phone production, installation/update and runtime gates remain open.
+
+### Whole-game UI and Railgunner display synchronized controllers
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-animator-controllers.json` | `142d4b25e4566ddf4aa257f5e1fbc87b720346d0ed28556784b7e2181e38c9be` |
+
+Audit: 2026-10-31. Original UI and Railgunner display layer/state identities
+select the existing controller owner's first-tree motion, null-motion and
+synchronized override policies. Pinned AssetRipper 813fed15
+AnimatorControllerProcessor.cs:93-138 leaves synchronized overrides unset.
+Only source selectors, hashes, policies and checked pointer relationships ship;
+no controller body, generated content, target byte patch or private path is included.
+Two persisted controllers independently match J850 raw-exact, 6,140 bytes.
+Final-file readiness stays 693/705 available, 685 raw-exact. Complete bundle,
+phone production, installation/update and runtime gates remain open.
