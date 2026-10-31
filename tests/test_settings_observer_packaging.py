@@ -27,14 +27,18 @@ class SettingsObserverPackagingTests(unittest.TestCase):
             self.assertEqual(attr("process"), ":settings_write_observer")
             self.assertEqual(attr("exported"), "false")
             self.assertEqual(attr("isolatedProcess"), "false")
-            shared = library / "src/dev/ror2lab/diagnostics/LabPendingWriteStop.java"
+            # Unity's generated androidlib Gradle file leaves java.srcDirs unset.
+            # Only Gradle's default src/main/java participates in compilation.
+            java = library / "src/main/java"
+            self.assertTrue((java / "dev/ror2lab/diagnostics/LabSettingsWriteObserver.java").is_file())
+            shared = java / "dev/ror2lab/diagnostics/LabPendingWriteStop.java"
             self.assertEqual(shared.read_bytes(), (ROOT / "tools/android-write-interruption/LabPendingWriteStop.java").read_bytes())
             javac = Path(os.environ.get("JAVA_HOME", ANDROID / "OpenJDK")) / "bin/javac"
             android = ANDROID / "SDK/platforms/android-30/android.jar"
             if not javac.is_file() or not android.is_file():
                 self.skipTest("pinned bundled JDK/SDK unavailable")
             result = subprocess.run(
-                [str(javac), "-source", "8", "-target", "8", "-cp", str(android), "-d", str(project / "classes"), *map(str, sorted(library.rglob("*.java")))],
+                [str(javac), "-source", "8", "-target", "8", "-cp", str(android), "-d", str(project / "classes"), *map(str, sorted(java.rglob("*.java")))],
                 capture_output=True,
                 text=True,
                 timeout=30,

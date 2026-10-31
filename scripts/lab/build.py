@@ -673,7 +673,7 @@ def stage_android_assets(project, io=None):
                 io.apply(project / "Assets" / source.relative_to(ROOT / "android/Assets"), copy=source)
 
     source = ROOT / "tools/android-write-interruption/LabPendingWriteStop.java"
-    target = project / "Assets/Plugins/Android/SettingsWriteObserver.androidlib/src/dev/ror2lab/diagnostics/LabPendingWriteStop.java"
+    target = project / "Assets/Plugins/Android/SettingsWriteObserver.androidlib/src/main/java/dev/ror2lab/diagnostics/LabPendingWriteStop.java"
     if io is None:
         target.parent.mkdir(parents=True, exist_ok=True)
         copy_build_artifact(source, target, verify=False)
