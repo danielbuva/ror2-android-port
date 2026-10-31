@@ -22,11 +22,18 @@ import time
 
 ROOT = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(ROOT / "scripts/lab"))
-from owner_assemblies import input_state  # noqa: E402
 
 PROFILE = ROOT / "recipe/owner-native-arm64.json"
 PROFILE_SHA = "868a0665d3550b53eebf0d57c8a50997f09a4a797e86a45ebd21f13004e6136d"
 RESERVE = 2 * 1024**3
+
+
+def input_state(work):
+    # Generic SDK/APK packaging uses these helpers without game reconstruction
+    # recipes. Load the owner validator only for actual native production.
+    from owner_assemblies import input_state as owner_input_state
+
+    return owner_input_state(work)
 
 
 def sha(path):
