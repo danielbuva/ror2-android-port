@@ -5936,3 +5936,22 @@ public template identities, SDK relationships and output pins. No protected
 source body, program, generated data, private path or credential is published.
 Both persisted records are raw-exact (12,004 bytes); complete-file, phone
 production and runtime acceptance remain open.
+
+### Whole-game inserted-component sequence ownership (J1308)
+
+`owner-whole-game-path-managed-records.json` SHA-256:
+`f60ed7b00484c57041745ef89a292dbfd0b84cfc3a9cff59b77466c8b489a4e8`.
+
+Audit: 2026-10-31. Five original managed component selectors extend the existing
+record owner: four ProjectileNetworkTransform records and one TeamFilter.
+Already-qualified GameObject recipes declare source omissions and the appended
+SilentProjectileBoundary identity. Filtering that insertion leaves the complete
+original class and assembly/namespace/class sequence unchanged; ordered occurrence
+and reciprocal GameObject owners uniquely identify duplicate components.
+Pinned ThunderKit FileIdUtil and AssetRipper MonoScriptExtensions inform full
+script identity, as in J1281/J1295. Native schema and all nonpointer bytes remain
+original; only GameObject/MonoScript pointers relocate. The recipe contains input
+selectors, hashes, native identities and checked relationship mappings, without
+protected bodies, scalar templates, implementation, private paths or generated
+content. All five persisted records match J850 raw-exact (360 bytes). Complete
+bundle, phone production and install/update acceptance remain open.
