@@ -453,6 +453,10 @@ named-active-source check. `owner-whole-game-activation-records.json` selects
 three original HUD roots under existing authored activation policies, preserving
 ordered component references. Setup, pack state, readers and teardown use the
 existing record owner; complete-file and phone admission remain open.
+`owner-whole-game-native-component-records.json` selects the three remaining
+native HUD slots (Canvas, Rigidbody and CanvasRenderer) through ordered original
+component PPtrs and reciprocal qualified root ownership. The same record owner
+relocates their GameObject pointers while preserving schemas and nonpointer bytes.
 Generic record admission also includes native classes 96, 119, 193 and 330,
 preserving their original schemas and every nonpointer byte.
 The component-edge recipe selects unchanged original records through explicit
