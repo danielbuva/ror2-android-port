@@ -1092,6 +1092,74 @@ def controller_clear_null_motion(body, root):
     return bytes(result)
 
 
+def controller_omit_synced_overrides(body, root):
+    """Retain the pinned exporter's first motion tree and its clip occurrences."""
+    _, spans = fields(body, root)
+    result, changes, removed_clips, memory = bytearray(body), [], [], 0
+    for path, (start, end) in spans.items():
+        if len(path) != 11 or path[:3] != ("m_Controller", "m_StateMachineArray", "Array") or path[-2:] != ("m_BlendTreeConstantArray", "Array"):
+            continue
+        count = struct.unpack_from("<I", body, start)[0]
+        if count <= 1:
+            continue
+        first_end = spans[path + ("0",)][1]
+        for index in range(1, count):
+            tree = path + (str(index),)
+            left, right = spans[tree]
+            arrays = [p for p in spans if p[: len(tree)] == tree and p[-1] == "Array"]
+            nodes = tree + ("data", "m_NodeArray", "Array")
+            # Matched original-source controller shapes establish 152 bytes per
+            # empty single-leaf tree (479 pairs, including zero-tree sources).
+            # This is controller blob accounting, not deserializer heap size.
+            if right - left != 68 or len(arrays) != 9 or struct.unpack_from("<I", body, spans[nodes][0])[0] != 1:
+                raise ValueError("unsupported synced override tree allocation shape")
+            if any(struct.unpack_from("<I", body, spans[p][0])[0] for p in arrays if p != nodes):
+                raise ValueError("unsupported synced override populated blend data")
+            memory += 152
+            for p, (offset, _) in spans.items():
+                if p[: len(tree)] != tree or p[-1] != "m_ClipID":
+                    continue
+                children = spans[p[:-1] + ("m_ChildIndices",)][0]
+                clip = struct.unpack_from("<I", body, offset)[0]
+                if not struct.unpack_from("<I", body, children)[0] and clip != 0xFFFFFFFF:
+                    removed_clips.append(clip)
+        changes.append((start, end, struct.pack("<I", 1) + body[start + 4 : first_end]))
+        left, right = spans[path[:-2] + ("m_BlendTreeConstantIndexArray",)]
+        for offset in range(left + 4, right, 4):
+            index = struct.unpack_from("<I", body, offset)[0]
+            if index not in (0, 0xFFFFFFFF):
+                struct.pack_into("<I", result, offset, 0xFFFFFFFF)
+    start, end = spans[("m_AnimationClips",)]
+    count = struct.unpack_from("<I", body, start)[0]
+    clips = [body[start + 4 + i * 12 : start + 16 + i * 12] for i in range(count)]
+    retained = list(range(count))
+    # Exported clips contain one occurrence per motion. A synced override may
+    # share a clip with a retained motion; remove the final matching occurrence.
+    for clip in removed_clips:
+        match = next(i for i in reversed(retained) if clips[i] == clips[clip])
+        retained.remove(match)
+    inverse = {old: new for new, old in enumerate(retained)}
+    removed_ranges = [(a + len(replacement), b) for a, b, replacement in changes]
+    for path, (offset, _) in spans.items():
+        if path[0] != "m_Controller" or path[-1] != "m_ClipID" or any(a <= offset < b for a, b in removed_ranges):
+            continue
+        if struct.unpack_from("<I", body, spans[path[:-1] + ("m_ChildIndices",)][0])[0]:
+            continue
+        old = struct.unpack_from("<I", body, offset)[0]
+        if old != 0xFFFFFFFF:
+            representative = next(i for i in retained if clips[i] == clips[old])
+            struct.pack_into("<I", result, offset, inverse[representative])
+    # Copy retained trees after updating their leaf indices.
+    changes = [(a, b, replacement[:4] + result[a + 4 : a + len(replacement)]) for a, b, replacement in changes]
+    changes.append((start, end, struct.pack("<I", len(retained)) + b"".join(clips[i] for i in retained)))
+    offset = spans[("m_ControllerSize",)][0]
+    size = struct.unpack_from("<I", body, offset)[0]
+    struct.pack_into("<I", result, offset, size - memory)
+    for start, end, replacement in sorted(changes, reverse=True):
+        result[start:end] = replacement
+    return bytes(result)
+
+
 def controller_clear_skeleton_masks(body, root):
     """Apply the pinned exporter's omitted layer masks and native allocation size."""
     _, spans = fields(body, root)
@@ -1213,6 +1281,7 @@ def transform_generic(body, class_id, selected, root=None, read_clip=None, sourc
         "controller_clear_skeleton_masks",
         "controller_state_order",
         "controller_clear_null_motion",
+        "controller_omit_synced_overrides",
         "canonical",
         "importer_guid",
         "crop_rectangle_offset",
@@ -1272,6 +1341,10 @@ def transform_generic(body, class_id, selected, root=None, read_clip=None, sourc
         if selected["controller_clear_null_motion"] is not True:
             raise ValueError("unqualified controller null-motion policy")
         body = controller_clear_null_motion(body, root)
+    if "controller_omit_synced_overrides" in selected:
+        if selected["controller_omit_synced_overrides"] is not True:
+            raise ValueError("unqualified controller synced-motion policy")
+        body = controller_omit_synced_overrides(body, root)
     if "controller_loop_states" in selected:
         body = controller_loop_states(body, root, selected["controller_loop_states"], read_clip)
     if "controller_clip_order" in selected:

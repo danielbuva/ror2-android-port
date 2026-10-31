@@ -1827,3 +1827,17 @@ Persisted outputs raw-exact to J850: 12 records, 39,788 bytes; pack SHA-256 valu
 `14449eeade2f939107b3b28b5c7336a47184258965e4f01929089bce8cb8f7f7`.
 Saved public residual 57 → 45; readiness stays 693/705 available, 685 raw-exact.
 Complete bundle, phone production and original runtime remain open. Host-only.
+
+## J1322 — Reconstruct synced motion and Mimic controllers
+
+2026-10-31. Existing controller owner omits synced override motions as the pinned
+AssetRipper exporter does, retaining source first-tree motion and clip identities.
+Source-only matched shapes (479 pairs) establish the admitted 152-byte blob-size
+marginal; no claim of native heap allocation derivation. Mimic reuses existing
+collision-ordinal and relationship policies. Authored controller fixture passes.
+Evidence: `work/coordination/p1-scenes-w/synced-controller-public-20261031/done.json`;
+source proofs: `work/coordination/p1-scenes-w/controller-source-allocation-20261031/`.
+Three persisted records raw-exact to J850, 28,684 bytes; pack SHA-256
+`194603a7fe76d34cb3e149fd98c68019f7a7f8fe7080e3a4fa2fc6f760cfd959`.
+Saved residual 45 → 42; readiness stays 693/705 available, 685 raw-exact.
+Complete bundle, phone production and runtime remain open. Host-only; no APK claim.

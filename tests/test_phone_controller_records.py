@@ -66,6 +66,70 @@ class ControllerRecords(unittest.TestCase):
         root = A.SCHEMA.type_tree(io.BytesIO(A.W.read_serialized(stream)["types"][0]["tree"]))
         self.assertEqual(A.transform_generic(body, 91, {"controller_clear_null_motion": True}, root), expected)
 
+    def test_synced_override_omission_preserves_shared_clip_occurrences(self):
+        empty = lambda name: F.array(name, integer("data"))
+        leaf = F.node(
+            "data",
+            children=[
+                F.node(
+                    "data",
+                    children=[
+                        integer("m_BlendType"),
+                        integer("m_BlendEventID"),
+                        integer("m_BlendEventYID"),
+                        empty("m_ChildIndices"),
+                        F.node("m_Blend1dData", children=[F.node("data", children=[empty("m_ChildThresholdArray")])]),
+                        F.node(
+                            "m_Blend2dData",
+                            children=[
+                                F.node(
+                                    "data",
+                                    children=[
+                                        empty(name)
+                                        for name in (
+                                            "m_ChildPositionArray",
+                                            "m_ChildMagnitudeArray",
+                                            "m_ChildPairVectorArray",
+                                            "m_ChildPairAvgMagInvArray",
+                                            "m_ChildNeighborListArray",
+                                        )
+                                    ],
+                                )
+                            ],
+                        ),
+                        F.node(
+                            "m_BlendDirectData", children=[F.node("data", children=[empty("m_ChildBlendEventIDArray"), integer("m_NormalizedBlendValues")])]
+                        ),
+                        integer("m_ClipID"),
+                        integer("m_Duration"),
+                        integer("m_CycleOffset"),
+                        integer("m_Mirror"),
+                    ],
+                )
+            ],
+        )
+        tree = F.node("data", children=[F.node("data", children=[F.array("m_NodeArray", leaf)])])
+        state = F.node(
+            "data", children=[F.node("data", children=[F.array("m_BlendTreeConstantArray", tree), F.array("m_BlendTreeConstantIndexArray", integer("data"))])]
+        )
+        machine = F.node("data", children=[F.node("data", children=[F.array("m_StateConstantArray", state)])])
+        pointer = F.node("data", children=[integer("m_FileID"), F.node("m_PathID", 8)])
+        schema = F.node(
+            "Base",
+            children=[
+                integer("m_ControllerSize"),
+                F.node("m_Controller", children=[F.array("m_StateMachineArray", machine)]),
+                F.array("m_AnimationClips", pointer),
+            ],
+        )
+        motion = lambda clip: vector([bytes(48) + struct.pack("<IIII", clip, 0, 0, 0)])
+        state_body = vector([motion(0), motion(0)]) + vector([struct.pack("<I", i) for i in (0, 1)])
+        clips = [struct.pack("<iq", 0, i) for i in (11, 22, 11)]
+        body = struct.pack("<I", 1000) + vector([vector([state_body])]) + vector(clips)
+        expected_state = vector([motion(0)]) + vector([bytes(4), struct.pack("<I", 0xFFFFFFFF)])
+        expected = struct.pack("<I", 848) + vector([vector([expected_state])]) + vector(clips[:2])
+        self.assertEqual(A.transform_generic(body, 91, {"controller_omit_synced_overrides": True}, schema), expected)
+
     def test_state_order_relocates_direct_destinations_and_preserves_selector_values(self):
         transition = F.node("data", children=[integer("m_DestinationState"), integer("retained")])
         state = F.node("data", children=[F.node("data", children=[integer("m_FullPathID"), F.array("m_TransitionConstantArray", transition)])])
