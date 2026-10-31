@@ -5657,6 +5657,27 @@ remaps are published. No target body, scalar template or implementation is added
 All 19 persisted records (1,493 bytes) match J850 raw-exact; complete-file, phone
 production and install/update gates remain open.
 
+### Whole-game empty renderer membership (J1294)
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-whole-game-empty-renderer-records.json` | `7e417530d2f417a022d416fe3d19358e2585ed3ac22c2008f64a7ae1d2a43cfe` |
+| `owner-whole-game-renderer-membership-records.json` | `f3114997dbf56ebb1a63730b62fccb2501ddaf3375752821da5e29a5c700367c` |
+
+Audit: 2026-10-31. Existing J245 original AnimateShaderAlpha repair applies
+when an original GameObject lacks a renderer and its decal reference is absent
+or removed by the existing decal omission policy. Ordered original component
+lists and reciprocal ownership establish all fourteen cases. The existing empty
+MeshRenderer constructor preserves the original donor's native fields and type
+identity while applying its three disabled flags. Generic record production
+delegates that constructor, relocates checked owner PPtrs and uses existing
+component append for GameObject membership. Pinned AssetRipper
+GameObjectExtensions supplies ordered component traversal knowledge. Profiles
+contain only original selectors/hashes, native identities, named operations and
+checked relationships; no native body, scalar template, game implementation or
+private input is published. All 28 persisted records (3,090 bytes) match J850
+raw-exact. Complete-file, phone production and install/update gates remain open.
+
 ### Whole-game catalog-witnessed materials (J1293)
 
 `owner-whole-game-material-compute-records.json` SHA-256:

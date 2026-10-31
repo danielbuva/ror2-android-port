@@ -1481,6 +1481,19 @@ play, physical input and genuine filled-filesystem recovery remain open.
   readiness stays 693/705 available, 685 raw-exact; complete whole-game bundle,
   phone production and install/update remain open.
 
+## J1294 — Reconstruct whole-game empty renderer membership
+2026-10-31.
+- Generic record owner delegates the existing J245 empty renderer constructor;
+  existing component append supplies fourteen original GameObject memberships.
+- Original AnimateShaderAlpha/decal relationships establish the bounded scope;
+  all 28 persisted records (3,090 bytes) match J850 raw-exact.
+- Evidence: `work/coordination/p1-scenes-w/wholegame-empty-renderer-v2-20261031/`
+  and `wholegame-go-renderer-append-20261031/`, each with `done.json` and relationships.
+- Renderer pack: `836ada40a71ddff2fb02a7f4f58659763f93c1f0a4f819a1217f013cf78afbb5`.
+- Membership pack: `e81861f0e448a8fead2c0e0dcff2bf3dac1f9c9eadcd7fdb38234c6e2707b199`.
+- Saved unresolved census falls 203 to 175, excluding parallel work. Final-file
+  readiness stays 693/705 available, 685 raw-exact; whole-game bundle, phone
+  production and install/update remain open.
 ## J1293 — Reconstruct catalog-witnessed whole-game materials
 2026-10-31.
 - Existing material record owner adds two original catalog-root source selections

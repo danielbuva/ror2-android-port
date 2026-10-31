@@ -620,6 +620,29 @@ class AnimationProducerTests(unittest.TestCase):
                 with self.assertRaisesRegex(ValueError, "generic object operation"):
                     A.produce(path, A.B.sha(path), pc, root / "operation-drift")
 
+    def test_empty_renderer_dispatch_preserves_native_values_before_owner_relocation(self):
+        schema = F.node(
+            "Base",
+            children=[
+                F.node("m_GameObject", 12, kind="PPtr<GameObject>"),
+                F.node("m_Enabled", 1, kind="UInt8"),
+                F.node("m_CastShadows", 1, kind="UInt8"),
+                F.node("m_ReceiveShadows", 1, kind="UInt8"),
+                F.node("retainedFlag", 1, kind="UInt8"),
+                F.array("m_Materials", F.node("data", 12, kind="PPtr<Material>")),
+                F.node("retained", 4, kind="float"),
+            ],
+        )
+        body = struct.pack("<iq", 0, 11) + bytes([1, 1, 1, 1]) + bytes(4) + struct.pack("<I", 0x80000000)
+        stream = io.BytesIO(serialized(body, schema, class_id=23))
+        stream.size = len(stream.getvalue())
+        source_type = A.W.read_serialized(stream)["types"][0]
+        policy = {"empty_mesh_renderer": True, "references": [{"offset": 0, "from": [0, 11], "to": [0, 99]}]}
+        expected = struct.pack("<iq", 0, 99) + bytes(3) + body[15:]
+        self.assertEqual(A.transform_generic(body, 23, policy, source_type=source_type), expected)
+        with self.assertRaisesRegex(ValueError, "original MeshRenderer schema"):
+            A.transform_generic(body, 1, policy, source_type=source_type)
+
     def test_prefab_policies_preserve_components_and_native_tail(self):
         name = b" Beam/[Demo] (Clone) "
         encoded = struct.pack("<I", len(name)) + name
