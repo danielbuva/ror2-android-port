@@ -1965,7 +1965,10 @@ exit and session cleanup clear notes and consent. The settings/application/GUI
 owners give the visible modal input priority while retaining the owned pause.
 Android clipboard, browser handoff and the composed settings route require
 device acceptance; host fixtures exercise the authored flow and refusal paths.
-`LabDiagnostics` replaces `snapshot.json` on its existing periodic schedule.
+`LabDiagnostics` requests 300 FPS at startup, before its first frame yield and
+the lab menu. Gameplay retains its existing 300 FPS request and restores this
+startup value on exit. This is a request; actual FPS depends on device load.
+It replaces `snapshot.json` on its existing periodic schedule.
 Only its startup/lifecycle snapshots use the full `LAB_SNAPSHOT` console record;
 periodic JSON is not retained by the original console. Original and error logging
 stay unchanged. During completed-session reclamation, `SessionResourceBoundary`
