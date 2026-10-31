@@ -157,6 +157,9 @@ class _GameThermalOwner:
         self.admission_battery = None
         self.battery_zone_celsius = None
 
+    def battery_current(self):
+        return int(self.device.sh("cat", "/sys/class/power_supply/battery/current_now", timeout=0.7))
+
     def sample(self, all_zones=False):
         before = time.monotonic()
         self.trace.parent.mkdir(parents=True, exist_ok=True)
@@ -178,6 +181,8 @@ class _GameThermalOwner:
                 text = "\n".join(name + "\t" + value + "\t" + path for (name, path), value in zip(self.runtime_zones, values))
             self.battery = battery_observation(self.device.sh("dumpsys", "battery", timeout=0.7))
             observation["battery"] = self.battery
+            if all_zones:
+                observation["battery_current_now"] = self.battery_current()
             at = time.monotonic()
             gap = at - self.previous if self.previous is not None else at - before
             self.previous = at
@@ -241,7 +246,7 @@ class _GameThermalOwner:
         if at >= self.deadline:
             raise RuntimeError("Three-hour alpha driver deadline reached")
         if all_zones:
-            if self.battery["level"] > 85 or (self.battery["status"] == 2 and self.battery["level"] >= 80):
+            if self.battery["level"] > 85 or (self.battery["level"] >= 80 and observation["battery_current_now"] > 0):
                 raise RuntimeError("Battery charge separation/limit admission refused; report without retry")
             self.hot_core_zones.clear()
             if maximum > 80:

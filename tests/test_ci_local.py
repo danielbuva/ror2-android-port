@@ -22,6 +22,9 @@ class CiLocalHookEnvironmentTests(unittest.TestCase):
                 "import unittest\nclass Fixture(unittest.TestCase):\n    def test_fixture(self):\n        self.assertTrue(True)\n"
             )
             shutil.copy2(source, scripts / "ci-local.sh")
+            shutil.copy2(source.parents[1] / "scripts/ci-local-cache.py", scripts / "ci-local-cache.py")
+            (repo / "tools").mkdir()
+            (repo / "tools/lab-requirements.txt").write_text("")
             shutil.copy2(source.parents[1] / "scripts/ci-hdiutil-volume.py", scripts / "ci-hdiutil-volume.py")
             for name in ("ruff-committed", "audit-public", "journal-index", "readme-actions"):
                 (scripts / f"{name}.py").write_text("print('fixture check passed')\n")
@@ -59,6 +62,8 @@ class CiLocalHookEnvironmentTests(unittest.TestCase):
                 "PATH": str(fakebin) + os.pathsep + env["PATH"],
                 "TMPDIR": str(root),
             }
+            # The checks must come from the commit, not another agent's current edits.
+            (scripts / "audit-public.py").write_text("raise SystemExit('uncommitted checker')\n")
             result = subprocess.run(
                 ["bash", str(scripts / "ci-local.sh"), head, head],
                 cwd=repo,
@@ -69,4 +74,38 @@ class CiLocalHookEnvironmentTests(unittest.TestCase):
             )
             self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
             self.assertIn("all CI steps pass", result.stdout)
-            self.assertEqual(git("status", "--porcelain"), "")
+            self.assertEqual(result.stdout.count("fixture check passed"), 4)
+            self.assertIn("dependency environment created", result.stderr)
+            second = subprocess.run(
+                ["bash", str(scripts / "ci-local.sh"), head, head],
+                cwd=repo,
+                env=hook_env,
+                capture_output=True,
+                text=True,
+                timeout=30,
+            )
+            self.assertEqual(second.returncode, 0, second.stdout + second.stderr)
+            self.assertIn("dependency environment reused", second.stderr)
+            self.assertIn("source objects reused", second.stderr)
+            self.assertEqual(second.stdout.count("fixture check passed"), 4)
+            self.assertIn("Ran 1 test", second.stderr)
+            self.assertEqual(git("status", "--porcelain"), "M scripts/audit-public.py")
+            # A present runner owns the full suite. Its failure must never fall back to
+            # serial discovery and turn a failing run into success.
+            (scripts / "audit-public.py").write_text("print('fixture check passed')\n")
+            (scripts / "host-tests.py").write_text("print('runner failure sentinel')\nraise SystemExit(19)\n")
+            git("add", ".")
+            git("-c", "commit.gpgsign=false", "commit", "-qm", "failing runner")
+            failed_head = git("rev-parse", "HEAD")
+            failure = subprocess.run(
+                ["bash", str(scripts / "ci-local.sh"), failed_head, head],
+                cwd=repo,
+                env=hook_env,
+                capture_output=True,
+                text=True,
+                timeout=30,
+            )
+            self.assertEqual(failure.returncode, 19, failure.stdout + failure.stderr)
+            self.assertIn("runner failure sentinel", failure.stdout)
+            self.assertNotIn("all CI steps pass", failure.stdout)
+            self.assertNotIn("Ran 1 test", failure.stderr)

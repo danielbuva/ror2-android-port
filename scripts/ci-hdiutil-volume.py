@@ -35,7 +35,9 @@ def main() -> int:
         "hdiutil",
         "create",
         "-size",
-        "2g",
+        # Producers require 2 GiB free in addition to their output. The fixture
+        # volume must leave that reserve available after APFS formatting.
+        "4g",
         "-fs",
         "Case-sensitive APFS",
         "-volname",

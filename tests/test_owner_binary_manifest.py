@@ -21,7 +21,7 @@ WIRE = load("owner_manifest_wire", ROOT / "scripts/lab/phone_apk.py")
 NONE = 0xFFFFFFFF
 
 
-def authored_manifest(utf8=True, unity=PATCH.UNITY, duplicate=False, version_kind=0x10, duplicate_version=False, omit_version=False):
+def authored_manifest(utf8=True, unity=PATCH.UNITY, duplicate=False, version_kind=0x10, duplicate_version=False, omit_version=False, application_name=None):
     strings = [
         "manifest",
         "application",
@@ -42,6 +42,7 @@ def authored_manifest(utf8=True, unity=PATCH.UNITY, duplicate=False, version_kin
         "android.intent.category.LAUNCHER",
         "authored.marker",
         "Éta𝄞",
+        application_name or "AuthoredApplication",
     ]
     content, offsets = bytearray(), []
     for text in strings:
@@ -70,7 +71,7 @@ def authored_manifest(utf8=True, unity=PATCH.UNITY, duplicate=False, version_kin
     marker = node(6, [attribute(10, 17), attribute(12, 18)])
     activity = node(2, [attribute(10, 14), attribute(11, 0x700, 0x10)], intent * (2 if duplicate else 1) + marker)
     versions = [] if omit_version else [attribute(8, 7, version_kind)] * (2 if duplicate_version else 1)
-    xml = node(0, [attribute(7, 13, namespace=NONE), *versions], node(1, [], activity))
+    xml = node(0, [attribute(7, 13, namespace=NONE), *versions], node(1, [attribute(10, 19)] if application_name else [], activity))
     return struct.pack("<HHI", 3, 8, 8 + len(pool) + len(resource_map) + len(xml)) + pool + resource_map + xml
 
 
@@ -101,6 +102,28 @@ def read(data):
 
 
 class OwnerBinaryManifestTests(unittest.TestCase):
+    def test_release_identity_changes_package_without_changing_component_identity(self):
+        for utf8 in (True, False):
+            for app in (".Application", "Application", "authored.original.Application"):
+                with self.subTest(utf8=utf8, app=app):
+                    original = authored_manifest(utf8=utf8, application_name=app)
+                    _, _, after = read(PATCH.patch(original, WIRE, version_code=8, application_id="dev.ror2lab.alpha"))
+                    self.assertEqual(after[0]["attributes"][(None, "package")], "dev.ror2lab.alpha")
+                    self.assertEqual(after[0]["attributes"][(PATCH.ANDROID, "versionCode")], 8)
+                    application = next(e for e in after if e["tag"] == "application")
+                    expected = "dev.owner.authoredfixture.Application" if app in (".Application", "Application") else app
+                    self.assertEqual(application["attributes"][(PATCH.ANDROID, "name")], expected)
+
+    def test_release_identity_rejects_invalid_package(self):
+        for value in ("", "alpha", "../escape", "dev.bad-name.app", True):
+            with self.subTest(value=value), self.assertRaisesRegex(ValueError, "applicationId"):
+                PATCH.patch(authored_manifest(), WIRE, application_id=value)
+
+    def test_first_release_version_is_not_the_source_template_version(self):
+        for version in (1, 7, 8):
+            _, _, elements = read(PATCH.patch(authored_manifest(), WIRE, version_code=version, application_id="dev.ror2lab.alpha"))
+            self.assertEqual(elements[0]["attributes"][(PATCH.ANDROID, "versionCode")], version)
+
     def test_both_encodings_move_launcher_preserve_existing_identity_and_close_bypass(self):
         for utf8 in (True, False):
             with self.subTest(utf8=utf8):

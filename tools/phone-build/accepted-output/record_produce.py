@@ -523,7 +523,33 @@ def normalize_quaternion(values):
     return [f32(value * inverse) for value in values]
 
 
-def root_average(body, root):
+# Adapted from FreeBSD msun s_atanf.c / e_atan2f.c, Sun's fdlibm.
+# Copyright (C) 1993 by Sun Microsystems, Inc. All rights reserved.
+# Developed at SunPro, a Sun Microsystems, Inc. business.
+# Permission to use, copy, modify, and distribute this software is freely
+# granted, provided that this notice is preserved.
+def small_atan2f(y, x):
+    """Portable fdlibm float arithmetic for the admitted positive-x yaw interval."""
+
+    def f32(value):
+        return struct.unpack("<f", struct.pack("<f", value))[0]
+
+    if not math.isfinite(x) or not math.isfinite(y) or x <= 0:
+        raise ValueError("root yaw is outside the positive-x atan2f domain")
+    value = f32(y / x)
+    if abs(value) >= 0.4375:
+        raise ValueError("root yaw is outside the small atan2f interval")
+    if abs(value) < 2**-12:
+        return value
+    coefficients = [f32(v) for v in (3.3333328366e-01, -1.9999158382e-01, 1.4253635705e-01, -1.0648017377e-01, 6.1687607318e-02)]
+    z = f32(value * value)
+    w = f32(z * z)
+    odd = f32(z * f32(coefficients[0] + f32(w * f32(coefficients[2] + f32(w * coefficients[4])))))
+    even = f32(w * f32(coefficients[1] + f32(w * coefficients[3])))
+    return f32(value - f32(value * f32(odd + even)))
+
+
+def root_average(body, root, use_atan2=False, use_small_atan2f=False):
     """Integrate original generic root curves over twenty native sample intervals."""
 
     def f32(value):
@@ -665,8 +691,13 @@ def root_average(body, root):
         if previous is not None:
             inverse = conjugate(previous)
             delta_rotation = multiply(inverse, rotation)
-            ratio = f32(delta_rotation[1] / delta_rotation[3])
-            angle = f32(f32(2 * f32(math.atan(ratio))) / step)
+            if use_small_atan2f:
+                phase = small_atan2f(delta_rotation[1], delta_rotation[3])
+            elif use_atan2:
+                phase = f32(math.atan2(delta_rotation[1], delta_rotation[3]))
+            else:
+                phase = f32(math.atan(f32(delta_rotation[1] / delta_rotation[3])))
+            angle = f32(f32(2 * phase) / step)
             delta = rotate(inverse, [f32(a - b) for a, b in zip(position, previous_position)])
             if mirror:
                 angle, delta[0] = -angle, -delta[0]
@@ -698,11 +729,19 @@ def transform(body, root, selected):
         "layout",
         "normalize_root_quaternions",
         "root_average",
+        "root_average_atan2",
+        "root_average_small_atan2f",
     }:
         raise ValueError("unknown AnimationClip operation")
     canonical = selected.get("canonical")
     if canonical not in (None, "zero-and-nan", "nan"):
         raise ValueError("unknown AnimationClip canonical policy")
+    if "root_average_atan2" in selected and (selected["root_average_atan2"] is not True or selected.get("root_average") is not True):
+        raise ValueError("atan2 projection requires source root-average integration")
+    if "root_average_small_atan2f" in selected and (
+        selected["root_average_small_atan2f"] is not True or selected.get("root_average") is not True or selected.get("root_average_atan2")
+    ):
+        raise ValueError("small atan2f requires its own source root-average projection")
     if not selected:
         return body
     result, spans = fields(body, root, canonical)
@@ -775,7 +814,11 @@ def transform(body, root, selected):
     for start, end, data in sorted(changes, reverse=True):
         result[start:end] = data
     result = layout_clip(bytes(result), root, selected["layout"]) if "layout" in selected else bytes(result)
-    return root_average(result, root) if selected.get("root_average") else result
+    return (
+        root_average(result, root, use_atan2=selected.get("root_average_atan2", False), use_small_atan2f=selected.get("root_average_small_atan2f", False))
+        if selected.get("root_average")
+        else result
+    )
 
 
 def reorder_controller_clips(body, root, order):
@@ -804,7 +847,7 @@ def reorder_controller_clips(body, root, order):
     return bytes(result)
 
 
-def exported_clip_tos(value):
+def exported_clip_tos(value, collision_index=None):
     """Rebuild the qualified export path from an original clip-path TOS entry."""
     if not value.startswith("Assets/"):
         raise ValueError("not an original clip asset path")
@@ -813,6 +856,10 @@ def exported_clip_tos(value):
         raise ValueError("missing original clip name")
     name = clip_name.replace("(Clone)", "").replace("(Instance)", "").strip()
     name = re.sub(r"[/:,\[\]\x00-\x1f]", "_", name)
+    if collision_index is not None:
+        if type(collision_index) is not int or not 0 <= collision_index < 2**31 - 1:
+            raise ValueError("invalid original export filename collision index")
+        name += f"_{collision_index}"
     if not name or len((name + ".anim").encode()) > 240:
         raise ValueError("unqualified export filename")
     directory = value[: match.start()].rsplit("/", 1)[0]
@@ -823,12 +870,21 @@ def controller_tos(body, root, selection):
     _, spans = fields(body, root)
     start, end = spans[("m_TOS",)]
     count = struct.unpack_from("<I", body, start)[0]
+    if any(len(row) not in (2, 3) for row in selection):
+        raise ValueError("invalid original controller TOS selection")
     if len({row[0] for row in selection}) != len(selection) or any(
-        type(i) is not int or not 0 <= i < count or type(rebuild) is not bool for i, rebuild in selection
+        type(row[0]) is not int
+        or not 0 <= row[0] < count
+        or type(row[1]) is not bool
+        or len(row) == 3
+        and (not row[1] or type(row[2]) is not int or not 0 <= row[2] < 2**31 - 1)
+        for row in selection
     ):
         raise ValueError("invalid original controller TOS selection")
     rows = []
-    for index, rebuild in selection:
+    for selected in selection:
+        index, rebuild = selected[:2]
+        collision_index = selected[2] if len(selected) == 3 else None
         a, b = spans[("m_TOS", "Array", str(index))]
         raw = body[a:b]
         key, size = struct.unpack_from("<II", raw)
@@ -836,7 +892,7 @@ def controller_tos(body, root, selection):
         if zlib.crc32(value.encode()) != key:
             raise ValueError("original TOS CRC drift")
         if rebuild:
-            encoded = exported_clip_tos(value).encode("utf-8")
+            encoded = exported_clip_tos(value, collision_index).encode("utf-8")
             raw = struct.pack("<II", zlib.crc32(encoded), len(encoded)) + encoded
             raw += bytes(-len(raw) % 4)
         rows.append(raw)
@@ -953,6 +1009,108 @@ def controller_loop_states(body, root, states, read_clip):
     return bytes(result)
 
 
+def controller_state_order(body, root, selections):
+    """Relocate original state records and their checked local index references."""
+    _, spans = fields(body, root)
+    result, changes = bytearray(body), []
+    machines = ("m_Controller", "m_StateMachineArray", "Array")
+    count = struct.unpack_from("<I", body, spans[machines][0])[0]
+    for machine, order in selections.items():
+        if not isinstance(machine, str) or not machine.isdecimal() or str(int(machine)) != machine or not 0 <= int(machine) < count:
+            raise ValueError("invalid original controller state machine")
+        prefix = machines + (machine, "data")
+        array = prefix + ("m_StateConstantArray", "Array")
+        start, end = spans[array]
+        states = struct.unpack_from("<I", body, start)[0]
+        if not isinstance(order, list) or any(type(index) is not int for index in order) or sorted(order) != list(range(states)):
+            raise ValueError("controller state order must be an original-state bijection")
+        inverse = {old: new for new, old in enumerate(order)}
+        for path, (offset, finish) in spans.items():
+            if path[: len(prefix)] != prefix or path[-1] not in ("m_DefaultState", "m_DestinationState", "m_Destination"):
+                continue
+            if finish - offset != 4:
+                raise ValueError("original controller state index extent drift")
+            value = struct.unpack_from("<I", result, offset)[0]
+            # High values select entry/exit state machines or unavailable states;
+            # only local state indices move with the original state array.
+            if value in inverse:
+                struct.pack_into("<I", result, offset, inverse[value])
+        ranges = [spans[array + (str(index),)] for index in range(states)]
+        chunks = b"".join(result[ranges[index][0] : ranges[index][1]] for index in order)
+        changes.append((start, end, struct.pack("<I", states) + chunks))
+    for start, end, replacement in sorted(changes, reverse=True):
+        result[start:end] = replacement
+    return bytes(result)
+
+
+def controller_clear_null_motion(body, root):
+    """Import a single original unavailable clip leaf as a null state motion."""
+    _, spans = fields(body, root)
+    result, removals, memory = bytearray(body), [], 0
+    for path, (start, end) in spans.items():
+        if len(path) != 11 or path[:3] != ("m_Controller", "m_StateMachineArray", "Array") or path[-2:] != ("m_BlendTreeConstantArray", "Array"):
+            continue
+        if struct.unpack_from("<I", body, start)[0] != 1:
+            continue
+        nodes = path + ("0", "data", "m_NodeArray", "Array")
+        if struct.unpack_from("<I", body, spans[nodes][0])[0] != 1:
+            continue
+        leaf = nodes + ("0", "data")
+        clip, children = spans[leaf + ("m_ClipID",)][0], spans[leaf + ("m_ChildIndices",)][0]
+        if struct.unpack_from("<I", body, clip)[0] != 0xFFFFFFFF or struct.unpack_from("<I", body, children)[0]:
+            continue
+        arrays = [p for p in spans if p[: len(path)] == path and p != path and p[-1] == "Array"]
+        if any(struct.unpack_from("<I", body, spans[p][0])[0] for p in arrays if p != nodes):
+            raise ValueError("original null-motion leaf contains unsupported array data")
+        # Native inline arrays use 16-byte headers; the release serialization
+        # stores their 4-byte counts. The outer state array header is retained.
+        memory += end - start - 4 + 12 * len(arrays)
+        removals.append((start, end))
+        left, right = spans[path[:-2] + ("m_BlendTreeConstantIndexArray",)]
+        count = struct.unpack_from("<I", body, left)[0]
+        if right - left != 4 + count * 4:
+            raise ValueError("original null-motion index extent drift")
+        for index in range(count):
+            offset = left + 4 + index * 4
+            if struct.unpack_from("<I", body, offset)[0] not in (0, 0xFFFFFFFF):
+                raise ValueError("original null-motion index does not select its sole tree")
+            struct.pack_into("<I", result, offset, 0xFFFFFFFF)
+    offset = spans[("m_ControllerSize",)][0]
+    size = struct.unpack_from("<I", body, offset)[0]
+    if size < memory:
+        raise ValueError("original null-motion allocation size drift")
+    struct.pack_into("<I", result, offset, size - memory)
+    for start, end in sorted(removals, reverse=True):
+        result[start:end] = bytes(4)
+    return bytes(result)
+
+
+def controller_clear_skeleton_masks(body, root):
+    """Apply the pinned exporter's omitted layer masks and native allocation size."""
+    _, spans = fields(body, root)
+    removals, memory = [], 0
+    for path, (start, end) in spans.items():
+        if len(path) != 9 or path[:3] != ("m_Controller", "m_LayerArray", "Array") or path[4:] != ("data", "m_SkeletonMask", "data", "m_Data", "Array"):
+            continue
+        count = struct.unpack_from("<I", body, start)[0]
+        if end - start != 4 + count * 8:
+            raise ValueError("original controller skeleton mask extent drift")
+        if count:
+            removals.append((start, end))
+            # Each native mask entry occupies 8 bytes, with a 24-byte allocation
+            # header for a nonempty array on the admitted 64-bit platforms.
+            memory += count * 8 + 24
+    offset, end = spans[("m_ControllerSize",)]
+    size = struct.unpack_from("<I", body, offset)[0]
+    if end - offset != 4 or size < memory:
+        raise ValueError("original controller allocation size drift")
+    result = bytearray(body)
+    struct.pack_into("<I", result, offset, size - memory)
+    for start, end in sorted(removals, reverse=True):
+        result[start:end] = bytes(4)
+    return bytes(result)
+
+
 def director_exposed_names(body, root):
     """Reimport AssetRipper decimal PropertyName strings and retain their PPtrs."""
     _, located = fields(body, root)
@@ -978,25 +1136,100 @@ def director_exposed_names(body, root):
     return body[:start] + struct.pack("<I", count) + b"".join(row for _, row in sorted(entries, key=lambda row: row[0])) + body[end:]
 
 
-def transform_generic(body, class_id, selected, root=None, read_clip=None):
+def director_unbound_tracks(body, root, selected):
+    """Add explicit imported track relationships with native null bindings.
+
+    The profile supplies only destination PPtrs and their binding positions.
+    Original bindings and all other Director state remain source-owned.
+    """
+    _, located = fields(body, root)
+    prefix = ("m_SceneBindings", "Array")
+    start, end = located[prefix]
+    count = struct.unpack_from("<I", body, start)[0]
+    entries = []
+    keys = set()
+    for index in range(count):
+        left, right = located[prefix + (str(index),)]
+        if right - left != 24 or located[prefix + (str(index), "key")] != (left, left + 12) or located[prefix + (str(index), "value")] != (left + 12, right):
+            raise ValueError("original Director binding schema differs")
+        entries.append(body[left:right])
+        keys.add(struct.unpack_from("<iq", body, left))
+    previous = -1
+    for row in selected:
+        if set(row) != {"index", "key"}:
+            raise ValueError("unbound track requires only position and PPtr")
+        index, key = row["index"], tuple(row["key"])
+        if type(index) is not int or not previous < index <= len(entries) or len(key) != 2 or any(type(value) is not int for value in key):
+            raise ValueError("invalid imported Director track relationship")
+        if key[0] < 0 or not key[1] or key in keys:
+            raise ValueError("imported Director track must be distinct and nonnull")
+        entries.insert(index, struct.pack("<iqiq", *key, 0, 0))
+        keys.add(key)
+        previous = index
+    result = body[:start] + struct.pack("<I", len(entries)) + b"".join(entries) + body[end:]
+    fields(result, root)
+    return result
+
+
+def transform_generic(body, class_id, selected, root=None, read_clip=None, source_type=None):
     if set(selected) - {
         "references",
         "demote_keywords",
+        "keyword_policy",
+        "strip_compute_programs",
         "director_exposed_names",
+        "director_unbound_tracks",
         "controller_clip_order",
         "controller_loop_states",
         "controller_tos",
         "controller_opposed_angles",
         "controller_behaviour_order",
+        "controller_clear_skeleton_masks",
+        "controller_state_order",
+        "controller_clear_null_motion",
         "canonical",
+        "importer_guid",
+        "crop_rectangle_offset",
+        "normalize_exported_prefab_name",
+        "append_components",
+        "remove_components",
     } or (selected.get("demote_keywords") and class_id != 21):
         raise ValueError("unknown generic object operation")
+    if "remove_components" in selected:
+        if class_id != 1:
+            raise ValueError("component omissions require original GameObject")
+        body = O.remove_components(body, selected["remove_components"])
+    if "normalize_exported_prefab_name" in selected:
+        if class_id != 1 or selected["normalize_exported_prefab_name"] is not True:
+            raise ValueError("prefab filename projection requires original GameObject")
+        body = O.normalize_exported_prefab_name(body)
+    if "append_components" in selected:
+        if class_id != 1:
+            raise ValueError("component append requires original GameObject")
+        body = O.append_components(body, selected["append_components"])
+    if "keyword_policy" in selected:
+        if class_id != 21 or selected["keyword_policy"] not in ("dummy-shader-demote-valid", "dummy-shader-sort-invalid"):
+            raise ValueError("keyword policy requires original Material and named dummy import")
+    if "strip_compute_programs" in selected:
+        if selected["strip_compute_programs"] is not True or class_id != 72 or source_type is None:
+            raise ValueError("compute projection requires original ComputeShader schema")
+        body = O.strip_compute_programs(body, source_type)
     if any(key.startswith("controller_") or key == "canonical" for key in selected) and (class_id != 91 or root is None):
         raise ValueError("controller operations require original controller schema")
     if "director_exposed_names" in selected:
         if selected["director_exposed_names"] is not True or class_id != 320 or root is None:
             raise ValueError("exposed-name import requires original PlayableDirector schema")
         body = director_exposed_names(body, root)
+    if "controller_clear_skeleton_masks" in selected:
+        if selected["controller_clear_skeleton_masks"] is not True:
+            raise ValueError("unqualified controller skeleton mask policy")
+        body = controller_clear_skeleton_masks(body, root)
+    if "controller_state_order" in selected:
+        body = controller_state_order(body, root, selected["controller_state_order"])
+    if "controller_clear_null_motion" in selected:
+        if selected["controller_clear_null_motion"] is not True:
+            raise ValueError("unqualified controller null-motion policy")
+        body = controller_clear_null_motion(body, root)
     if "controller_loop_states" in selected:
         body = controller_loop_states(body, root, selected["controller_loop_states"], read_clip)
     if "controller_clip_order" in selected:
@@ -1013,8 +1246,21 @@ def transform_generic(body, class_id, selected, root=None, read_clip=None):
         body = controller_tos(body, root, selected["controller_tos"])
     if "controller_behaviour_order" in selected:
         body = controller_singleton_behaviours(body, root, selected["controller_behaviour_order"])
+    if "importer_guid" in selected or "crop_rectangle_offset" in selected:
+        if class_id != 213 or "importer_guid" not in selected:
+            raise ValueError("Sprite import operations require an original Sprite and importer GUID")
+        sprites = O.module("player_data")
+        if "crop_rectangle_offset" in selected:
+            body = sprites.sprite_crop(body, selected["crop_rectangle_offset"])
+        body = sprites.sprite_key(body, selected["importer_guid"])
     result = O.remap(body, selected.get("references", []))
-    return O.demote_material_keywords(result) if selected.get("demote_keywords") else result
+    if "director_unbound_tracks" in selected:
+        if class_id != 320 or root is None:
+            raise ValueError("unbound tracks require original PlayableDirector schema")
+        result = director_unbound_tracks(result, root, selected["director_unbound_tracks"])
+    if selected.get("demote_keywords") or "keyword_policy" in selected:
+        return O.demote_material_keywords(result, sort_invalid=selected.get("keyword_policy") == "dummy-shader-sort-invalid")
+    return result
 
 
 def profile_bundles(path):
@@ -1033,12 +1279,42 @@ def profile_bundles(path):
                 yield source
     else:
         profile = json.loads(path.read_text())
-        if set(profile) != {"input_id", "bundles"} or profile["input_id"] != M.INPUT_ID:
+        if set(profile) - {"sdk", "managed"} != {"input_id", "bundles"} or profile["input_id"] != M.INPUT_ID:
             raise ValueError("unknown object-record input")
         yield from profile["bundles"]
 
 
-def produce(profile_path, profile_sha256, pc, output):
+def managed_record_hash(body, typ, metadata, member, script, sdk_tree, identity_owner, *, preserve_original=False):
+    """Derive an unchanged managed record's native hash from original schema."""
+    if typ["class_id"] != 114 or sdk_tree is None:
+        raise ValueError("managed record properties require MonoBehaviour and pinned SDK")
+    root = SCHEMA.type_tree(io.BytesIO(typ["tree"]))
+    _, spans = fields(body, root)
+    script_spans = [extent for path, extent in spans.items() if path in (("m_Script",), ("#490",))]
+    if len(script_spans) != 1:
+        raise ValueError("original managed script field is absent or ambiguous")
+    start, end = script_spans[0]
+    if end - start != 12:
+        raise ValueError("original managed script field differs")
+    file_id, path_id = struct.unpack_from("<iq", body, start)
+    source_member = metadata["externals"][file_id - 1]["path"].split("/")[-1] if file_id else member
+    selected, script_body, script_type = script
+    if path_id == 0 or selected["path_id"] != path_id or selected["member"] != source_member or script_type["class_id"] != 115:
+        raise ValueError("managed record script source differs from original PPtr")
+    _, names = O.script_fields(script_body)
+    if typ["script_id"] != identity_owner.md4("".join(names).encode()):
+        raise ValueError("managed record script identity differs from original schema")
+    if preserve_original:
+        return O.original_script_properties(script_body, script_type, typ, typ, identity_owner)
+    return identity_owner.properties_hash(*names, typ["tree"], sdk_tree)
+
+
+def check_native_type(typ, target):
+    if "native_type_hash" in target and target["native_type_hash"] != typ["hash"].hex():
+        raise ValueError("produced record native type identity differs")
+
+
+def produce(profile_path, profile_sha256, pc, output, sdk=None):
     if B.sha(profile_path) != profile_sha256:
         raise ValueError("object-record profile drift")
     pc = pc.resolve(strict=True)
@@ -1054,7 +1330,47 @@ def produce(profile_path, profile_sha256, pc, output):
     output.mkdir()
     started = time.monotonic()
     receipt = {"success": False, "input_id": M.INPUT_ID, "profile_sha256": profile_sha256, "objects": 0, "object_bytes": 0}
+    runtime_fields = None
     try:
+        sdk_path, sdk_tree = None, None
+        if not str(profile_path).endswith(".jsonl.gz") and "sdk" in (profile := json.loads(profile_path.read_text())):
+            if sdk is None:
+                raise ValueError("managed record properties require pinned owner SDK")
+            sdk_path = M.safe_input(sdk.resolve(strict=True), profile["sdk"]["path"])
+            if B.sha(sdk_path) != profile["sdk"]["sha256"] or output.is_relative_to(sdk.resolve()):
+                raise ValueError("SDK script metadata drift or output overlap")
+            with sdk_path.open("rb") as stream:
+                stream.size = sdk_path.stat().st_size
+                metadata = W.read_serialized(stream)
+            obj = next(row for row in metadata["objects"] if row["path_id"] == profile["sdk"]["path_id"])
+            typ = metadata["types"][obj["type_id"]]
+            if typ["class_id"] != 114:
+                raise ValueError("SDK script base is not MonoBehaviour")
+            sdk_tree = typ["tree"]
+        identity_owner = None
+        scripts, script_inputs = {}, {}
+
+        def original_script(selected):
+            key = selected["bundle"], selected["member"], selected["path_id"], selected["sha256"]
+            if key not in scripts:
+                path = M.safe_input(pc, selected["bundle"])
+                if path not in script_inputs:
+                    before = path.stat()
+                    if B.sha(path) != selected["bundle_sha256"]:
+                        raise ValueError("original managed script bundle drift")
+                    script_inputs[path] = before.st_size, before.st_mtime_ns, selected["bundle_sha256"]
+                if script_inputs[path][2] != selected["bundle_sha256"]:
+                    raise ValueError("original managed script bundle pin differs")
+                with O.source_member(path, selected["member"]) as member:
+                    metadata = W.read_serialized(member)
+                    obj = next(row for row in metadata["objects"] if row["path_id"] == selected["path_id"])
+                    member.seek(metadata["data_offset"] + obj["offset"])
+                    body = B.exact(member, obj["bytes"])
+                if hashlib.sha256(body).hexdigest() != selected["sha256"]:
+                    raise ValueError("original managed script body drift")
+                scripts[key] = selected, body, metadata["types"][obj["type_id"]]
+            return scripts[key]
+
         with (output / "objects.bin").open("xb") as data, (output / "index.jsonl").open("x") as index:
             for source in profile_bundles(profile_path):
                 path = M.safe_input(pc, source["path"])
@@ -1105,47 +1421,98 @@ def produce(profile_path, profile_sha256, pc, output):
                             21,
                             23,
                             33,
+                            54,
                             64,
                             65,
+                            72,
                             74,
                             91,
+                            95,
+                            96,
                             104,
                             108,
                             114,
+                            119,
+                            120,
                             135,
                             136,
                             137,
+                            156,
+                            193,
                             198,
                             199,
                             205,
+                            213,
                             215,
+                            221,
                             222,
                             223,
                             224,
                             225,
                             320,
+                            330,
                         ):
                             raise ValueError("unqualified original object class")
                         member.seek(metadata["data_offset"] + obj["offset"])
                         body = B.exact(member, obj["bytes"])
                         if hashlib.sha256(body).hexdigest() != selected["sha256"]:
                             raise ValueError("original object-record body drift")
+                        if "preserve_original_script_hash" in selected:
+                            if selected["preserve_original_script_hash"] is not True or "properties_hash" not in selected:
+                                raise ValueError("original managed hash requires explicit script properties")
+                        if "prune_absent_script_fields" in selected and (
+                            selected["prune_absent_script_fields"] is not True
+                            or "properties_hash" not in selected
+                            or selected.get("preserve_original_script_hash")
+                        ):
+                            raise ValueError("current script projection requires SDK properties and unchanged original binding")
+                        if "properties_hash" in selected:
+                            if set(selected["properties_hash"]) != {"script"}:
+                                raise ValueError("unknown managed record hash policy")
+                            if identity_owner is None:
+                                identity_owner = O.module("script_identity", Path(__file__).resolve().parents[3] / "scripts/lab/script_identity.py")
+                            value = managed_record_hash(
+                                body,
+                                typ,
+                                metadata,
+                                selected_member["name"],
+                                original_script(selected["properties_hash"]["script"]),
+                                sdk_tree,
+                                identity_owner,
+                                preserve_original=selected.get("preserve_original_script_hash", False),
+                            )
+                            if selected.get("prune_absent_script_fields"):
+                                if "managed" not in profile:
+                                    raise ValueError("current script projection requires pinned original assemblies")
+                                if runtime_fields is None:
+                                    runtime_fields = identity_owner.OriginalScriptFields(pc, profile["managed"])
+                                script_body = original_script(selected["properties_hash"]["script"])[1]
+                                body, tree, removed = O.project_current_script_fields(
+                                    body, typ["tree"], runtime_fields.names(script_body), sdk_tree, identity_owner
+                                )
+                                typ = {**typ, "tree": tree}
+                                value = identity_owner.properties_hash(*O.script_fields(script_body)[1], tree, sdk_tree)
+                                receipt.setdefault("pruned_script_fields", {})[str(obj["path_id"])] = removed
+                            typ = {**typ, "hash": value}
                         root = None
                         if typ["class_id"] in (74, 91, 320):
                             if obj["type_id"] not in trees:
                                 trees[obj["type_id"]] = SCHEMA.type_tree(io.BytesIO(typ["tree"]))
                             root = trees[obj["type_id"]]
                         for target in selected["outputs"]:
+                            check_native_type(typ, target)
                             operations = target.get("transform", {})
                             if typ["class_id"] == 74:
                                 result = transform(body, root, operations)
                             else:
-                                result = transform_generic(body, typ["class_id"], operations, root, read_controller_clip)
+                                result = transform_generic(body, typ["class_id"], operations, root, read_controller_clip, typ)
                             digest = hashlib.sha256(result).hexdigest()
                             if digest != target["sha256"] or len(result) != target["bytes"]:
                                 raise ValueError("produced object record differs from accepted hash")
                             row = {key: target[key] for key in ("bundle", "member", "path_id", "bytes", "sha256")}
                             row["offset"] = data.tell()
+                            if "native_type_hash" in target:
+                                row["native_type_hash"] = typ["hash"].hex()
                             data.write(result)
                             index.write(json.dumps(row, sort_keys=True) + "\n")
                             receipt["objects"] += 1
@@ -1161,6 +1528,15 @@ def produce(profile_path, profile_sha256, pc, output):
                     raise ValueError("persisted object-record extent drift")
         if B.sha(profile_path) != profile_sha256:
             raise ValueError("object-record profile changed during production")
+        for path, (size, mtime, digest) in script_inputs.items():
+            after = path.stat()
+            if (after.st_size, after.st_mtime_ns) != (size, mtime) or B.sha(path) != digest:
+                raise ValueError("original managed script changed during production")
+        if sdk_path is not None and B.sha(sdk_path) != profile["sdk"]["sha256"]:
+            raise ValueError("SDK script metadata changed during production")
+        if runtime_fields is not None:
+            runtime_fields.verify()
+            receipt["managed_field_inputs"] = dict(runtime_fields.pins)
         receipt["outputs"] = {name: {"bytes": (output / name).stat().st_size, "sha256": B.sha(output / name)} for name in ("objects.bin", "index.jsonl")}
         receipt["success"] = True
         return receipt
@@ -1168,6 +1544,8 @@ def produce(profile_path, profile_sha256, pc, output):
         receipt["error"] = type(error).__name__ + ": " + str(error)
         raise
     finally:
+        if runtime_fields is not None:
+            runtime_fields.close()
         receipt["seconds"] = time.monotonic() - started
         (output / "result.json").write_text(json.dumps(receipt, indent=2) + "\n")
 
@@ -1178,8 +1556,9 @@ def main():
     parser.add_argument("--profile-sha256", required=True)
     parser.add_argument("--pc", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument("--sdk", type=Path, help="pinned owner SDK root for original managed type hashes")
     args = parser.parse_args()
-    produce(args.profile, args.profile_sha256, args.pc, args.output)
+    produce(args.profile, args.profile_sha256, args.pc, args.output, args.sdk)
 
 
 if __name__ == "__main__":

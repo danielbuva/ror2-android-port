@@ -3,7 +3,10 @@
 import copy
 import importlib.util
 import io
+import json
+import hashlib
 import struct
+import tempfile
 import unittest
 from pathlib import Path
 
@@ -81,6 +84,40 @@ def fixture(stripped=False, renderer=2, level=0, resolved=1, variant_count=1, gr
 
 
 class ComputeProjectionTests(unittest.TestCase):
+    def test_record_pack_reuses_compute_policy_and_checks_native_type(self):
+        owner = A.A
+        body, typ = fixture()
+        expected, _ = fixture(stripped=True)
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            pc = root / "pc"
+            pc.mkdir()
+            schema = owner.SCHEMA.type_tree(io.BytesIO(typ["tree"]))
+            original = pc / "authored.bundle"
+            original.write_bytes(F.bundle([("CAB-authored", A.serialized(body, schema, 72), 4)]))
+            target = dict(
+                bundle="authored-result",
+                member="CAB-result",
+                path_id=88,
+                bytes=len(expected),
+                sha256=hashlib.sha256(expected).hexdigest(),
+                native_type_hash=typ["hash"].hex(),
+                transform={"strip_compute_programs": True},
+            )
+            selected = dict(path_id=77, class_id=72, sha256=hashlib.sha256(body).hexdigest(), outputs=[target])
+            profile = dict(
+                input_id=owner.M.INPUT_ID,
+                bundles=[dict(path="authored.bundle", sha256=owner.B.sha(original), members=[dict(name="CAB-authored", objects=[selected])])],
+            )
+            path = root / "profile.json"
+            path.write_text(json.dumps(profile))
+            before = owner.B.sha(original)
+            result = owner.produce(path, owner.B.sha(path), pc, root / "output")
+            self.assertTrue(result["success"])
+            self.assertEqual((root / "output/objects.bin").read_bytes(), expected)
+            self.assertEqual(json.loads((root / "output/index.jsonl").read_text())["native_type_hash"], typ["hash"].hex())
+            self.assertEqual(owner.B.sha(original), before)
+
     def test_all_program_arrays_are_empty_and_all_unrelated_bytes_are_retained(self):
         body, typ = fixture()
         before = body

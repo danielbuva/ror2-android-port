@@ -17,6 +17,9 @@ while [ ! -e "$FAKE_RELEASE" ]; do sleep 0.05; done
 exit 23
 FAKE
 chmod +x "$test_root/bin/hdiutil"
+# Exercise the Darwin cleanup contract even when this test runs on Linux.
+printf '#!/bin/sh\nprintf "Darwin\\n"\n' > "$test_root/bin/uname"
+chmod +x "$test_root/bin/uname"
 cat > "$test_root/runner.sh" <<'RUNNER'
 #!/bin/bash
 set -euo pipefail

@@ -17,15 +17,15 @@ BINARY_SHA256 = "906123118e45d56c6bcf20f3776ed2373417553042500714023daeb9e53058e
 
 
 class MachO:
-    """Bounded thin little-endian ARM64 Mach-O reader, using no native libraries."""
+    """Bounded thin ARM64 reader; executables by default, explicit dylib opt-in."""
 
-    def __init__(self, data):
+    def __init__(self, data, *, file_kind=2):
         self.data = data
         if len(data) < 32:
             raise ValueError("Truncated Mach-O header")
         magic, cpu, subtype, kind, commands, size, flags, reserved = struct.unpack_from("<IiiIIIII", data)
-        if magic != 0xFEEDFACF or cpu != 0x100000C or kind != 2 or commands > 4096:
-            raise ValueError("Expected a thin ARM64 little-endian SDK executable")
+        if file_kind not in (2, 6) or magic != 0xFEEDFACF or cpu != 0x100000C or kind != file_kind or commands > 4096:
+            raise ValueError("Expected the selected thin ARM64 little-endian SDK file kind")
         self.segments, self.symbols, self.sections = [], {}, []
         self.take(32, size)
         position, symtab = 32, None

@@ -61,6 +61,7 @@ public final class PayloadBootstrapActivity extends Activity {
         // writing data while the game may still be using it.
         if (backend.unityRequested && backend.status.equals("ready")) {
             try {
+                ProfileRetentionProvider.beforeUnityLaunch(getApplicationContext());
                 handingOff = true;
                 startActivity(new Intent().setClassName(getPackageName(), "com.unity3d.player.UnityPlayerActivity"));
                 finish();
@@ -304,6 +305,7 @@ public final class PayloadBootstrapActivity extends Activity {
                         boolean hadGame = unityRequested;
                         try {
                             Intent intent = new Intent().setClassName(context.getPackageName(), "com.unity3d.player.UnityPlayerActivity");
+                            ProfileRetentionProvider.beforeUnityLaunch(context);
                             unityRequested = true;
                             target.handingOff = true;
                             target.startActivity(intent);
@@ -312,7 +314,11 @@ public final class PayloadBootstrapActivity extends Activity {
                         } catch (Exception failure) {
                             unityRequested = hadGame;
                             target.handingOff = false;
-                            synchronized (this) { running = false; status = "error"; percent = null; message = hadGame ? "The game could not be resumed. Exit and restart it." : "The game could not be started. Retry preparation."; }
+                            synchronized (this) {
+                                running = false; status = "error"; percent = null;
+                                message = failure instanceof IOException ? "Local profile recovery is pending or unavailable. Open the installer and retry recovery before launching."
+                                        : hadGame ? "The game could not be resumed. Exit and restart it." : "The game could not be started. Retry preparation.";
+                            }
                         }
                     });
                 } catch (Exception failure) {

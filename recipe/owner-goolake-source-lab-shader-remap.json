@@ -1,0 +1,20 @@
+{
+  "input_id": "6af7ed94619fe1b4346974b4486afa03a8d1625a7820e92da0ff74d57208fe88",
+  "records": [
+    {
+      "source_profile_sha256": "634ace2d8f1ea8e80bfc9dc2756c41acb25a8aa611c0fea3e213310e66516bd2",
+      "source": [
+        "sulfurpools-source-lab",
+        "BuildPlayer-sulfurpools.sharedAssets",
+        176
+      ],
+      "destination": [
+        "goolake-source-lab",
+        "BuildPlayer-goolake.sharedAssets",
+        56
+      ],
+      "bytes": 261528,
+      "sha256": "e1796cd46e548f64cc337e841d83bd23a1772c22861b69bdb9b162787f4f6689"
+    }
+  ]
+}

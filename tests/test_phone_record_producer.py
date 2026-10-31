@@ -10,6 +10,7 @@ from pathlib import Path
 import struct
 import tempfile
 import unittest
+from unittest.mock import Mock, patch
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -232,6 +233,41 @@ def root_motion_fixture(turn=False):
 
 
 class AnimationProducerTests(unittest.TestCase):
+    def test_managed_type_hash_uses_original_script_binding_and_sdk_schema(self):
+        identity = A.O.module("script_identity", ROOT / "scripts/lab/script_identity.py")
+        schema = F.node("Base", children=[F.node("m_Script", 12, kind="PPtr<MonoScript>"), F.node("retained", 4, kind="float")])
+        names = ("AuthoredComponent", "Fixture", "Fixture.dll")
+        stream = io.BytesIO()
+        A.O.aligned_string(stream, "Authored script")
+        original_hash = b"ORIGINAL HASH!!!"
+        stream.write(bytes(4) + original_hash)
+        for name in names:
+            A.O.aligned_string(stream, name)
+        body = struct.pack("<iqI", 1, 99, 0x80000000)
+        typ = {"class_id": 114, "script_id": identity.md4("".join(names).encode()), "tree": b"original-schema"}
+        script = ({"member": "source-scripts", "path_id": 99}, stream.getvalue(), {"class_id": 115})
+        helper = Mock(md4=identity.md4, properties_hash=Mock(return_value=b"NATIVE HASH HERE"))
+        metadata = {"externals": [{"path": "archive:/source-scripts/source-scripts"}]}
+        with patch.object(A.SCHEMA, "type_tree", return_value=schema):
+            value = A.managed_record_hash(body, typ, metadata, "source-component", script, b"sdk-schema", helper)
+            self.assertEqual(value, b"NATIVE HASH HERE")
+            helper.properties_hash.assert_called_once_with(*names, b"original-schema", b"sdk-schema")
+            self.assertEqual(
+                A.managed_record_hash(body, typ, metadata, "source-component", script, b"sdk-schema", helper, preserve_original=True), original_hash
+            )
+            common_schema = F.node("Base", children=[F.node("#490", 12, kind="PPtr<MonoScript>"), F.node("retained", 4, kind="float")])
+            with patch.object(A.SCHEMA, "type_tree", return_value=common_schema):
+                self.assertEqual(A.managed_record_hash(body, typ, metadata, "source-component", script, b"sdk-schema", helper), value)
+            with self.assertRaisesRegex(ValueError, "original PPtr"):
+                A.managed_record_hash(struct.pack("<iqI", 1, 100, 0), typ, metadata, "source-component", script, b"sdk-schema", helper)
+            with self.assertRaisesRegex(ValueError, "script identity"):
+                A.managed_record_hash(body, {**typ, "script_id": bytes(16)}, metadata, "source-component", script, b"sdk-schema", helper)
+
+    def test_bounded_float_yaw_preserves_the_single_precision_library_rounding(self):
+        self.assertEqual(struct.pack("<f", A.small_atan2f(0.000732421875, 1.25)).hex(), "9999193a")
+        self.assertEqual(struct.pack("<f", A.small_atan2f(-0.000732421875, 1.25)).hex(), "999919ba")
+        self.assertEqual(struct.pack("<f", A.small_atan2f(-0.0, 1.25)).hex(), "00000080")
+
     def test_director_reimport_sorts_signed_keys_with_their_references(self):
         # Fixed CRC32 vectors cover signed ordering, alignment changes and null PPtrs.
         entry = F.node("data", children=[F.text("first"), F.node("second", 12, kind="PPtr<Object>")])
@@ -249,6 +285,23 @@ class AnimationProducerTests(unittest.TestCase):
         self.assertEqual(made, expected)
         with self.assertRaisesRegex(ValueError, "PlayableDirector"):
             A.transform_generic(body, 91, {"director_exposed_names": True}, schema)
+
+    def test_director_import_adds_null_track_relationships_after_pointer_relocation(self):
+        pointer = lambda name: F.node(name, children=[F.node("m_FileID", 4, kind="int"), F.node("m_PathID", 8, kind="SInt64")])
+        entry = F.node("data", children=[pointer("key"), pointer("value")])
+        schema = F.node("Base", children=[F.node("prefix", 4), F.array("m_SceneBindings", entry), F.node("suffix", 4)])
+        bindings = [struct.pack("<iqiq", 2, -91, 0, 54), struct.pack("<iqiq", 3, 77, 0, 0)]
+        body = struct.pack("<II", 0x12345678, 2) + b"".join(bindings) + struct.pack("<I", 0x87654321)
+        policy = {
+            "references": [{"offset": 8, "from": [2, -91], "to": [1, 101]}],
+            "director_unbound_tracks": [{"index": 0, "key": [1, 103]}, {"index": 2, "key": [1, 104]}],
+        }
+        made = A.transform_generic(body, 320, policy, schema)
+        expected = struct.pack("<II", 0x12345678, 4) + struct.pack("<iqiq", 1, 103, 0, 0) + struct.pack("<iqiq", 1, 101, 0, 54)
+        expected += struct.pack("<iqiq", 1, 104, 0, 0) + bindings[1] + struct.pack("<I", 0x87654321)
+        self.assertEqual(expected, made)
+        with self.assertRaisesRegex(ValueError, "PlayableDirector"):
+            A.transform_generic(body, 91, policy, schema)
 
     def test_empty_dense_metadata_uses_original_clip_stop_and_rate(self):
         body, schema = layout_fixture()
@@ -322,11 +375,15 @@ class AnimationProducerTests(unittest.TestCase):
         _, spans = A.fields(body, schema)
         angular = spans[("m_MuscleClip", "m_AverageAngularSpeed")][0]
         self.assertAlmostEqual(struct.unpack_from("<f", result, angular)[0], math.pi / 2, places=5)
+        projected = A.transform(body, schema, {"root_average": True, "root_average_atan2": True})
+        self.assertAlmostEqual(struct.unpack_from("<f", projected, angular)[0], math.pi / 2, places=5)
         speed = spans[("m_MuscleClip", "m_AverageSpeed")][0]
         self.assertEqual(struct.unpack_from("<3f", result, speed), (0, 0, 0))
         changed = bytearray(body)
         changed[spans[("m_MuscleClip", "m_Mirror")][0]] = 1
         self.assertAlmostEqual(struct.unpack_from("<f", A.root_average(bytes(changed), schema), angular)[0], -math.pi / 2, places=5)
+        mirrored = A.transform(bytes(changed), schema, {"root_average": True, "root_average_atan2": True})
+        self.assertAlmostEqual(struct.unpack_from("<f", mirrored, angular)[0], -math.pi / 2, places=5)
 
     def test_binding_reorder_sorts_complete_source_keys_by_the_new_curve_index(self):
         body, schema = layout_fixture()
@@ -478,7 +535,38 @@ class AnimationProducerTests(unittest.TestCase):
     def test_generic_packs_retain_all_nonpointer_bytes(self):
         body, schema = fixture()
         expected = body[:-16] + struct.pack("<iq", 7, -999) + body[-4:]
-        for class_id in (1, 4, 23, 33, 64, 65, 91, 104, 108, 114, 135, 136, 137, 198, 199, 205, 215, 222, 223, 224, 225):
+        for class_id in (
+            1,
+            4,
+            23,
+            33,
+            54,
+            64,
+            65,
+            91,
+            95,
+            96,
+            104,
+            108,
+            114,
+            119,
+            120,
+            135,
+            136,
+            137,
+            156,
+            193,
+            198,
+            199,
+            205,
+            215,
+            221,
+            222,
+            223,
+            224,
+            225,
+            330,
+        ):
             transform = {"references": [{"offset": len(body) - 16, "from": [3, 1234567], "to": [7, -999]}]}
             with tempfile.TemporaryDirectory() as temporary:
                 root = Path(temporary)
@@ -513,6 +601,46 @@ class AnimationProducerTests(unittest.TestCase):
                 with self.assertRaisesRegex(ValueError, "generic object operation"):
                     A.produce(path, A.B.sha(path), pc, root / "operation-drift")
 
+    def test_prefab_policies_preserve_components_and_native_tail(self):
+        name = b" Beam/[Demo] (Clone) "
+        encoded = struct.pack("<I", len(name)) + name
+        body = struct.pack("<IiqiqI", 2, 0, 11, 0, 22, 5) + encoded + bytes(-len(encoded) % 4) + b"\x07\x00\x01"
+        projected = struct.pack("<I", 11) + b"Beam__Demo_" + bytes(1)
+        expected = struct.pack("<IiqiqiqI", 3, 0, 101, 0, 303, 0, 202, 5) + projected + b"\x07\x00\x01"
+        policy = {
+            "normalize_exported_prefab_name": True,
+            "append_components": [303],
+            "references": [
+                {"offset": 4, "from": [0, 11], "to": [0, 101]},
+                {"offset": 16, "from": [0, 22], "to": [0, 303]},
+                {"offset": 28, "from": [0, 303], "to": [0, 202]},
+            ],
+        }
+        self.assertEqual(A.transform_generic(body, 1, policy), expected)
+        with self.assertRaisesRegex(ValueError, "filename projection"):
+            A.transform_generic(body, 114, policy)
+        with self.assertRaisesRegex(ValueError, "component append"):
+            A.transform_generic(body, 114, {"append_components": [303]})
+
+    def test_prefab_omissions_check_original_identity_before_append_and_remap(self):
+        tail = struct.pack("<II", 5, 4) + b"Demo" + b"\x07\x00\x01"
+        body = struct.pack("<Iiqiqiq", 3, 0, 11, 0, 88, 0, 22) + tail
+        policy = {
+            "remove_components": [{"index": 1, "path_id": 88}],
+            "append_components": [303],
+            "references": [
+                {"offset": 16, "from": [0, 22], "to": [0, 303]},
+                {"offset": 28, "from": [0, 303], "to": [0, 22]},
+            ],
+        }
+        expected = struct.pack("<Iiqiqiq", 3, 0, 11, 0, 303, 0, 22) + tail
+        self.assertEqual(A.transform_generic(body, 1, policy), expected)
+        with self.assertRaisesRegex(ValueError, "component omissions"):
+            A.transform_generic(body, 114, policy)
+        policy["remove_components"][0]["path_id"] = 99
+        with self.assertRaisesRegex(ValueError, "component identity drift"):
+            A.transform_generic(body, 1, policy)
+
     def test_generic_material_policy_relocates_before_demoting_original_keywords(self):
         prefix = struct.pack("<I", 4) + b"Demo" + struct.pack("<iq", 2, 77)
         keyword = struct.pack("<I", 3) + b"ONE\0"
@@ -524,6 +652,16 @@ class AnimationProducerTests(unittest.TestCase):
         self.assertEqual(A.transform_generic(expected, 21, {"demote_keywords": True}), expected)
         with self.assertRaisesRegex(ValueError, "generic object operation"):
             A.transform_generic(body, 91, selected)
+
+    def test_named_material_keyword_policy_keeps_source_text_and_ordinal_order(self):
+        prefix = struct.pack("<I", 4) + b"Demo" + struct.pack("<iq", 2, 77)
+        keyword = lambda text: struct.pack("<I", len(text)) + text + bytes(-len(text) % 4)
+        valid, invalid = [keyword(b"ZZ"), keyword(b"AA")], [keyword(b"MM")]
+        suffix = b"RETAIN ALL MATERIAL VALUES"
+        body = prefix + struct.pack("<I", 2) + b"".join(valid) + struct.pack("<I", 1) + b"".join(invalid) + suffix
+        for policy, order in [("dummy-shader-demote-valid", valid + invalid), ("dummy-shader-sort-invalid", [valid[1], invalid[0], valid[0]])]:
+            expected = prefix + struct.pack("<II", 0, 3) + b"".join(order) + suffix
+            self.assertEqual(A.transform_generic(body, 21, {"keyword_policy": policy}), expected)
 
     def test_compressed_profile_streams_groups_and_rejects_unbounded_or_incomplete_rows(self):
         header = json.dumps({"input_id": A.M.INPUT_ID}).encode() + b"\n"

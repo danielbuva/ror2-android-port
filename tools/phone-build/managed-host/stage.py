@@ -12,6 +12,10 @@ import xml.etree.ElementTree as ET
 SOURCE = Path(__file__).resolve().parent
 ROOT = SOURCE.parents[2]
 METADATA = ROOT / "recipe/owner-app-host-tools.json"
+UPDATE_NETWORK_MODULES = {
+    "libpyext__socket.so": "python/lib/python3.14/lib-dynload/_socket.cpython-314-aarch64-linux-android.so",
+    "libpyext__ssl.so": "python/lib/python3.14/lib-dynload/_ssl.cpython-314-aarch64-linux-android.so",
+}
 
 
 def digest(path):
@@ -24,6 +28,27 @@ def relative(value):
     if not value or path.is_absolute() or ".." in path.parts or "\\" in value or path.as_posix() != value:
         raise ValueError("Unsafe fixture input path")
     return path
+
+
+def validate_update_network(extra):
+    """Require caller-pinned network modules before starting any installer build.
+
+    The base tool experiment did not need networking. Reuse its explicit
+    backend-tools.json native/link contract rather than guess provider hashes.
+    """
+    if not isinstance(extra, dict) or not isinstance(extra.get("natives"), dict) or not isinstance(extra.get("links"), dict):
+        raise ValueError("Installer HTTPS requires pinned _socket and _ssl modules in backend-tools.json natives/links")
+    for target, link in UPDATE_NETWORK_MODULES.items():
+        row = extra["natives"].get(target)
+        if not isinstance(row, dict) or set(row) != {"path", "sha256"} or extra["links"].get(link) != target:
+            raise ValueError("Installer HTTPS requires explicit native provider and Python link: " + target)
+        if not isinstance(row["sha256"], str) or not re.fullmatch(r"[0-9a-f]{64}", row["sha256"]):
+            raise ValueError("Installer HTTPS provider needs supplied SHA-256: " + target)
+        path = Path(row["path"])
+        if not path.is_absolute() or path != path.resolve() or not path.is_file() or path.name != PurePosixPath(link).name:
+            raise ValueError("Installer HTTPS provider must be a canonical matching Python 3.14 module: " + target)
+        if digest(path) != row["sha256"]:
+            raise ValueError("Installer HTTPS native provider drift: " + target)
 
 
 def load_metadata():
@@ -49,17 +74,26 @@ def load_metadata():
     return data
 
 
-def tool_manifest(source, destination, package=None):
+def tool_manifest(source, destination, package=None, game_package=None):
     """Keep Java class identities when selecting a separate owned tool package."""
     tree = ET.parse(source)
     manifest = tree.getroot()
     original = manifest.attrib["package"]
     package = package or original
-    if not re.fullmatch(r"dev\.ror2lab\.[A-Za-z][A-Za-z0-9_.]*", package) or package == "dev.ror2lab.arm64":
+    if not re.fullmatch(r"dev\.ror2lab\.[A-Za-z][A-Za-z0-9_.]*", package) or package in {"dev.ror2lab.arm64", "dev.ror2lab.alpha", game_package}:
         raise ValueError("separate lab tool package required")
     android = "{http://schemas.android.com/apk/res/android}"
+    if game_package is not None:
+        if not re.fullmatch(r"[A-Za-z][A-Za-z0-9_]*(?:\.[A-Za-z][A-Za-z0-9_]*)+", game_package):
+            raise ValueError("explicit game applicationId required")
+        queries = manifest.find("queries")
+        if queries is None:
+            queries = ET.SubElement(manifest, "queries")
+        for old in list(queries):
+            queries.remove(old)
+        ET.SubElement(queries, "package", {android + "name": game_package})
     for node in manifest.iter():
-        if node.tag in {"activity", "instrumentation", "provider"}:
+        if node.tag in {"activity", "instrumentation", "provider", "receiver", "service"}:
             name = node.attrib.get(android + "name", "")
             if name.startswith("."):
                 node.set(android + "name", original + name)
@@ -72,7 +106,7 @@ def tool_manifest(source, destination, package=None):
     tree.write(destination, encoding="utf-8", xml_declaration=True)
 
 
-def stage(profile_source, sdk, destination, *, root=ROOT, owner_backend=False):
+def stage(profile_source, sdk, destination, *, root=ROOT, owner_backend=False, release_trust=None):
     profile_source = Path(profile_source).resolve(strict=True)
     sdk = Path(sdk).resolve(strict=True)
     destination = Path(destination).expanduser().absolute()
@@ -98,6 +132,17 @@ def stage(profile_source, sdk, destination, *, root=ROOT, owner_backend=False):
             raise ValueError("Public transform source drift: " + name)
     for name in (
         "owner-apk/build_owner_apk.py",
+        "owner-apk/release.py",
+        "owner-apk/updates.py",
+        "owner-apk/release_source.py",
+        "owner-apk/public_release.py",
+        "owner-apk/release_jobs.py",
+        "owner-apk/game_import.py",
+        "owner-apk/install_flow.py",
+        "owner-apk/alpha_policy.py",
+        "owner-apk/ProfileStore.java",
+        "owner-apk/ProfileRetentionProvider.java",
+        "owner-apk/install_inputs.py",
         "owner-apk/binary_manifest.py",
         "accepted-output/package.py",
         "accepted-output/assemble.py",
@@ -119,6 +164,12 @@ def stage(profile_source, sdk, destination, *, root=ROOT, owner_backend=False):
         "NativeDotnetMuxer.c",
         "NativeJavaHost.c",
         "ToolHostActivity.java",
+        "OwnerInstaller.java",
+        "OwnerAlphaInstall.java",
+        "OwnerUpdateState.java",
+        "OwnerBuildService.java",
+        "OwnerInputImport.java",
+        "OwnerInputSource.java",
         "run_profile.py",
         "stage.py",
         "build_fixture.py",
@@ -127,9 +178,15 @@ def stage(profile_source, sdk, destination, *, root=ROOT, owner_backend=False):
         bind(SOURCE / name, name)
     for name in ("NativeToolHost.c", "Hello.cs"):
         bind(SOURCE.parent / "native-host" / name, name)
+    # This is build-time public trust, never a key learned from a downloaded release.
+    trust_source = Path(release_trust).resolve(strict=True) if release_trust else SOURCE / "release-trust.json"
+    trust = json.loads(trust_source.read_text())
+    if set(trust) != {"repository", "application_id", "keys"} or not isinstance(trust["keys"], dict):
+        raise ValueError("Explicit public release trust configuration required")
+    bind(trust_source, "release-trust.json")
     bind(METADATA, "python-native-plan.json")
     for name, path in {
-        "android.jar": "platforms/android-30/android.jar",
+        "android.jar": "platforms/android-33/android.jar",
         "d8.jar": "build-tools/34.0.0/lib/d8.jar",
         "apksigner.jar": "build-tools/34.0.0/lib/apksigner.jar",
     }.items():
@@ -160,6 +217,7 @@ if __name__ == "__main__":
     parser.add_argument("--sdk", type=Path, required=True)
     parser.add_argument("--dest", type=Path, required=True)
     parser.add_argument("--owner-backend", action="store_true", help="stage current authored owners for the headless whole-player backend")
+    parser.add_argument("--release-trust", type=Path, help="explicit publisher public-key configuration; default remains unprovisioned")
     args = parser.parse_args()
-    result = stage(args.profile_source, args.sdk, args.dest, owner_backend=args.owner_backend)
+    result = stage(args.profile_source, args.sdk, args.dest, owner_backend=args.owner_backend, release_trust=args.release_trust)
     print(json.dumps(dict(success=result["success"], files=len(result["files"]))))

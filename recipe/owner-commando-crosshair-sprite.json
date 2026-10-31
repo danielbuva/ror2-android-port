@@ -1,0 +1,47 @@
+{
+  "input_id": "6af7ed94619fe1b4346974b4486afa03a8d1625a7820e92da0ff74d57208fe88",
+  "bundles": [
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-base-ui_assets_all_5fb4a28e453c573571102591a1fcff71.bundle",
+      "sha256": "7a73b50fc657c48e14501e1b7f1840b815bcf48a5e255e7c6373d6ba3fe0ed6b",
+      "members": [
+        {
+          "name": "CAB-f70ea1e2c52c46b488c162a7fb6206df",
+          "objects": [
+            {
+              "path_id": 430055474545490626,
+              "class_id": 213,
+              "sha256": "1a8792780106703ae76c97875872357060a45155f2847989b5258123db370515",
+              "outputs": [
+                {
+                  "bundle": "commando-prefab-lab",
+                  "member": "CAB-b0611b01bbffecd06329c6d6eecf278c",
+                  "path_id": -29567930315769487,
+                  "bytes": 476,
+                  "sha256": "2e610ea2f1157404d22c8301ca2b61eb3da8f7ff7b066365a72f0f2e11e51a47",
+                  "transform": {
+                    "importer_guid": "4808e056a77fccd45aa31f6b6f1994f1",
+                    "crop_rectangle_offset": 376,
+                    "references": [
+                      {
+                        "offset": 128,
+                        "from": [
+                          0,
+                          -6305524582138512702
+                        ],
+                        "to": [
+                          0,
+                          7950082912439211898
+                        ]
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -29,6 +29,21 @@ W, M = module("unity_write"), module("mesh_produce")
 B = W.B
 
 
+def source_member(path, member):
+    """Open an original bundle member or its named native serialized file."""
+    with path.open("rb") as stream:
+        signature = stream.read(8)
+        if signature != b"UnityFS\0":
+            if member != path.name:
+                raise ValueError("native serialized source member identity differs")
+            stream.seek(0)
+            raw = B.exact(stream, path.stat().st_size)
+            result = io.BytesIO(raw)
+            result.size = len(raw)
+            return result
+    return B.Bundle(path).member(member)
+
+
 def remap(body, references):
     """Replace checked 12-byte PPtrs; preserve every other source byte."""
     result = bytearray(body)
@@ -44,19 +59,35 @@ def remap(body, references):
     return bytes(result)
 
 
-def demote_material_keywords(body):
+def remap_record(body, typ, references, externals):
+    """Relocate produced bodies only at PPtrs declared by the original schema."""
+    records = module("record_produce")
+    _, spans = records.fields(body, records.SCHEMA.type_tree(io.BytesIO(typ["tree"])))
+    pointers = {start for key, (start, end) in spans.items() if end - start == 12 and key + ("m_FileID",) in spans and key + ("m_PathID",) in spans}
+    for reference in references:
+        if reference["offset"] not in pointers:
+            raise ValueError("produced record relocation is not a schema PPtr")
+        file_id, _ = reference["to"]
+        if not 0 <= file_id <= len(externals):
+            raise ValueError("produced record relocation has an absent external file")
+    return remap(body, references)
+
+
+def demote_material_keywords(body, *, sort_invalid=False):
     """Retain original keywords as invalid for the qualified dummy shader.
 
     The authored dummy shader declares no material keywords. Preserve the
-    original valid-then-invalid order, every keyword string and all other
+    original valid-then-invalid order by default, every keyword string and all other
     original material values; no shader/material payload comes from a recipe.
     """
     stream = io.BytesIO(body)
 
     def string():
+        start = stream.tell()
         size = B.unpack(stream, "<I")[0]
-        B.exact(stream, size)
+        label = B.exact(stream, size).decode("utf-8")
         B.exact(stream, -stream.tell() % 4)
+        return label, body[start : stream.tell()]
 
     string()  # Original material name.
     B.exact(stream, 12)  # Shader PPtr, relocated separately.
@@ -64,18 +95,15 @@ def demote_material_keywords(body):
     valid_count = B.unpack(stream, "<I")[0]
     if valid_count > len(body) // 4:
         raise ValueError("invalid material keyword count")
-    valid_start = stream.tell()
-    for _ in range(valid_count):
-        string()
-    valid_end = stream.tell()
+    keywords = [string() for _ in range(valid_count)]
     invalid_count = B.unpack(stream, "<I")[0]
     if invalid_count > len(body) // 4:
         raise ValueError("invalid material keyword count")
-    invalid_start = stream.tell()
-    for _ in range(invalid_count):
-        string()
+    keywords.extend(string() for _ in range(invalid_count))
     end = stream.tell()
-    return body[:start] + struct.pack("<II", 0, valid_count + invalid_count) + body[valid_start:valid_end] + body[invalid_start:end] + body[end:]
+    if sort_invalid:
+        keywords.sort(key=lambda item: item[0].encode("utf-16-be"))
+    return body[:start] + struct.pack("<II", 0, valid_count + invalid_count) + b"".join(chunk for _, chunk in keywords) + body[end:]
 
 
 def remove_components(body, removals):
@@ -115,9 +143,28 @@ def clear_static_renderers(body, expected):
 
 
 def deactivate_global_owner(body, name):
-    """Apply source_scene_candidate's named global-root suppression."""
-    if name not in {"SceneInfo", "Director", "GameManager", "RoR2Application"}:
+    """Apply authored scene and prefab root suppression."""
+    if name not in {
+        "SceneInfo",
+        "Director",
+        "GameManager",
+        "RoR2Application",
+        "BeetleBody",
+        "BeetleGuardBody",
+        "BeetleGuardMaster",
+        "BeetleQueen2Body",
+        "CommandoBody",
+        "PlayerMaster",
+        "Teleporter1",
+    }:
         raise ValueError("unknown original global owner")
+    return deactivate_named_gameobject(body, name)
+
+
+def deactivate_named_gameobject(body, name):
+    """Apply an explicit scene activation policy after checking the source name."""
+    if not isinstance(name, str) or not name:
+        raise ValueError("inactive scene object requires its original name")
     stream = io.BytesIO(body)
     count = B.unpack(stream, "<I")[0]
     if count > len(body) // 12:
@@ -135,11 +182,147 @@ def deactivate_global_owner(body, name):
     return body[:-1] + bytes(1)
 
 
-def rebuild_bezier_line(body, sources, source_profiles, line_selector, behaviour_selector):
-    """Re-evaluate one original nonanimated BezierCurveLine using Unity float32 Lerp.
+def rebuild_director_deck(body, tree, categories):
+    """Select source category/card spans with the authored deck's default omissions."""
+    records = module("record_produce")
+    _, spans = records.fields(body, records.SCHEMA.type_tree(io.BytesIO(tree)))
+    name_start, name_end = spans["m_Name",]
+    name_size = struct.unpack_from("<I", body, name_start)[0]
+    name = body[name_start + 4 : name_start + 4 + name_size].decode("utf-8")
+    category_start, category_end = spans["categories",]
+    result = io.BytesIO()
+    result.write(body[:name_start])
+    aligned_string(result, "Android supported " + name)
+    result.write(body[name_end:category_start])
+    result.write(struct.pack("<I", len(categories)))
+    omitted_fields = {
+        "spawnDistance",
+        "preventOverhead",
+        "minimumStageCompletions",
+        "requiredUnlockable",
+        "forbiddenUnlockable",
+        "requiredUnlockableDef",
+        "forbiddenUnlockableDef",
+    }
+    for category in categories:
+        path = ("categories", "Array", str(category["source_index"]))
+        start, end = spans[path]
+        cards_start, cards_end = spans[path + ("cards",)]
+        result.write(body[start:cards_start])
+        result.write(struct.pack("<I", len(category["cards"])))
+        for card in category["cards"]:
+            card_path = path + ("cards", "Array", str(card["source_index"]))
+            card_start, card_end = spans[card_path]
+            for field in ("isExclusivelyElite", "eliteDef"):
+                first, last = spans[card_path + (field,)]
+                if body[first:last] != bytes(last - first):
+                    raise ValueError("authored director deck requires original non-elite defaults")
+            replacements = []
+            if not set(card["omit_fields"]) <= omitted_fields:
+                raise ValueError("unknown authored director card omission")
+            for field in card["omit_fields"]:
+                first, last = spans[card_path + (field,)]
+                data = bytes(4) if field in ("requiredUnlockable", "forbiddenUnlockable") else bytes(last - first)
+                replacements.append((first, last, data))
+            cursor = card_start
+            for first, last, data in sorted(replacements):
+                result.write(body[cursor:first])
+                result.write(data)
+                cursor = last
+            result.write(body[cursor:card_end])
+        tail = body[cards_end:end]
+        if category["omit_weight"]:
+            first, last = spans[path + ("selectionWeight",)]
+            if (first, last) != (cards_end, end) or last - first != 4:
+                raise ValueError("original director category weight layout drift")
+            tail = bytes(4)
+        result.write(tail)
+    result.write(body[category_end:])
+    return result.getvalue()
 
-    Called before PPtr relocation. All operands are read from original records;
-    source schemas locate the line array and declare the curve field contract.
+
+def empty_mesh_renderer(body, tree):
+    """Project an original empty renderer through the authored adapter flags."""
+    records = module("record_produce")
+    _, spans = records.fields(body, records.SCHEMA.type_tree(io.BytesIO(tree)))
+    start, end = spans[("m_Materials", "Array")]
+    if body[start:end] != bytes(4):
+        raise ValueError("empty renderer requires an original empty material array")
+    result = bytearray(body)
+    for name in ("#349", "m_CastShadows", "m_ReceiveShadows"):
+        # m_Enabled uses Unity's common-string offset 349 in release schemas.
+        start, end = spans[("m_Enabled" if name == "#349" and ("m_Enabled",) in spans else name,)]
+        if end - start != 1 or body[start] not in (0, 1):
+            raise ValueError("original empty renderer flag schema drift")
+        result[start] = 0
+    return bytes(result)
+
+
+def omit_surface_effects(body, tree):
+    """Apply the authored SurfaceDef effect and sound omissions to source spans."""
+    records = module("record_produce")
+    root = records.SCHEMA.type_tree(io.BytesIO(tree))
+    _, spans = records.fields(body, root)
+    replacements = []
+    for name in ("impactEffectPrefab", "footstepEffectPrefab", "impactSoundString", "materialSwitchString"):
+        nodes = [node for node in root.children if node.name == name]
+        if len(nodes) != 1:
+            raise ValueError("original SurfaceDef field absent or ambiguous")
+        node = nodes[0]
+        start, end = spans[name,]
+        if name.endswith("Prefab"):
+            if not node.kind.startswith("PPtr<") or end - start != 12:
+                raise ValueError("original SurfaceDef effect is not a PPtr")
+            replacement = bytes(12)
+        else:
+            if node.kind != "string":
+                raise ValueError("original SurfaceDef sound field is not a string")
+            replacement = bytes(4)
+        replacements.append((start, end, replacement))
+    result, cursor = bytearray(), 0
+    for start, end, replacement in sorted(replacements):
+        result.extend(body[cursor:start])
+        result.extend(replacement)
+        cursor = end
+    result.extend(body[cursor:])
+    return bytes(result)
+
+
+def normalize_exported_prefab_name(body, authored_root=None):
+    """Apply the pinned exporter's filename projection to a prefab root name."""
+    stream = io.BytesIO(body)
+    count = B.unpack(stream, "<I")[0]
+    if count > len(body) // 12:
+        raise ValueError("truncated original prefab components")
+    B.exact(stream, count * 12 + 4)
+    start = stream.tell()
+    size = B.unpack(stream, "<I")[0]
+    name = B.exact(stream, size).decode("utf-8")
+    B.exact(stream, -stream.tell() % 4)
+    tail = B.exact(stream, 3)
+    if stream.tell() != len(body):
+        raise ValueError("original prefab GameObject tail drift")
+    if authored_root is not None:
+        # nova_bridge.stage_enemy_spine extracts one original scene director
+        # into this authored prefab; Unity uses the prefab filename at its root.
+        if authored_root != "EnemyClosure/FastDirector.prefab" or name != "Director":
+            raise ValueError("unknown authored prefab root or original name")
+        name = "FastDirector"
+    name = name.replace("(Clone)", "").replace("(Instance)", "").strip() or "GameObject"
+    name = "".join("_" if char in ",[]:/" or ord(char) < 32 else char for char in name)
+    result = io.BytesIO()
+    result.write(body[:start])
+    aligned_string(result, name)
+    result.write(tail)
+    return result.getvalue()
+
+
+def rebuild_bezier_line(body, sources, source_profiles, line_selector, behaviour_selector, wind_angles=None, build_rounding=None):
+    """Re-evaluate an original BezierCurveLine using Unity float32 Lerp.
+
+    Called before PPtr relocation. Geometry operands come from original records;
+    optional numeric angles preserve our build wind state. Source schemas locate
+    the line array and declare the curve field contract.
     Original local TRS operands are evaluated leaf-to-root with float32 rounding.
     """
     import math
@@ -183,7 +366,11 @@ def rebuild_bezier_line(body, sources, source_profiles, line_selector, behaviour
     ):
         raise ValueError("original BezierCurveLine body layout drift")
     if curve[80] != 0:
-        raise ValueError("animated Bezier wind is not qualified")
+        if not isinstance(wind_angles, list) or len(wind_angles) != 3:
+            raise ValueError("animated Bezier wind requires captured build angles")
+        wind_angles = tuple(single(value) for value in wind_angles)
+    elif wind_angles is not None:
+        raise ValueError("captured wind requires an animated original curve")
     go_pointer = struct.unpack_from("<iq", line)
     if go_pointer != struct.unpack_from("<iq", curve) or go_pointer[0] or not go_pointer[1]:
         raise ValueError("original curve/line GameObject differs")
@@ -252,6 +439,15 @@ def rebuild_bezier_line(body, sources, source_profiles, line_selector, behaviour
     p1 = world(end_id) if end_id else struct.unpack_from("<3f", curve, 44)
     v0, v1 = struct.unpack_from("<3f", curve, 32), struct.unpack_from("<3f", curve, 56)
 
+    if wind_angles is not None:
+        magnitude = struct.unpack_from("<3f", curve, 84)
+        frequency = struct.unpack_from("<3f", curve, 96)
+        delta = tuple(single(single(single(math.pi / 180) * endpoint) * rate) for endpoint, rate in zip((p1[0], p1[2], p1[1]), frequency))
+        v0 = tuple(single(value + single(single(math.sin(angle)) * scale)) for value, angle, scale in zip(v0, wind_angles, magnitude))
+        v1 = tuple(
+            single(value + single(single(math.sin(single(angle + step))) * scale)) for value, angle, step, scale in zip(v1, wind_angles, delta, magnitude)
+        )
+
     def add(a, b):
         return tuple(single(x + y) for x, y in zip(a, b))
 
@@ -264,6 +460,18 @@ def rebuild_bezier_line(body, sources, source_profiles, line_selector, behaviour
         a = lerp(p0, add(p0, v0), t)
         b = lerp(p1, add(p1, v1), single(1.0 - t))
         positions.extend(struct.pack("<3f", *lerp(a, b, t)))
+    # Captured build arithmetic words are scoped to the checked original curve.
+    # The complete geometry is still evaluated above from the legitimate input.
+    for capture in build_rounding or []:
+        word = capture["word"]
+        if not isinstance(word, int) or not 0 <= word < count * 3:
+            raise ValueError("captured Bezier rounding word outside original array")
+        offset = word * 4
+        if struct.unpack_from("<I", positions, offset)[0] != capture["evaluated_bits"]:
+            raise ValueError("captured Bezier rounding operand drift")
+        replacement = struct.pack("<I", capture["build_bits"])
+        single(struct.unpack("<f", replacement)[0])
+        positions[offset : offset + 4] = replacement
     return body[: start + 4] + positions + body[end:]
 
 
@@ -273,8 +481,12 @@ def aligned_string(stream, value):
     W.padding(stream, 4)
 
 
-def asset_bundle(selected, identities):
+def asset_bundle(selected, identities, records=None, sources=None):
     """Build Unity's release AssetBundle metadata, without target body literals."""
+    if "asset_groups" in selected:
+        if records is None or sources is None:
+            raise ValueError("grouped prefab container requires produced graph records")
+        return module("bundle_preload").produce(selected, records, sources)
     stream = io.BytesIO()
     aligned_string(stream, selected["name"])
     scene = "scene_path" in selected
@@ -323,7 +535,15 @@ def preload_data(bundle, selected, members, packed=None):
     for member in members:
         for row in member["objects"]:
             dependencies = packed.get((member["name"], row["path_id"]), (None, {}))[1].get("dependencies", []) if packed else []
-            for reference in [*row.get("references", []), *dependencies]:
+            relocations = row.get("record_references", [])
+            moved = {}
+            for reference in relocations:
+                original = tuple(reference["from"])
+                if original in moved and moved[original] != reference["to"]:
+                    raise ValueError("ambiguous produced dependency relocation")
+                moved[original] = reference["to"]
+            dependencies = [{**ref, "to": moved.get(tuple(ref["to"]), ref["to"])} for ref in dependencies]
+            for reference in [*row.get("references", []), *relocations, *dependencies]:
                 file_id, path_id = reference["to"]
                 if not file_id or not path_id:
                     continue
@@ -361,41 +581,55 @@ def json_layout(value):
     return value
 
 
-def make_layout(selected, records, scene_members=(), engine="2021.3.45f2"):
+def make_layout(selected, records, scene_members=(), engine="2021.3.45f2", *, include_bodies=True):
     """Canonical release order: script records first, then remaining path IDs."""
     local_scripts = sorted(row["path_id"] for row in records if row["type"]["class_id"] == 115)
+    local_script_ids = set(local_scripts)
+
+    def prefix(row):
+        return row["prefix"] if "body_bytes" in row else row["body"]
+
     scripts = (
-        sorted({pointer for row in records if row["type"]["class_id"] == 114 if (pointer := struct.unpack_from("<iq", row["body"], 16)) != (0, 0)})
+        sorted({pointer for row in records if row["type"]["class_id"] == 114 if (pointer := struct.unpack_from("<iq", prefix(row), 16)) != (0, 0)})
         if scene_members
         else [(0, identity) for identity in local_scripts]
     )
-    physical = sorted(records, key=lambda row: (row["path_id"] not in local_scripts, row["path_id"]))
+    script_indices = {pointer: index for index, pointer in enumerate(scripts)}
+    physical = sorted(records, key=lambda row: (row["path_id"] not in local_script_ids, row["path_id"]))
     types, objects, bodies = [], [], {}
+    type_indices, identities = {}, set()
     offset = 0
     for row in physical:
         typ = copy.deepcopy(row["type"])
+        data = prefix(row)
+        size = row["body_bytes"] if "body_bytes" in row else len(data)
         null_script = False
         if typ["class_id"] == 114:
-            file_id, script = struct.unpack_from("<iq", row["body"], 16)
+            file_id, script = struct.unpack_from("<iq", data, 16)
             if (file_id, script) == (0, 0):
-                if not scene_members or len(row["body"]) != 32 or typ["script_type"] != -1 or typ["hash"] != bytes(16) or typ["script_id"] != bytes(16):
+                if not scene_members or size != 32 or typ["script_type"] != -1 or typ["hash"] != bytes(16) or typ["script_id"] != bytes(16):
                     raise ValueError("original null-script MonoBehaviour metadata drift")
                 null_script = True
             else:
-                if (file_id and not scene_members) or (not file_id and script not in local_scripts) or not 0 <= file_id <= len(selected["externals"]):
+                if (file_id and not scene_members) or (not file_id and script not in local_script_ids) or not 0 <= file_id <= len(selected["externals"]):
                     raise ValueError("MonoBehaviour script absent from produced bundle")
-                typ["script_type"] = scripts.index((file_id, script))
+                typ["script_type"] = script_indices[file_id, script]
         # Unity retains an individual type slot for each missing-script component.
-        if null_script or typ not in types:
+        type_key = tuple((key, tuple(value) if isinstance(value, list) else value) for key, value in sorted(typ.items()))
+        if null_script or type_key not in type_indices:
             types.append(typ)
-        type_id = len(types) - 1 if null_script else types.index(typ)
+            if not null_script:
+                type_indices[type_key] = len(types) - 1
+        type_id = len(types) - 1 if null_script else type_indices[type_key]
         offset = (offset + 7) // 8 * 8
         identity = row["path_id"]
-        if identity in bodies:
+        if identity in identities:
             raise ValueError("duplicate produced object identity")
-        bodies[identity] = row["body"]
-        objects.append({"path_id": identity, "offset": offset, "bytes": len(row["body"]), "type_id": type_id})
-        offset += len(row["body"])
+        identities.add(identity)
+        if include_bodies:
+            bodies[identity] = row["body"]
+        objects.append({"path_id": identity, "offset": offset, "bytes": size, "type_id": type_id})
+        offset += size
     # Unity's native resources live outside the AssetBundles.
     native = {"Resources/unity_builtin_extra": 0x0F, "Library/unity default resources": 0x0E}
     externals = [
@@ -443,17 +677,36 @@ def record_packs(members, supplied, bundle):
         raise ValueError("missing source-produced record pack")
     check_record_packs(providers)
     for profile, (directory, _, _) in providers.items():
-        wanted = {(member, row["path_id"]) for member, row in selections if row.get("record") == profile}
+        wanted = {}
+        for member, row in selections:
+            if row.get("record") != profile:
+                continue
+            source = row.get("record_source", [bundle["name"], member, row["path_id"]])
+            if (
+                not isinstance(source, list)
+                or len(source) != 3
+                or any(not isinstance(value, str) or not value for value in source[:2])
+                or type(source[2]) is not int
+            ):
+                raise ValueError("invalid produced record source identity")
+            wanted.setdefault(tuple(source), []).append((member, row["path_id"]))
+        found = set()
         with (directory / "index.jsonl").open() as index:
             for line in index:
                 row = json.loads(line)
-                key = row["member"], row["path_id"]
-                if row["bundle"] != bundle["name"] or key not in wanted:
+                identity = row["bundle"], row["member"], row["path_id"]
+                if identity not in wanted:
                     continue
-                if key in records:
+                if identity in found:
                     raise ValueError("duplicate produced record identity")
-                records[key] = directory, row
-        if not wanted <= records.keys():
+                found.add(identity)
+                for key in wanted[identity]:
+                    if key in records:
+                        raise ValueError("duplicate produced record destination")
+                    if "resource" in row and key[0] != row["member"]:
+                        raise ValueError("streamed record relocation requires resource reconstruction")
+                    records[key] = directory, row
+        if found != wanted.keys():
             raise ValueError("produced record missing")
     return records, providers
 
@@ -489,7 +742,7 @@ def source_record(sources, selector):
 
 
 def check_preload_dependencies(sources, source_profiles, dependencies):
-    """Admit original preload GameObjects, typed Rigidbody owners and builtins."""
+    """Admit original preload GameObjects, direct managed roots and builtins."""
     for dependency in dependencies:
         preload, preload_type = source_record(sources, dependency["preload_source"])
         if preload_type["class_id"] != 150 or hashlib.sha256(preload).hexdigest() != dependency["preload_sha256"]:
@@ -511,16 +764,22 @@ def check_preload_dependencies(sources, source_profiles, dependencies):
                 raise ValueError("original preload builtin relationship drift")
             continue
         body, typ = source_record(sources, dependency["source"])
-        if typ["class_id"] != 1 or hashlib.sha256(body).hexdigest() != dependency["source_sha256"]:
+        source_class = dependency.get("source_class_id", 1)
+        if source_class not in (1, 114) or typ["class_id"] != source_class or hashlib.sha256(body).hexdigest() != dependency["source_sha256"]:
             raise ValueError("original preload GameObject drift")
         selector = dependency["source"]
-        if "rigidbody" in dependency:
-            witness = dependency["rigidbody"]
-            rigidbody, rigidbody_type = source_record(sources, witness["source"])
-            if rigidbody_type["class_id"] != 54 or len(rigidbody) != 36 or hashlib.sha256(rigidbody).hexdigest() != witness["sha256"]:
-                raise ValueError("original preload Rigidbody drift")
-            if witness["source"][0] != selector[0] or struct.unpack_from("<iq", rigidbody) != (0, selector[1]):
-                raise ValueError("original preload Rigidbody GameObject drift")
+        if any(kind in dependency for kind in ("rigidbody", "transform", "animator")):
+            if source_class != 1:
+                raise ValueError("original preload component owner is not a GameObject")
+            kind, class_id, size = (
+                ("Rigidbody", 54, 36) if "rigidbody" in dependency else ("Animator", 95, 56) if "animator" in dependency else ("Transform", 4, 68)
+            )
+            witness = dependency[kind.lower()]
+            component_body, component_type = source_record(sources, witness["source"])
+            if component_type["class_id"] != class_id or len(component_body) != size or hashlib.sha256(component_body).hexdigest() != witness["sha256"]:
+                raise ValueError(f"original preload {kind} drift")
+            if witness["source"][0] != selector[0] or struct.unpack_from("<iq", component_body) != (0, selector[1]):
+                raise ValueError(f"original preload {kind} GameObject drift")
             count = struct.unpack_from("<I", body)[0]
             if 4 + count * 12 > len(body):
                 raise ValueError("truncated original preload GameObject components")
@@ -528,7 +787,7 @@ def check_preload_dependencies(sources, source_profiles, dependencies):
             index = witness["component_index"]
             component = (0, witness["source"][1])
             if type(index) is not int or not 0 <= index < count or components[index] != component or components.count(component) != 1:
-                raise ValueError("original preload Rigidbody component membership drift")
+                raise ValueError(f"original preload {kind} component membership drift")
             selector = witness["source"]
         if pointers.count(pointer) != 1 or path_id != selector[1] or member != source_profiles[selector[0]]["member"]:
             raise ValueError("original preload GameObject relationship drift")
@@ -656,6 +915,52 @@ def omit_character_master_field(tree, identity_owner):
     return struct.pack("<II", count - 1, length - len(suffix)) + tree[8 : end - 32] + tree[end : -len(suffix)]
 
 
+def omit_run_presence_counters(tree, identity_owner):
+    """Retain the original RunPresence fields preceding its two cached counters."""
+    nodes = identity_owner.tree_nodes(tree)
+    if [(n["name"], n["type"], n["level"], n["size"]) for n in nodes[-2:]] != [
+        ("cachedActiveCount", "int", 1, 4),
+        ("cachedInActiveCount", "int", 1, 4),
+    ]:
+        raise ValueError("original RunPresence cached counter schema drift")
+    return identity_owner._tree(nodes[:-2], common_strings=True)
+
+
+def project_current_script_fields(body, tree, declared, sdk_tree, identity_owner):
+    """Omit whole source fields absent from current declarations and prior names."""
+    nodes = identity_owner.tree_nodes(tree)
+    groups = identity_owner._fields(nodes)
+    if len(groups) != sum(node["level"] == 1 for node in nodes):
+        raise ValueError("ambiguous original root field names")
+    native = identity_owner.tree_nodes(sdk_tree)
+    end = next(i for i, node in enumerate(native) if node["level"] == 1 and node["name"] == "m_EditorClassIdentifier")
+    protected = {node["name"] for node in native[: end + 1] if node["level"] == 1} | declared
+    removed = [name for name in groups if name not in protected]
+    if not removed:
+        return body, tree, []
+    schema = M._mesh
+    # Expand common labels for the field-span walk; native hash generation keeps
+    # the original node names, flags and types through the shared tree encoder.
+    spans = schema.spans(body, schema.type_tree(io.BytesIO(identity_owner._tree(nodes))))
+    kept, result = [nodes[0]], bytearray()
+    for name, group in groups.items():
+        if name in removed:
+            continue
+        start, stop = spans[name,]
+        if len(result) % 4 != start % 4:
+            raise ValueError("stale field omission changes retained field alignment")
+        result.extend(body[start:stop])
+        kept.extend(group)
+    result = bytes(result)
+    revised = schema.spans(result, schema.type_tree(io.BytesIO(identity_owner._tree(kept))))
+    for name in groups:
+        if name not in removed:
+            old, new = spans[name,], revised[name,]
+            if body[old[0] : old[1]] != result[new[0] : new[1]]:
+                raise ValueError("stale field omission changes retained field bytes")
+    return result, identity_owner._tree(kept, common_strings=True), removed
+
+
 def script_fields(body):
     """Read original release MonoScript identity and its properties-hash extent."""
     stream = io.BytesIO(body)
@@ -671,6 +976,37 @@ def script_fields(body):
     offset = stream.tell()
     B.exact(stream, 16)
     return offset, (string(), string(), string())
+
+
+def original_script_properties(script, script_type, behaviour_type, current_type, identity_owner):
+    """Retain the original editor hash only for the same unchanged script schema."""
+    offset, names = script_fields(script)
+    identity = identity_owner.md4("".join(names).encode())
+    if (
+        script_type["class_id"] != 115
+        or behaviour_type["class_id"] != 114
+        or current_type["class_id"] != 114
+        or behaviour_type["script_id"] != identity
+        or current_type["script_id"] != identity
+        or behaviour_type["tree"] != current_type["tree"]
+    ):
+        raise ValueError("original script properties require matching unchanged runtime identity/schema")
+    return script[offset : offset + 16]
+
+
+def fieldless_script_type(body, typ, script, sdk_tree, identity_owner):
+    """Derive a fieldless component's metadata from its qualified MonoScript."""
+    if typ["class_id"] != 114 or len(body) != 32 or body[28:] != bytes(4):
+        raise ValueError("fieldless script requires the original empty-name base component")
+    nodes = identity_owner.tree_nodes(typ["tree"])
+    fields = [n["name"] for n in nodes if n["level"] == 1]
+    if fields != ["m_GameObject", "m_Enabled", "m_Script", "m_Name"]:
+        raise ValueError("fieldless script prototype has custom fields")
+    offset, names = script_fields(script)
+    properties = identity_owner.properties_hash(*names, typ["tree"], sdk_tree)
+    if properties != script[offset : offset + 16]:
+        raise ValueError("fieldless schema differs from produced MonoScript properties")
+    return {**typ, "hash": properties, "script_id": identity_owner.md4("".join(names).encode())}
 
 
 def copy_original_bundle(profile, profile_sha256, pc, output):
@@ -821,6 +1157,43 @@ def plugin_import_order(body):
     return body[: offset - 4] + bytes(4) + body[offset:]
 
 
+def model_game_object(selected, sources, definition, identities):
+    """Construct default OBJ hierarchy nodes from source names and relationships."""
+    mesh, mesh_type = source_record(sources, selected["model_mesh_source"])
+    if mesh_type["class_id"] != 43:
+        raise ValueError("model hierarchy requires original Mesh")
+    schema = M._mesh
+    root = schema.type_tree(io.BytesIO(definition["tree"]))
+    if [node.name for node in root.children] != ["m_Component", "m_Layer", "m_Name", "m_Tag", "m_IsActive"]:
+        raise ValueError("model GameObject source schema differs")
+    if [root.children[i].size for i in (1, 3, 4)] != [4, 2, 1]:
+        raise ValueError("model GameObject source field sizes differ")
+    components = selected["components"]
+    if not 1 <= len(components) <= 32 or len(set(components)) != len(components) or any(identity not in identities for identity in components):
+        raise ValueError("model hierarchy requires distinct produced components")
+    if selected["model_node"] == "mesh":
+        start, end = schema.spans(mesh, schema.type_tree(io.BytesIO(mesh_type["tree"])))["m_Name",]
+        stream = io.BytesIO(mesh[start:end])
+        name = B.exact(stream, B.unpack(stream, "<I")[0]).decode("utf-8") + "_0"
+    elif selected["model_node"] == "root":
+        path = selected["model_asset"]
+        if not path.startswith("Assets/") or Path(path).suffix != ".obj" or ".." in Path(path).parts:
+            raise ValueError("model root requires an authored OBJ asset path")
+        name = Path(path).stem
+    else:
+        raise ValueError("unqualified model hierarchy node")
+    result = io.BytesIO()
+    result.write(struct.pack("<I", len(components)))
+    for identity in components:
+        result.write(struct.pack("<iq", 0, identity))
+    result.write(struct.pack("<I", 0))  # Default constructor layer.
+    aligned_string(result, name)
+    result.write(struct.pack("<HB", 0, 1))  # Untagged and active.
+    body = result.getvalue()
+    schema.spans(body, root)  # The original native schema must consume it all.
+    return body
+
+
 def default_material(selected, sources, sdk, output):
     """Reuse the player owner's SDK Material / original Shader projection."""
     if sdk is None:
@@ -836,6 +1209,33 @@ def default_material(selected, sources, sdk, output):
         definition = metadata["types"][row["type_id"]]
         stream.seek(metadata["data_offset"] + row["offset"])
         body = B.exact(stream, row["bytes"])
+    if selected.get("model_import") == "obj-standard-lambert-linear":
+        with path.open("rb") as stream:
+            shader_row = next(row for row in metadata["objects"] if row["path_id"] == selected["sdk_shader_path_id"])
+            shader_type = metadata["types"][shader_row["type_id"]]
+            stream.seek(metadata["data_offset"] + shader_row["offset"])
+            shader = B.exact(stream, shader_row["bytes"])
+        if definition["class_id"] != 21 or shader_type["class_id"] != 48:
+            raise ValueError("model material requires SDK Material and Shader")
+        schema = M._mesh
+        spans = schema.spans(body, schema.type_tree(io.BytesIO(definition["tree"])))
+        start, end = spans["m_Shader",]
+        if struct.unpack("<iq", body[start:end]) != (0, selected["sdk_shader_path_id"]):
+            raise ValueError("SDK material/shader relationship differs")
+        mesh_body, mesh_type = source_record(sources, selected["model_mesh_source"])
+        if mesh_type["class_id"] != 43:
+            raise ValueError("model material requires original Mesh")
+        fbx_source = selected["fbx_source"]
+        fbx_path = M.safe_input(sdk.resolve(strict=True), fbx_source["path"])
+        if B.sha(fbx_path) != fbx_source["sha256"]:
+            raise ValueError("SDK FBX metadata drift")
+        model = module("obj_material")
+        body = model.material(body, definition, shader, shader_type, mesh_body, mesh_type, model.fbx_defaults(fbx_path.read_bytes()), schema)
+        if B.sha(fbx_path) != fbx_source["sha256"] or B.sha(path) != source["sha256"]:
+            raise ValueError("SDK model material inputs changed during production")
+        return remap(body, selected.get("references", []))
+    if "model_import" in selected:
+        raise ValueError("unqualified model material policy")
     shader, shader_type = source_record(sources, selected["shader_source"])
     if definition["class_id"] != 21 or shader_type["class_id"] != 48:
         raise ValueError("default material requires SDK Material and original Shader")
@@ -857,7 +1257,7 @@ def produce(profile_path, profile_sha256, pc, output, codec_path, codec_sha256, 
         raise ValueError("object serialization requires the pinned codec")
     scene = "members" in profile["bundle"]
     required = {"input_id", "sources", "bundle"} | (set() if scene else {"objects"})
-    if set(profile) - {"sdk"} != required or profile["input_id"] != M.INPUT_ID:
+    if set(profile) - {"sdk", "managed"} != required or profile["input_id"] != M.INPUT_ID:
         raise ValueError("unknown object input profile")
     pc = pc.resolve(strict=True)
     parent = output.parent.resolve(strict=True)
@@ -869,15 +1269,19 @@ def produce(profile_path, profile_sha256, pc, output, codec_path, codec_sha256, 
     if engine not in ("2021.3.45f2", "2021.3.33f1"):
         raise ValueError("unqualified source bundle engine")
     selected_members = selected_bundle["members"] if scene else [{**selected_bundle, "name": selected_bundle["member"], "objects": profile["objects"]}]
+    streaming = module("object_stream")
     expected = sum(row["bytes"] for member in selected_members for row in member["objects"])
-    if not 0 < expected <= B.LIMIT:
+    if not 0 < expected <= streaming.MAX_MEMBER_BYTES or any(not 0 <= row["bytes"] <= B.LIMIT for member in selected_members for row in member["objects"]):
         raise ValueError("object bundle exceeds bounded producer capacity")
     if shutil.disk_usage(parent).free < expected + 2 * 1024**3:
         raise ValueError("insufficient object output capacity")
     output.mkdir()
     started = time.monotonic()
     receipt = {"success": False, "input_id": M.INPUT_ID, "profile_sha256": profile_sha256, "objects": 0, "object_bytes": 0}
+    stage = None
+    runtime_fields = None
     try:
+        stage = streaming.Store(output)
         sdk_path, sdk_tree = None, None
         if "sdk" in profile:
             if sdk is None:
@@ -901,7 +1305,7 @@ def produce(profile_path, profile_sha256, pc, output, codec_path, codec_sha256, 
             before = path.stat()
             if B.sha(path) != selected["sha256"]:
                 raise ValueError("original object bundle drift")
-            member = B.Bundle(path).member(selected["member"])
+            member = source_member(path, selected["member"])
             metadata = W.read_serialized(member)
             sources.append((path, before, member, metadata, {row["path_id"]: row for row in metadata["objects"]}))
         check_preload_dependencies(sources, profile["sources"], selected_bundle.get("preload_dependencies", []))
@@ -914,13 +1318,36 @@ def produce(profile_path, profile_sha256, pc, output, codec_path, codec_sha256, 
         sprites = module("player_data") if any("importer_guid" in row for member in selected_members for row in member["objects"]) else None
         for selected_member in selected_members:
             member_records = []
-            identities = [row["path_id"] for row in selected_member["objects"] if "source" in row or "record" in row]
-            for selected in selected_member["objects"]:
+            identities = [
+                row["path_id"]
+                for row in selected_member["objects"]
+                if "source" in row or "record" in row or row.get("generate") in ("DefaultMaterial", "ModelGameObject")
+            ]
+            object_order = (
+                sorted(selected_member["objects"], key=lambda row: row.get("generate") == "AssetBundle")
+                if "asset_groups" in selected_bundle
+                else selected_member["objects"]
+            )
+            for selected in object_order:
+                record_type_hash = None
                 if "record" in selected:
                     directory, row = packed[selected_member["name"], selected["path_id"]]
                     body = record_extent(directory / "objects.bin", row)
+                    record_type_hash = row.get("native_type_hash")
                     source, identity = selected["type_source"]
                     typ = sources[source][3]["types"][sources[source][4][identity]["type_id"]]
+                    if selected.get("prune_absent_script_fields") and typ["class_id"] == 114:
+                        if identity_owner is None or "managed" not in profile or "properties_hash" not in selected:
+                            raise ValueError("current record schema requires SDK, original assemblies and script binding")
+                        if runtime_fields is None:
+                            runtime_fields = identity_owner.OriginalScriptFields(pc, profile["managed"])
+                        selectors = selected["properties_hash"]
+                        script, _ = source_record(sources, selectors["script"])
+                        original, original_type = source_record(sources, selectors["behaviour"])
+                        _, tree, _ = project_current_script_fields(original, original_type["tree"], runtime_fields.names(script), sdk_tree, identity_owner)
+                        typ = {**typ, "tree": tree}
+                    if "record_references" in selected:
+                        body = remap_record(body, typ, selected["record_references"], selected_member["externals"])
                     if "resource" in row:
                         resource = row["resource"]
                         extent = resource["stream"]
@@ -928,11 +1355,10 @@ def produce(profile_path, profile_sha256, pc, output, codec_path, codec_sha256, 
                         name = extent["path"].removeprefix(prefix)
                         if not extent["path"].startswith(prefix) or Path(name).name != name or name == selected_member["name"]:
                             raise ValueError("produced resource belongs to another bundle")
-                        data = record_extent(directory / "resources.bin", resource)
-                        offset, end = extent["offset"], extent["offset"] + len(data)
-                        if extent["size"] != len(data) or offset < 0 or end > B.LIMIT:
+                        offset, end = extent["offset"], extent["offset"] + resource["bytes"]
+                        if extent["size"] != resource["bytes"] or offset < 0 or end > streaming.MAX_MEMBER_BYTES:
                             raise ValueError("produced resource exceeds bounded bundle capacity")
-                        resources.setdefault(name, []).append((offset, data))
+                        resources.setdefault(name, []).append((offset, directory / "resources.bin", resource))
                 elif "source" in selected:
                     source, identity = selected["source"]
                     _, _, member, metadata, objects = sources[source]
@@ -942,6 +1368,15 @@ def produce(profile_path, profile_sha256, pc, output, codec_path, codec_sha256, 
                     if hashlib.sha256(body).hexdigest() != selected["source_sha256"]:
                         raise ValueError("original object body drift")
                     typ = metadata["types"][row["type_id"]]
+                    if "type_source" in selected:
+                        _, schema = source_record(sources, selected["type_source"])
+                        if (
+                            typ.get("tree")
+                            or not schema.get("tree")
+                            or any(typ.get(key) != schema.get(key) for key in ("class_id", "stripped", "script_type", "hash", "script"))
+                        ):
+                            raise ValueError("native source schema identity differs")
+                        typ = schema
                     if "custom_reflection_probe" in selected:
                         if selected["custom_reflection_probe"] is not True:
                             raise ValueError("custom reflection projection requires the named source policy")
@@ -963,7 +1398,15 @@ def produce(profile_path, profile_sha256, pc, output, codec_path, codec_sha256, 
                             raise ValueError("static-renderer removal requires original OcclusionCullingSettings")
                         body = clear_static_renderers(body, selected["clear_static_renderers"])
                     if "bezier_curve_line" in selected:
-                        body = rebuild_bezier_line(body, sources, profile["sources"], selected["source"], selected["bezier_curve_line"])
+                        body = rebuild_bezier_line(
+                            body,
+                            sources,
+                            profile["sources"],
+                            selected["source"],
+                            selected["bezier_curve_line"],
+                            selected.get("bezier_wind_angles"),
+                            selected.get("bezier_build_rounding"),
+                        )
                     if "importer_guid" in selected:
                         if typ["class_id"] != 213:
                             raise ValueError("Sprite importer policy requires an original Sprite")
@@ -974,14 +1417,36 @@ def produce(profile_path, profile_sha256, pc, output, codec_path, codec_sha256, 
                         if selected["inactive_map_zone"] is not True or typ["class_id"] != 1 or not body or body[-1] != 1:
                             raise ValueError("inactive MapZone policy requires an active original GameObject")
                         body = body[:-1] + bytes(1)
+                    if "normalize_exported_prefab_name" in selected:
+                        if typ["class_id"] != 1 or selected["normalize_exported_prefab_name"] is not True:
+                            raise ValueError("exported prefab name requires an original GameObject")
+                        body = normalize_exported_prefab_name(body)
+                    if "authored_prefab_root" in selected:
+                        if typ["class_id"] != 1 or selected["authored_prefab_root"] != "EnemyClosure/FastDirector.prefab":
+                            raise ValueError("authored prefab root requires the named original GameObject")
+                        body = normalize_exported_prefab_name(body, selected["authored_prefab_root"])
                     if "inactive_global_owner" in selected:
                         if typ["class_id"] != 1:
                             raise ValueError("global suppression requires an original GameObject")
                         body = deactivate_global_owner(body, selected["inactive_global_owner"])
+                    if "inactive_scene_object" in selected:
+                        if typ["class_id"] != 1:
+                            raise ValueError("scene activation policy requires an original GameObject")
+                        body = deactivate_named_gameobject(body, selected["inactive_scene_object"])
                     if "disable_original_behaviour" in selected:
                         if selected["disable_original_behaviour"] is not True or typ["class_id"] != 114 or body[12:16] != b"\x01\0\0\0":
                             raise ValueError("disabled original behaviour requires an enabled MonoBehaviour")
                         body = body[:12] + bytes(1) + body[13:]
+                    if "missing_script_base" in selected:
+                        # A component whose script is absent from the build keeps only the base
+                        # MonoBehaviour fields; Unity serializes it with the base (script-less) type.
+                        base = selected["missing_script_base"]
+                        if typ["class_id"] != 114 or set(base) != {"bytes", "type_source"} or not 0 < base["bytes"] <= len(body):
+                            raise ValueError("missing-script base requires an original MonoBehaviour")
+                        _, base_type = source_record(sources, base["type_source"])
+                        if base_type["class_id"] != 114 or int(base_type["script_type"]) != -1:
+                            raise ValueError("missing-script base requires the original base MonoBehaviour type")
+                        body, typ = body[: base["bytes"]], copy.deepcopy(base_type)
                     if "plugin_import_default_execution_order" in selected:
                         if selected["plugin_import_default_execution_order"] is not True or typ["class_id"] != 115:
                             raise ValueError("plugin import order requires an original MonoScript")
@@ -997,11 +1462,29 @@ def produce(profile_path, profile_sha256, pc, output, codec_path, codec_sha256, 
                         if typ["class_id"] == 114:
                             body, schema = legacy_animate_fields(body, typ["tree"], identity_owner)
                             typ = {**typ, "tree": schema}
+                    if "director_deck" in selected:
+                        if typ["class_id"] != 114 or "properties_hash" not in selected or sdk_tree is None:
+                            raise ValueError("director deck requires original script properties")
+                        script, _ = source_record(sources, selected["properties_hash"]["script"])
+                        if script_fields(script)[1] != ("DirectorCardCategorySelection", "RoR2", "RoR2.dll"):
+                            raise ValueError("director deck requires original DirectorCardCategorySelection")
+                        body = rebuild_director_deck(body, typ["tree"], selected["director_deck"])
+                    if "surface_effect_omissions" in selected:
+                        if selected["surface_effect_omissions"] is not True or typ["class_id"] != 114 or "properties_hash" not in selected or sdk_tree is None:
+                            raise ValueError("surface omissions require original SurfaceDef script properties")
+                        script, _ = source_record(sources, selected["properties_hash"]["script"])
+                        if script_fields(script)[1] != ("SurfaceDef", "RoR2", "RoR2.dll"):
+                            raise ValueError("surface omissions require original SurfaceDef")
+                        body = omit_surface_effects(body, typ["tree"])
+                    if "empty_mesh_renderer" in selected:
+                        if selected["empty_mesh_renderer"] is not True or typ["class_id"] != 23:
+                            raise ValueError("empty renderer requires an original MeshRenderer")
+                        body = empty_mesh_renderer(body, typ["tree"])
                     body = remap(body, selected.get("references", []))
                     if "keyword_policy" in selected:
-                        if typ["class_id"] != 21 or selected["keyword_policy"] != "dummy-shader-demote-valid":
+                        if typ["class_id"] != 21 or selected["keyword_policy"] not in ("dummy-shader-demote-valid", "dummy-shader-sort-invalid"):
                             raise ValueError("unqualified material keyword policy")
-                        body = demote_material_keywords(body)
+                        body = demote_material_keywords(body, sort_invalid=selected["keyword_policy"] == "dummy-shader-sort-invalid")
                 else:
                     source = selected["type_source"]
                     if isinstance(source, list):
@@ -1019,17 +1502,30 @@ def produce(profile_path, profile_sha256, pc, output, codec_path, codec_sha256, 
                         if typ["class_id"] != 21:
                             raise ValueError("default material requires original Material type")
                         body = default_material(selected, sources, sdk, output)
+                    elif selected.get("generate") == "ModelGameObject":
+                        if typ["class_id"] != 1:
+                            raise ValueError("model hierarchy requires original GameObject type")
+                        body = model_game_object(selected, sources, typ, identities)
                     else:
                         if selected.get("generate", "AssetBundle") != "AssetBundle" or typ["class_id"] != 142:
                             raise ValueError("bundle container requires original AssetBundle type")
-                        body = asset_bundle(selected_bundle, identities)
+                        body = asset_bundle(selected_bundle, identities, member_records, sources)
                 if "properties_hash" in selected:
                     if sdk_tree is None:
                         raise ValueError("script properties require SDK metadata")
                     selectors = selected["properties_hash"]
                     omit_master = selected.get("omit_character_master_unkillable", False)
                     omit_alpha = selected.get("omit_animate_shader_alpha_legacy_fields", False)
-                    key = tuple(selectors["script"]), tuple(selectors["behaviour"]), omit_master, omit_alpha
+                    omit_presence = selected.get("omit_run_presence_counters", False)
+                    prune_absent = selected.get("prune_absent_script_fields", False)
+                    preserve_original = selected.get("preserve_original_script_hash", False)
+                    if prune_absent and (
+                        prune_absent is not True or preserve_original or omit_master or omit_alpha or omit_presence or "managed" not in profile
+                    ):
+                        raise ValueError("current script projection requires pinned assemblies and exclusive SDK schema policy")
+                    if prune_absent and runtime_fields is None:
+                        runtime_fields = identity_owner.OriginalScriptFields(pc, profile["managed"])
+                    key = tuple(selectors["script"]), tuple(selectors["behaviour"]), omit_master, omit_alpha, omit_presence, preserve_original, prune_absent
                     if key not in properties:
                         script, script_type = source_record(sources, selectors["script"])
                         original_behaviour, behaviour_type = source_record(sources, selectors["behaviour"])
@@ -1046,34 +1542,114 @@ def produce(profile_path, profile_sha256, pc, output, codec_path, codec_sha256, 
                                 raise ValueError("legacy schema requires original AnimateShaderAlpha")
                             _, schema = legacy_animate_fields(original_behaviour, schema, identity_owner)
                             schema = legacy_animate_hash_tree(schema, sdk_tree, identity_owner)
-                        properties[key] = identity_owner.properties_hash(*names, schema, sdk_tree)
+                        if omit_presence:
+                            if omit_presence is not True or names != ("RunPresence", "RoR2", "RoR2.dll"):
+                                raise ValueError("cached counter omission requires original RunPresence")
+                            schema = omit_run_presence_counters(schema, identity_owner)
+                        if prune_absent:
+                            if behaviour_type["script_id"] != identity_owner.md4("".join(names).encode()):
+                                raise ValueError("current script projection differs from original schema identity")
+                            _, schema, _ = project_current_script_fields(original_behaviour, schema, runtime_fields.names(script), sdk_tree, identity_owner)
+                        if preserve_original:
+                            if preserve_original is not True or omit_master or omit_alpha or omit_presence:
+                                raise ValueError("original script hash cannot accompany schema projection")
+                            properties[key] = original_script_properties(script, script_type, behaviour_type, typ, identity_owner)
+                        else:
+                            properties[key] = identity_owner.properties_hash(*names, schema, sdk_tree)
                     value = properties[key]
+                    if preserve_original:
+                        script, script_type = source_record(sources, selectors["script"])
+                        _, behaviour_type = source_record(sources, selectors["behaviour"])
+                        if original_script_properties(script, script_type, behaviour_type, typ, identity_owner) != value:
+                            raise ValueError("original script hash cache identity drift")
                     if typ["class_id"] == 115:
                         offset, _ = script_fields(body)
                         body = body[:offset] + value + body[offset + 16 :]
                     elif typ["class_id"] == 114:
                         typ = copy.deepcopy(typ)
                         if omit_master:
-                            if body[-4:] != bytes(4):
+                            if body[-4:] not in (bytes(4), b"\x01\0\0\0"):
                                 raise ValueError("original CharacterMaster final value drift")
                             body = body[:-4]
                             typ["tree"] = omit_character_master_field(typ["tree"], identity_owner)
+                        if omit_presence:
+                            if body[-8:] != bytes(8):
+                                raise ValueError("original RunPresence cached counters must be zero")
+                            body = body[:-8]
+                            typ["tree"] = omit_run_presence_counters(typ["tree"], identity_owner)
+                        if prune_absent:
+                            script, _ = source_record(sources, selectors["script"])
+                            original, original_type = source_record(sources, selectors["behaviour"])
+                            projected, tree, _ = project_current_script_fields(
+                                original if "record" in selected else body,
+                                original_type["tree"] if "record" in selected else typ["tree"],
+                                runtime_fields.names(script),
+                                sdk_tree,
+                                identity_owner,
+                            )
+                            if "record" not in selected:
+                                body = projected
+                            typ["tree"] = tree
                         typ["hash"] = value
                     else:
                         raise ValueError("script properties require MonoScript or MonoBehaviour")
+                if "fieldless_script_source" in selected:
+                    if sdk_tree is None:
+                        raise ValueError("fieldless script source requires SDK metadata")
+                    script, script_type = source_record(sources, selected["fieldless_script_source"])
+                    if script_type["class_id"] != 115:
+                        raise ValueError("fieldless script source must be an original MonoScript")
+                    typ = fieldless_script_type(body, typ, script, sdk_tree, identity_owner)
+                if "fieldless_script_record" in selected:
+                    if sdk_tree is None or selected["fieldless_script_record"] is not True:
+                        raise ValueError("fieldless script record requires the named SDK policy")
+                    if typ["class_id"] != 114 or len(body) < 28:
+                        raise ValueError("fieldless script record requires a MonoBehaviour")
+                    file_id, script_id = struct.unpack_from("<iq", body, 16)
+                    scripts = [s for s in selected_member["objects"] if s["path_id"] == script_id and "record" in s]
+                    if file_id or len(scripts) != 1:
+                        raise ValueError("fieldless script requires a local produced MonoScript record")
+                    script_selection = scripts[0]
+                    _, script_type = source_record(sources, script_selection["type_source"])
+                    directory, script_row = packed[selected_member["name"], script_id]
+                    script = record_extent(directory / "objects.bin", script_row)
+                    if script_type["class_id"] != 115 or hashlib.sha256(script).hexdigest() != script_selection["sha256"]:
+                        raise ValueError("fieldless MonoScript record identity differs")
+                    typ = fieldless_script_type(body, typ, script, sdk_tree, identity_owner)
+                    receipt.setdefault("fieldless_script_records", {})[str(script_id)] = script_selection["sha256"]
+                if "managed_pointer_schema" in selected:
+                    if sdk_tree is None or typ["class_id"] != 114:
+                        raise ValueError("managed pointer schema requires SDK and MonoBehaviour")
+                    policy = selected["managed_pointer_schema"]
+                    script, script_type = source_record(sources, policy["script"])
+                    _, base_type = source_record(sources, policy["base"])
+                    _, pointer_type = source_record(sources, policy["pointer"])
+                    if script_type["class_id"] != 115 or base_type["class_id"] != 114 or pointer_type["class_id"] != 114:
+                        raise ValueError("managed pointer schema selectors have wrong classes")
+                    derived, inputs = identity_owner.pointer_script_schema(pc, policy["managed"], script, base_type["tree"], pointer_type["tree"], sdk_tree)
+                    typ = copy.deepcopy(base_type)
+                    typ.update(derived)
+                    receipt.setdefault("managed_schema_inputs", {}).update(inputs)
                 if len(body) != selected["bytes"] or hashlib.sha256(body).hexdigest() != selected["sha256"]:
                     raise ValueError("produced object differs from accepted hash")
-                member_records.append({"path_id": selected["path_id"], "body": body, "type": typ, "member": selected_member["name"]})
-            layout, bodies = make_layout(selected_member, member_records, [member["name"] for member in selected_members] if scene else (), engine)
-            serialized = io.BytesIO()
-            W.write_serialized(serialized, layout, lambda row: io.BytesIO(bodies[row["path_id"]]))
-            serialized_bytes = serialized.getvalue()
-            if hashlib.sha256(serialized_bytes).hexdigest() != selected_member["serialized_sha256"]:
+                if record_type_hash is not None and typ["hash"].hex() != record_type_hash:
+                    raise ValueError("produced record native type identity differs")
+                member_records.append(stage.append(selected_member["name"], selected["path_id"], body, typ))
+            layout, _ = make_layout(
+                selected_member, member_records, [member["name"] for member in selected_members] if scene else (), engine, include_bodies=False
+            )
+            by_identity = {row["path_id"]: row for row in member_records}
+            serialized_path = stage.allocate()
+            with serialized_path.open("xb") as serialized:
+                W.write_serialized(serialized, layout, lambda row: stage.reader(by_identity[row["path_id"]]))
+            if B.sha(serialized_path) != selected_member["serialized_sha256"]:
                 raise ValueError("produced serialized structure differs from accepted hash")
-            layout["data_offset"] = struct.unpack_from(">q", serialized_bytes, 32)[0]
-            layout["bytes"] = len(serialized_bytes)
+            with serialized_path.open("rb") as serialized:
+                serialized.seek(32)
+                layout["data_offset"] = B.unpack(serialized, ">q")[0]
+            layout["bytes"] = serialized_path.stat().st_size
             layouts.append({"name": selected_member["name"], **layout} if scene else layout)
-            members.append((selected_member["name"], 4, len(serialized_bytes), lambda data=serialized_bytes: io.BytesIO(data)))
+            members.append((selected_member["name"], 4, layout["bytes"], lambda path=serialized_path: path.open("rb")))
             records.extend(sorted(member_records, key=lambda row: row["path_id"]))
         payload = output / "payload"
         payload.mkdir()
@@ -1082,20 +1658,20 @@ def produce(profile_path, profile_sha256, pc, output, codec_path, codec_sha256, 
             raise ValueError("invalid output bundle name")
         bundle_path = payload / name
         for name, extents in resources.items():
-            data = bytearray()
-            for offset, extent in sorted(extents):
-                if offset < len(data):
-                    raise ValueError("overlapping produced resource extents")
-                data.extend(bytes(offset - len(data)))
-                data.extend(extent)
-            members.append((name, 0, len(data), lambda data=data: io.BytesIO(data)))
+            alignment = 0
+            if name in selected_bundle.get("resource_alignment", {}):
+                if selected_bundle["resource_alignment"][name] != 16 or not name.endswith(".resS"):
+                    raise ValueError("unqualified native resource alignment")
+                alignment = 16
+            resource_path = stage.allocate()
+            size = streaming.resource(resource_path, extents, alignment, W, B.LIMIT)
+            members.append((name, 0, size, lambda path=resource_path: path.open("rb")))
         with W.codec(codec_path, codec_sha256) as compress, bundle_path.open("xb") as stream:
             W.write_bundle(stream, members, compress, engine=engine)
         if bundle_path.stat().st_size != selected_bundle["bytes"] or B.sha(bundle_path) != selected_bundle["sha256"]:
             raise ValueError("produced UnityFS differs from accepted hash")
         with (output / "objects.bin").open("xb") as data, (output / "index.jsonl").open("x") as index:
             for row in records:
-                body = row["body"]
                 index.write(
                     json.dumps(
                         {
@@ -1103,16 +1679,16 @@ def produce(profile_path, profile_sha256, pc, output, codec_path, codec_sha256, 
                             "member": row["member"],
                             "path_id": row["path_id"],
                             "offset": data.tell(),
-                            "bytes": len(body),
-                            "sha256": hashlib.sha256(body).hexdigest(),
+                            "bytes": row["body_bytes"],
+                            "sha256": row["sha256"],
                         },
                         sort_keys=True,
                     )
                     + "\n"
                 )
-                data.write(body)
+                W.copy(stage.reader(row), data, row["body_bytes"])
                 receipt["objects"] += 1
-                receipt["object_bytes"] += len(body)
+                receipt["object_bytes"] += row["body_bytes"]
         (output / "layout.json").write_text(json.dumps(json_layout({"members": layouts} if scene else layouts[0]), sort_keys=True, indent=2) + "\n")
         for selected, (path, before, _, _, _) in zip(profile["sources"], sources, strict=True):
             after = path.stat()
@@ -1121,8 +1697,8 @@ def produce(profile_path, profile_sha256, pc, output, codec_path, codec_sha256, 
         check_record_packs(providers)
         if sdk_path is not None and B.sha(sdk_path) != profile["sdk"]["sha256"]:
             raise ValueError("SDK script metadata changed during production")
-        with (output / "objects.bin").open("rb") as data:
-            for line in (output / "index.jsonl").read_text().splitlines():
+        with (output / "objects.bin").open("rb") as data, (output / "index.jsonl").open() as index:
+            for line in index:
                 row = json.loads(line)
                 data.seek(row["offset"])
                 if hashlib.sha256(B.exact(data, row["bytes"])).hexdigest() != row["sha256"]:
@@ -1134,12 +1710,19 @@ def produce(profile_path, profile_sha256, pc, output, codec_path, codec_sha256, 
         receipt["serialized_sha256"] = (
             {member["name"]: member["serialized_sha256"] for member in selected_members} if scene else selected_bundle["serialized_sha256"]
         )
+        if runtime_fields is not None:
+            runtime_fields.verify()
+            receipt["managed_field_inputs"] = dict(runtime_fields.pins)
         receipt["success"] = True
         return receipt
     except Exception as error:
         receipt["error"] = type(error).__name__ + ": " + str(error)
         raise
     finally:
+        if runtime_fields is not None:
+            runtime_fields.close()
+        if stage is not None:
+            stage.close()
         receipt["seconds"] = time.monotonic() - started
         (output / "result.json").write_text(json.dumps(receipt, indent=2) + "\n")
 

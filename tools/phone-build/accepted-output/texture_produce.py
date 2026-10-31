@@ -193,7 +193,7 @@ def field(body, fields, name):
 
 def body_output(body, fields, pixels, target, operation):
     required = {"m_Name", "m_CompleteImageSize", "m_TextureFormat", "m_IsAlphaChannelOptional", "m_LightmapFormat", "image data", "m_StreamData"}
-    cube = operation in {"cube-mips", "cube-hdr", "cube-rgba-mips"}
+    cube = operation in {"cube-mips", "cube-hdr", "cube-rgba-mips", "cube-preserve"}
     if operation in {"etc1-mips", "sdk-rgba-mips"} or cube:
         required |= {"m_MipCount", "m_ColorSpace"}
     if set(fields) != required:
@@ -216,6 +216,12 @@ def body_output(body, fields, pixels, target, operation):
     if operation in {"etc1-mips", "sdk-rgba-mips"} or cube:
         replacements["m_MipCount"] = struct.pack("<i", target["mips"])
         replacements["m_ColorSpace"] = struct.pack("<i", target["colour_space"])
+    if operation == "cube-preserve":
+        for key, name, code in (("mips", "m_MipCount", "<i"), ("colour_space", "m_ColorSpace", "<i"), ("usage", "m_LightmapFormat", "<i")):
+            if target[key] != struct.unpack(code, field(body, fields, name))[0]:
+                raise ValueError("preserved cubemap metadata differs from source")
+        if target["alpha_optional"] != bool(field(body, fields, "m_IsAlphaChannelOptional")[0]):
+            raise ValueError("preserved cubemap alpha metadata differs from source")
     stream = target["stream"]
     if target["inline"] or not pixels:
         if stream != {"offset": 0, "size": 0, "path": ""}:
@@ -383,6 +389,27 @@ def cube_mips(pixels, body, selected, sdk, etc_codec):
     return b"".join(parts)
 
 
+def preserve_cube_mips(pixels, body, selected):
+    """Retain original HDR face/mip bytes; never regenerate or quantize them.
+
+    BC6H requires native device support. RGBAHalf is the lossless decoded form;
+    this operation does not choose a format or assert platform capability.
+    """
+    width, height = selected["width"], selected["height"]
+    fields = selected["fields"]
+    fmt = struct.unpack("<i", field(body, fields, "m_TextureFormat"))[0]
+    mips = struct.unpack("<i", field(body, fields, "m_MipCount"))[0]
+    stride = struct.unpack("<I", field(body, fields, "m_CompleteImageSize"))[0]
+    if type(width) is not int or width != height or not 0 < width <= 8192 or width & (width - 1) or not 1 <= mips <= width.bit_length():
+        raise ValueError("unqualified preserved cubemap dimensions/mips")
+    if fmt not in (17, 24):
+        raise ValueError("unqualified preserved HDR cubemap format")
+    expected = sum(((max(1, width >> mip) + 3) // 4) ** 2 * 16 if fmt == 24 else max(1, width >> mip) ** 2 * 8 for mip in range(mips))
+    if stride != expected or len(pixels) != stride * 6:
+        raise ValueError("preserved cubemap must contain six complete source mip chains")
+    return pixels
+
+
 def pixels_input(bundle, body, selected, jpeg_codec=None, etc_codec=None, sdk=None):
     location = selected["pixels"]
     if location["member"] is None:
@@ -399,6 +426,8 @@ def pixels_input(bundle, body, selected, jpeg_codec=None, etc_codec=None, sdk=No
     operation = selected["operation"]
     if operation in {"cube-mips", "cube-hdr", "cube-rgba-mips"}:
         return cube_mips(pixels, body, selected, sdk, etc_codec)
+    if operation == "cube-preserve":
+        return preserve_cube_mips(pixels, body, selected)
     if operation == "copy":
         return pixels
     if operation in {"sdk-rgba", "sdk-rgba-mips"}:

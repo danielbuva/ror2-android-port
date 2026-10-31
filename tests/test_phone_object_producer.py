@@ -25,6 +25,197 @@ def load(name, path):
 
 P = load("object_producer", ROOT / "tools/phone-build/accepted-output/object_produce.py")
 FIXTURE = load("object_bundle_fixture", ROOT / "tests/test_phone_mesh_producer.py")
+RECORD_FIXTURE = load("record_bundle_fixture", ROOT / "tests/test_phone_record_producer.py")
+
+
+class ProducedRecordRelocationTests(unittest.TestCase):
+    def test_absent_field_projection_preserves_live_values_and_serialized_aliases(self):
+        identity = P.module("script_identity", ROOT / "scripts/lab/script_identity.py")
+        nodes = [identity._node("MonoBehaviour", "Base", -1, level=0)] + [identity._node("int", name, 4) for name in ("m_Base", "live", "stale", "tail")]
+        sdk = identity._tree(nodes[:2] + [identity._node("string", "m_EditorClassIdentifier", -1)])
+        body = struct.pack("<4I", 17, 0x80000000, 37, 99)
+        tree = identity._tree(nodes)
+        made, revised, removed = P.project_current_script_fields(body, tree, {"live", "tail"}, sdk, identity)
+        self.assertEqual(made, struct.pack("<3I", 17, 0x80000000, 99))
+        self.assertEqual(removed, ["stale"])
+        self.assertEqual([v["name"] for v in identity.tree_nodes(revised)[1:]], ["m_Base", "live", "tail"])
+        self.assertEqual(P.project_current_script_fields(body, tree, {"live", "stale", "tail"}, sdk, identity), (body, tree, []))
+
+    def test_scene_activation_checks_original_name_and_only_clears_active_byte(self):
+        source = io.BytesIO()
+        source.write(struct.pack("<IiqI", 1, 0, 19, 4))
+        P.aligned_string(source, "Authored scene group")
+        source.write(struct.pack("<HB", 6, 1))
+        body = source.getvalue()
+        self.assertEqual(P.deactivate_named_gameobject(body, "Authored scene group"), body[:-1] + bytes(1))
+        for name, data in (("another group", body), ("Authored scene group", body[:-1] + bytes(1))):
+            with self.subTest(name=name), self.assertRaises(ValueError):
+                P.deactivate_named_gameobject(data, name)
+
+    def test_record_source_reuses_a_checked_pack_in_multiple_namespaces(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            pack = Path(temporary)
+            body = b"AUTHORED SHADER"
+            (pack / "objects.bin").write_bytes(body)
+            record = dict(bundle="source", member="source-file", path_id=9, offset=0, bytes=len(body), sha256=hashlib.sha256(body).hexdigest())
+            (pack / "index.jsonl").write_text(json.dumps(record) + "\n")
+            outputs = {name: dict(bytes=(pack / name).stat().st_size, sha256=P.B.sha(pack / name)) for name in ("objects.bin", "index.jsonl")}
+            receipt = dict(success=True, input_id=P.M.INPUT_ID, profile_sha256="a" * 64, outputs=outputs)
+            (pack / "result.json").write_text(json.dumps(receipt))
+            selected = [dict(name="destination", objects=[dict(path_id=i, record="a" * 64, record_source=["source", "source-file", 9]) for i in (4, 5)])]
+            records, _ = P.record_packs(selected, [(pack, P.B.sha(pack / "result.json"))], dict(name="other"))
+            self.assertEqual(set(records), {("destination", 4), ("destination", 5)})
+            self.assertEqual(P.record_extent(pack / "objects.bin", records["destination", 4][1]), body)
+            selected[0]["objects"][0]["record_source"][2] = 10
+            with self.assertRaisesRegex(ValueError, "record missing"):
+                P.record_packs(selected, [(pack, P.B.sha(pack / "result.json"))], dict(name="other"))
+            selected[0]["objects"][0]["record_source"][2] = 9
+            record["resource"] = dict(stream=dict(path="archive:/source-file/source.resS", offset=0, size=0))
+            (pack / "index.jsonl").write_text(json.dumps(record) + "\n")
+            receipt["outputs"]["index.jsonl"] = dict(bytes=(pack / "index.jsonl").stat().st_size, sha256=P.B.sha(pack / "index.jsonl"))
+            (pack / "result.json").write_text(json.dumps(receipt))
+            with self.assertRaisesRegex(ValueError, "resource reconstruction"):
+                P.record_packs(selected, [(pack, P.B.sha(pack / "result.json"))], dict(name="other"))
+
+    def test_empty_renderer_keeps_native_fields_and_changes_only_authored_flags(self):
+        schema = FIXTURE.node(
+            "Base",
+            children=[
+                FIXTURE.node("m_Enabled", 1, kind="UInt8"),
+                FIXTURE.node("m_CastShadows", 1, kind="UInt8"),
+                FIXTURE.node("m_ReceiveShadows", 1, kind="UInt8"),
+                FIXTURE.node("m_DynamicOccludee", 1, kind="UInt8"),
+                FIXTURE.array("m_Materials", FIXTURE.node("data", 12, kind="PPtr<Material>")),
+                FIXTURE.node("retained", 4, kind="float"),
+            ],
+        )
+        body = bytes([1, 1, 1, 1]) + bytes(4) + struct.pack("<I", 0x80000000)
+        stream = io.BytesIO(RECORD_FIXTURE.serialized(body, schema, class_id=23))
+        stream.size = len(stream.getvalue())
+        tree = P.W.read_serialized(stream)["types"][0]["tree"]
+        self.assertEqual(P.empty_mesh_renderer(body, tree), bytes(3) + body[3:])
+
+    def test_original_editor_script_hash_requires_unchanged_runtime_identity_and_schema(self):
+        identity = P.module("script_identity", ROOT / "scripts/lab/script_identity.py")
+        stream = io.BytesIO()
+        P.aligned_string(stream, "AuthoredCurve")
+        stream.write(bytes(4))
+        expected = bytes(range(16))
+        stream.write(expected)
+        for text in ("AuthoredCurve", "Lab", "Fixture.dll"):
+            P.aligned_string(stream, text)
+        script = stream.getvalue()
+        metadata = {"class_id": 114, "script_id": identity.md4(b"AuthoredCurveLabFixture.dll"), "tree": b"same-source-schema"}
+        self.assertEqual(P.original_script_properties(script, {"class_id": 115}, metadata, metadata.copy(), identity), expected)
+        for changed in ({**metadata, "tree": b"projected-schema"}, {**metadata, "script_id": bytes(16)}, {**metadata, "class_id": 115}):
+            with self.subTest(changed=changed), self.assertRaisesRegex(ValueError, "unchanged runtime identity/schema"):
+                P.original_script_properties(script, {"class_id": 115}, metadata, changed, identity)
+
+    def test_run_presence_projection_retains_source_metadata_before_zero_counters(self):
+        identity = P.module("script_identity", ROOT / "scripts/lab/script_identity.py")
+        schema = FIXTURE.node(
+            "Base",
+            kind="MonoBehaviour",
+            children=[
+                FIXTURE.node("retained", 4, kind="float"),
+                FIXTURE.node("cachedActiveCount", 4, kind="int"),
+                FIXTURE.node("cachedInActiveCount", 4, kind="int"),
+            ],
+        )
+        stream = io.BytesIO(RECORD_FIXTURE.serialized(bytes(12), schema, class_id=114))
+        stream.size = len(stream.getvalue())
+        tree = P.W.read_serialized(stream)["types"][0]["tree"]
+        source = identity.tree_nodes(tree)
+        projected = identity.tree_nodes(P.omit_run_presence_counters(tree, identity))
+        self.assertEqual(projected, source[:2])
+        self.assertEqual(P.omit_run_presence_counters(tree, identity), identity._tree(source[:2], common_strings=True))
+        with self.assertRaisesRegex(ValueError, "counter schema drift"):
+            P.omit_run_presence_counters(tree.replace(b"cachedActiveCount", b"cachedOtherXCount"), identity)
+
+    def test_director_deck_selects_source_spans_and_defaults_only_authored_omissions(self):
+        card = FIXTURE.node(
+            "data",
+            children=[
+                FIXTURE.node("spawnCard", 12, kind="PPtr<SpawnCard>"),
+                FIXTURE.node("selectionWeight", 4, kind="UInt32"),
+                FIXTURE.text("requiredUnlockable"),
+                FIXTURE.node("isExclusivelyElite", 4, kind="UInt32"),
+                FIXTURE.node("eliteDef", 12, kind="PPtr<EliteDef>"),
+            ],
+        )
+        category = FIXTURE.node("data", children=[FIXTURE.text("name"), FIXTURE.array("cards", card), FIXTURE.node("selectionWeight", 4, kind="float")])
+        schema = FIXTURE.node(
+            "Base",
+            children=[
+                FIXTURE.node("before", 4),
+                FIXTURE.text("m_Name"),
+                FIXTURE.node("middle", 4),
+                FIXTURE.array("categories", category),
+                FIXTURE.node("after", 4),
+            ],
+        )
+        text = FIXTURE.M.padded_string
+        first_card = struct.pack("<iqI", 1, 101, 7) + text("Old") + bytes(16)
+        second_card = struct.pack("<iqI", 2, 202, 0x11223344) + text("Locked") + bytes(16)
+        source = b"HEAD" + text("Deck") + b"MID!" + struct.pack("<I", 2)
+        source += text("First") + struct.pack("<I", 1) + first_card + struct.pack("<f", 0.5)
+        source += text("Second") + struct.pack("<I", 1) + second_card + struct.pack("<f", 0.75) + b"TAIL"
+        stream = io.BytesIO(RECORD_FIXTURE.serialized(source, schema, class_id=114))
+        stream.size = len(stream.getvalue())
+        tree = P.W.read_serialized(stream)["types"][0]["tree"]
+        selection = [{"source_index": 1, "cards": [{"source_index": 0, "omit_fields": ["requiredUnlockable"]}], "omit_weight": True}]
+        expected = b"HEAD" + text("Android supported Deck") + b"MID!" + struct.pack("<I", 1)
+        expected += text("Second") + struct.pack("<I", 1) + struct.pack("<iqI", 2, 202, 0x11223344) + bytes(24) + b"TAIL"
+        self.assertEqual(P.rebuild_director_deck(source, tree, selection), expected)
+
+    def test_surface_projection_resizes_strings_and_preserves_unselected_bytes(self):
+        schema = FIXTURE.node(
+            "Base",
+            children=[
+                FIXTURE.node("before", 4, kind="UInt32"),
+                FIXTURE.node("impactEffectPrefab", 12, kind="PPtr<GameObject>"),
+                FIXTURE.text("impactSoundString"),
+                FIXTURE.node("middle", 4, kind="float"),
+                FIXTURE.text("materialSwitchString"),
+                FIXTURE.node("footstepEffectPrefab", 12, kind="PPtr<GameObject>"),
+                FIXTURE.node("after", 4, kind="UInt32"),
+            ],
+        )
+        before, middle, after = struct.pack("<I", 0x01020304), struct.pack("<I", 0x80000000), struct.pack("<I", 0xF00DF00D)
+        body = before + struct.pack("<iq", 1, 11) + FIXTURE.M.padded_string("ImpactName") + middle
+        body += FIXTURE.M.padded_string("SurfaceName") + struct.pack("<iq", 2, 29) + after
+        stream = io.BytesIO(RECORD_FIXTURE.serialized(body, schema, class_id=114))
+        stream.size = len(stream.getvalue())
+        tree = P.W.read_serialized(stream)["types"][0]["tree"]
+        self.assertEqual(P.omit_surface_effects(body, tree), before + bytes(16) + middle + bytes(16) + after)
+
+    def test_schema_pointer_only_and_external_file_check(self):
+        schema = FIXTURE.node(
+            "Base",
+            children=[
+                FIXTURE.node("scalar", 4, kind="UInt32"),
+                FIXTURE.node("pointer", children=[FIXTURE.node("m_FileID", 4, kind="int"), FIXTURE.node("m_PathID", 8, kind="SInt64")], kind="PPtr<Shader>"),
+            ],
+        )
+        body = struct.pack("<Iiq", 17, 1, 6)
+        stream = io.BytesIO(RECORD_FIXTURE.serialized(body, schema, class_id=21))
+        stream.size = len(stream.getvalue())
+        typ = P.W.read_serialized(stream)["types"][0]
+        reference = {"offset": 4, "from": [1, 6], "to": [2, 6]}
+        self.assertEqual(P.remap_record(body, typ, [reference], ["old", "new"]), struct.pack("<Iiq", 17, 2, 6))
+        with self.assertRaisesRegex(ValueError, "schema PPtr"):
+            P.remap_record(body, typ, [dict(reference, offset=0)], ["old", "new"])
+        with self.assertRaisesRegex(ValueError, "absent external"):
+            P.remap_record(body, typ, [reference], ["old"])
+        with self.assertRaisesRegex(ValueError, "identity drift"):
+            P.remap_record(body, typ, [dict(reference, **{"from": [1, 7]})], ["old", "new"])
+
+    def test_preload_uses_relocated_dependency(self):
+        bundle = {"preload_dependencies": [], "dependencies": []}
+        member = {"name": "scene", "externals": ["old", "new"], "objects": [{"path_id": 9, "record_references": [{"offset": 4, "from": [1, 6], "to": [2, 6]}]}]}
+        packed = {("scene", 9): (None, {"dependencies": [{"to": [1, 6], "source": {"member": "original", "path_id": 42}}]})}
+        selected = {"externals": ["old", "new"]}
+        self.assertEqual(P.preload_data(bundle, selected, [member], packed), struct.pack("<IIiqIB", 0, 1, 2, 6, 0, 0))
 
 
 def digest(data):
@@ -157,6 +348,66 @@ def fixture(root):
     path = root / "profile.json"
     path.write_text(json.dumps(profile))
     return pc, path, profile, bodies, target.getvalue()
+
+
+class NativeSerializedSourceTests(unittest.TestCase):
+    def test_stripped_native_metadata_uses_only_an_identical_original_schema(self):
+        for wrong_schema in (False, True):
+            with self.subTest(wrong_schema=wrong_schema), tempfile.TemporaryDirectory() as temporary:
+                root = Path(temporary)
+                pc, path, profile, _, _ = fixture(root)
+                original = P.B.Bundle(pc / "source.bundle").member("CAB-source")
+                metadata = P.W.read_serialized(original)
+                bodies = {}
+                for row in metadata["objects"]:
+                    original.seek(metadata["data_offset"] + row["offset"])
+                    bodies[row["path_id"]] = P.B.exact(original, row["bytes"])
+                metadata["trees"] = False
+                for typ in metadata["types"]:
+                    typ.pop("tree", None)
+                    typ.pop("dependencies", None)
+                native = pc / "registry.assets"
+                with native.open("wb") as stream:
+                    P.W.write_serialized(stream, metadata, lambda row: io.BytesIO(bodies[row["path_id"]]))
+                profile["sources"].append({"path": native.name, "member": native.name, "sha256": P.B.sha(native)})
+                for selected in profile["objects"]:
+                    if "source" in selected:
+                        selected["type_source"] = list(selected["source"])
+                        selected["source"][0] = 1
+                if wrong_schema:
+                    profile["objects"][2]["type_source"] = [0, 61]
+                path.write_text(json.dumps(profile))
+                if wrong_schema:
+                    with self.assertRaisesRegex(ValueError, "native source schema identity differs"):
+                        produce(path, P.B.sha(path), pc, root / "output")
+                else:
+                    self.assertTrue(produce(path, P.B.sha(path), pc, root / "output")["success"])
+
+    def test_complete_bundle_uses_hash_pinned_native_original_records(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            pc, path, profile, _, _ = fixture(root)
+            original = P.B.Bundle(pc / "source.bundle").member("CAB-source")
+            native = pc / "registry.assets"
+            native.write_bytes(original.read())
+            profile["sources"] = [{"path": native.name, "member": native.name, "sha256": P.B.sha(native)}]
+            path.write_text(json.dumps(profile))
+            result = produce(path, P.B.sha(path), pc, root / "output")
+            self.assertTrue(result["success"])
+            self.assertEqual(P.B.sha(root / "output/payload/authored-target"), profile["bundle"]["sha256"])
+            native.write_bytes(native.read_bytes() + b"drift")
+            with self.assertRaisesRegex(ValueError, "original object bundle drift"):
+                produce(path, P.B.sha(path), pc, root / "drift-output")
+
+    def test_native_member_name_must_match_the_original_file(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            pc, _, _, _, _ = fixture(root)
+            original = P.B.Bundle(pc / "source.bundle").member("CAB-source")
+            native = pc / "registry.assets"
+            native.write_bytes(original.read())
+            with self.assertRaisesRegex(ValueError, "member identity differs"):
+                P.source_member(native, "unrelated-member")
 
 
 def packed_fixture(root):
@@ -447,7 +698,7 @@ def rewrite_managed_source(pc, profile, mutate):
             row["source_sha256"] = digest(bodies[row["source"][1]])
 
 
-def managed_fixture(root, *, omit_master=False, disable=False, plugin_order=False):
+def managed_fixture(root, *, omit_master=False, disable=False, plugin_order=False, master_value=False):
     pc, path, profile, _, original_target = fixture(root)
     source = pc / "source.bundle"
     source_layout = P.W.read_serialized(P.B.Bundle(source).member("CAB-source"))
@@ -474,7 +725,7 @@ def managed_fixture(root, *, omit_master=False, disable=False, plugin_order=Fals
     if disable:
         source_behaviour = source_behaviour[:12] + b"\x01\0\0\0" + source_behaviour[16:]
     if omit_master:
-        source_behaviour += bytes(4)
+        source_behaviour += struct.pack("<I", master_value)
     target_behaviour = source_behaviour[:16] + struct.pack("<iq", 0, 2) + source_behaviour[28:]
     if disable:
         target_behaviour = target_behaviour[:12] + bytes(1) + target_behaviour[13:]
@@ -537,6 +788,116 @@ def managed_fixture(root, *, omit_master=False, disable=False, plugin_order=Fals
 
 
 class ObjectProducerTests(unittest.TestCase):
+    def test_streamed_aggregate_exceeds_single_record_bound_and_remains_canonical(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            pc, path, profile, bodies, serialized = fixture(root)
+            stream = io.BytesIO(serialized)
+            stream.size = len(serialized)
+            layout = P.W.read_serialized(stream)
+            layout.pop("data_offset")
+            layout.pop("bytes")
+            clone_body = bodies[-7]
+            offset = (max(row["offset"] + row["bytes"] for row in layout["objects"]) + 7) // 8 * 8
+            original_selection = profile["objects"][0]
+            for identity in range(100, 10100):
+                layout["objects"].append(dict(path_id=identity, offset=offset, bytes=len(clone_body), type_id=1))
+                profile["objects"].append({**copy.deepcopy(original_selection), "path_id": identity})
+                offset += len(clone_body)
+            profile["bundle"]["assets"] = [dict(path="Assets/Authored.prefab", root=-7, preload=[[0, -7], [0, 2], [1, 88]])]
+            expected = io.BytesIO()
+            P.W.write_serialized(expected, layout, lambda row: io.BytesIO(bodies.get(row["path_id"], clone_body)))
+            data = expected.getvalue()
+            complete = io.BytesIO()
+            P.W.write_bundle(complete, [("CAB-target", 4, len(data), lambda: io.BytesIO(data))], literal_lz4)
+            profile["bundle"].update(serialized_sha256=digest(data), bytes=len(complete.getvalue()), sha256=digest(complete.getvalue()))
+            path.write_text(json.dumps(profile))
+            with patch.object(P.B, "LIMIT", 128 * 1024), patch.object(P.W, "codec", return_value=nullcontext(literal_lz4)):
+                result = P.produce(path, P.B.sha(path), pc, root / "streamed", Path("codec"), "pin")
+            self.assertTrue(result["success"])
+            self.assertGreater(result["object_bytes"], 128 * 1024)
+            self.assertEqual((root / "streamed/payload/authored-target").read_bytes(), complete.getvalue())
+            self.assertEqual(result["objects"], 10003)
+            self.assertFalse(list((root / "streamed").glob("native-stream-*")))
+
+    def test_streamed_resource_reads_are_bounded_and_preserve_padding_and_hashes(self):
+        storage = P.module("object_stream")
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            source = root / "source"
+            block = bytes(range(256)) * 32
+            digestor = hashlib.sha256()
+            with source.open("wb") as stream:
+                for _ in range(256):
+                    stream.write(block)
+                    digestor.update(block)
+            size = source.stat().st_size
+            extent = dict(offset=0, bytes=size, sha256=digestor.hexdigest())
+            real_open = Path.open
+            reads = []
+
+            class Bounded:
+                def __enter__(self):
+                    self.file = real_open(source, "rb")
+                    return self
+
+                def __exit__(self, *args):
+                    self.file.close()
+
+                def seek(self, offset):
+                    return self.file.seek(offset)
+
+                def read(self, count):
+                    self_test.assertGreater(count, 0)
+                    self_test.assertLessEqual(count, 128 * 1024)
+                    reads.append(count)
+                    return self.file.read(count)
+
+            self_test = self
+
+            def open_file(path, *args, **kwargs):
+                return Bounded() if path == source else real_open(path, *args, **kwargs)
+
+            with patch.object(Path, "open", open_file):
+                count = storage.resource(root / "resource", [(7, source, extent)], 16, P.W, P.B.LIMIT)
+            result = (root / "resource").read_bytes()
+            self.assertEqual(count, (7 + size + 15) // 16 * 16)
+            self.assertEqual(result[:7], bytes(7))
+            self.assertEqual(hashlib.sha256(result[7 : 7 + size]).hexdigest(), digestor.hexdigest())
+            self.assertEqual(result[7 + size :], bytes(count - 7 - size))
+            self.assertGreater(len(reads), 1)
+
+    def test_model_hierarchy_derives_names_and_requires_produced_components(self):
+        schema = FIXTURE.node(
+            "Base",
+            children=[
+                FIXTURE.array("m_Component", FIXTURE.node("data", 12, kind="PPtr<Component>")),
+                FIXTURE.node("m_Layer", 4, kind="UInt32"),
+                FIXTURE.text("m_Name"),
+                FIXTURE.node("m_Tag", 2, kind="UInt16"),
+                FIXTURE.node("m_IsActive", 1, kind="bool"),
+            ],
+        )
+        stream = io.BytesIO(RECORD_FIXTURE.serialized(bytes(4) + bytes(4) + bytes(4) + bytes(3), schema, class_id=1))
+        stream.size = len(stream.getvalue())
+        definition = P.W.read_serialized(stream)["types"][0]
+        name = io.BytesIO()
+        P.aligned_string(name, "InventedMesh")
+        mesh = name.getvalue()
+        stream = io.BytesIO(RECORD_FIXTURE.serialized(mesh, FIXTURE.node("Base", children=[FIXTURE.text("m_Name")]), class_id=43))
+        stream.size = len(stream.getvalue())
+        mesh_type = P.W.read_serialized(stream)["types"][0]
+        selected = {"model_mesh_source": [0, 7], "model_node": "mesh", "components": [9, -17]}
+        with patch.object(P, "source_record", return_value=(mesh, mesh_type)):
+            for node, expected in (("mesh", "InventedMesh_0"), ("root", "InventedFile")):
+                selected.update(model_node=node, model_asset="Assets/Recovered/InventedFile.obj")
+                result = P.model_game_object(selected, [], definition, [9, -17])
+                name = io.BytesIO()
+                P.aligned_string(name, expected)
+                self.assertEqual(struct.pack("<IiqiqI", 2, 0, 9, 0, -17, 0) + name.getvalue() + struct.pack("<HB", 0, 1), result)
+            with self.assertRaisesRegex(ValueError, "produced components"):
+                P.model_game_object(selected, [], definition, [9])
+
     def test_default_material_uses_pinned_sdk_and_existing_player_helper(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
@@ -641,14 +1002,38 @@ class ObjectProducerTests(unittest.TestCase):
                 else:
                     P.check_preload_dependencies(sources, profiles, [dependency])
 
-    def test_original_preload_rigidbody_requires_unique_reciprocal_component(self):
+    def test_original_preload_direct_managed_root_requires_pinned_class_and_membership(self):
+        body = b"AUTHORED MANAGED ROOT"
+        preload = struct.pack("<IIiq", 0, 1, 1, 19)
+        dependency = dict(
+            source=[1, 19],
+            source_class_id=114,
+            source_sha256=digest(body),
+            preload_source=[0, 1],
+            preload_sha256=digest(preload),
+            source_pointer=[1, 19],
+            to=[2, 91],
+        )
+        profiles = [{"member": "CAB-scene"}, {"member": "CAB-root"}]
+        sources = [(None, None, None, {"externals": [{"path": "CAB-root"}]}, None)]
+        with patch.object(P, "source_record", side_effect=lambda _, selector: (preload, typ(150)) if selector == [0, 1] else (body, typ(114))):
+            P.check_preload_dependencies(sources, profiles, [dependency])
+            for change in ({"source_class_id": 1}, {"source_sha256": "0" * 64}, {"source_pointer": [1, 20]}, {"transform": {}}):
+                with self.subTest(change=change), self.assertRaises(ValueError):
+                    P.check_preload_dependencies(sources, profiles, [dependency | change])
+
+    def test_original_preload_component_requires_unique_reciprocal_membership(self):
+        for kind, class_id, size in (("Rigidbody", 54, 36), ("Transform", 4, 68), ("Animator", 95, 56)):
+            self.check_preload_component(kind, class_id, size)
+
+    def check_preload_component(self, kind, class_id, size):
         for failure in (None, "class", "length", "hash", "owner", "member", "index", "duplicate", "pointer"):
-            with self.subTest(failure=failure):
+            with self.subTest(kind=kind, failure=failure):
                 components = [(0, 71), (0, 72), (0, 73), (0, 20)]
                 if failure == "duplicate":
                     components[0] = (0, 20)
                 gameobject = struct.pack("<I", len(components)) + b"".join(struct.pack("<iq", *p) for p in components)
-                rigidbody = struct.pack("<iq", 0, 99 if failure == "owner" else 19) + bytes(24)
+                rigidbody = struct.pack("<iq", 0, 99 if failure == "owner" else 19) + bytes(size - 12)
                 if failure == "length":
                     rigidbody += bytes(4)
                 preload = struct.pack("<IIiq", 0, 1, 1, 21 if failure == "pointer" else 20)
@@ -660,20 +1045,20 @@ class ObjectProducerTests(unittest.TestCase):
                     "preload_sha256": digest(preload),
                     "source_pointer": [1, 21 if failure == "pointer" else 20],
                     "to": [2, 91],
-                    "rigidbody": {
+                    kind.lower(): {
                         "source": [0 if failure == "member" else 1, 20],
                         "sha256": "0" * 64 if failure == "hash" else digest(rigidbody),
                         "component_index": 2 if failure == "index" else 3,
                     },
                 }
                 bodies = [
-                    {1: (preload, typ(150)), 20: (rigidbody, typ(54))},
-                    {19: (gameobject, typ(1)), 20: (rigidbody, typ(4 if failure == "class" else 54))},
+                    {1: (preload, typ(150)), 20: (rigidbody, typ(class_id))},
+                    {19: (gameobject, typ(1)), 20: (rigidbody, typ(1 if failure == "class" else class_id))},
                 ]
                 sources = curve_sources(bodies, profiles)
                 sources[0][3]["externals"] = [{"path": "archive:/original/CAB-original"}]
                 if failure:
-                    with self.assertRaisesRegex(ValueError, "Rigidbody|relationship drift"):
+                    with self.assertRaisesRegex(ValueError, kind + "|relationship drift"):
                         P.check_preload_dependencies(sources, profiles, [dependency])
                 else:
                     P.check_preload_dependencies(sources, profiles, [dependency])
@@ -733,33 +1118,36 @@ class ObjectProducerTests(unittest.TestCase):
             self.assertFalse(json.loads((root / "failed/result.json").read_text())["success"])
 
     def test_character_master_omission_keeps_script_and_behaviour_schema_hashes_consistent(self):
-        with tempfile.TemporaryDirectory() as temporary:
-            root = Path(temporary)
-            pc, path, _, sdk, names, original_type, sdk_tree, derived, bodies, serialized = managed_fixture(root, omit_master=True)
-            identity = load("authored_script_identity", ROOT / "scripts/lab/script_identity.py")
-            helper = Mock(properties_hash=Mock(return_value=derived), tree_nodes=identity.tree_nodes)
-            real_module = P.module
-            with (
-                patch.object(P, "module", side_effect=lambda name, location=None: helper if name == "script_identity" else real_module(name, location)),
-                patch.object(P.W, "codec", return_value=nullcontext(literal_lz4)),
-            ):
-                result = P.produce(path, P.B.sha(path), pc, root / "produced", Path("codec"), "pin", sdk=sdk)
-            self.assertTrue(result["success"])
-            helper.properties_hash.assert_called_once_with(*names, character_master_schema(False), sdk_tree)
-            member = P.B.Bundle(root / "produced/payload/authored-target").member("CAB-target")
-            self.assertEqual(P.B.exact(member, member.size), serialized)
-            layout = P.W.read_serialized(member)
-            mb = next(kind for kind in layout["types"] if kind["class_id"] == 114)
-            self.assertEqual(mb, {**original_type, "hash": derived, "script_type": 0, "tree": character_master_schema(False)})
-            self.assertEqual([node["name"] for node in identity.tree_nodes(mb["tree"])], ["Base", "AuthoredValue"])
-            for row in layout["objects"]:
-                member.seek(layout["data_offset"] + row["offset"])
-                actual = P.B.exact(member, row["bytes"])
-                self.assertEqual(actual, bodies[row["path_id"]])
-                if row["path_id"] == 2:
-                    offset, actual_names = P.script_fields(actual)
-                    self.assertEqual(actual_names, names)
-                    self.assertEqual(actual[offset : offset + 16], derived)
+        for master_value in (False, True):
+            with tempfile.TemporaryDirectory() as temporary:
+                root = Path(temporary)
+                pc, path, _, sdk, names, original_type, sdk_tree, derived, bodies, serialized = managed_fixture(
+                    root, omit_master=True, master_value=master_value
+                )
+                identity = load("authored_script_identity", ROOT / "scripts/lab/script_identity.py")
+                helper = Mock(properties_hash=Mock(return_value=derived), tree_nodes=identity.tree_nodes)
+                real_module = P.module
+                with (
+                    patch.object(P, "module", side_effect=lambda name, location=None: helper if name == "script_identity" else real_module(name, location)),
+                    patch.object(P.W, "codec", return_value=nullcontext(literal_lz4)),
+                ):
+                    result = P.produce(path, P.B.sha(path), pc, root / "produced", Path("codec"), "pin", sdk=sdk)
+                self.assertTrue(result["success"])
+                helper.properties_hash.assert_called_once_with(*names, character_master_schema(False), sdk_tree)
+                member = P.B.Bundle(root / "produced/payload/authored-target").member("CAB-target")
+                self.assertEqual(P.B.exact(member, member.size), serialized)
+                layout = P.W.read_serialized(member)
+                mb = next(kind for kind in layout["types"] if kind["class_id"] == 114)
+                self.assertEqual(mb, {**original_type, "hash": derived, "script_type": 0, "tree": character_master_schema(False)})
+                self.assertEqual([node["name"] for node in identity.tree_nodes(mb["tree"])], ["Base", "AuthoredValue"])
+                for row in layout["objects"]:
+                    member.seek(layout["data_offset"] + row["offset"])
+                    actual = P.B.exact(member, row["bytes"])
+                    self.assertEqual(actual, bodies[row["path_id"]])
+                    if row["path_id"] == 2:
+                        offset, actual_names = P.script_fields(actual)
+                        self.assertEqual(actual_names, names)
+                        self.assertEqual(actual[offset : offset + 16], derived)
 
     def test_character_master_omission_rejects_identity_schema_class_and_value_drift(self):
         for failure, message in (
@@ -805,7 +1193,7 @@ class ObjectProducerTests(unittest.TestCase):
                         layout["types"][0]["tree"] = tree
                     elif failure in ("value", "padding"):
                         body = bytearray(bodies[61])
-                        body[-4 if failure == "value" else -1] = 1
+                        body[-4 if failure == "value" else -1] = 2 if failure == "value" else 1
                         bodies[61] = bytes(body)
 
                 rewrite_managed_source(pc, profile, mutate)
@@ -823,6 +1211,21 @@ class ObjectProducerTests(unittest.TestCase):
                 ):
                     P.produce(path, P.B.sha(path), pc, root / "failed", Path("codec"), "pin", sdk=sdk)
                 self.assertFalse(json.loads((root / "failed/result.json").read_text())["success"])
+
+    def test_fieldless_script_source_cannot_reidentify_a_component_with_payload(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            pc, path, profile, sdk, _, _, _, derived, _, _ = managed_fixture(root)
+            selected = next(row for row in profile["objects"] if row["path_id"] == -7)
+            selected["fieldless_script_source"] = [0, 51]
+            path.write_text(json.dumps(profile))
+            helper = Mock(properties_hash=Mock(return_value=derived))
+            real_module = P.module
+            with (
+                patch.object(P, "module", side_effect=lambda name, location=None: helper if name == "script_identity" else real_module(name, location)),
+                self.assertRaisesRegex(ValueError, "empty-name base component"),
+            ):
+                P.produce(path, P.B.sha(path), pc, root / "failed", Path("codec"), "pin", sdk=sdk)
 
     def test_original_behaviour_disable_preserves_all_other_emitted_bytes(self):
         with tempfile.TemporaryDirectory() as temporary:
@@ -997,6 +1400,7 @@ class ObjectProducerTests(unittest.TestCase):
                 with self.assertRaisesRegex(ValueError, message):
                     P.produce(path, P.B.sha(path), pc, root / "failed", Path("codec"), "pin", [(pack, P.B.sha(pack / "result.json"))])
                 self.assertFalse(json.loads((root / "failed/result.json").read_text())["success"])
+                self.assertFalse(list((root / "failed").glob("native-stream-*")))
 
     def test_named_global_owner_suppression_emits_the_complete_scene(self):
         with tempfile.TemporaryDirectory() as temporary:
@@ -1020,7 +1424,19 @@ class ObjectProducerTests(unittest.TestCase):
                 self.assertEqual(P.W.read_serialized(emitted.member(member))["engine"], "2021.3.33f1")
 
     def test_global_owner_suppression_checks_original_identity_and_active_tail(self):
-        for name in ("SceneInfo", "Director", "GameManager", "RoR2Application"):
+        for name in (
+            "SceneInfo",
+            "Director",
+            "GameManager",
+            "RoR2Application",
+            "BeetleBody",
+            "BeetleGuardBody",
+            "BeetleGuardMaster",
+            "BeetleQueen2Body",
+            "CommandoBody",
+            "PlayerMaster",
+            "Teleporter1",
+        ):
             encoded = name.encode()
             original = struct.pack("<IiqII", 1, 0, 713, 9, len(encoded)) + encoded + bytes(-len(encoded) % 4) + struct.pack("<HB", 17, 1)
             self.assertEqual(P.deactivate_global_owner(original, name), original[:-1] + bytes(1))
@@ -1032,6 +1448,22 @@ class ObjectProducerTests(unittest.TestCase):
             ):
                 with self.subTest(name=name, selected=selected), self.assertRaises(ValueError):
                     P.deactivate_global_owner(body, selected)
+
+    def test_exported_prefab_name_preserves_components_layer_tag_and_activation(self):
+        def string(value):
+            encoded = value.encode()
+            return struct.pack("<I", len(encoded)) + encoded + bytes(-len(encoded) % 4)
+
+        prefix = struct.pack("<IiqI", 1, 0, 713, 8)
+        tail = struct.pack("<HB", 6, 1)
+        original = prefix + string("  Variant, One(Clone)  ") + tail
+        expected = prefix + string("Variant_ One") + tail
+        self.assertEqual(P.normalize_exported_prefab_name(original), expected)
+        director = prefix + string("Director") + tail
+        self.assertEqual(
+            P.normalize_exported_prefab_name(director, "EnemyClosure/FastDirector.prefab"),
+            prefix + string("FastDirector") + tail,
+        )
 
     def test_original_windows_bundle_copy_needs_no_codec_or_comparison_supplier(self):
         with tempfile.TemporaryDirectory() as temporary:
@@ -1137,6 +1569,56 @@ class ObjectProducerTests(unittest.TestCase):
             self.assertEqual(P.B.exact(emitted.member("CAB-target.resS"), 16), bytes(8) + b"AUTHORED")
             self.assertEqual(P.B.sha(pc / "source.bundle"), before)
 
+    def test_bundle_checks_record_native_type_after_source_projection(self):
+        for mismatch in (False, True):
+            with self.subTest(mismatch=mismatch), tempfile.TemporaryDirectory() as temporary:
+                root = Path(temporary)
+                pc, path, pack, profile, row, _ = packed_fixture(root)
+                source_index, source_id = profile["objects"][0]["type_source"]
+                source = profile["sources"][source_index]
+                with P.source_member(pc / source["path"], source["member"]) as member:
+                    metadata = P.W.read_serialized(member)
+                obj = next(obj for obj in metadata["objects"] if obj["path_id"] == source_id)
+                native_hash = metadata["types"][obj["type_id"]]["hash"].hex()
+                row["native_type_hash"] = "ff" * 16 if mismatch else native_hash
+                (pack / "index.jsonl").write_text(json.dumps(row) + "\n")
+                receipt = json.loads((pack / "result.json").read_text())
+                receipt["outputs"]["index.jsonl"] = {"bytes": (pack / "index.jsonl").stat().st_size, "sha256": P.B.sha(pack / "index.jsonl")}
+                (pack / "result.json").write_text(json.dumps(receipt))
+                with patch.object(P.W, "codec", return_value=nullcontext(literal_lz4)):
+                    if mismatch:
+                        with self.assertRaisesRegex(ValueError, "native type identity"):
+                            P.produce(path, P.B.sha(path), pc, root / "complete", Path("codec"), "pin", [(pack, P.B.sha(pack / "result.json"))])
+                    else:
+                        self.assertTrue(
+                            P.produce(path, P.B.sha(path), pc, root / "complete", Path("codec"), "pin", [(pack, P.B.sha(pack / "result.json"))])["success"]
+                        )
+
+    def test_optional_native_resource_padding_preserves_source_extent(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            pc, path, pack, profile, row, serialized = packed_fixture(root)
+            row["resource"]["stream"]["offset"] = 9
+            (pack / "index.jsonl").write_text(json.dumps(row) + "\n")
+            receipt = json.loads((pack / "result.json").read_text())
+            receipt["outputs"]["index.jsonl"] = {"bytes": (pack / "index.jsonl").stat().st_size, "sha256": P.B.sha(pack / "index.jsonl")}
+            (pack / "result.json").write_text(json.dumps(receipt))
+            resource = bytes(9) + b"AUTHORED" + bytes(15)
+            expected = io.BytesIO()
+            P.W.write_bundle(
+                expected,
+                [("CAB-target", 4, len(serialized), lambda: io.BytesIO(serialized)), ("CAB-target.resS", 0, 32, lambda: io.BytesIO(resource))],
+                literal_lz4,
+            )
+            profile["bundle"].update(resource_alignment={"CAB-target.resS": 16}, bytes=len(expected.getvalue()), sha256=digest(expected.getvalue()))
+            path.write_text(json.dumps(profile))
+            with patch.object(P.W, "codec", return_value=nullcontext(literal_lz4)):
+                result = P.produce(path, P.B.sha(path), pc, root / "padded", Path("codec"), "pin", [(pack, P.B.sha(pack / "result.json"))])
+            self.assertTrue(result["success"])
+            member = P.B.Bundle(root / "padded/payload/authored-target").member("CAB-target.resS")
+            self.assertEqual(member.read(), resource)
+            self.assertEqual((pack / "resources.bin").read_bytes(), b"AUTHORED")
+
     def test_pack_receipts_outputs_identities_and_extents_are_checked(self):
         for failure in ("receipt", "failed", "profile", "output", "extent", "missing", "duplicate", "foreign-resource"):
             with self.subTest(failure=failure), tempfile.TemporaryDirectory() as temporary:
@@ -1206,6 +1688,9 @@ class ObjectProducerTests(unittest.TestCase):
         self.assertEqual(P.demote_material_keywords(original), expected)
         self.assertEqual(len(original), len(expected))
         self.assertEqual(P.demote_material_keywords(expected), expected)
+        ordered = prefix + struct.pack("<II", 0, 3) + first + third + second + suffix
+        self.assertEqual(P.demote_material_keywords(original, sort_invalid=True), ordered)
+        self.assertEqual(P.demote_material_keywords(ordered, sort_invalid=True), ordered)
         with self.assertRaises((ValueError, EOFError)):
             P.demote_material_keywords(prefix + struct.pack("<I", 100000))
 
@@ -1487,6 +1972,34 @@ class BezierCurveLineTests(unittest.TestCase):
         self.assertEqual(result[80:], records[0][10][0][80:])
         self.assertEqual(struct.unpack_from("<iq", result, 80), (7, -1234567890123))
         self.assertEqual(records, before)
+
+    def test_captured_wind_evaluates_original_curve_without_geometry_literals(self):
+        records, profiles = bezier_fixture()
+        self.mutate(records, 20, 80, bytes([1]))
+        self.mutate(records, 20, 84, struct.pack("<6f", 0, 2, 0, 0, 0, 0))
+        source = curve_sources(records, profiles)
+        # sin(pi/2) adds two to each original Y control offset: +4*t*(1-t).
+        result = P.rebuild_bezier_line(records[0][10][0], source, profiles, [0, 10], [0, 20], [0, 1.5707963705062866, 0])
+        expected = struct.pack("<15f", 12, 26, 42, 11, 28.25, 43.5, 10, 29, 44, 9, 28.25, 43.5, 8, 26, 42)
+        self.assertEqual(result[20:80], expected)
+        self.assertEqual(result[:20], records[0][10][0][:20])
+        self.assertEqual(result[80:], records[0][10][0][80:])
+
+    def test_captured_build_rounding_changes_only_pinned_coordinate(self):
+        records, profiles = bezier_fixture()
+        body = records[0][10][0]
+        source = curve_sources(records, profiles)
+        bits = struct.unpack("<I", struct.pack("<f", 27.5))[0]
+        capture = [{"word": 4, "evaluated_bits": bits, "build_bits": bits + 1}]
+        result = P.rebuild_bezier_line(body, source, profiles, [0, 10], [0, 20], build_rounding=capture)
+        expected = bytearray(self.EXPECTED)
+        struct.pack_into("<I", expected, 16, bits + 1)
+        self.assertEqual(result[20:80], expected)
+        self.assertEqual(result[:20], body[:20])
+        self.assertEqual(result[80:], body[80:])
+        self.mutate(records, 31, 32, struct.pack("<f", 21))
+        with self.assertRaisesRegex(ValueError, "rounding operand drift"):
+            P.rebuild_bezier_line(body, curve_sources(records, profiles), profiles, [0, 10], [0, 20], build_rounding=capture)
 
     def test_null_endpoint_uses_original_literal_p1(self):
         records, profiles = bezier_fixture(endpoint=False)
@@ -1795,6 +2308,43 @@ class ReflectionProbeImportTests(unittest.TestCase):
         for malformed in [body[:-1], body + b"UNOWNED"]:
             with self.assertRaises((ValueError, struct.error)):
                 P.custom_reflection_probe(malformed, typ)
+
+
+class FieldlessScriptMetadataTests(unittest.TestCase):
+    def test_owned_script_properties_prove_base_only_schema(self):
+        def pointer(name):
+            return FIXTURE.node(name, kind="PPtr<Object>", children=[FIXTURE.node("m_FileID", 4, kind="int"), FIXTURE.node("m_PathID", 8, kind="SInt64")])
+
+        fields = [pointer("m_GameObject"), FIXTURE.node("m_Enabled", 1, kind="UInt8", meta=0x4000), pointer("m_Script"), FIXTURE.node("m_Name", 4, kind="int")]
+
+        def metadata(children):
+            stream = io.BytesIO(RECORD_FIXTURE.serialized(b"", FIXTURE.node("Base", kind="MonoBehaviour", children=children), class_id=114))
+            stream.size = len(stream.getvalue())
+            return P.W.read_serialized(stream)["types"][0]
+
+        typ = metadata(fields)
+        sdk_tree = metadata(fields + [FIXTURE.node("m_EditorClassIdentifier", 4, kind="int")])["tree"]
+        body = struct.pack("<iqB3xiqI", 0, 41, 1, 0, 99, 0)
+        names = ("AuthoredBoundary", "Fixture", "Authored.dll")
+        properties = LEGACY_IDENTITY.properties_hash(*names, typ["tree"], sdk_tree)
+        stream = io.BytesIO()
+        P.aligned_string(stream, "Display Name")
+        stream.write(bytes(4) + properties)
+        for value in names:
+            P.aligned_string(stream, value)
+        script = stream.getvalue()
+        derived = P.fieldless_script_type(body, typ, script, sdk_tree, LEGACY_IDENTITY)
+        self.assertEqual(derived["tree"], typ["tree"])
+        self.assertEqual(derived["hash"], properties)
+        self.assertEqual(derived["script_id"], LEGACY_IDENTITY.md4("".join(names).encode()))
+        changed = bytearray(script)
+        changed[P.script_fields(script)[0]] ^= 1
+        with self.assertRaisesRegex(ValueError, "properties"):
+            P.fieldless_script_type(body, typ, bytes(changed), sdk_tree, LEGACY_IDENTITY)
+        with self.assertRaisesRegex(ValueError, "custom fields"):
+            P.fieldless_script_type(body, metadata(fields + [FIXTURE.node("custom", 4, kind="int")]), script, sdk_tree, LEGACY_IDENTITY)
+        with self.assertRaisesRegex(ValueError, "base component"):
+            P.fieldless_script_type(body + bytes(4), typ, script, sdk_tree, LEGACY_IDENTITY)
 
 
 if __name__ == "__main__":

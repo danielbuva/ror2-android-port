@@ -1,5 +1,49 @@
 # Accepted-output reconstruction support
 
+## Source stage contexts
+
+`stage_contexts.py --profile recipe/owner-stage-contexts.json --profile-sha256 SHA
+--pc ORIGINAL_INSTALLATION --output NEW_PRIVATE_DIRECTORY` is the current
+original-record producer for WholeStageContexts. It derives all 23 population
+contexts and three identity/toggle graphs from source scenes and the original
+catalog, using bounded member readers. No accepted file, exported YAML or private
+intermediate is an input. The existing desktop YAML adapter shares its metadata
+algorithm; its actual YAML receipt contract is preserved.
+
+Per-stage provenance hashes cover original serialized members. Identity graph
+hashes additionally bind the public profile and producer, and declare their
+representation explicitly. Runtime fields remain unchanged. The player-data
+owner accepts `--stage-context-profile PROFILE SHA256`; the APK request accepts
+`stage_contexts: {"path": "PRODUCER_RESULT_JSON", "sha256": "SHA256"}`. Admission
+regenerates and hashes the complete file, covers only its named target path and
+reports `generated_stage_context_count` separately. It cannot admit changed game
+code, other assets or managers. Full phone and runtime acceptance remain open.
+
+## Public startup metadata
+
+`startup_metadata.py` is the current source producer for `boot.config` and
+`unity_app_guid`. Run it with `--input-manifest OWNER_INVENTORY`,
+`--settings PUBLIC_PLAYER_SETTINGS`, `--toolchain PUBLIC_TOOLCHAIN` and
+`--output NEW_PRIVATE_DIRECTORY`. The public smoke PlayerSettings and
+`environment/toolchain.json` supply the current authored settings/toolchain.
+It reads no accepted APK, project cache, historical UUID or connection setting.
+The caller remains responsible for admitting the legitimate game inventory.
+
+The producer preserves HDR/fullscreen/safe-area settings, requires incremental
+GC, uses a 3 ms GC slice and disables debugger waiting. Development connection
+discovery is omitted. Distinct app/build identifiers derive from complete input
+hashes plus producer identity; relocating unchanged files preserves them. The
+product, package and signing identities used for data-preserving updates remain
+unchanged. The build GUID in the receipt is reserved for the future manager
+producer; this command does not generate `globalgamemanagers`.
+
+The owner APK request may supply `startup_metadata: {"path": "RECEIPT",
+"sha256": "RECEIPT_SHA256"}`. Admission rehashes inputs, regenerates complete
+expected bytes and checks both persisted outputs and selected assembly inputs.
+It covers only these two paths, reports `generated_metadata_count` separately
+and never increments raw-exact counts for differing files. This is a host
+production contract; complete phone production, launch and updates remain open.
+
 `phone_decode.py` is the current experimental Android shell receiver for one
 complete, pinned accepted-output profile. It preserves native IL2CPP code and
 Android content by reproducing their exact bytes. It runs no game, Unity Editor,
@@ -113,6 +157,36 @@ host RSS. This is an accepted-record roundtrip control, not PC-input-only
 production or phone qualification.
 
 ## Produce the first complete source-only bundle
+
+Original object sources may select a UnityFS member or a native serialized
+file from the owner's PC installation. Native selections name the file itself
+as `member`; the existing source-file hash, object-body hash, type metadata and
+before/after input checks apply. This lets a scene select MonoScripts from the
+original PC player registry when no Addressables bundle references those scripts.
+If that original file omits type trees, an explicit `type_source` selects the
+schema from an original bundle. Its class, native hash, script identity and
+stripping fields must match the native record before the schema can be used.
+
+The optional `managed_pointer_schema` policy derives a build-added script type
+with one object-reference field. Its original MonoScript supplies class identity
+and the expected properties hash; pinned original CLR assemblies supply the
+field name/type. Original native base and pointer prototypes supply transfer
+flags and common-string encoding. The owner checks the resulting properties
+hash, derives the script ID and rechecks consumed assemblies. Recipes contain
+selectors and assembly hashes; generated type trees stay in owner output.
+This optional CLR policy needs the `dnfile`/`pefile` dependencies pinned in
+`tools/lab-requirements.txt`; invoke it from that configured Python environment
+without `-S`. Other object policies retain their existing stdlib-only path.
+
+`object_produce.py` also has an experimental `DefaultMaterial` selection with
+`model_import: "obj-standard-lambert-linear"`. It requires `model_mesh_source`,
+`sdk_shader_path_id` and pinned `sdk_source` / `fbx_source` paths relative to the
+explicit SDK root. `obj_material.py` reads Standard property declarations and
+the FBX library's named static defaults without loading native code. This
+attribute-only OBJ policy assumes opaque Lambert shading and linear color;
+it does not accept arbitrary authored model material parameters. Stage
+`obj_material.py` and `scripts/lab/phone_registry.py` with the existing producer
+dependencies. No target material body or property-value table is an input.
 
 `object_produce.py` currently qualifies the complete pickup-droplet and
 player-death-effect bundles from original PC records. The audited recipe contains original selectors, checked
@@ -260,6 +334,24 @@ The CLR reader projects compact metadata and releases PE/SDK/witness state;
 J1169 qualifies the complete host cohort below 500 MiB. Complete registry
 production on a phone remains open until its own guarded replay passes.
 
+`script_registry.py` is the current standalone entry point for the same registry
+phase. It needs the registry recipe, original game root, exact SDK editor resources,
+code request and managed production described above; it needs no texture packs,
+converter output or accepted player file:
+
+```sh
+python3 -I -B tools/phone-build/accepted-output/script_registry.py \
+  --profile recipe/owner-player-registry.json --profile-sha256 RECIPE_SHA256 \
+  --pc ORIGINAL_PC_ROOT --editor-resources "OWNER_SDK_RESOURCES/unity editor resources" \
+  --code-request ORIGINAL_INPUT_CODE_REQUEST.json \
+  --managed-production SOURCE_PRODUCED_MANAGED_DIRECTORY --output NEW_PRIVATE_OUTPUT
+```
+
+It writes `globalgamemanagers.assets` and a receipt after rechecking provider pins.
+`record_remap.py --serialized-producer DIRECTORY RECEIPT_SHA256` can select its
+records under bundle identities, retaining source provenance and native type
+hashes. Complete phone production and runtime acceptance remain open.
+
 Each texture directory is an existing producer's `objects.bin`, `resources.bin`,
 `index.jsonl` and successful `result.json`; pass the hash of that receipt. The
 profile selects producer profile hashes and bundle/member/path IDs, never
@@ -332,6 +424,14 @@ and that full bundle are host byte-exact; phone/runtime gates remain open.
 
 ## Produce meshes directly from original PC bundles
 
+The generic `record_produce.py` Director transform also accepts
+`director_unbound_tracks: [{"index": POSITION, "key": [FILE_ID, PATH_ID]}]`.
+These minimum imported-track relationships add null bindings after the existing
+`references` relocation; positions address the resulting binding list in ascending
+order. Existing source bindings and playback state remain intact. This operation
+requires an original PlayableDirector schema and supplies no Timeline parameters
+or serialized binding-body literals. Complete-scene qualification remains separate.
+
 `mesh_produce.py`, `unity_bundle.py` and `unity_mesh.py` own current experimental
 PC-input-only mesh production. They use Python 3.11+ standard-library modules
 on the host and Android, with no Editor, UnityPy, SDK or target-content input:
@@ -357,6 +457,15 @@ halfway away from zero. Source schema controls field extents, including nested
 alignment. The reader qualifies little-endian serialized v22 and UnityFS 7/8
 from Unity 2021.3 with raw/LZ4 compression; other compression is refused.
 
+The separate audited `owner-compressed-tangent-mesh.json` profile adds the
+MercSwordSwipe record through this CLI without changing the original cohort's
+identity. Its `packed_tangents: repair_negative_z` operation unpacks original
+XY values, reconstructs Z squared, normalizes XY when Z squared is negative,
+then derives the packing bounds and integer stream using float32 arithmetic.
+The recipe supplies no replacement floats or packed bytes. This additional
+record is host raw-exact; complete Commando assembly and phone production
+remain open.
+
 The process checks every selected original file before/after use, bounds reads
 and decompressed blocks to 64 MiB, retains two blocks and requires all generated
 object hashes to match. It writes `objects.bin`, `resources.bin`, their
@@ -364,6 +473,37 @@ object hashes to match. It writes `objects.bin`, `resources.bin`, their
 are re-read; failed outputs are retained. It requires expected object capacity
 plus 2 GiB free before starting. Peak RSS uses the platform's native
 `resource.getrusage` units. Exit tears down the only producer process.
+
+The current optional `obj_import: static-triangles` operation imports the
+admitted static float32 position/normal/tangent/UV0 layout. `obj_mesh.py` owns
+source-derived tangent generation, robust normalization, the 16-vertex cache
+order, first-use vertex order and the UV-density calculation. Its profile's
+top-level `obj_import` pins the authored helper source and public providers;
+`--obj-helper` selects a separately built helper directory. Receipt and binary
+hashes are checked before and after calls. No retained model or captured
+geometry/metric value supplies production.
+
+Acquire unchanged `mikktspace.c` and `mikktspace.h` from
+[MikkTSpace at 3e895b49](https://github.com/mmikk/MikkTSpace/tree/3e895b49d05ea07e4c2133156cfa94369e19e409),
+and `qsort.c` and `heapsort.c` from `stdlib/FreeBSD/` in
+[Apple Libc at 71bbe350](https://github.com/apple-oss-distributions/Libc/tree/71bbe350ab79eef58113991d817ccc6165061a64).
+Keep them in explicit private provider directories. The builder checks all
+four file hashes and retains the source-header licenses with its output:
+
+```sh
+python3 tools/phone-build/accepted-output/build_mesh_obj.py \
+  --mikk PINNED_MIKK_DIRECTORY --libc PINNED_LIBC_DIRECTORY \
+  --compiler C_COMPILER --output NEW_PRIVATE_HELPER_DIRECTORY
+```
+
+For the existing Android native Clang 21 provider, also pass
+`--android-tool-root NATIVE_TOOL_ROOT`. Stage `obj_mesh.py` beside the existing
+mesh owner and pass its helper build directory using `--obj-helper`.
+The helper reads bounded binary requests on stdin and emits tangents or area
+ordering on stdout; it opens no game files. The original importer's Boolean
+area comparator is preserved using the pinned portable BSD implementation,
+including its heap-sort fallback. Native helper outputs remain private.
+Host Mesh-body equality does not qualify a complete bundle or Android execution.
 
 These game-derived packs remain private. They are inputs for a future bundle
 assembler, not UnityFS bundles, a replacement private replay packet, or an APK.
@@ -908,6 +1048,38 @@ python3 -I -S -B tools/phone-build/accepted-output/record_produce.py \
   --pc ORIGINAL_PC_ROOT --output NEW_PRIVATE_OUTPUT
 ```
 
+For `recipe/owner-whole-game-source-records.json`, add `--sdk EXACT_SDK_ROOT`.
+The same option serves `owner-whole-game-path-managed-records.json` and
+`owner-whole-game-path-original-hash-records.json`; the latter retains original
+script hashes only for unchanged identity/schema. These managed records derive
+native type hashes from original component/script
+bindings and the pinned SDK base schema. Output index rows retain checked
+`native_type_hash` values; complete-bundle assembly verifies these after source
+type projection. This recipe adds no original fields or generated body templates.
+Native `owner-whole-game-hierarchy-path-records.json` needs no SDK input.
+`owner-whole-game-component-edge-records.json` also uses the same CLI without
+`--sdk`. It selects unchanged native records through qualified GameObject pointer
+relationships, with actual script identity and ownership checked at qualification.
+`owner-whole-game-current-script-fields.json` additionally selects the generic
+`prune_absent_script_fields` policy. Its `managed` directory/file hashes pin
+original CLR declarations. Fields still declared by the current type or its
+ancestors, prior serialized names and SDK native fields remain protected; only
+whole absent fields can be omitted. Retained values/alignment and the original
+script binding stay checked, followed by SDK-derived native hash verification.
+It uses the same CLI with `--sdk`; the complete-object owner supports the same
+policy when assembling these records. This does not relax existing zero checks.
+`owner-whole-game-prefab-policy-records.json` uses the same CLI without `--sdk`.
+It delegates existing prefab filename and component-append operations, retaining
+the complete ordered original component list and native tail. Appended components
+must be supplied by the existing public adapter recipes at bundle assembly.
+`owner-whole-game-existing-presentation-records.json` also delegates checked
+component omissions to the object owner, applying the existing optional-content
+policy with original component indices and IDs. It uses the same CLI and no SDK.
+`recipe/owner-whole-game-material-compute-records.json` uses the same CLI without
+`--sdk`. It reuses the named material keyword policies and the existing class 72
+DXBC shell projection. Compute declarations remain source-owned; these shells
+provide no executable Android compute programs or new runtime fallback.
+
 Use `recipe/owner-animator-controllers.json` for the qualified controller
 cohort, `recipe/owner-material-records.json` for materials,
 `recipe/owner-gameobjects.json` / `recipe/owner-transforms.json` for hierarchy
@@ -1020,6 +1192,17 @@ production. Android cohort qualification remains open.
 
 ## Produce source-derived cubemaps
 
+For original baked HDR probes, the opt-in
+`recipe/owner-source-baked-reflections.json` uses `cube-preserve` with the same
+texture producer/output contract and no codecs or SDK input. It retains every
+original compressed face/mip byte and native format, color space and usage;
+only output naming/storage changes. BC6H must be supported by the selected
+Android runtime. Two source probes pass native Android IL2CPP/Vulkan loading,
+every-mip sampling and HDR decode comparison (J1260). This is a source-fidelity
+alternative, not a J850 raw-exact admission or a complete scene qualification.
+RGBAHalf source chains can also be retained; no format conversion is performed.
+
+
 J1128 qualifies the complete 110-record profile on the host.
 Use the existing texture producer with `recipe/owner-cubemap-textures.json`,
 SHA-256
@@ -1099,10 +1282,49 @@ d3dasm tool. No retained HLSL is consumed. Builtin and shared source records use
 schema. The same command emits the 44-object builtin file and the two-record
 `shared-shaders` object pack for the existing mixed-file writer. There are 369
 complete files plus two shared records; the terminal shared receipt records its
-`objects.bin` and `index.jsonl` hashes. Phone execution remains unqualified (J1144/J1146/J1147/J1151/J1157).
+`objects.bin` and `index.jsonl` hashes. The full cohort remains phone-unqualified (J1144/J1146/J1147/J1151/J1157);
+the bounded ColorGrade phone result is recorded below.
 
 Build the existing public LZ4 worker with `build_bundle_lz4.py`; its worker method
-9 selects shader HC9 while UnityFS methods 2/3 stay fast/HC12. Then run:
+9 selects shader HC9 while UnityFS methods 2/3 stay fast/HC12.
+
+For a separately acquired compiler host, pass `--compiler-command` as a JSON
+argv array (including any GNU runner prefix) and `--compiler-data` as that
+compiler's SDK data directory. `--sdk` continues to select the pinned Mac SDK
+metadata and includes. The existing compiler session appends its data, log and
+IPC arguments, inherits the caller's runner environment and owns teardown.
+Acquire and verify the Linux compiler/plugin/runtime and public runner through
+their existing J1094/J1102 input receipts; this option does not acquire tools or
+qualify complete phone production. Omitting both options retains the Mac host.
+
+Preserve the acquired Linux SDK layout: `--compiler-data LINUX_DATA` must
+contain `Tools/UnityShaderCompiler`, `Tools/libdxcompiler.so`,
+`Tools/D3DCompiler_47.dll` and `Tools/glslang.so`. Point the GNU runner at
+`LINUX_DATA/Tools/UnityShaderCompiler` and include `LINUX_DATA/Tools` in its
+`LD_LIBRARY_PATH` alongside the acquired GNU runtime libraries. The existing
+IPC owner rejects missing DX compiler dependencies before launch. A flattened
+`shader/` directory fails the compiler's relative `Tools/D3DCompiler_47.dll`
+lookup even after IPC initialization. Keep Mac metadata/includes in `--sdk`.
+
+The bounded ColorGrade producer ran on Android without the Editor and persisted
+7,784 B, SHA-256
+`fb6f38549e1336f51e87d60672350305c745c4017a044bc50189c1c2f534e98c`,
+raw-exact to J850. Local evidence:
+`work/coordination/p1-colorgrade-phone-v1/device-source-v4/`.
+The thermal worker completed in 8.61 s, peak CPU/GPU 46.5 C and 0 s above 80 C;
+scratch removal, display sleep, lease release and prune passed. This is isolated
+shell production, with acquired SDK/runtime inputs staged by the host. Ordinary
+app production, complete cohort, installation/update and readiness stay open.
+
+For a bounded authored slice, add repeatable `--authored-file FILE` arguments.
+ColorGrade is `--authored-file 19e91578880954efeab1111b405232b9` in the
+existing player profile. Selection preserves profile order, settings, original
+schema and every common SDK/authored/include pin, while omitting unrelated
+native, font, builtin and shared providers. The profile itself remains hash
+checked; no derived private recipe is required. Only rows naming tracked
+ShaderLab sources are admitted. Omitting this option produces the full profile.
+
+Run the producer:
 
 ```sh
 python3 tools/phone-build/accepted-output/shader_produce.py \
@@ -1428,3 +1650,285 @@ The existing member-aware writer exposes `payload/skymeadow-source-lab`.
 All 37,402 persisted objects, both serialized members and the compressed bundle
 are host raw-exact against J850. No runtime owner is added; phone production,
 installation and original scene behavior remain open.
+
+Frozenwall complete spine-scene selections extend the existing object/Shader
+owners through `recipe/owner-frozenwall-spine-objects.json` and
+`recipe/owner-frozenwall-spine-lab-standard-shaders.json`. Original renderer,
+skybox and local-material roots select the reduced-spine Standard variants.
+Explicit current PC/SDK roots, pinned profiles/tools, receipt-pinned
+source-produced media/Shader packs and a separate output directory set up
+production; process exit tears down producers while receipts persist. The
+existing member-aware writer exposes `payload/frozenwall-spine-lab`.
+All 9,672 persisted objects, both serialized members and the compressed bundle
+are host raw-exact against J850. No runtime owner is added; phone production,
+installation and original scene behavior remain open.
+
+Frozenwall, Villagenight and Foggyswamp source selections and Skymeadow
+spine selections extend the existing `object_produce.py` and Shader owners
+through their named `recipe/owner-*-objects.json` profiles. The Bezier owner
+re-evaluates original curves with optional captured build angles; no geometry
+arrays are recipe inputs. `record_remap.py` owns index reuse: explicit pinned
+source pack receipts and `owner-*-shader-remap.json` profiles supply unchanged
+bodies/dependency provenance under destination identities. Original suppliers
+remain visible in the output receipt. Setup requires explicit PC/SDK/tool roots,
+pinned profiles, source-produced media/Shader packs and new output directories.
+Process exit tears down producers; receipts persist. These are optional host
+reconstruction owners; phone production, installation and original runtime
+behavior remain open.
+
+Index reuse command (all paths are caller supplied):
+
+```sh
+python3 tools/phone-build/accepted-output/record_remap.py \
+  --profile recipe/owner-frozenwall-source-lab-shader-remap.json \
+  --profile-sha256 "$remap_profile_sha256" \
+  --record-pack "$source_pack" "$source_receipt_sha256" \
+  --output "$new_remap_output"
+```
+
+Pass the resulting directory and its `result.json` SHA-256 to the object
+producer's existing `--record-pack` argument. Repeat the supplier argument for
+profiles with multiple source packs. The remap profile names the public source
+profile hash; callers first produce that source profile with the existing
+Shader owner. No compilation or historical-target lookup occurs in the remapper.
+
+## Source Menu player data
+
+`player_data.py --ui-profile recipe/owner-player-menu.json PROFILE_SHA256
+--ugui-source SDK_UGUI_CORE` adds the current source Menu and any missing original
+Sprite/texture dependencies to the existing player-data command. Keep its normal
+registry, code-request, managed-production, SDK and record/texture inputs. The SDK
+directory is the exact editor's `com.unity.ugui/Runtime/UI/Core`; four pinned source
+files supply constructor defaults. This is a current experimental producer.
+
+The parent generates its registry first; the UI owner receives that value rather
+than a separate registry packet. It reads original UI/scripts/English data and
+public player supplier recipes, preserves asset identities and resolves every
+nonzero pointer. Native schemas may cross original files only with matching
+class IDs/hashes. Common-string names use the pinned parser's vocabulary; no
+class-database schema supplies content. Original Sprite copies require matching
+render keys and geometry. Missing atlas-free Sprites get independently named
+standalone files, retaining original geometry/filter/color-space and decoded mips.
+
+`ui-source/` contains private object/schema receipts; the parent result includes
+`ui.resources`, whose file/root-ID pair belongs to the future manager producer.
+There is no implicit timestamped input or current Unity-project dependency.
+Source Menu production covers 591 objects with independently generated local IDs.
+All type identities/hashes match J850; two genuine differences remain explicit:
+current SubmenuLegend alignment and the retained original store-button Sprite
+where J850 has null. This producer does not exempt either difference from final
+compatibility review, qualify a phone run or increase the raw-exact count.
+
+## Source HUD player data
+
+Add `--hud-profile recipe/owner-player-hud.json PROFILE_SHA256` to the existing
+player-data command with its registry, managed-production and exact SDK inputs.
+This current experimental phase derives the RecoveredHudBuilder hierarchy from
+original HUD, run-info, item-icon and crosshair roots. No cached prefab, historical
+HUD file or saved ID map is required. Clone-local references, authored bindings,
+font/material normalization and component filtering follow the public builder.
+Original script properties must match the freshly produced registry; SDK editor
+curve metadata affects only the existing checked hash projection.
+
+The parent result exposes `hud.resources` for manager construction; `hud-source/`
+retains private object/schema/provider receipts. Readers close on exit. The complete
+source graph has 2,021 objects with independently allocated local IDs. Original
+hierarchy differences from J850 remain explicit; host pointer/schema checks do
+not qualify Android loading, gameplay or complete phone production.
+
+## Source native player managers
+
+Add `--manager-profile recipe/owner-player-managers.json PROFILE_SHA256`,
+`--manager-shaders SHADER_OUTPUT RECEIPT_SHA256`,
+`--manager-startup STARTUP_RECEIPT SHA256` and `--sdk-binary SDK_ARM64_EXECUTABLE`
+to the player-data command. Menu, HUD, stage-context, registry and ordinary
+player-data inputs remain required. The Shader directory is the complete
+`shader_produce.py` output; its receipt must bind the selected public profile and
+all 369 player files. Keep both source phases when assembling the final APK:
+manager references name the Shader phase files without copying those outputs.
+
+This current experimental owner emits all 18 native managers. Public settings
+and existing input/tier policies replace editor state. SDK declarations derive
+internal shader expansion; all nonzero resource pointers are followed, including
+script references and cycles. UI manifests must reproduce their emitted bodies.
+Native structural fallback uses the existing pinned parser's declarations and
+strict full-body reads. PyYAML 6.0.3 SafeLoader is a pure Python dependency;
+encoded numeric arrays retain their original text before typed projection.
+
+`managers-source/` retains private fields, roots and pinned providers. The parent
+result includes `managers.files`; normal source-file and schema checks remain
+strict. The public policy disables paid capability flags without asserting SDK
+rights, generates build identity through the startup owner, and derives script
+hashes from actual produced MonoScripts. Unused historical cache rows and current
+UI graphs are reported separately. Host emission is complete; combined phone
+production, installation/update/save retention and native gameplay remain open.
+
+## Complete original-lighting scene alternatives
+
+The opt-in profiles `owner-promovoidsurvivor-source-lighting-objects.json` and
+`owner-snowyforest-source-lighting-objects.json` produce complete scene files
+through `object_produce.py`. Their four changed records preserve the original
+three BC6H reflection chains and RenderSettings; every other object body, all
+native/script metadata, script tables and external identities match J850.
+Native BC6H support is required. Complete phone production and game-runtime
+qualification remain open; historical raw-exact admission does not accept these
+new file hashes. The explicit source-output assembly route can pin source
+artifacts once its remaining complete input set is available.
+
+Generate the following packs from the user's game/SDK inputs, then supply each
+pack directory and its freshly generated receipt hash using `--record-pack`.
+No retained packet, historical bundle or private generated file is an input.
+
+| Producer | Shared public recipe |
+| --- | --- |
+| `mesh_produce.py` | `owner-meshes.json` |
+| `texture_produce.py` | `owner-uncompressed-textures.json`, `owner-rgba-mip-textures.json`, `owner-alpha-textures.json` |
+| `record_produce.py` | `owner-animation-clips.json` |
+| `texture_produce.py` | Per-scene `owner-<stage>-source-lighting-textures.json` |
+| `payload_shader_records.py` | Per-scene `owner-<stage>-standard-shaders.json` and `owner-<stage>-postprocess-shaders.json` |
+| `record_produce.py` | Promo's `owner-promovoidsurvivor-timeline-records.json` |
+
+The existing producer help documents codec, permitted SDK and pinned public
+AssetRipper source inputs. Full scene production additionally consumes the
+object profile, legitimate installation, SDK and canonical bundle codec, each
+with its explicit hash. Profile `record` hashes identify the required packs.
+`fieldless_script_source: [source_index, path_id]` derives a fieldless component's
+metadata identity from its original MonoScript, using the existing fieldless
+schema/SDK checks. It addresses Snowy's imported empty component without
+changing its serialized body. Other component layouts are rejected.
+
+## Bounded complete object output
+
+Complete object production now spools checked bodies and resource extents through
+`object_stream.py`. Existing profiles and CLI arguments are unchanged. Native
+metadata and small body prefixes remain resident; serialized bodies, resource
+padding and final UnityFS blocks stream from owned temporary files. All source,
+record, serialized-member and complete-bundle hash checks still apply. Individual
+records retain the 256 MiB bound; the aggregate member bound is 8 GiB. The output
+must be new and have room for temporary serialized/resource files, the body spool
+and final artifacts. Temporary storage closes/removes on failure as well as success;
+failed result receipts and completed output evidence remain in the caller's tree.
+The authored 257 MiB canonical control is a host memory/I/O result; full phone
+conversion and native game consumption remain open.
+
+## Complete Moon2 source spine
+
+The opt-in `owner-moon2-spine-source-lighting-objects.json` reconstructs the
+complete legacy Moon2 spine scene with original RenderSettings, the external
+original sky material and all original baked reflection faces/mips. Its preload
+table retains every historical dependency and adds that sky material. All 30,450
+native/script identities and 30,447 record bodies match J850. This is a source
+alternative; historical exact-file admission and full phone/runtime gates remain
+separate. Existing phone HDR controls qualify native BC6H sampling; this complete
+scene has not yet been run on the phone.
+
+Supply freshly produced packs for `owner-meshes.json`, `owner-alpha-textures.json`,
+`owner-material-records.json`, `owner-gameobjects.json`, `owner-generic-records.json`,
+`owner-transforms.json`, `owner-hierarchy-records-1.jsonl.gz`,
+`owner-sulfurpools-whole-standard-shaders.json`,
+`owner-testotherbrother-skybox-shaders.json` and
+`owner-moon2-spine-source-lighting-textures.json`. Use the same complete-object
+CLI and explicit receipt hashes described above. No private provider directory
+is selected implicitly. `record_source: [bundle, member, path_id]` selects a
+checked pack record in another namespace; content/type/reference gates still
+apply, and changing a streamed member requires resource reconstruction.
+`inactive_scene_object` names an original GameObject whose active flag is cleared;
+it retains the legacy lab's existing group suppression policy.
+
+## Complete Snowy Forest source and spine labs
+
+The opt-in `owner-snowyforest-{source,spine}-lab-lighting-objects.json` profiles
+produce the complete legacy lab files with original reflections/RenderSettings
+and strict native/script identities. All other bodies, external identities and
+script tables match J850. Each lab preserves its own original sky/probe binding;
+local IDs are not shared between variants.
+
+Generate `owner-meshes.json`, `owner-snowyforest-standard-shaders.json` and the
+matching `owner-snowyforest-<variant>-lab-lighting-textures.json` pack. The source
+lab also requires `owner-uncompressed-textures.json`, `owner-rgba-mip-textures.json`,
+`owner-alpha-textures.json` and `owner-snowyforest-postprocess-shaders.json` packs.
+Supply each freshly generated receipt hash to the existing complete-object CLI.
+Shader namespace aliases reuse the qualified programs; no private recipe/body or
+historical output supplies content. Outputs have new complete-file hashes;
+historical exact-file admission and complete phone/runtime qualification remain
+separate.
+
+## Source bundle manifest
+
+The current `bundle_manifest.py` producer emits a native UnityFS manifest from
+actual produced Android bundles. It reads each bundle's native dependency
+records through the existing catalog owner and refuses missing dependencies.
+It uses public native wire declarations, deterministic local indices and the
+first 128 bits of each complete file's SHA-256 as its cache version. These are
+converter-owned versions, distinct from Unity Editor's historical build-cache
+hashes. Native asset identities and dependency relationships are preserved.
+
+```sh
+python3 tools/phone-build/accepted-output/bundle_manifest.py \
+  --inputs work/produced-bundle-inputs.json --output work/source-bundle-manifest
+```
+
+The private input JSON has schema `owner-produced-bundle-inputs-v1` and a
+`bundles` array. Every row supplies `name`, `path`, `sha256` and `bytes` for a
+produced file; relative paths resolve beside the input JSON. The caller owns
+complete build-population selection. No accepted output, `.manifest` sidecar,
+private build ID or precomputed hash is required. Output is a new directory
+with `generated-android-data` and `result.json`; inputs are rehashed before
+success. Keep these generated files ignored. Native hashes and wire values
+are independently checked with the pinned public format parser. Full production
+and native runtime qualification remain open; this output is not admitted as
+historically raw-exact.
+
+Source UI Sprites may share one complete original texture. The UI media owner
+freshly derives its complete serialized texture for each use and permits reuse
+inside the new output tree only when file size and SHA-256 agree. A conflicting
+file or redirected path refuses generation; Sprite files remain exclusive.
+
+## Source default player scene
+
+Current `player_scene.py` constructs all 16 default-scene objects from original
+native records, public Bootstrap/Lab authoring and explicit source environment
+outputs. The original native fields and SDK declarations supply defaults; the
+producer rebinds references by provider name and allocates independent local IDs.
+It checks the actual source registry's fieldless `LabDiagnostics` properties,
+shared material names, native Cube identity and all direct references. SDK tag
+numbers are derived from the paired permitted Android code/symbol files; symbol
+files with NOBITS text never supply instruction bytes.
+
+The guarded host API emits a complete candidate. All 16 native/script type
+identities match the independent SDK reference. Thirteen records match all fields
+and relationships after reference translation; the diagnostics reference binds
+the actual source registry. Two lighting records retain generated native Android
+half-float reflection data and final ambient values. Historical raw-exactness,
+lighting equivalence and native scene loading remain unqualified.
+
+Select `--scene-profile PROFILE SHA256` on `player_data.py`, together with:
+
+- `--scene-environment-result RESULT_JSON SHA256`
+- `--scene-environment-request REQUEST_JSON SHA256`
+- `--scene-environment-bundle MATERIAL_BUNDLE SHA256`
+- `--scene-environment-images FACE_MIP_DIRECTORY`
+
+Registry/shared-default phases and the supplied SDK are required. The parent uses
+its fresh registry/shared files, retains the new `default-scene-source/` phase and
+copies/rechecks `level0`. The standalone `player_scene.py --help` exposes the same
+inputs with explicit registry/shared-file hashes. Source bundle uniforms and
+keywords must match the legitimate default sky, with complete finite face/mip
+extents, native HDR decode and request policy checked before construction.
+Readers and SDK mappings close at exit; failures retain their new output. Keep
+all generated media, records and receipts private. The host-built diagnostic
+outputs used to qualify this API are never required public converter inputs;
+phone-built tool construction and complete APK/install/update qualification remain
+open. The existing assembler gains no acceptance exemption from this feature.
+
+## Whole-game Shader records
+
+`recipe/owner-whole-game-shader-*.json` uses the existing source Shader owners.
+The [recipe audit table](../../../recipe/README.md#whole-game-shader-records-j1275)
+marks `S` for `payload_shader_records.py` (`--pc`) and `F` for `shader_prefab.py`
+(`--pc-root`). Supply the pinned SDK, public exporter templates, codec and a new
+private output to the selected CLI. SDK declarations derive fallback keyword
+tables and dependencies. Logical compiler filenames may derive from original
+asset identities; historical export files are not public conversion inputs.
+The 117 persisted records match J850. Complete bundle, phone production and
+original rendering/gameplay acceptance remain open.
