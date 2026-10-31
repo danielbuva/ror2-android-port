@@ -5774,12 +5774,13 @@ host raw-exact to J850. This adds no runtime owner; bundle and phone gates remai
 open.
 
 
-`recipe/owner-whole-game-bundle-material-records.json` selects 58 original
+`recipe/owner-whole-game-bundle-material-records.json` selects 67 original
 Materials through the existing `record_produce.py` generic native owner. Unique
 typed Shader/Texture relationships supply relocated endpoints; published
-SingleColor dummy Shader identities select the existing ordinal invalid-keyword
+SingleColor, Default and TransparentDiffuse dummy Shader identities select the
+existing ordinal invalid-keyword
 policy. Inverse-source ambiguity exclusions preserve unresolved alternatives.
 Setup pins original bundles and creates a fresh record pack; scoped readers close
-on process exit and receipts persist. All 58 persisted records are host raw-exact
+on process exit and receipts persist. All 67 persisted records are host raw-exact
 to J850. This adds no runtime owner; group, complete bundle and phone gates remain
 open.
