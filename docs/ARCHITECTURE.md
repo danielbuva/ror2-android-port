@@ -467,6 +467,12 @@ existing record owner; complete-file and phone admission remain open.
 native HUD slots (Canvas, Rigidbody and CanvasRenderer) through ordered original
 component PPtrs and reciprocal qualified root ownership. The same record owner
 relocates their GameObject pointers while preserving schemas and nonpointer bytes.
+`owner-whole-game-meshfilter-records.json` selects fourteen original MeshFilters
+through qualified GameObject sources, unique original class slots and reciprocal
+ownership. Both original owner and mesh endpoints resolve to existing public
+suppliers, including external mesh members. The same generic record owner
+preserves native fields and schemas while relocating checked pointers; setup,
+pack state and teardown follow its existing contract.
 Generic record admission also includes native classes 96, 119, 193 and 330,
 preserving their original schemas and every nonpointer byte.
 The component-edge recipe selects unchanged original records through explicit
