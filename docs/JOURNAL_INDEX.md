@@ -10,8 +10,8 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
-| [J1327](PORTING_JOURNAL.md#j1327--reconstruct-false-son-synchronized-behaviour-controller) | 2026-10-31 | Reconstruct False Son synchronized behaviour controller | 2026-10-31. |
 | [J1327](PORTING_JOURNAL.md#j1327--release-destroyed-overlap-discovery-targets-after-session-teardown) | 2026-10-31 | Release destroyed overlap discovery targets after session teardown | 2026-10-31. |
+| [J1328](PORTING_JOURNAL.md#j1328--reconstruct-false-son-synchronized-behaviour-controller) | 2026-10-31 | Reconstruct False Son synchronized behaviour controller | 2026-10-31. |
 | [J1325](PORTING_JOURNAL.md#j1325--reconstruct-voidward-synced-motion-controller) | 2026-10-31 | Reconstruct VoidWard synced motion controller | 2026-10-31. |
 | [J1324](PORTING_JOURNAL.md#j1324--reconstruct-powerorb-synced-motion-controller) | 2026-10-31 | Reconstruct PowerOrb synced motion controller | 2026-10-31. |
 | [J1326](PORTING_JOURNAL.md#j1326--reconstruct-legacy-transparent-shader-from-original-materials) | 2026-10-31 | Reconstruct Legacy Transparent Shader from original Materials | 2026-10-31. |
