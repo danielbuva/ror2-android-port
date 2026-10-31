@@ -2181,3 +2181,18 @@ Host-only; no device heat measurement. Saved residual 7 → 6 by selector subtra
 Clip2, CustomRenderTexture3 (previously labelled Cubemap), AssetBundle1.
 Readiness stays 693/705 available, 685 raw-exact. Complete bundle, phone
 production, installation/update and original runtime remain open. No APK claim.
+
+
+## J1347 — Reconstruct whole-game CustomRenderTextures
+
+2026-10-31. Existing generic record owner admits native class 86 and preserves
+original fields while relocating three schema-checked typed PPtrs per record.
+Published Material/Texture suppliers and original external metadata qualify edges.
+Prior art: pinned UnityPy 1.25.3 CustomRenderTexture/PPtr; J1273/J1281 owner policy.
+Evidence: `work/coordination/p1-wholegame-1031/crt-public-v1/done.json`.
+Three independently persisted records are J850 raw-exact, 596 bytes; pack SHA-256
+`cdadeeb06ada80bb7644594349b001759e3dc8982c734da297127b1e7289f998`.
+Production 0.170 s, qualification 9.747 s, peak RSS 339,410,944 bytes.
+Host-only; no device heat measurement. Saved residual 6 → 3 by selector subtraction:
+Clip2, AssetBundle1. Readiness stays 693/705 available, 685 raw-exact.
+Complete bundle, phone production, installation/update and runtime remain open.

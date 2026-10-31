@@ -1813,6 +1813,7 @@ def produce(profile_path, profile_sha256, pc, output, sdk=None):
                             65,
                             72,
                             74,
+                            86,
                             91,
                             95,
                             96,

@@ -5744,3 +5744,13 @@ stage/axis contracts remain first choices. Setup pins original Shader/Material
 bundles, SDK/tool inputs and a fresh output pack; scoped source/compiler processes
 close on exit and receipts persist. One record is host raw-exact to J850;
 complete bundle and phone/runtime acceptance remain open. No runtime owner is added.
+
+
+`owner-whole-game-custom-render-textures.json` selects three original
+CustomRenderTextures through the existing `record_produce.py` generic native
+owner. Native schemas validate three typed PPtrs per record; published Material
+and Texture suppliers provide relocated endpoints, checked against original
+external metadata. All other native fields remain source-owned. Setup requires
+pinned original bundles and a fresh output pack; scoped readers close on process
+exit and receipts persist. Three records are host raw-exact to J850. No runtime
+owner is added; complete bundle and phone/runtime acceptance remain open.
