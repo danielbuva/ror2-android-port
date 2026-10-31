@@ -1923,22 +1923,19 @@ a changed repeated-session slope remains a device gate.
 The host memory summary keeps immediate post-collection and subsequent-menu
 managed slopes separate, including the observed final menu without extrapolation.
 The current `settings-write-interrupt-check` host diagnostic uses
-`settings_write_interrupt_check.py` and the authored `LabPendingWriteStop` SDK
-actor. It requires an idle, owned APK and a matched diagnostic menu selector,
-saves the existing native values, observes the actual pending-file creation,
-then terminates that writer through same-UID signalling from the owned
-Development package via standard `run-as`. Both SDK and host require its exit.
-The normal package-stop command remains failure teardown; no root or permission
-changes are used. An
-unchanged primary and retained pending transaction are required before cold
-recovery/resave can qualify; a missed window refuses acceptance. The original
-store performs every save. Teardown removes only its selector and unique SDK
-temporary files, stops its owned process and verifies OLED sleep. Protected
-profile/results hashes remain unchanged. The SDK actor exits explicitly after
-its observer completes, with a separate 35-second process deadline because
-Android may retain a non-daemon observer thread. Initial primary bytes and
-observer failure output are preserved privately. This does not simulate power loss or
-ENOSPC, and runtime qualification remains a separate journal gate.
+`settings_write_interrupt_check.py` and the packaged `LabSettingsWriteObserver`
+service described below. It requires an idle, owned APK, matched menu selector
+and a nonce-only request. It saves existing native values and observes actual
+pending-file creation, then terminates only the PID/UID-bound main writer through
+same-UID signalling. Atomic ready/result records bind a distinct service PID.
+An unchanged original primary and retained pending transaction are required
+before cold validated-primary recovery and native resave can qualify. A missed
+window refuses acceptance. Original save behavior is unchanged. Teardown stops
+the owned package, removes its selector/request/unique records and verifies OLED
+sleep. Protected profile/results hashes remain unchanged. Initial primary bytes
+and observer failure output stay private. The standalone SDK CLI retains its
+explicit exit and hard deadline for historical use; the service never calls it.
+This does not simulate power loss or ENOSPC; device qualification remains open.
 The current `session-memory-check --memory-snapshots` diagnostic extends
 `SessionResourceBoundary` with native/managed heap captures before presentation
 at menus 2 and 4, after the completed worlds have been reclaimed. It requires an
@@ -2059,6 +2056,19 @@ with no live bank swap. Host payload resync still replaces the attempt-bound map
 restart qualification therefore requires the same attempt without resync.
 Mapping/capture/filesystem fixtures and settings-modal peers cover host contracts;
 physical labels, native actions, Android writes and restart remain device gates.
+
+`OfflineSettingsSession` also owns the default-off interrupted-write witness.
+`PortSession` reads a nonce-only `settings-write-observer.request` once at startup;
+opening settings starts the non-exported same-UID Android service
+`LabSettingsWriteObserver` in `:settings_write_observer`. It derives external
+paths and writer PID/UID inside the app, observes the native pending CREATE and
+writes atomic nonce-bound ready/result records without changing the save method.
+Closing settings or disposing its owner cancels observation; the service stops
+itself after completion or its 35-second deadline (`START_NOT_STICKY`).
+`build.stage_android_assets` stages its Android library and shared Java operation
+from tracked inputs. The host checks distinct service/main PIDs, retained original
+primary/pending bytes, cold recovery and native resave. Device survival after the
+writer kill remains a qualification gate.
 
 Settings persistence remains owned by `AndroidOfflineSettings`. Its existing
 validated pending/primary/backup transaction is unchanged. `TrySave` converts
