@@ -6568,3 +6568,18 @@ message delivery and original/error stack policies. Pinned BepInEx `5b766a3b`
 log callback observation informs the subscriber boundary; exact Unity 2021.3.45f2
 CoreModule API documents the per-call option. Recipes contain authored source
 hashes only, with no captured text, protected code, game bytes or private paths.
+
+### Whole-game Bandit Sprite source relationship
+
+`owner-whole-game-sprite-relationships.json` (SHA-256
+`f0fe7954defbc1de2d408f693577abb30408562db5bbdf32ae4b368f4cc0eb19`) selects one original Sprite, its source hash, the
+current export texture GUID and one checked Texture2D relocation. The original
+source container independently supplies the Sprite root; current PNG metadata
+witnesses the GUID and single-Sprite importer context. Pinned AssetRipper
+`1ac666f` TextureExportCollection single-Sprite relationships and the existing
+J1285 exporter audit supply prior art. Existing `record_produce.py` applies
+`player_data.sprite_key` before pointer relocation; no new reconstruction rule,
+pixels, geometry, native output or proprietary implementation is published.
+The complete 476-byte persisted record matches J850. This fills a provider gap;
+residual three and historical readiness remain unchanged. Complete bundle and
+phone/install/update qualification stay open.

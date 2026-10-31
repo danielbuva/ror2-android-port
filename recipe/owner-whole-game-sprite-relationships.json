@@ -1,0 +1,46 @@
+{
+  "input_id": "6af7ed94619fe1b4346974b4486afa03a8d1625a7820e92da0ff74d57208fe88",
+  "bundles": [
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-base-achievements_assets_all_e774063485b556cb190059cd0dc50ba7.bundle",
+      "sha256": "73b426881fbd32e68cdda28ccbb8dda7de66e33a2f54f79d53f5609f031cd5ba",
+      "members": [
+        {
+          "name": "CAB-1dd2b702bd9bd045e77c67534a0086ab",
+          "objects": [
+            {
+              "path_id": 8011246714269438674,
+              "class_id": 213,
+              "sha256": "2876300c9fd03443c31b6c5cb8e438649daa0b83990cc7a02ff272e2f3cbb591",
+              "outputs": [
+                {
+                  "bundle": "whole-game-content",
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "path_id": 223460600779145972,
+                  "bytes": 476,
+                  "sha256": "2913ee69057433e8fa1c16d50ffe6982eed1d03cfaf109c1aa3232cd04d68e2b",
+                  "transform": {
+                    "references": [
+                      {
+                        "offset": 128,
+                        "from": [
+                          0,
+                          5251408762636767954
+                        ],
+                        "to": [
+                          0,
+                          7123960278802897565
+                        ]
+                      }
+                    ],
+                    "importer_guid": "8d0fbce58363a464eab097a1dda5ef52"
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
