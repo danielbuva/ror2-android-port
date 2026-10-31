@@ -1914,6 +1914,8 @@ only that generated snapshot, verifies its SHA-256, then removes the exact devic
 file; profile/payload data are untouched. Snapshot allocation and pauses exclude
 this case from ordinary growth/performance acceptance. The existing static-root
 walk is a separate diagnostic. Heap files, databases and analysis stay private.
+The host retains the last PID/attempt-matched report before teardown, including
+when a runtime log error interrupts a session; prior reports cannot replace it.
 The public Unity `MemorySnapshotDataTools` CLI can analyze them without an Editor
 package; no parser or third-party implementation is vendored into the lab/player.
 

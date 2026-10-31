@@ -1,9 +1,11 @@
 import sys
 import hashlib
+import json
 import tempfile
 from unittest import mock
 import unittest
 from pathlib import Path
+from contextlib import ExitStack
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts/lab"))
 
@@ -17,6 +19,7 @@ from session_memory_check import (
     parse_total_pss_kib,
     resource_samples,
 )
+import session_memory_check as memory
 
 
 def samples(start, after, probes=0):
@@ -28,6 +31,54 @@ def samples(start, after, probes=0):
 
 
 class SessionMemoryCheckTests(unittest.TestCase):
+    def test_runtime_error_retains_only_matching_current_report_before_stopping(self):
+        for report_pid in ("123", "999"):
+            with tempfile.TemporaryDirectory() as temporary, self.subTest(report_pid=report_pid), ExitStack() as stack:
+                root = Path(temporary)
+                out = root / "evidence"
+                device = mock.Mock()
+                device.settings = {"storage_mode": "internal"}
+                device.owned.return_value = {"storage": {"mode": "internal"}, "package_path": "/data/app/fixture/base.apk"}
+                device.storage.return_value = {"mode": "internal"}
+                device.read_receipt.return_value = {"persistentDataPath": "/fixture/Android/data/dev.ror2lab.arm64/files"}
+                device.evidence_directory.return_value = out
+                device.launch.return_value = {"pid": "123"}
+                device.sh.return_value = "runtime error fixture"
+                report = {
+                    "pid": int(report_pid),
+                    "attempt": "fixture",
+                    "id": memory.SPINE_ID,
+                    "session": 1,
+                    "phase": "fixture-loading",
+                    "selectedSurvivor": "Commando",
+                    "world": {"lightningStakes": [{"finiteSnapshot": False}]},
+                }
+                replacements = {
+                    "WORK": root / "work",
+                    "SessionCleanupDevice": mock.Mock(return_value=device),
+                    "bind_installed_apk": mock.Mock(return_value=("0" * 64, "fixture")),
+                    "attempt_from_installed": mock.Mock(return_value="fixture"),
+                    "survivor_identity_failures": mock.Mock(return_value=[]),
+                    "runtime_stop": mock.Mock(return_value=None),
+                    "current_errors": mock.Mock(return_value=["runtime error fixture"]),
+                }
+                for name, value in replacements.items():
+                    stack.enter_context(mock.patch.object(memory, name, value))
+                stack.enter_context(mock.patch.object(memory.cleanup, "_remote_path_state", return_value="absent"))
+                stack.enter_context(mock.patch.object(memory.cleanup, "_same_process", return_value=True))
+                stack.enter_context(mock.patch.object(memory.cleanup, "_read_json", return_value=report))
+
+                def stop(*args):
+                    self.assertEqual((out / "last-current-report.json").exists(), report_pid == "123")
+                    return True
+
+                stack.enter_context(mock.patch.object(memory.cleanup, "_stop_process", side_effect=stop))
+                with self.assertRaisesRegex(RuntimeError, "Session memory check failed"):
+                    check_session_memory(sessions=3, expected_apk_sha256="0" * 64)
+                if report_pid == "123":
+                    self.assertEqual(json.loads((out / "last-current-report.json").read_text()), report)
+                self.assertFalse(json.loads((out / "result.json").read_text())["success"])
+
     def test_snapshot_admission_waits_for_native_completion_and_refuses_foreign_names(self):
         name = "session-2-" + "a" * 32 + ".snap"
         sample = {"phase": "before-presentation", "memorySnapshotRequested": True, "memorySnapshotComplete": False}
