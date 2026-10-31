@@ -5,6 +5,7 @@ import importlib
 from pathlib import Path
 import sys
 import unittest
+from unittest.mock import Mock
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "tools/phone-build/accepted-output"))
 S = importlib.import_module("shader_prefab")
@@ -23,6 +24,20 @@ def snippet(global_axes=(), local_axes=(), builtins=(), runtime=""):
 
 
 class PrefabShaderTests(unittest.TestCase):
+    def test_original_fallback_retains_local_edge_and_unresolved_literal(self):
+        selected = {"original": {"path": "original.bundle", "member": "CAB-source"}, "fallback_original": []}
+        source = {"m_Dependencies": [], "m_ParsedForm": {"m_FallbackName": "Legacy/Diffuse"}}
+        original = Mock()
+        self.assertEqual(S.original_fallback_dependencies(source, selected, original), [])
+        original.assert_not_called()
+        witness = dict(selected["original"], path_id=-7)
+        selected["fallback_original"] = [{"original": witness, "to": [0, 19]}]
+        source["m_Dependencies"] = [{"m_FileID": 0, "m_PathID": -7}]
+        source["m_ParsedForm"]["m_FallbackName"] = "Water/Single Sided"
+        original.return_value.read_typetree.return_value = {"m_ParsedForm": {"m_Name": "Water/Single Sided"}}
+        self.assertEqual(S.original_fallback_dependencies(source, selected, original), [{"m_FileID": 0, "m_PathID": 19}])
+        original.assert_called_once_with(witness)
+
     def test_inherited_snippet_order_owns_registry_without_reordering_existing_pass_names(self):
         first = snippet([["__", "FOG_LINEAR"]])
         second = snippet([["__", "INSTANCING_ON"]], [["_", "LOCAL"]], [["SHADOWS_DEPTH"], ["SHADOWS_CUBE"]])
