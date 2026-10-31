@@ -1996,7 +1996,7 @@ Saved selector residual 30 → 22; coverage subtraction only. Readiness stays
 693/705 available, 685 raw-exact. Complete bundle, phone production, installation/
 update and original runtime remain open. No APK claim.
 
-## J1334 — Reconstruct Reaper secondary-swing animation
+## J1335 — Reconstruct Reaper secondary-swing animation
 
 2026-10-31. The existing animation record owner uses original native curves,
 quaternion normalization and its atan2 root-average policy; producer code unchanged.
@@ -2008,3 +2008,16 @@ Production 0.131 s; independent comparison 3.553 s. Host-only, no thermal data.
 Saved selector residual 22 → 21; coverage subtraction only. Readiness stays
 693/705 available, 685 raw-exact. Complete bundle, phone installation/update
 and original runtime remain open. No APK claim.
+## J1334 — Reconstruct the VoidSurvivor synchronized layer chain
+
+2026-10-31. Existing controller owner resolves original exported layer chains,
+deriving machine groups, ordinals, state slots and aligned blob-size changes.
+Prior art: inspected AssetRipper 1ac666f AnimatorControllerProcessor.InitializeLayer
+exports machine indices as layer links; exact-editor tracing supplies allocation.
+Evidence: `work/coordination/p1-scenes-w/voidsurvivor-public-v1-20261031/done.json`.
+One persisted record independently raw-exact to J850, 16,376 bytes; pack SHA-256
+`a7e2636e203177851e7593f7903c2a516f836352e4dac65e0bc2afa4e8808d3f`.
+Production/qualification wall 58.232 s; host-only, no thermal measurement.
+Saved selector residual 22 → 21; coverage subtraction, no accepted output rerun.
+Readiness stays 693/705 available, 685 raw-exact. Complete bundle, phone production,
+installation/update and original runtime remain open. No APK claim.

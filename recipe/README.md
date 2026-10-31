@@ -6332,6 +6332,23 @@ is included. Other native bytes remain intact before checked pointer relocation.
 Eight persisted records match J850 raw-exact, 592 bytes. Complete-file readiness,
 phone installation/update and runtime gates remain open.
 
+### Whole-game VoidSurvivor synchronized layer chain
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-animator-controllers.json` | `e84b83a4ce6b4ae8734c8d52a40f69410b45dccd867c2dc02e08d7f517370c9d` |
+
+Audit: 2026-10-31. Original VoidSurvivor layers select the existing controller
+owner's synchronized-link resolution. Inspected AssetRipper 1ac666f
+AnimatorControllerProcessor.InitializeLayer exports machine indices as layer
+links; resolving those original chains derives machine groups and ordinals.
+Exact-editor allocation tracing establishes aligned source index-array sizes.
+Only selectors, policies, hashes and checked pointer relationships ship; no
+controller body, generated content, target byte patch or private path is included.
+One independently persisted controller matches J850 raw-exact, 16,376 bytes.
+Final-file readiness stays 693/705 available, 685 raw-exact; complete bundle,
+phone production, installation/update and runtime remain open.
+
 ### Whole-game Reaper secondary-swing animation
 
 | Recipe | SHA-256 |
