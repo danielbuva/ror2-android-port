@@ -6397,6 +6397,11 @@ path is included. Two independently persisted records match J850 raw-exact,
 profile bundle list from an incorrectly nested member. Complete bundle, phone
 production, installation/update and original runtime remain open.
 
+The point-sound timeout owner source pin admits the authored session dispatcher
+that calls the unchanged original timeout method while its application owner is
+inactive. Original timeout configuration, clock and pool behavior remain source-owned.
+The recipe contains only the authored-source hash; no original code or runtime data.
+
 ### Whole-game Acolyte null AvatarMask defaults
 
 | Recipe | SHA-256 |
