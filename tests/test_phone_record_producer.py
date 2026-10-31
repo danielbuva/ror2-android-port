@@ -581,6 +581,7 @@ class AnimationProducerTests(unittest.TestCase):
             54,
             64,
             65,
+            86,
             91,
             95,
             96,

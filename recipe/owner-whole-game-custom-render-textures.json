@@ -1,0 +1,183 @@
+{
+  "input_id": "6af7ed94619fe1b4346974b4486afa03a8d1625a7820e92da0ff74d57208fe88",
+  "bundles": [
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-dlc4-sadism-common_assets_all_b73a821b3861b8aea31ece4317bbddea.bundle",
+      "sha256": "51db930e0043bf1a197e3364e8c229eadded9db579dbe4ac9ef80a370a9b40a2",
+      "members": [
+        {
+          "name": "CAB-42fd77510482be15bf98a2c46d20345a",
+          "objects": [
+            {
+              "path_id": 4899991698003766809,
+              "class_id": 86,
+              "sha256": "f037937c8c114df9ad53db40d0a4c36f055b896822d3f24f5f47cbf54538bfe3",
+              "outputs": [
+                {
+                  "bundle": "whole-game-content",
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "path_id": -6787596883337163803,
+                  "bytes": 188,
+                  "sha256": "4b5b4fdb12c899cf682cac8efe9dee2216b144c3f2339423a2bac46a3166eae0",
+                  "transform": {
+                    "references": [
+                      {
+                        "offset": 92,
+                        "from": [
+                          0,
+                          2031882977499468568
+                        ],
+                        "to": [
+                          0,
+                          1120699973220093322
+                        ]
+                      },
+                      {
+                        "offset": 108,
+                        "from": [
+                          0,
+                          2031882977499468568
+                        ],
+                        "to": [
+                          0,
+                          1120699973220093322
+                        ]
+                      },
+                      {
+                        "offset": 136,
+                        "from": [
+                          9,
+                          3707480796669223613
+                        ],
+                        "to": [
+                          0,
+                          -8574891794050748875
+                        ]
+                      }
+                    ]
+                  },
+                  "native_type_hash": "c1ac3db85397042a08753649979b5b9a"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-dlc4-soul-common_assets_all_2f11e141aea0fd7416f52bc8397a3249.bundle",
+      "sha256": "15ecdf7bb32beb7ca46d6b9d4afe03c0e919cbc327268ec4cba55786f9a50727",
+      "members": [
+        {
+          "name": "CAB-5a54ed2ad025ce33628377374bf548d2",
+          "objects": [
+            {
+              "path_id": 3515555731358166670,
+              "class_id": 86,
+              "sha256": "2a0c3782de525a28ac329d82dcc6ade71b38b827f72a9d319795eac7cafa26b1",
+              "outputs": [
+                {
+                  "bundle": "whole-game-content",
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "path_id": 3578021000479001850,
+                  "bytes": 204,
+                  "sha256": "417a238dbcccb25f9a25441081481a84c9b88f6c93c161a2370a163d2f76a2af",
+                  "transform": {
+                    "references": [
+                      {
+                        "offset": 108,
+                        "from": [
+                          48,
+                          1903645168582251038
+                        ],
+                        "to": [
+                          0,
+                          4966266215540611097
+                        ]
+                      },
+                      {
+                        "offset": 124,
+                        "from": [
+                          48,
+                          1903645168582251038
+                        ],
+                        "to": [
+                          0,
+                          4966266215540611097
+                        ]
+                      },
+                      {
+                        "offset": 152,
+                        "from": [
+                          16,
+                          3707480796669223613
+                        ],
+                        "to": [
+                          0,
+                          -8574891794050748875
+                        ]
+                      }
+                    ]
+                  },
+                  "native_type_hash": "c1ac3db85397042a08753649979b5b9a"
+                }
+              ]
+            },
+            {
+              "path_id": 8468543451045798275,
+              "class_id": 86,
+              "sha256": "c73f0c970d6079e734826847f76384af07ecf260cc596db3eda7f72223d02c09",
+              "outputs": [
+                {
+                  "bundle": "whole-game-content",
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "path_id": 2474660663942095709,
+                  "bytes": 204,
+                  "sha256": "dc6c8108e5b83b2f1b9c8d1cca6247e79c42cd20398650eebbbb55f3663072bc",
+                  "transform": {
+                    "references": [
+                      {
+                        "offset": 108,
+                        "from": [
+                          0,
+                          -3674302452879280801
+                        ],
+                        "to": [
+                          0,
+                          -593061625525717465
+                        ]
+                      },
+                      {
+                        "offset": 124,
+                        "from": [
+                          0,
+                          -3674302452879280801
+                        ],
+                        "to": [
+                          0,
+                          -593061625525717465
+                        ]
+                      },
+                      {
+                        "offset": 152,
+                        "from": [
+                          16,
+                          3707480796669223613
+                        ],
+                        "to": [
+                          0,
+                          -8574891794050748875
+                        ]
+                      }
+                    ]
+                  },
+                  "native_type_hash": "c1ac3db85397042a08753649979b5b9a"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
