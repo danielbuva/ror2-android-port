@@ -6379,3 +6379,20 @@ Only original selectors, hashes, checked relationships and policies ship; no
 controller body, target patch, generated data or private path is included.
 Two independently persisted records match J850 raw-exact, 28,916 bytes.
 Complete bundle, phone production, installation/update and runtime remain open.
+
+### Whole-game Bandit/Enforcer populated synchronized trees
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-animator-controllers.json` | `c9d9c6b31cce330d6f5fbc1ada7331582f675bc9031377ca3e420cafaa874178` |
+
+Audit: 2026-10-31. The existing controller owner derives omitted populated
+1D/2D tree allocation from original node, child, threshold and neighbor counts.
+Exact-editor source-only native tracing supplies pointer/header strides and
+alignment; pinned AssetRipper 813fed1597 GetBlendTree supplies tree-zero export
+prior art. Only original selectors, checked pointer relationships, hashes and
+policies ship; no controller body, target size patch, generated data or private
+path is included. Two independently persisted records match J850 raw-exact,
+44,048 bytes. The previously qualified VoidSurvivor selector is restored to the
+profile bundle list from an incorrectly nested member. Complete bundle, phone
+production, installation/update and original runtime remain open.

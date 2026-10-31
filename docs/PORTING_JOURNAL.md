@@ -2035,3 +2035,18 @@ Production 0.410 s; qualification wall 54.061 s; host-only, no thermal data.
 Current merged-recipe selector subtraction leaves 19 → 17 unresolved records;
 no accepted output rerun. Readiness stays 693/705 available, 685 raw-exact.
 Complete bundle, phone production, installation/update and runtime remain open.
+
+## J1337 — Reconstruct populated synchronized controller tree allocation
+
+2026-10-31. Existing controller owner derives Bandit/Enforcer omitted 1D/2D
+tree allocation from original arrays, including nested neighbor lists.
+Prior art: pinned AssetRipper 813fed1597 GetBlendTree; exact-editor source-only
+native traces establish debug-pointer strides, alignment and no deduplication.
+Evidence: `work/coordination/p1-scenes-w/controller-populated-public-20261031/done.json`.
+Two persisted records independently raw-exact to J850, 44,048 bytes; pack SHA-256
+`7b5f024900d6daf9249fc32d73daa7ba4b2685b134a995311d78256fea2dd75c`.
+Qualification/production wall 60.554 s; host-only, no thermal measurement.
+Restores the qualified VoidSurvivor selector's malformed profile nesting.
+Saved selector residual 17 → 15; coverage subtraction, no accepted output rerun.
+Readiness stays 693/705 available, 685 raw-exact. Complete bundle, phone production,
+installation/update and original runtime remain open. No APK claim.
