@@ -1402,3 +1402,16 @@ play, physical input and genuine filled-filesystem recovery remain open.
 - This batch reduces the post-J1285 unresolved set from 280 to 256; parallel
   whole-game work is counted separately. Final-file readiness remains 693/705
   available, 685 raw-exact; phone/gameplay/install/update gates remain open.
+
+## J1287 — Resolve three whole-game duplicate-behaviour controllers
+2026-10-31.
+- Existing controller owner reconstructs Totem, Bandit and LynxAmbusher using
+  original layer/state/range relationships to disambiguate equal behaviours.
+- Three newly persisted records (40,044 bytes) are raw-exact J850; prior recipe
+  selections are unchanged. Acolyte and MimicLogbook remain unresolved.
+- Evidence: `work/coordination/p1-scenes-w/wholegame-behaviour-relationships-20261031/`
+  `public-production-done.json`; relationship provenance is in `notes.md`.
+- New-record pack SHA-256: `c7fef02c7b341c251856d35817a167fc53ff3762f54d10a0d18687cd6c47e0fd`.
+- Post-J1286 unresolved set falls from 256 to 253, excluding parallel work.
+  Final-file readiness stays 693/705 available, 685 raw-exact; phone, gameplay
+  and install/update gates remain open.

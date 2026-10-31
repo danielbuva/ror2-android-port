@@ -5544,3 +5544,16 @@ scalar, string, body, type template, original implementation or private setting
 is included. All 358 persisted controller records match J850, including the
 24 additions; existing 334 outputs are unchanged. Generated bodies remain local.
 Complete bundle, phone production and install/update acceptance stay open.
+
+### Whole-game duplicate behaviour relationships (J1287)
+
+`owner-animator-controllers.json` SHA-256: `23a81b8615260e23de8d9ab985535bd8a96428e3e9a431e4dafc7aa992a2edac`.
+Audit: 2026-10-31. The J1143/J1286 selection policy now includes Totem,
+Bandit and LynxAmbusher. Original layer/state keys and range ordinals identify
+otherwise identical behaviour bodies; script/body equality and original
+PPtr edges are checked. Pinned AssetRipper `GetStateBehaviours` documents the
+range-to-index relationship. The recipe adds source identities, ordinals,
+operations and checked pointer remaps; no target scalar, string, native body,
+type template, implementation or private setting. Three new persisted records
+(40,044 bytes) are raw-exact J850; earlier selections are unchanged. Generated
+bodies remain ignored. Complete bundle, phone and install/update gates stay open.
