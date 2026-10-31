@@ -321,9 +321,10 @@ def publish(service, files, version):
 
 
 class Phone:
-    def __init__(self, serial, timeout, allow_test_installs=False):
+    def __init__(self, serial, timeout, allow_test_installs=False, allow_test_notifications=False):
         self.serial, self.timeout = serial, timeout
         self.allow_test_installs = allow_test_installs
+        self.allow_test_notifications = allow_test_notifications
         self.adb = Path("/opt/homebrew/bin/adb")
         self.owned_installer = False
         self.install_attempted = False
@@ -541,8 +542,9 @@ class Phone:
     def dismiss_notification_permission(self):
         # ToolHostActivity.onCreate requests only POST_NOTIFICATIONS. This is
         # not the separately authorized unknown-source install permission.
-        # Decline only this owned test app's notification prompt, never grant
-        # an unidentified permission or rely on localized button text.
+        # Decline by default; allow only with explicit owner authorization for
+        # this owned test app. Never act on an unidentified permission or rely
+        # on localized button text.
         if not self.owned_installer:
             raise Failure("notification-dialog-installer-not-owned")
         controller = "com.android.permissioncontroller"
@@ -552,14 +554,15 @@ class Phone:
         messages = [node.get("text", "").casefold() for node in nodes if node.get("resource-id") == controller + ":id/permission_message"]
         if len(messages) != 1 or "owner game installer" not in messages[0] or not re.search(r"\bnotifications\b", messages[0]):
             raise Failure("notification-dialog-not-identified")
-        buttons = [node for node in nodes if node.get("resource-id") == controller + ":id/permission_deny_button" and node.get("enabled") == "true"]
+        action = "allow" if self.allow_test_notifications else "deny"
+        buttons = [node for node in nodes if node.get("resource-id") == controller + ":id/permission_" + action + "_button" and node.get("enabled") == "true"]
         if len(buttons) != 1:
-            raise Failure("notification-denial-unavailable")
+            raise Failure("notification-allow-unavailable" if self.allow_test_notifications else "notification-denial-unavailable")
         bounds = re.fullmatch(r"\[(\d+),(\d+)\]\[(\d+),(\d+)\]", buttons[0].get("bounds", ""))
         if not bounds:
             raise Failure("ui-button-bounds")
         x1, y1, x2, y2 = map(int, bounds.groups())
-        self.shell("input", "tap", str((x1 + x2) // 2), str((y1 + y2) // 2), label="device-notification-deny")
+        self.shell("input", "tap", str((x1 + x2) // 2), str((y1 + y2) // 2), label="device-notification-" + action)
         if any(node.get("package") == controller for node in self.ui_for((PACKAGE, controller)).iter("node")):
             raise Failure("notification-dialog-not-dismissed")
         return True
@@ -979,6 +982,9 @@ def main(argv=None):
     parser.add_argument(
         "--allow-test-installs", action="store_true", help="Only after explicit owner authorization: allow installs for this fresh disposable test package"
     )
+    parser.add_argument(
+        "--allow-test-notifications", action="store_true", help="Only after explicit owner authorization: allow this owned test app's POST_NOTIFICATIONS prompt"
+    )
     parser.add_argument("--inspect-state", action="store_true", help="Read-only fixed-package presence/hash and installer permission; no build, UI or cleanup")
     parser.add_argument(
         "--expected-installer-sha256", help="Required for --inspect-state: last known installer hash, used only for comparison, never ownership"
@@ -990,12 +996,16 @@ def main(argv=None):
     args = parser.parse_args(argv)
     if args.inspect_ui_failure:
         DIAGNOSTICS = None
-        return inspect_ui_failure(args.diagnostic_run, conflicting_mode=args.inspect_state or args.host_only or args.allow_test_installs)
+        return inspect_ui_failure(
+            args.diagnostic_run, conflicting_mode=args.inspect_state or args.host_only or args.allow_test_installs or args.allow_test_notifications
+        )
     if args.inspect_state:
         # This driver-only observation makes no claim about APK source identity.
         # Bypass cache/toolchain setup, private log writes and all cleanup paths.
         DIAGNOSTICS = None
-        return inspect_state(args.expected_installer_sha256, args.timeout, conflicting_mode=args.host_only or args.allow_test_installs)
+        return inspect_state(
+            args.expected_installer_sha256, args.timeout, conflicting_mode=args.host_only or args.allow_test_installs or args.allow_test_notifications
+        )
     completed = set()
     phone = None
     reason = None
@@ -1014,7 +1024,7 @@ def main(argv=None):
         DIAGNOSTICS = PrivateDiagnostics(ROOT / "work/coordination/installer-update-acceptance")
         config = read_context()
         if not args.host_only:
-            phone = Phone(serial, args.timeout, args.allow_test_installs)
+            phone = Phone(serial, args.timeout, args.allow_test_installs, args.allow_test_notifications)
         # Explicit /tmp, never TMPDIR (which might point inside a checkout).
         with tempfile.TemporaryDirectory(prefix="ror2-synthetic-updates-", dir="/tmp") as name:
             temporary = Path(name).resolve()

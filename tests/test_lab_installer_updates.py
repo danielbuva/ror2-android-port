@@ -95,6 +95,7 @@ class LabInstallerUpdatesTests(unittest.TestCase):
                 ["--diagnostic-run", str(root)],
                 ["--diagnostic-run", "newest", "--inspect-state"],
                 ["--diagnostic-run", "newest", "--allow-test-installs"],
+                ["--diagnostic-run", "newest", "--allow-test-notifications"],
             ):
                 with self.subTest(args=args):
                     code, result = self.log_inspection(root, args)
@@ -196,6 +197,7 @@ class LabInstallerUpdatesTests(unittest.TestCase):
             (["--expected-installer-sha256", "synthetic-private-invalid"], None),
             (["--expected-installer-sha256", "a" * 64], {}),
             (["--expected-installer-sha256", "a" * 64, "--allow-test-installs"], None),
+            (["--expected-installer-sha256", "a" * 64, "--allow-test-notifications"], None),
             (["--expected-installer-sha256", "a" * 64, "--host-only"], None),
         ):
             with self.subTest(args=args, environment=environment):
@@ -566,17 +568,66 @@ class LabInstallerUpdatesTests(unittest.TestCase):
         unknown = LAB.ui_environment_summary({})
         self.assertTrue(all(value is False if key.endswith("_query_ok") else value is None for key, value in unknown.items()))
 
-    def test_notification_dialog_does_not_act_without_prompt_or_fresh_ownership(self):
-        phone = LAB.Phone("synthetic-private-selector", 1)
-        with patch.object(phone, "ui_for") as ui, patch.object(phone, "shell") as shell:
-            with self.assertRaisesRegex(LAB.Failure, "notification-dialog-installer-not-owned"):
-                phone.dismiss_notification_permission()
-            ui.assert_not_called()
-            shell.assert_not_called()
+    def test_notification_opt_in_selects_allow_resource_id_not_button_text(self):
+        phone = LAB.Phone("synthetic-private-selector", 1, allow_test_notifications=True)
         phone.owned_installer = True
-        with patch.object(phone, "ui_for", return_value=ET.Element("hierarchy")), patch.object(phone, "shell") as shell:
-            self.assertFalse(phone.dismiss_notification_permission())
-            shell.assert_not_called()
+        dialog = self.notification_dialog(button="permission_allow_button")
+        deny = self.notification_dialog().findall("node")[-1]
+        deny.set("bounds", "[200,400][300,480]")
+        dialog.append(deny)
+        with patch.object(phone, "ui_for", side_effect=[dialog, ET.Element("hierarchy")]) as ui, patch.object(phone, "shell") as shell:
+            self.assertTrue(phone.dismiss_notification_permission())
+        shell.assert_called_once_with("input", "tap", "60", "60", label="device-notification-allow")
+        self.assertEqual([call.args for call in ui.call_args_list], [((LAB.PACKAGE, "com.android.permissioncontroller"),)] * 2)
+
+    def test_notification_opt_in_rejects_unidentified_or_unavailable_allow_button(self):
+        phone = LAB.Phone("synthetic-private-selector", 1, allow_test_notifications=True)
+        phone.owned_installer = True
+        for message, changes, duplicate, reason in (
+            ("Allow another app to send you notifications?", {}, False, "notification-dialog-not-identified"),
+            ("Allow Owner game installer to access your camera?", {}, False, "notification-dialog-not-identified"),
+            (None, {"enabled": "false"}, False, "notification-allow-unavailable"),
+            (None, {"package": "another.app"}, False, "notification-allow-unavailable"),
+            (None, {"resource-id": "com.android.permissioncontroller:id/permission_deny_button"}, False, "notification-allow-unavailable"),
+            (None, {}, True, "notification-allow-unavailable"),
+            (None, {"bounds": "invalid"}, False, "ui-button-bounds"),
+        ):
+            dialog = self.notification_dialog(button="permission_allow_button")
+            if message is not None:
+                dialog.findall("node")[0].set("text", message)
+            button = dialog.findall("node")[-1]
+            button.attrib.update(changes)
+            if duplicate:
+                dialog.append(ET.fromstring(ET.tostring(button)))
+            with self.subTest(reason=reason, changes=changes), patch.object(phone, "ui_for", return_value=dialog), patch.object(phone, "shell") as shell:
+                with self.assertRaisesRegex(LAB.Failure, reason):
+                    phone.dismiss_notification_permission()
+                shell.assert_not_called()
+
+    def test_notification_opt_in_cli_reaches_phone_without_enabling_installs(self):
+        with (
+            patch.dict(os.environ, {"LAB_DEVICE_SERIAL": "synthetic-private-selector"}),
+            patch.object(LAB, "PrivateDiagnostics"),
+            patch.object(LAB, "read_context", return_value={}),
+            patch.object(LAB, "Phone") as phone,
+            patch.object(LAB, "acceptance"),
+            redirect_stdout(io.StringIO()),
+        ):
+            self.assertEqual(LAB.main(["--allow-test-notifications"]), 0)
+        phone.assert_called_once_with("synthetic-private-selector", 1200, False, True)
+
+    def test_notification_dialog_does_not_act_without_prompt_or_fresh_ownership(self):
+        for allow in (False, True):
+            phone = LAB.Phone("synthetic-private-selector", 1, allow_test_notifications=allow)
+            with self.subTest(allow=allow), patch.object(phone, "ui_for") as ui, patch.object(phone, "shell") as shell:
+                with self.assertRaisesRegex(LAB.Failure, "notification-dialog-installer-not-owned"):
+                    phone.dismiss_notification_permission()
+                ui.assert_not_called()
+                shell.assert_not_called()
+            phone.owned_installer = True
+            with patch.object(phone, "ui_for", return_value=ET.Element("hierarchy")), patch.object(phone, "shell") as shell:
+                self.assertFalse(phone.dismiss_notification_permission())
+                shell.assert_not_called()
 
     def test_notification_dialog_rejects_other_apps_permissions_and_allow_button(self):
         phone = LAB.Phone("synthetic-private-selector", 1)
@@ -592,12 +643,14 @@ class LabInstallerUpdatesTests(unittest.TestCase):
                 shell.assert_not_called()
 
     def test_notification_dialog_requires_observed_dismissal(self):
-        phone = LAB.Phone("synthetic-private-selector", 1)
-        phone.owned_installer = True
-        with patch.object(phone, "ui_for", return_value=self.notification_dialog()), patch.object(phone, "shell") as shell:
-            with self.assertRaisesRegex(LAB.Failure, "notification-dialog-not-dismissed"):
-                phone.dismiss_notification_permission()
-        self.assertEqual(shell.call_count, 1)
+        for allow in (False, True):
+            phone = LAB.Phone("synthetic-private-selector", 1, allow_test_notifications=allow)
+            phone.owned_installer = True
+            dialog = self.notification_dialog(button="permission_allow_button" if allow else "permission_deny_button")
+            with self.subTest(allow=allow), patch.object(phone, "ui_for", return_value=dialog), patch.object(phone, "shell") as shell:
+                with self.assertRaisesRegex(LAB.Failure, "notification-dialog-not-dismissed"):
+                    phone.dismiss_notification_permission()
+            self.assertEqual(shell.call_count, 1)
 
     def test_occupied_alpha_refuses_before_build_and_key_creation(self):
         phone = LAB.Phone("synthetic-private-selector", 1)
