@@ -1011,13 +1011,27 @@ def inspect_ui_failure(selection, *, conflicting_mode=False, update_failure=Fals
 
         failure_sequence = None
         dump_category = "device-ui-dump"
-        for path in sorted(directory.glob("[0-9][0-9][0-9][0-9][0-9]-device-ui-read.json")):
+        selected_records = None
+        for path in sorted(directory.glob("[0-9][0-9][0-9][0-9][0-9]-device-ui-*.json")):
+            match = re.fullmatch(r"([0-9]{5})-(device-ui-(?:dump|windows-dump|read))\.json", path.name)
+            if not match:
+                continue
             metadata = json.loads(read(path.name))
-            if metadata.get("phase") == "baseline-N-check" and metadata.get("category") == "device-ui-read":
-                if metadata.get("returncode") != 0 or metadata.get("outcome") != "returned":
-                    failure_sequence = int(path.name[:5])
-                    break
-        if failure_sequence is None:
+            if metadata.get("phase") != "baseline-N-check":
+                continue
+            sequence, category = int(match.group(1)), match.group(2)
+            if metadata.get("category") != category:
+                raise Failure("log-inspection-record-mismatch")
+            if metadata.get("returncode") != 0 or metadata.get("outcome") != "returned":
+                selected_records = [(sequence, category)]
+                if category == "device-ui-read":
+                    for previous in ("device-ui-dump", "device-ui-windows-dump"):
+                        if (directory / f"{sequence - 1:05d}-{previous}.json").is_file():
+                            dump_category = previous
+                            selected_records.insert(0, (sequence - 1, previous))
+                            break
+                break
+        if selected_records is None:
             # A windows dump may read successfully yet be rejected by the
             # focused-root/package guard. Inspect its retained XML, never retry
             # the phone or relax the tap-target whitelist to diagnose it.
@@ -1036,9 +1050,11 @@ def inspect_ui_failure(selection, *, conflicting_mode=False, update_failure=Fals
                     failure_sequence = sequence + 1
                     dump_category = "device-ui-windows-dump"
                     break
-        if failure_sequence is None or failure_sequence < 2:
+            if failure_sequence is not None:
+                selected_records = [(failure_sequence - 1, dump_category), (failure_sequence, "device-ui-read")]
+        if selected_records is None:
             raise Failure("log-inspection-ui-read-failure-not-found")
-        for sequence, category in ((failure_sequence - 1, dump_category), (failure_sequence, "device-ui-read")):
+        for sequence, category in selected_records:
             prefix = f"{sequence:05d}-{category}"
             metadata = json.loads(read(prefix + ".json"))
             if metadata.get("phase") != "baseline-N-check" or metadata.get("category") != category:

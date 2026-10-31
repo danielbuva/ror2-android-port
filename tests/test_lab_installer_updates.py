@@ -267,6 +267,49 @@ class LabInstallerUpdatesTests(unittest.TestCase):
             for private in ("synthetic", "ui.xml", "run-newest00", "run-first000", "UiTestAutomationBridge"):
                 self.assertNotIn(private, json.dumps([result, explicit]))
 
+    def test_private_ui_log_summary_observes_failed_dump_without_inventing_a_read(self):
+        for category, code, outcome, stderr, classification in (
+            ("device-ui-dump", 1, "returned", b"ERROR: null root node synthetic-private", "null-root"),
+            ("device-ui-windows-dump", 1, "returned", b"Permission denied: synthetic-private", "permission-denied"),
+            ("device-ui-dump", None, "TimeoutExpired", b"synthetic-private", "other-output"),
+            ("device-ui-dump", None, "OSError", b"", "empty"),
+        ):
+            with self.subTest(category=category, outcome=outcome), tempfile.TemporaryDirectory() as temporary:
+                root = Path(temporary)
+                directory = root / "work/coordination/installer-update-acceptance/run-newest00"
+                directory.mkdir(parents=True)
+                prefix = "00001-" + category
+                (directory / (prefix + ".json")).write_bytes(
+                    LAB.encoded({"phase": "baseline-N-check", "category": category, "returncode": code, "outcome": outcome})
+                )
+                (directory / (prefix + ".stdout.log")).write_bytes(b"")
+                (directory / (prefix + ".stderr.log")).write_bytes(stderr)
+                before = {path: path.read_bytes() for path in directory.iterdir()}
+                status, result = self.log_inspection(root, ["--diagnostic-run", "newest"])
+                self.assertEqual(status, 0)
+                self.assertEqual(len(result["records"]), 1)
+                self.assertEqual(result["records"][0]["category"], category)
+                self.assertEqual(result["records"][0]["outcome"], outcome)
+                self.assertEqual(result["records"][0]["returncode"], "nonzero" if code == 1 else "unavailable")
+                self.assertEqual(result["records"][0]["stderr"], classification)
+                self.assertEqual(before, {path: path.read_bytes() for path in directory.iterdir()})
+                self.assertNotIn("synthetic-private", json.dumps(result))
+
+    def test_private_ui_log_summary_pairs_failed_read_with_actual_windows_dump(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            directory = self.private_ui_logs(root, "run-newest00")
+            for suffix in (".json", ".stdout.log", ".stderr.log"):
+                (directory / ("00001-device-ui-dump" + suffix)).rename(directory / ("00001-device-ui-windows-dump" + suffix))
+            metadata = directory / "00001-device-ui-windows-dump.json"
+            row = json.loads(metadata.read_bytes())
+            row["category"] = "device-ui-windows-dump"
+            metadata.write_bytes(LAB.encoded(row))
+            code, result = self.log_inspection(root, ["--diagnostic-run", "newest"])
+            self.assertEqual(code, 0)
+            self.assertEqual([record["category"] for record in result["records"]], ["device-ui-windows-dump", "device-ui-read"])
+            self.assertEqual(result["foreground"], {"status": "unknown", "reason": "ui-window-read-unavailable"})
+
     def test_private_ui_log_classification_never_echoes_unknown_output(self):
         for data, expected in (
             (b"synthetic-private-error", "other-output"),
