@@ -6081,8 +6081,9 @@ excludes parallel closures; complete bundle and phone/runtime gates remain open.
 
 ### Whole-game build-missing script component
 
-`owner-whole-game-missing-script-records.json` SHA-256:
-`36732035bfe1a3fecf454e024a740850e4c92faba98f295bbddf073a898ae571`.
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-whole-game-missing-script-records.json` | `36732035bfe1a3fecf454e024a740850e4c92faba98f295bbddf073a898ae571` |
 
 Audit: 2026-10-31. The original Rewired GameObject's existing public selector,
 component slot two and reciprocal owner select NintendoSwitchInputManager.
