@@ -5962,8 +5962,9 @@ bundle, phone production and install/update acceptance remain open.
 
 ### Whole-game original TerrainData Shader closure (J1310)
 
-`owner-whole-game-terrain-shaders.json` SHA-256:
-`f9611252293e4750fab696f851005b5ea5b907323de7fdad4ef7068c3d89b7bf`.
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-whole-game-terrain-shaders.json` | `f9611252293e4750fab696f851005b5ea5b907323de7fdad4ef7068c3d89b7bf` |
 
 Audit: 2026-10-31. The shipped original Title TerrainData selection supplies
 eleven explicit preload Shader relationships. Its checked external bundle
