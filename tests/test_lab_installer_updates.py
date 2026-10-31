@@ -188,6 +188,35 @@ class LabInstallerUpdatesTests(unittest.TestCase):
             self.assertEqual(code, 1)
             self.assertEqual(result["errors"], ["log-inspection-record-unavailable"])
 
+    def test_update_error_inspection_includes_baseline_install_but_not_cleanup(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            public = root / "tools/phone-build/owner-apk/updates.py"
+            public.parent.mkdir(parents=True)
+            public.write_text('raise ValueError("public build failure")\n')
+            directory = root / "work/coordination/installer-update-acceptance/run-newest00"
+            directory.mkdir(parents=True)
+            rows = (
+                ("cleanup", {"state": "ERROR", "message": "synthetic-private-cleanup"}),
+                ("baseline-N-check", {"state": "UPDATE_AVAILABLE"}),
+                ("baseline-N-install", None),
+                ("baseline-N-install", {"state": "ERROR", "message": "ValueError: public build failure"}),
+                ("baseline-N-install", {"state": "ERROR", "message": "synthetic-private-later"}),
+            )
+            for index, (phase, state) in enumerate(rows, 1):
+                prefix = f"{index:05d}-device-state-read"
+                (directory / (prefix + ".json")).write_bytes(
+                    LAB.encoded({"phase": phase, "category": "device-state-read", "returncode": 0, "outcome": "returned"})
+                )
+                (directory / (prefix + ".stdout.log")).write_bytes(LAB.encoded(state))
+            before = {path: path.read_bytes() for path in root.rglob("*") if path.is_file()}
+            code, result = self.log_inspection(root, ["--diagnostic-run", "newest"], mode="--inspect-update-failure")
+            self.assertEqual(code, 0)
+            self.assertEqual(result["phase"], "baseline-N-install")
+            self.assertEqual(result["backend_error"]["public_templates"][0]["public_message"], "public build failure")
+            self.assertNotIn("synthetic-private", json.dumps(result))
+            self.assertEqual(before, {path: path.read_bytes() for path in root.rglob("*") if path.is_file()})
+
     def test_backend_error_summary_preserves_only_public_literals_and_traceback_locations(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)

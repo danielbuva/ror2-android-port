@@ -992,7 +992,7 @@ def inspect_ui_failure(selection, *, conflicting_mode=False, update_failure=Fals
         if update_failure:
             for path in sorted(directory.glob("[0-9][0-9][0-9][0-9][0-9]-device-state-read.json")):
                 metadata = json.loads(read(path.name))
-                if metadata.get("phase") != "baseline-N-check" or metadata.get("category") != "device-state-read":
+                if metadata.get("phase") not in ("baseline-N-check", "baseline-N-install") or metadata.get("category") != "device-state-read":
                     continue
                 if metadata.get("returncode") != 0 or metadata.get("outcome") != "returned":
                     continue
@@ -1001,6 +1001,7 @@ def inspect_ui_failure(selection, *, conflicting_mode=False, update_failure=Fals
                     message = state.get("message")
                     if not isinstance(message, str):
                         raise Failure("log-inspection-update-error-shape")
+                    result["phase"] = metadata["phase"]
                     result["backend_error"] = backend_error_summary(message)
                     break
             else:
@@ -1227,7 +1228,7 @@ def main(argv=None):
     )
     parser.add_argument("--inspect-ui-failure", action="store_true", help="Read-only fixed classification of this driver's retained UI dump/read failure logs")
     parser.add_argument(
-        "--inspect-update-failure", action="store_true", help="Read-only public-source error matches from the retained first baseline update ERROR"
+        "--inspect-update-failure", action="store_true", help="Read-only public-source error matches from the retained first baseline check/install ERROR"
     )
     parser.add_argument(
         "--inspect-toolhost-failure", metavar="SOURCE_COMMIT", help="Read-only fixed build-error classification for one exact toolhost source commit"
