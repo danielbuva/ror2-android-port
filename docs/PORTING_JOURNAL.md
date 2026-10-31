@@ -1925,3 +1925,17 @@ post-GC managed fell 1,458,176 bytes; menu PSS rose 34,604 KiB. Wall 834 s;
 CPU/GPU peak 80 C, time above 80 C 0 s, battery 33→35 C. Idle/asleep verified.
 Four exact-editor host contracts passed. Ordinary-play memory bound, physical
 controls and sustained performance remain open; diagnostic input is not acceptance.
+
+## J1329 — Reconstruct UI and Railgunner display synchronized controllers
+
+2026-10-31. Original controller selectors reuse the existing controller owner,
+retaining first-tree motions and omitting null motions and synced overrides.
+No producer or runtime owner is added. Prior art: pinned AssetRipper 813fed15
+AnimatorControllerProcessor.cs:93-138 leaves synchronized overrides unset.
+Evidence: `work/coordination/p1-scenes-w/ui-display-controllers-v1-20261031/done.json`.
+Two persisted records independently raw-exact to J850, 6,140 bytes; pack SHA-256
+`474799ea712b9e75b81f689869464c5baeacdb65091458ad8e96fee843589655`.
+Production/qualification wall 53.004 s; host-only, no device thermal measurement.
+Saved selector residual 38 → 36; coverage subtraction, without requalification.
+Readiness stays 693/705 available, 685 raw-exact. Complete bundle, phone production,
+installation/update and original runtime remain open. Host-only; no APK claim.

@@ -96845,6 +96845,213 @@
           ]
         }
       ]
+    },
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-dlc1-railgunner_assets_all_cf3fbe7633db7043e15d00025adea82a.bundle",
+      "sha256": "22472ed86cb62f6854e2393554d1b0c9a2dae5a6c02ac04604f4639a11298f02",
+      "members": [
+        {
+          "name": "CAB-132b274ea7d9ba7dfe7a90198b5d8dc7",
+          "objects": [
+            {
+              "path_id": -2324376233500089894,
+              "class_id": 91,
+              "sha256": "39ca89ee13007b565bc4aa063d0fc8e6f77079f5d8a7a80aca866b8685122580",
+              "outputs": [
+                {
+                  "bundle": "whole-game-content",
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "path_id": 5014789702582809650,
+                  "bytes": 2888,
+                  "sha256": "e209bcd437fbd2c3aec88ca645402720c446dced553dbcc7c3e905dc5122cb2b",
+                  "transform": {
+                    "references": [
+                      {
+                        "offset": 2736,
+                        "from": [
+                          0,
+                          5643719785573921002
+                        ],
+                        "to": [
+                          0,
+                          -8396565766537743043
+                        ]
+                      },
+                      {
+                        "offset": 2748,
+                        "from": [
+                          0,
+                          -1242737605692935958
+                        ],
+                        "to": [
+                          0,
+                          -8818622104183091207
+                        ]
+                      },
+                      {
+                        "offset": 2760,
+                        "from": [
+                          0,
+                          -1086642657703395727
+                        ],
+                        "to": [
+                          0,
+                          -7065464893772678310
+                        ]
+                      },
+                      {
+                        "offset": 2772,
+                        "from": [
+                          0,
+                          -4279821065409167759
+                        ],
+                        "to": [
+                          0,
+                          3580153451090898310
+                        ]
+                      },
+                      {
+                        "offset": 2784,
+                        "from": [
+                          0,
+                          -4329584037680566038
+                        ],
+                        "to": [
+                          0,
+                          8147435573448917724
+                        ]
+                      },
+                      {
+                        "offset": 2796,
+                        "from": [
+                          0,
+                          -7183578370715209494
+                        ],
+                        "to": [
+                          0,
+                          5947785393566619622
+                        ]
+                      },
+                      {
+                        "offset": 2860,
+                        "from": [
+                          0,
+                          8159919712718610906
+                        ],
+                        "to": [
+                          0,
+                          -8480880518459423383
+                        ]
+                      },
+                      {
+                        "offset": 2872,
+                        "from": [
+                          0,
+                          7525200209938276826
+                        ],
+                        "to": [
+                          0,
+                          1347007403205653681
+                        ]
+                      }
+                    ],
+                    "controller_clear_skeleton_masks": true,
+                    "controller_clear_null_motion": true,
+                    "controller_omit_synced_overrides": true
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-dlc1-voidsurvivor_assets_all_80375e44229ea2d389f73db0ca71d10e.bundle",
+      "sha256": "140a56ebba268fab1529089988f75c6abd4e57a3b9a13393bd9cdd540e20137a",
+      "members": [
+        {
+          "name": "CAB-fc0a044a5eae31724558806a49fad075",
+          "objects": [
+            {
+              "path_id": -8991505383869218400,
+              "class_id": 91,
+              "sha256": "0de0fff0f016d682c3d3dd162283526b818a5108c843c50ce8aaad7f14a3b327",
+              "outputs": [
+                {
+                  "bundle": "whole-game-content",
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "path_id": 8865543227161168284,
+                  "bytes": 3252,
+                  "sha256": "34eee47d4a2f5d41d62cfff79f28113fa9cbcdc81a4ce165b0513405948378fc",
+                  "transform": {
+                    "references": [
+                      {
+                        "offset": 3176,
+                        "from": [
+                          0,
+                          9039506327283727129
+                        ],
+                        "to": [
+                          0,
+                          7021198217869826613
+                        ]
+                      },
+                      {
+                        "offset": 3188,
+                        "from": [
+                          0,
+                          9039506327283727129
+                        ],
+                        "to": [
+                          0,
+                          7021198217869826613
+                        ]
+                      },
+                      {
+                        "offset": 3200,
+                        "from": [
+                          0,
+                          9039506327283727129
+                        ],
+                        "to": [
+                          0,
+                          7021198217869826613
+                        ]
+                      },
+                      {
+                        "offset": 3212,
+                        "from": [
+                          0,
+                          9039506327283727129
+                        ],
+                        "to": [
+                          0,
+                          7021198217869826613
+                        ]
+                      },
+                      {
+                        "offset": 3224,
+                        "from": [
+                          0,
+                          9039506327283727129
+                        ],
+                        "to": [
+                          0,
+                          7021198217869826613
+                        ]
+                      }
+                    ],
+                    "controller_clear_skeleton_masks": true,
+                    "controller_clear_null_motion": true,
+                    "controller_omit_synced_overrides": true
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
     }
   ]
 }
