@@ -6312,3 +6312,22 @@ target byte patch or private path is included.
 One independently persisted controller matches J850 raw-exact, 19,584 bytes.
 Final-file readiness stays 693/705 available, 685 raw-exact; complete bundle,
 phone production, installation/update and runtime remain open.
+
+### Whole-game expanding-wave Transform callbacks
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-whole-game-transform-owner-records.json` | `8de79965e62ba314f968dd1be244296c2f404ef3a9a6671c9fe94acb98470104` |
+
+Audit: 2026-10-31. Eight original Transform selectors extend the existing record
+owner with a source callback endpoint-distance projection. Pinned original
+MonoScripts identify the two expanding-wave callback types; source radius, segment
+count, curve endpoint and root position supply the float32 calculation. Reciprocal
+Transform hierarchy and HitBoxGroup/ghost membership establish ownership.
+Pinned AssetRipper 1ac666 TransformExtensions.cs:11 and YamlWalker.cs:430 preserve
+floats unchanged; this is a callback-specific projection, not generic rounding.
+Only selectors, hashes, checked pointer relationships and an authored calculation
+ship. No original implementation, target-derived scalar, game body or private path
+is included. Other native bytes remain intact before checked pointer relocation.
+Eight persisted records match J850 raw-exact, 592 bytes. Complete-file readiness,
+phone installation/update and runtime gates remain open.

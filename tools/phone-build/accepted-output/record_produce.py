@@ -1313,7 +1313,97 @@ def director_unbound_tracks(body, root, selected):
     return result
 
 
-def transform_generic(body, class_id, selected, root=None, read_clip=None, source_type=None, material_keywords=None):
+def expanding_wave_scale(body, root, selected, read_record):
+    """Project the source callback's endpoint distance, retaining other native fields."""
+
+    def record(name, class_id):
+        selector, raw, typ = read_record(selected[name])
+        if typ["class_id"] != class_id:
+            raise ValueError("expanding wave source class differs")
+        schema = SCHEMA.type_tree(io.BytesIO(typ["tree"]))
+        spans = fields(raw, schema)[1]
+        spans = {
+            tuple({"#299": "m_Curve", "#374": "m_GameObject", "#490": "m_Script"}.get(part, part) for part in path): extent for path, extent in spans.items()
+        }
+        return selector, raw, spans
+
+    def value(raw, locations, path, fmt):
+        start, end = locations[tuple(path.split("/"))]
+        if end - start != struct.calcsize(fmt):
+            raise ValueError("expanding wave field extent differs")
+        values = struct.unpack_from(fmt, raw, start)
+        return values[0] if len(values) == 1 else values
+
+    def ptr(raw, locations, path):
+        return value(raw, locations, path, "<iq")
+
+    def pointers(raw, locations, name):
+        start, end = locations[(name, "Array")]
+        count = struct.unpack_from("<I", raw, start)[0]
+        if end - start != 4 + 12 * count:
+            raise ValueError("expanding wave pointer array extent differs")
+        return [struct.unpack_from("<iq", raw, start + 4 + 12 * index) for index in range(count)]
+
+    own = {tuple("m_GameObject" if part == "#374" else part for part in path): extent for path, extent in fields(body, root)[1].items()}
+    callback, cb, cf = record("callback", 114)
+    script, sb, _ = record("script", 115)
+    base, bb, bf = record("base", 4)
+    parent, pb, pf = record("parent", 4)
+    names = O.script_fields(sb)[1]
+    if names[:2] not in (("ExpandingWaveProjectile", "RoR2.Projectile"), ("ExpandingWaveProjectileGhostController", "RoR2.Projectile")):
+        raise ValueError("expanding wave callback script differs")
+    if ptr(cb, cf, "m_Script") != (1, script["path_id"]) or ptr(cb, cf, "m_GameObject") != ptr(bb, bf, "m_GameObject"):
+        raise ValueError("expanding wave callback ownership differs")
+    ghost = names[0].endswith("GhostController")
+    if ptr(cb, cf, "root" if ghost else "hitBoxParent") != (0, parent["path_id"]):
+        raise ValueError("expanding wave parent relationship differs")
+    if ptr(pb, pf, "m_Father") != (0, base["path_id"]) or ptr(body, own, "m_Father") != (0, parent["path_id"]):
+        raise ValueError("expanding wave hierarchy differs")
+    if (0, selected["source_transform"]) not in pointers(pb, pf, "m_Children"):
+        raise ValueError("expanding wave reciprocal child missing")
+    owner = ptr(body, own, "m_GameObject")
+    if ghost:
+        admitted = owner in pointers(cb, cf, "ghostSegments")
+    else:
+        group, gb, gf = record("group", 114)
+        hitbox, hb, hf = record("hitbox", 114)
+        admitted = (
+            ptr(gb, gf, "m_GameObject") == ptr(cb, cf, "m_GameObject")
+            and (0, hitbox["path_id"]) in pointers(gb, gf, "hitBoxes")
+            and ptr(hb, hf, "m_GameObject") == owner
+        )
+    if not admitted:
+        raise ValueError("expanding wave segment membership differs")
+    if ptr(bb, bf, "m_Father") != (0, 0):
+        raise ValueError("expanding wave base must be a prefab root")
+    for axis, expected in zip("xyzw", (0, 0, 0, 1)):
+        if value(bb, bf, "m_LocalRotation/" + axis, "<f") != expected:
+            raise ValueError("expanding wave base rotation differs")
+    for axis in "xyz":
+        if value(bb, bf, "m_LocalScale/" + axis, "<f") != 1:
+            raise ValueError("expanding wave base scale differs")
+    keys = sorted(int(path[3]) for path in cf if path[:3] == ("sizeCurve", "m_Curve", "Array") and len(path) == 4 and path[3].isdigit())
+    endpoint = "sizeCurve/m_Curve/Array/" + str(keys[-1])
+    if value(cb, cf, endpoint + "/time", "<f") != 1:
+        raise ValueError("expanding wave curve endpoint differs")
+    f32 = lambda number: struct.unpack("<f", struct.pack("<f", number))[0]
+    radius = f32(value(cb, cf, "radius", "<f") * value(cb, cf, endpoint + "/value", "<f"))
+    segments = value(cb, cf, "segments", "<i")
+    angle = f32(f32(f32(math.pi) * 2) * f32(1 / segments))
+    position = [value(bb, bf, "m_LocalPosition/" + axis, "<f") for axis in "xyz"]
+    first = [f32(position[0] + radius), position[1], position[2]]
+    second = [f32(position[0] + f32(f32(math.cos(angle)) * radius)), position[1], f32(position[2] + f32(f32(math.sin(angle)) * radius))]
+    delta = [f32(a - b) for a, b in zip(first, second)]
+    distance = f32(math.sqrt(f32(f32(f32(delta[0] * delta[0]) + f32(delta[1] * delta[1])) + f32(delta[2] * delta[2]))))
+    for axis, source_axis in (("y", "y"), ("z", "x")):
+        if value(body, own, "m_LocalScale/" + axis, "<f") != value(cb, cf, "hurtboxSize/" + source_axis, "<f"):
+            raise ValueError("expanding wave retained scale differs")
+    result = bytearray(body)
+    struct.pack_into("<f", result, own[("m_LocalScale", "x")][0], distance)
+    return bytes(result)
+
+
+def transform_generic(body, class_id, selected, root=None, read_clip=None, source_type=None, material_keywords=None, read_record=None):
     if set(selected) - {
         "references",
         "demote_keywords",
@@ -1339,8 +1429,13 @@ def transform_generic(body, class_id, selected, root=None, read_clip=None, sourc
         "remove_components",
         "inactive_scene_object",
         "empty_mesh_renderer",
+        "expanding_wave_scale",
     } or (selected.get("demote_keywords") and class_id != 21):
         raise ValueError("unknown generic object operation")
+    if "expanding_wave_scale" in selected:
+        if class_id != 4 or root is None or read_record is None:
+            raise ValueError("expanding wave projection requires original Transform and callback reader")
+        body = expanding_wave_scale(body, root, selected["expanding_wave_scale"], read_record)
     if "remove_components" in selected:
         if class_id != 1:
             raise ValueError("component omissions require original GameObject")
@@ -1681,7 +1776,8 @@ def produce(profile_path, profile_sha256, pc, output, sdk=None):
                             typ = {**typ, "hash": value}
                         root = None
                         if typ["class_id"] in (74, 91, 320) or any(
-                            "control_exposed_name_default" in target.get("transform", {}) for target in selected["outputs"]
+                            any(key in target.get("transform", {}) for key in ("control_exposed_name_default", "expanding_wave_scale"))
+                            for target in selected["outputs"]
                         ):
                             if obj["type_id"] not in trees:
                                 trees[obj["type_id"]] = SCHEMA.type_tree(io.BytesIO(typ["tree"]))
@@ -1692,7 +1788,9 @@ def produce(profile_path, profile_sha256, pc, output, sdk=None):
                             if typ["class_id"] == 74:
                                 result = transform(body, root, operations)
                             else:
-                                result = transform_generic(body, typ["class_id"], operations, root, read_controller_clip, typ, material_keywords)
+                                result = transform_generic(
+                                    body, typ["class_id"], operations, root, read_controller_clip, typ, material_keywords, original_record
+                                )
                             digest = hashlib.sha256(result).hexdigest()
                             if digest != target["sha256"] or len(result) != target["bytes"]:
                                 raise ValueError("produced object record differs from accepted hash")

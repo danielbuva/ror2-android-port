@@ -1980,3 +1980,18 @@ Production/qualification wall 57.056 s; host-only, no thermal measurement.
 Saved selector residual 35 → 34; coverage subtraction, no accepted output rerun.
 Readiness stays 693/705 available, 685 raw-exact. Complete bundle, phone production,
 installation/update and original runtime remain open. No APK claim.
+
+## J1333 — Reconstruct expanding-wave callback Transform scales
+
+2026-10-31. The existing generic record owner derives eight local scale X values
+from pinned original callback radius, segment count, curve endpoint and root fields;
+reciprocal hierarchy and hitbox/ghost membership establish original ownership.
+Pinned AssetRipper 1ac666 TransformExtensions/YamlWalker preserve floats unchanged;
+the source callback explains the specific float32 difference, without generic rounding.
+Evidence: `work/coordination/p1-wholegame-1031/transform-callback-public-v3/done.json`.
+Eight independently persisted records match J850 raw-exact, 592 bytes; pack SHA-256
+`2c4b2fa2b57736e7b7ba1b5728146b3c5d91b3232a92290df7402ca4df5a25bc`.
+Production 0.501 s; total qualification 7.565 s. Host-only; no device thermal data.
+Saved selector residual 30 → 22; coverage subtraction only. Readiness stays
+693/705 available, 685 raw-exact. Complete bundle, phone production, installation/
+update and original runtime remain open. No APK claim.

@@ -642,6 +642,100 @@ class AnimationProducerTests(unittest.TestCase):
                 with self.assertRaisesRegex(ValueError, "generic object operation"):
                     A.produce(path, A.B.sha(path), pc, root / "operation-drift")
 
+    def test_expanding_wave_callback_uses_source_fields_and_retains_other_bytes(self):
+        def scalar(name, number, kind="float"):
+            return F.node(name, 4, kind=kind), struct.pack("<f" if kind == "float" else "<i", number)
+
+        def pointer(name, pid):
+            return F.node(name, children=[F.node("m_FileID", 4), F.node("m_PathID", 8)]), struct.pack("<iq", 0, pid)
+
+        def composite(name, entries):
+            return F.node(name, children=[entry[0] for entry in entries]), b"".join(entry[1] for entry in entries)
+
+        def vector(name, values):
+            element = pointer("data", 0)[0]
+            return F.array(name, element), F.vector(b"".join(struct.pack("<iq", 0, pid) for pid in values), len(values))
+
+        def xyz(name, values):
+            return composite(name, [scalar(axis, number) for axis, number in zip("xyzw", values)])
+
+        for ghost, radius, segments in ((False, 225, 12), (True, 225, 12), (True, 90, 4)):
+            with self.subTest(ghost=ghost, radius=radius, segments=segments):
+                records = {}
+
+                def record(name, pid, class_id, entries):
+                    schema, raw = composite("Base", entries)
+                    stream = io.BytesIO(serialized(raw, schema, class_id=class_id))
+                    stream.size = len(stream.getvalue())
+                    records[name] = ({"path_id": pid}, raw, A.W.read_serialized(stream)["types"][0])
+                    return name
+
+                body_schema, body = composite(
+                    "Base",
+                    [
+                        pointer("m_GameObject", 10),
+                        xyz("m_LocalRotation", (-0.0, 0, 0, 1)),
+                        xyz("m_LocalPosition", (1, 0, 2)),
+                        xyz("m_LocalScale", (123, 7, 8)),
+                        pointer("m_Father", 30),
+                        scalar("retained", -0.0),
+                    ],
+                )
+                record(
+                    "base",
+                    20,
+                    4,
+                    [
+                        pointer("m_GameObject", 40),
+                        xyz("m_LocalRotation", (0, 0, 0, 1)),
+                        xyz("m_LocalPosition", (0, 14.5 if ghost else 0, 0)),
+                        xyz("m_LocalScale", (1, 1, 1)),
+                        pointer("m_Father", 0),
+                    ],
+                )
+                record("parent", 30, 4, [pointer("m_Father", 20), vector("m_Children", [50])])
+                curve = composite("data", [scalar("time", 1), scalar("value", 1)])
+                curve_entry = composite("sizeCurve", [(F.array("#299", curve[0]), F.vector(curve[1], 1))])
+                callback_entries = [
+                    pointer("m_GameObject", 40),
+                    (pointer("m_Script", 60)[0], struct.pack("<iq", 1, 60)),
+                    scalar("radius", radius),
+                    scalar("segments", segments, "int"),
+                    xyz("hurtboxSize", (8, 7)),
+                    curve_entry,
+                    pointer("root" if ghost else "hitBoxParent", 30),
+                ]
+                if ghost:
+                    callback_entries.append(vector("ghostSegments", [10]))
+                record("callback", 70, 114, callback_entries)
+                if not ghost:
+                    record("group", 80, 114, [pointer("m_GameObject", 40), vector("hitBoxes", [90])])
+                    record("hitbox", 90, 114, [pointer("m_GameObject", 10)])
+
+                def text(value):
+                    raw = value.encode()
+                    return F.vector(raw, len(raw))
+
+                script = (
+                    text("fixture")
+                    + bytes(20)
+                    + text("ExpandingWaveProjectileGhostController" if ghost else "ExpandingWaveProjectile")
+                    + text("RoR2.Projectile")
+                    + text("Assembly-CSharp")
+                )
+                record("script", 60, 115, [(F.node("raw", len(script)), script)])
+                operation = {name: name for name in records}
+                operation["source_transform"] = 50
+                selected = {"expanding_wave_scale": operation, "references": [{"offset": 0, "from": [0, 10], "to": [0, 99]}]}
+                result = A.transform_generic(body, 4, selected, body_schema, read_record=records.__getitem__)
+                _, spans = A.fields(body, body_schema)
+                offset = spans[("m_LocalScale", "x")][0]
+                expected = bytearray(body)
+                struct.pack_into("<iq", expected, 0, 0, 99)
+                x = 116.46856689453125 if radius == 225 else 127.27922821044922
+                struct.pack_into("<f", expected, offset, x)
+                self.assertEqual(result, bytes(expected))
+
     def test_empty_renderer_dispatch_preserves_native_values_before_owner_relocation(self):
         schema = F.node(
             "Base",
