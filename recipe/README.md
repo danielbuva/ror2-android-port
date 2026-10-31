@@ -6603,7 +6603,7 @@ phone/install/update qualification stay open.
 
 | Recipe | SHA-256 |
 | --- | --- |
-| `owner-whole-game-bundle-material-records.json` | `0db9f63c3b7ec1f936c7cf4f2a4a7dbc65620c9ac052e1fd593787917a57d7fa` |
+| `owner-whole-game-bundle-material-records.json` | `f195b009ae494b3bc4dccc203753d2365c2da12f0281c426c45a7c6ed0db7a08` |
 
 Audit: 2026-10-31. The existing generic record owner selects 58 original
 Materials with unique typed Shader/Texture endpoints. Mandatory inverse-source
@@ -6618,3 +6618,11 @@ pixels, target repairs or private paths ship. Independent persisted production
 matches all 58 J850 records, 116,100 bytes. This supplies 80 group occurrences;
 complete groups have not been requalified. Saved residual three and file readiness
 remain unchanged; complete bundle, phone/install/update and runtime stay open.
+
+Nine further Materials use published Default/TransparentDiffuse dummy Shader
+selectors with the same source-owned policy and ambiguity exclusions. Independent
+persisted qualification matches all nine J850 records (29,860 bytes); the owner
+now supplies 67 records. Source selectors, hashes and typed relationships only;
+no new producer logic or protected content is published. The 59 previously
+completed source groups compare exact diagnostically; final bundle qualification
+and readiness remain open.

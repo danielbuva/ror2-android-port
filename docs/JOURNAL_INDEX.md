@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J1352](PORTING_JOURNAL.md#j1352--extend-source-derived-bundle-material-providers) | 2026-10-31 | Extend source-derived bundle Material providers | 2026-10-31. |
 | [J1351](PORTING_JOURNAL.md#j1351--supply-source-derived-bundle-material-providers) | 2026-10-31 | Supply source-derived bundle Material providers | 2026-10-31. |
 | [J1350](PORTING_JOURNAL.md#j1350--restore-original-console-retention-default-at-composed-startup) | 2026-10-31 | Restore original Console retention default at composed startup | 2026-10-31. |
 | [J1349](PORTING_JOURNAL.md#j1349--supply-the-whole-game-bandit-achievement-sprite) | 2026-10-31 | Supply the whole-game Bandit achievement Sprite | 2026-10-31. |
