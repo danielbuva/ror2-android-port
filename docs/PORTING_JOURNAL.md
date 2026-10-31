@@ -1624,3 +1624,18 @@ play, physical input and genuine filled-filesystem recovery remain open.
 - Prior art: pinned AssetRipper local/dependency PPtr resolution, checked on originals.
 - Final-file readiness stays 693/705 available, 685 raw-exact. Complete bundle,
   phone production and install/update remain open; residual recount pending.
+
+
+## J1305 — Recover native settings after writer termination and activity restart
+2026-10-31.
+- The host checker binds termination to the observed writer PID and stops Android's
+  replacement activity before cold recovery; a replacement is not a surviving writer.
+- Fresh device witness: pending file retained, writer exited in 142 ms, prior primary
+  unchanged, native recovery/resave passed and all 48 protected files unchanged.
+- Evidence: `work/coordination/alpha-settings-restart-device-20261031T081900Z/terminal.done.json`;
+  settings receipt: `settings-write-interruption/20261031T082119.574414Z/result.json`.
+- APK SHA-256: `c570dfd740902e6501a1ae1a6f953a61473d74ccea722b757bc5a1e09b61d61a`;
+  runtime source `fb28a00c`; host contracts cover replacement acceptance/live-writer refusal.
+- Sustained observation refused lost window focus before collecting samples; cleanup
+  verified idle process, absent selector/pending, sleeping OLED and released lease.
+- No power-cut, ENOSPC, ordinary-play, sustained-performance or memory-bound claim.
