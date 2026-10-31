@@ -5487,3 +5487,18 @@ No original implementation, field value, type tree, target template or private
 setting is included. Five persisted RunPresence records match J850; their stale
 counters are absent from the current original assembly. Complete bundle, phone
 production, gameplay and installation/update acceptance remain open.
+
+### Whole-game component edge records (J1281)
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-whole-game-component-edge-records.json` | `84413591dc94cd91944ccbbc526ae986f650ebaa3b452c10ed3021675e85d7d1` |
+
+Audit: minimum original bundle/member/object selectors and hashes, output IDs,
+checked PPtr relationships and native type hashes. Already-qualified original
+GameObject recipes supply explicit component-pointer mappings after checked
+omissions; append/reordering cases are excluded. Actual script names, native
+identity and reciprocal ownership agree. No field value, original body/type
+tree, implementation, private setting or generated prototype is published.
+All 16 persisted records match J850. Complete bundle, phone production, gameplay
+and data-preserving installation/update remain open.

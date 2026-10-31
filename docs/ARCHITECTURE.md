@@ -450,6 +450,10 @@ MonoScript binding. The hierarchy path recipes select original records using
 proven roots and unique reciprocal child paths; output state remains exact.
 Generic record admission also includes native classes 96, 119, 193 and 330,
 preserving their original schemas and every nonpointer byte.
+The component-edge recipe selects unchanged original records through explicit
+component PPtrs in qualified GameObject recipes, after checked omissions.
+Append/reordering cases are excluded. Actual script identity and reciprocal
+ownership qualify the bindings; the same generic producer owns their emission.
 The prefab-policy record recipe delegates the existing exported-name projection
 and component append to the object owner. Original component order and ownership
 remain checked; appended adapters come from existing public source production.
