@@ -24,6 +24,29 @@ def snippet(global_axes=(), local_axes=(), builtins=(), runtime=""):
 
 
 class PrefabShaderTests(unittest.TestCase):
+    def test_original_vertex_order_covers_vertex_only_runtime_keywords(self):
+        row = {"m_Type": 0, "m_State": {"gpuProgramID": 11, "m_Name": "MAIN", "m_Tags": {"tags": []}}}
+        source = {
+            "m_CompileInfo": {"m_Snippets": [(11, snippet([["__", "VERTEXLIGHT_ON"], ["__", "A"]], runtime="VERTEXLIGHT_ON"))]},
+            "m_ParsedForm": {"m_KeywordNames": ["A", "VERTEXLIGHT_ON"], "m_SubShaders": [{"m_Passes": [row]}]},
+        }
+        carrier = deepcopy(source)
+        original = carrier["m_ParsedForm"]["m_SubShaders"][0]["m_Passes"][0]
+        original["progFragment"] = {"m_PlayerSubPrograms": [[{"m_KeywordIndices": keys} for keys in ([], [0])]]}
+        original["progVertex"] = {"m_PlayerSubPrograms": [[{"m_KeywordIndices": keys} for keys in ([], [0, 1], [1], [0])]]}
+        self.assertEqual(
+            S.prefab_selections(source, material_keywords=[{"A"}], carrier=carrier)[11],
+            [[[], ["A", "VERTEXLIGHT_ON"], ["VERTEXLIGHT_ON"], ["A"]]] * 3,
+        )
+
+    def test_material_features_preserve_combinations_without_union(self):
+        source = {
+            "m_CompileInfo": {"m_Snippets": [(11, snippet([["__", "A"], ["__", "B"]]))]},
+            "m_ParsedForm": {"m_SubShaders": [{"m_Passes": [{"m_Type": 0, "m_State": {"gpuProgramID": 11, "m_Tags": {"tags": []}}}]}]},
+        }
+        rows = S.prefab_selections(source, material_keywords=[{"A"}, {"B"}, {"A"}])[11]
+        self.assertEqual(rows, [[[], ["B"], ["A"]]] * 3)
+
     def test_empty_terrain_details_strip_instancing_from_default_shaders(self):
         source = {
             "m_CompileInfo": {"m_Snippets": [(11, snippet([["__", "INSTANCING_ON"]], runtime="INSTANCING_ON"))]},
