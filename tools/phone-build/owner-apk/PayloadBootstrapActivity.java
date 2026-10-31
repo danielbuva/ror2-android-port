@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.Intent;
+import android.content.res.AssetManager;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -75,29 +76,43 @@ public final class PayloadBootstrapActivity extends Activity {
         web.getSettings().setBlockNetworkLoads(true);
         web.getSettings().setDomStorageEnabled(false);
         web.addJavascriptInterface(new Bridge(), "OwnerPayload");
-        web.setWebViewClient(new WebViewClient() {
-            @Override public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
-                return !request.getUrl().toString().startsWith(ORIGIN);
-            }
-            @Override public WebResourceResponse shouldInterceptRequest(WebView view, WebResourceRequest request) {
-                String url = request.getUrl().toString();
-                String name = request.getUrl().getPath();
-                if (!url.startsWith(ORIGIN) || name == null || !name.matches("/(index.html|style.css|app.js|controller.js|background.png|owner-host.js)"))
-                    return new WebResourceResponse("text/plain", "UTF-8", 403, "Forbidden", Collections.emptyMap(), new ByteArrayInputStream(new byte[0]));
-                try {
-                    String mime = name.endsWith(".js") ? "text/javascript" : name.endsWith(".css") ? "text/css" : name.endsWith(".png") ? "image/png" : "text/html";
-                    Map<String, String> headers = new HashMap<>();
-                    headers.put("Content-Security-Policy", "default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self'; connect-src 'none'; frame-src 'none'; base-uri 'none'");
-                    headers.put("X-Content-Type-Options", "nosniff");
-                    return new WebResourceResponse(mime, "UTF-8", 200, "OK", headers, getAssets().open(ASSETS + "ui" + name));
-                } catch (IOException error) {
-                    return new WebResourceResponse("text/plain", "UTF-8", 404, "Not Found", Collections.emptyMap(), new ByteArrayInputStream(new byte[0]));
-                }
-            }
-        });
+        web.setWebViewClient(new LocalAssetClient(getAssets()));
         setContentView(web);
         web.loadUrl(ORIGIN + "index.html#setup");
         if (backend.status.equals("idle")) backend.start(backend.previous);
+    }
+
+    // Named static adapters avoid anonymous InnerClasses entries with a null
+    // inner_name in the pinned on-device D8 graph reader.
+    private static final class LocalAssetClient extends WebViewClient {
+        private final AssetManager assets;
+        LocalAssetClient(AssetManager assets) { this.assets = assets; }
+        @Override public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
+            return !request.getUrl().toString().startsWith(ORIGIN);
+        }
+        @Override public WebResourceResponse shouldInterceptRequest(WebView view, WebResourceRequest request) {
+            String url = request.getUrl().toString();
+            String name = request.getUrl().getPath();
+            if (!url.startsWith(ORIGIN) || name == null || !name.matches("/(index.html|style.css|app.js|controller.js|background.png|owner-host.js)"))
+                return new WebResourceResponse("text/plain", "UTF-8", 403, "Forbidden", Collections.emptyMap(), new ByteArrayInputStream(new byte[0]));
+            try {
+                String mime = name.endsWith(".js") ? "text/javascript" : name.endsWith(".css") ? "text/css" : name.endsWith(".png") ? "image/png" : "text/html";
+                Map<String, String> headers = new HashMap<>();
+                headers.put("Content-Security-Policy", "default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self'; connect-src 'none'; frame-src 'none'; base-uri 'none'");
+                headers.put("X-Content-Type-Options", "nosniff");
+                return new WebResourceResponse(mime, "UTF-8", 200, "OK", headers, assets.open(ASSETS + "ui" + name));
+            } catch (IOException error) {
+                return new WebResourceResponse("text/plain", "UTF-8", 404, "Not Found", Collections.emptyMap(), new ByteArrayInputStream(new byte[0]));
+            }
+        }
+    }
+
+    private static final class AssetPayloadSource implements PayloadStore.Source {
+        private final AssetManager assets;
+        private final File root;
+        AssetPayloadSource(AssetManager assets, File root) { this.assets = assets; this.root = root; }
+        public InputStream open(String name) throws IOException { return assets.open(ASSETS + "data/" + name); }
+        public long availableBytes() { return new StatFs(root.toString()).getAvailableBytes(); }
     }
 
     private void releaseWebView() {
@@ -248,10 +263,7 @@ public final class PayloadBootstrapActivity extends Activity {
             message = "Checking prepared game files.";
             worker = new Thread(() -> {
                 try {
-                    Map<String, String> hashes = PayloadStore.install(root, rows, new PayloadStore.Source() {
-                        public InputStream open(String name) throws IOException { return context.getAssets().open(ASSETS + "data/" + name); }
-                        public long availableBytes() { return new StatFs(root.toString()).getAvailableBytes(); }
-                    }, this, accepted);
+                    Map<String, String> hashes = PayloadStore.install(root, rows, new AssetPayloadSource(context.getAssets(), root), this, accepted);
                     JSONObject saved = new JSONObject();
                     saved.put("schema", 1).put("package", context.getPackageName()).put("profile", profile).put("files", new JSONObject(hashes));
                     FileOutputStream out = null;

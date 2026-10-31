@@ -28,6 +28,7 @@ public final class ToolHostActivity extends Activity {
     private final OwnerUpdateState model = new OwnerUpdateState();
     private final android.os.Handler handler = new android.os.Handler(android.os.Looper.getMainLooper());
     private TextView statusView;
+    private final OwnerUpdateState.StatusRender statusRender = new OwnerUpdateState.StatusRender();
     private Button checkButton, rollbackButton, recoveryButton, prepareButton, treeButton, zipButton, importButton, buildButton, installButton, pauseButton, resumeButton, cancelButton, retryButton;
     private static final int PICK_TREE = 120, PICK_ZIP = 121;
     private String flowDetail = "";
@@ -360,7 +361,8 @@ public final class ToolHostActivity extends Activity {
     private void render() {
         String phase = model.phase() == OwnerUpdateState.Phase.ERROR ? "FAILED" : model.phase().toString().replace('_', ' ');
         try { flowDetail = phoneProgress(); } catch (Exception error) { flowDetail = "\nPrivate progress unavailable: " + error.getMessage(); }
-        statusView.setText(phase + "\n" + model.message() + flowDetail);
+        String statusText = phase + "\n" + model.message() + flowDetail;
+        if (statusRender.update(statusText, model.phase(), android.os.SystemClock.elapsedRealtime())) statusView.setText(statusText);
         boolean idle = !OwnerBuildService.isRunning() && !OwnerInstaller.busy(this) && !OwnerAlphaInstall.pending(this);
         rollbackButton.setEnabled(idle && OwnerAlphaInstall.canRollback(this));
         recoveryButton.setEnabled(!OwnerBuildService.isRunning() && !OwnerInstaller.busy(this) && OwnerAlphaInstall.pending(this));
