@@ -1339,3 +1339,16 @@ phone APK/installation/update acceptance remain open.
 - Source-identity proofs are retained in `whole-game-go-edges-v1/proofs.json`.
 - Whole-game unresolved records fall to 345; historical readiness remains
   693/705 available, 685 raw-exact. Full phone/gameplay/install/update gates open.
+
+## J1282 — Add paused measured-button rebinding host contracts
+
+2026-10-26. Existing settings/input owners capture an isolated button draft
+after stable neutral, one press/release and explicit physical confirmation.
+Collisions/menu-back remain reserved; modal input, cancel/focus/cleanup and
+failed-save retry preserve pause and the active map. All three mapping readers
+share validated pending/readback/backup recovery; known observation provenance
+and delivery permissions survive saves for next-session activation.
+Evidence: `work/coordination/alpha-callback-build/rebinding-host-notes.md`;
+36 focused host contracts and Ruff pass. No APK/output generated or installed.
+Host-only; Android writes/restart, human-labelled native effects, Thor physical
+input, callback-removal acceptance and managed-growth bounds remain open.

@@ -4024,6 +4024,12 @@ packs remain required. Generated outputs and evidence stay ignored. Existing
 ownership and redistribution boundaries apply; phone production, installation
 and original scene behavior remain open.
 
+J1282 refreshes the existing audio-owner manifest's authored `PortSession.cs`
+source hash for the reviewed mapping-startup reader change. The merge retains
+main's integrated-world pin and refreshes the dependent camera build-hook
+identity. No original audio data, account input or proprietary content is added. Manual provenance/privacy/licensing review: 2026-10-26. Audio output
+and device behavior gain no qualification from this pin refresh.
+
 ## Native graph detour owner repin (2026-10-26)
 
 Refresh the authored integrated-world owner hash after preserving progressing

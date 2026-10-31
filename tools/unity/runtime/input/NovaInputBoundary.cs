@@ -289,8 +289,7 @@ public sealed partial class PortSession
             if (physicalInputAvailable)
             {
                 var mappingPath = System.IO.Path.Combine(Application.persistentDataPath, "nova-input-mapping.json");
-                coordinator.Check(File.Exists(mappingPath), "Measured Nova mapping required before physical Commando test");
-                mapping = JsonUtility.FromJson<NovaInputBridge.Mapping>(File.ReadAllText(mappingPath));
+                mapping = NovaInputBridge.MappingStore.Load(mappingPath, coordinator.r.attempt);
                 mapping.Validate(coordinator.r.attempt);
                 coordinator.Check(!mapping.enableSkills, "Ability execution is a separate probe");
                 coordinator.r.nova.mapping = mapping;

@@ -130,8 +130,12 @@ physical actions remain separate work until measured.
 This sequence keeps the first implementation small while giving Apply, Cancel,
 Retry and restart concrete behavior. It requires host fixtures for capture
 release/collision, draft isolation, failed-save recovery and next-session
-activation before shipping. There is currently no rebinding UI, capture owner or
-mapping persistence transaction implementing this proposal.
+activation before shipping. The paused settings modal now implements this button-only sequence through
+`NovaInputBridge.ButtonRebind` and `MappingStore`. Menu/back stays reserved;
+collisions name their action. Same-attempt saves preserve observation hash and
+accepted-mapping provenance. Capture, filesystem recovery and modal routing have
+host fixtures; physical labels/effects, Android save interruption and restart
+without host resync remain unqualified. The active session never swaps maps.
 
 ## Physical acceptance on the candidate
 
@@ -164,9 +168,12 @@ historical Nova pass cannot qualify a new device or a current-alpha build.
 `tests/test_nova_input_mapping.py` extracts the production mapping, raw sample,
 presence and stick/neutral methods and compiles them against the pinned Unity
 2021.3.45f2 managed API. `tests/fixtures/NovaInputMappingHost.cs` supplies only
-authored values. Its seven cases cover provenance rejection, range/collision/sign
+authored values. Its cases cover provenance rejection, range/collision/sign
 validation, optional interaction, nonmutating validation, radial conversion and
 all-button/mapped-axis neutral reacquisition, including the radial regression.
+They also cover opening-press exclusion, press/release, collisions, ambiguous
+chords, disconnect, draft isolation, provenance-preserving save/reload, pending
+rejection, backup recovery and failed-write retry with a controlled JSON peer.
 No raw device input, middleware or
 game implementation is embedded. Missing pinned Mono/Roslyn skips the fixture.
 
@@ -180,4 +187,4 @@ Existing `test_nova_input_presence.py`, `test_android_touch_input.py` and
 `test_portable_diagnostic_input.py` cover presence transitions, pointer ownership
 and source-selection guards. These fixtures do not exercise Android input
 dispatch, a physical digitizer/controller, native gameplay effects or the
-proposed rebinding screen.
+rebinding screen on Android.

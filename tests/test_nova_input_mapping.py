@@ -39,6 +39,8 @@ class NovaInputMappingTests(unittest.TestCase):
             for declaration in (
                 "public class Mapping",
                 "public class Raw",
+                "public sealed class ButtonRebind",
+                "public static class MappingStore",
                 "public sealed class ControllerPresence",
                 "static Vector2 Stick(",
                 "static bool NeutralSample(",
@@ -59,6 +61,7 @@ class NovaInputMappingTests(unittest.TestCase):
                 str(CSC),
                 "-nologo",
                 "-langversion:9",
+                "-r:System.Runtime.Serialization.dll",
                 "-out:" + str(cls.exe),
                 "-r:" + str(ENGINE / "UnityEngine.CoreModule.dll"),
                 str(harness),
@@ -73,7 +76,7 @@ class NovaInputMappingTests(unittest.TestCase):
 
     def case(self, name):
         result = subprocess.run(
-            [str(MONO), str(self.exe), name],
+            [str(MONO), str(self.exe), name, str(Path(self.temp.name) / name)],
             env=dict(os.environ, MONO_PATH=str(ENGINE)),
             capture_output=True,
             text=True,
@@ -102,6 +105,21 @@ class NovaInputMappingTests(unittest.TestCase):
 
     def test_reconnect_neutrality_matches_radial_stick_at_center_edge_and_diagonal(self):
         self.case("radial-neutral")
+
+    def test_rebinding_excludes_opening_press_and_preserves_live_mapping(self):
+        self.case("rebind-capture")
+
+    def test_rebinding_rejects_collisions_multibuttons_and_disconnects(self):
+        self.case("rebind-refusals")
+
+    def test_saved_mapping_preserves_provenance_and_activates_only_on_reload(self):
+        self.case("mapping-roundtrip")
+
+    def test_mapping_recovery_ignores_pending_and_refuses_stale_backup(self):
+        self.case("mapping-recovery")
+
+    def test_failed_mapping_save_preserves_live_disk_and_allows_retry(self):
+        self.case("mapping-save-failure")
 
 
 if __name__ == "__main__":
