@@ -6019,3 +6019,22 @@ protected body, implementation, generated content or private path is included.
 The persisted record is raw-exact to J850, 60 bytes. Saved public residual
 79 to 78 excludes parallel controller closures; complete bundle, phone
 production, installation/update and runtime acceptance remain open.
+
+### Whole-game duplicate clip-name controllers (J1313)
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-animator-controllers.json` | `c417169cfdd6dcc7255c475d94cbcbc23bfbbfaac333f8796962730a0b567abe` |
+
+Audit: 2026-10-31. Existing J1143/J1286-J1288 relationship policies add
+DroneTech, FalseSonNew and Drifter. Original clip identities, selected export-name
+collision ordinals, state permutations and checked PPtr edges feed the unchanged
+controller producer. Original layer/state keys, range indices and ordinal resolve
+identical behaviour bodies; script/body equality remains checked. Pinned
+AssetRipper ExportCollection.GetUniqueFileName and GetStateBehaviours document
+the collision and range relationships. This is a selected reconstruction, not a
+generic historical export-order inference. Only source selectors/hashes, ordinal
+policies and checked pointer remaps ship; no target strings, scalar values, body,
+type template, implementation or private settings. Three new persisted records
+(107,980 bytes) match J850 raw-exact. Earlier outputs are unchanged; complete
+bundle, phone production and install/update gates remain open.
