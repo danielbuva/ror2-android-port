@@ -2151,6 +2151,12 @@ experiments, so playable input cleanup cannot overwrite application teardown.
 Explicit Android sleep/background actions remain available. The production
 lifetime methods execute in the native-feedback host fixture.
 
+At playable startup this owner also applies the original Console retention convar
+metadata default once when the original Console is absent and its limit is still
+uninitialized. The process-wide default survives coordinator replacement; a live
+Console, preconfigured nonzero limit and later user values retain authority.
+The original log handler continues to trim and notify subscribers itself.
+
 The exact editor is started with `./dev editor --target lab --action open`; send it one
 mutation at a time. Device acceptance is always the real device, never the editor.
 
