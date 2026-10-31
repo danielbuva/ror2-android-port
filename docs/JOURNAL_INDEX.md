@@ -10,7 +10,8 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
-| [J1322](PORTING_JOURNAL.md#j1322--reconstruct-whole-game-scope-shader-texture-declaration) | 2026-10-31 | Reconstruct whole-game Scope Shader texture declaration | 2026-10-31. |
+| [J1322](PORTING_JOURNAL.md#j1322--reconstruct-synced-motion-and-mimic-controllers) | 2026-10-31 | Reconstruct synced motion and Mimic controllers | 2026-10-31. |
+| [J1323](PORTING_JOURNAL.md#j1323--reconstruct-whole-game-scope-shader-texture-declaration) | 2026-10-31 | Reconstruct whole-game Scope Shader texture declaration | 2026-10-31. |
 | [J1321](PORTING_JOURNAL.md#j1321--reconstruct-whole-game-fallback-material-keyword-spaces) | 2026-10-31 | Reconstruct whole-game fallback Material keyword spaces | 2026-10-31. |
 | [J1320](PORTING_JOURNAL.md#j1320--reconstruct-whole-game-missing-script-base-component) | 2026-10-31 | Reconstruct whole-game missing-script base component | 2026-10-31. |
 | [J1318](PORTING_JOURNAL.md#j1318--reconstruct-whole-game-shrine-component-relationships) | 2026-10-31 | Reconstruct whole-game shrine component relationships | 2026-10-31. |
