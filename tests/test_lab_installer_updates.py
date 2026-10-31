@@ -264,6 +264,31 @@ class LabInstallerUpdatesTests(unittest.TestCase):
                 self.assertEqual(before, {path: path.read_bytes() for path in root.rglob("*") if path.is_file()})
                 self.assertNotIn("synthetic-private", json.dumps(result))
 
+    def test_update_error_inspection_classifies_captured_apk_logs_without_raw_output(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            directory = root / "work/coordination/installer-update-acceptance/run-newest00"
+            directory.mkdir(parents=True)
+            for sequence, category, output in (
+                (1, "device-state-read", LAB.encoded({"state": "ERROR", "message": "synthetic-private"})),
+                (4, "device-apk-javac-log", b"ROR2_APK_LOG_BEGIN\n/synthetic-private/ProfileStore.java:42: error: cannot find symbol\nprivate-symbol\n"),
+                (5, "device-apk-dex-log", b""),
+                (6, "device-apk-javac-log", b"unrelated-later-log"),
+            ):
+                prefix = directory / f"{sequence:05d}-{category}"
+                prefix.with_suffix(".json").write_bytes(
+                    LAB.encoded({"phase": "baseline-N-install", "category": category, "returncode": 0, "outcome": "returned"})
+                )
+                prefix.with_suffix(".stdout.log").write_bytes(output)
+            code, result = self.log_inspection(root, ["--diagnostic-run", "newest"], mode="--inspect-update-failure")
+            self.assertEqual(code, 0)
+            self.assertEqual(len(result["apk_logs"]), 2)
+            self.assertEqual(result["apk_logs"][0]["status"], "captured")
+            self.assertEqual(result["apk_logs"][0]["error"], {"category": "java-symbol-not-found", "source": "ProfileStore.java", "line": 42})
+            self.assertEqual(result["apk_logs"][1], {"tool": "dex", "status": "not-found"})
+            self.assertNotIn("private-symbol", json.dumps(result))
+            self.assertNotIn("unrelated-later-log", json.dumps(result))
+
     def test_backend_error_summary_preserves_only_public_literals_and_traceback_locations(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
@@ -1044,6 +1069,50 @@ class LabInstallerUpdatesTests(unittest.TestCase):
                 LAB.acceptance(phone, {}, Path("/unused"), lambda case: None)
         build.assert_not_called()
         keys.assert_not_called()
+
+    def test_apk_log_capture_is_owned_bounded_and_rejects_symlinks(self):
+        phone = LAB.Phone("synthetic-private-selector", 1)
+        phone.installer_hash = "a" * 64
+        with patch.object(phone, "package_hash", return_value="b" * 64), patch.object(phone, "shell") as shell:
+            for owned in (False, True):
+                phone.owned_installer = owned
+                with self.assertRaisesRegex(LAB.Failure, "apk-log-installer-not-owned"):
+                    phone.capture_apk_logs()
+            shell.assert_not_called()
+        with patch.object(phone, "package_hash", return_value=phone.installer_hash), patch.object(phone, "shell") as shell:
+            phone.capture_apk_logs()
+        self.assertEqual([call.kwargs["label"] for call in shell.call_args_list], ["device-apk-javac-log", "device-apk-dex-log"])
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            releases = root / "files/owner-input/work/releases"
+            for index in range(6):
+                assembly = releases / f"build-{index}" / "assembly"
+                assembly.mkdir(parents=True)
+                (assembly / "javac.log").write_bytes(b"x" * 70000)
+                (assembly / "dex.log").symlink_to(root / "private-log")
+            (root / "private-log").write_text("synthetic-private")
+            for call in shell.call_args_list:
+                self.assertEqual(call.args[:4], ("run-as", LAB.PACKAGE, "sh", "-c"))
+                self.assertEqual(call.kwargs["timeout"], 15)
+                script = call.args[4][1:-1]
+                output = subprocess.run(["sh", "-c", script], cwd=root, capture_output=True, check=True).stdout
+                if call.kwargs["label"] == "device-apk-javac-log":
+                    self.assertEqual(output, (b"ROR2_APK_LOG_BEGIN\n" + b"x" * 65536 + b"\n") * 4)
+                else:
+                    self.assertEqual(output, b"")
+                self.assertNotIn(b"synthetic-private", output)
+
+    def test_apk_log_capture_failure_keeps_original_install_failure(self):
+        phone = LAB.Phone("synthetic-private-selector", 1)
+        state = {"state": "ERROR", "pipeline": {"first_failure": {"stage": "apk"}}}
+        with (
+            patch.object(LAB, "CURRENT_PHASE", "baseline-N-install"),
+            patch.object(phone, "read", side_effect=[None, state]),
+            patch.object(phone, "capture_apk_logs", side_effect=OSError("synthetic-private")) as capture,
+        ):
+            with self.assertRaisesRegex(LAB.Failure, "^installer-build-error$"):
+                phone.installed(1)
+            capture.assert_called_once_with()
 
     def test_unowned_cleanup_never_uninstalls_or_reads_app_data(self):
         phone = LAB.Phone("synthetic-private-selector", 1)

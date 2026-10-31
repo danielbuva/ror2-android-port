@@ -609,6 +609,13 @@ class Phone:
                 return receipt
             row = self.read("update-state.json")
             if row and row.get("state") == "ERROR":
+                try:
+                    if CURRENT_PHASE == "baseline-N-install" and row.get("pipeline", {}).get("first_failure", {}).get("stage") == "apk":
+                        self.capture_apk_logs()
+                except Exception:
+                    # Diagnostic loss must not replace the first failure or
+                    # prevent normal owned-package cleanup.
+                    pass
                 raise Failure("installer-build-error")
             # Consent is always the real Android PackageInstaller UI. Never forge
             # success receipts or use adb install to replace the alpha package.
@@ -625,6 +632,21 @@ class Phone:
         # The root lab invocation may pass this flag ONLY after explicit owner
         # authorization for this fresh disposable test package on the leased phone.
         self.shell("appops", "set", PACKAGE, "REQUEST_INSTALL_PACKAGES", "allow", label="device-install-permission-enable")
+
+    def capture_apk_logs(self):
+        # APK-stage subprocesses in build_owner_apk.build write only these two
+        # logs. Never traverse producer artifacts, keys, or other app namespaces.
+        if not self.owned_installer or self.package_hash(PACKAGE) != self.installer_hash:
+            raise Failure("apk-log-installer-not-owned")
+        for tool in ("javac", "dex"):
+            script = (
+                'for p in files files/owner-input files/owner-input/work files/owner-input/work/releases; do [ ! -L "$p" ] || exit 1; done; '
+                "n=0; for d in files/owner-input/work/releases/build-*; do "
+                '[ ! -L "$d" ] && [ ! -L "$d/assembly" ] || continue; '
+                'p="$d/assembly/' + tool + '.log"; [ ! -L "$p" ] && [ -f "$p" ] || continue; '
+                'n=$((n+1)); [ "$n" -le 4 ] || break; printf "ROR2_APK_LOG_BEGIN\\n"; head -c 65536 "$p" || exit 1; printf "\\n"; done'
+            )
+            self.shell("run-as", PACKAGE, "sh", "-c", "'" + script + "'", label="device-apk-" + tool + "-log", timeout=15)
 
     def cleanup(self):
         # Only delete exact packages installed by this fresh run. Unknown or
@@ -1034,6 +1056,22 @@ def inspect_ui_failure(selection, *, conflicting_mode=False, update_failure=Fals
                             "stage": stage if stage in ("admission", "staging", "assembly", "textures", "native", "apk", "signing", "install") else "unknown",
                             "reason": backend_error_summary(reason) if isinstance(reason, str) else {"status": "unavailable"},
                         }
+                    result["apk_logs"] = []
+                    for log_path in sorted(directory.glob("[0-9][0-9][0-9][0-9][0-9]-device-apk-*-log.json")):
+                        match = re.fullmatch(r"([0-9]{5})-device-apk-(javac|dex)-log\.json", log_path.name)
+                        if not match or not int(path.name[:5]) < int(match.group(1)) <= int(path.name[:5]) + 4:
+                            continue
+                        log_meta = json.loads(read(log_path.name))
+                        if log_meta.get("phase") != metadata["phase"] or log_meta.get("category") != "device-apk-" + match.group(2) + "-log":
+                            raise Failure("log-inspection-record-mismatch")
+                        entry = {"tool": match.group(2), "status": "unavailable"}
+                        if log_meta.get("returncode") == 0 and log_meta.get("outcome") == "returned":
+                            output = read(log_path.stem + ".stdout.log").decode(errors="replace")
+                            entry["status"] = "captured" if output.startswith("ROR2_APK_LOG_BEGIN\n") else "not-found"
+                            if entry["status"] == "captured":
+                                entry["error"] = toolhost_error_summary(output)
+                                entry["backend_error"] = backend_error_summary(output)
+                        result["apk_logs"].append(entry)
                     break
             else:
                 raise Failure("log-inspection-update-error-not-found")
@@ -1190,6 +1228,10 @@ def inspect_state(expected_installer_hash, timeout, *, conflicting_mode=False):
 def toolhost_error_summary(text):
     """First recognized error only; never return a log excerpt or unknown name."""
     java_files = (
+        "PayloadStore.java",
+        "PayloadBootstrapActivity.java",
+        "ProfileStore.java",
+        "ProfileRetentionProvider.java",
         "ToolHostActivity.java",
         "OwnerUpdateState.java",
         "OwnerInstaller.java",
