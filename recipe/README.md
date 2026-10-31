@@ -5882,7 +5882,7 @@ acceptance remain open.
 
 | Recipe | SHA-256 |
 | --- | --- |
-| `owner-whole-game-director-records.json` | `34d16fef4f01ce4957a10594f52b075f8c85881aaed66b31ee4868ec56331d4a` |
+| `owner-whole-game-director-records.json` | `a76af2367dc096d0bf862455af699c4f817f6ec40bc9d848a0d5a7a03bec036f` |
 
 Audit: 2026-10-31. Unique original Director component slots and reciprocal
 qualified GameObject ownership select ConduitCanyon and SolusAmalgam sources.
@@ -5893,8 +5893,12 @@ integer exposed-name export; the existing record owner reimports those names
 and relocates checked references while preserving the native schema and fields.
 The profile contains selectors, hashes, native identity and relationship mappings;
 no protected bodies, target scalar templates, implementation or private paths.
-Both persisted records (984 bytes) match J850 raw-exact. Champrush is excluded
-for unresolved suppliers. Complete-file, phone and install/update gates remain open.
+All three persisted records (1,380 bytes) match J850 raw-exact (J1305/J1309).
+Champrush endpoints follow 80 original Transform pairs rooted at a published
+GameObject selection and seven connected Director suppliers, including the
+reciprocal Animator component slot. Only identities and checked relationships
+are published; original hierarchy/animation data stays local.
+Complete-file, phone and install/update gates remain open.
 
 ### Whole-game Meridian material relationships (J1303)
 
@@ -5955,3 +5959,23 @@ selectors, hashes, native identities and checked relationship mappings, without
 protected bodies, scalar templates, implementation, private paths or generated
 content. All five persisted records match J850 raw-exact (360 bytes). Complete
 bundle, phone production and install/update acceptance remain open.
+
+### Whole-game original TerrainData Shader closure (J1310)
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-whole-game-terrain-shaders.json` | `f9611252293e4750fab696f851005b5ea5b907323de7fdad4ef7068c3d89b7bf` |
+
+Audit: 2026-10-31. The shipped original Title TerrainData selection supplies
+eleven explicit preload Shader relationships. Its checked external bundle
+contains the actual original Shader records; names, properties and native schema
+select acquired SDK Shader equivalents through the unchanged `shader_prefab.py`
+owner. SDK native terrain preload collection corroborates inclusion but is not
+a recipe input. Pinned AssetRipper `1ac666f47d8e9dedf96afb0b914c70d7656151ea`,
+`DummyShaderTextExporter.cs:49-78`, informs source name/property preservation;
+current original pointers and persisted J850 comparison remain authoritative.
+The profile contains only source selectors, SDK identities/settings and hash pins;
+no protected body, shader program, generated content or private path is published.
+All eleven persisted records are raw-exact, 79,656 bytes; exact public coverage
+reduces the saved residual from 93 to 82. Complete bundle, phone
+production, installation and original runtime remain open.

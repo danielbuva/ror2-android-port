@@ -5590,10 +5590,12 @@ the public-source Mesh helper and a fresh output directory. Process exit release
 file/codec handles; receipts persist. All 10 objects, the member and compressed
 bundle are host raw-exact to J850. Complete phone production remains open.
 
-`owner-whole-game-director-records.json` selects two original PlayableDirectors
+`owner-whole-game-director-records.json` selects three original PlayableDirectors
 through unique component slots and reciprocal public GameObject owners. Shipped
 selectors, compressed hierarchy outputs and checked typed PPtr witnesses supply
-all endpoints. The existing generic record owner applies its signed exposed-name
+all endpoints; Champrush follows an original Transform graph rooted at a
+published GameObject and reciprocal Animator component ownership.
+The existing generic record owner applies its signed exposed-name
 reimport and checked pointer relocation, retaining native schema and other fields.
 Setup requires pinned original bundles and a fresh output pack; scoped readers
 close on process exit and pack receipts persist. No runtime owner is added.
@@ -5613,3 +5615,10 @@ original records through pinned public exporter templates and acquired SDK
 metadata. Setup uses explicit PC/SDK/template/codec inputs and a fresh output;
 process exit releases source/compiler handles and receipts persist. Both records
 are host raw-exact to J850; complete bundle and phone production remain open.
+
+`owner-whole-game-terrain-shaders.json` selects eleven original TerrainData preload
+Shader dependencies through the existing `shader_prefab.py` owner. Checked original
+external pointers supply source identity; acquired SDK metadata supplies Android
+records. Setup uses pinned original/SDK/tool roots and a fresh record pack; process
+exit releases compiler/source handles and receipts persist. Records are host
+raw-exact to J850; complete bundle and phone gates remain open.
