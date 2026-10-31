@@ -1771,7 +1771,7 @@ stays 693/705 available, 685 raw-exact. Complete bundle, phone production,
 installation/update and original runtime remain open. Host-only; no APK/device claim.
 
 
-## J1317 — Reconstruct whole-game native component and Material suppliers
+## J1319 — Reconstruct whole-game native component and Material suppliers
 
 2026-10-31. Existing record producer selects Renderer2/LODGroup1 by original
 reciprocal GameObject ownership and unique class slots; Renderer slots identify
@@ -1785,3 +1785,17 @@ All seven persisted records raw-exact to J850, 2,768 bytes; pack SHA-256
 `f4683d2da14f16e9b1f7014fa9bda070549f1a58a7015f465ef257d802c636df`.
 Final-file readiness stays 693/705 available, 685 raw-exact. Complete bundle,
 phone production and runtime remain open; host-only, no APK/device claim.
+## J1318 — Reconstruct whole-game shrine component relationships
+
+2026-10-31. Existing source recipes select ShrineCombatPoison through its typed
+original prefab path and both CombatDirectors through the complete sixteen-slot
+component/script sequence with reciprocal ownership. Native schemas and all
+nonpointer bytes remain intact; no new producer or runtime owner is added.
+Prior art: pinned R2API DirectorAPIinternal.cs:22-28,75-78, original typed paths.
+Evidence: `work/coordination/p1-wholegame-1031/shrine-public-v1/terminal.json`;
+source witnesses: adjacent `../shrine-managed-v1/proofs.json`, `../shrine-witness-next.md`.
+Three persisted records independently raw-exact to J850, 699 bytes; pack SHA-256
+`ea13180235114742b081ab67d0deece5d82d5859fb6633f18fe4eb369eb5f0b4`.
+Saved public residual 63 → 60 before parallel closures. Readiness stays
+693/705 available, 685 raw-exact. Complete bundle, phone production, installation/
+update and original runtime remain open. Host-only; no APK/device claim.
