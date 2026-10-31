@@ -4384,6 +4384,71 @@
                   }
                 }
               ]
+            },
+            {
+              "path_id": 3908124294813894892,
+              "class_id": 91,
+              "sha256": "949e11422436fb10f17516547e6e2b110c529ff2ae434e2d535e064688cbc70e",
+              "outputs": [
+                {
+                  "bundle": "whole-game-content",
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "path_id": 6589448342088849470,
+                  "bytes": 1256,
+                  "sha256": "c2fc44a5b967268257408ae4caf53a69a536afe35f776623d215ec0807d7ed2d",
+                  "transform": {
+                    "references": [
+                      {
+                        "offset": 1192,
+                        "from": [
+                          12,
+                          -7940862738839963422
+                        ],
+                        "to": [
+                          0,
+                          2939239489498241336
+                        ]
+                      },
+                      {
+                        "offset": 1204,
+                        "from": [
+                          12,
+                          -4943888697725093662
+                        ],
+                        "to": [
+                          0,
+                          -6092970678084721623
+                        ]
+                      },
+                      {
+                        "offset": 1216,
+                        "from": [
+                          12,
+                          -7570696771874850590
+                        ],
+                        "to": [
+                          0,
+                          -5522233964277844082
+                        ]
+                      },
+                      {
+                        "offset": 1228,
+                        "from": [
+                          12,
+                          -4943888697725093662
+                        ],
+                        "to": [
+                          0,
+                          -6092970678084721623
+                        ]
+                      }
+                    ],
+                    "controller_clear_skeleton_masks": true,
+                    "controller_clear_null_motion": true,
+                    "controller_omit_synced_overrides": true
+                  }
+                }
+              ]
             }
           ]
         }
