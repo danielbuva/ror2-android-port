@@ -1554,3 +1554,16 @@ play, physical input and genuine filled-filesystem recovery remain open.
 - Saved unresolved census falls 163 to 162; with peer MeshFilter14, 148 remain.
   Final-file readiness stays 693/705 available, 685 raw-exact. Complete bundle,
   phone, gameplay and install/update acceptance remain open.
+
+## J1300 — Reconstruct whole-game original Trees and WindAssets
+2026-10-31.
+- Existing generic record owner selects eight Trees through unique native slots
+  and reciprocal published prefab ownership, plus two referenced WindAssets.
+- Every pointer endpoint has a public supplier; native schemas and nonpointer
+  fields are preserved. All ten persisted records (2,952 bytes) match J850 raw-exact.
+- Evidence: `work/coordination/p1-scenes-w/wholegame-tree-20261031/done.json`;
+  source ownership and endpoint witnesses: `relationships.json` nearby.
+- Pack SHA-256: `afd88761dc33856c1592893b5f7bf9d307dd18ab9852aa5501bd9f8a869a1474`.
+- This batch removes ten unresolved records. Final-file readiness stays 693/705
+  available, 685 raw-exact; complete bundle, phone production and install/update
+  remain open.

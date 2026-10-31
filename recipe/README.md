@@ -5776,3 +5776,21 @@ The profile contains only input pins, source identities, dependency pointers and
 output hashes. No source body, private path or generated content is published.
 The persisted 25,056-byte record is independently raw-exact to J850. Complete
 bundle, phone, gameplay and install/update gates remain open.
+
+### Whole-game original Tree and WindAsset ownership (J1300)
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-whole-game-tree-records.json` | `751feacef112c6688858ab239c0206f57fa4759d72b489b6e6f741f25d578da0` |
+
+Audit: 2026-10-31. Published original prefab GameObjects, unique Tree class
+slots and reciprocal component ownership identify eight Trees. Their original
+non-owner pointers identify two SpeedTreeWindAssets. Every pointer endpoint,
+including null and unchanged references, resolves to a checked public supplier.
+Pinned EditorKit AddressablesPathDictionaryCache informs component lookup through
+GameObjects. The existing generic record owner preserves native schemas and all
+nonpointer bytes; class 228 admission adds WindAssets to that owner. This profile
+contains only original selectors, hashes, native type identities and pointer
+relationships. No object bodies, scalar templates, game implementation or private
+paths are published. All ten persisted records (2,952 bytes) match J850 raw-exact.
+Complete-file, phone production and install/update gates remain open.

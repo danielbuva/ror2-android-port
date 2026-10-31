@@ -478,7 +478,11 @@ through qualified GameObject sources, unique class slots and reciprocal ownershi
 Every original pointer endpoint, including null and unchanged references, is
 checked against existing public suppliers. The generic record owner preserves
 native schemas and fields, with its existing reader lifecycle and pack state.
-Generic record admission also includes native classes 96, 119, 193 and 330,
+`owner-whole-game-tree-records.json` selects eight Trees through original prefab
+GameObject owners and unique reciprocal class slots, plus two WindAssets through
+original Tree references. All pointer endpoints resolve to public suppliers;
+setup, pack state and reader teardown follow the generic record owner contract.
+Generic record admission also includes native classes 96, 119, 193, 228 and 330,
 preserving their original schemas and every nonpointer byte.
 The component-edge recipe selects unchanged original records through explicit
 component PPtrs in qualified GameObject recipes, after checked omissions.
