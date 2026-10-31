@@ -5714,3 +5714,13 @@ relationships relocate its two checked pointers while FontData and native schema
 remain source-owned. Setup pins original PC input and creates a fresh record
 pack; scoped readers close on process exit and receipts persist. This adds no
 runtime owner; complete bundle and phone/runtime acceptance remain open.
+
+`owner-whole-game-surface-shader.json` extends the existing `shader_prefab.py`
+SDK owner with two original Material witnesses. `payload_shader_records.py`
+matches source passes by name/LightMode and lifts fragment cyclic keyword order
+over original vertex-only contexts. `shader_sdk.py` derives the compile-only
+UNITY_PASS_DEFERRED declaration from source LightMode; serialized keyword axes
+remain source-owned. Setup pins original Shader/Material bundles, SDK/tool
+inputs and a fresh output pack; scoped source/compiler processes close on exit
+and receipts persist. One record is host raw-exact to J850; complete bundle and
+phone/runtime acceptance remain open. No runtime owner is added.
