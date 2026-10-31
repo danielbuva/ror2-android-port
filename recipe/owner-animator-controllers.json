@@ -101779,6 +101779,2410 @@
       ]
     }
   ]
+},
+{
+  "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-base-heretic_assets_all_b9b392dc7ff6a2dcfc45102aabe0a535.bundle",
+  "sha256": "651027ef09cb8cf3bb30b73950b3e065f0feba04b75692e6b4aedfb80155303a",
+  "members": [
+    {
+      "name": "CAB-559f3aff6836abe01f061bd2b99f7cc1",
+      "objects": [
+        {
+          "path_id": -2553196621133490255,
+          "class_id": 91,
+          "sha256": "a9315ef5382f83654896f000421547f0becbfb10cc4a41b3d3cce37b79048216",
+          "outputs": [
+            {
+              "bundle": "whole-game-content",
+              "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+              "path_id": 3519071328560160765,
+              "bytes": 12592,
+              "sha256": "f9a90fd8acfc6fdbfcbd13858ed6de3b7898114bd50fcb85cde4f01e2c225e74",
+              "transform": {
+                "controller_clip_order": [
+                  0,
+                  1,
+                  2,
+                  3,
+                  4,
+                  5,
+                  6,
+                  7,
+                  8,
+                  9,
+                  10,
+                  11,
+                  12,
+                  13,
+                  14,
+                  15,
+                  16,
+                  17,
+                  21,
+                  18,
+                  19,
+                  20,
+                  22,
+                  23,
+                  24,
+                  25,
+                  26,
+                  27
+                ],
+                "controller_tos": [
+                  [
+                    0,
+                    false
+                  ],
+                  [
+                    1,
+                    false
+                  ],
+                  [
+                    2,
+                    false
+                  ],
+                  [
+                    3,
+                    false
+                  ],
+                  [
+                    4,
+                    false
+                  ],
+                  [
+                    5,
+                    false
+                  ],
+                  [
+                    16,
+                    false
+                  ],
+                  [
+                    7,
+                    false
+                  ],
+                  [
+                    8,
+                    false
+                  ],
+                  [
+                    9,
+                    false
+                  ],
+                  [
+                    10,
+                    false
+                  ],
+                  [
+                    11,
+                    false
+                  ],
+                  [
+                    12,
+                    false
+                  ],
+                  [
+                    13,
+                    false
+                  ],
+                  [
+                    14,
+                    false
+                  ],
+                  [
+                    15,
+                    false
+                  ],
+                  [
+                    17,
+                    false
+                  ],
+                  [
+                    18,
+                    false
+                  ],
+                  [
+                    19,
+                    false
+                  ],
+                  [
+                    20,
+                    false
+                  ],
+                  [
+                    21,
+                    false
+                  ],
+                  [
+                    22,
+                    false
+                  ],
+                  [
+                    23,
+                    false
+                  ],
+                  [
+                    99,
+                    true
+                  ],
+                  [
+                    24,
+                    false
+                  ],
+                  [
+                    25,
+                    false
+                  ],
+                  [
+                    31,
+                    false
+                  ],
+                  [
+                    27,
+                    false
+                  ],
+                  [
+                    28,
+                    false
+                  ],
+                  [
+                    29,
+                    false
+                  ],
+                  [
+                    30,
+                    false
+                  ],
+                  [
+                    32,
+                    false
+                  ],
+                  [
+                    42,
+                    false
+                  ],
+                  [
+                    35,
+                    false
+                  ],
+                  [
+                    36,
+                    false
+                  ],
+                  [
+                    37,
+                    false
+                  ],
+                  [
+                    38,
+                    false
+                  ],
+                  [
+                    39,
+                    false
+                  ],
+                  [
+                    40,
+                    false
+                  ],
+                  [
+                    41,
+                    false
+                  ],
+                  [
+                    60,
+                    false
+                  ],
+                  [
+                    43,
+                    false
+                  ],
+                  [
+                    56,
+                    true
+                  ],
+                  [
+                    45,
+                    false
+                  ],
+                  [
+                    46,
+                    false
+                  ],
+                  [
+                    44,
+                    false
+                  ],
+                  [
+                    47,
+                    false
+                  ],
+                  [
+                    48,
+                    false
+                  ],
+                  [
+                    49,
+                    false
+                  ],
+                  [
+                    50,
+                    false
+                  ],
+                  [
+                    51,
+                    false
+                  ],
+                  [
+                    52,
+                    false
+                  ],
+                  [
+                    58,
+                    false
+                  ],
+                  [
+                    54,
+                    false
+                  ],
+                  [
+                    55,
+                    false
+                  ],
+                  [
+                    57,
+                    false
+                  ],
+                  [
+                    70,
+                    false
+                  ],
+                  [
+                    59,
+                    false
+                  ],
+                  [
+                    61,
+                    false
+                  ],
+                  [
+                    62,
+                    false
+                  ],
+                  [
+                    63,
+                    false
+                  ],
+                  [
+                    64,
+                    false
+                  ],
+                  [
+                    106,
+                    true
+                  ],
+                  [
+                    65,
+                    false
+                  ],
+                  [
+                    67,
+                    false
+                  ],
+                  [
+                    68,
+                    false
+                  ],
+                  [
+                    69,
+                    false
+                  ],
+                  [
+                    74,
+                    false
+                  ],
+                  [
+                    71,
+                    false
+                  ],
+                  [
+                    72,
+                    false
+                  ],
+                  [
+                    73,
+                    false
+                  ],
+                  [
+                    76,
+                    false
+                  ],
+                  [
+                    77,
+                    false
+                  ],
+                  [
+                    78,
+                    false
+                  ],
+                  [
+                    75,
+                    false
+                  ],
+                  [
+                    80,
+                    false
+                  ],
+                  [
+                    81,
+                    false
+                  ],
+                  [
+                    82,
+                    false
+                  ],
+                  [
+                    83,
+                    false
+                  ],
+                  [
+                    66,
+                    false
+                  ],
+                  [
+                    85,
+                    false
+                  ],
+                  [
+                    84,
+                    false
+                  ],
+                  [
+                    86,
+                    false
+                  ],
+                  [
+                    87,
+                    false
+                  ],
+                  [
+                    6,
+                    true
+                  ],
+                  [
+                    88,
+                    false
+                  ],
+                  [
+                    89,
+                    false
+                  ],
+                  [
+                    90,
+                    false
+                  ],
+                  [
+                    91,
+                    false
+                  ],
+                  [
+                    92,
+                    false
+                  ],
+                  [
+                    93,
+                    false
+                  ],
+                  [
+                    94,
+                    false
+                  ],
+                  [
+                    95,
+                    false
+                  ],
+                  [
+                    96,
+                    false
+                  ],
+                  [
+                    97,
+                    false
+                  ],
+                  [
+                    98,
+                    false
+                  ],
+                  [
+                    100,
+                    false
+                  ],
+                  [
+                    26,
+                    true
+                  ],
+                  [
+                    101,
+                    false
+                  ],
+                  [
+                    79,
+                    true
+                  ],
+                  [
+                    102,
+                    false
+                  ],
+                  [
+                    103,
+                    false
+                  ],
+                  [
+                    105,
+                    false
+                  ],
+                  [
+                    107,
+                    false
+                  ],
+                  [
+                    104,
+                    false
+                  ],
+                  [
+                    108,
+                    false
+                  ],
+                  [
+                    109,
+                    false
+                  ],
+                  [
+                    110,
+                    false
+                  ],
+                  [
+                    111,
+                    false
+                  ],
+                  [
+                    112,
+                    false
+                  ],
+                  [
+                    113,
+                    false
+                  ],
+                  [
+                    114,
+                    false
+                  ],
+                  [
+                    115,
+                    false
+                  ],
+                  [
+                    34,
+                    true
+                  ],
+                  [
+                    117,
+                    false
+                  ],
+                  [
+                    116,
+                    false
+                  ],
+                  [
+                    118,
+                    false
+                  ],
+                  [
+                    119,
+                    false
+                  ],
+                  [
+                    120,
+                    false
+                  ],
+                  [
+                    121,
+                    false
+                  ],
+                  [
+                    122,
+                    false
+                  ],
+                  [
+                    53,
+                    true
+                  ],
+                  [
+                    123,
+                    false
+                  ],
+                  [
+                    124,
+                    false
+                  ],
+                  [
+                    125,
+                    false
+                  ],
+                  [
+                    126,
+                    false
+                  ],
+                  [
+                    127,
+                    false
+                  ],
+                  [
+                    128,
+                    false
+                  ],
+                  [
+                    129,
+                    false
+                  ],
+                  [
+                    130,
+                    false
+                  ],
+                  [
+                    131,
+                    false
+                  ],
+                  [
+                    132,
+                    false
+                  ],
+                  [
+                    133,
+                    false
+                  ],
+                  [
+                    134,
+                    false
+                  ],
+                  [
+                    135,
+                    false
+                  ],
+                  [
+                    136,
+                    false
+                  ],
+                  [
+                    137,
+                    false
+                  ],
+                  [
+                    138,
+                    false
+                  ],
+                  [
+                    139,
+                    false
+                  ],
+                  [
+                    140,
+                    false
+                  ],
+                  [
+                    141,
+                    false
+                  ],
+                  [
+                    142,
+                    false
+                  ],
+                  [
+                    143,
+                    false
+                  ],
+                  [
+                    144,
+                    false
+                  ],
+                  [
+                    145,
+                    false
+                  ],
+                  [
+                    146,
+                    false
+                  ]
+                ],
+                "controller_opposed_angles": true,
+                "canonical": "nan",
+                "references": [
+                  {
+                    "offset": 12176,
+                    "from": [
+                      0,
+                      -205253134359640541
+                    ],
+                    "to": [
+                      0,
+                      3534452792499995853
+                    ]
+                  },
+                  {
+                    "offset": 12188,
+                    "from": [
+                      0,
+                      3265049513937143719
+                    ],
+                    "to": [
+                      0,
+                      477192517542030392
+                    ]
+                  },
+                  {
+                    "offset": 12200,
+                    "from": [
+                      0,
+                      7832228919628633351
+                    ],
+                    "to": [
+                      0,
+                      -1496099428484398397
+                    ]
+                  },
+                  {
+                    "offset": 12212,
+                    "from": [
+                      0,
+                      -205253134359640541
+                    ],
+                    "to": [
+                      0,
+                      3534452792499995853
+                    ]
+                  },
+                  {
+                    "offset": 12224,
+                    "from": [
+                      0,
+                      -2460203630379462185
+                    ],
+                    "to": [
+                      0,
+                      4226255274280510681
+                    ]
+                  },
+                  {
+                    "offset": 12236,
+                    "from": [
+                      0,
+                      -8976766005727879027
+                    ],
+                    "to": [
+                      0,
+                      -5863071298424623828
+                    ]
+                  },
+                  {
+                    "offset": 12248,
+                    "from": [
+                      0,
+                      -2321993628156922371
+                    ],
+                    "to": [
+                      0,
+                      3070303671156208981
+                    ]
+                  },
+                  {
+                    "offset": 12260,
+                    "from": [
+                      0,
+                      -5895388235278983148
+                    ],
+                    "to": [
+                      0,
+                      2388481621585378674
+                    ]
+                  },
+                  {
+                    "offset": 12272,
+                    "from": [
+                      0,
+                      -205253134359640541
+                    ],
+                    "to": [
+                      0,
+                      3534452792499995853
+                    ]
+                  },
+                  {
+                    "offset": 12284,
+                    "from": [
+                      0,
+                      -2358520552684011735
+                    ],
+                    "to": [
+                      0,
+                      5457632061791547504
+                    ]
+                  },
+                  {
+                    "offset": 12296,
+                    "from": [
+                      0,
+                      1345478405364373462
+                    ],
+                    "to": [
+                      0,
+                      4705997978292431355
+                    ]
+                  },
+                  {
+                    "offset": 12308,
+                    "from": [
+                      0,
+                      -5017705465759721482
+                    ],
+                    "to": [
+                      0,
+                      8306618909656268551
+                    ]
+                  },
+                  {
+                    "offset": 12320,
+                    "from": [
+                      0,
+                      -5017705465759721482
+                    ],
+                    "to": [
+                      0,
+                      8306618909656268551
+                    ]
+                  },
+                  {
+                    "offset": 12332,
+                    "from": [
+                      0,
+                      -8038211471642650634
+                    ],
+                    "to": [
+                      0,
+                      6545385308165022561
+                    ]
+                  },
+                  {
+                    "offset": 12344,
+                    "from": [
+                      0,
+                      -842291470520628880
+                    ],
+                    "to": [
+                      0,
+                      -8107838093505682592
+                    ]
+                  },
+                  {
+                    "offset": 12356,
+                    "from": [
+                      0,
+                      -766167646014228286
+                    ],
+                    "to": [
+                      0,
+                      6883799200755396815
+                    ]
+                  },
+                  {
+                    "offset": 12368,
+                    "from": [
+                      0,
+                      -497357112740464213
+                    ],
+                    "to": [
+                      0,
+                      -3625700939474807937
+                    ]
+                  },
+                  {
+                    "offset": 12380,
+                    "from": [
+                      0,
+                      6736039824236366927
+                    ],
+                    "to": [
+                      0,
+                      -8412683018433147488
+                    ]
+                  },
+                  {
+                    "offset": 12392,
+                    "from": [
+                      0,
+                      3236688299716329873
+                    ],
+                    "to": [
+                      0,
+                      -6912989297548728244
+                    ]
+                  },
+                  {
+                    "offset": 12404,
+                    "from": [
+                      0,
+                      3594027569935061747
+                    ],
+                    "to": [
+                      0,
+                      488111100049836824
+                    ]
+                  },
+                  {
+                    "offset": 12416,
+                    "from": [
+                      0,
+                      6611987401401275123
+                    ],
+                    "to": [
+                      0,
+                      8205110079102445160
+                    ]
+                  },
+                  {
+                    "offset": 12428,
+                    "from": [
+                      0,
+                      4004726962256188147
+                    ],
+                    "to": [
+                      0,
+                      -6382387147769846217
+                    ]
+                  },
+                  {
+                    "offset": 12440,
+                    "from": [
+                      0,
+                      2888542712079060482
+                    ],
+                    "to": [
+                      0,
+                      -7561132626090696546
+                    ]
+                  },
+                  {
+                    "offset": 12452,
+                    "from": [
+                      0,
+                      553950992846097922
+                    ],
+                    "to": [
+                      0,
+                      4020607746224006729
+                    ]
+                  },
+                  {
+                    "offset": 12464,
+                    "from": [
+                      0,
+                      -3182858726196572670
+                    ],
+                    "to": [
+                      0,
+                      -9087156114694734028
+                    ]
+                  },
+                  {
+                    "offset": 12476,
+                    "from": [
+                      0,
+                      4143451442450614487
+                    ],
+                    "to": [
+                      0,
+                      -1105292761741890263
+                    ]
+                  },
+                  {
+                    "offset": 12488,
+                    "from": [
+                      0,
+                      -9118015198391126326
+                    ],
+                    "to": [
+                      0,
+                      8045932836828282576
+                    ]
+                  },
+                  {
+                    "offset": 12500,
+                    "from": [
+                      0,
+                      -1898148042979913393
+                    ],
+                    "to": [
+                      0,
+                      -2132757455976340159
+                    ]
+                  },
+                  {
+                    "offset": 12564,
+                    "from": [
+                      0,
+                      -6814498793322555471
+                    ],
+                    "to": [
+                      0,
+                      6653355347588628591
+                    ]
+                  },
+                  {
+                    "offset": 12576,
+                    "from": [
+                      0,
+                      -2458634606772332623
+                    ],
+                    "to": [
+                      0,
+                      -4547262368105621981
+                    ]
+                  }
+                ],
+                "controller_loop_states": [
+                  {
+                    "state": [
+                      4,
+                      2
+                    ],
+                    "clips": [
+                      {
+                        "index": 21,
+                        "bundle": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-base-heretic_assets_all_b9b392dc7ff6a2dcfc45102aabe0a535.bundle",
+                        "bundle_sha256": "651027ef09cb8cf3bb30b73950b3e065f0feba04b75692e6b4aedfb80155303a",
+                        "member": "CAB-559f3aff6836abe01f061bd2b99f7cc1",
+                        "path_id": 3236688299716329873,
+                        "sha256": "a257dbb4685c66dbabf3ec46ffae3375d5e500cf147eedcff5d7406220037ca5"
+                      }
+                    ]
+                  }
+                ],
+                "controller_clear_skeleton_masks": true,
+                "controller_clear_null_motion": true,
+                "controller_omit_synced_overrides": true,
+                "controller_resolve_synced_layers": true
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+},
+{
+  "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-dlc1-railgunner_assets_all_cf3fbe7633db7043e15d00025adea82a.bundle",
+  "sha256": "22472ed86cb62f6854e2393554d1b0c9a2dae5a6c02ac04604f4639a11298f02",
+  "members": [
+    {
+      "name": "CAB-132b274ea7d9ba7dfe7a90198b5d8dc7",
+      "objects": [
+        {
+          "path_id": -1059887448393569777,
+          "class_id": 91,
+          "sha256": "856cf869552203976cf670771fe9180114c6224bbb7d2ef73343bac555719a2f",
+          "outputs": [
+            {
+              "bundle": "whole-game-content",
+              "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+              "path_id": 7773772620133500509,
+              "bytes": 16324,
+              "sha256": "466c633f3108d9fc3049d7478558729dde45aaa49b0e912745e9afea5cd69d1d",
+              "transform": {
+                "controller_tos": [
+                  [
+                    167,
+                    true
+                  ],
+                  [
+                    1,
+                    false
+                  ],
+                  [
+                    2,
+                    false
+                  ],
+                  [
+                    4,
+                    false
+                  ],
+                  [
+                    5,
+                    false
+                  ],
+                  [
+                    6,
+                    false
+                  ],
+                  [
+                    7,
+                    false
+                  ],
+                  [
+                    8,
+                    false
+                  ],
+                  [
+                    9,
+                    false
+                  ],
+                  [
+                    10,
+                    false
+                  ],
+                  [
+                    11,
+                    false
+                  ],
+                  [
+                    12,
+                    false
+                  ],
+                  [
+                    14,
+                    false
+                  ],
+                  [
+                    15,
+                    false
+                  ],
+                  [
+                    16,
+                    false
+                  ],
+                  [
+                    17,
+                    false
+                  ],
+                  [
+                    18,
+                    false
+                  ],
+                  [
+                    19,
+                    false
+                  ],
+                  [
+                    20,
+                    false
+                  ],
+                  [
+                    21,
+                    false
+                  ],
+                  [
+                    22,
+                    false
+                  ],
+                  [
+                    23,
+                    false
+                  ],
+                  [
+                    24,
+                    false
+                  ],
+                  [
+                    25,
+                    false
+                  ],
+                  [
+                    26,
+                    false
+                  ],
+                  [
+                    27,
+                    false
+                  ],
+                  [
+                    28,
+                    false
+                  ],
+                  [
+                    30,
+                    false
+                  ],
+                  [
+                    31,
+                    false
+                  ],
+                  [
+                    33,
+                    false
+                  ],
+                  [
+                    32,
+                    false
+                  ],
+                  [
+                    34,
+                    false
+                  ],
+                  [
+                    35,
+                    false
+                  ],
+                  [
+                    36,
+                    false
+                  ],
+                  [
+                    37,
+                    false
+                  ],
+                  [
+                    38,
+                    false
+                  ],
+                  [
+                    39,
+                    false
+                  ],
+                  [
+                    0,
+                    true
+                  ],
+                  [
+                    40,
+                    false
+                  ],
+                  [
+                    41,
+                    false
+                  ],
+                  [
+                    42,
+                    false
+                  ],
+                  [
+                    43,
+                    false
+                  ],
+                  [
+                    44,
+                    false
+                  ],
+                  [
+                    45,
+                    false
+                  ],
+                  [
+                    46,
+                    false
+                  ],
+                  [
+                    47,
+                    false
+                  ],
+                  [
+                    48,
+                    false
+                  ],
+                  [
+                    49,
+                    false
+                  ],
+                  [
+                    50,
+                    false
+                  ],
+                  [
+                    51,
+                    false
+                  ],
+                  [
+                    52,
+                    false
+                  ],
+                  [
+                    53,
+                    false
+                  ],
+                  [
+                    54,
+                    false
+                  ],
+                  [
+                    55,
+                    false
+                  ],
+                  [
+                    56,
+                    false
+                  ],
+                  [
+                    57,
+                    false
+                  ],
+                  [
+                    58,
+                    false
+                  ],
+                  [
+                    60,
+                    false
+                  ],
+                  [
+                    61,
+                    false
+                  ],
+                  [
+                    62,
+                    false
+                  ],
+                  [
+                    63,
+                    false
+                  ],
+                  [
+                    64,
+                    false
+                  ],
+                  [
+                    65,
+                    false
+                  ],
+                  [
+                    66,
+                    false
+                  ],
+                  [
+                    67,
+                    false
+                  ],
+                  [
+                    68,
+                    false
+                  ],
+                  [
+                    69,
+                    false
+                  ],
+                  [
+                    70,
+                    false
+                  ],
+                  [
+                    71,
+                    false
+                  ],
+                  [
+                    72,
+                    false
+                  ],
+                  [
+                    73,
+                    false
+                  ],
+                  [
+                    74,
+                    false
+                  ],
+                  [
+                    75,
+                    false
+                  ],
+                  [
+                    76,
+                    false
+                  ],
+                  [
+                    77,
+                    false
+                  ],
+                  [
+                    78,
+                    false
+                  ],
+                  [
+                    79,
+                    false
+                  ],
+                  [
+                    80,
+                    false
+                  ],
+                  [
+                    3,
+                    true
+                  ],
+                  [
+                    81,
+                    false
+                  ],
+                  [
+                    82,
+                    false
+                  ],
+                  [
+                    83,
+                    false
+                  ],
+                  [
+                    84,
+                    false
+                  ],
+                  [
+                    86,
+                    false
+                  ],
+                  [
+                    87,
+                    false
+                  ],
+                  [
+                    88,
+                    false
+                  ],
+                  [
+                    89,
+                    false
+                  ],
+                  [
+                    90,
+                    false
+                  ],
+                  [
+                    91,
+                    false
+                  ],
+                  [
+                    92,
+                    false
+                  ],
+                  [
+                    93,
+                    false
+                  ],
+                  [
+                    94,
+                    false
+                  ],
+                  [
+                    105,
+                    true
+                  ],
+                  [
+                    95,
+                    false
+                  ],
+                  [
+                    13,
+                    true
+                  ],
+                  [
+                    96,
+                    false
+                  ],
+                  [
+                    97,
+                    false
+                  ],
+                  [
+                    98,
+                    false
+                  ],
+                  [
+                    99,
+                    false
+                  ],
+                  [
+                    100,
+                    false
+                  ],
+                  [
+                    101,
+                    false
+                  ],
+                  [
+                    103,
+                    false
+                  ],
+                  [
+                    109,
+                    false
+                  ],
+                  [
+                    104,
+                    false
+                  ],
+                  [
+                    106,
+                    false
+                  ],
+                  [
+                    107,
+                    false
+                  ],
+                  [
+                    108,
+                    false
+                  ],
+                  [
+                    110,
+                    false
+                  ],
+                  [
+                    111,
+                    false
+                  ],
+                  [
+                    112,
+                    false
+                  ],
+                  [
+                    113,
+                    false
+                  ],
+                  [
+                    114,
+                    false
+                  ],
+                  [
+                    115,
+                    false
+                  ],
+                  [
+                    116,
+                    false
+                  ],
+                  [
+                    117,
+                    false
+                  ],
+                  [
+                    59,
+                    true
+                  ],
+                  [
+                    118,
+                    false
+                  ],
+                  [
+                    119,
+                    false
+                  ],
+                  [
+                    120,
+                    false
+                  ],
+                  [
+                    121,
+                    false
+                  ],
+                  [
+                    122,
+                    false
+                  ],
+                  [
+                    123,
+                    false
+                  ],
+                  [
+                    124,
+                    false
+                  ],
+                  [
+                    125,
+                    false
+                  ],
+                  [
+                    126,
+                    false
+                  ],
+                  [
+                    127,
+                    false
+                  ],
+                  [
+                    128,
+                    false
+                  ],
+                  [
+                    129,
+                    false
+                  ],
+                  [
+                    130,
+                    false
+                  ],
+                  [
+                    131,
+                    false
+                  ],
+                  [
+                    132,
+                    false
+                  ],
+                  [
+                    133,
+                    false
+                  ],
+                  [
+                    134,
+                    false
+                  ],
+                  [
+                    135,
+                    false
+                  ],
+                  [
+                    136,
+                    false
+                  ],
+                  [
+                    137,
+                    false
+                  ],
+                  [
+                    138,
+                    false
+                  ],
+                  [
+                    139,
+                    false
+                  ],
+                  [
+                    140,
+                    false
+                  ],
+                  [
+                    141,
+                    false
+                  ],
+                  [
+                    142,
+                    false
+                  ],
+                  [
+                    143,
+                    false
+                  ],
+                  [
+                    156,
+                    true
+                  ],
+                  [
+                    144,
+                    false
+                  ],
+                  [
+                    145,
+                    false
+                  ],
+                  [
+                    146,
+                    false
+                  ],
+                  [
+                    147,
+                    false
+                  ],
+                  [
+                    148,
+                    false
+                  ],
+                  [
+                    149,
+                    false
+                  ],
+                  [
+                    150,
+                    false
+                  ],
+                  [
+                    151,
+                    false
+                  ],
+                  [
+                    152,
+                    false
+                  ],
+                  [
+                    153,
+                    false
+                  ],
+                  [
+                    154,
+                    false
+                  ],
+                  [
+                    155,
+                    false
+                  ],
+                  [
+                    158,
+                    false
+                  ],
+                  [
+                    159,
+                    false
+                  ],
+                  [
+                    85,
+                    true
+                  ],
+                  [
+                    160,
+                    false
+                  ],
+                  [
+                    161,
+                    false
+                  ],
+                  [
+                    162,
+                    false
+                  ],
+                  [
+                    163,
+                    false
+                  ],
+                  [
+                    157,
+                    true
+                  ],
+                  [
+                    165,
+                    false
+                  ],
+                  [
+                    164,
+                    false
+                  ],
+                  [
+                    166,
+                    false
+                  ],
+                  [
+                    29,
+                    true
+                  ],
+                  [
+                    168,
+                    false
+                  ],
+                  [
+                    169,
+                    false
+                  ],
+                  [
+                    170,
+                    false
+                  ],
+                  [
+                    171,
+                    false
+                  ],
+                  [
+                    172,
+                    false
+                  ],
+                  [
+                    173,
+                    false
+                  ],
+                  [
+                    174,
+                    false
+                  ],
+                  [
+                    175,
+                    false
+                  ],
+                  [
+                    176,
+                    false
+                  ],
+                  [
+                    177,
+                    false
+                  ],
+                  [
+                    178,
+                    false
+                  ],
+                  [
+                    179,
+                    false
+                  ],
+                  [
+                    180,
+                    false
+                  ],
+                  [
+                    181,
+                    false
+                  ],
+                  [
+                    182,
+                    false
+                  ],
+                  [
+                    183,
+                    false
+                  ],
+                  [
+                    184,
+                    false
+                  ],
+                  [
+                    185,
+                    false
+                  ],
+                  [
+                    186,
+                    false
+                  ],
+                  [
+                    187,
+                    false
+                  ],
+                  [
+                    188,
+                    false
+                  ],
+                  [
+                    189,
+                    false
+                  ],
+                  [
+                    190,
+                    false
+                  ],
+                  [
+                    191,
+                    false
+                  ],
+                  [
+                    192,
+                    false
+                  ],
+                  [
+                    193,
+                    false
+                  ],
+                  [
+                    194,
+                    false
+                  ]
+                ],
+                "controller_opposed_angles": true,
+                "canonical": "nan",
+                "references": [
+                  {
+                    "offset": 15764,
+                    "from": [
+                      0,
+                      9201573547900150964
+                    ],
+                    "to": [
+                      0,
+                      6413484336063120675
+                    ]
+                  },
+                  {
+                    "offset": 15776,
+                    "from": [
+                      0,
+                      -5484490481130163765
+                    ],
+                    "to": [
+                      0,
+                      -2517815654463028974
+                    ]
+                  },
+                  {
+                    "offset": 15788,
+                    "from": [
+                      0,
+                      -4048657338996117045
+                    ],
+                    "to": [
+                      0,
+                      -8317641415273311750
+                    ]
+                  },
+                  {
+                    "offset": 15800,
+                    "from": [
+                      0,
+                      9201573547900150964
+                    ],
+                    "to": [
+                      0,
+                      6413484336063120675
+                    ]
+                  },
+                  {
+                    "offset": 15812,
+                    "from": [
+                      0,
+                      -1964020057827462709
+                    ],
+                    "to": [
+                      0,
+                      -3316274054468002120
+                    ]
+                  },
+                  {
+                    "offset": 15824,
+                    "from": [
+                      0,
+                      -1273243977243184693
+                    ],
+                    "to": [
+                      0,
+                      3058235858032960792
+                    ]
+                  },
+                  {
+                    "offset": 15836,
+                    "from": [
+                      0,
+                      9201573547900150964
+                    ],
+                    "to": [
+                      0,
+                      6413484336063120675
+                    ]
+                  },
+                  {
+                    "offset": 15848,
+                    "from": [
+                      0,
+                      2479825281197519307
+                    ],
+                    "to": [
+                      0,
+                      -8698486949879286166
+                    ]
+                  },
+                  {
+                    "offset": 15860,
+                    "from": [
+                      0,
+                      3153585969437127115
+                    ],
+                    "to": [
+                      0,
+                      -3806812233393714790
+                    ]
+                  },
+                  {
+                    "offset": 15872,
+                    "from": [
+                      0,
+                      -6367399257862196789
+                    ],
+                    "to": [
+                      0,
+                      -8376786693037604974
+                    ]
+                  },
+                  {
+                    "offset": 15884,
+                    "from": [
+                      0,
+                      -7214304672426164100
+                    ],
+                    "to": [
+                      0,
+                      -5836650454966080085
+                    ]
+                  },
+                  {
+                    "offset": 15896,
+                    "from": [
+                      0,
+                      -352583598992274591
+                    ],
+                    "to": [
+                      0,
+                      -6673659884504991969
+                    ]
+                  },
+                  {
+                    "offset": 15908,
+                    "from": [
+                      0,
+                      6800490446777142113
+                    ],
+                    "to": [
+                      0,
+                      8413597181698941640
+                    ]
+                  },
+                  {
+                    "offset": 15920,
+                    "from": [
+                      0,
+                      7637100147214240609
+                    ],
+                    "to": [
+                      0,
+                      423042047058271282
+                    ]
+                  },
+                  {
+                    "offset": 15932,
+                    "from": [
+                      0,
+                      -4153538929561646239
+                    ],
+                    "to": [
+                      0,
+                      6591675473404342699
+                    ]
+                  },
+                  {
+                    "offset": 15944,
+                    "from": [
+                      0,
+                      -8996055529044599573
+                    ],
+                    "to": [
+                      0,
+                      -625347678979376532
+                    ]
+                  },
+                  {
+                    "offset": 15956,
+                    "from": [
+                      0,
+                      8700196938447756523
+                    ],
+                    "to": [
+                      0,
+                      -141231374321646879
+                    ]
+                  },
+                  {
+                    "offset": 15968,
+                    "from": [
+                      0,
+                      -8629272181064557333
+                    ],
+                    "to": [
+                      0,
+                      3914509854924499814
+                    ]
+                  },
+                  {
+                    "offset": 15980,
+                    "from": [
+                      0,
+                      870510489010740459
+                    ],
+                    "to": [
+                      0,
+                      -8797528128116133367
+                    ]
+                  },
+                  {
+                    "offset": 15992,
+                    "from": [
+                      0,
+                      7642659955910383186
+                    ],
+                    "to": [
+                      0,
+                      668881814974104248
+                    ]
+                  },
+                  {
+                    "offset": 16004,
+                    "from": [
+                      0,
+                      1118986555315656274
+                    ],
+                    "to": [
+                      0,
+                      4868880433388032165
+                    ]
+                  },
+                  {
+                    "offset": 16016,
+                    "from": [
+                      0,
+                      -1781505695390689710
+                    ],
+                    "to": [
+                      0,
+                      2817927586943717301
+                    ]
+                  },
+                  {
+                    "offset": 16028,
+                    "from": [
+                      0,
+                      -2760045483634862936
+                    ],
+                    "to": [
+                      0,
+                      -1276091580695488367
+                    ]
+                  },
+                  {
+                    "offset": 16040,
+                    "from": [
+                      0,
+                      -3621019851371653976
+                    ],
+                    "to": [
+                      0,
+                      4985586103797730377
+                    ]
+                  },
+                  {
+                    "offset": 16052,
+                    "from": [
+                      0,
+                      -2125340168623303512
+                    ],
+                    "to": [
+                      0,
+                      -1298450087514191550
+                    ]
+                  },
+                  {
+                    "offset": 16064,
+                    "from": [
+                      0,
+                      -1310180440092781400
+                    ],
+                    "to": [
+                      0,
+                      -8903854550940923991
+                    ]
+                  },
+                  {
+                    "offset": 16076,
+                    "from": [
+                      0,
+                      -4731102365871647576
+                    ],
+                    "to": [
+                      0,
+                      7501470530864610719
+                    ]
+                  },
+                  {
+                    "offset": 16088,
+                    "from": [
+                      0,
+                      5242213213330740585
+                    ],
+                    "to": [
+                      0,
+                      -1786834261900172279
+                    ]
+                  },
+                  {
+                    "offset": 16100,
+                    "from": [
+                      0,
+                      8424817512560048947
+                    ],
+                    "to": [
+                      0,
+                      -4364718736443017627
+                    ]
+                  },
+                  {
+                    "offset": 16112,
+                    "from": [
+                      0,
+                      -6416826049772274893
+                    ],
+                    "to": [
+                      0,
+                      5439626755921728843
+                    ]
+                  },
+                  {
+                    "offset": 16124,
+                    "from": [
+                      15,
+                      -8650794667067687067
+                    ],
+                    "to": [
+                      1,
+                      6780870145308687814
+                    ]
+                  },
+                  {
+                    "offset": 16136,
+                    "from": [
+                      15,
+                      5140047494025723749
+                    ],
+                    "to": [
+                      1,
+                      -1678890127046498482
+                    ]
+                  },
+                  {
+                    "offset": 16148,
+                    "from": [
+                      15,
+                      -7933772764220080283
+                    ],
+                    "to": [
+                      1,
+                      697915830919423318
+                    ]
+                  },
+                  {
+                    "offset": 16160,
+                    "from": [
+                      16,
+                      767194454235403583
+                    ],
+                    "to": [
+                      0,
+                      2091926059780181337
+                    ]
+                  },
+                  {
+                    "offset": 16172,
+                    "from": [
+                      0,
+                      6487172418733440625
+                    ],
+                    "to": [
+                      0,
+                      -2576117380048286896
+                    ]
+                  },
+                  {
+                    "offset": 16184,
+                    "from": [
+                      0,
+                      -1086642657703395727
+                    ],
+                    "to": [
+                      0,
+                      -7065464893772678310
+                    ]
+                  },
+                  {
+                    "offset": 16196,
+                    "from": [
+                      0,
+                      -4279821065409167759
+                    ],
+                    "to": [
+                      0,
+                      3580153451090898310
+                    ]
+                  },
+                  {
+                    "offset": 16208,
+                    "from": [
+                      0,
+                      5027086062224572017
+                    ],
+                    "to": [
+                      0,
+                      997431419017446710
+                    ]
+                  },
+                  {
+                    "offset": 16220,
+                    "from": [
+                      0,
+                      -456940016290464143
+                    ],
+                    "to": [
+                      0,
+                      8612119171963218754
+                    ]
+                  },
+                  {
+                    "offset": 16232,
+                    "from": [
+                      0,
+                      -4279821065409167759
+                    ],
+                    "to": [
+                      0,
+                      3580153451090898310
+                    ]
+                  },
+                  {
+                    "offset": 16296,
+                    "from": [
+                      0,
+                      3701398449103514127
+                    ],
+                    "to": [
+                      0,
+                      -5255154320090789486
+                    ]
+                  },
+                  {
+                    "offset": 16308,
+                    "from": [
+                      0,
+                      2164174371175672335
+                    ],
+                    "to": [
+                      0,
+                      4339561034336966994
+                    ]
+                  }
+                ],
+                "controller_loop_states": [
+                  {
+                    "state": [
+                      3,
+                      3
+                    ],
+                    "clips": [
+                      {
+                        "index": 19,
+                        "bundle": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-dlc1-railgunner_assets_all_cf3fbe7633db7043e15d00025adea82a.bundle",
+                        "bundle_sha256": "22472ed86cb62f6854e2393554d1b0c9a2dae5a6c02ac04604f4639a11298f02",
+                        "member": "CAB-132b274ea7d9ba7dfe7a90198b5d8dc7",
+                        "path_id": 7642659955910383186,
+                        "sha256": "0d64fcd696596cd979c7268452cbe834de6d0ed8edabd587acffff04af5bc84b"
+                      }
+                    ]
+                  },
+                  {
+                    "state": [
+                      3,
+                      4
+                    ],
+                    "clips": [
+                      {
+                        "index": 20,
+                        "bundle": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-dlc1-railgunner_assets_all_cf3fbe7633db7043e15d00025adea82a.bundle",
+                        "bundle_sha256": "22472ed86cb62f6854e2393554d1b0c9a2dae5a6c02ac04604f4639a11298f02",
+                        "member": "CAB-132b274ea7d9ba7dfe7a90198b5d8dc7",
+                        "path_id": 1118986555315656274,
+                        "sha256": "acc66bc27493bf7c3854c9ae660f92119b97a72472563db4b7c0a6eea53456c2"
+                      }
+                    ]
+                  },
+                  {
+                    "state": [
+                      3,
+                      5
+                    ],
+                    "clips": [
+                      {
+                        "index": 21,
+                        "bundle": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-dlc1-railgunner_assets_all_cf3fbe7633db7043e15d00025adea82a.bundle",
+                        "bundle_sha256": "22472ed86cb62f6854e2393554d1b0c9a2dae5a6c02ac04604f4639a11298f02",
+                        "member": "CAB-132b274ea7d9ba7dfe7a90198b5d8dc7",
+                        "path_id": -1781505695390689710,
+                        "sha256": "b622a84fbf88769fbd8932a8b1045d086801c9536e56b1a8de9db5887693291e"
+                      }
+                    ]
+                  },
+                  {
+                    "state": [
+                      3,
+                      7
+                    ],
+                    "clips": [
+                      {
+                        "index": 23,
+                        "bundle": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-dlc1-railgunner_assets_all_cf3fbe7633db7043e15d00025adea82a.bundle",
+                        "bundle_sha256": "22472ed86cb62f6854e2393554d1b0c9a2dae5a6c02ac04604f4639a11298f02",
+                        "member": "CAB-132b274ea7d9ba7dfe7a90198b5d8dc7",
+                        "path_id": -3621019851371653976,
+                        "sha256": "e98bfb23ac6af4a5f36d8ba461e86da75896bbd291578f28945c45e8f0774e7d"
+                      }
+                    ]
+                  },
+                  {
+                    "state": [
+                      3,
+                      8
+                    ],
+                    "clips": [
+                      {
+                        "index": 24,
+                        "bundle": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-dlc1-railgunner_assets_all_cf3fbe7633db7043e15d00025adea82a.bundle",
+                        "bundle_sha256": "22472ed86cb62f6854e2393554d1b0c9a2dae5a6c02ac04604f4639a11298f02",
+                        "member": "CAB-132b274ea7d9ba7dfe7a90198b5d8dc7",
+                        "path_id": -2125340168623303512,
+                        "sha256": "87425e4f06e27673ce09602d87db7096dfe5b569360d3c1db946ccb10ac9a0fe"
+                      }
+                    ]
+                  },
+                  {
+                    "state": [
+                      3,
+                      9
+                    ],
+                    "clips": [
+                      {
+                        "index": 25,
+                        "bundle": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-dlc1-railgunner_assets_all_cf3fbe7633db7043e15d00025adea82a.bundle",
+                        "bundle_sha256": "22472ed86cb62f6854e2393554d1b0c9a2dae5a6c02ac04604f4639a11298f02",
+                        "member": "CAB-132b274ea7d9ba7dfe7a90198b5d8dc7",
+                        "path_id": -1310180440092781400,
+                        "sha256": "3aac12645e5261c7104bf226a97c401fce6a8f9cf9eecd8d9e3d85a86146b038"
+                      }
+                    ]
+                  },
+                  {
+                    "state": [
+                      3,
+                      10
+                    ],
+                    "clips": [
+                      {
+                        "index": 26,
+                        "bundle": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-dlc1-railgunner_assets_all_cf3fbe7633db7043e15d00025adea82a.bundle",
+                        "bundle_sha256": "22472ed86cb62f6854e2393554d1b0c9a2dae5a6c02ac04604f4639a11298f02",
+                        "member": "CAB-132b274ea7d9ba7dfe7a90198b5d8dc7",
+                        "path_id": -4731102365871647576,
+                        "sha256": "03702c0ceedb46ce6bb82bffe2e278f2e91bc3e3a1fe742d854ba372c3d7cefc"
+                      }
+                    ]
+                  },
+                  {
+                    "state": [
+                      3,
+                      11
+                    ],
+                    "clips": [
+                      {
+                        "index": 27,
+                        "bundle": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-dlc1-railgunner_assets_all_cf3fbe7633db7043e15d00025adea82a.bundle",
+                        "bundle_sha256": "22472ed86cb62f6854e2393554d1b0c9a2dae5a6c02ac04604f4639a11298f02",
+                        "member": "CAB-132b274ea7d9ba7dfe7a90198b5d8dc7",
+                        "path_id": 5242213213330740585,
+                        "sha256": "7b98356ef2658de76294cd3f8a41c682b5bedfef41f4c666161a3ea18196e088"
+                      }
+                    ]
+                  }
+                ],
+                "controller_clear_skeleton_masks": true,
+                "controller_clear_null_motion": true,
+                "controller_omit_synced_overrides": true,
+                "controller_resolve_synced_layers": true
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
 }
 ]
 }

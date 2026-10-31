@@ -149,6 +149,12 @@ class ControllerRecords(unittest.TestCase):
         expected = struct.pack("<I", 848) + vector([vector([expected_state])]) + vector(clips[:2])
         self.assertEqual(A.transform_generic(body, 91, {"controller_omit_synced_overrides": True}, schema), expected)
 
+        # The exporter selects tree zero even when only a synchronized layer
+        # references it. Reimport places that motion in the base state slot.
+        source_state = vector([motion(0)]) + vector([struct.pack("<I", i) for i in (0xFFFFFFFF, 0)])
+        source = struct.pack("<I", 848) + vector([vector([source_state])]) + vector(clips[:2])
+        self.assertEqual(A.transform_generic(source, 91, {"controller_omit_synced_overrides": True}, schema), expected)
+
     def test_synced_behaviour_omission_preserves_original_state_keys(self):
         layer = F.node("data", children=[F.node("data", children=[integer("m_StateMachineSynchronizedLayerIndex")])])
         key = F.node("key", children=[integer("m_StateID"), integer("m_LayerIndex")])

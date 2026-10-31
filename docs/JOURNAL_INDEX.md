@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J1336](PORTING_JOURNAL.md#j1336--normalize-retained-synchronized-controller-trees-to-base-motion) | 2026-10-31 | Normalize retained synchronized controller trees to base motion | 2026-10-31. |
 | [J1334](PORTING_JOURNAL.md#j1334--reconstruct-the-voidsurvivor-synchronized-layer-chain) | 2026-10-31 | Reconstruct the VoidSurvivor synchronized layer chain | 2026-10-31. |
 | [J1335](PORTING_JOURNAL.md#j1335--reconstruct-reaper-secondary-swing-animation) | 2026-10-31 | Reconstruct Reaper secondary-swing animation | 2026-10-31. |
 | [J1333](PORTING_JOURNAL.md#j1333--reconstruct-expanding-wave-callback-transform-scales) | 2026-10-31 | Reconstruct expanding-wave callback Transform scales | 2026-10-31. |

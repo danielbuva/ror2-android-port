@@ -6364,3 +6364,18 @@ root-motion fixture checks atan2 projection. Only selectors, hashes and existing
 policy flags ship; no curve, target scalar, generated body or private path is
 included. Independently persisted output matches J850 raw-exact, 262,216 bytes.
 Complete bundle, phone installation/update and original runtime remain open.
+
+### Whole-game Heretic/Railgunner base-motion normalization
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-animator-controllers.json` | `88f20d197bb515390ef1f68ac242b48823a16fd16e6b3096c27c3f470edff165` |
+
+Audit: 2026-10-31. The existing controller owner follows pinned AssetRipper
+813fed1597bac674def7256ce633a227e7b27497 StateConstantExtensions.GetBlendTree
+and VirtualAnimationFactory: retained tree zero becomes base motion regardless
+of its original synchronized slot. Override indices become unavailable.
+Only original selectors, hashes, checked relationships and policies ship; no
+controller body, target patch, generated data or private path is included.
+Two independently persisted records match J850 raw-exact, 28,916 bytes.
+Complete bundle, phone production, installation/update and runtime remain open.

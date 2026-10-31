@@ -2021,3 +2021,17 @@ Production/qualification wall 58.232 s; host-only, no thermal measurement.
 Saved selector residual 22 → 21; coverage subtraction, no accepted output rerun.
 Readiness stays 693/705 available, 685 raw-exact. Complete bundle, phone production,
 installation/update and original runtime remain open. No APK claim.
+
+## J1336 — Normalize retained synchronized controller trees to base motion
+
+2026-10-31. Existing controller owner reconstructs Heretic/Railgunner base motion
+from retained tree zero, clearing original synchronized override indices.
+Prior art: pinned AssetRipper 813fed1597 StateConstantExtensions.GetBlendTree
+and VirtualAnimationFactory select and assign the first tree without slot lookup.
+Evidence: `work/coordination/p1-scenes-w/controller-first-tree-public-20261031/done.json`.
+Two persisted records independently raw-exact to J850, 28,916 bytes; pack SHA-256
+`0baf27dd6dc7fae8b98dab349c7a5a7963a88394942b1f4a8af41e00dad23185`.
+Production 0.410 s; qualification wall 54.061 s; host-only, no thermal data.
+Current merged-recipe selector subtraction leaves 19 → 17 unresolved records;
+no accepted output rerun. Readiness stays 693/705 available, 685 raw-exact.
+Complete bundle, phone production, installation/update and runtime remain open.
