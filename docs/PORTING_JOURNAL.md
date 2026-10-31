@@ -2239,3 +2239,30 @@ Evidence hash-verified in cold storage; process/selectors absent, OLED asleep.
 Host lifecycle, feedback and producer/pin checks pass. No logger rewrite or purge.
 Repeated-session memory bound, callback delivery, physical controls and sustained
 performance remain open; the observation does not establish a pool plateau.
+
+
+## J1351 — Supply source-derived bundle Material providers
+
+2026-10-31. Existing generic record owner reconstructs 58 original Materials with
+unique typed Shader/Texture edges and the existing dummy invalid-keyword policy.
+All 116,100 persisted bytes raw-exact to J850; pack SHA-256
+`6e41bee9610a35d3e51b343d790ef21053e0385b67906f7de0837e0f74cc8dc0`.
+Evidence: `work/coordination/p1-wholegame-1031/bundle-material-sorted-persisted-qualification-v1/done.json`;
+source witnesses: sibling `bundle-material-source-sorted-v1/source-witnesses.json`.
+Production 13.00 s, qualification 3.72 s, peak RSS 279,396,352 bytes.
+Host-only; heat unmeasured. Provider gaps filled across 80 group occurrences;
+complete groups unqualified, residual three unchanged. Readiness stays
+693/705 available, 685 raw-exact; bundle, phone/install/update and runtime open.
+
+## J1352 — Extend source-derived bundle Material providers
+
+2026-10-31. Existing generic record owner supplies nine more original Materials
+through published dummy Shader policies and unique typed dependency endpoints.
+All 29,860 persisted bytes raw-exact to J850; pack SHA-256
+`466c0ed39cd96ca8e8476dbabda2ec7ef227be4f968a5e26d5b31d8c73418fa2`.
+Evidence: `work/coordination/p1-wholegame-1031/bundle-material-remaining-persisted-qualification-v1/done.json`;
+source witnesses: sibling `bundle-material-source-remaining-v1/source-witnesses.json`.
+Production 5.28 s, qualification 8.46 s, peak RSS 278,085,632 bytes.
+Host-only; heat unmeasured. Owner now supplies 67 Materials; residual three
+unchanged. Readiness stays 693/705 available, 685 raw-exact; complete bundle,
+phone/install/update and runtime remain open.

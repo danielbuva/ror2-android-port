@@ -6597,3 +6597,32 @@ pixels, geometry, native output or proprietary implementation is published.
 The complete 476-byte persisted record matches J850. This fills a provider gap;
 residual three and historical readiness remain unchanged. Complete bundle and
 phone/install/update qualification stay open.
+
+
+### Whole-game bundle Material provider records
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-whole-game-bundle-material-records.json` | `f195b009ae494b3bc4dccc203753d2365c2da12f0281c426c45a7c6ed0db7a08` |
+
+Audit: 2026-10-31. The existing generic record owner selects 58 original
+Materials with unique typed Shader/Texture endpoints. Mandatory inverse-source
+ambiguity exclusions retain unresolved alternatives. Published SingleColor dummy
+Shader selectors witness the existing `dummy-shader-sort-invalid` policy
+(J1274/J1321): original keyword strings are demoted and sorted ordinally; all
+other native fields remain source-owned. Pinned AssetRipper DummyShaderTextExporter
+and TemplateList selection inform the dummy declaration boundary; EditorKit typed
+EntryLookup informs identity (docs/community-prior-art.md). Only source selectors,
+hashes and checked pointer relationships ship; no native bodies, keyword strings,
+pixels, target repairs or private paths ship. Independent persisted production
+matches all 58 J850 records, 116,100 bytes. This supplies 80 group occurrences;
+complete groups have not been requalified. Saved residual three and file readiness
+remain unchanged; complete bundle, phone/install/update and runtime stay open.
+
+Nine further Materials use published Default/TransparentDiffuse dummy Shader
+selectors with the same source-owned policy and ambiguity exclusions. Independent
+persisted qualification matches all nine J850 records (29,860 bytes); the owner
+now supplies 67 records. Source selectors, hashes and typed relationships only;
+no new producer logic or protected content is published. The 59 previously
+completed source groups compare exact diagnostically; final bundle qualification
+and readiness remain open.
