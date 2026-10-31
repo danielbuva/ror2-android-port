@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J1346](PORTING_JOURNAL.md#j1346--qualify-whole-game-recorded-animation-source) | 2026-10-31 | Qualify whole-game Recorded animation source | 2026-10-31. |
 | [J1345](PORTING_JOURNAL.md#j1345--reconstruct-whole-game-shader-material-signature-template) | 2026-10-31 | Reconstruct whole-game Shader material-signature template | 2026-10-31. |
 | [J1344](PORTING_JOURNAL.md#j1344--reconstruct-whole-game-overlapping-sdk-shader-axes) | 2026-10-31 | Reconstruct whole-game overlapping SDK Shader axes | 2026-10-31. |
 | [J1342](PORTING_JOURNAL.md#j1342--restore-original-point-sound-timeout-dispatch) | 2026-10-31 | Restore original point-sound timeout dispatch | 2026-10-31. |

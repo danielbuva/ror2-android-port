@@ -2165,3 +2165,19 @@ local job output 21,082,292 bytes. Host-only; no device heat measurement.
 Merged-selector residual 8 → 7: Clip3, Cubemap3, AssetBundle1; subtraction only.
 Readiness stays 693/705 available, 685 raw-exact. Complete bundle, phone
 production, installation/update and original runtime remain open. No APK claim.
+
+## J1346 — Qualify whole-game Recorded animation source
+
+2026-10-31. Existing animation owner selects original Champrush Recorded using
+native-stream, reference-pose removal and two checked script relocations.
+Native type and script-aware binding multisets qualify one physical source.
+Prior art: J1143 pinned AssetRipper StreamedCurveKey/CustomCurveResolver; existing
+alternate-clip/index-profile diagnostics check current source identities.
+Evidence: `work/coordination/p1-wholegame-1031/recorded-public-v1/done.json`.
+One independently persisted record is J850 raw-exact, 2,460 bytes; SHA-256
+`d821b7219ca531137dd9975f8a510771b0e77f7eb1c03bc2679841002ce98d30`.
+Production 3.440 s, qualification 7.119 s, peak RSS 285,786,112 bytes.
+Host-only; no device heat measurement. Saved residual 7 → 6 by selector subtraction:
+Clip2, CustomRenderTexture3 (previously labelled Cubemap), AssetBundle1.
+Readiness stays 693/705 available, 685 raw-exact. Complete bundle, phone
+production, installation/update and original runtime remain open. No APK claim.
