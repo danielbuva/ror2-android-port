@@ -5980,7 +5980,29 @@ All eleven persisted records are raw-exact, 79,656 bytes; exact public coverage
 reduces the saved residual from 93 to 82. Complete bundle, phone
 production, installation and original runtime remain open.
 
-### Whole-game duplicate clip-name controllers (J1311)
+### Whole-game empty TerrainData detail Shaders (J1312)
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-whole-game-terrain-detail-shaders.json` | `90928b2df1554a0e43c0ae93543a71b8be37e1da05baab917aa3108282f4b0ee` |
+
+Audit: 2026-10-31. Original Title TerrainData's three indexed default Shader
+pointers identify the original detail Shaders. Its empty detail prototype array
+supplies the usage witness for the existing fresh-mono instancing stripping
+policy; the acquired SDK DetailRenderer constructor corroborates that no
+prototype instancing caches are created. Original Shader records retain their
+instancing declarations and supply names, properties, native schema and fallback
+identity. The existing `shader_prefab.py` owner checks the pinned TerrainData,
+external member and default Shader identity before selecting variants.
+Pinned AssetRipper `1ac666f47d8e9dedf96afb0b914c70d7656151ea`,
+`DummyShaderTextExporter.cs:49-78`, informs property/fallback preservation.
+Only input selectors, relationships, SDK settings and hashes are published;
+no protected source/program body, generated content or private path is included.
+All three persisted records are independently raw-exact to J850, 131,996 bytes;
+public saved residual reduces from 82 to 79. Complete bundle, phone production,
+installation and runtime gates remain open.
+
+### Whole-game duplicate clip-name controllers (J1313)
 
 | Recipe | SHA-256 |
 | --- | --- |

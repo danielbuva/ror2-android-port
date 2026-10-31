@@ -75,6 +75,16 @@ def prefab_selections(source, *, retain_instancing=True):
     return selections
 
 
+def terrain_selections(source, terrain, pointer):
+    """Empty original detail prototypes create no instancing users."""
+    database = terrain["m_DetailDatabase"]
+    if pointer not in [database[f"m_DefaultShaders[{i}]"] for i in range(3)]:
+        raise ValueError("Prefab TerrainData default Shader identity differs")
+    if database["m_DetailPrototypes"]:
+        raise ValueError("Prefab TerrainData has detail prototype usage")
+    return prefab_selections(source, retain_instancing=False)
+
+
 def particle_selections(source, original, material):
     """Filter original particle order by acquired default-material features."""
     if material["m_Shader"] != {"m_FileID": 0, "m_PathID": 211}:
@@ -110,6 +120,9 @@ def produce(profile_path, profile_pin, pc, sdk, asset_ripper, codec, codec_pin, 
     for record in profile["records"]:
         pins.append((P.relative(pc, record["original"]["path"]), record["original"]))
         pins.extend((P.relative(pc, material["path"]), material) for material in record.get("materials", []))
+        if "terrain" in record:
+            witness = record["terrain"]["original"]
+            pins.append((P.relative(pc, witness["path"]), witness))
         pins.extend((P.relative(pc, row["original"]["path"]), row["original"]) for row in record.get("fallback_original", []))
     for path, pin in pins:
         P.checked(path, pin)
@@ -129,13 +142,13 @@ def produce(profile_path, profile_pin, pc, sdk, asset_ripper, codec, codec_pin, 
             templates[name] = raw.decode().replace("\r", "")
     originals, sdk_objects = {}, {}
 
-    def original(selected):
+    def original(selected, class_name="Shader"):
         path = P.relative(pc, selected["path"])
         originals.setdefault(path, None)
         if originals[path] is None:
             originals[path] = UnityPy.load(str(path))
         obj = next(obj for obj in originals[path].objects if (obj.assets_file.name, obj.path_id) == (selected["member"], selected["path_id"]))
-        if obj.type.name != "Shader" or hashlib.sha256(obj.get_raw_data()).hexdigest() != selected["body_sha256"]:
+        if obj.type.name != class_name or hashlib.sha256(obj.get_raw_data()).hexdigest() != selected["body_sha256"]:
             raise ValueError("Prefab original Shader body differs")
         return obj
 
@@ -221,6 +234,14 @@ def produce(profile_path, profile_pin, pc, sdk, asset_ripper, codec, codec_pin, 
                         if identity != 211:
                             raise ValueError("Prefab original materials require the particle shader")
                         runtime, selections = A.particles_selections(runtime, particle_materials(selected), None, carrier=source)
+                    elif "terrain" in selected:
+                        witness = selected["terrain"]
+                        terrain = original(witness["original"], "TerrainData")
+                        file_id = witness["shader_file_id"]
+                        member = terrain.assets_file.externals[file_id - 1].path.rsplit("/", 1)[-1] if file_id else terrain.assets_file.name
+                        if member != selected["original"]["member"]:
+                            raise ValueError("Prefab TerrainData Shader member differs")
+                        selections = terrain_selections(runtime, terrain.read_typetree(), {"m_FileID": file_id, "m_PathID": obj.path_id})
                     elif "sdk_material" in selected:
                         material = next(
                             obj
@@ -293,6 +314,8 @@ def produce(profile_path, profile_pin, pc, sdk, asset_ripper, codec, codec_pin, 
             P.checked(path, pin)
         for selected in profile["records"]:
             original(selected["original"])
+            if "terrain" in selected:
+                original(selected["terrain"]["original"], "TerrainData")
         if P.includes(sdk / "CGIncludes")[0] != inventory:
             raise ValueError("Prefab Shader include inputs changed")
         receipt.update(

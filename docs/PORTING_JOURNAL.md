@@ -1717,6 +1717,19 @@ Public saved residual 93 → 82 by exact output identity/hash coverage.
 Readiness stays 693/705 available, 685 raw-exact; complete bundle, phone production
 and original runtime remain open. Host-only; no APK/device claim.
 
+## J1312 — Reconstruct empty-TerrainData detail Shaders
+
+2026-10-31. Extend the existing Shader owner with pinned original TerrainData
+usage: three default Shader pointers and zero detail prototypes justify the
+existing fresh-mono instancing policy. Original Shader identity/fallbacks remain.
+Evidence: `work/coordination/p1-wholegame-1031/terrain-detail-public-v1/terminal.json`;
+source/native witness: adjacent `../shader-provenance-20261031.md`.
+Three persisted records independently raw-exact to J850, 131,996 bytes.
+Pack SHA-256: `a456aa01ded4ed2e1ab28a3c8b31cd468238a3d7ec288ccaac8d6a1b275f6089`.
+Public saved residual 82 → 79; readiness stays 693/705 available, 685 raw-exact.
+Complete bundle, phone production, installation and runtime gates remain open.
+Host-only; no APK/device claim.
+
 ## J1313 — Reconstruct duplicate clip-name controller relationships
 
 2026-10-31. Add DroneTech, FalseSonNew and Drifter to the existing original
@@ -1728,6 +1741,5 @@ Evidence: `work/coordination/p1-scenes-w/wholegame-controller-collisions-v2-2026
 source collision and range provenance: adjacent `notes.md`/`behaviour-witnesses.json`.
 All three new persisted records raw-exact to J850, 107,980 bytes; pack SHA-256
 `70b09f2d50e1d1f5665f1cf3053b07fc1cecfa9b179545474f415fabd87dee2b`.
-Public saved residual 82 → 79; final-file readiness stays 693/705 available,
+Public saved residual 79 → 76 after parallel detail-Shader closures; final-file readiness stays 693/705 available,
 685 raw-exact. Complete bundle, phone production and runtime gates remain open.
-Host-only; no APK/device claim.
