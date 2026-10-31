@@ -61,6 +61,7 @@ class ManagedHostStageTests(unittest.TestCase):
             "release_jobs.py",
             "game_import.py",
             "install_flow.py",
+            "atomic_io.py",
             "install_inputs.py",
             "alpha_policy.py",
             "ProfileStore.java",

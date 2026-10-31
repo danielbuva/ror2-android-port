@@ -7,37 +7,21 @@ be skipped. No installer consent or installation success is synthesized here.
 
 import hashlib
 import json
-import os
 from pathlib import Path
-import tempfile
 import time
 import subprocess
+import importlib.util as _atomic_import
+
+_atomic_spec = _atomic_import.spec_from_file_location("owner_atomic_io", Path(__file__).with_name("atomic_io.py"))
+ATOMIC = _atomic_import.module_from_spec(_atomic_spec)
+_atomic_spec.loader.exec_module(ATOMIC)
+
 
 STAGES = ("admission", "staging", "assembly", "textures", "native", "apk", "signing", "install")
 PRODUCTION = STAGES[2:5]
 
 
-def write_json(path, value):
-    path = Path(path)
-    path.parent.mkdir(parents=True, exist_ok=True)
-    if path.is_symlink():
-        raise ValueError("checkpoint cannot be a symlink")
-    fd, temporary = tempfile.mkstemp(prefix=".checkpoint-", dir=path.parent)
-    try:
-        with os.fdopen(fd, "w") as stream:
-            json.dump(value, stream, sort_keys=True, allow_nan=False)
-            stream.write("\n")
-            stream.flush()
-            os.fsync(stream.fileno())
-        os.replace(temporary, path)
-        # Durability includes the directory entry, not just the temporary file.
-        fd = os.open(path.parent, os.O_RDONLY)
-        try:
-            os.fsync(fd)
-        finally:
-            os.close(fd)
-    finally:
-        Path(temporary).unlink(missing_ok=True)
+write_json = ATOMIC.write_json
 
 
 def digest(path):
@@ -191,7 +175,15 @@ class Pipeline:
         if self.state["first_failure"] is None:
             self.state["first_failure"] = {"stage": stage, "reason": reason}
         self.state["status"] = "failed"
-        self.persist()
+        try:
+            self.persist()
+        except OSError:
+            # Full storage cannot require a second successful write to report
+            # the original failure. The last durable running state is resumable.
+            try:
+                self.emit(self.snapshot())
+            except OSError:
+                pass
 
     def perform(self, stage, action):
         self.begin(stage)
