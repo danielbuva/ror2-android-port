@@ -2196,3 +2196,18 @@ Production 0.170 s, qualification 9.747 s, peak RSS 339,410,944 bytes.
 Host-only; no device heat measurement. Saved residual 6 → 3 by selector subtraction:
 Clip2, AssetBundle1. Readiness stays 693/705 available, 685 raw-exact.
 Complete bundle, phone production, installation/update and runtime remain open.
+
+
+## J1348 — Preserve preparation markers without redundant diagnostic stacks
+
+2026-10-31. Existing IntegratedWorldSession preparation markers use per-call
+LogOption.NoStacktrace; original/error logging retains its existing stack policy.
+APK SHA-256 `e2c9f7498d9d24660da2bc76535c58a175c6826221f3ea9570e3419a7b8261d9`.
+Device: `work/coordination/alpha-preparation-stack-observed-device-20261031T180012Z/terminal.done.json`.
+Decode: `work/coordination/alpha-preparation-decode-20261031T181917Z/analysis.done.json`.
+Three assisted diagnostic sessions, 856.35 s; menus 2/4 retain 21/63 preparation
+messages, zero preparation stacks, and 199/248 other stacks in Console history.
+CPU/GPU peak 79.2 C, above 80 C for 0 s; battery 33 → 36 C.
+Snapshots hash-verified in cold storage; process/selectors absent, OLED asleep.
+This qualifies diagnostic string retention only; ordinary repeated-session memory,
+error-callback delivery, physical controls and sustained performance remain open.
