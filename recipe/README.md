@@ -5656,3 +5656,8 @@ only original selectors/hashes, named policies, type identities and checked PPtr
 remaps are published. No target body, scalar template or implementation is added.
 All 19 persisted records (1,493 bytes) match J850 raw-exact; complete-file, phone
 production and install/update gates remain open.
+
+2026-10-31 authored owner pin refresh: `original-audio-owner-sources.json`
+updates only the public `PortSession.cs` hash for the default-off settings
+write observer startup request. Provenance, privacy, licensing and sensitive-content
+audit: authored source hash only; no game content, private inputs or identifiers.
