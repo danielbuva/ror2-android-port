@@ -5671,7 +5671,7 @@ game content, private inputs or identifiers. Runtime camera outputs are unchange
 
 | Recipe | SHA-256 |
 | --- | --- |
-| `owner-whole-game-empty-renderer-records.json` | `7e417530d2f417a022d416fe3d19358e2585ed3ac22c2008f64a7ae1d2a43cfe` |
+| `owner-whole-game-empty-renderer-records.json` | `6ea471b31c1f52acccf13a5679c7ce4dfa3ff5b450170aa831a7e5c4b9e5c07b` |
 | `owner-whole-game-renderer-membership-records.json` | `f3114997dbf56ebb1a63730b62fccb2501ddaf3375752821da5e29a5c700367c` |
 
 Audit: 2026-10-31. Existing J245 original AnimateShaderAlpha repair applies
@@ -6282,3 +6282,17 @@ ship; no controller body, generated content, target patch or private path.
 One independently persisted controller matches J850 raw-exact, 24,584 bytes.
 Final-file readiness stays 693/705 available, 685 raw-exact; complete bundle,
 phone production, installation/update and runtime remain open.
+
+### Whole-game remaining alpha renderer records
+
+Audit: 2026-10-31. Four selectors extend the existing J1294 empty-renderer
+profile and constructor; no new producer or payload template is introduced.
+Original ordered component lists, retained sibling suppliers and reciprocal
+GameObject ownership independently identify the Chef, BeetleQueen, DLC4 and
+Croco alpha hosts. The J245 omitted-Decalicious repair explains renderer
+insertion. Pinned AssetRipper GameObjectExtensions supplies ordered component
+traversal knowledge. Published additions contain only original donor selectors,
+checked owner PPtr relocations, type identities and output hashes; no game body,
+private path, generated content or proprietary implementation is included.
+Four persisted records, 576 bytes, match J850 raw-exact; GameObject membership
+and complete-file, phone installation/update gates are separate and remain open.

@@ -64,6 +64,30 @@
                 {
                   "bundle": "whole-game-content",
                   "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "path_id": -6218075803648282372,
+                  "bytes": 144,
+                  "sha256": "46b8b52b94ac518ce884f1ae2c409f7e9b8d20310c5d779e8960c787c960233d",
+                  "transform": {
+                    "empty_mesh_renderer": true,
+                    "references": [
+                      {
+                        "offset": 0,
+                        "from": [
+                          0,
+                          7538853480606844685
+                        ],
+                        "to": [
+                          0,
+                          621964067863461132
+                        ]
+                      }
+                    ]
+                  },
+                  "native_type_hash": "e07b8fbbe1e7b8f953df1f094e626daa"
+                },
+                {
+                  "bundle": "whole-game-content",
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
                   "path_id": -5391815413240921359,
                   "bytes": 144,
                   "sha256": "d4ba6664acbc72e99aeada8a866e5432907f986b8db066d3e7d76718a701fac7",
@@ -79,6 +103,30 @@
                         "to": [
                           0,
                           -7784787061512429118
+                        ]
+                      }
+                    ]
+                  },
+                  "native_type_hash": "e07b8fbbe1e7b8f953df1f094e626daa"
+                },
+                {
+                  "bundle": "whole-game-content",
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "path_id": -4058823902354597487,
+                  "bytes": 144,
+                  "sha256": "47f2a18f55aa4f70a88f5c4b50c24d7abe35a1e0d9ba78a9a8ed52f2f2e94319",
+                  "transform": {
+                    "empty_mesh_renderer": true,
+                    "references": [
+                      {
+                        "offset": 0,
+                        "from": [
+                          0,
+                          7538853480606844685
+                        ],
+                        "to": [
+                          0,
+                          -6433177430030483853
                         ]
                       }
                     ]
@@ -208,6 +256,30 @@
                 {
                   "bundle": "whole-game-content",
                   "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "path_id": 1230334173799264810,
+                  "bytes": 144,
+                  "sha256": "28bc1949c42df3df00ee6b8573ed4673f0033d9710605ac22e76badfd4193cf1",
+                  "transform": {
+                    "empty_mesh_renderer": true,
+                    "references": [
+                      {
+                        "offset": 0,
+                        "from": [
+                          0,
+                          7538853480606844685
+                        ],
+                        "to": [
+                          0,
+                          504821593444508365
+                        ]
+                      }
+                    ]
+                  },
+                  "native_type_hash": "e07b8fbbe1e7b8f953df1f094e626daa"
+                },
+                {
+                  "bundle": "whole-game-content",
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
                   "path_id": 1994337769509398903,
                   "bytes": 144,
                   "sha256": "589a61e02265a04f8622d8f9ee7b454322cddc24a9abd3e1e8fb23dff0faca16",
@@ -295,6 +367,30 @@
                         "to": [
                           0,
                           -4509276931767622698
+                        ]
+                      }
+                    ]
+                  },
+                  "native_type_hash": "e07b8fbbe1e7b8f953df1f094e626daa"
+                },
+                {
+                  "bundle": "whole-game-content",
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "path_id": 3308788201289185147,
+                  "bytes": 144,
+                  "sha256": "371f1f67bccf52037c24a6e4560ca981398ffa72d7ab9f3885a9195a6ecebea0",
+                  "transform": {
+                    "empty_mesh_renderer": true,
+                    "references": [
+                      {
+                        "offset": 0,
+                        "from": [
+                          0,
+                          7538853480606844685
+                        ],
+                        "to": [
+                          0,
+                          545354382921768114
                         ]
                       }
                     ]
