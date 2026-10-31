@@ -6331,3 +6331,19 @@ ship. No original implementation, target-derived scalar, game body or private pa
 is included. Other native bytes remain intact before checked pointer relocation.
 Eight persisted records match J850 raw-exact, 592 bytes. Complete-file readiness,
 phone installation/update and runtime gates remain open.
+
+### Whole-game Reaper secondary-swing animation
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-animation-clips.json` | `20b3c6bc413a89c082070597290a8181f0343ec5d324ff261eb731a2ad309031` |
+
+Audit: 2026-10-31. One original AnimationClip selector uses the existing native
+stream, reference-pose removal, quaternion normalization and atan2 root-average
+policies. Original curve channels, orientation, loop and mirror fields supply
+the calculation. J1143's pinned AssetRipper 1ac666 StreamedCurveKey and
+CustomCurveResolver provide tangent/binding prior art; the existing synthetic
+root-motion fixture checks atan2 projection. Only selectors, hashes and existing
+policy flags ship; no curve, target scalar, generated body or private path is
+included. Independently persisted output matches J850 raw-exact, 262,216 bytes.
+Complete bundle, phone installation/update and original runtime remain open.

@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J1334](PORTING_JOURNAL.md#j1334--reconstruct-reaper-secondary-swing-animation) | 2026-10-31 | Reconstruct Reaper secondary-swing animation | 2026-10-31. |
 | [J1333](PORTING_JOURNAL.md#j1333--reconstruct-expanding-wave-callback-transform-scales) | 2026-10-31 | Reconstruct expanding-wave callback Transform scales | 2026-10-31. |
 | [J1331](PORTING_JOURNAL.md#j1331--reconstruct-the-false-son-boss-controller) | 2026-10-31 | Reconstruct the False Son Boss controller | 2026-10-31. |
 | [J1332](PORTING_JOURNAL.md#j1332--reconstruct-four-remaining-alpha-renderer-records) | 2026-10-31 | Reconstruct four remaining alpha renderer records | 2026-10-31. |
