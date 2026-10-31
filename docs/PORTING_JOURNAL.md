@@ -2211,3 +2211,16 @@ CPU/GPU peak 79.2 C, above 80 C for 0 s; battery 33 → 36 C.
 Snapshots hash-verified in cold storage; process/selectors absent, OLED asleep.
 This qualifies diagnostic string retention only; ordinary repeated-session memory,
 error-callback delivery, physical controls and sustained performance remain open.
+
+## J1349 — Supply the whole-game Bandit achievement Sprite
+
+2026-10-31. Existing generic record owner reconstructs one original Sprite through
+an independently witnessed export GUID and checked original Texture2D edge.
+All 476 persisted bytes raw-exact to J850; pack SHA-256
+`2913ee69057433e8fa1c16d50ffe6982eed1d03cfaf109c1aa3232cd04d68e2b`.
+Evidence: `work/coordination/p1-wholegame-1031/bandit-sprite-public-v1/done.json`;
+source metadata witnesses: parent `source-export-witness-20261031.json`.
+Production 1.430 s, qualification 5.036 s, peak RSS 284,934,144 bytes.
+Host-only; heat unmeasured. Provider gap filled; residual three unchanged.
+Readiness stays 693/705 available, 685 raw-exact; full bundle, phone production,
+installation/update and runtime remain open.

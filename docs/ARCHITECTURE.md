@@ -5763,3 +5763,12 @@ external metadata. All other native fields remain source-owned. Setup requires
 pinned original bundles and a fresh output pack; scoped readers close on process
 exit and receipts persist. Three records are host raw-exact to J850. No runtime
 owner is added; complete bundle and phone/runtime acceptance remain open.
+
+`recipe/owner-whole-game-sprite-relationships.json` selects the original Bandit
+achievement Sprite through the existing `record_produce.py` native owner. Its
+current exported PNG GUID witnesses the imported Sprite identity; the original
+Sprite supplies geometry and native schema, and a checked Texture2D pointer
+supplies its dependency. Setup pins original input and creates a fresh record
+pack; scoped readers close on process exit and receipts persist. The record is
+host raw-exact to J850. This adds no runtime owner; bundle and phone gates remain
+open.

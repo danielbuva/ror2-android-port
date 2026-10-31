@@ -6579,3 +6579,21 @@ remain authoritative. The synthetic host fixture tests startup and replacement
 lifetime without game source or assets. Provenance/privacy review: authored field
 access only; original implementation, raw heap strings and evidence remain ignored.
 Device qualification remains required before claiming bounded session growth.
+
+### Whole-game Bandit Sprite source relationship
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-whole-game-sprite-relationships.json` | `f0fe7954defbc1de2d408f693577abb30408562db5bbdf32ae4b368f4cc0eb19` |
+
+The recipe selects one original Sprite, its source hash, the
+current export texture GUID and one checked Texture2D relocation. The original
+source container independently supplies the Sprite root; current PNG metadata
+witnesses the GUID and single-Sprite importer context. Pinned AssetRipper
+`1ac666f` TextureExportCollection single-Sprite relationships and the existing
+J1285 exporter audit supply prior art. Existing `record_produce.py` applies
+`player_data.sprite_key` before pointer relocation; no new reconstruction rule,
+pixels, geometry, native output or proprietary implementation is published.
+The complete 476-byte persisted record matches J850. This fills a provider gap;
+residual three and historical readiness remain unchanged. Complete bundle and
+phone/install/update qualification stay open.
