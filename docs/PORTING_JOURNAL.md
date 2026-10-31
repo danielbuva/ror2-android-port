@@ -1626,7 +1626,7 @@ play, physical input and genuine filled-filesystem recovery remain open.
   phone production and install/update remain open; residual recount pending.
 
 
-## J1305 — Recover native settings after writer termination and activity restart
+## J1309 — Recover native settings after writer termination and activity restart
 2026-10-31.
 - The host checker binds termination to the observed writer PID and stops Android's
   replacement activity before cold recovery; a replacement is not a surviving writer.
