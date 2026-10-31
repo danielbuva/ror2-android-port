@@ -1664,6 +1664,19 @@ Public saved residual 103 → 101 before parallel Director closures.
 Readiness stays 693/705 available, 685 raw-exact; full bundle, phone production,
 installation and original runtime remain open. Host-only; no APK/run claim.
 
+## J1309 — Complete original Champrush Director ownership
+
+2026-10-31. Extend the existing whole-game Director recipe with one original
+Champrush record; reuse signed exposed-name conversion and checked PPtr remaps.
+Original topology (80 Transform pairs, seven connected suppliers) is rooted at
+a public GameObject selector and reciprocal Animator slot; no target body ships.
+Evidence: `work/coordination/p1-scenes-w/wholegame-directors-champrush-20261031/done.json`;
+source topology and ownership witnesses are adjacent JSON records.
+Persisted record is raw-exact to J850, 396 bytes; pack SHA-256
+`a7264559e35be5b6b50d57b207534862e3a156725fc79a49f99f09843e8fa09f`.
+Prior art: existing pinned AssetRipper signed PropertyName export technique.
+Saved residual 99 → 98 after J1305/J1306; final-file readiness stays
+693/705 available, 685 raw-exact. Complete bundle/phone/install gates remain open.
 ## J1308 — Resolve whole-game inserted-component managed identities
 
 2026-10-31. Extend the existing source record owner with four original
