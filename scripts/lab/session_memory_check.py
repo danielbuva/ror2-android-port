@@ -244,6 +244,7 @@ def check_session_memory(sessions=DEFAULT_SESSIONS, expected_apk_sha256=None, ro
         value["diagnosticCompletedRootWalkSession"] = sessions + 1
     if memory_snapshots:
         value["diagnosticCompletedMemorySnapshots"] = True
+        value["diagnosticCompletedMemorySnapshotFinalSession"] = sessions + 1
     write(out / "selection.json", value)
     frozen = {
         "sessions": sessions,
@@ -325,7 +326,7 @@ def check_session_memory(sessions=DEFAULT_SESSIONS, expected_apk_sha256=None, ro
                     break
                 phase = current.get("phase")
                 snapshot_ready = True
-                if phase == "offline-start-menu" and memory_snapshots and session in (2, 4) and session not in snapshot_files:
+                if phase == "offline-start-menu" and memory_snapshots and session in (2, sessions + 1) and session not in snapshot_files:
                     name = memory_snapshot_file(current, session)
                     snapshot_ready = name is not None
                     if snapshot_ready:
@@ -481,7 +482,7 @@ def check_session_memory(sessions=DEFAULT_SESSIONS, expected_apk_sha256=None, ro
     summary = growth_summary(observed, resource_samples(final_menu))
     if memory_snapshots:
         summary["limits"] += (
-            " Native heap captures at menus 2/4 allocate and pause; this is attribution evidence, not an ordinary growth/performance measurement."
+            " Native heap captures at menu 2 and the final menu allocate and pause; this is attribution evidence, not an ordinary growth/performance measurement."
         )
     result = {
         "success": not failures,

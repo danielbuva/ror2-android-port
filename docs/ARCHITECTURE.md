@@ -1999,7 +1999,9 @@ explicit exit and hard deadline for historical use; the service never calls it.
 This does not simulate power loss or ENOSPC; device qualification remains open.
 The current `session-memory-check --memory-snapshots` diagnostic extends
 `SessionResourceBoundary` with native/managed heap captures before presentation
-at menus 2 and 4, after the completed worlds have been reclaimed. It requires an
+at menu 2 and the requested series' final menu, after the completed worlds have
+been reclaimed. The host binds the final capture index to `sessions + 1`;
+selectors without that field retain the historical menu-4 default. It requires an
 attempt-matched opt-in and an idle Development player. Native callback completion
 and a nonempty owned file are required before the host proceeds. The host copies
 only that generated snapshot, verifies its SHA-256, then removes the exact device

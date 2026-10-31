@@ -481,7 +481,7 @@ _ENTRIES = (
         "check_session_memory",
         {},
         "current",
-        "Repeat ordinary Commando menu-start, 60 s ready Lakes play and UI-abandon sessions in one process (five by default, --sessions 3 to 32); each completed session must pass the session-abandon contract. Reports existing runtime resource samples and per-menu PSS as observations, not a leak fix or normal-game acceptance. Optional --memory-snapshots captures private native/managed heaps at menus 2/4 for attribution; it allocates/pauses and is separate from ordinary growth/performance. Requires --expected-apk-sha256 bound to the selected device's ownership receipt.",
+        "Repeat ordinary Commando menu-start, 60 s ready Lakes play and UI-abandon sessions in one process (five by default, --sessions 3 to 32); each completed session must pass the session-abandon contract. Reports existing runtime resource samples and per-menu PSS as observations, not a leak fix or normal-game acceptance. Optional --memory-snapshots captures private native/managed heaps at menu 2 and the final menu for attribution; it allocates/pauses and is separate from ordinary growth/performance. Requires --expected-apk-sha256 bound to the selected device's ownership receipt.",
         handler=_session_memory,
     ),
     Action(

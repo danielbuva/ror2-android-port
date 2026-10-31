@@ -2280,3 +2280,16 @@ Production 33.55 s, qualification 4.23 s, peak RSS 338,952,192 bytes.
 Host-only; heat unmeasured. Bounded source recipe only; producer unchanged.
 Residual three unchanged. Readiness stays 693/705 available, 685 raw-exact;
 complete groups, bundle, phone/install/update and runtime gates remain open.
+## J1353 — Capture the requested final menu heap
+
+2026-10-31. Existing SessionResourceBoundary snapshot selection now uses the requested
+final session instead of always menu 4; the host selector records that same endpoint.
+Device acceptance: twelve assisted sessions capture only menus 2 and 13; both native
+snapshots complete and transfer with matching hashes. This is attribution evidence;
+ordinary-play managed-memory plateau and sustained-performance gates remain open.
+Evidence: `work/coordination/alpha-final-menu-heap-device-20261031T204335Z/terminal.done.json`.
+Source `097c75e5`; APK SHA-256
+`d9009691ddccbefb3bdca3aad45bf5120dd011ccb2de66056c9a591a636b038a`.
+Prior art: existing pinned Unity MemorySnapshotDataTools and SDK capture contract.
+Focused 247 host checks, Ruff, public audit and source-pin checks pass; cleanup,
+selector removal, process exit and sleeping display verified; native heaps retained cold.
