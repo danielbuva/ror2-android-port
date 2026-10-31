@@ -488,6 +488,12 @@ parent/child pointer shape, native schemas and every nonpointer bit remain check
 the existing generic owner relocates only explicit references. Setup takes pinned
 original bundles and a fresh output pack; existing scoped readers close at exit
 and pack receipts persist. No runtime owner is added.
+`owner-whole-game-billboard-records.json` selects two original BillboardRenderers
+through unique native component slots and reciprocal public GameObject ownership,
+plus their two referenced BillboardAssets. Original material endpoints resolve to
+public suppliers. The generic owner admits classes 226/227, preserves native
+schemas and nonpointer fields, and relocates checked pointers. Setup, pack state
+and scoped reader teardown follow its existing contract.
 Generic record admission also includes native classes 96, 119, 193, 228 and 330,
 preserving their original schemas and every nonpointer byte.
 The component-edge recipe selects unchanged original records through explicit

@@ -584,6 +584,8 @@ class AnimationProducerTests(unittest.TestCase):
             223,
             224,
             225,
+            226,
+            227,
             228,
             330,
         ):
