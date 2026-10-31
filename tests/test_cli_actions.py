@@ -310,6 +310,26 @@ class PrototypeActionTests(unittest.TestCase):
         self.assertEqual(git.call_args.kwargs["cwd"], FIXTURE_ROOT)
         self.modules["device"].Device.sleep_awakened.assert_not_called()
 
+    def test_alpha_batch_gameplay_only_dispatch_keeps_explicit_scope(self):
+        module = ModuleType("alpha_stability_batch")
+        module.check_alpha_stability_batch = Mock(return_value={"success": True})
+        self.modules["alpha_stability_batch"] = module
+        with patch.dict(sys.modules, {"alpha_stability_batch": module}), patch.object(common.subprocess, "check_output", return_value="/canonical/.git\n"):
+            code, _, error = self.cli(
+                "--action",
+                "alpha-stability-batch",
+                "--device",
+                "fixture-device",
+                "--expected-apk-sha256",
+                "a" * 64,
+                "--done-file",
+                "/private-evidence/done.json",
+                "--gameplay-only",
+            )
+        self.assertEqual((code, error), (0, ""))
+        self.assertTrue(module.check_alpha_stability_batch.call_args.kwargs["gameplay_only"])
+        self.assertNotIn("prior_settings_batch", module.check_alpha_stability_batch.call_args.kwargs)
+
     def test_registry_names_and_current_status_match_documented_contract(self):
         # Added actions have separate dispatch contracts rather than changing
         # the historical pre-registry snapshot.

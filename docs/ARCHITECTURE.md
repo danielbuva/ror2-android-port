@@ -213,7 +213,9 @@ schema's two trailing cached counters after checking their zero values; all
 preceding source fields and SDK-derived script identity remain owned here.
 The `empty_mesh_renderer` projection consumes an original renderer with an empty
 material array and applies the existing authored constructor's three disabled
-flags, retaining every other source field and native type identity.
+flags, retaining every other source field and native type identity. The generic
+record owner delegates the same projection before checked owner-pointer relocation;
+original GameObject membership uses its existing component append operation.
 Explicit record-pack directory/receipt pins supply already
 produced texture bodies and resources; the owner verifies them before/after,
 assembles resource extents, and generates each asset's rooted container preloads.
@@ -436,6 +438,14 @@ require `native_type_hash` for each output. The pack retains that identity and
 `object_produce.py` checks it after its own source type projection, before bundle
 emission. Source readers close per supplier, script caches expire at process exit
 and input pins are rechecked; no new runtime owner is added.
+The same record owner imports named `ControlPlayableAsset` PropertyName mappings
+with `control_exposed_name_default`. An exact-editor authored fixture establishes
+the mapping default; original managed metadata and pinned AssetRipper encoding
+identify its native decimal zero. `owner-whole-game-timeline-records.json` selects
+20 unique incoming tracks and 23 child controls by original graph relationships.
+Checked pointer relocation retains all remaining source fields and type/script
+identities. Setup, output receipts and teardown use the existing record-pack
+contract; no new runtime state or owner is added.
 `script_identity.OriginalScriptFields` scopes original CLR metadata under the
 existing pinned managed-directory contract. Its current/inherited declarations
 and serialized-name aliases govern `prune_absent_script_fields` in both record
@@ -448,7 +458,49 @@ The optional `preserve_original_script_hash` selection delegates to the object
 owner's existing unchanged-schema check after verifying the actual original
 MonoScript binding. The hierarchy path recipes select original records using
 proven roots and unique reciprocal child paths; output state remains exact.
-Generic record admission also includes native classes 96, 119, 193 and 330,
+The generic path also delegates `inactive_scene_object` to the object owner's
+named-active-source check. `owner-whole-game-activation-records.json` selects
+three original HUD roots under existing authored activation policies, preserving
+ordered component references. Setup, pack state, readers and teardown use the
+existing record owner; complete-file and phone admission remain open.
+`owner-whole-game-native-component-records.json` selects the three remaining
+native HUD slots (Canvas, Rigidbody and CanvasRenderer) through ordered original
+component PPtrs and reciprocal qualified root ownership. The same record owner
+relocates their GameObject pointers while preserving schemas and nonpointer bytes.
+`owner-whole-game-meshfilter-records.json` selects fourteen original MeshFilters
+through qualified GameObject sources, unique original class slots and reciprocal
+ownership. Both original owner and mesh endpoints resolve to existing public
+suppliers, including external mesh members. The same generic record owner
+preserves native fields and schemas while relocating checked pointers; setup,
+pack state and teardown follow its existing contract.
+`owner-whole-game-renderer-records.json` selects twelve original MeshRenderers
+through qualified GameObject sources, unique class slots and reciprocal ownership.
+Every original pointer endpoint, including null and unchanged references, is
+checked against existing public suppliers. The generic record owner preserves
+native schemas and fields, with its existing reader lifecycle and pack state.
+`owner-whole-game-tree-records.json` selects eight Trees through original prefab
+GameObject owners and unique reciprocal class slots, plus two WindAssets through
+original Tree references. All pointer endpoints resolve to public suppliers;
+setup, pack state and reader teardown follow the generic record owner contract.
+`owner-whole-game-transform-owner-records.json` selects eighteen original Transforms
+through qualified GameObject component slots and reciprocal ownership. Original
+parent/child pointer shape, native schemas and every nonpointer bit remain checked;
+the existing generic owner relocates only explicit references. Setup takes pinned
+original bundles and a fresh output pack; existing scoped readers close at exit
+and pack receipts persist. No runtime owner is added.
+`owner-whole-game-billboard-records.json` selects two original BillboardRenderers
+through unique native component slots and reciprocal public GameObject ownership,
+plus their two referenced BillboardAssets. Original material endpoints resolve to
+public suppliers. The generic owner admits classes 226/227, preserves native
+schemas and nonpointer fields, and relocates checked pointers. Setup, pack state
+and scoped reader teardown follow its existing contract.
+`owner-whole-game-lodgroup-records.json` selects one original LODGroup through
+its unique native component slot and reciprocal public GameObject ownership.
+Every original LOD renderer endpoint resolves to a public supplier, including the
+BillboardRenderer. The existing generic record owner preserves native class 205,
+schema and nonpointer fields; only checked references relocate. Setup, persisted
+pack state and scoped reader teardown follow its existing contract.
+Generic record admission also includes native classes 96, 119, 193, 228 and 330,
 preserving their original schemas and every nonpointer byte.
 The component-edge recipe selects unchanged original records through explicit
 component PPtrs in qualified GameObject recipes, after checked omissions.
@@ -458,6 +510,11 @@ The prefab-policy record recipe delegates the existing exported-name projection
 and component append to the object owner. Original component order and ownership
 remain checked; appended adapters come from existing public source production.
 These pack operations add no runtime owner or complete-bundle acceptance.
+`owner-whole-game-prefab-source-records.json` selects original SpeedTree and
+ItemInfection roots plus BrotherSwing through ordered component fingerprints,
+reciprocal ownership and parent relationships. It uses the same generic record
+owner and existing exported-name/checked detacher-omission operations. Setup,
+pack state and teardown follow the existing contract above.
 The existing-presentation recipe additionally delegates checked component
 omissions to that owner. `sanitize_optional_content` supplies the existing policy;
 actual original script identities select omissions, while retained component
@@ -473,6 +530,10 @@ their native allocation sizes, preserving all other controller fields.
 `controller_state_order` relocates whole original state records using checked
 source-index bijections. Default states and direct transition destinations move
 with those records; selector and entry/exit indices retain their source values.
+`controller_behaviour_order` relocates original behaviour pointers and adjusts
+source state-range starts. Nonempty ranges must remain contiguous and ordered;
+empty ranges retain their source start, and the original ranges must cover all
+identity-indexed behaviours exactly once. No behaviour fields are synthesized.
 TOS export selections may also name a checked collision ordinal, applying the
 pinned exporter's filename suffix before deriving the path CRC from source text.
 `controller_clear_null_motion` imports an original sole unavailable clip leaf as
@@ -1039,10 +1100,15 @@ serialized member and 148 MB resource member; block caching remains bounded.
 
 `shader_prefab.py` owns standalone prefab Shader records. Original Shader forms
 and acquired SDK snippets supply runtime passes and no-scene keyword axes; SDK
-default materials select particle features while original fragment rows retain
-native ordering. Original dummy properties and pinned public exporter templates
-supply game placeholder forms. Fallback keyword registration follows serialized
-SDK snippet order, including inherited snippets, and SDK dependency traversal
+default materials select particle features; alternatively, pinned original
+materials with checked shader relationships retain original runtime feature
+alternatives. Original fragment rows retain native ordering. Original dummy
+properties and pinned public exporter templates supply game placeholder forms.
+Explicit `fallback_original` selections preserve checked local original fallback
+edges, or retain a literal fallback with no original dependency, without adding
+SDK keyword axes; `owner-whole-game-shader-calmwater.json` uses this path.
+Fallback keyword registration follows serialized SDK snippet order, including
+inherited snippets, and SDK dependency traversal
 maps to declared destination identities. Existing compiler, SDK serializer and
 codec owners produce all programs and framing. Setup requires pinned original,
 SDK, template and profile providers with new disjoint output. Teardown reaps
@@ -1889,22 +1955,19 @@ a changed repeated-session slope remains a device gate.
 The host memory summary keeps immediate post-collection and subsequent-menu
 managed slopes separate, including the observed final menu without extrapolation.
 The current `settings-write-interrupt-check` host diagnostic uses
-`settings_write_interrupt_check.py` and the authored `LabPendingWriteStop` SDK
-actor. It requires an idle, owned APK and a matched diagnostic menu selector,
-saves the existing native values, observes the actual pending-file creation,
-then terminates that writer through same-UID signalling from the owned
-Development package via standard `run-as`. Both SDK and host require its exit.
-The normal package-stop command remains failure teardown; no root or permission
-changes are used. An
-unchanged primary and retained pending transaction are required before cold
-recovery/resave can qualify; a missed window refuses acceptance. The original
-store performs every save. Teardown removes only its selector and unique SDK
-temporary files, stops its owned process and verifies OLED sleep. Protected
-profile/results hashes remain unchanged. The SDK actor exits explicitly after
-its observer completes, with a separate 35-second process deadline because
-Android may retain a non-daemon observer thread. Initial primary bytes and
-observer failure output are preserved privately. This does not simulate power loss or
-ENOSPC, and runtime qualification remains a separate journal gate.
+`settings_write_interrupt_check.py` and the packaged `LabSettingsWriteObserver`
+service described below. It requires an idle, owned APK, matched menu selector
+and a nonce-only request. It saves existing native values and observes actual
+pending-file creation, then terminates only the PID/UID-bound main writer through
+same-UID signalling. Atomic ready/result records bind a distinct service PID.
+An unchanged original primary and retained pending transaction are required
+before cold validated-primary recovery and native resave can qualify. A missed
+window refuses acceptance. Original save behavior is unchanged. Teardown stops
+the owned package, removes its selector/request/unique records and verifies OLED
+sleep. Protected profile/results hashes remain unchanged. Initial primary bytes
+and observer failure output stay private. The standalone SDK CLI retains its
+explicit exit and hard deadline for historical use; the service never calls it.
+This does not simulate power loss or ENOSPC; device qualification remains open.
 The current `session-memory-check --memory-snapshots` diagnostic extends
 `SessionResourceBoundary` with native/managed heap captures before presentation
 at menus 2 and 4, after the completed worlds have been reclaimed. It requires an
@@ -1914,6 +1977,8 @@ only that generated snapshot, verifies its SHA-256, then removes the exact devic
 file; profile/payload data are untouched. Snapshot allocation and pauses exclude
 this case from ordinary growth/performance acceptance. The existing static-root
 walk is a separate diagnostic. Heap files, databases and analysis stay private.
+The host retains the last PID/attempt-matched report before teardown, including
+when a runtime log error interrupts a session; prior reports cannot replace it.
 The public Unity `MemorySnapshotDataTools` CLI can analyze them without an Editor
 package; no parser or third-party implementation is vendored into the lab/player.
 
@@ -1932,6 +1997,11 @@ performance guarantee. Host admission estimates two 4 GiB snapshots plus
 records that budget and observed free bytes. The 100 GiB full-build floor does
 not apply to this capture-only queue. Host fixtures exercise admission and
 failure contracts.
+`--gameplay-only` selects just the existing heap and sustained owners when the
+independent SDK interruption route is blocked. Its receipt explicitly records
+that scope; it supplies no settings-interruption evidence and cannot combine
+with retained settings evidence. All device, thermal and teardown contracts
+remain required.
 `--prior-settings-batch PATH` retains a successful settings-interruption stage
 from a prior batch with matching outer and nested APK digests, even when a later
 stage failed. Its source path, SHA-256 and stage remain separate from fresh
@@ -2018,6 +2088,21 @@ with no live bank swap. Host payload resync still replaces the attempt-bound map
 restart qualification therefore requires the same attempt without resync.
 Mapping/capture/filesystem fixtures and settings-modal peers cover host contracts;
 physical labels, native actions, Android writes and restart remain device gates.
+
+`OfflineSettingsSession` also owns the default-off interrupted-write witness.
+`PortSession` reads a nonce-only `settings-write-observer.request` once at startup;
+opening settings starts the non-exported same-UID Android service
+`LabSettingsWriteObserver` in `:settings_write_observer`. It derives external
+paths and writer PID/UID inside the app, observes the native pending CREATE and
+writes atomic nonce-bound ready/result records without changing the save method.
+Closing settings or disposing its owner cancels observation; the service stops
+itself after completion or its 35-second deadline (`START_NOT_STICKY`).
+`build.stage_android_assets` stages its Android library and shared Java operation
+from tracked inputs under Gradle's default `src/main/java` source root; Unity's
+generated library build file does not enable the legacy `src` root. The host
+checks distinct service/main PIDs, retained original
+primary/pending bytes, cold recovery and native resave. Device survival after the
+writer kill remains a qualification gate.
 
 Settings persistence remains owned by `AndroidOfflineSettings`. Its existing
 validated pending/primary/backup transaction is unchanged. `TrySave` converts
@@ -4869,7 +4954,10 @@ cadence, and detaches the exact bridge delegate during teardown. An ownership
 conflict marks session failure while remaining world cleanup continues.
 The Cecil producer inserts a default-off branch immediately before the original
 projectile call, preserving its receiver, source struct local and original
-call. The observer stores at most eight scalar-only rows; it retains no game
+call. The observer stores at most eight scalar-only rows. It continues checking
+scalar finiteness after the cap and, if no invalid call was retained earlier,
+replaces the final row with the first later nonfinite call. Subsequent calls
+preserve that first witness. It retains no game
 objects and changes no projectile operands. Producer, music-return observer
 and native-camera profiles bind the resulting managed chain separately.
 `DamageInfo.force` is observed as an invariant vector triplet string with a
@@ -4934,7 +5022,9 @@ The source knowledge is the pinned Android 13
 and the public [MotionEvent](https://developer.android.com/reference/android/view/MotionEvent)
 pointer-ID/action contract; no platform implementation is copied. Each gesture
 is bounded to 128 steps/30 s of waits, cancels a final hold and removes its
-unique temporary device DEX/request files. A dispatch failure stops only the
+unique temporary device DEX/request files. These files use the existing app-external
+runtime directory; its receipt reader verifies backing against fresh storage
+observations before staging. A dispatch failure stops only the
 still-matching owned game process. Success leaves the session/display running.
 The driver observes only the owned UID's foreground process state through the
 normal shell API. Leaving that state ends the pointer stream with
@@ -5499,3 +5589,10 @@ graph. Setup takes original PC/SDK roots, explicit receipt-pinned provider packs
 the public-source Mesh helper and a fresh output directory. Process exit releases
 file/codec handles; receipts persist. All 10 objects, the member and compressed
 bundle are host raw-exact to J850. Complete phone production remains open.
+
+The whole-game Meridian Material profile
+`recipe/owner-whole-game-meridian-material-records.json` uses the existing
+`record_produce.py` owner to preserve original fields and keywords while
+relocating schema-checked Shader/texture relationships. Its four persisted
+records are host raw-exact; shared Shader and complete bundle/device gates
+remain separate. It owns no runtime state or teardown.

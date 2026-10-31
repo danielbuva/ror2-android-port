@@ -268,6 +268,25 @@ class AnimationProducerTests(unittest.TestCase):
         self.assertEqual(struct.pack("<f", A.small_atan2f(-0.000732421875, 1.25)).hex(), "999919ba")
         self.assertEqual(struct.pack("<f", A.small_atan2f(-0.0, 1.25)).hex(), "00000080")
 
+    def test_control_mapping_import_defaults_name_and_keeps_reference_and_state(self):
+        schema = F.node(
+            "Base",
+            children=[
+                F.node("prefix", 12, kind="PPtr<MonoScript>"),
+                F.node("sourceGameObject", children=[F.text("exposedName"), F.node("defaultValue", 12, kind="PPtr<GameObject>")]),
+                F.node("suffix", 4),
+            ],
+        )
+        pointer = struct.pack("<iq", 1, 123)
+        state = struct.pack("<iqI", 0, 456, 0x12345678)
+        source = pointer + F.vector(b"-123456789", 10) + state
+        policy = {"control_exposed_name_default": True, "references": [{"offset": 20, "from": [0, 456], "to": [0, 789]}]}
+        expected = pointer + F.vector(b"0", 1) + struct.pack("<iqI", 0, 789, 0x12345678)
+        self.assertEqual(A.transform_generic(source, 114, policy, schema), expected)
+        self.assertEqual(A.transform_generic(source, 114, {}, schema), source)
+        with self.assertRaisesRegex(ValueError, "MonoBehaviour"):
+            A.transform_generic(source, 320, policy, schema)
+
     def test_director_reimport_sorts_signed_keys_with_their_references(self):
         # Fixed CRC32 vectors cover signed ordering, alignment changes and null PPtrs.
         entry = F.node("data", children=[F.text("first"), F.node("second", 12, kind="PPtr<Object>")])
@@ -565,6 +584,9 @@ class AnimationProducerTests(unittest.TestCase):
             223,
             224,
             225,
+            226,
+            227,
+            228,
             330,
         ):
             transform = {"references": [{"offset": len(body) - 16, "from": [3, 1234567], "to": [7, -999]}]}
@@ -601,6 +623,29 @@ class AnimationProducerTests(unittest.TestCase):
                 with self.assertRaisesRegex(ValueError, "generic object operation"):
                     A.produce(path, A.B.sha(path), pc, root / "operation-drift")
 
+    def test_empty_renderer_dispatch_preserves_native_values_before_owner_relocation(self):
+        schema = F.node(
+            "Base",
+            children=[
+                F.node("m_GameObject", 12, kind="PPtr<GameObject>"),
+                F.node("m_Enabled", 1, kind="UInt8"),
+                F.node("m_CastShadows", 1, kind="UInt8"),
+                F.node("m_ReceiveShadows", 1, kind="UInt8"),
+                F.node("retainedFlag", 1, kind="UInt8"),
+                F.array("m_Materials", F.node("data", 12, kind="PPtr<Material>")),
+                F.node("retained", 4, kind="float"),
+            ],
+        )
+        body = struct.pack("<iq", 0, 11) + bytes([1, 1, 1, 1]) + bytes(4) + struct.pack("<I", 0x80000000)
+        stream = io.BytesIO(serialized(body, schema, class_id=23))
+        stream.size = len(stream.getvalue())
+        source_type = A.W.read_serialized(stream)["types"][0]
+        policy = {"empty_mesh_renderer": True, "references": [{"offset": 0, "from": [0, 11], "to": [0, 99]}]}
+        expected = struct.pack("<iq", 0, 99) + bytes(3) + body[15:]
+        self.assertEqual(A.transform_generic(body, 23, policy, source_type=source_type), expected)
+        with self.assertRaisesRegex(ValueError, "original MeshRenderer schema"):
+            A.transform_generic(body, 1, policy, source_type=source_type)
+
     def test_prefab_policies_preserve_components_and_native_tail(self):
         name = b" Beam/[Demo] (Clone) "
         encoded = struct.pack("<I", len(name)) + name
@@ -621,6 +666,20 @@ class AnimationProducerTests(unittest.TestCase):
             A.transform_generic(body, 114, policy)
         with self.assertRaisesRegex(ValueError, "component append"):
             A.transform_generic(body, 114, {"append_components": [303]})
+
+    def test_prefab_activation_preserves_component_order_and_checks_source_name(self):
+        tail = struct.pack("<II", 5, 4) + b"Demo" + b"\x07\x00\x01"
+        body = struct.pack("<Iiqiq", 2, 0, 11, 0, 22) + tail
+        policy = {
+            "inactive_scene_object": "Demo",
+            "references": [{"offset": 4, "from": [0, 11], "to": [0, 101]}],
+        }
+        expected = struct.pack("<Iiqiq", 2, 0, 101, 0, 22) + tail[:-1] + bytes(1)
+        self.assertEqual(A.transform_generic(body, 1, policy), expected)
+        with self.assertRaisesRegex(ValueError, "named active original"):
+            A.transform_generic(body, 1, {"inactive_scene_object": "Other"})
+        with self.assertRaisesRegex(ValueError, "activation policy"):
+            A.transform_generic(body, 114, policy)
 
     def test_prefab_omissions_check_original_identity_before_append_and_remap(self):
         tail = struct.pack("<II", 5, 4) + b"Demo" + b"\x07\x00\x01"

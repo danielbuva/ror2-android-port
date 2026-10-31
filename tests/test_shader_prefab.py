@@ -5,6 +5,7 @@ import importlib
 from pathlib import Path
 import sys
 import unittest
+from unittest.mock import Mock
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "tools/phone-build/accepted-output"))
 S = importlib.import_module("shader_prefab")
@@ -23,6 +24,20 @@ def snippet(global_axes=(), local_axes=(), builtins=(), runtime=""):
 
 
 class PrefabShaderTests(unittest.TestCase):
+    def test_original_fallback_retains_local_edge_and_unresolved_literal(self):
+        selected = {"original": {"path": "original.bundle", "member": "CAB-source"}, "fallback_original": []}
+        source = {"m_Dependencies": [], "m_ParsedForm": {"m_FallbackName": "Legacy/Diffuse"}}
+        original = Mock()
+        self.assertEqual(S.original_fallback_dependencies(source, selected, original), [])
+        original.assert_not_called()
+        witness = dict(selected["original"], path_id=-7)
+        selected["fallback_original"] = [{"original": witness, "to": [0, 19]}]
+        source["m_Dependencies"] = [{"m_FileID": 0, "m_PathID": -7}]
+        source["m_ParsedForm"]["m_FallbackName"] = "Water/Single Sided"
+        original.return_value.read_typetree.return_value = {"m_ParsedForm": {"m_Name": "Water/Single Sided"}}
+        self.assertEqual(S.original_fallback_dependencies(source, selected, original), [{"m_FileID": 0, "m_PathID": 19}])
+        original.assert_called_once_with(witness)
+
     def test_inherited_snippet_order_owns_registry_without_reordering_existing_pass_names(self):
         first = snippet([["__", "FOG_LINEAR"]])
         second = snippet([["__", "INSTANCING_ON"]], [["_", "LOCAL"]], [["SHADOWS_DEPTH"], ["SHADOWS_CUBE"]])
@@ -57,6 +72,10 @@ class PrefabShaderTests(unittest.TestCase):
         material = {"m_Shader": {"m_FileID": 0, "m_PathID": 211}, "m_ValidKeywords": ["_ALPHABLEND_ON"], "m_EnableInstancingVariants": False}
         _, rows = S.particle_selections(source, carrier, material)
         self.assertEqual(rows, {11: [[[], ["_ALPHABLEND_ON"], ["PROCEDURAL_INSTANCING_ON", "_ALPHABLEND_ON"]]] * 3})
+        # Original materials retain original runtime feature alternatives; the
+        # acquired SDK default above intentionally strips unused local features.
+        _, original_rows = S.A.particles_selections(source, [material], None, carrier=carrier)
+        self.assertEqual(original_rows, {11: [[[], ["_ALPHABLEND_ON"], ["_ALPHAMODULATE_ON"], ["PROCEDURAL_INSTANCING_ON", "_ALPHABLEND_ON"]]] * 3})
 
     def test_prefab_keeps_instancing_and_softparticles_but_excludes_scene_fog_and_editor_passes(self):
         source_snippet = snippet(

@@ -1,6 +1,6 @@
 """Compile standalone prefab SDK shaders and original dummy fallback forms.
 
-Original forms, acquired SDK declarations/default materials and pinned public
+Original forms/materials, acquired SDK declarations/default materials and pinned public
 exporter templates are the only content providers. No accepted body, program,
 pass-key or keyword/permutation table supplies production data.
 """
@@ -39,6 +39,21 @@ def keyword_registry(source, seed):
                 names.append(name)
                 flags.append(0)
     return names, flags
+
+
+def original_fallback_dependencies(source, selected, original):
+    """Retain original fallback edges, including an unresolved literal fallback."""
+    witnesses = selected["fallback_original"]
+    dependencies = source["m_Dependencies"]
+    if dependencies != [{"m_FileID": 0, "m_PathID": row["original"]["path_id"]} for row in witnesses]:
+        raise ValueError("Prefab original fallback dependencies differ")
+    for row in witnesses:
+        witness = row["original"]
+        if (witness["path"], witness["member"]) != (selected["original"]["path"], selected["original"]["member"]):
+            raise ValueError("Prefab original fallback member differs")
+        if original(witness).read_typetree()["m_ParsedForm"]["m_Name"] != source["m_ParsedForm"]["m_FallbackName"]:
+            raise ValueError("Prefab original fallback name differs")
+    return [{"m_FileID": row["to"][0], "m_PathID": row["to"][1]} for row in witnesses]
 
 
 def prefab_selections(source, *, retain_instancing=True):
@@ -94,6 +109,8 @@ def produce(profile_path, profile_pin, pc, sdk, asset_ripper, codec, codec_pin, 
     pins.extend((P.relative(sdk, name), pin) for name, pin in profile["sdk"].items())
     for record in profile["records"]:
         pins.append((P.relative(pc, record["original"]["path"]), record["original"]))
+        pins.extend((P.relative(pc, material["path"]), material) for material in record.get("materials", []))
+        pins.extend((P.relative(pc, row["original"]["path"]), row["original"]) for row in record.get("fallback_original", []))
     for path, pin in pins:
         P.checked(path, pin)
     inventory, common = P.includes(sdk / "CGIncludes")
@@ -121,6 +138,24 @@ def produce(profile_path, profile_pin, pc, sdk, asset_ripper, codec, codec_pin, 
         if obj.type.name != "Shader" or hashlib.sha256(obj.get_raw_data()).hexdigest() != selected["body_sha256"]:
             raise ValueError("Prefab original Shader body differs")
         return obj
+
+    def particle_materials(selected):
+        materials = []
+        for witness in selected["materials"]:
+            path = P.relative(pc, witness["path"])
+            if path not in originals:
+                originals[path] = UnityPy.load(str(path))
+            obj = next(obj for obj in originals[path].objects if (obj.assets_file.name, obj.path_id) == (witness["member"], witness["path_id"]))
+            if obj.type.name != "Material" or hashlib.sha256(obj.get_raw_data()).hexdigest() != witness["body_sha256"]:
+                raise ValueError("Prefab original particle material body differs")
+            material = obj.read_typetree()
+            pointer = material["m_Shader"]
+            file_id = pointer["m_FileID"]
+            member = obj.assets_file.name if file_id == 0 else obj.assets_file.externals[file_id - 1].path.rsplit("/", 1)[-1]
+            if (member, pointer["m_PathID"]) != (selected["original"]["member"], selected["original"]["path_id"]):
+                raise ValueError("Prefab original particle material shader differs")
+            materials.append(material)
+        return materials
 
     def sdk_source(identity):
         if identity not in sdk_objects:
@@ -182,7 +217,11 @@ def produce(profile_path, profile_pin, pc, sdk, asset_ripper, codec, codec_pin, 
                     runtime = sdk_source(identity)
                     if any(source["m_ParsedForm"][key] != runtime["m_ParsedForm"][key] for key in ("m_Name", "m_PropInfo")):
                         raise ValueError("Prefab original/SDK Shader properties differ")
-                    if "sdk_material" in selected:
+                    if "materials" in selected:
+                        if identity != 211:
+                            raise ValueError("Prefab original materials require the particle shader")
+                        runtime, selections = A.particles_selections(runtime, particle_materials(selected), None, carrier=source)
+                    elif "sdk_material" in selected:
                         material = next(
                             obj
                             for obj in UnityPy.load(str(sdk / "Resources/unity_builtin_extra")).objects
@@ -222,13 +261,16 @@ def produce(profile_path, profile_pin, pc, sdk, asset_ripper, codec, codec_pin, 
                         raise ValueError("Prefab original dummy template differs")
                     tree = A.postprocessing_tree(connection, text, filename, source, node, profile["settings"], image, common, compress)
                     fallback = tree["m_ParsedForm"]["m_FallbackName"]
-                    identity = selected["fallback_sdk_shader"]
-                    fallback_source = sdk_source(identity)
-                    if fallback_source["m_ParsedForm"]["m_Name"].removeprefix("Legacy Shaders/") != fallback:
-                        raise ValueError("Prefab original/SDK fallback identity differs")
-                    form = tree["m_ParsedForm"]
-                    form["m_KeywordNames"], form["m_KeywordFlags"] = keyword_registry(fallback_source, (form["m_KeywordNames"], form["m_KeywordFlags"]))
-                    tree["m_Dependencies"] = pointers(chain(identity))
+                    if "fallback_original" in selected:
+                        tree["m_Dependencies"] = original_fallback_dependencies(source, selected, original)
+                    else:
+                        identity = selected["fallback_sdk_shader"]
+                        fallback_source = sdk_source(identity)
+                        if fallback_source["m_ParsedForm"]["m_Name"].removeprefix("Legacy Shaders/") != fallback:
+                            raise ValueError("Prefab original/SDK fallback identity differs")
+                        form = tree["m_ParsedForm"]
+                        form["m_KeywordNames"], form["m_KeywordFlags"] = keyword_registry(fallback_source, (form["m_KeywordNames"], form["m_KeywordFlags"]))
+                        tree["m_Dependencies"] = pointers(chain(identity))
                     writer = EndianBinaryWriter(endian="<")
                     write_typetree(tree, node, writer)
                     body = writer.bytes

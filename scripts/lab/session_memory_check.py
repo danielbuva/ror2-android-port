@@ -270,6 +270,7 @@ def check_session_memory(sessions=DEFAULT_SESSIONS, expected_apk_sha256=None, ro
     live_at = startup_at = None
     settings_sent = end_requested = end_sent = False
     final_menu = None
+    last_current = None
     runtime_errors = []
     cleanup_errors = []
     started = time.monotonic()
@@ -308,6 +309,7 @@ def check_session_memory(sessions=DEFAULT_SESSIONS, expected_apk_sha256=None, ro
                 break
             current = cleanup._read_json(device, report_path)
             if current and matches_run(current, pid, attempt):
+                last_current = current
                 session = current.get("session")
                 if type(session) is not int or not 1 <= session <= sessions + 1:
                     fail("unexpected-session-index")
@@ -430,6 +432,12 @@ def check_session_memory(sessions=DEFAULT_SESSIONS, expected_apk_sha256=None, ro
     except Exception as error:
         fail("runner-error", str(error))
     finally:
+        try:
+            if last_current is not None:
+                # Keep observer evidence when a log error aborts before the next menu.
+                write(out / "last-current-report.json", last_current)
+        except Exception as error:
+            cleanup_errors.append("current report capture: " + str(error))
         try:
             if pid:
                 logs = device.sh("logcat", "-d", "--pid=" + pid, "-v", "threadtime", "Unity:I", "AndroidRuntime:E", "*:S", check=False)

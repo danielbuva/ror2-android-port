@@ -939,7 +939,7 @@ def controller_opposed_angles(body, root):
     return bytes(result)
 
 
-def controller_singleton_behaviours(body, root, order):
+def controller_behaviour_ranges(body, root, order):
     _, spans = fields(body, root)
     inverse = {old: new for new, old in enumerate(order)}
     start, end = spans[("m_StateMachineBehaviours",)]
@@ -958,11 +958,18 @@ def controller_singleton_behaviours(body, root, order):
         if path[:2] != prefix + ("m_StateMachineBehaviourRanges",) or path[-1] != "m_StartIndex":
             continue
         c, d = spans[path[:-1] + ("m_Count",)]
-        if b - a != 4 or d - c != 4 or struct.unpack_from("<I", body, c)[0] != 1:
-            raise ValueError("nonsingleton behaviour range")
+        if b - a != 4 or d - c != 4:
+            raise ValueError("invalid behaviour range extent")
         old = struct.unpack_from("<I", body, a)[0]
-        seen.append(old)
-        struct.pack_into("<I", out, a, inverse[old])
+        size = struct.unpack_from("<I", body, c)[0]
+        if old + size > n:
+            raise ValueError("behaviour range outside source indices")
+        mapped = [inverse[i] for i in range(old, old + size)]
+        if mapped and mapped != list(range(mapped[0], mapped[0] + size)):
+            raise ValueError("noncontiguous behaviour range")
+        seen.extend(range(old, old + size))
+        if mapped:
+            struct.pack_into("<I", out, a, mapped[0])
     if sorted(seen) != list(range(n)):
         raise ValueError("incomplete source behaviour ranges")
     return bytes(out)
@@ -1136,6 +1143,24 @@ def director_exposed_names(body, root):
     return body[:start] + struct.pack("<I", count) + b"".join(row for _, row in sorted(entries, key=lambda row: row[0])) + body[end:]
 
 
+def control_exposed_name_default(body, root):
+    """Import the managed YAML PropertyName mapping as the native default.
+
+    The exact-editor authored scalar/mapping fixture establishes this import
+    behavior independently of accepted game records. Other fields stay original.
+    """
+    _, located = fields(body, root)
+    start, end = located[("sourceGameObject", "exposedName")]
+    length = struct.unpack_from("<I", body, start)[0]
+    text = body[start + 4 : start + 4 + length].decode("utf-8")
+    value = int(text)
+    if str(value) != text or not -(2**31) <= value < 2**31 or end != (start + 4 + length + 3) // 4 * 4:
+        raise ValueError("original PropertyName is not an exported signed integer")
+    result = body[:start] + struct.pack("<I", 1) + b"0\0\0\0" + body[end:]
+    fields(result, root)
+    return result
+
+
 def director_unbound_tracks(body, root, selected):
     """Add explicit imported track relationships with native null bindings.
 
@@ -1178,6 +1203,7 @@ def transform_generic(body, class_id, selected, root=None, read_clip=None, sourc
         "keyword_policy",
         "strip_compute_programs",
         "director_exposed_names",
+        "control_exposed_name_default",
         "director_unbound_tracks",
         "controller_clip_order",
         "controller_loop_states",
@@ -1193,6 +1219,8 @@ def transform_generic(body, class_id, selected, root=None, read_clip=None, sourc
         "normalize_exported_prefab_name",
         "append_components",
         "remove_components",
+        "inactive_scene_object",
+        "empty_mesh_renderer",
     } or (selected.get("demote_keywords") and class_id != 21):
         raise ValueError("unknown generic object operation")
     if "remove_components" in selected:
@@ -1207,6 +1235,14 @@ def transform_generic(body, class_id, selected, root=None, read_clip=None, sourc
         if class_id != 1:
             raise ValueError("component append requires original GameObject")
         body = O.append_components(body, selected["append_components"])
+    if "inactive_scene_object" in selected:
+        if class_id != 1:
+            raise ValueError("activation policy requires original GameObject")
+        body = O.deactivate_named_gameobject(body, selected["inactive_scene_object"])
+    if "empty_mesh_renderer" in selected:
+        if class_id != 23 or selected["empty_mesh_renderer"] is not True or source_type is None:
+            raise ValueError("empty renderer projection requires original MeshRenderer schema")
+        body = O.empty_mesh_renderer(body, source_type["tree"])
     if "keyword_policy" in selected:
         if class_id != 21 or selected["keyword_policy"] not in ("dummy-shader-demote-valid", "dummy-shader-sort-invalid"):
             raise ValueError("keyword policy requires original Material and named dummy import")
@@ -1220,6 +1256,10 @@ def transform_generic(body, class_id, selected, root=None, read_clip=None, sourc
         if selected["director_exposed_names"] is not True or class_id != 320 or root is None:
             raise ValueError("exposed-name import requires original PlayableDirector schema")
         body = director_exposed_names(body, root)
+    if "control_exposed_name_default" in selected:
+        if selected["control_exposed_name_default"] is not True or class_id != 114 or root is None:
+            raise ValueError("control exposed-name import requires original MonoBehaviour schema")
+        body = control_exposed_name_default(body, root)
     if "controller_clear_skeleton_masks" in selected:
         if selected["controller_clear_skeleton_masks"] is not True:
             raise ValueError("unqualified controller skeleton mask policy")
@@ -1245,7 +1285,7 @@ def transform_generic(body, class_id, selected, root=None, read_clip=None, sourc
     if "controller_tos" in selected:
         body = controller_tos(body, root, selected["controller_tos"])
     if "controller_behaviour_order" in selected:
-        body = controller_singleton_behaviours(body, root, selected["controller_behaviour_order"])
+        body = controller_behaviour_ranges(body, root, selected["controller_behaviour_order"])
     if "importer_guid" in selected or "crop_rectangle_offset" in selected:
         if class_id != 213 or "importer_guid" not in selected:
             raise ValueError("Sprite import operations require an original Sprite and importer GUID")
@@ -1449,6 +1489,9 @@ def produce(profile_path, profile_sha256, pc, output, sdk=None):
                             223,
                             224,
                             225,
+                            226,
+                            227,
+                            228,
                             320,
                             330,
                         ):
@@ -1495,7 +1538,9 @@ def produce(profile_path, profile_sha256, pc, output, sdk=None):
                                 receipt.setdefault("pruned_script_fields", {})[str(obj["path_id"])] = removed
                             typ = {**typ, "hash": value}
                         root = None
-                        if typ["class_id"] in (74, 91, 320):
+                        if typ["class_id"] in (74, 91, 320) or any(
+                            "control_exposed_name_default" in target.get("transform", {}) for target in selected["outputs"]
+                        ):
                             if obj["type_id"] not in trees:
                                 trees[obj["type_id"]] = SCHEMA.type_tree(io.BytesIO(typ["tree"]))
                             root = trees[obj["type_id"]]

@@ -163,8 +163,10 @@ Record sampled time above 80 C, CPU/GPU peak and phase; demanding moments at
 80–85 C do not fail a run. Retain failed cases without automatic retry.
 Before each stage, cool readable CPU/GPU/battery/skin zones to at most 50 C
 with the OLED asleep, and battery back to at most 35 C before every stage.
-Refuse admission while battery status is charging (2) at level >= 80%, or
-level > 85%; report without retry and never change charging settings. Record
+At level >= 80%, confirm actual charging only after three consecutive positive
+`current_now` samples 10 seconds apart; a nonpositive sample permits the usual
+cool admission checks. Status 2 with zero current is admitted. Refuse confirmed
+charging or level > 85%; report without retry and never change charging settings. Record
 battery temperature, level and status in the trace and stage receipts.
 Record other physical zones, including power-management,
 charger and USB sensors, as excluded from admission only; continue sampling
@@ -209,6 +211,11 @@ nohup ./dev prototype --action alpha-stability-batch \
 
 The long-lived driver records its own PID in the lease, stops on the first
 failure and publishes the done receipt after terminal verification and pruning.
+Use `--gameplay-only` when collecting independent heap and sustained evidence
+while settings interruption is blocked (for example, adopted-storage `run-as`
+refusal). The receipt records `scope: gameplay-only`; success covers only those
+two stages and leaves settings interruption open. Do not combine this option
+with `--prior-settings-batch`.
 Read that receipt after completion rather than polling the device. A failed
 terminal readback preserves the lease and evidence for diagnosis. The sustained
 case uses invincibility only, manual neutral input and small software camera

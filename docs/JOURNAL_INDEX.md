@@ -10,6 +10,28 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J1303](PORTING_JOURNAL.md#j1303--publish-original-whole-game-meridian-material-relationships) | 2026-10-31 | Publish original whole-game Meridian Material relationships | 2026-10-31. |
+| [J1304](PORTING_JOURNAL.md#j1304--reconstruct-whole-game-original-lodgroup-ownership) | 2026-10-31 | Reconstruct whole-game original LODGroup ownership | 2026-10-31. |
+| [J1302](PORTING_JOURNAL.md#j1302--reconstruct-whole-game-original-billboard-ownership) | 2026-10-31 | Reconstruct whole-game original Billboard ownership | 2026-10-31. |
+| [J1301](PORTING_JOURNAL.md#j1301--reconstruct-whole-game-original-transform-ownership) | 2026-10-31 | Reconstruct whole-game original Transform ownership | 2026-10-31. |
+| [J1299](PORTING_JOURNAL.md#j1299--preserve-original-calmwater-shader-fallback-graphs) | 2026-10-31 | Preserve original CalmWater Shader fallback graphs | 2026-10-31. |
+| [J1300](PORTING_JOURNAL.md#j1300--reconstruct-whole-game-original-trees-and-windassets) | 2026-10-31 | Reconstruct whole-game original Trees and WindAssets | 2026-10-31. |
+| [J1297](PORTING_JOURNAL.md#j1297--reconstruct-whole-game-particle-shader-from-original-materials) | 2026-10-31 | Reconstruct whole-game particle Shader from original materials | 2026-10-31. |
+| [J1298](PORTING_JOURNAL.md#j1298--reconstruct-whole-game-original-meshrenderer-ownership) | 2026-10-31 | Reconstruct whole-game original MeshRenderer ownership | 2026-10-31. |
+| [J1295](PORTING_JOURNAL.md#j1295--reconstruct-whole-game-reciprocal-managed-ownership) | 2026-10-31 | Reconstruct whole-game reciprocal managed ownership | 2026-10-31. |
+| [J1296](PORTING_JOURNAL.md#j1296--reconstruct-whole-game-original-meshfilter-ownership) | 2026-10-31 | Reconstruct whole-game original MeshFilter ownership | 2026-10-31. |
+| [J1293](PORTING_JOURNAL.md#j1293--reconstruct-catalog-witnessed-whole-game-materials) | 2026-10-30 | Reconstruct catalog-witnessed whole-game materials | 2026-10-31. |
+| [J1294](PORTING_JOURNAL.md#j1294--reconstruct-whole-game-empty-renderer-membership) | 2026-10-30 | Reconstruct whole-game empty renderer membership | 2026-10-31. |
+| [J1292](PORTING_JOURNAL.md#j1292--reconstruct-original-whole-game-prefab-sources) | 2026-10-30 | Reconstruct original whole-game prefab sources | 2026-10-31. |
+| [J1291](PORTING_JOURNAL.md#j1291--reproduce-whole-game-timeline-import-relationships) | 2026-10-30 | Reproduce whole-game Timeline import relationships | 2026-10-31. |
+| [J1290](PORTING_JOURNAL.md#j1290--reconstruct-three-native-whole-game-hud-component-slots) | 2026-10-30 | Reconstruct three native whole-game HUD component slots | 2026-10-31. |
+| [J1289](PORTING_JOURNAL.md#j1289--reproduce-three-authored-whole-game-prefab-activations) | 2026-10-30 | Reproduce three authored whole-game prefab activations | 2026-10-31. |
+| [J1288](PORTING_JOURNAL.md#j1288--preserve-ordered-multi-behaviour-controller-ranges) | 2026-10-30 | Preserve ordered multi-behaviour controller ranges | 2026-10-31. |
+| [J1287](PORTING_JOURNAL.md#j1287--resolve-three-whole-game-duplicate-behaviour-controllers) | 2026-10-30 | Resolve three whole-game duplicate-behaviour controllers | 2026-10-31. |
+| [J1286](PORTING_JOURNAL.md#j1286--reconstruct-24-whole-game-controllers-from-source-relationships) | 2026-10-30 | Reconstruct 24 whole-game controllers from source relationships | 2026-10-31. |
+| [J1285](PORTING_JOURNAL.md#j1285--reconstruct-65-remaining-whole-game-native-sprite-imports) | 2026-10-30 | Reconstruct 65 remaining whole-game native Sprite imports | 2026-10-31. |
+| [J1284](PORTING_JOURNAL.md#j1284--scope-independent-gameplay-stability-collection) | 2026-10-30 | Scope independent gameplay stability collection | 2026-10-31. |
+| [J1283](PORTING_JOURNAL.md#j1283--align-stability-admission-and-touch-staging-with-device-policy) | 2026-10-30 | Align stability admission and touch staging with device policy | 2026-10-31. |
 | [J1282](PORTING_JOURNAL.md#j1282--add-paused-measured-button-rebinding-host-contracts) | 2026-10-30 | Add paused measured-button rebinding host contracts | 2026-10-26. |
 | [J1281](PORTING_JOURNAL.md#j1281--reconstruct-16-whole-game-components-from-qualified-pointer-edges) | 2026-10-30 | Reconstruct 16 whole-game components from qualified pointer edges | 2026-10-30. |
 | [J1280](PORTING_JOURNAL.md#j1280--project-stale-serialized-fields-from-current-original-clr-declarations) | 2026-10-29 | Project stale serialized fields from current original CLR declarations | 2026-10-30. |

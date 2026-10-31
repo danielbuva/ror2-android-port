@@ -5508,3 +5508,392 @@ identity and reciprocal ownership agree. No field value, original body/type
 tree, implementation, private setting or generated prototype is published.
 All 16 persisted records match J850. Complete bundle, phone production, gameplay
 and data-preserving installation/update remain open.
+
+### Whole-game remaining native Sprite imports (J1285)
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-whole-game-native-sprites-2.json` | `113d582c6e2cf7f70fa66be6a2a58e7bc8b9ab0e9377b3265005f6d44674342c` |
+
+Audit: 65 minimum original Sprite/Texture2D selectors and hashes, importer GUIDs,
+output identities and checked pointer relationships. Current export metadata
+independently witnesses every importer GUID; 61 target texture edges select the
+same original texture, and four aliases have identical compressed mip bytes,
+dimensions and format. Production always decodes each Sprite's own original
+texture. Pinned AssetRipper `1ac666f` SpriteProcessor/TextureExportCollection
+normalization and EditorKit typed lookup guidance remain the prior art used by
+the existing producer; target pixels or geometry never supply production input.
+No pixels, contours, geometry, native output, original implementation or private
+configuration is published. Exact-SDK host constructor output and every persisted
+record extent match J850. Complete bundle and phone/install/update gates stay open.
+
+### Whole-game selected controller relationships (J1286)
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-animator-controllers.json` | `28724ccbb02362eb2f5814bc8d3718a3171e5ed6976fdbfe0eb16317a4fe1411` |
+
+Audit: 2026-10-31. This extends the J1143 source-relationship policy with 24
+whole-game controllers. Profiles select original objects, clip/state ordinals,
+checked PPtr relationships and source TOS entries; the existing owner enforces
+bijections and regenerates strings from the original source. Selected FullPathID
+relationships qualify these records; they do not establish a generic state-order
+inference algorithm. Pinned AssetRipper controller behaviour ranges, hierarchy
+mask omissions and BlendTree leaf/child indices remain the prior art. No target
+scalar, string, body, type template, original implementation or private setting
+is included. All 358 persisted controller records match J850, including the
+24 additions; existing 334 outputs are unchanged. Generated bodies remain local.
+Complete bundle, phone production and install/update acceptance stay open.
+
+### Whole-game duplicate behaviour relationships (J1287)
+
+`owner-animator-controllers.json` SHA-256: `23a81b8615260e23de8d9ab985535bd8a96428e3e9a431e4dafc7aa992a2edac`.
+Audit: 2026-10-31. The J1143/J1286 selection policy now includes Totem,
+Bandit and LynxAmbusher. Original layer/state keys and range ordinals identify
+otherwise identical behaviour bodies; script/body equality and original
+PPtr edges are checked. Pinned AssetRipper `GetStateBehaviours` documents the
+range-to-index relationship. The recipe adds source identities, ordinals,
+operations and checked pointer remaps; no target scalar, string, native body,
+type template, implementation or private setting. Three new persisted records
+(40,044 bytes) are raw-exact J850; earlier selections are unchanged. Generated
+bodies remain ignored. Complete bundle, phone and install/update gates stay open.
+
+### Whole-game ordered behaviour ranges (J1288)
+
+Audit: 2026-10-31. The existing source-relationship policy adds MimicLogbook and
+four original state behaviours (two ClearLayerWeight, two SetRandomIntOnEnter).
+Original layer/state keys, range membership and ordinal resolve their identities;
+script identities, SDK-derived properties hashes, source schemas and full bodies
+are checked. Pinned AssetRipper `GetStateBehaviours` traverses every range member.
+Only original selectors/hashes, index permutations and checked pointer remaps
+are published; no target scalar, string, body, type template or implementation.
+New-only persisted production reproduces five records (16,252 bytes) raw-exact
+J850. Previous outputs are unchanged; complete bundle and phone gates stay open.
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-animator-controllers.json` | `df6381c71730c913a105808e25656b827f50c25af43fab2d2b3436ed1a6edd2f` |
+| `owner-whole-game-path-managed-records.json` | `fe49a139288fb404846159f821cc149b71dab1beb5f1bfb8b35810a682ab7118` |
+
+### Whole-game authored prefab activation (J1289)
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-whole-game-activation-records.json` | `720bb9f36bed638f194afb1a20d62f4d8691795e91568abf43f4ca440b423c6f` |
+
+Audit: 2026-10-31. Existing `asset-transforms.json` policies deactivate the
+original ItemIcon, HUDSimple and ClassicRunInfoHudPanel roots. Generic record
+production delegates the same named-active-source check to the object owner.
+Ordered component PPtrs, reciprocal ownership and 16 independently qualified
+public component edges establish source identity. Three other native slots
+(CanvasRenderer, Canvas, Rigidbody) have equal schemas, normalized bodies,
+pointer fields and ordinals; those component records are not claimed produced.
+Pinned AssetRipper GameObjectExtensions separates activation from ordered
+component PPtrs. The profile contains only original selectors/hashes, authored
+activation policy and checked pointer remaps, with no target body, type template,
+implementation or private data. Three persisted records (317 bytes) match J850
+raw-exact. Complete-file, phone production and install/update gates remain open.
+
+### LightningStake late source witness (2026-10-31)
+
+The default-off source observer continues checking scalar finiteness after its
+eight-row cap, preserving the first later invalid call in the final row unless
+an earlier invalid call is already retained. Its source hash and the shared
+audio/camera owner-cohort pins are refreshed together. Review: authored observer
+and metadata only; no game-derived content, private paths or identifiers. This
+is diagnostic capture, with no projectile mutation or device-acceptance claim.
+
+### Whole-game native HUD component slots (J1290)
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-whole-game-native-component-records.json` | `581a2f05b14d6ae18365386646a1e8b541cc33f2c0c26c7278f6e6913733d78f` |
+
+Audit: 2026-10-31. Original HUDSimple Canvas/Rigidbody and ItemIcon
+CanvasRenderer slots are identified by ordered component PPtrs, reciprocal
+qualified GameObject ownership, equal complete schemas and equal normalized
+bodies. Pinned AssetRipper GameObjectExtensions exposes ordered component
+traversal; existing J1273 native record production relocates only the checked
+GameObject pointer. No producer change or target scalar/body/template is added.
+The profile contains original selectors/hashes, native type identities and
+checked pointer remaps; generated bodies remain ignored. Three persisted records
+(108 bytes) are raw-exact J850. Complete-file, phone and install/update gates
+remain open.
+
+### Whole-game Timeline relationships (J1291)
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-whole-game-timeline-records.json` | `30557118e6555f13c9ba3b50510e2cd0b986c4d7fe422fcb580906a8043e513e` |
+
+Audit: 2026-10-31. Minimum original object selectors/hashes, output identities,
+checked PPtr relationships and one named import operation select 20 unique
+incoming tracks and their 23 ControlPlayableAsset children. An authored fixture
+in the exact editor independently proves managed PropertyName mapping import
+uses the default value. Original managed metadata establishes default integer
+zero; pinned AssetRipper `813fed1597bac674def7256ce633a227e7b27497`
+`YamlWalker`/`PropertyNameExtensions` establishes native decimal encoding.
+No target scalar template, native body, type tree, game implementation or private
+setting is published. All 43 persisted records match J850 raw-exact. Complete
+bundle, phone production, gameplay and install/update acceptance remain open.
+
+### Whole-game original prefab sources (J1292)
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-whole-game-prefab-source-records.json` | `fbc447822e5509b12a4ea6ca3c4f10d5a92b532609b44052d19bc627b5374cdb` |
+
+Audit: 2026-10-31. Ordered equal component fingerprints, reciprocal ownership
+and parent hierarchy select ten original SpeedTree GameObjects. Eight original
+ItemInfection prefab roots use the existing exported-filename projection; native
+components match, and managed components retain script identity, normalized body
+and pointer schema despite imported native hash differences. BrotherSwing uses
+the existing J288 detacher-removal policy after checking both original
+DetachParticleOnDestroyAndEndEmission script identities and retained component
+order. Pinned AssetRipper GameObjectExtensions establishes ordered component and
+root-parent traversal. Existing generic record production supplies every body;
+only original selectors/hashes, named policies, type identities and checked PPtr
+remaps are published. No target body, scalar template or implementation is added.
+All 19 persisted records (1,493 bytes) match J850 raw-exact; complete-file, phone
+production and install/update gates remain open.
+
+2026-10-31 authored owner pin refresh: `original-audio-owner-sources.json`
+updates only the public `PortSession.cs` hash for the default-off settings
+write observer startup request. Provenance, privacy, licensing and sensitive-content
+audit: authored source hash only; no game content, private inputs or identifiers.
+
+2026-10-31 camera build-hook pin refresh: `native-view-camera-transform.json`
+tracks the authored hook hash after its owner-manifest pin update. Provenance,
+privacy, licensing and sensitive-content audit: public authored hash only; no
+game content, private inputs or identifiers. Runtime camera outputs are unchanged.
+
+### Whole-game empty renderer membership (J1294)
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-whole-game-empty-renderer-records.json` | `7e417530d2f417a022d416fe3d19358e2585ed3ac22c2008f64a7ae1d2a43cfe` |
+| `owner-whole-game-renderer-membership-records.json` | `f3114997dbf56ebb1a63730b62fccb2501ddaf3375752821da5e29a5c700367c` |
+
+Audit: 2026-10-31. Existing J245 original AnimateShaderAlpha repair applies
+when an original GameObject lacks a renderer and its decal reference is absent
+or removed by the existing decal omission policy. Ordered original component
+lists and reciprocal ownership establish all fourteen cases. The existing empty
+MeshRenderer constructor preserves the original donor's native fields and type
+identity while applying its three disabled flags. Generic record production
+delegates that constructor, relocates checked owner PPtrs and uses existing
+component append for GameObject membership. Pinned AssetRipper
+GameObjectExtensions supplies ordered component traversal knowledge. Profiles
+contain only original selectors/hashes, native identities, named operations and
+checked relationships; no native body, scalar template, game implementation or
+private input is published. All 28 persisted records (3,090 bytes) match J850
+raw-exact. Complete-file, phone production and install/update gates remain open.
+
+### Whole-game catalog-witnessed materials (J1293)
+
+`owner-whole-game-material-compute-records.json` SHA-256:
+`2a8face247ee9a9b5480de17751bd075e89541393eafaae83bc4ad3f741cb9f7`.
+
+Audit: two original material selectors extend the existing record owner. Original
+catalog-root relationships independently identify the Enforcer and LunarGolem
+materials; original native schemas, pointer slots and all non-pointer fields match
+under the existing named keyword import policies. The recipe retains source pins,
+checked pointer mappings and output hashes only. No field payload, keyword string,
+type tree, shader program, private path or generated game content is included.
+J367/J371 and pinned EditorKit `HopooCloudRemapGUI` inform preservation of original
+property/blend fields rather than exporter defaults; no upstream code is copied.
+Both persisted records (2,856 bytes) match J850 raw-exact; 11 other witnessed
+materials still differ after existing policies and are excluded. Complete bundle,
+phone production, gameplay and install/update acceptance remain open.
+
+### Whole-game original MeshFilter ownership (J1296)
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-whole-game-meshfilter-records.json` | `4518372445d82bbdfaabfe197fed2fed9f54155c22e0fe7cdbc0dd78d16871f9` |
+
+Audit: 2026-10-31. Existing public GameObject source selections and the unique
+original MeshFilter class slot identify fourteen records. Reciprocal component
+ownership and both original pointer endpoints are checked against existing public
+suppliers, resolving external mesh members explicitly. Pinned EditorKit
+AddressablesPathDictionaryCache supplies GameObject/type component lookup
+knowledge. The existing generic record owner preserves schemas and all nonpointer
+bytes and relocates checked GameObject/mesh identities. This profile contains only
+original selectors, input/output hashes, native type identities and pointer
+relationships; no object bodies, scalar templates, game implementation or private
+paths are published. All fourteen persisted records (336 bytes) match J850
+raw-exact. Complete-file, phone production and install/update gates remain open.
+
+### Whole-game reciprocal managed ownership (J1295)
+
+`owner-whole-game-path-managed-records.json` SHA-256:
+`a96162e8d171e9ad73fdfdd90878a9ad448cdadb4e424072dc3614121f4ddb50`.
+
+Audit: ten original managed component selections extend the existing record owner:
+eight ItemDisplay and two EffectManagerHelper records. Qualified original
+GameObject component order and reciprocal owner links identify each component;
+full assembly/namespace/class identity and source MonoScript hashes independently
+check its type. The existing SDK properties-hash policy retains schema identity.
+Pinned ThunderKit FileIdUtil and AssetRipper MonoScriptExtensions inform these
+identity checks; no upstream implementation is copied. The additions contain
+only source selectors/hashes, native identities, checked pointer mappings and
+output hashes. No scalar template, original body, game implementation, private
+path or generated content is included. All ten persisted records (880 bytes)
+match J850 raw-exact. Complete bundle, phone and install/update gates remain open.
+
+### Whole-game original MeshRenderer ownership (J1298)
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-whole-game-renderer-records.json` | `65810a7caa3fba3a55557c0044cf5bccbbf66a0082d0bed02a0dd96b4224d208` |
+
+Audit: 2026-10-31. Existing public GameObject source selections and each unique
+original MeshRenderer class slot identify twelve records. Reciprocal component
+ownership and every original pointer endpoint, including unchanged and null
+references, are checked against existing public suppliers. Two records with
+unresolved material suppliers are excluded. Pinned EditorKit
+AddressablesPathDictionaryCache informs GameObject/type component lookup.
+The existing generic record owner preserves schemas and nonpointer bytes while
+relocating checked references. This profile contains only source selectors,
+input/output hashes, native type identities and pointer relationships; no object
+bodies, scalar templates, game implementation or private paths are published.
+All twelve persisted records (1,944 bytes) match J850 raw-exact. Complete-file,
+phone production and install/update gates remain open.
+| `owner-whole-game-shader-particle.json` | Original particle material and Shader pins, SDK declaration identity, dependency pointers and output hash; `shader_prefab.py`; J1297. |
+
+### Whole-game original-material particle Shader (J1297)
+
+`owner-whole-game-shader-particle.json` SHA-256:
+`cb4108d7c0c3484f208d2f8b48057cf93786674f96a7cee9120512abf66c9a83`.
+
+Audit: existing `shader_prefab.py` compiles acquired SDK 211 declarations using
+original particle fragment order and an original UI material whose checked
+external Shader pointer identifies the selected original shader. The existing
+particle owner retains runtime feature alternatives and excludes scene fog;
+no accepted keyword/pass/program table is an input. Pinned AssetRipper
+`DummyShaderTextExporter` at `1ac666f47d8e9dedf96afb0b914c70d7656151ea`
+continues to inform property/fallback contracts; it supplies no particle code.
+The profile contains only input pins, source identities, dependency pointers and
+output hashes. No source body, private path or generated content is published.
+The persisted 25,056-byte record is independently raw-exact to J850. Complete
+bundle, phone, gameplay and install/update gates remain open.
+
+### Whole-game original Tree and WindAsset ownership (J1300)
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-whole-game-tree-records.json` | `751feacef112c6688858ab239c0206f57fa4759d72b489b6e6f741f25d578da0` |
+
+Audit: 2026-10-31. Published original prefab GameObjects, unique Tree class
+slots and reciprocal component ownership identify eight Trees. Their original
+non-owner pointers identify two SpeedTreeWindAssets. Every pointer endpoint,
+including null and unchanged references, resolves to a checked public supplier.
+Pinned EditorKit AddressablesPathDictionaryCache informs component lookup through
+GameObjects. The existing generic record owner preserves native schemas and all
+nonpointer bytes; class 228 admission adds WindAssets to that owner. This profile
+contains only original selectors, hashes, native type identities and pointer
+relationships. No object bodies, scalar templates, game implementation or private
+paths are published. All ten persisted records (2,952 bytes) match J850 raw-exact.
+Complete-file, phone production and install/update gates remain open.
+
+| `owner-whole-game-shader-calmwater.json` | Original CalmWater Shader pins, checked local fallback edge, public template identity and output hashes; `shader_prefab.py`; J1299. |
+
+### Whole-game original CalmWater fallback graphs (J1299)
+
+`owner-whole-game-shader-calmwater.json` SHA-256:
+`2f272216acd8c3979f866937400ca0ee6b685aba9ae370a9a532af55530a61c1`.
+
+Audit: existing `shader_prefab.py` combines original parsed properties with the
+pinned public SingleColor exporter template and acquired SDK compiler. Original
+local dependencies independently witness the DX11 fallback edge; DoubleSided
+retains its original unresolved fallback literal without a dependency. Pinned
+AssetRipper `DummyShaderTextExporter` at
+`1ac666f47d8e9dedf96afb0b914c70d7656151ea` emits fallback literals independently
+of resolution, informing this preservation policy. No original implementation,
+accepted keyword table or shader program is a producer input. The recipe contains
+only original/SDK/template pins, source identities, one pointer mapping and output
+hashes; no protected body, private path or generated bytes are published. Both
+persisted records (12,928 bytes) independently match J850 raw-exact. Complete
+bundle, phone production, gameplay and install/update gates remain open.
+
+
+| `owner-whole-game-transform-owner-records.json` | Original Transform selectors, checked component/owner relationships, native schemas and output hashes; `record_produce.py`; J1301. |
+
+### Whole-game original Transform ownership (J1301)
+
+`owner-whole-game-transform-owner-records.json` SHA-256:
+`e02b80ee9fa096e2d497187ae5f1b9bc5ae0ff988747579f13265d9831a1e44e`.
+
+Audit: qualified public GameObject recipes independently identify the original
+Transform through its ordered component slot and reciprocal GameObject pointer.
+Ten common-props and eight Brother records retain their original native type
+hash, pointer shape and every nonpointer byte, including float bits. Only checked
+references relocate through the unchanged generic record owner. J426's pinned
+UnityPy `PPtr.deref` and `ObjectReader.peek_name` inform original member/path-ID
+ownership; names alone do not select these records. Source parent/child edges
+remain intact. The eight unresolved SolusWing records are excluded because their
+original scale bits differ; no target scalar template or rounding policy is added.
+The recipe contains only original selectors, hashes and relationship mappings;
+no protected bodies, implementation, private paths or generated content. All
+eighteen persisted records (1,320 bytes) match J850 raw-exact. Complete-bundle,
+phone production and install/update acceptance remain open.
+
+
+### Whole-game original Billboard ownership (J1302)
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-whole-game-billboard-records.json` | `fabfa2f7e4692c71063f3c723b6f585681ef291dd603b34f0bb5798446c4c79e` |
+
+Audit: 2026-10-31. Qualified original GameObjects, unique BillboardRenderer
+component slots and reciprocal ownership identify two renderers. Their original
+Billboard pointers identify two BillboardAssets; original material endpoints
+resolve to existing public suppliers. Pinned AssetRipper PPtrExtensions at
+`813fed1597bac674def7256ce633a227e7b27497` informs local/dependency pointer
+resolution. The existing generic owner admits native classes 226/227, preserving
+native schemas and every nonpointer byte. This profile contains only original
+selectors, hashes, native identities and checked pointer relationships. No object
+body, scalar template, game implementation, private path or generated content is
+published. All four persisted records (808 bytes) match J850 raw-exact. Three
+remove saved census residuals; the fourth's overlap is unproven. Complete-file,
+phone production and install/update gates remain open.
+
+
+### Whole-game original LODGroup ownership (J1304)
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-whole-game-lodgroup-records.json` | `4b1fb0450355c9ce57b70bf223a2d73a0820703f8b081ebfb1d0bd9ea62b4e59` |
+
+Audit: 2026-10-31. A unique original LODGroup component slot and reciprocal
+qualified GameObject ownership select the source. Every original LOD renderer
+endpoint resolves to an existing public supplier, including J1302's Billboard.
+Pinned AssetRipper PPtrExtensions at `813fed1597bac674def7256ce633a227e7b27497`
+informs local/dependency pointer resolution. The unchanged generic record owner
+preserves native class 205, schema and every nonpointer byte, relocating only
+checked references. The profile contains original selectors, hashes, native
+identity and relationship mappings; no protected bodies, scalar templates,
+implementation, private paths or generated content. The persisted record is
+raw-exact to J850 (140 bytes). A second candidate remains excluded for missing
+public renderer suppliers. Complete-file, phone production and install/update
+acceptance remain open.
+
+### Whole-game Meridian material relationships (J1303)
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-whole-game-meridian-material-records.json` | `d6438f2ab2ddb8170bda115fba368259f2e9f0801fe0cbd83dcdaa9fcd8a307a` |
+
+Audit: 2026-10-31. Four original Meridian Materials retain their complete
+source bodies and keyword state; the existing `record_produce.py` owner changes
+only schema-checked Shader/texture references. Original material identities and
+public texture selections witness the endpoints; the shared original Shader
+identity is retained as a dependency, without claiming its production is closed.
+The profile contains only legitimate input selectors, hashes, pointer mappings
+and output identities. No source body, generated program, private path or
+protected implementation is published. Pinned community source/identity techniques
+in `docs/community-prior-art.md` inform relationship inspection; current input
+and persisted J850 byte comparison remain authoritative.
+
+All four persisted records are raw-exact (1,184 bytes); one belongs to the saved
+unresolved census, reducing 104 to 103. Other overlapping outputs are not counted
+as new closures. Complete bundle, phone production and runtime gates stay open.

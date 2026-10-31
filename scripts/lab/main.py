@@ -93,6 +93,11 @@ p.add_argument(
 )
 p.add_argument("--json", action="store_true")
 p.add_argument(
+    "--gameplay-only",
+    action="store_true",
+    help="Current: alpha-stability-batch runs only heap and sustained stages; settings interruption remains unqualified",
+)
+p.add_argument(
     "--done-file", help="Current: alpha-stability-batch requires a new absolute host JSON receipt path; launch detached and inspect it after completion"
 )
 p.add_argument(
@@ -239,6 +244,8 @@ if a.expected_apk_sha256 is not None and (
         "session-abandon-check, session-memory-check, session-memory-root-check, touch-gesture, settings-write-interrupt-check or alpha-stability-batch"
     )
 is_alpha_batch = a.command == "prototype" and a.action == "alpha-stability-batch"
+if a.gameplay_only and not is_alpha_batch:
+    p.error("--gameplay-only requires prototype --action alpha-stability-batch")
 if a.done_file is not None and not is_alpha_batch:
     p.error("--done-file requires prototype --action alpha-stability-batch")
 if a.prior_settings_batch is not None and not is_alpha_batch:
