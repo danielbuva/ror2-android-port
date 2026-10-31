@@ -124,7 +124,7 @@ class LabInstallerUpdatesTests(unittest.TestCase):
             (directory / (prefix + ".stderr.log")).write_bytes(stderr)
         return directory
 
-    def log_inspection(self, root, args):
+    def log_inspection(self, root, args, mode="--inspect-ui-failure"):
         output = io.StringIO()
         with ExitStack() as stack:
             stack.enter_context(patch.object(LAB, "ROOT", root))
@@ -133,11 +133,86 @@ class LabInstallerUpdatesTests(unittest.TestCase):
                 stack.enter_context(patch.object(LAB, name, side_effect=AssertionError("log inspection must not call " + name)))
             run = stack.enter_context(patch.object(LAB.subprocess, "run", side_effect=AssertionError("log inspection must not execute a command")))
             stack.enter_context(redirect_stdout(output))
-            code = LAB.main(["--inspect-ui-failure", *args])
+            code = LAB.main([mode, *args])
         run.assert_not_called()
         self.assertEqual(len(output.getvalue().splitlines()), 1)
         self.assertNotIn(str(root), output.getvalue())
         return code, json.loads(output.getvalue())
+
+    def test_update_error_inspection_selects_first_retained_error_and_emits_only_public_template(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            public = root / "tools/phone-build/owner-apk/updates.py"
+            public.parent.mkdir(parents=True)
+            public.write_text('raise ValueError("public contract failure: " + private)\n')
+            directory = root / "work/coordination/installer-update-acceptance/run-newest00"
+            directory.mkdir(parents=True)
+            for index, state in enumerate(
+                (
+                    {"state": "CHECKING", "message": "synthetic-private"},
+                    {"state": "ERROR", "message": "ValueError: public contract failure: synthetic-private-input"},
+                    {"state": "ERROR", "message": "RuntimeError: synthetic-private-later"},
+                ),
+                1,
+            ):
+                prefix = f"{index:05d}-device-state-read"
+                (directory / (prefix + ".json")).write_bytes(
+                    LAB.encoded({"phase": "baseline-N-check", "category": "device-state-read", "returncode": 0, "outcome": "returned"})
+                )
+                (directory / (prefix + ".stdout.log")).write_bytes(LAB.encoded(state))
+            before = {path: path.read_bytes() for path in root.rglob("*") if path.is_file()}
+            code, result = self.log_inspection(root, ["--diagnostic-run", "newest"], mode="--inspect-update-failure")
+            self.assertEqual(code, 0)
+            self.assertEqual(result["backend_error"]["exception_classes"], ["ValueError"])
+            self.assertEqual(
+                result["backend_error"]["public_templates"],
+                [
+                    {
+                        "source": "tools/phone-build/owner-apk/updates.py",
+                        "line": 1,
+                        "public_message": "public contract failure: ",
+                        "dynamic_suffix_omitted": True,
+                    }
+                ],
+            )
+            self.assertNotIn("synthetic-private", json.dumps(result))
+            self.assertEqual(before, {path: path.read_bytes() for path in root.rglob("*") if path.is_file()})
+            for flag in ("--allow-test-notifications", "--allow-test-installs", "--host-only", "--inspect-ui-failure", "--inspect-state"):
+                code, result = self.log_inspection(root, ["--diagnostic-run", "newest", flag], mode="--inspect-update-failure")
+                self.assertEqual(code, 1)
+                self.assertNotIn("backend_error", result)
+            record = directory / "00002-device-state-read.stdout.log"
+            record.unlink()
+            record.symlink_to(root / "unrelated-not-read")
+            code, result = self.log_inspection(root, ["--diagnostic-run", "newest"], mode="--inspect-update-failure")
+            self.assertEqual(code, 1)
+            self.assertEqual(result["errors"], ["log-inspection-record-unavailable"])
+
+    def test_backend_error_summary_preserves_only_public_literals_and_traceback_locations(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            source = "tools/phone-build/owner-apk/updates.py"
+            path = root / source
+            path.parent.mkdir(parents=True)
+            path.write_text('raise ValueError("exact public failure")\nraise ValueError("public prefix: " + value)\n')
+            java = root / "tools/phone-build/managed-host/ToolHostActivity.java"
+            java.parent.mkdir(parents=True)
+            java.write_text('throw new IOException("public native failure " + name);\n')
+            with patch.object(LAB, "ROOT", root):
+                result = LAB.backend_error_summary(
+                    'java.io.IOException: owner-backend exit 1 Traceback:\n  File "/synthetic-private/repo/'
+                    + source
+                    + '", line 17, in private_function\nValueError: public prefix: synthetic-private'
+                )
+                self.assertEqual(result["owner_backend_exit"], 1)
+                self.assertEqual(result["public_traceback_frames"], [{"source": source, "line": 17}])
+                self.assertEqual(result["public_templates"][0]["public_message"], "public prefix: ")
+                self.assertNotIn("synthetic-private", json.dumps(result))
+                self.assertNotIn("private_function", json.dumps(result))
+                result = LAB.backend_error_summary("java.io.IOException: public native failure synthetic-private")
+                self.assertEqual(result["public_templates"][0]["public_message"], "public native failure ")
+                for value in ("exact public failure synthetic-private", "synthetic-private", "SecretException: synthetic-private"):
+                    self.assertEqual(LAB.backend_error_summary(value), {"exception_classes": [], "public_templates": [], "public_traceback_frames": []})
 
     def test_private_ui_log_summary_selects_one_run_and_only_fixed_classifications(self):
         with tempfile.TemporaryDirectory() as temporary:

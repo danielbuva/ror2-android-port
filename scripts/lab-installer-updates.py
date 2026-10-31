@@ -10,6 +10,7 @@ All generated binaries/keys stay on the lab host/device, never in GitHub output.
 """
 
 import argparse
+import ast
 from contextlib import contextmanager
 import hashlib
 import http.server
@@ -891,8 +892,79 @@ def ui_output_classification(data):
     return "other-output" if value.strip() else "empty"
 
 
-def inspect_ui_failure(selection, *, conflicting_mode=False):
-    result = {"mode": "inspect-ui-failure", "status": "observed", "selection": "newest" if selection == "newest" else "explicit", "records": [], "errors": []}
+def backend_error_summary(message):
+    """Match public source literals/locations, never print private message text."""
+    sources = tuple(
+        "tools/phone-build/owner-apk/" + name for name in ("updates.py", "release_source.py", "release.py", "public_release.py", "alpha_policy.py")
+    ) + (
+        "tools/phone-build/managed-host/ToolHostActivity.java",
+        "tools/phone-build/managed-host/OwnerBuildService.java",
+    )
+    classes = (
+        "ValueError",
+        "TypeError",
+        "KeyError",
+        "ImportError",
+        "ModuleNotFoundError",
+        "OSError",
+        "FileNotFoundError",
+        "PermissionError",
+        "TimeoutError",
+        "ConnectionRefusedError",
+        "HTTPError",
+        "URLError",
+        "RuntimeError",
+        "java.io.IOException",
+        "java.io.FileNotFoundException",
+        "java.lang.IllegalStateException",
+        "java.lang.IllegalArgumentException",
+        "java.lang.SecurityException",
+        "android.system.ErrnoException",
+        "org.json.JSONException",
+    )
+    lines = message.splitlines()
+    exceptions = sorted({name for name in classes if re.search(r"(?:^|\n)\s*" + re.escape(name) + r":", message)})
+    normalized = [re.sub(r"^(?:" + "|".join(map(re.escape, classes)) + r"):\s*", "", line.strip()) for line in lines]
+    matches, frames = [], []
+    for source in sources:
+        path = ROOT / source
+        if not path.is_file():
+            continue
+        code = path.read_text()
+        templates = []
+        if source.endswith(".py"):
+            for node in ast.walk(ast.parse(code)):
+                if not isinstance(node, ast.Raise) or not isinstance(node.exc, ast.Call) or not node.exc.args:
+                    continue
+                value = node.exc.args[0]
+                suffix = isinstance(value, ast.BinOp) and isinstance(value.op, ast.Add)
+                while isinstance(value, ast.BinOp) and isinstance(value.op, ast.Add):
+                    value = value.left
+                if isinstance(value, ast.Constant) and isinstance(value.value, str):
+                    templates.append((node.lineno, value.value, suffix))
+        else:
+            for found in re.finditer(r'throw new [A-Za-z.]+\("((?:[^"\\]|\\.)*)"\s*(\+|\))', code):
+                templates.append((code.count("\n", 0, found.start()) + 1, json.loads('"' + found.group(1) + '"'), found.group(2) == "+"))
+        for line, literal, suffix in templates:
+            if len(literal) >= 8 and any(value.startswith(literal) if suffix else value == literal for value in normalized):
+                matches.append({"source": source, "line": line, "public_message": literal, "dynamic_suffix_omitted": suffix})
+        for found in re.finditer(r'File "[^"\n]*' + re.escape(source) + r'", line ([0-9]+)', message):
+            frames.append({"source": source, "line": int(found.group(1))})
+    result = {"exception_classes": exceptions, "public_templates": matches[:8], "public_traceback_frames": frames[-8:]}
+    child = re.match(r"(?:java\.io\.IOException: )?owner-backend exit (-?[0-9]+) ", message)
+    if child:
+        result["owner_backend_exit"] = int(child.group(1))
+    return result
+
+
+def inspect_ui_failure(selection, *, conflicting_mode=False, update_failure=False):
+    result = {
+        "mode": "inspect-update-failure" if update_failure else "inspect-ui-failure",
+        "status": "observed",
+        "selection": "newest" if selection == "newest" else "explicit",
+        "records": [],
+        "errors": [],
+    }
     try:
         if conflicting_mode:
             raise Failure("log-inspection-cannot-run-other-modes")
@@ -916,6 +988,25 @@ def inspect_ui_failure(selection, *, conflicting_mode=False):
             if path.is_symlink() or not path.is_file():
                 raise Failure("log-inspection-record-unavailable")
             return path.read_bytes()
+
+        if update_failure:
+            for path in sorted(directory.glob("[0-9][0-9][0-9][0-9][0-9]-device-state-read.json")):
+                metadata = json.loads(read(path.name))
+                if metadata.get("phase") != "baseline-N-check" or metadata.get("category") != "device-state-read":
+                    continue
+                if metadata.get("returncode") != 0 or metadata.get("outcome") != "returned":
+                    continue
+                state = json.loads(read(path.stem + ".stdout.log"))
+                if isinstance(state, dict) and state.get("state") == "ERROR":
+                    message = state.get("message")
+                    if not isinstance(message, str):
+                        raise Failure("log-inspection-update-error-shape")
+                    result["backend_error"] = backend_error_summary(message)
+                    break
+            else:
+                raise Failure("log-inspection-update-error-not-found")
+            print(encoded(result).decode(), end="", flush=True)
+            return 0
 
         failure_sequence = None
         dump_category = "device-ui-dump"
@@ -1136,6 +1227,9 @@ def main(argv=None):
     )
     parser.add_argument("--inspect-ui-failure", action="store_true", help="Read-only fixed classification of this driver's retained UI dump/read failure logs")
     parser.add_argument(
+        "--inspect-update-failure", action="store_true", help="Read-only public-source error matches from the retained first baseline update ERROR"
+    )
+    parser.add_argument(
         "--inspect-toolhost-failure", metavar="SOURCE_COMMIT", help="Read-only fixed build-error classification for one exact toolhost source commit"
     )
     parser.add_argument(
@@ -1147,7 +1241,19 @@ def main(argv=None):
         return inspect_toolhost_failure(
             args.inspect_toolhost_failure,
             args.diagnostic_run,
+            conflicting_mode=args.inspect_ui_failure
+            or args.inspect_update_failure
+            or args.inspect_state
+            or args.host_only
+            or args.allow_test_installs
+            or args.allow_test_notifications,
+        )
+    if args.inspect_update_failure:
+        DIAGNOSTICS = None
+        return inspect_ui_failure(
+            args.diagnostic_run,
             conflicting_mode=args.inspect_ui_failure or args.inspect_state or args.host_only or args.allow_test_installs or args.allow_test_notifications,
+            update_failure=True,
         )
     if args.inspect_ui_failure:
         DIAGNOSTICS = None
