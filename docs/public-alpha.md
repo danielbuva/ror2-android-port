@@ -251,7 +251,10 @@ the priority; these gates must pass before any public release.
       Its next stage stopped under the historical thermal guard during startup.
       The current [thermal policy](PLAYTESTING.md#stability-persistence-and-updates)
       permits that heat; fresh heaps and sustained play remain open.
-      Injected persistence states and this writer interruption do not establish
+      J1311 additionally verifies writer termination, Android activity replacement,
+      unchanged-primary recovery/resave and 48 protected files on the composed
+      candidate. Sustained observation refused lost focus before its first sample.
+      Injected persistence states and these writer interruptions do not establish
       a power-cut or filled-filesystem result.
 - [ ] Qualify the [prepared-lab owner-build/install/playtest checklist](PLAYTESTING.md)
       on fresh public inputs, then establish final player installation, ordinary
