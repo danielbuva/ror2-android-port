@@ -5596,7 +5596,10 @@ raw-exact. Complete-file, phone production and install/update gates remain open.
 
 ### Whole-game Timeline relationships (J1291)
 
-`owner-whole-game-timeline-records.json` SHA-256: `30557118e6555f13c9ba3b50510e2cd0b986c4d7fe422fcb580906a8043e513e`.
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-whole-game-timeline-records.json` | `30557118e6555f13c9ba3b50510e2cd0b986c4d7fe422fcb580906a8043e513e` |
+
 Audit: 2026-10-31. Minimum original object selectors/hashes, output identities,
 checked PPtr relationships and one named import operation select 20 unique
 incoming tracks and their 23 ControlPlayableAsset children. An authored fixture
