@@ -1855,6 +1855,20 @@ Three persisted records raw-exact to J850, 28,684 bytes; pack SHA-256
 Saved residual 45 → 42; readiness stays 693/705 available, 685 raw-exact.
 Complete bundle, phone production and runtime remain open. Host-only; no APK claim.
 
+
+## J1326 — Reconstruct Legacy Transparent Shader from original Materials
+
+2026-10-31. Existing SDK Shader owner reads pinned original Material instancing
+flags for non-particle shaders; the particle feature policy remains intact.
+A complete 970-bundle/9,080-Material census finds six users, all instancing off.
+Prior art: EditorKit name/GUID Shader identity and pinned AssetRipper templates.
+Evidence: `work/coordination/p1-wholegame-1031/legacy-material-public-v2/terminal.json`
+and adjacent `provenance.md` (source census and native-pointer witnesses).
+Persisted record independently raw-exact to J850, 14,416 bytes, SHA-256
+`d61fa84d4b06c0fa763d824886ba9d383f611fc291d516249730c6e0aa39c68e`.
+Focused 40 tests, Ruff and host preflight pass; production 1.260 s.
+Combined saved residual 41 → 40; readiness stays 693/705 available, 685 raw-exact.
+Complete bundle, phone production and runtime remain open. Host-only; no APK claim.
 ## J1324 — Reconstruct PowerOrb synced motion controller
 
 2026-10-31. Original controller selectors reuse the J1322 controller owner,
