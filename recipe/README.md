@@ -6445,3 +6445,19 @@ exporter prior art but no permutation authority. Only selectors, hashes,
 relationships and policies ship; no Shader text, program, target patch or private
 path is included. Persisted public output is J850 raw-exact, 292,980 bytes.
 Complete bundle, phone production, installation/update and runtime remain open.
+
+### Whole-game original Noto Font
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-whole-game-font-records.json` | `6bbe62c89e40b8660d8f4bba1d9fae670ecc4c02f25e768eb004ee246401aa6b` |
+
+Audit: 2026-10-31. J1113's pinned original Noto Font supplies the complete
+FontData and native schema. Published original Material/Texture relationships
+identify the two relocated pointers. Pinned AssetRipper FontExtensions
+TryGetFontMaterial/TryGetFontTexture/GetFontExtension supplies observation prior
+art. The existing generic record owner admits Font class 128 and preserves all
+nonpointer bytes. Only selectors, hashes and checked relationships ship; no font
+bytes, generated data, scalar patches or private paths are included. Independent
+public production reproduces one J850 record, 16,412,474 bytes. Complete bundle,
+phone production, installation/update and original runtime remain open.
