@@ -5574,3 +5574,22 @@ J850. Previous outputs are unchanged; complete bundle and phone gates stay open.
 | --- | --- |
 | `owner-animator-controllers.json` | `df6381c71730c913a105808e25656b827f50c25af43fab2d2b3436ed1a6edd2f` |
 | `owner-whole-game-path-managed-records.json` | `fe49a139288fb404846159f821cc149b71dab1beb5f1bfb8b35810a682ab7118` |
+
+### Whole-game authored prefab activation (J1289)
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-whole-game-activation-records.json` | `720bb9f36bed638f194afb1a20d62f4d8691795e91568abf43f4ca440b423c6f` |
+
+Audit: 2026-10-31. Existing `asset-transforms.json` policies deactivate the
+original ItemIcon, HUDSimple and ClassicRunInfoHudPanel roots. Generic record
+production delegates the same named-active-source check to the object owner.
+Ordered component PPtrs, reciprocal ownership and 16 independently qualified
+public component edges establish source identity. Three other native slots
+(CanvasRenderer, Canvas, Rigidbody) have equal schemas, normalized bodies,
+pointer fields and ordinals; those component records are not claimed produced.
+Pinned AssetRipper GameObjectExtensions separates activation from ordered
+component PPtrs. The profile contains only original selectors/hashes, authored
+activation policy and checked pointer remaps, with no target body, type template,
+implementation or private data. Three persisted records (317 bytes) match J850
+raw-exact. Complete-file, phone production and install/update gates remain open.

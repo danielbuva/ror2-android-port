@@ -1200,6 +1200,7 @@ def transform_generic(body, class_id, selected, root=None, read_clip=None, sourc
         "normalize_exported_prefab_name",
         "append_components",
         "remove_components",
+        "inactive_scene_object",
     } or (selected.get("demote_keywords") and class_id != 21):
         raise ValueError("unknown generic object operation")
     if "remove_components" in selected:
@@ -1214,6 +1215,10 @@ def transform_generic(body, class_id, selected, root=None, read_clip=None, sourc
         if class_id != 1:
             raise ValueError("component append requires original GameObject")
         body = O.append_components(body, selected["append_components"])
+    if "inactive_scene_object" in selected:
+        if class_id != 1:
+            raise ValueError("activation policy requires original GameObject")
+        body = O.deactivate_named_gameobject(body, selected["inactive_scene_object"])
     if "keyword_policy" in selected:
         if class_id != 21 or selected["keyword_policy"] not in ("dummy-shader-demote-valid", "dummy-shader-sort-invalid"):
             raise ValueError("keyword policy requires original Material and named dummy import")
