@@ -1755,3 +1755,17 @@ All three new persisted records raw-exact to J850, 107,980 bytes; pack SHA-256
 `70b09f2d50e1d1f5665f1cf3053b07fc1cecfa9b179545474f415fabd87dee2b`.
 Public saved residual 79 → 76 after parallel detail-Shader closures; final-file readiness stays 693/705 available,
 685 raw-exact. Complete bundle, phone production and runtime gates remain open.
+
+## J1316 — Reconstruct whole-game controller state-range managed records
+
+2026-10-31. Existing managed record recipe selects twelve original behaviours
+through matching controller layer/state keys and indexed range ordinals;
+original native/script schema and nonpointer bytes remain intact.
+Prior art: pinned AssetRipper AnimatorControllerExtensions.cs:44-71.
+Evidence: `work/coordination/p1-wholegame-1031/controller-managed-public-v2/terminal.json`;
+source witness: adjacent `../controller-managed-v2/witnesses.json`.
+Persisted records raw-exact to J850, 716 bytes; pack SHA-256
+`e1ca4ad093a9ed5ea5f6ba136ee94b4806ceee7e76ce24180a04f26735f10141`.
+Saved public residual 75 → 63 includes merged controller closures. Readiness
+stays 693/705 available, 685 raw-exact. Complete bundle, phone production,
+installation/update and original runtime remain open. Host-only; no APK/device claim.
