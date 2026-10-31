@@ -2648,6 +2648,12 @@ hash but must differ as complete pairs; unknown pairs refuse.
 
 The per-session `pointSoundDiagnosticRequested` selector defaults false and
 requires the integrated route, ready selected audio and instrumented callsites.
+`PortSessionOriginalAudioOwner.Update` also dispatches the original point-sound
+timeout processor while the original application is inactive and opted-in native
+audio is ready. The cached original-method delegate preserves the original clock,
+timeout and emitter pool; active application dispatch and original Term close this
+seam. It adds no pool cleanup or global application update dispatch.
+
 `PortSessionOriginalAudioOwner` owns the matching Unity log subscription;
 the Core observer stores bounded scalar values only, never raw messages/stacks
 or Unity objects. `PortSession.Save` refreshes its snapshot. Completion, lifecycle

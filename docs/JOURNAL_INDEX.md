@@ -11,6 +11,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
 | [J1342](PORTING_JOURNAL.md#j1342--reconstruct-whole-game-surface-shader-stage-context) | 2026-10-31 | Reconstruct whole-game surface Shader stage context | 2026-10-31. |
+| [J1342](PORTING_JOURNAL.md#j1342--restore-original-point-sound-timeout-dispatch) | 2026-10-31 | Restore original point-sound timeout dispatch | 2026-10-31. |
 | [J1341](PORTING_JOURNAL.md#j1341--reconstruct-whole-game-original-noto-font) | 2026-10-31 | Reconstruct whole-game original Noto Font | 2026-10-31. |
 | [J1339](PORTING_JOURNAL.md#j1339--reconstruct-billboard-material-feature-shader-ordering) | 2026-10-31 | Reconstruct Billboard material-feature Shader ordering | 2026-10-31. |
 | [J1340](PORTING_JOURNAL.md#j1340--recover-beetlequeen-ghost-fx-managed-records-from-their-hierarchy) | 2026-10-31 | Recover BeetleQueen ghost FX managed records from their hierarchy | 2026-10-31. |
