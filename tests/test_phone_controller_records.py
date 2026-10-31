@@ -41,6 +41,25 @@ def tos_entry(value):
 
 
 class ControllerRecords(unittest.TestCase):
+    def test_exported_sync_chain_resolves_groups_and_aligned_index_allocations(self):
+        state = F.node("data", children=[F.node("data", children=[F.array("m_BlendTreeConstantIndexArray", integer("data"))])])
+        machine = F.node("data", children=[F.node("data", children=[integer("m_SynchronizedLayerCount"), F.array("m_StateConstantArray", state)])])
+        layer = F.node("data", children=[F.node("data", children=[integer("m_StateMachineIndex"), integer("m_StateMachineSynchronizedLayerIndex")])])
+        schema = F.node(
+            "Base",
+            children=[integer("m_ControllerSize"), F.node("m_Controller", children=[F.array("m_StateMachineArray", machine), F.array("m_LayerArray", layer)])],
+        )
+
+        def group(slots, states):
+            indices = vector([bytes(4)] + [struct.pack("<I", 0xFFFFFFFF)] * (slots - 1))
+            return struct.pack("<I", slots) + vector([indices] * states)
+
+        source_layers = vector([struct.pack("<II", *row) for row in ((0, 0), (1, 0), (1, 1), (2, 0), (2, 1))])
+        expected_layers = vector([struct.pack("<II", *row) for row in ((0, 0), (1, 0), (1, 1), (2, 0), (1, 2))])
+        body = struct.pack("<I", 400) + vector([group(1, 1), group(2, 3), group(2, 5)]) + source_layers
+        expected = struct.pack("<I", 424) + vector([group(1, 1), group(3, 3), group(1, 5)]) + expected_layers
+        self.assertEqual(A.transform_generic(body, 91, {"controller_resolve_synced_layers": True}, schema), expected)
+
     def test_null_motion_retains_state_and_replaces_the_removed_tree_index(self):
         leaf = F.node(
             "data",

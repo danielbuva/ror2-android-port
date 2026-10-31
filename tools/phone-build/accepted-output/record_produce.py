@@ -1209,6 +1209,61 @@ def controller_omit_synced_overrides(body, root):
     return controller_omit_synced_behaviours(bytes(result), root)
 
 
+def controller_resolve_synced_layers(body, root):
+    """Resolve the exporter's machine-index-as-layer-index synchronized links."""
+    _, spans = fields(body, root)
+    result, changes, allocation = bytearray(body), [], 0
+    layers = ("m_Controller", "m_LayerArray", "Array")
+    machines = ("m_Controller", "m_StateMachineArray", "Array")
+
+    def read(path):
+        return struct.unpack_from("<I", body, spans[path][0])[0]
+
+    def write(path, value):
+        struct.pack_into("<I", result, spans[path][0], value)
+
+    count = read(layers)
+    links = [read(layers + (str(i), "data", "m_StateMachineIndex")) for i in range(count)]
+    synced = [read(layers + (str(i), "data", "m_StateMachineSynchronizedLayerIndex")) != 0 for i in range(count)]
+    groups = {}
+    for layer in range(count):
+        base, seen = layer, set()
+        while synced[base]:
+            if base in seen or links[base] >= count:
+                raise ValueError("invalid exported synchronized layer chain")
+            seen.add(base)
+            base = links[base]
+        machine = links[base]
+        group = groups.setdefault(machine, [])
+        write(layers + (str(layer), "data", "m_StateMachineIndex"), machine)
+        write(layers + (str(layer), "data", "m_StateMachineSynchronizedLayerIndex"), len(group))
+        group.append(layer)
+    for machine, group in groups.items():
+        prefix = machines + (str(machine), "data")
+        slots = len(group)
+        write(prefix + ("m_SynchronizedLayerCount",), slots)
+        states = prefix + ("m_StateConstantArray", "Array")
+        for state in range(read(states)):
+            path = states + (str(state), "data", "m_BlendTreeConstantIndexArray")
+            left, right = spans[path]
+            old = read(path)
+            indices = list(struct.unpack_from("<" + "I" * old, body, left + 4))
+            # Run after synced override omission: only the base motion remains.
+            if not indices or any(index != 0xFFFFFFFF for index in indices[1:]):
+                raise ValueError("synchronized layer resolution requires omitted motion overrides")
+            replacement = struct.pack("<I", slots) + struct.pack("<I", indices[0]) + struct.pack("<I", 0xFFFFFFFF) * (slots - 1)
+            changes.append((left, right, replacement))
+            # Exact editor BlobWrite starts this payload at an 8-byte boundary.
+            # Transition pointer blocks/bodies round to 8; condition bodies are
+            # 16 bytes. uint slots use 4 bytes; the next allocation aligns to 8.
+            allocation += ((4 * slots + 7) & ~7) - ((4 * old + 7) & ~7)
+    size = ("m_ControllerSize",)
+    write(size, read(size) + allocation)
+    for left, right, replacement in sorted(changes, reverse=True):
+        result[left:right] = replacement
+    return bytes(result)
+
+
 def controller_clear_skeleton_masks(body, root):
     """Apply the pinned exporter's omitted layer masks and native allocation size."""
     _, spans = fields(body, root)
@@ -1421,6 +1476,7 @@ def transform_generic(body, class_id, selected, root=None, read_clip=None, sourc
         "controller_state_order",
         "controller_clear_null_motion",
         "controller_omit_synced_overrides",
+        "controller_resolve_synced_layers",
         "canonical",
         "importer_guid",
         "crop_rectangle_offset",
@@ -1489,6 +1545,10 @@ def transform_generic(body, class_id, selected, root=None, read_clip=None, sourc
         if selected["controller_omit_synced_overrides"] is not True:
             raise ValueError("unqualified controller synced-motion policy")
         body = controller_omit_synced_overrides(body, root)
+    if "controller_resolve_synced_layers" in selected:
+        if selected["controller_resolve_synced_layers"] is not True:
+            raise ValueError("unqualified controller synchronized layer policy")
+        body = controller_resolve_synced_layers(body, root)
     if "controller_loop_states" in selected:
         body = controller_loop_states(body, root, selected["controller_loop_states"], read_clip)
     if "controller_clip_order" in selected:

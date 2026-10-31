@@ -552,6 +552,11 @@ overrides; their blob-size adjustment follows matched original-source shapes,
 not native deserializer heap allocation. It also omits synchronized layers’
 behaviour overrides, retaining source index order and remapping surviving ranges
 without synthesizing behaviour bodies or changing controller blob allocation.
+`controller_resolve_synced_layers` follows exported synchronized layer chains to
+an unsynchronized base, then derives machine groups, layer ordinals and state
+index slots from those source relationships after override omission. Controller
+blob-size changes follow 8-byte-aligned native index allocations; no target size
+constant or controller body is stored in the recipe.
 Setup, pack state and teardown remain with the same generic record owner.
 `scripts/lab/sprite_native_fixture.py` stages the current SDK-only Sprite runtime
 diagnostic with `SpriteNativeFixture.cs`. It references source PNGs by path/hash
