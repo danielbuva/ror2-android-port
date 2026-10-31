@@ -19,6 +19,12 @@ import shutil
 import stat
 import unicodedata
 import zipfile
+import importlib.util as _atomic_import
+
+_atomic_spec = _atomic_import.spec_from_file_location("owner_atomic_io", Path(__file__).with_name("atomic_io.py"))
+ATOMIC = _atomic_import.module_from_spec(_atomic_spec)
+_atomic_spec.loader.exec_module(ATOMIC)
+
 
 CHUNK = 64 * 1024
 MAX_FILES = 100_000
@@ -227,7 +233,7 @@ def _root(path, *, create=False):
     if any(part.is_symlink() for part in [path, *path.parents]):
         raise ValueError("symbolic-link import root refused")
     if create:
-        path.mkdir(parents=True, exist_ok=True, mode=0o700)
+        ATOMIC.mkdirs(path)
     if not path.is_dir():
         raise ValueError("directory import root required")
     return path
@@ -424,14 +430,7 @@ class Importer:
 
     def _checkpoint(self):
         value = {"schema": 1, "manifest_sha256": self.identity, "status": self.report["status"], "completed": self.completed}
-        temporary = _within(self.root, "checkpoint.tmp")
-        fd = os.open(temporary, os.O_WRONLY | os.O_CREAT | os.O_TRUNC | os.O_NOFOLLOW, 0o600)
-        with os.fdopen(fd, "wb") as stream:
-            stream.write(_encoded(value))
-            stream.flush()
-            os.fsync(stream.fileno())
-        os.replace(temporary, _within(self.root, "checkpoint.json"))
-        _sync_directory(self.root)
+        ATOMIC.write_json(_within(self.root, "checkpoint.json"), value)
 
     def _emit(self, **changes):
         self.report.update(changes)
@@ -594,9 +593,8 @@ class Importer:
                     partial = None
                     continue
                 destination = _within(self.files, name, parents=True)
-                os.replace(partial, destination)
+                ATOMIC.publish(partial, destination)
                 partial = None
-                _sync_directory(destination.parent)
                 self.completed[name] = {"bytes": row["bytes"], "sha256": row["sha256"]}
                 remaining -= row["bytes"]
                 self._checkpoint()
@@ -610,10 +608,13 @@ class Importer:
             return self._finish()
         except BaseException:
             if partial is not None:
-                partial.unlink(missing_ok=True)
+                ATOMIC.discard(partial)
             self.report["status"] = "failed"
             if owned:
-                self._checkpoint()
+                try:
+                    self._checkpoint()
+                except OSError:
+                    pass  # Retain the last durable checkpoint and original error.
             raise
 
     def _finish(self):

@@ -145,10 +145,7 @@ public final class ToolHostActivity extends Activity {
         return new JSONObject(new String(bytes.toByteArray(), StandardCharsets.UTF_8));
     }
     static synchronized void writeJson(File file, JSONObject value) throws Exception {
-        File parent = file.getParentFile(); if (!parent.isDirectory() && !parent.mkdirs()) throw new IOException("Private owner directory unavailable");
-        File staged = new File(parent, file.getName() + ".writing");
-        try (FileOutputStream output = new FileOutputStream(staged)) { output.write(value.toString().getBytes(StandardCharsets.UTF_8)); output.getFD().sync(); }
-        if (!staged.renameTo(file)) throw new IOException("Could not publish private status");
+        OwnerInputImport.writeAtomic(file, output -> output.write(value.toString().getBytes(StandardCharsets.UTF_8)));
     }
     static void updateStatus(Context app, String phase, String message) {
         try { File file = new File(app.getFilesDir(), "owner-input/update-state.json"); JSONObject value = file.isFile() ? readJson(file) : new JSONObject(); writeJson(file, value.put("state", phase).put("message", message)); }

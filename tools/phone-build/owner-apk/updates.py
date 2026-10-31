@@ -38,6 +38,7 @@ def module(name, path):
 RELEASE = module("owner_update_release", HERE / "release.py")
 SOURCE = module("owner_update_source", HERE / "release_source.py")
 ALPHA = RELEASE.ALPHA
+ATOMIC = RELEASE.ATOMIC
 
 
 @functools.lru_cache(maxsize=1)
@@ -62,21 +63,7 @@ def within(root, value, *, exists=False):
     return result
 
 
-def write_json(path, value):
-    path = Path(path)
-    path.parent.mkdir(parents=True, exist_ok=True)
-    if path.is_symlink():
-        raise ValueError("receipt cannot be a symlink")
-    handle, temporary = tempfile.mkstemp(prefix=".receipt-", dir=path.parent)
-    try:
-        with os.fdopen(handle, "w", encoding="utf-8") as stream:
-            json.dump(value, stream, sort_keys=True, allow_nan=False)
-            stream.write("\n")
-            stream.flush()
-            os.fsync(stream.fileno())
-        os.replace(temporary, path)
-    finally:
-        Path(temporary).unlink(missing_ok=True)
+write_json = ATOMIC.write_json
 
 
 class GitHubTransport:
@@ -227,10 +214,16 @@ def extract_bundle(bundle, destination, release):
                             raise ValueError("public member exceeded declared size")
                         digest.update(data)
                         output.write(data)
+                    output.flush()
+                    os.fsync(output.fileno())
                 if digest.hexdigest() != expected:
                     raise ValueError("public bundle member hash differs: " + name)
             write_json(stage / "bundle-index.json", index)
+            # Sync nested entries before publishing the complete verified tree.
+            for directory, _, _ in os.walk(stage, topdown=False):
+                ATOMIC.sync_directory(directory)
             stage.rename(destination)
+            ATOMIC.sync_directory(destination.parent)
         finally:
             if stage.exists():
                 shutil.rmtree(stage)
@@ -734,7 +727,10 @@ def _run(request_file, runtime, native, *, transport=None, debuggable=False):
     except Exception as error:
         if flow is not None and flow.state["status"] != "failed":
             flow.fail(error)
-        emit("ERROR", str(error))
+        try:
+            emit("ERROR", str(error))
+        except OSError:
+            pass  # Reporting cannot overwrite the original ENOSPC/failure.
         raise
 
 
