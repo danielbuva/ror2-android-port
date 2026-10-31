@@ -6058,3 +6058,23 @@ protected body, implementation, generated content or private path is included.
 All twelve persisted records are raw-exact to J850, 716 bytes. Saved public
 residual 75 to 63 includes the merged controller closures. Complete bundle,
 phone production, installation/update and runtime gates remain open.
+
+### Whole-game shrine component relationships (J1318)
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-whole-game-hierarchy-path-records.json` | `633ffe0b124232321bb76ee8a46f209c97481888fea4388dc9a014ce195125e7` |
+| `owner-whole-game-path-managed-records.json` | `2a32cff26498ddef58c73f87f57daaa58e1e4c406ccb7948ac36d76977793d95` |
+
+Audit: 2026-10-31. Original typed ShrineCombatPoison prefab path identifies
+its GameObject. Its complete sixteen-component native/script sequence and
+reciprocal owners identify both CombatDirector slots without name matching.
+Existing source record production retains native schemas and nonpointer bytes
+and relocates checked component, script and object references. Pinned R2API
+DirectorAPIinternal.cs:22-28,75-78 describes per-instance Director state;
+it supplies no shortcut for serialized duplicate identity. Original typed paths
+and full sequences retain the J1276/J1281/J1308 policies. Only original selectors,
+relationship mappings and hashes ship; no protected body, implementation,
+generated content or private path is included. All three persisted records
+are independently raw-exact to J850, 699 bytes. Saved public residual 63 to 60
+excludes parallel closures; complete bundle and phone/runtime gates remain open.

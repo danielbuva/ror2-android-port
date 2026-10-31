@@ -1769,3 +1769,18 @@ Persisted records raw-exact to J850, 716 bytes; pack SHA-256
 Saved public residual 75 → 63 includes merged controller closures. Readiness
 stays 693/705 available, 685 raw-exact. Complete bundle, phone production,
 installation/update and original runtime remain open. Host-only; no APK/device claim.
+
+## J1318 — Reconstruct whole-game shrine component relationships
+
+2026-10-31. Existing source recipes select ShrineCombatPoison through its typed
+original prefab path and both CombatDirectors through the complete sixteen-slot
+component/script sequence with reciprocal ownership. Native schemas and all
+nonpointer bytes remain intact; no new producer or runtime owner is added.
+Prior art: pinned R2API DirectorAPIinternal.cs:22-28,75-78, original typed paths.
+Evidence: `work/coordination/p1-wholegame-1031/shrine-public-v1/terminal.json`;
+source witnesses: adjacent `../shrine-managed-v1/proofs.json`, `../shrine-witness-next.md`.
+Three persisted records independently raw-exact to J850, 699 bytes; pack SHA-256
+`ea13180235114742b081ab67d0deece5d82d5859fb6633f18fe4eb369eb5f0b4`.
+Saved public residual 63 → 60 before parallel closures. Readiness stays
+693/705 available, 685 raw-exact. Complete bundle, phone production, installation/
+update and original runtime remain open. Host-only; no APK/device claim.
