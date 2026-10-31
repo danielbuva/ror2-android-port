@@ -5594,6 +5594,15 @@ activation policy and checked pointer remaps, with no target body, type template
 implementation or private data. Three persisted records (317 bytes) match J850
 raw-exact. Complete-file, phone production and install/update gates remain open.
 
+### LightningStake late source witness (2026-10-31)
+
+The default-off source observer continues checking scalar finiteness after its
+eight-row cap, preserving the first later invalid call in the final row unless
+an earlier invalid call is already retained. Its source hash and the shared
+audio/camera owner-cohort pins are refreshed together. Review: authored observer
+and metadata only; no game-derived content, private paths or identifiers. This
+is diagnostic capture, with no projectile mutation or device-acceptance claim.
+
 ### Whole-game native HUD component slots (J1290)
 
 | Recipe | SHA-256 |

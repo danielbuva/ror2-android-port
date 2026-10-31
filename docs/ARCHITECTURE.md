@@ -4897,7 +4897,10 @@ cadence, and detaches the exact bridge delegate during teardown. An ownership
 conflict marks session failure while remaining world cleanup continues.
 The Cecil producer inserts a default-off branch immediately before the original
 projectile call, preserving its receiver, source struct local and original
-call. The observer stores at most eight scalar-only rows; it retains no game
+call. The observer stores at most eight scalar-only rows. It continues checking
+scalar finiteness after the cap and, if no invalid call was retained earlier,
+replaces the final row with the first later nonfinite call. Subsequent calls
+preserve that first witness. It retains no game
 objects and changes no projectile operands. Producer, music-return observer
 and native-camera profiles bind the resulting managed chain separately.
 `DamageInfo.force` is observed as an invariant vector triplet string with a
