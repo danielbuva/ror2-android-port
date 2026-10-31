@@ -1580,3 +1580,18 @@ play, physical input and genuine filled-filesystem recovery remain open.
 - Saved unresolved census falls 148 to 146; with peer Renderer12, 134 remain.
   Final-file readiness stays 693/705 available, 685 raw-exact. Complete bundle,
   phone production, gameplay and install/update acceptance remain open.
+
+
+## J1301 — Reconstruct whole-game original Transform ownership
+2026-10-31.
+- Existing generic record owner emits eighteen Transforms selected through
+  qualified GameObject component slots and reciprocal original ownership.
+- Native schemas, parent/child shape and all nonpointer bits stay original; only
+  explicit references relocate. Persisted output is raw-exact to J850, 1,320 bytes.
+- Evidence: `work/coordination/p1-wholegame-1031/transform-owner-edges-v1/terminal.json`;
+  source identities and component witnesses: adjacent `proofs.json`.
+- Pack SHA-256: `fd7c1e9226ffd82a8a6585e61c24543667868827f0cbfbad9c75feb983209518`.
+- Prior art: J426 UnityPy PPtr member/path-ID ownership, checked against originals.
+- Combined unresolved census falls 134 to 116 (106 after peer Tree10). Final-file
+  readiness stays 693/705 available, 685 raw-exact. Complete bundle, phone
+  production, gameplay and install/update acceptance remain open.

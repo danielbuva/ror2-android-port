@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J1301](PORTING_JOURNAL.md#j1301--reconstruct-whole-game-original-transform-ownership) | 2026-10-31 | Reconstruct whole-game original Transform ownership | 2026-10-31. |
 | [J1299](PORTING_JOURNAL.md#j1299--preserve-original-calmwater-shader-fallback-graphs) | 2026-10-31 | Preserve original CalmWater Shader fallback graphs | 2026-10-31. |
 | [J1300](PORTING_JOURNAL.md#j1300--reconstruct-whole-game-original-trees-and-windassets) | 2026-10-31 | Reconstruct whole-game original Trees and WindAssets | 2026-10-31. |
 | [J1297](PORTING_JOURNAL.md#j1297--reconstruct-whole-game-particle-shader-from-original-materials) | 2026-10-31 | Reconstruct whole-game particle Shader from original materials | 2026-10-31. |
