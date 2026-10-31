@@ -101,7 +101,7 @@ class HdiutilVolumeTests(unittest.TestCase):
         result, _ = self.run_helper("success")
         self.assertEqual(result.returncode, 0, result.stderr)
         commands = self.log.read_text().splitlines()
-        self.assertEqual(commands[0], f"create -size 2g -fs Case-sensitive APFS -volname ci-local -type SPARSE {self.image} -quiet")
+        self.assertEqual(commands[0], f"create -size 4g -fs Case-sensitive APFS -volname ci-local -type SPARSE {self.image} -quiet")
         self.assertEqual(commands[1], f"attach {self.image} -mountpoint {self.mount} -nobrowse -quiet")
 
     def test_nonzero_setup_failures_keep_existing_fallback_result(self) -> None:
@@ -138,6 +138,10 @@ class HdiutilVolumeTests(unittest.TestCase):
         (tests / "test_fixture.py").write_text("import unittest\nclass Fixture(unittest.TestCase):\n def test_ok(self): self.assertTrue(True)\n")
         fakebin = self.root / "full-bin"
         fakebin.mkdir()
+        # Exercise the macOS mount branch even on Linux CI.
+        uname = fakebin / "uname"
+        uname.write_text("#!/bin/sh\nprintf 'Darwin\\n'\n")
+        uname.chmod(0o755)
         hdiutil = fakebin / "hdiutil"
         hdiutil.write_text('#!/bin/sh\nprintf \'%s\\n\' "$*" >> "$HDIUTIL_LOG"\nexit 23\n')
         hdiutil.chmod(0o755)

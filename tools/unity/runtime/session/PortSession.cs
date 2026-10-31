@@ -684,6 +684,7 @@ public sealed partial class PortSession : MonoBehaviour
     {
         if (File.Exists(System.IO.Path.Combine(Application.persistentDataPath, "whole-catalog-selection.json")))
             yield break;
+        ReadSettingsWriteObserverRequest();
         yield return new WaitForSeconds(8);
         // MovementBatchProbe is the unchanged resource/file name.
         var path = System.IO.Path.Combine(Application.persistentDataPath, "movement-batch-selection.json");
@@ -846,8 +847,7 @@ public sealed partial class PortSession : MonoBehaviour
             if (!UsesTouchUi())
             {
                 var mappingPath = System.IO.Path.Combine(Application.persistentDataPath, "nova-input-mapping.json");
-                while (!File.Exists(mappingPath) ||
-                       JsonUtility.FromJson<NovaInputBridge.Mapping>(File.ReadAllText(mappingPath)).attempt != config.attempt)
+                while (!NovaInputBridge.MappingStore.TryLoad(mappingPath, config.attempt, out _))
                     yield return new WaitForSeconds(1);
             }
             r = new SessionReport { attempt = config.attempt, id = "body-state-spawn-state-auto-nova-spine", freePlay = true };

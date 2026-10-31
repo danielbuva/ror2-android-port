@@ -93,6 +93,19 @@ class TerrainBaseGeneratorTests(unittest.TestCase):
         source = self.fixture()
         self.assertEqual(S.terrain_basegen_selections(deepcopy(source), source, []), {identity: [[[]], [[]], [[]]] for identity in (10, 20, 30)})
 
+    def test_legacy_prefab_particle_uses_declared_no_fog_variants(self):
+        source = self.fixture()
+        source["m_ParsedForm"]["m_Name"] = "Legacy Shaders/Particles/Alpha Blended Premultiply"
+        snippet = source["m_CompileInfo"]["m_Snippets"][0][1]
+        snippet["m_VariantsBuiltin0"] = [[], ["FOG_LINEAR"], ["STEREO_INSTANCING_ON"]]
+        self.assertEqual(S.legacy_particle_selections(deepcopy(source), source, []), {identity: [[[]], [[]], [[]]] for identity in (10, 20, 30)})
+        with self.assertRaisesRegex(ValueError, "no material variants"):
+            S.legacy_particle_selections(source, source, [{}])
+        original = deepcopy(source)
+        original["m_ParsedForm"]["m_Name"] = "Other"
+        with self.assertRaisesRegex(ValueError, "identity differs"):
+            S.legacy_particle_selections(original, source, [])
+
     def test_original_property_contract_must_match_sdk(self):
         original, sdk = self.fixture(), self.fixture()
         original["m_ParsedForm"]["m_PropInfo"]["m_Props"] = [{"m_Name": "_Different"}]

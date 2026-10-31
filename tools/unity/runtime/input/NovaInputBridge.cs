@@ -12,21 +12,190 @@ public sealed class NovaInputBridge : MonoBehaviour
     [Serializable]
     public class Mapping
     {
-        public string attempt, observation;
+        public string attempt, observation, observation_sha256, accepted_mapping_attempt;
         public int moveX, moveY, aimX, aimY, jump, primary, secondary, utility, special, interact;
         public float moveYSign, aimYSign;
         public bool enableSkills, enableInteraction;
+        public Mapping Copy() { return (Mapping)MemberwiseClone(); }
         public void Validate(string expected)
         {
             if (attempt != expected || string.IsNullOrEmpty(observation))
-                throw new Exception("Unmeasured or stale Nova mapping");
+                throw new ArgumentException("Unmeasured or stale Nova mapping");
             var axes = new[] { moveX, moveY, aimX, aimY };
             var buttons = new[] { jump, primary, secondary, utility, special };
             if (axes.Any(x => x < 0 || x >= 16) || axes.Distinct().Count() != 4 || buttons.Any(x => x < 0 || x >= 20) ||
                 buttons.Distinct().Count() != 5 || Mathf.Abs(moveYSign) != 1 || Mathf.Abs(aimYSign) != 1)
-                throw new Exception("Invalid Nova bindings");
+                throw new ArgumentException("Invalid Nova bindings");
             if (enableInteraction && (interact < 0 || interact >= 20 || buttons.Contains(interact)))
-                throw new Exception("Invalid measured interaction binding");
+                throw new ArgumentException("Invalid measured interaction binding");
+        }
+    }
+    public static class MappingStore
+    {
+        static Mapping Read(string path, string expected)
+        {
+            var value = new Mapping();
+            JsonUtility.FromJsonOverwrite(System.IO.File.ReadAllText(path), value);
+            value.Validate(expected ?? value.attempt);
+            return value;
+        }
+        static bool Recoverable(Exception e)
+        {
+            return e is System.IO.IOException || e is UnauthorizedAccessException || e is ArgumentException;
+        }
+        public static Mapping Load(string path, string expected)
+        {
+            try { return Read(path, expected); }
+            catch (Exception e) { if (!Recoverable(e)) throw; }
+            // Only validated generations may recover a mapping. Pending is never promoted.
+            var backup = Read(path + ".backup", expected);
+            Write(path + ".pending", backup);
+            Read(path + ".pending", expected);
+            if (System.IO.File.Exists(path))
+                System.IO.File.Move(path, path + ".rejected-" + Guid.NewGuid().ToString("N"));
+            System.IO.File.Move(path + ".pending", path);
+            return Read(path, expected);
+        }
+        public static bool TryLoad(string path, string expected, out Mapping mapping)
+        {
+            mapping = null;
+            try { mapping = Load(path, expected); return true; }
+            catch (Exception e) { if (!Recoverable(e)) throw; return false; }
+        }
+        static void Write(string path, Mapping value)
+        {
+            using (var stream = new System.IO.FileStream(path, System.IO.FileMode.Create, System.IO.FileAccess.Write,
+                                                       System.IO.FileShare.None))
+            {
+                using (var writer = new System.IO.StreamWriter(stream, System.Text.Encoding.UTF8, 1024, true))
+                {
+                    writer.Write(JsonUtility.ToJson(value, true));
+                    writer.Flush();
+                }
+                stream.Flush(true);
+            }
+        }
+        public static bool TrySave(string path, Mapping draft, string expected)
+        {
+            try
+            {
+                draft.Validate(expected);
+                // Require an existing measured map; this screen cannot create one.
+                Load(path, expected);
+                var pending = path + ".pending";
+                Write(pending, draft);
+                var verified = Read(pending, expected);
+                if (JsonUtility.ToJson(verified, false) != JsonUtility.ToJson(draft, false))
+                    throw new System.IO.InvalidDataException("Mapping readback mismatch");
+                System.IO.File.Replace(pending, path, path + ".backup");
+                if (JsonUtility.ToJson(Read(path, expected), false) != JsonUtility.ToJson(draft, false))
+                    throw new System.IO.InvalidDataException("Mapping readback mismatch");
+                return true;
+            }
+            catch (Exception e) { if (!Recoverable(e)) throw; return false; }
+        }
+    }
+    // A paused, isolated draft. Capture never writes the live bank or mapping.
+    // The owning settings screen confirms the physical label before persistence.
+    public sealed class ButtonRebind
+    {
+        public readonly Mapping draft;
+        public readonly string action;
+        public int candidate { get; private set; } = -1;
+        public string error { get; private set; }
+        public bool ready { get; private set; }
+        readonly ControllerPresence presence;
+        readonly int originalButton;
+        bool armed;
+        public ButtonRebind(Mapping current, string action, string controllerName)
+        {
+            current.Validate(current.attempt);
+            if (!new[] { "jump", "primary", "secondary", "utility", "special", "interact" }.Contains(action) ||
+                (action == "interact" && !current.enableInteraction))
+                throw new ArgumentException("Unavailable button action");
+            draft = current.Copy();
+            this.action = action;
+            originalButton = Button(current, action);
+            presence = new ControllerPresence(controllerName);
+        }
+        public void Observe(string[] names, Raw raw, float now)
+        {
+            if (!presence.Matches(names))
+            {
+                Retry("Reconnect the same controller, then release all controls.");
+                return;
+            }
+            if (ready)
+                return;
+            if (!armed)
+            {
+                // Exclude the opening press and require the existing neutral window.
+                armed = presence.Observe(names, NeutralSample(raw, draft), now);
+                return;
+            }
+            var down = Enumerable.Range(0, raw.buttons.Length).Where(i => raw.buttons[i]).ToArray();
+            if (down.Length > 1 || (candidate >= 0 && down.Length == 1 && down[0] != candidate))
+            {
+                Retry("Press only one button, then release it.");
+                return;
+            }
+            if (candidate < 0 && down.Length == 1)
+                candidate = down[0];
+            else if (candidate >= 0 && down.Length == 0)
+            {
+                var conflict = new[] { "jump", "primary", "secondary", "utility", "special", "interact" }
+                    .FirstOrDefault(a => a != action && (a != "interact" || draft.enableInteraction) && Button(draft, a) == candidate);
+                if (candidate == 1 || conflict != null)
+                {
+                    Retry("That button is assigned to " + (candidate == 1 ? "menu / back" : conflict) + ". Choose another button.");
+                    return;
+                }
+                int prior = Button(draft, action);
+                SetButton(draft, action, candidate);
+                try
+                {
+                    draft.Validate(draft.attempt);
+                    ready = true;
+                    error = null;
+                }
+                catch (Exception)
+                {
+                    SetButton(draft, action, prior);
+                    Retry("That button is already assigned. Choose another button.");
+                }
+            }
+        }
+        void Retry(string message)
+        {
+            SetButton(draft, action, originalButton);
+            armed = ready = false;
+            candidate = -1;
+            presence.Suspend();
+            error = message;
+        }
+        static int Button(Mapping m, string action)
+        {
+            switch (action)
+            {
+                case "jump": return m.jump;
+                case "primary": return m.primary;
+                case "secondary": return m.secondary;
+                case "utility": return m.utility;
+                case "special": return m.special;
+                default: return m.interact;
+            }
+        }
+        static void SetButton(Mapping m, string action, int button)
+        {
+            switch (action)
+            {
+                case "jump": m.jump = button; break;
+                case "primary": m.primary = button; break;
+                case "secondary": m.secondary = button; break;
+                case "utility": m.utility = button; break;
+                case "special": m.special = button; break;
+                default: m.interact = button; break;
+            }
         }
     }
     [Serializable]
@@ -222,6 +391,7 @@ public sealed class NovaInputBridge : MonoBehaviour
     bool focused = true, jumpHeld, jumpLatched;
     ControllerPresence presence;
     static string requiredControllerName;
+    public static string MeasuredControllerName => requiredControllerName;
     public bool controllerConnected => presence != null && presence.connected;
     public int controllerSuspensions => presence == null ? 0 : presence.suspensions;
     public int controllerReconnections => presence == null ? 0 : presence.reconnections;

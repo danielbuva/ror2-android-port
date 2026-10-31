@@ -441,6 +441,18 @@ def terrain_basegen_selections(original, sdk_source, materials):
     return P.sdk_scene_selections(sdk_source, set())
 
 
+def legacy_particle_selections(original, sdk_source, materials):
+    """Select the standalone prefab's SDK particle source without scene fog."""
+    name = "Legacy Shaders/Particles/Alpha Blended Premultiply"
+    if materials or original["m_Dependencies"] or sdk_source["m_Dependencies"]:
+        raise ValueError("legacy prefab particle shader has no material variants or dependencies")
+    if any(source["m_ParsedForm"]["m_Name"] != name for source in (original, sdk_source)):
+        raise ValueError("legacy prefab particle shader identity differs")
+    if original["m_ParsedForm"]["m_PropInfo"] != sdk_source["m_ParsedForm"]["m_PropInfo"]:
+        raise ValueError("legacy prefab particle shader original/SDK properties differ")
+    return P.sdk_scene_selections(sdk_source, set())
+
+
 def produce_standard(profile_path, profile_sha256, pc, sdk, output, codec, codec_sha256):
     """Produce the bounded Standard source record through the shared SDK owner."""
     import UnityPy
@@ -456,7 +468,10 @@ def produce_standard(profile_path, profile_sha256, pc, sdk, output, codec, codec
     codec_pin = {"bytes": codec.stat().st_size, "sha256": codec_sha256}
     output = checked_output(output, (pc, sdk, profile_path, codec))
     source = profile["source_type"]
-    selections = [source, *profile["materials"], profile["scene"]]
+    prefab = profile.get("prefab_no_fog", False)
+    if prefab and (prefab is not True or profile.get("sdk_shader") != 207 or "scene" in profile):
+        raise ValueError("prefab no-fog policy requires the standalone legacy particle shader")
+    selections = [source, *profile["materials"], *([] if prefab else [profile["scene"]])]
     pins = [(profile_path, profile_pin), (codec, codec_pin)]
     pins.extend((P.relative(pc, selected["path"]), selected) for selected in selections)
     pins.extend((P.relative(sdk, name), pin) for name, pin in profile["compiler_sdk"].items())
@@ -478,7 +493,13 @@ def produce_standard(profile_path, profile_sha256, pc, sdk, output, codec, codec
     obj = original_object(source, "Shader")
     original = obj.read_typetree()
     sdk_id = profile.get("sdk_shader", 46)
-    expected_name = {46: "Standard", 106: "Skybox/Procedural", 211: "Particles/Standard Unlit", 10626: "Hidden/TerrainEngine/Splatmap/Standard-BaseGen"}[sdk_id]
+    expected_name = {
+        46: "Standard",
+        106: "Skybox/Procedural",
+        207: "Legacy Shaders/Particles/Alpha Blended Premultiply",
+        211: "Particles/Standard Unlit",
+        10626: "Hidden/TerrainEngine/Splatmap/Standard-BaseGen",
+    }[sdk_id]
     if original["m_ParsedForm"]["m_Name"] != expected_name:
         raise ValueError("Standard native type source differs")
     materials = []
@@ -497,19 +518,26 @@ def produce_standard(profile_path, profile_sha256, pc, sdk, output, codec, codec
         # Original body and shader/PPtr checks above still apply to mapped
         # materials. Only the explicit profile identity chooses SDK features.
         materials.append(standard_material(selected, value, sdk_materials))
-    environment = UnityPy.load(str(P.relative(pc, profile["scene"]["path"])))
-    scene_objects = [obj for obj in environment.objects if "member" not in profile["scene"] or obj.assets_file.name == profile["scene"]["member"]]
-    fog = [obj.read_typetree() for obj in scene_objects if obj.type.name == "RenderSettings"]
-    maps = [obj.read_typetree() for obj in scene_objects if obj.type.name == "LightmapSettings"]
-    fog_keyword = validate_standard_scene(
-        fog,
-        maps,
-        [renderer.read_typetree() for renderer in scene_objects if renderer.type.name.endswith("Renderer")],
-    )
+    fog_keyword = None
+    if not prefab:
+        environment = UnityPy.load(str(P.relative(pc, profile["scene"]["path"])))
+        scene_objects = [obj for obj in environment.objects if "member" not in profile["scene"] or obj.assets_file.name == profile["scene"]["member"]]
+        fog = [obj.read_typetree() for obj in scene_objects if obj.type.name == "RenderSettings"]
+        maps = [obj.read_typetree() for obj in scene_objects if obj.type.name == "LightmapSettings"]
+        fog_keyword = validate_standard_scene(
+            fog,
+            maps,
+            [renderer.read_typetree() for renderer in scene_objects if renderer.type.name.endswith("Renderer")],
+        )
     sdk_pin = profile["compiler_sdk"]["Resources/unity_builtin_extra"]["sha256"]
     sdk_source = SDK.sdk_source(sdk, sdk_id, sdk_pin)
     dependency_relocations = []
-    if sdk_id == 10626:
+    if sdk_id == 207:
+        if not prefab:
+            raise ValueError("legacy particle shader requires the standalone prefab scope")
+        source_runtime = sdk_source
+        keyword_rows = legacy_particle_selections(original, source_runtime, materials)
+    elif sdk_id == 10626:
         source_runtime = sdk_source
         keyword_rows = terrain_basegen_selections(original, source_runtime, materials)
     elif sdk_id == 106:

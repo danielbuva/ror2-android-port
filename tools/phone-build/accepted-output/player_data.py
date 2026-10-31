@@ -1148,6 +1148,16 @@ def produce(
     code_request=None,
     managed_production=None,
     record_packs=(),
+    ui_profile=None,
+    ugui_source=None,
+    stage_context_profile=None,
+    hud_profile=None,
+    manager_profile=None,
+    manager_shaders=None,
+    manager_startup=None,
+    sdk_binary=None,
+    scene_profile=None,
+    scene_environment=None,
 ):
     """Write a new target tree; never use target bytes as a source provider."""
     profile_path = Path(profile_path)
@@ -1277,6 +1287,72 @@ def produce(
             result["registry_inputs"] = {str(path): {"bytes": pin[0], "sha256": pin[1]} for path, pin in registry_pins}
         elif "shared_defaults" in profile:
             raise ValueError("shared defaults require the source registry")
+        if scene_profile is not None:
+            if "registry" not in profile or "shared_defaults" not in profile or scene_environment is None:
+                raise ValueError("source default scene requires registry, shared defaults and native source environment")
+            scene = OBJECTS.module("_player_scene", Path(__file__).with_name("player_scene.py"))
+            registry_file = output / (TARGET + profile["registry"]["file"])
+            shared_file = output / (TARGET + profile["shared_defaults"]["file"])
+            produced_scene = scene.produce(
+                scene_profile[0],
+                scene_profile[1],
+                pc,
+                sdk,
+                editor_resources,
+                (registry_file, sha(registry_file)),
+                (shared_file, sha(shared_file)),
+                scene_environment,
+                output / "default-scene-source",
+            )
+            for name, row in produced_scene["files"].items():
+                shutil.copyfile(output / "default-scene-source" / name, output / (TARGET + name))
+                checked(output / (TARGET + name), (row["bytes"], row["sha256"]))
+                result["files"][TARGET + name] = row
+            result["default_scene"] = produced_scene
+        if ui_profile is not None:
+            if "registry" not in profile or ugui_source is None:
+                raise ValueError("source UI requires the generated registry and exact SDK UGUI source")
+            ui = OBJECTS.module("_player_ui", Path(__file__).with_name("player_ui.py"))
+            produced_ui = ui.produce(
+                ui_profile[0], ui_profile[1], pc, profile, builtin_extra, editor_resources, ugui_source, managed_production, registry, output / TARGET
+            )
+            result["ui"] = produced_ui
+            result["files"].update({TARGET + name: row for name, row in produced_ui["files"].items()})
+        if hud_profile is not None:
+            if "registry" not in profile:
+                raise ValueError("source HUD requires the generated registry")
+            hud = OBJECTS.module("_player_hud", Path(__file__).with_name("player_hud.py"))
+            produced_hud = hud.produce(
+                hud_profile[0], hud_profile[1], pc, profile, builtin_extra, editor_resources, managed_production, registry, output / TARGET
+            )
+            result["hud"] = produced_hud
+            result["files"].update({TARGET + name: row for name, row in produced_hud["files"].items()})
+        if stage_context_profile is not None:
+            contexts = OBJECTS.module("_player_stage_contexts", Path(__file__).with_name("stage_contexts.py"))
+            produced_contexts = contexts.produce(stage_context_profile[0], stage_context_profile[1], pc, output / "stage-context-source")
+            for name, row in produced_contexts["files"].items():
+                shutil.copyfile(output / "stage-context-source" / name, output / (TARGET + name))
+                checked(output / (TARGET + name), (row["bytes"], row["sha256"]))
+                result["files"][TARGET + name] = dict(row, source_role="original-stage-contexts")
+            result["stage_contexts"] = produced_contexts
+        if manager_profile is not None:
+            if any(value is None for value in (ui_profile, hud_profile, stage_context_profile, manager_shaders, manager_startup, sdk_binary)):
+                raise ValueError("source managers require UI, HUD, stage, Shader, startup and SDK phases")
+            managers = OBJECTS.module("_player_managers", Path(__file__).with_name("player_managers.py"))
+            produced_managers = managers.produce(
+                manager_profile[0],
+                manager_profile[1],
+                pc,
+                sdk,
+                builtin_extra,
+                sdk_binary,
+                manager_shaders,
+                manager_startup,
+                profile,
+                output / TARGET,
+            )
+            result["managers"] = produced_managers
+            result["files"].update({TARGET + name: row for name, row in produced_managers["files"].items()})
         # Re-read persisted files and their providers before declaring success.
         for name, pin in expected.items():
             checked(output / (TARGET + name), pin)
@@ -1318,6 +1394,27 @@ def main():
         "--code-request", type=Path, help="existing original-input code request, with target.source and source_inputs.packages; required for registry"
     )
     parser.add_argument("--managed-production", type=Path, help="successful source-produced managed directory; required for registry")
+    parser.add_argument("--ui-profile", nargs=2, metavar=("PROFILE", "SHA256"), help="current source Menu profile; requires registry and SDK UGUI source")
+    parser.add_argument(
+        "--hud-profile", nargs=2, metavar=("PROFILE", "SHA256"), help="current source HUD profile; requires registry and managed source outputs"
+    )
+    parser.add_argument("--stage-context-profile", nargs=2, metavar=("PROFILE", "SHA256"), help="current original-record stage context profile")
+    parser.add_argument(
+        "--manager-profile",
+        nargs=2,
+        metavar=("PROFILE", "SHA256"),
+        help="current complete native manager phase; requires Menu, HUD, stage, Shader and startup phases",
+    )
+    parser.add_argument("--manager-shaders", nargs=2, metavar=("DIRECTORY", "RECEIPT_SHA256"), help="complete source-produced player Shader directory")
+    parser.add_argument("--manager-startup", nargs=2, metavar=("RECEIPT", "SHA256"), help="public startup metadata receipt supplying build identity")
+    parser.add_argument("--sdk-binary", type=Path, help="exact acquired ARM64 SDK executable; required for manager metadata selection")
+    parser.add_argument(
+        "--scene-profile", nargs=2, metavar=("PROFILE", "SHA256"), help="current source default-scene phase; native lighting compatibility remains open"
+    )
+    for name in ("scene-environment-result", "scene-environment-request", "scene-environment-bundle"):
+        parser.add_argument("--" + name, nargs=2, metavar=("PATH", "SHA256"), help="explicit native source environment phase input")
+    parser.add_argument("--scene-environment-images", type=Path, help="source capture face/mip directory")
+    parser.add_argument("--ugui-source", type=Path, help="exact SDK com.unity.ugui Runtime/UI/Core source directory; required for source Menu")
     parser.add_argument(
         "--record-pack",
         nargs=2,
@@ -1336,6 +1433,11 @@ def main():
     )
     parser.add_argument("--output", type=Path, required=True, help="new private target-tree root; parent must exist")
     args = parser.parse_args()
+    scene_inputs = (args.scene_environment_result, args.scene_environment_request, args.scene_environment_images, args.scene_environment_bundle)
+    if any(value is not None for value in scene_inputs) and not all(value is not None for value in scene_inputs):
+        parser.error("supply all four source environment inputs together")
+    if bool(args.scene_profile) != all(value is not None for value in scene_inputs):
+        parser.error("source scene profile and complete native environment must be supplied together")
     produce(
         args.profile,
         args.profile_sha256,
@@ -1350,6 +1452,16 @@ def main():
         args.code_request,
         args.managed_production,
         args.record_pack,
+        args.ui_profile,
+        args.ugui_source,
+        args.stage_context_profile,
+        args.hud_profile,
+        args.manager_profile,
+        args.manager_shaders,
+        args.manager_startup,
+        args.sdk_binary,
+        args.scene_profile,
+        scene_inputs if args.scene_profile is not None else None,
     )
 
 

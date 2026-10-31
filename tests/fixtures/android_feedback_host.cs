@@ -90,6 +90,7 @@ namespace UnityEngine
         public static string persistentDataPath = ".";
         public static string url;
         public static bool openFails;
+        public static bool isFocused = true;
         public static void OpenURL(string value) { if (openFails) throw new InvalidOperationException(); url = value; }
         public static void Quit() { }
     }
@@ -102,10 +103,11 @@ namespace UnityEngine
         public KeyCode keyCode;
         public void Use() { type = EventType.Used; }
     }
-    public static class Time { public static float timeScale = .75f; public static int frameCount = 1; }
+    public static class Time { public static float timeScale = .75f, realtimeSinceStartup; public static int frameCount = 1; }
     public static class Input
     {
         public static HashSet<KeyCode> down = new HashSet<KeyCode>();
+        public static string[] GetJoystickNames() => new[] { "Authored controller" };
         public static bool GetKeyDown(KeyCode key) => down.Contains(key);
     }
 }
@@ -130,7 +132,21 @@ public class NovaInputBridge : UnityEngine.Object
 {
     public static bool ownGuiMouse;
     public bool OwnsTouchGuiMouse => ownGuiMouse;
-    public class Mapping { public int moveX, aimX = 1, jump; }
+    public class Mapping { public int moveX, aimX = 1, jump; public bool enableInteraction; }
+    public static string MeasuredControllerName => "Authored controller";
+    public class ButtonRebind
+    {
+        public Mapping draft; public string action, error; public bool ready; public int candidate = -1;
+        public static ButtonRebind last;
+        public ButtonRebind(Mapping mapping, string action, string name) { draft = new Mapping { jump = mapping.jump }; this.action = action; last = this; }
+        public void Observe(string[] names, Raw raw, float now) { }
+    }
+    public static class MappingStore
+    {
+        public static bool refuse; public static int saves;
+        public static bool TryLoad(string path, string attempt, out Mapping mapping) { mapping = new Mapping(); return true; }
+        public static bool TrySave(string path, Mapping draft, string attempt) { saves++; return !refuse; }
+    }
     public struct Raw { public float[] axes; }
     public static Raw raw = new Raw { axes = new float[2] };
     public static Raw ReadRaw() => raw;
@@ -161,13 +177,13 @@ public class AndroidOfflineSettings
 }
 public sealed partial class PortSession
 {
-    public class Mapping { public int jump; }
+    public class Mapping : NovaInputBridge.Mapping { }
     public class Report
     {
         public OfflineSettingsReport settings;
         public Report runClock, nova, profile, results, world, primary, combat, enemy;
         public bool freePlay = true, physicalInputAvailable = true, ready, reportGenerated, integratedWorld = true, commandoPrimaryDiagnostic, persisted;
-        public string phase = "world";
+        public string phase = "world", attempt = "host";
         public Mapping mapping = new Mapping();
         public int fixedTicks, appliedRuns, kills, shots, stockAfter, secondaryEntries, utilityEntries, specialEntries, headbutts;
         public float damageDealt, healthAfter, health, playerHealth;
@@ -344,6 +360,36 @@ public static class AndroidFeedbackHost
         Check(LabelContains("Enter a description first."), "cleanup retained private draft");
         session.Dispose(); session.Dispose(); Check(Time.timeScale == .75f, "repeated cleanup changed pause");
     }
+    static void RebindModal()
+    {
+        var session = new PortSession(); session.Prepare(); session.Show(true);
+        GUI.click = "Rebind controller buttons"; session.Render();
+        Check(session.r.settings.rebindVisible && session.Paused, "rebind not paused");
+        GUI.click = "jump"; session.Render();
+        Input.down.Add(KeyCode.Joystick1Button1); Input.down.Add(KeyCode.Joystick1Button0);
+        session.Controller(); Input.down.Clear();
+        Check(session.SettingsVisible && session.Paused && session.SettingsSaves == 0, "capture leaked B/A to close/save");
+        GUI.click = "Cancel"; session.Render();
+        Check(!session.r.settings.rebindVisible && session.r.nova.mapping.jump == 0 && session.Paused, "cancel changed active map/pause");
+        GUI.click = "Rebind controller buttons"; session.Render();
+        GUI.click = "jump"; session.Render();
+        var capture = NovaInputBridge.ButtonRebind.last;
+        capture.ready = true; capture.candidate = capture.draft.jump = 18;
+        NovaInputBridge.MappingStore.refuse = true;
+        GUI.click = "Confirm button and save for next session"; session.Render();
+        Check(session.r.settings.rebindVisible && session.Paused && !session.r.settings.rebindSavedForNextSession &&
+              session.r.nova.mapping.jump == 0, "save failure lost draft or changed active map");
+        NovaInputBridge.MappingStore.refuse = false;
+        GUI.click = "Confirm button and save for next session"; session.Render();
+        Check(!session.r.settings.rebindVisible && session.r.settings.rebindSavedForNextSession && session.Paused &&
+              session.r.nova.mapping.jump == 0, "retry resumed or hot-swapped live input");
+        GUI.click = "Rebind controller buttons"; session.Render();
+        GUI.click = "jump"; session.Render();
+        Application.isFocused = false; session.Controller(); Application.isFocused = true;
+        Check(session.r.settings.rebindAction == null, "focus loss kept capture");
+        session.Dispose();
+        Check(!session.r.settings.rebindVisible && !session.Paused, "teardown retained modal/pause");
+    }
     static void StartMenuInput()
     {
         var session = new PortSession(); session.Prepare(); session.StartMenu(); session.Show(true);
@@ -442,6 +488,7 @@ public static class AndroidFeedbackHost
             case "screen-consent": ScreenConsent(); break;
             case "screen-errors": ScreenErrors(); break;
             case "screen-escape": ScreenEscape(); break;
+            case "rebind-modal": RebindModal(); break;
             case "settings-lifecycle": SettingsLifecycle(); break;
             case "start-menu-input": StartMenuInput(); break;
             case "end-run-confirmation": EndRunConfirmation(); break;

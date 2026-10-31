@@ -11,7 +11,7 @@ import io
 import struct
 
 
-LIMIT = 64 * 1024 * 1024
+LIMIT = 256 * 1024 * 1024  # Commando: 175 MB serialized member, 148 MB resource member
 
 
 def sha(path):

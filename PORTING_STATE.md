@@ -1,6 +1,6 @@
 # Porting state
 
-Updated 2026-10-27 UTC. This laboratory is not a finished port. Full results belong in the
+Updated 2026-10-30 UTC. This laboratory is not a finished port. Full results belong in the
 [journal](docs/PORTING_JOURNAL.md) (index: [JOURNAL_INDEX](docs/JOURNAL_INDEX.md); J1–J1177 frozen in
 [history](docs/history/journal-J1-J1177/JOURNAL_INDEX.md)).
 
@@ -13,13 +13,19 @@ is disposable (user-approved cleanup, 2026-10-27).
 | --- | --- |
 | Accepted input | Steam 25475991; input `6af7ed94619fe1b4346974b4486afa03a8d1625a7820e92da0ff74d57208fe88` |
 | Toolchain | Unity 2021.3.45f2 (88f88f591b2e), IL2CPP ARM64, Vulkan; `environment/toolchain.json` |
-| Accepted build (P1 target) | J850 `f1550ce0ff030ea0fa7a1ab66de19d54ee7894a7ae2f5b344f993157d6713949`, source `1780ea9`; scope in [BASELINE.md](docs/BASELINE.md). Phone-only reconstruction must reproduce these bytes from the user's game files. |
+| Compatibility reference (P1) | J850 `f1550ce0ff030ea0fa7a1ab66de19d54ee7894a7ae2f5b344f993157d6713949`, source `1780ea9`. Strict reference for game code, asset identities, serialized relationships and runtime compatibility; incidental metadata may be generated or omitted. [Converter contract](docs/accepted-build-reconstruction.md). |
 | Latest device-verified APK | J1121/R58 `4386916991386bdf5b747e69786be58fa72ccfb0d3fc0220f59061ede495d0f5`, source `55149b48`; installed and verified on the shared Nova. Siren-route recovery and destination capture remain device gates. |
 | Installed now (Main Nova) | `43a8c0ffd5e98fd7f04e7030df3c3e29e765ebfe06a50a647231c7d3103a8d7a`, source `70f44151`, adopted storage. Shared handoffs may advance receipts; never infer installation from Git. |
 | Runtime source since that APK | Frozen Siren candidate `4f2274d49ba10474299ffa7a58de5da49ffd70327897e532806a519d0ee24cea`, source `5dc99b6c` (native navigation detours); its assisted Siren stage still fails in gameplay and is the current Main gate. |
-| Phone-only production | Host readiness 645 of 705 final files (640 raw-exact). Remaining: scene/shader/texture cohorts (incl. 13 native Cubemaps) and the phone install/update flow (PRs 159/163/168, phone-tested). Details: [reconstruction](docs/accepted-build-reconstruction.md), [public alpha](docs/public-alpha.md). |
+| Phone-only production | Host readiness 693 of 705 final files (685 raw-exact), through J1274. Remaining: 12 scene/player/lab/catalog files, including native Cubemaps; complete phone production and install/update acceptance remain open. Details: [reconstruction](docs/accepted-build-reconstruction.md), [public alpha](docs/public-alpha.md). |
 | Historical executable rollbacks | J425 `5a25bb9fe001440a01316bbe79f4e8269ac37e6bf33e91d4c20e91f1f9ae63b0`; paused J323 Moon `893b03c4162a79d4cc9b194fb07b412695e34c1b50439434230902289bd385a9`. [Retention policy](docs/history-retention.md). |
 | Retained old input | Steam 21587608 / Unity 2021.3.33f1 retained for old rollbacks only. |
+
+The public converter uses legitimate game files, permitted SDK inputs and public
+recipes. Random build IDs, private development connections and machine metadata
+need not reproduce historical bytes. Private J850 artifacts or inaccessible
+development settings are never required public inputs. Raw-exact results,
+generated metadata and device acceptance remain separate facts.
 
 ## Remaining gates
 

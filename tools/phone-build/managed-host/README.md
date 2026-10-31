@@ -210,3 +210,140 @@ ordinary app host, with actual native hash/mapping/UID/context evidence. It does
 not qualify full-player assembly, installer UI or game performance. The separate
 original-input native compilation remains active until its own terminal result
 and explicit corrected relink. Device policy/security qualification stays open.
+
+## Phone-only installer surface (host-qualified, not device-qualified)
+
+Installer version 3 keeps the existing signed release updater, source-only
+producers, thermal supervisor and `OwnerInstaller` PackageInstaller path. The
+Activity now prepares a signed installation plan, asks Android's Storage Access
+Framework for a folder or ZIP and retains read-only URI permission. No input URI,
+file bytes or local inventory is sent to the release network client.
+
+`OwnerInputSource` owns Android provider access and revocation recovery;
+`OwnerInputImport` is the host-tested stream copier. It imports only signed-manifest
+paths directly into `owner-input/import/files`, verifies sizes/SHA-256 and retains
+whole verified files for resume. ZIP input is streamed once, without a private
+archive-sized copy; ignored extra members have a bounded decompression budget.
+Traversal, aliases, duplicate ZIP entries, mismatches and missing inputs refuse.
+The free-space estimate includes remaining copies, the signed workspace budget,
+2 GiB reserve and 5% of remaining input bytes. A changed manifest retains the
+previous files in an import-local `previous-import-*` directory rather than
+silently deleting them. Python rehashes exact final membership before reconstruction;
+Java progress/receipts are never input admission proof. Only deterministic unfinished
+native copy fragments are discarded automatically.
+
+`OwnerBuildService` owns the worker independently of Activity recreation and task
+removal, with an ongoing foreground notification and a partial wake lock during
+local work. Pause/resume/cancel feed the existing thermal supervisor; user pause
+never pauses its sensor loop or overrides its cooling decision. Provider cancel
+uses `CancellationSignal` and closes the active source stream. Battery admission
+retains the documented caller rule (at most 35 C and 85%, no charging at or above
+80%); the supervisor's thermal limits are unchanged. The screen displays signed
+stages, byte/job progress, elapsed time, first failure, live duty-runner readings
+and Android battery charge/health; unavailable or old readings are marked.
+
+Process death/reboot preserves source grants, verified files and stage checkpoints.
+There is no boot receiver, sticky restart or automatic work after reboot: Resume is
+explicit and all reused bytes are revalidated. Cancelling keeps verified checkpoints.
+The service signals the existing supervisor, whose teardown kills/reaps its process
+family even while paused. Retrying an install failure uses the existing session
+installer rather than reconstructing completed stages. After an explicitly started
+reconstruction succeeds, the service hands the ready APK to `OwnerInstaller` if
+Android permits installation; otherwise the UI asks the user to grant permission
+and continue. The notification remains through a pending session/consent; only
+package/version/signer readback marks installation complete. No uninstall or save
+reset is added.
+
+Synthetic JVM import/session tests, source/manifest lifecycle contracts and Android
+API compilation do not establish real SAF-provider behavior, Android process-death
+or reboot behavior, notification delivery, battery/thermal measurements, actual
+PackageInstaller consent, a complete signed release recipe or a playable game.
+Those remain device/release acceptance gates. This work creates no APK or key.
+
+## Alpha update, rollback and profile-retention boundary
+
+Installer version 3 selects only `dev.ror2lab.alpha` in the final UI. The existing
+`OwnerInstaller` session path remains authoritative, including its Android 12+
+request for no extra user action on eligible same-key updates; Android may still
+require confirmation. Repeated clicks or activity recreation do not create a
+second session. `OwnerAlphaInstall` adds exact installed APK/code/certificate
+readback and an installer-private ownership receipt; an occupied unowned identity
+or changed signer is refused without uninstalling. A signed issued-version row
+binds source, accepted input, toolchain, payload, APK and certificate. Dispatch
+consumes the code durably: a failed/cancelled session requires a newly issued
+higher-code build rather than a downgrade or reused code.
+
+The rollback button rebuilds the previous verified installed release with the
+same owner key and a higher Android code. Publisher release numbering is separate
+from installed/issued codes. `installed-release.json` and
+`previous-installed-release.json` retain whole signed release manifests and
+private signed-APK references, not copies of game data. Only verified successful
+installation rotates these references. The UI reports retained APK bytes,
+installer-filesystem free bytes and schema/key eligibility; release operations
+prune older unreferenced generated APK artifacts while protecting current,
+previous and the active ready build. Android chooses install placement; observed
+installer free space does not certify the final game's data backing.
+
+Before an update/rollback, the certificate-bound game provider at
+`dev.ror2lab.alpha.retention` snapshots the allowlisted Android-local profile and
+settings under the **game UID**, freezes game launch, and returns a token, schema
+and byte count. The installer and game are different UIDs/signers: the installer
+never opens game-private files. `pending-install.json` retains the transaction
+before session commit. The target release must read the snapshot's schema.
+After exact installed identity readback, the foreground service verifies the
+snapshot against live data, restores only if necessary, verifies again, publishes
+the installed receipt, then releases the game launch freeze. A cancelled/failed
+session verifies/restores the prior installation before releasing it. Recovery
+failure keeps the token/freeze and exposes an explicit recovery button; fully
+stop the game and resolve space/permission errors before retrying. No failure
+path silently adopts another identity, clears data, or uninstalls. A certificate-bound
+read-only `status` call also proves a previously released token. If the installer
+died after release and gameplay has since resumed, recovery rechecks the installed
+APK/code/certificate and signed issue ledger, then finalizes only the pending
+receipt. It never restores an old snapshot over that newer legitimate gameplay.
+An active token still requires the full verify/restore/verify/release sequence;
+an unknown token or changed identity remains blocked. Snapshots
+remain private in the game's no-backup storage; current and previous verified
+snapshots are retained by its retention owner, separate from release artifacts.
+
+`test_owner_alpha_installer.py` executes these orchestration/refusal paths with
+synthetic streams and a provider double, alongside the original session tests.
+Full source compilation against `android.jar` is not device acceptance: ordinary
+PackageInstaller callbacks, actual installed storage/backing and real game
+profile/settings across cold starts still require explicit device qualification.
+
+## Explicit debug release source
+
+Only a debuggable installer accepts an explicitly provisioned private
+`owner-input/debug-release-source.json` containing `enabled: true`, `base_url`,
+`key_id` and `public_key`. The base is an explicit loopback HTTP address and port
+reached through the lab's reverse tunnel; `latest.json` and all three signed
+release assets stay within that base. The extra publisher public key cannot
+replace a production key. The UI labels the test source prominently.
+
+Release builds reject this configuration, including partial configuration,
+before contacting any server. Debuggability is read from Android application
+flags, not from the configuration. Removing the file restores the pinned
+production source and trust. No signature, version, ownership, same-key,
+rollback or profile-retention check is bypassed.
+
+The synthetic acceptance entrypoint is `scripts/lab-installer-updates.py`.
+First request `/lab toolhost ref=<branch>`; the runner builds the separate
+`dev.ror2lab.installertest` package and caches it by source commit. Then run
+`/lab script ref=<branch> -- scripts/lab-installer-updates.py --host-only`
+to prepare synthetic fixtures without a phone. The phone command is
+`/lab script ref=<branch> device=<authorized-alias> -- scripts/lab-installer-updates.py`.
+The runner supplies the leased device serial; this script never selects a phone
+from a remembered identifier. Its toolhost builder must use an available authorized
+device too. Only after the owner explicitly approves enabling unknown-source installation
+for that disposable package may the invocation add `--allow-test-installs`.
+
+The script resolves `LAB_TOOLHOST_ROOT` and `scripts/env.sh` on the lab host;
+it requires Android platform 33, build-tools 34.0.0 and the configured NDK/JDK.
+It refuses existing alpha/test packages, uses only original synthetic inputs,
+creates throwaway publisher keys outside the checkout, and exercises the real
+checker, rebuild, signing, retention and PackageInstaller path. It never reads
+the builder's private test-publisher key. Results are fixed PASS/FAIL case lines;
+raw subprocess output, private selectors, keys and APKs stay on the lab host.
+Cleanup removes only this run's hash-verified packages and reverse tunnel and
+verifies package absence. A host-only result is not phone acceptance.

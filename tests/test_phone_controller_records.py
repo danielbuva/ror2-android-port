@@ -41,6 +41,74 @@ def tos_entry(value):
 
 
 class ControllerRecords(unittest.TestCase):
+    def test_null_motion_retains_state_and_replaces_the_removed_tree_index(self):
+        leaf = F.node(
+            "data",
+            children=[
+                F.node(
+                    "data", children=[integer("m_ClipID"), F.array("m_ChildIndices", integer("data")), F.array("extras", integer("data")), integer("retained")]
+                )
+            ],
+        )
+        tree = F.node("data", children=[F.node("data", children=[F.array("m_NodeArray", leaf)])])
+        state = F.node(
+            "data", children=[F.node("data", children=[F.array("m_BlendTreeConstantArray", tree), F.array("m_BlendTreeConstantIndexArray", integer("data"))])]
+        )
+        machine = F.node("data", children=[F.node("data", children=[F.array("m_StateConstantArray", state)])])
+        schema = F.node(
+            "Base", children=[integer("m_ControllerSize"), F.node("m_Controller", children=[F.array("m_StateMachineArray", machine)]), integer("tail")]
+        )
+        motion = vector([vector([struct.pack("<IIII", 0xFFFFFFFF, 0, 0, 37)])])
+        body = struct.pack("<I", 1000) + vector([vector([motion + vector([bytes(4)])])]) + struct.pack("<I", 71)
+        expected = struct.pack("<I", 944) + vector([vector([bytes(4) + vector([struct.pack("<I", 0xFFFFFFFF)])])]) + body[-4:]
+        stream = io.BytesIO(C.serialized(body, schema, 91))
+        stream.size = len(stream.getvalue())
+        root = A.SCHEMA.type_tree(io.BytesIO(A.W.read_serialized(stream)["types"][0]["tree"]))
+        self.assertEqual(A.transform_generic(body, 91, {"controller_clear_null_motion": True}, root), expected)
+
+    def test_state_order_relocates_direct_destinations_and_preserves_selector_values(self):
+        transition = F.node("data", children=[integer("m_DestinationState"), integer("retained")])
+        state = F.node("data", children=[F.node("data", children=[integer("m_FullPathID"), F.array("m_TransitionConstantArray", transition)])])
+        machine = F.node(
+            "data",
+            children=[
+                F.node(
+                    "data",
+                    children=[F.array("m_StateConstantArray", state), integer("m_DefaultState"), F.array("m_AnyStateTransitionConstantArray", transition)],
+                )
+            ],
+        )
+        schema = F.node("Base", children=[F.node("m_Controller", children=[F.array("m_StateMachineArray", machine)])])
+
+        def record(identity, destination, retained):
+            return struct.pack("<I", identity) + vector([struct.pack("<II", destination, retained)])
+
+        first, second, third = record(101, 1, 313), record(202, 0xFFFFFFFF, 919), record(303, 30001, 717)
+        body = vector([vector([first, second, third]) + struct.pack("<I", 1) + vector([struct.pack("<II", 2, 411)])])
+        expected = vector([vector([third, record(101, 2, 313), second]) + struct.pack("<I", 2) + vector([struct.pack("<II", 0, 411)])])
+        stream = io.BytesIO(C.serialized(body, schema, 91))
+        stream.size = len(stream.getvalue())
+        tree = A.W.read_serialized(stream)["types"][0]["tree"]
+        root = A.SCHEMA.type_tree(io.BytesIO(tree))
+        self.assertEqual(A.transform_generic(body, 91, {"controller_state_order": {"0": [2, 0, 1]}}, root), expected)
+
+    def test_exported_mask_omission_preserves_controller_fields_and_allocation_size(self):
+        item = F.node("data", children=[integer("path_hash"), F.node("weight", 4, kind="float")])
+        mask = F.node("m_SkeletonMask", children=[F.node("data", children=[F.array("m_Data", item)])])
+        layer = F.node("data", children=[F.node("data", children=[integer("retained"), mask])])
+        schema = F.node(
+            "Base",
+            children=[integer("m_ControllerSize"), F.node("m_Controller", children=[F.array("m_LayerArray", layer)]), integer("tail")],
+        )
+        mask_body = vector([struct.pack("<If", 71, 0.25), struct.pack("<If", 89, 0.75)])
+        body = struct.pack("<I", 1000) + vector([struct.pack("<I", 17) + mask_body, struct.pack("<II", 29, 0)]) + struct.pack("<I", 0xAABBCCDD)
+        expected = struct.pack("<I", 960) + vector([struct.pack("<II", 17, 0), struct.pack("<II", 29, 0)]) + struct.pack("<I", 0xAABBCCDD)
+        stream = io.BytesIO(C.serialized(body, schema, 91))
+        stream.size = len(stream.getvalue())
+        tree = A.W.read_serialized(stream)["types"][0]["tree"]
+        root = A.SCHEMA.type_tree(io.BytesIO(tree))
+        self.assertEqual(A.transform_generic(body, 91, {"controller_clear_skeleton_masks": True}, root), expected)
+
     def test_tos_selects_source_rows_rebuilds_export_name_and_crc(self):
         text = F.node("second", children=[F.array("chars", F.node("data", 1, kind="char"))], meta=0x4000)
         entry = F.node("data", children=[integer("first"), text])
@@ -49,6 +117,8 @@ class ControllerRecords(unittest.TestCase):
         body = vector([tos_entry("Base Layer"), tos_entry(original), tos_entry("unused")]) + struct.pack("<I", 0x12345678)
         expected = vector([tos_entry("Assets/WholeGame/Art/Walk.anim Walk(Clone) "), tos_entry("Base Layer")]) + body[-4:]
         self.assertEqual(A.transform_generic(body, 91, {"controller_tos": [[1, True], [0, False]]}, schema), expected)
+        collision = vector([tos_entry("Assets/WholeGame/Art/Walk_0.anim Walk(Clone) "), tos_entry("Base Layer")]) + body[-4:]
+        self.assertEqual(A.transform_generic(body, 91, {"controller_tos": [[1, True, 0], [0, False]]}, schema), collision)
         self.assertEqual(A.exported_clip_tos("Assets/Example.animIdle(Instance)"), "Assets/WholeGame/Idle.animIdle(Instance)")
         for selection in ([[1, True], [1, False]], [[3, False]], [[True, False]], [[0, 1]]):
             with self.subTest(selection=selection), self.assertRaises(ValueError):
@@ -118,12 +188,37 @@ class ControllerRecords(unittest.TestCase):
             self.assertEqual(struct.unpack_from("<I", result, spans[path][0])[0], expected)
         self.assertEqual(result[-4:], body[-4:])
         with self.assertRaisesRegex(ValueError, "invalid behaviour permutation"):
-            A.controller_singleton_behaviours(body, schema, [0, 1, 2, 2])
+            A.controller_behaviour_ranges(body, schema, [0, 1, 2, 2])
         changed = bytearray(body)
         path = ("m_StateMachineBehaviourVectorDescription", "m_StateMachineBehaviourRanges", "Array", "0", "m_Count")
         struct.pack_into("<I", changed, spans[path][0], 2)
-        with self.assertRaisesRegex(ValueError, "nonsingleton"):
-            A.controller_singleton_behaviours(bytes(changed), schema, [0, 1, 3, 2])
+        with self.assertRaisesRegex(ValueError, "noncontiguous"):
+            A.controller_behaviour_ranges(bytes(changed), schema, [0, 1, 3, 2])
+
+    def test_behaviour_permutation_preserves_ordered_multi_and_empty_ranges(self):
+        pointer = F.node("data", children=[integer("m_FileID"), F.node("m_PathID", 8)])
+        state = F.node("data", children=[integer("m_StartIndex"), integer("m_Count")])
+        schema = F.node(
+            "Base",
+            children=[
+                F.array("m_StateMachineBehaviours", pointer),
+                F.node(
+                    "m_StateMachineBehaviourVectorDescription",
+                    children=[
+                        F.array("m_StateMachineBehaviourIndices", integer("data")),
+                        F.array("m_StateMachineBehaviourRanges", state),
+                    ],
+                ),
+            ],
+        )
+        body = vector([struct.pack("<iq", 1, i) for i in (11, 22, 33, 44)])
+        indices = vector([struct.pack("<I", i) for i in range(4)])
+        body += indices + vector([struct.pack("<II", start, count) for start, count in ((0, 2), (4, 0), (2, 2))])
+        expected = vector([struct.pack("<iq", 1, i) for i in (33, 44, 11, 22)])
+        expected += indices + vector([struct.pack("<II", start, count) for start, count in ((2, 2), (4, 0), (0, 2))])
+        self.assertEqual(A.transform_generic(body, 91, {"controller_behaviour_order": [2, 3, 0, 1]}, schema), expected)
+        with self.assertRaisesRegex(ValueError, "noncontiguous"):
+            A.controller_behaviour_ranges(body, schema, [1, 0, 2, 3])
 
     def test_original_clip_dependencies_compile_mixed_state_loop_flags(self):
         leaf = F.node("data", children=[F.array("m_ChildIndices", integer("data")), integer("m_ClipID")])

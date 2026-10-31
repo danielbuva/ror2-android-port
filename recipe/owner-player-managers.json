@@ -1,0 +1,96 @@
+{
+  "schema": "owner-source-managers-v1",
+  "input_id": "6af7ed94619fe1b4346974b4486afa03a8d1625a7820e92da0ff74d57208fe88",
+  "source": {
+    "path": "Risk of Rain 2_Data/globalgamemanagers",
+    "bytes": 480724,
+    "sha256": "292966bcba420ae931250b19633717684d0add5277abec3e9d3c4605cc5cd236"
+  },
+  "public_inputs": {
+    "shaders": {
+      "path": "recipe/owner-player-shaders.json",
+      "sha256": "9ff4e5d552d71bc0f8e68653e2ac5680810bad07a1b18b84290f72b8188aa008"
+    },
+    "contexts": {
+      "path": "recipe/owner-stage-contexts.json",
+      "sha256": "e9098b415c66f74530b23aac1206443f0932daf7619b6c6ad192ef6e254ea807"
+    },
+    "copies": {
+      "path": "recipe/composition-export-copies.json",
+      "sha256": "81dc0838901672a6a3063a649aa55b728285a23c7b07b493cfa48c1db6c1940f"
+    },
+    "additions": {
+      "path": "recipe/export-additions.json",
+      "sha256": "a8965d9a7c36af8d638d3451adfeaef1a7cbae1a99fde8446221491da474ae65"
+    },
+    "project_recipe": {
+      "path": "recipe/project-inputs.json",
+      "sha256": "de1ed235adfbc7b0b1c663289a33d19304b844afac01be1b69196a40914fc246"
+    },
+    "hud_builder": {
+      "path": "tools/unity/runtime/presentation/RecoveredHudBuilder.cs",
+      "sha256": "8271b2aaa997a16bed403f1039a4d16393179a978b3b05badad1edf689248597"
+    },
+    "bridge": {
+      "path": "scripts/lab/nova_bridge.py",
+      "sha256": "c7beb96a6e17572d30a4d86d11b4845fe3b108ea2ed42cacb14c5c884f9d0d3d"
+    },
+    "staging": {
+      "path": "scripts/lab/project_input_rebuild.py",
+      "sha256": "ccf35babc8a9f1576e658b0e867f357cbb5c380df44209d8026ed616d0b4e2e8"
+    },
+    "build": {
+      "path": "android/Assets/Editor/LabBuild.cs",
+      "sha256": "9cfd0aec4dd17c33c291bf8ee218b197e626a27d1182c385e337bfe09ea6b700"
+    },
+    "requirements": {
+      "path": "tools/lab-requirements.txt",
+      "sha256": "ee114fd9a3a0108a8e4b07c670ba6a67dbf04b2b6744e15989ecebeb73e33699"
+    },
+    "settings_ProjectSettings": {
+      "path": "smoke/ProjectSettings/ProjectSettings.asset",
+      "sha256": "d66146bae51e552b7f83ac8ad4a141a457996753cb7da7ea394dc66ce2954452"
+    },
+    "settings_InputManager": {
+      "path": "smoke/ProjectSettings/InputManager.asset",
+      "sha256": "aa9c09fc8335af6fa9594d6e5244d1f77b1685fb17772011fc852a06b6e8d4e4"
+    },
+    "settings_AudioManager": {
+      "path": "smoke/ProjectSettings/AudioManager.asset",
+      "sha256": "9a554916fe138ebcad8443ee9b079363ecc72795c39d0e80f5f7ca99e2c6f5e7"
+    },
+    "settings_GraphicsSettings": {
+      "path": "smoke/ProjectSettings/GraphicsSettings.asset",
+      "sha256": "7e7101091125a933bbbaaed9ba2f9b3c7e69a38222c2554a29af9c9490b8687b"
+    },
+    "settings_TimeManager": {
+      "path": "smoke/ProjectSettings/TimeManager.asset",
+      "sha256": "1a83e54adbbda7c9f4851103a0c6ab7f6448a3343d4ea5b7620452fa08416ecd"
+    },
+    "settings_DynamicsManager": {
+      "path": "smoke/ProjectSettings/DynamicsManager.asset",
+      "sha256": "63d4baef3e25a3dc11bd1b5aac6278eaa714bcef13b1e73197c078f2c6acee73"
+    },
+    "settings_QualitySettings": {
+      "path": "smoke/ProjectSettings/QualitySettings.asset",
+      "sha256": "88e358e892b5876aebe859a7bcd10d88f7ccc73f5cf9b0ecd97262ca7a3974e6"
+    },
+    "settings_NavMeshAreas": {
+      "path": "smoke/ProjectSettings/NavMeshAreas.asset",
+      "sha256": "28db9a32b1eebd40fb57b40367780ae2c7722d9268f1f5249e4e09c617046a19"
+    },
+    "settings_Physics2DSettings": {
+      "path": "smoke/ProjectSettings/Physics2DSettings.asset",
+      "sha256": "8440eb91da6ad817c8426a0dfd24fc66ff620983f7eb2a75ff434ed42b634a23"
+    }
+  },
+  "policy": {
+    "preload_shaders": false,
+    "dynamic_batching_default": true,
+    "paid_capabilities": {
+      "hasPROVersion": false,
+      "isNoWatermarkBuild": false,
+      "hasAdvancedVersion": false
+    }
+  }
+}

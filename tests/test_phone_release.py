@@ -64,6 +64,30 @@ class ReleaseTests(unittest.TestCase):
         reordered = dict(reversed(list(self.release.items())))
         self.assertEqual(OWNER.signed_bytes(self.release), OWNER.signed_bytes(reordered))
 
+    def test_failed_signer_request_does_not_block_retry(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            keys = root / "keys"
+            keys.mkdir()
+            for name in ("owner.p12", "password"):
+                (keys / name).write_text("retained authored fixture, not a key")
+            calls = []
+
+            def sign(request, output):
+                self.assertEqual(request.stat().st_mode & 0o777, 0o600)
+                calls.append(request)
+                if len(calls) == 1:
+                    raise RuntimeError("synthetic failure before output")
+                return {"success": True}
+
+            signer = Mock(sign=sign)
+            with self.assertRaisesRegex(RuntimeError, "synthetic failure"):
+                OWNER.sign_release(signer, self.release, {"key_directory": str(keys)}, root / "signed", **self.context)
+            result = OWNER.sign_release(signer, self.release, {"key_directory": str(keys)}, root / "signed", **self.context)
+            self.assertTrue(result["success"])
+            self.assertNotEqual(*calls)
+            self.assertTrue(all(not path.exists() for path in calls))
+
     def test_identity_version_and_minimum_installer(self):
         for field, value in (("application_id", "other.package"), ("version_code", 1), ("version_code", 2100000001), ("minimum_installer_version", 2)):
             release = copy.deepcopy(self.release)

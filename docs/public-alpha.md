@@ -161,12 +161,14 @@ The policy's [acceptance matrix](ALPHA_POLICY.md#final-flow-acceptance-contract)
 separates reusable host owners from final-flow work; it does not qualify an
 installed alpha package.
 
-- [ ] Enforce the selected alpha identity, increasing version code, private
-      signing custody and update/rollback policy; prove actual game
-      profile/settings update retention.
-- [ ] Implement the selected local-file validation, cancellation and honest
-      unknown-version refusals in the final owner flow. Preserve the source
-      installation; account downloads and Steam Cloud are deferred by policy.
+- [ ] Phone-qualify the implemented alpha identity, issued-version/same-key
+      update and forward rollback flow, including real profile/settings backup,
+      verified restore, interruption and cold-start retention. The policy matrix
+      records the passing synthetic host contracts; it is not device evidence.
+- [ ] Phone-qualify the implemented folder/ZIP validation, cancellation and honest
+      supported/unknown-version refusal against legitimate input cohorts and SAF
+      providers. Source installations remain read-only; account downloads and
+      Steam Cloud stay deferred.
 Fresh per-device capacity, placement and runtime-backing receipts and capacity
 refusal are qualified in [J1071](history/journal-J1-J1177/PORTING_JOURNAL.md#j1071--qualify-software-touch-native-pause-and-recovery),
 retaining J595/J755's ownership guards. Final alpha identity and installation

@@ -1,0 +1,80 @@
+{
+  "input_id": "6af7ed94619fe1b4346974b4486afa03a8d1625a7820e92da0ff74d57208fe88",
+  "records": [
+    {
+      "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
+      "source": [
+        "apk/assets/bin/Data/globalgamemanagers.assets",
+        2
+      ],
+      "class_id": 21,
+      "bytes": 304,
+      "sha256": "cd2ae96273fe8227273f048aadad738d84ec11c653cff269070c3786b4928c94",
+      "destination": [
+        "objective-support-lab",
+        "CAB-d621b06adada9dbd86ac345cd5e6cc93",
+        -6562632805628259368
+      ]
+    },
+    {
+      "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
+      "source": [
+        "apk/assets/bin/Data/globalgamemanagers.assets",
+        925
+      ],
+      "class_id": 115,
+      "bytes": 88,
+      "sha256": "8fbf7822f79dee32e8c112608420f8367c7cd9ea7d567ea405f61692db27e9ce",
+      "destination": [
+        "objective-support-lab",
+        "CAB-d621b06adada9dbd86ac345cd5e6cc93",
+        -2058557041282165059
+      ]
+    },
+    {
+      "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
+      "source": [
+        "apk/assets/bin/Data/globalgamemanagers.assets",
+        1342
+      ],
+      "class_id": 115,
+      "bytes": 104,
+      "sha256": "d4b1c09da30beead8bcb54d38e8ba98747c84c72d861cf7acc2f762ce0905a21",
+      "destination": [
+        "objective-support-lab",
+        "CAB-d621b06adada9dbd86ac345cd5e6cc93",
+        3231134817632079172
+      ]
+    },
+    {
+      "source_profile_sha256": "8de2632786c035a1f4d14f17e7b1b791161a262a49a0cb79a28c1de0f6f76537",
+      "source": [
+        "whole-scene-intro",
+        "BuildPlayer-intro.sharedAssets",
+        112
+      ],
+      "bytes": 98712,
+      "sha256": "370ce3dcf451ce2b7767ef1738fe55798989d473c071ce16071449e0494de66d",
+      "destination": [
+        "objective-support-lab",
+        "CAB-d621b06adada9dbd86ac345cd5e6cc93",
+        -4850512016903265157
+      ]
+    },
+    {
+      "source_profile_sha256": "864c09f923538e53efb9a8223779f1804ca826122f184ea6c051d772d4dd918a",
+      "source": [
+        "whole-scene-voidoutro",
+        "BuildPlayer-voidoutro.sharedAssets",
+        314
+      ],
+      "bytes": 23656,
+      "sha256": "7c82bb4cd162c3283baf08e20117b09181020d6f0d5e5869ab25dbfcd2543746",
+      "destination": [
+        "objective-support-lab",
+        "CAB-d621b06adada9dbd86ac345cd5e6cc93",
+        -3801517640135355048
+      ]
+    }
+  ]
+}

@@ -36,6 +36,7 @@ class LaneSourceStagingTests(unittest.TestCase):
         for path, data in {
             "tools/unity/" + self.name: "// lane runtime\n",
             "tools/unity/" + self.name + ".meta": "fileFormatVersion: 2\nguid: " + self.guid + "\n",
+            "tools/android-write-interruption/LabPendingWriteStop.java": "// lane observer\n",
             "tools/catalog/OwnedHost.cs": "// lane host\n",
             "tools/catalog/WholeCatalogBuild.cs": "// lane builder\n",
             "recipe/templates/BaselineHost.cs": "// lane baseline host\n",
