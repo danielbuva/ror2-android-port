@@ -421,6 +421,18 @@ public sealed partial class PortSession
         }
         return removed;
     }
+    // Native menu-4 capture reaches completed player stats through this scratch
+    // list. Original Fire clears it before discovery, but leaves its last targets
+    // afterwards. Release only destroyed targets at the idle teardown boundary.
+    int PruneDestroyedOverlapTargets()
+    {
+        Check(r.world.cleaned && !Run.instance && !NetworkServer.active && !NetworkClient.active,
+              "Refuse overlap-target cleanup in a live session");
+        var field = typeof(OverlapAttack).GetField("discoveredHurtboxes", BindingFlags.Static | BindingFlags.NonPublic);
+        var targets = field == null ? null : field.GetValue(null) as System.Collections.Generic.List<HurtBox>;
+        Check(targets != null, "Original overlap discovery storage changed");
+        return targets.RemoveAll(target => !target);
+    }
     // The captured J1091 graph identifies the original BulletHitPool as a root
     // for completed actors. Its Reset leaves hitHurtBox assigned. Visit only
     // returned items, after teardown, and release only Unity-destroyed targets.
@@ -454,6 +466,7 @@ public sealed partial class PortSession
         int pruned = PruneDestroyedDepossessionSubscribers();
         var registries = PruneDestroyedOriginalRegistries().Concat(new[] {
             "BulletAttack.bulletHitPool.destroyedTargets:" + ReleaseDestroyedPooledHitTargets(),
+            "OverlapAttack.discoveredHurtboxes.destroyedTargets:" + PruneDestroyedOverlapTargets(),
             "CharacterSpawnCard.loadoutAvailability.destroyedTargets:" + PruneDestroyedSpawnCardCallbacks()
         }).ToArray();
         ObserveSessionResources("completed-before-reclaim");
