@@ -1939,3 +1939,17 @@ Production/qualification wall 53.004 s; host-only, no device thermal measurement
 Saved selector residual 38 → 36; coverage subtraction, without requalification.
 Readiness stays 693/705 available, 685 raw-exact. Complete bundle, phone production,
 installation/update and original runtime remain open. Host-only; no APK claim.
+
+## J1330 — Reconstruct the Seeker synchronized controller
+
+2026-10-31. Original Seeker selectors reuse the existing controller owner with
+source ordering, null-motion and synchronized override policies; no new producer.
+Prior art: pinned AssetRipper 813fed15 AnimatorControllerProcessor.cs:93-138
+leaves synchronized overrides unset.
+Evidence: `work/coordination/p1-scenes-w/seeker-controller-v1-20261031/done.json`.
+One persisted record independently raw-exact to J850, 24,584 bytes; pack SHA-256
+`144b6027c538b3dea5e48b13b6122699fb9d0a0f4648ff331e15417f032468df`.
+Production/qualification wall 57.098 s; host-only, no thermal measurement.
+Saved selector residual 36 → 35; coverage subtraction, no accepted output rerun.
+Readiness stays 693/705 available, 685 raw-exact. Complete bundle, phone production,
+installation/update and original runtime remain open. No APK claim.

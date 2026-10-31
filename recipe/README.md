@@ -6269,3 +6269,16 @@ no controller body, generated content, target byte patch or private path is incl
 Two persisted controllers independently match J850 raw-exact, 6,140 bytes.
 Final-file readiness stays 693/705 available, 685 raw-exact. Complete bundle,
 phone production, installation/update and runtime gates remain open.
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-animator-controllers.json` | `88683044a35ff7884575ad4c9f05bc4128dfccbbee2e6e46be919e1392b48231` |
+
+Audit: 2026-10-31. Original Seeker layer/state identities select the existing
+controller owner's source ordering, null-motion and synchronized override policies.
+Pinned AssetRipper 813fed15 AnimatorControllerProcessor.cs:93-138 omits synced
+overrides. Only source selectors, hashes, policies and checked pointer relationships
+ship; no controller body, generated content, target patch or private path.
+One independently persisted controller matches J850 raw-exact, 24,584 bytes.
+Final-file readiness stays 693/705 available, 685 raw-exact; complete bundle,
+phone production, installation/update and runtime remain open.
