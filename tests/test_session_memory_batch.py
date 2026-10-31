@@ -167,6 +167,59 @@ class SessionMemoryBatchTests(unittest.TestCase):
         self.assertNotIn("finish", self.events)
         self.assertIn("terminal", self.events)
 
+    def test_identity_cli_returns_only_verified_hash_without_writes_or_apk_reads(self):
+        self.device.owned = lambda: {"apk_sha256": APK, "apk": "PRIVATE_APK_PATH", "serial": "REDACTED"}
+        stream = io.StringIO()
+        with (
+            mock.patch.dict(os.environ, self.env),
+            contextlib.redirect_stdout(stream),
+            mock.patch.object(self.common, "write", side_effect=AssertionError("identity must not write")),
+            mock.patch.object(self.module, "attempt_from_installed", side_effect=AssertionError("identity must not read APK bytes")),
+        ):
+            code = self.module.main(["identity"])
+        self.assertEqual(code, 0)
+        self.assertEqual(
+            json.loads(stream.getvalue()),
+            dict(success=True, mode="identity", read_only=True, apk_sha256=APK, installed_bytes_verified=True, idle_verified=True),
+        )
+        self.assertEqual(self.events, ["device", "identity"])
+        self.assertEqual(list(self.work.iterdir()), [])
+        self.assertEqual(self.selector, (None, None))
+
+    def test_identity_requires_runner_lease_before_device_access(self):
+        self.write(self.lease / "lab-runner.json", dict(workstream="other", pid=os.getppid(), run="123"))
+        result = self.module.installed_identity(environ=self.env)
+        self.assertFalse(result["success"])
+        self.assertEqual(result["failure_phase"], "runner-context")
+        self.assertEqual(self.events, [])
+
+    def test_identity_rejects_invalid_receipt_hash_before_readback(self):
+        self.device.owned = lambda: {"apk_sha256": "PRIVATE_INVALID_HASH"}
+        result = self.module.installed_identity(environ=self.env)
+        self.assertFalse(result["success"])
+        self.assertEqual(result["failure_phase"], "installed-ownership")
+        self.assertEqual(self.events, ["device"])
+        self.assertNotIn("PRIVATE", json.dumps(result))
+
+    def test_identity_readback_failure_hides_hash_and_owner_diagnostics(self):
+        def fail(device, expected):
+            print("PRIVATE_OWNER_DIAGNOSTIC")
+            raise RuntimeError("PRIVATE_PATH_AND_SERIAL")
+
+        self.owner._idle_readback = fail
+        stream = io.StringIO()
+        with contextlib.redirect_stdout(stream):
+            result = self.module.installed_identity(environ=self.env)
+        self.assertEqual(stream.getvalue(), "")
+        self.assertEqual(result, dict(success=False, mode="identity", read_only=True, failure_phase="installed-readback"))
+        self.assertEqual(self.events, ["device"])
+
+    def test_identity_cli_rejects_receipts_and_other_modes_still_require_hash(self):
+        for args in (["identity", "--receipt", self.receipt], ["capture", "--receipt", self.receipt]):
+            with self.subTest(args=args), contextlib.redirect_stderr(io.StringIO()), self.assertRaises(SystemExit):
+                self.module.main(args)
+        self.assertEqual(self.events, [])
+
     def test_wrong_lease_is_refused_before_device_access(self):
         self.write(self.lease / "lab-runner.json", dict(workstream="other", pid=os.getppid(), run="123"))
         result = self.run_mode()

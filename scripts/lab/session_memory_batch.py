@@ -5,11 +5,13 @@ this synchronous adapter neither acquires another lease nor changes policy.
 Private evidence stays under work/. Stdout is an explicit numeric/hash summary.
 Capture is attribution only; measure omits snapshots and the static-root walk.
 The inspect mode reads existing failed evidence without a device alias or access.
+The identity mode verifies the selected idle installation read-only and emits its hash.
 """
 
 import argparse
 import contextlib
 import hashlib
+import io
 import json
 import math
 import os
@@ -231,6 +233,31 @@ def inspect_receipt(receipt, expected_receipt_sha256, expected_apk_sha256):
     return public
 
 
+def installed_identity(*, environ=None):
+    """Discover an owned idle APK hash; no APK transfer, local APK read or writes."""
+    public = dict(success=False, mode="identity", read_only=True)
+    phase = "runner-context"
+    try:
+        # Device helpers capture adb output; suppress any Python owner diagnostics.
+        with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):
+            serial, _, _ = _runner_context(os.environ if environ is None else environ)
+            import alpha_stability_batch as owner
+
+            phase = "installed-ownership"
+            device = owner._device(serial)
+            expected = validate_expected_apk_sha256(device.owned().get("apk_sha256"))
+            if expected is None:
+                raise ValueError("Owned receipt lacks an APK hash")
+            phase = "installed-readback"
+            # Independently hashes actual package bytes on-device and verifies
+            # receipt placement, runtime backing and absent process/selector/pending.
+            owner._idle_readback(device, expected)
+            public.update(success=True, apk_sha256=expected, installed_bytes_verified=True, idle_verified=True)
+    except BaseException:
+        public["failure_phase"] = phase
+    return public
+
+
 def run(mode, expected_apk_sha256, sessions=6, *, receipt, environ=None):
     """Reuse installed identity, capacity, cleanup and thermal owners unchanged."""
     import alpha_stability_batch as owner
@@ -372,14 +399,23 @@ def run(mode, expected_apk_sha256, sessions=6, *, receipt, environ=None):
 
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("mode", choices=("preflight", "capture", "measure", "inspect"))
-    parser.add_argument("--expected-apk-sha256", required=True)
+    parser.add_argument("mode", choices=("preflight", "capture", "measure", "inspect", "identity"))
+    parser.add_argument("--expected-apk-sha256")
     parser.add_argument("--sessions", type=int, default=6)
-    parser.add_argument("--receipt", required=True, help="Repository-relative ignored JSON receipt under work/coordination; new for runs, existing for inspect")
+    parser.add_argument(
+        "--receipt", help="Repository-relative ignored JSON receipt under work/coordination; new for runs, existing for inspect; omitted for identity"
+    )
     parser.add_argument("--expected-receipt-sha256", help="Required for read-only inspect; bind the existing private receipt's exact bytes")
     args = parser.parse_args(argv)
+    if args.mode == "identity":
+        if any(value is not None for value in (args.receipt, args.expected_apk_sha256, args.expected_receipt_sha256)):
+            parser.error("identity discovers the installed hash read-only; omit receipt and expected hashes")
+    elif args.expected_apk_sha256 is None or args.receipt is None:
+        parser.error("this mode requires --expected-apk-sha256 and --receipt")
     try:
-        if args.mode == "inspect":
+        if args.mode == "identity":
+            summary = installed_identity()
+        elif args.mode == "inspect":
             summary = inspect_receipt(args.receipt, args.expected_receipt_sha256, args.expected_apk_sha256)
         else:
             if args.expected_receipt_sha256 is not None:
