@@ -5622,3 +5622,12 @@ external pointers supply source identity; acquired SDK metadata supplies Android
 records. Setup uses pinned original/SDK/tool roots and a fresh record pack; process
 exit releases compiler/source handles and receipts persist. Records are host
 raw-exact to J850; complete bundle and phone gates remain open.
+
+`owner-whole-game-terrain-detail-shaders.json` extends `shader_prefab.py` with
+original TerrainData usage witnesses. Three checked default Shader pointers and
+an empty detail prototype array select the existing fresh-mono instancing policy;
+original Shader and acquired SDK records supply identity and compilation inputs.
+Setup pins the original TerrainData alongside Shader/SDK/tool inputs and creates
+a fresh record pack; process exit releases source/compiler handles while receipts
+persist. Three records are host raw-exact to J850; complete bundle/phone gates
+remain open. This adds no runtime owner.

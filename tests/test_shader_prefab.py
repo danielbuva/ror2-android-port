@@ -24,6 +24,18 @@ def snippet(global_axes=(), local_axes=(), builtins=(), runtime=""):
 
 
 class PrefabShaderTests(unittest.TestCase):
+    def test_empty_terrain_details_strip_instancing_from_default_shaders(self):
+        source = {
+            "m_CompileInfo": {"m_Snippets": [(11, snippet([["__", "INSTANCING_ON"]], runtime="INSTANCING_ON"))]},
+            "m_ParsedForm": {"m_SubShaders": [{"m_Passes": [{"m_Type": 0, "m_State": {"gpuProgramID": 11, "m_Tags": {"tags": []}}}]}]},
+        }
+        pointer = {"m_FileID": 2, "m_PathID": 7}
+        terrain = {"m_DetailDatabase": {**{f"m_DefaultShaders[{i}]": pointer for i in range(3)}, "m_DetailPrototypes": []}}
+        self.assertEqual(S.terrain_selections(source, terrain, pointer), {11: [[[]]] * 3})
+        terrain["m_DetailDatabase"]["m_DetailPrototypes"] = [{"m_UseInstancing": True}]
+        with self.assertRaisesRegex(ValueError, "prototype usage"):
+            S.terrain_selections(source, terrain, pointer)
+
     def test_original_fallback_retains_local_edge_and_unresolved_literal(self):
         selected = {"original": {"path": "original.bundle", "member": "CAB-source"}, "fallback_original": []}
         source = {"m_Dependencies": [], "m_ParsedForm": {"m_FallbackName": "Legacy/Diffuse"}}
