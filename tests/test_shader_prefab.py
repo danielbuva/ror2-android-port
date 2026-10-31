@@ -57,6 +57,10 @@ class PrefabShaderTests(unittest.TestCase):
         material = {"m_Shader": {"m_FileID": 0, "m_PathID": 211}, "m_ValidKeywords": ["_ALPHABLEND_ON"], "m_EnableInstancingVariants": False}
         _, rows = S.particle_selections(source, carrier, material)
         self.assertEqual(rows, {11: [[[], ["_ALPHABLEND_ON"], ["PROCEDURAL_INSTANCING_ON", "_ALPHABLEND_ON"]]] * 3})
+        # Original materials retain original runtime feature alternatives; the
+        # acquired SDK default above intentionally strips unused local features.
+        _, original_rows = S.A.particles_selections(source, [material], None, carrier=carrier)
+        self.assertEqual(original_rows, {11: [[[], ["_ALPHABLEND_ON"], ["_ALPHAMODULATE_ON"], ["PROCEDURAL_INSTANCING_ON", "_ALPHABLEND_ON"]]] * 3})
 
     def test_prefab_keeps_instancing_and_softparticles_but_excludes_scene_fog_and_editor_passes(self):
         source_snippet = snippet(
