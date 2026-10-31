@@ -1954,7 +1954,7 @@ Saved selector residual 36 → 35; coverage subtraction, no accepted output reru
 Readiness stays 693/705 available, 685 raw-exact. Complete bundle, phone production,
 installation/update and original runtime remain open. No APK claim.
 
-## J1331 — Reconstruct four remaining alpha renderer records
+## J1332 — Reconstruct four remaining alpha renderer records
 
 2026-10-31. Four original-owner selectors extend the existing J1294 renderer
 constructor; J245 absent/omitted-decal repair explains the inserted renderers.
@@ -1967,3 +1967,16 @@ Saved current-main exact-selector residual 34 → 30; coverage subtraction only.
 Host preflight and 33 focused record/recipe tests pass. Host-only; no APK claim.
 Readiness remains 693/705 available, 685 raw-exact. GameObject membership,
 complete-file, phone production and install/update acceptance remain open.
+## J1331 — Reconstruct the False Son Boss controller
+
+2026-10-31. Original controller selectors reuse the existing controller owner,
+including duplicate clip-name collision ordinals; no new producer or runtime owner.
+Prior art: pinned AssetRipper 813fed15 ExportCollection.cs:70-91 derives unique
+exported names after clone/instance cleanup.
+Evidence: `work/coordination/p1-scenes-w/fsboss-controller-v1-20261031/done.json`.
+One persisted record independently raw-exact to J850, 19,584 bytes; pack SHA-256
+`aee8d1dd8d5a85042e784bc27ab3f465de77c36a1a6aa2fcc2a33232b9045e4c`.
+Production/qualification wall 57.056 s; host-only, no thermal measurement.
+Saved selector residual 35 → 34; coverage subtraction, no accepted output rerun.
+Readiness stays 693/705 available, 685 raw-exact. Complete bundle, phone production,
+installation/update and original runtime remain open. No APK claim.
