@@ -6059,6 +6059,26 @@ All twelve persisted records are raw-exact to J850, 716 bytes. Saved public
 residual 75 to 63 includes the merged controller closures. Complete bundle,
 phone production, installation/update and runtime gates remain open.
 
+
+### Whole-game native component and Material suppliers (J1319)
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-whole-game-native-material-supplier-records.json` | `d7e1b7f4ec940109e3228445e42318154a368f8862710827c4131e7257d80d6e` |
+
+Audit: 2026-10-31. Original GameObject component lists, reciprocal ownership and
+unique native class slots select two Renderers and one LODGroup. Ordered
+Renderer Material slots identify four Materials; every relocated pointer has an
+original supplier witness. The shared Shader mapping comes from the public
+Commando fallback recipe. The unchanged record producer preserves native schemas
+and nonpointer bytes, using the existing dummy-Shader keyword demotion policy.
+Pinned RoR2EditorKit AddressablesPathDictionaryCache.cs:203-214 and AssetRipper
+GameObjectExtensions FetchComponents/GetComponentAccessList inform identity;
+the pinned TransparentDiffuse template has no keyword variants. Only original
+selectors, identity relationships, checked pointer remaps and hash pins ship;
+no body, keyword string, material value, protected program or private path.
+Seven persisted records are raw-exact to J850, 2,768 bytes. Complete bundle,
+phone production, installation/update and runtime acceptance remain open.
 ### Whole-game shrine component relationships (J1318)
 
 | Recipe | SHA-256 |
