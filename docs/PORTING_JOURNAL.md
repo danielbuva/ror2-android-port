@@ -1856,7 +1856,7 @@ Saved residual 45 → 42; readiness stays 693/705 available, 685 raw-exact.
 Complete bundle, phone production and runtime remain open. Host-only; no APK claim.
 
 
-## J1324 — Reconstruct Legacy Transparent Shader from original Materials
+## J1325 — Reconstruct Legacy Transparent Shader from original Materials
 
 2026-10-31. Existing SDK Shader owner reads pinned original Material instancing
 flags for non-particle shaders; the particle feature policy remains intact.
@@ -1869,3 +1869,16 @@ Persisted record independently raw-exact to J850, 14,416 bytes, SHA-256
 Focused 40 tests, Ruff and host preflight pass; production 1.260 s.
 Combined saved residual 41 → 40; readiness stays 693/705 available, 685 raw-exact.
 Complete bundle, phone production and runtime remain open. Host-only; no APK claim.
+## J1324 — Reconstruct PowerOrb synced motion controller
+
+2026-10-31. Original controller selectors reuse the J1322 controller owner,
+retaining first-tree motion and source clip occurrences while omitting synced
+overrides. No producer or runtime owner is added.
+Prior art: pinned AssetRipper 813fed15 VirtualAnimationFactory.cs:215-223,
+StateConstantExtensions.cs:18-20 and AnimatorControllerProcessor.cs:93-139.
+Evidence: `work/coordination/p1-scenes-w/powerorb-public-20261031/done.json`.
+One persisted record independently raw-exact to J850, 1,256 bytes; pack SHA-256
+`c2fc44a5b967268257408ae4caf53a69a536afe35f776623d215ec0807d7ed2d`.
+One additional public production gap closes; older residual census is unreconciled.
+Readiness stays 693/705 available, 685 raw-exact. Complete bundle, phone production,
+installation/update and original runtime remain open. Host-only; no APK claim.

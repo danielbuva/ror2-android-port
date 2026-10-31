@@ -10,7 +10,8 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
-| [J1324](PORTING_JOURNAL.md#j1324--reconstruct-legacy-transparent-shader-from-original-materials) | 2026-10-31 | Reconstruct Legacy Transparent Shader from original Materials | 2026-10-31. |
+| [J1324](PORTING_JOURNAL.md#j1324--reconstruct-powerorb-synced-motion-controller) | 2026-10-31 | Reconstruct PowerOrb synced motion controller | 2026-10-31. |
+| [J1325](PORTING_JOURNAL.md#j1325--reconstruct-legacy-transparent-shader-from-original-materials) | 2026-10-31 | Reconstruct Legacy Transparent Shader from original Materials | 2026-10-31. |
 | [J1322](PORTING_JOURNAL.md#j1322--reconstruct-synced-motion-and-mimic-controllers) | 2026-10-31 | Reconstruct synced motion and Mimic controllers | 2026-10-31. |
 | [J1323](PORTING_JOURNAL.md#j1323--reconstruct-whole-game-scope-shader-texture-declaration) | 2026-10-31 | Reconstruct whole-game Scope Shader texture declaration | 2026-10-31. |
 | [J1321](PORTING_JOURNAL.md#j1321--reconstruct-whole-game-fallback-material-keyword-spaces) | 2026-10-31 | Reconstruct whole-game fallback Material keyword spaces | 2026-10-31. |
