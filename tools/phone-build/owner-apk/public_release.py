@@ -101,6 +101,7 @@ PUBLISHING_SOURCE_FILES = {
             "release_jobs.py",
             "install_inputs.py",
             "install_flow.py",
+            "atomic_io.py",
             "game_import.py",
         )
     },

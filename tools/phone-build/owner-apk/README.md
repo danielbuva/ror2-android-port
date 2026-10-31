@@ -495,3 +495,42 @@ every output to match its complete local producer pins; historical metadata
 exceptions cannot override those pins. Both routes use the same assembler and
 retained signing key. Real phone installation and saved-data survival remain
 acceptance gates.
+
+### Interrupted writes and full storage
+
+`atomic_io.py` owns private installer receipt writes: sibling staging, file fsync,
+atomic replace and parent-directory fsync. Its caller must retain the existing
+import/update lock or foreground operation ownership. A retry overwrites only its
+owned partial; partial bytes are never completion evidence. `release.py` syncs
+producer outputs before publication and checkpoints each verified output, so a
+later producer failure does not discard earlier progress. `game_import.py`
+rehashes completed files on resume. A failed error-report write cannot mask the
+original storage error or invalidate the last durable checkpoint. An error after
+rename means durability is unconfirmed, not that the old bytes are still present.
+
+`OwnerInputImport` owns the matching Java atomic writer/directory sync used by
+`ToolHostActivity.writeJson` and streamed imports. Android uses `Os.fsync`; the
+Android-free fixture uses the host JVM. PackageInstaller still owns APK session
+commit, and no checkpoint claims installation success.
+
+Host acceptance: `python3 -m unittest tests.test_owner_atomic_writes` injects
+ENOSPC during staging, fsync and rename, kills a writer mid-write, and verifies
+cleanup, last-receipt preservation and explicit resume. Java compilation needs a
+JDK. The separately leased lab command is:
+
+```
+/lab script ref=dani/dots-atomic-installer-writes device=nova-b -- scripts/lab-installer-quota.py
+```
+
+The phone fixture creates only a fresh shell scratch directory and runs the same
+Java writer through `app_process`. It fills a **64 KiB logical quota**, injects
+ENOSPC after a bounded partial write, and verifies unchanged committed bytes,
+cleanup and retry. It never fills the filesystem, mounts a quota volume, installs
+an APK, or reads game/key state. Admission requires at least 15 GiB free on the
+actual scratch backing and the existing battery rule; a device-side watchdog
+refuses missing sensors, temperatures above 50 C, battery at 35 C or above, and
+runs longer than 10 s. Owned scratch is removed and the display sleeps on exit.
+The driver uses the pinned build-tools version and `JAVA_HOME`/`ANDROID_SDK_ROOT`
+(or the documented Unity Android toolchain). Raw diagnostics remain ignored.
+This is logical-quota failure injection, **not physical-filesystem ENOSPC or full
+installer UI qualification**. No phone result is implied by host fixture success.
