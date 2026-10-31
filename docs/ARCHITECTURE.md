@@ -5734,3 +5734,13 @@ select feature combinations. Setup pins original Shader/Material bundles,
 SDK/tool inputs and a fresh output pack; scoped source/compiler processes close
 on exit and receipts persist. One record is host raw-exact to J850; complete
 bundle and phone/runtime acceptance remain open. No runtime owner is added.
+
+`owner-whole-game-material-template-shader.json` extends the existing
+`shader_prefab.py`/`payload_shader_records.py` owners with complete cyclic
+material-signature templates inferred from original fragment records. The
+entire source sequence must match before lifting over original vertex contexts;
+SDK user and builtin declarations jointly identify runtime keywords. Existing
+stage/axis contracts remain first choices. Setup pins original Shader/Material
+bundles, SDK/tool inputs and a fresh output pack; scoped source/compiler processes
+close on exit and receipts persist. One record is host raw-exact to J850;
+complete bundle and phone/runtime acceptance remain open. No runtime owner is added.

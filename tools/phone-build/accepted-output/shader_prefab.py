@@ -107,7 +107,16 @@ def prefab_selections(source, *, retain_instancing=True, material_keywords=None,
                     # Vertex records include vertex-only runtime alternatives
                     # absent from original fragment records (e.g. vertex lights).
                     try:
-                        variants = A.original_feature_order(carrier, sub_index, original_passes.index(row), row, declared, variants, stage="progVertex")
+                        variants = A.original_feature_order(
+                            carrier,
+                            sub_index,
+                            original_passes.index(row),
+                            row,
+                            declared,
+                            variants,
+                            stage="progVertex",
+                            runtime=runtime | set(snippet["m_BuiltinKeywords"].split()),
+                        )
                     except ValueError:
                         variants = A.original_sdk_axis_order(carrier, sub_index, row, declared, variants, snippet)
                 selections[identity] = [deepcopy(variants) for _ in range(3)]

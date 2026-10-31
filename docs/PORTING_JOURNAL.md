@@ -2150,3 +2150,18 @@ local job output 31,568,383 bytes. Host-only; no device heat measurement.
 Merged-selector residual 9 → 8; subtraction only, no complete output rerun.
 Readiness stays 693/705 available, 685 raw-exact. Complete bundle, phone
 production, installation/update and original runtime remain open. No APK claim.
+
+## J1345 — Reconstruct whole-game Shader material-signature template
+
+2026-10-31. Existing Shader owners infer and verify complete original fragment
+material templates, then lift over vertex runtime contexts. SDK user and builtin
+keywords identify contexts; 29 pinned original Materials select features.
+Prior art: pinned R2Wiki Assets/Extraction.md post-SOTS dummy versus legacy YAML.
+Evidence: `work/coordination/p1-wholegame-1031/shader012-template-public-v1/done.json`.
+One independently persisted record is J850 raw-exact, 871,652 bytes; SHA-256
+`d0cafb7f7a73495e52dda11b576f91417bcaeb4b8d053ff9942c9cf20410a398`.
+Production 59.553 s, qualification 67.421 s, peak RSS 1,588,576,256 bytes;
+local job output 21,082,292 bytes. Host-only; no device heat measurement.
+Merged-selector residual 8 → 7: Clip3, Cubemap3, AssetBundle1; subtraction only.
+Readiness stays 693/705 available, 685 raw-exact. Complete bundle, phone
+production, installation/update and original runtime remain open. No APK claim.
