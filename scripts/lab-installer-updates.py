@@ -321,12 +321,21 @@ def publish(service, files, version):
     return base
 
 
+TRANSPORT = module("lab_adb_transport", ROOT / "scripts/lab/adb_transport.py")
+
+
+def adb_diagnostic(label, **record):
+    if DIAGNOSTICS is not None:
+        DIAGNOSTICS.record(label, **record)
+
+
 class Phone:
     def __init__(self, serial, timeout, allow_test_installs=False, allow_test_notifications=False):
         self.serial, self.timeout = serial, timeout
         self.allow_test_installs = allow_test_installs
         self.allow_test_notifications = allow_test_notifications
         self.adb = Path("/opt/homebrew/bin/adb")
+        self.transport = TRANSPORT.AdbTransport(self.adb, serial, observer=adb_diagnostic)
         self.owned_installer = False
         self.install_attempted = False
         self.installer_hash = None
@@ -335,16 +344,91 @@ class Phone:
         self.install_volume = None
         self.ui_path = "/data/local/tmp/ror2-installer-ui-" + secrets.token_hex(8) + ".xml"
 
-    def command(self, *args, stdin=None, label, timeout=60):
-        return run([self.adb, "-s", self.serial, *args], label=label, stdin=stdin, timeout=timeout)
+    def execute(self, *args, stdin=None, label, timeout=60, idempotent=False):
+        try:
+            return self.transport.execute(*args, label=label, stdin=stdin, timeout=timeout, idempotent=idempotent)
+        except TRANSPORT.AdbError:
+            raise Failure(label) from None
+
+    def command(self, *args, stdin=None, label, timeout=60, idempotent=False):
+        result = self.execute(*args, label=label, stdin=stdin, timeout=timeout, idempotent=idempotent)
+        if result.returncode:
+            raise Failure(label)
+        return result.stdout
+
+    def detached(self, command, *, label, timeout=30):
+        # Long accessibility commands survive a killed host adb client. Polling
+        # never relaunches the job; final logical records preserve the existing
+        # private UI diagnostic inspector's dump/read adjacency contract.
+        with tempfile.TemporaryDirectory(prefix="ror2-adb-logs-") as temporary:
+            logs = Path(temporary)
+            try:
+                job = self.transport.start_detached(command, label=label, timeout=min(10, timeout))
+                if DIAGNOSTICS is not None:
+                    # Retain the exact private handle and partial logs if waiting
+                    # times out. No device identifiers or paths are published.
+                    name = Path(job.directory).name
+                    DIAGNOSTICS.write(name + ".json", encoded({"directory": job.directory, "phase": CURRENT_PHASE, "category": label}))
+                    logs = DIAGNOSTICS.directory / name
+                    logs.mkdir(mode=0o700)
+                result = self.transport.wait_detached(job, logs, label=label, timeout=timeout)
+                try:
+                    self.transport.cleanup_detached(job)
+                except TRANSPORT.AdbError:
+                    pass  # Terminal evidence exists; retain the exact directory.
+            except TRANSPORT.AdbError as error:
+                adb_diagnostic(
+                    label,
+                    stdout=(logs / "stdout.log").read_bytes() if (logs / "stdout.log").is_file() else b"",
+                    stderr=(logs / "stderr.log").read_bytes() if (logs / "stderr.log").is_file() else b"",
+                    outcome="TimeoutExpired" if isinstance(error, TRANSPORT.DetachedUncertain) else "transport-error",
+                )
+                raise Failure(label) from None
+        adb_diagnostic(label, stdout=result.stdout, stderr=result.stderr, returncode=result.returncode)
+        return result
+
+    def install(self, apk):
+        self.install_attempted = True
+        self.installer_hash = sha(apk.read_bytes())
+        try:
+            self.transport.install(
+                apk,
+                self.install_volume,
+                label="install-fresh-test-installer",
+                timeout=600,
+                reconcile=lambda: self.package_hash(PACKAGE) == self.installer_hash,
+            )
+        except TRANSPORT.AdbError:
+            raise Failure("test-installer-install-unverified") from None
+        self.owned_installer = True
 
     def shell(self, *args, **kwargs):
-        return self.command("shell", *args, **kwargs)
+        # Exact read-only command shapes; mutations (taps, appops set, launches,
+        # writes, uninstalls) are not silently replayed after an uncertain result.
+        readonly = (
+            args[:1] in (("cat",), ("sha256sum",), ("df",))
+            or args[:2]
+            in (
+                ("sm", "list-volumes"),
+                ("appops", "get"),
+                ("am", "get-current-user"),
+            )
+            or args
+            in (
+                ("dumpsys", "power"),
+                ("dumpsys", "window"),
+                ("dumpsys", "activity", "activities"),
+                ("dumpsys", "accessibility"),
+                ("dumpsys", "activity", "processes"),
+            )
+            or (len(args) >= 3 and args[:1] == ("run-as",) and args[2] == "df")
+        )
+        return self.command("shell", *args, idempotent=readonly, **kwargs)
 
     def package_paths(self, package):
         # Android pm path reports an absent package with either exit 0 or 1.
         # This exception belongs only to this read-only query, not generic ADB.
-        result = execute([self.adb, "-s", self.serial, "shell", "pm", "path", package], label="device-package-path-query", timeout=60)
+        result = self.execute("shell", "pm", "path", package, label="device-package-path-query", timeout=60, idempotent=True)
         if result.returncode in (0, 1) and result.stdout == b"" and result.stderr == b"":
             return []
         if result.returncode or result.stderr:
@@ -429,7 +513,7 @@ class Phone:
         # uiautomator still exits 0 and creates no file. Retry only that observed
         # result, never cat a missing dump or retry unrelated command failures.
         for attempt in range(3):
-            result = execute([self.adb, "-s", self.serial, "shell", "uiautomator", "dump", self.ui_path], label="device-ui-dump", timeout=30)
+            result = self.detached(["uiautomator", "dump", self.ui_path], label="device-ui-dump", timeout=30)
             if result.returncode:
                 raise Failure("device-ui-dump")
             # Both AOSP dump modes wait for idle before acquiring any root.
@@ -462,9 +546,7 @@ class Phone:
         try:
             if not self.owned_installer:
                 raise Failure("ui-window-installer-not-owned")
-            result = execute(
-                [self.adb, "-s", self.serial, "shell", "uiautomator", "dump", "--windows", self.ui_path], label="device-ui-windows-dump", timeout=30
-            )
+            result = self.detached(["uiautomator", "dump", "--windows", self.ui_path], label="device-ui-windows-dump", timeout=30)
             if result.returncode or ui_output_classification(result.stdout) != "dump-reported-written":
                 raise Failure("ui-window-dump-unavailable")
             hierarchy = focused_ui_hierarchy(self.read_ui_dump("displays"), allowed_packages)
@@ -731,12 +813,7 @@ def acceptance(phone, config, temporary, passed):
     set_phase("pre-install-storage")
     phone.storage()
     set_phase("installer-install")
-    phone.install_attempted = True
-    phone.command("install", "--force-uuid", phone.install_volume, str(apk), timeout=600, label="install-fresh-test-installer")
-    phone.installer_hash = sha(apk.read_bytes())
-    if phone.package_hash(PACKAGE) != phone.installer_hash:
-        raise Failure("test-installer-readback")
-    phone.owned_installer = True
+    phone.install(apk)
     set_phase("installer-storage")
     phone.storage()
     set_phase("installer-permission")
