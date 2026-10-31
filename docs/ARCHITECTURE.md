@@ -494,6 +494,12 @@ plus their two referenced BillboardAssets. Original material endpoints resolve t
 public suppliers. The generic owner admits classes 226/227, preserves native
 schemas and nonpointer fields, and relocates checked pointers. Setup, pack state
 and scoped reader teardown follow its existing contract.
+`owner-whole-game-lodgroup-records.json` selects one original LODGroup through
+its unique native component slot and reciprocal public GameObject ownership.
+Every original LOD renderer endpoint resolves to a public supplier, including the
+BillboardRenderer. The existing generic record owner preserves native class 205,
+schema and nonpointer fields; only checked references relocate. Setup, persisted
+pack state and scoped reader teardown follow its existing contract.
 Generic record admission also includes native classes 96, 119, 193, 228 and 330,
 preserving their original schemas and every nonpointer byte.
 The component-edge recipe selects unchanged original records through explicit
