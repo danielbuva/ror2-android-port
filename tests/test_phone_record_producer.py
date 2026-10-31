@@ -268,6 +268,25 @@ class AnimationProducerTests(unittest.TestCase):
         self.assertEqual(struct.pack("<f", A.small_atan2f(-0.000732421875, 1.25)).hex(), "999919ba")
         self.assertEqual(struct.pack("<f", A.small_atan2f(-0.0, 1.25)).hex(), "00000080")
 
+    def test_control_mapping_import_defaults_name_and_keeps_reference_and_state(self):
+        schema = F.node(
+            "Base",
+            children=[
+                F.node("prefix", 12, kind="PPtr<MonoScript>"),
+                F.node("sourceGameObject", children=[F.text("exposedName"), F.node("defaultValue", 12, kind="PPtr<GameObject>")]),
+                F.node("suffix", 4),
+            ],
+        )
+        pointer = struct.pack("<iq", 1, 123)
+        state = struct.pack("<iqI", 0, 456, 0x12345678)
+        source = pointer + F.vector(b"-123456789", 10) + state
+        policy = {"control_exposed_name_default": True, "references": [{"offset": 20, "from": [0, 456], "to": [0, 789]}]}
+        expected = pointer + F.vector(b"0", 1) + struct.pack("<iqI", 0, 789, 0x12345678)
+        self.assertEqual(A.transform_generic(source, 114, policy, schema), expected)
+        self.assertEqual(A.transform_generic(source, 114, {}, schema), source)
+        with self.assertRaisesRegex(ValueError, "MonoBehaviour"):
+            A.transform_generic(source, 320, policy, schema)
+
     def test_director_reimport_sorts_signed_keys_with_their_references(self):
         # Fixed CRC32 vectors cover signed ordering, alignment changes and null PPtrs.
         entry = F.node("data", children=[F.text("first"), F.node("second", 12, kind="PPtr<Object>")])

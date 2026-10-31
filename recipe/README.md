@@ -5593,3 +5593,17 @@ component PPtrs. The profile contains only original selectors/hashes, authored
 activation policy and checked pointer remaps, with no target body, type template,
 implementation or private data. Three persisted records (317 bytes) match J850
 raw-exact. Complete-file, phone production and install/update gates remain open.
+
+### Whole-game Timeline relationships (J1291)
+
+`owner-whole-game-timeline-records.json` SHA-256: `30557118e6555f13c9ba3b50510e2cd0b986c4d7fe422fcb580906a8043e513e`.
+Audit: 2026-10-31. Minimum original object selectors/hashes, output identities,
+checked PPtr relationships and one named import operation select 20 unique
+incoming tracks and their 23 ControlPlayableAsset children. An authored fixture
+in the exact editor independently proves managed PropertyName mapping import
+uses the default value. Original managed metadata establishes default integer
+zero; pinned AssetRipper `813fed1597bac674def7256ce633a227e7b27497`
+`YamlWalker`/`PropertyNameExtensions` establishes native decimal encoding.
+No target scalar template, native body, type tree, game implementation or private
+setting is published. All 43 persisted records match J850 raw-exact. Complete
+bundle, phone production, gameplay and install/update acceptance remain open.

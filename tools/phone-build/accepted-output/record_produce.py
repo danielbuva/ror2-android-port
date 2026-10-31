@@ -1143,6 +1143,24 @@ def director_exposed_names(body, root):
     return body[:start] + struct.pack("<I", count) + b"".join(row for _, row in sorted(entries, key=lambda row: row[0])) + body[end:]
 
 
+def control_exposed_name_default(body, root):
+    """Import the managed YAML PropertyName mapping as the native default.
+
+    The exact-editor authored scalar/mapping fixture establishes this import
+    behavior independently of accepted game records. Other fields stay original.
+    """
+    _, located = fields(body, root)
+    start, end = located[("sourceGameObject", "exposedName")]
+    length = struct.unpack_from("<I", body, start)[0]
+    text = body[start + 4 : start + 4 + length].decode("utf-8")
+    value = int(text)
+    if str(value) != text or not -(2**31) <= value < 2**31 or end != (start + 4 + length + 3) // 4 * 4:
+        raise ValueError("original PropertyName is not an exported signed integer")
+    result = body[:start] + struct.pack("<I", 1) + b"0\0\0\0" + body[end:]
+    fields(result, root)
+    return result
+
+
 def director_unbound_tracks(body, root, selected):
     """Add explicit imported track relationships with native null bindings.
 
@@ -1185,6 +1203,7 @@ def transform_generic(body, class_id, selected, root=None, read_clip=None, sourc
         "keyword_policy",
         "strip_compute_programs",
         "director_exposed_names",
+        "control_exposed_name_default",
         "director_unbound_tracks",
         "controller_clip_order",
         "controller_loop_states",
@@ -1232,6 +1251,10 @@ def transform_generic(body, class_id, selected, root=None, read_clip=None, sourc
         if selected["director_exposed_names"] is not True or class_id != 320 or root is None:
             raise ValueError("exposed-name import requires original PlayableDirector schema")
         body = director_exposed_names(body, root)
+    if "control_exposed_name_default" in selected:
+        if selected["control_exposed_name_default"] is not True or class_id != 114 or root is None:
+            raise ValueError("control exposed-name import requires original MonoBehaviour schema")
+        body = control_exposed_name_default(body, root)
     if "controller_clear_skeleton_masks" in selected:
         if selected["controller_clear_skeleton_masks"] is not True:
             raise ValueError("unqualified controller skeleton mask policy")
@@ -1507,7 +1530,9 @@ def produce(profile_path, profile_sha256, pc, output, sdk=None):
                                 receipt.setdefault("pruned_script_fields", {})[str(obj["path_id"])] = removed
                             typ = {**typ, "hash": value}
                         root = None
-                        if typ["class_id"] in (74, 91, 320):
+                        if typ["class_id"] in (74, 91, 320) or any(
+                            "control_exposed_name_default" in target.get("transform", {}) for target in selected["outputs"]
+                        ):
                             if obj["type_id"] not in trees:
                                 trees[obj["type_id"]] = SCHEMA.type_tree(io.BytesIO(typ["tree"]))
                             root = trees[obj["type_id"]]
