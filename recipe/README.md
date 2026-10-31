@@ -6556,3 +6556,15 @@ ship; no texture pixels, native bodies, target patches or private paths ship.
 Independent persisted public production matches three J850 records, 596 bytes.
 Saved unresolved count falls 6 to 3 by selector subtraction. File readiness is
 unchanged; complete bundle, phone production, install/update and runtime stay open.
+
+
+### Preparation marker stack policy
+
+Audit: 2026-10-31. `original-audio-owner-sources.json` refreshes only the
+reviewed authored `IntegratedWorldBoundary.cs` cohort hash;
+`native-view-camera-transform.json` refreshes its manifest-consuming build-hook
+hash. The marker uses Unity's per-call `LogOption.NoStacktrace`, preserving
+message delivery and original/error stack policies. Pinned BepInEx `5b766a3b`
+log callback observation informs the subscriber boundary; exact Unity 2021.3.45f2
+CoreModule API documents the per-call option. Recipes contain authored source
+hashes only, with no captured text, protected code, game bytes or private paths.

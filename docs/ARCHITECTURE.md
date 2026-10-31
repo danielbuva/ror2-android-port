@@ -5165,7 +5165,10 @@ new owner or private target-tree supplier is added.
 initial world-preparation seam, including the existing loot report write,
 asynchronous resource waits, equipment/displays and stage population. Markers
 contain monotonic process time and frame count so thermal traces can identify
-the interrupted operation. They add no retained state, report writes or yields;
+the interrupted operation. Per-call `LogOption.NoStacktrace` preserves marker
+text without adding preparation stacks to the original Console history. Original
+and error logging keep their existing stack policy. They add no owner state,
+report writes or yields;
 the existing report phase and resource teardown remain authoritative. A marker
 names the operation about to begin; the next marker bounds its elapsed time.
 
