@@ -3,11 +3,13 @@
 import os
 from pathlib import Path
 import subprocess
+import sys
 import tempfile
 import unittest
 import xml.etree.ElementTree as ET
 
-import build
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts/lab"))
+import build  # noqa: E402
 
 ROOT = Path(__file__).resolve().parents[1]
 ANDROID = Path("/Applications/Unity/Hub/Editor/2021.3.45f2/PlaybackEngines/AndroidPlayer")
