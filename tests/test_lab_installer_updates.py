@@ -217,6 +217,53 @@ class LabInstallerUpdatesTests(unittest.TestCase):
             self.assertNotIn("synthetic-private", json.dumps(result))
             self.assertEqual(before, {path: path.read_bytes() for path in root.rglob("*") if path.is_file()})
 
+    def test_update_error_inspection_preserves_pipeline_first_failure_without_private_suffixes(self):
+        for stage, reason, expected in (
+            ("apk", "[Errno 2] No such file or directory: '/synthetic-private/input'", {"os_error": "missing-file"}),
+            ("signing", "PermissionError: [Errno 13] Permission denied: '/synthetic-private/key'", {"os_error": "permission-denied"}),
+            ("apk", "[Errno 28] No space left on device: '/synthetic-private/output'", {"os_error": "no-space"}),
+            ("assembly", "Source producer exited with code -9; private producer log retained.", {"producer_exit": -9}),
+            ("apk", "public assembly refusal", {"public_message": "public assembly refusal"}),
+            ("synthetic-private-stage", "[Errno 999] synthetic-private", {}),
+            ("apk", {"synthetic-private": True}, {"status": "unavailable"}),
+        ):
+            with self.subTest(stage=stage, expected=expected), tempfile.TemporaryDirectory() as temporary:
+                root = Path(temporary)
+                source = root / "tools/phone-build/owner-apk/build_owner_apk.py"
+                source.parent.mkdir(parents=True)
+                source.write_text('raise ValueError("public assembly refusal")\n')
+                directory = root / "work/coordination/installer-update-acceptance/run-newest00"
+                directory.mkdir(parents=True)
+                prefix = directory / "00001-device-state-read"
+                prefix.with_suffix(".json").write_bytes(
+                    LAB.encoded({"phase": "baseline-N-install", "category": "device-state-read", "returncode": 0, "outcome": "returned"})
+                )
+                prefix.with_suffix(".stdout.log").write_bytes(
+                    LAB.encoded(
+                        {
+                            "state": "ERROR",
+                            "message": "synthetic-private-wrapper",
+                            "pipeline": {
+                                "current_stage": "install",
+                                "first_failure": {"stage": stage, "reason": reason},
+                                "stages": [{"id": "synthetic-private", "work": "/synthetic-private"}],
+                            },
+                        }
+                    )
+                )
+                before = {path: path.read_bytes() for path in root.rglob("*") if path.is_file()}
+                code, result = self.log_inspection(root, ["--diagnostic-run", "newest"], mode="--inspect-update-failure")
+                self.assertEqual(code, 0)
+                first = result["pipeline_first_failure"]
+                self.assertEqual(first["stage"], "unknown" if stage == "synthetic-private-stage" else stage)
+                for key, value in expected.items():
+                    actual = first["reason"]["public_templates"][0] if key == "public_message" else first["reason"]
+                    self.assertEqual(actual[key], value)
+                if not expected:
+                    self.assertEqual(first["reason"], {"exception_classes": [], "public_templates": [], "public_traceback_frames": []})
+                self.assertEqual(before, {path: path.read_bytes() for path in root.rglob("*") if path.is_file()})
+                self.assertNotIn("synthetic-private", json.dumps(result))
+
     def test_backend_error_summary_preserves_only_public_literals_and_traceback_locations(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)

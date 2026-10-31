@@ -895,8 +895,11 @@ def ui_output_classification(data):
 def backend_error_summary(message):
     """Match public source literals/locations, never print private message text."""
     sources = tuple(
-        "tools/phone-build/owner-apk/" + name for name in ("updates.py", "release_source.py", "release.py", "public_release.py", "alpha_policy.py")
+        "tools/phone-build/owner-apk/" + name
+        for name in ("updates.py", "release_source.py", "release.py", "public_release.py", "alpha_policy.py", "install_flow.py", "build_owner_apk.py")
     ) + (
+        "tools/phone-build/accepted-output/sdk_package.py",
+        "tools/phone-build/owner-code/native.py",
         "tools/phone-build/managed-host/ToolHostActivity.java",
         "tools/phone-build/managed-host/OwnerBuildService.java",
     )
@@ -951,6 +954,26 @@ def backend_error_summary(message):
         for found in re.finditer(r'File "[^"\n]*' + re.escape(source) + r'", line ([0-9]+)', message):
             frames.append({"source": source, "line": int(found.group(1))})
     result = {"exception_classes": exceptions, "public_templates": matches[:8], "public_traceback_frames": frames[-8:]}
+    # Python's OSError string contains private filenames after the standard
+    # errno/strerror prefix. Classify only exact known prefixes, never the suffix.
+    for prefix, label in (
+        ("[Errno 2] No such file or directory", "missing-file"),
+        ("[Errno 5] Input/output error", "io-error"),
+        ("[Errno 8] Exec format error", "exec-format"),
+        ("[Errno 12] Cannot allocate memory", "out-of-memory"),
+        ("[Errno 13] Permission denied", "permission-denied"),
+        ("[Errno 17] File exists", "file-exists"),
+        ("[Errno 20] Not a directory", "not-directory"),
+        ("[Errno 21] Is a directory", "is-directory"),
+        ("[Errno 28] No space left on device", "no-space"),
+        ("[Errno 30] Read-only file system", "read-only-filesystem"),
+    ):
+        if any(value == prefix or value.startswith(prefix + ":") for value in normalized):
+            result["os_error"] = label
+            break
+    producer = re.fullmatch(r"Source producer exited with code (-?[0-9]{1,3}); private producer log retained\.", message)
+    if producer:
+        result["producer_exit"] = int(producer.group(1))
     child = re.match(r"(?:java\.io\.IOException: )?owner-backend exit (-?[0-9]+) ", message)
     if child:
         result["owner_backend_exit"] = int(child.group(1))
@@ -1003,6 +1026,14 @@ def inspect_ui_failure(selection, *, conflicting_mode=False, update_failure=Fals
                         raise Failure("log-inspection-update-error-shape")
                     result["phase"] = metadata["phase"]
                     result["backend_error"] = backend_error_summary(message)
+                    pipeline = state.get("pipeline")
+                    first = pipeline.get("first_failure") if isinstance(pipeline, dict) else None
+                    if isinstance(first, dict):
+                        stage, reason = first.get("stage"), first.get("reason")
+                        result["pipeline_first_failure"] = {
+                            "stage": stage if stage in ("admission", "staging", "assembly", "textures", "native", "apk", "signing", "install") else "unknown",
+                            "reason": backend_error_summary(reason) if isinstance(reason, str) else {"status": "unavailable"},
+                        }
                     break
             else:
                 raise Failure("log-inspection-update-error-not-found")
