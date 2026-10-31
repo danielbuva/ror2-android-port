@@ -188,12 +188,37 @@ class ControllerRecords(unittest.TestCase):
             self.assertEqual(struct.unpack_from("<I", result, spans[path][0])[0], expected)
         self.assertEqual(result[-4:], body[-4:])
         with self.assertRaisesRegex(ValueError, "invalid behaviour permutation"):
-            A.controller_singleton_behaviours(body, schema, [0, 1, 2, 2])
+            A.controller_behaviour_ranges(body, schema, [0, 1, 2, 2])
         changed = bytearray(body)
         path = ("m_StateMachineBehaviourVectorDescription", "m_StateMachineBehaviourRanges", "Array", "0", "m_Count")
         struct.pack_into("<I", changed, spans[path][0], 2)
-        with self.assertRaisesRegex(ValueError, "nonsingleton"):
-            A.controller_singleton_behaviours(bytes(changed), schema, [0, 1, 3, 2])
+        with self.assertRaisesRegex(ValueError, "noncontiguous"):
+            A.controller_behaviour_ranges(bytes(changed), schema, [0, 1, 3, 2])
+
+    def test_behaviour_permutation_preserves_ordered_multi_and_empty_ranges(self):
+        pointer = F.node("data", children=[integer("m_FileID"), F.node("m_PathID", 8)])
+        state = F.node("data", children=[integer("m_StartIndex"), integer("m_Count")])
+        schema = F.node(
+            "Base",
+            children=[
+                F.array("m_StateMachineBehaviours", pointer),
+                F.node(
+                    "m_StateMachineBehaviourVectorDescription",
+                    children=[
+                        F.array("m_StateMachineBehaviourIndices", integer("data")),
+                        F.array("m_StateMachineBehaviourRanges", state),
+                    ],
+                ),
+            ],
+        )
+        body = vector([struct.pack("<iq", 1, i) for i in (11, 22, 33, 44)])
+        indices = vector([struct.pack("<I", i) for i in range(4)])
+        body += indices + vector([struct.pack("<II", start, count) for start, count in ((0, 2), (4, 0), (2, 2))])
+        expected = vector([struct.pack("<iq", 1, i) for i in (33, 44, 11, 22)])
+        expected += indices + vector([struct.pack("<II", start, count) for start, count in ((2, 2), (4, 0), (0, 2))])
+        self.assertEqual(A.transform_generic(body, 91, {"controller_behaviour_order": [2, 3, 0, 1]}, schema), expected)
+        with self.assertRaisesRegex(ValueError, "noncontiguous"):
+            A.controller_behaviour_ranges(body, schema, [1, 0, 2, 3])
 
     def test_original_clip_dependencies_compile_mixed_state_loop_flags(self):
         leaf = F.node("data", children=[F.array("m_ChildIndices", integer("data")), integer("m_ClipID")])

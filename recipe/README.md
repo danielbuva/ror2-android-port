@@ -5557,3 +5557,20 @@ operations and checked pointer remaps; no target scalar, string, native body,
 type template, implementation or private setting. Three new persisted records
 (40,044 bytes) are raw-exact J850; earlier selections are unchanged. Generated
 bodies remain ignored. Complete bundle, phone and install/update gates stay open.
+
+### Whole-game ordered behaviour ranges (J1288)
+
+Audit: 2026-10-31. The existing source-relationship policy adds MimicLogbook and
+four original state behaviours (two ClearLayerWeight, two SetRandomIntOnEnter).
+Original layer/state keys, range membership and ordinal resolve their identities;
+script identities, SDK-derived properties hashes, source schemas and full bodies
+are checked. Pinned AssetRipper `GetStateBehaviours` traverses every range member.
+Only original selectors/hashes, index permutations and checked pointer remaps
+are published; no target scalar, string, body, type template or implementation.
+New-only persisted production reproduces five records (16,252 bytes) raw-exact
+J850. Previous outputs are unchanged; complete bundle and phone gates stay open.
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-animator-controllers.json` | `df6381c71730c913a105808e25656b827f50c25af43fab2d2b3436ed1a6edd2f` |
+| `owner-whole-game-path-managed-records.json` | `fe49a139288fb404846159f821cc149b71dab1beb5f1bfb8b35810a682ab7118` |

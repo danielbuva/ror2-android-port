@@ -1415,3 +1415,17 @@ play, physical input and genuine filled-filesystem recovery remain open.
 - Post-J1286 unresolved set falls from 256 to 253, excluding parallel work.
   Final-file readiness stays 693/705 available, 685 raw-exact; phone, gameplay
   and install/update gates remain open.
+
+## J1288 — Preserve ordered multi-behaviour controller ranges
+2026-10-31.
+- Existing controller owner preserves contiguous ordered multi-element and empty
+  state ranges; source witnesses select MimicLogbook and four managed behaviours.
+- Five new persisted records (16,252 bytes) are raw-exact J850; earlier accepted
+  records were not requalified. Eight focused controller tests pass.
+- Evidence: `work/coordination/p1-scenes-w/wholegame-residual-controllers-20261031/`
+  and `wholegame-managed-four-20261031/`, each `public-production-done.json`.
+- Controller output SHA-256: `f49c77722cdbf26d4b01eeade9ea49afb5a73c227f49a49beafcf5ce5c626d72`;
+  managed pack: `bdbb2b34528dc799b30e8594c085f9b308f76173898bf8607d1850c839d2c632`.
+- Workstream unresolved count falls 253 to 248, excluding parallel changes.
+  Final-file readiness stays 693/705 available, 685 raw-exact; Acolyte masks,
+  complete whole-game bundle, phone production and install/update remain open.

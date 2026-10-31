@@ -939,7 +939,7 @@ def controller_opposed_angles(body, root):
     return bytes(result)
 
 
-def controller_singleton_behaviours(body, root, order):
+def controller_behaviour_ranges(body, root, order):
     _, spans = fields(body, root)
     inverse = {old: new for new, old in enumerate(order)}
     start, end = spans[("m_StateMachineBehaviours",)]
@@ -958,11 +958,18 @@ def controller_singleton_behaviours(body, root, order):
         if path[:2] != prefix + ("m_StateMachineBehaviourRanges",) or path[-1] != "m_StartIndex":
             continue
         c, d = spans[path[:-1] + ("m_Count",)]
-        if b - a != 4 or d - c != 4 or struct.unpack_from("<I", body, c)[0] != 1:
-            raise ValueError("nonsingleton behaviour range")
+        if b - a != 4 or d - c != 4:
+            raise ValueError("invalid behaviour range extent")
         old = struct.unpack_from("<I", body, a)[0]
-        seen.append(old)
-        struct.pack_into("<I", out, a, inverse[old])
+        size = struct.unpack_from("<I", body, c)[0]
+        if old + size > n:
+            raise ValueError("behaviour range outside source indices")
+        mapped = [inverse[i] for i in range(old, old + size)]
+        if mapped and mapped != list(range(mapped[0], mapped[0] + size)):
+            raise ValueError("noncontiguous behaviour range")
+        seen.extend(range(old, old + size))
+        if mapped:
+            struct.pack_into("<I", out, a, mapped[0])
     if sorted(seen) != list(range(n)):
         raise ValueError("incomplete source behaviour ranges")
     return bytes(out)
@@ -1245,7 +1252,7 @@ def transform_generic(body, class_id, selected, root=None, read_clip=None, sourc
     if "controller_tos" in selected:
         body = controller_tos(body, root, selected["controller_tos"])
     if "controller_behaviour_order" in selected:
-        body = controller_singleton_behaviours(body, root, selected["controller_behaviour_order"])
+        body = controller_behaviour_ranges(body, root, selected["controller_behaviour_order"])
     if "importer_guid" in selected or "crop_rectangle_offset" in selected:
         if class_id != 213 or "importer_guid" not in selected:
             raise ValueError("Sprite import operations require an original Sprite and importer GUID")

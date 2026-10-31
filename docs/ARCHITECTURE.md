@@ -473,6 +473,10 @@ their native allocation sizes, preserving all other controller fields.
 `controller_state_order` relocates whole original state records using checked
 source-index bijections. Default states and direct transition destinations move
 with those records; selector and entry/exit indices retain their source values.
+`controller_behaviour_order` relocates original behaviour pointers and adjusts
+source state-range starts. Nonempty ranges must remain contiguous and ordered;
+empty ranges retain their source start, and the original ranges must cover all
+identity-indexed behaviours exactly once. No behaviour fields are synthesized.
 TOS export selections may also name a checked collision ordinal, applying the
 pinned exporter's filename suffix before deriving the path CRC from source text.
 `controller_clear_null_motion` imports an original sole unavailable clip leaf as
