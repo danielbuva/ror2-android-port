@@ -6038,3 +6038,23 @@ policies and checked pointer remaps ship; no target strings, scalar values, body
 type template, implementation or private settings. Three new persisted records
 (107,980 bytes) match J850 raw-exact. Earlier outputs are unchanged; complete
 bundle, phone production and install/update gates remain open.
+
+### Whole-game controller state-range managed records (J1316)
+
+`owner-whole-game-path-managed-records.json` SHA-256:
+`46138646bcc4c0c6974638fdcf8b16a2fd47f9de0ae2a28d363aaf7a737b8dde`.
+
+Audit: 2026-10-31. Twelve original managed records are selected by original
+AnimatorController identity, matching layer/state dictionary keys, range count
+and behaviour ordinal through the indexed behaviour array. Railgunner, FalseSon,
+and Chef source controllers supply these relationships independently
+of whether their complete controller records can already be reconstructed.
+Original native/script schemas and all nonpointer bytes agree; the unchanged
+record producer relocates only checked MonoScript pointers. Pinned AssetRipper
+`1ac666f47d8e9dedf96afb0b914c70d7656151ea`,
+`AnimatorControllerExtensions.cs:44-71`, documents the range/index indirection.
+Only source selectors, relationship mappings and hashes are published; no
+protected body, implementation, generated content or private path is included.
+All twelve persisted records are raw-exact to J850, 716 bytes. Saved public
+residual 75 to 63 includes the merged controller closures. Complete bundle,
+phone production, installation/update and runtime gates remain open.
