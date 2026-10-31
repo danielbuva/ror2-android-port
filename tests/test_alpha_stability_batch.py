@@ -180,6 +180,25 @@ class AlphaStabilityBatchTests(unittest.TestCase):
         self.assertTrue(result["lease_released"])
         self.assertFalse(self.lease.exists())
 
+    def test_gameplay_only_runs_fresh_heaps_and_sustained_without_claiming_settings(self):
+        self.args["gameplay_only"] = True
+        events, result = self.run_case()
+        self.assertEqual([event[0] for event in events if isinstance(event, tuple)], ["memory", "sustained"])
+        self.assertEqual([stage["name"] for stage in result["stages"]], ["session-memory", "session-sustained"])
+        self.assertEqual(result["scope"], "gameplay-only")
+        self.assertTrue(result["success"])
+        self.assertTrue(result["lease_released"])
+        self.assertTrue(result["terminal_readback"]["oled_asleep"])
+        self.assertNotIn("prior_settings_batch", result)
+
+    def test_gameplay_only_still_stops_and_cleans_up_at_first_gameplay_failure(self):
+        self.args["gameplay_only"] = True
+        events, result = self.run_case(fail_at="memory")
+        self.assertEqual([event[0] for event in events if isinstance(event, tuple)], ["memory"])
+        self.assertFalse(result["success"])
+        self.assertTrue(result["lease_released"])
+        self.assertEqual(result["scope"], "gameplay-only")
+
     def prior_settings(self, apk=HASH, success=True):
         source = self.root / "prior.json"
         source.write_text(

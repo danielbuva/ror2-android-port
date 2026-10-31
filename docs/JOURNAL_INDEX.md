@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J1284](PORTING_JOURNAL.md#j1284--scope-independent-gameplay-stability-collection) | 2026-10-30 | Scope independent gameplay stability collection | 2026-10-31. |
 | [J1283](PORTING_JOURNAL.md#j1283--align-stability-admission-and-touch-staging-with-device-policy) | 2026-10-30 | Align stability admission and touch staging with device policy | 2026-10-31. |
 | [J1282](PORTING_JOURNAL.md#j1282--add-paused-measured-button-rebinding-host-contracts) | 2026-10-30 | Add paused measured-button rebinding host contracts | 2026-10-26. |
 | [J1281](PORTING_JOURNAL.md#j1281--reconstruct-16-whole-game-components-from-qualified-pointer-edges) | 2026-10-30 | Reconstruct 16 whole-game components from qualified pointer edges | 2026-10-30. |

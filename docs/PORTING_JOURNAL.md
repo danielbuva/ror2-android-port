@@ -1362,3 +1362,17 @@ the app-external runtime directory after fresh storage-backing validation.
 Evidence: `work/coordination/alpha-stability-sessions/host-notes.md`;
 58 focused host tests and Ruff pass. No APK/output hash or device run;
 fresh heap attribution, sustained play and Android helper execution remain open.
+
+## J1284 — Scope independent gameplay stability collection
+
+2026-10-31. The existing batch accepts `--gameplay-only`, records that scope and
+runs fresh heap/sustained owners without claiming settings-interruption coverage.
+Lease, thermal admission/sampling, first-failure and terminal cleanup remain required.
+Host evidence: 282 focused tests and Ruff pass. The prior batch also verifies the
+app-external touch helper on adopted storage: two events open native Settings,
+with no cleanup errors. Evidence: `work/device/` selected-device touch case
+`experiments/touch-gesture/20261031T033604.610873Z/result.json` and batch
+`work/coordination/alpha-stability-main-20261031T033430Z/terminal.done.json`.
+APK: `ba0b7e9318c251be6a2dd6e46784bd030eb816a57caab2327b5c205f29bdd92d`.
+Current-APK interrupted-write recovery, retained-root attribution, sustained
+play, physical input and genuine filled-filesystem recovery remain open.
