@@ -2224,3 +2224,18 @@ Production 1.430 s, qualification 5.036 s, peak RSS 284,934,144 bytes.
 Host-only; heat unmeasured. Provider gap filled; residual three unchanged.
 Readiness stays 693/705 available, 685 raw-exact; full bundle, phone production,
 installation/update and runtime remain open.
+
+## J1350 — Restore original Console retention default at composed startup
+
+2026-10-31. OfflineApplicationSession applies the original convar metadata default
+once when Console is absent and its value is zero; existing/later settings prevail.
+APK SHA-256 `e605c0423d6c4b3efe0693c096aba61d4937c020ed51c0a7795a83740c7edb6a`.
+Diagnostic: `work/coordination/alpha-console-default-deps-device-20261031T185340Z/terminal.done.json`;
+menus 2/4 both retain 25 logs, original warning stacks and cleared unused slots.
+Ordinary: `work/coordination/alpha-console-default-ordinary-device-20261031T191200Z/terminal.done.json`;
+12 assisted same-process sessions, 2792.63 s; matched menu slope +218,749 B/session.
+CPU/GPU peak 83.6 C, above 80 C for 25.39 s; battery 35 → 38 C.
+Evidence hash-verified in cold storage; process/selectors absent, OLED asleep.
+Host lifecycle, feedback and producer/pin checks pass. No logger rewrite or purge.
+Repeated-session memory bound, callback delivery, physical controls and sustained
+performance remain open; the observation does not establish a pool plateau.

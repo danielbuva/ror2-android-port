@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J1350](PORTING_JOURNAL.md#j1350--restore-original-console-retention-default-at-composed-startup) | 2026-10-31 | Restore original Console retention default at composed startup | 2026-10-31. |
 | [J1349](PORTING_JOURNAL.md#j1349--supply-the-whole-game-bandit-achievement-sprite) | 2026-10-31 | Supply the whole-game Bandit achievement Sprite | 2026-10-31. |
 | [J1348](PORTING_JOURNAL.md#j1348--preserve-preparation-markers-without-redundant-diagnostic-stacks) | 2026-10-31 | Preserve preparation markers without redundant diagnostic stacks | 2026-10-31. |
 | [J1347](PORTING_JOURNAL.md#j1347--reconstruct-whole-game-customrendertextures) | 2026-10-31 | Reconstruct whole-game CustomRenderTextures | 2026-10-31. |
