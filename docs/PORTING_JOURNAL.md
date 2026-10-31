@@ -1717,7 +1717,7 @@ Public saved residual 93 → 82 by exact output identity/hash coverage.
 Readiness stays 693/705 available, 685 raw-exact; complete bundle, phone production
 and original runtime remain open. Host-only; no APK/device claim.
 
-## J1311 — Reconstruct duplicate clip-name controller relationships
+## J1312 — Reconstruct duplicate clip-name controller relationships
 
 2026-10-31. Add DroneTech, FalseSonNew and Drifter to the existing original
 controller recipe; selected clip collision ordinals and state/layer-keyed ordered
