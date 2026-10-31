@@ -5661,3 +5661,8 @@ production and install/update gates remain open.
 updates only the public `PortSession.cs` hash for the default-off settings
 write observer startup request. Provenance, privacy, licensing and sensitive-content
 audit: authored source hash only; no game content, private inputs or identifiers.
+
+2026-10-31 camera build-hook pin refresh: `native-view-camera-transform.json`
+tracks the authored hook hash after its owner-manifest pin update. Provenance,
+privacy, licensing and sensitive-content audit: public authored hash only; no
+game content, private inputs or identifiers. Runtime camera outputs are unchanged.
