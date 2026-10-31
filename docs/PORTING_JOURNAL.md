@@ -1450,6 +1450,7 @@ play, physical input and genuine filled-filesystem recovery remain open.
   producer changes. Evidence:
   `work/coordination/p1-scenes-w/wholegame-native-components-20261031/done.json`.
 - Pack SHA-256: `03bbe9dd01af77b9e0ebb5f0adb6bce4dea03a73e1f8857ba9610fa98c73e699`.
-- Workstream unresolved count falls 245 to 242, excluding parallel work.
+- Saved unresolved census remains 245: these slots lacked public suppliers but
+  were already absent from that census. Parallel Timeline work is separate.
   Final-file readiness stays 693/705 available, 685 raw-exact; complete bundle,
   phone production and install/update remain open.
