@@ -6429,3 +6429,19 @@ source/destination selectors, hashes and pointer relationships; no scalar patch,
 protected body, generated data or private path ships. Two independently persisted
 records match J850 raw-exact, 216 bytes. Complete bundle, phone production,
 installation/update and original runtime remain open.
+
+### Whole-game Billboard material-feature Shader
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-whole-game-billboard-shader.json` | `e1c4e3a399233ded23e25eb36fdb01cf899c0947c849cd4adc3b2147f79765f7` |
+
+Audit: 2026-10-31. Six original published Material witnesses retain the default
+and observed feature combinations separately. Original vertex-stage keyword
+records order retained variants, including vertex-only runtime alternatives;
+the existing SDK native-order mechanism governs compiled-program interning.
+Pinned AssetRipper 1ac666 SimpleShaderExporter/DummyShaderTextExporter supplies
+exporter prior art but no permutation authority. Only selectors, hashes,
+relationships and policies ship; no Shader text, program, target patch or private
+path is included. Persisted public output is J850 raw-exact, 292,980 bytes.
+Complete bundle, phone production, installation/update and runtime remain open.

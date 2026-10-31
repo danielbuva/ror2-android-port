@@ -2065,7 +2065,7 @@ Saved selector residual 15 → 14; coverage subtraction, no accepted output reru
 Readiness stays 693/705 available, 685 raw-exact. Complete bundle, phone production,
 installation/update and original runtime remain open. No APK claim.
 
-## J1339 — Recover BeetleQueen ghost FX managed records from their hierarchy
+## J1340 — Recover BeetleQueen ghost FX managed records from their hierarchy
 
 2026-10-31. Existing path-managed record owner selects two original components
 through BeetleQueenAcidGhost/FX reciprocal hierarchy; only PPtrs relocate.
@@ -2078,3 +2078,17 @@ Production/qualification wall 57.588 s; host-only, no thermal measurement.
 Saved selector residual 14 → 12 before concurrent shader work; no output rerun.
 Readiness stays 693/705 available, 685 raw-exact. Complete bundle, phone production,
 installation/update and original runtime remain open. No APK claim.
+## J1339 — Reconstruct Billboard material-feature Shader ordering
+
+2026-10-31. Existing prefab Shader owner retains default and witnessed Material
+feature combinations, ordered by original vertex records and native interning.
+Prior art: pinned AssetRipper 1ac666 SimpleShaderExporter/DummyShaderTextExporter;
+original stage metadata supplies permutation authority absent from exporters.
+Evidence: `work/coordination/p1-wholegame-1031/shader-direct-material-native-order-v7/done.json`.
+One persisted record is raw-exact to J850, 292,980 bytes; pack SHA-256
+`059a1227b9b483c61ed54bbad373ba243edaa8161eabd749d4639bfdb2c03d73`.
+Production 32.004 s, qualification 36.730 s, peak RSS 558,596,096 bytes;
+local job output 8,914,110 bytes. Host-only; no device thermal measurement.
+Merged selector residual 14 → 13; subtraction only, no complete output rerun.
+Readiness stays 693/705 available, 685 raw-exact. Complete bundle, phone
+production, installation/update and original runtime remain open. No APK claim.

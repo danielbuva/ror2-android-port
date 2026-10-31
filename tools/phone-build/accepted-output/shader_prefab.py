@@ -56,11 +56,12 @@ def original_fallback_dependencies(source, selected, original):
     return [{"m_FileID": row["to"][0], "m_PathID": row["to"][1]} for row in witnesses]
 
 
-def prefab_selections(source, *, retain_instancing=True):
+def prefab_selections(source, *, retain_instancing=True, material_keywords=None, carrier=None):
     """Keep no-scene runtime axes, including source instancing alternatives."""
     snippets = dict(source["m_CompileInfo"]["m_Snippets"])
     selections = {}
-    for sub in source["m_ParsedForm"]["m_SubShaders"]:
+    for sub_index, sub in enumerate(source["m_ParsedForm"]["m_SubShaders"]):
+        original_passes = list(sub["m_Passes"])
         sub["m_Passes"] = [
             row
             for row in sub["m_Passes"]
@@ -71,7 +72,35 @@ def prefab_selections(source, *, retain_instancing=True):
         for row in sub["m_Passes"]:
             if row["m_Type"] == 0:
                 identity = row["m_State"]["gpuProgramID"]
-                selections[identity] = [P.sdk_scene_variants(snippets[identity], set(), retain_instancing=retain_instancing) for _ in range(3)]
+                snippet = snippets[identity]
+                runtime = set(snippet["m_NonStrippedUserKeywords"].split())
+                features = (
+                    {
+                        keyword
+                        for group in ("m_VariantsUserGlobal", "m_VariantsUserLocal")
+                        for stage in range(7)
+                        for axis in snippet[group + str(stage)]
+                        for keyword in axis
+                    }
+                    - runtime
+                    - {"_", "__"}
+                )
+                if material_keywords is None:
+                    variants = P.sdk_scene_variants(snippet, set(), retain_instancing=retain_instancing)
+                else:
+                    # Retain the default and actual material feature combinations.
+                    admitted = {frozenset(), *(frozenset(keys & features) for keys in material_keywords)}
+                    variants = [
+                        variant
+                        for variant in P.sdk_scene_variants(snippet, retain_instancing=retain_instancing)
+                        if frozenset(set(variant) & features) in admitted
+                    ]
+                if carrier is not None:
+                    declared = set().union(*(set(keys) for keys in variants))
+                    # Vertex records include vertex-only runtime alternatives
+                    # absent from original fragment records (e.g. vertex lights).
+                    variants = A.original_feature_order(carrier, sub_index, original_passes.index(row), row, declared, variants, stage="progVertex")
+                selections[identity] = [deepcopy(variants) for _ in range(3)]
     return selections
 
 
@@ -235,7 +264,17 @@ def produce(profile_path, profile_pin, pc, sdk, asset_ripper, codec, codec_pin, 
                         if identity == 211:
                             runtime, selections = A.particles_selections(runtime, materials, None, carrier=source)
                         else:
-                            selections = prefab_selections(runtime, retain_instancing=any(material["m_EnableInstancingVariants"] for material in materials))
+                            selections = prefab_selections(
+                                runtime,
+                                retain_instancing=any(material["m_EnableInstancingVariants"] for material in materials),
+                                carrier=source,
+                                material_keywords=[
+                                    set(material.get("m_ValidKeywords", []))
+                                    | set(material.get("m_InvalidKeywords", []))
+                                    | set(material.get("m_ShaderKeywords", "").split())
+                                    for material in materials
+                                ],
+                            )
                     elif "terrain" in selected:
                         witness = selected["terrain"]
                         terrain = original(witness["original"], "TerrainData")
@@ -274,7 +313,7 @@ def produce(profile_path, profile_pin, pc, sdk, asset_ripper, codec, codec_pin, 
                         common,
                         compress,
                         leaf,
-                        native_order={i: rows[0] for i, rows in selections.items()} if identity == 211 else None,
+                        native_order={i: rows[0] for i, rows in selections.items()} if identity == 211 or "materials" in selected else None,
                     )
                 elif selected["kind"] == "dummy":
                     filename = selected["source_filename"]
