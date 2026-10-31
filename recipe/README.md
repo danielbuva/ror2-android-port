@@ -6501,3 +6501,20 @@ hashes, relationships and authored transformations ship; no Shader text, program
 accepted-output patches or private paths. Independent production reproduces one
 J850 record, 1,322,972 bytes. Complete bundle, phone production, installation/update
 and original runtime remain open.
+
+### Whole-game Shader material-signature template
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-whole-game-material-template-shader.json` | `7dc38fe947997a87a7053a58e8af8666b2a7584b29c4ef6d27dfa1cea838084e` |
+
+Audit: 2026-10-31. Twenty-nine pinned original Materials select feature
+combinations. Original fragment records supply a complete cyclic material
+signature template, checked in full before lifting over first-seen vertex
+contexts. SDK nonstripped user and builtin declarations together identify runtime
+keywords. Pinned R2Wiki Assets/Extraction.md documents post-SOTS dummy Shader
+exports versus legacy YAML; it supplies no Android permutation solution.
+Only selectors, hashes, relationships and authored transformations ship; no
+Shader text, program, target patch, generated data or private path is included.
+Independent source-only production reproduces one J850 record, 871,652 bytes.
+Complete bundle, phone production, installation/update and runtime remain open.

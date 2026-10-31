@@ -5,7 +5,7 @@ import importlib
 from pathlib import Path
 import sys
 import unittest
-from unittest.mock import Mock
+from unittest.mock import Mock, patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "tools/phone-build/accepted-output"))
 S = importlib.import_module("shader_prefab")
@@ -53,6 +53,38 @@ class PrefabShaderTests(unittest.TestCase):
         selected = [[], ["V"], ["F"], ["F", "V"], ["C"], ["C", "V"], ["C", "F"], ["C", "F", "V"]]
         actual = S.A.original_feature_order(carrier, 0, 0, row, {"C", "F", "V"}, selected, stage="progVertex")
         self.assertEqual(actual, [[], ["F", "V"], ["V"], ["C", "F"], ["C"], ["C", "F", "V"], ["C", "V"], ["F"]])
+
+    def test_material_template_lifts_complete_signatures_over_builtin_and_user_contexts(self):
+        declaration = snippet([["__", "V"], ["__", "I"]], [["M", "N", "__"]], [["C"], []], runtime="V I")
+        row = {"m_Type": 0, "m_State": {"gpuProgramID": 11, "m_Name": "MAIN", "m_Tags": {"tags": []}}}
+        names = ["C", "V", "I", "M", "N"]
+        source = {
+            "m_CompileInfo": {"m_Snippets": [(11, declaration)]},
+            "m_ParsedForm": {"m_KeywordNames": names, "m_SubShaders": [{"m_Passes": [row]}]},
+        }
+        carrier = deepcopy(source)
+        original = carrier["m_ParsedForm"]["m_SubShaders"][0]["m_Passes"][0]
+        vertex, fragment, expected = [], [], []
+        # Two instancing cohorts, each with three exclusive material signatures.
+        # C is builtin, V exists only in vertex records, and I is user runtime.
+        for instance in (set(), {"I"}):
+            contexts = [instance, instance | {"C"}]
+            fragment.extend([instance, contexts[1] | {"M"}, contexts[1] | {"N"}, contexts[1], instance | {"M"}, instance | {"N"}])
+            expanded = [instance, instance | {"V"}, instance | {"C"}, instance | {"C", "V"}]
+            vertex.extend(expanded)
+            expected.extend(
+                [instance] + [context | signature for context in expanded[1:] for signature in ({"M"}, {"N"}, set())] + [instance | {"M"}, instance | {"N"}]
+            )
+        for stage, keys in (("progVertex", vertex), ("progFragment", fragment)):
+            original[stage] = {"m_PlayerSubPrograms": [[{"m_KeywordIndices": [names.index(name) for name in sorted(key)]} for key in keys]]}
+        variants = [sorted(key) for key in reversed(expected)]
+        with patch.object(S.P, "sdk_scene_variants", return_value=variants):
+            actual = S.prefab_selections(source, material_keywords=[set(), {"M"}, {"N"}], carrier=carrier)[11]
+        self.assertEqual(actual, [[sorted(key) for key in expected]] * 3)
+        # An incomplete signature run must never supply a permutation template.
+        original["progFragment"]["m_PlayerSubPrograms"][0].pop(2)
+        with self.assertRaisesRegex(ValueError, "template sequence"):
+            S.A.original_stage_lift(original, names, set(names), variants, runtime={"C", "V", "I"})
 
     def test_overlapping_stage_axes_keep_defaults_and_duplicate_tier_rows(self):
         declaration = snippet([["P", "C"], ["__", "INSTANCING_ON"]], runtime="INSTANCING_ON")

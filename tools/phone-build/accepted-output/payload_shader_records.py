@@ -7,7 +7,7 @@ The retained J131 bundle uses Gamma/default Android tiers and the acquired
 
 from collections import Counter
 from copy import deepcopy
-from itertools import product
+from itertools import groupby, product
 import argparse
 import hashlib
 import itertools
@@ -292,7 +292,7 @@ def standard_material(selected, original, sdk_objects):
     return value
 
 
-def original_stage_lift(original_pass, names, features, selected):
+def original_stage_lift(original_pass, names, features, selected, *, runtime=None):
     """Lift a source fragment cyclic order over complete vertex contexts."""
 
     def sequence(stage):
@@ -311,7 +311,39 @@ def original_stage_lift(original_pass, names, features, selected):
     wanted = {frozenset(k) for k in selected}
     vertex = [k for k in vertex if any(s & vn == k for s in wanted)]
     fragment = [k for k in fragment if any(s & fn == k for s in wanted)]
-    if not vn - fn:
+    if runtime is not None:
+        # Infer a complete material-signature template from the first full
+        # fragment context, then verify its rotation against the entire source.
+        runtime = frozenset(runtime)
+        groups = [(context, list(rows)) for context, rows in groupby(fragment, key=lambda key: key & runtime)]
+        answer = []
+        offset = 0
+        while offset < len(groups):
+            start, head = groups[offset]
+            end = next((i for i in range(offset + 1, len(groups)) if groups[i][0] == start), None)
+            if end is None:
+                raise ValueError("source material template has no wrap")
+            contexts = [context for context, _ in groups[offset:end]]
+            signatures = [key - runtime for key in groups[offset + 1][1]]
+            if len(head) != 1 or head[0] - runtime != signatures[-1]:
+                raise ValueError("source material template head differs")
+            observed = (
+                [start | signatures[-1]]
+                + [context | signature for context in contexts[1:] for signature in signatures]
+                + [start | signature for signature in signatures[:-1]]
+            )
+            if observed != [key for _, rows in groups[offset : end + 1] for key in rows]:
+                raise ValueError("source material template sequence differs")
+            expanded = list(dict.fromkeys(key & runtime for key in vertex if key & fn & runtime in contexts))
+            if not expanded:
+                raise ValueError("empty lifted material template contexts")
+            answer.extend(
+                [expanded[0] | signatures[-1]]
+                + [context | signature for context in expanded[1:] for signature in signatures]
+                + [expanded[0] | signature for signature in signatures[:-1]]
+            )
+            offset = end + 1
+    elif not vn - fn:
         answer = fragment
     elif not fn - vn:
         answer = vertex
@@ -396,7 +428,7 @@ def original_sdk_axis_order(carrier, subshader_index, shader_pass, features, sel
     return [sorted(keys) for keys in answer]
 
 
-def original_feature_order(carrier, subshader_index, pass_index, shader_pass, features, selected, *, stage="progFragment"):
+def original_feature_order(carrier, subshader_index, pass_index, shader_pass, features, selected, *, stage="progFragment", runtime=None):
     """Order retained material identities by original stage records."""
     form = carrier["m_ParsedForm"]
 
@@ -417,7 +449,12 @@ def original_feature_order(carrier, subshader_index, pass_index, shader_pass, fe
                 ranks[keys] = len(ranks)
     if set(ranks) != wanted:
         if stage == "progVertex":
-            return original_stage_lift(original_pass, form["m_KeywordNames"], features, selected)
+            try:
+                return original_stage_lift(original_pass, form["m_KeywordNames"], features, selected)
+            except ValueError:
+                if runtime is None:
+                    raise
+                return original_stage_lift(original_pass, form["m_KeywordNames"], features, selected, runtime=runtime)
         raise ValueError("original stage records do not cover retained material identities")
     return sorted(selected, key=lambda keys: ranks[frozenset(keys)])
 
