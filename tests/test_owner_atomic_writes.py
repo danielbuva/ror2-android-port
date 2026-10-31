@@ -169,6 +169,143 @@ class QuotaDriverTests(unittest.TestCase):
         self.driver = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(self.driver)
 
+    def inspection_fixture(self, root):
+        logs = root / "work/coordination/installer-quota/run-synthetic"
+        logs.mkdir(parents=True)
+        (logs / "phone-quota.stdout").write_bytes(b"PRIVATE OUTPUT\xff")
+        (logs / "phone-quota.stderr").write_bytes(b"java.lang.AssertionError: PRIVATE PATH\n")
+        return logs
+
+    def test_inspection_is_read_only_bounded_and_workflow_association_unknown(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            logs = self.inspection_fixture(root)
+            (logs / "phone-quota.stderr").write_bytes(b"java.lang.AssertionError: PRIVATE\n" + b"x" * 40000)
+            before = {p.name: p.read_bytes() for p in logs.iterdir()}
+            with patch.object(self.driver, "ROOT", root), patch.object(self.driver.subprocess, "run") as command:
+                result = self.driver.inspect_quota_failure("newest")
+            command.assert_not_called()
+            self.assertEqual(result["java_errors"], ["java.lang.AssertionError"])
+            self.assertTrue(result["logs_truncated"])
+            self.assertEqual(result["workflow_association"], "unrecorded")
+            self.assertIsNone(result["returncode"])
+            self.assertNotIn("PRIVATE", json.dumps(result))
+            self.assertNotIn("run-synthetic", json.dumps(result))
+            self.assertEqual(before, {p.name: p.read_bytes() for p in logs.iterdir()})
+
+    def test_inspection_selection_rejects_paths_symlinks_and_nonregular_logs(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            logs = self.inspection_fixture(root)
+            with patch.object(self.driver, "ROOT", root):
+                for value in ("../run-synthetic", str(logs), "run-synthetic/child", "41187385460", "run-", "run-a\n"):
+                    with self.assertRaises(self.driver.Failure):
+                        self.driver.inspect_quota_failure(value)
+                linked = logs.parent / "run-link"
+                linked.symlink_to(logs, target_is_directory=True)
+                with self.assertRaises(self.driver.Failure):
+                    self.driver.inspect_quota_failure("run-link")
+                stderr = logs / "phone-quota.stderr"
+                stderr.unlink()
+                stderr.symlink_to(logs / "phone-quota.stdout")
+                with self.assertRaises(self.driver.Failure):
+                    self.driver.inspect_quota_failure("run-synthetic")
+                stderr.unlink()
+                os.mkfifo(stderr)
+                with self.assertRaisesRegex(self.driver.Failure, "diagnostic-log-not-regular"):
+                    self.driver.inspect_quota_failure("run-synthetic")
+
+    def test_inspection_mode_never_uses_serial_compiler_or_commands(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            self.inspection_fixture(root)
+            output = io.StringIO()
+            with (
+                patch.object(self.driver, "ROOT", root),
+                patch.dict(os.environ, {}, clear=True),
+                patch.object(self.driver.subprocess, "run") as command,
+                patch("sys.stdout", output),
+            ):
+                self.assertEqual(self.driver.main(["--inspect-quota-failure", "--diagnostic-run", "run-synthetic"]), 0)
+            command.assert_not_called()
+            self.assertEqual(json.loads(output.getvalue())["selection"], "explicit")
+
+    def test_inspection_missing_logs_refuses_and_shared_work_symlink_is_supported(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            shared = root / "shared"
+            shared.mkdir()
+            logs = self.inspection_fixture(shared)
+            checkout = root / "checkout"
+            checkout.mkdir()
+            (checkout / "work").symlink_to(shared / "work", target_is_directory=True)
+            with patch.object(self.driver, "ROOT", checkout):
+                self.assertEqual(self.driver.inspect_quota_failure("newest")["status"], "observed")
+                (logs / "phone-quota.stdout").unlink()
+                with self.assertRaisesRegex(self.driver.Failure, "diagnostic-evidence-unavailable-or-unsafe"):
+                    self.driver.inspect_quota_failure("newest")
+
+    def test_failed_command_preserves_bounded_logs_and_fixed_classification(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            logs = Path(temporary)
+            private = b"java.lang.AssertionError: PRIVATE_INPUT\n" + b"x" * 40000
+            result = subprocess.CompletedProcess(["adb"], 1, b"PRIVATE_OUTPUT", private)
+            with patch.object(self.driver.subprocess, "run", return_value=result):
+                with self.assertRaises(self.driver.Failure) as caught:
+                    self.driver.run(["adb", "PRIVATE_ARGUMENT"], logs, "phone-quota")
+            diagnostic = caught.exception.diagnostic
+            self.assertEqual(diagnostic["returncode"], 1)
+            self.assertEqual(diagnostic["java_errors"], ["java.lang.AssertionError"])
+            self.assertTrue(diagnostic["logs_truncated"])
+            self.assertNotIn("PRIVATE", json.dumps(diagnostic))
+            self.assertEqual((logs / "phone-quota.stderr").stat().st_size, self.driver.LOG_LIMIT)
+            self.assertEqual((logs / "phone-quota.stdout").read_bytes(), b"PRIVATE_OUTPUT")
+            self.assertEqual(json.loads((logs / "phone-quota.result.json").read_text()), diagnostic)
+
+    def test_signal_and_guard_codes_are_distinct_without_signal_inference(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            logs = Path(temporary)
+            for code, category in (
+                (-9, "host-command-signal"),
+                (81, "guard-initial-refusal"),
+                (82, "guard-watchdog-refusal"),
+                (83, "guard-final-refusal"),
+                (137, "exited"),
+            ):
+                result = self.driver.record_command(logs, "phone-quota", returncode=code)
+                self.assertEqual(result["category"], category)
+                self.assertEqual(result["signal"], "SIGKILL" if code == -9 else None)
+
+    def test_timeout_preserves_partial_output_and_launch_error_hides_message(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            logs = Path(temporary)
+            timeout = subprocess.TimeoutExpired(["PRIVATE"], 30, output=b"partial", stderr=b"private stderr")
+            with patch.object(self.driver.subprocess, "run", side_effect=timeout):
+                with self.assertRaises(self.driver.Failure) as caught:
+                    self.driver.run(["adb"], logs, "phone-quota")
+            self.assertEqual(caught.exception.diagnostic["category"], "host-command-timeout")
+            self.assertIsNone(caught.exception.diagnostic["returncode"])
+            self.assertEqual((logs / "phone-quota.stdout").read_bytes(), b"partial")
+            with patch.object(self.driver.subprocess, "run", side_effect=OSError("PRIVATE LAUNCH ERROR")):
+                with self.assertRaises(self.driver.Failure) as caught:
+                    self.driver.run(["adb"], logs, "phone-quota")
+            self.assertEqual(caught.exception.diagnostic["category"], "host-command-launch-error")
+            self.assertNotIn("PRIVATE", json.dumps(caught.exception.diagnostic))
+
+    def test_java_class_allowlist_does_not_expose_unknown_names_or_messages(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            result = self.driver.record_command(
+                Path(temporary),
+                "phone-quota",
+                returncode=1,
+                stderr=b'Exception in thread "PRIVATE" java.lang.reflect.InvocationTargetException\n'
+                b"Caused by: android.system.ErrnoException: open failed: PRIVATE\n"
+                b"private.secret.UnknownException: details\n",
+            )
+            self.assertEqual(result["java_errors"], ["java.lang.reflect.InvocationTargetException", "android.system.ErrnoException"])
+            self.assertNotIn("PRIVATE", json.dumps(result))
+            self.assertNotIn("private.secret", json.dumps(result))
+
     def test_no_device_selection_refuses_before_command(self):
         with patch.dict(os.environ, {}, clear=True), patch.object(self.driver, "run") as command:
             self.assertEqual(self.driver.main([]), 1)

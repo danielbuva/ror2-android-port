@@ -13,6 +13,8 @@ import json
 import os
 from pathlib import Path
 import re
+import signal
+import stat
 import subprocess
 import tempfile
 
@@ -70,18 +72,138 @@ safe || exit 83
 
 
 class Failure(Exception):
-    pass
+    def __init__(self, label, diagnostic=None):
+        super().__init__(label)
+        self.diagnostic = diagnostic
+
+
+LOG_LIMIT = 32768
+JAVA_ERRORS = (
+    "java.io.IOException",
+    "java.lang.AssertionError",
+    "java.lang.ClassNotFoundException",
+    "java.lang.NoClassDefFoundError",
+    "java.lang.IllegalAccessException",
+    "java.lang.NoSuchMethodException",
+    "java.lang.NoSuchFieldException",
+    "java.lang.reflect.InvocationTargetException",
+    "android.system.ErrnoException",
+)
+
+
+def java_errors(text):
+    return [name for name in JAVA_ERRORS if re.search(r"(?m)(?:^|Caused by: |Exception in thread \"[^\"\n]*\" )" + re.escape(name) + r"(?=[:\s]|$)", text)]
+
+
+def inspect_quota_failure(selection):
+    """Read only fixed log names under the driver's owned evidence directory.
+
+    Historical random run directories have no workflow ID. Selection never
+    claims that newest evidence belongs to a particular GitHub Actions run.
+    Work itself may be the lab runner's shared-directory symlink; descendants,
+    selected run directories and log files must not be symlinks.
+    """
+    if selection != "newest" and not re.fullmatch(r"run-[A-Za-z0-9_-]{1,80}", selection):
+        raise Failure("invalid-diagnostic-selection")
+    descriptors = []
+    try:
+        directory = os.open((ROOT / "work").resolve(strict=True), os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW)
+        descriptors.append(directory)
+        for part in ("coordination", "installer-quota"):
+            directory = os.open(part, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW, dir_fd=directory)
+            descriptors.append(directory)
+        if selection == "newest":
+            candidates = []
+            with os.scandir(directory) as entries:
+                for count, entry in enumerate(entries):
+                    if count >= 256:
+                        raise Failure("diagnostic-candidate-limit")
+                    if re.fullmatch(r"run-[A-Za-z0-9_-]{1,80}", entry.name) and entry.is_dir(follow_symlinks=False):
+                        candidates.append((entry.stat(follow_symlinks=False).st_mtime_ns, entry.name))
+            if not candidates:
+                raise Failure("diagnostic-evidence-unavailable")
+            selected = max(candidates)[1]
+        else:
+            selected = selection
+        directory = os.open(selected, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW, dir_fd=directory)
+        descriptors.append(directory)
+        raw, truncated = [], False
+        for name in ("phone-quota.stdout", "phone-quota.stderr"):
+            descriptor = os.open(name, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK, dir_fd=directory)
+            try:
+                if not stat.S_ISREG(os.fstat(descriptor).st_mode):
+                    raise Failure("diagnostic-log-not-regular")
+                with os.fdopen(descriptor, "rb", closefd=False) as stream:
+                    value = stream.read(LOG_LIMIT + 1)
+                truncated |= len(value) > LOG_LIMIT
+                raw.append(value[:LOG_LIMIT].decode("utf-8", errors="replace"))
+            finally:
+                os.close(descriptor)
+        return {
+            "mode": "inspect-quota-failure",
+            "selection": "newest" if selection == "newest" else "explicit",
+            "workflow_association": "unrecorded",
+            "status": "observed",
+            "returncode": None,
+            "returncode_status": "not-inferred-from-output",
+            "java_errors": java_errors("\n".join(raw)),
+            "stdout_empty": not raw[0],
+            "stderr_empty": not raw[1],
+            "logs_truncated": truncated,
+        }
+    except (OSError, RuntimeError) as error:
+        raise Failure("diagnostic-evidence-unavailable-or-unsafe") from error
+    finally:
+        for descriptor in reversed(descriptors):
+            os.close(descriptor)
+
+
+def record_command(logs, label, *, stdout=b"", stderr=b"", returncode=None, status="exited"):
+    """Retain bounded raw evidence locally; expose only fixed classifications.
+
+    /lab links checkout/work to the persistent repository work directory, so
+    these records survive removal of the temporary checkout. Never print raw
+    command output, command arguments, exception messages or filesystem paths.
+    """
+    raw = []
+    truncated = False
+    for kind, value in (("stdout", stdout), ("stderr", stderr)):
+        value = value or b""
+        if isinstance(value, str):
+            value = value.encode("utf-8", errors="replace")
+        truncated |= len(value) > LOG_LIMIT
+        value = value[:LOG_LIMIT]
+        (logs / (label + "." + kind)).write_bytes(value)
+        raw.append(value.decode("utf-8", errors="replace"))
+    category = status
+    signal_name = None
+    if returncode is not None and returncode < 0:
+        category = "host-command-signal"
+        try:
+            signal_name = signal.Signals(-returncode).name
+        except ValueError:
+            signal_name = "unknown"
+    elif label == "phone-quota":
+        category = {81: "guard-initial-refusal", 82: "guard-watchdog-refusal", 83: "guard-final-refusal"}.get(returncode, status)
+    text = "\n".join(raw)
+    errors = java_errors(text)
+    diagnostic = {"category": category, "returncode": returncode, "signal": signal_name, "java_errors": errors, "logs_truncated": truncated}
+    (logs / (label + ".result.json")).write_text(json.dumps(diagnostic, sort_keys=True) + "\n")
+    return diagnostic
 
 
 def run(argv, logs, label, *, timeout=60):
     try:
         result = subprocess.run(list(map(str, argv)), capture_output=True, timeout=timeout)
-    except (OSError, subprocess.TimeoutExpired) as error:
-        raise Failure(label) from error
-    (logs / (label + ".stdout")).write_bytes(result.stdout)
-    (logs / (label + ".stderr")).write_bytes(result.stderr)
+    except subprocess.TimeoutExpired as error:
+        diagnostic = record_command(logs, label, stdout=error.stdout, stderr=error.stderr, status="host-command-timeout")
+        raise Failure(label, diagnostic) from error
+    except OSError as error:
+        diagnostic = record_command(logs, label, status="host-command-launch-error")
+        raise Failure(label, diagnostic) from error
+    diagnostic = record_command(logs, label, stdout=result.stdout, stderr=result.stderr, returncode=result.returncode)
     if result.returncode:
-        raise Failure(label)
+        raise Failure(label, diagnostic)
     return result.stdout
 
 
@@ -111,7 +233,21 @@ def safety(adb, logs, phase):
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--host-only", action="store_true", help="Compile/run the identical Java fixture without contacting a phone")
+    parser.add_argument("--inspect-quota-failure", action="store_true", help="Read retained quota logs only; no subprocesses, compiler or device access")
+    parser.add_argument(
+        "--diagnostic-run", default="newest", help="Newest retained directory or exact run-* basename; historical workflow association is unrecorded"
+    )
     args = parser.parse_args(argv)
+    if args.inspect_quota_failure:
+        if args.host_only:
+            print("FAIL incompatible-diagnostic-mode")
+            return 1
+        try:
+            print(json.dumps(inspect_quota_failure(args.diagnostic_run), sort_keys=True))
+            return 0
+        except Failure as error:
+            print("FAIL " + str(error))
+            return 1
     serial = os.environ.get("LAB_DEVICE_SERIAL")
     if not args.host_only and not serial:
         print("FAIL LAB_DEVICE_SERIAL-required-use-authorized-lab-runner")
@@ -122,7 +258,7 @@ def main(argv=None):
     evidence = ROOT / "work/coordination/installer-quota"
     evidence.mkdir(parents=True, exist_ok=True)
     logs = Path(tempfile.mkdtemp(prefix="run-", dir=evidence))
-    remote, failure, cleanup_failure = None, None, False
+    remote, failure, cleanup_failure, diagnostic = None, None, False, None
     try:
         with tempfile.TemporaryDirectory(prefix="ror2-quota-", dir="/tmp") as temporary:
             temporary = Path(temporary).resolve()
@@ -180,6 +316,7 @@ def main(argv=None):
                 raise Failure("quota-contract-result")
     except Failure as error:
         failure = str(error)
+        diagnostic = error.diagnostic
     except Exception:
         failure = "unexpected-local-error-see-private-evidence"
     finally:
@@ -196,6 +333,8 @@ def main(argv=None):
                 cleanup_failure = True
     if failure or cleanup_failure:
         print("FAIL " + (failure or "cleanup-or-display-unconfirmed"))
+        if diagnostic:
+            print("DIAGNOSTIC " + json.dumps(diagnostic, sort_keys=True))
         if cleanup_failure and failure:
             print("FAIL cleanup-or-display-unconfirmed")
         return 1
