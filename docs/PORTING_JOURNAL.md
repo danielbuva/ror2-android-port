@@ -1352,3 +1352,13 @@ Evidence: `work/coordination/alpha-callback-build/rebinding-host-notes.md`;
 36 focused host contracts and Ruff pass. No APK/output generated or installed.
 Host-only; Android writes/restart, human-labelled native effects, Thor physical
 input, callback-removal acceptance and managed-growth bounds remain open.
+
+## J1283 — Align stability admission and touch staging with device policy
+
+2026-10-31. Existing stability admission confirms charging with three positive
+current readings 10 seconds apart; transient current and status 2/current 0
+retain cool admission. Touch diagnostics stage and remove DEX/request files in
+the app-external runtime directory after fresh storage-backing validation.
+Evidence: `work/coordination/alpha-stability-sessions/host-notes.md`;
+58 focused host tests and Ruff pass. No APK/output hash or device run;
+fresh heap attribution, sustained play and Android helper execution remain open.

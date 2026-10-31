@@ -4934,7 +4934,9 @@ The source knowledge is the pinned Android 13
 and the public [MotionEvent](https://developer.android.com/reference/android/view/MotionEvent)
 pointer-ID/action contract; no platform implementation is copied. Each gesture
 is bounded to 128 steps/30 s of waits, cancels a final hold and removes its
-unique temporary device DEX/request files. A dispatch failure stops only the
+unique temporary device DEX/request files. These files use the existing app-external
+runtime directory; its receipt reader verifies backing against fresh storage
+observations before staging. A dispatch failure stops only the
 still-matching owned game process. Success leaves the session/display running.
 The driver observes only the owned UID's foreground process state through the
 normal shell API. Leaving that state ends the pointer stream with
