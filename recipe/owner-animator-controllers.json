@@ -4384,6 +4384,71 @@
                   }
                 }
               ]
+            },
+            {
+              "path_id": 3908124294813894892,
+              "class_id": 91,
+              "sha256": "949e11422436fb10f17516547e6e2b110c529ff2ae434e2d535e064688cbc70e",
+              "outputs": [
+                {
+                  "bundle": "whole-game-content",
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "path_id": 6589448342088849470,
+                  "bytes": 1256,
+                  "sha256": "c2fc44a5b967268257408ae4caf53a69a536afe35f776623d215ec0807d7ed2d",
+                  "transform": {
+                    "references": [
+                      {
+                        "offset": 1192,
+                        "from": [
+                          12,
+                          -7940862738839963422
+                        ],
+                        "to": [
+                          0,
+                          2939239489498241336
+                        ]
+                      },
+                      {
+                        "offset": 1204,
+                        "from": [
+                          12,
+                          -4943888697725093662
+                        ],
+                        "to": [
+                          0,
+                          -6092970678084721623
+                        ]
+                      },
+                      {
+                        "offset": 1216,
+                        "from": [
+                          12,
+                          -7570696771874850590
+                        ],
+                        "to": [
+                          0,
+                          -5522233964277844082
+                        ]
+                      },
+                      {
+                        "offset": 1228,
+                        "from": [
+                          12,
+                          -4943888697725093662
+                        ],
+                        "to": [
+                          0,
+                          -6092970678084721623
+                        ]
+                      }
+                    ],
+                    "controller_clear_skeleton_masks": true,
+                    "controller_clear_null_motion": true,
+                    "controller_omit_synced_overrides": true
+                  }
+                }
+              ]
             }
           ]
         }
@@ -96551,6 +96616,126 @@
       ]
     }
   ]
-}
+},
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-dlc1-voidwardcrab_assets_all_394981a25ef6a7b48b8f36ee3821b03b.bundle",
+      "sha256": "f96216dd4ef0af0d17204cf93f96605b34510f2d225d4d428041d22b5bc6c07e",
+      "members": [
+        {
+          "name": "CAB-a77361184b3d7465ec8dd8ff7915ac64",
+          "objects": [
+            {
+              "path_id": -6386021359868378393,
+              "class_id": 91,
+              "sha256": "48b4df99ba21074e71f7e27651771bb2c889fff47d66df0c8d9f7cb66c177028",
+              "outputs": [
+                {
+                  "bundle": "whole-game-content",
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "path_id": 3908577824080668812,
+                  "bytes": 2020,
+                  "sha256": "d3873dcd19ca1ce6c3c0c163df96e63ded0c74a79c7691c39f047b4cc8b07f29",
+                  "transform": {
+                    "references": [
+                      {
+                        "offset": 1908,
+                        "from": [
+                          0,
+                          -1637966068993853236
+                        ],
+                        "to": [
+                          0,
+                          2571541422185033457
+                        ]
+                      },
+                      {
+                        "offset": 1920,
+                        "from": [
+                          0,
+                          -4647091385196513076
+                        ],
+                        "to": [
+                          0,
+                          2108957517272748801
+                        ]
+                      },
+                      {
+                        "offset": 1932,
+                        "from": [
+                          0,
+                          4228172060898785484
+                        ],
+                        "to": [
+                          0,
+                          -7524419444112003492
+                        ]
+                      },
+                      {
+                        "offset": 1944,
+                        "from": [
+                          0,
+                          -4386308160468584244
+                        ],
+                        "to": [
+                          0,
+                          7639919699969712706
+                        ]
+                      },
+                      {
+                        "offset": 1956,
+                        "from": [
+                          0,
+                          -1637966068993853236
+                        ],
+                        "to": [
+                          0,
+                          2571541422185033457
+                        ]
+                      },
+                      {
+                        "offset": 1968,
+                        "from": [
+                          0,
+                          -1637966068993853236
+                        ],
+                        "to": [
+                          0,
+                          2571541422185033457
+                        ]
+                      },
+                      {
+                        "offset": 1980,
+                        "from": [
+                          0,
+                          -1637966068993853236
+                        ],
+                        "to": [
+                          0,
+                          2571541422185033457
+                        ]
+                      },
+                      {
+                        "offset": 1992,
+                        "from": [
+                          0,
+                          2011110849397749964
+                        ],
+                        "to": [
+                          0,
+                          -3571305803726280700
+                        ]
+                      }
+                    ],
+                    "controller_clear_skeleton_masks": true,
+                    "controller_clear_null_motion": true,
+                    "controller_omit_synced_overrides": true
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
   ]
 }

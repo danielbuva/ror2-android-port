@@ -1854,3 +1854,45 @@ Three persisted records raw-exact to J850, 28,684 bytes; pack SHA-256
 `194603a7fe76d34cb3e149fd98c68019f7a7f8fe7080e3a4fa2fc6f760cfd959`.
 Saved residual 45 → 42; readiness stays 693/705 available, 685 raw-exact.
 Complete bundle, phone production and runtime remain open. Host-only; no APK claim.
+
+
+## J1326 — Reconstruct Legacy Transparent Shader from original Materials
+
+2026-10-31. Existing SDK Shader owner reads pinned original Material instancing
+flags for non-particle shaders; the particle feature policy remains intact.
+A complete 970-bundle/9,080-Material census finds six users, all instancing off.
+Prior art: EditorKit name/GUID Shader identity and pinned AssetRipper templates.
+Evidence: `work/coordination/p1-wholegame-1031/legacy-material-public-v2/terminal.json`
+and adjacent `provenance.md` (source census and native-pointer witnesses).
+Persisted record independently raw-exact to J850, 14,416 bytes, SHA-256
+`d61fa84d4b06c0fa763d824886ba9d383f611fc291d516249730c6e0aa39c68e`.
+Focused 40 tests, Ruff and host preflight pass; production 1.260 s.
+Combined saved residual 41 → 40; readiness stays 693/705 available, 685 raw-exact.
+Complete bundle, phone production and runtime remain open. Host-only; no APK claim.
+## J1324 — Reconstruct PowerOrb synced motion controller
+
+2026-10-31. Original controller selectors reuse the J1322 controller owner,
+retaining first-tree motion and source clip occurrences while omitting synced
+overrides. No producer or runtime owner is added.
+Prior art: pinned AssetRipper 813fed15 VirtualAnimationFactory.cs:215-223,
+StateConstantExtensions.cs:18-20 and AnimatorControllerProcessor.cs:93-139.
+Evidence: `work/coordination/p1-scenes-w/powerorb-public-20261031/done.json`.
+One persisted record independently raw-exact to J850, 1,256 bytes; pack SHA-256
+`c2fc44a5b967268257408ae4caf53a69a536afe35f776623d215ec0807d7ed2d`.
+One additional public production gap closes; older residual census is unreconciled.
+Readiness stays 693/705 available, 685 raw-exact. Complete bundle, phone production,
+installation/update and original runtime remain open. Host-only; no APK claim.
+
+## J1325 — Reconstruct VoidWard synced motion controller
+
+2026-10-31. Original animVoidWardCrab selectors reuse the J1322 controller owner,
+retaining first-tree motions and clip occurrences while omitting synced overrides.
+No producer or runtime owner is added.
+Prior art: pinned AssetRipper 813fed15 StateConstantExtensions.cs:18-20 and
+AnimatorControllerProcessor.cs:108-138; the existing source-evidenced marginal applies.
+Evidence: `work/coordination/p1-scenes-w/voidward-public-20261031/done.json`.
+One persisted record independently raw-exact to J850, 2,020 bytes; pack SHA-256
+`d3873dcd19ca1ce6c3c0c163df96e63ded0c74a79c7691c39f047b4cc8b07f29`.
+Saved selector residual 40 → 39; this is coverage subtraction, not requalification.
+Readiness stays 693/705 available, 685 raw-exact. Complete bundle, phone production,
+installation/update and original runtime remain open. Host-only; no APK claim.

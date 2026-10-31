@@ -5663,3 +5663,13 @@ texture declarations (`any`). Setup takes explicit original/SDK/template/codec
 inputs and a fresh output pack; process exit releases source/compiler handles
 and receipts persist. The record is host raw-exact to J850. This adds no runtime
 owner; complete bundle and phone production remain open.
+
+
+`owner-whole-game-legacy-transparent-shader.json` uses the existing
+`shader_prefab.py` SDK owner with pinned original Material witnesses. Checked
+native Shader pointers and original instancing flags select the existing no-scene
+variant policy; particle SDK identity 211 retains its feature-specific policy.
+Setup requires pinned original/SDK/template/codec inputs and a fresh output pack;
+existing compiler/codec teardown releases processes and receipts persist.
+One record is host raw-exact to J850; complete bundle and phone/runtime gates
+remain open. This introduces no runtime owner.
