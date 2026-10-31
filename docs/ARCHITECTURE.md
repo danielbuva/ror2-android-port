@@ -475,6 +475,11 @@ The prefab-policy record recipe delegates the existing exported-name projection
 and component append to the object owner. Original component order and ownership
 remain checked; appended adapters come from existing public source production.
 These pack operations add no runtime owner or complete-bundle acceptance.
+`owner-whole-game-prefab-source-records.json` selects original SpeedTree and
+ItemInfection roots plus BrotherSwing through ordered component fingerprints,
+reciprocal ownership and parent relationships. It uses the same generic record
+owner and existing exported-name/checked detacher-omission operations. Setup,
+pack state and teardown follow the existing contract above.
 The existing-presentation recipe additionally delegates checked component
 omissions to that owner. `sanitize_optional_content` supplies the existing policy;
 actual original script identities select omissions, while retained component

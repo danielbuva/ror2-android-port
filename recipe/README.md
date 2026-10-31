@@ -5636,3 +5636,23 @@ zero; pinned AssetRipper `813fed1597bac674def7256ce633a227e7b27497`
 No target scalar template, native body, type tree, game implementation or private
 setting is published. All 43 persisted records match J850 raw-exact. Complete
 bundle, phone production, gameplay and install/update acceptance remain open.
+
+### Whole-game original prefab sources (J1292)
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-whole-game-prefab-source-records.json` | `fbc447822e5509b12a4ea6ca3c4f10d5a92b532609b44052d19bc627b5374cdb` |
+
+Audit: 2026-10-31. Ordered equal component fingerprints, reciprocal ownership
+and parent hierarchy select ten original SpeedTree GameObjects. Eight original
+ItemInfection prefab roots use the existing exported-filename projection; native
+components match, and managed components retain script identity, normalized body
+and pointer schema despite imported native hash differences. BrotherSwing uses
+the existing J288 detacher-removal policy after checking both original
+DetachParticleOnDestroyAndEndEmission script identities and retained component
+order. Pinned AssetRipper GameObjectExtensions establishes ordered component and
+root-parent traversal. Existing generic record production supplies every body;
+only original selectors/hashes, named policies, type identities and checked PPtr
+remaps are published. No target body, scalar template or implementation is added.
+All 19 persisted records (1,493 bytes) match J850 raw-exact; complete-file, phone
+production and install/update gates remain open.
