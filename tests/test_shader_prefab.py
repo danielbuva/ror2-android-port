@@ -52,6 +52,16 @@ class PrefabShaderTests(unittest.TestCase):
         self.assertEqual(source, before)
         self.assertEqual(seed, (["STEREO", "LOCAL"], [0, 1]))
 
+    def test_stage_order_registers_local_and_builtin_before_later_global_axes(self):
+        first = snippet([["__", "VERTEX"]], [["_", "LOCAL_VERTEX"]], [["BUILTIN", "SHARED"]])
+        first["m_VariantsUserGlobal1"] = [["__", "FRAGMENT", "SHARED"]]
+        first["m_VariantsUserLocal1"] = [["_", "LOCAL_FRAGMENT", "BUILTIN"]]
+        source = {"m_CompileInfo": {"m_Snippets": [(1, first)]}}
+        self.assertEqual(
+            S.keyword_registry(source, (["SEED"], [1])),
+            (["SEED", "VERTEX", "LOCAL_VERTEX", "BUILTIN", "SHARED", "FRAGMENT", "LOCAL_FRAGMENT"], [1, 0, 1, 0, 0, 0, 1]),
+        )
+
     def test_particle_material_features_filter_original_order_and_keep_procedural_rows(self):
         names = ["_ALPHABLEND_ON", "_ALPHAMODULATE_ON", "PROCEDURAL_INSTANCING_ON", "FOG_EXP"]
         row = {"m_Type": 0, "m_State": {"m_Name": "Main", "gpuProgramID": 11, "m_Tags": {"tags": []}}}

@@ -5876,3 +5876,82 @@ implementation, private paths or generated content. The persisted record is
 raw-exact to J850 (140 bytes). A second candidate remains excluded for missing
 public renderer suppliers. Complete-file, phone production and install/update
 acceptance remain open.
+
+
+### Whole-game original PlayableDirector ownership (J1305)
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-whole-game-director-records.json` | `34d16fef4f01ce4957a10594f52b075f8c85881aaed66b31ee4868ec56331d4a` |
+
+Audit: 2026-10-31. Unique original Director component slots and reciprocal
+qualified GameObject ownership select ConduitCanyon and SolusAmalgam sources.
+All original pointer endpoints resolve through shipped selectors, including
+compressed hierarchy suppliers and checked typed reference endpoints. Pinned
+AssetRipper PropertyNameExtensions.GetIdString and YamlWalker explain signed
+integer exposed-name export; the existing record owner reimports those names
+and relocates checked references while preserving the native schema and fields.
+The profile contains selectors, hashes, native identity and relationship mappings;
+no protected bodies, target scalar templates, implementation or private paths.
+Both persisted records (984 bytes) match J850 raw-exact. Champrush is excluded
+for unresolved suppliers. Complete-file, phone and install/update gates remain open.
+
+### Whole-game Meridian material relationships (J1303)
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-whole-game-meridian-material-records.json` | `d6438f2ab2ddb8170bda115fba368259f2e9f0801fe0cbd83dcdaa9fcd8a307a` |
+
+Audit: 2026-10-31. Four original Meridian Materials retain their complete
+source bodies and keyword state; the existing `record_produce.py` owner changes
+only schema-checked Shader/texture references. Original material identities and
+public texture selections witness the endpoints; the shared original Shader
+identity is retained as a dependency, without claiming its production is closed.
+The profile contains only legitimate input selectors, hashes, pointer mappings
+and output identities. No source body, generated program, private path or
+protected implementation is published. Pinned community source/identity techniques
+in `docs/community-prior-art.md` inform relationship inspection; current input
+and persisted J850 byte comparison remain authoritative.
+
+All four persisted records are raw-exact (1,184 bytes); one belongs to the saved
+unresolved census, reducing 104 to 103. Other overlapping outputs are not counted
+as new closures. Complete bundle, phone production and runtime gates stay open.
+
+### Whole-game Standard fallback keyword registration (J1306)
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-whole-game-shader-standard-fallback.json` | `1b2b7eaad21fc49eb1eea48ed17484ad0709604a8247c4f16ed5d41bd8147668` |
+
+Audit: 2026-10-31. The existing prefab Shader owner derives two original
+Shader records from pinned legitimate input, public exporter templates and
+acquired SDK fallback 46. Keyword registration traverses each snippet's stages,
+then global/local declarations and builtin names, preserving first registration
+and existing flags. No accepted keyword table is supplied to production.
+Pinned AssetRipper `1ac666f47d8e9dedf96afb0b914c70d7656151ea`,
+`DummyShaderTextExporter.cs:49-78`, informs property/template/fallback handling;
+current SDK metadata and independently persisted J850 equality qualify ordering.
+The profile contains only original selectors, hashes, authored filenames,
+public template identities, SDK relationships and output pins. No protected
+source body, program, generated data, private path or credential is published.
+Both persisted records are raw-exact (12,004 bytes); complete-file, phone
+production and runtime acceptance remain open.
+
+### Whole-game inserted-component sequence ownership (J1308)
+
+`owner-whole-game-path-managed-records.json` SHA-256:
+`f60ed7b00484c57041745ef89a292dbfd0b84cfc3a9cff59b77466c8b489a4e8`.
+
+Audit: 2026-10-31. Five original managed component selectors extend the existing
+record owner: four ProjectileNetworkTransform records and one TeamFilter.
+Already-qualified GameObject recipes declare source omissions and the appended
+SilentProjectileBoundary identity. Filtering that insertion leaves the complete
+original class and assembly/namespace/class sequence unchanged; ordered occurrence
+and reciprocal GameObject owners uniquely identify duplicate components.
+Pinned ThunderKit FileIdUtil and AssetRipper MonoScriptExtensions inform full
+script identity, as in J1281/J1295. Native schema and all nonpointer bytes remain
+original; only GameObject/MonoScript pointers relocate. The recipe contains input
+selectors, hashes, native identities and checked relationship mappings, without
+protected bodies, scalar templates, implementation, private paths or generated
+content. All five persisted records match J850 raw-exact (360 bytes). Complete
+bundle, phone production and install/update acceptance remain open.

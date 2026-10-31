@@ -5589,3 +5589,27 @@ graph. Setup takes original PC/SDK roots, explicit receipt-pinned provider packs
 the public-source Mesh helper and a fresh output directory. Process exit releases
 file/codec handles; receipts persist. All 10 objects, the member and compressed
 bundle are host raw-exact to J850. Complete phone production remains open.
+
+`owner-whole-game-director-records.json` selects two original PlayableDirectors
+through unique component slots and reciprocal public GameObject owners. Shipped
+selectors, compressed hierarchy outputs and checked typed PPtr witnesses supply
+all endpoints. The existing generic record owner applies its signed exposed-name
+reimport and checked pointer relocation, retaining native schema and other fields.
+Setup requires pinned original bundles and a fresh output pack; scoped readers
+close on process exit and pack receipts persist. No runtime owner is added.
+
+The whole-game Meridian Material profile
+`recipe/owner-whole-game-meridian-material-records.json` uses the existing
+`record_produce.py` owner to preserve original fields and keywords while
+relocating schema-checked Shader/texture relationships. Its four persisted
+records are host raw-exact; shared Shader and complete bundle/device gates
+remain separate. It owns no runtime state or teardown.
+
+The existing `shader_prefab.py` owner registers inherited fallback keywords in
+snippet/stage order, merging global/local declarations and builtin names within
+each stage while retaining existing flags. The whole-game Standard fallback
+profile `recipe/owner-whole-game-shader-standard-fallback.json` selects two
+original records through pinned public exporter templates and acquired SDK
+metadata. Setup uses explicit PC/SDK/template/codec inputs and a fresh output;
+process exit releases source/compiler handles and receipts persist. Both records
+are host raw-exact to J850; complete bundle and phone production remain open.

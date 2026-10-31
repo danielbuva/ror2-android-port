@@ -198,6 +198,23 @@ qualification remain separate from these laboratory installs.
       acceptance follows [capability gates](milestones.md), including an
       unassisted run. Keep Moon/finale manual.
 
+## Performance (release gate)
+
+Correctness comes first: no optimization may change reconstructed bytes, original
+behaviour or visual output to improve a benchmark. Reconstruction-gap closure stays
+the priority; these gates must pass before any public release.
+
+- [ ] Profile the complete phone converter (import → reconstruction → APK → install)
+      on supported hardware and record wall time, peak memory, peak/sustained
+      temperature and peak/final storage per stage. Optimize the largest costs and
+      set per-device budgets; installation time, memory, heat and storage use are
+      minimized without changing any produced byte.
+- [ ] Profile the installed game over sustained sessions on supported hardware and
+      record sustained FPS, frame-time pacing (percentiles, hitches), battery drain
+      and thermal behaviour, with visual fidelity checked against the original. Fix
+      the largest regressions and set per-device budgets; no fidelity reduction
+      without an explicit, documented user decision.
+
 ## Stability and playtests
 
 - [ ] Attribute and bound repeated-session managed growth, then qualify a long

@@ -1639,3 +1639,54 @@ play, physical input and genuine filled-filesystem recovery remain open.
 - Sustained observation refused lost window focus before collecting samples; cleanup
   verified idle process, absent selector/pending, sleeping OLED and released lease.
 - No power-cut, ENOSPC, ordinary-play, sustained-performance or memory-bound claim.
+## J1305 — Reconstruct whole-game original Director ownership
+2026-10-31.
+- Existing record owner reconstructs ConduitCanyon/SolusAmalgam PlayableDirectors.
+- Unique component slots, reciprocal public owners and checked supplier endpoints
+  retain source identity; shipped signed exposed-name conversion is reused.
+- Both persisted records (984 bytes) match J850 raw-exact after pointer relocation.
+- Evidence: `work/coordination/p1-scenes-w/wholegame-directors-v2-20261031/done.json`;
+  source ownership and public supplier witnesses are adjacent JSON records.
+- Pack SHA-256: `a131b97eda9fbb9137a5c42e10164152fd55571b9101863f9955e241b167d399`.
+- Prior art: pinned AssetRipper PropertyName export, checked on original records.
+- Final-file readiness stays 693/705 available, 685 raw-exact; no file closure.
+  Champrush suppliers, complete bundle, phone production and install/update remain open.
+## J1303 — Publish original whole-game Meridian Material relationships
+
+2026-10-31. Publish four retained source-owned Material selections through the
+existing record producer, preserving keyword state and changing only checked
+Shader/texture references; no producer change or accepted-body replay.
+Evidence: `work/coordination/p1-scenes-w/meridian-endpoints-v4/findings.json` and
+`work/coordination/p1-scenes-w/meridian-material-pack-v1/done.json`: four persisted
+records independently raw-exact to J850 (1,184 bytes). Record-pack SHA-256
+`079c74935106c9a6bb1cd9102a92837df8f16bc8d52a2328ec8ddb78167dee45`.
+One saved residual closes, 104 → 103; the other three are overlapping outputs.
+Readiness stays 693/705 available, 685 raw-exact; shared Shader, full bundle,
+phone production and device acceptance remain open. Host-only; no APK/run claim.
+
+## J1306 — Source-ordered whole-game Standard fallback Shader records
+
+2026-10-31. Existing prefab Shader keyword registration now visits each snippet's
+stages before global/local axes and builtin names; existing flags remain stable.
+Publish two original Shader selectors using acquired SDK fallback metadata and
+pinned public exporter templates; no accepted keyword tables enter production.
+Evidence: `work/coordination/p1-wholegame-1031/stage-keyword-public-v1/result.json`.
+Both persisted records independently raw-exact to J850, 12,004 bytes; pack SHA-256
+`bc89dab841c30bfdc191198dc89e127cbbc8df44a22d74141fcd96797666a935`.
+Public saved residual 103 → 101 before parallel Director closures.
+Readiness stays 693/705 available, 685 raw-exact; full bundle, phone production,
+installation and original runtime remain open. Host-only; no APK/run claim.
+
+## J1308 — Resolve whole-game inserted-component managed identities
+
+2026-10-31. Extend the existing source record owner with four original
+ProjectileNetworkTransform records and one TeamFilter, preserving native schema
+and all nonpointer bytes. Qualified GameObject recipes, full script sequences
+and reciprocal owners resolve duplicates across a SilentProjectileBoundary insertion.
+Evidence: `work/coordination/p1-wholegame-1031/managed-public-v6/terminal.json`;
+identity witnesses: adjacent `../managed-owner-edges-v5/proofs.json`.
+All five persisted records raw-exact to J850, 360 bytes; record-pack SHA-256
+`b8acef36e6aaaff664ffa3b2ca7718256fced74d8f01ca8afbe75e83cc5278f8`.
+Public saved residual 101 → 96 before parallel Director closures. Readiness stays
+693/705 available, 685 raw-exact; complete bundle, phone production and runtime
+acceptance remain open. Host-only; no APK/device claim.
