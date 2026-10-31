@@ -11,6 +11,7 @@ inspect-install reads one hash-bound failed install receipt and emits fixed cate
 import argparse
 import contextlib
 import hashlib
+import io
 import json
 import os
 from pathlib import Path
@@ -289,9 +290,64 @@ def inspect_install(*, lane, expected_source_commit, receipt, expected_receipt_s
     return public
 
 
+def inspect_host_path(*, lane, expected_source_commit, receipt, expected_receipt_sha256, expected_current_apk_sha256):
+    """Lease-bound path metadata only, rooted in freshly verified installed ownership."""
+    public = dict(success=False, mode="inspect-host-path", read_only=True, diagnostic_only=True)
+    phase = "failed-receipt"
+    try:
+        summary = inspect_install(lane=lane, expected_source_commit=expected_source_commit, receipt=receipt, expected_receipt_sha256=expected_receipt_sha256)
+        if not summary["success"] or summary.get("failure_category") != "old-host-apk-path-rejected":
+            raise ValueError("Requires the observed path rejection")
+        expected = require_hash(expected_current_apk_sha256)
+        raw = _receipt_path(receipt, existing=True).read_bytes()
+        if hashlib.sha256(raw).hexdigest() != expected_receipt_sha256:
+            raise ValueError("Receipt changed")
+        if json.loads(raw).get("initial_readback", {}).get("apk_sha256") != expected:
+            raise ValueError("Failed receipt installation differs")
+        with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):
+            phase = "runner-device-lease"
+            serial, _, _ = _runner_context(os.environ)
+            import alpha_stability_batch as owner
+
+            phase = "current-installed-identity"
+            device = owner._device(serial)
+            owner._idle_readback(device, expected)
+            installed = device.owned()
+            if installed.get("apk_sha256") != expected:
+                raise ValueError("Ownership changed")
+            phase = "host-path-shape"
+            value = installed.get("apk")
+            if not isinstance(value, str) or not value or "\x00" in value:
+                raise ValueError("Invalid path")
+            path = Path(value)
+            root = common.WORK.resolve()
+            absolute = path.is_absolute()
+            lexical = absolute and ".." not in path.parts and path.is_relative_to(root)
+            public.update(
+                path_absolute=absolute,
+                lexical_within_canonical_work=lexical,
+                path_equals_resolved=None,
+                resolved_within_canonical_work=None,
+                final_symlink=None,
+                file_exists=None,
+                regular_file=None,
+            )
+            # Never stat/resolve an arbitrary external or relative receipt target.
+            if lexical:
+                resolved = path.resolve()
+                inside = resolved.is_relative_to(root)
+                public.update(path_equals_resolved=path == resolved, resolved_within_canonical_work=inside)
+                if inside:
+                    public.update(final_symlink=path.is_symlink(), file_exists=path.exists(), regular_file=path.is_file())
+            public.update(success=True, installed_bytes_verified=True, idle_verified=True)
+    except Exception:
+        public["failure_phase"] = phase
+    return public
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("mode", choices=("build", "install", "inspect-install"))
+    parser.add_argument("mode", choices=("build", "install", "inspect-install", "inspect-host-path"))
     parser.add_argument("--lane", required=True)
     parser.add_argument("--expected-source-commit", required=True)
     parser.add_argument("--receipt", required=True)
@@ -300,13 +356,27 @@ def main(argv=None):
     parser.add_argument("--expected-current-apk-sha256")
     parser.add_argument("--expected-receipt-sha256", help="Required for read-only inspect-install")
     args = parser.parse_args(argv)
-    if args.mode == "inspect-install":
-        if not args.expected_receipt_sha256 or any((args.candidate_receipt, args.expected_candidate_receipt_sha256, args.expected_current_apk_sha256)):
+    if args.mode in {"inspect-install", "inspect-host-path"}:
+        if args.mode == "inspect-host-path" and not args.expected_current_apk_sha256:
+            parser.error("inspect-host-path requires the expected installed hash")
+        if (
+            not args.expected_receipt_sha256
+            or any((args.candidate_receipt, args.expected_candidate_receipt_sha256))
+            or (args.mode == "inspect-install" and args.expected_current_apk_sha256)
+        ):
             parser.error("inspect-install requires only receipt hash, source, lane and receipt")
     elif args.expected_receipt_sha256:
         parser.error("receipt hash is only for inspect-install")
     try:
-        if args.mode == "inspect-install":
+        if args.mode == "inspect-host-path":
+            result = inspect_host_path(
+                lane=args.lane,
+                expected_source_commit=args.expected_source_commit,
+                receipt=args.receipt,
+                expected_receipt_sha256=args.expected_receipt_sha256,
+                expected_current_apk_sha256=args.expected_current_apk_sha256,
+            )
+        elif args.mode == "inspect-install":
             result = inspect_install(
                 lane=args.lane, expected_source_commit=args.expected_source_commit, receipt=args.receipt, expected_receipt_sha256=args.expected_receipt_sha256
             )

@@ -453,6 +453,110 @@ class CandidateBridgeTests(unittest.TestCase):
         self.assertEqual(json.loads(output.getvalue())["failure_category"], "old-host-apk-path-rejected")
         self.assertEqual(self.events, [])
 
+    def inspect_host_fixture(self, path=None, expected=None):
+        self.inspect_failed_install(initial_readback={"apk_sha256": self.old_hash})
+        if path is not None:
+            self.device.owned = lambda: {"apk": str(path), "apk_sha256": self.old_hash}
+        return self.module.inspect_host_path(
+            lane="test-memory",
+            expected_source_commit=COMMIT,
+            receipt=self.receipt,
+            expected_receipt_sha256=self.common.sha(self.root / self.receipt),
+            expected_current_apk_sha256=expected or self.old_hash,
+        )
+
+    def test_host_path_metadata_regular_missing_and_relative(self):
+        regular = self.inspect_host_fixture()
+        self.assertTrue(regular["success"])
+        self.assertTrue(regular["regular_file"])
+        self.assertTrue(regular["path_equals_resolved"])
+        missing = self.inspect_host_fixture(self.work / "missing.bin")
+        self.assertFalse(missing["file_exists"])
+        relative = self.inspect_host_fixture("work/missing.bin")
+        self.assertFalse(relative["path_absolute"])
+        self.assertIsNone(relative["regular_file"])
+        self.assertFalse(any(isinstance(e, tuple) and str(self.root / "dev") in e for e in self.events))
+
+    def test_host_path_outside_is_not_resolved_or_statted(self):
+        outside = self.root / "outside-private.bin"
+        ordinary = Path.resolve
+
+        def safe_resolve(path, *args, **kwargs):
+            self.assertNotEqual(path, outside)
+            return ordinary(path, *args, **kwargs)
+
+        with mock.patch.object(Path, "resolve", safe_resolve):
+            result = self.inspect_host_fixture(outside)
+        self.assertTrue(result["success"])
+        self.assertFalse(result["lexical_within_canonical_work"])
+        self.assertIsNone(result["file_exists"])
+        self.assertNotIn("outside-private", json.dumps(result))
+
+    def test_host_path_reports_parent_alias_and_final_symlink(self):
+        alias = self.work / "alias"
+        alias.symlink_to(self.old_apk.parent, target_is_directory=True)
+        result = self.inspect_host_fixture(alias / self.old_apk.name)
+        self.assertFalse(result["path_equals_resolved"])
+        self.assertTrue(result["resolved_within_canonical_work"])
+        self.assertFalse(result["final_symlink"])
+        link = self.work / "link.bin"
+        link.symlink_to(self.old_apk)
+        result = self.inspect_host_fixture(link)
+        self.assertTrue(result["final_symlink"])
+        self.assertFalse(result["path_equals_resolved"])
+
+    def test_host_path_symlink_escape_does_not_stat_external_target(self):
+        link = self.work / "escape"
+        link.symlink_to(self.root / "external.bin")
+        result = self.inspect_host_fixture(link)
+        self.assertFalse(result["resolved_within_canonical_work"])
+        self.assertIsNone(result["regular_file"])
+        self.assertIsNone(result["file_exists"])
+
+    def test_host_path_cli_requires_and_binds_installed_hash(self):
+        self.inspect_failed_install(initial_readback={"apk_sha256": self.old_hash})
+        output = io.StringIO()
+        with contextlib.redirect_stdout(output):
+            code = self.module.main(
+                [
+                    "inspect-host-path",
+                    "--lane",
+                    "test-memory",
+                    "--expected-source-commit",
+                    COMMIT,
+                    "--receipt",
+                    self.receipt,
+                    "--expected-receipt-sha256",
+                    self.common.sha(self.root / self.receipt),
+                    "--expected-current-apk-sha256",
+                    self.old_hash,
+                ]
+            )
+        self.assertEqual(code, 0)
+        self.assertTrue(json.loads(output.getvalue())["installed_bytes_verified"])
+
+    def test_host_path_rejects_hash_drift_before_device_and_reads_no_artifact(self):
+        result = self.inspect_host_fixture(expected="f" * 64)
+        self.assertFalse(result["success"])
+        self.assertEqual(self.events, [])
+        ordinary = Path.read_bytes
+
+        def receipt_only(path):
+            self.assertEqual(path, self.root / self.receipt)
+            return ordinary(path)
+
+        self.inspect_failed_install(initial_readback={"apk_sha256": self.old_hash})
+        digest = self.common.sha(self.root / self.receipt)
+        with mock.patch.object(Path, "read_bytes", receipt_only):
+            result = self.module.inspect_host_path(
+                lane="test-memory",
+                expected_source_commit=COMMIT,
+                receipt=self.receipt,
+                expected_receipt_sha256=digest,
+                expected_current_apk_sha256=self.old_hash,
+            )
+        self.assertTrue(result["success"])
+
     def test_private_capture_includes_real_authored_child_output(self):
         path = self.root / "authored-child.log"
         with path.open("w") as log, self.module.private_output(log):
