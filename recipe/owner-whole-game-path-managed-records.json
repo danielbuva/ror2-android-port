@@ -7012,6 +7012,46 @@
           ]
         }
       ]
+    },
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-dlc1-voidraidcrab_assets_all_a751e73857351df29abb4d6c80a51cc6.bundle",
+      "sha256": "26d5df860a205de144c9c43f5e3e25678ac8aefa9bc3a0c483c74daaed5e196e",
+      "members": [
+        {
+          "name": "CAB-ee1beea5a5521b904eaffb66c9c3dc0d",
+          "objects": [
+            {
+              "path_id": -9080097827661998763,
+              "class_id": 114,
+              "sha256": "b5a2394d8cda8c08e7f22101849601be3f5319371e52bda5d680f2844b5c3f8d",
+              "outputs": [
+                {
+                  "bundle": "whole-game-content",
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "path_id": -4291712346735224027,
+                  "bytes": 60,
+                  "sha256": "06bdf03a6e8d17db5d1a3cfbfa5f3635f02bd986a90506668c0b92ff11fac92f",
+                  "transform": {
+                    "references": [
+                      {
+                        "offset": 16,
+                        "from": [
+                          1,
+                          -8616034975397494312
+                        ],
+                        "to": [
+                          0,
+                          -19469833043174286
+                        ]
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
     }
   ],
   "sdk": {

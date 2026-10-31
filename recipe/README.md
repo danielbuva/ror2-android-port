@@ -6002,6 +6002,24 @@ All three persisted records are independently raw-exact to J850, 131,996 bytes;
 public saved residual reduces from 82 to 79. Complete bundle, phone production,
 installation and runtime gates remain open.
 
+### Whole-game controller-owned managed record (J1314)
+
+`owner-whole-game-path-managed-records.json` SHA-256:
+`37c587c9c70e6027a7f876e455a7a4324e8da8d93fec3fcb2374c81837cffad1`.
+
+Audit: 2026-10-31. The qualified original VoidRaidCrab AnimatorController's
+indexed state-machine behaviour array identifies one original managed record.
+The existing controller behaviour order supplies the output identity; original
+native type/script schema and every nonpointer byte agree independently. Only
+the MonoScript pointer relocates through the unchanged record producer.
+Pinned ThunderKit FileIdUtil and AssetRipper MonoScriptExtensions full
+assembly/namespace/class identity inform script checks, as in J1281/J1295.
+Only source selectors, relationship mappings and hash pins are published; no
+protected body, implementation, generated content or private path is included.
+The persisted record is raw-exact to J850, 60 bytes. Saved public residual
+79 to 78 excludes parallel controller closures; complete bundle, phone
+production, installation/update and runtime acceptance remain open.
+
 ### Whole-game duplicate clip-name controllers (J1313)
 
 | Recipe | SHA-256 |
