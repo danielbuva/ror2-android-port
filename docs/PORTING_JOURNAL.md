@@ -1703,3 +1703,18 @@ Pack SHA-256: `02f7cff022cafda7e9b3ee03babfc07451da9b44823077c7a5910104bbd4c3c5`
 Public saved residual 93 → 82 by exact output identity/hash coverage.
 Readiness stays 693/705 available, 685 raw-exact; complete bundle, phone production
 and original runtime remain open. Host-only; no APK/device claim.
+
+## J1311 — Reconstruct duplicate clip-name controller relationships
+
+2026-10-31. Add DroneTech, FalseSonNew and Drifter to the existing original
+controller recipe; selected clip collision ordinals and state/layer-keyed ordered
+behaviour ranges resolve ambiguous names/bodies using checked source identities.
+Pinned AssetRipper ExportCollection/GetStateBehaviours supply prior art; the
+existing producer is unchanged and no target body or string enters production.
+Evidence: `work/coordination/p1-scenes-w/wholegame-controller-collisions-v2-20261031/done.json`;
+source collision and range provenance: adjacent `notes.md`/`behaviour-witnesses.json`.
+All three new persisted records raw-exact to J850, 107,980 bytes; pack SHA-256
+`70b09f2d50e1d1f5665f1cf3053b07fc1cecfa9b179545474f415fabd87dee2b`.
+Public saved residual 82 → 79; final-file readiness stays 693/705 available,
+685 raw-exact. Complete bundle, phone production and runtime gates remain open.
+Host-only; no APK/device claim.
