@@ -6,6 +6,22 @@ public final class OwnerUpdateState {
         BUILDING, SIGNING, READY, INSTALLING, AWAITING_CONFIRMATION, INSTALLED, INPUT_REQUIRED, VALIDATING, IMPORTING, IMPORTED, PAUSED, CANCELLED, INTERRUPTED, VERIFYING_PROFILE, RECOVERING_PROFILE, RECOVERY_REQUIRED, ERROR }
     private Phase phase = Phase.IDLE;
     private String message = "Check for a signed public release.";
+    /** Presentation only: preserve accessibility quiet time between live-detail updates. */
+    public static final class StatusRender {
+        private String text;
+        private Phase phase;
+        private long renderedAt;
+        public boolean update(String nextText, Phase nextPhase, long elapsedMillis) {
+            if (nextText.equals(text)) return false;
+            // State transitions remain immediate; continuously changing details
+            // coalesce to the latest observation, without slowing worker sampling.
+            if (phase == nextPhase && elapsedMillis - renderedAt < 2000) return false;
+            text = nextText;
+            phase = nextPhase;
+            renderedAt = elapsedMillis;
+            return true;
+        }
+    }
     public static String backendScript(String action) {
         if (action == null) return "repo/tools/phone-build/owner-code/run_android.py";
         if ("release-check".equals(action) || "release-build".equals(action) || "install-prepare".equals(action) || "release-rollback".equals(action)) return "repo/tools/phone-build/owner-apk/updates.py";
