@@ -1531,6 +1531,18 @@ play, physical input and genuine filled-filesystem recovery remain open.
   available, 685 raw-exact. Complete bundle, phone, gameplay and install/update
   acceptance remain open.
 
+## J1298 — Reconstruct whole-game original MeshRenderer ownership
+2026-10-31.
+- Existing generic record owner selects twelve original MeshRenderers through
+  unique class slots, reciprocal GameObject ownership and public pointer suppliers.
+- All pointer endpoints are checked, including null and unchanged references;
+  all twelve persisted records (1,944 bytes) match J850 raw-exact.
+- Evidence: `work/coordination/p1-scenes-w/wholegame-renderer-20261031/done.json`;
+  source ownership and endpoint witnesses: `relationships.json` nearby.
+- Pack SHA-256: `c1be2fadd133546686e29bffdb17299af2148bd11eabfe966ad73ae26c9ee732`.
+- Saved unresolved census falls 149 to 137, excluding parallel work. Final-file
+  readiness stays 693/705 available, 685 raw-exact; complete bundle, phone
+  production and install/update remain open.
 ## J1297 — Reconstruct whole-game particle Shader from original materials
 2026-10-31.
 - Existing prefab Shader owner accepts pinned original particle materials with
