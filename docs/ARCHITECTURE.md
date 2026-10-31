@@ -5589,3 +5589,10 @@ graph. Setup takes original PC/SDK roots, explicit receipt-pinned provider packs
 the public-source Mesh helper and a fresh output directory. Process exit releases
 file/codec handles; receipts persist. All 10 objects, the member and compressed
 bundle are host raw-exact to J850. Complete phone production remains open.
+
+The whole-game Meridian Material profile
+`recipe/owner-whole-game-meridian-material-records.json` uses the existing
+`record_produce.py` owner to preserve original fields and keywords while
+relocating schema-checked Shader/texture relationships. Its four persisted
+records are host raw-exact; shared Shader and complete bundle/device gates
+remain separate. It owns no runtime state or teardown.
