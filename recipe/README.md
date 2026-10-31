@@ -6198,6 +6198,26 @@ record is independently raw-exact to J850, 1,256 bytes. Final-file readiness
 stays 693/705 available, 685 raw-exact; complete bundle, phone production,
 installation/update and runtime gates remain open.
 
+
+### Whole-game Legacy Transparent Shader material selection
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-whole-game-legacy-transparent-shader.json` | `c3889bebdd48bbbb8f26ee966f484e2e8b87c6920ab7cbad8e030310fd3f9e9d` |
+
+Audit: 2026-10-31. A complete current-input census of 970 bundles and 9,080
+Materials identifies six native-pointer users of Legacy Transparent/Diffuse.
+All six original Materials disable instancing. Their pinned bodies and checked
+Shader relationships select the existing SDK no-scene variant policy without
+instancing; the particle-specific feature policy remains intact. Prior art:
+EditorKit SerializableShaderWrapper preserves Shader name/GUID identity; pinned
+AssetRipper 1ac666f exporter templates supply original declaration metadata.
+Only source selectors, hashes, settings, relationships and SDK/template pins ship;
+no original bodies, programs, keyword strings or generated content are included.
+One persisted record is independently raw-exact to J850, 14,416 bytes. Combined
+saved public residual 41 to 40; readiness stays 693/705 available, 685 raw-exact.
+Complete bundle, phone production, installation/update and runtime remain open.
+
 ### Whole-game VoidWard synced motion controller
 
 | Recipe | SHA-256 |

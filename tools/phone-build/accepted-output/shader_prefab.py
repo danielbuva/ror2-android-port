@@ -152,7 +152,7 @@ def produce(profile_path, profile_pin, pc, sdk, asset_ripper, codec, codec_pin, 
             raise ValueError("Prefab original Shader body differs")
         return obj
 
-    def particle_materials(selected):
+    def original_materials(selected):
         materials = []
         for witness in selected["materials"]:
             path = P.relative(pc, witness["path"])
@@ -160,13 +160,13 @@ def produce(profile_path, profile_pin, pc, sdk, asset_ripper, codec, codec_pin, 
                 originals[path] = UnityPy.load(str(path))
             obj = next(obj for obj in originals[path].objects if (obj.assets_file.name, obj.path_id) == (witness["member"], witness["path_id"]))
             if obj.type.name != "Material" or hashlib.sha256(obj.get_raw_data()).hexdigest() != witness["body_sha256"]:
-                raise ValueError("Prefab original particle material body differs")
+                raise ValueError("Prefab original material body differs")
             material = obj.read_typetree()
             pointer = material["m_Shader"]
             file_id = pointer["m_FileID"]
             member = obj.assets_file.name if file_id == 0 else obj.assets_file.externals[file_id - 1].path.rsplit("/", 1)[-1]
             if (member, pointer["m_PathID"]) != (selected["original"]["member"], selected["original"]["path_id"]):
-                raise ValueError("Prefab original particle material shader differs")
+                raise ValueError("Prefab original material shader differs")
             materials.append(material)
         return materials
 
@@ -231,9 +231,11 @@ def produce(profile_path, profile_pin, pc, sdk, asset_ripper, codec, codec_pin, 
                     if any(source["m_ParsedForm"][key] != runtime["m_ParsedForm"][key] for key in ("m_Name", "m_PropInfo")):
                         raise ValueError("Prefab original/SDK Shader properties differ")
                     if "materials" in selected:
-                        if identity != 211:
-                            raise ValueError("Prefab original materials require the particle shader")
-                        runtime, selections = A.particles_selections(runtime, particle_materials(selected), None, carrier=source)
+                        materials = original_materials(selected)
+                        if identity == 211:
+                            runtime, selections = A.particles_selections(runtime, materials, None, carrier=source)
+                        else:
+                            selections = prefab_selections(runtime, retain_instancing=any(material["m_EnableInstancingVariants"] for material in materials))
                     elif "terrain" in selected:
                         witness = selected["terrain"]
                         terrain = original(witness["original"], "TerrainData")
