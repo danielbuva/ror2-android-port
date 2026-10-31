@@ -1954,6 +1954,19 @@ Saved selector residual 36 → 35; coverage subtraction, no accepted output reru
 Readiness stays 693/705 available, 685 raw-exact. Complete bundle, phone production,
 installation/update and original runtime remain open. No APK claim.
 
+## J1332 — Reconstruct four remaining alpha renderer records
+
+2026-10-31. Four original-owner selectors extend the existing J1294 renderer
+constructor; J245 absent/omitted-decal repair explains the inserted renderers.
+Retained sibling suppliers and reciprocal ownership identify the original hosts;
+pinned AssetRipper GameObjectExtensions informs ordered component traversal.
+Evidence: `work/coordination/p1-wholegame-1031/renderer4-public-v1/done.json`.
+Four independently persisted records match J850 raw-exact, 576 bytes; pack SHA-256
+`8d93eba5bb1dd2cdfc5d2ad5642f76a79e6681f380cda2424f08a6a154a9bbbd`.
+Saved current-main exact-selector residual 34 → 30; coverage subtraction only.
+Host preflight and 33 focused record/recipe tests pass. Host-only; no APK claim.
+Readiness remains 693/705 available, 685 raw-exact. GameObject membership,
+complete-file, phone production and install/update acceptance remain open.
 ## J1331 — Reconstruct the False Son Boss controller
 
 2026-10-31. Original controller selectors reuse the existing controller owner,
