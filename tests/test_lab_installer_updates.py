@@ -20,6 +20,97 @@ SPEC.loader.exec_module(LAB)
 
 
 class LabInstallerUpdatesTests(unittest.TestCase):
+    def toolhost_inspection(self, root, args):
+        output = io.StringIO()
+        with ExitStack() as stack:
+            stack.enter_context(patch.dict(os.environ, {"LAB_TOOLHOST_ROOT": str(root / "toolhost")}, clear=True))
+            for name in ("read_context", "Phone", "PrivateDiagnostics", "prepare_artifacts", "publisher_keys", "acceptance", "server"):
+                stack.enter_context(patch.object(LAB, name, side_effect=AssertionError("toolhost inspection must not call " + name)))
+            stack.enter_context(patch.object(LAB.subprocess, "run", side_effect=AssertionError("toolhost inspection must not execute commands")))
+            stack.enter_context(redirect_stdout(output))
+            code = LAB.main(["--inspect-toolhost-failure", *args])
+        self.assertEqual(len(output.getvalue().splitlines()), 1)
+        self.assertNotIn(str(root), output.getvalue())
+        self.assertNotIn("synthetic-private", output.getvalue())
+        return code, json.loads(output.getvalue())
+
+    @staticmethod
+    def toolhost_logs(root):
+        build = root / "toolhost" / ("a" * 40)
+        build.mkdir(parents=True)
+        (build / "result.json").write_bytes(
+            LAB.encoded({"source_commit": "a" * 40, "package": LAB.PACKAGE, "success": False, "failure": "javac exit 1", "private": "synthetic-private"})
+        )
+        run = root / "123456"
+        run.mkdir()
+        (run / "output.log").write_text(
+            "$ python /synthetic-private/build.py --source " + "a" * 40 + " --out /synthetic-private\n"
+            "/synthetic-private/ToolHostActivity.java:365: error: cannot find symbol\n"
+            "symbol: synthetic-private-symbol\n"
+        )
+        return build, run
+
+    def test_toolhost_inspector_reads_only_bound_receipt_and_run_log_without_mutation(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            self.toolhost_logs(root)
+            before = {path: path.read_bytes() for path in root.rglob("*") if path.is_file()}
+            code, result = self.toolhost_inspection(root, ["a" * 40, "--diagnostic-run", "123456"])
+            self.assertEqual(code, 0)
+            self.assertFalse(result["build_success"])
+            self.assertTrue(result["receipt_source_present"])
+            self.assertTrue(result["receipt_failure_present"])
+            self.assertEqual(result["receipt_failure"], {"category": "build-command-failed", "stage": "javac"})
+            self.assertEqual(result["log_error"], {"category": "java-symbol-not-found", "source": "ToolHostActivity.java", "line": 365})
+            self.assertEqual(before, {path: path.read_bytes() for path in root.rglob("*") if path.is_file()})
+            self.assertNotIn("a" * 40, json.dumps(result))
+
+    def test_toolhost_inspector_refuses_unbound_selection_and_mutating_modes(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            self.toolhost_logs(root)
+            for args in (
+                ["a" * 40],
+                ["../synthetic-private", "--diagnostic-run", "123456"],
+                ["a" * 40, "--diagnostic-run", "../synthetic-private"],
+                *[
+                    ["a" * 40, "--diagnostic-run", "123456", flag]
+                    for flag in ("--host-only", "--allow-test-installs", "--allow-test-notifications", "--inspect-state", "--inspect-ui-failure")
+                ],
+            ):
+                with self.subTest(args=args):
+                    code, result = self.toolhost_inspection(root, args)
+                    self.assertEqual(code, 1)
+                    self.assertNotIn("log_error", result)
+
+    def test_toolhost_inspector_refuses_log_source_drift_and_symlink(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            build, run = self.toolhost_logs(root)
+            log = run / "output.log"
+            log.write_text("$ build --source " + "b" * 40 + "\n")
+            code, result = self.toolhost_inspection(root, ["a" * 40, "--diagnostic-run", "123456"])
+            self.assertEqual(code, 1)
+            self.assertEqual(result["errors"], ["toolhost-inspection-log-source-mismatch"])
+            log.unlink()
+            log.symlink_to(root / "unrelated-not-read")
+            code, result = self.toolhost_inspection(root, ["a" * 40, "--diagnostic-run", "123456"])
+            self.assertEqual(code, 1)
+            self.assertEqual(result["errors"], ["toolhost-inspection-record-unavailable"])
+
+    def test_toolhost_error_classifier_never_exports_unknown_names_or_error_text(self):
+        self.assertEqual(LAB.toolhost_error_summary("synthetic-private-error"), {"category": "unclassified"})
+        self.assertEqual(
+            LAB.toolhost_error_summary("Traceback (most recent call last):\nOSError: synthetic-private: No space left on device"),
+            {"category": "storage-exhausted"},
+        )
+        self.assertEqual(LAB.toolhost_error_summary("TIMEOUT after 1200 s synthetic-private"), {"category": "timeout"})
+        self.assertEqual(LAB.toolhost_error_summary("/synthetic-private/Unknown.java:99: error: cannot find symbol"), {"category": "java-symbol-not-found"})
+        self.assertEqual(
+            LAB.toolhost_error_summary("/synthetic-private/OwnerUpdateState.java:9: error: synthetic-private-syntax"),
+            {"category": "java-compiler-error", "source": "OwnerUpdateState.java", "line": 9},
+        )
+
     @staticmethod
     def private_ui_logs(root, run_name, dump=b"ERROR: could not get idle state.\n", read_error=b"cat: /synthetic/private/ui.xml: No such file or directory\n"):
         directory = root / "work/coordination/installer-update-acceptance" / run_name

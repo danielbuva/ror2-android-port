@@ -1032,6 +1032,90 @@ def inspect_state(expected_installer_hash, timeout, *, conflicting_mode=False):
     return 1 if result["errors"] else 0
 
 
+def toolhost_error_summary(text):
+    """First recognized error only; never return a log excerpt or unknown name."""
+    java_files = (
+        "ToolHostActivity.java",
+        "OwnerUpdateState.java",
+        "OwnerInstaller.java",
+        "OwnerAlphaInstall.java",
+        "OwnerBuildService.java",
+        "OwnerInputImport.java",
+        "OwnerInputSource.java",
+    )
+    fallback = {"category": "unclassified"}
+    for line in text.splitlines():
+        java = re.search(r"(?:^|[/\\])(" + "|".join(map(re.escape, java_files)) + r"):(\d+): error: (.*)$", line)
+        value = (java.group(3) if java else line).lower()
+        for marker, category in (
+            ("cannot find symbol", "java-symbol-not-found"),
+            ("incompatible types", "java-incompatible-types"),
+            ("already defined", "java-duplicate-definition"),
+            ("does not override", "java-override-error"),
+            ("does not exist", "dependency-missing"),
+            ("no space left on device", "storage-exhausted"),
+            ("permission denied", "permission-denied"),
+            ("no such file or directory", "file-missing"),
+            ("build input changed", "input-drift"),
+            ("timed out", "timeout"),
+            ("timeout after", "timeout"),
+            ("fatal error:", "native-compiler-error"),
+        ):
+            if marker in value:
+                return {"category": category, **({"source": java.group(1), "line": int(java.group(2))} if java else {})}
+        if java:
+            return {"category": "java-compiler-error", "source": java.group(1), "line": int(java.group(2))}
+        if "traceback (most recent call last)" in value:
+            fallback = {"category": "python-error"}
+        stage = re.search(r"\b(native-build|javac|dex|aapt|owner-sign) exit -?[0-9]+\b", value)
+        if stage:
+            return {"category": "build-command-failed", "stage": stage.group(1)}
+    return fallback
+
+
+def inspect_toolhost_failure(source, run_id, *, conflicting_mode=False):
+    result = {"mode": "inspect-toolhost-failure", "status": "observed", "errors": []}
+    try:
+        if conflicting_mode:
+            raise Failure("toolhost-inspection-cannot-run-other-modes")
+        if not re.fullmatch(r"[0-9a-f]{40}", source or "") or not re.fullmatch(r"[0-9]{1,20}", run_id or ""):
+            raise Failure("toolhost-inspection-requires-source-and-run")
+        configured = os.environ.get("LAB_TOOLHOST_ROOT")
+        if not configured:
+            raise Failure("LAB_TOOLHOST_ROOT-required")
+        root = Path(configured).resolve(strict=True)
+        build, run_directory = root / source, root.parent / run_id
+        if build.is_symlink() or run_directory.is_symlink():
+            raise Failure("toolhost-inspection-record-unavailable")
+
+        def read(path):
+            if path.is_symlink() or not path.is_file() or path.stat().st_size > 32 * 1024**2:
+                raise Failure("toolhost-inspection-record-unavailable")
+            return path.read_text(errors="replace")
+
+        receipt = json.loads(read(build / "result.json"))
+        if not isinstance(receipt, dict):
+            raise Failure("toolhost-inspection-receipt-shape")
+        if receipt.get("source_commit", source) != source or receipt.get("package", PACKAGE) != PACKAGE:
+            raise Failure("toolhost-inspection-receipt-mismatch")
+        result["build_success"] = receipt.get("success") if type(receipt.get("success")) is bool else None
+        result["receipt_source_present"] = "source_commit" in receipt
+        result["receipt_failure_present"] = any(isinstance(receipt.get(key), str) and receipt[key] for key in ("failure", "error"))
+        result["receipt_failure"] = toolhost_error_summary("\n".join(receipt[key] for key in ("failure", "error") if isinstance(receipt.get(key), str)))
+        # Public lab_runner.py writes this exact job log. It records --source
+        # on the local builder command; no arbitrary receipt paths are followed.
+        log = read(run_directory / "output.log")
+        sources = re.findall(r"(?:^|\s)--source\s+([0-9a-f]{40})(?=\s|$)", log)
+        if not sources or set(sources) != {source}:
+            raise Failure("toolhost-inspection-log-source-mismatch")
+        result["log_error"] = toolhost_error_summary(log)
+    except Exception as error:
+        result["status"] = "error"
+        result["errors"].append(str(error) if isinstance(error, Failure) else "toolhost-inspection-local-read-error")
+    print(encoded(result).decode(), end="", flush=True)
+    return 1 if result["errors"] else 0
+
+
 def main(argv=None):
     global DIAGNOSTICS
     set_phase("setup")
@@ -1052,9 +1136,19 @@ def main(argv=None):
     )
     parser.add_argument("--inspect-ui-failure", action="store_true", help="Read-only fixed classification of this driver's retained UI dump/read failure logs")
     parser.add_argument(
-        "--diagnostic-run", help="Required for --inspect-ui-failure: newest or one private run-directory basename; never prints paths or raw logs"
+        "--inspect-toolhost-failure", metavar="SOURCE_COMMIT", help="Read-only fixed build-error classification for one exact toolhost source commit"
+    )
+    parser.add_argument(
+        "--diagnostic-run", help="Inspection selection: UI newest/private run basename, or toolhost numeric lab run ID; never prints paths or raw logs"
     )
     args = parser.parse_args(argv)
+    if args.inspect_toolhost_failure is not None:
+        DIAGNOSTICS = None
+        return inspect_toolhost_failure(
+            args.inspect_toolhost_failure,
+            args.diagnostic_run,
+            conflicting_mode=args.inspect_ui_failure or args.inspect_state or args.host_only or args.allow_test_installs or args.allow_test_notifications,
+        )
     if args.inspect_ui_failure:
         DIAGNOSTICS = None
         return inspect_ui_failure(
