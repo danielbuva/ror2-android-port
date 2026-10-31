@@ -194,7 +194,9 @@ qualification remain separate from these laboratory installs.
       software confirmation/cancel, native teardown/menu and strict assisted
       same-process restart. J1080 qualifies Main's original audio Term/disarm;
       the restored point-sound timeout dispatcher drains its queue in instrumented
-      menu snapshots. Ordinary long-run dependency retention remains open.
+      menu snapshots. Composed startup now applies the original Console retention
+      default; twelve assisted sessions still show a rising matched-menu memory
+      series. Ordinary long-run dependency retention remains open.
 - [ ] Coordinate gameplay/audio/animation prerequisites with the main session;
       acceptance follows [capability gates](milestones.md), including an
       unassisted run. Keep Moon/finale manual.

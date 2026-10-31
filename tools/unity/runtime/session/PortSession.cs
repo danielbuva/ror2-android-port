@@ -881,7 +881,10 @@ public sealed partial class PortSession : MonoBehaviour
             r.sirenEggInput = new SirenEggInputReport();
         r.recoveredHudEnabled = config.recoveredHudEnabled;
         if (IsPlayableSpine())
+        {
+            OfflineApplicationSession.InitializeConsoleRetention();
             GetOfflineApplicationSession().KeepScreenAwake();
+        }
         if (r.recoveredHudEnabled)
             r.hud = new RecoveredHudPresentation.Observation();
         CollectPriorSessionGarbage();

@@ -6569,6 +6569,17 @@ log callback observation informs the subscriber boundary; exact Unity 2021.3.45f
 CoreModule API documents the per-call option. Recipes contain authored source
 hashes only, with no captured text, protected code, game bytes or private paths.
 
+### Composed Console retention default
+
+The authored offline application owner applies the original private `maxMessages`
+convar's own metadata default when composed startup omits Console initialization.
+It does not copy the logger, suppress warnings, purge logs or change subscriptions.
+The default is process-wide; live Console configuration and later explicit values
+remain authoritative. The synthetic host fixture tests startup and replacement
+lifetime without game source or assets. Provenance/privacy review: authored field
+access only; original implementation, raw heap strings and evidence remain ignored.
+Device qualification remains required before claiming bounded session growth.
+
 ### Whole-game Bandit Sprite source relationship
 
 | Recipe | SHA-256 |
