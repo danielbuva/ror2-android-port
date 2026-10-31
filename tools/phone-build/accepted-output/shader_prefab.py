@@ -24,20 +24,20 @@ import unity_write as W
 
 
 def keyword_registry(source, seed):
-    """Merge SDK snippet declarations in their serialized source order."""
+    """Merge SDK declarations by snippet, stage, global/local axes, builtins."""
     names, flags = (list(values) for values in seed)
     for _, snippet in source["m_CompileInfo"]["m_Snippets"]:
-        for group, flag in (("m_VariantsUserGlobal", 0), ("m_VariantsUserLocal", 1)):
-            for stage in range(7):
+        for stage in range(7):
+            for group, flag in (("m_VariantsUserGlobal", 0), ("m_VariantsUserLocal", 1)):
                 for axis in snippet[group + str(stage)]:
                     for name in axis:
                         if name.strip("_") and name not in names:
                             names.append(name)
                             flags.append(flag)
-        for name in snippet["m_BuiltinKeywords"].split():
-            if name not in names:
-                names.append(name)
-                flags.append(0)
+            for name in snippet["m_BuiltinKeywords"].split():
+                if name not in names:
+                    names.append(name)
+                    flags.append(0)
     return names, flags
 
 
