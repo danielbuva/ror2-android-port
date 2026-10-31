@@ -584,6 +584,7 @@ class AnimationProducerTests(unittest.TestCase):
             223,
             224,
             225,
+            228,
             330,
         ):
             transform = {"references": [{"offset": len(body) - 16, "from": [3, 1234567], "to": [7, -999]}]}
