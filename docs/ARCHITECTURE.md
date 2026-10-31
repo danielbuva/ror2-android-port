@@ -5796,3 +5796,13 @@ Setup pins original bundles and streams bounded source groups into a fresh recor
 pack. Scoped readers close on process exit and persisted receipts remain.
 All records are host raw-exact to J850; no runtime owner is added. Complete
 bundle and phone/install/update gates remain open.
+
+`recipe/owner-whole-game-bundle-tree-records.jsonl.gz` selects 62 original Trees
+through the existing `record_produce.py` native owner. Qualified GameObject
+component edges and reciprocal original ownership establish checked pointer
+relocations; additional nonzero pointers remain excluded until their endpoints
+are source-qualified. Native scalars and schemas remain original-input owned.
+Setup pins original bundles and streams bounded source groups into a fresh pack;
+scoped readers close on process exit and persisted receipts remain. All 62 records
+are host raw-exact to J850. Complete bundle and phone/install/update gates remain
+open; no runtime owner is added.

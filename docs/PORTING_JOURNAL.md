@@ -2293,3 +2293,17 @@ Source `097c75e5`; APK SHA-256
 Prior art: existing pinned Unity MemorySnapshotDataTools and SDK capture contract.
 Focused 247 host checks, Ruff, public audit and source-pin checks pass; cleanup,
 selector removal, process exit and sleeping display verified; native heaps retained cold.
+
+## J1355 — Supply source-derived bundle Tree providers
+
+2026-10-31. Existing generic native record owner supplies 62 original Trees
+through checked GameObject component/backlink relationships; 2,028 candidates
+with unresolved nonowner pointers remain excluded.
+All 1,488 persisted bytes raw-exact to J850; pack SHA-256
+`e5b45276dba618706c75be5a11c31f8344aa67591cb4f07a669a929f50f7f4e2`.
+Evidence: `work/coordination/p1-wholegame-1031/bundle-tree-persisted-qualification-v1/done.json`;
+source witnesses: sibling `bundle-tree-source-frontier-v1/witnesses.jsonl`.
+Production 1.71 s, qualification 3.79 s, peak RSS 287,227,904 bytes.
+Host-only; heat unmeasured. Bounded source recipe only; producer unchanged.
+Residual three unchanged. Readiness stays 693/705 available, 685 raw-exact;
+complete groups, bundle, phone/install/update and runtime gates remain open.

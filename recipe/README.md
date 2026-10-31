@@ -6648,3 +6648,24 @@ optional native type hashes are omitted. Independent persisted production
 matches all 10,870 J850 records (141,310 bytes). Saved residual three and final
 file readiness remain unchanged; complete groups, bundle, phone/install/update
 and runtime gates stay open.
+
+### Whole-game bundle Tree provider records
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-whole-game-bundle-tree-records.jsonl.gz` | `4345adb71b8cb29b5c4d7ffe2801ed3483003fe5e1aebdf8a07eb4426dfaccda` |
+
+Audit: 2026-10-31. The existing generic native record owner selects 62 original
+Trees across 37 source members. Qualified GameObject component edges and
+reciprocal original GameObject pointers establish unique typed identities and
+checked relocations. Additional nonzero pointers exclude 2,028 candidates;
+no WindAsset endpoint is guessed. Pinned EditorKit `4128710` EntryLookup
+component requirements (lines 48–68), documented in community-prior-art.md,
+and the J1354 reciprocal ownership technique inform selection. Only source
+selectors, source/output hashes and checked relationships ship; no native
+bodies, target repairs, protected implementation or private paths ship.
+The deterministic gzip JSONL profile uses the existing bounded reader;
+all native scalar fields and schemas remain source-owned. Independent
+persisted production matches all 62 J850 records (1,488 bytes). Saved residual
+three and final-file readiness remain unchanged; group, complete bundle,
+phone/install/update and runtime gates remain open.
