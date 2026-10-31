@@ -1467,3 +1467,16 @@ play, physical input and genuine filled-filesystem recovery remain open.
 - Recount: unresolved records fall 245 to 222; 20 tracks already have public
   suppliers, so this batch adds 23. Final-file readiness stays 693/705 available,
   685 raw-exact. Complete bundle, phone, gameplay and install/update remain open.
+
+## J1292 — Reconstruct original whole-game prefab sources
+2026-10-31.
+- Existing generic record owner selects ten SpeedTree and eight ItemInfection
+  GameObjects plus BrotherSwing through original component and parent identities.
+- Existing exported-name and detacher-removal policies produce all 19 persisted
+  records (1,493 bytes) raw-exact J850; no new producer or target bytes are added.
+- Evidence: `work/coordination/p1-scenes-w/wholegame-prefab-native-v2-20261031/done.json`;
+  source relationships: `relationships.json` nearby.
+- Pack SHA-256: `3328f5bede3fd183acd9fc1e36d067e359138e9e24370a1904bd918cf98137e3`.
+- Saved unresolved census falls 222 to 203, excluding parallel work. Final-file
+  readiness stays 693/705 available, 685 raw-exact; complete whole-game bundle,
+  phone production and install/update remain open.
