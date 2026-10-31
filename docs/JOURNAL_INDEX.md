@@ -11,6 +11,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
 | [J1291](PORTING_JOURNAL.md#j1291--reproduce-whole-game-timeline-import-relationships) | 2026-10-30 | Reproduce whole-game Timeline import relationships | 2026-10-31. |
+| [J1290](PORTING_JOURNAL.md#j1290--reconstruct-three-native-whole-game-hud-component-slots) | 2026-10-30 | Reconstruct three native whole-game HUD component slots | 2026-10-31. |
 | [J1289](PORTING_JOURNAL.md#j1289--reproduce-three-authored-whole-game-prefab-activations) | 2026-10-30 | Reproduce three authored whole-game prefab activations | 2026-10-31. |
 | [J1288](PORTING_JOURNAL.md#j1288--preserve-ordered-multi-behaviour-controller-ranges) | 2026-10-30 | Preserve ordered multi-behaviour controller ranges | 2026-10-31. |
 | [J1287](PORTING_JOURNAL.md#j1287--resolve-three-whole-game-duplicate-behaviour-controllers) | 2026-10-30 | Resolve three whole-game duplicate-behaviour controllers | 2026-10-31. |
