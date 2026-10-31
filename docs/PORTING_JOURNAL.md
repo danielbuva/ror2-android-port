@@ -2092,3 +2092,17 @@ local job output 8,914,110 bytes. Host-only; no device thermal measurement.
 Merged selector residual 14 → 13; subtraction only, no complete output rerun.
 Readiness stays 693/705 available, 685 raw-exact. Complete bundle, phone
 production, installation/update and original runtime remain open. No APK claim.
+
+## J1341 — Reconstruct whole-game original Noto Font
+
+2026-10-31. Generic native record production admits Font class 128; the audited
+original Noto recipe preserves FontData and relocates published Material/Texture
+relationships. Pinned AssetRipper FontExtensions supplies observation prior art.
+Evidence: `work/coordination/p1-wholegame-1031/font-public-v3/done.json`.
+One independently persisted record is raw-exact to J850, 16,412,474 bytes; SHA-256
+`78df32cae9a626e7f64856eac7ed9f7561ddc36c8ca1e93440255c71ba833fa4`.
+Production 0.683 s, qualification 4.374 s, peak RSS 335,839,232 bytes;
+local output 16,415,930 bytes. Host-only; no device heat measurement.
+Merged-selector residual 11 → 10; subtraction only, no complete output rerun.
+Readiness stays 693/705 available, 685 raw-exact. Complete bundle, phone
+production, installation/update and original runtime remain open. No APK claim.

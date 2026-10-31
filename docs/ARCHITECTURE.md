@@ -5701,3 +5701,10 @@ interning. Setup pins original Shader/Material bundles, SDK/tool inputs and a
 fresh record pack; process exit releases source/compiler handles and receipts
 persist. One record is host raw-exact to J850; complete bundle and phone/runtime
 gates remain open. No runtime owner is added.
+
+`owner-whole-game-font-records.json` selects the original Noto Font through the
+existing `record_produce.py` generic native owner. Published Material/Texture
+relationships relocate its two checked pointers while FontData and native schema
+remain source-owned. Setup pins original PC input and creates a fresh record
+pack; scoped readers close on process exit and receipts persist. This adds no
+runtime owner; complete bundle and phone/runtime acceptance remain open.
