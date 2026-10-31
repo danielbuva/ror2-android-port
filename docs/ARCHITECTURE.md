@@ -487,7 +487,13 @@ through qualified GameObject component slots and reciprocal ownership. Original
 parent/child pointer shape, native schemas and every nonpointer bit remain checked;
 the existing generic owner relocates only explicit references. Setup takes pinned
 original bundles and a fresh output pack; existing scoped readers close at exit
-and pack receipts persist. No runtime owner is added.
+and pack receipts persist. Eight additional expanding-wave Transforms use the same
+owner's source callback endpoint-distance projection: pinned script identity, typed
+radius/segments/curve/root fields, reciprocal hierarchy and hitbox/ghost membership
+supply the calculation. Only local scale X changes before checked pointer relocation;
+other native bytes remain source-owned. The existing original-record reader owns
+pinned inputs and teardown. These records are host raw-exact; phone/runtime gates
+remain open. No runtime owner is added.
 `owner-whole-game-billboard-records.json` selects two original BillboardRenderers
 through unique native component slots and reciprocal public GameObject ownership,
 plus their two referenced BillboardAssets. Original material endpoints resolve to
