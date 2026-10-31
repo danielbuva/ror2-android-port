@@ -6217,3 +6217,20 @@ no original bodies, programs, keyword strings or generated content are included.
 One persisted record is independently raw-exact to J850, 14,416 bytes. Combined
 saved public residual 41 to 40; readiness stays 693/705 available, 685 raw-exact.
 Complete bundle, phone production, installation/update and runtime remain open.
+
+### Whole-game VoidWard synced motion controller
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-animator-controllers.json` | `9254e6205034e97264824935588371a776032270b13eedd843bc2fb105d3dbef` |
+
+Audit: 2026-10-31. Original animVoidWardCrab identity selects its source states,
+first-tree motions and clip occurrences through the existing J1322 controller
+owner. Pinned AssetRipper 813fed15 StateConstantExtensions.cs:18-20 selects
+tree zero; AnimatorControllerProcessor.cs:108-138 recreates synced links without
+motion overrides. The existing source-evidenced 152-byte marginal applies.
+Only selectors, hashes, named policies and checked pointer relationships ship;
+no controller body, generated content or private path is included. One persisted
+record independently matches J850 raw-exact, 2,020 bytes. Final-file readiness
+stays 693/705 available, 685 raw-exact. Complete bundle, phone production,
+installation/update and runtime gates remain open.

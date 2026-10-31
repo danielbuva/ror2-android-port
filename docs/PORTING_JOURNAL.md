@@ -1856,7 +1856,7 @@ Saved residual 45 → 42; readiness stays 693/705 available, 685 raw-exact.
 Complete bundle, phone production and runtime remain open. Host-only; no APK claim.
 
 
-## J1325 — Reconstruct Legacy Transparent Shader from original Materials
+## J1326 — Reconstruct Legacy Transparent Shader from original Materials
 
 2026-10-31. Existing SDK Shader owner reads pinned original Material instancing
 flags for non-particle shaders; the particle feature policy remains intact.
@@ -1880,5 +1880,19 @@ Evidence: `work/coordination/p1-scenes-w/powerorb-public-20261031/done.json`.
 One persisted record independently raw-exact to J850, 1,256 bytes; pack SHA-256
 `c2fc44a5b967268257408ae4caf53a69a536afe35f776623d215ec0807d7ed2d`.
 One additional public production gap closes; older residual census is unreconciled.
+Readiness stays 693/705 available, 685 raw-exact. Complete bundle, phone production,
+installation/update and original runtime remain open. Host-only; no APK claim.
+
+## J1325 — Reconstruct VoidWard synced motion controller
+
+2026-10-31. Original animVoidWardCrab selectors reuse the J1322 controller owner,
+retaining first-tree motions and clip occurrences while omitting synced overrides.
+No producer or runtime owner is added.
+Prior art: pinned AssetRipper 813fed15 StateConstantExtensions.cs:18-20 and
+AnimatorControllerProcessor.cs:108-138; the existing source-evidenced marginal applies.
+Evidence: `work/coordination/p1-scenes-w/voidward-public-20261031/done.json`.
+One persisted record independently raw-exact to J850, 2,020 bytes; pack SHA-256
+`d3873dcd19ca1ce6c3c0c163df96e63ded0c74a79c7691c39f047b4cc8b07f29`.
+Saved selector residual 40 → 39; this is coverage subtraction, not requalification.
 Readiness stays 693/705 available, 685 raw-exact. Complete bundle, phone production,
 installation/update and original runtime remain open. Host-only; no APK claim.
