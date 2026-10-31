@@ -1828,6 +1828,19 @@ Persisted outputs raw-exact to J850: 12 records, 39,788 bytes; pack SHA-256 valu
 Saved public residual 57 → 45; readiness stays 693/705 available, 685 raw-exact.
 Complete bundle, phone production and original runtime remain open. Host-only.
 
+## J1323 — Reconstruct whole-game Scope Shader texture declaration
+
+2026-10-31. Existing Shader property owner preserves native dimension-one
+textures from pinned AssetRipper `any` declarations. Public original selectors,
+export path and TransparentDiffuse template produce the Scope record.
+Prior art: AssetRipper 1ac666f DummyShaderTextExporter texture switch;
+original property metadata independently agrees.
+Evidence: `work/coordination/p1-wholegame-1031/scope-any-v3/terminal.json`.
+Persisted record raw-exact to J850, 4,940 bytes, SHA-256
+`aebe6a524af2fa431ddecfe29b3f72d5d1ee8480e9bd5dc061d5f5175a573b3f`.
+Focused 42 tests, Ruff and host preflight pass. Saved public residual 45 → 44
+excludes pending peer closures; readiness stays 693/705 available, 685 raw-exact.
+Complete bundle, phone production and original runtime remain open. Host-only.
 ## J1322 — Reconstruct synced motion and Mimic controllers
 
 2026-10-31. Existing controller owner omits synced override motions as the pinned
