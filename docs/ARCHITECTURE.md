@@ -540,6 +540,11 @@ pinned exporter's filename suffix before deriving the path CRC from source text.
 no motion, retaining its state and remapping that tree's indices to the native
 unavailable sentinel. Its size adjustment derives from the original subtree and
 the admitted native array layout.
+`controller_omit_synced_overrides` retains the pinned exporter's first motion
+tree and surviving source clip occurrences. It admits only empty single-leaf
+overrides; their blob-size adjustment follows matched original-source shapes,
+not native deserializer heap allocation. Setup, pack state and teardown remain
+with the same generic record owner.
 `scripts/lab/sprite_native_fixture.py` stages the current SDK-only Sprite runtime
 diagnostic with `SpriteNativeFixture.cs`. It references source PNGs by path/hash
 in a fresh ignored project. Under the editor mutex, the pinned Unity MCP invokes

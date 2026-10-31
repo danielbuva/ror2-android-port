@@ -6138,3 +6138,25 @@ policies and checked pointer relationships ship; no body, generated content or
 private paths are included. Twelve persisted records are raw-exact to J850,
 39,788 bytes. Saved public residual 57 to 45; final-file readiness remains
 693/705 available, 685 raw-exact. Complete bundle and phone/runtime gates stay open.
+
+
+### Whole-game synced motion and Mimic controllers
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-animator-controllers.json` | `ff69865d77a5987188f2f230c57c597ed9fcd7b865313ef9c0bc4caca4d4a610` |
+
+Audit: 2026-10-31. Original VoidSurvivor and Chef controller identities select
+synced layers whose pinned AssetRipper 813fed15 processor omits motion overrides.
+StateConstantExtensions.GetBlendTree selects the first source tree; the producer
+retains that tree, remaps surviving clip occurrences and omits later overrides.
+Only the observed empty single-leaf shape is admitted: 68 serialized bytes,
+nine arrays, one node and no populated nested blend data. Source-only matching
+across 479 controller pairs establishes a 152-byte blob-size marginal per tree;
+this is empirical source evidence, not native deserializer heap allocation.
+Mimic reuses existing collision-ordinal and source relationship policies.
+Only source selectors, policies, pointer relationships and hashes ship; no
+controller body, decompiled implementation or generated content is included.
+Three persisted records are raw-exact to J850, 28,684 bytes. Saved residual
+45 to 42; readiness stays 693/705 available, 685 raw-exact. Complete bundle,
+phone production, installation/update and runtime gates remain open.
