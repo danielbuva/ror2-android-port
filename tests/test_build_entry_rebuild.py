@@ -135,6 +135,7 @@ class BuildEntryTests(unittest.TestCase):
             "WholeCatalogBuild",
         ):
             self.put(self.root / "tools/catalog" / (name + ".cs"), "class " + name + " {}")
+        self.put(self.root / "tools/android-write-interruption/LabPendingWriteStop.java", "class LabPendingWriteStop {}")
         self.put(self.root / "android/Assets/Editor/LabBuild.cs", "class LabBuild {}")
         self.put(self.root / "android/Assets/LabDiagnostics.cs", "class LabDiagnostics {}")
         self.clip = "Assets/WholeGame/attack.anim"

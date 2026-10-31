@@ -87,7 +87,7 @@ def compile_tool(source=None):
         ]
         for index, command in enumerate(commands):
             if index == 1:
-                command.extend(str(path) for path in sorted(classes.glob("*.class")))
+                command.extend(str(path) for path in sorted(classes.rglob("*.class")))
             result = subprocess.run(command, capture_output=True, text=True, timeout=60)
             (directory / ("compile-%d.log" % index)).write_text(result.stdout + result.stderr)
             if result.returncode:
