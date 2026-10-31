@@ -6282,3 +6282,19 @@ ship; no controller body, generated content, target patch or private path.
 One independently persisted controller matches J850 raw-exact, 24,584 bytes.
 Final-file readiness stays 693/705 available, 685 raw-exact; complete bundle,
 phone production, installation/update and runtime remain open.
+
+### Whole-game False Son Boss controller
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-animator-controllers.json` | `3481bfc27161bb1386a3072a574d7d091b455df70ce2b42620420e4d7836fc42` |
+
+Audit: 2026-10-31. Original False Son Boss layer/state identities select the
+existing controller owner, including duplicate clip-name collision ordinals.
+Pinned AssetRipper 813fed15 ExportCollection.cs:70-91 derives unique exported
+names after clone/instance cleanup. Only source selectors, hashes, policies and
+checked pointer relationships ship; no controller body, generated content,
+target byte patch or private path is included.
+One independently persisted controller matches J850 raw-exact, 19,584 bytes.
+Final-file readiness stays 693/705 available, 685 raw-exact; complete bundle,
+phone production, installation/update and runtime remain open.
