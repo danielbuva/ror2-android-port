@@ -5856,3 +5856,23 @@ body, scalar template, game implementation, private path or generated content is
 published. All four persisted records (808 bytes) match J850 raw-exact. Three
 remove saved census residuals; the fourth's overlap is unproven. Complete-file,
 phone production and install/update gates remain open.
+
+
+### Whole-game original LODGroup ownership (J1304)
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-whole-game-lodgroup-records.json` | `4b1fb0450355c9ce57b70bf223a2d73a0820703f8b081ebfb1d0bd9ea62b4e59` |
+
+Audit: 2026-10-31. A unique original LODGroup component slot and reciprocal
+qualified GameObject ownership select the source. Every original LOD renderer
+endpoint resolves to an existing public supplier, including J1302's Billboard.
+Pinned AssetRipper PPtrExtensions at `813fed1597bac674def7256ce633a227e7b27497`
+informs local/dependency pointer resolution. The unchanged generic record owner
+preserves native class 205, schema and every nonpointer byte, relocating only
+checked references. The profile contains original selectors, hashes, native
+identity and relationship mappings; no protected bodies, scalar templates,
+implementation, private paths or generated content. The persisted record is
+raw-exact to J850 (140 bytes). A second candidate remains excluded for missing
+public renderer suppliers. Complete-file, phone production and install/update
+acceptance remain open.

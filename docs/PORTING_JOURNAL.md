@@ -1610,3 +1610,17 @@ play, physical input and genuine filled-filesystem recovery remain open.
 - Saved unresolved census falls 106 to 103; fourth record overlap is unproven.
   Final-file readiness stays 693/705 available, 685 raw-exact; complete bundle,
   phone production and install/update remain open.
+
+
+## J1304 — Reconstruct whole-game original LODGroup ownership
+2026-10-31.
+- Existing generic record owner reconstructs one original LODGroup (140 bytes).
+- Unique native component slot, reciprocal GameObject ownership and public LOD
+  renderer suppliers identify the original; native schema/nonpointer bytes stay intact.
+- Persisted output is raw-exact to J850 after checked pointer relocation.
+- Evidence: `work/coordination/p1-scenes-w/wholegame-lodgroup-20261031/done.json`;
+  source ownership and endpoint witnesses: adjacent `relationships.json`.
+- Pack SHA-256: `3f034cc9a11d2f00d7d19bda93216f52381080818eb0312d2aaa3b6ba9f67bcf`.
+- Prior art: pinned AssetRipper local/dependency PPtr resolution, checked on originals.
+- Final-file readiness stays 693/705 available, 685 raw-exact. Complete bundle,
+  phone production and install/update remain open; residual recount pending.
