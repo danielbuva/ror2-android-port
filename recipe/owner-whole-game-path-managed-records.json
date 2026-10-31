@@ -7594,6 +7594,108 @@
           ]
         }
       ]
+    },
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-base-beetlequeen_assets_all_92883c5c953b27d8222e59b81e988042.bundle",
+      "sha256": "feb5f9ee5c1dab724c1ec7c8eebfde56b97b8b749b00b405a46b249dfb594359",
+      "members": [
+        {
+          "name": "CAB-adeb2e6f8eeb7ab958b18fee80d89d79",
+          "objects": [
+            {
+              "path_id": 6116231937398155815,
+              "class_id": 114,
+              "sha256": "747b658a9b26c2be810eaa8bcbe98633e433391d4437d6019f7400b1ae7cba9e",
+              "outputs": [
+                {
+                  "bundle": "whole-game-content",
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "path_id": -102906888800587083,
+                  "bytes": 156,
+                  "sha256": "3005276cd257c816e92a4d520332734e30cc74566504dd2aa548180468dbe810",
+                  "transform": {
+                    "references": [
+                      {
+                        "offset": 0,
+                        "from": [
+                          0,
+                          8502141345888610855
+                        ],
+                        "to": [
+                          0,
+                          621964067863461132
+                        ]
+                      },
+                      {
+                        "offset": 16,
+                        "from": [
+                          1,
+                          -4649755032825100113
+                        ],
+                        "to": [
+                          0,
+                          8744676495530577047
+                        ]
+                      },
+                      {
+                        "offset": 108,
+                        "from": [
+                          0,
+                          -5324317559032239577
+                        ],
+                        "to": [
+                          0,
+                          0
+                        ]
+                      }
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "path_id": 7286514249401641511,
+              "class_id": 114,
+              "sha256": "6b987f7074d7b8e2a10ce7096377ef06ffac1c4f2631c37f0387ee84a0c795a7",
+              "outputs": [
+                {
+                  "bundle": "whole-game-content",
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "path_id": 7900748398768957181,
+                  "bytes": 60,
+                  "sha256": "cf2a08849ecfcef523007f394a50f53cf51db0059cf2d12957b69a4a03b2c4ee",
+                  "transform": {
+                    "references": [
+                      {
+                        "offset": 0,
+                        "from": [
+                          0,
+                          8502141345888610855
+                        ],
+                        "to": [
+                          0,
+                          621964067863461132
+                        ]
+                      },
+                      {
+                        "offset": 16,
+                        "from": [
+                          1,
+                          3377156548080134455
+                        ],
+                        "to": [
+                          0,
+                          4435503255846738234
+                        ]
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
     }
   ],
   "sdk": {

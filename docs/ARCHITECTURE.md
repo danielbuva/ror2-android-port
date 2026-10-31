@@ -458,6 +458,8 @@ The optional `preserve_original_script_hash` selection delegates to the object
 owner's existing unchanged-schema check after verifying the actual original
 MonoScript binding. The hierarchy path recipes select original records using
 proven roots and unique reciprocal child paths; output state remains exact.
+The path-managed profile also selects BeetleQueenAcidGhost/FX components via
+the original root/child hierarchy, preserving script identity and scalar bytes.
 The generic path also delegates `inactive_scene_object` to the object owner's
 named-active-source check. `owner-whole-game-activation-records.json` selects
 three original HUD roots under existing authored activation policies, preserving
