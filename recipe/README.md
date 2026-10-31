@@ -6571,8 +6571,11 @@ hashes only, with no captured text, protected code, game bytes or private paths.
 
 ### Whole-game Bandit Sprite source relationship
 
-`owner-whole-game-sprite-relationships.json` (SHA-256
-`f0fe7954defbc1de2d408f693577abb30408562db5bbdf32ae4b368f4cc0eb19`) selects one original Sprite, its source hash, the
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-whole-game-sprite-relationships.json` | `f0fe7954defbc1de2d408f693577abb30408562db5bbdf32ae4b368f4cc0eb19` |
+
+The recipe selects one original Sprite, its source hash, the
 current export texture GUID and one checked Texture2D relocation. The original
 source container independently supplies the Sprite root; current PNG metadata
 witnesses the GUID and single-Sprite importer context. Pinned AssetRipper
