@@ -1149,6 +1149,11 @@ def controller_omit_synced_overrides(body, root):
         if len(path) != 11 or path[:3] != ("m_Controller", "m_StateMachineArray", "Array") or path[-2:] != ("m_BlendTreeConstantArray", "Array"):
             continue
         count = struct.unpack_from("<I", body, start)[0]
+        # StateConstantExtensions.GetBlendTree exports tree zero regardless of
+        # its original synchronized slot. Reimport makes it the base motion.
+        left, right = spans[path[:-2] + ("m_BlendTreeConstantIndexArray",)]
+        for offset in range(left + 4, right, 4):
+            struct.pack_into("<I", result, offset, 0 if count and offset == left + 4 else 0xFFFFFFFF)
         if count <= 1:
             continue
         first_end = spans[path + ("0",)][1]
@@ -1173,11 +1178,6 @@ def controller_omit_synced_overrides(body, root):
                 if not struct.unpack_from("<I", body, children)[0] and clip != 0xFFFFFFFF:
                     removed_clips.append(clip)
         changes.append((start, end, struct.pack("<I", 1) + body[start + 4 : first_end]))
-        left, right = spans[path[:-2] + ("m_BlendTreeConstantIndexArray",)]
-        for offset in range(left + 4, right, 4):
-            index = struct.unpack_from("<I", body, offset)[0]
-            if index not in (0, 0xFFFFFFFF):
-                struct.pack_into("<I", result, offset, 0xFFFFFFFF)
     start, end = spans[("m_AnimationClips",)]
     count = struct.unpack_from("<I", body, start)[0]
     clips = [body[start + 4 + i * 12 : start + 16 + i * 12] for i in range(count)]
