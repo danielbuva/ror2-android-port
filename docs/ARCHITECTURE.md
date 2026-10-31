@@ -2066,7 +2066,9 @@ writes atomic nonce-bound ready/result records without changing the save method.
 Closing settings or disposing its owner cancels observation; the service stops
 itself after completion or its 35-second deadline (`START_NOT_STICKY`).
 `build.stage_android_assets` stages its Android library and shared Java operation
-from tracked inputs. The host checks distinct service/main PIDs, retained original
+from tracked inputs under Gradle's default `src/main/java` source root; Unity's
+generated library build file does not enable the legacy `src` root. The host
+checks distinct service/main PIDs, retained original
 primary/pending bytes, cold recovery and native resave. Device survival after the
 writer kill remains a qualification gate.
 
