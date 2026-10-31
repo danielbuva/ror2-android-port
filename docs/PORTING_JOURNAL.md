@@ -1897,6 +1897,19 @@ Saved selector residual 40 → 39; this is coverage subtraction, not requalifica
 Readiness stays 693/705 available, 685 raw-exact. Complete bundle, phone production,
 installation/update and original runtime remain open. Host-only; no APK claim.
 
+## J1328 — Reconstruct False Son synchronized behaviour controller
+
+2026-10-31. Existing controller owner omits synchronized behaviour overrides,
+retaining original index order and compacting surviving keyed ranges/pointers.
+Prior art: pinned AssetRipper 813fed15 AnimatorControllerProcessor.cs:93-138
+shares synchronized state machines without initializing override behaviours.
+Authored fixture covers reversed range order and surviving source indices.
+Evidence: `work/coordination/p1-scenes-w/falseson-public-v3-20261031/done.json`.
+One persisted record independently raw-exact to J850, 2,420 bytes; pack SHA-256
+`a5303fc7533249900f46160c023a630f58ccdff0ade33e67072655de1d54cebd`.
+Saved selector residual 39 → 38; coverage subtraction, without requalification.
+Readiness stays 693/705 available, 685 raw-exact. Complete bundle, phone production,
+installation/update and original runtime remain open. Host-only; no APK claim.
 ## J1327 — Release destroyed overlap discovery targets after session teardown
 
 2026-10-31. Existing SessionResourceBoundary prunes Unity-destroyed entries from

@@ -1092,6 +1092,55 @@ def controller_clear_null_motion(body, root):
     return bytes(result)
 
 
+def controller_omit_synced_behaviours(body, root):
+    """The exporter leaves synced layers' behaviour overrides uninitialized."""
+    _, spans = fields(body, root)
+    layers = ("m_Controller", "m_LayerArray", "Array")
+    synced = {
+        int(path[3])
+        for path, (offset, _) in spans.items()
+        if path[:3] == layers and path[-1] == "m_StateMachineSynchronizedLayerIndex" and struct.unpack_from("<I", body, offset)[0]
+    }
+    if not synced:
+        return body
+    prefix = ("m_StateMachineBehaviourVectorDescription",)
+    ranges = prefix + ("m_StateMachineBehaviourRanges", "Array")
+    start, end = spans[ranges]
+    count = struct.unpack_from("<I", body, start)[0]
+    kept, indices = [], []
+    for index in range(count):
+        entry = ranges + (str(index),)
+        values = {path[-1]: (path, struct.unpack_from("<I", body, a)[0]) for path, (a, b) in spans.items() if path[:4] == entry and b - a == 4}
+        if values["m_LayerIndex"][1] in synced:
+            continue
+        a, b = spans[entry]
+        raw = bytearray(body[a:b])
+        path, old = values["m_StartIndex"]
+        size = values["m_Count"][1]
+        indices.extend(range(old, old + size))
+        kept.append((raw, spans[path][0] - a, old))
+    indices.sort()
+    positions = {old: new for new, old in enumerate(indices)}
+    for raw, offset, old in kept:
+        struct.pack_into("<I", raw, offset, positions[old])
+    ia, ib = spans[prefix + ("m_StateMachineBehaviourIndices",)]
+    n = struct.unpack_from("<I", body, ia)[0]
+    source_indices = struct.unpack_from("<" + "I" * n, body, ia + 4)
+    selected = sorted({source_indices[i] for i in indices})
+    inverse = {old: new for new, old in enumerate(selected)}
+    pa, pb = spans[("m_StateMachineBehaviours",)]
+    pointers = [body[pa + 4 + i * 12 : pa + 16 + i * 12] for i in selected]
+    changes = [
+        (start, end, struct.pack("<I", len(kept)) + b"".join(raw for raw, _, _ in kept)),
+        (ia, ib, struct.pack("<I", len(indices)) + b"".join(struct.pack("<I", inverse[source_indices[i]]) for i in indices)),
+        (pa, pb, struct.pack("<I", len(pointers)) + b"".join(pointers)),
+    ]
+    result = bytearray(body)
+    for a, b, replacement in sorted(changes, reverse=True):
+        result[a:b] = replacement
+    return bytes(result)
+
+
 def controller_omit_synced_overrides(body, root):
     """Retain the pinned exporter's first motion tree and its clip occurrences."""
     _, spans = fields(body, root)
@@ -1157,7 +1206,7 @@ def controller_omit_synced_overrides(body, root):
     struct.pack_into("<I", result, offset, size - memory)
     for start, end, replacement in sorted(changes, reverse=True):
         result[start:end] = replacement
-    return bytes(result)
+    return controller_omit_synced_behaviours(bytes(result), root)
 
 
 def controller_clear_skeleton_masks(body, root):

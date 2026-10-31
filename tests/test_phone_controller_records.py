@@ -130,6 +130,35 @@ class ControllerRecords(unittest.TestCase):
         expected = struct.pack("<I", 848) + vector([vector([expected_state])]) + vector(clips[:2])
         self.assertEqual(A.transform_generic(body, 91, {"controller_omit_synced_overrides": True}, schema), expected)
 
+    def test_synced_behaviour_omission_preserves_original_state_keys(self):
+        layer = F.node("data", children=[F.node("data", children=[integer("m_StateMachineSynchronizedLayerIndex")])])
+        key = F.node("key", children=[integer("m_StateID"), integer("m_LayerIndex")])
+        value = F.node("value", children=[integer("m_StartIndex"), integer("m_Count")])
+        entry = F.node("data", children=[key, value])
+        pointer = F.node("data", children=[integer("m_FileID"), F.node("m_PathID", 8)])
+        schema = F.node(
+            "Base",
+            children=[
+                F.node("m_Controller", children=[F.array("m_LayerArray", layer)]),
+                F.array("m_StateMachineBehaviours", pointer),
+                F.node(
+                    "m_StateMachineBehaviourVectorDescription",
+                    children=[
+                        F.array("m_StateMachineBehaviourIndices", integer("data")),
+                        F.array("m_StateMachineBehaviourRanges", entry),
+                    ],
+                ),
+                integer("opaque"),
+            ],
+        )
+        layers = vector([struct.pack("<I", i) for i in (0, 0, 1)])
+        pointers = [struct.pack("<iq", 0, i) for i in (11, 22, 33)]
+        ranges = [struct.pack("<IIII", *row) for row in ((73, 2, 2, 1), (59, 1, 1, 1), (41, 0, 0, 1))]
+        body = layers + vector(pointers) + vector([struct.pack("<I", i) for i in range(3)]) + vector(ranges) + struct.pack("<I", 97)
+        expected = layers + vector(pointers[:2]) + vector([bytes(4), struct.pack("<I", 1)])
+        expected += vector([struct.pack("<IIII", 59, 1, 1, 1), struct.pack("<IIII", 41, 0, 0, 1)]) + body[-4:]
+        self.assertEqual(A.controller_omit_synced_behaviours(body, schema), expected)
+
     def test_state_order_relocates_direct_destinations_and_preserves_selector_values(self):
         transition = F.node("data", children=[integer("m_DestinationState"), integer("retained")])
         state = F.node("data", children=[F.node("data", children=[integer("m_FullPathID"), F.array("m_TransitionConstantArray", transition)])])
