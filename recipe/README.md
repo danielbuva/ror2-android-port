@@ -5656,3 +5656,20 @@ only original selectors/hashes, named policies, type identities and checked PPtr
 remaps are published. No target body, scalar template or implementation is added.
 All 19 persisted records (1,493 bytes) match J850 raw-exact; complete-file, phone
 production and install/update gates remain open.
+
+### Whole-game catalog-witnessed materials (J1293)
+
+`owner-whole-game-material-compute-records.json` SHA-256:
+`2a8face247ee9a9b5480de17751bd075e89541393eafaae83bc4ad3f741cb9f7`.
+
+Audit: two original material selectors extend the existing record owner. Original
+catalog-root relationships independently identify the Enforcer and LunarGolem
+materials; original native schemas, pointer slots and all non-pointer fields match
+under the existing named keyword import policies. The recipe retains source pins,
+checked pointer mappings and output hashes only. No field payload, keyword string,
+type tree, shader program, private path or generated game content is included.
+J367/J371 and pinned EditorKit `HopooCloudRemapGUI` inform preservation of original
+property/blend fields rather than exporter defaults; no upstream code is copied.
+Both persisted records (2,856 bytes) match J850 raw-exact; 11 other witnessed
+materials still differ after existing policies and are excluded. Complete bundle,
+phone production, gameplay and install/update acceptance remain open.
