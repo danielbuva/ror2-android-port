@@ -1952,6 +1952,10 @@ stay unchanged. During completed-session reclamation, `SessionResourceBoundary`
 releases already-destroyed HurtBox targets from returned bullet-hit pool entries,
 with no live world/network, after deferred destruction. It preserves live and
 checked-out hits and records its release count with existing registry cleanup.
+It also removes already-destroyed targets from the original overlap discovery
+scratch list at that same boundary, preserving live targets, order and capacity.
+Native captured roots identify the retained completed-character graph; ordinary
+session memory acceptance remains open.
 The same owner prunes deferred loadout callbacks targeting already-destroyed
 `CharacterSpawnCard` clones after world/network teardown. It writes the boxed
 original availability struct back, preserving its availability flag, live and
