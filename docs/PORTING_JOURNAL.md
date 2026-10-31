@@ -1376,3 +1376,16 @@ with no cleanup errors. Evidence: `work/device/` selected-device touch case
 APK: `ba0b7e9318c251be6a2dd6e46784bd030eb816a57caab2327b5c205f29bdd92d`.
 Current-APK interrupted-write recovery, retained-root attribution, sustained
 play, physical input and genuine filled-filesystem recovery remain open.
+
+## J1285 — Reconstruct 65 remaining whole-game native Sprite imports
+2026-10-31.
+- Existing original-pixel preparation, exact-SDK Sprite constructor and checked
+  record producer emit all 65 remaining Sprite records, 65,852 bytes raw-exact J850.
+- Every importer GUID has a current export metadata witness; 61 direct texture
+  edges and four compressed-mip-exact aliases qualify the original suppliers.
+- Audited recipe contains identities/hashes/relationships only; no native output.
+- Evidence: `work/coordination/p1-wholegame-1031/sprite-host-records-v1/`;
+  source witnesses: `sprite-qualified-witnesses.json` in the parent directory.
+- Record pack SHA-256: `c3d5816e68a8a2e5bf85337b9c5248c4b4291626fc906919524622afcc62beeb`.
+- Whole-game unresolved records fall from 345 to 280. Historical readiness stays
+  693/705 available, 685 raw-exact; phone/gameplay/install/update gates remain open.

@@ -5508,3 +5508,21 @@ identity and reciprocal ownership agree. No field value, original body/type
 tree, implementation, private setting or generated prototype is published.
 All 16 persisted records match J850. Complete bundle, phone production, gameplay
 and data-preserving installation/update remain open.
+
+### Whole-game remaining native Sprite imports (J1285)
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-whole-game-native-sprites-2.json` | `113d582c6e2cf7f70fa66be6a2a58e7bc8b9ab0e9377b3265005f6d44674342c` |
+
+Audit: 65 minimum original Sprite/Texture2D selectors and hashes, importer GUIDs,
+output identities and checked pointer relationships. Current export metadata
+independently witnesses every importer GUID; 61 target texture edges select the
+same original texture, and four aliases have identical compressed mip bytes,
+dimensions and format. Production always decodes each Sprite's own original
+texture. Pinned AssetRipper `1ac666f` SpriteProcessor/TextureExportCollection
+normalization and EditorKit typed lookup guidance remain the prior art used by
+the existing producer; target pixels or geometry never supply production input.
+No pixels, contours, geometry, native output, original implementation or private
+configuration is published. Exact-SDK host constructor output and every persisted
+record extent match J850. Complete bundle and phone/install/update gates stay open.
