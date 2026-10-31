@@ -5711,3 +5711,20 @@ only source selectors/hashes, native identities, checked pointer mappings and
 output hashes. No scalar template, original body, game implementation, private
 path or generated content is included. All ten persisted records (880 bytes)
 match J850 raw-exact. Complete bundle, phone and install/update gates remain open.
+
+### Whole-game original-material particle Shader (J1297)
+
+`owner-whole-game-shader-particle.json` SHA-256:
+`cb4108d7c0c3484f208d2f8b48057cf93786674f96a7cee9120512abf66c9a83`.
+
+Audit: existing `shader_prefab.py` compiles acquired SDK 211 declarations using
+original particle fragment order and an original UI material whose checked
+external Shader pointer identifies the selected original shader. The existing
+particle owner retains runtime feature alternatives and excludes scene fog;
+no accepted keyword/pass/program table is an input. Pinned AssetRipper
+`DummyShaderTextExporter` at `1ac666f47d8e9dedf96afb0b914c70d7656151ea`
+continues to inform property/fallback contracts; it supplies no particle code.
+The profile contains only input pins, source identities, dependency pointers and
+output hashes. No source body, private path or generated content is published.
+The persisted 25,056-byte record is independently raw-exact to J850. Complete
+bundle, phone, gameplay and install/update gates remain open.

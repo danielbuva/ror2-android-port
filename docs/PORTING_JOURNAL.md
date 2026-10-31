@@ -1518,3 +1518,15 @@ play, physical input and genuine filled-filesystem recovery remain open.
 - Saved unresolved census falls 173 to 163. Final-file readiness stays 693/705
   available, 685 raw-exact. Complete bundle, phone, gameplay and install/update
   acceptance remain open.
+
+## J1297 — Reconstruct whole-game particle Shader from original materials
+2026-10-31.
+- Existing prefab Shader owner accepts pinned original particle materials with
+  checked Shader relationships, alongside its acquired SDK default selections.
+- SDK 211 declarations and original runtime fragment order reproduce the
+  25,056-byte record raw-exact J850 after persisted independent comparison.
+- Evidence: `work/coordination/p1-wholegame-1031/particle-material-public-v3/terminal.json`.
+- Pack SHA-256: `26a2a0c7e2a0436f29932470969d5e2a2b0422fc2ade73eba1f1690989bfdc1d`.
+- Saved unresolved census falls 163 to 162; with peer MeshFilter14, 148 remain.
+  Final-file readiness stays 693/705 available, 685 raw-exact. Complete bundle,
+  phone, gameplay and install/update acceptance remain open.

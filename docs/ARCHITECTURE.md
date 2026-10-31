@@ -1067,8 +1067,9 @@ serialized member and 148 MB resource member; block caching remains bounded.
 
 `shader_prefab.py` owns standalone prefab Shader records. Original Shader forms
 and acquired SDK snippets supply runtime passes and no-scene keyword axes; SDK
-default materials select particle features while original fragment rows retain
-native ordering. Original dummy properties and pinned public exporter templates
+default materials select particle features; alternatively, pinned original
+materials with checked shader relationships retain original runtime feature
+alternatives. Original fragment rows retain native ordering. Original dummy properties and pinned public exporter templates
 supply game placeholder forms. Fallback keyword registration follows serialized
 SDK snippet order, including inherited snippets, and SDK dependency traversal
 maps to declared destination identities. Existing compiler, SDK serializer and
