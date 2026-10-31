@@ -6412,3 +6412,20 @@ selectors, relationships, hashes and policies ship; no controller body, target
 patch, generated data or private path is included. One independently persisted
 record matches J850 raw-exact, 23,108 bytes. Complete bundle, phone production,
 installation/update and runtime remain open.
+
+### Whole-game BeetleQueen ghost FX managed records
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-whole-game-path-managed-records.json` | `da13fa261b0f5933a675ed5a8ec60a308cf3ed3e7becde684d89c0414ada01ac` |
+
+Audit: 2026-10-31. Existing record production selects the original
+BeetleQueenAcidGhost/FX components through the already qualified root and unique
+reciprocal Transform hierarchy. Pinned AssetRipper GameObjectExtensions
+FetchComponents/GetTransform supplies hierarchy observation prior art.
+Original script/type identity and scalar bytes remain unchanged; only checked
+PPtrs relocate, including the omitted component's null reference. Recipes hold
+source/destination selectors, hashes and pointer relationships; no scalar patch,
+protected body, generated data or private path ships. Two independently persisted
+records match J850 raw-exact, 216 bytes. Complete bundle, phone production,
+installation/update and original runtime remain open.

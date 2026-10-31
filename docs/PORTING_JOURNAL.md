@@ -2064,3 +2064,17 @@ Qualification/production wall 63.196 s; host-only, no thermal measurement.
 Saved selector residual 15 → 14; coverage subtraction, no accepted output rerun.
 Readiness stays 693/705 available, 685 raw-exact. Complete bundle, phone production,
 installation/update and original runtime remain open. No APK claim.
+
+## J1339 — Recover BeetleQueen ghost FX managed records from their hierarchy
+
+2026-10-31. Existing path-managed record owner selects two original components
+through BeetleQueenAcidGhost/FX reciprocal hierarchy; only PPtrs relocate.
+Prior art: pinned AssetRipper GameObjectExtensions FetchComponents/GetTransform
+preserves component/hierarchy relationships; script/type and scalars are unchanged.
+Evidence: `work/coordination/p1-scenes-w/managed-fx-public-20261031/done.json`.
+Two persisted records independently raw-exact to J850, 216 bytes; pack SHA-256
+`29493995419aa8e4feb95223562223c11a986bcddf2e26937f381480013bcac7`.
+Production/qualification wall 57.588 s; host-only, no thermal measurement.
+Saved selector residual 14 → 12 before concurrent shader work; no output rerun.
+Readiness stays 693/705 available, 685 raw-exact. Complete bundle, phone production,
+installation/update and original runtime remain open. No APK claim.
