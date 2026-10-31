@@ -148,6 +148,28 @@ public class Harness {
         check(OwnerUpdateState.backendScript("release-check").endsWith("owner-apk/updates.py"));
         check(OwnerUpdateState.backendScript("release-build").endsWith("owner-apk/updates.py"));
         try {OwnerUpdateState.backendScript("install");throw new AssertionError();}catch(IllegalArgumentException expected){}
+        OwnerUpdateState.StatusRender render=new OwnerUpdateState.StatusRender();
+        check(render.update("idle",OwnerUpdateState.Phase.IDLE,0));
+        check(!render.update("idle",OwnerUpdateState.Phase.IDLE,500));
+        // Continuously changing telemetry at the real 500 ms observation cadence
+        // leaves 2 s between text mutations; only the newest detail is presented.
+        long previous=0;int rendered=0;
+        for(long now=500;now<=6000;now+=500){
+            boolean changed=render.update("detail-"+now,OwnerUpdateState.Phase.IDLE,now);
+            check(changed==(now%2000==0));
+            if(changed){check(now-previous>=2000);previous=now;rendered++;}
+        }
+        check(rendered==3);
+        check(!render.update("detail-6000",OwnerUpdateState.Phase.IDLE,6100));
+        check(render.update("checking",OwnerUpdateState.Phase.CHECKING,6500));
+        check(!render.update("newest-check-detail",OwnerUpdateState.Phase.CHECKING,7000));
+        check(render.update("newest-check-detail",OwnerUpdateState.Phase.CHECKING,8500));
+        check(render.update("failed",OwnerUpdateState.Phase.ERROR,8600));
+        check(render.update("retry",OwnerUpdateState.Phase.CHECKING,8700));
+        check(render.update("complete",OwnerUpdateState.Phase.UP_TO_DATE,8800));
+        check(!render.update("complete",OwnerUpdateState.Phase.UP_TO_DATE,50000));
+        check(render.update("new detail after resume",OwnerUpdateState.Phase.UP_TO_DATE,50001));
+        check(new OwnerUpdateState.StatusRender().update("recreated",OwnerUpdateState.Phase.IDLE,0));
         System.out.println("session install/update/hash/key/version/callback contracts PASS");
     }
 }
@@ -166,6 +188,8 @@ class OwnerInstallerTests(unittest.TestCase):
         self.assertIn("registerOnSharedPreferenceChangeListener(installObserver)", ui)
         self.assertIn("unregisterOnSharedPreferenceChangeListener(installObserver)", ui)
         self.assertIn("handler.removeCallbacks(refresh)", ui)
+        self.assertIn("statusRender.update(statusText, model.phase(), android.os.SystemClock.elapsedRealtime())", ui)
+        self.assertEqual(ui.count("statusView.setText("), 1)
         self.assertIn("OwnerInstaller.reconcile(this)", ui)
         self.assertIn("OwnerUpdateState.backendScript(updateAction)", activity)
         self.assertIn("factory.init((java.security.KeyStore) null)", activity)

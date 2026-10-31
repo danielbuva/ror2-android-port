@@ -4446,6 +4446,31 @@ orchestrator device lease, applies the battery rule, posts a sanitized result an
 prunes. `scripts/lab/lab-runner-guard.sh` is its job-started hook, installed outside
 the repository. Setup and command reference: [LAB_RUNNER](LAB_RUNNER.md).
 
+`scripts/lab/adb_transport.py` owns shared explicitly targeted ADB subprocesses
+for the runner and synthetic installer acceptance driver. It retries only
+caller-declared idempotent operations after a negative local signal status, with
+bounded attempts and a shared timeout budget; ordinary failures, timeouts and
+remote `128 + signal` exits never trigger replay. The installer driver marks only
+read-only shell shapes retryable; UI taps, launches and package mutations are not.
+Install uses status-returning `adb install -r --force-uuid`, never `exec-in`.
+Exact artifact readback reconciles an interrupted install without replay and is
+required before the caller acquires package cleanup ownership.
+
+The transport's detached device-job lifecycle exclusively creates a random private
+directory, launches once with `setsid sh -c` and closed stdin/redirected output,
+polls an atomically published remote exit status through transient transport
+failures, and pulls stdout/stderr before reporting. Polling and log collection are
+bounded separately. An unfinished job is not killed, relaunched or removed on a
+host timeout; its private handle remains available for later observation. Cleanup
+accepts only a generated job path with terminal status. The installer uses this
+lifecycle for accessibility dumps and preserves final private dump/read diagnostic
+records. Authorization, storage discovery, exact package identity and lease policy
+remain caller-owned; the transport never discovers a target or grants ownership.
+The workflow stages the runner and transport from one pinned trusted-main commit
+in a fresh bootstrap directory, including under isolated Python. Contracts:
+`test_adb_transport.py`, `test_lab_installer_updates.py`, `test_lab_runner.py`.
+These are fake-ADB/host-only contracts, not device acceptance.
+
 Host CI also runs Ruff (pinned in `tools/lab-requirements.txt`, configured in `ruff.toml`):
 `ruff check` and `ruff format --check` on every Python file a change touches. `scripts/` and
 `tests/` are ruff-formatted (J518); `ruff.toml` lists the rules still off and why.

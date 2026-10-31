@@ -7,6 +7,7 @@ device, and a sanitized result comment (public repository: no paths, serials, st
 Raw output stays local under work/coordination/lab-runner/<run>/. See docs/LAB_RUNNER.md.
 """
 
+import importlib.util
 import json
 import os
 import re
@@ -16,6 +17,12 @@ import subprocess
 import sys
 import time
 from pathlib import Path
+
+# The workflow copies both files from the same pinned origin/main commit.
+# Explicit sibling loading also works under python -I (no ambient PYTHONPATH).
+_TRANSPORT_SPEC = importlib.util.spec_from_file_location("lab_adb_transport", Path(__file__).with_name("adb_transport.py"))
+_TRANSPORT = importlib.util.module_from_spec(_TRANSPORT_SPEC)
+_TRANSPORT_SPEC.loader.exec_module(_TRANSPORT)
 
 USAGE = """`/lab <job> [ref=<branch|sha>] [device=<alias>] [-- args...]`
 jobs: `status`, `host-tests`, `preflight`, `doctor`, `dev <action> ...`, `script <repo path .py> ...`, `toolhost`"""
@@ -141,14 +148,19 @@ class Runner:
                 return 124
 
     def adb_sh(self, serial, *args):
-        result = subprocess.run([self.adb, "-s", serial, "shell", *args], capture_output=True, text=True, timeout=30)
-        return result.stdout.strip()
+        try:
+            readonly = args in (("dumpsys", "battery"), ("cat", "/sys/class/power_supply/battery/current_now"))
+            return _TRANSPORT.AdbTransport(self.adb, serial).run("shell", *args, label="runner-observation", timeout=30, idempotent=readonly).decode().strip()
+        except (_TRANSPORT.AdbError, UnicodeError):
+            raise CommandError("device observation unavailable") from None
 
     def battery(self, serial):
         dump = self.adb_sh(serial, "dumpsys", "battery")
         values = dict(re.findall(r"^\s*(level|temperature):\s*(\d+)", dump, re.M))
-        current = self.adb_sh(serial, "cat", "/sys/class/power_supply/battery/current_now") or "0"
-        return int(values.get("level", 0)), int(current) if current.lstrip("-").isdigit() else 0, int(values.get("temperature", 0))
+        current = self.adb_sh(serial, "cat", "/sys/class/power_supply/battery/current_now")
+        if set(values) != {"level", "temperature"} or not re.fullmatch(r"-?[0-9]+", current):
+            raise CommandError("device battery observation incomplete")
+        return int(values["level"]), int(current), int(values["temperature"])
 
     def take_lease(self, alias, serial):
         lease = self.leases / serial
@@ -239,8 +251,21 @@ class Runner:
             return code, None
         finally:
             if lease:  # only a device this job leased; a refused lease belongs to another worker's live run
-                subprocess.run([self.adb, "-s", serial, "shell", "input", "keyevent", "KEYCODE_SLEEP"], capture_output=True, timeout=30)
-                shutil.rmtree(lease, ignore_errors=True)
+                try:
+                    _TRANSPORT.AdbTransport(self.adb, serial).run(
+                        "shell",
+                        "input",
+                        "keyevent",
+                        "KEYCODE_SLEEP",
+                        label="runner-display-sleep",
+                        timeout=30,
+                        idempotent=True,
+                    )
+                except _TRANSPORT.AdbError:
+                    with self.log.open("a") as log:
+                        log.write("WARNING: device display sleep unverified\n")
+                finally:
+                    shutil.rmtree(lease, ignore_errors=True)
             self.run(["git", "-C", str(self.repo), "worktree", "remove", "--force", str(checkout)], self.repo, timeout=600)
             self.run([sys.executable, "scripts/prune-generated.py", "--apply"], self.repo, timeout=1800)
 
