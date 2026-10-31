@@ -768,7 +768,7 @@ def acceptance(phone, config, temporary, passed):
             passed(case)
 
 
-def focused_ui_hierarchy(document, allowed_packages):
+def focused_window_hierarchy(document):
     # AOSP Android 13 AccessibilityNodeInfoDumper.dumpWindowsToFile schema:
     # displays/display/window/(child windows...)/DIRECT hierarchy/node.
     # Never flatten background, child, accessibility-focused or other-display
@@ -784,11 +784,42 @@ def focused_ui_hierarchy(document, allowed_packages):
     hierarchies = windows[0].findall("hierarchy")
     if len(hierarchies) != 1 or len(hierarchies[0].findall("node")) != 1:
         raise Failure("ui-window-root-unavailable")
-    hierarchy = hierarchies[0]
+    return hierarchies[0]
+
+
+def focused_ui_hierarchy(document, allowed_packages):
+    hierarchy = focused_window_hierarchy(document)
     package = hierarchy.find("node").get("package")
     if package not in allowed_packages or any(node.get("package") not in (None, "", package) for node in hierarchy.iter("node")):
         raise Failure("ui-window-package-not-allowed")
     return hierarchy
+
+
+def ui_window_summary(data):
+    """Read-only fixed foreground categories; never export window/node values."""
+    try:
+        start, end = data.find(b"<?xml"), data.rfind(b"</displays>")
+        if start < 0 or end < 0:
+            raise Failure("ui-window-schema")
+        hierarchy = focused_window_hierarchy(ET.fromstring(data[start : end + len(b"</displays>")]))
+        package = hierarchy.find("node").get("package")
+        category = {
+            PACKAGE: "test-installer",
+            "com.android.permissioncontroller": "permission-controller",
+            "com.android.systemui": "system-ui",
+            "android": "android-system",
+            "com.android.packageinstaller": "package-installer",
+            "com.google.android.packageinstaller": "package-installer",
+        }.get(package, "other" if package else "unknown")
+        return {
+            "status": "observed",
+            "package_category": category,
+            "mixed_node_packages": any(node.get("package") not in (None, "", package) for node in hierarchy.iter("node")),
+        }
+    except Failure as error:
+        return {"status": "unknown", "reason": str(error)}
+    except (ET.ParseError, ValueError):
+        return {"status": "unknown", "reason": "ui-window-schema"}
 
 
 def ui_environment_summary(outputs):
@@ -883,15 +914,35 @@ def inspect_ui_failure(selection, *, conflicting_mode=False):
             return path.read_bytes()
 
         failure_sequence = None
+        dump_category = "device-ui-dump"
         for path in sorted(directory.glob("[0-9][0-9][0-9][0-9][0-9]-device-ui-read.json")):
             metadata = json.loads(read(path.name))
             if metadata.get("phase") == "baseline-N-check" and metadata.get("category") == "device-ui-read":
                 if metadata.get("returncode") != 0 or metadata.get("outcome") != "returned":
                     failure_sequence = int(path.name[:5])
                     break
+        if failure_sequence is None:
+            # A windows dump may read successfully yet be rejected by the
+            # focused-root/package guard. Inspect its retained XML, never retry
+            # the phone or relax the tap-target whitelist to diagnose it.
+            for path in sorted(directory.glob("[0-9][0-9][0-9][0-9][0-9]-device-ui-windows-dump.json")):
+                metadata = json.loads(read(path.name))
+                if metadata.get("phase") == "baseline-N-check" and metadata.get("category") == "device-ui-windows-dump":
+                    sequence = int(path.name[:5])
+                    # Successful fallbacks can precede the failure. Require the
+                    # rejection-only diagnostic after this read and dump removal.
+                    marker = f"{sequence + 3:05d}-device-ui-diagnostic-power.json"
+                    if not (directory / marker).is_file():
+                        continue
+                    diagnostic = json.loads(read(marker))
+                    if diagnostic.get("phase") != "baseline-N-check" or diagnostic.get("category") != "device-ui-diagnostic-power":
+                        raise Failure("log-inspection-record-mismatch")
+                    failure_sequence = sequence + 1
+                    dump_category = "device-ui-windows-dump"
+                    break
         if failure_sequence is None or failure_sequence < 2:
             raise Failure("log-inspection-ui-read-failure-not-found")
-        for sequence, category in ((failure_sequence - 1, "device-ui-dump"), (failure_sequence, "device-ui-read")):
+        for sequence, category in ((failure_sequence - 1, dump_category), (failure_sequence, "device-ui-read")):
             prefix = f"{sequence:05d}-{category}"
             metadata = json.loads(read(prefix + ".json"))
             if metadata.get("phase") != "baseline-N-check" or metadata.get("category") != category:
@@ -907,6 +958,12 @@ def inspect_ui_failure(selection, *, conflicting_mode=False):
                     "stderr": ui_output_classification(read(prefix + ".stderr.log")),
                 }
             )
+            if dump_category == "device-ui-windows-dump" and category == "device-ui-read":
+                result["foreground"] = (
+                    ui_window_summary(read(prefix + ".stdout.log"))
+                    if metadata.get("returncode") == 0 and outcome == "returned"
+                    else {"status": "unknown", "reason": "ui-window-read-unavailable"}
+                )
     except Exception as error:
         result["status"] = "error"
         result["errors"].append(str(error) if isinstance(error, Failure) else "log-inspection-local-read-error")

@@ -427,6 +427,78 @@ class LabInstallerUpdatesTests(unittest.TestCase):
         self.assertIs(selected, document.find("display/window/hierarchy"))
         self.assertEqual(len(list(selected.iter("node"))), 1)
 
+    def test_retained_window_summary_exports_only_fixed_categories_and_mixed_package_fact(self):
+        for package, category in (
+            (LAB.PACKAGE, "test-installer"),
+            ("com.android.permissioncontroller", "permission-controller"),
+            ("com.android.systemui", "system-ui"),
+            ("android", "android-system"),
+            ("com.android.packageinstaller", "package-installer"),
+            ("com.google.android.packageinstaller", "package-installer"),
+            ("synthetic.private.foreground", "other"),
+        ):
+            with self.subTest(category=category):
+                document = self.window_document(package)
+                result = LAB.ui_window_summary(ET.tostring(document, xml_declaration=True))
+                self.assertEqual(result, {"status": "observed", "package_category": category, "mixed_node_packages": False})
+                ET.SubElement(document.find("display/window/hierarchy/node"), "node", {"package": "synthetic.private.child"})
+                result = LAB.ui_window_summary(ET.tostring(document, xml_declaration=True))
+                self.assertTrue(result["mixed_node_packages"])
+                self.assertNotIn("synthetic", json.dumps(result))
+                # Classification never authorizes a foreign or mixed tap root.
+                with self.assertRaises(LAB.Failure):
+                    LAB.focused_ui_hierarchy(document, (LAB.PACKAGE, "com.android.permissioncontroller"))
+
+    def test_retained_window_summary_keeps_ambiguous_or_malformed_focus_unknown(self):
+        document = self.window_document()
+        ET.SubElement(document.find("display"), "window", {"active": "true", "focused": "false"})
+        result = LAB.ui_window_summary(ET.tostring(document, xml_declaration=True))
+        self.assertEqual(result, {"status": "unknown", "reason": "ui-window-focus-ambiguous"})
+        for data in (b"synthetic-private", b"<?xml invalid?></displays>", b"<?xml version='1.0'?><hierarchy></hierarchy>"):
+            self.assertEqual(LAB.ui_window_summary(data), {"status": "unknown", "reason": "ui-window-schema"})
+
+    def test_private_ui_log_summary_classifies_successfully_read_rejected_window_without_device_calls(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            directory = root / "work/coordination/installer-update-acceptance/run-newest00"
+            directory.mkdir(parents=True)
+            document = self.window_document("com.android.systemui")
+            for sequence, category, stdout in (
+                (1, "device-ui-dump", b"ERROR: null root node returned\n"),
+                (2, "device-ui-windows-dump", b"UI hierarchy dumped to: /synthetic/private/ui.xml\n"),
+                (3, "device-ui-read", ET.tostring(document, xml_declaration=True)),
+                (4, "device-ui-remove", b""),
+                (5, "device-ui-diagnostic-power", b"synthetic-private-output-not-exported"),
+            ):
+                prefix = f"{sequence:05d}-{category}"
+                (directory / (prefix + ".json")).write_bytes(
+                    LAB.encoded({"phase": "baseline-N-check", "category": category, "returncode": 0, "outcome": "returned"})
+                )
+                (directory / (prefix + ".stdout.log")).write_bytes(stdout)
+                (directory / (prefix + ".stderr.log")).write_bytes(b"")
+            marker = directory / "00005-device-ui-diagnostic-power.json"
+            marker_bytes = marker.read_bytes()
+            marker.unlink()
+            code, result = self.log_inspection(root, ["--diagnostic-run", "newest"])
+            self.assertEqual(code, 1)
+            self.assertNotIn("foreground", result)
+            marker.write_bytes(marker_bytes)
+            before = {path: path.read_bytes() for path in directory.iterdir()}
+            code, result = self.log_inspection(root, ["--diagnostic-run", "newest"])
+            self.assertEqual(code, 0)
+            self.assertEqual([record["category"] for record in result["records"]], ["device-ui-windows-dump", "device-ui-read"])
+            self.assertEqual(result["foreground"], {"status": "observed", "package_category": "system-ui", "mixed_node_packages": False})
+            self.assertEqual(before, {path: path.read_bytes() for path in directory.iterdir()})
+            for private in ("synthetic", "ui.xml", "run-newest00", "com.android.systemui"):
+                self.assertNotIn(private, json.dumps(result))
+            record = directory / "00003-device-ui-read.stdout.log"
+            record.unlink()
+            record.symlink_to(root / "unrelated-not-read")
+            code, result = self.log_inspection(root, ["--diagnostic-run", "newest"])
+            self.assertEqual(code, 1)
+            self.assertEqual(result["errors"], ["log-inspection-record-unavailable"])
+            self.assertNotIn("foreground", result)
+
     def test_window_fallback_refuses_missing_ambiguous_background_or_foreign_roots(self):
         cases = []
         wrong_schema = ET.Element("hierarchy")
