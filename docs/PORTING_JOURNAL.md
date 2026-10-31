@@ -1542,3 +1542,17 @@ play, physical input and genuine filled-filesystem recovery remain open.
 - Saved unresolved census falls 163 to 162; with peer MeshFilter14, 148 remain.
   Final-file readiness stays 693/705 available, 685 raw-exact. Complete bundle,
   phone, gameplay and install/update acceptance remain open.
+
+
+## J1299 — Preserve original CalmWater Shader fallback graphs
+2026-10-31.
+- Existing prefab Shader owner preserves checked local original dependencies or
+  an unresolved fallback literal, without importing SDK fallback keyword axes.
+- Original properties, pinned public SingleColor template and acquired SDK
+  compiler produce both persisted records (12,928 bytes) raw-exact to J850.
+- Evidence: `work/coordination/p1-wholegame-1031/calmwater-public-v1/terminal.json`;
+  prior art: `../calmwater-provenance-20261031.md` nearby.
+- Pack SHA-256: `3a3c74f6368d039ee52aa5bfae2eea91779cd4965628c87ca152454af708ced4`.
+- Saved unresolved census falls 148 to 146; with peer Renderer12, 134 remain.
+  Final-file readiness stays 693/705 available, 685 raw-exact. Complete bundle,
+  phone production, gameplay and install/update acceptance remain open.

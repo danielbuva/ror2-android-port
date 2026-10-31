@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J1299](PORTING_JOURNAL.md#j1299--preserve-original-calmwater-shader-fallback-graphs) | 2026-10-31 | Preserve original CalmWater Shader fallback graphs | 2026-10-31. |
 | [J1297](PORTING_JOURNAL.md#j1297--reconstruct-whole-game-particle-shader-from-original-materials) | 2026-10-31 | Reconstruct whole-game particle Shader from original materials | 2026-10-31. |
 | [J1295](PORTING_JOURNAL.md#j1295--reconstruct-whole-game-reciprocal-managed-ownership) | 2026-10-31 | Reconstruct whole-game reciprocal managed ownership | 2026-10-31. |
 | [J1296](PORTING_JOURNAL.md#j1296--reconstruct-whole-game-original-meshfilter-ownership) | 2026-10-31 | Reconstruct whole-game original MeshFilter ownership | 2026-10-31. |
