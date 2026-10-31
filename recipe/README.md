@@ -5959,3 +5959,22 @@ selectors, hashes, native identities and checked relationship mappings, without
 protected bodies, scalar templates, implementation, private paths or generated
 content. All five persisted records match J850 raw-exact (360 bytes). Complete
 bundle, phone production and install/update acceptance remain open.
+
+### Whole-game original TerrainData Shader closure (J1310)
+
+`owner-whole-game-terrain-shaders.json` SHA-256:
+`f9611252293e4750fab696f851005b5ea5b907323de7fdad4ef7068c3d89b7bf`.
+
+Audit: 2026-10-31. The shipped original Title TerrainData selection supplies
+eleven explicit preload Shader relationships. Its checked external bundle
+contains the actual original Shader records; names, properties and native schema
+select acquired SDK Shader equivalents through the unchanged `shader_prefab.py`
+owner. SDK native terrain preload collection corroborates inclusion but is not
+a recipe input. Pinned AssetRipper `1ac666f47d8e9dedf96afb0b914c70d7656151ea`,
+`DummyShaderTextExporter.cs:49-78`, informs source name/property preservation;
+current original pointers and persisted J850 comparison remain authoritative.
+The profile contains only source selectors, SDK identities/settings and hash pins;
+no protected body, shader program, generated content or private path is published.
+All eleven persisted records are raw-exact, 79,656 bytes; exact public coverage
+reduces the saved residual from 93 to 82. Complete bundle, phone
+production, installation and original runtime remain open.

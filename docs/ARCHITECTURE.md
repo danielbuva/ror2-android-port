@@ -5615,3 +5615,10 @@ original records through pinned public exporter templates and acquired SDK
 metadata. Setup uses explicit PC/SDK/template/codec inputs and a fresh output;
 process exit releases source/compiler handles and receipts persist. Both records
 are host raw-exact to J850; complete bundle and phone production remain open.
+
+`owner-whole-game-terrain-shaders.json` selects eleven original TerrainData preload
+Shader dependencies through the existing `shader_prefab.py` owner. Checked original
+external pointers supply source identity; acquired SDK metadata supplies Android
+records. Setup uses pinned original/SDK/tool roots and a fresh record pack; process
+exit releases compiler/source handles and receipts persist. Records are host
+raw-exact to J850; complete bundle and phone gates remain open.
