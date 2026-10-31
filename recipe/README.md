@@ -5882,7 +5882,7 @@ acceptance remain open.
 
 | Recipe | SHA-256 |
 | --- | --- |
-| `owner-whole-game-director-records.json` | `34d16fef4f01ce4957a10594f52b075f8c85881aaed66b31ee4868ec56331d4a` |
+| `owner-whole-game-director-records.json` | `a76af2367dc096d0bf862455af699c4f817f6ec40bc9d848a0d5a7a03bec036f` |
 
 Audit: 2026-10-31. Unique original Director component slots and reciprocal
 qualified GameObject ownership select ConduitCanyon and SolusAmalgam sources.
@@ -5893,8 +5893,12 @@ integer exposed-name export; the existing record owner reimports those names
 and relocates checked references while preserving the native schema and fields.
 The profile contains selectors, hashes, native identity and relationship mappings;
 no protected bodies, target scalar templates, implementation or private paths.
-Both persisted records (984 bytes) match J850 raw-exact. Champrush is excluded
-for unresolved suppliers. Complete-file, phone and install/update gates remain open.
+All three persisted records (1,380 bytes) match J850 raw-exact (J1305/J1307).
+Champrush endpoints follow 80 original Transform pairs rooted at a published
+GameObject selection and seven connected Director suppliers, including the
+reciprocal Animator component slot. Only identities and checked relationships
+are published; original hierarchy/animation data stays local.
+Complete-file, phone and install/update gates remain open.
 
 ### Whole-game Meridian material relationships (J1303)
 
