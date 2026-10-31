@@ -263,6 +263,25 @@ class AnimationProducerTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "script identity"):
                 A.managed_record_hash(body, {**typ, "script_id": bytes(16)}, metadata, "source-component", script, b"sdk-schema", helper)
 
+    def test_missing_script_uses_complete_base_type_before_pointer_relocation(self):
+        body = struct.pack("<iqIiqI", 0, 11, 1, 1, 123, 0) + b"script fields"
+        donor = {"class_id": 114, "script_type": -1, "hash": bytes(16), "tree": b"base schema"}
+        policy = {"bytes": 32, "type_source": {"path_id": 17}}
+        made, typ = A.O.missing_script_base(body, {"class_id": 114}, policy, lambda row: donor)
+        self.assertEqual(typ, donor)
+        self.assertIsNot(typ, donor)
+        result = A.transform_generic(
+            made,
+            114,
+            {
+                "references": [
+                    {"offset": 0, "from": [0, 11], "to": [0, 99]},
+                    {"offset": 16, "from": [1, 123], "to": [0, 0]},
+                ]
+            },
+        )
+        self.assertEqual(result, struct.pack("<iqIiqI", 0, 99, 1, 0, 0, 0))
+
     def test_bounded_float_yaw_preserves_the_single_precision_library_rounding(self):
         self.assertEqual(struct.pack("<f", A.small_atan2f(0.000732421875, 1.25)).hex(), "9999193a")
         self.assertEqual(struct.pack("<f", A.small_atan2f(-0.000732421875, 1.25)).hex(), "999919ba")

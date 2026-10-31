@@ -5631,3 +5631,10 @@ Setup pins the original TerrainData alongside Shader/SDK/tool inputs and creates
 a fresh record pack; process exit releases source/compiler handles while receipts
 persist. Three records are host raw-exact to J850; complete bundle/phone gates
 remain open. This adds no runtime owner.
+
+`owner-whole-game-missing-script-records.json` uses the existing J1225
+`object_produce.py` base-type policy through `record_produce.py`. A pinned
+original base MonoBehaviour supplies the complete type; original component
+ownership supplies the selected record and checked pointer relocations. Setup
+requires pinned original bundles and a fresh output pack. Scoped readers close
+on process exit; receipts persist. No runtime owner or input backend is added.
