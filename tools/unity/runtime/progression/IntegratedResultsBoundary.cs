@@ -711,9 +711,22 @@ public sealed partial class PortSession
             for (int i = 0; i < lines.Count; i++)
                 GUI.Label(new Rect(32, 78 + i * 40, 840, 38), lines[i], style);
         }
-        public void Dispose()
+        void FinishResultsStatistics()
         {
             resultsStatsFixed = null;
+            // Stop only our native event producers before their final consumer.
+            // Events can arrive after the last fixed tick. Process them with the
+            // original ForceUpdate while player/server/profile/catalog context
+            // is still alive, not by clearing queues or inventing another tick.
+            ReleaseResultsEvents();
+            if (resultsStatsProcess == null)
+                return; // Preparation may have stopped before binding the consumer.
+            resultsStatsProcess();
+            resultsStatsProcess = null; // A failed consumer must not claim completion.
+        }
+        public void Dispose()
+        {
+            FinishResultsStatistics();
             if (resultsOfflineStageBegin != null)
             {
                 Stage.onServerStageBegin -= resultsOfflineStageBegin;
@@ -741,7 +754,6 @@ public sealed partial class PortSession
                     Call(coordinator.resultsStats, "OnDestroy");
                     ownsResultsStats = false;
                 }
-                ReleaseResultsEvents();
                 CleanupResultsItemRelationships();
                 CleanupResultsItemGroups();
                 CleanupResultsKeyItems();
@@ -762,7 +774,6 @@ public sealed partial class PortSession
                 Call(coordinator.resultsStats, "OnDestroy");
                 ownsResultsStats = false;
             }
-            ReleaseResultsEvents();
             ContentManager._gameEndingDefs = previousEndingContent;
             StaticCall(typeof(GameEndingCatalog), "SetGameEndingDefs", new object[] { previousEndingCatalog });
             typeof(RunReport)
