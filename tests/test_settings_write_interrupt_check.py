@@ -15,14 +15,12 @@ import settings_write_interrupt_check as check  # noqa: E402
 class InterruptedWriteEvidenceTests(unittest.TestCase):
     witness = dict(success=True, createObserved=True, writerExited=True, pendingPresentBeforeStop=True, pendingPresentAfterStop=True)
 
-    def test_observer_uses_the_actual_device_timeout_transport(self):
-        device = object.__new__(check.Device)
-        with patch.object(check.Device, "cmd", autospec=True, return_value="observer evidence") as command:
-            self.assertEqual(check.pending_observer(device, "owned observer"), "observer evidence")
-        self.assertEqual(command.call_count, 1)
-        self.assertEqual(command.call_args.args, (device, "shell", "owned observer"))
-        self.assertGreater(command.call_args.kwargs["timeout"], 30)
-        self.assertLessEqual(command.call_args.kwargs["timeout"], 45)
+    def test_service_binding_requires_nonce_writer_uid_and_distinct_process(self):
+        ready = dict(nonce="a" * 32, pid=123, uid=10001, observerPid=124)
+        check.validate_observer_binding(ready, "a" * 32, "123", 10001)
+        for changed in (dict(nonce="b" * 32), dict(pid=125), dict(uid=10002), dict(observerPid=123), dict(observerPid=True)):
+            with self.subTest(changed=changed), self.assertRaisesRegex(RuntimeError, "binding differs"):
+                check.validate_observer_binding(dict(ready, **changed), "a" * 32, "123", 10001)
 
     def test_a_completed_save_is_not_interruption_evidence(self):
         with self.assertRaisesRegex(RuntimeError, "Missed pre-commit"):
@@ -68,11 +66,11 @@ class InterruptedWriteEvidenceTests(unittest.TestCase):
         device.read_receipt.return_value = {"persistentDataPath": "/runtime"}
         device.evidence_directory.return_value = out
         device.launch.return_value = {"pid": "123"}
-        pids = iter(["", "123", "123", ""])
+        pids = iter(["", "123", ""])
 
         def sh(*args, **kwargs):
             if args[0] == "pidof":
-                return next(pids)
+                return "" if args[1].endswith(":settings_write_observer") else next(pids)
             if args[0] == "sha256sum":
                 return "a" * 64
             if args[0] == "logcat":

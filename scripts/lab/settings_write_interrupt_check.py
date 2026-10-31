@@ -4,10 +4,8 @@ No injected store bytes, player hooks, power-cut or ENOSPC claim. Refuse a misse
 pre-commit window. The native store performs both ordinary saves and recovery.
 """
 
-from concurrent.futures import ThreadPoolExecutor
 import json
 import re
-import shlex
 import time
 import uuid
 
@@ -16,7 +14,7 @@ from device import Device, PACKAGE
 from nova_bridge import current_errors
 from installed_attempt import attempt_from_installed, bind_installed_apk, validate_expected_apk_sha256
 from session_cleanup_check import SPINE_ID, _read_json, _read_raw, _remote_path_state, matches_run, selection, selector_action
-from touch_gesture import compile_tool, run as gesture
+from touch_gesture import run as gesture
 
 
 def interrupted_transaction(before, after, pending, observed):
@@ -34,9 +32,17 @@ def interrupted_transaction(before, after, pending, observed):
         raise RuntimeError("Missed pre-commit window; do not claim interrupted-write recovery")
 
 
-def pending_observer(device, command):
-    """Run the 30-second observer through the timeout-capable device transport."""
-    return device.cmd("shell", command, timeout=40)
+def validate_observer_binding(observed, nonce, pid, uid):
+    if (
+        not isinstance(observed, dict)
+        or observed.get("nonce") != nonce
+        or observed.get("pid") != int(pid)
+        or observed.get("uid") != uid
+        or type(observed.get("observerPid")) is not int
+        or observed["observerPid"] <= 0
+        or observed["observerPid"] == int(pid)
+    ):
+        raise RuntimeError("Separate-process observer binding differs")
 
 
 def check_settings_write_interrupt(expected_apk_sha256=None, _launch=None):
@@ -128,6 +134,16 @@ def check_settings_write_interrupt(expected_apk_sha256=None, _launch=None):
         if sha(before_file) != before_hash:
             raise RuntimeError("Initial primary evidence transfer hash differs")
         result["primary_before"] = dict(sha256=before_hash, bytes=before_file.stat().st_size)
+        nonce = uuid.uuid4().hex
+        prefix = runtime + "/ror2lab-write-" + nonce
+        request = runtime + "/settings-write-observer.request"
+        remote = [request, prefix + ".ready", prefix + ".result", prefix + ".ready.tmp", prefix + ".result.tmp"]
+        if any(_remote_path_state(device, path) != "absent" for path in remote):
+            remote = []
+            raise RuntimeError("Observer request/evidence already exists; preserve it")
+        write(out / "observer-request.json", dict(nonce=nonce))
+        (out / "observer.request").write_text(nonce)
+        device.cmd("push", str(out / "observer.request"), request)
         report = menu()
         tap("settings-open", report, report["settings"]["buttonX"], report["settings"]["buttonY"])
         report = wait(lambda r: r["settings"]["visible"] is True)
@@ -136,61 +152,38 @@ def check_settings_write_interrupt(expected_apk_sha256=None, _launch=None):
         # Saving unchanged values still performs the real pending/replace transaction.
         # A retained newly-created pending file distinguishes interruption from commit.
         write(out / "native-settings-before-save.json", report)
-        dex = compile_tool(ROOT / "tools/android-write-interruption/LabPendingWriteStop.java")
-        prefix = runtime + "/ror2lab-write-" + uuid.uuid4().hex
-        targets = [prefix + ".dex", prefix + ".ready"]
-        if any(_remote_path_state(device, path) != "absent" for path in targets):
-            raise RuntimeError("Temporary observer target exists; preserve it")
-        remote = targets
         packages = device.sh("cmd", "package", "list", "packages", "-U", PACKAGE)
         matches = re.findall(r"^package:" + re.escape(PACKAGE) + r" uid:([0-9]+)$", packages, re.M)
         if len(matches) != 1 or int(matches[0]) < 10000:
             raise RuntimeError("Owned package UID is ambiguous")
-        if device.sh("run-as", PACKAGE, "id", "-u").strip() != matches[0]:
-            raise RuntimeError("Requires the owned Development package debug UID")
-        write(
-            out / "observer-binding.json",
-            dict(
-                apk_sha256=expected,
-                pid=pid,
-                uid=int(matches[0]),
-                dex_sha256=sha(dex),
-                source_sha256=sha(ROOT / "tools/android-write-interruption/LabPendingWriteStop.java"),
-            ),
-        )
-        device.cmd("push", str(dex), remote[0])
-        if device.sh("sha256sum", remote[0]).split()[0] != sha(dex):
-            raise RuntimeError("Observer DEX transfer hash differs")
-        command = shlex.join(
-            ["run-as", PACKAGE, "env", "CLASSPATH=" + remote[0], "app_process", "/system/bin", "LabPendingWriteStop", directory, remote[1], pid, matches[0]]
-        )
-        with ThreadPoolExecutor(max_workers=1) as pool:
-            future = pool.submit(pending_observer, device, command)
-            deadline = time.monotonic() + 10
-            while _remote_path_state(device, remote[1]) != "file":
-                if future.done():
-                    future.result()
-                    raise RuntimeError("Observer exited before arming")
-                if time.monotonic() >= deadline:
-                    raise RuntimeError("Observer did not arm")
-                time.sleep(0.1)
-            try:
-                result["save_gesture"] = tap("native-save-and-interrupt", report, width * 0.5 - 110, height * 0.5 + 48)
-            except Exception as error:
-                # The observed stop can invalidate the scoped gesture actor before
-                # its final UP/wait completes. Only the independent CREATE/stop
-                # witness and retained pending file below can qualify this case.
-                result["save_gesture"] = dict(success=False, error=str(error))
-            try:
-                raw = future.result(timeout=40)
-            except Exception as error:
-                for stream in ("stdout", "stderr"):
-                    captured = getattr(error, stream, None)
-                    if isinstance(captured, (bytes, str)):
-                        (out / ("observer." + stream)).write_bytes(captured.encode() if isinstance(captured, str) else captured)
-                raise
-            (out / "observer.stdout").write_text(raw)
-            observed = json.loads(raw)
+        uid = int(matches[0])
+        deadline = time.monotonic() + 10
+        while _remote_path_state(device, prefix + ".ready") != "file":
+            if time.monotonic() >= deadline:
+                raise RuntimeError("Separate-process observer did not arm")
+            time.sleep(0.1)
+        ready = _read_json(device, prefix + ".ready")
+        validate_observer_binding(ready, nonce, pid, uid)
+        service_pid = device.sh("pidof", PACKAGE + ":settings_write_observer", check=False).strip()
+        if service_pid != str(ready["observerPid"]):
+            raise RuntimeError("Ready witness does not match the separate service PID")
+        write(out / "observer-binding.json", dict(apk_sha256=expected, **ready))
+        # Consume request before cold launch so recovery cannot re-arm it.
+        device.sh("rm", request)
+        try:
+            result["save_gesture"] = tap("native-save-and-interrupt", report, width * 0.5 - 110, height * 0.5 + 48)
+        except Exception as error:
+            result["save_gesture"] = dict(success=False, error=str(error))
+        deadline = time.monotonic() + 40
+        while _remote_path_state(device, prefix + ".result") != "file":
+            if time.monotonic() >= deadline:
+                raise RuntimeError("Separate-process observer result deadline")
+            time.sleep(0.1)
+        observed = _read_json(device, prefix + ".result")
+        validate_observer_binding(observed, nonce, pid, uid)
+        if observed["observerPid"] != ready["observerPid"]:
+            raise RuntimeError("Observer process changed after arming")
+        write(out / "observer-result.json", observed)
         result["interruption_observer"] = observed
         stopped_pid = pid
         if capture_owned_errors("interrupted-process"):
@@ -274,6 +267,16 @@ def check_settings_write_interrupt(expected_apk_sha256=None, _launch=None):
                 errors.append("Selector ownership changed; preserved it")
         except Exception as error:
             errors.append(str(error))
+        try:
+            if pid:
+                bind_installed_apk(device.owned(), expected_sha256=expected)
+                device.sh("am", "force-stop", PACKAGE)
+            if device.sh("pidof", PACKAGE, check=False).strip() or device.sh("pidof", PACKAGE + ":settings_write_observer", check=False).strip():
+                errors.append("Owned package still running")
+            if not device.display(False):
+                errors.append("OLED sleep not verified")
+        except Exception as error:
+            errors.append(str(error))
         for path in remote:
             try:
                 device.sh("rm", "-f", path)
@@ -281,16 +284,6 @@ def check_settings_write_interrupt(expected_apk_sha256=None, _launch=None):
                     errors.append("Observer temporary target remains")
             except Exception as error:
                 errors.append(str(error))
-        try:
-            if pid and device.sh("pidof", PACKAGE, check=False).strip() == pid:
-                bind_installed_apk(device.owned(), expected_sha256=expected)
-                device.sh("am", "force-stop", PACKAGE)
-            if device.sh("pidof", PACKAGE, check=False).strip():
-                errors.append("Owned package still running")
-            if not device.display(False):
-                errors.append("OLED sleep not verified")
-        except Exception as error:
-            errors.append(str(error))
         result["cleanup_errors"] = errors
         result["success"] = result["success"] and not errors
         write(out / "result.json", result)

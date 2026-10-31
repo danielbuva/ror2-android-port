@@ -55,6 +55,16 @@ public sealed partial class PortSession
         return offlineSettingsSession != null && offlineSettingsSession.Save();
     }
 
+    string settingsWriteObserverNonce;
+    void ReadSettingsWriteObserverRequest()
+    {
+        var path = Path.Combine(Application.persistentDataPath, "settings-write-observer.request");
+        if (!File.Exists(path)) return;
+        var nonce = File.ReadAllText(path).Trim();
+        if (System.Text.RegularExpressions.Regex.IsMatch(nonce, "\\A[0-9a-f]{32}\\z"))
+            settingsWriteObserverNonce = nonce;
+    }
+
     // Nested so the owner can use the coordinator's shared state and report without
     // widening their visibility. It retains the same lifetime as the settings store.
     sealed class OfflineSettingsSession : IDisposable
@@ -66,6 +76,7 @@ public sealed partial class PortSession
         NovaInputBridge.ButtonRebind rebind;
         string rebindError;
         float offlineSettingsTimeScale;
+        bool writeObserverStarted;
         public OfflineSettingsSession(PortSession coordinator)
         {
             this.coordinator = coordinator;
@@ -140,6 +151,18 @@ public sealed partial class PortSession
                 coordinator.offlineSettingsPaused = false;
                 coordinator.r.settings.resumes++;
             }
+#if UNITY_ANDROID && !UNITY_EDITOR
+            if (show && !writeObserverStarted && coordinator.settingsWriteObserverNonce != null)
+            {
+                using (var unity = new AndroidJavaClass("com.unity3d.player.UnityPlayer"))
+                using (var activity = unity.GetStatic<AndroidJavaObject>("currentActivity"))
+                using (var observer = new AndroidJavaClass("dev.ror2lab.diagnostics.LabSettingsWriteObserver"))
+                    observer.CallStatic("start", activity, coordinator.settingsWriteObserverNonce);
+                writeObserverStarted = true;
+                coordinator.settingsWriteObserverNonce = null;
+            }
+            if (!show) CancelWriteObserver();
+#endif
             coordinator.SetRecoveredMenuObscured(show);
             coordinator.offlineSettingsVisible = show;
             Observe();
@@ -401,8 +424,20 @@ public sealed partial class PortSession
         }
         // Cleanup may run between sessions. Only an owned pause is released; the
         // store and an unpaused visible screen keep their existing lifetime.
+        void CancelWriteObserver()
+        {
+#if UNITY_ANDROID && !UNITY_EDITOR
+            if (!writeObserverStarted) return;
+            using (var unity = new AndroidJavaClass("com.unity3d.player.UnityPlayer"))
+            using (var activity = unity.GetStatic<AndroidJavaObject>("currentActivity"))
+            using (var observer = new AndroidJavaClass("dev.ror2lab.diagnostics.LabSettingsWriteObserver"))
+                observer.CallStatic("cancel", activity);
+            writeObserverStarted = false;
+#endif
+        }
         public void Dispose()
         {
+            CancelWriteObserver();
             feedback.Close();
             rebindVisible = false;
             rebind = null;

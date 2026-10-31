@@ -22,6 +22,9 @@ class BuildErrorTests(unittest.TestCase):
             (root / "scripts/lab").mkdir(parents=True)
             (root / "scripts/lab/build.py").write_text("# Test-only recipe fixture\n")
             (work / "lab-project/Assets").mkdir(parents=True)
+            observer = root / "tools/android-write-interruption/LabPendingWriteStop.java"
+            observer.parent.mkdir(parents=True)
+            observer.write_text("// Test-only observer source fixture\n")
 
             def editor(target, action):
                 if action == "build":
