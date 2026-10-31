@@ -1506,7 +1506,7 @@ play, physical input and genuine filled-filesystem recovery remain open.
 - Unresolved census falls 203 to 201. Final-file readiness remains 693/705
   available, 685 raw-exact. Complete bundle, phone and install/update remain open.
 
-## J1295 — Reconstruct whole-game original MeshFilter ownership
+## J1296 — Reconstruct whole-game original MeshFilter ownership
 2026-10-31.
 - Existing generic record owner selects fourteen original MeshFilters through
   unique class slots, reciprocal GameObject ownership and public mesh suppliers.
@@ -1518,3 +1518,15 @@ play, physical input and genuine filled-filesystem recovery remain open.
 - Saved unresolved census falls 173 to 159, excluding parallel work. Final-file
   readiness stays 693/705 available, 685 raw-exact; complete bundle, phone
   production and install/update remain open.
+## J1295 — Reconstruct whole-game reciprocal managed ownership
+2026-10-31.
+- Existing managed record owner selects eight original ItemDisplay and two
+  EffectManagerHelper components through qualified GameObject ownership edges.
+- Full script identities and reciprocal component order establish source identity;
+  existing SDK schema policy produces all ten records (880 bytes) raw-exact J850.
+- Evidence: `work/coordination/p1-wholegame-1031/managed-public-v5/terminal.json`;
+  ownership witnesses: `../managed-owner-edges-v3/proofs.json` nearby.
+- Pack SHA-256: `d40e58413888cd9379ac46a8b8016ecd31474e195dec8d961a58dfb7ee4d2945`.
+- Saved unresolved census falls 173 to 163. Final-file readiness stays 693/705
+  available, 685 raw-exact. Complete bundle, phone, gameplay and install/update
+  acceptance remain open.

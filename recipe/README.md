@@ -5695,7 +5695,7 @@ Both persisted records (2,856 bytes) match J850 raw-exact; 11 other witnessed
 materials still differ after existing policies and are excluded. Complete bundle,
 phone production, gameplay and install/update acceptance remain open.
 
-### Whole-game original MeshFilter ownership (J1295)
+### Whole-game original MeshFilter ownership (J1296)
 
 | Recipe | SHA-256 |
 | --- | --- |
@@ -5712,3 +5712,20 @@ original selectors, input/output hashes, native type identities and pointer
 relationships; no object bodies, scalar templates, game implementation or private
 paths are published. All fourteen persisted records (336 bytes) match J850
 raw-exact. Complete-file, phone production and install/update gates remain open.
+
+### Whole-game reciprocal managed ownership (J1295)
+
+`owner-whole-game-path-managed-records.json` SHA-256:
+`a96162e8d171e9ad73fdfdd90878a9ad448cdadb4e424072dc3614121f4ddb50`.
+
+Audit: ten original managed component selections extend the existing record owner:
+eight ItemDisplay and two EffectManagerHelper records. Qualified original
+GameObject component order and reciprocal owner links identify each component;
+full assembly/namespace/class identity and source MonoScript hashes independently
+check its type. The existing SDK properties-hash policy retains schema identity.
+Pinned ThunderKit FileIdUtil and AssetRipper MonoScriptExtensions inform these
+identity checks; no upstream implementation is copied. The additions contain
+only source selectors/hashes, native identities, checked pointer mappings and
+output hashes. No scalar template, original body, game implementation, private
+path or generated content is included. All ten persisted records (880 bytes)
+match J850 raw-exact. Complete bundle, phone and install/update gates remain open.
