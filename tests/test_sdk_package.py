@@ -4,6 +4,9 @@ import hashlib
 import importlib.util
 import os
 from pathlib import Path
+import shutil
+import subprocess
+import sys
 import tempfile
 from types import SimpleNamespace
 import unittest
@@ -18,6 +21,62 @@ SPEC.loader.exec_module(PACKAGE)
 
 
 class SDKPackageTests(unittest.TestCase):
+    def test_apk_sdk_imports_without_game_recipes_and_native_validation_still_delegates(self):
+        source = PATH.parents[3]
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            for name in (
+                "accepted-output/sdk_package.py",
+                "accepted-output/sdk_inputs.py",
+                "accepted-output/package.py",
+                "accepted-output/assemble.py",
+                "owner-code/native.py",
+                "owner-apk/build_owner_apk.py",
+                "owner-apk/binary_manifest.py",
+            ):
+                target = root / "tools/phone-build" / name
+                target.parent.mkdir(parents=True, exist_ok=True)
+                shutil.copyfile(source / "tools/phone-build" / name, target)
+            # A clean interpreter prevents the checkout's imported lab modules
+            # from accidentally satisfying dependencies absent from the bundle.
+            program = r"""
+import hashlib, importlib.util, sys, types
+from pathlib import Path
+root = Path(sys.argv[1])
+def module(name, path):
+    spec = importlib.util.spec_from_file_location(name, path)
+    value = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(value)
+    return value
+owner = module("owner", root / "tools/phone-build/owner-apk/build_owner_apk.py")
+sdk = module("sdk", root / "tools/phone-build/accepted-output/sdk_package.py")
+cohort = {name: "authored source" for name in owner.CODE_ENTRIES | sdk.SDK_ENTRIES}
+assert owner.code_paths({"code": cohort}) == cohort
+authored = root / "authored.txt"
+authored.write_bytes(b"authored packaging fixture")
+assert sdk.NATIVE.sha(authored) == hashlib.sha256(authored.read_bytes()).hexdigest()
+assert "owner_assemblies" not in sys.modules
+assert not (root / "recipe").exists()
+calls = []
+validator = types.ModuleType("owner_assemblies")
+def input_state(work):
+    calls.append(work)
+    if work == "reject":
+        raise ValueError("authored admission refusal")
+    return ("authored identity", work, {})
+validator.input_state = input_state
+sys.modules["owner_assemblies"] = validator
+assert sdk.NATIVE.input_state(root) == ("authored identity", root, {})
+try:
+    sdk.NATIVE.input_state("reject")
+    raise AssertionError("native input validator bypassed")
+except ValueError as error:
+    assert str(error) == "authored admission refusal"
+assert calls == [root, "reject"]
+"""
+            result = subprocess.run([sys.executable, "-I", "-c", program, str(root)], cwd=root, capture_output=True, text=True)
+            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+
     def test_produce_preserves_app_host_environment_for_java_and_qemu_launches(self):
         with tempfile.TemporaryDirectory() as temp:
             root = Path(temp).resolve()
