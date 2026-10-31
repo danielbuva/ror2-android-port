@@ -56,6 +56,10 @@ public final class LabPendingWriteStop {
         Files.write(temporary.toPath(), value.toString().getBytes(StandardCharsets.UTF_8), java.nio.file.StandardOpenOption.CREATE_NEW);
         Files.move(temporary.toPath(), destination.toPath(), java.nio.file.StandardCopyOption.ATOMIC_MOVE);
     }
+    static String observerNonce(File ready) {
+        String name = ready.getName();
+        return name.substring("ror2lab-write-".length(), name.length() - ".ready".length());
+    }
     public static JSONObject observe(String[] args, java.util.function.BooleanSupplier cancelled) throws Exception {
         if (args.length != 4)
             throw new IllegalArgumentException("Requires owned debug UID, settings directory, ready path, observed PID and UID");
@@ -95,7 +99,7 @@ public final class LabPendingWriteStop {
         };
         try {
             observer.startWatching();
-            atomicJson(ready, new JSONObject().put("nonce", ready.getName().substring(13, 45))
+            atomicJson(ready, new JSONObject().put("nonce", observerNonce(ready))
                 .put("pid", pid).put("uid", uid).put("observerPid", Process.myPid()));
             long deadline = SystemClock.uptimeMillis() + 30000;
             while (!done.await(100, TimeUnit.MILLISECONDS)) {
