@@ -572,6 +572,9 @@ class Linker:
         native_material = None
         if "m_Material" in fields and fields["m_Material"]["m_PathID"]:
             native_material = self.choose(reference_key(self.ui, fields["m_Material"]), "NativeUiMaterial")
+            # Graphic's material precedes Image's sprite in the source schema.
+            # Reserve its provider before visiting the remaining typed links.
+            self.pointer(*native_material)
             fields["m_Material"] = dict(m_FileID=0, m_PathID=0)
         if scripted:
             fields["m_Script"] = dict(m_FileID=0, m_PathID=0)
@@ -625,6 +628,19 @@ def produce(profile_path, profile_sha256, pc, player, builtin_extra, editor_reso
         native = P.script_sdk_schema(editor_resources, player["script_properties_sdk"])
         defaults = sdk_defaults(store, ugui_source, selected["sdk_ui_sources"])
         records += component_records(store, ui, scripts, graph, records, extras, native, managed, defaults)
+        if "saved_object_ids" in selected:
+            saved = {(row["path"], row["identity"]): row["id"] for row in selected["saved_object_ids"]}
+            require(len(saved) == len(records) == len(selected["saved_object_ids"]), "saved UI identity cohort differs")
+            require(set(saved) == {(row["path"], row["identity"]) for row in records}, "saved UI identities do not cover source graph")
+            require(set(saved.values()) == set(range(1, len(records) + 1)), "saved UI identities are not a complete player allocation")
+            relocated = {row["id"]: saved[row["path"], row["identity"]] for row in records}
+            for row in records:
+                map_pointers(
+                    row["fields"],
+                    lambda ptr: dict(m_FileID=0, m_PathID=relocated[ptr["m_PathID"]]) if ptr["m_FileID"] == 0 and ptr["m_PathID"] in relocated else ptr,
+                )
+                row["id"] = relocated[row["id"]]
+            records.sort(key=lambda row: row["id"])
         linker = Linker(store, ui, player, profile_path.parent, selected, builtin_extra, output)
         ids = {row["id"] for row in records}
         metadata, bodies, rows, scripts_table, manifest = [], {}, [], [], []
