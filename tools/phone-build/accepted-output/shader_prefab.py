@@ -41,6 +41,21 @@ def keyword_registry(source, seed):
     return names, flags
 
 
+def original_fallback_dependencies(source, selected, original):
+    """Retain original fallback edges, including an unresolved literal fallback."""
+    witnesses = selected["fallback_original"]
+    dependencies = source["m_Dependencies"]
+    if dependencies != [{"m_FileID": 0, "m_PathID": row["original"]["path_id"]} for row in witnesses]:
+        raise ValueError("Prefab original fallback dependencies differ")
+    for row in witnesses:
+        witness = row["original"]
+        if (witness["path"], witness["member"]) != (selected["original"]["path"], selected["original"]["member"]):
+            raise ValueError("Prefab original fallback member differs")
+        if original(witness).read_typetree()["m_ParsedForm"]["m_Name"] != source["m_ParsedForm"]["m_FallbackName"]:
+            raise ValueError("Prefab original fallback name differs")
+    return [{"m_FileID": row["to"][0], "m_PathID": row["to"][1]} for row in witnesses]
+
+
 def prefab_selections(source, *, retain_instancing=True):
     """Keep no-scene runtime axes, including source instancing alternatives."""
     snippets = dict(source["m_CompileInfo"]["m_Snippets"])
@@ -95,6 +110,7 @@ def produce(profile_path, profile_pin, pc, sdk, asset_ripper, codec, codec_pin, 
     for record in profile["records"]:
         pins.append((P.relative(pc, record["original"]["path"]), record["original"]))
         pins.extend((P.relative(pc, material["path"]), material) for material in record.get("materials", []))
+        pins.extend((P.relative(pc, row["original"]["path"]), row["original"]) for row in record.get("fallback_original", []))
     for path, pin in pins:
         P.checked(path, pin)
     inventory, common = P.includes(sdk / "CGIncludes")
@@ -245,13 +261,16 @@ def produce(profile_path, profile_pin, pc, sdk, asset_ripper, codec, codec_pin, 
                         raise ValueError("Prefab original dummy template differs")
                     tree = A.postprocessing_tree(connection, text, filename, source, node, profile["settings"], image, common, compress)
                     fallback = tree["m_ParsedForm"]["m_FallbackName"]
-                    identity = selected["fallback_sdk_shader"]
-                    fallback_source = sdk_source(identity)
-                    if fallback_source["m_ParsedForm"]["m_Name"].removeprefix("Legacy Shaders/") != fallback:
-                        raise ValueError("Prefab original/SDK fallback identity differs")
-                    form = tree["m_ParsedForm"]
-                    form["m_KeywordNames"], form["m_KeywordFlags"] = keyword_registry(fallback_source, (form["m_KeywordNames"], form["m_KeywordFlags"]))
-                    tree["m_Dependencies"] = pointers(chain(identity))
+                    if "fallback_original" in selected:
+                        tree["m_Dependencies"] = original_fallback_dependencies(source, selected, original)
+                    else:
+                        identity = selected["fallback_sdk_shader"]
+                        fallback_source = sdk_source(identity)
+                        if fallback_source["m_ParsedForm"]["m_Name"].removeprefix("Legacy Shaders/") != fallback:
+                            raise ValueError("Prefab original/SDK fallback identity differs")
+                        form = tree["m_ParsedForm"]
+                        form["m_KeywordNames"], form["m_KeywordFlags"] = keyword_registry(fallback_source, (form["m_KeywordNames"], form["m_KeywordFlags"]))
+                        tree["m_Dependencies"] = pointers(chain(identity))
                     writer = EndianBinaryWriter(endian="<")
                     write_typetree(tree, node, writer)
                     body = writer.bytes
