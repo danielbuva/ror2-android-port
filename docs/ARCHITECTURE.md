@@ -1932,6 +1932,11 @@ performance guarantee. Host admission estimates two 4 GiB snapshots plus
 records that budget and observed free bytes. The 100 GiB full-build floor does
 not apply to this capture-only queue. Host fixtures exercise admission and
 failure contracts.
+`--gameplay-only` selects just the existing heap and sustained owners when the
+independent SDK interruption route is blocked. Its receipt explicitly records
+that scope; it supplies no settings-interruption evidence and cannot combine
+with retained settings evidence. All device, thermal and teardown contracts
+remain required.
 `--prior-settings-batch PATH` retains a successful settings-interruption stage
 from a prior batch with matching outer and nested APK digests, even when a later
 stage failed. Its source path, SHA-256 and stage remain separate from fresh

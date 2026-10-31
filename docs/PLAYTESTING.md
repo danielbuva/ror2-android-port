@@ -211,6 +211,11 @@ nohup ./dev prototype --action alpha-stability-batch \
 
 The long-lived driver records its own PID in the lease, stops on the first
 failure and publishes the done receipt after terminal verification and pruning.
+Use `--gameplay-only` when collecting independent heap and sustained evidence
+while settings interruption is blocked (for example, adopted-storage `run-as`
+refusal). The receipt records `scope: gameplay-only`; success covers only those
+two stages and leaves settings interruption open. Do not combine this option
+with `--prior-settings-batch`.
 Read that receipt after completion rather than polling the device. A failed
 terminal readback preserves the lease and evidence for diagnosis. The sustained
 case uses invincibility only, manual neutral input and small software camera

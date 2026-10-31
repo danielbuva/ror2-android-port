@@ -477,7 +477,7 @@ def _prior_settings_batch(path, expected):
     return dict(path=str(source), sha256=hashlib.sha256(raw).hexdigest(), stage=passed[0])
 
 
-def check_alpha_stability_batch(*, device_serial, expected_apk_sha256, canonical_root, done_file, prior_settings_batch=None):
+def check_alpha_stability_batch(*, device_serial, expected_apk_sha256, canonical_root, done_file, prior_settings_batch=None, gameplay_only=False):
     """Run fixed stages synchronously; publish terminal status on success or failure."""
     root = Path(canonical_root).expanduser().resolve()
     if not (root / ".git").is_dir():
@@ -486,7 +486,7 @@ def check_alpha_stability_batch(*, device_serial, expected_apk_sha256, canonical
     done = Path(done_file).expanduser()
     if not done.is_absolute() or done != done.resolve() or not done.is_relative_to(work) or done.exists():
         raise ValueError("Use a new absolute --done-file under canonical ignored work/")
-    result = dict(success=False, driver_pid=os.getpid(), stages=[], lease_released=False)
+    result = dict(success=False, driver_pid=os.getpid(), stages=[], lease_released=False, scope="gameplay-only" if gameplay_only else "full-stability-batch")
     token = uuid.uuid4().hex
     owner = dict(
         workstream="alpha-stability-batch",
@@ -507,6 +507,8 @@ def check_alpha_stability_batch(*, device_serial, expected_apk_sha256, canonical
         if expected is None:
             raise ValueError("alpha-stability-batch requires --expected-apk-sha256")
         result["apk_sha256"] = expected
+        if gameplay_only and prior_settings_batch is not None:
+            raise ValueError("Choose gameplay-only or retained settings evidence, not both")
         if prior_settings_batch is not None:
             result["prior_settings_batch"] = _prior_settings_batch(prior_settings_batch, expected)
         result["host_capture_budget"] = _host_capture_budget(root)
@@ -539,7 +541,7 @@ def check_alpha_stability_batch(*, device_serial, expected_apk_sha256, canonical
             ("session-memory", memory.check_session_memory, dict(sessions=3, memory_snapshots=True)),
             ("session-sustained", sustained.check_session_sustained, {}),
         ):
-            if name == "settings-write-interrupt" and prior_settings_batch is not None:
+            if name == "settings-write-interrupt" and (gameplay_only or prior_settings_batch is not None):
                 continue
             result["active_stage"] = name
             if name == "session-memory":
