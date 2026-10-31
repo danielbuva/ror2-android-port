@@ -448,6 +448,11 @@ The optional `preserve_original_script_hash` selection delegates to the object
 owner's existing unchanged-schema check after verifying the actual original
 MonoScript binding. The hierarchy path recipes select original records using
 proven roots and unique reciprocal child paths; output state remains exact.
+The generic path also delegates `inactive_scene_object` to the object owner's
+named-active-source check. `owner-whole-game-activation-records.json` selects
+three original HUD roots under existing authored activation policies, preserving
+ordered component references. Setup, pack state, readers and teardown use the
+existing record owner; complete-file and phone admission remain open.
 Generic record admission also includes native classes 96, 119, 193 and 330,
 preserving their original schemas and every nonpointer byte.
 The component-edge recipe selects unchanged original records through explicit

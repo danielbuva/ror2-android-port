@@ -1429,3 +1429,15 @@ play, physical input and genuine filled-filesystem recovery remain open.
 - Workstream unresolved count falls 253 to 248, excluding parallel changes.
   Final-file readiness stays 693/705 available, 685 raw-exact; Acolyte masks,
   complete whole-game bundle, phone production and install/update remain open.
+
+## J1289 — Reproduce three authored whole-game prefab activations
+2026-10-31.
+- Generic record production delegates existing named source activation policy;
+  original ordered component edges and reciprocal ownership select three HUD roots.
+- All three persisted records (317 bytes) match J850 raw-exact. Evidence:
+  `work/coordination/p1-scenes-w/wholegame-go-activation-v2-20261031/done.json`;
+  source relationship findings: `wholegame-go-activation-20261031/anchor-findings.md`.
+- Pack SHA-256: `61445555eb957794ad07e9f204b81a659c547e3f4afc356b77dcda83be997dc4`.
+- Workstream unresolved count falls from 248 to 245, excluding parallel work.
+  Final-file readiness stays 693/705 available, 685 raw-exact; full bundle,
+  phone production and install/update remain open.
