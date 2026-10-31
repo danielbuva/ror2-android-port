@@ -48,6 +48,10 @@ class CharacterSpawnCard : UnityEngine.Object {
 }
 static class CompletedSessionRootWalk { REMOVE_TARGETS }
 class HurtBox : UnityEngine.Object {}
+class OverlapAttack {
+ private static readonly List<HurtBox> discoveredHurtboxes=new List<HurtBox>();
+ public static List<HurtBox> Targets {get{return discoveredHurtboxes;}}
+}
 class PoolBase<T> { private Stack<T> items=new Stack<T>(); public Stack<T> Returned {get{return items;}} }
 class HitPool : PoolBase<BulletAttack.BulletHit> {}
 class BulletAttack {
@@ -64,7 +68,20 @@ class ResourceOwner {
  public Report r=new Report();
  void Check(bool pass,string message){if(!pass)throw new InvalidOperationException(message);}
  CLEANUP
+ OVERLAP_METHOD
  SPAWN_METHOD
+ public static void VerifyOverlap(){
+  var owner=new ResourceOwner();var dead=new HurtBox {destroyed=true};var live=new HurtBox();var second=new HurtBox();
+  var list=OverlapAttack.Targets;list.Add(dead);list.Add(live);list.Add(null);list.Add(dead);list.Add(second);int capacity=list.Capacity;
+  for(int flag=0;flag<4;flag++){
+   owner.r.world.cleaned=flag!=0;Run.instance=flag==1?new UnityEngine.Object():null;NetworkServer.active=flag==2;NetworkClient.active=flag==3;
+   bool refused=false;try{owner.PruneDestroyedOverlapTargets();}catch(InvalidOperationException){refused=true;}
+   if(!refused||list.Count!=5)throw new Exception("Live-world overlap targets mutated");
+  }
+  owner.r.world.cleaned=true;Run.instance=null;NetworkServer.active=NetworkClient.active=false;
+  if(owner.PruneDestroyedOverlapTargets()!=3||list.Count!=2||!ReferenceEquals(list[0],live)||!ReferenceEquals(list[1],second)||list.Capacity!=capacity)throw new Exception("Destroyed overlap retained or live order/capacity changed");
+  if(owner.PruneDestroyedOverlapTargets()!=0)throw new Exception("Overlap cleanup not idempotent");
+ }
  public static void VerifySpawn(){
   var owner=new ResourceOwner();var dead=new CharacterSpawnCard {destroyed=true};var live=new CharacterSpawnCard();
   Action foreign=()=>{};var state=new ResourceAvailability {available=true};state.Add(dead.Callback);state.Add(live.Callback);state.Add(foreign);state.Add(dead.Callback);CharacterSpawnCard.Availability=state;
@@ -94,7 +111,7 @@ class ResourceOwner {
   if(owner.ReleaseDestroyedPooledHitTargets()!=0)throw new Exception("Cleanup not idempotent");
  }
 }
-class Program {static void Main(string[] args){if(args[0]=="publication")LabDiagnostics.Verify(args[1]);else if(args[0]=="spawn")ResourceOwner.VerifySpawn();else ResourceOwner.Verify();Console.WriteLine(args[0]+": PASS");}}
+class Program {static void Main(string[] args){if(args[0]=="publication")LabDiagnostics.Verify(args[1]);else if(args[0]=="overlap")ResourceOwner.VerifyOverlap();else if(args[0]=="spawn")ResourceOwner.VerifySpawn();else ResourceOwner.Verify();Console.WriteLine(args[0]+": PASS");}}
 """
 
 
@@ -114,6 +131,7 @@ class DiagnosticRetentionTests(unittest.TestCase):
             extract_method((ROOT / "tools/unity/runtime/session/SessionResourceBoundary.cs").read_text(), "    int ReleaseDestroyedPooledHitTargets()"),
         )
         resource = (ROOT / "tools/unity/runtime/session/SessionResourceBoundary.cs").read_text()
+        code = code.replace("OVERLAP_METHOD", extract_method(resource, "    int PruneDestroyedOverlapTargets()"))
         code = code.replace("SPAWN_METHOD", extract_method(resource, "    int PruneDestroyedSpawnCardCallbacks()"))
         code = code.replace("REMOVE_TARGETS", extract_method(resource, "    public static Delegate RemoveTargets("))
         source = directory / "Production.cs"
@@ -156,3 +174,6 @@ class DiagnosticRetentionTests(unittest.TestCase):
 
     def test_teardown_releases_only_destroyed_spawn_card_callbacks(self):
         self.case("spawn")
+
+    def test_teardown_releases_only_destroyed_overlap_discovery_targets(self):
+        self.case("overlap")

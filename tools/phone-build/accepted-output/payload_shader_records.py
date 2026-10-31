@@ -5,8 +5,9 @@ The retained J131 bundle uses Gamma/default Android tiers and the acquired
 2021.3.45f2 compiler; neither Editor nor the old compiler is executed.
 """
 
+from collections import Counter
 from copy import deepcopy
-from itertools import product
+from itertools import groupby, product
 import argparse
 import hashlib
 import itertools
@@ -291,26 +292,170 @@ def standard_material(selected, original, sdk_objects):
     return value
 
 
-def original_feature_order(carrier, subshader_index, pass_index, shader_pass, features, selected):
-    """Order retained material identities by original fragment records."""
+def original_stage_lift(original_pass, names, features, selected, *, runtime=None):
+    """Lift a source fragment cyclic order over complete vertex contexts."""
+
+    def sequence(stage):
+        result = []
+        for tier in original_pass[stage]["m_PlayerSubPrograms"]:
+            for record in tier:
+                key = frozenset(names[i] for i in record["m_KeywordIndices"]) & features
+                if key not in result:
+                    result.append(key)
+        return result
+
+    vertex = sequence("progVertex")
+    fragment = sequence("progFragment")
+    vn = frozenset().union(*vertex)
+    fn = frozenset().union(*fragment)
+    wanted = {frozenset(k) for k in selected}
+    vertex = [k for k in vertex if any(s & vn == k for s in wanted)]
+    fragment = [k for k in fragment if any(s & fn == k for s in wanted)]
+    if runtime is not None:
+        # Infer a complete material-signature template from the first full
+        # fragment context, then verify its rotation against the entire source.
+        runtime = frozenset(runtime)
+        groups = [(context, list(rows)) for context, rows in groupby(fragment, key=lambda key: key & runtime)]
+        answer = []
+        offset = 0
+        while offset < len(groups):
+            start, head = groups[offset]
+            end = next((i for i in range(offset + 1, len(groups)) if groups[i][0] == start), None)
+            if end is None:
+                raise ValueError("source material template has no wrap")
+            contexts = [context for context, _ in groups[offset:end]]
+            signatures = [key - runtime for key in groups[offset + 1][1]]
+            if len(head) != 1 or head[0] - runtime != signatures[-1]:
+                raise ValueError("source material template head differs")
+            observed = (
+                [start | signatures[-1]]
+                + [context | signature for context in contexts[1:] for signature in signatures]
+                + [start | signature for signature in signatures[:-1]]
+            )
+            if observed != [key for _, rows in groups[offset : end + 1] for key in rows]:
+                raise ValueError("source material template sequence differs")
+            expanded = list(dict.fromkeys(key & runtime for key in vertex if key & fn & runtime in contexts))
+            if not expanded:
+                raise ValueError("empty lifted material template contexts")
+            answer.extend(
+                [expanded[0] | signatures[-1]]
+                + [context | signature for context in expanded[1:] for signature in signatures]
+                + [expanded[0] | signature for signature in signatures[:-1]]
+            )
+            offset = end + 1
+    elif not vn - fn:
+        answer = fragment
+    elif not fn - vn:
+        answer = vertex
+    else:
+        common = vn & fn
+        exclusive = fn - vn
+        answer = []
+        offset = 0
+        while offset < len(fragment):
+            first = fragment[offset]
+            base = first & exclusive
+            start = first & common
+            end = next((j for j in range(offset + 1, len(fragment)) if fragment[j] & common == start and fragment[j] & exclusive != base), None)
+            if end is None:
+                raise ValueError("source fragment cycle has no wrap")
+            cycle = fragment[offset : end + 1]
+            alternatives = {k & exclusive for k in cycle}
+            if len(alternatives) != 2:
+                raise ValueError("source fragment cycle not binary")
+            other = next(k for k in alternatives if k != base)
+            contexts = []
+            for k in cycle:
+                if k & common not in contexts:
+                    contexts.append(k & common)
+            # Verify source itself is exactly the inferred cyclic zipper.
+            observed = [contexts[0] | base]
+            for c in contexts[1:]:
+                observed.extend((c | other, c | base))
+            observed.append(contexts[0] | other)
+            if observed != cycle:
+                raise ValueError("source fragment cycle not cyclic zipper")
+            expanded = [k for k in vertex if k & common in contexts]
+            if not expanded:
+                raise ValueError("empty lifted source cycle")
+            answer.append(expanded[0] | base)
+            for k in expanded[1:]:
+                answer.extend((k | other, k | base))
+            answer.append(expanded[0] | other)
+            offset = end + 1
+    if len(answer) != len(wanted) or set(answer) != wanted:
+        raise ValueError("source stage lift does not cover selected identities uniquely")
+    lookup = {frozenset(k): k for k in selected}
+    return [lookup[k] for k in answer]
+
+
+def original_sdk_axis_order(carrier, subshader_index, shader_pass, features, selected, snippet):
+    """Expand overlapping SDK stage axes over first-seen original contexts.
+
+    Shared keywords can produce the same identity more than once. Keep those
+    serialized rows; native compilation interns only their first occurrence.
+    """
+    axes = []
+    for group in ("m_VariantsUserGlobal", "m_VariantsUserLocal"):
+        for stage in range(7):
+            for axis in snippet[group + str(stage)]:
+                if axis not in axes:
+                    axes.append(axis)
+    names = [{key for key in axis if key.strip("_")} for axis in axes]
+    crossed = [i for i, axis in enumerate(names) if any(i != j and axis & other for j, other in enumerate(names))]
+    if not crossed:
+        raise ValueError("SDK declarations have no overlapping stage axes")
+    crossed = list(range(min(crossed), max(crossed) + 1))
+    excluded = set().union(*(names[i] for i in crossed))
+    axis_rows = [frozenset(key for key in keys if key.strip("_")) for keys in product(*(axes[i] for i in crossed))]
     form = carrier["m_ParsedForm"]
-    original_pass = form["m_SubShaders"][subshader_index]["m_Passes"][pass_index]
+
+    def identity(row):
+        tags = {key.upper(): value.upper() for key, value in row["m_State"]["m_Tags"]["tags"]}
+        return row["m_State"]["m_Name"], tags.get("LIGHTMODE")
+
+    original = next(row for row in form["m_SubShaders"][subshader_index]["m_Passes"] if identity(row) == identity(shader_pass))
+    wanted = {frozenset(keys) - excluded for keys in selected}
+    base = []
+    for tier in original["progVertex"]["m_PlayerSubPrograms"]:
+        for row in tier:
+            keys = (frozenset(form["m_KeywordNames"][i] for i in row["m_KeywordIndices"]) & features) - excluded
+            if keys in wanted and keys not in base:
+                base.append(keys)
+    answer = [keys | axis for axis in axis_rows for keys in base if keys | axis in {frozenset(row) for row in selected}]
+    if Counter(answer) != Counter(map(frozenset, selected)):
+        raise ValueError("SDK source axis multiplicity differs")
+    return [sorted(keys) for keys in answer]
+
+
+def original_feature_order(carrier, subshader_index, pass_index, shader_pass, features, selected, *, stage="progFragment", runtime=None):
+    """Order retained material identities by original stage records."""
+    form = carrier["m_ParsedForm"]
 
     def identity(value):
         tags = {name.upper(): text.upper() for name, text in value["m_State"]["m_Tags"]["tags"]}
-        return value["m_State"]["m_Name"], tags.get("LIGHTMODE")
+        return value["m_State"].get("m_Name", ""), tags.get("LIGHTMODE")
 
-    if identity(original_pass) != identity(shader_pass):
+    matches = [row for row in form["m_SubShaders"][subshader_index]["m_Passes"] if identity(row) == identity(shader_pass)]
+    if len(matches) != 1:
         raise ValueError("Standard original/SDK carrier pass differs")
+    original_pass = matches[0]
     wanted = {frozenset(keys) for keys in selected}
     ranks = {}
-    for tier in original_pass["progFragment"]["m_PlayerSubPrograms"]:
+    for tier in original_pass[stage]["m_PlayerSubPrograms"]:
         for row in tier:
             keys = frozenset(form["m_KeywordNames"][index] for index in row["m_KeywordIndices"]) & features
             if keys in wanted and keys not in ranks:
                 ranks[keys] = len(ranks)
     if set(ranks) != wanted:
-        raise ValueError("Standard original fragment records do not cover retained material identities")
+        if stage == "progVertex":
+            try:
+                return original_stage_lift(original_pass, form["m_KeywordNames"], features, selected)
+            except ValueError:
+                if runtime is None:
+                    raise
+                return original_stage_lift(original_pass, form["m_KeywordNames"], features, selected, runtime=runtime)
+        raise ValueError("original stage records do not cover retained material identities")
     return sorted(selected, key=lambda keys: ranks[frozenset(keys)])
 
 

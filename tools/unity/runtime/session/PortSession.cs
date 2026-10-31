@@ -684,6 +684,7 @@ public sealed partial class PortSession : MonoBehaviour
     {
         if (File.Exists(System.IO.Path.Combine(Application.persistentDataPath, "whole-catalog-selection.json")))
             yield break;
+        ReadSettingsWriteObserverRequest();
         yield return new WaitForSeconds(8);
         // MovementBatchProbe is the unchanged resource/file name.
         var path = System.IO.Path.Combine(Application.persistentDataPath, "movement-batch-selection.json");

@@ -627,6 +627,10 @@ public sealed partial class PortSession
                     if (coordinator.offlineSettingsPaused)
                     {
                         bridge.Neutral();
+                        // Native component updates still run while settings is open.
+                        // Retain the bounded read-only projectile transition observer.
+                        if (cfg.integratedWorld)
+                            coordinator.ObserveLightningStakes();
                         continue;
                     }
                     coordinator.ObserveAutomaticModelFollow(body);

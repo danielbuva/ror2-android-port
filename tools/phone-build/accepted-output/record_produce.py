@@ -939,7 +939,7 @@ def controller_opposed_angles(body, root):
     return bytes(result)
 
 
-def controller_singleton_behaviours(body, root, order):
+def controller_behaviour_ranges(body, root, order):
     _, spans = fields(body, root)
     inverse = {old: new for new, old in enumerate(order)}
     start, end = spans[("m_StateMachineBehaviours",)]
@@ -958,11 +958,18 @@ def controller_singleton_behaviours(body, root, order):
         if path[:2] != prefix + ("m_StateMachineBehaviourRanges",) or path[-1] != "m_StartIndex":
             continue
         c, d = spans[path[:-1] + ("m_Count",)]
-        if b - a != 4 or d - c != 4 or struct.unpack_from("<I", body, c)[0] != 1:
-            raise ValueError("nonsingleton behaviour range")
+        if b - a != 4 or d - c != 4:
+            raise ValueError("invalid behaviour range extent")
         old = struct.unpack_from("<I", body, a)[0]
-        seen.append(old)
-        struct.pack_into("<I", out, a, inverse[old])
+        size = struct.unpack_from("<I", body, c)[0]
+        if old + size > n:
+            raise ValueError("behaviour range outside source indices")
+        mapped = [inverse[i] for i in range(old, old + size)]
+        if mapped and mapped != list(range(mapped[0], mapped[0] + size)):
+            raise ValueError("noncontiguous behaviour range")
+        seen.extend(range(old, old + size))
+        if mapped:
+            struct.pack_into("<I", out, a, mapped[0])
     if sorted(seen) != list(range(n)):
         raise ValueError("incomplete source behaviour ranges")
     return bytes(out)
@@ -1085,6 +1092,224 @@ def controller_clear_null_motion(body, root):
     return bytes(result)
 
 
+def controller_omit_synced_behaviours(body, root):
+    """The exporter leaves synced layers' behaviour overrides uninitialized."""
+    _, spans = fields(body, root)
+    layers = ("m_Controller", "m_LayerArray", "Array")
+    synced = {
+        int(path[3])
+        for path, (offset, _) in spans.items()
+        if path[:3] == layers and path[-1] == "m_StateMachineSynchronizedLayerIndex" and struct.unpack_from("<I", body, offset)[0]
+    }
+    if not synced:
+        return body
+    prefix = ("m_StateMachineBehaviourVectorDescription",)
+    ranges = prefix + ("m_StateMachineBehaviourRanges", "Array")
+    start, end = spans[ranges]
+    count = struct.unpack_from("<I", body, start)[0]
+    kept, indices = [], []
+    for index in range(count):
+        entry = ranges + (str(index),)
+        values = {path[-1]: (path, struct.unpack_from("<I", body, a)[0]) for path, (a, b) in spans.items() if path[:4] == entry and b - a == 4}
+        if values["m_LayerIndex"][1] in synced:
+            continue
+        a, b = spans[entry]
+        raw = bytearray(body[a:b])
+        path, old = values["m_StartIndex"]
+        size = values["m_Count"][1]
+        indices.extend(range(old, old + size))
+        kept.append((raw, spans[path][0] - a, old))
+    indices.sort()
+    positions = {old: new for new, old in enumerate(indices)}
+    for raw, offset, old in kept:
+        struct.pack_into("<I", raw, offset, positions[old])
+    ia, ib = spans[prefix + ("m_StateMachineBehaviourIndices",)]
+    n = struct.unpack_from("<I", body, ia)[0]
+    source_indices = struct.unpack_from("<" + "I" * n, body, ia + 4)
+    selected = sorted({source_indices[i] for i in indices})
+    inverse = {old: new for new, old in enumerate(selected)}
+    pa, pb = spans[("m_StateMachineBehaviours",)]
+    pointers = [body[pa + 4 + i * 12 : pa + 16 + i * 12] for i in selected]
+    changes = [
+        (start, end, struct.pack("<I", len(kept)) + b"".join(raw for raw, _, _ in kept)),
+        (ia, ib, struct.pack("<I", len(indices)) + b"".join(struct.pack("<I", inverse[source_indices[i]]) for i in indices)),
+        (pa, pb, struct.pack("<I", len(pointers)) + b"".join(pointers)),
+    ]
+    result = bytearray(body)
+    for a, b, replacement in sorted(changes, reverse=True):
+        result[a:b] = replacement
+    return bytes(result)
+
+
+def controller_tree_allocation(body, spans, tree):
+    """Count the editor's 64-bit debug-pointer controller blob allocations."""
+    cursor = 0
+
+    def allocate(size, alignment=8):
+        nonlocal cursor
+        cursor = (cursor + alignment - 1) & -alignment
+        cursor += size
+
+    def count(path):
+        return struct.unpack_from("<I", body, spans[path][0])[0]
+
+    def payload(path, stride=4, alignment=4):
+        size = count(path)
+        if size:
+            allocate(size * stride, alignment)
+        return size
+
+    nodes = tree + ("data", "m_NodeArray", "Array")
+    # OffsetPtr tree slot, tree header and the array of node pointer slots.
+    allocate(16)
+    allocate(24)
+    allocate(16 * count(nodes))
+    for index in range(count(nodes)):
+        node = nodes + (str(index), "data")
+        allocate(96)
+        payload(node + ("m_ChildIndices", "Array"))
+        thresholds = node + ("m_Blend1dData", "data", "m_ChildThresholdArray", "Array")
+        if count(thresholds):
+            allocate(24)
+            payload(thresholds)
+        blend = node + ("m_Blend2dData", "data")
+        arrays = [
+            blend + (name, "Array")
+            for name in (
+                "m_ChildPositionArray",
+                "m_ChildMagnitudeArray",
+                "m_ChildPairVectorArray",
+                "m_ChildPairAvgMagInvArray",
+                "m_ChildNeighborListArray",
+            )
+        ]
+        if any(count(path) for path in arrays):
+            allocate(120)
+            for path, stride in zip(arrays[:4], (8, 4, 8, 4)):
+                payload(path, stride)
+            neighbors = payload(arrays[4], 24, 8)
+            for neighbor in range(neighbors):
+                payload(arrays[4] + (str(neighbor), "m_NeighborArray", "Array"))
+        direct = node + ("m_BlendDirectData", "data", "m_ChildBlendEventIDArray", "Array")
+        if count(direct):
+            raise ValueError("unsupported synced override direct blend data")
+    return cursor
+
+
+def controller_omit_synced_overrides(body, root):
+    """Retain the pinned exporter's first motion tree and its clip occurrences."""
+    _, spans = fields(body, root)
+    result, changes, removed_clips, memory = bytearray(body), [], [], 0
+    for path, (start, end) in spans.items():
+        if len(path) != 11 or path[:3] != ("m_Controller", "m_StateMachineArray", "Array") or path[-2:] != ("m_BlendTreeConstantArray", "Array"):
+            continue
+        count = struct.unpack_from("<I", body, start)[0]
+        # StateConstantExtensions.GetBlendTree exports tree zero regardless of
+        # its original synchronized slot. Reimport makes it the base motion.
+        left, right = spans[path[:-2] + ("m_BlendTreeConstantIndexArray",)]
+        for offset in range(left + 4, right, 4):
+            struct.pack_into("<I", result, offset, 0 if count and offset == left + 4 else 0xFFFFFFFF)
+        if count <= 1:
+            continue
+        first_end = spans[path + ("0",)][1]
+        for index in range(1, count):
+            tree = path + (str(index),)
+            left, right = spans[tree]
+            memory += controller_tree_allocation(body, spans, tree)
+            for p, (offset, _) in spans.items():
+                if p[: len(tree)] != tree or p[-1] != "m_ClipID":
+                    continue
+                children = spans[p[:-1] + ("m_ChildIndices",)][0]
+                clip = struct.unpack_from("<I", body, offset)[0]
+                if not struct.unpack_from("<I", body, children)[0] and clip != 0xFFFFFFFF:
+                    removed_clips.append(clip)
+        changes.append((start, end, struct.pack("<I", 1) + body[start + 4 : first_end]))
+    start, end = spans[("m_AnimationClips",)]
+    count = struct.unpack_from("<I", body, start)[0]
+    clips = [body[start + 4 + i * 12 : start + 16 + i * 12] for i in range(count)]
+    retained = list(range(count))
+    # Exported clips contain one occurrence per motion. A synced override may
+    # share a clip with a retained motion; remove the final matching occurrence.
+    for clip in removed_clips:
+        match = next(i for i in reversed(retained) if clips[i] == clips[clip])
+        retained.remove(match)
+    inverse = {old: new for new, old in enumerate(retained)}
+    removed_ranges = [(a + len(replacement), b) for a, b, replacement in changes]
+    for path, (offset, _) in spans.items():
+        if path[0] != "m_Controller" or path[-1] != "m_ClipID" or any(a <= offset < b for a, b in removed_ranges):
+            continue
+        if struct.unpack_from("<I", body, spans[path[:-1] + ("m_ChildIndices",)][0])[0]:
+            continue
+        old = struct.unpack_from("<I", body, offset)[0]
+        if old != 0xFFFFFFFF:
+            representative = next(i for i in retained if clips[i] == clips[old])
+            struct.pack_into("<I", result, offset, inverse[representative])
+    # Copy retained trees after updating their leaf indices.
+    changes = [(a, b, replacement[:4] + result[a + 4 : a + len(replacement)]) for a, b, replacement in changes]
+    changes.append((start, end, struct.pack("<I", len(retained)) + b"".join(clips[i] for i in retained)))
+    offset = spans[("m_ControllerSize",)][0]
+    size = struct.unpack_from("<I", body, offset)[0]
+    struct.pack_into("<I", result, offset, size - memory)
+    for start, end, replacement in sorted(changes, reverse=True):
+        result[start:end] = replacement
+    return controller_omit_synced_behaviours(bytes(result), root)
+
+
+def controller_resolve_synced_layers(body, root):
+    """Resolve the exporter's machine-index-as-layer-index synchronized links."""
+    _, spans = fields(body, root)
+    result, changes, allocation = bytearray(body), [], 0
+    layers = ("m_Controller", "m_LayerArray", "Array")
+    machines = ("m_Controller", "m_StateMachineArray", "Array")
+
+    def read(path):
+        return struct.unpack_from("<I", body, spans[path][0])[0]
+
+    def write(path, value):
+        struct.pack_into("<I", result, spans[path][0], value)
+
+    count = read(layers)
+    links = [read(layers + (str(i), "data", "m_StateMachineIndex")) for i in range(count)]
+    synced = [read(layers + (str(i), "data", "m_StateMachineSynchronizedLayerIndex")) != 0 for i in range(count)]
+    groups = {}
+    for layer in range(count):
+        base, seen = layer, set()
+        while synced[base]:
+            if base in seen or links[base] >= count:
+                raise ValueError("invalid exported synchronized layer chain")
+            seen.add(base)
+            base = links[base]
+        machine = links[base]
+        group = groups.setdefault(machine, [])
+        write(layers + (str(layer), "data", "m_StateMachineIndex"), machine)
+        write(layers + (str(layer), "data", "m_StateMachineSynchronizedLayerIndex"), len(group))
+        group.append(layer)
+    for machine, group in groups.items():
+        prefix = machines + (str(machine), "data")
+        slots = len(group)
+        write(prefix + ("m_SynchronizedLayerCount",), slots)
+        states = prefix + ("m_StateConstantArray", "Array")
+        for state in range(read(states)):
+            path = states + (str(state), "data", "m_BlendTreeConstantIndexArray")
+            left, right = spans[path]
+            old = read(path)
+            indices = list(struct.unpack_from("<" + "I" * old, body, left + 4))
+            # Run after synced override omission: only the base motion remains.
+            if not indices or any(index != 0xFFFFFFFF for index in indices[1:]):
+                raise ValueError("synchronized layer resolution requires omitted motion overrides")
+            replacement = struct.pack("<I", slots) + struct.pack("<I", indices[0]) + struct.pack("<I", 0xFFFFFFFF) * (slots - 1)
+            changes.append((left, right, replacement))
+            # Exact editor BlobWrite starts this payload at an 8-byte boundary.
+            # Transition pointer blocks/bodies round to 8; condition bodies are
+            # 16 bytes. uint slots use 4 bytes; the next allocation aligns to 8.
+            allocation += ((4 * slots + 7) & ~7) - ((4 * old + 7) & ~7)
+    size = ("m_ControllerSize",)
+    write(size, read(size) + allocation)
+    for left, right, replacement in sorted(changes, reverse=True):
+        result[left:right] = replacement
+    return bytes(result)
+
+
 def controller_clear_skeleton_masks(body, root):
     """Apply the pinned exporter's omitted layer masks and native allocation size."""
     _, spans = fields(body, root)
@@ -1105,6 +1330,12 @@ def controller_clear_skeleton_masks(body, root):
     if end - offset != 4 or size < memory:
         raise ValueError("original controller allocation size drift")
     result = bytearray(body)
+    # Exact-editor BuildAsset uses FullBodyMask for every null layer mask.
+    # The pinned exporter omits AvatarMask references for all recreated layers.
+    for path, (start, end) in spans.items():
+        if len(path) == 7 and path[:3] == ("m_Controller", "m_LayerArray", "Array") and path[4:6] == ("data", "m_BodyMask"):
+            word = {"word0": 0xFFFFFFFF, "word1": 0xFFFFFFFF, "word2": (1 << 19) - 1}[path[-1]]
+            struct.pack_into("<I", result, start, word)
     struct.pack_into("<I", result, offset, size - memory)
     for start, end in sorted(removals, reverse=True):
         result[start:end] = bytes(4)
@@ -1134,6 +1365,24 @@ def director_exposed_names(body, root):
         key = struct.pack("<I", len(encoded)) + encoded
         entries.append((signed, key + bytes(-len(key) % 4) + body[pointer:right]))
     return body[:start] + struct.pack("<I", count) + b"".join(row for _, row in sorted(entries, key=lambda row: row[0])) + body[end:]
+
+
+def control_exposed_name_default(body, root):
+    """Import the managed YAML PropertyName mapping as the native default.
+
+    The exact-editor authored scalar/mapping fixture establishes this import
+    behavior independently of accepted game records. Other fields stay original.
+    """
+    _, located = fields(body, root)
+    start, end = located[("sourceGameObject", "exposedName")]
+    length = struct.unpack_from("<I", body, start)[0]
+    text = body[start + 4 : start + 4 + length].decode("utf-8")
+    value = int(text)
+    if str(value) != text or not -(2**31) <= value < 2**31 or end != (start + 4 + length + 3) // 4 * 4:
+        raise ValueError("original PropertyName is not an exported signed integer")
+    result = body[:start] + struct.pack("<I", 1) + b"0\0\0\0" + body[end:]
+    fields(result, root)
+    return result
 
 
 def director_unbound_tracks(body, root, selected):
@@ -1171,13 +1420,104 @@ def director_unbound_tracks(body, root, selected):
     return result
 
 
-def transform_generic(body, class_id, selected, root=None, read_clip=None, source_type=None):
+def expanding_wave_scale(body, root, selected, read_record):
+    """Project the source callback's endpoint distance, retaining other native fields."""
+
+    def record(name, class_id):
+        selector, raw, typ = read_record(selected[name])
+        if typ["class_id"] != class_id:
+            raise ValueError("expanding wave source class differs")
+        schema = SCHEMA.type_tree(io.BytesIO(typ["tree"]))
+        spans = fields(raw, schema)[1]
+        spans = {
+            tuple({"#299": "m_Curve", "#374": "m_GameObject", "#490": "m_Script"}.get(part, part) for part in path): extent for path, extent in spans.items()
+        }
+        return selector, raw, spans
+
+    def value(raw, locations, path, fmt):
+        start, end = locations[tuple(path.split("/"))]
+        if end - start != struct.calcsize(fmt):
+            raise ValueError("expanding wave field extent differs")
+        values = struct.unpack_from(fmt, raw, start)
+        return values[0] if len(values) == 1 else values
+
+    def ptr(raw, locations, path):
+        return value(raw, locations, path, "<iq")
+
+    def pointers(raw, locations, name):
+        start, end = locations[(name, "Array")]
+        count = struct.unpack_from("<I", raw, start)[0]
+        if end - start != 4 + 12 * count:
+            raise ValueError("expanding wave pointer array extent differs")
+        return [struct.unpack_from("<iq", raw, start + 4 + 12 * index) for index in range(count)]
+
+    own = {tuple("m_GameObject" if part == "#374" else part for part in path): extent for path, extent in fields(body, root)[1].items()}
+    callback, cb, cf = record("callback", 114)
+    script, sb, _ = record("script", 115)
+    base, bb, bf = record("base", 4)
+    parent, pb, pf = record("parent", 4)
+    names = O.script_fields(sb)[1]
+    if names[:2] not in (("ExpandingWaveProjectile", "RoR2.Projectile"), ("ExpandingWaveProjectileGhostController", "RoR2.Projectile")):
+        raise ValueError("expanding wave callback script differs")
+    if ptr(cb, cf, "m_Script") != (1, script["path_id"]) or ptr(cb, cf, "m_GameObject") != ptr(bb, bf, "m_GameObject"):
+        raise ValueError("expanding wave callback ownership differs")
+    ghost = names[0].endswith("GhostController")
+    if ptr(cb, cf, "root" if ghost else "hitBoxParent") != (0, parent["path_id"]):
+        raise ValueError("expanding wave parent relationship differs")
+    if ptr(pb, pf, "m_Father") != (0, base["path_id"]) or ptr(body, own, "m_Father") != (0, parent["path_id"]):
+        raise ValueError("expanding wave hierarchy differs")
+    if (0, selected["source_transform"]) not in pointers(pb, pf, "m_Children"):
+        raise ValueError("expanding wave reciprocal child missing")
+    owner = ptr(body, own, "m_GameObject")
+    if ghost:
+        admitted = owner in pointers(cb, cf, "ghostSegments")
+    else:
+        group, gb, gf = record("group", 114)
+        hitbox, hb, hf = record("hitbox", 114)
+        admitted = (
+            ptr(gb, gf, "m_GameObject") == ptr(cb, cf, "m_GameObject")
+            and (0, hitbox["path_id"]) in pointers(gb, gf, "hitBoxes")
+            and ptr(hb, hf, "m_GameObject") == owner
+        )
+    if not admitted:
+        raise ValueError("expanding wave segment membership differs")
+    if ptr(bb, bf, "m_Father") != (0, 0):
+        raise ValueError("expanding wave base must be a prefab root")
+    for axis, expected in zip("xyzw", (0, 0, 0, 1)):
+        if value(bb, bf, "m_LocalRotation/" + axis, "<f") != expected:
+            raise ValueError("expanding wave base rotation differs")
+    for axis in "xyz":
+        if value(bb, bf, "m_LocalScale/" + axis, "<f") != 1:
+            raise ValueError("expanding wave base scale differs")
+    keys = sorted(int(path[3]) for path in cf if path[:3] == ("sizeCurve", "m_Curve", "Array") and len(path) == 4 and path[3].isdigit())
+    endpoint = "sizeCurve/m_Curve/Array/" + str(keys[-1])
+    if value(cb, cf, endpoint + "/time", "<f") != 1:
+        raise ValueError("expanding wave curve endpoint differs")
+    f32 = lambda number: struct.unpack("<f", struct.pack("<f", number))[0]
+    radius = f32(value(cb, cf, "radius", "<f") * value(cb, cf, endpoint + "/value", "<f"))
+    segments = value(cb, cf, "segments", "<i")
+    angle = f32(f32(f32(math.pi) * 2) * f32(1 / segments))
+    position = [value(bb, bf, "m_LocalPosition/" + axis, "<f") for axis in "xyz"]
+    first = [f32(position[0] + radius), position[1], position[2]]
+    second = [f32(position[0] + f32(f32(math.cos(angle)) * radius)), position[1], f32(position[2] + f32(f32(math.sin(angle)) * radius))]
+    delta = [f32(a - b) for a, b in zip(first, second)]
+    distance = f32(math.sqrt(f32(f32(f32(delta[0] * delta[0]) + f32(delta[1] * delta[1])) + f32(delta[2] * delta[2]))))
+    for axis, source_axis in (("y", "y"), ("z", "x")):
+        if value(body, own, "m_LocalScale/" + axis, "<f") != value(cb, cf, "hurtboxSize/" + source_axis, "<f"):
+            raise ValueError("expanding wave retained scale differs")
+    result = bytearray(body)
+    struct.pack_into("<f", result, own[("m_LocalScale", "x")][0], distance)
+    return bytes(result)
+
+
+def transform_generic(body, class_id, selected, root=None, read_clip=None, source_type=None, material_keywords=None, read_record=None):
     if set(selected) - {
         "references",
         "demote_keywords",
         "keyword_policy",
         "strip_compute_programs",
         "director_exposed_names",
+        "control_exposed_name_default",
         "director_unbound_tracks",
         "controller_clip_order",
         "controller_loop_states",
@@ -1187,14 +1527,23 @@ def transform_generic(body, class_id, selected, root=None, read_clip=None, sourc
         "controller_clear_skeleton_masks",
         "controller_state_order",
         "controller_clear_null_motion",
+        "controller_omit_synced_overrides",
+        "controller_resolve_synced_layers",
         "canonical",
         "importer_guid",
         "crop_rectangle_offset",
         "normalize_exported_prefab_name",
         "append_components",
         "remove_components",
+        "inactive_scene_object",
+        "empty_mesh_renderer",
+        "expanding_wave_scale",
     } or (selected.get("demote_keywords") and class_id != 21):
         raise ValueError("unknown generic object operation")
+    if "expanding_wave_scale" in selected:
+        if class_id != 4 or root is None or read_record is None:
+            raise ValueError("expanding wave projection requires original Transform and callback reader")
+        body = expanding_wave_scale(body, root, selected["expanding_wave_scale"], read_record)
     if "remove_components" in selected:
         if class_id != 1:
             raise ValueError("component omissions require original GameObject")
@@ -1207,9 +1556,19 @@ def transform_generic(body, class_id, selected, root=None, read_clip=None, sourc
         if class_id != 1:
             raise ValueError("component append requires original GameObject")
         body = O.append_components(body, selected["append_components"])
+    if "inactive_scene_object" in selected:
+        if class_id != 1:
+            raise ValueError("activation policy requires original GameObject")
+        body = O.deactivate_named_gameobject(body, selected["inactive_scene_object"])
+    if "empty_mesh_renderer" in selected:
+        if class_id != 23 or selected["empty_mesh_renderer"] is not True or source_type is None:
+            raise ValueError("empty renderer projection requires original MeshRenderer schema")
+        body = O.empty_mesh_renderer(body, source_type["tree"])
     if "keyword_policy" in selected:
-        if class_id != 21 or selected["keyword_policy"] not in ("dummy-shader-demote-valid", "dummy-shader-sort-invalid"):
-            raise ValueError("keyword policy requires original Material and named dummy import")
+        if class_id != 21 or selected["keyword_policy"] not in ("dummy-shader-demote-valid", "dummy-shader-sort-invalid", "sdk-fallback-sort-invalid"):
+            raise ValueError("keyword policy requires original Material and named shader import")
+        if selected["keyword_policy"] == "sdk-fallback-sort-invalid" and material_keywords is None:
+            raise ValueError("fallback keyword policy requires checked SDK declarations")
     if "strip_compute_programs" in selected:
         if selected["strip_compute_programs"] is not True or class_id != 72 or source_type is None:
             raise ValueError("compute projection requires original ComputeShader schema")
@@ -1220,6 +1579,10 @@ def transform_generic(body, class_id, selected, root=None, read_clip=None, sourc
         if selected["director_exposed_names"] is not True or class_id != 320 or root is None:
             raise ValueError("exposed-name import requires original PlayableDirector schema")
         body = director_exposed_names(body, root)
+    if "control_exposed_name_default" in selected:
+        if selected["control_exposed_name_default"] is not True or class_id != 114 or root is None:
+            raise ValueError("control exposed-name import requires original MonoBehaviour schema")
+        body = control_exposed_name_default(body, root)
     if "controller_clear_skeleton_masks" in selected:
         if selected["controller_clear_skeleton_masks"] is not True:
             raise ValueError("unqualified controller skeleton mask policy")
@@ -1230,6 +1593,14 @@ def transform_generic(body, class_id, selected, root=None, read_clip=None, sourc
         if selected["controller_clear_null_motion"] is not True:
             raise ValueError("unqualified controller null-motion policy")
         body = controller_clear_null_motion(body, root)
+    if "controller_omit_synced_overrides" in selected:
+        if selected["controller_omit_synced_overrides"] is not True:
+            raise ValueError("unqualified controller synced-motion policy")
+        body = controller_omit_synced_overrides(body, root)
+    if "controller_resolve_synced_layers" in selected:
+        if selected["controller_resolve_synced_layers"] is not True:
+            raise ValueError("unqualified controller synchronized layer policy")
+        body = controller_resolve_synced_layers(body, root)
     if "controller_loop_states" in selected:
         body = controller_loop_states(body, root, selected["controller_loop_states"], read_clip)
     if "controller_clip_order" in selected:
@@ -1245,7 +1616,7 @@ def transform_generic(body, class_id, selected, root=None, read_clip=None, sourc
     if "controller_tos" in selected:
         body = controller_tos(body, root, selected["controller_tos"])
     if "controller_behaviour_order" in selected:
-        body = controller_singleton_behaviours(body, root, selected["controller_behaviour_order"])
+        body = controller_behaviour_ranges(body, root, selected["controller_behaviour_order"])
     if "importer_guid" in selected or "crop_rectangle_offset" in selected:
         if class_id != 213 or "importer_guid" not in selected:
             raise ValueError("Sprite import operations require an original Sprite and importer GUID")
@@ -1259,7 +1630,11 @@ def transform_generic(body, class_id, selected, root=None, read_clip=None, sourc
             raise ValueError("unbound tracks require original PlayableDirector schema")
         result = director_unbound_tracks(result, root, selected["director_unbound_tracks"])
     if selected.get("demote_keywords") or "keyword_policy" in selected:
-        return O.demote_material_keywords(result, sort_invalid=selected.get("keyword_policy") == "dummy-shader-sort-invalid")
+        return O.demote_material_keywords(
+            result,
+            sort_invalid=selected.get("keyword_policy") in ("dummy-shader-sort-invalid", "sdk-fallback-sort-invalid"),
+            valid_keywords=material_keywords if selected.get("keyword_policy") == "sdk-fallback-sort-invalid" else (),
+        )
     return result
 
 
@@ -1279,7 +1654,7 @@ def profile_bundles(path):
                 yield source
     else:
         profile = json.loads(path.read_text())
-        if set(profile) - {"sdk", "managed"} != {"input_id", "bundles"} or profile["input_id"] != M.INPUT_ID:
+        if set(profile) - {"sdk", "managed", "material_keyword_sdk"} != {"input_id", "bundles"} or profile["input_id"] != M.INPUT_ID:
             raise ValueError("unknown object-record input")
         yield from profile["bundles"]
 
@@ -1347,27 +1722,39 @@ def produce(profile_path, profile_sha256, pc, output, sdk=None):
             if typ["class_id"] != 114:
                 raise ValueError("SDK script base is not MonoBehaviour")
             sdk_tree = typ["tree"]
+        material_keywords, keyword_sdk_path = None, None
+        if not str(profile_path).endswith(".jsonl.gz") and "material_keyword_sdk" in profile:
+            selected_sdk = profile["material_keyword_sdk"]
+            if sdk is None:
+                raise ValueError("fallback material keywords require pinned owner SDK")
+            keyword_sdk_path = M.safe_input(sdk.resolve(strict=True), "Resources/unity_builtin_extra")
+            if output.is_relative_to(sdk.resolve()):
+                raise ValueError("SDK material keyword output overlap")
+            shader = module("shader_sdk").sdk_source(sdk, selected_sdk["path_id"], selected_sdk["sha256"])
+            if shader["m_ParsedForm"]["m_Name"] != selected_sdk["name"]:
+                raise ValueError("SDK material keyword shader identity differs")
+            material_keywords = set(module("shader_prefab").keyword_registry(shader, ([], []))[0])
         identity_owner = None
         scripts, script_inputs = {}, {}
 
-        def original_script(selected):
+        def original_record(selected):
             key = selected["bundle"], selected["member"], selected["path_id"], selected["sha256"]
             if key not in scripts:
                 path = M.safe_input(pc, selected["bundle"])
                 if path not in script_inputs:
                     before = path.stat()
                     if B.sha(path) != selected["bundle_sha256"]:
-                        raise ValueError("original managed script bundle drift")
+                        raise ValueError("original record bundle drift")
                     script_inputs[path] = before.st_size, before.st_mtime_ns, selected["bundle_sha256"]
                 if script_inputs[path][2] != selected["bundle_sha256"]:
-                    raise ValueError("original managed script bundle pin differs")
+                    raise ValueError("original record bundle pin differs")
                 with O.source_member(path, selected["member"]) as member:
                     metadata = W.read_serialized(member)
                     obj = next(row for row in metadata["objects"] if row["path_id"] == selected["path_id"])
                     member.seek(metadata["data_offset"] + obj["offset"])
                     body = B.exact(member, obj["bytes"])
                 if hashlib.sha256(body).hexdigest() != selected["sha256"]:
-                    raise ValueError("original managed script body drift")
+                    raise ValueError("original record body drift")
                 scripts[key] = selected, body, metadata["types"][obj["type_id"]]
             return scripts[key]
 
@@ -1426,6 +1813,7 @@ def produce(profile_path, profile_sha256, pc, output, sdk=None):
                             65,
                             72,
                             74,
+                            86,
                             91,
                             95,
                             96,
@@ -1434,6 +1822,7 @@ def produce(profile_path, profile_sha256, pc, output, sdk=None):
                             114,
                             119,
                             120,
+                            128,
                             135,
                             136,
                             137,
@@ -1449,6 +1838,9 @@ def produce(profile_path, profile_sha256, pc, output, sdk=None):
                             223,
                             224,
                             225,
+                            226,
+                            227,
+                            228,
                             320,
                             330,
                         ):
@@ -1457,6 +1849,8 @@ def produce(profile_path, profile_sha256, pc, output, sdk=None):
                         body = B.exact(member, obj["bytes"])
                         if hashlib.sha256(body).hexdigest() != selected["sha256"]:
                             raise ValueError("original object-record body drift")
+                        if "missing_script_base" in selected:
+                            body, typ = O.missing_script_base(body, typ, selected["missing_script_base"], lambda row: original_record(row)[2])
                         if "preserve_original_script_hash" in selected:
                             if selected["preserve_original_script_hash"] is not True or "properties_hash" not in selected:
                                 raise ValueError("original managed hash requires explicit script properties")
@@ -1476,7 +1870,7 @@ def produce(profile_path, profile_sha256, pc, output, sdk=None):
                                 typ,
                                 metadata,
                                 selected_member["name"],
-                                original_script(selected["properties_hash"]["script"]),
+                                original_record(selected["properties_hash"]["script"]),
                                 sdk_tree,
                                 identity_owner,
                                 preserve_original=selected.get("preserve_original_script_hash", False),
@@ -1486,7 +1880,7 @@ def produce(profile_path, profile_sha256, pc, output, sdk=None):
                                     raise ValueError("current script projection requires pinned original assemblies")
                                 if runtime_fields is None:
                                     runtime_fields = identity_owner.OriginalScriptFields(pc, profile["managed"])
-                                script_body = original_script(selected["properties_hash"]["script"])[1]
+                                script_body = original_record(selected["properties_hash"]["script"])[1]
                                 body, tree, removed = O.project_current_script_fields(
                                     body, typ["tree"], runtime_fields.names(script_body), sdk_tree, identity_owner
                                 )
@@ -1495,7 +1889,10 @@ def produce(profile_path, profile_sha256, pc, output, sdk=None):
                                 receipt.setdefault("pruned_script_fields", {})[str(obj["path_id"])] = removed
                             typ = {**typ, "hash": value}
                         root = None
-                        if typ["class_id"] in (74, 91, 320):
+                        if typ["class_id"] in (74, 91, 320) or any(
+                            any(key in target.get("transform", {}) for key in ("control_exposed_name_default", "expanding_wave_scale"))
+                            for target in selected["outputs"]
+                        ):
                             if obj["type_id"] not in trees:
                                 trees[obj["type_id"]] = SCHEMA.type_tree(io.BytesIO(typ["tree"]))
                             root = trees[obj["type_id"]]
@@ -1505,7 +1902,9 @@ def produce(profile_path, profile_sha256, pc, output, sdk=None):
                             if typ["class_id"] == 74:
                                 result = transform(body, root, operations)
                             else:
-                                result = transform_generic(body, typ["class_id"], operations, root, read_controller_clip, typ)
+                                result = transform_generic(
+                                    body, typ["class_id"], operations, root, read_controller_clip, typ, material_keywords, original_record
+                                )
                             digest = hashlib.sha256(result).hexdigest()
                             if digest != target["sha256"] or len(result) != target["bytes"]:
                                 raise ValueError("produced object record differs from accepted hash")
@@ -1534,6 +1933,8 @@ def produce(profile_path, profile_sha256, pc, output, sdk=None):
                 raise ValueError("original managed script changed during production")
         if sdk_path is not None and B.sha(sdk_path) != profile["sdk"]["sha256"]:
             raise ValueError("SDK script metadata changed during production")
+        if keyword_sdk_path is not None and B.sha(keyword_sdk_path) != profile["material_keyword_sdk"]["sha256"]:
+            raise ValueError("SDK material keyword declarations changed during production")
         if runtime_fields is not None:
             runtime_fields.verify()
             receipt["managed_field_inputs"] = dict(runtime_fields.pins)

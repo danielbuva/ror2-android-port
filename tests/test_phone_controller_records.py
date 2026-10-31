@@ -41,6 +41,25 @@ def tos_entry(value):
 
 
 class ControllerRecords(unittest.TestCase):
+    def test_exported_sync_chain_resolves_groups_and_aligned_index_allocations(self):
+        state = F.node("data", children=[F.node("data", children=[F.array("m_BlendTreeConstantIndexArray", integer("data"))])])
+        machine = F.node("data", children=[F.node("data", children=[integer("m_SynchronizedLayerCount"), F.array("m_StateConstantArray", state)])])
+        layer = F.node("data", children=[F.node("data", children=[integer("m_StateMachineIndex"), integer("m_StateMachineSynchronizedLayerIndex")])])
+        schema = F.node(
+            "Base",
+            children=[integer("m_ControllerSize"), F.node("m_Controller", children=[F.array("m_StateMachineArray", machine), F.array("m_LayerArray", layer)])],
+        )
+
+        def group(slots, states):
+            indices = vector([bytes(4)] + [struct.pack("<I", 0xFFFFFFFF)] * (slots - 1))
+            return struct.pack("<I", slots) + vector([indices] * states)
+
+        source_layers = vector([struct.pack("<II", *row) for row in ((0, 0), (1, 0), (1, 1), (2, 0), (2, 1))])
+        expected_layers = vector([struct.pack("<II", *row) for row in ((0, 0), (1, 0), (1, 1), (2, 0), (1, 2))])
+        body = struct.pack("<I", 400) + vector([group(1, 1), group(2, 3), group(2, 5)]) + source_layers
+        expected = struct.pack("<I", 424) + vector([group(1, 1), group(3, 3), group(1, 5)]) + expected_layers
+        self.assertEqual(A.transform_generic(body, 91, {"controller_resolve_synced_layers": True}, schema), expected)
+
     def test_null_motion_retains_state_and_replaces_the_removed_tree_index(self):
         leaf = F.node(
             "data",
@@ -65,6 +84,140 @@ class ControllerRecords(unittest.TestCase):
         stream.size = len(stream.getvalue())
         root = A.SCHEMA.type_tree(io.BytesIO(A.W.read_serialized(stream)["types"][0]["tree"]))
         self.assertEqual(A.transform_generic(body, 91, {"controller_clear_null_motion": True}, root), expected)
+
+    def test_populated_tree_blob_counts_nested_arrays_and_alignment(self):
+        tree = ("tree",)
+
+        def allocation(node_counts):
+            body, spans = bytearray(), {}
+
+            def value(path, count):
+                spans[path] = (len(body), len(body) + 4)
+                body.extend(struct.pack("<I", count))
+
+            nodes = tree + ("data", "m_NodeArray", "Array")
+            value(nodes, len(node_counts))
+            for index, counts in enumerate(node_counts):
+                node = nodes + (str(index), "data")
+                value(node + ("m_ChildIndices", "Array"), counts.get("children", 0))
+                value(node + ("m_Blend1dData", "data", "m_ChildThresholdArray", "Array"), counts.get("thresholds", 0))
+                blend = node + ("m_Blend2dData", "data")
+                for name, count in zip(
+                    ("m_ChildPositionArray", "m_ChildMagnitudeArray", "m_ChildPairVectorArray", "m_ChildPairAvgMagInvArray"),
+                    counts.get("two_d", (0, 0, 0, 0)),
+                ):
+                    value(blend + (name, "Array"), count)
+                neighbors = blend + ("m_ChildNeighborListArray", "Array")
+                value(neighbors, len(counts.get("neighbors", [])))
+                for neighbor, count in enumerate(counts.get("neighbors", [])):
+                    value(neighbors + (str(neighbor), "m_NeighborArray", "Array"), count)
+                value(node + ("m_BlendDirectData", "data", "m_ChildBlendEventIDArray", "Array"), 0)
+            return A.controller_tree_allocation(body, spans, tree)
+
+        self.assertEqual(allocation([{}]), 152)
+        self.assertEqual(allocation([{"children": 2, "thresholds": 2}, {}, {}]), 416)
+        # Odd child count pads before the 2D header; neighbor records have
+        # 24-byte native strides and nested uint payloads remain 4-aligned.
+        self.assertEqual(allocation([{"children": 3, "two_d": (3, 3, 9, 9), "neighbors": [1, 2, 3]}, {}]), 640)
+
+    def test_synced_override_omission_preserves_shared_clip_occurrences(self):
+        empty = lambda name: F.array(name, integer("data"))
+        leaf = F.node(
+            "data",
+            children=[
+                F.node(
+                    "data",
+                    children=[
+                        integer("m_BlendType"),
+                        integer("m_BlendEventID"),
+                        integer("m_BlendEventYID"),
+                        empty("m_ChildIndices"),
+                        F.node("m_Blend1dData", children=[F.node("data", children=[empty("m_ChildThresholdArray")])]),
+                        F.node(
+                            "m_Blend2dData",
+                            children=[
+                                F.node(
+                                    "data",
+                                    children=[
+                                        empty(name)
+                                        for name in (
+                                            "m_ChildPositionArray",
+                                            "m_ChildMagnitudeArray",
+                                            "m_ChildPairVectorArray",
+                                            "m_ChildPairAvgMagInvArray",
+                                            "m_ChildNeighborListArray",
+                                        )
+                                    ],
+                                )
+                            ],
+                        ),
+                        F.node(
+                            "m_BlendDirectData", children=[F.node("data", children=[empty("m_ChildBlendEventIDArray"), integer("m_NormalizedBlendValues")])]
+                        ),
+                        integer("m_ClipID"),
+                        integer("m_Duration"),
+                        integer("m_CycleOffset"),
+                        integer("m_Mirror"),
+                    ],
+                )
+            ],
+        )
+        tree = F.node("data", children=[F.node("data", children=[F.array("m_NodeArray", leaf)])])
+        state = F.node(
+            "data", children=[F.node("data", children=[F.array("m_BlendTreeConstantArray", tree), F.array("m_BlendTreeConstantIndexArray", integer("data"))])]
+        )
+        machine = F.node("data", children=[F.node("data", children=[F.array("m_StateConstantArray", state)])])
+        pointer = F.node("data", children=[integer("m_FileID"), F.node("m_PathID", 8)])
+        schema = F.node(
+            "Base",
+            children=[
+                integer("m_ControllerSize"),
+                F.node("m_Controller", children=[F.array("m_StateMachineArray", machine)]),
+                F.array("m_AnimationClips", pointer),
+            ],
+        )
+        motion = lambda clip: vector([bytes(48) + struct.pack("<IIII", clip, 0, 0, 0)])
+        state_body = vector([motion(0), motion(0)]) + vector([struct.pack("<I", i) for i in (0, 1)])
+        clips = [struct.pack("<iq", 0, i) for i in (11, 22, 11)]
+        body = struct.pack("<I", 1000) + vector([vector([state_body])]) + vector(clips)
+        expected_state = vector([motion(0)]) + vector([bytes(4), struct.pack("<I", 0xFFFFFFFF)])
+        expected = struct.pack("<I", 848) + vector([vector([expected_state])]) + vector(clips[:2])
+        self.assertEqual(A.transform_generic(body, 91, {"controller_omit_synced_overrides": True}, schema), expected)
+
+        # The exporter selects tree zero even when only a synchronized layer
+        # references it. Reimport places that motion in the base state slot.
+        source_state = vector([motion(0)]) + vector([struct.pack("<I", i) for i in (0xFFFFFFFF, 0)])
+        source = struct.pack("<I", 848) + vector([vector([source_state])]) + vector(clips[:2])
+        self.assertEqual(A.transform_generic(source, 91, {"controller_omit_synced_overrides": True}, schema), expected)
+
+    def test_synced_behaviour_omission_preserves_original_state_keys(self):
+        layer = F.node("data", children=[F.node("data", children=[integer("m_StateMachineSynchronizedLayerIndex")])])
+        key = F.node("key", children=[integer("m_StateID"), integer("m_LayerIndex")])
+        value = F.node("value", children=[integer("m_StartIndex"), integer("m_Count")])
+        entry = F.node("data", children=[key, value])
+        pointer = F.node("data", children=[integer("m_FileID"), F.node("m_PathID", 8)])
+        schema = F.node(
+            "Base",
+            children=[
+                F.node("m_Controller", children=[F.array("m_LayerArray", layer)]),
+                F.array("m_StateMachineBehaviours", pointer),
+                F.node(
+                    "m_StateMachineBehaviourVectorDescription",
+                    children=[
+                        F.array("m_StateMachineBehaviourIndices", integer("data")),
+                        F.array("m_StateMachineBehaviourRanges", entry),
+                    ],
+                ),
+                integer("opaque"),
+            ],
+        )
+        layers = vector([struct.pack("<I", i) for i in (0, 0, 1)])
+        pointers = [struct.pack("<iq", 0, i) for i in (11, 22, 33)]
+        ranges = [struct.pack("<IIII", *row) for row in ((73, 2, 2, 1), (59, 1, 1, 1), (41, 0, 0, 1))]
+        body = layers + vector(pointers) + vector([struct.pack("<I", i) for i in range(3)]) + vector(ranges) + struct.pack("<I", 97)
+        expected = layers + vector(pointers[:2]) + vector([bytes(4), struct.pack("<I", 1)])
+        expected += vector([struct.pack("<IIII", 59, 1, 1, 1), struct.pack("<IIII", 41, 0, 0, 1)]) + body[-4:]
+        self.assertEqual(A.controller_omit_synced_behaviours(body, schema), expected)
 
     def test_state_order_relocates_direct_destinations_and_preserves_selector_values(self):
         transition = F.node("data", children=[integer("m_DestinationState"), integer("retained")])
@@ -95,14 +248,22 @@ class ControllerRecords(unittest.TestCase):
     def test_exported_mask_omission_preserves_controller_fields_and_allocation_size(self):
         item = F.node("data", children=[integer("path_hash"), F.node("weight", 4, kind="float")])
         mask = F.node("m_SkeletonMask", children=[F.node("data", children=[F.array("m_Data", item)])])
-        layer = F.node("data", children=[F.node("data", children=[integer("retained"), mask])])
+        human = F.node("m_BodyMask", children=[integer("word0"), integer("word1"), integer("word2")])
+        layer = F.node("data", children=[F.node("data", children=[integer("retained"), human, mask])])
         schema = F.node(
             "Base",
             children=[integer("m_ControllerSize"), F.node("m_Controller", children=[F.array("m_LayerArray", layer)]), integer("tail")],
         )
         mask_body = vector([struct.pack("<If", 71, 0.25), struct.pack("<If", 89, 0.75)])
-        body = struct.pack("<I", 1000) + vector([struct.pack("<I", 17) + mask_body, struct.pack("<II", 29, 0)]) + struct.pack("<I", 0xAABBCCDD)
-        expected = struct.pack("<I", 960) + vector([struct.pack("<II", 17, 0), struct.pack("<II", 29, 0)]) + struct.pack("<I", 0xAABBCCDD)
+        full = struct.pack("<III", 0xFFFFFFFF, 0xFFFFFFFF, (1 << 19) - 1)
+        body = (
+            struct.pack("<I", 1000)
+            + vector([struct.pack("<I", 17) + bytes(12) + mask_body, struct.pack("<I", 29) + full + bytes(4)])
+            + struct.pack("<I", 0xAABBCCDD)
+        )
+        expected = (
+            struct.pack("<I", 960) + vector([struct.pack("<I", 17) + full + bytes(4), struct.pack("<I", 29) + full + bytes(4)]) + struct.pack("<I", 0xAABBCCDD)
+        )
         stream = io.BytesIO(C.serialized(body, schema, 91))
         stream.size = len(stream.getvalue())
         tree = A.W.read_serialized(stream)["types"][0]["tree"]
@@ -188,12 +349,37 @@ class ControllerRecords(unittest.TestCase):
             self.assertEqual(struct.unpack_from("<I", result, spans[path][0])[0], expected)
         self.assertEqual(result[-4:], body[-4:])
         with self.assertRaisesRegex(ValueError, "invalid behaviour permutation"):
-            A.controller_singleton_behaviours(body, schema, [0, 1, 2, 2])
+            A.controller_behaviour_ranges(body, schema, [0, 1, 2, 2])
         changed = bytearray(body)
         path = ("m_StateMachineBehaviourVectorDescription", "m_StateMachineBehaviourRanges", "Array", "0", "m_Count")
         struct.pack_into("<I", changed, spans[path][0], 2)
-        with self.assertRaisesRegex(ValueError, "nonsingleton"):
-            A.controller_singleton_behaviours(bytes(changed), schema, [0, 1, 3, 2])
+        with self.assertRaisesRegex(ValueError, "noncontiguous"):
+            A.controller_behaviour_ranges(bytes(changed), schema, [0, 1, 3, 2])
+
+    def test_behaviour_permutation_preserves_ordered_multi_and_empty_ranges(self):
+        pointer = F.node("data", children=[integer("m_FileID"), F.node("m_PathID", 8)])
+        state = F.node("data", children=[integer("m_StartIndex"), integer("m_Count")])
+        schema = F.node(
+            "Base",
+            children=[
+                F.array("m_StateMachineBehaviours", pointer),
+                F.node(
+                    "m_StateMachineBehaviourVectorDescription",
+                    children=[
+                        F.array("m_StateMachineBehaviourIndices", integer("data")),
+                        F.array("m_StateMachineBehaviourRanges", state),
+                    ],
+                ),
+            ],
+        )
+        body = vector([struct.pack("<iq", 1, i) for i in (11, 22, 33, 44)])
+        indices = vector([struct.pack("<I", i) for i in range(4)])
+        body += indices + vector([struct.pack("<II", start, count) for start, count in ((0, 2), (4, 0), (2, 2))])
+        expected = vector([struct.pack("<iq", 1, i) for i in (33, 44, 11, 22)])
+        expected += indices + vector([struct.pack("<II", start, count) for start, count in ((2, 2), (4, 0), (0, 2))])
+        self.assertEqual(A.transform_generic(body, 91, {"controller_behaviour_order": [2, 3, 0, 1]}, schema), expected)
+        with self.assertRaisesRegex(ValueError, "noncontiguous"):
+            A.controller_behaviour_ranges(body, schema, [1, 0, 2, 3])
 
     def test_original_clip_dependencies_compile_mixed_state_loop_flags(self):
         leaf = F.node("data", children=[F.array("m_ChildIndices", integer("data")), integer("m_ClipID")])

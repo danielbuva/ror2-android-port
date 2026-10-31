@@ -385,6 +385,14 @@ stop permission. No platform implementation, player hook, grant or permission
 change is added. Actual retained pending bytes plus an unchanged primary are
 required; observer dispatch alone never qualifies a transaction interruption.
 
+The later menu-4 native capture also reaches completed player stats through
+`OverlapAttack.discoveredHurtboxes`. Accepted input's `Fire` clears this scratch
+list before discovery and leaves its last results afterwards. The same pinned
+UnityExplorer inspection technique and Unity snapshot graph distinguish destroyed
+wrappers from native-live targets. At the existing idle teardown boundary, remove
+only destroyed entries; preserve live targets, order, capacity and attack behavior.
+This closes a captured retaining path, not an ordinary-play memory-bound gate.
+
 ### Thor secondary-panel control
 
 The public [ThorBottomScreen source](https://github.com/slushiimusic/ThorBottomScreen/tree/ba9f5febcb868a7c0313ac70e0cd2669948fe59f),

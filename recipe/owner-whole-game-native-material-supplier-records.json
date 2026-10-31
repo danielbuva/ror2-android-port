@@ -1,0 +1,373 @@
+{
+  "input_id": "6af7ed94619fe1b4346974b4486afa03a8d1625a7820e92da0ff74d57208fe88",
+  "bundles": [
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-base-common-props_assets_all_3ea3b6fea6bb8b8eb05318f2b584ac4c.bundle",
+      "sha256": "493e505fe58ad0dd5d5a4a4bbd39eec37c957c4e3ede5544194fd8f957a637c9",
+      "members": [
+        {
+          "name": "CAB-f38cfefcd1c4a090600dbd2f3c76efd6",
+          "objects": [
+            {
+              "path_id": -9178296135181138444,
+              "class_id": 23,
+              "sha256": "06b0f1722a5d4500407b6e374ee1d7d0fba7345b58f062e73a4ac64e35da729d",
+              "outputs": [
+                {
+                  "bundle": "whole-game-content",
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "path_id": 2919812458066653438,
+                  "bytes": 180,
+                  "sha256": "a7965e1d5c1b22a6b53c75af9b6f1e37840db379876d34ed00cd485525927c1f",
+                  "transform": {
+                    "references": [
+                      {
+                        "offset": 0,
+                        "from": [
+                          0,
+                          8520094632853112308
+                        ],
+                        "to": [
+                          0,
+                          733305162027397879
+                        ]
+                      },
+                      {
+                        "offset": 72,
+                        "from": [
+                          0,
+                          6055287668533768570
+                        ],
+                        "to": [
+                          0,
+                          -3474228190484102350
+                        ]
+                      },
+                      {
+                        "offset": 84,
+                        "from": [
+                          0,
+                          1726448513145146699
+                        ],
+                        "to": [
+                          0,
+                          -62085217270306386
+                        ]
+                      },
+                      {
+                        "offset": 96,
+                        "from": [
+                          0,
+                          6124727762154399915
+                        ],
+                        "to": [
+                          0,
+                          -1383449533067123514
+                        ]
+                      }
+                    ]
+                  },
+                  "native_type_hash": "e07b8fbbe1e7b8f953df1f094e626daa"
+                }
+              ]
+            },
+            {
+              "path_id": -7743056514387683937,
+              "class_id": 21,
+              "sha256": "cdd85797ebd0d5284e02b3b9b0a4d9bc323451546f827fb57e7d653a82a842b8",
+              "outputs": [
+                {
+                  "bundle": "whole-game-content",
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "path_id": -603403340149530859,
+                  "bytes": 572,
+                  "sha256": "4c21c30aa75315afd8ee61bcee7b3d610ca987bdbfee59155106d03e7b28f0e6",
+                  "transform": {
+                    "references": [
+                      {
+                        "offset": 16,
+                        "from": [
+                          4,
+                          -8684109817920462965
+                        ],
+                        "to": [
+                          1,
+                          7127148501076925575
+                        ]
+                      },
+                      {
+                        "offset": 260,
+                        "from": [
+                          0,
+                          -4602671683119621185
+                        ],
+                        "to": [
+                          0,
+                          4069509202676086901
+                        ]
+                      }
+                    ],
+                    "keyword_policy": "dummy-shader-demote-valid"
+                  },
+                  "native_type_hash": "c60098ac66a28b50aa0580db11bf018c"
+                }
+              ]
+            },
+            {
+              "path_id": -4593115093151773508,
+              "class_id": 21,
+              "sha256": "248b134217fe21ba603c997f34807ec676a3370b382b5724e85ff17642b953a3",
+              "outputs": [
+                {
+                  "bundle": "whole-game-content",
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "path_id": 7701724059122898945,
+                  "bytes": 568,
+                  "sha256": "e4f908c5d17e8bf28d53a4861930678298e19d4132840cb9aa8dc8bca01503b2",
+                  "transform": {
+                    "references": [
+                      {
+                        "offset": 12,
+                        "from": [
+                          4,
+                          -8684109817920462965
+                        ],
+                        "to": [
+                          1,
+                          7127148501076925575
+                        ]
+                      },
+                      {
+                        "offset": 256,
+                        "from": [
+                          0,
+                          -4836754478622365371
+                        ],
+                        "to": [
+                          0,
+                          -1348470920599066110
+                        ]
+                      }
+                    ],
+                    "keyword_policy": "dummy-shader-demote-valid"
+                  },
+                  "native_type_hash": "c60098ac66a28b50aa0580db11bf018c"
+                }
+              ]
+            },
+            {
+              "path_id": 1726448513145146699,
+              "class_id": 21,
+              "sha256": "cdd85797ebd0d5284e02b3b9b0a4d9bc323451546f827fb57e7d653a82a842b8",
+              "outputs": [
+                {
+                  "bundle": "whole-game-content",
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "path_id": -62085217270306386,
+                  "bytes": 572,
+                  "sha256": "4c21c30aa75315afd8ee61bcee7b3d610ca987bdbfee59155106d03e7b28f0e6",
+                  "transform": {
+                    "references": [
+                      {
+                        "offset": 16,
+                        "from": [
+                          4,
+                          -8684109817920462965
+                        ],
+                        "to": [
+                          1,
+                          7127148501076925575
+                        ]
+                      },
+                      {
+                        "offset": 260,
+                        "from": [
+                          0,
+                          -4602671683119621185
+                        ],
+                        "to": [
+                          0,
+                          4069509202676086901
+                        ]
+                      }
+                    ],
+                    "keyword_policy": "dummy-shader-demote-valid"
+                  },
+                  "native_type_hash": "c60098ac66a28b50aa0580db11bf018c"
+                }
+              ]
+            },
+            {
+              "path_id": 6124727762154399915,
+              "class_id": 21,
+              "sha256": "248b134217fe21ba603c997f34807ec676a3370b382b5724e85ff17642b953a3",
+              "outputs": [
+                {
+                  "bundle": "whole-game-content",
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "path_id": -1383449533067123514,
+                  "bytes": 568,
+                  "sha256": "e4f908c5d17e8bf28d53a4861930678298e19d4132840cb9aa8dc8bca01503b2",
+                  "transform": {
+                    "references": [
+                      {
+                        "offset": 12,
+                        "from": [
+                          4,
+                          -8684109817920462965
+                        ],
+                        "to": [
+                          1,
+                          7127148501076925575
+                        ]
+                      },
+                      {
+                        "offset": 256,
+                        "from": [
+                          0,
+                          -4836754478622365371
+                        ],
+                        "to": [
+                          0,
+                          -1348470920599066110
+                        ]
+                      }
+                    ],
+                    "keyword_policy": "dummy-shader-demote-valid"
+                  },
+                  "native_type_hash": "c60098ac66a28b50aa0580db11bf018c"
+                }
+              ]
+            },
+            {
+              "path_id": 6132657271428482548,
+              "class_id": 23,
+              "sha256": "fbfcba2a1581833789e70fa95dcf1a06f24f3cffc9b1799e37bf4be5ae3c13c3",
+              "outputs": [
+                {
+                  "bundle": "whole-game-content",
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "path_id": -8497519572329777275,
+                  "bytes": 168,
+                  "sha256": "332c119e2555c8d30219fec692f7712d157e6619d096ae6c52e9049064df1404",
+                  "transform": {
+                    "references": [
+                      {
+                        "offset": 0,
+                        "from": [
+                          0,
+                          6221923846178801140
+                        ],
+                        "to": [
+                          0,
+                          4130983638061560772
+                        ]
+                      },
+                      {
+                        "offset": 72,
+                        "from": [
+                          0,
+                          -7743056514387683937
+                        ],
+                        "to": [
+                          0,
+                          -603403340149530859
+                        ]
+                      },
+                      {
+                        "offset": 84,
+                        "from": [
+                          0,
+                          -4593115093151773508
+                        ],
+                        "to": [
+                          0,
+                          7701724059122898945
+                        ]
+                      }
+                    ]
+                  },
+                  "native_type_hash": "e07b8fbbe1e7b8f953df1f094e626daa"
+                }
+              ]
+            },
+            {
+              "path_id": 6163040823875405300,
+              "class_id": 205,
+              "sha256": "dbf3a88850ef40b19af1218a4f03b96e95edb5069229e9c3906cd7f887a5089c",
+              "outputs": [
+                {
+                  "bundle": "whole-game-content",
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "path_id": -4040025428149417314,
+                  "bytes": 140,
+                  "sha256": "50673cefbfa54f6b0dfa3946b1d6cbd078d23ba0b7525168716b0119813ebefd",
+                  "transform": {
+                    "references": [
+                      {
+                        "offset": 0,
+                        "from": [
+                          0,
+                          -9117465425827330572
+                        ],
+                        "to": [
+                          0,
+                          -3502471154827029755
+                        ]
+                      },
+                      {
+                        "offset": 52,
+                        "from": [
+                          0,
+                          -8425326470056311308
+                        ],
+                        "to": [
+                          0,
+                          -8700957502126252828
+                        ]
+                      },
+                      {
+                        "offset": 76,
+                        "from": [
+                          0,
+                          -9178296135181138444
+                        ],
+                        "to": [
+                          0,
+                          2919812458066653438
+                        ]
+                      },
+                      {
+                        "offset": 100,
+                        "from": [
+                          0,
+                          6132657271428482548
+                        ],
+                        "to": [
+                          0,
+                          -8497519572329777275
+                        ]
+                      },
+                      {
+                        "offset": 124,
+                        "from": [
+                          0,
+                          -1234932529401690636
+                        ],
+                        "to": [
+                          0,
+                          -5982001901564787495
+                        ]
+                      }
+                    ]
+                  },
+                  "native_type_hash": "6871202292687103b690b487eb977834"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -263,10 +263,48 @@ class AnimationProducerTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "script identity"):
                 A.managed_record_hash(body, {**typ, "script_id": bytes(16)}, metadata, "source-component", script, b"sdk-schema", helper)
 
+    def test_missing_script_uses_complete_base_type_before_pointer_relocation(self):
+        body = struct.pack("<iqIiqI", 0, 11, 1, 1, 123, 0) + b"script fields"
+        donor = {"class_id": 114, "script_type": -1, "hash": bytes(16), "tree": b"base schema"}
+        policy = {"bytes": 32, "type_source": {"path_id": 17}}
+        made, typ = A.O.missing_script_base(body, {"class_id": 114}, policy, lambda row: donor)
+        self.assertEqual(typ, donor)
+        self.assertIsNot(typ, donor)
+        result = A.transform_generic(
+            made,
+            114,
+            {
+                "references": [
+                    {"offset": 0, "from": [0, 11], "to": [0, 99]},
+                    {"offset": 16, "from": [1, 123], "to": [0, 0]},
+                ]
+            },
+        )
+        self.assertEqual(result, struct.pack("<iqIiqI", 0, 99, 1, 0, 0, 0))
+
     def test_bounded_float_yaw_preserves_the_single_precision_library_rounding(self):
         self.assertEqual(struct.pack("<f", A.small_atan2f(0.000732421875, 1.25)).hex(), "9999193a")
         self.assertEqual(struct.pack("<f", A.small_atan2f(-0.000732421875, 1.25)).hex(), "999919ba")
         self.assertEqual(struct.pack("<f", A.small_atan2f(-0.0, 1.25)).hex(), "00000080")
+
+    def test_control_mapping_import_defaults_name_and_keeps_reference_and_state(self):
+        schema = F.node(
+            "Base",
+            children=[
+                F.node("prefix", 12, kind="PPtr<MonoScript>"),
+                F.node("sourceGameObject", children=[F.text("exposedName"), F.node("defaultValue", 12, kind="PPtr<GameObject>")]),
+                F.node("suffix", 4),
+            ],
+        )
+        pointer = struct.pack("<iq", 1, 123)
+        state = struct.pack("<iqI", 0, 456, 0x12345678)
+        source = pointer + F.vector(b"-123456789", 10) + state
+        policy = {"control_exposed_name_default": True, "references": [{"offset": 20, "from": [0, 456], "to": [0, 789]}]}
+        expected = pointer + F.vector(b"0", 1) + struct.pack("<iqI", 0, 789, 0x12345678)
+        self.assertEqual(A.transform_generic(source, 114, policy, schema), expected)
+        self.assertEqual(A.transform_generic(source, 114, {}, schema), source)
+        with self.assertRaisesRegex(ValueError, "MonoBehaviour"):
+            A.transform_generic(source, 320, policy, schema)
 
     def test_director_reimport_sorts_signed_keys_with_their_references(self):
         # Fixed CRC32 vectors cover signed ordering, alignment changes and null PPtrs.
@@ -543,6 +581,7 @@ class AnimationProducerTests(unittest.TestCase):
             54,
             64,
             65,
+            86,
             91,
             95,
             96,
@@ -551,6 +590,7 @@ class AnimationProducerTests(unittest.TestCase):
             114,
             119,
             120,
+            128,
             135,
             136,
             137,
@@ -565,6 +605,9 @@ class AnimationProducerTests(unittest.TestCase):
             223,
             224,
             225,
+            226,
+            227,
+            228,
             330,
         ):
             transform = {"references": [{"offset": len(body) - 16, "from": [3, 1234567], "to": [7, -999]}]}
@@ -601,6 +644,123 @@ class AnimationProducerTests(unittest.TestCase):
                 with self.assertRaisesRegex(ValueError, "generic object operation"):
                     A.produce(path, A.B.sha(path), pc, root / "operation-drift")
 
+    def test_expanding_wave_callback_uses_source_fields_and_retains_other_bytes(self):
+        def scalar(name, number, kind="float"):
+            return F.node(name, 4, kind=kind), struct.pack("<f" if kind == "float" else "<i", number)
+
+        def pointer(name, pid):
+            return F.node(name, children=[F.node("m_FileID", 4), F.node("m_PathID", 8)]), struct.pack("<iq", 0, pid)
+
+        def composite(name, entries):
+            return F.node(name, children=[entry[0] for entry in entries]), b"".join(entry[1] for entry in entries)
+
+        def vector(name, values):
+            element = pointer("data", 0)[0]
+            return F.array(name, element), F.vector(b"".join(struct.pack("<iq", 0, pid) for pid in values), len(values))
+
+        def xyz(name, values):
+            return composite(name, [scalar(axis, number) for axis, number in zip("xyzw", values)])
+
+        for ghost, radius, segments in ((False, 225, 12), (True, 225, 12), (True, 90, 4)):
+            with self.subTest(ghost=ghost, radius=radius, segments=segments):
+                records = {}
+
+                def record(name, pid, class_id, entries):
+                    schema, raw = composite("Base", entries)
+                    stream = io.BytesIO(serialized(raw, schema, class_id=class_id))
+                    stream.size = len(stream.getvalue())
+                    records[name] = ({"path_id": pid}, raw, A.W.read_serialized(stream)["types"][0])
+                    return name
+
+                body_schema, body = composite(
+                    "Base",
+                    [
+                        pointer("m_GameObject", 10),
+                        xyz("m_LocalRotation", (-0.0, 0, 0, 1)),
+                        xyz("m_LocalPosition", (1, 0, 2)),
+                        xyz("m_LocalScale", (123, 7, 8)),
+                        pointer("m_Father", 30),
+                        scalar("retained", -0.0),
+                    ],
+                )
+                record(
+                    "base",
+                    20,
+                    4,
+                    [
+                        pointer("m_GameObject", 40),
+                        xyz("m_LocalRotation", (0, 0, 0, 1)),
+                        xyz("m_LocalPosition", (0, 14.5 if ghost else 0, 0)),
+                        xyz("m_LocalScale", (1, 1, 1)),
+                        pointer("m_Father", 0),
+                    ],
+                )
+                record("parent", 30, 4, [pointer("m_Father", 20), vector("m_Children", [50])])
+                curve = composite("data", [scalar("time", 1), scalar("value", 1)])
+                curve_entry = composite("sizeCurve", [(F.array("#299", curve[0]), F.vector(curve[1], 1))])
+                callback_entries = [
+                    pointer("m_GameObject", 40),
+                    (pointer("m_Script", 60)[0], struct.pack("<iq", 1, 60)),
+                    scalar("radius", radius),
+                    scalar("segments", segments, "int"),
+                    xyz("hurtboxSize", (8, 7)),
+                    curve_entry,
+                    pointer("root" if ghost else "hitBoxParent", 30),
+                ]
+                if ghost:
+                    callback_entries.append(vector("ghostSegments", [10]))
+                record("callback", 70, 114, callback_entries)
+                if not ghost:
+                    record("group", 80, 114, [pointer("m_GameObject", 40), vector("hitBoxes", [90])])
+                    record("hitbox", 90, 114, [pointer("m_GameObject", 10)])
+
+                def text(value):
+                    raw = value.encode()
+                    return F.vector(raw, len(raw))
+
+                script = (
+                    text("fixture")
+                    + bytes(20)
+                    + text("ExpandingWaveProjectileGhostController" if ghost else "ExpandingWaveProjectile")
+                    + text("RoR2.Projectile")
+                    + text("Assembly-CSharp")
+                )
+                record("script", 60, 115, [(F.node("raw", len(script)), script)])
+                operation = {name: name for name in records}
+                operation["source_transform"] = 50
+                selected = {"expanding_wave_scale": operation, "references": [{"offset": 0, "from": [0, 10], "to": [0, 99]}]}
+                result = A.transform_generic(body, 4, selected, body_schema, read_record=records.__getitem__)
+                _, spans = A.fields(body, body_schema)
+                offset = spans[("m_LocalScale", "x")][0]
+                expected = bytearray(body)
+                struct.pack_into("<iq", expected, 0, 0, 99)
+                x = 116.46856689453125 if radius == 225 else 127.27922821044922
+                struct.pack_into("<f", expected, offset, x)
+                self.assertEqual(result, bytes(expected))
+
+    def test_empty_renderer_dispatch_preserves_native_values_before_owner_relocation(self):
+        schema = F.node(
+            "Base",
+            children=[
+                F.node("m_GameObject", 12, kind="PPtr<GameObject>"),
+                F.node("m_Enabled", 1, kind="UInt8"),
+                F.node("m_CastShadows", 1, kind="UInt8"),
+                F.node("m_ReceiveShadows", 1, kind="UInt8"),
+                F.node("retainedFlag", 1, kind="UInt8"),
+                F.array("m_Materials", F.node("data", 12, kind="PPtr<Material>")),
+                F.node("retained", 4, kind="float"),
+            ],
+        )
+        body = struct.pack("<iq", 0, 11) + bytes([1, 1, 1, 1]) + bytes(4) + struct.pack("<I", 0x80000000)
+        stream = io.BytesIO(serialized(body, schema, class_id=23))
+        stream.size = len(stream.getvalue())
+        source_type = A.W.read_serialized(stream)["types"][0]
+        policy = {"empty_mesh_renderer": True, "references": [{"offset": 0, "from": [0, 11], "to": [0, 99]}]}
+        expected = struct.pack("<iq", 0, 99) + bytes(3) + body[15:]
+        self.assertEqual(A.transform_generic(body, 23, policy, source_type=source_type), expected)
+        with self.assertRaisesRegex(ValueError, "original MeshRenderer schema"):
+            A.transform_generic(body, 1, policy, source_type=source_type)
+
     def test_prefab_policies_preserve_components_and_native_tail(self):
         name = b" Beam/[Demo] (Clone) "
         encoded = struct.pack("<I", len(name)) + name
@@ -621,6 +781,20 @@ class AnimationProducerTests(unittest.TestCase):
             A.transform_generic(body, 114, policy)
         with self.assertRaisesRegex(ValueError, "component append"):
             A.transform_generic(body, 114, {"append_components": [303]})
+
+    def test_prefab_activation_preserves_component_order_and_checks_source_name(self):
+        tail = struct.pack("<II", 5, 4) + b"Demo" + b"\x07\x00\x01"
+        body = struct.pack("<Iiqiq", 2, 0, 11, 0, 22) + tail
+        policy = {
+            "inactive_scene_object": "Demo",
+            "references": [{"offset": 4, "from": [0, 11], "to": [0, 101]}],
+        }
+        expected = struct.pack("<Iiqiq", 2, 0, 101, 0, 22) + tail[:-1] + bytes(1)
+        self.assertEqual(A.transform_generic(body, 1, policy), expected)
+        with self.assertRaisesRegex(ValueError, "named active original"):
+            A.transform_generic(body, 1, {"inactive_scene_object": "Other"})
+        with self.assertRaisesRegex(ValueError, "activation policy"):
+            A.transform_generic(body, 114, policy)
 
     def test_prefab_omissions_check_original_identity_before_append_and_remap(self):
         tail = struct.pack("<II", 5, 4) + b"Demo" + b"\x07\x00\x01"
@@ -662,6 +836,18 @@ class AnimationProducerTests(unittest.TestCase):
         for policy, order in [("dummy-shader-demote-valid", valid + invalid), ("dummy-shader-sort-invalid", [valid[1], invalid[0], valid[0]])]:
             expected = prefix + struct.pack("<II", 0, 3) + b"".join(order) + suffix
             self.assertEqual(A.transform_generic(body, 21, {"keyword_policy": policy}), expected)
+
+    def test_fallback_material_keywords_use_sdk_space_and_preserve_values(self):
+        prefix = struct.pack("<I", 4) + b"Demo" + struct.pack("<iq", 2, 77)
+        keyword = lambda text: struct.pack("<I", len(text)) + text + bytes(-len(text) % 4)
+        emission, custom, invalid = map(keyword, (b"_EMISSION", b"CUSTOM", b"BEFORE"))
+        tail = b"UNCHANGED MATERIAL VALUES"
+        body = prefix + struct.pack("<I", 2) + custom + emission + struct.pack("<I", 1) + invalid + tail
+        policy = {"keyword_policy": "sdk-fallback-sort-invalid"}
+        expected = prefix + struct.pack("<I", 1) + emission + struct.pack("<I", 2) + invalid + custom + tail
+        self.assertEqual(A.transform_generic(body, 21, policy, material_keywords={"_EMISSION", "OTHER_SDK_FEATURE"}), expected)
+        with self.assertRaisesRegex(ValueError, "checked SDK declarations"):
+            A.transform_generic(body, 21, policy)
 
     def test_compressed_profile_streams_groups_and_rejects_unbounded_or_incomplete_rows(self):
         header = json.dumps({"input_id": A.M.INPUT_ID}).encode() + b"\n"

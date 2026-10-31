@@ -9913,6 +9913,154 @@
           ]
         }
       ]
+    },
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-dlc4-enforcer_assets_all_ab813ef37760aebf15c955020b78aaa5.bundle",
+      "sha256": "23c5fa1caeadde96a1176895289889d6efdbb1311d2a47e6c579fe5598d8a18f",
+      "members": [
+        {
+          "name": "CAB-8cdd44761edbbf12c40473ad7a81e473",
+          "objects": [
+            {
+              "path_id": -7636363214745033674,
+              "class_id": 21,
+              "sha256": "10b994e225825d112246628b77c5f53d2bac0b8280fec5a20f588180140a7eca",
+              "outputs": [
+                {
+                  "bundle": "whole-game-content",
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "path_id": 1356809689957184797,
+                  "bytes": 1412,
+                  "sha256": "ec4f9c81c218d5f121901e49855916ae40cc167e162437f8e4a1e2315c800c41",
+                  "transform": {
+                    "references": [
+                      {
+                        "offset": 20,
+                        "from": [
+                          3,
+                          -658352061839041481
+                        ],
+                        "to": [
+                          1,
+                          -7654450177102856894
+                        ]
+                      },
+                      {
+                        "offset": 212,
+                        "from": [
+                          7,
+                          -7021629468536759314
+                        ],
+                        "to": [
+                          1,
+                          -4965139636437396481
+                        ]
+                      },
+                      {
+                        "offset": 256,
+                        "from": [
+                          14,
+                          -9021760483846757965
+                        ],
+                        "to": [
+                          1,
+                          -5942440418310167244
+                        ]
+                      }
+                    ],
+                    "keyword_policy": "dummy-shader-demote-valid"
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-base-lunargolem_static_assets_all_1630ab8025c493177f0d21f0ab367661.bundle",
+      "sha256": "a4ec7cdebe4694e1385680275c8425c0f450bfc101db47d9b6708547478c25a9",
+      "members": [
+        {
+          "name": "CAB-86275492d270f7fca5611be486c5b632",
+          "objects": [
+            {
+              "path_id": -5651106731672236156,
+              "class_id": 21,
+              "sha256": "779021582c9c9062d00e46e8445bcbb7251bf11ec302be4b51f882fc24bfbf49",
+              "outputs": [
+                {
+                  "bundle": "whole-game-content",
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "path_id": 1358043417058234864,
+                  "bytes": 1444,
+                  "sha256": "603591a91699a6cde367848b795a02f8c5dec5fdb3b2b436e8d1953fe3730685",
+                  "transform": {
+                    "references": [
+                      {
+                        "offset": 28,
+                        "from": [
+                          9,
+                          -658352061839041481
+                        ],
+                        "to": [
+                          1,
+                          -7654450177102856894
+                        ]
+                      },
+                      {
+                        "offset": 148,
+                        "from": [
+                          10,
+                          4585579286142212187
+                        ],
+                        "to": [
+                          1,
+                          -4737221390732503386
+                        ]
+                      },
+                      {
+                        "offset": 192,
+                        "from": [
+                          10,
+                          4585579286142212187
+                        ],
+                        "to": [
+                          1,
+                          -4737221390732503386
+                        ]
+                      },
+                      {
+                        "offset": 232,
+                        "from": [
+                          11,
+                          3830418662754145800
+                        ],
+                        "to": [
+                          1,
+                          -2087158990822059157
+                        ]
+                      },
+                      {
+                        "offset": 276,
+                        "from": [
+                          12,
+                          -1532946911139773262
+                        ],
+                        "to": [
+                          1,
+                          4519054639100343305
+                        ]
+                      }
+                    ],
+                    "keyword_policy": "dummy-shader-sort-invalid"
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
     }
   ]
 }

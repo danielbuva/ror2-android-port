@@ -193,10 +193,28 @@ qualification remain separate from these laboratory installs.
       memory ([session owners](ARCHITECTURE.md#ownership)). J1066/J1071 qualify
       software confirmation/cancel, native teardown/menu and strict assisted
       same-process restart. J1080 qualifies Main's original audio Term/disarm;
-      long-run dependency retention remains open.
+      the restored point-sound timeout dispatcher drains its queue in instrumented
+      menu snapshots. Ordinary long-run dependency retention remains open.
 - [ ] Coordinate gameplay/audio/animation prerequisites with the main session;
       acceptance follows [capability gates](milestones.md), including an
       unassisted run. Keep Moon/finale manual.
+
+## Performance (release gate)
+
+Correctness comes first: no optimization may change reconstructed bytes, original
+behaviour or visual output to improve a benchmark. Reconstruction-gap closure stays
+the priority; these gates must pass before any public release.
+
+- [ ] Profile the complete phone converter (import → reconstruction → APK → install)
+      on supported hardware and record wall time, peak memory, peak/sustained
+      temperature and peak/final storage per stage. Optimize the largest costs and
+      set per-device budgets; installation time, memory, heat and storage use are
+      minimized without changing any produced byte.
+- [ ] Profile the installed game over sustained sessions on supported hardware and
+      record sustained FPS, frame-time pacing (percentiles, hitches), battery drain
+      and thermal behaviour, with visual fidelity checked against the original. Fix
+      the largest regressions and set per-device budgets; no fidelity reduction
+      without an explicit, documented user decision.
 
 ## Stability and playtests
 
@@ -234,7 +252,10 @@ qualification remain separate from these laboratory installs.
       Its next stage stopped under the historical thermal guard during startup.
       The current [thermal policy](PLAYTESTING.md#stability-persistence-and-updates)
       permits that heat; fresh heaps and sustained play remain open.
-      Injected persistence states and this writer interruption do not establish
+      J1311 additionally verifies writer termination, Android activity replacement,
+      unchanged-primary recovery/resave and 48 protected files on the composed
+      candidate. Sustained observation refused lost focus before its first sample.
+      Injected persistence states and these writer interruptions do not establish
       a power-cut or filled-filesystem result.
 - [ ] Qualify the [prepared-lab owner-build/install/playtest checklist](PLAYTESTING.md)
       on fresh public inputs, then establish final player installation, ordinary

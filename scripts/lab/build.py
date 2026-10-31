@@ -672,9 +672,23 @@ def stage_android_assets(project, io=None):
             if source.is_file():
                 io.apply(project / "Assets" / source.relative_to(ROOT / "android/Assets"), copy=source)
 
+    source = ROOT / "tools/android-write-interruption/LabPendingWriteStop.java"
+    target = project / "Assets/Plugins/Android/SettingsWriteObserver.androidlib/src/main/java/dev/ror2lab/diagnostics/LabPendingWriteStop.java"
+    if io is None:
+        target.parent.mkdir(parents=True, exist_ok=True)
+        copy_build_artifact(source, target, verify=False)
+    else:
+        io.apply(target, copy=source)
+
 
 # Authored sources a whole-catalog build stages into the project (J738).
-BUILD_SOURCE_PATHS = ("tools/unity", "tools/catalog", "android/Assets/Editor")
+BUILD_SOURCE_PATHS = (
+    "tools/unity",
+    "tools/catalog",
+    "android/Assets/Editor",
+    "android/Assets/Plugins/Android/SettingsWriteObserver.androidlib",
+    "tools/android-write-interruption",
+)
 
 
 def build_source_identity():

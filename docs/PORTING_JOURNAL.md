@@ -1352,3 +1352,862 @@ Evidence: `work/coordination/alpha-callback-build/rebinding-host-notes.md`;
 36 focused host contracts and Ruff pass. No APK/output generated or installed.
 Host-only; Android writes/restart, human-labelled native effects, Thor physical
 input, callback-removal acceptance and managed-growth bounds remain open.
+
+## J1283 — Align stability admission and touch staging with device policy
+
+2026-10-31. Existing stability admission confirms charging with three positive
+current readings 10 seconds apart; transient current and status 2/current 0
+retain cool admission. Touch diagnostics stage and remove DEX/request files in
+the app-external runtime directory after fresh storage-backing validation.
+Evidence: `work/coordination/alpha-stability-sessions/host-notes.md`;
+58 focused host tests and Ruff pass. No APK/output hash or device run;
+fresh heap attribution, sustained play and Android helper execution remain open.
+
+## J1284 — Scope independent gameplay stability collection
+
+2026-10-31. The existing batch accepts `--gameplay-only`, records that scope and
+runs fresh heap/sustained owners without claiming settings-interruption coverage.
+Lease, thermal admission/sampling, first-failure and terminal cleanup remain required.
+Host evidence: 282 focused tests and Ruff pass. The prior batch also verifies the
+app-external touch helper on adopted storage: two events open native Settings,
+with no cleanup errors. Evidence: `work/device/` selected-device touch case
+`experiments/touch-gesture/20261031T033604.610873Z/result.json` and batch
+`work/coordination/alpha-stability-main-20261031T033430Z/terminal.done.json`.
+APK: `ba0b7e9318c251be6a2dd6e46784bd030eb816a57caab2327b5c205f29bdd92d`.
+Current-APK interrupted-write recovery, retained-root attribution, sustained
+play, physical input and genuine filled-filesystem recovery remain open.
+
+## J1285 — Reconstruct 65 remaining whole-game native Sprite imports
+2026-10-31.
+- Existing original-pixel preparation, exact-SDK Sprite constructor and checked
+  record producer emit all 65 remaining Sprite records, 65,852 bytes raw-exact J850.
+- Every importer GUID has a current export metadata witness; 61 direct texture
+  edges and four compressed-mip-exact aliases qualify the original suppliers.
+- Audited recipe contains identities/hashes/relationships only; no native output.
+- Evidence: `work/coordination/p1-wholegame-1031/sprite-host-records-v1/`;
+  source witnesses: `sprite-qualified-witnesses.json` in the parent directory.
+- Record pack SHA-256: `c3d5816e68a8a2e5bf85337b9c5248c4b4291626fc906919524622afcc62beeb`.
+- Whole-game unresolved records fall from 345 to 280. Historical readiness stays
+  693/705 available, 685 raw-exact; phone/gameplay/install/update gates remain open.
+
+## J1286 — Reconstruct 24 whole-game controllers from source relationships
+2026-10-31.
+- Existing controller owner consumes selected original clip/state/TOS and PPtr
+  relationships under the J1143 provenance policy; no target value template.
+- All 358 persisted controller records (1,227,116 bytes) match J850 raw-exact,
+  including 24 additions; the prior 334 recipe outputs remain unchanged.
+- Evidence: `work/coordination/p1-scenes-w/wholegame-controllers-20261031/`
+  `public-production-done-v2.json`; source selection limits are in `notes.md`.
+- Record pack SHA-256: `f0caf106c4e68c1bc25e2f29b8e9ae652d7c52fd2addbbb3c73969a694dba848`.
+- This batch reduces the post-J1285 unresolved set from 280 to 256; parallel
+  whole-game work is counted separately. Final-file readiness remains 693/705
+  available, 685 raw-exact; phone/gameplay/install/update gates remain open.
+
+## J1287 — Resolve three whole-game duplicate-behaviour controllers
+2026-10-31.
+- Existing controller owner reconstructs Totem, Bandit and LynxAmbusher using
+  original layer/state/range relationships to disambiguate equal behaviours.
+- Three newly persisted records (40,044 bytes) are raw-exact J850; prior recipe
+  selections are unchanged. Acolyte and MimicLogbook remain unresolved.
+- Evidence: `work/coordination/p1-scenes-w/wholegame-behaviour-relationships-20261031/`
+  `public-production-done.json`; relationship provenance is in `notes.md`.
+- New-record pack SHA-256: `c7fef02c7b341c251856d35817a167fc53ff3762f54d10a0d18687cd6c47e0fd`.
+- Post-J1286 unresolved set falls from 256 to 253, excluding parallel work.
+  Final-file readiness stays 693/705 available, 685 raw-exact; phone, gameplay
+  and install/update gates remain open.
+
+## J1288 — Preserve ordered multi-behaviour controller ranges
+2026-10-31.
+- Existing controller owner preserves contiguous ordered multi-element and empty
+  state ranges; source witnesses select MimicLogbook and four managed behaviours.
+- Five new persisted records (16,252 bytes) are raw-exact J850; earlier accepted
+  records were not requalified. Eight focused controller tests pass.
+- Evidence: `work/coordination/p1-scenes-w/wholegame-residual-controllers-20261031/`
+  and `wholegame-managed-four-20261031/`, each `public-production-done.json`.
+- Controller output SHA-256: `f49c77722cdbf26d4b01eeade9ea49afb5a73c227f49a49beafcf5ce5c626d72`;
+  managed pack: `bdbb2b34528dc799b30e8594c085f9b308f76173898bf8607d1850c839d2c632`.
+- Workstream unresolved count falls 253 to 248, excluding parallel changes.
+  Final-file readiness stays 693/705 available, 685 raw-exact; Acolyte masks,
+  complete whole-game bundle, phone production and install/update remain open.
+
+## J1289 — Reproduce three authored whole-game prefab activations
+2026-10-31.
+- Generic record production delegates existing named source activation policy;
+  original ordered component edges and reciprocal ownership select three HUD roots.
+- All three persisted records (317 bytes) match J850 raw-exact. Evidence:
+  `work/coordination/p1-scenes-w/wholegame-go-activation-v2-20261031/done.json`;
+  source relationship findings: `wholegame-go-activation-20261031/anchor-findings.md`.
+- Pack SHA-256: `61445555eb957794ad07e9f204b81a659c547e3f4afc356b77dcda83be997dc4`.
+- Workstream unresolved count falls from 248 to 245, excluding parallel work.
+  Final-file readiness stays 693/705 available, 685 raw-exact; full bundle,
+  phone production and install/update remain open.
+
+## J1290 — Reconstruct three native whole-game HUD component slots
+2026-10-31.
+- Existing native record owner selects original Canvas, Rigidbody and CanvasRenderer
+  through ordered component slots and reciprocal qualified HUD root ownership.
+- All three persisted records (108 bytes) match J850 raw-exact; no scalar or
+  producer changes. Evidence:
+  `work/coordination/p1-scenes-w/wholegame-native-components-20261031/done.json`.
+- Pack SHA-256: `03bbe9dd01af77b9e0ebb5f0adb6bce4dea03a73e1f8857ba9610fa98c73e699`.
+- Saved unresolved census remains 245: these slots lacked public suppliers but
+  were already absent from that census. Parallel Timeline work is separate.
+  Final-file readiness stays 693/705 available, 685 raw-exact; complete bundle,
+  phone production and install/update remain open.
+
+## J1291 — Reproduce whole-game Timeline import relationships
+2026-10-31.
+- Existing generic record owner selects 20 incoming tracks and 23 child controls;
+  exact-editor authored PropertyName mapping fixture independently proves defaults.
+- All 43 persisted records (12,052 bytes) match J850 raw-exact, including original
+  type/script identities. No game body or scalar template is published.
+- Evidence: `work/coordination/p1-wholegame-1031/timeline-public-v2/done.json`;
+  import provenance and fixture details: `timeline-provenance-notes.md` nearby.
+- Pack SHA-256: `4c8010780113e36d869758d224c9e47d77b66f1ec5cbbb8b903e39b9dca446ed`.
+- Recount: unresolved records fall 245 to 222; 20 tracks already have public
+  suppliers, so this batch adds 23. Final-file readiness stays 693/705 available,
+  685 raw-exact. Complete bundle, phone, gameplay and install/update remain open.
+
+## J1292 — Reconstruct original whole-game prefab sources
+2026-10-31.
+- Existing generic record owner selects ten SpeedTree and eight ItemInfection
+  GameObjects plus BrotherSwing through original component and parent identities.
+- Existing exported-name and detacher-removal policies produce all 19 persisted
+  records (1,493 bytes) raw-exact J850; no new producer or target bytes are added.
+- Evidence: `work/coordination/p1-scenes-w/wholegame-prefab-native-v2-20261031/done.json`;
+  source relationships: `relationships.json` nearby.
+- Pack SHA-256: `3328f5bede3fd183acd9fc1e36d067e359138e9e24370a1904bd918cf98137e3`.
+- Saved unresolved census falls 222 to 203, excluding parallel work. Final-file
+  readiness stays 693/705 available, 685 raw-exact; complete whole-game bundle,
+  phone production and install/update remain open.
+
+## J1294 — Reconstruct whole-game empty renderer membership
+2026-10-31.
+- Generic record owner delegates the existing J245 empty renderer constructor;
+  existing component append supplies fourteen original GameObject memberships.
+- Original AnimateShaderAlpha/decal relationships establish the bounded scope;
+  all 28 persisted records (3,090 bytes) match J850 raw-exact.
+- Evidence: `work/coordination/p1-scenes-w/wholegame-empty-renderer-v2-20261031/`
+  and `wholegame-go-renderer-append-20261031/`, each with `done.json` and relationships.
+- Renderer pack: `836ada40a71ddff2fb02a7f4f58659763f93c1f0a4f819a1217f013cf78afbb5`.
+- Membership pack: `e81861f0e448a8fead2c0e0dcff2bf3dac1f9c9eadcd7fdb38234c6e2707b199`.
+- Saved unresolved census falls 203 to 175, excluding parallel work. Final-file
+  readiness stays 693/705 available, 685 raw-exact; whole-game bundle, phone
+  production and install/update remain open.
+## J1293 — Reconstruct catalog-witnessed whole-game materials
+2026-10-31.
+- Existing material record owner adds two original catalog-root source selections
+  using unchanged dummy-shader keyword import policies and checked pointer edges.
+- Both persisted records (2,856 bytes) match J850 raw-exact. Eleven other witnessed
+  materials remain excluded because their original fields differ after policies.
+- Evidence: `work/coordination/p1-wholegame-1031/material-public-v3/terminal.json`;
+  independent source identities: `../material-catalog-v2/candidates.json` nearby.
+- Pack SHA-256: `cfcce4214c1b7d01d7c08f537f7aa786c4197cd7e43f32ab793ac3d276bea3fe`.
+- Unresolved census falls 203 to 201. Final-file readiness remains 693/705
+  available, 685 raw-exact. Complete bundle, phone and install/update remain open.
+
+## J1296 — Reconstruct whole-game original MeshFilter ownership
+2026-10-31.
+- Existing generic record owner selects fourteen original MeshFilters through
+  unique class slots, reciprocal GameObject ownership and public mesh suppliers.
+- Both pointer endpoints are independently checked; all fourteen persisted
+  records (336 bytes) match J850 raw-exact without new producer machinery.
+- Evidence: `work/coordination/p1-scenes-w/wholegame-meshfilter-20261031/done.json`;
+  source ownership and endpoint witnesses: `relationships.json` nearby.
+- Pack SHA-256: `203d72845527ade1ad624f3521273163c0207b2fa2c2589d3cf7bc591241ca0e`.
+- Saved unresolved census falls 173 to 159, excluding parallel work. Final-file
+  readiness stays 693/705 available, 685 raw-exact; complete bundle, phone
+  production and install/update remain open.
+## J1295 — Reconstruct whole-game reciprocal managed ownership
+2026-10-31.
+- Existing managed record owner selects eight original ItemDisplay and two
+  EffectManagerHelper components through qualified GameObject ownership edges.
+- Full script identities and reciprocal component order establish source identity;
+  existing SDK schema policy produces all ten records (880 bytes) raw-exact J850.
+- Evidence: `work/coordination/p1-wholegame-1031/managed-public-v5/terminal.json`;
+  ownership witnesses: `../managed-owner-edges-v3/proofs.json` nearby.
+- Pack SHA-256: `d40e58413888cd9379ac46a8b8016ecd31474e195dec8d961a58dfb7ee4d2945`.
+- Saved unresolved census falls 173 to 163. Final-file readiness stays 693/705
+  available, 685 raw-exact. Complete bundle, phone, gameplay and install/update
+  acceptance remain open.
+
+## J1298 — Reconstruct whole-game original MeshRenderer ownership
+2026-10-31.
+- Existing generic record owner selects twelve original MeshRenderers through
+  unique class slots, reciprocal GameObject ownership and public pointer suppliers.
+- All pointer endpoints are checked, including null and unchanged references;
+  all twelve persisted records (1,944 bytes) match J850 raw-exact.
+- Evidence: `work/coordination/p1-scenes-w/wholegame-renderer-20261031/done.json`;
+  source ownership and endpoint witnesses: `relationships.json` nearby.
+- Pack SHA-256: `c1be2fadd133546686e29bffdb17299af2148bd11eabfe966ad73ae26c9ee732`.
+- Saved unresolved census falls 149 to 137, excluding parallel work. Final-file
+  readiness stays 693/705 available, 685 raw-exact; complete bundle, phone
+  production and install/update remain open.
+## J1297 — Reconstruct whole-game particle Shader from original materials
+2026-10-31.
+- Existing prefab Shader owner accepts pinned original particle materials with
+  checked Shader relationships, alongside its acquired SDK default selections.
+- SDK 211 declarations and original runtime fragment order reproduce the
+  25,056-byte record raw-exact J850 after persisted independent comparison.
+- Evidence: `work/coordination/p1-wholegame-1031/particle-material-public-v3/terminal.json`.
+- Pack SHA-256: `26a2a0c7e2a0436f29932470969d5e2a2b0422fc2ade73eba1f1690989bfdc1d`.
+- Saved unresolved census falls 163 to 162; with peer MeshFilter14, 148 remain.
+  Final-file readiness stays 693/705 available, 685 raw-exact. Complete bundle,
+  phone, gameplay and install/update acceptance remain open.
+
+## J1300 — Reconstruct whole-game original Trees and WindAssets
+2026-10-31.
+- Existing generic record owner selects eight Trees through unique native slots
+  and reciprocal published prefab ownership, plus two referenced WindAssets.
+- Every pointer endpoint has a public supplier; native schemas and nonpointer
+  fields are preserved. All ten persisted records (2,952 bytes) match J850 raw-exact.
+- Evidence: `work/coordination/p1-scenes-w/wholegame-tree-20261031/done.json`;
+  source ownership and endpoint witnesses: `relationships.json` nearby.
+- Pack SHA-256: `afd88761dc33856c1592893b5f7bf9d307dd18ab9852aa5501bd9f8a869a1474`.
+- This batch removes ten unresolved records. Final-file readiness stays 693/705
+  available, 685 raw-exact; complete bundle, phone production and install/update
+  remain open.
+
+## J1299 — Preserve original CalmWater Shader fallback graphs
+2026-10-31.
+- Existing prefab Shader owner preserves checked local original dependencies or
+  an unresolved fallback literal, without importing SDK fallback keyword axes.
+- Original properties, pinned public SingleColor template and acquired SDK
+  compiler produce both persisted records (12,928 bytes) raw-exact to J850.
+- Evidence: `work/coordination/p1-wholegame-1031/calmwater-public-v1/terminal.json`;
+  prior art: `../calmwater-provenance-20261031.md` nearby.
+- Pack SHA-256: `3a3c74f6368d039ee52aa5bfae2eea91779cd4965628c87ca152454af708ced4`.
+- Saved unresolved census falls 148 to 146; with peer Renderer12, 134 remain.
+  Final-file readiness stays 693/705 available, 685 raw-exact. Complete bundle,
+  phone production, gameplay and install/update acceptance remain open.
+
+
+## J1301 — Reconstruct whole-game original Transform ownership
+2026-10-31.
+- Existing generic record owner emits eighteen Transforms selected through
+  qualified GameObject component slots and reciprocal original ownership.
+- Native schemas, parent/child shape and all nonpointer bits stay original; only
+  explicit references relocate. Persisted output is raw-exact to J850, 1,320 bytes.
+- Evidence: `work/coordination/p1-wholegame-1031/transform-owner-edges-v1/terminal.json`;
+  source identities and component witnesses: adjacent `proofs.json`.
+- Pack SHA-256: `fd7c1e9226ffd82a8a6585e61c24543667868827f0cbfbad9c75feb983209518`.
+- Prior art: J426 UnityPy PPtr member/path-ID ownership, checked against originals.
+- Combined unresolved census falls 134 to 116 (106 after peer Tree10). Final-file
+  readiness stays 693/705 available, 685 raw-exact. Complete bundle, phone
+  production, gameplay and install/update acceptance remain open.
+
+
+## J1302 — Reconstruct whole-game original Billboard ownership
+2026-10-31.
+- Existing generic record owner admits BillboardAsset/Renderer classes 226/227.
+- Unique native component slots, reciprocal public GameObject ownership and
+  original Billboard/material relationships identify all four source records.
+- Native schemas and nonpointer fields stay original; all four persisted records
+  (808 bytes) match J850 raw-exact with only checked pointer relocation.
+- Evidence: `work/coordination/p1-scenes-w/wholegame-billboard-20261031/done.json`;
+  source ownership and endpoint witnesses: adjacent `relationships.json`.
+- Pack SHA-256: `0c330e0ce2740e56da7bb7b6122eba7e82c786ef6ad4b85bb48476390bdade00`.
+- Saved unresolved census falls 106 to 103; fourth record overlap is unproven.
+  Final-file readiness stays 693/705 available, 685 raw-exact; complete bundle,
+  phone production and install/update remain open.
+
+
+## J1304 — Reconstruct whole-game original LODGroup ownership
+2026-10-31.
+- Existing generic record owner reconstructs one original LODGroup (140 bytes).
+- Unique native component slot, reciprocal GameObject ownership and public LOD
+  renderer suppliers identify the original; native schema/nonpointer bytes stay intact.
+- Persisted output is raw-exact to J850 after checked pointer relocation.
+- Evidence: `work/coordination/p1-scenes-w/wholegame-lodgroup-20261031/done.json`;
+  source ownership and endpoint witnesses: adjacent `relationships.json`.
+- Pack SHA-256: `3f034cc9a11d2f00d7d19bda93216f52381080818eb0312d2aaa3b6ba9f67bcf`.
+- Prior art: pinned AssetRipper local/dependency PPtr resolution, checked on originals.
+- Final-file readiness stays 693/705 available, 685 raw-exact. Complete bundle,
+  phone production and install/update remain open; residual recount pending.
+
+
+## J1311 — Recover native settings after writer termination and activity restart
+2026-10-31.
+- The host checker binds termination to the observed writer PID and stops Android's
+  replacement activity before cold recovery; a replacement is not a surviving writer.
+- Fresh device witness: pending file retained, writer exited in 142 ms, prior primary
+  unchanged, native recovery/resave passed and all 48 protected files unchanged.
+- Evidence: `work/coordination/alpha-settings-restart-device-20261031T081900Z/terminal.done.json`;
+  settings receipt: `settings-write-interruption/20261031T082119.574414Z/result.json`.
+- APK SHA-256: `c570dfd740902e6501a1ae1a6f953a61473d74ccea722b757bc5a1e09b61d61a`;
+  runtime source `fb28a00c`; host contracts cover replacement acceptance/live-writer refusal.
+- Sustained observation refused lost window focus before collecting samples; cleanup
+  verified idle process, absent selector/pending, sleeping OLED and released lease.
+- No power-cut, ENOSPC, ordinary-play, sustained-performance or memory-bound claim.
+## J1305 — Reconstruct whole-game original Director ownership
+2026-10-31.
+- Existing record owner reconstructs ConduitCanyon/SolusAmalgam PlayableDirectors.
+- Unique component slots, reciprocal public owners and checked supplier endpoints
+  retain source identity; shipped signed exposed-name conversion is reused.
+- Both persisted records (984 bytes) match J850 raw-exact after pointer relocation.
+- Evidence: `work/coordination/p1-scenes-w/wholegame-directors-v2-20261031/done.json`;
+  source ownership and public supplier witnesses are adjacent JSON records.
+- Pack SHA-256: `a131b97eda9fbb9137a5c42e10164152fd55571b9101863f9955e241b167d399`.
+- Prior art: pinned AssetRipper PropertyName export, checked on original records.
+- Final-file readiness stays 693/705 available, 685 raw-exact; no file closure.
+  Champrush suppliers, complete bundle, phone production and install/update remain open.
+## J1303 — Publish original whole-game Meridian Material relationships
+
+2026-10-31. Publish four retained source-owned Material selections through the
+existing record producer, preserving keyword state and changing only checked
+Shader/texture references; no producer change or accepted-body replay.
+Evidence: `work/coordination/p1-scenes-w/meridian-endpoints-v4/findings.json` and
+`work/coordination/p1-scenes-w/meridian-material-pack-v1/done.json`: four persisted
+records independently raw-exact to J850 (1,184 bytes). Record-pack SHA-256
+`079c74935106c9a6bb1cd9102a92837df8f16bc8d52a2328ec8ddb78167dee45`.
+One saved residual closes, 104 → 103; the other three are overlapping outputs.
+Readiness stays 693/705 available, 685 raw-exact; shared Shader, full bundle,
+phone production and device acceptance remain open. Host-only; no APK/run claim.
+
+## J1306 — Source-ordered whole-game Standard fallback Shader records
+
+2026-10-31. Existing prefab Shader keyword registration now visits each snippet's
+stages before global/local axes and builtin names; existing flags remain stable.
+Publish two original Shader selectors using acquired SDK fallback metadata and
+pinned public exporter templates; no accepted keyword tables enter production.
+Evidence: `work/coordination/p1-wholegame-1031/stage-keyword-public-v1/result.json`.
+Both persisted records independently raw-exact to J850, 12,004 bytes; pack SHA-256
+`bc89dab841c30bfdc191198dc89e127cbbc8df44a22d74141fcd96797666a935`.
+Public saved residual 103 → 101 before parallel Director closures.
+Readiness stays 693/705 available, 685 raw-exact; full bundle, phone production,
+installation and original runtime remain open. Host-only; no APK/run claim.
+
+## J1309 — Complete original Champrush Director ownership
+
+2026-10-31. Extend the existing whole-game Director recipe with one original
+Champrush record; reuse signed exposed-name conversion and checked PPtr remaps.
+Original topology (80 Transform pairs, seven connected suppliers) is rooted at
+a public GameObject selector and reciprocal Animator slot; no target body ships.
+Evidence: `work/coordination/p1-scenes-w/wholegame-directors-champrush-20261031/done.json`;
+source topology and ownership witnesses are adjacent JSON records.
+Persisted record is raw-exact to J850, 396 bytes; pack SHA-256
+`a7264559e35be5b6b50d57b207534862e3a156725fc79a49f99f09843e8fa09f`.
+Prior art: existing pinned AssetRipper signed PropertyName export technique.
+Saved residual 99 → 98 after J1305/J1306; final-file readiness stays
+693/705 available, 685 raw-exact. Complete bundle/phone/install gates remain open.
+## J1308 — Resolve whole-game inserted-component managed identities
+
+2026-10-31. Extend the existing source record owner with four original
+ProjectileNetworkTransform records and one TeamFilter, preserving native schema
+and all nonpointer bytes. Qualified GameObject recipes, full script sequences
+and reciprocal owners resolve duplicates across a SilentProjectileBoundary insertion.
+Evidence: `work/coordination/p1-wholegame-1031/managed-public-v6/terminal.json`;
+identity witnesses: adjacent `../managed-owner-edges-v5/proofs.json`.
+All five persisted records raw-exact to J850, 360 bytes; record-pack SHA-256
+`b8acef36e6aaaff664ffa3b2ca7718256fced74d8f01ca8afbe75e83cc5278f8`.
+Public saved residual 101 → 96 before parallel Director closures. Readiness stays
+693/705 available, 685 raw-exact; complete bundle, phone production and runtime
+acceptance remain open. Host-only; no APK/device claim.
+
+## J1310 — Reconstruct whole-game TerrainData preload Shaders
+
+2026-10-31. Publish eleven original Shader selections witnessed by the shipped
+Title TerrainData's preload pointer edges; unchanged SDK Shader owner preserves
+original names, properties and schema. No target-derived production input.
+Evidence: `work/coordination/p1-wholegame-1031/terrain-public-v1/terminal.json`;
+source witness notes: adjacent `../shader-provenance-20261031.md`.
+All eleven persisted records independently raw-exact to J850, 79,656 bytes.
+Pack SHA-256: `02f7cff022cafda7e9b3ee03babfc07451da9b44823077c7a5910104bbd4c3c5`.
+Public saved residual 93 → 82 by exact output identity/hash coverage.
+Readiness stays 693/705 available, 685 raw-exact; complete bundle, phone production
+and original runtime remain open. Host-only; no APK/device claim.
+
+## J1312 — Reconstruct empty-TerrainData detail Shaders
+
+2026-10-31. Extend the existing Shader owner with pinned original TerrainData
+usage: three default Shader pointers and zero detail prototypes justify the
+existing fresh-mono instancing policy. Original Shader identity/fallbacks remain.
+Evidence: `work/coordination/p1-wholegame-1031/terrain-detail-public-v1/terminal.json`;
+source/native witness: adjacent `../shader-provenance-20261031.md`.
+Three persisted records independently raw-exact to J850, 131,996 bytes.
+Pack SHA-256: `a456aa01ded4ed2e1ab28a3c8b31cd468238a3d7ec288ccaac8d6a1b275f6089`.
+Public saved residual 82 → 79; readiness stays 693/705 available, 685 raw-exact.
+Complete bundle, phone production, installation and runtime gates remain open.
+Host-only; no APK/device claim.
+
+## J1314 — Reconstruct whole-game controller-owned managed identity
+
+2026-10-31. Extend the existing managed record recipe with one original
+VoidRaidCrab controller-owned behaviour. Qualified controller behaviour order
+witnesses identity; original native schema and nonpointer bytes remain intact.
+Evidence: `work/coordination/p1-wholegame-1031/controller-managed-public-v1/terminal.json`;
+source relationship witness: adjacent `../controller-managed-v1/witnesses.json`.
+Persisted record raw-exact to J850, 60 bytes; pack SHA-256
+`06bdf03a6e8d17db5d1a3cfbfa5f3635f02bd986a90506668c0b92ff11fac92f`.
+Saved public residual 79 → 78 before parallel controller closures. Readiness stays
+693/705 available, 685 raw-exact; complete bundle, phone production and runtime
+acceptance remain open. Host-only; no APK/device claim.
+## J1313 — Reconstruct duplicate clip-name controller relationships
+
+2026-10-31. Add DroneTech, FalseSonNew and Drifter to the existing original
+controller recipe; selected clip collision ordinals and state/layer-keyed ordered
+behaviour ranges resolve ambiguous names/bodies using checked source identities.
+Pinned AssetRipper ExportCollection/GetStateBehaviours supply prior art; the
+existing producer is unchanged and no target body or string enters production.
+Evidence: `work/coordination/p1-scenes-w/wholegame-controller-collisions-v2-20261031/done.json`;
+source collision and range provenance: adjacent `notes.md`/`behaviour-witnesses.json`.
+All three new persisted records raw-exact to J850, 107,980 bytes; pack SHA-256
+`70b09f2d50e1d1f5665f1cf3053b07fc1cecfa9b179545474f415fabd87dee2b`.
+Public saved residual 79 → 76 after parallel detail-Shader closures; final-file readiness stays 693/705 available,
+685 raw-exact. Complete bundle, phone production and runtime gates remain open.
+
+## J1316 — Reconstruct whole-game controller state-range managed records
+
+2026-10-31. Existing managed record recipe selects twelve original behaviours
+through matching controller layer/state keys and indexed range ordinals;
+original native/script schema and nonpointer bytes remain intact.
+Prior art: pinned AssetRipper AnimatorControllerExtensions.cs:44-71.
+Evidence: `work/coordination/p1-wholegame-1031/controller-managed-public-v2/terminal.json`;
+source witness: adjacent `../controller-managed-v2/witnesses.json`.
+Persisted records raw-exact to J850, 716 bytes; pack SHA-256
+`e1ca4ad093a9ed5ea5f6ba136ee94b4806ceee7e76ce24180a04f26735f10141`.
+Saved public residual 75 → 63 includes merged controller closures. Readiness
+stays 693/705 available, 685 raw-exact. Complete bundle, phone production,
+installation/update and original runtime remain open. Host-only; no APK/device claim.
+
+
+## J1319 — Reconstruct whole-game native component and Material suppliers
+
+2026-10-31. Existing record producer selects Renderer2/LODGroup1 by original
+reciprocal GameObject ownership and unique class slots; Renderer slots identify
+Material4. All pointers have source witnesses, including the shared public
+Commando fallback Shader; existing dummy keyword policy preserves source order.
+Prior art: pinned RoR2EditorKit AddressablesPathDictionaryCache and AssetRipper
+GameObjectExtensions component access, plus the pinned TransparentDiffuse policy.
+Evidence: `work/coordination/p1-scenes-w/native-material-seven-v3-20261031/done.json`;
+source witnesses: adjacent `relationships.json` and `prior-art.md`.
+All seven persisted records raw-exact to J850, 2,768 bytes; pack SHA-256
+`f4683d2da14f16e9b1f7014fa9bda070549f1a58a7015f465ef257d802c636df`.
+Final-file readiness stays 693/705 available, 685 raw-exact. Complete bundle,
+phone production and runtime remain open; host-only, no APK/device claim.
+## J1318 — Reconstruct whole-game shrine component relationships
+
+2026-10-31. Existing source recipes select ShrineCombatPoison through its typed
+original prefab path and both CombatDirectors through the complete sixteen-slot
+component/script sequence with reciprocal ownership. Native schemas and all
+nonpointer bytes remain intact; no new producer or runtime owner is added.
+Prior art: pinned R2API DirectorAPIinternal.cs:22-28,75-78, original typed paths.
+Evidence: `work/coordination/p1-wholegame-1031/shrine-public-v1/terminal.json`;
+source witnesses: adjacent `../shrine-managed-v1/proofs.json`, `../shrine-witness-next.md`.
+Three persisted records independently raw-exact to J850, 699 bytes; pack SHA-256
+`ea13180235114742b081ab67d0deece5d82d5859fb6633f18fe4eb369eb5f0b4`.
+Saved public residual 63 → 60 before parallel closures. Readiness stays
+693/705 available, 685 raw-exact. Complete bundle, phone production, installation/
+update and original runtime remain open. Host-only; no APK/device claim.
+
+## J1320 — Reconstruct whole-game missing-script base component
+
+2026-10-31. Shared J1225 policy emits the original Rewired Switch component's
+32-byte base through the generic record owner, retaining the complete original
+base type and checked owner/null-script relocation. Original GameObject slot
+and reciprocal ownership select it; existing Rewired runtime results stay intact.
+Prior art: pinned RoR2ImportExtensions AssemblyBlacklist.Process; no Android substitute.
+Evidence: `work/coordination/p1-wholegame-1031/tombstone-public-v1/terminal.json`.
+Persisted record raw-exact to J850, pack SHA-256
+`b04876ed61d613f36346074f8cf1b27f91af58a8a4d44b1b63c67147b8d3a7c0`.
+Saved public residual 60 → 59 excludes parallel closures; readiness remains
+693/705 available, 685 raw-exact. Complete bundle, phone production and runtime
+remain open. Host-only; no APK/device claim.
+
+## J1321 — Reconstruct whole-game fallback Material keyword spaces
+
+2026-10-31. Existing generic owner partitions original keywords using the pinned
+SDK Standard declarations for eleven catalog-selected fallback Materials. A twelfth
+Gauntlet Material reuses dummy sorting and five independently published endpoints.
+Prior art: pinned AssetRipper fallback export; existing EditorKit property boundaries.
+Evidence: `work/coordination/p1-wholegame-1031/material-fallback-v1/terminal.json`
+and `work/coordination/p1-wholegame-1031/material-missing-v2/terminal.json`.
+Persisted outputs raw-exact to J850: 12 records, 39,788 bytes; pack SHA-256 values
+`5e6a4a98fb3f4276a46e79406d864ea0df52372fcc8c27d151612765b9a1c179` and
+`14449eeade2f939107b3b28b5c7336a47184258965e4f01929089bce8cb8f7f7`.
+Saved public residual 57 → 45; readiness stays 693/705 available, 685 raw-exact.
+Complete bundle, phone production and original runtime remain open. Host-only.
+
+## J1323 — Reconstruct whole-game Scope Shader texture declaration
+
+2026-10-31. Existing Shader property owner preserves native dimension-one
+textures from pinned AssetRipper `any` declarations. Public original selectors,
+export path and TransparentDiffuse template produce the Scope record.
+Prior art: AssetRipper 1ac666f DummyShaderTextExporter texture switch;
+original property metadata independently agrees.
+Evidence: `work/coordination/p1-wholegame-1031/scope-any-v3/terminal.json`.
+Persisted record raw-exact to J850, 4,940 bytes, SHA-256
+`aebe6a524af2fa431ddecfe29b3f72d5d1ee8480e9bd5dc061d5f5175a573b3f`.
+Focused 42 tests, Ruff and host preflight pass. Saved public residual 45 → 44
+excludes pending peer closures; readiness stays 693/705 available, 685 raw-exact.
+Complete bundle, phone production and original runtime remain open. Host-only.
+## J1322 — Reconstruct synced motion and Mimic controllers
+
+2026-10-31. Existing controller owner omits synced override motions as the pinned
+AssetRipper exporter does, retaining source first-tree motion and clip identities.
+Source-only matched shapes (479 pairs) establish the admitted 152-byte blob-size
+marginal; no claim of native heap allocation derivation. Mimic reuses existing
+collision-ordinal and relationship policies. Authored controller fixture passes.
+Evidence: `work/coordination/p1-scenes-w/synced-controller-public-20261031/done.json`;
+source proofs: `work/coordination/p1-scenes-w/controller-source-allocation-20261031/`.
+Three persisted records raw-exact to J850, 28,684 bytes; pack SHA-256
+`194603a7fe76d34cb3e149fd98c68019f7a7f8fe7080e3a4fa2fc6f760cfd959`.
+Saved residual 45 → 42; readiness stays 693/705 available, 685 raw-exact.
+Complete bundle, phone production and runtime remain open. Host-only; no APK claim.
+
+
+## J1326 — Reconstruct Legacy Transparent Shader from original Materials
+
+2026-10-31. Existing SDK Shader owner reads pinned original Material instancing
+flags for non-particle shaders; the particle feature policy remains intact.
+A complete 970-bundle/9,080-Material census finds six users, all instancing off.
+Prior art: EditorKit name/GUID Shader identity and pinned AssetRipper templates.
+Evidence: `work/coordination/p1-wholegame-1031/legacy-material-public-v2/terminal.json`
+and adjacent `provenance.md` (source census and native-pointer witnesses).
+Persisted record independently raw-exact to J850, 14,416 bytes, SHA-256
+`d61fa84d4b06c0fa763d824886ba9d383f611fc291d516249730c6e0aa39c68e`.
+Focused 40 tests, Ruff and host preflight pass; production 1.260 s.
+Combined saved residual 41 → 40; readiness stays 693/705 available, 685 raw-exact.
+Complete bundle, phone production and runtime remain open. Host-only; no APK claim.
+## J1324 — Reconstruct PowerOrb synced motion controller
+
+2026-10-31. Original controller selectors reuse the J1322 controller owner,
+retaining first-tree motion and source clip occurrences while omitting synced
+overrides. No producer or runtime owner is added.
+Prior art: pinned AssetRipper 813fed15 VirtualAnimationFactory.cs:215-223,
+StateConstantExtensions.cs:18-20 and AnimatorControllerProcessor.cs:93-139.
+Evidence: `work/coordination/p1-scenes-w/powerorb-public-20261031/done.json`.
+One persisted record independently raw-exact to J850, 1,256 bytes; pack SHA-256
+`c2fc44a5b967268257408ae4caf53a69a536afe35f776623d215ec0807d7ed2d`.
+One additional public production gap closes; older residual census is unreconciled.
+Readiness stays 693/705 available, 685 raw-exact. Complete bundle, phone production,
+installation/update and original runtime remain open. Host-only; no APK claim.
+
+## J1325 — Reconstruct VoidWard synced motion controller
+
+2026-10-31. Original animVoidWardCrab selectors reuse the J1322 controller owner,
+retaining first-tree motions and clip occurrences while omitting synced overrides.
+No producer or runtime owner is added.
+Prior art: pinned AssetRipper 813fed15 StateConstantExtensions.cs:18-20 and
+AnimatorControllerProcessor.cs:108-138; the existing source-evidenced marginal applies.
+Evidence: `work/coordination/p1-scenes-w/voidward-public-20261031/done.json`.
+One persisted record independently raw-exact to J850, 2,020 bytes; pack SHA-256
+`d3873dcd19ca1ce6c3c0c163df96e63ded0c74a79c7691c39f047b4cc8b07f29`.
+Saved selector residual 40 → 39; this is coverage subtraction, not requalification.
+Readiness stays 693/705 available, 685 raw-exact. Complete bundle, phone production,
+installation/update and original runtime remain open. Host-only; no APK claim.
+
+## J1328 — Reconstruct False Son synchronized behaviour controller
+
+2026-10-31. Existing controller owner omits synchronized behaviour overrides,
+retaining original index order and compacting surviving keyed ranges/pointers.
+Prior art: pinned AssetRipper 813fed15 AnimatorControllerProcessor.cs:93-138
+shares synchronized state machines without initializing override behaviours.
+Authored fixture covers reversed range order and surviving source indices.
+Evidence: `work/coordination/p1-scenes-w/falseson-public-v3-20261031/done.json`.
+One persisted record independently raw-exact to J850, 2,420 bytes; pack SHA-256
+`a5303fc7533249900f46160c023a630f58ccdff0ade33e67072655de1d54cebd`.
+Saved selector residual 39 → 38; coverage subtraction, without requalification.
+Readiness stays 693/705 available, 685 raw-exact. Complete bundle, phone production,
+installation/update and original runtime remain open. Host-only; no APK claim.
+## J1327 — Release destroyed overlap discovery targets after session teardown
+
+2026-10-31. Existing SessionResourceBoundary prunes Unity-destroyed entries from
+OverlapAttack discovery scratch storage only after world/network teardown;
+live targets, ordering and capacity remain intact. Native captured roots and
+pinned UnityExplorer inspection informed the change; no attack behavior changes.
+Evidence: `work/coordination/alpha-overlap-device-20261031T115535Z/terminal.done.json`;
+prior graph: `work/coordination/alpha-memory-attribution-20261031T114112Z/`.
+Normal IL2CPP build/source `eed58dd9`; adopted-install APK SHA-256
+`4a95382c140364d780bb5940e87183605a04f48083edbbbe53062ff97fce5d51`.
+Three same-process diagnostic sessions removed 7/6/0 overlap targets. Session 2→3
+post-GC managed fell 1,458,176 bytes; menu PSS rose 34,604 KiB. Wall 834 s;
+CPU/GPU peak 80 C, time above 80 C 0 s, battery 33→35 C. Idle/asleep verified.
+Four exact-editor host contracts passed. Ordinary-play memory bound, physical
+controls and sustained performance remain open; diagnostic input is not acceptance.
+
+## J1329 — Reconstruct UI and Railgunner display synchronized controllers
+
+2026-10-31. Original controller selectors reuse the existing controller owner,
+retaining first-tree motions and omitting null motions and synced overrides.
+No producer or runtime owner is added. Prior art: pinned AssetRipper 813fed15
+AnimatorControllerProcessor.cs:93-138 leaves synchronized overrides unset.
+Evidence: `work/coordination/p1-scenes-w/ui-display-controllers-v1-20261031/done.json`.
+Two persisted records independently raw-exact to J850, 6,140 bytes; pack SHA-256
+`474799ea712b9e75b81f689869464c5baeacdb65091458ad8e96fee843589655`.
+Production/qualification wall 53.004 s; host-only, no device thermal measurement.
+Saved selector residual 38 → 36; coverage subtraction, without requalification.
+Readiness stays 693/705 available, 685 raw-exact. Complete bundle, phone production,
+installation/update and original runtime remain open. Host-only; no APK claim.
+
+## J1330 — Reconstruct the Seeker synchronized controller
+
+2026-10-31. Original Seeker selectors reuse the existing controller owner with
+source ordering, null-motion and synchronized override policies; no new producer.
+Prior art: pinned AssetRipper 813fed15 AnimatorControllerProcessor.cs:93-138
+leaves synchronized overrides unset.
+Evidence: `work/coordination/p1-scenes-w/seeker-controller-v1-20261031/done.json`.
+One persisted record independently raw-exact to J850, 24,584 bytes; pack SHA-256
+`144b6027c538b3dea5e48b13b6122699fb9d0a0f4648ff331e15417f032468df`.
+Production/qualification wall 57.098 s; host-only, no thermal measurement.
+Saved selector residual 36 → 35; coverage subtraction, no accepted output rerun.
+Readiness stays 693/705 available, 685 raw-exact. Complete bundle, phone production,
+installation/update and original runtime remain open. No APK claim.
+
+## J1332 — Reconstruct four remaining alpha renderer records
+
+2026-10-31. Four original-owner selectors extend the existing J1294 renderer
+constructor; J245 absent/omitted-decal repair explains the inserted renderers.
+Retained sibling suppliers and reciprocal ownership identify the original hosts;
+pinned AssetRipper GameObjectExtensions informs ordered component traversal.
+Evidence: `work/coordination/p1-wholegame-1031/renderer4-public-v1/done.json`.
+Four independently persisted records match J850 raw-exact, 576 bytes; pack SHA-256
+`8d93eba5bb1dd2cdfc5d2ad5642f76a79e6681f380cda2424f08a6a154a9bbbd`.
+Saved current-main exact-selector residual 34 → 30; coverage subtraction only.
+Host preflight and 33 focused record/recipe tests pass. Host-only; no APK claim.
+Readiness remains 693/705 available, 685 raw-exact. GameObject membership,
+complete-file, phone production and install/update acceptance remain open.
+## J1331 — Reconstruct the False Son Boss controller
+
+2026-10-31. Original controller selectors reuse the existing controller owner,
+including duplicate clip-name collision ordinals; no new producer or runtime owner.
+Prior art: pinned AssetRipper 813fed15 ExportCollection.cs:70-91 derives unique
+exported names after clone/instance cleanup.
+Evidence: `work/coordination/p1-scenes-w/fsboss-controller-v1-20261031/done.json`.
+One persisted record independently raw-exact to J850, 19,584 bytes; pack SHA-256
+`aee8d1dd8d5a85042e784bc27ab3f465de77c36a1a6aa2fcc2a33232b9045e4c`.
+Production/qualification wall 57.056 s; host-only, no thermal measurement.
+Saved selector residual 35 → 34; coverage subtraction, no accepted output rerun.
+Readiness stays 693/705 available, 685 raw-exact. Complete bundle, phone production,
+installation/update and original runtime remain open. No APK claim.
+
+## J1333 — Reconstruct expanding-wave callback Transform scales
+
+2026-10-31. The existing generic record owner derives eight local scale X values
+from pinned original callback radius, segment count, curve endpoint and root fields;
+reciprocal hierarchy and hitbox/ghost membership establish original ownership.
+Pinned AssetRipper 1ac666 TransformExtensions/YamlWalker preserve floats unchanged;
+the source callback explains the specific float32 difference, without generic rounding.
+Evidence: `work/coordination/p1-wholegame-1031/transform-callback-public-v3/done.json`.
+Eight independently persisted records match J850 raw-exact, 592 bytes; pack SHA-256
+`2c4b2fa2b57736e7b7ba1b5728146b3c5d91b3232a92290df7402ca4df5a25bc`.
+Production 0.501 s; total qualification 7.565 s. Host-only; no device thermal data.
+Saved selector residual 30 → 22; coverage subtraction only. Readiness stays
+693/705 available, 685 raw-exact. Complete bundle, phone production, installation/
+update and original runtime remain open. No APK claim.
+
+## J1335 — Reconstruct Reaper secondary-swing animation
+
+2026-10-31. The existing animation record owner uses original native curves,
+quaternion normalization and its atan2 root-average policy; producer code unchanged.
+Prior art: J1143's pinned AssetRipper 1ac666 StreamedCurveKey/CustomCurveResolver.
+Evidence: `work/coordination/p1-wholegame-1031/reaper-atan2-public-v1/done.json`.
+One independently persisted record matches J850 raw-exact, 262,216 bytes; pack
+SHA-256 `e9a5bab2332e929fcfdfdd78c28917ea2875a886f4cec0336a84594ec10f25f6`.
+Production 0.131 s; independent comparison 3.553 s. Host-only, no thermal data.
+Saved selector residual 22 → 21; coverage subtraction only. Readiness stays
+693/705 available, 685 raw-exact. Complete bundle, phone installation/update
+and original runtime remain open. No APK claim.
+## J1334 — Reconstruct the VoidSurvivor synchronized layer chain
+
+2026-10-31. Existing controller owner resolves original exported layer chains,
+deriving machine groups, ordinals, state slots and aligned blob-size changes.
+Prior art: inspected AssetRipper 1ac666f AnimatorControllerProcessor.InitializeLayer
+exports machine indices as layer links; exact-editor tracing supplies allocation.
+Evidence: `work/coordination/p1-scenes-w/voidsurvivor-public-v1-20261031/done.json`.
+One persisted record independently raw-exact to J850, 16,376 bytes; pack SHA-256
+`a7e2636e203177851e7593f7903c2a516f836352e4dac65e0bc2afa4e8808d3f`.
+Production/qualification wall 58.232 s; host-only, no thermal measurement.
+Saved selector residual 22 → 21; coverage subtraction, no accepted output rerun.
+Readiness stays 693/705 available, 685 raw-exact. Complete bundle, phone production,
+installation/update and original runtime remain open. No APK claim.
+
+## J1336 — Normalize retained synchronized controller trees to base motion
+
+2026-10-31. Existing controller owner reconstructs Heretic/Railgunner base motion
+from retained tree zero, clearing original synchronized override indices.
+Prior art: pinned AssetRipper 813fed1597 StateConstantExtensions.GetBlendTree
+and VirtualAnimationFactory select and assign the first tree without slot lookup.
+Evidence: `work/coordination/p1-scenes-w/controller-first-tree-public-20261031/done.json`.
+Two persisted records independently raw-exact to J850, 28,916 bytes; pack SHA-256
+`0baf27dd6dc7fae8b98dab349c7a5a7963a88394942b1f4a8af41e00dad23185`.
+Production 0.410 s; qualification wall 54.061 s; host-only, no thermal data.
+Current merged-recipe selector subtraction leaves 19 → 17 unresolved records;
+no accepted output rerun. Readiness stays 693/705 available, 685 raw-exact.
+Complete bundle, phone production, installation/update and runtime remain open.
+
+## J1337 — Reconstruct populated synchronized controller tree allocation
+
+2026-10-31. Existing controller owner derives Bandit/Enforcer omitted 1D/2D
+tree allocation from original arrays, including nested neighbor lists.
+Prior art: pinned AssetRipper 813fed1597 GetBlendTree; exact-editor source-only
+native traces establish debug-pointer strides, alignment and no deduplication.
+Evidence: `work/coordination/p1-scenes-w/controller-populated-public-20261031/done.json`.
+Two persisted records independently raw-exact to J850, 44,048 bytes; pack SHA-256
+`7b5f024900d6daf9249fc32d73daa7ba4b2685b134a995311d78256fea2dd75c`.
+Qualification/production wall 60.554 s; host-only, no thermal measurement.
+Restores the qualified VoidSurvivor selector's malformed profile nesting.
+Saved selector residual 17 → 15; coverage subtraction, no accepted output rerun.
+Readiness stays 693/705 available, 685 raw-exact. Complete bundle, phone production,
+installation/update and original runtime remain open. No APK claim.
+
+## J1338 — Restore native null AvatarMask defaults for Acolyte
+
+2026-10-31. Existing controller mask-omission policy restores full 83-bit human
+masks alongside skeleton removal for exported null AvatarMasks.
+Prior art: pinned AssetRipper 813fed1597 InitializeLayer leaves masks null;
+exact-editor source-only BuildAsset/GetMask/FullBodyMask traces prove defaults.
+Evidence: `work/coordination/p1-scenes-w/acolyte-mask-public-20261031/done.json`.
+One persisted record independently raw-exact to J850, 23,108 bytes; pack SHA-256
+`893cfd6c3ad58c221b0f76136e86abfa9eb4b40273666e34abdf281685c823a3`.
+Qualification/production wall 63.196 s; host-only, no thermal measurement.
+Saved selector residual 15 → 14; coverage subtraction, no accepted output rerun.
+Readiness stays 693/705 available, 685 raw-exact. Complete bundle, phone production,
+installation/update and original runtime remain open. No APK claim.
+
+## J1340 — Recover BeetleQueen ghost FX managed records from their hierarchy
+
+2026-10-31. Existing path-managed record owner selects two original components
+through BeetleQueenAcidGhost/FX reciprocal hierarchy; only PPtrs relocate.
+Prior art: pinned AssetRipper GameObjectExtensions FetchComponents/GetTransform
+preserves component/hierarchy relationships; script/type and scalars are unchanged.
+Evidence: `work/coordination/p1-scenes-w/managed-fx-public-20261031/done.json`.
+Two persisted records independently raw-exact to J850, 216 bytes; pack SHA-256
+`29493995419aa8e4feb95223562223c11a986bcddf2e26937f381480013bcac7`.
+Production/qualification wall 57.588 s; host-only, no thermal measurement.
+Saved selector residual 14 → 12 before concurrent shader work; no output rerun.
+Readiness stays 693/705 available, 685 raw-exact. Complete bundle, phone production,
+installation/update and original runtime remain open. No APK claim.
+## J1339 — Reconstruct Billboard material-feature Shader ordering
+
+2026-10-31. Existing prefab Shader owner retains default and witnessed Material
+feature combinations, ordered by original vertex records and native interning.
+Prior art: pinned AssetRipper 1ac666 SimpleShaderExporter/DummyShaderTextExporter;
+original stage metadata supplies permutation authority absent from exporters.
+Evidence: `work/coordination/p1-wholegame-1031/shader-direct-material-native-order-v7/done.json`.
+One persisted record is raw-exact to J850, 292,980 bytes; pack SHA-256
+`059a1227b9b483c61ed54bbad373ba243edaa8161eabd749d4639bfdb2c03d73`.
+Production 32.004 s, qualification 36.730 s, peak RSS 558,596,096 bytes;
+local job output 8,914,110 bytes. Host-only; no device thermal measurement.
+Merged selector residual 14 → 13; subtraction only, no complete output rerun.
+Readiness stays 693/705 available, 685 raw-exact. Complete bundle, phone
+production, installation/update and original runtime remain open. No APK claim.
+
+## J1341 — Reconstruct whole-game original Noto Font
+
+2026-10-31. Generic native record production admits Font class 128; the audited
+original Noto recipe preserves FontData and relocates published Material/Texture
+relationships. Pinned AssetRipper FontExtensions supplies observation prior art.
+Evidence: `work/coordination/p1-wholegame-1031/font-public-v3/done.json`.
+One independently persisted record is raw-exact to J850, 16,412,474 bytes; SHA-256
+`78df32cae9a626e7f64856eac7ed9f7561ddc36c8ca1e93440255c71ba833fa4`.
+Production 0.683 s, qualification 4.374 s, peak RSS 335,839,232 bytes;
+local output 16,415,930 bytes. Host-only; no device heat measurement.
+Merged-selector residual 11 → 10; subtraction only, no complete output rerun.
+Readiness stays 693/705 available, 685 raw-exact. Complete bundle, phone
+production, installation/update and original runtime remain open. No APK claim.
+
+## J1343 — Reconstruct whole-game surface Shader stage context
+
+2026-10-31. Existing SDK Shader owners match original pass identities and lift
+source fragment cyclic order over vertex contexts; deferred LightMode supplies
+its SDK compile declaration. Two published original Materials retain features.
+Pinned AssetRipper exporter templates and SDK UnityPBSLighting inform the change.
+Evidence: `work/coordination/p1-wholegame-1031/shader-surface-context-v13/done.json`.
+One independently persisted record is J850 raw-exact, 130,700 bytes; SHA-256
+`afc9534d469f048a4bf8f9ca4e53a9dc5755a2eda07acfafae03368fc80e7de3`.
+Production 173.213 s, qualification 177.191 s, peak RSS 608,813,056 bytes;
+local job output 4,152,081 bytes. Host-only; no device heat measurement.
+Merged-selector residual 10 → 9; subtraction only, no complete output rerun.
+Readiness stays 693/705 available, 685 raw-exact. Complete bundle, phone
+production, installation/update and original runtime remain open. No APK claim.
+
+## J1342 — Restore original point-sound timeout dispatch
+
+2026-10-31. The composed audio owner dispatches the unchanged original timeout
+processor while the original application is inactive; clock, timeout and pools stay original.
+Prior art: pinned R2API f539511e SoundAPI initialization ordering; J880 pool preservation.
+Evidence: `work/coordination/alpha-timeout-hoststage-20261031T150558Z/terminal.done.json`
+and `work/coordination/alpha-timeout-acceptance-20261031T153156Z/terminal.done.json`.
+APK `db0ada198090072870ea38ba54fbef6bf1a5a8216fe95683b4712e124587ba91`, source `30e35439`.
+Adopted install verified; instrumented menu 2/4 snapshots show queue count 0,
+capacity 4, all emitter slots clear, versus the earlier retained queue count 22.
+Capture wall 965 s; CPU/GPU peak 78.1 C, above 80 C for 0 s; battery 32 → 35 C.
+Snapshots hash-verified in cold storage; app stopped, selectors/scratch removed, OLED asleep.
+Ordinary repeated-session memory, physical controls and sustained performance remain open.
+
+## J1344 — Reconstruct whole-game overlapping SDK Shader axes
+
+2026-10-31. Existing Shader owners derive default features and overlapping SDK
+axes over original vertex contexts, preserving duplicate tier identities while
+interning native programs in first-seen order. Eleven original Materials select features.
+Prior art: pinned AssetRipper 1ac666 DummyShaderTextExporter:49–78; SDK declarations.
+Evidence: `work/coordination/p1-wholegame-1031/shader018-axis-public-v7/done.json`.
+One independently persisted record is J850 raw-exact, 1,322,972 bytes; SHA-256
+`8b3ac8bbaff20b0b759c4086f59030119f7083a1f694121e82de753eeccf996f`.
+Production 151.589 s, qualification 157.135 s, peak RSS 1,057,062,912 bytes;
+local job output 31,568,383 bytes. Host-only; no device heat measurement.
+Merged-selector residual 9 → 8; subtraction only, no complete output rerun.
+Readiness stays 693/705 available, 685 raw-exact. Complete bundle, phone
+production, installation/update and original runtime remain open. No APK claim.
+
+## J1345 — Reconstruct whole-game Shader material-signature template
+
+2026-10-31. Existing Shader owners infer and verify complete original fragment
+material templates, then lift over vertex runtime contexts. SDK user and builtin
+keywords identify contexts; 29 pinned original Materials select features.
+Prior art: pinned R2Wiki Assets/Extraction.md post-SOTS dummy versus legacy YAML.
+Evidence: `work/coordination/p1-wholegame-1031/shader012-template-public-v1/done.json`.
+One independently persisted record is J850 raw-exact, 871,652 bytes; SHA-256
+`d0cafb7f7a73495e52dda11b576f91417bcaeb4b8d053ff9942c9cf20410a398`.
+Production 59.553 s, qualification 67.421 s, peak RSS 1,588,576,256 bytes;
+local job output 21,082,292 bytes. Host-only; no device heat measurement.
+Merged-selector residual 8 → 7: Clip3, Cubemap3, AssetBundle1; subtraction only.
+Readiness stays 693/705 available, 685 raw-exact. Complete bundle, phone
+production, installation/update and original runtime remain open. No APK claim.
+
+## J1346 — Qualify whole-game Recorded animation source
+
+2026-10-31. Existing animation owner selects original Champrush Recorded using
+native-stream, reference-pose removal and two checked script relocations.
+Native type and script-aware binding multisets qualify one physical source.
+Prior art: J1143 pinned AssetRipper StreamedCurveKey/CustomCurveResolver; existing
+alternate-clip/index-profile diagnostics check current source identities.
+Evidence: `work/coordination/p1-wholegame-1031/recorded-public-v1/done.json`.
+One independently persisted record is J850 raw-exact, 2,460 bytes; SHA-256
+`d821b7219ca531137dd9975f8a510771b0e77f7eb1c03bc2679841002ce98d30`.
+Production 3.440 s, qualification 7.119 s, peak RSS 285,786,112 bytes.
+Host-only; no device heat measurement. Saved residual 7 → 6 by selector subtraction:
+Clip2, CustomRenderTexture3 (previously labelled Cubemap), AssetBundle1.
+Readiness stays 693/705 available, 685 raw-exact. Complete bundle, phone
+production, installation/update and original runtime remain open. No APK claim.
+
+
+## J1347 — Reconstruct whole-game CustomRenderTextures
+
+2026-10-31. Existing generic record owner admits native class 86 and preserves
+original fields while relocating three schema-checked typed PPtrs per record.
+Published Material/Texture suppliers and original external metadata qualify edges.
+Prior art: pinned UnityPy 1.25.3 CustomRenderTexture/PPtr; J1273/J1281 owner policy.
+Evidence: `work/coordination/p1-wholegame-1031/crt-public-v1/done.json`.
+Three independently persisted records are J850 raw-exact, 596 bytes; pack SHA-256
+`cdadeeb06ada80bb7644594349b001759e3dc8982c734da297127b1e7289f998`.
+Production 0.170 s, qualification 9.747 s, peak RSS 339,410,944 bytes.
+Host-only; no device heat measurement. Saved residual 6 → 3 by selector subtraction:
+Clip2, AssetBundle1. Readiness stays 693/705 available, 685 raw-exact.
+Complete bundle, phone production, installation/update and runtime remain open.
+
+
+## J1348 — Preserve preparation markers without redundant diagnostic stacks
+
+2026-10-31. Existing IntegratedWorldSession preparation markers use per-call
+LogOption.NoStacktrace; original/error logging retains its existing stack policy.
+APK SHA-256 `e2c9f7498d9d24660da2bc76535c58a175c6826221f3ea9570e3419a7b8261d9`.
+Device: `work/coordination/alpha-preparation-stack-observed-device-20261031T180012Z/terminal.done.json`.
+Decode: `work/coordination/alpha-preparation-decode-20261031T181917Z/analysis.done.json`.
+Three assisted diagnostic sessions, 856.35 s; menus 2/4 retain 21/63 preparation
+messages, zero preparation stacks, and 199/248 other stacks in Console history.
+CPU/GPU peak 79.2 C, above 80 C for 0 s; battery 33 → 36 C.
+Snapshots hash-verified in cold storage; process/selectors absent, OLED asleep.
+This qualifies diagnostic string retention only; ordinary repeated-session memory,
+error-callback delivery, physical controls and sustained performance remain open.

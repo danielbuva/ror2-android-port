@@ -1,0 +1,7 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android" package="dev.ror2lab.diagnostics">
+  <application>
+    <service android:name="dev.ror2lab.diagnostics.LabSettingsWriteObserver"
+        android:exported="false" android:isolatedProcess="false"
+        android:process=":settings_write_observer" android:stopWithTask="true" />
+  </application>
+</manifest>

@@ -153,6 +153,7 @@ def _alpha_stability_batch(function, options, args):
         expected_apk_sha256=args.expected_apk_sha256,
         canonical_root=Path(common_dir).parent,
         done_file=args.done_file,
+        **(dict(gameplay_only=True) if getattr(args, "gameplay_only", False) else {}),
         **(dict(prior_settings_batch=args.prior_settings_batch) if getattr(args, "prior_settings_batch", None) else {}),
     )
     print(json.dumps(result, indent=2))

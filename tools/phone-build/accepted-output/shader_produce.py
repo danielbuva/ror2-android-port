@@ -355,22 +355,26 @@ def properties(prop_node, shaderlab):
     if not blocks:
         return []
     block = blocks[0][1]
-    pattern = r'((?:\[[^\]]+\]\s*)*)(\w+)\s*\(\s*"([^"]*)"\s*,\s*(2DArray|2D|Cube|Color|Vector|Float|Range\s*\([^)]*\))\s*\)\s*=\s*("[^"]*"\s*\{\s*\}|\([^)]*\)|[-+\d.eE]+)'
+    pattern = r'((?:\[[^\]]+\]\s*)*)(\w+)\s*\(\s*"([^"]*)"\s*,\s*(2DArray|2D|Cube|any|Color|Vector|Float|Range\s*\([^)]*\))\s*\)\s*=\s*("[^"]*"\s*\{\s*\}|\([^)]*\)|[-+\d.eE]+)'
     result = []
     known = {name: 1 << index for index, name in enumerate(("HideInInspector", "PerRendererData", "NoScaleOffset", "Normal", "HDR", "Gamma"))}
     for match in re.finditer(pattern, block, re.I):
         attributes, name, description, kind, literal = match.groups()
-        kind = kind[0].upper() + kind[1:].lower() if kind.lower() in ("color", "vector", "float", "cube") else kind
+        kind = kind[0].upper() + kind[1:].lower() if kind.lower() in ("color", "vector", "float", "cube", "any") else kind
         prop = default(prop_node)
         prop.update(
-            {"m_Name": name, "m_Description": description, "m_Type": {"Color": 0, "Vector": 1, "Float": 2, "2D": 4, "Cube": 4, "2DArray": 4}.get(kind, 3)}
+            {
+                "m_Name": name,
+                "m_Description": description,
+                "m_Type": {"Color": 0, "Vector": 1, "Float": 2, "Any": 4, "2D": 4, "Cube": 4, "2DArray": 4}.get(kind, 3),
+            }
         )
         attributes = re.findall(r"\[([^\]]+)\]", attributes)
         prop["m_Flags"] = sum(known.get(attribute, 0) for attribute in attributes)
         prop["m_Attributes"] = [attribute for attribute in attributes if attribute not in known]
         prop["m_DefTexture"]["m_TexDim"] = 1
-        if kind in ("2D", "Cube", "2DArray"):
-            prop["m_DefTexture"] = {"m_DefaultName": re.search(r'"([^"]*)"', literal)[1], "m_TexDim": {"2D": 2, "Cube": 4, "2DArray": 5}[kind]}
+        if kind in ("Any", "2D", "Cube", "2DArray"):
+            prop["m_DefTexture"] = {"m_DefaultName": re.search(r'"([^"]*)"', literal)[1], "m_TexDim": {"Any": 1, "2D": 2, "Cube": 4, "2DArray": 5}[kind]}
         else:
             values = [float(part.strip()) for part in literal.strip("()").split(",")]
             if len(values) != (4 if kind in ("Color", "Vector") else 1):

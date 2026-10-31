@@ -23,8 +23,40 @@ public static class LightningStakeRollingObserverHostContracts
         __EXTRACTED_RETIREMENT_METHOD__
     }
 
+    sealed class PauseCoordinator
+    {
+        public bool offlineSettingsPaused;
+        public int observations;
+        public void ObserveLightningStakes() { observations++; }
+    }
+    sealed class PauseBridge
+    {
+        public int neutralCalls;
+        public void Neutral() { neutralCalls++; }
+    }
+    sealed class PauseConfig { public bool integratedWorld; }
+
+    static void CheckPause(bool paused, bool integrated, int expectedObservations, int expectedSimulation)
+    {
+        var coordinator = new PauseCoordinator { offlineSettingsPaused = paused };
+        var bridge = new PauseBridge();
+        var cfg = new PauseConfig { integratedWorld = integrated };
+        int simulation = 0;
+        for (int frame = 0; frame < 3; frame++)
+        {
+            __EXTRACTED_PAUSED_BRANCH__
+            simulation++;
+        }
+        Require(coordinator.observations == expectedObservations, "paused observation follows integrated owner selection");
+        Require(bridge.neutralCalls == (paused ? 3 : 0), "pause keeps input neutral each frame");
+        Require(simulation == expectedSimulation, "paused diagnostic never resumes simulation");
+    }
+
     public static int Main()
     {
+        CheckPause(true, true, 3, 0);
+        CheckPause(true, false, 0, 0);
+        CheckPause(false, true, 0, 3);
         var policy = new LightningStakeSamplingPolicy();
         Require(policy.TryTrack(1) && policy.TryTrack(2) && policy.TryTrack(3), "three active identities fit");
         Require(!policy.TryTrack(4) && policy.IdentityCount == 3, "active identity budget refuses fourth");

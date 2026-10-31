@@ -163,8 +163,10 @@ Record sampled time above 80 C, CPU/GPU peak and phase; demanding moments at
 80–85 C do not fail a run. Retain failed cases without automatic retry.
 Before each stage, cool readable CPU/GPU/battery/skin zones to at most 50 C
 with the OLED asleep, and battery back to at most 35 C before every stage.
-Refuse admission while battery status is charging (2) at level >= 80%, or
-level > 85%; report without retry and never change charging settings. Record
+At level >= 80%, confirm actual charging only after three consecutive positive
+`current_now` samples 10 seconds apart; a nonpositive sample permits the usual
+cool admission checks. Status 2 with zero current is admitted. Refuse confirmed
+charging or level > 85%; report without retry and never change charging settings. Record
 battery temperature, level and status in the trace and stage receipts.
 Record other physical zones, including power-management,
 charger and USB sensors, as excluded from admission only; continue sampling
@@ -209,6 +211,11 @@ nohup ./dev prototype --action alpha-stability-batch \
 
 The long-lived driver records its own PID in the lease, stops on the first
 failure and publishes the done receipt after terminal verification and pruning.
+Use `--gameplay-only` when collecting independent heap and sustained evidence
+while settings interruption is blocked (for example, adopted-storage `run-as`
+refusal). The receipt records `scope: gameplay-only`; success covers only those
+two stages and leaves settings interruption open. Do not combine this option
+with `--prior-settings-batch`.
 Read that receipt after completion rather than polling the device. A failed
 terminal readback preserves the lease and evidence for diagnosis. The sustained
 case uses invincibility only, manual neutral input and small software camera
@@ -219,8 +226,10 @@ native-heap pause/allocation effects separate from repeated-session measurement.
 
 The settings case observes a native pending-file creation and terminates only
 the bound writer from its own Development-package UID, preserving the existing
-preference values. It requires standard debug `run-as` access; ordinary package
-stop remains failure teardown. It accepts recovery
+preference values. It requires standard debug `run-as` access. After independently
+proving the bound writer exited, it stops any replacement activity before cold
+recovery; package stop alone is not interruption evidence. J1305 verifies this
+restart case, unchanged primary, native resave and 48 protected files. It accepts recovery
 only after proving that the old primary and an actual uncommitted pending file
 survived, including a hash-verified private copy of the initial primary. The
 SDK actor has a bounded lifetime independent of Android observer threads;
