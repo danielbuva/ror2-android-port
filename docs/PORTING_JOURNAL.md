@@ -1494,3 +1494,14 @@ play, physical input and genuine filled-filesystem recovery remain open.
 - Saved unresolved census falls 203 to 175, excluding parallel work. Final-file
   readiness stays 693/705 available, 685 raw-exact; whole-game bundle, phone
   production and install/update remain open.
+## J1293 — Reconstruct catalog-witnessed whole-game materials
+2026-10-31.
+- Existing material record owner adds two original catalog-root source selections
+  using unchanged dummy-shader keyword import policies and checked pointer edges.
+- Both persisted records (2,856 bytes) match J850 raw-exact. Eleven other witnessed
+  materials remain excluded because their original fields differ after policies.
+- Evidence: `work/coordination/p1-wholegame-1031/material-public-v3/terminal.json`;
+  independent source identities: `../material-catalog-v2/candidates.json` nearby.
+- Pack SHA-256: `cfcce4214c1b7d01d7c08f537f7aa786c4197cd7e43f32ab793ac3d276bea3fe`.
+- Unresolved census falls 203 to 201. Final-file readiness remains 693/705
+  available, 685 raw-exact. Complete bundle, phone and install/update remain open.
