@@ -5602,3 +5602,20 @@ an earlier invalid call is already retained. Its source hash and the shared
 audio/camera owner-cohort pins are refreshed together. Review: authored observer
 and metadata only; no game-derived content, private paths or identifiers. This
 is diagnostic capture, with no projectile mutation or device-acceptance claim.
+
+### Whole-game native HUD component slots (J1290)
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-whole-game-native-component-records.json` | `581a2f05b14d6ae18365386646a1e8b541cc33f2c0c26c7278f6e6913733d78f` |
+
+Audit: 2026-10-31. Original HUDSimple Canvas/Rigidbody and ItemIcon
+CanvasRenderer slots are identified by ordered component PPtrs, reciprocal
+qualified GameObject ownership, equal complete schemas and equal normalized
+bodies. Pinned AssetRipper GameObjectExtensions exposes ordered component
+traversal; existing J1273 native record production relocates only the checked
+GameObject pointer. No producer change or target scalar/body/template is added.
+The profile contains original selectors/hashes, native type identities and
+checked pointer remaps; generated bodies remain ignored. Three persisted records
+(108 bytes) are raw-exact J850. Complete-file, phone and install/update gates
+remain open.
