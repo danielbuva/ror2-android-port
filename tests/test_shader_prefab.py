@@ -39,6 +39,21 @@ class PrefabShaderTests(unittest.TestCase):
             [[[], ["A", "VERTEXLIGHT_ON"], ["VERTEXLIGHT_ON"], ["A"]]] * 3,
         )
 
+    def test_source_cycle_lifts_fragment_feature_over_vertex_contexts(self):
+        def shader_pass(name):
+            return {"m_Type": 0, "m_State": {"m_Name": name, "m_Tags": {"tags": [("LightMode", name)]}}}
+
+        row = shader_pass("Forward")
+        source = deepcopy(row)
+        # Vertex-only V and fragment-only F share context C. The original
+        # fragment cycle wraps to the first context after visiting the second.
+        source["progVertex"] = {"m_PlayerSubPrograms": [[{"m_KeywordIndices": k} for k in ([], [2], [0], [0, 2])]]}
+        source["progFragment"] = {"m_PlayerSubPrograms": [[{"m_KeywordIndices": k} for k in ([], [0, 1], [0], [1])]]}
+        carrier = {"m_ParsedForm": {"m_KeywordNames": ["C", "F", "V"], "m_SubShaders": [{"m_Passes": [shader_pass("Meta"), source]}]}}
+        selected = [[], ["V"], ["F"], ["F", "V"], ["C"], ["C", "V"], ["C", "F"], ["C", "F", "V"]]
+        actual = S.A.original_feature_order(carrier, 0, 0, row, {"C", "F", "V"}, selected, stage="progVertex")
+        self.assertEqual(actual, [[], ["F", "V"], ["V"], ["C", "F"], ["C"], ["C", "F", "V"], ["C", "V"], ["F"]])
+
     def test_material_features_preserve_combinations_without_union(self):
         source = {
             "m_CompileInfo": {"m_Snippets": [(11, snippet([["__", "A"], ["__", "B"]]))]},

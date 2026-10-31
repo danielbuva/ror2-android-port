@@ -2106,3 +2106,18 @@ local output 16,415,930 bytes. Host-only; no device heat measurement.
 Merged-selector residual 11 → 10; subtraction only, no complete output rerun.
 Readiness stays 693/705 available, 685 raw-exact. Complete bundle, phone
 production, installation/update and original runtime remain open. No APK claim.
+
+## J1342 — Reconstruct whole-game surface Shader stage context
+
+2026-10-31. Existing SDK Shader owners match original pass identities and lift
+source fragment cyclic order over vertex contexts; deferred LightMode supplies
+its SDK compile declaration. Two published original Materials retain features.
+Pinned AssetRipper exporter templates and SDK UnityPBSLighting inform the change.
+Evidence: `work/coordination/p1-wholegame-1031/shader-surface-context-v13/done.json`.
+One independently persisted record is J850 raw-exact, 130,700 bytes; SHA-256
+`afc9534d469f048a4bf8f9ca4e53a9dc5755a2eda07acfafae03368fc80e7de3`.
+Production 173.213 s, qualification 177.191 s, peak RSS 608,813,056 bytes;
+local job output 4,152,081 bytes. Host-only; no device heat measurement.
+Merged-selector residual 10 → 9; subtraction only, no complete output rerun.
+Readiness stays 693/705 available, 685 raw-exact. Complete bundle, phone
+production, installation/update and original runtime remain open. No APK claim.

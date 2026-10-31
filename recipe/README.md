@@ -6461,3 +6461,21 @@ nonpointer bytes. Only selectors, hashes and checked relationships ship; no font
 bytes, generated data, scalar patches or private paths are included. Independent
 public production reproduces one J850 record, 16,412,474 bytes. Complete bundle,
 phone production, installation/update and original runtime remain open.
+
+### Whole-game surface Shader stage context
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-whole-game-surface-shader.json` | `039a7b6f522ba3ffc63d1ab4111e8a0c4782b6862bd228759deb7ffcd4186bf2` |
+
+Audit: 2026-10-31. Two published original Materials select default and observed
+feature combinations. Original pass name/LightMode identifies the SDK pass;
+original vertex/fragment keyword records supply cyclic order, lifted over
+vertex-only contexts. The SDK UnityPBSLighting deferred declaration requires
+UNITY_PASS_DEFERRED during compilation only. Pinned AssetRipper 1ac666
+SimpleShaderExporter/DummyShaderTextExporter provides exporter/template prior
+art, without a stage-order or pass-context solution. Only selectors, hashes,
+relationships and authored transformations ship; no Shader text, programs,
+accepted-output patches or private paths. Independent public production is
+J850 raw-exact for one 130,700-byte record. Complete bundle, phone production,
+installation/update and runtime remain open.

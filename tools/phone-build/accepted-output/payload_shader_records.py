@@ -291,17 +291,83 @@ def standard_material(selected, original, sdk_objects):
     return value
 
 
+def original_stage_lift(original_pass, names, features, selected):
+    """Lift a source fragment cyclic order over complete vertex contexts."""
+
+    def sequence(stage):
+        result = []
+        for tier in original_pass[stage]["m_PlayerSubPrograms"]:
+            for record in tier:
+                key = frozenset(names[i] for i in record["m_KeywordIndices"]) & features
+                if key not in result:
+                    result.append(key)
+        return result
+
+    vertex = sequence("progVertex")
+    fragment = sequence("progFragment")
+    vn = frozenset().union(*vertex)
+    fn = frozenset().union(*fragment)
+    wanted = {frozenset(k) for k in selected}
+    vertex = [k for k in vertex if any(s & vn == k for s in wanted)]
+    fragment = [k for k in fragment if any(s & fn == k for s in wanted)]
+    if not vn - fn:
+        answer = fragment
+    elif not fn - vn:
+        answer = vertex
+    else:
+        common = vn & fn
+        exclusive = fn - vn
+        answer = []
+        offset = 0
+        while offset < len(fragment):
+            first = fragment[offset]
+            base = first & exclusive
+            start = first & common
+            end = next((j for j in range(offset + 1, len(fragment)) if fragment[j] & common == start and fragment[j] & exclusive != base), None)
+            if end is None:
+                raise ValueError("source fragment cycle has no wrap")
+            cycle = fragment[offset : end + 1]
+            alternatives = {k & exclusive for k in cycle}
+            if len(alternatives) != 2:
+                raise ValueError("source fragment cycle not binary")
+            other = next(k for k in alternatives if k != base)
+            contexts = []
+            for k in cycle:
+                if k & common not in contexts:
+                    contexts.append(k & common)
+            # Verify source itself is exactly the inferred cyclic zipper.
+            observed = [contexts[0] | base]
+            for c in contexts[1:]:
+                observed.extend((c | other, c | base))
+            observed.append(contexts[0] | other)
+            if observed != cycle:
+                raise ValueError("source fragment cycle not cyclic zipper")
+            expanded = [k for k in vertex if k & common in contexts]
+            if not expanded:
+                raise ValueError("empty lifted source cycle")
+            answer.append(expanded[0] | base)
+            for k in expanded[1:]:
+                answer.extend((k | other, k | base))
+            answer.append(expanded[0] | other)
+            offset = end + 1
+    if len(answer) != len(wanted) or set(answer) != wanted:
+        raise ValueError("source stage lift does not cover selected identities uniquely")
+    lookup = {frozenset(k): k for k in selected}
+    return [lookup[k] for k in answer]
+
+
 def original_feature_order(carrier, subshader_index, pass_index, shader_pass, features, selected, *, stage="progFragment"):
     """Order retained material identities by original stage records."""
     form = carrier["m_ParsedForm"]
-    original_pass = form["m_SubShaders"][subshader_index]["m_Passes"][pass_index]
 
     def identity(value):
         tags = {name.upper(): text.upper() for name, text in value["m_State"]["m_Tags"]["tags"]}
-        return value["m_State"]["m_Name"], tags.get("LIGHTMODE")
+        return value["m_State"].get("m_Name", ""), tags.get("LIGHTMODE")
 
-    if identity(original_pass) != identity(shader_pass):
+    matches = [row for row in form["m_SubShaders"][subshader_index]["m_Passes"] if identity(row) == identity(shader_pass)]
+    if len(matches) != 1:
         raise ValueError("Standard original/SDK carrier pass differs")
+    original_pass = matches[0]
     wanted = {frozenset(keys) for keys in selected}
     ranks = {}
     for tier in original_pass[stage]["m_PlayerSubPrograms"]:
@@ -310,6 +376,8 @@ def original_feature_order(carrier, subshader_index, pass_index, shader_pass, fe
             if keys in wanted and keys not in ranks:
                 ranks[keys] = len(ranks)
     if set(ranks) != wanted:
+        if stage == "progVertex":
+            return original_stage_lift(original_pass, form["m_KeywordNames"], features, selected)
         raise ValueError("original stage records do not cover retained material identities")
     return sorted(selected, key=lambda keys: ranks[frozenset(keys)])
 
