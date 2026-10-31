@@ -5638,3 +5638,12 @@ original base MonoBehaviour supplies the complete type; original component
 ownership supplies the selected record and checked pointer relocations. Setup
 requires pinned original bundles and a fresh output pack. Scoped readers close
 on process exit; receipts persist. No runtime owner or input backend is added.
+
+`owner-whole-game-fallback-material-records.json` extends the existing generic
+record owner with SDK-declared fallback keyword partitioning. `shader_sdk.py`
+and `shader_prefab.py` provide the checked Standard declaration registry; original
+material strings and property values remain source-owned. The Gauntlet selection
+reuses dummy sorting and published Shader/texture relationships. Setup requires
+pinned original/SDK roots and fresh output; scoped readers close on process exit
+and receipts persist. Twelve records are host raw-exact to J850. This adds no
+runtime owner; complete bundle and phone production remain open.

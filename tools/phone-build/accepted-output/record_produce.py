@@ -1196,7 +1196,7 @@ def director_unbound_tracks(body, root, selected):
     return result
 
 
-def transform_generic(body, class_id, selected, root=None, read_clip=None, source_type=None):
+def transform_generic(body, class_id, selected, root=None, read_clip=None, source_type=None, material_keywords=None):
     if set(selected) - {
         "references",
         "demote_keywords",
@@ -1244,8 +1244,10 @@ def transform_generic(body, class_id, selected, root=None, read_clip=None, sourc
             raise ValueError("empty renderer projection requires original MeshRenderer schema")
         body = O.empty_mesh_renderer(body, source_type["tree"])
     if "keyword_policy" in selected:
-        if class_id != 21 or selected["keyword_policy"] not in ("dummy-shader-demote-valid", "dummy-shader-sort-invalid"):
-            raise ValueError("keyword policy requires original Material and named dummy import")
+        if class_id != 21 or selected["keyword_policy"] not in ("dummy-shader-demote-valid", "dummy-shader-sort-invalid", "sdk-fallback-sort-invalid"):
+            raise ValueError("keyword policy requires original Material and named shader import")
+        if selected["keyword_policy"] == "sdk-fallback-sort-invalid" and material_keywords is None:
+            raise ValueError("fallback keyword policy requires checked SDK declarations")
     if "strip_compute_programs" in selected:
         if selected["strip_compute_programs"] is not True or class_id != 72 or source_type is None:
             raise ValueError("compute projection requires original ComputeShader schema")
@@ -1299,7 +1301,11 @@ def transform_generic(body, class_id, selected, root=None, read_clip=None, sourc
             raise ValueError("unbound tracks require original PlayableDirector schema")
         result = director_unbound_tracks(result, root, selected["director_unbound_tracks"])
     if selected.get("demote_keywords") or "keyword_policy" in selected:
-        return O.demote_material_keywords(result, sort_invalid=selected.get("keyword_policy") == "dummy-shader-sort-invalid")
+        return O.demote_material_keywords(
+            result,
+            sort_invalid=selected.get("keyword_policy") in ("dummy-shader-sort-invalid", "sdk-fallback-sort-invalid"),
+            valid_keywords=material_keywords if selected.get("keyword_policy") == "sdk-fallback-sort-invalid" else (),
+        )
     return result
 
 
@@ -1319,7 +1325,7 @@ def profile_bundles(path):
                 yield source
     else:
         profile = json.loads(path.read_text())
-        if set(profile) - {"sdk", "managed"} != {"input_id", "bundles"} or profile["input_id"] != M.INPUT_ID:
+        if set(profile) - {"sdk", "managed", "material_keyword_sdk"} != {"input_id", "bundles"} or profile["input_id"] != M.INPUT_ID:
             raise ValueError("unknown object-record input")
         yield from profile["bundles"]
 
@@ -1387,6 +1393,18 @@ def produce(profile_path, profile_sha256, pc, output, sdk=None):
             if typ["class_id"] != 114:
                 raise ValueError("SDK script base is not MonoBehaviour")
             sdk_tree = typ["tree"]
+        material_keywords, keyword_sdk_path = None, None
+        if not str(profile_path).endswith(".jsonl.gz") and "material_keyword_sdk" in profile:
+            selected_sdk = profile["material_keyword_sdk"]
+            if sdk is None:
+                raise ValueError("fallback material keywords require pinned owner SDK")
+            keyword_sdk_path = M.safe_input(sdk.resolve(strict=True), "Resources/unity_builtin_extra")
+            if output.is_relative_to(sdk.resolve()):
+                raise ValueError("SDK material keyword output overlap")
+            shader = module("shader_sdk").sdk_source(sdk, selected_sdk["path_id"], selected_sdk["sha256"])
+            if shader["m_ParsedForm"]["m_Name"] != selected_sdk["name"]:
+                raise ValueError("SDK material keyword shader identity differs")
+            material_keywords = set(module("shader_prefab").keyword_registry(shader, ([], []))[0])
         identity_owner = None
         scripts, script_inputs = {}, {}
 
@@ -1552,7 +1570,7 @@ def produce(profile_path, profile_sha256, pc, output, sdk=None):
                             if typ["class_id"] == 74:
                                 result = transform(body, root, operations)
                             else:
-                                result = transform_generic(body, typ["class_id"], operations, root, read_controller_clip, typ)
+                                result = transform_generic(body, typ["class_id"], operations, root, read_controller_clip, typ, material_keywords)
                             digest = hashlib.sha256(result).hexdigest()
                             if digest != target["sha256"] or len(result) != target["bytes"]:
                                 raise ValueError("produced object record differs from accepted hash")
@@ -1581,6 +1599,8 @@ def produce(profile_path, profile_sha256, pc, output, sdk=None):
                 raise ValueError("original managed script changed during production")
         if sdk_path is not None and B.sha(sdk_path) != profile["sdk"]["sha256"]:
             raise ValueError("SDK script metadata changed during production")
+        if keyword_sdk_path is not None and B.sha(keyword_sdk_path) != profile["material_keyword_sdk"]["sha256"]:
+            raise ValueError("SDK material keyword declarations changed during production")
         if runtime_fields is not None:
             runtime_fields.verify()
             receipt["managed_field_inputs"] = dict(runtime_fields.pins)

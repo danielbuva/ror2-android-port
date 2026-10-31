@@ -73,12 +73,14 @@ def remap_record(body, typ, references, externals):
     return remap(body, references)
 
 
-def demote_material_keywords(body, *, sort_invalid=False):
+def demote_material_keywords(body, *, sort_invalid=False, valid_keywords=()):
     """Retain original keywords as invalid for the qualified dummy shader.
 
     The authored dummy shader declares no material keywords. Preserve the
     original valid-then-invalid order by default, every keyword string and all other
     original material values; no shader/material payload comes from a recipe.
+    A checked SDK fallback may supply its declared keyword space to retain valid
+    original keywords. An empty space preserves the existing dummy policy.
     """
     stream = io.BytesIO(body)
 
@@ -101,9 +103,18 @@ def demote_material_keywords(body, *, sort_invalid=False):
         raise ValueError("invalid material keyword count")
     keywords.extend(string() for _ in range(invalid_count))
     end = stream.tell()
+    valid = [item for item in keywords if item[0] in valid_keywords]
+    invalid = [item for item in keywords if item[0] not in valid_keywords]
     if sort_invalid:
-        keywords.sort(key=lambda item: item[0].encode("utf-16-be"))
-    return body[:start] + struct.pack("<II", 0, valid_count + invalid_count) + b"".join(chunk for _, chunk in keywords) + body[end:]
+        invalid.sort(key=lambda item: item[0].encode("utf-16-be"))
+    return (
+        body[:start]
+        + struct.pack("<I", len(valid))
+        + b"".join(chunk for _, chunk in valid)
+        + struct.pack("<I", len(invalid))
+        + b"".join(chunk for _, chunk in invalid)
+        + body[end:]
+    )
 
 
 def remove_components(body, removals):

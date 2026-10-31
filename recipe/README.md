@@ -6117,3 +6117,24 @@ Only source selectors, hashes, extent and checked relationships ship; no body,
 type template, decompiled implementation or private settings are published.
 The persisted 32-byte record is raw-exact to J850. Saved residual 60 to 59
 excludes parallel closures; complete bundle and phone/runtime gates remain open.
+
+### Whole-game fallback Material keywords
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-whole-game-fallback-material-records.json` | `715a6477f46159d5d85f8f4726713b6d14583d2b2c329ae39443936eccfd78c8` |
+
+Audit: 2026-10-31. Existing catalog identities select eleven original Materials
+whose Texture Scrolling Wireframe Shader uses the published Standard fallback.
+The existing SDK Shader reader and keyword registry derive its declaration space
+from pinned SDK object 46; original strings partition into valid/invalid arrays,
+with invalid names sorted by the existing ordinal policy. All scalar/property
+bytes remain original. Pinned AssetRipper 1ac666f DummyShaderTextExporter retains
+fallback names; EditorKit metadata informs property boundaries, not scalar fitting.
+The Gauntlet skybox Material uses its original catalog identity (comma-normalized
+export path) and existing dummy sorting. Published Commando Shader and RGBA texture
+recipes independently witness all five endpoints. Only selectors, hashes, named
+policies and checked pointer relationships ship; no body, generated content or
+private paths are included. Twelve persisted records are raw-exact to J850,
+39,788 bytes. Saved public residual 57 to 45; final-file readiness remains
+693/705 available, 685 raw-exact. Complete bundle and phone/runtime gates stay open.

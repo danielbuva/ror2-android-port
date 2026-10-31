@@ -741,6 +741,18 @@ class AnimationProducerTests(unittest.TestCase):
             expected = prefix + struct.pack("<II", 0, 3) + b"".join(order) + suffix
             self.assertEqual(A.transform_generic(body, 21, {"keyword_policy": policy}), expected)
 
+    def test_fallback_material_keywords_use_sdk_space_and_preserve_values(self):
+        prefix = struct.pack("<I", 4) + b"Demo" + struct.pack("<iq", 2, 77)
+        keyword = lambda text: struct.pack("<I", len(text)) + text + bytes(-len(text) % 4)
+        emission, custom, invalid = map(keyword, (b"_EMISSION", b"CUSTOM", b"BEFORE"))
+        tail = b"UNCHANGED MATERIAL VALUES"
+        body = prefix + struct.pack("<I", 2) + custom + emission + struct.pack("<I", 1) + invalid + tail
+        policy = {"keyword_policy": "sdk-fallback-sort-invalid"}
+        expected = prefix + struct.pack("<I", 1) + emission + struct.pack("<I", 2) + invalid + custom + tail
+        self.assertEqual(A.transform_generic(body, 21, policy, material_keywords={"_EMISSION", "OTHER_SDK_FEATURE"}), expected)
+        with self.assertRaisesRegex(ValueError, "checked SDK declarations"):
+            A.transform_generic(body, 21, policy)
+
     def test_compressed_profile_streams_groups_and_rejects_unbounded_or_incomplete_rows(self):
         header = json.dumps({"input_id": A.M.INPUT_ID}).encode() + b"\n"
         group = {"path": "authored.bundle", "sha256": "authored", "members": []}
