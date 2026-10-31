@@ -6396,3 +6396,19 @@ path is included. Two independently persisted records match J850 raw-exact,
 44,048 bytes. The previously qualified VoidSurvivor selector is restored to the
 profile bundle list from an incorrectly nested member. Complete bundle, phone
 production, installation/update and original runtime remain open.
+
+### Whole-game Acolyte null AvatarMask defaults
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-animator-controllers.json` | `b6b9c1e95887a702b1cffda99b2f4e980c7f6bfadddb8bb5b45b7c32933a4154` |
+
+Audit: 2026-10-31. The existing mask-omission policy restores the native full
+83-bit human mask and removes skeleton entries when exported AvatarMasks are
+null. Pinned AssetRipper 813fed1597 AnimatorControllerProcessor.InitializeLayer
+leaves recreated masks null; exact-editor BuildAsset/GetMask/FullBodyMask
+tracing establishes the default independently of accepted output. Only source
+selectors, relationships, hashes and policies ship; no controller body, target
+patch, generated data or private path is included. One independently persisted
+record matches J850 raw-exact, 23,108 bytes. Complete bundle, phone production,
+installation/update and runtime remain open.

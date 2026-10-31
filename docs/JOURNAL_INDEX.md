@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J1338](PORTING_JOURNAL.md#j1338--restore-native-null-avatarmask-defaults-for-acolyte) | 2026-10-31 | Restore native null AvatarMask defaults for Acolyte | 2026-10-31. |
 | [J1337](PORTING_JOURNAL.md#j1337--reconstruct-populated-synchronized-controller-tree-allocation) | 2026-10-31 | Reconstruct populated synchronized controller tree allocation | 2026-10-31. |
 | [J1336](PORTING_JOURNAL.md#j1336--normalize-retained-synchronized-controller-trees-to-base-motion) | 2026-10-31 | Normalize retained synchronized controller trees to base motion | 2026-10-31. |
 | [J1334](PORTING_JOURNAL.md#j1334--reconstruct-the-voidsurvivor-synchronized-layer-chain) | 2026-10-31 | Reconstruct the VoidSurvivor synchronized layer chain | 2026-10-31. |

@@ -2050,3 +2050,17 @@ Restores the qualified VoidSurvivor selector's malformed profile nesting.
 Saved selector residual 17 → 15; coverage subtraction, no accepted output rerun.
 Readiness stays 693/705 available, 685 raw-exact. Complete bundle, phone production,
 installation/update and original runtime remain open. No APK claim.
+
+## J1338 — Restore native null AvatarMask defaults for Acolyte
+
+2026-10-31. Existing controller mask-omission policy restores full 83-bit human
+masks alongside skeleton removal for exported null AvatarMasks.
+Prior art: pinned AssetRipper 813fed1597 InitializeLayer leaves masks null;
+exact-editor source-only BuildAsset/GetMask/FullBodyMask traces prove defaults.
+Evidence: `work/coordination/p1-scenes-w/acolyte-mask-public-20261031/done.json`.
+One persisted record independently raw-exact to J850, 23,108 bytes; pack SHA-256
+`893cfd6c3ad58c221b0f76136e86abfa9eb4b40273666e34abdf281685c823a3`.
+Qualification/production wall 63.196 s; host-only, no thermal measurement.
+Saved selector residual 15 → 14; coverage subtraction, no accepted output rerun.
+Readiness stays 693/705 available, 685 raw-exact. Complete bundle, phone production,
+installation/update and original runtime remain open. No APK claim.
