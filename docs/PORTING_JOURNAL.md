@@ -1664,7 +1664,7 @@ Public saved residual 103 → 101 before parallel Director closures.
 Readiness stays 693/705 available, 685 raw-exact; full bundle, phone production,
 installation and original runtime remain open. Host-only; no APK/run claim.
 
-## J1307 — Complete original Champrush Director ownership
+## J1309 — Complete original Champrush Director ownership
 
 2026-10-31. Extend the existing whole-game Director recipe with one original
 Champrush record; reuse signed exposed-name conversion and checked PPtr remaps.

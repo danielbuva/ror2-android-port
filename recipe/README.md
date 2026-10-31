@@ -5893,7 +5893,7 @@ integer exposed-name export; the existing record owner reimports those names
 and relocates checked references while preserving the native schema and fields.
 The profile contains selectors, hashes, native identity and relationship mappings;
 no protected bodies, target scalar templates, implementation or private paths.
-All three persisted records (1,380 bytes) match J850 raw-exact (J1305/J1307).
+All three persisted records (1,380 bytes) match J850 raw-exact (J1305/J1309).
 Champrush endpoints follow 80 original Transform pairs rooted at a published
 GameObject selection and seven connected Director suppliers, including the
 reciprocal Animator component slot. Only identities and checked relationships
