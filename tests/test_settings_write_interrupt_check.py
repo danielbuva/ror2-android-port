@@ -15,6 +15,21 @@ import settings_write_interrupt_check as check  # noqa: E402
 class InterruptedWriteEvidenceTests(unittest.TestCase):
     witness = dict(success=True, createObserved=True, writerExited=True, pendingPresentBeforeStop=True, pendingPresentAfterStop=True)
 
+    def test_android_restarted_activity_is_stopped_without_reclassifying_writer_exit(self):
+        device = Mock()
+        device.sh.side_effect = ["456", "", ""]
+        with patch.object(check, "_remote_path_state", return_value="absent"), patch.object(check, "bind_installed_apk") as binding:
+            result = check.stop_after_observed_exit(device, dict(self.witness, pid=123), "a" * 64)
+        self.assertEqual(result, dict(writer_pid=123, writer_absent=True, package_pids_before_stop="456"))
+        device.sh.assert_any_call("am", "force-stop", check.PACKAGE)
+        binding.assert_called_once_with(device.owned(), expected_sha256="a" * 64)
+
+    def test_still_live_bound_writer_is_not_hidden_by_force_stop(self):
+        device = Mock()
+        with patch.object(check, "_remote_path_state", return_value="directory"), self.assertRaisesRegex(RuntimeError, "writer PID remains"):
+            check.stop_after_observed_exit(device, dict(self.witness, pid=123), "a" * 64)
+        device.sh.assert_not_called()
+
     def test_service_binding_requires_nonce_writer_uid_and_distinct_process(self):
         ready = dict(nonce="a" * 32, pid=123, uid=10001, observerPid=124)
         check.validate_observer_binding(ready, "a" * 32, "123", 10001)
