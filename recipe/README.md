@@ -5712,6 +5712,8 @@ output hashes. No scalar template, original body, game implementation, private
 path or generated content is included. All ten persisted records (880 bytes)
 match J850 raw-exact. Complete bundle, phone and install/update gates remain open.
 
+| `owner-whole-game-shader-particle.json` | Original particle material and Shader pins, SDK declaration identity, dependency pointers and output hash; `shader_prefab.py`; J1297. |
+
 ### Whole-game original-material particle Shader (J1297)
 
 `owner-whole-game-shader-particle.json` SHA-256:
