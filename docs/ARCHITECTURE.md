@@ -531,8 +531,10 @@ renderer/program preconditions and native type hashes remain checked. Compute
 shells retain declarations and keywords; they contain no executable Android
 compute programs. The material/compute recipe adds no runtime behavior.
 Its `controller_clear_skeleton_masks` policy follows the pinned
-exporter's omitted layer masks: it removes original mask entries and subtracts
-their native allocation sizes, preserving all other controller fields.
+exporter's omitted layer masks: it removes original skeleton mask entries and
+subtracts their native allocation sizes. Exact-editor `BuildAsset` applies the
+full 83-bit human mask to every layer whose exported AvatarMask is null; the
+same operation restores that default while preserving other controller fields.
 `controller_state_order` relocates whole original state records using checked
 source-index bijections. Default states and direct transition destinations move
 with those records; selector and entry/exit indices retain their source values.
