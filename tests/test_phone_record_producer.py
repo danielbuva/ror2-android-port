@@ -622,6 +622,20 @@ class AnimationProducerTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "component append"):
             A.transform_generic(body, 114, {"append_components": [303]})
 
+    def test_prefab_activation_preserves_component_order_and_checks_source_name(self):
+        tail = struct.pack("<II", 5, 4) + b"Demo" + b"\x07\x00\x01"
+        body = struct.pack("<Iiqiq", 2, 0, 11, 0, 22) + tail
+        policy = {
+            "inactive_scene_object": "Demo",
+            "references": [{"offset": 4, "from": [0, 11], "to": [0, 101]}],
+        }
+        expected = struct.pack("<Iiqiq", 2, 0, 101, 0, 22) + tail[:-1] + bytes(1)
+        self.assertEqual(A.transform_generic(body, 1, policy), expected)
+        with self.assertRaisesRegex(ValueError, "named active original"):
+            A.transform_generic(body, 1, {"inactive_scene_object": "Other"})
+        with self.assertRaisesRegex(ValueError, "activation policy"):
+            A.transform_generic(body, 114, policy)
+
     def test_prefab_omissions_check_original_identity_before_append_and_remap(self):
         tail = struct.pack("<II", 5, 4) + b"Demo" + b"\x07\x00\x01"
         body = struct.pack("<Iiqiqiq", 3, 0, 11, 0, 88, 0, 22) + tail
