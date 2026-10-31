@@ -1813,3 +1813,17 @@ Persisted record raw-exact to J850, pack SHA-256
 Saved public residual 60 → 59 excludes parallel closures; readiness remains
 693/705 available, 685 raw-exact. Complete bundle, phone production and runtime
 remain open. Host-only; no APK/device claim.
+
+## J1321 — Reconstruct whole-game fallback Material keyword spaces
+
+2026-10-31. Existing generic owner partitions original keywords using the pinned
+SDK Standard declarations for eleven catalog-selected fallback Materials. A twelfth
+Gauntlet Material reuses dummy sorting and five independently published endpoints.
+Prior art: pinned AssetRipper fallback export; existing EditorKit property boundaries.
+Evidence: `work/coordination/p1-wholegame-1031/material-fallback-v1/terminal.json`
+and `work/coordination/p1-wholegame-1031/material-missing-v2/terminal.json`.
+Persisted outputs raw-exact to J850: 12 records, 39,788 bytes; pack SHA-256 values
+`5e6a4a98fb3f4276a46e79406d864ea0df52372fcc8c27d151612765b9a1c179` and
+`14449eeade2f939107b3b28b5c7336a47184258965e4f01929089bce8cb8f7f7`.
+Saved public residual 57 → 45; readiness stays 693/705 available, 685 raw-exact.
+Complete bundle, phone production and original runtime remain open. Host-only.

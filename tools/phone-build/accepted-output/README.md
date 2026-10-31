@@ -1932,3 +1932,10 @@ tables and dependencies. Logical compiler filenames may derive from original
 asset identities; historical export files are not public conversion inputs.
 The 117 persisted records match J850. Complete bundle, phone production and
 original rendering/gameplay acceptance remain open.
+
+`owner-whole-game-fallback-material-records.json` uses `record_produce.py` with
+`--sdk EXACT_SDK_ROOT`. Its `material_keyword_sdk` pins the SDK Shader declaration
+registry used by `sdk-fallback-sort-invalid`: retain declared original keywords as
+valid and sort the remaining original names as invalid. Material values stay
+unchanged. The same profile includes a catalog-selected Gauntlet Material using
+the existing dummy policy and checked public texture/Shader endpoint mappings.
