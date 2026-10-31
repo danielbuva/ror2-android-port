@@ -5691,3 +5691,11 @@ Setup requires pinned original/SDK/template/codec inputs and a fresh output pack
 existing compiler/codec teardown releases processes and receipts persist.
 One record is host raw-exact to J850; complete bundle and phone/runtime gates
 remain open. This introduces no runtime owner.
+
+`owner-whole-game-billboard-shader.json` extends the existing `shader_prefab.py`
+owner with original Material feature combinations and vertex-stage variant order.
+The existing SDK compiler native-order mechanism preserves source program
+interning. Setup pins original Shader/Material bundles, SDK/tool inputs and a
+fresh record pack; process exit releases source/compiler handles and receipts
+persist. One record is host raw-exact to J850; complete bundle and phone/runtime
+gates remain open. No runtime owner is added.
