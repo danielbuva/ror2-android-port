@@ -1996,6 +1996,18 @@ Saved selector residual 30 → 22; coverage subtraction only. Readiness stays
 693/705 available, 685 raw-exact. Complete bundle, phone production, installation/
 update and original runtime remain open. No APK claim.
 
+## J1335 — Reconstruct Reaper secondary-swing animation
+
+2026-10-31. The existing animation record owner uses original native curves,
+quaternion normalization and its atan2 root-average policy; producer code unchanged.
+Prior art: J1143's pinned AssetRipper 1ac666 StreamedCurveKey/CustomCurveResolver.
+Evidence: `work/coordination/p1-wholegame-1031/reaper-atan2-public-v1/done.json`.
+One independently persisted record matches J850 raw-exact, 262,216 bytes; pack
+SHA-256 `e9a5bab2332e929fcfdfdd78c28917ea2875a886f4cec0336a84594ec10f25f6`.
+Production 0.131 s; independent comparison 3.553 s. Host-only, no thermal data.
+Saved selector residual 22 → 21; coverage subtraction only. Readiness stays
+693/705 available, 685 raw-exact. Complete bundle, phone installation/update
+and original runtime remain open. No APK claim.
 ## J1334 — Reconstruct the VoidSurvivor synchronized layer chain
 
 2026-10-31. Existing controller owner resolves original exported layer chains,

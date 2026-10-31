@@ -233996,6 +233996,27 @@
                   }
                 }
               ]
+            },
+            {
+              "path_id": 7813652615075188649,
+              "class_id": 74,
+              "sha256": "95b8a226161680ee904c809ea3da2fc9294cf9e995e6484819b964cf09dbacfd",
+              "outputs": [
+                {
+                  "bundle": "whole-game-content",
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "path_id": 7475921267688756750,
+                  "bytes": 262216,
+                  "sha256": "e9a5bab2332e929fcfdfdd78c28917ea2875a886f4cec0336a84594ec10f25f6",
+                  "transform": {
+                    "clear_reference_pose": true,
+                    "native_stream": true,
+                    "normalize_root_quaternions": true,
+                    "root_average": true,
+                    "root_average_atan2": true
+                  }
+                }
+              ]
             }
           ]
         }
