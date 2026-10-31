@@ -5740,6 +5740,24 @@ output hashes. No scalar template, original body, game implementation, private
 path or generated content is included. All ten persisted records (880 bytes)
 match J850 raw-exact. Complete bundle, phone and install/update gates remain open.
 
+### Whole-game original MeshRenderer ownership (J1298)
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-whole-game-renderer-records.json` | `65810a7caa3fba3a55557c0044cf5bccbbf66a0082d0bed02a0dd96b4224d208` |
+
+Audit: 2026-10-31. Existing public GameObject source selections and each unique
+original MeshRenderer class slot identify twelve records. Reciprocal component
+ownership and every original pointer endpoint, including unchanged and null
+references, are checked against existing public suppliers. Two records with
+unresolved material suppliers are excluded. Pinned EditorKit
+AddressablesPathDictionaryCache informs GameObject/type component lookup.
+The existing generic record owner preserves schemas and nonpointer bytes while
+relocating checked references. This profile contains only source selectors,
+input/output hashes, native type identities and pointer relationships; no object
+bodies, scalar templates, game implementation or private paths are published.
+All twelve persisted records (1,944 bytes) match J850 raw-exact. Complete-file,
+phone production and install/update gates remain open.
 | `owner-whole-game-shader-particle.json` | Original particle material and Shader pins, SDK declaration identity, dependency pointers and output hash; `shader_prefab.py`; J1297. |
 
 ### Whole-game original-material particle Shader (J1297)

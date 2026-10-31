@@ -473,6 +473,11 @@ ownership. Both original owner and mesh endpoints resolve to existing public
 suppliers, including external mesh members. The same generic record owner
 preserves native fields and schemas while relocating checked pointers; setup,
 pack state and teardown follow its existing contract.
+`owner-whole-game-renderer-records.json` selects twelve original MeshRenderers
+through qualified GameObject sources, unique class slots and reciprocal ownership.
+Every original pointer endpoint, including null and unchanged references, is
+checked against existing public suppliers. The generic record owner preserves
+native schemas and fields, with its existing reader lifecycle and pack state.
 Generic record admission also includes native classes 96, 119, 193 and 330,
 preserving their original schemas and every nonpointer byte.
 The component-edge recipe selects unchanged original records through explicit
