@@ -2106,3 +2106,18 @@ local output 16,415,930 bytes. Host-only; no device heat measurement.
 Merged-selector residual 11 → 10; subtraction only, no complete output rerun.
 Readiness stays 693/705 available, 685 raw-exact. Complete bundle, phone
 production, installation/update and original runtime remain open. No APK claim.
+
+
+## J1342 — Restore original point-sound timeout dispatch
+
+2026-10-31. The composed audio owner dispatches the unchanged original timeout
+processor while the original application is inactive; clock, timeout and pools stay original.
+Prior art: pinned R2API f539511e SoundAPI initialization ordering; J880 pool preservation.
+Evidence: `work/coordination/alpha-timeout-hoststage-20261031T150558Z/terminal.done.json`
+and `work/coordination/alpha-timeout-acceptance-20261031T153156Z/terminal.done.json`.
+APK `db0ada198090072870ea38ba54fbef6bf1a5a8216fe95683b4712e124587ba91`, source `30e35439`.
+Adopted install verified; instrumented menu 2/4 snapshots show queue count 0,
+capacity 4, all emitter slots clear, versus the earlier retained queue count 22.
+Capture wall 965 s; CPU/GPU peak 78.1 C, above 80 C for 0 s; battery 32 → 35 C.
+Snapshots hash-verified in cold storage; app stopped, selectors/scratch removed, OLED asleep.
+Ordinary repeated-session memory, physical controls and sustained performance remain open.
