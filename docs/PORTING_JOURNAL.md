@@ -1896,3 +1896,19 @@ One persisted record independently raw-exact to J850, 2,020 bytes; pack SHA-256
 Saved selector residual 40 → 39; this is coverage subtraction, not requalification.
 Readiness stays 693/705 available, 685 raw-exact. Complete bundle, phone production,
 installation/update and original runtime remain open. Host-only; no APK claim.
+
+## J1327 — Release destroyed overlap discovery targets after session teardown
+
+2026-10-31. Existing SessionResourceBoundary prunes Unity-destroyed entries from
+OverlapAttack discovery scratch storage only after world/network teardown;
+live targets, ordering and capacity remain intact. Native captured roots and
+pinned UnityExplorer inspection informed the change; no attack behavior changes.
+Evidence: `work/coordination/alpha-overlap-device-20261031T115535Z/terminal.done.json`;
+prior graph: `work/coordination/alpha-memory-attribution-20261031T114112Z/`.
+Normal IL2CPP build/source `eed58dd9`; adopted-install APK SHA-256
+`4a95382c140364d780bb5940e87183605a04f48083edbbbe53062ff97fce5d51`.
+Three same-process diagnostic sessions removed 7/6/0 overlap targets. Session 2→3
+post-GC managed fell 1,458,176 bytes; menu PSS rose 34,604 KiB. Wall 834 s;
+CPU/GPU peak 80 C, time above 80 C 0 s, battery 33→35 C. Idle/asleep verified.
+Four exact-editor host contracts passed. Ordinary-play memory bound, physical
+controls and sustained performance remain open; diagnostic input is not acceptance.

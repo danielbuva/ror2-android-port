@@ -393,7 +393,6 @@ wrappers from native-live targets. At the existing idle teardown boundary, remov
 only destroyed entries; preserve live targets, order, capacity and attack behavior.
 This closes a captured retaining path, not an ordinary-play memory-bound gate.
 
-
 ### Thor secondary-panel control
 
 The public [ThorBottomScreen source](https://github.com/slushiimusic/ThorBottomScreen/tree/ba9f5febcb868a7c0313ac70e0cd2669948fe59f),
