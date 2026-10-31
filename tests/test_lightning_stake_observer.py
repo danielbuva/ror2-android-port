@@ -37,7 +37,12 @@ def production_host():
     policy = extract_block(source, "public sealed class LightningStakeSamplingPolicy : IDisposable")
     retirement = extract_block(source, "void RetireTrackedAt(int index)")
     fixture = (ROOT / "tests/fixtures/lightning_stake_observer_host.cs").read_text(encoding="utf-8")
-    return "using System;\nusing System.Collections.Generic;\n" + policy + "\n" + fixture.replace("__EXTRACTED_RETIREMENT_METHOD__", retirement)
+    paused = extract_block(
+        (ROOT / "tools/unity/runtime/input/NovaInputBoundary.cs").read_text(encoding="utf-8"),
+        "if (coordinator.offlineSettingsPaused)",
+    )
+    fixture = fixture.replace("__EXTRACTED_RETIREMENT_METHOD__", retirement).replace("__EXTRACTED_PAUSED_BRANCH__", paused)
+    return "using System;\nusing System.Collections.Generic;\n" + policy + "\n" + fixture
 
 
 class LightningStakeObserverContracts(unittest.TestCase):
