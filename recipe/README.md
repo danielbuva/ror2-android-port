@@ -6626,3 +6626,25 @@ now supplies 67 records. Source selectors, hashes and typed relationships only;
 no new producer logic or protected content is published. The 59 previously
 completed source groups compare exact diagnostically; final bundle qualification
 and readiness remain open.
+
+
+### Whole-game bundle CanvasRenderer provider records
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-whole-game-bundle-canvas-records.jsonl.gz` | `24452f8b3a4365fea92e96f9c391586fa7d18c67825494eb31fbf1d920e66df7` |
+
+Audit: 2026-10-31. The existing generic `record_produce.py` native owner selects
+10,870 original CanvasRenderers across 66 source members. Qualified original
+GameObject component PPtrs and reciprocal CanvasRenderer GameObject pointers
+supply unique source identities and checked pointer relocations. Pinned
+EditorKit `4128710` EntryLookup component requirements/child searches require
+actual typed ownership; J1290's ordered component/backlink technique supplies
+prior art. Only selectors, source/output hashes and checked relationships ship;
+no native body, scalar template, target repair, protected implementation or
+private path is included. The deterministic gzip JSONL profile uses the existing
+bounded source-group reader. Native schema is derived from original input;
+optional native type hashes are omitted. Independent persisted production
+matches all 10,870 J850 records (141,310 bytes). Saved residual three and final
+file readiness remain unchanged; complete groups, bundle, phone/install/update
+and runtime gates stay open.
