@@ -1784,3 +1784,17 @@ Three persisted records independently raw-exact to J850, 699 bytes; pack SHA-256
 Saved public residual 63 → 60 before parallel closures. Readiness stays
 693/705 available, 685 raw-exact. Complete bundle, phone production, installation/
 update and original runtime remain open. Host-only; no APK/device claim.
+
+## J1319 — Reconstruct whole-game missing-script base component
+
+2026-10-31. Shared J1225 policy emits the original Rewired Switch component's
+32-byte base through the generic record owner, retaining the complete original
+base type and checked owner/null-script relocation. Original GameObject slot
+and reciprocal ownership select it; existing Rewired runtime results stay intact.
+Prior art: pinned RoR2ImportExtensions AssemblyBlacklist.Process; no Android substitute.
+Evidence: `work/coordination/p1-wholegame-1031/tombstone-public-v1/terminal.json`.
+Persisted record raw-exact to J850, pack SHA-256
+`b04876ed61d613f36346074f8cf1b27f91af58a8a4d44b1b63c67147b8d3a7c0`.
+Saved public residual 60 → 59 excludes parallel closures; readiness remains
+693/705 available, 685 raw-exact. Complete bundle, phone production and runtime
+remain open. Host-only; no APK/device claim.

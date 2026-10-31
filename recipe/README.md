@@ -6078,3 +6078,21 @@ relationship mappings and hashes ship; no protected body, implementation,
 generated content or private path is included. All three persisted records
 are independently raw-exact to J850, 699 bytes. Saved public residual 63 to 60
 excludes parallel closures; complete bundle and phone/runtime gates remain open.
+
+### Whole-game build-missing script component
+
+`owner-whole-game-missing-script-records.json` SHA-256:
+`36732035bfe1a3fecf454e024a740850e4c92faba98f295bbddf073a898ae571`.
+
+Audit: 2026-10-31. The original Rewired GameObject's existing public selector,
+component slot two and reciprocal owner select NintendoSwitchInputManager.
+The existing J1225 `missing_script_base` policy retains its first 32 base bytes,
+uses the pinned original Black Beach base MonoBehaviour type and relocates the
+checked owner and absent-script pointers. The complete donor type agrees with
+the accepted type. Pinned RoR2ImportExtensions `AssemblyBlacklist.Process`
+illustrates platform/import-dependent assembly provision; it supplies no Android
+script replacement. Existing Rewired runtime results remain untouched.
+Only source selectors, hashes, extent and checked relationships ship; no body,
+type template, decompiled implementation or private settings are published.
+The persisted 32-byte record is raw-exact to J850. Saved residual 60 to 59
+excludes parallel closures; complete bundle and phone/runtime gates remain open.

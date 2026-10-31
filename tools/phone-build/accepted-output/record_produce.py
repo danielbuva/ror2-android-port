@@ -1390,24 +1390,24 @@ def produce(profile_path, profile_sha256, pc, output, sdk=None):
         identity_owner = None
         scripts, script_inputs = {}, {}
 
-        def original_script(selected):
+        def original_record(selected):
             key = selected["bundle"], selected["member"], selected["path_id"], selected["sha256"]
             if key not in scripts:
                 path = M.safe_input(pc, selected["bundle"])
                 if path not in script_inputs:
                     before = path.stat()
                     if B.sha(path) != selected["bundle_sha256"]:
-                        raise ValueError("original managed script bundle drift")
+                        raise ValueError("original record bundle drift")
                     script_inputs[path] = before.st_size, before.st_mtime_ns, selected["bundle_sha256"]
                 if script_inputs[path][2] != selected["bundle_sha256"]:
-                    raise ValueError("original managed script bundle pin differs")
+                    raise ValueError("original record bundle pin differs")
                 with O.source_member(path, selected["member"]) as member:
                     metadata = W.read_serialized(member)
                     obj = next(row for row in metadata["objects"] if row["path_id"] == selected["path_id"])
                     member.seek(metadata["data_offset"] + obj["offset"])
                     body = B.exact(member, obj["bytes"])
                 if hashlib.sha256(body).hexdigest() != selected["sha256"]:
-                    raise ValueError("original managed script body drift")
+                    raise ValueError("original record body drift")
                 scripts[key] = selected, body, metadata["types"][obj["type_id"]]
             return scripts[key]
 
@@ -1500,6 +1500,8 @@ def produce(profile_path, profile_sha256, pc, output, sdk=None):
                         body = B.exact(member, obj["bytes"])
                         if hashlib.sha256(body).hexdigest() != selected["sha256"]:
                             raise ValueError("original object-record body drift")
+                        if "missing_script_base" in selected:
+                            body, typ = O.missing_script_base(body, typ, selected["missing_script_base"], lambda row: original_record(row)[2])
                         if "preserve_original_script_hash" in selected:
                             if selected["preserve_original_script_hash"] is not True or "properties_hash" not in selected:
                                 raise ValueError("original managed hash requires explicit script properties")
@@ -1519,7 +1521,7 @@ def produce(profile_path, profile_sha256, pc, output, sdk=None):
                                 typ,
                                 metadata,
                                 selected_member["name"],
-                                original_script(selected["properties_hash"]["script"]),
+                                original_record(selected["properties_hash"]["script"]),
                                 sdk_tree,
                                 identity_owner,
                                 preserve_original=selected.get("preserve_original_script_hash", False),
@@ -1529,7 +1531,7 @@ def produce(profile_path, profile_sha256, pc, output, sdk=None):
                                     raise ValueError("current script projection requires pinned original assemblies")
                                 if runtime_fields is None:
                                     runtime_fields = identity_owner.OriginalScriptFields(pc, profile["managed"])
-                                script_body = original_script(selected["properties_hash"]["script"])[1]
+                                script_body = original_record(selected["properties_hash"]["script"])[1]
                                 body, tree, removed = O.project_current_script_fields(
                                     body, typ["tree"], runtime_fields.names(script_body), sdk_tree, identity_owner
                                 )
