@@ -362,6 +362,97 @@ class CandidateBridgeTests(unittest.TestCase):
         self.assertEqual(self.common.read(self.root / self.receipt), {"sentinel": True})
         self.assertEqual(self.events, [])
 
+    def inspect_failed_install(self, **changes):
+        private = dict(
+            mode="install",
+            success=False,
+            source_commit=COMMIT,
+            lane="test-memory",
+            phase="current-installed-identity",
+            error="Artifact must be a regular file within canonical work",
+            initial_readback={"private": "never publish"},
+            terminal_idle_verified=True,
+        )
+        private.update(changes)
+        self.write(self.root / self.receipt, private)
+        return self.module.inspect_install(
+            lane="test-memory", expected_source_commit=COMMIT, receipt=self.receipt, expected_receipt_sha256=self.common.sha(self.root / self.receipt)
+        )
+
+    def test_install_inspection_is_read_only_and_classifies_exact_path_error(self):
+        result = self.inspect_failed_install()
+        self.assertTrue(result["success"])
+        self.assertEqual(result["failure_category"], "old-host-apk-path-rejected")
+        self.assertTrue(result["initial_readback_recorded"])
+        self.assertTrue(result["terminal_idle_verified"])
+        self.assertEqual(self.events, [])
+        self.assertNotIn("private", json.dumps(result))
+
+    def test_install_inspection_projects_only_fixed_categories(self):
+        for error, category in (
+            ("Current receipt APK bytes differ", "old-host-apk-hash-mismatch"),
+            ("'apk'", "ownership-apk-field-missing"),
+            ("secret /private/synthetic-account/code", "unclassified"),
+            ({"secret": "private"}, "unclassified"),
+        ):
+            with self.subTest(error=error):
+                result = self.inspect_failed_install(error=error)
+                self.assertEqual(result["failure_category"], category)
+                self.assertNotIn("secret", json.dumps(result))
+                self.assertNotIn("private", json.dumps(result))
+
+    def test_install_inspection_rejects_hash_mismatch_without_echo(self):
+        self.inspect_failed_install()
+        result = self.module.inspect_install(lane="test-memory", expected_source_commit=COMMIT, receipt=self.receipt, expected_receipt_sha256="0" * 64)
+        self.assertFalse(result["success"])
+        self.assertEqual(result["failure_phase"], "receipt-hash")
+        self.assertNotIn("failure_category", result)
+
+    def test_install_inspection_requires_failed_matching_source_lane_and_phase(self):
+        for changes in ({"source_commit": "b" * 40}, {"lane": "other"}, {"mode": "build"}, {"success": True}, {"phase": "owned-in-place-install"}):
+            with self.subTest(changes=changes):
+                result = self.inspect_failed_install(**changes)
+                self.assertFalse(result["success"])
+                self.assertEqual(result["failure_phase"], "receipt-provenance")
+        self.assertEqual(self.events, [])
+
+    def test_install_inspection_uses_actual_receipt_path_boundary(self):
+        import ast
+
+        source = SOURCE.with_name("session_memory_batch.py")
+        node = next(n for n in ast.parse(source.read_text()).body if isinstance(n, ast.FunctionDef) and n.name == "_receipt_path")
+        namespace = {"Path": Path, "common": self.common}
+        exec(compile(ast.Module(body=[node], type_ignores=[]), str(source), "exec"), namespace)
+        self.inspect_failed_install()
+        link = self.work / "coordination/link.json"
+        link.symlink_to(self.root / self.receipt)
+        with mock.patch.object(self.module, "_receipt_path", namespace["_receipt_path"]):
+            for path in ("../escape.json", str(self.root / self.receipt), "work/coordination/link.json", "work/missing.json"):
+                result = self.module.inspect_install(lane="test-memory", expected_source_commit=COMMIT, receipt=path, expected_receipt_sha256="0" * 64)
+                self.assertFalse(result["success"])
+                self.assertEqual(result["failure_phase"], "receipt-read")
+
+    def test_install_inspection_cli_dispatches_without_build_or_device(self):
+        self.inspect_failed_install()
+        output = io.StringIO()
+        with contextlib.redirect_stdout(output):
+            code = self.module.main(
+                [
+                    "inspect-install",
+                    "--lane",
+                    "test-memory",
+                    "--expected-source-commit",
+                    COMMIT,
+                    "--receipt",
+                    self.receipt,
+                    "--expected-receipt-sha256",
+                    self.common.sha(self.root / self.receipt),
+                ]
+            )
+        self.assertEqual(code, 0)
+        self.assertEqual(json.loads(output.getvalue())["failure_category"], "old-host-apk-path-rejected")
+        self.assertEqual(self.events, [])
+
     def test_private_capture_includes_real_authored_child_output(self):
         path = self.root / "authored-child.log"
         with path.open("w") as log, self.module.private_output(log):
