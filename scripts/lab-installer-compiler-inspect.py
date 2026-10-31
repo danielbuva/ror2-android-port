@@ -80,9 +80,23 @@ def classify(text):
         "PayloadBootstrapActivity$2",
         "PayloadBootstrapActivity$LocalAssetClient",
         "PayloadBootstrapActivity$AssetPayloadSource",
+        "PayloadBootstrapActivity$Bridge",
+        "PayloadBootstrapActivity$Backend",
         "PayloadStore",
+        "PayloadStore$Source",
+        "PayloadStore$Progress",
+        "PayloadStore$Row",
+        "PayloadStore$Paused",
+        "PayloadStore$Drift",
         "ProfileStore",
+        "ProfileStore$Environment",
+        "ProfileStore$Snapshot",
+        "ProfileStore$Row",
+        "ProfileStore$Manifest",
+        "ProfileStore$Status",
         "ProfileRetentionProvider",
+        "ProfileRetentionProvider$1",
+        "ProfileRetentionProvider$2",
     )
     classes = [name for name in known if re.search(r"(?:^|[/.:\s])" + re.escape(name) + r"\.class(?:$|[:\s])", text, re.MULTILINE)]
     return {"categories": categories or ["unclassified"], "authored_classes": classes, "empty": not text.strip()}

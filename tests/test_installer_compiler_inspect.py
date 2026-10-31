@@ -78,6 +78,12 @@ class CompilerInspectionTests(unittest.TestCase):
         self.assertEqual(result["authored_classes"], ["PayloadBootstrapActivity$1"])
         self.assertIn("java-symbol-not-found", result["categories"])
 
+    def test_retention_anonymous_classes_are_public_allowlist_only(self):
+        for name in ("ProfileRetentionProvider$1", "ProfileRetentionProvider$2", "ProfileStore$Manifest", "PayloadStore$Source"):
+            result = INSPECT.classify(SECRET + "/bootstrap.jar:dev/ror2owner/bootstrap/" + name + ".class: java.lang.NullPointerException")
+            self.assertEqual(result["authored_classes"], [name])
+        self.assertEqual(INSPECT.classify("/ProfileRetentionProvider$Private.class: failure")["authored_classes"], [])
+
     def test_same_source_multiple_captures_refuse(self):
         other = self.capture.with_name("run-ijklmnop")
         other.mkdir()
