@@ -1,0 +1,2701 @@
+{
+  "schema": 1,
+  "input_id": "6af7ed94619fe1b4346974b4486afa03a8d1625a7820e92da0ff74d57208fe88",
+  "bundles": [
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-base-armorreductiononhit_static_assets_all_9c8c931f09f730e17b9f558207de1c1c.bundle",
+      "sha256": "d251d68388d91c991983cdea4ea7c149409d827fc77f4af700beb5325105958b",
+      "members": [
+        {
+          "name": "CAB-f63ac3c70fea8600f4f60c207262e257",
+          "objects": [
+            {
+              "id": "wholegame-sprite-cace9da8ec5a5de2",
+              "path_id": 8966798140250037634,
+              "sha256": "d44ffc16e2d9d3c5d54c06f060fa7ab6bd90ec8aefa9e0c4829f601cc84647a2",
+              "texture": {
+                "path_id": 2437176092575440258,
+                "sha256": "fd3ed798fbc4157f856390b277357b8f15438dc92f7864c125536d53dec25267"
+              },
+              "importer_guid": "c070ff4f8eda5b24cb265f6dca6d6a3a",
+              "texture_importer": "single",
+              "outputs": [
+                {
+                  "bundle": "whole-game-content",
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "path_id": -3832952884000301598,
+                  "bytes": 1144,
+                  "sha256": "58ed872c58b387e61515406631cd2f270e64c0d86d77680870ccacc19f4a1003",
+                  "references": [
+                    {
+                      "offset": 124,
+                      "from": [
+                        0,
+                        2437176092575440258
+                      ],
+                      "to": [
+                        0,
+                        -1362060276419724627
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-base-attackspeedoncrit_static_assets_all_ea49e47238fa088f0cf9ce562c383113.bundle",
+      "sha256": "b1a1788a205afda366e4657049ca35b5160d4293f113c1aa2f8c906ee1c18ee6",
+      "members": [
+        {
+          "name": "CAB-8dd131d595d79fd70957ccb4e57569b6",
+          "objects": [
+            {
+              "id": "wholegame-sprite-fe1de769dd769012",
+              "path_id": -2176856112926342905,
+              "sha256": "efd8e42e0849a85b512dab6643d5c82238b05f3ce73e2147ac58768123851cc0",
+              "texture": {
+                "path_id": -7066332348278554361,
+                "sha256": "26a8389b15d37da9c77ce31f69676040cb7e094eddc0caab72d22465bcf96c69"
+              },
+              "importer_guid": "0d2aa103562edfe4db836052f36bbb35",
+              "texture_importer": "single",
+              "outputs": [
+                {
+                  "bundle": "whole-game-content",
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "path_id": -135697971878129646,
+                  "bytes": 820,
+                  "sha256": "bdbe85c28712b658896e5e6677e2e17ce67bb3afe814e56a3b07582875b830db",
+                  "references": [
+                    {
+                      "offset": 132,
+                      "from": [
+                        0,
+                        -7066332348278554361
+                      ],
+                      "to": [
+                        0,
+                        -571668092474275428
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-base-bandit2_static_assets_all_0fd5b55eee8a86495dfbc2cab049e3dc.bundle",
+      "sha256": "1f16fab05bcaa8ef2b15cc22489db8f16e52542ad8f71cbee94abd0b77a31db8",
+      "members": [
+        {
+          "name": "CAB-f9a7c985a625bc550eb430cba640bd76",
+          "objects": [
+            {
+              "id": "wholegame-sprite-43c1fd9247a1056b",
+              "path_id": 377793598459150166,
+              "sha256": "e5c8d91be28dc5b0777bf4b89eae529b24c3d0882ba66727f8539f5215d6e12e",
+              "texture": {
+                "path_id": -4112210700258640042,
+                "sha256": "ae6bd8022c953696b6b4d8ccc46e56935052bf4f2cf91fa8d4ace08f2d5be62f"
+              },
+              "importer_guid": "ec59a940a71066b41b1b4227fdc096a6",
+              "texture_importer": "single",
+              "outputs": [
+                {
+                  "bundle": "whole-game-content",
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "path_id": 4882462275755115883,
+                  "bytes": 824,
+                  "sha256": "c84feaa3ca07688aee1920b8d4b53bae2e4af61a5eeeed535860a3b03c5a63ff",
+                  "references": [
+                    {
+                      "offset": 128,
+                      "from": [
+                        0,
+                        -4112210700258640042
+                      ],
+                      "to": [
+                        0,
+                        -3691701717380871104
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "wholegame-sprite-955f4c39a0b08177",
+              "path_id": 2520500035333278974,
+              "sha256": "4cd0e4c30488b22a8609c0d556c0ea9054a4e2924b7d787a92a134f5910c84d5",
+              "texture": {
+                "path_id": 4836601897079295230,
+                "sha256": "eba92449d918ddc389da232e797cf32aa778f0391e6eae10ca3289651f377fdf"
+              },
+              "importer_guid": "39c0c4ed9ebf74b4c9f1cdcde1b84c96",
+              "texture_importer": "single",
+              "outputs": [
+                {
+                  "bundle": "whole-game-content",
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "path_id": -7683338628878007945,
+                  "bytes": 924,
+                  "sha256": "201108648f5fffc1d29b77a4ef416fd1628fe738af86053ab2b32d7b4d711337",
+                  "references": [
+                    {
+                      "offset": 128,
+                      "from": [
+                        0,
+                        4836601897079295230
+                      ],
+                      "to": [
+                        0,
+                        -6222188673898825699
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-base-beetlegroup_static_assets_all_36f7bcf4a9a360a4abc233fd976bec53.bundle",
+      "sha256": "c2faf9dd8de32355d9fefb7511063329f24fa370b9abf654bf1c3b381d17bbb2",
+      "members": [
+        {
+          "name": "CAB-59483d73a90a90b29455a1991e8fef76",
+          "objects": [
+            {
+              "id": "wholegame-sprite-bf7d92773ac724c4",
+              "path_id": -6024501498759232142,
+              "sha256": "9b2c8a9b2aca013da152ec3ab814fbcaa395011d7d063b44fbf604ee123d623c",
+              "texture": {
+                "path_id": -3658088302200633998,
+                "sha256": "3a987f97cebb1e6898a5c92aab97f4285ebd46133c278b5511db05708e909f35"
+              },
+              "importer_guid": "d521c0a670ed24346a25bf38a515aa4d",
+              "texture_importer": "single",
+              "outputs": [
+                {
+                  "bundle": "whole-game-content",
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "path_id": -4648398199591590716,
+                  "bytes": 836,
+                  "sha256": "877b7933bac73f10fd2e3736d88ec0bf388fcc6b9ec772e48ce5bbfc386a9bbb",
+                  "references": [
+                    {
+                      "offset": 128,
+                      "from": [
+                        0,
+                        -3658088302200633998
+                      ],
+                      "to": [
+                        0,
+                        -5824809419066830210
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-base-common_assets_all_b6fdc58edc06db17638fcebe236610e4.bundle",
+      "sha256": "cd6fd1cec1d1df56068858a6744750e69c2931e88a8447d500f1204166af092a",
+      "members": [
+        {
+          "name": "CAB-eaebb18b70f57fc21a04c5bde375f03a",
+          "objects": [
+            {
+              "id": "wholegame-sprite-57103505b56b3252",
+              "path_id": -2732702744082908616,
+              "sha256": "514d2a94a005980f303a8c7fd1e997003310b0fd0269fc4408d26f3414e39153",
+              "texture": {
+                "path_id": -6038166012597765576,
+                "sha256": "47d8de053a4d2774bfa12eec45ffa479dfa45e2c86879fc9cb078eb02190f872"
+              },
+              "importer_guid": "5b8236c728843374181aabc78bf91e8b",
+              "texture_importer": "single",
+              "outputs": [
+                {
+                  "bundle": "whole-game-content",
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "path_id": 6273572579561910866,
+                  "bytes": 816,
+                  "sha256": "f8c01482e9b897a2d9a63a8c051c2a943389d91913df836f47bcd94ea823539b",
+                  "references": [
+                    {
+                      "offset": 124,
+                      "from": [
+                        0,
+                        -6038166012597765576
+                      ],
+                      "to": [
+                        0,
+                        -7248408670783336797
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "wholegame-sprite-0e4b1050789be8d4",
+              "path_id": 8568238241327665600,
+              "sha256": "4ad535c1ee827f77d0570cbc077049e151bb80d07739e3d2a1636accda7601b7",
+              "texture": {
+                "path_id": -4757966182409383488,
+                "sha256": "1192d3f132c6e9c077c8697858a39416146c9e0bcfec88af32e9107644d90f8d"
+              },
+              "importer_guid": "6ac7b0dfef0a91344914de4d56c6ff4b",
+              "texture_importer": "single",
+              "outputs": [
+                {
+                  "bundle": "whole-game-content",
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "path_id": 1029934877591202004,
+                  "bytes": 744,
+                  "sha256": "65ce4fd4a90e474fd27b08131afce44dbdcab3cc654fd531d3edf9776fecec1e",
+                  "references": [
+                    {
+                      "offset": 124,
+                      "from": [
+                        0,
+                        -4757966182409383488
+                      ],
+                      "to": [
+                        0,
+                        3552931180119186362
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-base-common_static_assets_all_c5d8595dcf1ebb5f39b6e5cea0902f85.bundle",
+      "sha256": "c8069f10e8c930d4cfba363c2f57523e1b1eb23b2032c81a48dc77f7dbfcfcd3",
+      "members": [
+        {
+          "name": "CAB-7aadc3876a6282688f5d01e2e4272074",
+          "objects": [
+            {
+              "id": "wholegame-sprite-7529b526834e0e60",
+              "path_id": -8620455519852357779,
+              "sha256": "87a1964e3d35fc3ca6f54ff2062dbca457a12b0ec370ba62416ef8046ffc00a7",
+              "texture": {
+                "path_id": -827709476441942163,
+                "sha256": "b5dceb2b4e2c4a0ec28a4f864b6bed97e49641659ddb302fd472ba66e7ea4154"
+              },
+              "importer_guid": "1324966344b0bc2479d6b524dd8b3f60",
+              "texture_importer": "single",
+              "outputs": [
+                {
+                  "bundle": "whole-game-content",
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "path_id": 8442478153499020896,
+                  "bytes": 780,
+                  "sha256": "727619408f6a48388cda33170475ecf40720ac80312f83cadb92d53a05c8fe5b",
+                  "references": [
+                    {
+                      "offset": 120,
+                      "from": [
+                        0,
+                        -827709476441942163
+                      ],
+                      "to": [
+                        0,
+                        3863018741588401055
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "wholegame-sprite-6b3e2b27856719e0",
+              "path_id": 280805085518354112,
+              "sha256": "65a4990efab11a4dfb8c8d1eb565b42e7e702cb6148bbdb30f0f5255d549e071",
+              "texture": {
+                "path_id": 1215198664568657600,
+                "sha256": "714f065c78dc4dceace7577005e6f8acb4acbbfdfbce594b38a42ebba671daae"
+              },
+              "importer_guid": "bf654b02dd746ce41bd3339d0df8953f",
+              "texture_importer": "single",
+              "outputs": [
+                {
+                  "bundle": "whole-game-content",
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "path_id": 7727661459356195296,
+                  "bytes": 1164,
+                  "sha256": "775286af9951a064d691f577573e4ef807fef513315f3c6c43518a0f84baf2c1",
+                  "references": [
+                    {
+                      "offset": 120,
+                      "from": [
+                        0,
+                        1215198664568657600
+                      ],
+                      "to": [
+                        0,
+                        -8364162125377210965
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "wholegame-sprite-918efd9246785bcf",
+              "path_id": 2242548368247488893,
+              "sha256": "991db5b721cc3b504ef91101f4b16cf295a0547fff69a6aa8846c41612e597d7",
+              "texture": {
+                "path_id": 3997264471581196669,
+                "sha256": "0262fb7cab04ff2cd79a7c809effa466b8cbf3dd9145239f19d9a6039df44ddc"
+              },
+              "importer_guid": "363a50bb874f74d43be5139a8d06b986",
+              "texture_importer": "single",
+              "outputs": [
+                {
+                  "bundle": "whole-game-content",
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "path_id": -7958144686827742257,
+                  "bytes": 896,
+                  "sha256": "5b3fc2ba8c96b8d450f1335daab85f56211574409619379f6d3ae477f2567bb0",
+                  "references": [
+                    {
+                      "offset": 124,
+                      "from": [
+                        0,
+                        3997264471581196669
+                      ],
+                      "to": [
+                        0,
+                        7362768038929170875
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "wholegame-sprite-57e784f691ff94ea",
+              "path_id": 4214072024457808876,
+              "sha256": "b49404283678690175d130793ddf441a85ec65c43e678ebdc3b627d8cd67cb38",
+              "texture": {
+                "path_id": 5395388712249658348,
+                "sha256": "9ff4c47072a904084fb51a939349235b4624c2a9148a9809dc10418357bf0def"
+              },
+              "importer_guid": "b2677c8b8b6fce04bbd752023fb8f3a5",
+              "texture_importer": "single",
+              "outputs": [
+                {
+                  "bundle": "whole-game-content",
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "path_id": 6334177595466159338,
+                  "bytes": 864,
+                  "sha256": "68b609c5b74c469bf1f45cc1fa9cb63eb8a259a254894375c3940f03e4a3587d",
+                  "references": [
+                    {
+                      "offset": 124,
+                      "from": [
+                        0,
+                        5395388712249658348
+                      ],
+                      "to": [
+                        0,
+                        -9004492076221941194
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-base-croco_static_assets_all_1f65751d41f45aa755c4f0912bed3221.bundle",
+      "sha256": "4bdbfb1dcbf90c9470c22a34bf5b17be1a4c821a5092ea72778498352484331a",
+      "members": [
+        {
+          "name": "CAB-bbeb009c98e65be6a2b6c918cbdca743",
+          "objects": [
+            {
+              "id": "wholegame-sprite-de9ad326ab4ea512",
+              "path_id": 8719561725369240267,
+              "sha256": "d835b7d0d0e4bf0a47263d83801addb7a80f19d59078a11be23b16358344f66c",
+              "texture": {
+                "path_id": -8347653666444948789,
+                "sha256": "3ed234a1640f19cfc4fcb4da19785238cb9d46314a41ea4d92b7c938069fc28c"
+              },
+              "importer_guid": "8933bd482bde359499757d9a5fdd4c3b",
+              "texture_importer": "single",
+              "outputs": [
+                {
+                  "bundle": "whole-game-content",
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "path_id": -2406378887839832814,
+                  "bytes": 720,
+                  "sha256": "d3fa401a33c0d7412087bd944c45b00474667c479ac13d52c52940f5f5d67bab",
+                  "references": [
+                    {
+                      "offset": 128,
+                      "from": [
+                        0,
+                        -8347653666444948789
+                      ],
+                      "to": [
+                        0,
+                        -6447862364927522694
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-base-deathmark_static_assets_all_aede7ca4176717af15c453e2500632c8.bundle",
+      "sha256": "3bced13c83d148cf16995ed40c303064b50ef7c51fb3e372186e81e4a2177be9",
+      "members": [
+        {
+          "name": "CAB-e59e8cfe7f0a036fc72266f5a2ad4978",
+          "objects": [
+            {
+              "id": "wholegame-sprite-994f5d4d2210846b",
+              "path_id": 3215471880265156102,
+              "sha256": "dfc439ca45418966ddb232b6b113c961feb0d30e1ede1c0a5b6b811171c3f017",
+              "texture": {
+                "path_id": -8972409584486038010,
+                "sha256": "5e420312c332260456438d1260916d6af05c88be1d778fbfcc0c8ce498d7c772"
+              },
+              "importer_guid": "005289908a79d094f9d931d269bed734",
+              "texture_importer": "single",
+              "outputs": [
+                {
+                  "bundle": "whole-game-content",
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "path_id": -7399593076881062805,
+                  "bytes": 932,
+                  "sha256": "20db41e5074f3841b08f05e45dc3600fe4d03f17fa7c7ac355547a32b4454c57",
+                  "references": [
+                    {
+                      "offset": 124,
+                      "from": [
+                        0,
+                        -8972409584486038010
+                      ],
+                      "to": [
+                        0,
+                        -5641540433142199279
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-base-eclipserun_static_assets_all_24122adbcd02f4bdf50c97e95835f7b5.bundle",
+      "sha256": "15ece9c90859cf73f26d35d61afcf08ff3e56f5276cc5406e49195193da0f7d4",
+      "members": [
+        {
+          "name": "CAB-69ed7152f661bcb596cf329f19840ba1",
+          "objects": [
+            {
+              "id": "wholegame-sprite-6377a63a74ebdc9d",
+              "path_id": -1629739328936809045,
+              "sha256": "60447b20ba08a79e8cdaf108b2066e5d1d19758594aa269a0701a03d946e6cd8",
+              "texture": {
+                "path_id": -1657482825442005589,
+                "sha256": "5cecbf30296d7e4d9076b270cc8d3e0950e0e869308e94bc97bf1f972fa36ba9"
+              },
+              "importer_guid": "edd2b78fdd6d93640a937b336683b591",
+              "texture_importer": "single",
+              "outputs": [
+                {
+                  "bundle": "whole-game-content",
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "path_id": 7167380101983362205,
+                  "bytes": 756,
+                  "sha256": "69b045c2a5711e88834994abc57a1aefe3ecd7296d138ed5ad4f49af1cadee29",
+                  "references": [
+                    {
+                      "offset": 128,
+                      "from": [
+                        0,
+                        -1657482825442005589
+                      ],
+                      "to": [
+                        0,
+                        -5901098045045329670
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-base-elementalrings_static_assets_all_dbfa7346f9ca1c48e9f6b29095dd3634.bundle",
+      "sha256": "0be5a2abdb4ae5a15ea5e673bc2b73ebcd68306a7dc77fcef4894a49af79410a",
+      "members": [
+        {
+          "name": "CAB-dee021f63381756c9230062bca8a4142",
+          "objects": [
+            {
+              "id": "wholegame-sprite-369917d25e8d1dbc",
+              "path_id": -2653702420583144263,
+              "sha256": "2fe0cbaf06caf6d8843534d108f18e2066511b56ed2b6bf3d16e92b29ead9dd2",
+              "texture": {
+                "path_id": 3659359702923945145,
+                "sha256": "1d9420a581b5de3c64b7f05df0ef6ae2a53aa1ab1d408add73a9029f69f15e6d"
+              },
+              "importer_guid": "9d70ceccc678db64b9731f093734cd45",
+              "texture_importer": "single",
+              "outputs": [
+                {
+                  "bundle": "whole-game-content",
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "path_id": 3934201941781716412,
+                  "bytes": 940,
+                  "sha256": "2d5e81820ae25a0aa72dd65aea9e0e70e525095d8d96ac0a5c9867de15a3aba2",
+                  "references": [
+                    {
+                      "offset": 140,
+                      "from": [
+                        0,
+                        3659359702923945145
+                      ],
+                      "to": [
+                        0,
+                        -5856737292783637092
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "wholegame-sprite-6892ce92b4173488",
+              "path_id": 4041989668614302249,
+              "sha256": "1981128e864d07ca934401d2f8a0059226d9059e29d013e7adafa875de139856",
+              "texture": {
+                "path_id": -712958537711752663,
+                "sha256": "780653db91867d6884d350e652dd86f5eab8cc799a0c27d01cab89f77d933861"
+              },
+              "importer_guid": "6d0340299c32a1e43a25b7e2d9f0e811",
+              "texture_importer": "single",
+              "outputs": [
+                {
+                  "bundle": "whole-game-content",
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "path_id": 7535312256026227848,
+                  "bytes": 1208,
+                  "sha256": "e24eeb89268dc942991264fc769549f78721fb4953744dd7ce5ff168c962227a",
+                  "references": [
+                    {
+                      "offset": 136,
+                      "from": [
+                        0,
+                        -712958537711752663
+                      ],
+                      "to": [
+                        0,
+                        -549095412091221752
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-base-elitelunar_static_assets_all_b8cea703bb6479127da0c0153978644a.bundle",
+      "sha256": "0760090879bc2919c16c9fc43959478d173147b27ebd2ab186a253dfa01ffcd0",
+      "members": [
+        {
+          "name": "CAB-530ae9fa696003d3dec44e72234599dd",
+          "objects": [
+            {
+              "id": "wholegame-sprite-3d732bb0b847b7a5",
+              "path_id": 2837673363296287189,
+              "sha256": "acf279b7fe54da69b488a52f21691eed400dd2f2fd3cb3e4886b0d749703fb22",
+              "texture": {
+                "path_id": -3102434240730170923,
+                "sha256": "36bcac986c079ff3f08107df400960bc2a6c80b0ee3ce3fd27c35600be996c05"
+              },
+              "importer_guid": "b70456bfe31ec2f48a36a4e3c45ac50f",
+              "texture_importer": "single",
+              "outputs": [
+                {
+                  "bundle": "whole-game-content",
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "path_id": 4427930896641275813,
+                  "bytes": 844,
+                  "sha256": "4de8b0e6e9bb386f37d9fedabb0d17e18db16391113d48180af0c8057e352463",
+                  "references": [
+                    {
+                      "offset": 124,
+                      "from": [
+                        0,
+                        -3102434240730170923
+                      ],
+                      "to": [
+                        0,
+                        -2184831585983183769
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-base-elitepoison_static_assets_all_1a32566136fa53b5043d0a81b707f2c8.bundle",
+      "sha256": "8373dd69c248771c0399a2d946781253ff808734de0012f63c4f431cbdd5e449",
+      "members": [
+        {
+          "name": "CAB-2fd6a74065619d468095603f83cb6551",
+          "objects": [
+            {
+              "id": "wholegame-sprite-d30dbace4d507bb6",
+              "path_id": 203228319477057403,
+              "sha256": "13ee72d40087f33d9933599083de9a38f3d94264162f13992ea04f3d310e1bef",
+              "texture": {
+                "path_id": -1537359932071098501,
+                "sha256": "a082ef5e66f1c0c9364721c9bf988b30374704aa3ad174bf0a52a69ee18e5ae4"
+              },
+              "importer_guid": "e8b727ed8a47bde449c47aa18e07beae",
+              "texture_importer": "single",
+              "outputs": [
+                {
+                  "bundle": "whole-game-content",
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "path_id": -3238727161786369098,
+                  "bytes": 784,
+                  "sha256": "b7151e5faa81ce786aa4081b36bdf80492ca028859d7fd1b4480e8c8f719f13d",
+                  "references": [
+                    {
+                      "offset": 132,
+                      "from": [
+                        0,
+                        -1537359932071098501
+                      ],
+                      "to": [
+                        0,
+                        -893280716079563161
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-base-energizedonequipmentuse_static_assets_all_9e1321539b669251f58b8811b91d05c6.bundle",
+      "sha256": "98018151345a6cbe146e116c2463fdcb7d587136563cfe51238e7687903840d0",
+      "members": [
+        {
+          "name": "CAB-f23e4f6ca69016497e327d1eaf2635d0",
+          "objects": [
+            {
+              "id": "wholegame-sprite-6e602d8f5e786405",
+              "path_id": -5440559919294147781,
+              "sha256": "7fb7c478c733dc4125f8a1ce076c2fc0f4837b2cbd74b88f19483c52d0db5e13",
+              "texture": {
+                "path_id": -8231048902954282181,
+                "sha256": "8d3480ffe4a8b759c3688aaa21742ed24d7b33e1ea820b8d934f61ad41f90fe0"
+              },
+              "importer_guid": "1a0821b3dbd5e4c4bbca23da1e024103",
+              "texture_importer": "single",
+              "outputs": [
+                {
+                  "bundle": "whole-game-content",
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "path_id": 7953407035724817413,
+                  "bytes": 968,
+                  "sha256": "54ff2545ee844b2ca42ba48d43b0ac89855efd0c28e8dd5f1f995b2424822170",
+                  "references": [
+                    {
+                      "offset": 124,
+                      "from": [
+                        0,
+                        -8231048902954282181
+                      ],
+                      "to": [
+                        0,
+                        -513952097333140724
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-base-gainarmor_static_assets_all_02cd83ac7bc92064552b16ea9c296e69.bundle",
+      "sha256": "68a72b3312248ce4f744c73a1ef945669156adfbf001e3a241b0809c971d727b",
+      "members": [
+        {
+          "name": "CAB-2edd41f681907b78a832dc03abf29280",
+          "objects": [
+            {
+              "id": "wholegame-sprite-e8b17bbbd1476849",
+              "path_id": -1803755990591257124,
+              "sha256": "5cb60d6c1f1531b0bcc8b399a9287c96a5b909ffac5c4b5e7541de9643d25c42",
+              "texture": {
+                "path_id": 5245724206003144156,
+                "sha256": "cf56033985ee0052f1cbe0c47471bdb14637068c917ce8f771205c34d6d793c8"
+              },
+              "importer_guid": "70492a35914bd724f89b88025f6629c8",
+              "texture_importer": "single",
+              "outputs": [
+                {
+                  "bundle": "whole-game-content",
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "path_id": -1679425139432265655,
+                  "bytes": 900,
+                  "sha256": "fbf134b320ec45ecfeae78d9ff71b37e84dc62a942f96e5f23d123e7d5dcac02",
+                  "references": [
+                    {
+                      "offset": 136,
+                      "from": [
+                        0,
+                        5245724206003144156
+                      ],
+                      "to": [
+                        0,
+                        -5353456684197868785
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-base-killelitefrenzy_static_assets_all_0f117ccd3abe3a20f399b35287432257.bundle",
+      "sha256": "d4a40096f5e074946d60826c31f09ed8f99c2eb539fdba03b4b170350fea91fd",
+      "members": [
+        {
+          "name": "CAB-e284cbbdff63b468601fa46ee3a3c9f6",
+          "objects": [
+            {
+              "id": "wholegame-sprite-b9d9b61a5dc1d206",
+              "path_id": 5453125038986813172,
+              "sha256": "ab6b2357ea3dd83ba03e736680f4477f9e4c8e3897b37ed44607810546306372",
+              "texture": {
+                "path_id": -5513821586947318028,
+                "sha256": "b979bc71003d7c11a65b5de8eb34d7dca39d5509e6f5060b0fedb12a183d1f10"
+              },
+              "importer_guid": "b00bbc354f8c37042adeb57e4eb6eb1b",
+              "texture_importer": "single",
+              "outputs": [
+                {
+                  "bundle": "whole-game-content",
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "path_id": -5054808882388282874,
+                  "bytes": 1928,
+                  "sha256": "4f0d5297b43c801b0fc4ebcdb15151a2d25b0f3332f334773fb68ed473423f85",
+                  "references": [
+                    {
+                      "offset": 128,
+                      "from": [
+                        0,
+                        -5513821586947318028
+                      ],
+                      "to": [
+                        0,
+                        -2190431111064810539
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-base-laserturbine_static_assets_all_e50ae11898947039c6b45e1899f5e165.bundle",
+      "sha256": "ef8b641f959029eb30d9859df09e6968dfa931b7235da07202fb611c9ffab746",
+      "members": [
+        {
+          "name": "CAB-8073a44b8631aae4d850083417f00917",
+          "objects": [
+            {
+              "id": "wholegame-sprite-5f2b9cbd890add06",
+              "path_id": 7682895066849204439,
+              "sha256": "8740ce498194a2f2772d7d7f0db45c022c21c5716044ddf1b5347dc7bcc243bc",
+              "texture": {
+                "path_id": -5966472467497363241,
+                "sha256": "963a8c8e60b26cbf7e7dc17d66ca1996acfb87c215c0eae2b00d640aa2813b04"
+              },
+              "importer_guid": "4b0b0a54df3564f43bd3ef20737186e3",
+              "texture_importer": "single",
+              "outputs": [
+                {
+                  "bundle": "whole-game-content",
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "path_id": 6857747195463654662,
+                  "bytes": 1284,
+                  "sha256": "f97fd5351eec8ca5e189098f56ea5b0162c2933c04323279eca1b0346a1eee1a",
+                  "references": [
+                    {
+                      "offset": 140,
+                      "from": [
+                        0,
+                        -5966472467497363241
+                      ],
+                      "to": [
+                        0,
+                        -5503887300451468021
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-base-lifestealonhit_static_assets_all_36a1ecca01665490fafde28991c05f00.bundle",
+      "sha256": "d4e306feaff772c54f229aef6795dd2420dd557bc066349f41a907bc2388ddbc",
+      "members": [
+        {
+          "name": "CAB-4f23f7840bae7c737fa6afc800107fa5",
+          "objects": [
+            {
+              "id": "wholegame-sprite-f055007886eefe5c",
+              "path_id": 7522708942452240792,
+              "sha256": "d891c84280853afa787345c90f5d7f6fb66519374602a70ba2071969a2372c59",
+              "texture": {
+                "path_id": -6760170785452641896,
+                "sha256": "038934b6750da637c25df490f4a0655545274d510066082e96286941f629795f"
+              },
+              "importer_guid": "c1ce54fab645e80439677e94eb597b52",
+              "texture_importer": "single",
+              "outputs": [
+                {
+                  "bundle": "whole-game-content",
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "path_id": -1128995613926556068,
+                  "bytes": 1236,
+                  "sha256": "4a29fbbaf1de1d7923cf9baee8580d43c9f22b45a685239fee1fe5c3bcd13a44",
+                  "references": [
+                    {
+                      "offset": 132,
+                      "from": [
+                        0,
+                        -6760170785452641896
+                      ],
+                      "to": [
+                        0,
+                        5846307200472510143
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-base-lunargolem_static_assets_all_1630ab8025c493177f0d21f0ab367661.bundle",
+      "sha256": "a4ec7cdebe4694e1385680275c8425c0f450bfc101db47d9b6708547478c25a9",
+      "members": [
+        {
+          "name": "CAB-86275492d270f7fca5611be486c5b632",
+          "objects": [
+            {
+              "id": "wholegame-sprite-403613aae4764882",
+              "path_id": 3007657296548306101,
+              "sha256": "d03ebcdc297f3ac66e5a0215e41ed188036db7d0ac8eb9effac5cc2b084e2088",
+              "texture": {
+                "path_id": -1694909912780989259,
+                "sha256": "e7aa670deb515b6a11719c46ed83f99f7d902f184a50673ff5b8bba863e735af"
+              },
+              "importer_guid": "91e63804fed8332479851864cfeb269a",
+              "texture_importer": "single",
+              "outputs": [
+                {
+                  "bundle": "whole-game-content",
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "path_id": 4626907291868088450,
+                  "bytes": 1240,
+                  "sha256": "2ec9d2822ba36b501c79d6fa2ea8f7d46284b8c7a8e3e98a4d0434531ea61a34",
+                  "references": [
+                    {
+                      "offset": 128,
+                      "from": [
+                        0,
+                        -1694909912780989259
+                      ],
+                      "to": [
+                        0,
+                        1292775339113513320
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-base-lunarskillreplacements_static_assets_all_9733712f86fde2644660e807cbb72e1f.bundle",
+      "sha256": "21752b5e81cd8c39ecd03d45cda0cf47c47a2af4dc2df575df5d241e11257e01",
+      "members": [
+        {
+          "name": "CAB-5c61144e5edf119076f0498731a75fa2",
+          "objects": [
+            {
+              "id": "wholegame-sprite-68b138dfaf365624",
+              "path_id": -8668639594783135982,
+              "sha256": "9463d1727dcec37a3746cab7ddf7d81f532a7e3b14708295efb084cefefbeb55",
+              "texture": {
+                "path_id": -2518881873111308526,
+                "sha256": "6133bebe8a62a5065548348c9ad3cb270a5bb5d31456e4346a5f0febd10190e7"
+              },
+              "importer_guid": "bfdb2ca24a76c0c4daec9a27b268c20f",
+              "texture_importer": "single",
+              "outputs": [
+                {
+                  "bundle": "whole-game-content",
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "path_id": 7543873384190727716,
+                  "bytes": 1088,
+                  "sha256": "c2d51f3ee9a3150e2f14e26df2cf8caa503cf016812ae2908da1effe163282a1",
+                  "references": [
+                    {
+                      "offset": 132,
+                      "from": [
+                        0,
+                        -2518881873111308526
+                      ],
+                      "to": [
+                        0,
+                        -8924794808296623396
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "wholegame-sprite-0643f420e0ced5e1",
+              "path_id": -3952700755059779478,
+              "sha256": "9350713849a0c8a2b6a22cea88aae665a255fe4fc2ea8c4c6e20892cbceae73e",
+              "texture": {
+                "path_id": 8244338705293334634,
+                "sha256": "9a093a3336cd71196e66e7b738ebf70d4d189afa744feaba67e25b6dd512c529"
+              },
+              "importer_guid": "2b4c75993cf284f42a3fd5b724db97a7",
+              "texture_importer": "single",
+              "outputs": [
+                {
+                  "bundle": "whole-game-content",
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "path_id": 451472809714963937,
+                  "bytes": 1148,
+                  "sha256": "3176c4c61b8d910416bf430dd4ba7c9df27ff9cabe46be672c5bcb2ec2791682",
+                  "references": [
+                    {
+                      "offset": 136,
+                      "from": [
+                        0,
+                        8244338705293334634
+                      ],
+                      "to": [
+                        0,
+                        6502452303800319908
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-base-medkit_static_assets_all_95732578050fefa91234f84f62ad1b30.bundle",
+      "sha256": "61e57ba6239cd5dac236e741d6a5779013ce0987e0de1775958ca28d96b4fec6",
+      "members": [
+        {
+          "name": "CAB-735204a594e53a2863adec3ae80b2ebb",
+          "objects": [
+            {
+              "id": "wholegame-sprite-4dd70e396a6b0010",
+              "path_id": -8164332178820837011,
+              "sha256": "0e9bd85442c29b852ff2fc4b839d288408089bdf817bb3fc21fde9e47d1ec0fb",
+              "texture": {
+                "path_id": -3559109431742312083,
+                "sha256": "6742695af8f90e48b9814847798fffbcc71040111489f6002efb50c555c178b0"
+              },
+              "importer_guid": "6ae403a04ab7f3e4780c344691b8d19e",
+              "texture_importer": "single",
+              "outputs": [
+                {
+                  "bundle": "whole-game-content",
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "path_id": 5608967500674564112,
+                  "bytes": 836,
+                  "sha256": "ec5cfd806cefa1bcd8bea09d61ac8f76a301a61344098b912b1af8e8931530e1",
+                  "references": [
+                    {
+                      "offset": 128,
+                      "from": [
+                        0,
+                        -3559109431742312083
+                      ],
+                      "to": [
+                        0,
+                        959339102646989890
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-base-merc_static_assets_all_086ca74a56e76fb47af8660e25d5cff1.bundle",
+      "sha256": "9ed40a1b6ce2be61c62c42545d4507a0b5a01fb8bd4f85dd17f649cb03d80e3f",
+      "members": [
+        {
+          "name": "CAB-4a405d98ca6bcaddc7c3e7fe0cc99ac1",
+          "objects": [
+            {
+              "id": "wholegame-sprite-3499a93f9877eeed",
+              "path_id": -3063092106912394655,
+              "sha256": "fb452abc77ac976a9e23d92cc5baf4aea843d5b68881ec6d507da06146c6b385",
+              "texture": {
+                "path_id": -4716313972327706015,
+                "sha256": "985e54e59cbe7f54642f302d4d2b63f174d8577b2ad6a858c643424d7c7c467b"
+              },
+              "importer_guid": "c1b58d8ea90736c49aeffc80202d228b",
+              "texture_importer": "single",
+              "outputs": [
+                {
+                  "bundle": "whole-game-content",
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "path_id": 3790246652015013613,
+                  "bytes": 1324,
+                  "sha256": "5bfce01ce526286eb52ac520df89703206aa53a5c5c743f173f54ab8d5f6b04a",
+                  "references": [
+                    {
+                      "offset": 128,
+                      "from": [
+                        0,
+                        -4716313972327706015
+                      ],
+                      "to": [
+                        0,
+                        6514760326823753242
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-base-nullifier_static_assets_all_fe04bbcd90ace51c313506e220df0be9.bundle",
+      "sha256": "af76fd453145343ac202b315c53f4bc44e2935d1698b4d90424aecd9914474f2",
+      "members": [
+        {
+          "name": "CAB-01e2d93eeb7d92db637f07be91c1d107",
+          "objects": [
+            {
+              "id": "wholegame-sprite-6be0308971915b67",
+              "path_id": -5810873227330700742,
+              "sha256": "6ad22e5147f28c2500a2c9c2687644d297dc1dc4759459d1474576d97683c216",
+              "texture": {
+                "path_id": -4069812145777919430,
+                "sha256": "125086d1e4a2e9eef12e125eb528051e2721e43ddfede071e33e705dc4715947"
+              },
+              "importer_guid": "26d7b0e68677eb8488de186358b8e738",
+              "texture_importer": "single",
+              "outputs": [
+                {
+                  "bundle": "whole-game-content",
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "path_id": 7773266323715480423,
+                  "bytes": 880,
+                  "sha256": "ad6af8169551d6abee19939d8535d3fec0ded5153de25ceeb3741e323294d348",
+                  "references": [
+                    {
+                      "offset": 128,
+                      "from": [
+                        0,
+                        -4069812145777919430
+                      ],
+                      "to": [
+                        0,
+                        1130770642013770824
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "wholegame-sprite-20771bb509b9f3e8",
+              "path_id": 5041040127579582311,
+              "sha256": "c7448b3e3e014c30e9ec0d6a5ae00c2ee98039624d0c4bec2d62ea7284173ec5",
+              "texture": {
+                "path_id": 4176719765814439783,
+                "sha256": "b5e0c82d3ae541494a8ff8209fc6d6f2e12bec49859726a6d6d805ed185c1c68"
+              },
+              "importer_guid": "5aad88e84fadefc4390f991b0be7db0f",
+              "texture_importer": "single",
+              "outputs": [
+                {
+                  "bundle": "whole-game-content",
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "path_id": 2339368995808474088,
+                  "bytes": 1448,
+                  "sha256": "2dadc34b2059982fc7df5513f88b6bf77cee9bfcc8b8127b6a636328c9bf463e",
+                  "references": [
+                    {
+                      "offset": 124,
+                      "from": [
+                        0,
+                        4176719765814439783
+                      ],
+                      "to": [
+                        0,
+                        -6745351310205370537
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-base-randomdamagezone_static_assets_all_4af7651ab465e9099754d4e805be8a85.bundle",
+      "sha256": "c8b9aea53d2867a5d68e5a96ddeeaec872b5fbe0774ef07c461785f10b231a75",
+      "members": [
+        {
+          "name": "CAB-e02311c22838b3d8c442f72e03ed40fe",
+          "objects": [
+            {
+              "id": "wholegame-sprite-4f90b42db949488e",
+              "path_id": -6797918913520242648,
+              "sha256": "af1b346a6e34f71ab93502b31739ccc65267242608119fb15bdc1e066aa83f20",
+              "texture": {
+                "path_id": -2066822376991723480,
+                "sha256": "9a1a07b6aec21c6385989876ad3798405185aeb3baaf02871bfea9efcf75cfa1"
+              },
+              "importer_guid": "4178b35351d7afa4bbfb6ecbf8fa6317",
+              "texture_importer": "single",
+              "outputs": [
+                {
+                  "bundle": "whole-game-content",
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "path_id": 5733280434117757070,
+                  "bytes": 964,
+                  "sha256": "1c677bcd3ed9b71f2a3fa4844d9ab4723048f8e3a5d2a722a7835b761e9e3584",
+                  "references": [
+                    {
+                      "offset": 120,
+                      "from": [
+                        0,
+                        -2066822376991723480
+                      ],
+                      "to": [
+                        0,
+                        3368104463705529112
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-base-roboballboss_assets_all_40c65bd35543cb01048217102a17e666.bundle",
+      "sha256": "5ac4ec5add6e08153d7d27abf23f978d23a9f20f9c7fe1e6d088f1be0cd8705c",
+      "members": [
+        {
+          "name": "CAB-c5401151f575ee209ba6094f4bbed7f3",
+          "objects": [
+            {
+              "id": "wholegame-sprite-85d65b72d0716988",
+              "path_id": -1081202441397603835,
+              "sha256": "bbf2075aed97be3338920ba4a68496865fa57a78537a878d9491e83ef8f4b2fb",
+              "texture": {
+                "path_id": -6414898765277892091,
+                "sha256": "c6f28b2173442cad6be3f47e368cfd1f9ca8b0a1a9ab5b6b7421a24a78014d47"
+              },
+              "importer_guid": "6255530c676f71741a7d3bba31298059",
+              "texture_importer": "single",
+              "outputs": [
+                {
+                  "bundle": "whole-game-content",
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "path_id": -8802747872967562872,
+                  "bytes": 1272,
+                  "sha256": "5c413be733bd5b9434349a68c1c3e7dfcfd727394720013a1a57497eed14d708",
+                  "references": [
+                    {
+                      "offset": 128,
+                      "from": [
+                        0,
+                        -6414898765277892091
+                      ],
+                      "to": [
+                        0,
+                        7263881123151341754
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-base-shocknearby_static_assets_all_e81b7189bb9c285efe3225e957ed0cae.bundle",
+      "sha256": "aa52b916f8e2f76c1e95190a9c34b0ba280151ef3b7e8ec890da34d6913ff813",
+      "members": [
+        {
+          "name": "CAB-cb8f88bc6a80227718192dba7b3f9ae1",
+          "objects": [
+            {
+              "id": "wholegame-sprite-b6ac88274542d089",
+              "path_id": 6299528424952276349,
+              "sha256": "ced1f950723b3b96bdbf744afbcbd14122a8403941260cec21eca82dff48d37e",
+              "texture": {
+                "path_id": -3034663877624945283,
+                "sha256": "79184da11e80b59290b521f2e739cf2fe2e1ec9eff221c0fa390cda4b55aa45a"
+              },
+              "importer_guid": "d573c6f4e2cd1e647893555a85e9ee1d",
+              "texture_importer": "single",
+              "outputs": [
+                {
+                  "bundle": "whole-game-content",
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "path_id": -5283698560565325687,
+                  "bytes": 1300,
+                  "sha256": "46387f4dea99461d55f01e59b8cfeeab42d3eec0b51cb37a9ce0af6ae2923fbd",
+                  "references": [
+                    {
+                      "offset": 120,
+                      "from": [
+                        0,
+                        -3034663877624945283
+                      ],
+                      "to": [
+                        0,
+                        -4924036461495172838
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-base-tonic_static_assets_all_5b89f24fa438e5583e2a9b68d5539d61.bundle",
+      "sha256": "965de7ab76ccc0ec184cc08a7c36ab716fe8c080ea653da5c8ca94618367e092",
+      "members": [
+        {
+          "name": "CAB-592c305614e84435f4c5756912d1b5f4",
+          "objects": [
+            {
+              "id": "wholegame-sprite-4bccc522bd3ac7d6",
+              "path_id": -8898596846867272294,
+              "sha256": "a2faacf3f3b26c241826ebf40dea6e0fdb9ce9d04b31213d915648659d1e5695",
+              "texture": {
+                "path_id": -4832073306463621734,
+                "sha256": "5da7d00cd7c7ec6465dd7e86df94bf1fe929e5d90438615da9853abe77f7a273"
+              },
+              "importer_guid": "bd824e41929bb9f4b883dd4e22822ab7",
+              "texture_importer": "single",
+              "outputs": [
+                {
+                  "bundle": "whole-game-content",
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "path_id": 5461957201087875030,
+                  "bytes": 708,
+                  "sha256": "f5f20355a9347d54469c7e8bc6705275aaf21e1f6720ceaf8166f8527a57a773",
+                  "references": [
+                    {
+                      "offset": 120,
+                      "from": [
+                        0,
+                        -4832073306463621734
+                      ],
+                      "to": [
+                        0,
+                        1317878212137745996
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-base-treebot_static_assets_all_b7e55c97b5adc0b714342718cdeec3e6.bundle",
+      "sha256": "8a58d9c83e40a6c17d861d63551ab6d36fbdeaeb5836d0dbedad83b9d9dbf67d",
+      "members": [
+        {
+          "name": "CAB-381d6bea3c660d4ce3fec10603bb1df5",
+          "objects": [
+            {
+              "id": "wholegame-sprite-1ba9d94a77c92e3c",
+              "path_id": 2950800066655275493,
+              "sha256": "4d358ed26cc92171da1cc09064a1edfe95cbb0a8d12b03f1c2b6afebfbcd1493",
+              "texture": {
+                "path_id": 357048374521809381,
+                "sha256": "03e2237064f98d62039a1a0d831647827c233273551962ed26c743a6aec5cf4e"
+              },
+              "importer_guid": "d893f500a984a064b80897babdcfc49f",
+              "texture_importer": "single",
+              "outputs": [
+                {
+                  "bundle": "whole-game-content",
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "path_id": 1993363223948635708,
+                  "bytes": 944,
+                  "sha256": "f958637b7f864e8ae750b01dc6d7aba22a8a5ffb432b7278c6a04c273fd5ec84",
+                  "references": [
+                    {
+                      "offset": 120,
+                      "from": [
+                        0,
+                        357048374521809381
+                      ],
+                      "to": [
+                        0,
+                        -6111343277666008822
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "wholegame-sprite-3d025ed221a4ed42",
+              "path_id": 4174893604705801471,
+              "sha256": "4e6753681f0602aebd3376bb9b1c4944f87a30019bcfa7db362a7bea1a5cb0ef",
+              "texture": {
+                "path_id": -5403092498251508481,
+                "sha256": "91f9a094f23822c1a83e99c6c5c22367c5e8a8814cbc8297fc8ad6ddc6e3daff"
+              },
+              "importer_guid": "b1ff64cf8e33d9f46bc788bbe0524df0",
+              "texture_importer": "single",
+              "outputs": [
+                {
+                  "bundle": "whole-game-content",
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "path_id": 4396180442867625282,
+                  "bytes": 888,
+                  "sha256": "2fcbe3ca5512ad39fd4b6bf368c9a32f6a7d02c86553070686bb54f52ec0e459",
+                  "references": [
+                    {
+                      "offset": 120,
+                      "from": [
+                        0,
+                        -5403092498251508481
+                      ],
+                      "to": [
+                        0,
+                        5927232411268753825
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "wholegame-sprite-b8a13f9189b6ee51",
+              "path_id": 9126055249062040379,
+              "sha256": "8133fe1b67f79e5ce01e57696b6084d6c702f86630d3d2716cfdf4a43a2d374f",
+              "texture": {
+                "path_id": 2765629134912066363,
+                "sha256": "b122e0a04a4bfb5eea84b64df42034375a3b80b6c4e5eef6dd76e7b46102f2af"
+              },
+              "importer_guid": "15ab62557d0002e4c88b73522e2de89e",
+              "texture_importer": "single",
+              "outputs": [
+                {
+                  "bundle": "whole-game-content",
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "path_id": -5142759405167120815,
+                  "bytes": 1000,
+                  "sha256": "113bb21f611f3cd6b6448ef9674307c664df8885d486b5f7b9418699256a7024",
+                  "references": [
+                    {
+                      "offset": 124,
+                      "from": [
+                        0,
+                        2765629134912066363
+                      ],
+                      "to": [
+                        0,
+                        8430327028158111531
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-base-ui-creditspanel_assets_all_f81a8ccc73e21bde1e35366cb5a51671.bundle",
+      "sha256": "2bd6123f3cb08b1e27a5b81631b70808625113af0856c8384dc8164e68f83aaf",
+      "members": [
+        {
+          "name": "CAB-2a39b27e252f4399c42b4435face818e",
+          "objects": [
+            {
+              "id": "wholegame-sprite-855b503e56b79c10",
+              "path_id": -4989762291167605641,
+              "sha256": "d0ca708053482b76fdbbccb4afbd07af51a132512e6c7999fe05a78cb7f5d9f8",
+              "texture": {
+                "path_id": 1528910996089982071,
+                "sha256": "3fa50c53f42aa8722b8441c7b2ac54520b49f6e2d1cacc56cb075bc9577b9d79"
+              },
+              "importer_guid": "45dc8122628ecc643a42974dc6169ad8",
+              "texture_importer": "single",
+              "outputs": [
+                {
+                  "bundle": "whole-game-content",
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "path_id": -8837381615111398384,
+                  "bytes": 456,
+                  "sha256": "4ba7b3d2295ebc5db65c49447c667aa2618cdfde1ff2b58b8e76e3b008cd0445",
+                  "references": [
+                    {
+                      "offset": 108,
+                      "from": [
+                        0,
+                        1528910996089982071
+                      ],
+                      "to": [
+                        0,
+                        -4314165611482067672
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "wholegame-sprite-68e0fc731e787d33",
+              "path_id": -2726018965163557596,
+              "sha256": "09322439bd04dbc8b85fac9607d33c20ef5ed74abe69e9c806b1cf58bcb688af",
+              "texture": {
+                "path_id": 5335807040944651556,
+                "sha256": "0284baff21b27a47d8316566e2253cff885984bda88706e3751309750c7060d4"
+              },
+              "importer_guid": "b797d8de0baa941468ea3a8265d52365",
+              "texture_importer": "single",
+              "outputs": [
+                {
+                  "bundle": "whole-game-content",
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "path_id": 7557317746090343731,
+                  "bytes": 460,
+                  "sha256": "8f9bd7e6545491847721e0be0666ad6b8591412ff982743abb5b59b8834acd04",
+                  "references": [
+                    {
+                      "offset": 112,
+                      "from": [
+                        0,
+                        5335807040944651556
+                      ],
+                      "to": [
+                        0,
+                        9137462338143563311
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "wholegame-sprite-da9f638580648ebf",
+              "path_id": -760291686964545741,
+              "sha256": "b73dcf632d7d3943b13379681e344e5fdc066ed0b5d98f31066b9643cd1a8929",
+              "texture": {
+                "path_id": 8639541415694677811,
+                "sha256": "8dfcc0744cdd7455e82cb100740eeac56c03577ea6d29f3c1a9459cc9a364e9d"
+              },
+              "importer_guid": "6de327f280343ef4e8ef0ef42fdf9404",
+              "texture_importer": "single",
+              "outputs": [
+                {
+                  "bundle": "whole-game-content",
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "path_id": -2693324627108393281,
+                  "bytes": 460,
+                  "sha256": "183a174575952ceeb4f3323ee9832717382c97e89ea5f56843a4c3643c49966b",
+                  "references": [
+                    {
+                      "offset": 112,
+                      "from": [
+                        0,
+                        8639541415694677811
+                      ],
+                      "to": [
+                        0,
+                        5933709109865626283
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-base-ui_assets_all_5fb4a28e453c573571102591a1fcff71.bundle",
+      "sha256": "7a73b50fc657c48e14501e1b7f1840b815bcf48a5e255e7c6373d6ba3fe0ed6b",
+      "members": [
+        {
+          "name": "CAB-f70ea1e2c52c46b488c162a7fb6206df",
+          "objects": [
+            {
+              "id": "wholegame-sprite-3dfc76d96ac8f470",
+              "path_id": -5220495157040029157,
+              "sha256": "630806d81b96d4708bd1ddfe4e803f22463d09d3d704987b77ffc6922877a233",
+              "texture": {
+                "path_id": 1380925711138054683,
+                "sha256": "b75fa4255bae1f1d683afba0d1eb420bceb1644833cc8bad35ba53af289b7687"
+              },
+              "importer_guid": "e5bf4ef4076e1e74f83b302e1f4b3e9c",
+              "texture_importer": "single",
+              "outputs": [
+                {
+                  "bundle": "whole-game-content",
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "path_id": 4466575606616224880,
+                  "bytes": 4384,
+                  "sha256": "871039b54da739a405ee77fa88a1d5c92e0da53c69433b723f799cd36870c625",
+                  "references": [
+                    {
+                      "offset": 120,
+                      "from": [
+                        0,
+                        1380925711138054683
+                      ],
+                      "to": [
+                        0,
+                        7701949858184706580
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-base-warcryonmultikill_assets_all_9cbb186026216c82f2ce7a006cfaed09.bundle",
+      "sha256": "e393cef8cca466595603137ba9395fd9bd7a9feb410101df9dfcccfa1b6b3008",
+      "members": [
+        {
+          "name": "CAB-67c5d1573d17644ba3ec06d259b72ebf",
+          "objects": [
+            {
+              "id": "wholegame-sprite-463302b1afb246c0",
+              "path_id": 4279375598012692681,
+              "sha256": "cfa69a54322db3ee544348aaf95293eb1ba4dfc9178eb6f3f74ff929edbe846c",
+              "texture": {
+                "path_id": -5558923072630064951,
+                "sha256": "8ca13de376a6d5330bd88da8a978b49fc9db836a542e33d26bf7a42e20befdb8"
+              },
+              "importer_guid": "3c9902157af331f42bf7b245de4f14e7",
+              "texture_importer": "single",
+              "outputs": [
+                {
+                  "bundle": "whole-game-content",
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "path_id": 5058389768647362240,
+                  "bytes": 876,
+                  "sha256": "d48ce6031de9930a95c82a0a0eb766a38e3103497b62ccb98e689ad009f688b2",
+                  "references": [
+                    {
+                      "offset": 124,
+                      "from": [
+                        0,
+                        -5558923072630064951
+                      ],
+                      "to": [
+                        0,
+                        1370197981832507631
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-base-wardonlevel_static_assets_all_a1c3cd96c186046373c2afca35a90f9a.bundle",
+      "sha256": "04de53733aa7e4d489410b711235ff4ae2f0143590f3c29f3b2d44ec93a744cc",
+      "members": [
+        {
+          "name": "CAB-2684be6f2588d402c46de8dd000366ae",
+          "objects": [
+            {
+              "id": "wholegame-sprite-d5c27138f0983196",
+              "path_id": -2560683635262482531,
+              "sha256": "486bb810270b1e1c4854698747e502ffa8149daed466a753b2dd63fa08343572",
+              "texture": {
+                "path_id": -4493342806306646115,
+                "sha256": "2ec88b0af0045a9718360bae1d62ec0dbf3634dc3287bdd2a4e74b794710e52b"
+              },
+              "importer_guid": "43e893e899cc29e43a0f7566edabc168",
+              "texture_importer": "single",
+              "outputs": [
+                {
+                  "bundle": "whole-game-content",
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "path_id": -3043745908780420714,
+                  "bytes": 748,
+                  "sha256": "1fe60fa49f0633e87c884b43e3c3ae6dda931d6ce9e76dd97570fa8c9032c26c",
+                  "references": [
+                    {
+                      "offset": 124,
+                      "from": [
+                        0,
+                        -4493342806306646115
+                      ],
+                      "to": [
+                        0,
+                        -3407357877604506531
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-dlc1-bearvoid_static_assets_all_12871cd616d66112cbed901ddd4b23c9.bundle",
+      "sha256": "c840379c680e569538ab57e919431a1517e0faf7ce0b57ddd824ee0d7b8730b8",
+      "members": [
+        {
+          "name": "CAB-3d0318a2988ad91a50f7ddb06c4b26af",
+          "objects": [
+            {
+              "id": "wholegame-sprite-9e6f98c2c2bef74a",
+              "path_id": -6665078098243251001,
+              "sha256": "7b650fb7f11e2f0173509fb1e1ba46ab5152eba75b885bd45dc26c31e581c849",
+              "texture": {
+                "path_id": 8140746918872847559,
+                "sha256": "73a0aada269aae0e07b34d4d23d92e244b9fb312cde977b1440b9b6f482bd18a"
+              },
+              "importer_guid": "2121d3d2e91b06d4f80ec1e6a1bd1c82",
+              "texture_importer": "single",
+              "outputs": [
+                {
+                  "bundle": "whole-game-content",
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "path_id": -7030232531043682486,
+                  "bytes": 1196,
+                  "sha256": "2bd655a281d4b7d7d5736a4d4d055bb2f6154d858f6d548a7334872239ea4df8",
+                  "references": [
+                    {
+                      "offset": 124,
+                      "from": [
+                        0,
+                        8140746918872847559
+                      ],
+                      "to": [
+                        0,
+                        -5694409319504446658
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-dlc1-bleedonhitvoid_static_assets_all_cd0053cf259cab31569bfd970877eba4.bundle",
+      "sha256": "25a043da3c57447830effd001ed275a4ba9fe5deeb6f7f69a0af39b41bf4815a",
+      "members": [
+        {
+          "name": "CAB-b6dda2a710ef2e392397496ee67eba84",
+          "objects": [
+            {
+              "id": "wholegame-sprite-8d9d430fadd14ebc",
+              "path_id": -6044002603767441509,
+              "sha256": "a57fd8fc20d6bbcd09e5ca58db3533b6bb48b9e5956b8cf2cedf97de544badd1",
+              "texture": {
+                "path_id": 2471415157736855451,
+                "sha256": "d995f307082fcb20fc83e4f4166129281126132bf0b27380f4690c61bf7569d4"
+              },
+              "importer_guid": "df86bed7ec2baa04187431ad2e317d67",
+              "texture_importer": "single",
+              "outputs": [
+                {
+                  "bundle": "whole-game-content",
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "path_id": -8242358008398393668,
+                  "bytes": 736,
+                  "sha256": "715e638a099306653b057fd3669f15e2f1a8276352a60dc5b7da45a9ef3c1af9",
+                  "references": [
+                    {
+                      "offset": 124,
+                      "from": [
+                        0,
+                        2471415157736855451
+                      ],
+                      "to": [
+                        0,
+                        -2165875477671950558
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-dlc1-elementalringvoid_static_assets_all_a3c9554880cd5588819f329f92a42a68.bundle",
+      "sha256": "a195aa9fa025e7ab80f12b3572cda1e53503f1e0e275d29bcffeaeb3d5684514",
+      "members": [
+        {
+          "name": "CAB-58a08d8c29cd4e6c6d72e3c110cf08c4",
+          "objects": [
+            {
+              "id": "wholegame-sprite-739e6da58c69f88b",
+              "path_id": -4429690888517683556,
+              "sha256": "36c61b613962b71585bbc11070421f8f8515e053dac645e663be7119ba50a706",
+              "texture": {
+                "path_id": -4186073382975539556,
+                "sha256": "ae2e47fe29164e5206dfdad9fa2c19a72fddf85ddf6544c3978168323f9a5537"
+              },
+              "importer_guid": "64e3527bb41236940b088329210ec28a",
+              "texture_importer": "single",
+              "outputs": [
+                {
+                  "bundle": "whole-game-content",
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "path_id": 8331216918474782859,
+                  "bytes": 892,
+                  "sha256": "8012b72962b3c0ac2b9d2819c42977397c3485ed5ca636b6d02581ecaee3d5b0",
+                  "references": [
+                    {
+                      "offset": 140,
+                      "from": [
+                        0,
+                        -4186073382975539556
+                      ],
+                      "to": [
+                        0,
+                        -4475234348838519687
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "wholegame-sprite-13cc87ac9d2348ef",
+              "path_id": 6295004420407740869,
+              "sha256": "24fe749fe84979397e95f124ba46f61ab51ea663ed4eef806db5cac6401ed883",
+              "texture": {
+                "path_id": 4662405414366529989,
+                "sha256": "77a748c71304389fd330e27a97566fcd2663ba714797d434e5e18c6b08d2d809"
+              },
+              "importer_guid": "3ba42f8c08d0dfb4795a3c79dd46133e",
+              "texture_importer": "single",
+              "outputs": [
+                {
+                  "bundle": "whole-game-content",
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "path_id": 1426664357410064623,
+                  "bytes": 1672,
+                  "sha256": "bcf1d8c4fa09b80eea80dce97216a27131df3c593b8b888035738cd496acea24",
+                  "references": [
+                    {
+                      "offset": 140,
+                      "from": [
+                        0,
+                        4662405414366529989
+                      ],
+                      "to": [
+                        0,
+                        7408396463426805840
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-dlc1-immunetodebuff_static_assets_all_edd5a2456894fa3edd33199937c88b53.bundle",
+      "sha256": "70883a9fdc9196e3d7d149f3284fdd52417829e4c68779291d279da98ff0a525",
+      "members": [
+        {
+          "name": "CAB-c7ce8798b6768fbbd3dd8d6554e5a77c",
+          "objects": [
+            {
+              "id": "wholegame-sprite-c1163382d456c989",
+              "path_id": 909048198066481673,
+              "sha256": "dd77fe382cbd1e25e371558912261e644e16791f6892c4fd989c8e794b489182",
+              "texture": {
+                "path_id": 5067909133162129929,
+                "sha256": "7e8688abef1956712cd38c1cb509a33009801b484e7e522ba87d7d85ca9e0826"
+              },
+              "importer_guid": "8ab3946300244724a9774ca041f9bc01",
+              "texture_importer": "single",
+              "outputs": [
+                {
+                  "bundle": "whole-game-content",
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "path_id": -4533379337900602999,
+                  "bytes": 840,
+                  "sha256": "10e27f503c025dbb3144daea3cd0524234a26eec526967339729f25c8a64f7f4",
+                  "references": [
+                    {
+                      "offset": 136,
+                      "from": [
+                        0,
+                        5067909133162129929
+                      ],
+                      "to": [
+                        0,
+                        4142970456304547863
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "wholegame-sprite-9002eff193dae91e",
+              "path_id": 8378451977718787506,
+              "sha256": "b0373e0f0d56c918a5398ff24823f3b300749eda944ed5d3493e0954f6029b80",
+              "texture": {
+                "path_id": 4541346748723555762,
+                "sha256": "c4c606b988b16976393e6623f4dffdc9af9a6c2098949f80161127f29b101e28"
+              },
+              "importer_guid": "c03b973f0190f2f4f992d3e696eb0d5c",
+              "texture_importer": "single",
+              "outputs": [
+                {
+                  "bundle": "whole-game-content",
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "path_id": -8069623761447753442,
+                  "bytes": 760,
+                  "sha256": "2adf0057e2c7d1bf2b2c1ba0ddefc6991911e9864a2bd85df5268ca6d85dd9d5",
+                  "references": [
+                    {
+                      "offset": 132,
+                      "from": [
+                        0,
+                        4541346748723555762
+                      ],
+                      "to": [
+                        0,
+                        8455317960370734095
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-dlc1-movespeedonkill_static_assets_all_77764e0bb65933a0098b258a6835193f.bundle",
+      "sha256": "686a8626e31fbf37a64d74752fb4ac14341d16021e1c97eac20b1b4bac7007bb",
+      "members": [
+        {
+          "name": "CAB-ff23d51a0faddc1c1c5c721bb7d271fa",
+          "objects": [
+            {
+              "id": "wholegame-sprite-adf0b0991253192c",
+              "path_id": 805952617438649810,
+              "sha256": "10b18ffd791a95d6a8e5034f411f65ca35e2b6d83d57208896492bb6a645d641",
+              "texture": {
+                "path_id": 887886813478264274,
+                "sha256": "73990dc48688b47de37fc6dd87d02fddeaa5c6d1284d4813d4be2a390fd92cf8"
+              },
+              "importer_guid": "0fbf8b7a2c44c0d4a8181c5a355a2c7c",
+              "texture_importer": "single",
+              "outputs": [
+                {
+                  "bundle": "whole-game-content",
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "path_id": -5913032139253540564,
+                  "bytes": 784,
+                  "sha256": "f70d4d634a12268b7ee96cc8fde8500bb57de926b864410b9a2d57a2ecd3bbe4",
+                  "references": [
+                    {
+                      "offset": 124,
+                      "from": [
+                        0,
+                        887886813478264274
+                      ],
+                      "to": [
+                        0,
+                        -8434723558773554121
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-dlc1-mushroomvoid_static_assets_all_258d18b474f7c4201baf3877ebfe017d.bundle",
+      "sha256": "a3e8b283a72d19f8fad21b80500a1049550787e8bd2e9f97bdfbf9f46d0d9bb5",
+      "members": [
+        {
+          "name": "CAB-1a6a5a3ce1c095f159066da6c31cc9f6",
+          "objects": [
+            {
+              "id": "wholegame-sprite-64a3460c9d74e1ae",
+              "path_id": 97121514677145721,
+              "sha256": "7544cf9deaa50c92b00a13438323a5dbfd319c2a447dee54ebce05ba79d385dd",
+              "texture": {
+                "path_id": 8593480027994394745,
+                "sha256": "4a9debc74e631ffe793ec0d34971d2a9f584498cd0687f256721dfe5b71168bb"
+              },
+              "importer_guid": "e4f86fcb1dd361e4c9535a701b2af74b",
+              "texture_importer": "single",
+              "outputs": [
+                {
+                  "bundle": "whole-game-content",
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "path_id": 7251716844991865262,
+                  "bytes": 720,
+                  "sha256": "008cbbc9813c7c13c3d538b3f405f6c4eed36874e64e390fd7e5a9e1b76226b6",
+                  "references": [
+                    {
+                      "offset": 128,
+                      "from": [
+                        0,
+                        8593480027994394745
+                      ],
+                      "to": [
+                        0,
+                        2617556957550641134
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-dlc1-outofcombatarmor_static_assets_all_58c8a7571508964c54ffed44d82d18bc.bundle",
+      "sha256": "d51227b756d228042dd5fd38ede7d569683adf85a3ce090170f1579337119b7a",
+      "members": [
+        {
+          "name": "CAB-6580dc95ebc6215dcadf1f041aab7526",
+          "objects": [
+            {
+              "id": "wholegame-sprite-dbb662d11c45ebca",
+              "path_id": 2986024706006468950,
+              "sha256": "53667d8ea586ad4ec07715b31a63f7157b171028dac895bedd206476c64ebbb3",
+              "texture": {
+                "path_id": -7469669811923957418,
+                "sha256": "60aeebda5ac24c1f262093eb02332047c02d4ee20e03c8edb60300ad643647a5"
+              },
+              "importer_guid": "3510ca4d0d8e4164aa1380e35684d2c5",
+              "texture_importer": "single",
+              "outputs": [
+                {
+                  "bundle": "whole-game-content",
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "path_id": -2614793883379962934,
+                  "bytes": 1100,
+                  "sha256": "cb31e3f51783a6c3a87081e320a6e6c10cab0684cd652da971ddbbef6ce0a45c",
+                  "references": [
+                    {
+                      "offset": 128,
+                      "from": [
+                        0,
+                        -7469669811923957418
+                      ],
+                      "to": [
+                        0,
+                        -3228292923407128604
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-dlc1-permanentdebuffonhit_static_assets_all_726c9d77c1817ba345a1043ba3cff82b.bundle",
+      "sha256": "5c1c42f5b9a7bd1a82be8ff0006d08eb84de15e0622e6c840567d6fc8fc7e6dc",
+      "members": [
+        {
+          "name": "CAB-0130e0f48b0b1f773c1f15f05116eb67",
+          "objects": [
+            {
+              "id": "wholegame-sprite-d1f064572c052e51",
+              "path_id": 2643498045578854376,
+              "sha256": "d1a0bcdea3fc125d2075a5b2f01f1c8e27ee4ab2f4012d9fd7f06453591dc84a",
+              "texture": {
+                "path_id": 7258866623585239016,
+                "sha256": "998d16bd101bf77d50aa45afb041a499159fc6f7d2f88113f4588c40f88edf1e"
+              },
+              "importer_guid": "84cdaf78920f14446b686e65045c46a8",
+              "texture_importer": "single",
+              "outputs": [
+                {
+                  "bundle": "whole-game-content",
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "path_id": -3319042599808586159,
+                  "bytes": 696,
+                  "sha256": "694918248d2e77bdf8768f591f80ad2f01c9f18474f411981a09055c4a87a2c4",
+                  "references": [
+                    {
+                      "offset": 132,
+                      "from": [
+                        0,
+                        7258866623585239016
+                      ],
+                      "to": [
+                        0,
+                        -5139816104629426870
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-dlc1-primaryskillshuriken_static_assets_all_3d2cd7f2f6ca4425d7d1d03d54bd83e1.bundle",
+      "sha256": "74e29f51c520dcd677d0cf0e7ec8c320c47e43aa8ad98cb1cca613cdd1e084e6",
+      "members": [
+        {
+          "name": "CAB-f1b8a2da7381cf174d8ad9ea9addb5b5",
+          "objects": [
+            {
+              "id": "wholegame-sprite-11765e8085d6c21a",
+              "path_id": -5075990230895499571,
+              "sha256": "c4f681de51ae3892e6cb8211f6219becb03144a7b964f94158cda9c976258ee0",
+              "texture": {
+                "path_id": 7417522961788823245,
+                "sha256": "51ba94b475f43742f2de5fd605e4ee887d266c6f93bcc4dcf02ffc76eae5d632"
+              },
+              "importer_guid": "149a142f07c2bc5459e152a57ffabdbb",
+              "texture_importer": "single",
+              "outputs": [
+                {
+                  "bundle": "whole-game-content",
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "path_id": 1258297051990901274,
+                  "bytes": 860,
+                  "sha256": "386de7296ed8c6c72c5fd3adccfa205e968a4898227c5ccf86e532b86ff4139a",
+                  "references": [
+                    {
+                      "offset": 136,
+                      "from": [
+                        0,
+                        7417522961788823245
+                      ],
+                      "to": [
+                        0,
+                        6794002935204427506
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-dlc1-strengthenburn_static_assets_all_45eade97eb4d2d5e998f5cfea424c1c7.bundle",
+      "sha256": "258f87c110fe974e9c0fd3df3218aa260914690961e9644b13ea3fc53ee229b8",
+      "members": [
+        {
+          "name": "CAB-731a35337dd0615d0b332a04144d52e9",
+          "objects": [
+            {
+              "id": "wholegame-sprite-dcfce8c67f306888",
+              "path_id": -470295899461084612,
+              "sha256": "37568842abce21587c78fdfc09001e14388a1223e85f4e7c4d71a970bc8281a6",
+              "texture": {
+                "path_id": 577682307982465596,
+                "sha256": "3d9b9ee845a354432b51789aaf55c1b4f1dc9e537fd18636e04eb83828948cdd"
+              },
+              "importer_guid": "6a88d0689f5c54a4db25503de1df240b",
+              "texture_importer": "single",
+              "outputs": [
+                {
+                  "bundle": "whole-game-content",
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "path_id": -2522885751999272824,
+                  "bytes": 1216,
+                  "sha256": "3d04afe991f604ef90542572ac1c482b2094d5669df7528034b863ec4712df31",
+                  "references": [
+                    {
+                      "offset": 128,
+                      "from": [
+                        0,
+                        577682307982465596
+                      ],
+                      "to": [
+                        0,
+                        4068602248482395754
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-dlc1-voidjailer_static_assets_all_fbdd3e7b79c222c4f6c3dfa004485f7a.bundle",
+      "sha256": "7f4fcef717d6442df52fa4222d3e51cf858e4dc40f5bf51001153d44e67b2ef4",
+      "members": [
+        {
+          "name": "CAB-30a0620e58f4c03a96e4cc3a73f5aae6",
+          "objects": [
+            {
+              "id": "wholegame-sprite-cec72f623a8ede34",
+              "path_id": 8582224562179543344,
+              "sha256": "f6de18a22d903b9c92f7d98a8cf04657f735231fc1adedd454c57418faca128b",
+              "texture": {
+                "path_id": 480155737829019952,
+                "sha256": "a5a377e5c3d209662dfb86d578e3df72d1dc063ca3ed193cac057c0eca3ffd74"
+              },
+              "importer_guid": "6f531d643bdad274c9c60cb743b856e9",
+              "texture_importer": "single",
+              "outputs": [
+                {
+                  "bundle": "whole-game-content",
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "path_id": -3546814082595234252,
+                  "bytes": 1380,
+                  "sha256": "cd5000fc6f7586ec9e1de83444bcc3d2de5eb17e2cc91ca7cbcb73b8c16dab27",
+                  "references": [
+                    {
+                      "offset": 120,
+                      "from": [
+                        0,
+                        480155737829019952
+                      ],
+                      "to": [
+                        0,
+                        -34452639862012827
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-dlc1-voidsurvivor_static_assets_all_9fb224e90ee9b6ad69ebbdb18ce4282d.bundle",
+      "sha256": "096e5642d15d98a87104826519eb71d6f3353c9abfe50d34e6f497d4fe002b3a",
+      "members": [
+        {
+          "name": "CAB-aefb2abade830f81c75bdd93bbcaf76e",
+          "objects": [
+            {
+              "id": "wholegame-sprite-43f4ec2445c26528",
+              "path_id": 1442632537672870401,
+              "sha256": "8fa7fbd04943c3da63f0a224dbe6ff74533dd192e60e50128ba72fa13079c47c",
+              "texture": {
+                "path_id": 824135512000981505,
+                "sha256": "b855fd2d720c21eae0ed652cad8385173592cd1bcae23e91d308d04aafd70f27"
+              },
+              "importer_guid": "d1f853d5e6d088c4b979d3ab90fa1f9f",
+              "texture_importer": "single",
+              "outputs": [
+                {
+                  "bundle": "whole-game-content",
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "path_id": 4896798335391917352,
+                  "bytes": 780,
+                  "sha256": "6db0d5012b3893fd8e74d0d356720a2219f2c58589100ef6c322b62738c315e8",
+                  "references": [
+                    {
+                      "offset": 140,
+                      "from": [
+                        0,
+                        824135512000981505
+                      ],
+                      "to": [
+                        0,
+                        4256148982191048240
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-dlc2-seeker-chakrabuff_assets_all_36e2e6e0d181cfb3d89c5b2a96eb5daa.bundle",
+      "sha256": "f180d037d0e6165637e98c5dbf5628070726f39f202398f7b420c19ff8e3e6a6",
+      "members": [
+        {
+          "name": "CAB-fde1391bb14e0f8c63394d129efb3415",
+          "objects": [
+            {
+              "id": "wholegame-sprite-7e58c5d4141e1899",
+              "path_id": -2613153082465930187,
+              "sha256": "b70658f679089876e89de166fc9440a1bf816fb80d15ccc34cb98b3b5ae5d8a4",
+              "texture": {
+                "path_id": -7711232844720589771,
+                "sha256": "e1ed758cd682d0d9363c33f5e1f5d6aeca926cc9ce287bc684bc05bc36f03d46"
+              },
+              "importer_guid": "8567fd21ea31a864bbf27cc260bbddae",
+              "texture_importer": "single",
+              "outputs": [
+                {
+                  "bundle": "whole-game-content",
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "path_id": 9104244161390712985,
+                  "bytes": 864,
+                  "sha256": "ddd9fef3b644e206a505efb4bff29d243fbae45f3e30a1a7bb70806efb1680f6",
+                  "references": [
+                    {
+                      "offset": 120,
+                      "from": [
+                        0,
+                        -7711232844720589771
+                      ],
+                      "to": [
+                        0,
+                        -5874710626467164667
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-dlc2-seeker-revitalizebuff_static_assets_all_227b14ec33abda674b64e8814ac1c488.bundle",
+      "sha256": "fe69ea1fe7b6a4ace480e160462c4ed2d1fd3ef9fabe7d43174fb4f24ac26070",
+      "members": [
+        {
+          "name": "CAB-b72ca31f261c4c1b9487034c499a4431",
+          "objects": [
+            {
+              "id": "wholegame-sprite-4cc3b48cf2c42427",
+              "path_id": 4202832913560222953,
+              "sha256": "69a500c7227dbe835d6a6953b00a521d44b4e18bb1a9423218e8f2e1c4ddf2be",
+              "texture": {
+                "path_id": -7461657946705773335,
+                "sha256": "f79415fa1f2dc5924ba634625cc848377d87e86684aac78ca543b50193fa357e"
+              },
+              "importer_guid": "402f4d611573f7341b177bd128b2db8e",
+              "texture_importer": "single",
+              "outputs": [
+                {
+                  "bundle": "whole-game-content",
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "path_id": 5531463284802462759,
+                  "bytes": 832,
+                  "sha256": "7e8d27539dc6dd7006fbd62a242d26d39ec8d4f343e1f8fc99b2c3795e93e84e",
+                  "references": [
+                    {
+                      "offset": 124,
+                      "from": [
+                        0,
+                        -7461657946705773335
+                      ],
+                      "to": [
+                        0,
+                        -9073921159522859358
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-dlc4-buffs_static_assets_all_d638434cc9aa251b569db2a06b0ff3ec.bundle",
+      "sha256": "eaa3ae451994e9bade339f6a39f75d9e30c831a1a4ce8297e7a671c47f51764c",
+      "members": [
+        {
+          "name": "CAB-e92f9092343c6a92296d9e7ec40ced19",
+          "objects": [
+            {
+              "id": "wholegame-sprite-c3a98877c2650fee",
+              "path_id": 1742142908164739352,
+              "sha256": "ca440b1e73da98f8a761dbdbf54f9379fcdd83116924bead2461f230c2e40b45",
+              "texture": {
+                "path_id": 6838286455190130968,
+                "sha256": "a8c8968184d778531cca9b1f9f701aa4d84ff692f520d25abbe2f9d52bf2633e"
+              },
+              "importer_guid": "5a82bc4afd8a0d94a8f6db1e42ea9db5",
+              "texture_importer": "single",
+              "outputs": [
+                {
+                  "bundle": "whole-game-content",
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "path_id": -4347793917305614354,
+                  "bytes": 928,
+                  "sha256": "4bf76918bd26c529590ad5f5c39b177ff4c42ba9e830a30889db1867cca2c351",
+                  "references": [
+                    {
+                      "offset": 120,
+                      "from": [
+                        0,
+                        6838286455190130968
+                      ],
+                      "to": [
+                        0,
+                        -1981773350556812542
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-junk-common_assets_all_1ad8346585df1502d0eae0aa8b87ea99.bundle",
+      "sha256": "4a6180e02175002089fd7dc606814208dac80ae508a64dc9063c8cbf472ac696",
+      "members": [
+        {
+          "name": "CAB-3fca2eb70dbdefe4cf9784ddcbf44051",
+          "objects": [
+            {
+              "id": "wholegame-sprite-8bfc025134314172",
+              "path_id": -8787298655344044106,
+              "sha256": "c29476dc28f940f0a5fd9bfb584b3789f90701f2a4306d5e13d2b12eb5f1825b",
+              "texture": {
+                "path_id": 6921952012207085494,
+                "sha256": "54cb1e81365790caa0395dcc73e99231280259d34bc72957afb6224a942bb45b"
+              },
+              "importer_guid": "7690b8611c6567e4ab77b6aae8b8f8fe",
+              "texture_importer": "single",
+              "outputs": [
+                {
+                  "bundle": "whole-game-content",
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "path_id": -8359804260515233422,
+                  "bytes": 624,
+                  "sha256": "a3a860bc4eace38149f895a7b597a1e68f1b0298d9aba7eb4947043315a3f61a",
+                  "references": [
+                    {
+                      "offset": 124,
+                      "from": [
+                        0,
+                        6921952012207085494
+                      ],
+                      "to": [
+                        0,
+                        -8526804895522401540
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-junk-common_static_assets_all_9409f0395031ea2fd5239cb5ddab64fd.bundle",
+      "sha256": "b295422e415b7e036f984e152b81714a6e4d43b7908f9505b7341b2944fa2562",
+      "members": [
+        {
+          "name": "CAB-48db40217eccbc62de9d69a3f6b7a75f",
+          "objects": [
+            {
+              "id": "wholegame-sprite-3f4851a1eda45853",
+              "path_id": 7395294953446764348,
+              "sha256": "2be290335dae1eb63c65597146036697e47d998aa781aef78d4cc3bc3ea9417f",
+              "texture": {
+                "path_id": 520660948214738748,
+                "sha256": "b5ab627fd48eb129065c48cfbc68846228bf1c81a73a38815bb5c1b683cde4e8"
+              },
+              "importer_guid": "de826ad071ddb5f438dacea8a1486433",
+              "texture_importer": "single",
+              "outputs": [
+                {
+                  "bundle": "whole-game-content",
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "path_id": 4559984378631182419,
+                  "bytes": 1028,
+                  "sha256": "13684fd2bfa6181bf3fc77832466c67fb8bea25617836964c5063cdaef43d6b8",
+                  "references": [
+                    {
+                      "offset": 124,
+                      "from": [
+                        0,
+                        520660948214738748
+                      ],
+                      "to": [
+                        0,
+                        5447167781266748945
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-junk-sniper_assets_all_19c70eccebc36333df6d0f751675a218.bundle",
+      "sha256": "06c62749f9c32a81e89d98ee6c5c919fb021794a6fff9947c5d58ae5879a0c51",
+      "members": [
+        {
+          "name": "CAB-64458fda2cbd26879aaa4280f38b1a85",
+          "objects": [
+            {
+              "id": "wholegame-sprite-29ef42a8810365ad",
+              "path_id": -6445731920048300615,
+              "sha256": "1fda5f45b51b7c80c1690b6f132e9694da7067d2b6dc81f10c39dac8cff0bff9",
+              "texture": {
+                "path_id": -8416718416369427015,
+                "sha256": "b524ee0a5cfb18f7898a2554740d2802303626eb3d7511679cc731b86ebae58e"
+              },
+              "importer_guid": "55fadb44098a5294eb7704610685c5c5",
+              "texture_importer": "single",
+              "outputs": [
+                {
+                  "bundle": "whole-game-content",
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "path_id": 3021707166475314605,
+                  "bytes": 528,
+                  "sha256": "2620b5717906c3622abab40245c3e1392ad725f10025d275ad0723665cb2766a",
+                  "references": [
+                    {
+                      "offset": 124,
+                      "from": [
+                        0,
+                        -8416718416369427015
+                      ],
+                      "to": [
+                        0,
+                        -953084557301348341
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-junk_dlc4-buffs_static_assets_all_37958d53be7cf7524f6b57d7cbdb6a65.bundle",
+      "sha256": "28dc6b3b289847769a680b60f39a0b1935bc18293bd46aea89f457947a67f8e9",
+      "members": [
+        {
+          "name": "CAB-c9f0910d832c3776f9a6adf99026125b",
+          "objects": [
+            {
+              "id": "wholegame-sprite-ed10d36d23679138",
+              "path_id": 579452490376098156,
+              "sha256": "86f26552d92625cbe9e768fe88fc177152049e0631753cbe1aa946ed69420663",
+              "texture": {
+                "path_id": -3883150881950453396,
+                "sha256": "bdb82a9f94bf643d39c2eee6ec40425e0590e900ea1d9ec4b3ed1d1771d73854"
+              },
+              "importer_guid": "8dff0c1fb6fdbe34790e7595f96adc2a",
+              "texture_importer": "single",
+              "outputs": [
+                {
+                  "bundle": "whole-game-content",
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "path_id": -1364358221394374344,
+                  "bytes": 748,
+                  "sha256": "8b0550f4554a779f25f9683d6c28294f4136bfbd78e4ef693886997447bbdaf1",
+                  "references": [
+                    {
+                      "offset": 128,
+                      "from": [
+                        0,
+                        -3883150881950453396
+                      ],
+                      "to": [
+                        0,
+                        6051507900628132551
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "wholegame-sprite-7484a64d96de9e5d",
+              "path_id": 6335007492958641971,
+              "sha256": "e85a8349e5c1d33e7b3eae88c09feaf5cd663d501c811f06bc50396f05004e80",
+              "texture": {
+                "path_id": -7652640637106856141,
+                "sha256": "99c3e63e84d638c1e9a0249a182bf8dfb32a2a14287f2f2b9a3b9702540e5bc0"
+              },
+              "importer_guid": "3ffd83624ea886e49840082f2ecabff5",
+              "texture_importer": "single",
+              "outputs": [
+                {
+                  "bundle": "whole-game-content",
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "path_id": 8396018457499311709,
+                  "bytes": 1932,
+                  "sha256": "f757c735ad4e61082504370b3a79fb87ff4fbcd66b7eaa1d96bfc2a7fbda33de",
+                  "references": [
+                    {
+                      "offset": 132,
+                      "from": [
+                        0,
+                        -7652640637106856141
+                      ],
+                      "to": [
+                        0,
+                        4653732240390064206
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
