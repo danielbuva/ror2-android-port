@@ -478,6 +478,12 @@ through qualified GameObject sources, unique class slots and reciprocal ownershi
 Every original pointer endpoint, including null and unchanged references, is
 checked against existing public suppliers. The generic record owner preserves
 native schemas and fields, with its existing reader lifecycle and pack state.
+`owner-whole-game-transform-owner-records.json` selects eighteen original Transforms
+through qualified GameObject component slots and reciprocal ownership. Original
+parent/child pointer shape, native schemas and every nonpointer bit remain checked;
+the existing generic owner relocates only explicit references. Setup takes pinned
+original bundles and a fresh output pack; existing scoped readers close at exit
+and pack receipts persist. No runtime owner is added.
 Generic record admission also includes native classes 96, 119, 193 and 330,
 preserving their original schemas and every nonpointer byte.
 The component-edge recipe selects unchanged original records through explicit
