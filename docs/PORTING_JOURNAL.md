@@ -1624,3 +1624,17 @@ play, physical input and genuine filled-filesystem recovery remain open.
 - Prior art: pinned AssetRipper local/dependency PPtr resolution, checked on originals.
 - Final-file readiness stays 693/705 available, 685 raw-exact. Complete bundle,
   phone production and install/update remain open; residual recount pending.
+
+
+## J1305 — Reconstruct whole-game original Director ownership
+2026-10-31.
+- Existing record owner reconstructs ConduitCanyon/SolusAmalgam PlayableDirectors.
+- Unique component slots, reciprocal public owners and checked supplier endpoints
+  retain source identity; shipped signed exposed-name conversion is reused.
+- Both persisted records (984 bytes) match J850 raw-exact after pointer relocation.
+- Evidence: `work/coordination/p1-scenes-w/wholegame-directors-v2-20261031/done.json`;
+  source ownership and public supplier witnesses are adjacent JSON records.
+- Pack SHA-256: `a131b97eda9fbb9137a5c42e10164152fd55571b9101863f9955e241b167d399`.
+- Prior art: pinned AssetRipper PropertyName export, checked on original records.
+- Final-file readiness stays 693/705 available, 685 raw-exact; no file closure.
+  Champrush suppliers, complete bundle, phone production and install/update remain open.

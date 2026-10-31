@@ -5876,3 +5876,22 @@ implementation, private paths or generated content. The persisted record is
 raw-exact to J850 (140 bytes). A second candidate remains excluded for missing
 public renderer suppliers. Complete-file, phone production and install/update
 acceptance remain open.
+
+
+### Whole-game original PlayableDirector ownership (J1305)
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-whole-game-director-records.json` | `34d16fef4f01ce4957a10594f52b075f8c85881aaed66b31ee4868ec56331d4a` |
+
+Audit: 2026-10-31. Unique original Director component slots and reciprocal
+qualified GameObject ownership select ConduitCanyon and SolusAmalgam sources.
+All original pointer endpoints resolve through shipped selectors, including
+compressed hierarchy suppliers and checked typed reference endpoints. Pinned
+AssetRipper PropertyNameExtensions.GetIdString and YamlWalker explain signed
+integer exposed-name export; the existing record owner reimports those names
+and relocates checked references while preserving the native schema and fields.
+The profile contains selectors, hashes, native identity and relationship mappings;
+no protected bodies, target scalar templates, implementation or private paths.
+Both persisted records (984 bytes) match J850 raw-exact. Champrush is excluded
+for unresolved suppliers. Complete-file, phone and install/update gates remain open.
