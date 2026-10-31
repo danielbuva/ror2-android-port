@@ -549,9 +549,10 @@ the admitted native array layout.
 `controller_omit_synced_overrides` retains the pinned exporter's first motion
 tree and surviving source clip occurrences. A retained tree becomes base motion
 with index zero even when only an original synchronized slot referenced it;
-all override indices become unavailable. It admits only empty single-leaf
-overrides; their blob-size adjustment follows matched original-source shapes,
-not native deserializer heap allocation. It also omits synchronized layers’
+all override indices become unavailable. `controller_tree_allocation` derives
+omitted empty and populated 1D/2D tree blob sizes from original node/child counts,
+primitive arrays and nested neighbor lists using exact-editor native strides
+and alignment. Direct blend payloads remain unsupported. It also omits synchronized layers’
 behaviour overrides, retaining source index order and remapping surviving ranges
 without synthesizing behaviour bodies or changing controller blob allocation.
 `controller_resolve_synced_layers` follows exported synchronized layer chains to

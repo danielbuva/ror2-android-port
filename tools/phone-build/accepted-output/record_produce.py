@@ -1141,6 +1141,61 @@ def controller_omit_synced_behaviours(body, root):
     return bytes(result)
 
 
+def controller_tree_allocation(body, spans, tree):
+    """Count the editor's 64-bit debug-pointer controller blob allocations."""
+    cursor = 0
+
+    def allocate(size, alignment=8):
+        nonlocal cursor
+        cursor = (cursor + alignment - 1) & -alignment
+        cursor += size
+
+    def count(path):
+        return struct.unpack_from("<I", body, spans[path][0])[0]
+
+    def payload(path, stride=4, alignment=4):
+        size = count(path)
+        if size:
+            allocate(size * stride, alignment)
+        return size
+
+    nodes = tree + ("data", "m_NodeArray", "Array")
+    # OffsetPtr tree slot, tree header and the array of node pointer slots.
+    allocate(16)
+    allocate(24)
+    allocate(16 * count(nodes))
+    for index in range(count(nodes)):
+        node = nodes + (str(index), "data")
+        allocate(96)
+        payload(node + ("m_ChildIndices", "Array"))
+        thresholds = node + ("m_Blend1dData", "data", "m_ChildThresholdArray", "Array")
+        if count(thresholds):
+            allocate(24)
+            payload(thresholds)
+        blend = node + ("m_Blend2dData", "data")
+        arrays = [
+            blend + (name, "Array")
+            for name in (
+                "m_ChildPositionArray",
+                "m_ChildMagnitudeArray",
+                "m_ChildPairVectorArray",
+                "m_ChildPairAvgMagInvArray",
+                "m_ChildNeighborListArray",
+            )
+        ]
+        if any(count(path) for path in arrays):
+            allocate(120)
+            for path, stride in zip(arrays[:4], (8, 4, 8, 4)):
+                payload(path, stride)
+            neighbors = payload(arrays[4], 24, 8)
+            for neighbor in range(neighbors):
+                payload(arrays[4] + (str(neighbor), "m_NeighborArray", "Array"))
+        direct = node + ("m_BlendDirectData", "data", "m_ChildBlendEventIDArray", "Array")
+        if count(direct):
+            raise ValueError("unsupported synced override direct blend data")
+    return cursor
+
+
 def controller_omit_synced_overrides(body, root):
     """Retain the pinned exporter's first motion tree and its clip occurrences."""
     _, spans = fields(body, root)
@@ -1160,16 +1215,7 @@ def controller_omit_synced_overrides(body, root):
         for index in range(1, count):
             tree = path + (str(index),)
             left, right = spans[tree]
-            arrays = [p for p in spans if p[: len(tree)] == tree and p[-1] == "Array"]
-            nodes = tree + ("data", "m_NodeArray", "Array")
-            # Matched original-source controller shapes establish 152 bytes per
-            # empty single-leaf tree (479 pairs, including zero-tree sources).
-            # This is controller blob accounting, not deserializer heap size.
-            if right - left != 68 or len(arrays) != 9 or struct.unpack_from("<I", body, spans[nodes][0])[0] != 1:
-                raise ValueError("unsupported synced override tree allocation shape")
-            if any(struct.unpack_from("<I", body, spans[p][0])[0] for p in arrays if p != nodes):
-                raise ValueError("unsupported synced override populated blend data")
-            memory += 152
+            memory += controller_tree_allocation(body, spans, tree)
             for p, (offset, _) in spans.items():
                 if p[: len(tree)] != tree or p[-1] != "m_ClipID":
                     continue

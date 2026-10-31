@@ -25,6 +25,14 @@ class RecipeAuditTests(unittest.TestCase):
             with self.subTest(recipe=shader.name):
                 self.assertIn(hashlib.sha256(shader.read_bytes()).hexdigest(), references[scene])
 
+    def test_controller_profile_has_native_member_rows(self):
+        profile = json.loads((RECIPE / "owner-animator-controllers.json").read_text())
+        for bundle in profile["bundles"]:
+            for member in bundle["members"]:
+                with self.subTest(bundle=bundle["path"]):
+                    self.assertEqual(set(member), {"name", "objects"})
+                    self.assertTrue(member["objects"])
+
     def test_every_recipe_is_listed_in_the_audit_record(self):
         record = (RECIPE / "README.md").read_text()
         for path in (*RECIPE.glob("*.json"), *RECIPE.glob("*.jsonl.gz")):

@@ -85,6 +85,41 @@ class ControllerRecords(unittest.TestCase):
         root = A.SCHEMA.type_tree(io.BytesIO(A.W.read_serialized(stream)["types"][0]["tree"]))
         self.assertEqual(A.transform_generic(body, 91, {"controller_clear_null_motion": True}, root), expected)
 
+    def test_populated_tree_blob_counts_nested_arrays_and_alignment(self):
+        tree = ("tree",)
+
+        def allocation(node_counts):
+            body, spans = bytearray(), {}
+
+            def value(path, count):
+                spans[path] = (len(body), len(body) + 4)
+                body.extend(struct.pack("<I", count))
+
+            nodes = tree + ("data", "m_NodeArray", "Array")
+            value(nodes, len(node_counts))
+            for index, counts in enumerate(node_counts):
+                node = nodes + (str(index), "data")
+                value(node + ("m_ChildIndices", "Array"), counts.get("children", 0))
+                value(node + ("m_Blend1dData", "data", "m_ChildThresholdArray", "Array"), counts.get("thresholds", 0))
+                blend = node + ("m_Blend2dData", "data")
+                for name, count in zip(
+                    ("m_ChildPositionArray", "m_ChildMagnitudeArray", "m_ChildPairVectorArray", "m_ChildPairAvgMagInvArray"),
+                    counts.get("two_d", (0, 0, 0, 0)),
+                ):
+                    value(blend + (name, "Array"), count)
+                neighbors = blend + ("m_ChildNeighborListArray", "Array")
+                value(neighbors, len(counts.get("neighbors", [])))
+                for neighbor, count in enumerate(counts.get("neighbors", [])):
+                    value(neighbors + (str(neighbor), "m_NeighborArray", "Array"), count)
+                value(node + ("m_BlendDirectData", "data", "m_ChildBlendEventIDArray", "Array"), 0)
+            return A.controller_tree_allocation(body, spans, tree)
+
+        self.assertEqual(allocation([{}]), 152)
+        self.assertEqual(allocation([{"children": 2, "thresholds": 2}, {}, {}]), 416)
+        # Odd child count pads before the 2D header; neighbor records have
+        # 24-byte native strides and nested uint payloads remain 4-aligned.
+        self.assertEqual(allocation([{"children": 3, "two_d": (3, 3, 9, 9), "neighbors": [1, 2, 3]}, {}]), 640)
+
     def test_synced_override_omission_preserves_shared_clip_occurrences(self):
         empty = lambda name: F.array(name, integer("data"))
         leaf = F.node(
