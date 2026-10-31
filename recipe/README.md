@@ -5836,3 +5836,23 @@ The recipe contains only original selectors, hashes and relationship mappings;
 no protected bodies, implementation, private paths or generated content. All
 eighteen persisted records (1,320 bytes) match J850 raw-exact. Complete-bundle,
 phone production and install/update acceptance remain open.
+
+
+### Whole-game original Billboard ownership (J1302)
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-whole-game-billboard-records.json` | `fabfa2f7e4692c71063f3c723b6f585681ef291dd603b34f0bb5798446c4c79e` |
+
+Audit: 2026-10-31. Qualified original GameObjects, unique BillboardRenderer
+component slots and reciprocal ownership identify two renderers. Their original
+Billboard pointers identify two BillboardAssets; original material endpoints
+resolve to existing public suppliers. Pinned AssetRipper PPtrExtensions at
+`813fed1597bac674def7256ce633a227e7b27497` informs local/dependency pointer
+resolution. The existing generic owner admits native classes 226/227, preserving
+native schemas and every nonpointer byte. This profile contains only original
+selectors, hashes, native identities and checked pointer relationships. No object
+body, scalar template, game implementation, private path or generated content is
+published. All four persisted records (808 bytes) match J850 raw-exact. Three
+remove saved census residuals; the fourth's overlap is unproven. Complete-file,
+phone production and install/update gates remain open.

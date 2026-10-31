@@ -1595,3 +1595,18 @@ play, physical input and genuine filled-filesystem recovery remain open.
 - Combined unresolved census falls 134 to 116 (106 after peer Tree10). Final-file
   readiness stays 693/705 available, 685 raw-exact. Complete bundle, phone
   production, gameplay and install/update acceptance remain open.
+
+
+## J1302 — Reconstruct whole-game original Billboard ownership
+2026-10-31.
+- Existing generic record owner admits BillboardAsset/Renderer classes 226/227.
+- Unique native component slots, reciprocal public GameObject ownership and
+  original Billboard/material relationships identify all four source records.
+- Native schemas and nonpointer fields stay original; all four persisted records
+  (808 bytes) match J850 raw-exact with only checked pointer relocation.
+- Evidence: `work/coordination/p1-scenes-w/wholegame-billboard-20261031/done.json`;
+  source ownership and endpoint witnesses: adjacent `relationships.json`.
+- Pack SHA-256: `0c330e0ce2740e56da7bb7b6122eba7e82c786ef6ad4b85bb48476390bdade00`.
+- Saved unresolved census falls 106 to 103; fourth record overlap is unproven.
+  Final-file readiness stays 693/705 available, 685 raw-exact; complete bundle,
+  phone production and install/update remain open.
