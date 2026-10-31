@@ -1638,3 +1638,15 @@ play, physical input and genuine filled-filesystem recovery remain open.
 - Prior art: pinned AssetRipper PropertyName export, checked on original records.
 - Final-file readiness stays 693/705 available, 685 raw-exact; no file closure.
   Champrush suppliers, complete bundle, phone production and install/update remain open.
+## J1303 — Publish original whole-game Meridian Material relationships
+
+2026-10-31. Publish four retained source-owned Material selections through the
+existing record producer, preserving keyword state and changing only checked
+Shader/texture references; no producer change or accepted-body replay.
+Evidence: `work/coordination/p1-scenes-w/meridian-endpoints-v4/findings.json` and
+`work/coordination/p1-scenes-w/meridian-material-pack-v1/done.json`: four persisted
+records independently raw-exact to J850 (1,184 bytes). Record-pack SHA-256
+`079c74935106c9a6bb1cd9102a92837df8f16bc8d52a2328ec8ddb78167dee45`.
+One saved residual closes, 104 → 103; the other three are overlapping outputs.
+Readiness stays 693/705 available, 685 raw-exact; shared Shader, full bundle,
+phone production and device acceptance remain open. Host-only; no APK/run claim.

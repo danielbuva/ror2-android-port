@@ -5895,3 +5895,24 @@ The profile contains selectors, hashes, native identity and relationship mapping
 no protected bodies, target scalar templates, implementation or private paths.
 Both persisted records (984 bytes) match J850 raw-exact. Champrush is excluded
 for unresolved suppliers. Complete-file, phone and install/update gates remain open.
+
+### Whole-game Meridian material relationships (J1303)
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-whole-game-meridian-material-records.json` | `d6438f2ab2ddb8170bda115fba368259f2e9f0801fe0cbd83dcdaa9fcd8a307a` |
+
+Audit: 2026-10-31. Four original Meridian Materials retain their complete
+source bodies and keyword state; the existing `record_produce.py` owner changes
+only schema-checked Shader/texture references. Original material identities and
+public texture selections witness the endpoints; the shared original Shader
+identity is retained as a dependency, without claiming its production is closed.
+The profile contains only legitimate input selectors, hashes, pointer mappings
+and output identities. No source body, generated program, private path or
+protected implementation is published. Pinned community source/identity techniques
+in `docs/community-prior-art.md` inform relationship inspection; current input
+and persisted J850 byte comparison remain authoritative.
+
+All four persisted records are raw-exact (1,184 bytes); one belongs to the saved
+unresolved census, reducing 104 to 103. Other overlapping outputs are not counted
+as new closures. Complete bundle, phone production and runtime gates stay open.

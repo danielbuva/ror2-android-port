@@ -5597,3 +5597,10 @@ all endpoints. The existing generic record owner applies its signed exposed-name
 reimport and checked pointer relocation, retaining native schema and other fields.
 Setup requires pinned original bundles and a fresh output pack; scoped readers
 close on process exit and pack receipts persist. No runtime owner is added.
+
+The whole-game Meridian Material profile
+`recipe/owner-whole-game-meridian-material-records.json` uses the existing
+`record_produce.py` owner to preserve original fields and keywords while
+relocating schema-checked Shader/texture relationships. Its four persisted
+records are host raw-exact; shared Shader and complete bundle/device gates
+remain separate. It owns no runtime state or teardown.
