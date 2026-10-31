@@ -5786,3 +5786,13 @@ Setup pins original bundles and creates a fresh record pack; scoped readers clos
 on process exit and receipts persist. All 67 persisted records are host raw-exact
 to J850. This adds no runtime owner; group, complete bundle and phone gates remain
 open.
+
+
+`recipe/owner-whole-game-bundle-canvas-records.jsonl.gz` selects 10,870 original
+CanvasRenderers through the existing `record_produce.py` native owner. Qualified
+GameObject component edges and reciprocal original ownership supply checked
+pointer relocations; remaining native fields and schemas stay source-owned.
+Setup pins original bundles and streams bounded source groups into a fresh record
+pack. Scoped readers close on process exit and persisted receipts remain.
+All records are host raw-exact to J850; no runtime owner is added. Complete
+bundle and phone/install/update gates remain open.

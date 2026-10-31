@@ -2267,6 +2267,19 @@ Host-only; heat unmeasured. Owner now supplies 67 Materials; residual three
 unchanged. Readiness stays 693/705 available, 685 raw-exact; complete bundle,
 phone/install/update and runtime remain open.
 
+
+## J1354 — Supply source-derived bundle CanvasRenderer providers
+
+2026-10-31. Existing generic native record owner supplies 10,870 original
+CanvasRenderers through checked GameObject component/backlink relationships.
+All 141,310 persisted bytes raw-exact to J850; pack SHA-256
+`ad320acb6f36ee2618fa1c0e5cf7fd4c8f856376c945e30a0fc8ce63c1d97a12`.
+Evidence: `work/coordination/p1-wholegame-1031/bundle-canvas-persisted-qualification-v1/done.json`;
+source witnesses: sibling `bundle-canvas-source-frontier-v1/witnesses.jsonl`.
+Production 33.55 s, qualification 4.23 s, peak RSS 338,952,192 bytes.
+Host-only; heat unmeasured. Bounded source recipe only; producer unchanged.
+Residual three unchanged. Readiness stays 693/705 available, 685 raw-exact;
+complete groups, bundle, phone/install/update and runtime gates remain open.
 ## J1353 — Capture the requested final menu heap
 
 2026-10-31. Existing SessionResourceBoundary snapshot selection now uses the requested
