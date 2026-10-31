@@ -5596,3 +5596,12 @@ The whole-game Meridian Material profile
 relocating schema-checked Shader/texture relationships. Its four persisted
 records are host raw-exact; shared Shader and complete bundle/device gates
 remain separate. It owns no runtime state or teardown.
+
+The existing `shader_prefab.py` owner registers inherited fallback keywords in
+snippet/stage order, merging global/local declarations and builtin names within
+each stage while retaining existing flags. The whole-game Standard fallback
+profile `recipe/owner-whole-game-shader-standard-fallback.json` selects two
+original records through pinned public exporter templates and acquired SDK
+metadata. Setup uses explicit PC/SDK/template/codec inputs and a fresh output;
+process exit releases source/compiler handles and receipts persist. Both records
+are host raw-exact to J850; complete bundle and phone production remain open.

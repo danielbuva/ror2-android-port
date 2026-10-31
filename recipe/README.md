@@ -5897,3 +5897,23 @@ and persisted J850 byte comparison remain authoritative.
 All four persisted records are raw-exact (1,184 bytes); one belongs to the saved
 unresolved census, reducing 104 to 103. Other overlapping outputs are not counted
 as new closures. Complete bundle, phone production and runtime gates stay open.
+
+### Whole-game Standard fallback keyword registration (J1306)
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-whole-game-shader-standard-fallback.json` | `1b2b7eaad21fc49eb1eea48ed17484ad0709604a8247c4f16ed5d41bd8147668` |
+
+Audit: 2026-10-31. The existing prefab Shader owner derives two original
+Shader records from pinned legitimate input, public exporter templates and
+acquired SDK fallback 46. Keyword registration traverses each snippet's stages,
+then global/local declarations and builtin names, preserving first registration
+and existing flags. No accepted keyword table is supplied to production.
+Pinned AssetRipper `1ac666f47d8e9dedf96afb0b914c70d7656151ea`,
+`DummyShaderTextExporter.cs:49-78`, informs property/template/fallback handling;
+current SDK metadata and independently persisted J850 equality qualify ordering.
+The profile contains only original selectors, hashes, authored filenames,
+public template identities, SDK relationships and output pins. No protected
+source body, program, generated data, private path or credential is published.
+Both persisted records are raw-exact (12,004 bytes); complete-file, phone
+production and runtime acceptance remain open.

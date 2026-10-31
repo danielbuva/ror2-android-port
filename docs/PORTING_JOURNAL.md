@@ -1637,3 +1637,16 @@ records independently raw-exact to J850 (1,184 bytes). Record-pack SHA-256
 One saved residual closes, 104 → 103; the other three are overlapping outputs.
 Readiness stays 693/705 available, 685 raw-exact; shared Shader, full bundle,
 phone production and device acceptance remain open. Host-only; no APK/run claim.
+
+## J1306 — Source-ordered whole-game Standard fallback Shader records
+
+2026-10-31. Existing prefab Shader keyword registration now visits each snippet's
+stages before global/local axes and builtin names; existing flags remain stable.
+Publish two original Shader selectors using acquired SDK fallback metadata and
+pinned public exporter templates; no accepted keyword tables enter production.
+Evidence: `work/coordination/p1-wholegame-1031/stage-keyword-public-v1/result.json`.
+Both persisted records independently raw-exact to J850, 12,004 bytes; pack SHA-256
+`bc89dab841c30bfdc191198dc89e127cbbc8df44a22d74141fcd96797666a935`.
+Public saved residual 103 → 101 before parallel Director closures.
+Readiness stays 693/705 available, 685 raw-exact; full bundle, phone production,
+installation and original runtime remain open. Host-only; no APK/run claim.
