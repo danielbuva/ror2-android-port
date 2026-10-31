@@ -436,6 +436,14 @@ require `native_type_hash` for each output. The pack retains that identity and
 `object_produce.py` checks it after its own source type projection, before bundle
 emission. Source readers close per supplier, script caches expire at process exit
 and input pins are rechecked; no new runtime owner is added.
+The same record owner imports named `ControlPlayableAsset` PropertyName mappings
+with `control_exposed_name_default`. An exact-editor authored fixture establishes
+the mapping default; original managed metadata and pinned AssetRipper encoding
+identify its native decimal zero. `owner-whole-game-timeline-records.json` selects
+20 unique incoming tracks and 23 child controls by original graph relationships.
+Checked pointer relocation retains all remaining source fields and type/script
+identities. Setup, output receipts and teardown use the existing record-pack
+contract; no new runtime state or owner is added.
 `script_identity.OriginalScriptFields` scopes original CLR metadata under the
 existing pinned managed-directory contract. Its current/inherited declarations
 and serialized-name aliases govern `prune_absent_script_fields` in both record

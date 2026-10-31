@@ -1454,3 +1454,16 @@ play, physical input and genuine filled-filesystem recovery remain open.
   were already absent from that census. Parallel Timeline work is separate.
   Final-file readiness stays 693/705 available, 685 raw-exact; complete bundle,
   phone production and install/update remain open.
+
+## J1291 — Reproduce whole-game Timeline import relationships
+2026-10-31.
+- Existing generic record owner selects 20 incoming tracks and 23 child controls;
+  exact-editor authored PropertyName mapping fixture independently proves defaults.
+- All 43 persisted records (12,052 bytes) match J850 raw-exact, including original
+  type/script identities. No game body or scalar template is published.
+- Evidence: `work/coordination/p1-wholegame-1031/timeline-public-v2/done.json`;
+  import provenance and fixture details: `timeline-provenance-notes.md` nearby.
+- Pack SHA-256: `4c8010780113e36d869758d224c9e47d77b66f1ec5cbbb8b903e39b9dca446ed`.
+- Recount: unresolved records fall 245 to 222; 20 tracks already have public
+  suppliers, so this batch adds 23. Final-file readiness stays 693/705 available,
+  685 raw-exact. Complete bundle, phone, gameplay and install/update remain open.

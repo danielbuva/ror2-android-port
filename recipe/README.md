@@ -5619,3 +5619,20 @@ The profile contains original selectors/hashes, native type identities and
 checked pointer remaps; generated bodies remain ignored. Three persisted records
 (108 bytes) are raw-exact J850. Complete-file, phone and install/update gates
 remain open.
+
+### Whole-game Timeline relationships (J1291)
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-whole-game-timeline-records.json` | `30557118e6555f13c9ba3b50510e2cd0b986c4d7fe422fcb580906a8043e513e` |
+
+Audit: 2026-10-31. Minimum original object selectors/hashes, output identities,
+checked PPtr relationships and one named import operation select 20 unique
+incoming tracks and their 23 ControlPlayableAsset children. An authored fixture
+in the exact editor independently proves managed PropertyName mapping import
+uses the default value. Original managed metadata establishes default integer
+zero; pinned AssetRipper `813fed1597bac674def7256ce633a227e7b27497`
+`YamlWalker`/`PropertyNameExtensions` establishes native decimal encoding.
+No target scalar template, native body, type tree, game implementation or private
+setting is published. All 43 persisted records match J850 raw-exact. Complete
+bundle, phone production, gameplay and install/update acceptance remain open.
