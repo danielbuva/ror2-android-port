@@ -5647,3 +5647,10 @@ reuses dummy sorting and published Shader/texture relationships. Setup requires
 pinned original/SDK roots and fresh output; scoped readers close on process exit
 and receipts persist. Twelve records are host raw-exact to J850. This adds no
 runtime owner; complete bundle and phone production remain open.
+
+`owner-whole-game-scope-shader.json` uses the existing `shader_produce.py`
+property owner and pinned exporter template to retain native dimension-one
+texture declarations (`any`). Setup takes explicit original/SDK/template/codec
+inputs and a fresh output pack; process exit releases source/compiler handles
+and receipts persist. The record is host raw-exact to J850. This adds no runtime
+owner; complete bundle and phone production remain open.
