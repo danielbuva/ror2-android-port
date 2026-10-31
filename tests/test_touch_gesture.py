@@ -15,6 +15,57 @@ def request():
 
 
 class TouchGestureTests(unittest.TestCase):
+    def test_inputs_use_validated_external_runtime_and_are_removed(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            path = root / "gesture.json"
+            path.write_text(json.dumps(request()))
+            dex = root / "classes.dex"
+            dex.write_bytes(b"authored fixture")
+            runtime = "/sdcard/Android/data/" + touch_gesture.PACKAGE + "/files"
+            device = Mock()
+            device.owned.return_value = dict(apk_sha256="a" * 64)
+            device.read_receipt.return_value = dict(persistentDataPath=runtime)
+            device.evidence_directory.return_value = root / "evidence"
+            pushed = {}
+
+            def command(*args, **kwargs):
+                if args[0] == "push":
+                    pushed[args[2]] = Path(args[1])
+                    return ""
+                return '{"success": true}'
+
+            def shell(*args, **kwargs):
+                if args[0] == "pidof":
+                    return "123"
+                if args[0] == "getprop":
+                    return "33"
+                if args[0] == "dumpsys":
+                    return "  Display: mDisplayId=0\n  mCurrentFocus=Window{fixture u0 " + touch_gesture.PACKAGE + "/Activity}"
+                if args[0] == "cmd":
+                    return "package:" + touch_gesture.PACKAGE + " uid:10001"
+                if args[0] == "sha256sum":
+                    return touch_gesture.sha(pushed[args[1]]) + "  " + args[1]
+                if args[0] == "rm":
+                    pushed.pop(args[2])
+                    return ""
+                raise AssertionError(args)
+
+            device.cmd.side_effect = command
+            device.sh.side_effect = shell
+            with (
+                patch.object(touch_gesture, "Device", return_value=device),
+                patch.object(touch_gesture, "compile_tool", return_value=dex),
+                patch.object(touch_gesture, "_remote_path_state", return_value="absent"),
+                patch.object(touch_gesture, "WORK", root / "work"),
+            ):
+                self.assertTrue(touch_gesture.run(path, "a" * 64)["success"])
+            device.read_receipt.assert_called_once_with("runtime.json")
+            transfers = [call.args[2] for call in device.cmd.call_args_list if call.args[0] == "push"]
+            self.assertEqual(len(transfers), 2)
+            self.assertTrue(all(target.startswith(runtime + "/ror2lab-touch-") for target in transfers))
+            self.assertFalse(pushed)
+
     def test_focus_must_belong_to_the_owned_app_on_display_zero(self):
         def display(index, window):
             return "  Display: mDisplayId=%d (organized)\n  mCurrentFocus=%s\n  mFocusedApp=ignored\n" % (index, window)
