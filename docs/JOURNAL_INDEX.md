@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J1304](PORTING_JOURNAL.md#j1304--reconstruct-whole-game-original-lodgroup-ownership) | 2026-10-31 | Reconstruct whole-game original LODGroup ownership | 2026-10-31. |
 | [J1302](PORTING_JOURNAL.md#j1302--reconstruct-whole-game-original-billboard-ownership) | 2026-10-31 | Reconstruct whole-game original Billboard ownership | 2026-10-31. |
 | [J1301](PORTING_JOURNAL.md#j1301--reconstruct-whole-game-original-transform-ownership) | 2026-10-31 | Reconstruct whole-game original Transform ownership | 2026-10-31. |
 | [J1299](PORTING_JOURNAL.md#j1299--preserve-original-calmwater-shader-fallback-graphs) | 2026-10-31 | Preserve original CalmWater Shader fallback graphs | 2026-10-31. |
