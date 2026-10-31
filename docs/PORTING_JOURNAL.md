@@ -1650,3 +1650,17 @@ Both persisted records independently raw-exact to J850, 12,004 bytes; pack SHA-2
 Public saved residual 103 → 101 before parallel Director closures.
 Readiness stays 693/705 available, 685 raw-exact; full bundle, phone production,
 installation and original runtime remain open. Host-only; no APK/run claim.
+
+## J1308 — Resolve whole-game inserted-component managed identities
+
+2026-10-31. Extend the existing source record owner with four original
+ProjectileNetworkTransform records and one TeamFilter, preserving native schema
+and all nonpointer bytes. Qualified GameObject recipes, full script sequences
+and reciprocal owners resolve duplicates across a SilentProjectileBoundary insertion.
+Evidence: `work/coordination/p1-wholegame-1031/managed-public-v6/terminal.json`;
+identity witnesses: adjacent `../managed-owner-edges-v5/proofs.json`.
+All five persisted records raw-exact to J850, 360 bytes; record-pack SHA-256
+`b8acef36e6aaaff664ffa3b2ca7718256fced74d8f01ca8afbe75e83cc5278f8`.
+Public saved residual 101 → 96 before parallel Director closures. Readiness stays
+693/705 available, 685 raw-exact; complete bundle, phone production and runtime
+acceptance remain open. Host-only; no APK/device claim.
