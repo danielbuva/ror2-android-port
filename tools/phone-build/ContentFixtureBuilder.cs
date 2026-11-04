@@ -16,6 +16,92 @@ public static class ContentFixtureBuilder
     [Serializable] public sealed class BuildReceipt { public string unity; public string source_commit; public string build_report_guid; }
     static string Output(string name) { return Path.GetFullPath(Path.Combine(Application.dataPath, "../..", name)); }
 
+    [Serializable] public sealed class NativeContentAsset { public string name; public string type; public string loaded_name; public string loaded_type; }
+    [Serializable] public sealed class NativeContentRequest { public string path; public string sha256; public NativeContentAsset[] assets; }
+    [Serializable] public sealed class NativeContentReceipt
+    {
+        public string unity;
+        public string source_commit;
+        public string request_sha256;
+        public string path;
+        public string sha256;
+        public List<NativeContentAsset> assets = new List<NativeContentAsset>();
+        public int count;
+        public bool unloaded;
+        public string failure;
+    }
+
+    static string FileHash(string path)
+    {
+        using (var stream = File.OpenRead(path))
+        using (var hash = SHA256.Create())
+            return BitConverter.ToString(hash.ComputeHash(stream)).Replace("-", "").ToLowerInvariant();
+    }
+
+    static void CheckNativeContent(string oracle)
+    {
+        string requestPath = Environment.GetEnvironmentVariable("ROR2_PHONE_NATIVE_CONTENT_CHECK");
+        if (String.IsNullOrEmpty(requestPath)) return;
+        var receipt = new NativeContentReceipt {
+            unity = Application.unityVersion,
+            source_commit = Environment.GetEnvironmentVariable("ROR2_PHONE_BUILD_SOURCE")
+        };
+        AssetBundle bundle = null;
+        var loaded = new List<UnityEngine.Object>();
+        try
+        {
+            if (!Path.IsPathRooted(requestPath)) throw new Exception("Absolute native-content request required");
+            receipt.request_sha256 = FileHash(requestPath);
+            var request = JsonUtility.FromJson<NativeContentRequest>(File.ReadAllText(requestPath));
+            if (request == null || String.IsNullOrEmpty(request.path) || !Path.IsPathRooted(request.path)
+                || request.assets == null || request.assets.Length == 0)
+                throw new Exception("Native-content request needs absolute bundle path and typed assets");
+            receipt.path = Path.GetFullPath(request.path);
+            receipt.sha256 = FileHash(receipt.path);
+            if (receipt.sha256 != request.sha256) throw new Exception("Native-content bundle SHA-256 mismatch");
+            var names = new HashSet<string>();
+            foreach (var asset in request.assets)
+                if (asset == null || String.IsNullOrEmpty(asset.name) || !names.Add(asset.name)
+                    || asset.type != "LightingSettings")
+                    throw new Exception("Native-content asset name/type absent, duplicated or unsupported");
+            bundle = AssetBundle.LoadFromFile(receipt.path);
+            if (bundle == null) throw new Exception("Native-content bundle failed to load");
+            foreach (var asset in request.assets)
+            {
+                // This SDK exposes LightingSettings as a typed asset. Native-only
+                // classes need a separate consumer fixture before admission.
+                var type = typeof(LightingSettings);
+                var value = bundle.LoadAsset(asset.name, type);
+                if (value == null || value.GetType() != type)
+                    throw new Exception("Native-content typed load failed: " + asset.name + " as " + type.FullName);
+                loaded.Add(value);
+                receipt.assets.Add(new NativeContentAsset {
+                    name = asset.name, type = asset.type, loaded_name = value.name, loaded_type = value.GetType().FullName
+                });
+                receipt.count = loaded.Count;
+            }
+            if (FileHash(receipt.path) != receipt.sha256) throw new Exception("Native-content bundle changed during load");
+        }
+        catch (Exception error) { receipt.failure = error.ToString(); throw; }
+        finally
+        {
+            try
+            {
+                if (bundle != null)
+                {
+                    bundle.Unload(true);
+                    receipt.unloaded = bundle == null && loaded.TrueForAll(value => value == null);
+                    if (!receipt.unloaded) throw new Exception("Native-content objects survived unload");
+                }
+            }
+            catch (Exception error) { receipt.failure = error.ToString(); throw; }
+            finally
+            {
+                File.WriteAllText(Path.Combine(Path.GetDirectoryName(oracle), "native-content-check.json"), JsonUtility.ToJson(receipt, true));
+            }
+        }
+    }
+
     [Serializable] public sealed class NativeScriptReceipt
     {
         public string unity;
@@ -90,6 +176,7 @@ public static class ContentFixtureBuilder
         if (!report.bundleLoaded || !report.textMatched || !report.unloaded || !String.IsNullOrEmpty(report.failure))
             throw new Exception("Content fixture failed; inspect the explicit oracle report");
         CheckNativeScript(oracle);
+        CheckNativeContent(oracle);
     }
 
     public static void Build()

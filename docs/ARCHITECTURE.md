@@ -1429,6 +1429,12 @@ the authored `NativeScriptSchemaFixture.cs` fields. It destroys the temporary
 objects after capture; the host must inspect actual type-tree presence before
 using the output as schema evidence. The fixture class is Editor-only and has
 no game-build consumer.
+An optional `ROR2_PHONE_NATIVE_CONTENT_CHECK` request uses this same owner for
+source-produced LightingSettings bundles: snapshot and hash
+the explicit request, load every address with its exact engine type, record the
+native type/name and destroy loaded objects on unload. `phone_content.py`
+validates the complete count, types, request/bundle hashes and unload receipt.
+This is desktop loadability evidence; device appearance/playability remains open.
 See [probe setup and boundaries](../tools/phone-build/README.md). No game-runtime
 owner or whole-catalog build calls this support path.
 
@@ -6144,6 +6150,16 @@ APK and device acceptance remain open.
 Release-graph Shader jobs with pinned template inputs receive the explicit public
 AssetRipper Git provider. Existing Shader owners validate its revision and resource
 hashes before compiling; the dispatcher retains the resulting pack and receipt.
+
+The existing `record_produce.py` native owner also preserves source release
+LightingSettings and OcclusionCullingData. It parses the complete pointer-free
+source schema, checks native type identity and persists unchanged record bodies;
+it does not synthesize editor-only bake settings or renderer/portal tables.
+Setup requires pinned source bundles and a fresh record pack; scoped readers
+close on exit and receipts persist. Authored host fixtures cover both native
+shapes. A source-derived 22-asset LightingSettings bundle passed typed exact-editor
+load and unload. Occlusion native-load, complete bundle and device acceptance
+remain open.
 
 Release-graph Texture jobs bind the public JPEG/ETC codecs and native SDK texture
 toolchain required by their source operations. Dynamic file hashes enter the

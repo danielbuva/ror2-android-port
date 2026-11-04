@@ -5,15 +5,125 @@ import json
 import subprocess
 import sys
 import hashlib
+import copy
 from unittest.mock import patch
 
 import UnityPy
 
 from phone_bundle import ASSET, PAYLOAD, make_bundle
-from phone_content import run_editor, stage, validate_ambient_capture, validate_linker_capture, validate_oracle
+from phone_content import native_content_request, run_editor, stage, validate_ambient_capture, validate_linker_capture, validate_native_content, validate_oracle
 
 
 class PhoneContentTests(unittest.TestCase):
+    def test_content_builder_compiles_against_exact_editor_api(self):
+        sdk = Path("/Applications/Unity/Hub/Editor/2021.3.45f2/Unity.app/Contents")
+        mono = sdk / "MonoBleedingEdge/bin/mono"
+        compiler = sdk / "MonoBleedingEdge/lib/mono/msbuild/Current/bin/Roslyn/csc.exe"
+        if not mono.is_file() or not compiler.is_file():
+            self.skipTest("Exact editor Mono/Roslyn unavailable")
+        source = Path(__file__).resolve().parents[1] / "tools/phone-build"
+        with tempfile.TemporaryDirectory() as root:
+            args = [str(mono), str(compiler), "/nologo", "/target:library", "/define:UNITY_EDITOR", "/out:" + str(Path(root) / "fixture.dll")]
+            args += ["/r:" + str(path) for path in sorted((sdk / "Managed/UnityEngine").glob("UnityEngine*.dll"))]
+            args += ["/r:" + str(sdk / "Managed/UnityEditor.dll")]
+            args += [str(source / name) for name in ("ContentFixtureBuilder.cs", "ContentFixture.cs", "NativeScriptSchemaFixture.cs")]
+            result = subprocess.run(args, capture_output=True, text=True, timeout=45)
+            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+
+    def test_native_content_requires_each_typed_load_and_bound_bundle_destruction(self):
+        with tempfile.TemporaryDirectory() as root:
+            attempt = Path(root).resolve()
+            bundle = attempt / "authored.bundle"
+            bundle.write_bytes(b"authored native request control")
+            request = {
+                "path": str(bundle),
+                "sha256": hashlib.sha256(bundle.read_bytes()).hexdigest(),
+                "assets": [{"name": "lighting", "type": "LightingSettings"}, {"name": "lighting2", "type": "LightingSettings"}],
+            }
+            request_path = attempt / "native-content-request.json"
+            request_path.write_text(json.dumps(request))
+            report = {
+                "unity": "2021.3.45f2",
+                "source_commit": "c" * 40,
+                "request_sha256": hashlib.sha256(request_path.read_bytes()).hexdigest(),
+                "path": str(bundle),
+                "sha256": request["sha256"],
+                "count": 2,
+                "unloaded": True,
+                "assets": [asset | {"loaded_name": "", "loaded_type": "UnityEngine." + asset["type"]} for asset in request["assets"]],
+            }
+            output = attempt / "native-content-check.json"
+            output.write_text(json.dumps(report))
+            self.assertEqual(validate_native_content(attempt, "c" * 40)["count"], 2)
+            for mutate in (
+                lambda r: r.update(sha256="0" * 64),
+                lambda r: r.update(request_sha256="0" * 64),
+                lambda r: r.update(count=1),
+                lambda r: r.update(unloaded=False),
+                lambda r: r.update(failure="native deserialize failed"),
+                lambda r: r["assets"].pop(),
+                lambda r: r["assets"][0].update(loaded_type="UnityEngine.Object"),
+                lambda r: r["assets"][1].update(name="wrong-address"),
+            ):
+                changed = copy.deepcopy(report)
+                mutate(changed)
+                output.write_text(json.dumps(changed))
+                with self.assertRaises(RuntimeError):
+                    validate_native_content(attempt, "c" * 40)
+            for change in (
+                {"assets": [{"name": "occlusion", "type": "OcclusionCullingData"}]},
+                {"assets": []},
+                {"assets": [{"name": "shader", "type": "Shader"}]},
+                {"assets": request["assets"] * 2},
+                {"path": "relative.bundle"},
+            ):
+                request_path.write_text(json.dumps(request | change))
+                with self.assertRaises(RuntimeError):
+                    native_content_request(request_path)
+            request_path.write_text(json.dumps(request))
+            bundle.write_bytes(b"changed bundle")
+            with self.assertRaisesRegex(RuntimeError, "SHA-256"):
+                native_content_request(request_path)
+
+    def test_editor_runner_requires_native_content_report_when_requested(self):
+        def launched(args, *, env, **kwargs):
+            oracle = Path(env["ROR2_PHONE_ORACLE_REPORT"])
+            self.assertEqual(Path(env["ROR2_PHONE_NATIVE_CONTENT_CHECK"]), oracle.parent / "native-content-request.json")
+            oracle.write_text(json.dumps({"unity": "2021.3.45f2", "bundleLoaded": True, "textMatched": True, "unloaded": True}))
+            return subprocess.CompletedProcess(args, 0, b"", b"")
+
+        with tempfile.TemporaryDirectory() as root:
+            bundle = Path(root) / "control.bundle"
+            bundle.write_bytes(b"authored control")
+            request = Path(root) / "request.json"
+            request.write_text(
+                json.dumps(
+                    {
+                        "path": str(bundle),
+                        "sha256": hashlib.sha256(bundle.read_bytes()).hexdigest(),
+                        "assets": [{"name": "lighting", "type": "LightingSettings"}],
+                    }
+                )
+            )
+            with (
+                patch("common.WORK", Path(root)),
+                patch.dict("os.environ", {"UNITY_EDITOR": "authored-editor", "ROR2_PHONE_NATIVE_CONTENT_CHECK": str(request)}),
+                patch("build_lock.host_build_lock"),
+                patch("phone_content.subprocess.run", side_effect=launched),
+                patch(
+                    "phone_content.subprocess.check_output",
+                    side_effect=lambda args, **kwargs: str(Path(root) / ".git") if "--git-common-dir" in args else "c" * 40,
+                ),
+                patch("builtins.print"),
+            ):
+                project = Path(root) / "rebuild/phone-content/native/project"
+                stage(project)
+                with self.assertRaisesRegex(RuntimeError, "Exact-editor fixture failed"):
+                    run_editor(project)
+            outcome = json.loads(next(project.parent.glob("editor-check-*/receipt.json")).read_text())
+            self.assertIn("native-content-check.json", outcome["oracle_error"])
+            self.assertIsNone(outcome["native_content"])
+
     def test_ambient_fixture_compiles_against_exact_editor_api(self):
         sdk = Path("/Applications/Unity/Hub/Editor/2021.3.45f2/Unity.app/Contents")
         mono = sdk / "MonoBleedingEdge/bin/mono"
