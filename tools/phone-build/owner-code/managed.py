@@ -270,7 +270,9 @@ def gameplay(out, sdk, inputs, original, ordinary, raw, package_output, audio_ou
     authored = source_root or ROOT
     public = [authored / "tools/unity" / native.relative(n) for n in names] + [authored / "android/Assets/LabDiagnostics.cs"]
     sources = target_source_order(public, support, maps) if source_root else public + support + maps
-    if (source_root is None and len(public) != 128) or len(support) != 14 or len(maps) != 3:
+    # runtime_sources validates the current authored manifest, including missing
+    # files and staging collisions. A historical count rejects new port releases.
+    if len(support) != 14 or len(maps) != 3:
         raise ValueError("current player source membership changed; review configuration")
     refs = {Path(p).name: sdk / p for p in phone_unity_compile.references(sdk)}
     plugins = {}
@@ -457,7 +459,7 @@ def target_run(work, sdk, values, target, source_root, output, *, android_tools=
 def run(work, sdk, values, output):
     work, sdk = native.canonical(work), native.canonical(sdk)
     output = Path(output)
-    if work != ROOT / "work":
+    if work != (ROOT / "work").resolve():
         raise ValueError("source owner currently requires this checkout's work root")
     state = native.input_state(work)
     if native.sha(PROFILE) != PROFILE_SHA:

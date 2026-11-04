@@ -551,8 +551,11 @@ acceptance gates.
 source-bundle profiles. Pass `--repo`, repeated repo-relative `--profile`, and a
 new `--output` staging root. It resolves supplier profile hashes, emits standard
 `recipe/jobs/*.json` descriptors and `source-index.json`, and reports missing or
-unsupported suppliers before writing output. Sprite/native and player serialized
-providers still need explicit wiring; this is not the complete 705-file release.
+unsupported suppliers before writing output. Player data and shaders expose
+their complete serialized files; remapping uses their top-level receipts, while
+player data consumes the nested shader pack and five texture suppliers.
+Sprite/native providers still need explicit wiring; this is not the complete
+705-file release.
 
 Dispatcher bindings `pc`, `sdk` and `codec` select canonical private input paths.
 Only producers requiring SDK data receive the default SDK argument. For object
@@ -564,6 +567,16 @@ is introduced. `input_sha256:NAME` hashes a declared regular input file, and
 `job_directory:JOB:ARTIFACT` selects the parent of a declared supplier receipt.
 Private input identity must cover acquired tools as well as original files, as
 required by the existing updater.
+
+Player jobs additionally bind `sdk_contents` (Unity Contents data), `converter`,
+`converter_receipt` (that directory's result.json), `code_request` and `managed`
+to freshly source-produced inputs. Shader jobs use `sdk_contents` and require
+their existing public recovery/compiler tool arguments through
+`--extra-arguments`. Player Menu/HUD/manager phases likewise use their existing
+explicit extra arguments. Missing inputs fail through the producer contracts;
+this compiler does not generate managed/native runtime inputs. Authored shader
+files, player registry/manifests/bootstrap/config and imported lab Python owners
+are included in the signed dependency closure.
 
 Overlay generated recipe files into a release source checkout, inspect/audit and
 commit them, then use the existing public publisher. The generated index is an

@@ -1105,6 +1105,41 @@ def shared_defaults(pc, selected, sdk, builtin_extra, registry, packs, destinati
     return result
 
 
+def current_registry_bindings(recipe, managed_production, root):
+    """Bind current importer identities to the exact sources compiled by the code owner."""
+    root = Path(root).resolve(strict=True)
+    managed = Path(managed_production).resolve(strict=True)
+    manifest = root / "recipe/runtime-sources.json"
+    layout = root / "recipe/project-layout.json"
+    compiler = managed / "gameplay/inputs.json"
+    result = managed / "result.json"
+    paths = (manifest, layout, compiler, result)
+    pins = {str(path): {"bytes": path.stat().st_size, "sha256": sha(path)} for path in paths}
+    names = json.loads(manifest.read_text())
+    guids = json.loads(layout.read_text())["runtime_source_guids"]
+    if len(set(names)) != len(names) or set(names) != set(guids):
+        raise ValueError("current registry runtime membership differs")
+    sources = json.loads(compiler.read_text())["sources"]
+    authored = recipe["authored"]
+    runtime = ["tools/unity/" + name for name in names] + ["android/Assets/LabDiagnostics.cs"]
+    files, identities = {}, {}
+    for name in runtime:
+        path = OBJECTS.M.safe_input(root, name)
+        digest = sources.get(str(path))
+        if digest is None or sha(path) != digest:
+            raise ValueError("current registry source was not compiled: " + name)
+        files[name] = digest
+        # Existing importer identities survive port updates. First-import owners
+        # have no Unity metadata; assign stable converter-owned path identities.
+        identities[name] = (
+            authored["guids"].get(name)
+            or guids.get(name.removeprefix("tools/unity/"))
+            or hashlib.md5(("ror2lab:script:" + name).encode(), usedforsecurity=False).hexdigest()
+        )
+    current = dict(authored, source_commit=json.loads(result.read_text()).get("source_commit"), source_files=files, runtime_sources=runtime, guids=identities)
+    return dict(recipe, authored=current), pins
+
+
 def registry_records(profile_root, selected, pc, editor_resources, code_request, managed_production):
     """Bind the existing original-input code request to the script identity owner."""
     if code_request is None or managed_production is None or editor_resources is None:
@@ -1117,16 +1152,28 @@ def registry_records(profile_root, selected, pc, editor_resources, code_request,
     packages = Path(request["source_inputs"]["packages"]).resolve(strict=True)
     # The existing source-input factory keeps its flat packages/<relative>
     # manifest beside the packages directory; it is not a new receipt format.
+    registry_recipe = json.loads(recipe.read_text())
+    current_pins = {}
+    if "target" in request:
+        authored_root = request["target"]["source"]
+        package_manifest = packages.parent / "input-hashes.json"
+    else:
+        authored_root = Path(__file__).resolve().parents[3]
+        registry_recipe, current_pins = current_registry_bindings(registry_recipe, managed_production, authored_root)
+        package_manifest = Path(managed_production) / "packages/inputs.json"
     value = SCRIPT.registry(
         pc,
         editor_resources,
         managed_production,
-        request["target"]["source"],
+        authored_root,
         packages,
-        packages.parent / "input-hashes.json",
-        json.loads(recipe.read_text()),
+        package_manifest,
+        registry_recipe,
         W,
     )
+    value["provider_pins"].update(current_pins)
+    for path, pin in current_pins.items():
+        checked(Path(path), (pin["bytes"], pin["sha256"]))
     value["provider_pins"][str(recipe)] = {"bytes": recipe.stat().st_size, "sha256": selected["sha256"]}
     value["provider_pins"][str(request_path)] = {"bytes": request_pin[0], "sha256": request_pin[1]}
     checked(recipe, (recipe.stat().st_size, selected["sha256"]))
@@ -1391,7 +1438,7 @@ def main():
     parser.add_argument("--converter", type=Path, required=True, help="fresh converter directory containing data/ and result.json")
     parser.add_argument("--converter-receipt-sha256", required=True)
     parser.add_argument(
-        "--code-request", type=Path, help="existing original-input code request, with target.source and source_inputs.packages; required for registry"
+        "--code-request", type=Path, help="original-input code request with source_inputs.packages; optional target.source selects a historical source cohort"
     )
     parser.add_argument("--managed-production", type=Path, help="successful source-produced managed directory; required for registry")
     parser.add_argument("--ui-profile", nargs=2, metavar=("PROFILE", "SHA256"), help="current source Menu profile; requires registry and SDK UGUI source")

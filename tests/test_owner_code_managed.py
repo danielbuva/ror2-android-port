@@ -5,6 +5,7 @@ import json
 from pathlib import Path
 import tempfile
 import unittest
+from unittest.mock import patch
 
 PATH = Path(__file__).resolve().parents[1] / "tools/phone-build/owner-code/managed.py"
 SPEC = importlib.util.spec_from_file_location("owner_code_managed_tests", PATH)
@@ -13,6 +14,21 @@ SPEC.loader.exec_module(MANAGED)
 
 
 class OwnerCodeManagedTests(unittest.TestCase):
+    def test_current_runtime_manifest_reaches_reference_resolution(self):
+        # Exercise the real current manifest, which outgrew the old 128-file
+        # guard. Stop at SDK resolution; no compiler or game inputs are needed.
+        class ReferencesReached(Exception):
+            pass
+
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            with patch.object(MANAGED.phone_unity_compile, "references", side_effect=ReferencesReached):
+                with self.assertRaises(ReferencesReached):
+                    MANAGED.gameplay(root, root, {}, root, {}, None, root, {}, [root] * 3, [root] * 14)
+                (root / "gameplay").rmdir()
+                with self.assertRaisesRegex(ValueError, "source membership changed"):
+                    MANAGED.gameplay(root, root, {}, root, {}, None, root, {}, [], [root] * 14)
+
     def test_fixed_target_uses_staged_paths_and_case_insensitive_source_order(self):
         public = [Path(n) for n in ("TeleportMaterialBoundary.cs", "TeleporterWorldBoundary.cs", "ActiveClientBoundary.cs", "LabDiagnostics.cs")]
         support, maps = [Path("support/Affix.cs")], [Path("maps/OriginalBodyVisualMap.cs")]

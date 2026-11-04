@@ -21,6 +21,35 @@ G, J = load("release_graph"), load("release_jobs")
 
 
 class ReleaseGraphTests(unittest.TestCase):
+    def test_player_shader_suppliers_keep_serialized_and_nested_pack_contracts(self):
+        graph = G.Graph(ROOT, {})
+        player_path = ROOT / "recipe/owner-player-data.json"
+        shader_path = ROOT / "recipe/owner-player-shaders.json"
+        remap = graph.build(G.digest(ROOT / "recipe/owner-presentation-reused-records.json"))
+        player = "recipe/jobs/owner-player-data.json"
+        shaders = "recipe/jobs/owner-player-shaders.json"
+        self.assertEqual(G.owner(json.loads(player_path.read_text())), "player_data")
+        self.assertEqual(G.owner(json.loads(shader_path.read_text())), "shader_produce")
+        args = graph.jobs[remap]["arguments"]
+        for name in (player, shaders):
+            position = args.index("${job_directory:" + name + ":receipt}")
+            self.assertEqual(args[position - 1], "--serialized-producer")
+        args = graph.jobs[player]["arguments"]
+        position = args.index("${job_directory:" + shaders + ":shared_receipt}")
+        self.assertEqual(args[position - 1], "--record-pack")
+        self.assertEqual(args.count("--texture-pack"), 5)
+        self.assertEqual(len(graph.jobs[shaders]["outputs"]), 369)
+        self.assertEqual(len(graph.jobs[player]["outputs"]), 177)
+        closure = graph.entry(remap)
+        self.assertIn("recipe/owner-player-registry.json", closure["recipe_files"])
+        self.assertIn("recipe/runtime-config.json", closure["recipe_files"])
+        self.assertIn("recipe/owner-player-shader-manifests.json", closure["recipe_files"])
+        self.assertIn("tools/unity/runtime/shaders/AndroidColorGrade.shader", closure["producer_files"])
+        index = graph.compile(["recipe/owner-player-data.json", "recipe/owner-player-shaders.json"])
+        self.assertEqual(len(index["entries"]), 546)
+        for row in index["entries"].values():
+            self.assertTrue(set(row["recipe_files"]) <= set(index["files"]) | set(graph.jobs))
+
     def test_generated_supplier_graph_executes_through_dispatcher_and_reuses(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
