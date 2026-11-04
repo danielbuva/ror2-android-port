@@ -907,6 +907,17 @@ and refuses blocked inputs before compiling its launcher. Check-only teardown
 retains one new private report; it starts no compiler or device action. Complete
 record packs do not satisfy final bundle/player-data paths, and this byte check
 does not establish source provenance or device qualification.
+Its optional `lighting_tolerance` selection uses
+`accepted-output/scene_compare.py`, the host-only full-scene comparison owner
+built on `unity_write.py` structural reads. Setup supplies the actual produced
+file, private reference and pinned measured recipe/visual review. Native schemas
+select lighting sample fields; all non-lighting bytes, identities and references
+stay exact. All other bundle members are checked. Numerical maxima and visual
+pins are retained in readiness; process exit closes inputs, assembly rechecks
+pins, and teardown retains the existing private report. No runtime state or
+production dependency on comparison artifacts is added. Readiness counts
+`tolerance_accepted_count` independently of exact/drift; actual lighting admission
+remains zero. Supported fields, formats and open gates are in [ADR-003](ADR-003-lighting-tolerance.md).
 Its optional `drift` selection admits changed content only through three pinned
 private qualification documents: historical exact production, repeated current
 production by the same public producer, and a named original-input/output extent

@@ -2333,6 +2333,19 @@ Bounded source recipe only; producer unchanged; 2,024 candidates remain excluded
 Residual three unchanged; readiness 693/705 available, 685 raw-exact.
 Complete groups, bundle, phone/install/update and runtime gates remain open.
 
+## J1363 — Qualify measured lighting tolerance separately from exact reconstruction
+
+2026-11-04. ADR-003 scopes GPU/sampling tolerance to probes, lightmaps and containers.
+The full-scene comparator derives native sample extents, checks measured per-channel
+bounds and preserves all other bytes, identities and serialized relationships.
+Bound reflection/lightmap pointers are required; unsupported schemas/encodings refuse.
+APK readiness requires pinned numerical recipes and matched visual review, reports
+`tolerance_accepted_count` separately and preserves current bytes during assembly.
+Authored host fixtures cover bounds, scope, exact fields/pointers, visual pins and counts.
+Evidence: `work/coordination/p1-tolerance/host-tests.log`; no APK/build/device run.
+Prior art: pinned AssetRipper LightmapSettings conversion and UnityPy native extents.
+Readiness stays 693/705 available, 685 raw-exact, zero tolerance-accepted; actual
+J850 lighting numerical/visual acceptance and phone install/update remain open.
 ## J1359 — Retained sustained game performance report
 
 2026-11-04. Host-only report owner reads existing sustained and thermal receipts; synthetic fixtures
