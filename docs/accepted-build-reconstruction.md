@@ -612,3 +612,10 @@ count. Native BC6H support, complete phone generation, full game-runtime behavio
 and final source-output assembly/install/update qualification remain gates.
 Evidence: `work/coordination/orchestrator/scenes/promo-source-complete-v1/` and
 `work/coordination/orchestrator/scenes/snowy-source-complete-v2/`.
+
+Lighting GPU/sampling differences may now qualify through
+[ADR-003](ADR-003-lighting-tolerance.md)'s measured per-record numerical bounds
+and matched visual review. The full-scene comparison owner preserves every
+non-lighting byte and reports `tolerance-accepted` separately. No J850 lighting
+record has completed both gates: readiness remains 693/705 available,
+685 raw-exact, zero tolerance-accepted. Source alternatives above are unchanged.

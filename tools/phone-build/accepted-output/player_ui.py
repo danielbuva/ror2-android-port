@@ -622,6 +622,18 @@ def assign_saved_ids(records, saved_rows):
     records.sort(key=lambda row: row["id"])
 
 
+def assign_saved_external_order(fields, external_files, saved_files):
+    """Retain audited provider IDs, appending additional source-owned providers."""
+    require(
+        len(set(saved_files)) == len(saved_files) and set(saved_files) <= set(external_files), "saved UI external identities differ from resolved providers"
+    )
+    ordered = list(saved_files) + [file for file in external_files if file not in saved_files]
+    relocated = {index: ordered.index(file) + 1 for index, file in enumerate(external_files, 1)}
+    for value in fields:
+        map_pointers(value, lambda ptr: dict(m_FileID=relocated[ptr["m_FileID"]], m_PathID=ptr["m_PathID"]) if ptr["m_FileID"] else ptr)
+    external_files[:] = ordered
+
+
 def produce(profile_path, profile_sha256, pc, player, builtin_extra, editor_resources, ugui_source, managed, registry, output):
     """Generate Menu and missing media inside an existing source player target tree.
 
@@ -653,9 +665,11 @@ def produce(profile_path, profile_sha256, pc, player, builtin_extra, editor_reso
         metadata, bodies, rows, scripts_table, manifest = [], {}, [], [], []
         audit = output.parent.parent.parent.parent / "ui-source"
         audit.mkdir(exist_ok=False)
+        linked_fields = [linker.fields(row, ids, registry["script_ids"]) for row in records]
+        if "saved_external_order" in selected:
+            assign_saved_external_order(linked_fields, linker.externals, selected["saved_external_order"])
         offset = 0
-        for row in records:
-            fields = linker.fields(row, ids, registry["script_ids"])
+        for row, fields in zip(records, linked_fields):
             typ = dict(row["typ"])
             if typ["class_id"] == 114:
                 typ["tree"] = explicit_tree(typ["tree"])

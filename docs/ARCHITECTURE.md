@@ -52,6 +52,17 @@ reproduction and framed emission. It verifies supplied target/profile/PC/SDK
 inputs without generating independent Android target information. `assemble.py`
 owns hash-bound unsigned APK assembly and required uncompressed/aligned resource
 storage; canonical alignment and owner signing follow separately.
+
+`tools/phone-build/profile_stage.py` owns host converter stage measurement.
+Call it with an explicit command, workspace and ignored evidence directory;
+optional `--table` extends the existing per-stage table. Each child process
+records wall/user/system time, wait4 RSS, block operations and sampled logical/
+allocated workspace bytes, including failed exits. Process exit stops sampling;
+logs/JSON remain caller-owned. Workspace preparation and validation are separate
+from measured commands. Sampling gives a peak lower bound; child RSS accounting
+is not simultaneous process-tree RSS. These host metrics do not qualify phone
+heat, installation or complete converter performance.
+
 `object_produce.py` emits complete source object bundles through
 `object_stream.py`, which owns checked-body spooling, lazy graph reads and bounded
 resource copying. Setup requires a new caller-owned output and the existing
@@ -63,8 +74,10 @@ individual records retain the existing 256 MiB bound. An authored 257 MiB contro
 matches canonical bytes with bounded payload memory; full phone production is open.
 `player_ui.py` owns current source Menu graph normalization, deterministic local
 IDs, SDK component construction and typed links to the existing player suppliers.
-Its audited Menu recipe may retain build-assigned IDs/order; the source graph
+Its audited `recipe/owner-player-menu.json` may retain build-assigned IDs/order; the source graph
 must match the full identity cohort before local pointers are relocated.
+Its audited external provider order applies only after source resolution;
+additional source providers append without shifting retained provider IDs.
 Graphic material providers reserve their position before Image Sprite providers,
 following the native schema field order. All body values remain source-derived.
 The optional player-data `--ui-profile` selects its audited source recipe;
@@ -75,8 +88,9 @@ existing runtime projection. Readers/CLR metadata close at scope exit; new
 outputs and `ui-source/` receipts retain the graph, schemas and resource root IDs.
 Original missing standalone Sprite dependencies are emitted with source geometry
 and decoded mip pixels. No accepted target/cache supplies content. Current Menu
-source production is complete; its two genuine J850 field differences and full
-phone/runtime acceptance remain open.
+production retains 591 build identities; 582 bodies are raw-exact to J850. Store
+Sprite/alignment differences and seven external-index shifts remain, alongside
+complete phone/runtime acceptance.
 `player_hud.py` owns current source HUD construction through the optional
 player-data `--hud-profile PROFILE SHA256` phase. It clones original hierarchies
 in separate pointer namespaces, applies the public RecoveredHudBuilder bindings
@@ -220,6 +234,11 @@ material array and applies the existing authored constructor's three disabled
 flags, retaining every other source field and native type identity. The generic
 record owner delegates the same projection before checked owner-pointer relocation;
 original GameObject membership uses its existing component append operation.
+`recipe/owner-whole-game-empty-renderer-records.json` and
+`owner-whole-game-renderer-membership-records.json` select fourteen renderer/owner
+pairs; four additional alpha-host renderers retain open membership. These use
+the generic record-pack lifecycle below; selected records are host raw-exact,
+with complete-file and phone/install/update gates open.
 Explicit record-pack directory/receipt pins supply already
 produced texture bodies and resources; the owner verifies them before/after,
 assembles resource extents, and generates each asset's rooted container preloads.
@@ -363,6 +382,9 @@ directory; the existing identity owner closes CLR/SDK readers before return.
 `record_remap.py` consumes the receipt through its serialized-supplier interface,
 preserving native type hashes as well as body and source provenance. No accepted
 player file or private schema packet is required by this route.
+`recipe/owner-whole-game-registry-records.json` selects six host raw-exact
+MonoScripts through that remap owner and fresh registry receipt; complete-bundle
+and phone/runtime gates remain open.
 `shared_defaults` uses those source script IDs, original RenderSettings with a
 hash-matched original Wisp schema, SDK Material/resource records and the shader
 owner's standard record pack. Its Cube and diagnostics preloads follow the
@@ -435,6 +457,9 @@ source-only EffectManagerHelper case; complete content and phone qualification
 remain separate. Original script-file-ID derivation remains unchanged.
 `record_produce.py` owns source-only AnimationClip and generic object-record
 production through the same object-pack interface.
+`recipe/owner-whole-game-source-records.json` selects original managed/native
+records through this owner; all 198 are host raw-exact. Setup takes pinned
+original/SDK inputs and a fresh pack; persisted receipts remain after exit.
 Its optional SDK input derives unchanged managed type hashes through the existing
 script-identity owner. Original component PPtrs select hash-pinned original
 MonoScripts; original schemas and SDK metadata determine the hash. A recipe may
@@ -450,6 +475,9 @@ identify its native decimal zero. `owner-whole-game-timeline-records.json` selec
 Checked pointer relocation retains all remaining source fields and type/script
 identities. Setup, output receipts and teardown use the existing record-pack
 contract; no new runtime state or owner is added.
+`recipe/owner-whole-game-current-script-fields.json` selects the current-field
+projection below through the same record owner and pack lifecycle; its five
+RunPresence records are host raw-exact, with complete-file and phone gates open.
 `script_identity.OriginalScriptFields` scopes original CLR metadata under the
 existing pinned managed-directory contract. Its current/inherited declarations
 and serialized-name aliases govern `prune_absent_script_fields` in both record
@@ -460,8 +488,12 @@ Setup requires explicit original DLL hashes and the existing original script/SDK
 bindings. DLL pins are rechecked before success and CLR readers close at exit.
 The optional `preserve_original_script_hash` selection delegates to the object
 owner's existing unchanged-schema check after verifying the actual original
-MonoScript binding. The hierarchy path recipes select original records using
+MonoScript binding. `recipe/owner-whole-game-hierarchy-path-records.json`,
+`owner-whole-game-path-managed-records.json` and
+`owner-whole-game-path-original-hash-records.json` select original records using
 proven roots and unique reciprocal child paths; output state remains exact.
+They share this record owner, pinned-input/fresh-pack setup and scoped teardown;
+complete-file and phone/install/update gates remain open.
 The path-managed profile also selects BeetleQueenAcidGhost/FX components via
 the original root/child hierarchy, preserving script identity and scalar bytes.
 The generic path also delegates `inactive_scene_object` to the object owner's
@@ -512,13 +544,20 @@ Every original LOD renderer endpoint resolves to a public supplier, including th
 BillboardRenderer. The existing generic record owner preserves native class 205,
 schema and nonpointer fields; only checked references relocate. Setup, persisted
 pack state and scoped reader teardown follow its existing contract.
+`recipe/owner-whole-game-native-material-supplier-records.json` uses this same
+record owner for two Renderers, one LODGroup and four Materials. Ordered component
+and Material slots qualify pointers; existing dummy-Shader keyword demotion
+preserves source fields. Setup pins original bundles and a fresh pack; scoped
+readers close at exit and receipts persist. Seven records are host raw-exact;
+complete-bundle and phone/install/update gates remain open.
 Generic record admission also includes native classes 96, 119, 193, 228 and 330,
 preserving their original schemas and every nonpointer byte.
-The component-edge recipe selects unchanged original records through explicit
+`recipe/owner-whole-game-component-edge-records.json` selects unchanged original
+records through explicit
 component PPtrs in qualified GameObject recipes, after checked omissions.
 Append/reordering cases are excluded. Actual script identity and reciprocal
 ownership qualify the bindings; the same generic producer owns their emission.
-The prefab-policy record recipe delegates the existing exported-name projection
+`recipe/owner-whole-game-prefab-policy-records.json` delegates the exported-name projection
 and component append to the object owner. Original component order and ownership
 remain checked; appended adapters come from existing public source production.
 These pack operations add no runtime owner or complete-bundle acceptance.
@@ -527,7 +566,7 @@ ItemInfection roots plus BrotherSwing through ordered component fingerprints,
 reciprocal ownership and parent relationships. It uses the same generic record
 owner and existing exported-name/checked detacher-omission operations. Setup,
 pack state and teardown follow the existing contract above.
-The existing-presentation recipe additionally delegates checked component
+`recipe/owner-whole-game-existing-presentation-records.json` delegates checked component
 omissions to that owner. `sanitize_optional_content` supplies the existing policy;
 actual original script identities select omissions, while retained component
 order and reciprocal ownership remain checked. Ambiguous duplicates are excluded.
@@ -535,7 +574,10 @@ Its generic path also delegates named material keyword policies and explicit
 ComputeShader shell production to the existing object owner. Original schemas,
 renderer/program preconditions and native type hashes remain checked. Compute
 shells retain declarations and keywords; they contain no executable Android
-compute programs. The material/compute recipe adds no runtime behavior.
+compute programs. `recipe/owner-whole-game-material-compute-records.json`
+selects these policies through the same record owner, pinned-input setup and
+scoped teardown. Persisted records are host raw-exact; complete-bundle and
+phone/runtime gates remain open. This adds no runtime behavior.
 Its `controller_clear_skeleton_masks` policy follows the pinned
 exporter's omitted layer masks: it removes original skeleton mask entries and
 subtracts their native allocation sizes. Exact-editor `BuildAsset` applies the
@@ -609,6 +651,12 @@ Every body and persisted record-pack extent must match its expected hash.
 Source files are rechecked and new outputs must lie outside the original input.
 The SDK fixture supplies the explicit native output; complete-bundle and full
 phone-production qualification remain separate gates.
+`recipe/owner-whole-game-native-sprites.json` and
+`owner-whole-game-native-sprites-2.json` select the whole-game Sprite cohorts
+through this owner, including 65 Sprite/Texture pairs in the latter. Export
+metadata witnesses importer GUIDs; each original Texture supplies its pixels.
+They share the pinned-input prepare/produce lifecycle; persisted records are host
+raw-exact, with complete-bundle and phone/install/update gates open.
 The existing `record_produce.py` generic record-pack path also admits original
 Sprite records through the same `importer_guid` and `crop_rectangle_offset`
 fields as `object_produce.py`. It delegates to `player_data.sprite_crop` and
@@ -861,6 +909,17 @@ and refuses blocked inputs before compiling its launcher. Check-only teardown
 retains one new private report; it starts no compiler or device action. Complete
 record packs do not satisfy final bundle/player-data paths, and this byte check
 does not establish source provenance or device qualification.
+Its optional `lighting_tolerance` selection uses
+`accepted-output/scene_compare.py`, the host-only full-scene comparison owner
+built on `unity_write.py` structural reads. Setup supplies the actual produced
+file, private reference and pinned measured recipe/visual review. Native schemas
+select lighting sample fields; all non-lighting bytes, identities and references
+stay exact. All other bundle members are checked. Numerical maxima and visual
+pins are retained in readiness; process exit closes inputs, assembly rechecks
+pins, and teardown retains the existing private report. No runtime state or
+production dependency on comparison artifacts is added. Readiness counts
+`tolerance_accepted_count` independently of exact/drift; actual lighting admission
+remains zero. Supported fields, formats and open gates are in [ADR-003](ADR-003-lighting-tolerance.md).
 Its optional `drift` selection admits changed content only through three pinned
 private qualification documents: historical exact production, repeated current
 production by the same public producer, and a named original-input/output extent
@@ -1144,6 +1203,12 @@ SDK, template and profile providers with new disjoint output. Teardown reaps
 compiler/codec children; failure preserves diagnostics. Input pins, body hashes
 and reread extents qualify each record. Complete-file and device gates remain
 separate; no accepted program or keyword table is an input.
+
+`recipe/owner-whole-game-shader-particle.json` selects SDK 211 through
+`shader_prefab.py`, using an original UI Material Shader pointer and fragment
+order, retaining runtime alternatives without scene fog. Existing pinned
+original/SDK/compiler setup and context teardown apply; its record is host
+raw-exact, with complete-bundle and phone/runtime gates open.
 
 The existing Shader owners also supply `owner-whole-game-shader-*.json`; the
 recipe audit table identifies each producer. SDK declarations derive fallback
@@ -1902,7 +1967,21 @@ contract are in [LOCAL_STATE.md](LOCAL_STATE.md#named-historical-optional-guard-
 `scripts/prune-generated.py` (current) discards rebuildable build outputs under
 `work/` while protecting the APKs pinned by `PORTING_STATE.md`, `docs/BASELINE.md`,
 device receipts and the coordination lock; agents run it after each build/run task
-(AGENTS.md "Storage hygiene").
+(AGENTS.md "Storage hygiene"). Finished session-memory heaps older than 24 h
+require a successful coordination analysis receipt matching their capture manifest
+(filename, SHA-256 and size); capture/analysis receipts and logs remain. Finished
+lane leftovers require the lane owner's matching `removed.json`; managed stale
+lanes still use owned teardown. Keep markers and receipt paths protect both.
+Cold-storage run/lane symlinks are unlinked only, preserving their targets.
+Linked worktrees resolve the canonical ignored work and lane roots.
+
+`scripts/journal-renumber.py` (support) owns branch-only journal numbering after
+merging fetched `origin/main`. It compares complete entries, preserves main,
+renumbers only branch additions and regenerates `docs/JOURNAL_INDEX.md`. Setup
+requires that merged baseline and resolved conflict markers; `--dry-run` writes
+nothing. It retains no process state, closes Git/file readers at exit and leaves
+journal/index edits for manual reference review and staging. It neither fetches
+nor commits. `tests/test_journal_renumber.py` covers ownership and refusal cases.
 
 `scripts/git-hooks/pre-push` delegates committed-source checks to
 `scripts/ci-local.sh` in a fresh exact-commit checkout. `scripts/ci-local-cache.py`
@@ -2013,9 +2092,10 @@ exit and session cleanup clear notes and consent. The settings/application/GUI
 owners give the visible modal input priority while retaining the owned pause.
 Android clipboard, browser handoff and the composed settings route require
 device acceptance; host fixtures exercise the authored flow and refusal paths.
-`LabDiagnostics` requests 300 FPS at startup, before its first frame yield and
-the lab menu. Gameplay retains its existing 300 FPS request and restores this
-startup value on exit. This is a request; actual FPS depends on device load.
+`android/Assets/LabDiagnostics.cs` (`LabDiagnostics`) requests 300 FPS in `Start`,
+before its first frame yield and the lab menu, for the player process lifetime.
+`NovaInputBoundary` captures that prior value, requests 300 FPS during gameplay
+and restores the captured value on teardown. This is a request; actual FPS depends on device load.
 It replaces `snapshot.json` on its existing periodic schedule.
 Only its startup/lifecycle snapshots use the full `LAB_SNAPSHOT` console record;
 periodic JSON is not retained by the original console. Original and error logging
@@ -2040,8 +2120,9 @@ service described below. It requires an idle, owned APK, matched menu selector
 and a nonce-only request. It saves existing native values and observes actual
 pending-file creation, then terminates only the PID/UID-bound main writer through
 same-UID signalling. Atomic ready/result records bind a distinct service PID.
-An unchanged original primary and retained pending transaction are required
-before cold validated-primary recovery and native resave can qualify. A missed
+`stop_after_observed_exit` verifies the witnessed writer PID is absent, rechecks
+the installed APK and stops any restarted activity. An unchanged original primary
+and retained pending transaction are required before cold validated-primary recovery and native resave can qualify. A missed
 window refuses acceptance. Original save behavior is unchanged. Teardown stops
 the owned package, removes its selector/request/unique records and verifies OLED
 sleep. Protected profile/results hashes remain unchanged. Initial primary bytes
@@ -2079,15 +2160,6 @@ performance guarantee. Host admission estimates two 4 GiB snapshots plus
 records that budget and observed free bytes. The 100 GiB full-build floor does
 not apply to this capture-only queue. Host fixtures exercise admission and
 failure contracts.
-`scripts/lab/perf_report.py` is the host-only sustained-report owner. Explicit
-session-result and thermal JSONL inputs produce local JSON/Markdown with input
-hashes, active counter deltas, periodic interval-mean percentiles and UTC-aligned
-FPS/temperature bins. Setup reads retained evidence; files close on process exit,
-no runtime/device state is changed, and reports persist at the requested output.
-It cannot recover individual-frame quantiles or causal throttling onset from
-aggregate traces. [Game performance](performance-game.md) owns the baseline and
-attribution limits; [public alpha](public-alpha.md#performance-release-gate) owns
-proposed device budgets. Synthetic host fixtures check window and coverage math.
 `--gameplay-only` selects just the existing heap and sustained owners when the
 independent SDK interruption route is blocked. Its receipt explicitly records
 that scope; it supplies no settings-interruption evidence and cannot combine
@@ -2140,6 +2212,16 @@ logs on failure before teardown, including before menu readiness. Capture
 failures preserve the original exception; established native errors take
 precedence over a transition failure. Private captures remain ignored.
 
+`scripts/lab/perf_report.py` is the host-only sustained-report owner. Explicit
+session-result and thermal JSONL inputs produce local JSON/Markdown with input
+hashes, active counter deltas, periodic interval-mean percentiles and UTC-aligned
+FPS/temperature bins. Setup reads retained evidence; files close on process exit,
+no runtime/device state is changed, and reports persist at the requested output.
+It cannot recover individual-frame quantiles or causal throttling onset from
+aggregate traces. [Game performance](performance-game.md) owns the baseline and
+attribution limits; [public alpha](public-alpha.md#performance-release-gate) owns
+proposed device budgets. Synthetic host fixtures check window and coverage math.
+
 
 `AndroidTouchInput` is the playable bridge's pointer producer. Stable finger IDs
 own independent movement, camera and eight native action captures, plus pause.
@@ -2190,8 +2272,10 @@ paths and writer PID/UID inside the app, observes the native pending CREATE and
 writes atomic nonce-bound ready/result records without changing the save method.
 Closing settings or disposing its owner cancels observation; the service stops
 itself after completion or its 35-second deadline (`START_NOT_STICKY`).
-`build.stage_android_assets` stages its Android library and shared Java operation
-from tracked inputs under Gradle's default `src/main/java` source root; Unity's
+`build.stage_android_assets` stages the manifest, project properties and
+`src/main/java/dev/ror2lab/diagnostics/LabSettingsWriteObserver.java` from
+`android/Assets/Plugins/Android/SettingsWriteObserver.androidlib/`, plus the shared
+Java operation, under Gradle's default `src/main/java` source root; Unity's
 generated library build file does not enable the legacy `src` root. The host
 checks distinct service/main PIDs, retained original
 primary/pending bytes, cold recovery and native resave. Device survival after the
@@ -4145,7 +4229,9 @@ transition can replace only the oldest ordinary row. A latched capped status
 exposes refused/replaced history without a per-frame string allocation.
 Transition-only history cannot grow, and between-scan short lifetimes remain
 unobserved. Disposal releases live slots and makes the policy inert. The first
-observation is explicitly not a known spawn position.
+observation is explicitly not a known spawn position. `NovaInputBoundary` keeps
+this read-only sampling active while settings is paused, after neutralizing input,
+because native projectile updates continue.
 
 `r.world.lightningStakes` retains root/network/Rigidbody values, velocities,
 owner attribution and native stick/victim/local-offset/ancestry observations.

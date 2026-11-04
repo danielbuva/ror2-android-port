@@ -2333,6 +2333,19 @@ Bounded source recipe only; producer unchanged; 2,024 candidates remain excluded
 Residual three unchanged; readiness 693/705 available, 685 raw-exact.
 Complete groups, bundle, phone/install/update and runtime gates remain open.
 
+## J1363 — Qualify measured lighting tolerance separately from exact reconstruction
+
+2026-11-04. ADR-003 scopes GPU/sampling tolerance to probes, lightmaps and containers.
+The full-scene comparator derives native sample extents, checks measured per-channel
+bounds and preserves all other bytes, identities and serialized relationships.
+Bound reflection/lightmap pointers are required; unsupported schemas/encodings refuse.
+APK readiness requires pinned numerical recipes and matched visual review, reports
+`tolerance_accepted_count` separately and preserves current bytes during assembly.
+Authored host fixtures cover bounds, scope, exact fields/pointers, visual pins and counts.
+Evidence: `work/coordination/p1-tolerance/host-tests.log`; no APK/build/device run.
+Prior art: pinned AssetRipper LightmapSettings conversion and UnityPy native extents.
+Readiness stays 693/705 available, 685 raw-exact, zero tolerance-accepted; actual
+J850 lighting numerical/visual acceptance and phone install/update remain open.
 ## J1359 — Retained sustained game performance report
 
 2026-11-04. Host-only report owner reads existing sustained and thermal receipts; synthetic fixtures
@@ -2369,3 +2382,61 @@ Validation: 243 focused host tests, Ruff and host-only preflight pass.
 Shared-host CI timeout follow-up reuses deterministic hdiutil failure coverage
 and bounds nested CI/Java fixture work at 300 s; eight affected host tests pass.
 Host-only tooling change; no APK, device evidence or game-readiness claim.
+## J1364 — Stabilize audited Menu external provider IDs
+
+2026-11-04. Menu retains 20 audited external provider filenames/order only after
+source resolution, appending the additional original store Sprite provider.
+Seven Sprite records become raw-exact; current Menu is now 589/591 exact bodies.
+Source alignment 5 versus reference 8 and store Sprite nonnull versus null remain;
+no source field is overridden and full-file/readiness closure stays open.
+Output SHA-256: `b4be78e019c316a79e1bc9cab63d6cbdae85a66ef80738728a86c37761d1b24d`.
+Evidence: `work/coordination/p1-menuhud/current-menu-v2/`; 13 focused UI tests and
+Ruff pass. Host-only; no phone/install/update/runtime acceptance is claimed.
+## J1363 — Stabilize host profile and optional-volume failure checks
+
+2026-11-04. ProfileStore's real Java compile/fsync harness uses bounded 300 s process deadlines.
+The optional-volume nonzero test uses fixed child results and exact create/attach ordering;
+real CLI timeout/reaping, arguments and uncertain-mount preservation remain covered.
+Completion establishes child reaping without sleeps; external calls retain bounded deadlines.
+Focused retention/volume tests, Ruff, host preflight and staged public audit pass.
+Evidence: `work/coordination/ci-flakes-20261104/` (repeat log and terminal receipt).
+Host-only test changes; no APK or device behaviour change. Remaining: none for these two flakes.
+## J1362 — Cache validated import progress totals
+
+2026-11-04. Existing `owner-apk/game_import.py` tracks completed bytes as files
+are validated/adopted and resets the total for each run, avoiding repeated sums.
+Same 2,749-file input: independently reopened output sizes and SHA-256s all exact;
+output manifest `0279c32cef6e7d4818e14a10fc3970c423e29be392e151bdb00f74237232481a`.
+Evidence: `work/coordination/p1-scenes-w/converter-import-optimization-v1/`;
+`before-v3/done.json` and `after/done.json` include metrics and successful cleanup.
+Profiled host harness wall 78.122 → 63.522 s; user CPU 21.023 → 8.313 s.
+Peak RSS 39,059,456 → 39,747,584 bytes; allocated workspace 4,161,007,616 →
+4,128,145,408 bytes. Sequential host/cache/profile effects limit speedup claims.
+Ruff and 33 focused import checks pass, including same-instance resume/adoption.
+No device/heat/full-pipeline measurement; phone performance remains open.
+Readiness unchanged: 693/705 available, 685 raw-exact; no new reconstruction closure.
+## J1361 — Prune analyzed heaps and removed build-lane leftovers
+
+2026-11-04. `prune-generated.py` recognizes finished session-memory captures
+with matching successful analysis receipts and lane leftovers with owned removal
+evidence. It preserves logs/receipts, recent content, keep markers and protected
+paths; cold-storage symlinks are unlinked without deleting targets. Linked
+worktrees use the shared canonical roots.
+Evidence: `work/coordination/prune-snapshots-20261104/focused-checks.json`
+(16 synthetic host tests; Ruff passed). No APK or device behaviour changed.
+Older heaps without successful matching analysis remain retained.
+## J1360 — Measure host APK finalization and private packet packaging
+
+2026-11-04. Reusable `profile_stage.py` records wall/CPU/RSS, sampled logical and
+allocated workspace bytes, block operations and failed exits; two host tests pass.
+Current original 2,749 source pins and 840 retained J850 target pins verified.
+Retained replay only; warm validation caches, preparation excluded. Wall/peak RSS:
+apk-assembly: 8.255 s / 30,457,856 bytes.
+zipalign: 0.423 s / 8,683,520 bytes.
+signing: 1.245 s / 380,960,768 bytes.
+private-payload-packet-packaging: 137.661 s / 119,685,120 bytes.
+Evidence: `work/coordination/apk-profile/`; shared baseline table extended.
+Signed output `c0b78163d5b00425592f271b49519ba01c9f8d16164368afc796af58b9d12026`;
+signature/alignment and unchanged existing key verified. SDK 34 uses `-p 4`;
+rejected `-P 16` and shared-prune disk-baseline change retained in local notes.
+Host-only; independent full reconstruction, phone heat/install/update remain open.
