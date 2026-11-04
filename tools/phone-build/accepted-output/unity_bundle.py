@@ -109,23 +109,25 @@ class Bundle:
             if string(stream) != "UnityFS":
                 raise ValueError("not UnityFS")
             (version,) = unpack(stream, ">I")
-            string(stream)  # player version
+            player = string(stream)
             engine = string(stream)
             if version not in (7, 8) or not engine.startswith("2021.3."):
                 raise ValueError("unqualified UnityFS version")
             size, compressed, expanded, flags = unpack(stream, ">QIII")
+            self.identity = (version, player, engine, flags)
             information_bytes = compressed
             if size != path.stat().st_size or flags & ~0x2FF:
                 raise ValueError("unsupported bundle header")
-            align(stream, 16)
+            header_padding = exact(stream, -stream.tell() % 16)
             start = stream.tell()
             if flags & 128:
                 stream.seek(size - compressed)
             info = io.BytesIO(decompress(exact(stream, compressed), expanded, flags))
             data_start = start if flags & 128 else stream.tell()
-            if flags & 512:
-                data_start = (data_start + 15) // 16 * 16
-            exact(info, 16)
+            stream.seek(data_start)
+            data_padding = exact(stream, -data_start % 16) if flags & 512 else b""
+            data_start += len(data_padding)
+            self.identity += (exact(info, 16),)
             (count,) = unpack(info, ">I")
             if count > 200000:
                 raise ValueError("excessive block count")
@@ -142,6 +144,9 @@ class Bundle:
                 total += expanded
             if data_start > size - (information_bytes if flags & 128 else 0):
                 raise ValueError("blocks exceed bundle")
+            stream.seek(data_start)
+            tail_padding = exact(stream, size - (information_bytes if flags & 128 else 0) - data_start)
+            self.framing = (header_padding, data_padding, tail_padding)
             (count,) = unpack(info, ">I")
             if count > 100000:
                 raise ValueError("excessive member count")
