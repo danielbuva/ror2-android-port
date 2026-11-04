@@ -23,6 +23,15 @@ G, J = load("release_graph"), load("release_jobs")
 
 
 class ReleaseGraphTests(unittest.TestCase):
+    def test_object_sdk_profile_keeps_application_relative_resource_root(self):
+        graph = G.Graph(ROOT, {})
+        name = graph.build(G.digest(ROOT / "recipe/owner-objective-support-objects.json"))
+        arguments = graph.jobs[name]["arguments"]
+        root = arguments[arguments.index("--sdk") + 1]
+        self.assertEqual(root, "${input:sdk_contents}/..")
+        profile = graph.job_profiles[name]
+        self.assertTrue(profile["sdk"]["path"].startswith("Contents/Resources/"))
+
     def test_sprite_cohorts_bind_native_witness_and_standard_pack_artifacts(self):
         graph = G.Graph(ROOT, {})
         for cohort in (1, 2, 3):
