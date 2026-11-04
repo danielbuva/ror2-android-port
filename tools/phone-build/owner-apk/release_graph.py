@@ -6,6 +6,7 @@ source, schema and reference checks. Unresolved suppliers are explicit failures.
 """
 
 import argparse
+import gzip
 import hashlib
 import json
 from pathlib import Path
@@ -64,6 +65,14 @@ class Graph:
         self.profiles = {}
         for path in sorted((self.repo / "recipe").glob("owner-*.json")):
             self.profiles[digest(path)] = (path.relative_to(self.repo).as_posix(), json.loads(path.read_text()))
+        # Large native-record recipes are streamed by record_produce itself.
+        # Discover their identity without expanding the hierarchy into memory.
+        for path in sorted((self.repo / "recipe").glob("owner-*.jsonl.gz")):
+            with gzip.open(path, "rb") as stream:
+                header = json.loads(stream.readline(8 * 1024**2 + 1))
+            if set(header) != {"input_id"}:
+                raise ValueError("unknown compressed record profile header: " + path.name)
+            self.profiles[digest(path)] = (path.relative_to(self.repo).as_posix(), header)
         self.jobs = {}
         self.profile_files = {}
         self.job_profiles = {}
@@ -74,10 +83,10 @@ class Graph:
         if pin not in self.profiles:
             raise ValueError("missing source supplier profile: " + pin)
         path, profile = self.profiles[pin]
-        name = "recipe/jobs/" + Path(path).stem + ".json"
+        name = "recipe/jobs/" + (Path(path).name.removesuffix(".jsonl.gz") if path.endswith(".jsonl.gz") else Path(path).stem) + ".json"
         if name in self.jobs:
             return name
-        producer = owner(profile)
+        producer = "record_produce" if path.endswith(".jsonl.gz") else owner(profile)
         if producer is None or producer == "sprite_produce":
             raise ValueError("explicit producer wiring required for " + path)
         providers = {dependency: self.build(dependency, (*active, pin)) for dependency in suppliers(profile)}

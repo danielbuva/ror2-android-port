@@ -554,8 +554,11 @@ new `--output` staging root. It resolves supplier profile hashes, emits standard
 unsupported suppliers before writing output. Player data and shaders expose
 their complete serialized files; remapping uses their top-level receipts, while
 player data consumes the nested shader pack and five texture suppliers.
-Sprite/native providers still need explicit wiring; this is not the complete
-705-file release.
+Compressed native-record recipes (`owner-*.jsonl.gz`) are discovered by their
+compressed SHA-256 and bounded header. Their existing record producer streams
+source groups; graph compilation does not expand the hierarchy.
+Sprite/native providers and complete player phases still need explicit wiring;
+this is not the complete source release.
 
 Dispatcher bindings `pc`, `sdk` and `codec` select canonical private input paths.
 Only producers requiring SDK data receive the default SDK argument. For object
