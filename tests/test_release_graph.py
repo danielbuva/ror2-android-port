@@ -91,6 +91,67 @@ class ReleaseGraphTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "missing=.*authored"):
                 J.Dispatcher.files_in(output, descriptor)
 
+    def test_native_job_binds_same_converter_and_reuses_both_outputs(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory).resolve()
+            repo, inputs = root / "repo", root / "inputs"
+            (repo / "recipe").mkdir(parents=True)
+            (inputs / "work").mkdir(parents=True)
+            for name in ("sdk_install", "converter_sources"):
+                (inputs / name).mkdir()
+            metadata = inputs / "converter_metadata"
+            metadata.write_bytes(b"independent metadata")
+            (inputs / "converter_receipt").write_text(json.dumps({"metadata_sha256": G.digest(metadata)}))
+            for name in ("recipe/owner-native-job-inputs.json", "recipe/owner-native-arm64.json"):
+                shutil.copyfile(ROOT / name, repo / name)
+            producer = repo / "tools/phone-build/owner-code/native.py"
+            producer.parent.mkdir(parents=True)
+            producer.write_text("""import hashlib,json,pathlib,sys
+request=json.loads(pathlib.Path(sys.argv[1]).read_text())
+receipt=pathlib.Path(request['converter_receipt'])
+assert hashlib.sha256(receipt.read_bytes()).hexdigest()==request['converter_receipt_sha256']
+metadata=pathlib.Path(request['metadata']).read_bytes()
+assert hashlib.sha256(metadata).hexdigest()==json.loads(receipt.read_text())['metadata_sha256']
+out=pathlib.Path(request['output']);assert out.is_relative_to(pathlib.Path(request['owner_work']))
+out.mkdir();(out/'global-metadata.dat').write_bytes(metadata)
+(out/'libil2cpp.so').write_bytes(b'independent native output')
+(out/'result.json').write_text('{"success":true}')
+""")
+            graph = G.Graph(repo, {})
+            index = graph.compile([], native_request="recipe/owner-native-job-inputs.json")
+            self.assertEqual(len(index["entries"]), 2)
+            self.assertIn("recipe/owner-native-arm64.json", index["files"])
+            for name, descriptor in graph.jobs.items():
+                path = repo / name
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_text(json.dumps(descriptor))
+                index["files"][name] = G.digest(path)
+            release = {"entries": {name: J.UPDATES.public().entry_dependencies(index, name) for name in index["entries"]}}
+            runtime, native = root / "runtime", root / "native"
+            runtime.mkdir()
+            native.mkdir()
+            config = {"bindings": {name: name for name in ("sdk_install", "converter_receipt", "converter_sources", "converter_metadata")}}
+            progress = []
+            for _ in range(2):
+                dispatcher = J.Dispatcher(
+                    repo,
+                    index,
+                    release,
+                    inputs,
+                    runtime,
+                    native,
+                    config,
+                    "a" * 64,
+                    python=[sys.executable],
+                    progress=lambda name, reused: progress.append(reused),
+                )
+                for name, dependencies in release["entries"].items():
+                    destination = root / Path(name).name
+                    dispatcher.produce(name, dependencies, destination)
+            self.assertEqual(progress, [False, True])
+            self.assertEqual((root / "global-metadata.dat").read_bytes(), metadata.read_bytes())
+            self.assertEqual((root / "libil2cpp.so").read_bytes(), b"independent native output")
+
     def test_startup_source_job_executes_and_reuses_through_dispatcher(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory).resolve()

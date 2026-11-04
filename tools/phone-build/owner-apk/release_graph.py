@@ -316,7 +316,30 @@ class Graph:
         self.job_profiles[name] = {}
         return name
 
-    def compile(self, selected, *, bundle_manifest=False):
+    def native_code(self, request_path):
+        """Produce native code and its matching metadata from one converter cohort."""
+        request = json.loads((self.repo / request_path).read_text())
+        if request.get("output") != "${output}":
+            raise ValueError("native request must use the dispatcher output")
+        name = "recipe/jobs/owner-native-code.json"
+        self.jobs[name] = {
+            "schema": 1,
+            "script": "tools/phone-build/owner-code/native.py",
+            "arguments": ["${request}"],
+            "request": request,
+            "needs": [],
+            "outputs": {
+                "apk/lib/arm64-v8a/libil2cpp.so": "libil2cpp.so",
+                "apk/assets/bin/Data/Managed/Metadata/global-metadata.dat": "global-metadata.dat",
+            },
+            "artifacts": {"receipt": "result.json"},
+        }
+        self.profile_files[name] = request_path
+        policy = "recipe/owner-native-arm64.json"
+        self.job_profiles[name] = {"authored_inputs": {policy: digest(self.repo / policy)}}
+        return name
+
+    def compile(self, selected, *, bundle_manifest=False, native_request=None):
         entries = {}
         selected_jobs = [self.build(digest(self.repo / path)) for path in selected]
         startup = "recipe/jobs/owner-startup-metadata.json"
@@ -324,6 +347,8 @@ class Graph:
             selected_jobs.append(startup)
         if bundle_manifest:
             selected_jobs.append(self.bundle_manifest(selected_jobs))
+        if native_request:
+            selected_jobs.append(self.native_code(native_request))
         for job in selected_jobs:
             entry = self.entry(job)
             for output in self.jobs[job]["outputs"]:
@@ -350,11 +375,12 @@ def main():
         action="store_true",
         help="generate the native manifest from every selected payload bundle; missing native dependencies fail production",
     )
+    parser.add_argument("--native-request", help="repo-relative native request template; emits matching library and metadata from acquired converter inputs")
     parser.add_argument("--extra-arguments", type=Path, help="JSON producer name -> additional CLI argv, with dispatcher substitutions")
     parser.add_argument("--output", type=Path, required=True, help="new public job staging root; overlay into a release source checkout")
     args = parser.parse_args()
     graph = Graph(args.repo, json.loads(args.extra_arguments.read_text()) if args.extra_arguments else {}, args.player_phases)
-    index = graph.compile(args.profile, bundle_manifest=args.bundle_manifest)
+    index = graph.compile(args.profile, bundle_manifest=args.bundle_manifest, native_request=args.native_request)
     args.output.mkdir(parents=True, exist_ok=False)
     for name, job in graph.jobs.items():
         path = args.output / name
