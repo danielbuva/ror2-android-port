@@ -201,9 +201,10 @@ public sealed partial class PortSession
             coordinator.Check((priorResultsRelationshipTypes == null || priorResultsRelationshipTypes.Length == 0) &&
                                   (priorResultsRelationshipProviders == null || priorResultsRelationshipProviders.Length == 0),
                               "Existing item-relationship content owner");
-            var types = WholeCatalogComposed.CategoryFamily(AddressablesLabels.itemRelationshipType, Array.Empty<ItemRelationshipType>());
+            var manifest = WholeCatalogComposed.ReadDefinitionManifest();
+            var types = WholeCatalogComposed.CategoryFamily(manifest, AddressablesLabels.itemRelationshipType, Array.Empty<ItemRelationshipType>());
             var providers =
-                WholeCatalogComposed.CategoryFamily(AddressablesLabels.itemRelationshipProvider, Array.Empty<ItemRelationshipProvider>());
+                WholeCatalogComposed.CategoryFamily(manifest, AddressablesLabels.itemRelationshipProvider, Array.Empty<ItemRelationshipProvider>());
             coordinator.Check(types.Length == 1 && providers.Length == 1 && types[0] && providers[0] &&
                                   providers[0].relationshipType == types[0] && providers[0].relationships != null &&
                                   providers[0].relationships.Length > 0 &&
@@ -211,7 +212,7 @@ public sealed partial class PortSession
                                                                          ItemCatalog.GetItemDef(pair.itemDef1.itemIndex) == pair.itemDef1 &&
                                                                          ItemCatalog.GetItemDef(pair.itemDef2.itemIndex) == pair.itemDef2),
                               "Original item relationship source or item identity differs");
-            WholeCatalogComposed.PopulateDefinitionFields("ItemRelationshipTypes", types);
+            WholeCatalogComposed.PopulateDefinitionFields(manifest, "ItemRelationshipTypes", types);
             ownsResultsItemRelationships = true;
             typeField.SetValue(null, types);
             providerField.SetValue(null, providers);
