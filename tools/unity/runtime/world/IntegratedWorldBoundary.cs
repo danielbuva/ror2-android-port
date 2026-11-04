@@ -1344,12 +1344,14 @@ public sealed partial class PortSession
             PrepareUnavailableWorldPresentation(player);
             coordinator.r.phase = "integrated-world-client";
             coordinator.Save();
+            TracePreparation("client-connect-begin");
             var connect = coordinator.ConnectActiveBodyClient(player);
             while (connect.MoveNext())
                 yield return connect.Current;
             coordinator.r.world.authority =
                 player.networkIdentity.hasAuthority && coordinator.activeBodyClient.isConnected && coordinator.activeBodyOwner.isReady;
             coordinator.Check(coordinator.r.world.authority, "Integrated local authority missing");
+            TracePreparation("client-authority-ready");
             Action skillActivity = PortSessionOriginalAudioOwner.PassivePcmCaptureAfterAuthoritySkillRequested
                 ? new Action(coordinator.OnRecognizedAuthoritySkillForPassivePcm) : null;
             survivorSkills = new SurvivorSkillObserver(player, skillActivity);
@@ -1365,10 +1367,12 @@ public sealed partial class PortSession
                 engiNativeOutputs = new EngineerNativeOutputObserver(player);
                 coordinator.r.world.engiNativeOutputs = engiNativeOutputs.report;
             }
+            TracePreparation("run-availability-begin");
             coordinator.PrepareWholeRunAvailability();
             var displayRules = coordinator.PrepareWholeModelDisplayRules();
             while (displayRules.MoveNext())
                 yield return displayRules.Current;
+            TracePreparation("display-rules-ready");
             // Source catalogs persist for the session, rather than being rebuilt around each interaction.
             var flags = BindingFlags.Static | BindingFlags.NonPublic;
             coordinator.Check(!coordinator.ownsPickupCatalog && PickupCatalog.pickupCount == 0, "Unowned integrated pickup catalog");
@@ -1425,6 +1429,7 @@ public sealed partial class PortSession
                                              .Concat(coordinator.EligibleWorldEquipment().Select(x => x.CreatePickupDef()))
                                              .Concat(new[] { lunarPickup })
                                              .ToArray());
+            TracePreparation("pickup-catalog-ready");
             // Native profiles size discovery storage from this complete pickup catalog.
             // Load earned state before native rules and the first stage choose loot.
             if (coordinator.r.nativeFirstStageLifecycleDiagnosticAttempt)
@@ -1493,6 +1498,7 @@ public sealed partial class PortSession
             coordinator.Check(coordinator.r.world.lootTier1 + coordinator.r.world.lootTier2 + coordinator.r.world.lootTier3 ==
                                   coordinator.worldLootDefinitions.Length,
                               "Original composed drop lists differ from eligible item domain");
+            TracePreparation("cost-catalog-begin");
             coordinator.moneyCatalogField = typeof(CostTypeCatalog).GetField("costTypeDefs", flags);
             coordinator.priorMoneyCatalog = coordinator.moneyCatalogField.GetValue(null);
             coordinator.Check((coordinator.priorMoneyCatalog == null || ((Array)coordinator.priorMoneyCatalog).Length == 0) &&
