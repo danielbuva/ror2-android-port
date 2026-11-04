@@ -2545,6 +2545,15 @@ preservation and CLI/preflight integration; focused camera/help/generation/build
 checks passed. Existing transform and stage validation remain enforced.
 No runtime behaviour changes; device and alpha readiness gates remain open.
 
+## J1374 — Bind source texture tools in the release graph
+
+2026-11-04. Existing release-graph texture jobs pass the public JPEG/ETC codecs
+and SDK texture toolchain required by their source operations, with file-hash
+bindings for incremental cache identity. Existing texture schema, source and
+pixel-extent checks remain enforced; no target bytes are supplied.
+Evidence: `work/coordination/p1-scenes-w/current-commando-production-v4/` records
+the missing-codec failure after source shader production; authored graph contracts
+cover six published texture cohorts. Complete source APK/device gates stay open.
 ## J1373 — Partition ordinary world preparation on device
 
 Six early seams in the existing world owner separate seven preparation blocks;
