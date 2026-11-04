@@ -127,6 +127,14 @@ native fields, roots, policy and provider receipts. The output is a complete
 native `globalgamemanagers` candidate with a fresh script-hash map and public
 Personal capability policy. Historical cache/UI differences and full phone/native
 runtime acceptance remain open; this introduces no gameplay/runtime owner.
+`shader_produce.py` also owns real TMP Distance Field and Sprite production
+through `tmp_source`: pinned Essential Resources provide original declarations
+and required includes; original material keywords select compiled variants.
+The legacy mobile selector retains its declaration contract. Output comparison
+is exact by default; explicit diagnostic comparison records both expected and
+actual hashes. Setup requires pinned original/SDK/package inputs and fresh
+output; compiler and codec contexts close on exit. Source compilation, complete
+bundle loading and visual acceptance remain separate gates.
 `tools/phone-build/environment/RuntimeEnvironmentProducer.cs` is the experimental
 source library for an owner-built native converter tool player. It owns SDK-sky
 ambient/reflection rendering, face/mip readback and output receipts, restoring
@@ -738,7 +746,10 @@ single-mip RGBA shell producer is device-qualified in J1199.
 `texture_produce.py` owns the current experimental Texture2D source producer. Audited `recipe/owner-uncompressed-textures.json` selects
 original body/pixel ranges and generic import/stream placement; standard BC1
 decoding, raw copying, fixed source-coordinate color extension and public
-JPEG roundtripping introduce no target pixels. `build_texture_jpeg.py` owns
+JPEG roundtripping introduce no target pixels. `source-rgba-mips` decodes every
+original BC1/BC3 mip independently to RGBA32, retaining partial chains, alpha,
+colour space and usage. It checks source extents and preserves metadata rather
+than generating replacement mip levels. `build_texture_jpeg.py` owns
 the current native JPEG-tool build from pinned public source providers and
 an explicit compiler; `texture_jpeg.c` owns bounded stdin/stdout processing.
 New private output, source/tool admission, bounded compiler/codec children,

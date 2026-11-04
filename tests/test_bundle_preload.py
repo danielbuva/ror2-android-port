@@ -90,6 +90,12 @@ class BundlePreloadTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "GameObject owner differs"):
                 P.external_owners(selected, [], schemas)
 
+    def test_orphan_records_cannot_hide_dangling_or_invalid_file_pointers(self):
+        for pointer in ((0, 999), (2, 17), (-1, 17), (2, 0)):
+            with self.subTest(pointer=pointer), self.assertRaisesRegex(ValueError, "Produced object 20 references an absent"):
+                P.validate_graph({10: set(), 20: {pointer}}, 1)
+        P.validate_graph({10: {(0, 20)}, 20: {(0, 10), (1, 17), (0, 0)}}, 1)
+
 
 if __name__ == "__main__":
     unittest.main()
