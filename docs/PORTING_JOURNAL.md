@@ -2666,7 +2666,7 @@ and current CLR identity remain required, with no global short-name inference.
 No APK produced; endpoint assignability, complete graph/load and device play remain open.
 
 
-## J1381 — Load buff definitions through typed provider roots
+## J1382 — Load buff definitions through typed provider roots
 
 2026-11-04. Existing catalog owner uses its typed provider-root family/cache;
 native registration, DLC4 selection, identity guards and restoration remain intact.
