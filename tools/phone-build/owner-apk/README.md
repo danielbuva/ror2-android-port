@@ -543,3 +543,31 @@ every output to match its complete local producer pins; historical metadata
 exceptions cannot override those pins. Both routes use the same assembler and
 retained signing key. Real phone installation and saved-data survival remain
 acceptance gates.
+
+
+### Source bundle job compilation
+
+`release_graph.py` is the current host authoring step for selected complete
+source-bundle profiles. Pass `--repo`, repeated repo-relative `--profile`, and a
+new `--output` staging root. It resolves supplier profile hashes, emits standard
+`recipe/jobs/*.json` descriptors and `source-index.json`, and reports missing or
+unsupported suppliers before writing output. Sprite/native and player serialized
+providers still need explicit wiring; this is not the complete 705-file release.
+
+Dispatcher bindings `pc`, `sdk` and `codec` select canonical private input paths.
+Only producers requiring SDK data receive the default SDK argument. For object
+profiles that derive script properties, supply it explicitly. Optional
+`--extra-arguments` reads a JSON map from producer name to additional argv, e.g.
+`{"object_produce": ["--sdk", "${input:sdk}"]}`. Use this for the existing
+codec/helper/template tool options; no command shell or private output fallback
+is introduced. `input_sha256:NAME` hashes a declared regular input file, and
+`job_directory:JOB:ARTIFACT` selects the parent of a declared supplier receipt.
+Private input identity must cover acquired tools as well as original files, as
+required by the existing updater.
+
+Overlay generated recipe files into a release source checkout, inspect/audit and
+commit them, then use the existing public publisher. The generated index is an
+input to release planning, not an issued or signed release. It conservatively
+includes the Python producer cohort because owners use dynamic imports.
+Production retains existing producer schema/reference checks and byte checks;
+this wiring does not relax a producer's historical comparison contract.

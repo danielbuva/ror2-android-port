@@ -954,7 +954,16 @@ signatures and tracked-only bundles; `.github/workflows/public-release.yml`
 publishes these on authorized version tags using an externally provisioned key.
 `owner-apk/updates.py` owns bounded GitHub acquisition, signature/archive
 verification and the private update transaction; `release_jobs.py` dispatches
-signed job recipes to existing source-only producers. The managed-host
+signed job recipes to existing source-only producers. `release_graph.py` compiles selected
+complete bundle profiles and their SHA-linked suppliers into those descriptors
+and a source index. Explicit extra argv selects acquired public tools; unresolved
+profiles fail before staging. Generated JSON is overlaid into the release source
+checkout and audited/committed before the existing tracked-only publisher runs.
+The dispatcher resolves supplier directories from declared receipt artifacts;
+input-file hash tokens bind acquired tools without embedding host paths.
+Generated jobs retain producer checks and do not establish complete APK or phone
+readiness. Setup uses explicit source checkout/profile/output paths; teardown
+keeps generated descriptors and caller-owned producer results. The managed-host
 `ToolHostActivity` presents check/download/rebuild/install states, while
 `OwnerUpdateState` is Android-free presentation policy. PR #119
 `OwnerInstaller` remains the PackageInstaller owner, including streamed hashing,
