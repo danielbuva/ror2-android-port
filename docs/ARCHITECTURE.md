@@ -2613,9 +2613,12 @@ setting. The host Unity build mutex is mandatory for every caller.
 Its first host gate calls `native_view_camera_build_hook.build_hook_pins` before
 reading local configuration. The current `./dev build-hook-pins` command checks
 every `source_paths`/`source_sha256` role in
-`recipe/native-view-camera-transform.json` without game inputs or an editor.
+`recipe/native-view-camera-transform.json`, the audio-owner source cohort and
+its producer/camera manifest bindings without game inputs or an editor.
 After source review and Python formatting, `--action refresh` updates only those
-source hashes, including the hook's own hash; all input, output, profile,
+source hashes and audio manifest bindings, including the hook's own hash.
+The explicit refresh updates reviewed Python hash literals by syntax position;
+builds only validate them. All game input, output, profile,
 receipt and toolchain pins remain unchanged. Check reports all stale sources
 without writing. Existing stage/transform validators still enforce their
 contracts. The command owns no persistent state beyond the tracked recipe and

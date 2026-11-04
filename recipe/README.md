@@ -1,5 +1,11 @@
 # Build recipes
 
+2026-11-04 startup-attribution audit: `original-audio-owner-sources.json`
+refreshes three authored session/audio timing-marker hashes. The explicit
+`build-hook-pins` refresh keeps producer/camera manifest bindings consistent;
+builds validate without changing source. Only repository source hashes change;
+no game bytes, private paths, identifiers or licensing changes are introduced.
+
 2026-11-04 player-startup audit: `original-audio-owner-sources.json` refreshes
 the authored session source hash and its producer/camera manifest pins. Only
 repository source hashes change; no game bytes, private paths or identifiers are
