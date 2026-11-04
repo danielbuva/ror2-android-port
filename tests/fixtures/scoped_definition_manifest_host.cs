@@ -10,6 +10,11 @@ using Object = UnityEngine.Object;
 namespace UnityEngine
 {
     public class Object { public string name; public static implicit operator bool(Object value) { return value != null; } }
+    public class GameObject : Object
+    {
+        public RoR2.CharacterBody body = new RoR2.CharacterBody();
+        public T GetComponent<T>() where T : Object { return body as T; }
+    }
     public static class Application { public static string persistentDataPath = "."; }
     public class AssetBundle : Object
     {
@@ -20,6 +25,7 @@ namespace UnityEngine
     }
 }
 namespace UnityEngine.ResourceManagement.ResourceLocations { public interface IResourceLocator {} }
+namespace RoR2 { public class CharacterBody : Object {} }
 namespace RoR2.ContentManagement
 {
     public class ContentPack { public bool allowed; }
@@ -38,6 +44,12 @@ namespace RoR2.ContentManagement
     public class TargetAssetNameAttribute : Attribute { public string targetAssetName; }
     public static class ContentLoadHelper
     {
+        public static void PopulateTypeFields<T>(Type holder, NamedAssetCollection<T> values, Func<T, RoR2.CharacterBody> convert)
+            where T : Object
+        {
+            foreach (var field in holder.GetFields(BindingFlags.Public | BindingFlags.Static))
+                field.SetValue(null, convert(values.ToArray().Single(value => value.name == field.Name)));
+        }
         public static void PopulateTypeFields<T>(Type holder, NamedAssetCollection<T> values, Func<string, string> convert)
             where T : Object
         {
@@ -51,6 +63,7 @@ public class SourceProvider
 {
     readonly RoR2.ContentManagement.ContentPack contentPack = new RoR2.ContentManagement.ContentPack { allowed = true };
     public class ItemRelationshipTypes { public static Definition Related; }
+    public class BodyPrefabs { public static RoR2.CharacterBody Player; }
 }
 public class ExcludedProvider
 {
@@ -67,6 +80,7 @@ public static partial class WholeCatalogComposed
         Directory.CreateDirectory("payload");
         var type = new Definition { name = "Related" };
         var provider = new Definition { name = "Provider" };
+        var player = new GameObject { name = "Player" };
         AssetBundle.assets.Add("type", type);
         AssetBundle.assets.Add("provider", provider);
         var data = new JObject {
@@ -83,6 +97,16 @@ public static partial class WholeCatalogComposed
         var types = CategoryFamily(snapshot, "types", new[] { type });
         var providers = CategoryFamily(snapshot, "providers", new[] { provider });
         PopulateDefinitionFields(snapshot, "ItemRelationshipTypes", types);
+        PopulateBodyFields(snapshot, new[] { player });
+        Check(ReferenceEquals(SourceProvider.BodyPrefabs.Player, player.body));
+        bool foreignBodyRejected = false;
+        try { PopulateBodyFields(snapshot, new[] { new GameObject { name = "Player" } }); }
+        catch (Exception) { foreignBodyRejected = true; }
+        Check(foreignBodyRejected);
+        bool missingBodyRejected = false;
+        try { PopulateBodyFields(snapshot, new GameObject[0]); }
+        catch (Exception) { missingBodyRejected = true; }
+        Check(missingBodyRejected);
         Check(ReferenceEquals(types.Single(), type) && ReferenceEquals(providers.Single(), provider));
         Check(ReferenceEquals(SourceProvider.ItemRelationshipTypes.Related, type));
         // A public cache hit keeps membership validation and needs no parse.
@@ -95,6 +119,7 @@ public static partial class WholeCatalogComposed
         priorDefinitionFields.Clear();
         definitionFamilies.Clear();
         Check(SourceProvider.ItemRelationshipTypes.Related == null);
+        Check(SourceProvider.BodyPrefabs.Player == null);
         data["locations"][0]["path"] = "provider";
         File.WriteAllText("payload/whole-catalog.json", data.ToString());
         Check(ReferenceEquals(CategoryFamily("types", new[] { provider }).Single(), provider));

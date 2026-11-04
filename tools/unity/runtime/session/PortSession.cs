@@ -2632,12 +2632,15 @@ public sealed partial class PortSession : MonoBehaviour
                                                             .Select(index => ArtifactCatalog.GetArtifactDef((ArtifactIndex)index)));
                 StaticCall(typeof(ArtifactCatalog), "SetArtifactDefs", new object[] { wholeArtifacts });
                 TraceStartup("definition-holders-begin");
-                WholeCatalogComposed.PopulateDefinitionFields("Artifacts", wholeArtifacts);
-                StaticCall(typeof(RunArtifactManager), "Init");
-                WholeCatalogComposed.PopulateDefinitionFields("Items", ItemCatalog.allItemDefs.ToArray());
-                WholeCatalogComposed.PopulateDefinitionFields(
-                    "Equipment", EquipmentCatalog.allEquipment.Select(index => EquipmentCatalog.GetEquipmentDef(index)).ToArray());
-                WholeCatalogComposed.PopulateBodyFields(BodyCatalog.allBodyPrefabs.ToArray());
+                {
+                    var holderManifest = WholeCatalogComposed.ReadDefinitionManifest();
+                    WholeCatalogComposed.PopulateDefinitionFields(holderManifest, "Artifacts", wholeArtifacts);
+                    StaticCall(typeof(RunArtifactManager), "Init");
+                    WholeCatalogComposed.PopulateDefinitionFields(holderManifest, "Items", ItemCatalog.allItemDefs.ToArray());
+                    WholeCatalogComposed.PopulateDefinitionFields(
+                        holderManifest, "Equipment", EquipmentCatalog.allEquipment.Select(index => EquipmentCatalog.GetEquipmentDef(index)).ToArray());
+                    WholeCatalogComposed.PopulateBodyFields(holderManifest, BodyCatalog.allBodyPrefabs.ToArray());
+                }
                 TraceStartup("drone-catalog-begin");
                 PrepareWholeDroneCatalog();
                 TraceStartup("projectile-catalog-begin");
