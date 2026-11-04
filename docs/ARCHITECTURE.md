@@ -738,7 +738,10 @@ single-mip RGBA shell producer is device-qualified in J1199.
 `texture_produce.py` owns the current experimental Texture2D source producer. Audited `recipe/owner-uncompressed-textures.json` selects
 original body/pixel ranges and generic import/stream placement; standard BC1
 decoding, raw copying, fixed source-coordinate color extension and public
-JPEG roundtripping introduce no target pixels. `build_texture_jpeg.py` owns
+JPEG roundtripping introduce no target pixels. `source-rgba-mips` decodes every
+original BC1/BC3 mip independently to RGBA32, retaining partial chains, alpha,
+colour space and usage. It checks source extents and preserves metadata rather
+than generating replacement mip levels. `build_texture_jpeg.py` owns
 the current native JPEG-tool build from pinned public source providers and
 an explicit compiler; `texture_jpeg.c` owns bounded stdin/stdout processing.
 New private output, source/tool admission, bounded compiler/codec children,

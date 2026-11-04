@@ -77,6 +77,16 @@ class TextureProducerTests(unittest.TestCase):
             with self.subTest(fmt=fmt), self.assertRaises(ValueError):
                 T.rgba_source(source, 1, 1, fmt)
 
+    def test_source_mips_keep_independent_colours_alpha_and_partial_chain(self):
+        red = struct.pack("<HHI", 0xF800, 0, 0)
+        green = struct.pack("<HHI", 0x07E0, 0, 0)
+        transparent = struct.pack("<HHI", 0, 0xFFFF, 0xFFFFFFFF)
+        self.assertEqual(T.source_rgba_mips(red + green + transparent, 4, 4, 10, 3), bytes([255, 0, 0, 255]) * 16 + bytes([0, 255, 0, 255]) * 4 + bytes(4))
+        self.assertEqual(T.source_rgba_mips(red + green, 4, 2, 10, 2), bytes([255, 0, 0, 255]) * 8 + bytes([0, 255, 0, 255]) * 2)
+        for data, fmt, mips in ((red, 10, 2), (red + green, 10, 1), (red, 4, 1), (red, 10, 4)):
+            with self.subTest(fmt=fmt, mips=mips), self.assertRaises(ValueError):
+                T.source_rgba_mips(data, 4, 4, fmt, mips)
+
     def test_normal_unpack_uses_ag_coordinates_and_integer_blue(self):
         source = bytes([19, 128, 49, 128, 31, 128, 29, 255, 0, 128, 0, 0, 6, 0, 12, 128])
         self.assertEqual(T.normal_rgb(source), bytes([128, 128, 254, 255, 128, 127, 0, 128, 127, 128, 0, 127]))
