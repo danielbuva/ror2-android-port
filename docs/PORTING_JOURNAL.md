@@ -2665,7 +2665,7 @@ Prior art: pinned EditorKit typed lookup and AssetRipper script identity; source
 and current CLR identity remain required, with no global short-name inference.
 No APK produced; endpoint assignability, complete graph/load and device play remain open.
 
-## J1380 — Resolve current managed pointer field contracts by exact CLR scope
+## J1381 — Resolve current managed pointer field contracts by exact CLR scope
 
 2026-11-04. The existing metadata owner binds current provider paths/hashes and
 resolves serialized fields through scoped inheritance, nested types, arrays and
