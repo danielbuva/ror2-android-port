@@ -5,11 +5,12 @@ import importlib.util
 import io
 import json
 import os
+import shutil
 from pathlib import Path
 import subprocess
 import tempfile
 import unittest
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 import urllib.request
 import xml.etree.ElementTree as ET
 
@@ -551,6 +552,160 @@ class LabInstallerUpdatesTests(unittest.TestCase):
             with self.assertRaisesRegex(LAB.Failure, "LAB_TOOLHOST_ROOT-required"):
                 LAB.read_context()
 
+    def test_acceptance_checks_witness_before_marking_update_and_rollback_pass(self):
+        phone = Mock()
+        phone.occupied.return_value = False
+        phone.ui.return_value = ET.fromstring('<hierarchy><node text="TEST RELEASE SOURCE"/></hierarchy>')
+        phone.installed.side_effect = [{"sha256": "first"}, {"sha256": "second"}, {"sha256": "rolled"}]
+        phone.read.return_value = {"sha256": "rolled"}
+        phone.package_hash.side_effect = lambda package: LAB.sha(b"synthetic test input") if package == LAB.PACKAGE else "rolled"
+        phone.wait_state.return_value = {"message": "signature refused"}
+        phone.attach_mock(Mock(), "passed")
+        releases = {n: {"release.json": LAB.encoded({"version": "synthetic"})} for n in (1, 2)}
+        apk = Mock()
+        apk.read_bytes.return_value = b"synthetic test input"
+        with patch.object(LAB, "prepare_artifacts", return_value=(apk, {}, b"key", releases, releases[2])):
+            LAB.acceptance(phone, {}, Path("unused"), phone.passed)
+        calls = [(call[0], call.args) for call in phone.mock_calls if call[0] in ("installed", "retention_witness", "passed")]
+        self.assertEqual(
+            calls[:10],
+            [
+                ("installed", (1,)),
+                ("retention_witness", ("seed",)),
+                ("passed", ("check-for-updates",)),
+                ("retention_witness", ("verify",)),
+                ("installed", (2, {"sha256": "first"})),
+                ("retention_witness", ("verify", {"sha256": "second"})),
+                ("passed", ("update-N-to-N+1",)),
+                ("installed", (1, {"sha256": "second"})),
+                ("retention_witness", ("verify", {"sha256": "rolled"})),
+                ("passed", ("same-key-rollback",)),
+            ],
+        )
+
+    def test_generated_witness_java_behavior_with_android_doubles(self):
+        # Compile the exact generator output, not a Python reimplementation.
+        # These doubles test file behavior, not Android lifecycle/API support.
+        java = shutil.which("java")
+        if not java:
+            self.skipTest("JDK compiler/runtime unavailable")
+        compiler = subprocess.run([java, "com.sun.tools.javac.Main", "-version"], capture_output=True, text=True)
+        if compiler.returncode:
+            self.skipTest("JDK compiler module unavailable")
+        files = {"dev/ror2lab/synthetic/RetentionWitness.java": LAB.witness_source()}
+        files["android/os/Bundle.java"] = r"""package android.os; public class Bundle {}"""
+        files["android/content/Intent.java"] = (
+            r"""package android.content; public class Intent { public String mode,nonce; public String getStringExtra(String key) { return key.equals("mode")?mode:nonce; } }"""
+        )
+        files["android/app/Activity.java"] = (
+            r"""package android.app; import java.io.File; public class Activity { public static File external,internal; public static android.content.Intent intent=new android.content.Intent(); public void onCreate(android.os.Bundle b){} public void finish(){} public android.content.Intent getIntent(){return intent;} public File getExternalFilesDir(String kind){return external;} public File getFilesDir(){return internal;} }"""
+        )
+        files["org/json/JSONObject.java"] = (
+            r"""package org.json; public class JSONObject { StringBuilder s=new StringBuilder(); public JSONObject put(String key,Object value){s.append(key).append("=").append(value).append(";");return this;} public String toString(){return s.toString();} }"""
+        )
+        files["Review.java"] = r"""import java.nio.file.*; import java.io.*; import android.app.Activity; import dev.ror2lab.synthetic.RetentionWitness;
+public class Review {
+ static Path base; static int cases;
+ static void setup(String name)throws Exception { Path p=base.resolve(name);Files.createDirectories(p);Activity.external=p.resolve("external").toFile();Activity.internal=p.resolve("internal").toFile();Activity.external.mkdirs();Activity.internal.mkdirs(); }
+ static String run(String mode)throws Exception { Activity.intent.mode=mode;Activity.intent.nonce=String.format("%032x",++cases);new RetentionWitness().onCreate(null);Path r=Activity.internal.toPath().resolve("synthetic-retention-witness.json");return Files.exists(r)?Files.readString(r):""; }
+ static void check(boolean ok,String name) { if(!ok)throw new AssertionError(name);System.out.println("PASS "+name); }
+ static Path profile(){return Activity.external.toPath().resolve("android-profile-v1/profile.json");}
+ public static void main(String[] args)throws Exception {
+ base=Paths.get(args[0]);
+ setup("ordinary");check(run("seed").contains("verified=true;files=2;"),"seed");byte[] expected=Files.readAllBytes(profile());
+ check(run("verify").contains("verified=true;files=2;"),"verify-after-seed");
+ check(run("seed").contains("verified=false;files=0;"),"repeated-seed-refused");check(java.util.Arrays.equals(expected,Files.readAllBytes(profile())),"repeated-seed-preserves-bytes");
+ byte[] changed=expected.clone();changed[0]^=1;Files.write(profile(),changed);check(run("verify").contains("verified=false;files=0;"),"same-size-changed-data-refused");check(java.util.Arrays.equals(changed,Files.readAllBytes(profile())),"verify-never-reseeds");
+ Files.delete(profile());check(run("verify").contains("verified=false;files=0;"),"missing-data-refused");check(!Files.exists(profile()),"missing-data-not-recreated");
+ setup("symlink");Path outside=base.resolve("outside");Files.createDirectories(outside);Files.createSymbolicLink(Activity.external.toPath().resolve("android-profile-v1"),outside.toAbsolutePath());check(run("seed").contains("verified=false;files=0;"),"symlink-parent-refused");check(!Files.exists(outside.resolve("profile.json")),"symlink-target-untouched");
+ setup("null-root");Activity.external=null;check(run("seed").contains("verified=false;files=0;"),"unavailable-external-root-refused");
+ setup("receipt-error");Files.createDirectory(Activity.internal.toPath().resolve("synthetic-retention-witness.tmp"));check(run("seed").isEmpty(),"receipt-write-failure-no-success");
+ setup("invalid-mode");check(run("unknown").isEmpty(),"invalid-mode-no-receipt");
+ }
+}"""
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            for name, source in files.items():
+                path = root / name
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_text(source)
+            result = subprocess.run(
+                [java, "com.sun.tools.javac.Main", "-source", "8", "-target", "8", "-d", str(root / "classes"), *[str(root / name) for name in files]],
+                capture_output=True,
+                text=True,
+            )
+            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+            for path in (root / "classes").rglob("*.class"):
+                self.assertEqual(int.from_bytes(path.read_bytes()[6:8], "big"), 52)
+            result = subprocess.run([java, "-cp", str(root / "classes"), "Review", str(root / "data")], capture_output=True, text=True)
+            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+            self.assertEqual(len(result.stdout.splitlines()), 13)
+            self.assertTrue(all(line.startswith("PASS ") for line in result.stdout.splitlines()))
+
+    def test_retention_witness_requires_owned_exact_alpha(self):
+        phone = LAB.Phone("synthetic", 1)
+        with patch.object(phone, "shell") as shell:
+            with self.assertRaisesRegex(LAB.Failure, "retention-witness-ownership"):
+                phone.retention_witness("seed")
+        shell.assert_not_called()
+
+    def test_retention_witness_nonce_matching_and_failure_are_fail_closed(self):
+        for verified, count in ((True, 2), (False, 0), (True, 0)):
+            with self.subTest(verified=verified, count=count):
+                phone = LAB.Phone("synthetic", 1)
+                phone.owned_installer, phone.alpha_hash = True, "a" * 64
+                rows = iter([None, {"nonce": "old", "verified": True}, {"nonce": "b" * 32, "mode": "verify", "verified": verified, "files": count}])
+                events = []
+
+                def shell(*args, label, **kwargs):
+                    events.append((args, label))
+                    return LAB.encoded(next(rows)) if label == "retention-witness-result" else b""
+
+                with (
+                    patch.object(phone, "package_hash", return_value=phone.alpha_hash),
+                    patch.object(LAB.secrets, "token_hex", return_value="b" * 32),
+                    patch.object(phone, "shell", side_effect=shell),
+                    patch.object(phone, "start") as start,
+                    patch.object(LAB.time, "sleep"),
+                ):
+                    if verified and count == 2:
+                        phone.retention_witness(
+                            "verify",
+                            {
+                                "profile_retention_verified": True,
+                                "retention_backup": {"snapshot": "c" * 64, "data_schema": 1, "bytes": sum(map(len, LAB.WITNESS_FILES.values()))},
+                            },
+                        )
+                        start.assert_called_once()
+                    else:
+                        with self.assertRaisesRegex(LAB.Failure, "retention-witness-mismatch"):
+                            phone.retention_witness("verify")
+                        start.assert_not_called()
+                self.assertEqual(events[-1], (("am", "force-stop", LAB.GAME), "retention-witness-stop"))
+                launches = [args for args, label in events if label == "retention-witness-launch"]
+                self.assertEqual(len(launches), 1)
+                self.assertIn(LAB.GAME + "/" + LAB.WITNESS_CLASS, launches[0])
+
+    def test_retention_witness_rejects_empty_or_unverified_provider_receipt(self):
+        phone = LAB.Phone("synthetic", 1)
+        phone.owned_installer, phone.alpha_hash = True, "a" * 64
+        for receipt in ({}, {"profile_retention_verified": True, "retention_backup": {"data_schema": 1, "bytes": 0, "snapshot": "c" * 64}}):
+            with patch.object(phone, "package_hash", return_value=phone.alpha_hash), patch.object(phone, "shell") as shell:
+                with self.assertRaisesRegex(LAB.Failure, "retention-witness-provider-unverified"):
+                    phone.retention_witness("verify", receipt)
+            shell.assert_not_called()
+
+    def test_witness_fixture_uses_real_retention_roots_and_no_verify_reseed(self):
+        source = LAB.witness_source()
+        self.assertEqual(set(LAB.WITNESS_FILES), {"android-profile-v1/profile.json", "offline-settings-v1/preferences.json"})
+        self.assertIn("getExternalFilesDir(null)", source)
+        self.assertIn('if ("seed".equals(mode) && files[i].exists()) throw new IOException()', source)
+        self.assertIn('if ("seed".equals(mode)) {', source)
+        self.assertIn("if (!files[i].createNewFile()) throw new IOException()", source)
+        self.assertIn("if (!Arrays.equals(actual, expected)) throw new IOException()", source)
+        self.assertNotIn("com.unity3d", source)
+        self.assertNotIn("listFiles", source)
+
     def test_synthetic_manifest_uses_aapt1_required_basename(self):
         # Only source XML is created: no toolchain invocation, APK or key.
         with tempfile.TemporaryDirectory() as temporary:
@@ -903,13 +1058,42 @@ class LabInstallerUpdatesTests(unittest.TestCase):
             if document is None:
                 read.assert_not_called()
 
+    def test_ui_interaction_wakes_before_read_without_relaunching_consent(self):
+        phone = LAB.Phone("synthetic-private-selector", 1)
+        events = []
+        tree = ET.fromstring('<hierarchy><node text="Install" enabled="true" bounds="[0,0][20,20]" /></hierarchy>')
+        with (
+            patch.object(phone, "shell", side_effect=lambda *args, **kwargs: events.append(args)),
+            patch.object(phone, "ui_for", side_effect=lambda packages: events.append(("read", packages)) or tree),
+        ):
+            for _ in range(2):
+                self.assertTrue(phone.tap_visible("Install"))
+        self.assertEqual(
+            events,
+            [
+                ("input", "keyevent", "KEYCODE_WAKEUP"),
+                ("read", (LAB.PACKAGE, "com.android.packageinstaller", "com.google.android.packageinstaller")),
+                ("input", "tap", "10", "10"),
+            ]
+            * 2,
+        )
+
+    def test_wake_failure_does_not_read_or_tap_ui(self):
+        phone = LAB.Phone("synthetic-private-selector", 1)
+        with patch.object(phone, "shell", side_effect=LAB.Failure("device-display-wake")) as shell, patch.object(phone, "ui_for") as read:
+            with self.assertRaisesRegex(LAB.Failure, "^device-display-wake$"):
+                phone.tap_visible("Install")
+        shell.assert_called_once_with("input", "keyevent", "KEYCODE_WAKEUP", label="device-display-wake")
+        read.assert_not_called()
+
     def test_install_consent_window_packages_are_scoped_to_install_action(self):
         phone = LAB.Phone("synthetic-private-selector", 1)
-        with patch.object(phone, "ui_for", return_value=ET.Element("hierarchy")) as read:
+        with patch.object(phone, "shell") as shell, patch.object(phone, "ui_for", return_value=ET.Element("hierarchy")) as read:
             self.assertFalse(phone.tap_visible("Install"))
             self.assertEqual(read.call_args.args, ((LAB.PACKAGE, "com.android.packageinstaller", "com.google.android.packageinstaller"),))
             self.assertFalse(phone.tap_visible("Check for updates"))
             self.assertEqual(read.call_args.args, ((LAB.PACKAGE,),))
+            self.assertEqual([call.args for call in shell.call_args_list], [("input", "keyevent", "KEYCODE_WAKEUP")] * 2)
         for package in ("com.android.permissioncontroller", "com.android.packageinstaller", "com.google.android.packageinstaller"):
             with self.subTest(package=package):
                 with self.assertRaises(LAB.Failure):
