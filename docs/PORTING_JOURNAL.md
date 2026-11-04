@@ -2357,3 +2357,19 @@ Sprite-induced external-index shifts; HUD graph remains 2,021 versus 1,902.
 Evidence: `work/coordination/p1-menuhud/current-menu-v1/`; 15 focused tests pass.
 Host production 13.659 s, peak RSS 367,804,416 bytes; cleanup passes.
 No readiness closure or device claim; complete phone/install/update gates remain open.
+
+## J1360 — Measure host APK finalization and private packet packaging
+
+2026-11-04. Reusable `profile_stage.py` records wall/CPU/RSS, sampled logical and
+allocated workspace bytes, block operations and failed exits; two host tests pass.
+Current original 2,749 source pins and 840 retained J850 target pins verified.
+Retained replay only; warm validation caches, preparation excluded. Wall/peak RSS:
+apk-assembly: 8.255 s / 30,457,856 bytes.
+zipalign: 0.423 s / 8,683,520 bytes.
+signing: 1.245 s / 380,960,768 bytes.
+private-payload-packet-packaging: 137.661 s / 119,685,120 bytes.
+Evidence: `work/coordination/apk-profile/`; shared baseline table extended.
+Signed output `c0b78163d5b00425592f271b49519ba01c9f8d16164368afc796af58b9d12026`;
+signature/alignment and unchanged existing key verified. SDK 34 uses `-p 4`;
+rejected `-P 16` and shared-prune disk-baseline change retained in local notes.
+Host-only; independent full reconstruction, phone heat/install/update remain open.
