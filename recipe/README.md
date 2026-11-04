@@ -13,6 +13,10 @@ SDK bytes, game content, private paths or credentials are included. Existing
 producer pins and license boundaries remain unchanged. Provenance, privacy,
 licensing and sensitive-content audit: 2026-11-04.
 
+The typed startup-discovery change refreshes the authored world-owner and
+camera/build source pins. Audit: 2026-11-04; repository source hashes only,
+with no game data, private paths, identifiers or licensing changes.
+
 ## Original assembly placement audit (R1, 2026-10-18)
 
 `original-assemblies.json` records only source/project identities, source SHA-256,

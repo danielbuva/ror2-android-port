@@ -21,6 +21,18 @@ using UnityEngine.ResourceManagement.ResourceProviders;
 // remain in the preserved assemblies. The shell supplies content/context and unavailable audio UI.
 public sealed partial class PortSession
 {
+    // Read only the method-attribute family this owner consumes. The stock broad
+    // scan constructs unrelated attributes on every kind of member (~49 s on device).
+    static IEnumerable<KeyValuePair<T, MethodInfo>> OriginalMethodAttributes<T>(params Assembly[] assemblies) where T : Attribute
+    {
+        foreach (var assembly in assemblies.Distinct())
+            foreach (var type in assembly.GetTypes())
+                foreach (var method in type.GetMethods(BindingFlags.Static | BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic |
+                                                      BindingFlags.DeclaredOnly))
+                    foreach (T attribute in method.GetCustomAttributes(typeof(T), false))
+                        yield return new KeyValuePair<T, MethodInfo>(attribute, method);
+    }
+
     [Serializable]
     public class WorldPickupObservation
     {
@@ -1894,22 +1906,28 @@ public sealed partial class PortSession
             ObserveWorldHandlers(false);
             ObserveWorldHandlers(true);
         }
+        static KeyValuePair<NetworkMessageHandlerAttribute, MethodInfo>[] originalWorldMessageMethods;
+
         public void RegisterMissingOriginalWorldMessages()
         {
             // Stock NetworkManagerSystem registers these searched source methods during
             // OnStartServer/OnStartClient. The owned offline loopback has neither manager.
-            SearchableAttribute.ScanAssembly(typeof(CharacterBody).Assembly);
-            var attributes = SearchableAttribute.GetInstances<NetworkMessageHandlerAttribute>();
-            coordinator.Check(attributes != null, "Original network-message attributes were not discovered");
-            var source = attributes.Cast<NetworkMessageHandlerAttribute>().Where(x => x.server || x.client).ToArray();
-            coordinator.Check(source.All(x => x.target is MethodInfo && ((MethodInfo)x.target).IsStatic),
-                              "Original network-message method contract changed");
-            coordinator.Check(source.Where(x => x.server).Select(x => x.msgType).Distinct().Count() == source.Count(x => x.server) &&
-                                  source.Where(x => x.client).Select(x => x.msgType).Distinct().Count() == source.Count(x => x.client),
+            // Metadata is process-lived, while handler ownership remains session-lived.
+            if (originalWorldMessageMethods == null)
+                originalWorldMessageMethods = OriginalMethodAttributes<NetworkMessageHandlerAttribute>(typeof(CharacterBody).Assembly)
+                                                  .Where(x => x.Key.server || x.Key.client).ToArray();
+            var source = originalWorldMessageMethods;
+            coordinator.Check(source.Length > 0, "Original network-message attributes were not discovered");
+            coordinator.Check(source.All(x => x.Value.IsStatic), "Original network-message method contract changed");
+            coordinator.Check(source.Where(x => x.Key.server).Select(x => x.Key.msgType).Distinct().Count() ==
+                                  source.Count(x => x.Key.server) &&
+                                  source.Where(x => x.Key.client).Select(x => x.Key.msgType).Distinct().Count() ==
+                                  source.Count(x => x.Key.client),
                               "Original network-message IDs are ambiguous");
-            foreach (var attribute in source)
+            foreach (var entry in source)
             {
-                var handler = (NetworkMessageDelegate)Delegate.CreateDelegate(typeof(NetworkMessageDelegate), (MethodInfo)attribute.target);
+                var attribute = entry.Key;
+                var handler = (NetworkMessageDelegate)Delegate.CreateDelegate(typeof(NetworkMessageDelegate), entry.Value);
                 if (attribute.server && !NetworkServer.handlers.ContainsKey(attribute.msgType))
                 {
                     NetworkServer.RegisterHandler(attribute.msgType, handler);

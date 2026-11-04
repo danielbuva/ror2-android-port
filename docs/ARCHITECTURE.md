@@ -6044,3 +6044,17 @@ original/SDK inputs and creates a fresh record pack; scoped readers close on
 process exit and receipts persist. All 221 records are host raw-exact to J850.
 Complete groups, bundle and phone/install/update gates remain open; no runtime
 owner is added.
+
+### Typed gameplay startup discovery
+
+`IntegratedWorldBoundary` discovers only the requested method-attribute family
+from the original assemblies, including private methods and all attributes on
+each declared method. Its process-lived network metadata cache supplies the
+existing session-owned handlers; teardown still unregisters only owned IDs.
+`IntegratedStageBoundary` uses the same discovery for damage macros, seeds the
+original HG registrar once, then retains native catalog initialization and index
+assignment. Already registered method targets are preserved. The whole-catalog
+linker roots the original registrar type for IL2CPP reflection. Setup refuses
+ambiguous network IDs and invalid instance handlers; assembly/type failures remain
+visible. `test_original_method_discovery.py` exercises discovery and native-style
+registration with authored peers. Device startup timing remains a separate gate.
