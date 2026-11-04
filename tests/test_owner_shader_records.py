@@ -448,6 +448,19 @@ class ShaderHashTests(unittest.TestCase):
         self.assertEqual(normal["m_Name"], "_Detail")
         self.assertEqual(normal["m_Flags"], 8)
         self.assertEqual(normal["m_DefTexture"], {"m_DefaultName": "bump", "m_TexDim": 2})
+        sky, gain = N.properties(
+            prop,
+            """Properties {
+                // Fixture description
+                _Sky ("Fixture /* literal */ // label", Cube)
+                    = "black" { /* fixture texture annotation } */ }
+                _Gain ("Fixture gain", Float) = 0.25 // trailing comment
+            } SubShader {}""",
+        )
+        self.assertEqual(sky["m_Description"], "Fixture /* literal */ // label")
+        self.assertEqual(sky["m_Type"], 4)
+        self.assertEqual(sky["m_DefTexture"], {"m_DefaultName": "black", "m_TexDim": 4})
+        self.assertEqual(gain["m_DefValue[0]"], 0.25)
         cube = N.properties(prop, 'Properties { _Sky ("Fixture cube", Cube)="black"{} } SubShader {}')[0]
         self.assertEqual(cube["m_Type"], 4)
         self.assertEqual(cube["m_DefTexture"], {"m_DefaultName": "black", "m_TexDim": 4})
@@ -635,6 +648,74 @@ class CompleteShaderContracts(unittest.TestCase):
             result = sources.package_mobile_source(sdk, package)
         self.assertEqual(result["shader"], original.replace(b"TextMeshPro/Mobile/Distance Field", b"PortingLab/RecoveredFontSDF"))
         self.assertEqual(result["include"], include)
+
+    def test_real_tmp_sources_preserve_declarations_and_require_only_own_includes(self):
+        import hashlib
+        import io
+        import tarfile
+        import tempfile
+
+        sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts/lab"))
+        import shader_source as sources
+
+        def archive(rows):
+            stream = io.BytesIO()
+            with tarfile.open(fileobj=stream, mode="w:gz") as tar:
+                for name, data in rows.items():
+                    entry = tarfile.TarInfo(name)
+                    entry.size = len(data)
+                    tar.addfile(entry, io.BytesIO(data))
+            return stream.getvalue()
+
+        for filename, declaration, include_names in (
+            ("TMP_SDF.shader", "TextMeshPro/Distance Field", ["TMPro_Properties.cginc", "TMPro.cginc"]),
+            ("TMP_Sprite.shader", "TextMeshPro/Sprite", []),
+        ):
+            with self.subTest(filename=filename), tempfile.TemporaryDirectory() as directory:
+                original = ('\ufeffShader "' + declaration + '" { Properties {} }\n').encode()
+                files = {filename: original, **{name: ("PUBLIC_FIXTURE_" + name).encode() for name in include_names}}
+                rows = {}
+                for number, (name, data) in enumerate(files.items()):
+                    rows[str(number) + "/pathname"] = ("Assets/TextMesh Pro/Shaders/" + name).encode()
+                    rows[str(number) + "/asset"] = data
+                resource = archive(rows)
+                raw = archive({"package/resources": resource})
+                package = {
+                    "name": "fixture",
+                    "version": "1",
+                    "sha256": hashlib.sha256(raw).hexdigest(),
+                    "resource": "package/resources",
+                    "resource_sha256": hashlib.sha256(resource).hexdigest(),
+                }
+                sdk = Path(directory)
+                path = sdk / "Resources/PackageManager/Editor/fixture-1.tgz"
+                path.parent.mkdir(parents=True)
+                path.write_bytes(raw)
+                result = sources.package_source(sdk, package, filename)
+                self.assertEqual(result["shader"], original)
+                self.assertEqual(result["includes"], {name: files[name] for name in include_names})
+                with self.assertRaisesRegex(ValueError, "unsupported TMP"):
+                    sources.package_source(sdk, package, "../../other.shader")
+                if include_names:
+                    with self.assertRaisesRegex(ValueError, "missing TMP"):
+                        sources.package_source(sdk, package, "TMP_Sprite.shader")
+
+    def test_shader_byte_comparison_is_strict_by_default_and_diagnostic_is_receipted(self):
+        import hashlib
+        import tempfile
+
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory).resolve() / "shader"
+            path.write_bytes(b"authored fixture")
+            expected = {"bytes": 1, "sha256": "0" * 64}
+            with self.assertRaisesRegex(ValueError, "differs"):
+                N.compare_output(path, expected)
+            actual, comparison = N.compare_output(path, {**expected, "comparison": "diagnostic"})
+            self.assertEqual(actual, {"bytes": 16, "sha256": hashlib.sha256(path.read_bytes()).hexdigest()})
+            self.assertEqual(comparison, {"policy": "diagnostic", "matches": False, "expected": expected, "actual": actual})
+            self.assertTrue(N.compare_output(path, actual)[1]["matches"])
+            with self.assertRaisesRegex(ValueError, "unknown shader comparison"):
+                N.compare_output(path, {**expected, "comparison": "ignore"})
 
     def test_pure_snippet_key_matches_native_reference_80_byte_fixture(self):
         # Independent public-domain C++ SpookyV2 wrapper over authored inputs.

@@ -7,6 +7,7 @@ owner workspace. Incomplete producer cohorts fail rather than selecting replay.
 
 import hashlib
 import importlib.util
+import json
 import os
 from pathlib import Path
 import re
@@ -215,6 +216,26 @@ class Dispatcher:
                     raise ValueError("producer declared a nonregular artifact")
         return files
 
+    def input_pins(self, name):
+        """Pin dynamic file witnesses, including suppliers, before cache reuse."""
+        pins, seen = {}, set()
+
+        def visit(job_name):
+            if job_name in seen:
+                return
+            seen.add(job_name)
+            descriptor = self.descriptor(job_name)
+            for binding in re.findall(r"\$\{input_sha256:([^}]+)\}", json.dumps(descriptor)):
+                selected = UPDATES.within(self.inputs, self.config.get("bindings", {}).get(binding), exists=True)
+                if not selected.is_file():
+                    raise ValueError("input hash requires a regular file")
+                pins[binding] = UPDATES.RELEASE.digest(selected)
+            for dependency in descriptor.get("needs", []):
+                visit(dependency)
+
+        visit(name)
+        return pins
+
     def execute(self, name):
         if name in self.completed:
             return self.completed[name]
@@ -227,7 +248,9 @@ class Dispatcher:
                 self.execute(needed)
             files = self.closure(name)
             self.verify_sources(files)
-            identity = hashlib.sha256(UPDATES.RELEASE.signed_bytes({"job": name, "files": files, "input_sha256": self.input_sha256})).hexdigest()
+            identity = hashlib.sha256(
+                UPDATES.RELEASE.signed_bytes({"job": name, "files": files, "input_sha256": self.input_sha256, "input_pins": self.input_pins(name)})
+            ).hexdigest()
             receipt_path = self.jobs_root / (identity + ".json")
             if receipt_path.exists():
                 receipt = UPDATES.public().load_json(receipt_path.read_bytes())

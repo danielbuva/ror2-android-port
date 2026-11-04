@@ -3,6 +3,7 @@
 import hashlib
 import importlib.util
 import json
+import struct
 from pathlib import Path
 import tempfile
 import unittest
@@ -17,6 +18,36 @@ spec.loader.exec_module(F)
 
 
 class RecordRemapTests(unittest.TestCase):
+    def test_current_script_uses_identity_and_receipt_instead_of_historical_id_or_body(self):
+        def text(value):
+            raw = value.encode()
+            return struct.pack("<I", len(raw)) + raw + bytes(-len(raw) % 4)
+
+        identity = ["Fixture.dll", "Authored", "CurrentScript"]
+        body = text(identity[2]) + struct.pack("<i", -1000) + b"p" * 16
+        body += text(identity[2]) + text(identity[1]) + text(identity[0])
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            path = root / "registry.assets"
+            path.write_bytes(F.serialized(body, F.F.node("Base", len(body), kind="UInt8"), class_id=115))
+            receipt = {"profile_sha256": "b" * 64, "files": {path.name: {"bytes": path.stat().st_size, "sha256": R.O.B.sha(path)}}}
+            selected = {"source": [path.name, 9000], "class_id": 115, "bytes": 1, "sha256": "0" * 64, "script_identity": identity}
+            row, actual = R.serialized_records(root, receipt, selected)
+            self.assertEqual(actual, body)
+            self.assertEqual(row["sha256"], hashlib.sha256(body).hexdigest())
+            self.assertEqual(row["source_produced"]["path_id"], 77)
+            self.assertEqual(row["source_produced"]["script_identity"], identity)
+            self.assertFalse(row["source_produced"]["historical_raw_exact"])
+            with self.assertRaisesRegex(ValueError, "identity"):
+                R.serialized_records(root, receipt, dict(selected, script_identity=["Other.dll", *identity[1:]]))
+            with self.assertRaisesRegex(ValueError, "MonoScript"):
+                R.serialized_records(root, receipt, dict(selected, class_id=21))
+            with self.assertRaisesRegex(ValueError, "native type"):
+                R.serialized_records(root, receipt, dict(selected, native_type_hash="ff" * 16))
+            R.O.current_script_identity(body, 115, identity)
+            with self.assertRaisesRegex(ValueError, "identity"):
+                R.O.current_script_identity(body, 115, ["Other.dll", *identity[1:]])
+
     def test_serialized_supplier_extracts_selected_record_and_rejects_drift(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)

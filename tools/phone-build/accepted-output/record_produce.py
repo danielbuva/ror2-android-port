@@ -1511,6 +1511,17 @@ def expanding_wave_scale(body, root, selected, read_record):
 
 
 def transform_generic(body, class_id, selected, root=None, read_clip=None, source_type=None, material_keywords=None, read_record=None):
+    if class_id in (363, 850595691):
+        if source_type is None or source_type["class_id"] != class_id:
+            raise ValueError("source lighting record requires its native schema")
+        if set(selected) - {"references"} or selected.get("references"):
+            raise ValueError("source lighting record must preserve release data")
+        # Release occlusion data has no editor renderer/portal ID tables.
+        # Parse the complete source layout without synthesizing those fields.
+        _, spans = fields(body, SCHEMA.type_tree(io.BytesIO(source_type["tree"])))
+        if any(path + ("m_FileID",) in spans and path + ("m_PathID",) in spans for path in spans):
+            raise ValueError("source lighting record requires a pointer-free release schema")
+        return body
     if set(selected) - {
         "references",
         "demote_keywords",
@@ -1805,32 +1816,49 @@ def produce(profile_path, profile_sha256, pc, output, sdk=None):
                         if typ["class_id"] != selected["class_id"] or selected["class_id"] not in (
                             1,
                             4,
+                            20,
                             21,
                             23,
                             33,
                             54,
+                            59,
                             64,
                             65,
                             72,
                             74,
+                            75,
+                            81,
                             86,
                             91,
                             95,
                             96,
                             104,
                             108,
+                            111,
                             114,
                             119,
                             120,
+                            124,
                             128,
+                            134,
                             135,
                             136,
                             137,
+                            138,
+                            143,
+                            144,
+                            145,
+                            146,
+                            153,
                             156,
+                            182,
+                            192,
                             193,
                             198,
                             199,
                             205,
+                            208,
+                            212,
                             213,
                             215,
                             221,
@@ -1841,8 +1869,13 @@ def produce(profile_path, profile_sha256, pc, output, sdk=None):
                             226,
                             227,
                             228,
+                            319,
                             320,
                             330,
+                            363,
+                            850595691,
+                            1773428102,
+                            1818360608,
                         ):
                             raise ValueError("unqualified original object class")
                         member.seek(metadata["data_offset"] + obj["offset"])
@@ -1897,6 +1930,8 @@ def produce(profile_path, profile_sha256, pc, output, sdk=None):
                                 trees[obj["type_id"]] = SCHEMA.type_tree(io.BytesIO(typ["tree"]))
                             root = trees[obj["type_id"]]
                         for target in selected["outputs"]:
+                            if typ["class_id"] in (363, 850595691) and "native_type_hash" not in target:
+                                raise ValueError("source lighting record requires native type identity")
                             check_native_type(typ, target)
                             operations = target.get("transform", {})
                             if typ["class_id"] == 74:

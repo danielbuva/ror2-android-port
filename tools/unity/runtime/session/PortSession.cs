@@ -685,7 +685,6 @@ public sealed partial class PortSession : MonoBehaviour
         if (File.Exists(System.IO.Path.Combine(Application.persistentDataPath, "whole-catalog-selection.json")))
             yield break;
         ReadSettingsWriteObserverRequest();
-        yield return new WaitForSeconds(8);
         // MovementBatchProbe is the unchanged resource/file name.
         var path = System.IO.Path.Combine(Application.persistentDataPath, "movement-batch-selection.json");
         var config = JsonUtility.FromJson<SessionConfig>(Resources.Load<TextAsset>("MovementBatchProbe").text);
@@ -850,7 +849,9 @@ public sealed partial class PortSession : MonoBehaviour
                 while (!NovaInputBridge.MappingStore.TryLoad(mappingPath, config.attempt, out _))
                     yield return new WaitForSeconds(1);
             }
-            r = new SessionReport { attempt = config.attempt, id = "body-state-spawn-state-auto-nova-spine", freePlay = true };
+            // Retain the shared spawn/state setup family, without selecting a lab probe.
+            // freePlay owns the normal menu and untimed player session, not diagnostic input.
+            r = new SessionReport { attempt = config.attempt, id = "body-state-spawn-state-auto-player", freePlay = true };
         }
         if (r.nativeSourceSkinLifecycleDiagnosticRequested &&
             (!config.integratedWorld || (r.id != "body-state-spawn-state-auto-nova-spine" &&
@@ -957,9 +958,11 @@ public sealed partial class PortSession : MonoBehaviour
             yield return applicationStart.Current;
         // Establish the original process-lifetime Wwise owner before any selected
         // body/model activation. It reuses the original manager/prefab/component path.
+        TraceStartup("audio-owner-begin");
         var originalAudio = PortSessionOriginalAudioOwner.EnsureOriginalOwner();
         while (originalAudio.MoveNext())
             yield return originalAudio.Current;
+        TraceStartup("audio-owner-returned");
         r.originalAudio = PortSessionOriginalAudioOwner.CaptureSnapshot();
         string originalAudioStartupFailure = PortSessionOriginalAudioOwner.StartupFailure;
         if (!OriginalNetworkSoundEventCatalogOwner.MayEnterSelectedProbe(
@@ -1236,7 +1239,7 @@ public sealed partial class PortSession : MonoBehaviour
             passivePcmActivityArmPolicy?.Close();
         }
     }
-    // The shipped game: both playable-spine ids (IsPlayableSpine) run the original body
+    // The shipped player and explicit playable-spine selectors run the original body
     // lifecycle directly, not through the experiment switch in LabExperiments.cs.
     IEnumerator GameSession()
     {
@@ -1941,6 +1944,7 @@ public sealed partial class PortSession : MonoBehaviour
         bool registered = false;
         try
         {
+            TraceStartup("body-buffs-begin");
             StaticCall(typeof(BuffCatalog), "SetBuffDefs", new object[] { new BuffDef[0] });
             Check(BuffCatalog.buffCount == 0, "Empty diagnostic buff catalog initialization");
             var first = BuffCatalog.GetPerBuffBuffer<int>();
@@ -2016,7 +2020,9 @@ public sealed partial class PortSession : MonoBehaviour
                 }
                 if (r.id == "body-adoption-content" || r.id == "body-inventory-adoption" || IsStatsProbe())
                 {
+                    TraceStartup("body-adoption-begin");
                     restoreAdoption = PrepareAdoption(cfg);
+                    TraceStartup("body-adoption-ready");
                     if (r.id == "body-adoption-content")
                         yield break;
                 }
@@ -2036,7 +2042,9 @@ public sealed partial class PortSession : MonoBehaviour
                 CharacterBody.onBodyAwakeGlobal += awake;
                 try
                 {
+                    TraceStartup("body-awake-begin");
                     Call(body, "Awake");
+                    TraceStartup("body-awake-ready");
                 }
                 finally
                 {
@@ -2434,9 +2442,18 @@ public sealed partial class PortSession : MonoBehaviour
             throw;
         }
     }
+    // Sparse setup seams only: no report writes, stack capture or coroutine yields.
+    static void TraceStartup(string step)
+    {
+        Debug.LogFormat(LogType.Log, LogOption.NoStacktrace, null, "{0}",
+                        "Original startup step=" + step + " at=" +
+                        Time.realtimeSinceStartup.ToString("R", System.Globalization.CultureInfo.InvariantCulture) +
+                        " frame=" + Time.frameCount);
+    }
     void InitializeSkills(CharacterBody body, GenericSkill[] skills)
     {
         Check(skills.Length >= 4, "Recovered skill slots missing");
+        TraceStartup("body-skills-begin");
         r.phase = "original-skill-awake";
         Save();
         foreach (var skill in skills)
@@ -2602,24 +2619,33 @@ public sealed partial class PortSession : MonoBehaviour
             {
                 Check(body && !body.gameObject.activeInHierarchy,
                       "Original equipment highlights must be ready before body activation");
+                TraceStartup("equipment-highlights-begin");
                 var equipmentHighlights = PrepareOriginalEquipmentHighlightAssets();
                 while (equipmentHighlights.MoveNext())
                     yield return equipmentHighlights.Current;
                 Check(r.originalEquipmentHighlightAssets != null && r.originalEquipmentHighlightAssets.ready,
                       "Original equipment-highlight preparation did not complete");
+                TraceStartup("artifact-family-begin");
                 var wholeArtifacts =
                     WholeCatalogComposed.CategoryFamily(RoR2.ContentManagement.AddressablesLabels.artifactDef,
                                                         Enumerable.Range(0, ArtifactCatalog.artifactCount)
                                                             .Select(index => ArtifactCatalog.GetArtifactDef((ArtifactIndex)index)));
                 StaticCall(typeof(ArtifactCatalog), "SetArtifactDefs", new object[] { wholeArtifacts });
-                WholeCatalogComposed.PopulateDefinitionFields("Artifacts", wholeArtifacts);
-                StaticCall(typeof(RunArtifactManager), "Init");
-                WholeCatalogComposed.PopulateDefinitionFields("Items", ItemCatalog.allItemDefs.ToArray());
-                WholeCatalogComposed.PopulateDefinitionFields(
-                    "Equipment", EquipmentCatalog.allEquipment.Select(index => EquipmentCatalog.GetEquipmentDef(index)).ToArray());
-                WholeCatalogComposed.PopulateBodyFields(BodyCatalog.allBodyPrefabs.ToArray());
+                TraceStartup("definition-holders-begin");
+                {
+                    var holderManifest = WholeCatalogComposed.ReadDefinitionManifest();
+                    WholeCatalogComposed.PopulateDefinitionFields(holderManifest, "Artifacts", wholeArtifacts);
+                    StaticCall(typeof(RunArtifactManager), "Init");
+                    WholeCatalogComposed.PopulateDefinitionFields(holderManifest, "Items", ItemCatalog.allItemDefs.ToArray());
+                    WholeCatalogComposed.PopulateDefinitionFields(
+                        holderManifest, "Equipment", EquipmentCatalog.allEquipment.Select(index => EquipmentCatalog.GetEquipmentDef(index)).ToArray());
+                    WholeCatalogComposed.PopulateBodyFields(holderManifest, BodyCatalog.allBodyPrefabs.ToArray());
+                }
+                TraceStartup("drone-catalog-begin");
                 PrepareWholeDroneCatalog();
+                TraceStartup("projectile-catalog-begin");
                 r.liveCatalogs.projectiles = WholeCatalogComposed.PrepareProjectiles();
+                TraceStartup("projectile-catalog-ready");
                 var skins = RegisterOriginalSkins();
                 while (skins.MoveNext())
                     yield return skins.Current;

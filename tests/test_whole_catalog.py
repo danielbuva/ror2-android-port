@@ -832,7 +832,7 @@ class AuthoredIntegrationHookTests(unittest.TestCase):
     def compact(self, name):
         return "".join((self.UNITY / name).read_text().split())
 
-    def test_start_yields_to_the_catalog_scan_before_the_session_wait(self):
+    def test_start_yields_to_the_catalog_scan_without_a_fixed_player_delay(self):
         text = self.compact("runtime/session/PortSession.cs")
         start = text[text.index("IEnumeratorStart(){") :]
         self.assertTrue(
@@ -840,7 +840,8 @@ class AuthoredIntegrationHookTests(unittest.TestCase):
                 'IEnumeratorStart(){if(File.Exists(System.IO.Path.Combine(Application.persistentDataPath,"whole-catalog-selection.json")))yieldbreak;'
             )
         )
-        self.assertLess(start.index("yieldbreak;"), start.index("WaitForSeconds(8)"))
+        startup = start[: start.index("if(File.Exists(path))")]
+        self.assertNotIn("WaitForSeconds", startup)
 
     def test_body_catalog_prepares_and_releases_the_composed_catalog(self):
         text = self.compact("runtime/catalog/BodyCatalogBoundary.cs")

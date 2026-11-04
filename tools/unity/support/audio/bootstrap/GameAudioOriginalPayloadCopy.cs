@@ -70,6 +70,14 @@ public sealed class GameAudioOriginalPayloadCopy : IGameAudioOriginalPayloadCopy
         if (expectedNames.Count != 153) throw new ArgumentException("Expected current source cohort is exactly 153 names.", nameof(sourceBankNames));
     }
 
+    // Sparse setup seams only: no report writes, stack capture or coroutine yields.
+    static void TraceStartup(string step)
+    {
+        Debug.LogFormat(LogType.Log, LogOption.NoStacktrace, null, "{0}",
+                        "Original startup step=" + step + " at=" +
+                        Time.realtimeSinceStartup.ToString("R", System.Globalization.CultureInfo.InvariantCulture) +
+                        " frame=" + Time.frameCount);
+    }
     public string Refusal { get { return refusal; } }
     public string PersistentRoot { get { return persistentRoot; } }
 
@@ -80,6 +88,7 @@ public sealed class GameAudioOriginalPayloadCopy : IGameAudioOriginalPayloadCopy
         // nonempty bank subfolder is not qualified by this copy operation.
         if (!NativeSearchRootMatches(persistentRoot, Application.persistentDataPath))
         { refusal = "persistent_bank_subfolder_not_qualified_for_native_io"; yield break; }
+        TraceStartup("audio-payload-receipt-begin");
         float deadline = Time.realtimeSinceStartup + CopyDeadlineSeconds;
         Receipt receipt = null;
         using (var request = UnityWebRequest.Get(Url("stage-receipt.json")))
@@ -101,16 +110,15 @@ public sealed class GameAudioOriginalPayloadCopy : IGameAudioOriginalPayloadCopy
         if (receipt.streamed_media.Length > 0 && !EnsurePrivateDirectoryTree(Path.Combine(persistentRoot, "Media"), Application.persistentDataPath))
         { refusal = "persistent_media_directory_missing_or_reparse"; yield break; }
 
+        TraceStartup("audio-payload-preflight-begin");
         long pendingBytes = 0;
         long largestPending = 0;
         foreach (Entry entry in receipt.outputs)
         {
             string destination = Path.Combine(persistentRoot, entry.filename);
-            if (Directory.Exists(destination))
-            { refusal = "persistent_bank_conflict:" + entry.filename; yield break; }
-            if (File.Exists(destination))
+            if (PathExistsIncludingReparse(destination))
             {
-                if (IsReparse(destination) || !Matches(destination, entry.sha256, entry.size_bytes))
+                if (!ExistingPayloadHasExpectedSize(destination, entry.size_bytes))
                 { refusal = "persistent_bank_conflict:" + entry.filename; yield break; }
             }
             else { pendingBytes = checked(pendingBytes + entry.size_bytes); largestPending = Math.Max(largestPending, entry.size_bytes); }
@@ -118,12 +126,9 @@ public sealed class GameAudioOriginalPayloadCopy : IGameAudioOriginalPayloadCopy
         foreach (MediaEntry entry in receipt.streamed_media)
         {
             string destination = Path.Combine(persistentRoot, entry.relative_path.Replace('/', Path.DirectorySeparatorChar));
-            if (PathExistsIncludingReparse(destination) &&
-                (!File.Exists(destination) || Directory.Exists(destination) || IsReparse(destination) || !Matches(destination, entry.sha256, entry.size_bytes)))
-            { refusal = "persistent_media_conflict:" + entry.media_id; yield break; }
-            if (File.Exists(destination))
+            if (PathExistsIncludingReparse(destination))
             {
-                if (IsReparse(destination) || !Matches(destination, entry.sha256, entry.size_bytes))
+                if (!ExistingPayloadHasExpectedSize(destination, entry.size_bytes))
                 { refusal = "persistent_media_conflict:" + entry.media_id; yield break; }
             }
             else { pendingBytes = checked(pendingBytes + entry.size_bytes); largestPending = Math.Max(largestPending, entry.size_bytes); }
@@ -132,14 +137,15 @@ public sealed class GameAudioOriginalPayloadCopy : IGameAudioOriginalPayloadCopy
         if (!TryAvailableBytes(persistentRoot, out available) || available < checked(pendingBytes + largestPending))
         { refusal = "persistent_payload_space_insufficient_or_unknown"; yield break; }
 
+        TraceStartup("audio-payload-banks-begin");
         foreach (Entry entry in receipt.outputs)
         {
             if (Time.realtimeSinceStartup >= deadline)
             { refusal = "payload_copy_deadline_exceeded"; yield break; }
             string destination = Path.Combine(persistentRoot, entry.filename);
-            if (File.Exists(destination))
+            if (PathExistsIncludingReparse(destination))
             {
-                if (IsReparse(destination) || !Matches(destination, entry.sha256, entry.size_bytes))
+                if (!ExistingPayloadMatches(destination, entry.sha256, entry.size_bytes))
                 { refusal = "persistent_bank_conflict:" + entry.filename; yield break; }
                 continue;
             }
@@ -174,6 +180,7 @@ public sealed class GameAudioOriginalPayloadCopy : IGameAudioOriginalPayloadCopy
                     catch { refusal = refusal ?? "persistent_bank_temporary_cleanup_failed:" + entry.filename; }
             }
         }
+        TraceStartup("audio-payload-banks-ready");
         long remainingMediaBytes = 0;
         long largestRemainingMedia = 0;
         foreach (MediaEntry entry in receipt.streamed_media)
@@ -187,6 +194,7 @@ public sealed class GameAudioOriginalPayloadCopy : IGameAudioOriginalPayloadCopy
         }
         if (!TryAvailableBytes(persistentRoot, out available) || available < checked(remainingMediaBytes + largestRemainingMedia))
         { refusal = "persistent_media_space_insufficient_or_unknown"; yield break; }
+        TraceStartup("audio-payload-media-begin");
         foreach (MediaEntry entry in receipt.streamed_media)
         {
             if (Time.realtimeSinceStartup >= deadline)
@@ -230,6 +238,7 @@ public sealed class GameAudioOriginalPayloadCopy : IGameAudioOriginalPayloadCopy
                     catch { refusal = refusal ?? "persistent_media_temporary_cleanup_failed:" + entry.media_id; }
             }
         }
+        TraceStartup("audio-payload-media-ready");
     }
 
     internal static bool NativeSearchRootMatches(string bankRoot, string appRoot)
@@ -303,7 +312,14 @@ public sealed class GameAudioOriginalPayloadCopy : IGameAudioOriginalPayloadCopy
 
     private static bool ExistingPayloadMatches(string path, string expectedHash, long expectedSize)
     {
-        return File.Exists(path) && !Directory.Exists(path) && !IsReparse(path) && Matches(path, expectedHash, expectedSize);
+        return ExistingPayloadHasExpectedSize(path, expectedSize) && Matches(path, expectedHash, expectedSize);
+    }
+
+    private static bool ExistingPayloadHasExpectedSize(string path, long expectedSize)
+    {
+        // Capacity preflight needs metadata only. Rehash at the actual reuse
+        // point: earlier copies may yield, so integrity is never cached here.
+        return File.Exists(path) && !Directory.Exists(path) && !IsReparse(path) && new FileInfo(path).Length == expectedSize;
     }
 
     private static bool TemporaryPathAvailable(string path)

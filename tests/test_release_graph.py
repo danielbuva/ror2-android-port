@@ -23,6 +23,55 @@ G, J = load("release_graph"), load("release_jobs")
 
 
 class ReleaseGraphTests(unittest.TestCase):
+    def test_object_sdk_profile_keeps_application_relative_resource_root(self):
+        graph = G.Graph(ROOT, {})
+        name = graph.build(G.digest(ROOT / "recipe/owner-objective-support-objects.json"))
+        arguments = graph.jobs[name]["arguments"]
+        root = arguments[arguments.index("--sdk") + 1]
+        self.assertEqual(root, "${input:sdk_contents}/..")
+        profile = graph.job_profiles[name]
+        self.assertTrue(profile["sdk"]["path"].startswith("Contents/Resources/"))
+
+    def test_sprite_cohorts_bind_native_witness_and_standard_pack_artifacts(self):
+        graph = G.Graph(ROOT, {})
+        for cohort in (1, 2, 3):
+            profile = ROOT / f"recipe/owner-commando-native-sprites-{cohort}.json"
+            pin = G.digest(profile)
+            name = graph.build(pin)
+            job = graph.jobs[name]
+            self.assertEqual(job["script"], G.PREFIX + "sprite_produce.py")
+            self.assertEqual(job["arguments"][0], "produce")
+            for argument in ("--pc-root", "--functional", "${input:sprite_native_" + pin + "}", "${input_sha256:sprite_native_" + pin + "}"):
+                self.assertIn(argument, job["arguments"])
+            self.assertEqual(job["artifacts"], {"receipt": "result.json", "objects": "objects.bin", "index": "index.jsonl"})
+
+    def test_fallback_shader_job_binds_pinned_public_templates(self):
+        graph = G.Graph(ROOT, {})
+        name = graph.build(G.digest(ROOT / "recipe/owner-commando-fallback-shaders.json"))
+        arguments = graph.jobs[name]["arguments"]
+        self.assertEqual(arguments[arguments.index("--asset-ripper") + 1], "${input:asset_ripper}")
+
+    def test_texture_jobs_bind_required_pinned_tools(self):
+        graph = G.Graph(ROOT, {})
+        for profile, bindings in (
+            ("rgb", {"jpeg_codec", "etc_codec"}),
+            ("uncompressed", {"jpeg_codec"}),
+            ("alpha", {"etc_codec"}),
+            ("rgba", {"etc_codec", "sdk_toolchain"}),
+            ("rgb-mip", {"jpeg_codec", "etc_codec", "sdk_toolchain"}),
+            ("cubemap", {"etc_codec", "sdk_toolchain"}),
+        ):
+            with self.subTest(profile=profile):
+                name = graph.build(G.digest(ROOT / f"recipe/owner-{profile}-textures.json"))
+                arguments = graph.jobs[name]["arguments"]
+                for binding in ("jpeg_codec", "etc_codec", "sdk_toolchain"):
+                    if binding in bindings:
+                        flag = "--" + binding.replace("_", "-")
+                        self.assertEqual(arguments[arguments.index(flag) + 1], "${input:" + binding + "}")
+                        self.assertEqual(arguments[arguments.index(flag + "-sha256") + 1], "${input_sha256:" + binding + "}")
+                    else:
+                        self.assertNotIn("${input:" + binding + "}", arguments)
+
     def test_player_shader_suppliers_keep_serialized_and_nested_pack_contracts(self):
         graph = G.Graph(ROOT, {})
         player_path = ROOT / "recipe/owner-player-data.json"
@@ -132,7 +181,9 @@ out.mkdir();(out/'global-metadata.dat').write_bytes(metadata)
             native.mkdir()
             config = {"bindings": {name: name for name in ("sdk_install", "converter_receipt", "converter_sources", "converter_metadata")}}
             progress = []
-            for _ in range(2):
+            for attempt in range(3):
+                if attempt == 2:
+                    (inputs / "converter_receipt").write_text(json.dumps({"metadata_sha256": G.digest(metadata), "new_witness": True}))
                 dispatcher = J.Dispatcher(
                     repo,
                     index,
@@ -148,7 +199,7 @@ out.mkdir();(out/'global-metadata.dat').write_bytes(metadata)
                 for name, dependencies in release["entries"].items():
                     destination = root / Path(name).name
                     dispatcher.produce(name, dependencies, destination)
-            self.assertEqual(progress, [False, True])
+            self.assertEqual(progress, [False, True, False])
             self.assertEqual((root / "global-metadata.dat").read_bytes(), metadata.read_bytes())
             self.assertEqual((root / "libil2cpp.so").read_bytes(), b"independent native output")
 

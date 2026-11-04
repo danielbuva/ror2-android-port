@@ -23,28 +23,46 @@ def serialized_records(directory, receipt, selected):
         stream.size = path.stat().st_size
         metadata = O.W.read_serialized(stream)
         matches = [r for r in metadata["objects"] if r["path_id"] == identity]
+        if "script_identity" in selected:
+            if selected["class_id"] != 115:
+                raise ValueError("current script selection requires MonoScript")
+            matches = []
+            for candidate in metadata["objects"]:
+                if metadata["types"][candidate["type_id"]]["class_id"] != 115:
+                    continue
+                stream.seek(metadata["data_offset"] + candidate["offset"])
+                raw = O.B.exact(stream, candidate["bytes"])
+                _, (name, namespace, assembly) = O.script_fields(raw)
+                if [assembly, namespace, name] == selected["script_identity"]:
+                    matches.append(candidate)
         if len(matches) != 1:
             raise ValueError("serialized supplier identity differs")
         original = matches[0]
         definition = metadata["types"][original["type_id"]]
         class_id = definition["class_id"]
-        if class_id != selected["class_id"] or original["bytes"] != selected["bytes"]:
+        if class_id != selected["class_id"] or ("script_identity" not in selected and original["bytes"] != selected["bytes"]):
             raise ValueError("serialized supplier class or size differs")
         if "native_type_hash" in selected and selected["native_type_hash"] != definition["hash"].hex():
             raise ValueError("serialized supplier native type differs")
         stream.seek(metadata["data_offset"] + original["offset"])
         body = O.B.exact(stream, original["bytes"])
-    if hashlib.sha256(body).hexdigest() != selected["sha256"]:
+    body_hash = hashlib.sha256(body).hexdigest()
+    if "script_identity" in selected:
+        O.current_script_identity(body, class_id, selected["script_identity"])
+    elif body_hash != selected["sha256"]:
         raise ValueError("serialized supplier body differs")
     if path.stat().st_size != pin["bytes"] or O.B.sha(path) != pin["sha256"]:
         raise ValueError("serialized supplier changed during extraction")
     row = {
         "bytes": len(body),
-        "sha256": selected["sha256"],
+        "sha256": body_hash,
         "class_id": class_id,
         "native_type_hash": definition["hash"].hex(),
-        "source_produced": {"profile_sha256": receipt["profile_sha256"], "file": relative, "path_id": identity, "file_sha256": pin["sha256"]},
+        "source_produced": {"profile_sha256": receipt["profile_sha256"], "file": relative, "path_id": original["path_id"], "file_sha256": pin["sha256"]},
     }
+    if "script_identity" in selected:
+        row["source_produced"]["script_identity"] = selected["script_identity"]
+        row["source_produced"]["historical_raw_exact"] = body_hash == selected["sha256"] and len(body) == selected["bytes"]
     return row, body
 
 

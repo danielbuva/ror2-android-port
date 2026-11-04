@@ -51,13 +51,20 @@ def copy_build_artifact(source, destination, *, verify=True):
     copy_file_clone(source, destination, runner=run)
     source_stat = source.stat()
     destination_stat = destination.stat()
-    if (
-        (source_stat.st_dev, source_stat.st_ino) == (destination_stat.st_dev, destination_stat.st_ino)
-        or file_identity(source) != before
-        or source_stat.st_size != destination_stat.st_size
-        or (verify and sha(source) != sha(destination))
-    ):
-        raise RuntimeError("Build snapshot independence or hash verification failed")
+    after = file_identity(source)
+    failures = []
+    if (source_stat.st_dev, source_stat.st_ino) == (destination_stat.st_dev, destination_stat.st_ino):
+        failures.append("source and destination share an inode")
+    if after != before:
+        fields = ("device", "inode", "size", "mtime_ns", "ctime_ns")
+        changes = {field: [old, new] for field, old, new in zip(fields, before, after) if old != new}
+        failures.append("source identity changed: " + json.dumps(changes, sort_keys=True))
+    if source_stat.st_size != destination_stat.st_size:
+        failures.append(f"size differs: source={source_stat.st_size}, destination={destination_stat.st_size}")
+    if verify and sha(source) != sha(destination):
+        failures.append("SHA-256 differs")
+    if failures:
+        raise RuntimeError("Build snapshot independence or hash verification failed: " + "; ".join(failures))
     return str(destination)
 
 
@@ -87,6 +94,9 @@ def validate_project_generation(project, input_id):
 
 def preflight_host():
     """Validate accepted host inputs and toolchain without querying a device."""
+    from native_view_camera_build_hook import build_hook_pins
+
+    build_hook_pins()
     cfg = config()
     base = game()
     inv = read(WORK / "inventory/files.json")
