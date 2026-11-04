@@ -2380,6 +2380,30 @@ Observed shared-host hook/profile fixture timeouts now have bounded 300 s deadli
 profile deadlines reuse the existing CI-fix work. Assertions remain unchanged.
 Evidence: `work/coordination/local-state-doc/audit.md`; 30 producer and 3 fixture tests pass.
 No APK or device claim; bootstrap and phone install/update gates remain open.
+## J1366 — Exercise projectile impact, pause and disposal on the host
+
+2026-11-04. Existing LightningStake host fixture executes extracted production
+finite checks and observation/disposal paths with authored scalar collaborators.
+Finite terrain-impact inputs survive paused observations and resume; an injected
+physical NaN is detected despite finite network position and collider geometry.
+Detach-before-destruction retains scalar history and prevents stale reads.
+Evidence: `tests/fixtures/lightning_stake_observer_host.cs`; focused host test passes.
+No APK, runtime behavior or device claim; native NaN producer remains unresolved.
+
+## J1365 — Supply source-derived bundle managed providers
+
+2026-11-04. Existing generic managed record owner supplies 221 MonoBehaviours via
+reciprocal GameObject ownership, unique typed endpoints and original MonoScripts.
+All 18,880 persisted bytes raw-exact to J850; 26 nonexact candidates excluded.
+Candidate pack SHA-256:
+`b6b67d2c93f920b33ce47ccdaf439fdb99b071607c7a2602d193bfe9d24309cd`.
+Evidence: `work/coordination/p1-wholegame-1031/bundle-managed-persisted-qualification-v1/done.json`;
+source witnesses: sibling `bundle-managed-source-frontier-v1/witnesses.jsonl`.
+Discovery 104.94 s, production 4.73 s, qualification 4.61 s; peak discovery RSS
+1,550,417,920 bytes, production/qualification RSS 280,363,008 bytes; cleanup passed.
+Host-only; heat unmeasured. EditorKit typed ownership and J1340 SDK hashes inform
+selection; bounded source recipe only, producer unchanged. Residual three unchanged;
+readiness 693/705 available, 685 raw-exact. Bundle/phone/install/update gates open.
 ## J1364 — Stabilize audited Menu external provider IDs
 
 2026-11-04. Menu retains 20 audited external provider filenames/order only after

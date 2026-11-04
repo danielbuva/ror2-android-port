@@ -4205,7 +4205,12 @@ transform correction or error filter is added. Diagnostic read failures expose
 an inert status separately from native runtime errors. The source-asset/policy
 fixture checks minimum imported identity/geometry and actual sampling limits;
 `test_lightning_stake_observer.py` executes the extracted policy and identity
-retirement with authored host collaborators. Report replacement/status remain
+retirement with authored host collaborators. It also executes the extracted
+per-projectile finite predicate and live/disposed observation paths through
+synthetic terrain impact, paused updates, resume and detach-before-destruction.
+An invalid physical-position control verifies detection while network position
+and collider geometry remain finite. This scalar fixture does not simulate
+native impact physics or establish a causal fix. Report replacement/status remain
 source-inspected there. Only a device trace can identify a runtime transition,
 and neither fixture nor
 first sample proves native fire input. J623's intermittent corruption remains
@@ -5920,3 +5925,14 @@ Setup pins original bundles and streams bounded source groups into a fresh pack;
 scoped readers close on process exit and persisted receipts remain. All 66 records
 are host raw-exact to J850. Complete bundle and phone/install/update gates remain
 open; no runtime owner is added.
+
+
+`recipe/owner-whole-game-bundle-managed-records.json` selects 221 original
+MonoBehaviours through the existing `record_produce.py` managed owner. Qualified
+GameObject component offsets, reciprocal original ownership and unique typed
+source endpoints establish pointer relocations; original MonoScript selectors
+and pinned SDK resources supply the existing properties-hash policy. Setup pins
+original/SDK inputs and creates a fresh record pack; scoped readers close on
+process exit and receipts persist. All 221 records are host raw-exact to J850.
+Complete groups, bundle and phone/install/update gates remain open; no runtime
+owner is added.
