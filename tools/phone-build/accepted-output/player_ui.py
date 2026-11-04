@@ -1,8 +1,9 @@
 """Produce source-owned player UI graphs from original files and public policy.
 
 Current policy reconstructs the authored offline Menu, preserving original
-assets and typed relationships with deterministic local IDs. No accepted player,
-exported prefab, cached graph or historical ID map is read. Outputs are private.
+assets and typed relationships. An audited recipe may retain build-assigned IDs;
+all fields still come from original inputs and public policy. No accepted player,
+exported prefab or cached graph is read. Outputs are private.
 """
 
 import argparse
@@ -572,6 +573,9 @@ class Linker:
         native_material = None
         if "m_Material" in fields and fields["m_Material"]["m_PathID"]:
             native_material = self.choose(reference_key(self.ui, fields["m_Material"]), "NativeUiMaterial")
+            # Graphic's material precedes Image's sprite in the source schema.
+            # Reserve its provider before visiting the remaining typed links.
+            self.pointer(*native_material)
             fields["m_Material"] = dict(m_FileID=0, m_PathID=0)
         if scripted:
             fields["m_Script"] = dict(m_FileID=0, m_PathID=0)
@@ -602,11 +606,28 @@ def same_sprite(left, right):
     return all(left[key] == right[key] for key in keys)
 
 
+def assign_saved_ids(records, saved_rows):
+    """Apply audited build identity/order without changing source-owned values."""
+    saved = {(row["path"], row["identity"]): row["id"] for row in saved_rows}
+    require(len(saved) == len(records) == len(saved_rows), "saved UI identity cohort differs")
+    require(set(saved) == {(row["path"], row["identity"]) for row in records}, "saved UI identities do not cover source graph")
+    require(set(saved.values()) == set(range(1, len(records) + 1)), "saved UI identities are not a complete player allocation")
+    relocated = {row["id"]: saved[row["path"], row["identity"]] for row in records}
+    for row in records:
+        map_pointers(
+            row["fields"],
+            lambda ptr: dict(m_FileID=0, m_PathID=relocated[ptr["m_PathID"]]) if ptr["m_FileID"] == 0 and ptr["m_PathID"] in relocated else ptr,
+        )
+        row["id"] = relocated[row["id"]]
+    records.sort(key=lambda row: row["id"])
+
+
 def produce(profile_path, profile_sha256, pc, player, builtin_extra, editor_resources, ugui_source, managed, registry, output):
     """Generate Menu and missing media inside an existing source player target tree.
 
     The parent player-data owner supplies its freshly derived registry value;
-    no separate registry packet, private metadata cache or ID map is admitted.
+    no separate registry packet or private metadata cache is admitted. Optional
+    saved IDs belong to the audited public profile, never a private input packet.
     """
     started = time.monotonic()
     output, profile_path = Path(output), Path(profile_path).resolve(strict=True)
@@ -625,6 +646,8 @@ def produce(profile_path, profile_sha256, pc, player, builtin_extra, editor_reso
         native = P.script_sdk_schema(editor_resources, player["script_properties_sdk"])
         defaults = sdk_defaults(store, ugui_source, selected["sdk_ui_sources"])
         records += component_records(store, ui, scripts, graph, records, extras, native, managed, defaults)
+        if "saved_object_ids" in selected:
+            assign_saved_ids(records, selected["saved_object_ids"])
         linker = Linker(store, ui, player, profile_path.parent, selected, builtin_extra, output)
         ids = {row["id"] for row in records}
         metadata, bodies, rows, scripts_table, manifest = [], {}, [], [], []

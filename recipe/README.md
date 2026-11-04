@@ -5027,16 +5027,21 @@ recorded under `work/coordination/orchestrator/public-startup-metadata-v2/`.
 
 | Recipe | SHA-256 |
 | --- | --- |
-| `owner-player-menu.json` | `c4b96578385df9882b4253dd37f5eb50e5aadafef423205a358deff966a3361c` |
+| `owner-player-menu.json` | `4ee619309ed4a0477bcf5bc5725d085b245847257a7e66b75f75e97585532f1c` |
 
 `owner-player-menu.json` selects minimum original UI/script/dependency members,
 the original prefab root, public English tokens and authored hide/action policies.
 It pins four separately supplied SDK UGUI source files and existing public texture
 recipes. `player_ui.py` derives all component values, geometry, pixels, script
-metadata and references locally; no saved prefab or historical ID map is supplied.
-Manual provenance/privacy/licensing review: the profile contains identifiers,
-source hashes and authored policy only, with no copied game/SDK code, asset body,
-pixel/geometry table, private path, connection value or credential. Outputs and
+metadata and references locally. The audited `saved_object_ids` rows retain only
+build-assigned path/component IDs and order, under the explicit 2026-10-31
+build-identity decision; no saved prefab, body or field value is supplied.
+Manual provenance/privacy/licensing review (updated 2026-11-04): the 591 saved
+rows contain only minimum hierarchy paths, component identities and allocated
+integers. These describe build identity, not asset content or ownership/authentication.
+The profile contains source hashes and authored policy, with no copied game/SDK
+code, asset body, pixel/geometry table, private path, connection value or credential.
+Outputs and
 receipts remain ignored. Genuine J850 field differences and phone/runtime
 acceptance remain open; evidence: `work/coordination/orchestrator/menu-public-source-v1/`.
 

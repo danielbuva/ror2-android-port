@@ -79,6 +79,24 @@ class PlayerUiTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "multiply owned"):
             U.hierarchy(asset, 1)
 
+    def test_saved_build_ids_relocate_graph_without_changing_content(self):
+        rows = [
+            dict(id=1, path="$", identity="GameObject", fields=dict(component=pointer(2), external=pointer(2, 1), null=pointer(), alignment=5)),
+            dict(id=2, path="$", identity="Widget", fields=dict(owner=pointer(1), text="source-owned")),
+        ]
+        saved = [dict(id=2, path="$", identity="GameObject"), dict(id=1, path="$", identity="Widget")]
+        U.assign_saved_ids(rows, saved)
+        self.assertEqual([row["identity"] for row in rows], ["Widget", "GameObject"])
+        self.assertEqual(rows[0]["fields"], dict(owner=pointer(2), text="source-owned"))
+        self.assertEqual(rows[1]["fields"], dict(component=pointer(1), external=pointer(2, 1), null=pointer(), alignment=5))
+        for invalid, message in [
+            (saved[:1], "cohort"),
+            ([saved[0], dict(saved[1], identity="Different")], "source graph"),
+            ([saved[0], dict(saved[1], id=2)], "complete player allocation"),
+        ]:
+            with self.subTest(message=message), self.assertRaisesRegex(ValueError, message):
+                U.assign_saved_ids(copy.deepcopy(rows), invalid)
+
     def test_only_typed_pointer_structures_are_relocated(self):
         value = dict(reference=pointer(41, 2), scalar=41, partial=dict(m_PathID=41, unrelated=2), array=[pointer(0)])
         U.map_pointers(value, lambda p: pointer(p["m_PathID"] + 1, p["m_FileID"]))
@@ -103,6 +121,21 @@ class PlayerUiTests(unittest.TestCase):
             linker.choose(("member", 1))
         with self.assertRaisesRegex(ValueError, "declared source"):
             linker.choose(("unknown", 2))
+
+    def test_graphic_material_reserves_its_provider_before_image_sprite(self):
+        linker = object.__new__(U.Linker)
+        linker.ui, linker.externals = object(), []
+        linker.choose = lambda key, role=None: ("material" if role == "NativeUiMaterial" else "sprite", 1)
+        row = dict(
+            identity="UnityEngine.UI:UnityEngine.UI.Image",
+            typ=dict(class_id=114),
+            fields=dict(m_Material=pointer(41, 2), m_Sprite=pointer(42, 2), m_Script=pointer()),
+        )
+        with patch.object(U, "reference_key", side_effect=lambda asset, ptr: ("original", ptr["m_PathID"])):
+            fields = linker.fields(row, set(), {("UnityEngine.UI.dll", "UnityEngine.UI", "Image"): 17})
+        self.assertEqual(linker.externals, ["material", "sprite", "globalgamemanagers.assets"])
+        self.assertEqual(fields, dict(m_Material=pointer(1, 1), m_Sprite=pointer(1, 2), m_Script=pointer(17, 3)))
+        self.assertEqual(row["fields"]["m_Material"], pointer(41, 2))
 
     def test_sdk_defaults_are_derived_not_fixed_constants(self):
         texts = {
