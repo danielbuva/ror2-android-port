@@ -3,6 +3,7 @@ import os
 from pathlib import Path
 import plistlib
 import shutil
+import subprocess
 import tempfile
 import unittest
 from unittest import mock
@@ -15,6 +16,25 @@ SPEC.loader.exec_module(PRODUCER)
 
 
 class ManagedProducerTests(unittest.TestCase):
+    def test_output_guard_accepts_ignored_shared_work_in_isolated_checkout(self):
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder).resolve()
+            checkout = root / "checkout"
+            checkout.mkdir()
+            shared = root / "shared"
+            shared.mkdir()
+            work = checkout / "work"
+            work.symlink_to(shared, target_is_directory=True)
+            subprocess.run(["git", "init", "--quiet", str(checkout)], check=True)
+            (checkout / ".gitignore").write_text("/work\n")
+            output = shared / "new-production"
+            with mock.patch.object(PRODUCER, "ROOT", checkout), mock.patch.object(PRODUCER, "WORK", work):
+                self.assertEqual(PRODUCER.output_directory(output), output)
+                self.assertTrue(output.is_dir())
+                (checkout / ".gitignore").write_text("")
+                with self.assertRaisesRegex(RuntimeError, "not ignored by Git"):
+                    PRODUCER.output_directory(shared / "public-output")
+
     def test_editor_identity_requires_both_version_and_revision(self):
         with tempfile.TemporaryDirectory() as folder:
             root = Path(folder)
