@@ -2358,7 +2358,7 @@ Evidence: `work/coordination/p1-menuhud/current-menu-v1/`; 15 focused tests pass
 Host production 13.659 s, peak RSS 367,804,416 bytes; cleanup passes.
 No readiness closure or device claim; complete phone/install/update gates remain open.
 
-## J1360 — Prune analyzed heaps and removed build-lane leftovers
+## J1361 — Prune analyzed heaps and removed build-lane leftovers
 
 2026-11-04. `prune-generated.py` recognizes finished session-memory captures
 with matching successful analysis receipts and lane leftovers with owned removal
