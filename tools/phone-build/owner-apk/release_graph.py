@@ -168,6 +168,8 @@ class Graph:
             arguments += ["--pc-root" if producer in {"shader_context", "shader_prefab", "sprite_produce"} else "--pc", "${input:pc}"]
         if producer in {"record_produce", "shader_context", "shader_prefab", "payload_shader_records", "player_data"}:
             arguments += ["--sdk", "${input:sdk}"]
+        if producer in {"shader_prefab", "shader_context", "payload_shader_records"} and profile.get("template_inputs"):
+            arguments += ["--asset-ripper", "${input:asset_ripper}"]
         if producer == "sprite_produce":
             binding = "sprite_native_" + pin
             arguments = [
