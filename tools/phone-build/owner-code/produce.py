@@ -26,6 +26,7 @@ import phone_registry  # noqa: E402
 SPEC = importlib.util.spec_from_file_location("owner_code_native_stage", HERE / "native.py")
 native = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(native)
+BURST_PROFILE = ROOT / "recipe/owner-j850-code.json"
 PROFILE = ROOT / "recipe/owner-player-code.json"
 PROFILE_SHA = "50b445d8ae972880b3f5177bb9e5bcd6726acde344208fc039b2398ff19b8b98"
 XML_ORDER = ("TypesInScenes.xml", "SerializedTypes.xml", "empty.xml", "burst.xml", "whole-preservation.xml", "item-behaviors.xml")
@@ -163,8 +164,8 @@ def burst(tools, policy, managed, output):
         if native.sha(runtime / native.relative(name)) != expected:
             raise ValueError("pinned Burst compiler drift: " + name)
     backends = [name for name, expected in policy["backends"].items() if (runtime / name).is_file() and native.sha(runtime / name) == expected]
-    if len(backends) != 1:
-        raise ValueError("one pinned Burst LLVM backend required")
+    if not backends:
+        raise ValueError("pinned Burst LLVM backend required")
     providers, compiler = file_map(managed), file_map(runtime)
     runner = native.sha(executable)
     roots = [native.relative(name) for name in policy["roots"]]
@@ -187,7 +188,7 @@ def burst(tools, policy, managed, output):
         options += ["--root-assembly=" + str(managed / name) for name in roots]
         response = output / "options.rsp"
         response.write_text("\n".join(options) + "\n")
-        native.write(output / "inputs.json", {"managed": providers, "runtime": compiler, "runner_sha256": runner, "backend": backends[0]})
+        native.write(output / "inputs.json", {"managed": providers, "runtime": compiler, "runner_sha256": runner, "backends": backends})
         environment = dict(os.environ, ANDROID_NDK_ROOT=str(ndk), BURST_ANDROID_MIN_API_LEVEL=str(policy["api_level"]), TMPDIR=str(output / "tmp"))
         native.invoke([*tools["command"], str(runtime / "bcl.exe"), "+burstc", "@" + str(response)], output, "burst", env=environment)
         library = output / "lib_burst_generated.so"
@@ -273,7 +274,7 @@ def source_run(request, *, stop_after_conversion=False, burst_only=False):
     specification.loader.exec_module(managed_owner)
     work, sdk = native.canonical(request["owner_work"]), native.canonical(request["sdk_install"])
     target, source_root, target_sha = target_inputs(request["target"]) if "target" in request else (None, None, None)
-    if target is None and work != ROOT / "work":
+    if target is None and work != (ROOT / "work").resolve():
         raise ValueError("source owner currently requires this checkout's work root")
     state = native.input_state(work)
     inputs = {k: native.canonical(v) for k, v in request["source_inputs"].items()} if target else managed_owner.bind_paths(request["source_inputs"])
@@ -392,18 +393,21 @@ def run(request, *, stop_after_conversion=False, burst_only=False):
             if native.sha(destination) != row["sha256"]:
                 raise ValueError("managed input copy changed")
         if "burst_tools" in request:
-            if target is None or "burst" not in target:
-                raise ValueError("fixed target Burst policy required")
+            burst_policy = target["burst"] if target else json.loads(BURST_PROFILE.read_text())["burst"]
+            burst_profile_sha = native.sha(BURST_PROFILE) if target is None else target_sha
+            result["burst_policy_profile_sha256"] = burst_profile_sha
             if set(request["burst_tools"]) != {"command", "runtime"}:
                 raise ValueError("explicit Burst host command and runtime required")
             result["phase"] = "burst-production"
             ndk = native.burst_ndk(sdk, request["linux_tools"], output / "burst-ndk") if "linux_tools" in request else sdk / "PlaybackEngines/AndroidPlayer/NDK"
-            result["burst"] = burst({**request["burst_tools"], "ndk": str(ndk)}, target["burst"], output / "managed", output / "burst")
+            result["burst"] = burst({**request["burst_tools"], "ndk": str(ndk)}, burst_policy, output / "managed", output / "burst")
             if (output / "burst/burst.xml").read_text() != profile["xml"]["burst.xml"]:
                 raise ValueError("fresh Burst preservation differs from qualified target roots")
+            if target is None and native.sha(BURST_PROFILE) != burst_profile_sha:
+                raise ValueError("Burst compiler policy changed during production")
             if burst_only:
                 verify_inputs(request, profile, sdk, sdk_state, before, work, state, output, configs)
-                if target_inputs(request["target"])[2] != target_sha:
+                if target and target_inputs(request["target"])[2] != target_sha:
                     raise ValueError("target changed during Burst production")
                 result.update(success=True, phase="burst-built")
                 return result
@@ -484,7 +488,9 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("request", type=Path)
     parser.add_argument("--stop-after-conversion", action="store_true", help="run complete stripping/conversion/preservation and only plan native compilation")
-    parser.add_argument("--burst-only", action="store_true", help="current fixed-target Burst qualification; stop before stripping/conversion/native work")
+    parser.add_argument(
+        "--burst-only", action="store_true", help="Burst compilation of the selected managed cohort; stop before stripping/conversion/native work"
+    )
     args = parser.parse_args()
     print(json.dumps(run(json.loads(args.request.read_text()), stop_after_conversion=args.stop_after_conversion, burst_only=args.burst_only), indent=2))
 

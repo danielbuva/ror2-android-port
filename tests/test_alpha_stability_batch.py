@@ -431,13 +431,16 @@ class GameThermalOwnerTests(unittest.TestCase):
         self.assertNotIn("cpu_celsius", row)
         self.assertIsNone(self.owner.peak_cpu_celsius)
 
-    def test_above_80_aborts_but_80_itself_continues(self):
-        self.device.cmd.return_value = "cpu-0 80000"
-        self.assertEqual(self.owner.sample(all_zones=True), 80)
-        self.device.cmd.return_value = "cpu-0 80001"
-        with self.assertRaisesRegex(RuntimeError, "80 C hard abort"):
-            self.owner.sample(all_zones=True)
-        self.assertEqual(self.owner.peak_cpu_celsius, 80.001)
+    def test_hot_core_waits_for_cooldown_instead_of_obsolete_80_degree_abort(self):
+        self.device.display.return_value = True
+        self.device.cmd.side_effect = ["cpu-0 81000", "cpu-0 50000"]
+        with mock.patch.object(batch.time, "sleep") as sleep:
+            self.owner.cool()
+        sleep.assert_called_once_with(batch.THERMAL_INTERVAL_SECONDS)
+        self.assertEqual(self.owner.peak_cpu_celsius, 81)
+        rows = [json.loads(line) for line in self.owner.trace.read_text().splitlines()]
+        self.assertEqual([row["admission_maximum_celsius"] for row in rows], [81, 50])
+        self.assertTrue(all("error" not in row for row in rows))
 
     def test_runtime_uses_non_cpu_readable_zone_and_records_unsupported(self):
         self.device.cmd.return_value = "cpu-0 49000\npm8550_tz 80000\npa1 UNREADABLE /thermal_zone1/temp"
@@ -446,8 +449,7 @@ class GameThermalOwnerTests(unittest.TestCase):
         self.assertEqual(row["maximum_zone_celsius"], 80)
         self.assertEqual(row["excluded_zones"], [dict(type="pa1", path="/thermal_zone1/temp", reason="Thermal temp read failed/unsupported")])
         self.device.cmd.return_value = "cpu-0 49000\npm8550_tz 80001"
-        with self.assertRaisesRegex(RuntimeError, "80 C hard abort"):
-            self.owner.sample(all_zones=True)
+        self.assertEqual(self.owner.sample(all_zones=True), 49)
         self.assertEqual(self.owner.peak_zone_celsius, 80.001)
         self.assertEqual(self.owner.peak_cpu_celsius, 49)
 
@@ -483,16 +485,16 @@ class GameThermalOwnerTests(unittest.TestCase):
     def test_cooldown_excludes_power_zones_but_keeps_runtime_recording(self):
         self.device.display.return_value = True
         names = ("pm8550b_lite_tz", "pmic", "charger", "usb")
-        text = "cpu-0 49000 /thermal_zone0/temp\n" + "\n".join(name + " 57763 /thermal_zone" + str(i) + "/temp" for i, name in enumerate(names, 1))
+        text = "cpu-0 49000 /thermal_zone0/temp\n" + "\n".join(name + " 81000 /thermal_zone" + str(i) + "/temp" for i, name in enumerate(names, 1))
         self.device.cmd.return_value = text
         with mock.patch.object(batch.time, "sleep") as sleep:
             self.owner.cool()
         sleep.assert_not_called()
         row = json.loads(self.owner.trace.read_text())
         self.assertEqual(row["admission_maximum_celsius"], 49)
-        self.assertEqual(row["maximum_zone_celsius"], 57.763)
+        self.assertEqual(row["maximum_zone_celsius"], 81)
         self.assertEqual([entry["type"] for entry in row["admission_excluded_zones"]], list(names))
-        self.assertTrue(all(entry["raw"] == 57763 and entry["path"].endswith("/temp") for entry in row["admission_excluded_zones"]))
+        self.assertTrue(all(entry["raw"] == 81000 and entry["path"].endswith("/temp") for entry in row["admission_excluded_zones"]))
         self.assertEqual(len(self.owner.runtime_zones), 5)
         self.device.cmd.return_value = "49000\n57763\n81000\n57763\n57763"
         self.assertEqual(self.owner.sample(), 81)

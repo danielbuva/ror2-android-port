@@ -94,6 +94,16 @@ def closure(graph, roots, owners):
     return references
 
 
+def validate_graph(graph, external_count):
+    """Validate every produced object, including objects outside asset roots."""
+    for identity, pointers in graph.items():
+        for file_id, path_id in pointers:
+            if not 0 <= file_id <= external_count:
+                raise ValueError(f"Produced object {identity} references an absent serialized file")
+            if path_id and not file_id and path_id not in graph:
+                raise ValueError(f"Produced object {identity} references an absent produced local object {path_id}")
+
+
 def produce(selected, records, sources):
     schemas = {}
     graph = {}
@@ -101,6 +111,7 @@ def produce(selected, records, sources):
         if row["path_id"] in graph:
             raise ValueError("Duplicate produced prefab graph identity")
         graph[row["path_id"]] = set(pointers(row["body"], row["type"], schemas).values())
+    validate_graph(graph, len(selected["externals"]))
     owners = external_owners(selected, sources, schemas)
     ranks = file_ranks(selected)
     groups = sorted(selected["asset_groups"], key=lambda row: guid_key(row["guid"]))

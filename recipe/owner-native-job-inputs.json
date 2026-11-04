@@ -1,0 +1,10 @@
+{
+  "owner_work": "${inputs}/work",
+  "sdk_install": "${input:sdk_install}",
+  "converter_receipt": "${input:converter_receipt}",
+  "converter_receipt_sha256": "${input_sha256:converter_receipt}",
+  "sources": "${input:converter_sources}",
+  "sources_compressed": true,
+  "metadata": "${input:converter_metadata}",
+  "output": "${output}"
+}

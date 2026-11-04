@@ -1,34 +1,32 @@
 # Capability gates
 
-Gate definitions and current status only. Each gate needs stored real-device evidence, not
-compilation alone; results are recorded in the [journal](PORTING_JOURNAL.md) and summarised in
-[PORTING_STATE.md](../PORTING_STATE.md). Policy: [DEVELOPMENT_PLAN.md](DEVELOPMENT_PLAN.md).
-The previous version, with per-entry status reports and the evidence log, is archived in
-[history/milestones-2026-10-16.md](history/milestones-2026-10-16.md).
+Gate status through PR #325 (2026-11-04 UTC). Host reconstruction, record coverage
+and real-device acceptance are separate facts. Evidence lives in the
+[journal](PORTING_JOURNAL.md); open actions live in the [backlog](execution-backlog.md).
+[Policy](DEVELOPMENT_PLAN.md), [alpha checklist](public-alpha.md) and
+[historical gate log](history/milestones-2026-10-16.md) retain detailed criteria.
 
-Shared procedure: preflight → minimal change/build → install/runtime-path discovery/sync/run →
-structured logs/crash/state plus relevant visual capture → first-failure classification →
-journal/state/commit. Query live storage on each install or size increase and retain the prior
-APK and payload; never change storage or unrelated data.
+| Gate | Status and remaining acceptance | Evidence |
+| --- | --- | --- |
+| P1 phone-only install/update | OPEN — 693/705 historical final files available, 685 raw-exact; complete phone production, fresh install, same-key in-place update, save retention and Check for updates remain open | [Reconstruction contract](accepted-build-reconstruction.md) |
+| Whole-game record reconstruction | PARTIAL — unresolved selectors reduced from 345 to three: two Clips and one AssetBundle. Complete groups/bundle assembly and runtime qualification remain open | [J1347](PORTING_JOURNAL.md#j1347--reconstruct-whole-game-customrendertextures), [J1355](PORTING_JOURNAL.md#j1355--supply-source-derived-bundle-tree-providers) |
+| Lighting reconstruction | POLICY DECIDED, ACCEPTANCE OPEN — GPU sampling/floating-point tolerance class permitted; measured numerical and visual bounds plus ADR required. Geometry-probe differences up to 134/255 remain unexplained | [Open qualification](execution-backlog.md#phone-only-installation-p1) |
+| P2 public alpha | OPEN — memory plateau, physical controls, recovery, complete packaging and performance gates remain | [Alpha checklist](public-alpha.md) |
+| L0–L2 baseline | PASS — accepted-input/toolchain and isolated ARM64/converted-content baseline; no game-readiness claim | [Historical gates](history/milestones-2026-10-16.md) |
+| L3 managed execution | PASS — original assembly closure executes on ARM64; preserve API/type identity | J431; [historical gates](history/milestones-2026-10-16.md) |
+| L4 recovered scene | PASS for isolated content — original content-loader integration remains distinct | J28; [historical gates](history/milestones-2026-10-16.md) |
+| L5 lawful startup/menu | OPEN — native Android menu/session lifecycle exists; complete lawful original startup/navigation remains unqualified | [Startup/session owners](ARCHITECTURE.md#ownership) |
+| L5.5 original simulation | OPEN as a formal gate dependent on L5; assisted original simulation runs | [Gameplay backlog](execution-backlog.md#gameplay-integration) |
+| L6 controllable stage | OPEN — survivor coverage does not close physical controls, ability semantics, unlocks or visuals | [Gameplay backlog](execution-backlog.md#gameplay-integration) |
+| L7 combat/complete stage | OPEN — native combat and assisted routes do not qualify a normal unassisted complete stage; Siren recovery and LightningStake remain open | [Gameplay backlog](execution-backlog.md#gameplay-integration) |
+| L8 complete offline victory | OPEN — uninterrupted normal victory, finale/results/return and a second stable run required; Moon/finale manual only | [Gameplay backlog](execution-backlog.md#gameplay-integration) |
+| L9 profile | PARTIAL — native save/reload/recovery and genuine-event achievements have evidence; full update retention and remaining recovery cases open; Steam/cloud unavailable | [Alpha checklist](public-alpha.md) |
+| L10 audio | OPEN — source clients and bounded shutdown/restart qualified; complete original mix/spatial/audibility acceptance remains | J1080; [gameplay backlog](execution-backlog.md#gameplay-integration) |
+| L11 graphics | PARTIAL — integrated source-informed rendering exists; matched PC parity and lighting qualification remain | [Lighting qualification](execution-backlog.md#phone-only-installation-p1) |
+| L12 performance | OPEN — startup requests 300 FPS; startup request does not qualify sustained FPS. Managed growth reduced from about 680 to 219 KB/session, plateau open | [Startup fix #322](https://github.com/danielbuva/ror2-android-port/pull/322), [J1350](PORTING_JOURNAL.md#j1350--restore-original-console-retention-default-at-composed-startup) |
+| L13 transformation | OPEN — substantial public host-producer coverage; complete clean phone reconstruction and install/update acceptance still required | [Reconstruction contract](accepted-build-reconstruction.md) |
+| Performance release gate | OPEN — full converter per-stage time/memory/heat/storage and sustained game FPS/pacing/battery/thermal/fidelity qualification required before release | [Gate added in #273](https://github.com/danielbuva/ror2-android-port/pull/273), [acceptance](public-alpha.md#performance-release-gate) |
 
-Status as of 2026-10-16 (J504). Status cells summarise; the journal entries they cite hold the evidence.
-
-| Gate | Status | Objective, scope and acceptance | Dependencies / principal risk |
-| --- | --- | --- | --- |
-| L0–L2 baseline | PASS — T01 reproduced | Accepted input; exact toolchain; original utility AOT, converted mesh on adopted data; GLES/Vulkan historical proof, fresh Vulkan capture | T01; not game readiness |
-| L3 managed execution | PASS — full original DLL, ten assertions × three cold launches | Original RoR2 slice expected results, three cold launches ≥30 s; preserve API/type identity | T02/T05/T06/T07; AOT/middleware |
-| L4 recovered scene | PASS — isolated content (J28); original loader deferred | loadingbasic plus dependency-rich animated prefab on device; required GUID/local fileID/script/subasset/catalog audit | L3; serialization; T10 before large data |
-| L5 lawful startup/menu | OPEN — original Steam/platform startup blocked; the recovered Android menu (J489) is not original menu navigation | Observed initialization, truthful services, optional no-audio lifecycle, Android profile/content roots, original menu navigation | L4/L9 foundation; entitlement/native lifecycle; ADR-001 review |
-| L5.5 original simulation | OPEN as a formal gate (needs L5); original simulation runs in assisted integrated play | Original Commando master/body/authority/state ticks; deterministic movement then built-in controls; three cold launches ≥60 s | L5; see detailed plan; no complete stage needed |
-| L6 controllable stage | OPEN — all 11 base survivors reach Lakes (J471, assisted); skills, unlocks, physical controls and visuals unproven | Introduce whole original stage to proven simulation; handheld movement, camera, aim, default abilities, collision/animation | L5.5; catalog/stage integration |
-| L7 combat/complete stage | OPEN — original damage and default skills under diagnostic input (J157/J158); normal complete stage open | Enemy/damage → pickup/interactable → director → teleporter; normal complete stage, readable G4 gameplay | L6; authority/effects/simulation |
-| L8 complete offline victory | OPEN | Route transitions/lifetime/finale/victory/results/return menu/profile; normal uninterrupted victory then second stable run | L7/L9; late dependencies/memory |
-| L9 profile | PARTIAL — native Android save, reload and recovery (J436); persistent-stat and event achievements on genuine events (J437, J500–J503); Steam/cloud open | Fresh Android-only foundation before L5; cold reload, interrupted write, update retention, backup/restore by L8 | Path audit; host Steam profile immutable; lawful platform/profile boundary |
-| L10 audio | OPEN — composed playback unqualified ([J919](history/journal-J1-J1177/PORTING_JOURNAL.md#j919--measure-the-selected-original-music-output-on-the-r20-player)) | Original SFX/music/spatial events, callbacks and complete shutdown/restart on Android | Authorized runtime and original bank/context compatibility |
-| L11 graphics | PARTIAL — L11-a PASS (J66); integrated source-informed material approximations across stages (J324–J335); PC parity open | Minimum surface/terrain/character/UI/hazard families with L4–L7; G5/G6 parity later | Required scene families; shaders/dummy export |
-| L12 performance | OPEN — 120 Hz, about 116 FPS first stage (J449–J451); crowded later stages below 60 FPS; memory growth and thermals open | Warm stage/combat, transitions, memory and thermals; optimize measured bottleneck, stable 30 FPS first | Meaningful gameplay; final after L8 |
-| L13 transformation | OPEN | Clean ignored regeneration/provenance/cache checks; same accepted input; real second-build compatibility when available | Stable route; update/toolchain |
-
-Replan at L3, L4, L5.5, L6, L7 and L8. No gate advances from a stripped empty build or synthetic
-completion. Moon/finale waits for manual input; composed audio remains unqualified; sustained 60 FPS,
-distribution and remote services come later.
+Heat is a metric, not a failure below the agreed safety limits. Runs still require
+cool admission, battery/charging admission and valid thermal sampling. No gate
+advances from a build, host test or assisted run alone.

@@ -351,6 +351,13 @@ def value(number=0, name="<noninit>"):
 
 
 def properties(prop_node, shaderlab):
+    # Texture defaults may contain annotations; comments are not native values.
+    # Keep quoted descriptions/defaults intact, including comment-like text.
+    shaderlab = re.sub(
+        r'"(?:\\.|[^"\\])*"|/\*[\s\S]*?\*/|//[^\r\n]*',
+        lambda match: match[0] if match[0].startswith('"') else " ",
+        shaderlab,
+    )
     blocks = source_blocks(shaderlab, "Properties")
     if not blocks:
         return []
@@ -1034,6 +1041,20 @@ def checked(path, expected):
         raise ValueError("shader input/output differs: " + path.name)
 
 
+def compare_output(path, expected):
+    """Byte equality is strict unless this output explicitly requests diagnostics."""
+    policy = expected.get("comparison", "exact")
+    if policy not in ("exact", "diagnostic"):
+        raise ValueError("unknown shader comparison policy")
+    if path.resolve(strict=True) != path or not path.is_file():
+        raise ValueError("redirected shader input/output")
+    actual = {"bytes": path.stat().st_size, "sha256": sha(path)}
+    target = {key: expected[key] for key in ("bytes", "sha256")}
+    if policy == "exact":
+        checked(path, expected)
+    return actual, {"policy": policy, "matches": actual == target, "expected": target, "actual": actual}
+
+
 def relative(root, name):
     path = PurePosixPath(name)
     if path.is_absolute() or ".." in path.parts or "\\" in name or name in ("", "."):
@@ -1326,7 +1347,10 @@ def produce(
     checked(codec_path, codec_pin)
     profile = select_authored_files(json.loads(profile_path.read_text()), authored_files)
     # Authored ShaderLab does not need native D3D recovery or UnityPy on Android.
-    native = any(key in profile for key in ("native_ui", "native_materials", "native_internal", "native_intersection", "tmp_dummy", "tmp_mobile", "builtin"))
+    native = any(
+        key in profile
+        for key in ("native_ui", "native_materials", "native_internal", "native_intersection", "tmp_dummy", "tmp_mobile", "tmp_source", "builtin")
+    )
     if native:
         import UnityPy
         import shader_source as sources
@@ -1362,8 +1386,9 @@ def produce(
         if asset_ripper_source is None:
             raise ValueError("TMP exporter requires the explicit pinned public AssetRipper source repository")
         pins.append((relative(pc, profile["tmp_dummy"]["source"]["path"]), profile["tmp_dummy"]["source"]))
-    if "tmp_mobile" in profile:
-        pins.extend((relative(pc, row["path"]), row) for row in profile["tmp_mobile"]["materials"])
+    for key in ("tmp_mobile", "tmp_source"):
+        if key in profile:
+            pins.extend((relative(pc, row["path"]), row) for row in profile[key]["materials"])
     if "builtin" in profile:
         pins.append((relative(pc, profile["builtin"]["source"]["path"]), profile["builtin"]["source"]))
         pins.extend((relative(pc, row["path"]), row) for row in profile["builtin"]["sprite_materials"])
@@ -1445,6 +1470,18 @@ def produce(
             include_dirs.append(directory)
             mobile_source = package["shader"].decode("utf-8")
             material_keywords = [row["m_ValidKeywords"] for row in original_materials(pc, profile["tmp_mobile"]["materials"])]
+        tmp_sources = {}
+        if "tmp_source" in profile:
+            selection = profile["tmp_source"]
+            directory = output / "tmp-real-package"
+            directory.mkdir()
+            include_dirs.append(directory)
+            for filename in sorted({row["tmp_source"] for row in profile["shaders"] if "tmp_source" in row}):
+                package = sources.package_source(sdk, selection["package"], filename)
+                for name, data in package["includes"].items():
+                    (directory / name).write_bytes(data)
+                tmp_sources[filename] = package["shader"].decode("utf-8")
+            tmp_material_keywords = [row["m_ValidKeywords"] for row in original_materials(pc, selection["materials"])]
         if "tmp_dummy" in profile:
             selected = profile["tmp_dummy"]
             for name, pin in selected["template_inputs"].items():
@@ -1487,6 +1524,8 @@ def produce(
                 elif "tmp_dummy" in shader:
                     text, _ = sources.dummy_shader_source(tmp_objects[shader["tmp_dummy"]].read_typetree()["m_ParsedForm"], template_inputs)
                     shader_sources[shader["file"]] = text
+                elif "tmp_source" in shader:
+                    shader_sources[shader["file"]] = tmp_sources[shader["tmp_source"]]
                 elif shader.get("tmp_mobile"):
                     shader_sources[shader["file"]] = mobile_source
                 else:
@@ -1505,7 +1544,8 @@ def produce(
                     req = next(row for row in pre["records"] if row["kind"] == "keywordsEnd" and row["fields"] == [gpu])
                     identity = editor_hash(snippet, sdk_image, connection.capabilities, profile["settings"], common_bytes)
                     variants = []
-                    for keywords in retained_keywords(pre, gpu, material_keywords if shader.get("tmp_mobile") else None):
+                    context = tmp_material_keywords if "tmp_source" in shader else material_keywords if shader.get("tmp_mobile") else None
+                    for keywords in retained_keywords(pre, gpu, context):
                         requirements = shader_requirements(req, keywords)
                         compilation = connection.compile(
                             snippet["source"],
@@ -1541,8 +1581,10 @@ def produce(
                 }
                 with destination.open("wb") as stream:
                     W.write_serialized(stream, standalone, lambda _: io.BytesIO(body))
-                checked(destination, shader)
-                result["files"][name] = {"bytes": destination.stat().st_size, "sha256": sha(destination)}
+                actual, comparison = compare_output(destination, shader)
+                result["files"][name] = actual
+                if comparison["policy"] == "diagnostic":
+                    result.setdefault("comparison", {})[name] = comparison
             if "builtin" in profile:
                 name, pin = produce_sdk_records(root, pc, sdk, profile, profile_sha256, output, connection, compress, sdk_image, common_bytes)
                 result["files"][name] = pin

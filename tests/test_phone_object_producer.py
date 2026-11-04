@@ -1753,6 +1753,20 @@ class ObjectProducerTests(unittest.TestCase):
                 self.assertFalse(receipt["success"])
                 self.assertIn("error", receipt)
 
+    def test_diagnostic_bundle_hashes_record_actual_output_and_keep_source_pins(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            pc, path, profile, _, expected = fixture(root)
+            profile["bundle"].update(comparison="diagnostic", sha256="0" * 64, serialized_sha256="0" * 64, bytes=0)
+            path.write_text(json.dumps(profile))
+            result = produce(path, P.B.sha(path), pc, root / "produced")
+            self.assertEqual(result["serialized_sha256"], digest(expected))
+            self.assertEqual(result["comparison"], {"policy": "diagnostic", "serialized_matches": {"CAB-target": False}, "bundle_matches": False})
+            profile["objects"][0]["source_sha256"] = "0" * 64
+            path.write_text(json.dumps(profile))
+            with self.assertRaisesRegex(ValueError, "original object body drift"):
+                produce(path, P.B.sha(path), pc, root / "bad-source")
+
     def test_checked_remap_rejects_overlaps_escape_and_wrong_identity(self):
         body = b"KEEP" + struct.pack("<iq", 4, -500) + b"TAIL"
         row = {"offset": 4, "from": [4, -500], "to": [0, 123]}
@@ -1814,6 +1828,31 @@ class ObjectProducerTests(unittest.TestCase):
         self.assertEqual(layout["scripts"], [(1, 42)])
         self.assertEqual(bodies, {row["path_id"]: row["body"] for row in records})
         self.assertEqual(null_type["script_type"], -1)
+
+    def test_prefab_null_script_requires_original_zero_metadata(self):
+        null_type = {**typ(114), "hash": bytes(16), "script_id": bytes(16)}
+        for failure in (None, "length", "hash", "script_id", "script_type", "dangling"):
+            with self.subTest(failure=failure):
+                original_type = copy.deepcopy(null_type)
+                body = bytes(32)
+                if failure == "length":
+                    body += bytes(4)
+                elif failure in ("hash", "script_id"):
+                    original_type[failure] = bytes([1]) * 16
+                elif failure == "script_type":
+                    original_type["script_type"] = 0
+                elif failure == "dangling":
+                    body = bytes(16) + struct.pack("<iq", 0, 999) + bytes(4)
+                records = [{"path_id": pid, "type": original_type, "body": body} for pid in (8, 9)]
+                if failure:
+                    with self.assertRaisesRegex(ValueError, "null-script|script absent"):
+                        P.make_layout({"externals": []}, records)
+                else:
+                    layout, bodies = P.make_layout({"externals": []}, records)
+                    self.assertEqual(layout["scripts"], [])
+                    self.assertEqual(layout["types"], [null_type, null_type])
+                    self.assertEqual([row["type_id"] for row in layout["objects"]], [0, 1])
+                    self.assertEqual(bodies, {8: bytes(32), 9: bytes(32)})
 
     def test_script_table_and_type_indices_follow_produced_script_order(self):
         mono = {**typ(114), "script_id": bytes(16), "script_type": 99}
