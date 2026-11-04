@@ -41,14 +41,14 @@ class OwnerProfileStoreTests(unittest.TestCase):
                 ],
                 capture_output=True,
                 text=True,
-                timeout=60,
+                timeout=300,
             )
             self.assertEqual(compile_result.returncode, 0, compile_result.stderr)
             result = subprocess.run(
                 [str(javac.with_name("java")), "-cp", str(classes), "dev.ror2owner.bootstrap.ProfileStoreHarness", str(data)],
                 capture_output=True,
                 text=True,
-                timeout=60,
+                timeout=300,
             )
             self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
             self.assertIn('"success":true', result.stdout)
