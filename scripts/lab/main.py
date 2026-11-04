@@ -11,7 +11,40 @@ if len(sys.argv) > 1 and sys.argv[1] == "lane" or os.environ.get("LAB_LANE"):
         print(json.dumps({"success": False, "command": "lane", "error": str(error)}), file=sys.stderr)
         sys.exit(1)
 
-p = argparse.ArgumentParser(description="Local RoR2 porting laboratory; generated evidence lives under ignored work/.")
+p = argparse.ArgumentParser(
+    description="Local RoR2 porting laboratory; generated evidence lives under ignored work/.",
+    formatter_class=argparse.RawDescriptionHelpFormatter,
+    epilog="""Command lifecycle (current tooling does not imply game readiness):
+  lane: current
+  diagnostics: current
+  migrate-device-receipts: current
+  test: current
+  doctor: current
+  inspect: current
+  decompile: current
+  export-project: current
+  preflight: current
+  check-baseline: current
+  build: current
+  install: current
+  sync-data: current
+  run: current
+  logs: current
+  crash: current
+  screenshot: current
+  reset: current
+  smoke: current
+  storage: current
+  perf: current
+  graphics: current
+  editor: current
+  prototype: current
+
+Prototype action labels: ./dev prototype --action list (current/historical).
+Editor/perf action labels and defaults: docs/ARCHITECTURE.md#dev-action-lifecycle.
+Lane action labels: ./dev lane --help.
+""",
+)
 p.add_argument(
     "command",
     choices=[

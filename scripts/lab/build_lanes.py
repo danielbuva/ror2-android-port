@@ -375,7 +375,7 @@ def dispatch(name, arguments, root=ROOT):
 
 def main(arguments):
     parser = argparse.ArgumentParser(description="Current APFS build lanes; canonical work/device state stays unchanged.")
-    parser.add_argument("--action", choices=("create", "list", "remove"), required=True)
+    parser.add_argument("--action", choices=("create", "list", "remove"), required=True, help="Current: create, list and remove isolated build lanes")
     parser.add_argument("--name", default=os.environ.get("LAB_LANE"))
     parser.add_argument("--port", type=int, help="Private loopback MCP port (default: choose a free port)")
     args = parser.parse_args(arguments)

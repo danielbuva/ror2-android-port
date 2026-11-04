@@ -963,6 +963,10 @@ profiles fail before staging. Generated JSON is overlaid into the release source
 checkout and audited/committed before the existing tracked-only publisher runs.
 The dispatcher resolves supplier directories from declared receipt artifacts;
 input-file hash tokens bind acquired tools without embedding host paths.
+Player/shader jobs declare complete serialized outputs; remapping consumes their
+top-level receipts, while player data consumes nested shared-shader and texture
+packs. Their authored shader and player configuration inputs travel in the
+signed closure. Fresh converter/managed inputs remain explicit caller bindings.
 Generated jobs retain producer checks and do not establish complete APK or phone
 readiness. Setup uses explicit source checkout/profile/output paths; teardown
 keeps generated descriptors and caller-owned producer results. The managed-host
@@ -1920,6 +1924,50 @@ proprietary tool delivery remain gates. No whole-catalog game build calls this o
 Status words used below: **current** (part of the shipped whole-catalog game or the
 commands that build it), **support** (editor builders, host fixtures and tooling around the
 current path) and **historical** (kept for evidence; not reached by current commands).
+
+## Dev action lifecycle
+
+`./dev --help` labels every top-level command. Current includes host tooling,
+fixtures and experiments; it does not imply game readiness. The prototype registry
+in `scripts/lab/actions.py` owns each prototype action's current/historical label,
+shown by `./dev prototype --action list`, including the historical `inspect`
+default and unknown-name fallback. The listing action itself is current.
+`./dev lane --help` labels its explicit create/list/remove actions as current.
+The remaining `--action` selectors are classified here:
+
+| Command | Action | Lifecycle |
+| --- | --- | --- |
+| editor | `open` | current |
+| editor | `inspect` | current |
+| editor | `refresh` | current |
+| editor | `play` | current |
+| editor | `build` | current |
+| editor | `presentation-payload` | current |
+| editor | `siren-input-host` | current |
+| editor | `engineer-laser-host` | current |
+| editor | `lightning-stake-host` | current |
+| editor | `siren-encounter-host` | current |
+| editor | `source-camera-graphics-host` | current |
+| editor | `character-motor-order` | historical |
+| editor | `catalog-addresses` | historical |
+| editor | `reference-identities` | historical |
+| editor | `backend` | historical |
+| editor | `load` | historical |
+| editor | `loadplay` | historical |
+| editor | `probe` | historical |
+| editor | `minimal-build` | historical |
+| perf | `cpu` | current |
+| perf | `inspect` | current |
+| perf | `collect` | current |
+
+Editor `inspect` (also the unknown-name fallback) reads hierarchy/console.
+The historical actions retain their experiment contracts; `minimal-build` is
+unsupported. Editor `build` and `presentation-payload` require their existing
+coordinators. Perf's default `inspect` and explicit `collect` use the current generic
+capture path; `cpu` selects the dedicated profiler and other names are refused. Other top-level commands
+ignore `--action`. `tests/test_dev_help.py` checks command labels, prototype
+registry labels and the editor/perf/lane selectors without starting an editor or
+querying a device. Labels live with existing CLI owners; dispatch is unchanged.
 
 ## Build pipeline
 
@@ -4210,7 +4258,12 @@ transform correction or error filter is added. Diagnostic read failures expose
 an inert status separately from native runtime errors. The source-asset/policy
 fixture checks minimum imported identity/geometry and actual sampling limits;
 `test_lightning_stake_observer.py` executes the extracted policy and identity
-retirement with authored host collaborators. Report replacement/status remain
+retirement with authored host collaborators. It also executes the extracted
+per-projectile finite predicate and live/disposed observation paths through
+synthetic terrain impact, paused updates, resume and detach-before-destruction.
+An invalid physical-position control verifies detection while network position
+and collider geometry remain finite. This scalar fixture does not simulate
+native impact physics or establish a causal fix. Report replacement/status remain
 source-inspected there. Only a device trace can identify a runtime transition,
 and neither fixture nor
 first sample proves native fire input. J623's intermittent corruption remains
