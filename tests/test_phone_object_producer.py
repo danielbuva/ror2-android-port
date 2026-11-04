@@ -1753,6 +1753,20 @@ class ObjectProducerTests(unittest.TestCase):
                 self.assertFalse(receipt["success"])
                 self.assertIn("error", receipt)
 
+    def test_diagnostic_bundle_hashes_record_actual_output_and_keep_source_pins(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            pc, path, profile, _, expected = fixture(root)
+            profile["bundle"].update(comparison="diagnostic", sha256="0" * 64, serialized_sha256="0" * 64, bytes=0)
+            path.write_text(json.dumps(profile))
+            result = produce(path, P.B.sha(path), pc, root / "produced")
+            self.assertEqual(result["serialized_sha256"], digest(expected))
+            self.assertEqual(result["comparison"], {"policy": "diagnostic", "serialized_matches": {"CAB-target": False}, "bundle_matches": False})
+            profile["objects"][0]["source_sha256"] = "0" * 64
+            path.write_text(json.dumps(profile))
+            with self.assertRaisesRegex(ValueError, "original object body drift"):
+                produce(path, P.B.sha(path), pc, root / "bad-source")
+
     def test_checked_remap_rejects_overlaps_escape_and_wrong_identity(self):
         body = b"KEEP" + struct.pack("<iq", 4, -500) + b"TAIL"
         row = {"offset": 4, "from": [4, -500], "to": [0, 123]}
