@@ -2371,6 +2371,15 @@ Evidence: `work/coordination/p1-menuhud/current-menu-v1/`; 15 focused tests pass
 Host production 13.659 s, peak RSS 367,804,416 bytes; cleanup passes.
 No readiness closure or device claim; complete phone/install/update gates remain open.
 
+## J1363 — Stabilize host profile and optional-volume failure checks
+
+2026-11-04. ProfileStore's real Java compile/fsync harness uses bounded 300 s process deadlines.
+The optional-volume nonzero test uses fixed child results and exact create/attach ordering;
+real CLI timeout/reaping, arguments and uncertain-mount preservation remain covered.
+Completion establishes child reaping without sleeps; external calls retain bounded deadlines.
+Focused retention/volume tests, Ruff, host preflight and staged public audit pass.
+Evidence: `work/coordination/ci-flakes-20261104/` (repeat log and terminal receipt).
+Host-only test changes; no APK or device behaviour change. Remaining: none for these two flakes.
 ## J1362 — Cache validated import progress totals
 
 2026-11-04. Existing `owner-apk/game_import.py` tracks completed bytes as files
