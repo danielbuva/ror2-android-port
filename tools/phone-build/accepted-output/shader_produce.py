@@ -351,6 +351,13 @@ def value(number=0, name="<noninit>"):
 
 
 def properties(prop_node, shaderlab):
+    # Texture defaults may contain annotations; comments are not native values.
+    # Keep quoted descriptions/defaults intact, including comment-like text.
+    shaderlab = re.sub(
+        r'"(?:\\.|[^"\\])*"|/\*[\s\S]*?\*/|//[^\r\n]*',
+        lambda match: match[0] if match[0].startswith('"') else " ",
+        shaderlab,
+    )
     blocks = source_blocks(shaderlab, "Properties")
     if not blocks:
         return []
