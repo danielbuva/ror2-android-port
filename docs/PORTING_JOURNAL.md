@@ -2333,7 +2333,7 @@ Bounded source recipe only; producer unchanged; 2,024 candidates remain excluded
 Residual three unchanged; readiness 693/705 available, 685 raw-exact.
 Complete groups, bundle, phone/install/update and runtime gates remain open.
 
-## J1360 — Qualify measured lighting tolerance separately from exact reconstruction
+## J1361 — Qualify measured lighting tolerance separately from exact reconstruction
 
 2026-11-04. ADR-003 scopes GPU/sampling tolerance to probes, lightmaps and containers.
 The full-scene comparator derives native sample extents, checks measured per-channel
