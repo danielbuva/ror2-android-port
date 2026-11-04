@@ -87,6 +87,12 @@ public final class OwnerInstaller {
         install(app, apk, expectedHash, null, 0);
     }
 
+    // Diagnostics are best effort and never alter install decisions or expose identities.
+    private static void diagnostic(Context app, String stage, String callback, boolean match) {
+        try { ToolHostActivity.updateInstallDiagnostic(app, stage, callback, match); }
+        catch (RuntimeException ignored) { }
+    }
+
     public static synchronized void install(Context app, File apk, String expectedHash, String expectedPackage, long expectedVersion) throws Exception {
         if (busy(app)) throw new IOException("An installation is already pending");
         PackageManager manager = app.getPackageManager();
@@ -106,6 +112,7 @@ public final class OwnerInstaller {
             if (!Arrays.equals(current.signatures, next.signatures))
                 throw new IOException("Owner signing key differs. Retain the original key; never uninstall to update or roll back.");
         }
+        diagnostic(app, "prepare", null, false);
         if (OwnerAlphaInstall.PACKAGE.equals(next.packageName)) {
             try { OwnerAlphaInstall.prepare(app, apk, expectedHash, next, current); }
             catch (Exception error) { failed(app, error.getMessage()); throw error; }
@@ -117,15 +124,18 @@ public final class OwnerInstaller {
         if (Build.VERSION.SDK_INT >= 31 && current != null)
             params.setRequireUserAction(PackageInstaller.SessionParams.USER_ACTION_NOT_REQUIRED);
         int id;
+        diagnostic(app, "session-create", null, false);
         try { id = installer.createSession(params); }
         catch (Exception error) { failed(app, "Could not create installation session: " + error.getMessage()); throw error; }
         boolean committed = false;
+        diagnostic(app, "session-open", null, false);
         try (PackageInstaller.Session session = installer.openSession(id)) {
             if (!app.getSharedPreferences(STATUS, 0).edit().putString("session", Integer.toString(id))
                 .putString("package", next.packageName).putString("version", Long.toString(version(next)))
                 .putString("signer", nextSigner).commit()) throw new IOException("Could not retain installation identity");
             status(app, "INSTALLING", "Installing " + next.packageName + "…");
             MessageDigest hash = MessageDigest.getInstance("SHA-256");
+            diagnostic(app, "write-start", null, false);
             try (InputStream input = new FileInputStream(apk);
                  OutputStream output = session.openWrite("base.apk", 0, apk.length())) {
                 byte[] buffer = new byte[65536]; int count;
@@ -135,13 +145,18 @@ public final class OwnerInstaller {
                 StringBuilder actual = new StringBuilder();
                 for (byte value : hash.digest()) actual.append(String.format(Locale.ROOT, "%02x", value & 255));
                 if (!actual.toString().equals(expectedHash)) throw new IOException("Owner APK output drift");
+                diagnostic(app, "write-complete", null, false);
+                diagnostic(app, "fsync-start", null, false);
                 session.fsync(output);
+                diagnostic(app, "fsync-complete", null, false);
             }
             Intent callback = new Intent(app, Result.class).setAction(app.getPackageName() + ".OWNER_INSTALL");
             int flags = PendingIntent.FLAG_UPDATE_CURRENT;
             if (Build.VERSION.SDK_INT >= 31) flags |= PendingIntent.FLAG_MUTABLE;
             PendingIntent result = PendingIntent.getBroadcast(app, id, callback, flags);
+            diagnostic(app, "commit-start", null, false);
             session.commit(result.getIntentSender());
+            diagnostic(app, "commit-returned", null, false);
             committed = true;
         } finally {
             if (!committed) {
@@ -183,8 +198,10 @@ public final class OwnerInstaller {
     public static final class Result extends BroadcastReceiver {
         @Override public void onReceive(Context app, Intent intent) {
             String session = app.getSharedPreferences(STATUS, 0).getString("session", "");
-            if (!session.equals(Integer.toString(intent.getIntExtra(PackageInstaller.EXTRA_SESSION_ID, -1)))) return;
+            boolean matches = session.equals(Integer.toString(intent.getIntExtra(PackageInstaller.EXTRA_SESSION_ID, -1)));
             int code = intent.getIntExtra(PackageInstaller.EXTRA_STATUS, PackageInstaller.STATUS_FAILURE);
+            diagnostic(app, null, code == PackageInstaller.STATUS_PENDING_USER_ACTION ? "pending-user-action" : code == PackageInstaller.STATUS_SUCCESS ? "success" : code == PackageInstaller.STATUS_FAILURE ? "failure" : "unknown", matches);
+            if (!matches) return;
             if (code == PackageInstaller.STATUS_PENDING_USER_ACTION) {
                 Intent confirmation = intent.getParcelableExtra(Intent.EXTRA_INTENT);
                 if (confirmation == null) { status(app, "AWAITING_CONFIRMATION", "Android confirmation unavailable; the existing install session is retained. No second session will be created."); return; }

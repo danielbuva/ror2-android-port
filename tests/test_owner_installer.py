@@ -15,7 +15,12 @@ STUBS = {
     "dev/ror2lab/phonebuildhostfixture/OwnerBuildService.java": """package dev.ror2lab.phonebuildhostfixture;public class OwnerBuildService {public static boolean isRunning(){return false;}public static void launch(android.content.Context c,String action){OwnerInstaller.finishVerification(c);}}""",
     "dev/ror2lab/phonebuildhostfixture/OwnerAlphaInstall.java": """package dev.ror2lab.phonebuildhostfixture; public class OwnerAlphaInstall {public static final String PACKAGE="dev.ror2lab.alpha";public static boolean pending(android.content.Context c){return false;}public static void prepare(android.content.Context c,java.io.File f,String h,android.content.pm.PackageInfo n,android.content.pm.PackageInfo o){}public static void complete(android.content.Context c,android.content.pm.PackageInfo p){}public static boolean recover(android.content.Context c){return false;}}""",
     "dev/ror2lab/phonebuildhostfixture/ToolHostActivity.java": """package dev.ror2lab.phonebuildhostfixture;
-public class ToolHostActivity {public static String checkpointState;public static void updateInstallCheckpoint(android.content.Context c,String state,String message){checkpointState=state;}}""",
+public class ToolHostActivity {public static String checkpointState;
+public static java.util.List<String> diagnosticEvents=new java.util.ArrayList<>();public static boolean failDiagnostic;
+public static void updateInstallDiagnostic(android.content.Context c,String stage,String callback,boolean match){
+if(failDiagnostic)throw new IllegalStateException("synthetic diagnostic error");
+diagnosticEvents.add(stage==null?"callback:"+callback+":"+match:stage);}
+public static void updateInstallCheckpoint(android.content.Context c,String state,String message){checkpointState=state;}}""",
     "android/os/Build.java": "package android.os; public class Build { public static class VERSION { public static int SDK_INT=33; } }",
     "android/content/IntentSender.java": "package android.content; public class IntentSender {}",
     "android/content/Intent.java": """package android.content; public class Intent {
@@ -97,6 +102,9 @@ public class Harness {
         StringBuilder digest=new StringBuilder();for(byte b:MessageDigest.getInstance("SHA-256").digest(bytes))digest.append(String.format("%02x",b&255));
         String hash=digest.toString(); Context c=new Context(); OwnerInstaller.install(c,apk,hash);
         check(c.manager.installer.session.committed && c.manager.installer.session.synced && c.manager.installer.session.closed);
+        check(ToolHostActivity.diagnosticEvents.toString().equals("[prepare, session-create, session-open, write-start, write-complete, fsync-start, fsync-complete, commit-start, commit-returned]"));
+        ToolHostActivity.failDiagnostic=true;Context diagnosticFailure=new Context();OwnerInstaller.install(diagnosticFailure,apk,hash);
+        check(diagnosticFailure.manager.installer.session.committed);ToolHostActivity.failDiagnostic=false;
         check(java.util.Arrays.equals(bytes,c.manager.installer.session.bytes.toByteArray()));
         check(c.manager.installer.params.mode==PackageInstaller.SessionParams.MODE_FULL_INSTALL && c.manager.installer.params.action==0);
         c=update();OwnerInstaller.install(c,apk,hash);check(c.manager.installer.params.action==2);
@@ -118,8 +126,10 @@ public class Harness {
         OwnerInstaller.Result receiver=new OwnerInstaller.Result();c=new Context();OwnerInstaller.install(c,apk,hash,"authored.game",2);
         try {OwnerInstaller.install(c,apk,hash);throw new AssertionError();}catch(IOException expected){check(expected.getMessage().contains("already pending"));}
         Intent i=new Intent();i.code=-1;i.confirmation=new Intent();
-        i.session=99;receiver.onReceive(c,i);check(c.started==null);i.session=7;
+        i.session=99;receiver.onReceive(c,i);check(c.started==null);
+        check(ToolHostActivity.diagnosticEvents.get(ToolHostActivity.diagnosticEvents.size()-1).equals("callback:pending-user-action:false"));i.session=7;
         receiver.onReceive(c,i);check(c.started==i.confirmation && OwnerInstaller.status(c).contains("Confirm"));
+        check(ToolHostActivity.diagnosticEvents.get(ToolHostActivity.diagnosticEvents.size()-1).equals("callback:pending-user-action:true"));
         check(OwnerInstaller.busy(c));c.manager.current=new PackageInfo();
         i.code=0;receiver.onReceive(c,i);check(OwnerInstaller.status(c).contains("complete"));
         check(!OwnerInstaller.busy(c) && OwnerInstaller.state(c).equals("INSTALLED"));

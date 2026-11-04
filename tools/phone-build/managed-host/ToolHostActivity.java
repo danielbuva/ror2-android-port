@@ -230,6 +230,25 @@ public final class ToolHostActivity extends Activity {
             writeJson(update, progress.put("pipeline", checkpoint).put("state", phase).put("message", existingFailure == null ? message : existingFailure.optString("reason", message)));
         } catch (Exception ignored) { updateStatus(app, phase, message); }
     }
+    /** Fixed-vocabulary observations only; failure never changes installation state. */
+    static synchronized void updateInstallDiagnostic(Context app, String stage, String callback, boolean match) {
+        try {
+            File file = new File(app.getFilesDir(), "owner-input/install-diagnostic.json");
+            JSONObject row = "prepare".equals(stage) || !file.isFile() ? new JSONObject() : readJson(file);
+            String previous = row.optString("stage", "unknown");
+            String observedStage = stage == null ? previous : stage;
+            if (!observedStage.matches("prepare|session-create|session-open|write-start|write-complete|fsync-start|fsync-complete|commit-start|commit-returned")) observedStage = "unknown";
+            String observedCallback = callback == null ? row.optString("callback", "none") : callback;
+            if (!observedCallback.matches("none|pending-user-action|success|failure")) observedCallback = "unknown";
+            Object priorMatch = row.opt("session_match");
+            if (!(priorMatch instanceof Boolean)) priorMatch = JSONObject.NULL;
+            // Rebuild the object rather than preserving arbitrary prior fields.
+            JSONObject safe = new JSONObject().put("schema", 1).put("stage", observedStage).put("callback", observedCallback)
+                    .put("session_match", callback == null ? priorMatch : match);
+            writeJson(file, safe);
+        } catch (Exception ignored) { /* Missing diagnostics are not successful installation evidence. */ }
+    }
+
     static void updateInstallCheckpoint(Context app, String state, String message) {
         try {
             File file = new File(app.getFilesDir(), "owner-input/install-checkpoint.json");
