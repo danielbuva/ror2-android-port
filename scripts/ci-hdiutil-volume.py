@@ -64,16 +64,21 @@ def main() -> int:
         "-nobrowse",
         "-quiet",
     ]
+    # hdiutil may delegate work to a service before its CLI is killed. An empty
+    # inventory is not evidence that a timed-out request cannot attach later.
+    pending = args.image.parent / "attach.pending"
+    pending.write_text("attachment-completion-unconfirmed\n")
     attach_status = run_hdiutil(attach, args.timeout_seconds)
     if attach_status is None:
         print(
-            "ci-local: hdiutil attach timed out; mount state is uncertain, preserving scratch image",
+            "ci-local: hdiutil attach timed out; mount state is uncertain; cleanup must reconcile image ownership",
             file=sys.stderr,
         )
         return ATTACH_STATE_UNCERTAIN
     if attach_status != 0:
         print(f"ci-local: hdiutil attach failed ({attach_status}); using ordinary temporary directory", file=sys.stderr)
         return CREATE_FAILED
+    pending.unlink()
     return 0
 
 
