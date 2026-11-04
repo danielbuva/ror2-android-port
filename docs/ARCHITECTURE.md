@@ -974,8 +974,10 @@ verification and the private update transaction; `release_jobs.py` dispatches
 signed job recipes to existing source-only producers. Optional
 `recipe/owner-player-phases.json` selects the five existing source player phases,
 including all Sprite/texture outputs, their profile argv and signed policy
-closure. Manager shaders use the existing shader job; startup and environment
-remain explicit source-produced inputs. Dispatcher production/reuse rejects
+closure. Manager shaders use the existing shader job. A shared startup job
+derives the manager build identity and final `boot.config`/`unity_app_guid`
+from the admitted inventory binding and signed smoke settings/toolchain.
+Environment remains an explicit source-produced input. Dispatcher production/reuse rejects
 player receipt membership differences before caching. No additional runtime
 owner or process lifetime is introduced. `release_graph.py` compiles selected
 complete bundle profiles and their SHA-linked suppliers into those descriptors

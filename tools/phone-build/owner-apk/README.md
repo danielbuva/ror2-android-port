@@ -566,6 +566,13 @@ player receipt to match declared membership exactly on production and reuse.
 New source media therefore reports a membership difference instead of silently
 omitting a referenced file.
 
+Selecting the manager phase also creates the existing `startup_metadata.py`
+job. Bind `inventory` to the admitted original-game inventory; the smoke
+PlayerSettings and toolchain descriptor travel in the signed public closure.
+The manager consumes this job's receipt/hash, and its two final startup files
+enter the release automatically. No separately supplied startup receipt is
+required. Environment capture remains an explicit source-produced input.
+
 Dispatcher bindings `pc`, `sdk` and `codec` select canonical private input paths.
 Only producers requiring SDK data receive the default SDK argument. For object
 profiles that derive script properties, supply it explicitly. Optional
