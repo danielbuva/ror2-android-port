@@ -158,16 +158,27 @@ class Graph:
         if name in self.jobs:
             return name
         producer = "record_produce" if path.endswith(".jsonl.gz") else owner(profile)
-        if producer is None or producer == "sprite_produce":
+        if producer is None:
             raise ValueError("explicit producer wiring required for " + path)
         providers = {dependency: self.build(dependency, (*active, pin)) for dependency in suppliers(profile)}
         phase_arguments = self.player_arguments(providers) if producer == "player_data" else []
         needs = list(providers.values())
         arguments = ["--profile", "${repo}/" + path, "--profile-sha256", pin, "--output", "${output}"]
         if producer != "record_remap":
-            arguments += ["--pc-root" if producer in {"shader_context", "shader_prefab"} else "--pc", "${input:pc}"]
+            arguments += ["--pc-root" if producer in {"shader_context", "shader_prefab", "sprite_produce"} else "--pc", "${input:pc}"]
         if producer in {"record_produce", "shader_context", "shader_prefab", "payload_shader_records", "player_data"}:
             arguments += ["--sdk", "${input:sdk}"]
+        if producer == "sprite_produce":
+            binding = "sprite_native_" + pin
+            arguments = [
+                "produce",
+                *arguments,
+                "--functional",
+                "--native-output",
+                "${input:" + binding + "}",
+                "--native-sha256",
+                "${input_sha256:" + binding + "}",
+            ]
         if producer == "shader_produce":
             arguments += ["--sdk", "${input:sdk_contents}"]
         if producer in {"object_produce", "shader_prefab", "payload_shader_records", "shader_produce"} and "original_bundle" not in profile:
