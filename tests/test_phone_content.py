@@ -38,7 +38,7 @@ class PhoneContentTests(unittest.TestCase):
             request = {
                 "path": str(bundle),
                 "sha256": hashlib.sha256(bundle.read_bytes()).hexdigest(),
-                "assets": [{"name": "lighting", "type": "LightingSettings"}, {"name": "occlusion", "type": "OcclusionCullingData"}],
+                "assets": [{"name": "lighting", "type": "LightingSettings"}, {"name": "lighting2", "type": "LightingSettings"}],
             }
             request_path = attempt / "native-content-request.json"
             request_path.write_text(json.dumps(request))
@@ -70,7 +70,13 @@ class PhoneContentTests(unittest.TestCase):
                 output.write_text(json.dumps(changed))
                 with self.assertRaises(RuntimeError):
                     validate_native_content(attempt, "c" * 40)
-            for change in ({"assets": []}, {"assets": [{"name": "shader", "type": "Shader"}]}, {"assets": request["assets"] * 2}, {"path": "relative.bundle"}):
+            for change in (
+                {"assets": [{"name": "occlusion", "type": "OcclusionCullingData"}]},
+                {"assets": []},
+                {"assets": [{"name": "shader", "type": "Shader"}]},
+                {"assets": request["assets"] * 2},
+                {"path": "relative.bundle"},
+            ):
                 request_path.write_text(json.dumps(request | change))
                 with self.assertRaises(RuntimeError):
                     native_content_request(request_path)

@@ -2598,3 +2598,17 @@ CPU/GPU peak 96.7 C, 67.455 s above 80 C; no sustained 3 s above 95 C;
 battery 30 to 32 C, maximum runtime sample gap 0.423 s. Adopted install/hash,
 stopped process, OLED sleep, scratch/prune/lease cleanup verified.
 Prior art: pinned R2API content families; sustained/manual/alpha acceptance remains open.
+
+## J1377 — Source release lighting records and typed native loading
+
+2026-11-04. Existing record producer preserves source LightingSettings and
+OcclusionCullingData after complete schema/type validation; authored fixtures
+cover both release layouts. Exact-editor fixture requires every requested
+LightingSettings asset, bound bundle/request hashes and destruction on unload.
+Source-derived bundle: 22 typed loads passed, SHA-256
+`48d02b8b975f678a5202a1280a81ca60e0325321ebcee13b5a3d08e6e0a2c8e4`.
+Evidence: `work/coordination/p1-wholegame-1031/source-lighting-settings-unity-v1-supervisor/terminal.json`.
+Eleven focused fixture tests passed; native Occlusion consumer validation,
+whole-game graph/loadability and device visuals/playability remain open.
+Prior art: pinned EditorKit typed lookup; AssetRipper release occlusion omission.
+No new APK or device claim; byte equality remains diagnostic.

@@ -106,7 +106,7 @@ def native_content_request(path):
     names = set()
     for asset in assets:
         name = asset.get("name")
-        if not isinstance(name, str) or not name or name in names or asset.get("type") not in {"LightingSettings", "OcclusionCullingData"}:
+        if not isinstance(name, str) or not name or name in names or asset.get("type") != "LightingSettings":
             raise RuntimeError("Native-content asset name/type absent, duplicated or unsupported")
         names.add(name)
     return request

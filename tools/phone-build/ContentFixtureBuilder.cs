@@ -62,15 +62,15 @@ public static class ContentFixtureBuilder
             var names = new HashSet<string>();
             foreach (var asset in request.assets)
                 if (asset == null || String.IsNullOrEmpty(asset.name) || !names.Add(asset.name)
-                    || (asset.type != "LightingSettings" && asset.type != "OcclusionCullingData"))
+                    || asset.type != "LightingSettings")
                     throw new Exception("Native-content asset name/type absent, duplicated or unsupported");
             bundle = AssetBundle.LoadFromFile(receipt.path);
             if (bundle == null) throw new Exception("Native-content bundle failed to load");
             foreach (var asset in request.assets)
             {
-                // OcclusionCullingData has no public C# declaration in this SDK;
-                // resolve its real engine type, never substitute Object as the query type.
-                var type = typeof(LightingSettings).Assembly.GetType("UnityEngine." + asset.type, true);
+                // This SDK exposes LightingSettings as a typed asset. Native-only
+                // classes need a separate consumer fixture before admission.
+                var type = typeof(LightingSettings);
                 var value = bundle.LoadAsset(asset.name, type);
                 if (value == null || value.GetType() != type)
                     throw new Exception("Native-content typed load failed: " + asset.name + " as " + type.FullName);

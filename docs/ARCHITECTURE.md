@@ -1430,7 +1430,7 @@ objects after capture; the host must inspect actual type-tree presence before
 using the output as schema evidence. The fixture class is Editor-only and has
 no game-build consumer.
 An optional `ROR2_PHONE_NATIVE_CONTENT_CHECK` request uses this same owner for
-source-produced LightingSettings/OcclusionCullingData bundles: snapshot and hash
+source-produced LightingSettings bundles: snapshot and hash
 the explicit request, load every address with its exact engine type, record the
 native type/name and destroy loaded objects on unload. `phone_content.py`
 validates the complete count, types, request/bundle hashes and unload receipt.
@@ -6146,7 +6146,9 @@ source schema, checks native type identity and persists unchanged record bodies;
 it does not synthesize editor-only bake settings or renderer/portal tables.
 Setup requires pinned source bundles and a fresh record pack; scoped readers
 close on exit and receipts persist. Authored host fixtures cover both native
-shapes. Complete bundle, exact-editor load and device acceptance remain open.
+shapes. A source-derived 22-asset LightingSettings bundle passed typed exact-editor
+load and unload. Occlusion native-load, complete bundle and device acceptance
+remain open.
 
 Release-graph Texture jobs bind the public JPEG/ETC codecs and native SDK texture
 toolchain required by their source operations. Dynamic file hashes enter the

@@ -127,7 +127,8 @@ For source-produced native lighting qualification, set
 `ROR2_PHONE_NATIVE_CONTENT_CHECK` to an absolute JSON request path before
 `phone-content-check`. The request is
 `{"path":"<absolute bundle>","sha256":"<bundle SHA-256>","assets":[{"name":"<container address>","type":"LightingSettings"}]}`;
-only `LightingSettings` and `OcclusionCullingData` types are supported. The
+only `LightingSettings` is supported. The exact SDK has no managed
+`OcclusionCullingData` type; its consumer/native-load check remains open. The
 runner snapshots the request beside the oracle. `native-content-check.json`
 records each actual native name/type and verifies destruction after
 `Unload(true)`; failures persist and fail the check. Host validation binds the
