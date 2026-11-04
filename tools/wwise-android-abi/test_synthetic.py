@@ -95,7 +95,7 @@ class WriterRoundTripTests(unittest.TestCase):
         self.repo = self.root / "test-repo"
         (self.repo / "work/config").mkdir(parents=True)
         (self.repo / "work/game-install").mkdir(parents=True)
-        (self.repo / ".gitignore").write_text("work/\n")
+        (self.repo / ".gitignore").write_text("/work\n")
         subprocess.run(["git", "init", "-q"], cwd=self.repo, check=True)
         (self.repo / "work/config/local.json").write_text(json.dumps({"game_path": str(self.repo / "work/game-install")}))
         self.tool = self.root / "inspector"
@@ -289,13 +289,26 @@ class WriterRoundTripTests(unittest.TestCase):
         plan = self.build_plan()
         plan_path = self.repo / "work/synthetic-plan.json"
         plan_path.write_text(json.dumps(plan, sort_keys=True, indent=2))
-        candidate = self.repo / "work/candidate.dll"
+        # Exercise the writer with the same shared-work layout as worker checkouts.
+        shared = self.root / "shared-work"
+        (self.repo / "work").rename(shared)
+        (self.repo / "work").symlink_to(shared, target_is_directory=True)
+        plan_path = shared / "synthetic-plan.json"
+        candidate = shared / "candidate.dll"
         result = self.invoke_writer(plan_path, candidate)
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         self.assertTrue(candidate.is_file())
         self.assertIn('"mapped":9', result.stdout)
         self.assertIn('"managed_call_rewrites":1', result.stdout)
         self.assertIn(b"fixture-payload-v1", candidate.read_bytes())
+
+        (self.repo / ".gitignore").write_text("")
+        public_output = shared / "public-output.dll"
+        refused_public = self.invoke_writer(plan_path, public_output)
+        self.assertNotEqual(refused_public.returncode, 0)
+        self.assertIn("not ignored by Git", refused_public.stderr)
+        self.assertFalse(public_output.exists())
+        (self.repo / ".gitignore").write_text("/work\n")
 
         after = {r["entrypoint"]: r for r in self.inspect(candidate)}
         self.assertIn("android-string", after)
@@ -318,28 +331,28 @@ class WriterRoundTripTests(unittest.TestCase):
         changed = json.loads(json.dumps(plan))
         string_row = next(x for x in changed["imports"] if x["source_entrypoint"] == "game-string")
         string_row["android"]["args"][0]["custom_attributes"][0]["raw_blob_base64"] = "AA=="
-        tampered = self.repo / "work/tampered-plan.json"
+        tampered = shared / "tampered-plan.json"
         tampered.write_text(json.dumps(changed, sort_keys=True, indent=2))
-        refused_output = self.repo / "work/refused.dll"
+        refused_output = shared / "refused.dll"
         refused = self.invoke_writer(tampered, refused_output)
         self.assertNotEqual(refused.returncode, 0)
         self.assertIn("custom-attribute payload mismatch", refused.stderr)
         self.assertFalse(refused_output.exists())
         self.assertFalse(list(refused_output.parent.glob("refused.dll.tmp-*")))
 
-        inside_install = self.repo / "work/game-install/should-not-write.dll"
+        inside_install = shared / "game-install/should-not-write.dll"
         refused_path = self.invoke_writer(plan_path, inside_install)
         self.assertNotEqual(refused_path.returncode, 0)
         self.assertIn("inside the configured accepted game installation", refused_path.stderr)
         self.assertFalse(inside_install.exists())
 
-        link = self.repo / "work/link"
-        link.symlink_to(self.repo / "work", target_is_directory=True)
+        link = shared / "link"
+        link.symlink_to(shared, target_is_directory=True)
         symlink_output = link / "symlink-output.dll"
         refused_link = self.invoke_writer(plan_path, symlink_output)
         self.assertNotEqual(refused_link.returncode, 0)
         self.assertIn("symlink", refused_link.stderr.lower())
-        self.assertFalse((self.repo / "work/symlink-output.dll").exists())
+        self.assertFalse((shared / "symlink-output.dll").exists())
 
         no_clobber = self.invoke_writer(plan_path, candidate)
         self.assertNotEqual(no_clobber.returncode, 0)
@@ -347,14 +360,14 @@ class WriterRoundTripTests(unittest.TestCase):
 
         # Same native kind, changed ArrayMarshalInfo.Size must be rejected by
         # the reopened-output comparator rather than passing as LPArray.
-        changed_marshal_output = self.repo / "work/changed-marshal.dll"
+        changed_marshal_output = shared / "changed-marshal.dll"
         changed_marshal = self.invoke_writer(plan_path, changed_marshal_output, mode="--synthetic-corrupt-reopened-array-marshal")
         self.assertNotEqual(changed_marshal.returncode, 0)
         self.assertIn("P/Invoke MarshalInfo metadata changed", changed_marshal.stderr)
         self.assertFalse(changed_marshal_output.exists())
         self.assertFalse(list(changed_marshal_output.parent.glob("changed-marshal.dll.tmp-*")))
 
-        changed_return_output = self.repo / "work/changed-return-marshal.dll"
+        changed_return_output = shared / "changed-return-marshal.dll"
         changed_return = self.invoke_writer(plan_path, changed_return_output, mode="--synthetic-corrupt-reopened-return-array-marshal")
         self.assertNotEqual(changed_return.returncode, 0)
         self.assertIn("P/Invoke MarshalInfo metadata changed", changed_return.stderr)
@@ -438,6 +451,33 @@ class WriterRoundTripTests(unittest.TestCase):
         self.assertNotEqual(writer_refusal.returncode, 0)
         self.assertIn("non-vector rank-one array", writer_refusal.stderr)
         self.assertFalse(candidate.exists())
+
+
+class SharedWorkOutputTests(unittest.TestCase):
+    def test_canonical_shared_work_requires_ignored_checkout_entry(self):
+        module = load_generator()
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder).resolve()
+            checkout = root / "checkout"
+            checkout.mkdir()
+            shared = root / "shared"
+            shared.mkdir()
+            work = checkout / "work"
+            work.symlink_to(shared, target_is_directory=True)
+            subprocess.run(["git", "init", "--quiet", str(checkout)], check=True)
+            ignore = checkout / ".gitignore"
+            ignore.write_text("/work\n")
+            module.ROOT, module.WORK = checkout, work
+            output = shared / "candidate.dll"
+            self.assertEqual(module.assert_output_path(output, root / "game"), output)
+            with self.assertRaisesRegex(ValueError, "symlink"):
+                module.assert_output_path(work / "candidate.dll", root / "game")
+            with self.assertRaisesRegex(ValueError, "accepted game"):
+                module.assert_output_path(output, shared)
+            ignore.write_text("")
+            with self.assertRaisesRegex(ValueError, "not ignored by Git"):
+                module.assert_output_path(output, root / "game")
+            self.assertFalse(output.exists())
 
 
 class AcceptedInputBindingTests(unittest.TestCase):
