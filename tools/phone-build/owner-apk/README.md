@@ -210,6 +210,54 @@ it never substitutes historical bytes. Keep these required private evidence
 inputs with their producer receipts as described in
 [LOCAL_STATE](../../../docs/LOCAL_STATE.md).
 
+### Lighting tolerance
+
+[ADR-003](../../../docs/ADR-003-lighting-tolerance.md) defines the narrow lighting
+exception. Optional `lighting_tolerance` maps a final target path to
+`{reference, recipe: {path, sha256}, visual: {path, sha256}}`. The reference is a
+private J850 file used only for qualification. The recipe is reviewed authored
+policy; bounds require recorded measurements, not a guessed epsilon. No actual
+J850 tolerance recipe has been accepted yet.
+
+A recipe contains `reference_sha256` and `members`, mapping UnityFS serialized
+member names to record rules. Use the empty member name for a standalone v22
+file. A rule contains `path_id`, `class_id` and `samples`; each sample contains
+`field` (native path components), `channels`, `max_abs` (one finite nonnegative
+measured bound per channel), and `measurement` (local numerical evidence and
+bound derivation). For example, this **synthetic** ambient rule uses an exactly
+representable fixture delta, not a game lighting bound:
+
+```json
+{"path_id": 1, "class_id": 104, "samples": [{
+  "field": ["m_AmbientProbe"], "channels": 27,
+  "max_abs": [0.125, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+              0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+  "measurement": "Authored fixture maximum"
+}]}
+```
+
+Cubemap rules also name `reflection_owner`, a local RenderSettings or
+ReflectionProbe path ID actually pointing to the cubemap. Texture2D rules name
+`lightmap_owner`, a local LightmapSettings path ID actually pointing to the
+texture in `m_Lightmaps`. Texel samples select `["image data", "Array", "payload"]`;
+LightProbes select `["m_BakedCoefficients", "Array", "payload"]`.
+Ambient recipes require 27 bounds, one per native coefficient in each probe. Missing embedded
+schemas, changed streamed resources and unsupported formats remain blocked.
+
+The visual document contains `reference_sha256`, `candidate_sha256`, `parity: true`
+and a nonempty `review` describing retained matched captures/settings and their
+review. The checker validates pins and recomputes all numerical differences;
+human review establishes that these measurements arise from GPU/sampling
+variation and that the captures show parity. No receipt alone proves that fact.
+
+An admitted file has status `tolerance-accepted`, `target_equal: false`, measured
+per-record maxima in `lighting_comparison`, and pinned `lighting_evidence`.
+`tolerance_accepted_count` counts admitted final files separately from raw-exact,
+drift and generated metadata counts. A changed unrelated byte still blocks the
+file. The assembler preserves current bytes, rechecks evidence and leaves
+`device_qualified` and `source_provenance_verified` false. Production never reads
+J850, bounds or captures to fill missing content.
+
 The normal build writes the same `readiness.json` and refuses all blocked inputs
 before launcher compilation or ZIP creation. Once the content owner materializes
 its final tree, use that unchanged request with `--request`, then pass the new
