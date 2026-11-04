@@ -2373,6 +2373,16 @@ Discovery 104.94 s, production 4.73 s, qualification 4.61 s; peak discovery RSS
 Host-only; heat unmeasured. EditorKit typed ownership and J1340 SDK hashes inform
 selection; bounded source recipe only, producer unchanged. Residual three unchanged;
 readiness 693/705 available, 685 raw-exact. Bundle/phone/install/update gates open.
+## J1361 — Prune analyzed heaps and removed build-lane leftovers
+
+2026-11-04. `prune-generated.py` recognizes finished session-memory captures
+with matching successful analysis receipts and lane leftovers with owned removal
+evidence. It preserves logs/receipts, recent content, keep markers and protected
+paths; cold-storage symlinks are unlinked without deleting targets. Linked
+worktrees use the shared canonical roots.
+Evidence: `work/coordination/prune-snapshots-20261104/focused-checks.json`
+(16 synthetic host tests; Ruff passed). No APK or device behaviour changed.
+Older heaps without successful matching analysis remain retained.
 ## J1360 — Measure host APK finalization and private packet packaging
 
 2026-11-04. Reusable `profile_stage.py` records wall/CPU/RSS, sampled logical and
