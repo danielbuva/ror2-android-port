@@ -13,13 +13,18 @@ build-pipeline changes. This checklist makes no alpha-readiness claim.
 
 ## Decision and reproducibility
 
-- [ ] Deliver complete PC-input-to-Android conversion on the phone, preserving
-      Architecture C. Evaluate the [accepted-build design](accepted-build-reconstruction.md)
-      against the full target before implementing another large pipeline.
-      [J1357](PORTING_JOURNAL.md#j1357--resolve-source-derived-tree-windasset-endpoints)
-      retains host readiness at 693/705 files, 685 raw-exact;
-      [J1358](PORTING_JOURNAL.md#j1358--retain-audited-menu-build-identities-and-native-provider-order)
-      leaves Menu/HUD differences and complete phone production/install/update open.
+- [ ] Produce a fully playable source-derived APK from the user's original game
+      files, preserving Architecture C and the latest lab build's behaviour,
+      content, visuals, performance and features (current reference `9f904392`,
+      source `6c12b506`). Require strict PPtr/file-ID, type-tree, script-binding,
+      collider and other gameplay-critical checks, loadability and in-game
+      verification. Byte equality is diagnostic; historical 693/705 availability
+      and 685 raw-exact results do not establish playability.
+      Then qualify the complete phone-only import → convert → install → play →
+      newer port-release update flow, preserving profiles/settings and rebuilding
+      only changed outputs where possible, including Check for updates.
+      Discovering newer Steam inputs is secondary; report unknown/changed assets
+      clearly. See the [converter contract](accepted-build-reconstruction.md).
 - [ ] Qualify permitted tool acquisition, Android app execution, complete game
       AOT/metadata construction, content/shader production, durable owner signing
       and user-mediated installation/update as one complete flow, including
@@ -90,8 +95,9 @@ retain J595/J755 ownership guards; final alpha installation remains separate.
 
 ## Performance (release gate)
 
-Correctness comes first: no optimization may change reconstructed bytes, original
-behaviour or visual output to improve a benchmark. Reconstruction-gap closure stays
+Correctness comes first: no optimization may regress functional/structural
+correctness, original behaviour or visual output to improve a benchmark. Byte
+equality remains a diagnostic under the converter contract. Reconstruction-gap closure stays
 the priority; these gates must pass before any public release.
 
 - [ ] Profile the complete phone converter (import → reconstruction → APK → install)
