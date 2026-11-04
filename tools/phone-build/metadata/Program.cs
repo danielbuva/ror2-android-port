@@ -26,6 +26,18 @@ object? Scope(IMetadataScope? scope) => scope == null ? null : new
     assembly_identity = scope is AssemblyNameReference reference ? reference.FullName :
         scope is ModuleDefinition module ? module.Assembly?.Name.FullName : null
 };
+object Signature(TypeReference type) => type switch
+{
+    ArrayType array => new { kind = "array", rank = array.Rank, element = Signature(array.ElementType) },
+    GenericInstanceType instance => new
+    {
+        kind = "generic_instance", definition = Signature(instance.ElementType),
+        arguments = instance.GenericArguments.Select(Signature).ToArray()
+    },
+    GenericParameter parameter => new { kind = "generic_parameter", owner = parameter.Type.ToString(), position = parameter.Position },
+    TypeSpecification specification => new { kind = "unsupported", name = specification.FullName },
+    _ => new { kind = "named", name = type.FullName, scope = Scope(type.Scope) }
+};
 var assemblies = new List<object>();
 var seen = new HashSet<string>(StringComparer.Ordinal);
 foreach (var row in input.RootElement.GetProperty("assemblies").EnumerateArray())
@@ -43,6 +55,13 @@ foreach (var row in input.RootElement.GetProperty("assemblies").EnumerateArray()
         name = type.FullName,
         base_type = type.BaseType?.FullName,
         base_scope = Scope(type.BaseType?.Scope),
+        base_signature = type.BaseType == null ? null : Signature(type.BaseType),
+        generic_parameters = type.GenericParameters.Select(parameter => new { name = parameter.Name, position = parameter.Position }).ToArray(),
+        fields = type.Fields.Select(field => new
+        {
+            name = field.Name, is_static = field.IsStatic, is_not_serialized = field.IsNotSerialized,
+            signature = Signature(field.FieldType)
+        }).ToArray(),
         native_attributes = type.CustomAttributes.Where(attribute =>
             attribute.AttributeType.Name == "NativeClassAttribute" || attribute.AttributeType.Name == "NativeTypeAttribute")
             .Select(attribute => new

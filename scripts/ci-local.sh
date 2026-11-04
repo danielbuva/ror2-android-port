@@ -18,47 +18,20 @@ unset PYTHONPATH PYTHONHOME PYTHONSTARTUP PYTHONUSERBASE VIRTUAL_ENV
 export PYTHONNOUSERSITE=1 PYTHONDONTWRITEBYTECODE=1
 python="$root/.local/lab-venv/bin/python"
 [ -x "$python" ] || python=python3
-scratch=$(mktemp -d "${TMPDIR:-/tmp}/ci-local.XXXXXX")
+# The supervisor records ownership and keeps cleanup alive across shell failures.
+# Recorded child groups add a live-work veto; CI commands must join their children.
+if [ -z "${CI_LOCAL_OWNED_SCRATCH:-}" ]; then
+  exec "$python" "$root/scripts/ci-scratch.py" "$0" "$@"
+fi
+scratch="$CI_LOCAL_OWNED_SCRATCH"
+unset CI_LOCAL_OWNED_SCRATCH
 volume="$scratch/case-sensitive"
-preserve_scratch=0
-cleanup_dir=$(git -C "$root" rev-parse --path-format=absolute --git-path ci-cleanup)
-cleanup_log="$cleanup_dir/$(basename "$scratch").log"
-mkdir -p "$cleanup_dir"
-cleanup() {
-  local status=$?
-  trap - EXIT
-  if [ "$(uname -s)" = Linux ]; then
-    # There is no mounted image to detach on Linux. Finish removal before exiting:
-    # VM/job supervisors can terminate background children as soon as the hook ends.
-    {
-      echo "cleanup: started"
-      if rm -rf "$scratch"; then
-        echo "cleanup: scratch removed"
-      else
-        echo "cleanup: scratch removal failed"
-      fi
-    } </dev/null >>"$cleanup_log" 2>&1
-    exit "$status"
-  fi
-  (
-    echo "cleanup: started"
-    if [ "${preserve_scratch:-0}" -eq 1 ]; then
-      echo "cleanup: attach timed out with uncertain mount state; preserving $scratch"
-      exit 0
-    fi
-    if [ -d "$volume" ] && ! hdiutil detach "$volume" -quiet; then
-      echo "cleanup: detach failed; preserving $scratch"
-      exit 0
-    fi
-    if rm -rf "$scratch"; then
-      echo "cleanup: scratch removed"
-    else
-      echo "cleanup: scratch removal failed"
-    fi
-  ) </dev/null >>"$cleanup_log" 2>&1 &
-  exit "$status"
-}
-trap cleanup EXIT
+# EXIT returns to the supervisor, which synchronously detaches by verified device
+# and removes only our scratch. Abnormal/SIGKILL runs retain durable uncertainty.
+trap 'status=$?; trap - EXIT; exit "$status"' EXIT
+trap 'exit 130' INT
+trap 'exit 143' TERM
+trap 'exit 129' HUP
 
 "$python" "$root/scripts/ci-local-cache.py" checkout "$root" "$scratch/repo" "$target" "$base"
 python=$("$python" "$root/scripts/ci-local-cache.py" environment "$root" "$scratch/repo")
@@ -82,9 +55,8 @@ fi
 if [ "$setup_status" -eq 0 ]; then
   tmp="$volume/tmp"
 elif [ "$setup_status" -eq 2 ]; then
-  # hdiutil may have mounted before its CLI timed out. Do not detach or remove the
-  # image/volume on this ambiguous outcome; the cleanup trap preserves the scratch.
-  preserve_scratch=1
+  # Cleanup reconciles the exact image through hdiutil inventory before removal.
+  echo "ci-local: attach uncertain; cleanup will reconcile image ownership" >&2
 else
   echo "ci-local: using the host temporary filesystem" >&2
 fi

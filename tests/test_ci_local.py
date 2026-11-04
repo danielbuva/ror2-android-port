@@ -27,6 +27,7 @@ class CiLocalHookEnvironmentTests(unittest.TestCase):
                 "import unittest\nclass Fixture(unittest.TestCase):\n    def test_fixture(self):\n        self.assertTrue(True)\n"
             )
             shutil.copy2(source, scripts / "ci-local.sh")
+            shutil.copy2(source.parents[1] / "scripts/ci-scratch.py", scripts / "ci-scratch.py")
             shutil.copy2(source.parents[1] / "scripts/ci-local-cache.py", scripts / "ci-local-cache.py")
             (repo / "tools").mkdir()
             (repo / "tools/lab-requirements.txt").write_text("")

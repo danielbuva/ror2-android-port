@@ -3,7 +3,13 @@ using System.Collections;
 
 namespace UnityEngine
 {
-    public static class Time { public static float realtimeSinceStartup { get { return 0f; } } }
+    public enum LogType { Log }
+    public enum LogOption { NoStacktrace }
+    public static class Debug
+    {
+        public static void LogFormat(LogType type, LogOption option, object context, string format, params object[] args) { }
+    }
+    public static class Time { public static int frameCount; public static float realtimeSinceStartup { get { return 0f; } } }
     public static class Application { public static string persistentDataPath { get { return "/tmp/app"; } } }
     public sealed class AndroidJavaObject : IDisposable
     {

@@ -304,7 +304,7 @@
   },
   "source_sha256": {
     "artifact_copy": "b4fff18bbb88573494e9189f7349a9f0f204dcd9bbe221d3b86891c89d156d55",
-    "build_hook": "7f301af6bc85fff541c3d7341cd7f1af5973bf8c677d0a6f3eb542c60b78afd4",
+    "build_hook": "704febf45b33212d9211fd98a3615a0338cd48f0f635e6f737eba04703d26198",
     "camera_contract": "259463fea059fb40f84ff8dd3bfc027efc70635ce7b81320725a177c78f5bf73",
     "camera_owner": "a9c422d7140af1ed076a2a97a642956e4f64fcea9c8f6a53a2e8ce8a3d779f1b",
     "camera_prerequisites": "7d726175b0f93d9d4e83d032b7244cd9f9cd9df49d0ec1bd57d73df63587d18a",

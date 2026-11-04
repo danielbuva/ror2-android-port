@@ -110,6 +110,7 @@ authentication is needed to inspect the supplied installation.
 | `./dev test` | Host tests in the lab venv. |
 | `./dev doctor [--json]` | Toolchain, inventory and dependency-pin health. |
 | `./dev preflight [--device SERIAL] [--host-only]` | Current: host/input gates plus selected-device storage; `--host-only` omits device access. |
+| `./dev build-hook-pins [--action check\|refresh]` | Current: check reviewed camera and audio-owner source pins and manifest bindings without local inputs (default); after reviewing source changes, refresh source hashes and bindings. Format Python before refreshing: the hook pins itself. Host preflight checks these pins before reading local configuration. |
 | `./dev check-baseline` | The standard device check on the installed APK: 35 s of assisted Lakes play, no report error, profile run count unchanged ([docs/BASELINE.md](BASELINE.md)). |
 | `./dev check-baseline --stage-exit --capture-in-destination` | Current audio diagnostic: require a finite, nonzero MainOutput window after a native skill in the verified next stage; fresh process/skill-deferred MainOutput build required, at most 30 s there. Original audio lifecycle is unchanged. |
 | `./dev editor --target lab --action open` | Start the isolated exact editor and connect the pinned Unity MCP. One editor mutation at a time. |

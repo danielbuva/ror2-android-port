@@ -9789,7 +9789,10 @@
           ]
         }
       ],
-      "fieldless_script_record": true
+      "sdk_event_system": {
+        "path": "Contents/Resources/PackageManager/BuiltInPackages/com.unity.ugui/Runtime/EventSystem/EventSystem.cs",
+        "sha256": "05e486c5d37e88335df9d8dafbb42208331bddb0441c94949b208f4180a36e65"
+      }
     },
     {
       "path_id": -9048412504190879658,
@@ -13326,7 +13329,7 @@
     },
     {
       "path_id": -6562632805628259368,
-      "record": "59af5ea81ad9473f39c27cbd88e9f34b5be866c49a915bf479de10cbff27ad29",
+      "record": "0f03acd21a7000bd31127aed63acd0957ebb3d72bdd3737c0cbd40c71619742c",
       "type_source": [
         85,
         3653340983115571221
@@ -14234,7 +14237,10 @@
           ]
         }
       ],
-      "fieldless_script_record": true
+      "sdk_event_system": {
+        "path": "Contents/Resources/PackageManager/BuiltInPackages/com.unity.ugui/Runtime/EventSystem/EventSystem.cs",
+        "sha256": "05e486c5d37e88335df9d8dafbb42208331bddb0441c94949b208f4180a36e65"
+      }
     },
     {
       "path_id": -5857962428119707782,
@@ -15470,7 +15476,7 @@
     },
     {
       "path_id": -4850512016903265157,
-      "record": "59af5ea81ad9473f39c27cbd88e9f34b5be866c49a915bf479de10cbff27ad29",
+      "record": "0f03acd21a7000bd31127aed63acd0957ebb3d72bdd3737c0cbd40c71619742c",
       "type_source": [
         97,
         -8014961710185377972
@@ -16693,7 +16699,7 @@
     },
     {
       "path_id": -3801517640135355048,
-      "record": "59af5ea81ad9473f39c27cbd88e9f34b5be866c49a915bf479de10cbff27ad29",
+      "record": "0f03acd21a7000bd31127aed63acd0957ebb3d72bdd3737c0cbd40c71619742c",
       "type_source": [
         97,
         -8014961710185377972
@@ -18957,7 +18963,7 @@
     },
     {
       "path_id": -2058557041282165059,
-      "record": "59af5ea81ad9473f39c27cbd88e9f34b5be866c49a915bf479de10cbff27ad29",
+      "record": "0f03acd21a7000bd31127aed63acd0957ebb3d72bdd3737c0cbd40c71619742c",
       "type_source": [
         0,
         -6455632894822689791
@@ -25024,7 +25030,10 @@
           ]
         }
       ],
-      "fieldless_script_record": true
+      "sdk_event_system": {
+        "path": "Contents/Resources/PackageManager/BuiltInPackages/com.unity.ugui/Runtime/EventSystem/EventSystem.cs",
+        "sha256": "05e486c5d37e88335df9d8dafbb42208331bddb0441c94949b208f4180a36e65"
+      }
     },
     {
       "path_id": 2948180784589753914,
@@ -25163,7 +25172,10 @@
           ]
         }
       ],
-      "fieldless_script_record": true
+      "sdk_event_system": {
+        "path": "Contents/Resources/PackageManager/BuiltInPackages/com.unity.ugui/Runtime/EventSystem/EventSystem.cs",
+        "sha256": "05e486c5d37e88335df9d8dafbb42208331bddb0441c94949b208f4180a36e65"
+      }
     },
     {
       "path_id": 3004753090809230107,
@@ -25500,13 +25512,18 @@
     },
     {
       "path_id": 3231134817632079172,
-      "record": "59af5ea81ad9473f39c27cbd88e9f34b5be866c49a915bf479de10cbff27ad29",
+      "record": "0f03acd21a7000bd31127aed63acd0957ebb3d72bdd3737c0cbd40c71619742c",
       "type_source": [
         0,
         -6455632894822689791
       ],
       "bytes": 104,
-      "sha256": "d4b1c09da30beead8bcb54d38e8ba98747c84c72d861cf7acc2f762ce0905a21"
+      "sha256": "d4b1c09da30beead8bcb54d38e8ba98747c84c72d861cf7acc2f762ce0905a21",
+      "script_identity": [
+        "UnityEngine.UI.dll",
+        "UnityEngine.EventSystems",
+        "EventSystem"
+      ]
     },
     {
       "path_id": 3234704277651660508,
@@ -29714,7 +29731,10 @@
           ]
         }
       ],
-      "fieldless_script_record": true
+      "sdk_event_system": {
+        "path": "Contents/Resources/PackageManager/BuiltInPackages/com.unity.ugui/Runtime/EventSystem/EventSystem.cs",
+        "sha256": "05e486c5d37e88335df9d8dafbb42208331bddb0441c94949b208f4180a36e65"
+      }
     },
     {
       "path_id": 6411183946209198156,
@@ -32203,7 +32223,10 @@
           ]
         }
       ],
-      "fieldless_script_record": true
+      "sdk_event_system": {
+        "path": "Contents/Resources/PackageManager/BuiltInPackages/com.unity.ugui/Runtime/EventSystem/EventSystem.cs",
+        "sha256": "05e486c5d37e88335df9d8dafbb42208331bddb0441c94949b208f4180a36e65"
+      }
     },
     {
       "path_id": 8579305234156075945,

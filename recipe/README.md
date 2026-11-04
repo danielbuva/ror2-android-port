@@ -1,5 +1,20 @@
 # Build recipes
 
+2026-11-04 EventSystem audit: objective-support and Commando recipes construct
+32 EventSystem components from the pinned SDK declarations and constructor
+initializers, preserving source base-component references. Current receipt-bound
+MonoScript identity and properties hashes qualify the resulting schema. Recipes
+contain only the SDK-relative source path/hash and authored policy; no SDK source,
+game bytes, private paths or identifiers are added. The other fieldless components
+retain their strict fieldless contract. Provenance, privacy, licensing and
+sensitive-content review passed; Android load/play gates remain open.
+
+2026-11-04 startup-attribution audit: `original-audio-owner-sources.json`
+refreshes three authored session/audio timing-marker hashes. The explicit
+`build-hook-pins` refresh keeps producer/camera manifest bindings consistent;
+builds validate without changing source. Only repository source hashes change;
+no game bytes, private paths, identifiers or licensing changes are introduced.
+
 2026-11-04 player-startup audit: `original-audio-owner-sources.json` refreshes
 the authored session source hash and its producer/camera manifest pins. Only
 repository source hashes change; no game bytes, private paths or identifiers are
@@ -4804,9 +4819,9 @@ production remain open. Generated outputs and raw comparison evidence remain ign
 | Recipe | SHA-256 |
 | --- | --- |
 | `owner-native-alias-records.json` | `4f041c4fdb4b9b928c1301fb8fa207e060ad94cc4b1e40ad8e1ef43c5b54aab2` |
-| `owner-objective-reused-records.json` | `59af5ea81ad9473f39c27cbd88e9f34b5be866c49a915bf479de10cbff27ad29` |
+| `owner-objective-reused-records.json` | `0f03acd21a7000bd31127aed63acd0957ebb3d72bdd3737c0cbd40c71619742c` |
 | `owner-objective-legacy-particle-shader.json` | `0c8c53f8075478878bf812b6bb89df9a34b44bc034d09bc928cb813e2b008304` |
-| `owner-objective-support-objects.json` | `2fdab523dc067eebf70709078ad08b6c854baf3a2fdbd86ee28ce5230f7774cc` |
+| `owner-objective-support-objects.json` | `6177f393bceff837be35af0f5741ed514a11eb5f673fa5632839e65686e0d09c` |
 
 Manual provenance, privacy, licensing and sensitive-content audit: these profiles
 contain original source selectors, expected hashes, checked pointer/component
@@ -4966,7 +4981,7 @@ curve value, node table, program, private path or device identifier is tracked.
 | Recipe | SHA-256 |
 | --- | --- |
 | `owner-commando-objects.json` | `bfd084b6e1d649f0e0b62eb56714bc12535d5c2fd4720b708e313aa0f7641def` |
-| `owner-commando-reused-records.json` | `5440ce0007c9d69c6f5bd82f500a97caae8fffe1ed1b6dc7f76be96ad45ee37f` |
+| `owner-commando-reused-records.json` | `7e5f9478375a58032aa204a1f57979faaf29f212b3c9b40e2a1fbe90dbdfb6d7` |
 | `owner-commando-original-sprites-1.json` | `503c9feb21cf0865a6429c4a5d51f5b97ee2767b8235e9454635041bf1efb09f` |
 | `owner-commando-sdk-shaders.json` | `9d109f1048dbc1bdddbae266dd4fee798be5328ef759226611262adbcf8e3ede` |
 | `owner-commando-native-sprites-2.json` | `12f487a6c66e4645820a8a73b4e597fd9134b906ccf68bc7a323ae0bd2b9b594` |
@@ -6773,6 +6788,11 @@ change. No asset bytes, private paths or runtime capture are included.
 | --- | --- |
 | `owner-whole-scene-standard-shader-remap.json` | `367d8fc933e722d167036230a28446879695703d10859d202ae71f25433e10da` |
 
+Audit: 2026-11-04. `original-audio-owner-sources.json` refreshes only the
+payload-copy owner's authored source hash. Capacity preflight now checks
+path/type/size; actual bank/media reuse retains complete integrity hashing.
+No original audio bytes, identifiers, local paths or third-party code are added.
+
 Meridian post-processing Shader identities reuse the current source-produced
 Habitatfall cohort through `record_remap.py`. Only destination indices change;
 source bodies and supplier receipts remain checked. The consumer retains native
@@ -6782,3 +6802,31 @@ relationships and integrity pins, with no game-derived bodies or pixels.
 | Authored recipe | SHA-256 |
 | --- | --- |
 | `owner-whole-scene-postprocess-shader-remap.json` | `a88c83cd062eca5241bdd8a57b2b34a0d211cd093d3e474ac90c9b0c8df138cc` |
+
+The early world-preparation timing seams refresh the reviewed authored
+`IntegratedWorldBoundary.cs` source pin and its audio-owner manifest consumers.
+The change adds six scalar, stack-free diagnostic markers only; no protected
+content, identifiers, generated data or native/audio bytes are published.
+
+## Commando controller supplier refresh (2026-11-04)
+
+The complete Commando recipe selects the current public AnimatorController
+supplier. All 32 selected path IDs retain their qualified lengths and hashes;
+only the supplier identity changes. Existing source, schema and PPtr checks remain.
+No game-derived bodies or new external inputs are included.
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-commando-objects.json` | `b7029a2b1dbb5f417c393840ab8545170b4d46f1b2d0708c1159ec04ab08d25c` |
+
+## Current EventSystem supplier identity (2026-11-04)
+
+The objective and Commando remap/object profiles above select EventSystem by
+assembly, namespace and class in the fresh source-produced player registry.
+Their audited hash rows include this policy and the refreshed supplier links.
+Manual provenance, privacy, licensing and sensitive-content audit: the change
+adds only a public script identity and authored selection policy; no serialized
+body, game code, private path or credential is included. The pinned AssetRipper
+MonoScriptExtensions full-name comparison informs identity selection. The
+producer retains receipt/file/native-type checks and records historical body
+equality as a diagnostic; generated bodies remain ignored.

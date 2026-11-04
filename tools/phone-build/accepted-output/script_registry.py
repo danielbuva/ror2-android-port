@@ -41,11 +41,14 @@ def produce(profile_path, profile_sha256, pc, editor_resources, code_request, ma
         for source, pin in value["provider_pins"].items():
             P.checked(Path(source), (pin["bytes"], pin["sha256"]))
         P.checked(profile_path, (profile_path.stat().st_size, profile_sha256))
+        schemas = output / "schemas.json"
+        schemas.write_text(json.dumps(value["transfer_schemas"], indent=2) + "\n")
         receipt.update(
             success=True,
             files={NAME: {"bytes": path.stat().st_size, "sha256": P.sha(path)}},
             scripts=len(value["script_ids"]),
             objects=len(value["layout"]["objects"]),
+            schemas={"bytes": schemas.stat().st_size, "sha256": P.sha(schemas)},
             provider_pins=value["provider_pins"],
         )
     except Exception as error:
