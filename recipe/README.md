@@ -6726,8 +6726,12 @@ before assigning their saved external IDs; additional source providers append.
 No Sprite, layout value, asset body or null override is retained in this table.
 
 Native release job request audit (2026-11-04):
-`owner-native-job-inputs.json` (`8aac45cbe864a1364ab2e306fae59ff3d94e1ac07a51b2940a473a565125f9cf`)
-contains only dispatcher bindings for acquired SDK/converter inputs and a private
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-native-job-inputs.json` | `8aac45cbe864a1364ab2e306fae59ff3d94e1ac07a51b2940a473a565125f9cf` |
+
+This request contains only dispatcher bindings for acquired SDK/converter inputs and a private
 output location. No game bytes, generated sources, native binaries, private paths
 or credentials are retained. The existing native policy and converter receipt
 checks own compilation and metadata provenance; APK/device gates remain open.
