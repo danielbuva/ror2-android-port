@@ -6114,3 +6114,7 @@ path, and records actual output sizes/hashes; historical byte differences are
 diagnostic. Setup requires current original bundles and a pinned exact-SDK
 constructor witness; scoped readers close on exit and receipts persist. Complete
 APK and device acceptance remain open.
+
+Release-graph Shader jobs with pinned template inputs receive the explicit public
+AssetRipper Git provider. Existing Shader owners validate its revision and resource
+hashes before compiling; the dispatcher retains the resulting pack and receipt.
