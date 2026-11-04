@@ -2371,7 +2371,7 @@ Evidence: `work/coordination/p1-menuhud/current-menu-v1/`; 15 focused tests pass
 Host production 13.659 s, peak RSS 367,804,416 bytes; cleanup passes.
 No readiness closure or device claim; complete phone/install/update gates remain open.
 
-## J1360 — Stabilize audited Menu external provider IDs
+## J1364 — Stabilize audited Menu external provider IDs
 
 2026-11-04. Menu retains 20 audited external provider filenames/order only after
 source resolution, appending the additional original store Sprite provider.
