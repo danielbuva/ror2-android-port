@@ -118,6 +118,60 @@ class LabInstallerUpdatesTests(unittest.TestCase):
                 if fail_capture:
                     self.assertEqual(diagnostic["observed"], {"status": "unavailable", "reason": "capture-failed"})
 
+    def test_install_diagnostic_output_failure_cannot_skip_cleanup_or_replace_failure(self):
+        for mode in ("write", "flush"):
+            for fail_capture in (False, True):
+                with self.subTest(mode=mode, fail_capture=fail_capture), tempfile.TemporaryDirectory() as tmp:
+                    events = []
+
+                    class BrokenDiagnosticOutput(io.StringIO):
+                        pending = False
+
+                        def write(self, value):
+                            if '"mode":"install-diagnostic"' in value:
+                                events.append("diagnostic-output")
+                                if mode == "write":
+                                    raise BrokenPipeError("private-output-error")
+                                self.pending = True
+                            return super().write(value)
+
+                        def flush(self):
+                            if self.pending:
+                                self.pending = False
+                                raise BrokenPipeError("private-output-error")
+                            return super().flush()
+
+                    output, phone = BrokenDiagnosticOutput(), Mock()
+
+                    def fail(*args):
+                        LAB.set_phase("baseline-N-install")
+                        raise LAB.Failure("install-readback-timeout")
+
+                    def capture():
+                        events.append("capture")
+                        if fail_capture:
+                            raise ValueError("private-capture-error")
+                        return {"status": "observed", "stage": "commit-returned", "callback": "none", "session_match": None}
+
+                    phone.capture_install_diagnostic.side_effect = capture
+                    phone.cleanup.side_effect = lambda: events.append("cleanup") or "verified-absent"
+                    with (
+                        patch.object(LAB, "ROOT", Path(tmp)),
+                        patch.dict(os.environ, {"LAB_DEVICE_SERIAL": "synthetic"}),
+                        patch.object(LAB, "read_context", return_value={}),
+                        patch.object(LAB, "Phone", return_value=phone),
+                        patch.object(LAB, "acceptance", side_effect=fail),
+                        redirect_stdout(output),
+                    ):
+                        self.assertEqual(LAB.main([]), 1)
+                    self.assertEqual(events, ["capture", "diagnostic-output", "cleanup"])
+                    phone.cleanup.assert_called_once_with()
+                    self.assertIsNone(LAB.DIAGNOSTICS)
+                    self.assertIn("reason=install-readback-timeout", output.getvalue())
+                    self.assertIn("PASS cleanup packages=verified-absent", output.getvalue())
+                    self.assertNotIn("private-output-error", output.getvalue())
+                    self.assertNotIn("private-capture-error", output.getvalue())
+
     def toolhost_inspection(self, root, args):
         output = io.StringIO()
         with ExitStack() as stack:

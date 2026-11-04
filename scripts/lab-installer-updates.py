@@ -1573,22 +1573,26 @@ def main(argv=None):
         reason = "unexpected-local-error-see-private-lab-environment"
         failure_phase = CURRENT_PHASE
     finally:
-        if phone is not None:
-            if reason and failure_phase in ("baseline-N-install", "update-N-to-N+1", "same-key-rollback"):
+        try:
+            if phone is not None and reason and failure_phase in ("baseline-N-install", "update-N-to-N+1", "same-key-rollback"):
                 try:
                     observed = phone.capture_install_diagnostic()
                 except Exception:
                     observed = {"status": "unavailable", "reason": "capture-failed"}
-                # Capture failure must not replace the original failure or cleanup.
                 print(encoded({"mode": "install-diagnostic", "observed": observed}).decode(), end="", flush=True)
-            set_phase("cleanup")
-            try:
-                cleanup_verified = phone.cleanup() == "verified-absent"
-            except Failure as error:
-                cleanup_reason = str(error)
-            except Exception:
-                cleanup_reason = "unexpected-cleanup-error-see-private-lab-environment"
-        DIAGNOSTICS = None
+        except Exception:
+            # Optional diagnostics, including output, cannot replace the install failure.
+            pass
+        finally:
+            if phone is not None:
+                set_phase("cleanup")
+                try:
+                    cleanup_verified = phone.cleanup() == "verified-absent"
+                except Failure as error:
+                    cleanup_reason = str(error)
+                except Exception:
+                    cleanup_reason = "unexpected-cleanup-error-see-private-lab-environment"
+            DIAGNOSTICS = None
     if reason:
         if args.host_only:
             print("FAIL host-fixture-build phase=" + failure_phase + " reason=" + reason, flush=True)
