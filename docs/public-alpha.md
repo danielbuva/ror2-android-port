@@ -218,6 +218,23 @@ the priority; these gates must pass before any public release.
       the largest regressions and set per-device budgets; no fidelity reduction
       without an explicit, documented user decision.
 
+Game baseline and attribution plan: [retained sustained report](performance-game.md).
+The 30-minute Main Nova observation averages 49.06 FPS; 1.537% of active frames
+exceed 50 ms. Raw frame percentiles, battery drain and throttling onset remain
+unmeasured. Periodic interval-mean percentiles cannot close the pacing gate.
+
+Proposed game budgets (targets, not accepted results), at original visual fidelity:
+
+| Device | Sustained workload | Proposed pacing budget | Energy/thermal budget |
+| --- | --- | --- | --- |
+| Main Nova, 120 Hz panel | 30 minutes of representative ordinary play, each supported stage | Mean >=60 FPS; raw frame p50 <=16.67 ms, p95 <=33.334 ms, p99 <=50 ms; >50 ms frames <=1% | Establish unplugged energy baseline; propose <=10 battery percentage points per 30 minutes, pending measurement. Record temperature/exposure and clock limits; heat alone is not failure. |
+| Ayn Thor, top panel only | Same workload, native display mode recorded | Start with the same 60 FPS/pacing targets; no retained comparable game trace, so qualification stays open | Measure drain and thermal exposure independently; do not transfer Nova results. |
+
+Other hardware needs its own measured baseline before support. For every device,
+report both whole-session and final ten-minute pacing, plus hitch counts and
+throttling evidence. Keep the existing admission, safety-stop and one-second
+thermal sampling policy; proposed performance budgets do not change those limits.
+
 ## Stability and playtests
 
 - [ ] Attribute and bound repeated-session managed growth, then qualify a long
