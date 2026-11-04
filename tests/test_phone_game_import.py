@@ -197,13 +197,16 @@ class GameImportTests(unittest.TestCase):
             nonlocal paused
             paused = value["completed_files"] >= 1
 
-        report = self.importer().run(self.source(), progress=progress, control=lambda: "pause" if paused else None)
+        importer = self.importer()
+        report = importer.run(self.source(), progress=progress, control=lambda: "pause" if paused else None)
         self.assertEqual("paused", report["status"])
         self.assertEqual(1, report["completed_files"])
+        self.assertEqual(sum(len(self.contents[name]) for name in self.opened), report["completed_bytes"])
         completed = self.opened[:]
         self.opened.clear()
-        result = self.importer().run(self.source())
+        result = importer.run(self.source())
         self.assertEqual("complete", result["status"])
+        self.assertEqual(sum(map(len, self.contents.values())), result["completed_bytes"])
         self.assertTrue(set(completed).isdisjoint(self.opened))
 
     def test_pause_and_cancel_mid_file_delete_partial_and_restart(self):
@@ -272,6 +275,7 @@ class GameImportTests(unittest.TestCase):
         with patch.object(G.os, "replace", wraps=os.replace) as replace:
             result = importer.verify()
         self.assertEqual("complete", result["status"])
+        self.assertEqual(sum(map(len, self.contents.values())), result["completed_bytes"])
         self.assertTrue(all(str(call.args[1]).endswith("checkpoint.json") for call in replace.call_args_list))
         self.assertEqual([], list((self.private / "staging").iterdir()))
 

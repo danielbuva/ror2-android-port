@@ -1,85 +1,81 @@
 # Execution backlog
 
-Open work only. Completed and superseded T/S/I/C issue records are archived verbatim in
-[history/execution-backlog-2026-10-16.md](history/execution-backlog-2026-10-16.md); full results
-are in the [journal](PORTING_JOURNAL.md). Remove an item here when it is done and record the
-result in the journal.
+Open work only, reconciled through PR #325 (2026-11-04 UTC). Gate status lives in
+[milestones](milestones.md); release acceptance lives in [public alpha](public-alpha.md).
+Completed records remain in the [journal](PORTING_JOURNAL.md) and
+[historical backlog](history/execution-backlog-2026-10-16.md).
 
-## Gameplay integration
+## Phone-only installation (P1)
 
-- [ ] Compare the opt-in source view against a matched PC reference and resolve
-      measured color/lighting differences; terrain visibility is restored in J1077.
-- [ ] Complete audio mix/spatial/event-attribution/audibility acceptance; source
-      stage clients and bounded release/restart are qualified in J1080.
-- [ ] Unassisted full run with normal-difficulty combat (all current route evidence is assisted).
-- [ ] Commit an actually earned alternate loadout choice through the profile (J493 revisit).
-- [ ] Observe the remaining J503 achievement conditions (near-death charge, two-stack Mountain
-      Shrine, loop) and positive ordinary unlock grants without assists.
-- [ ] Complete default and alternate ability semantics for the base survivors.
-      Callback coverage is broader than complete effects; continue with the exact
-      live variant inventories and output owners (J673, J684, J685).
-- [ ] Finish the opt-in source-stage lifecycle: observe natural teleporter/boss
-      rewards and exit before extending transport and its table/identity turnover.
-      Preserve the strict source retirement and effect-reference guards; current
-      native UI-abandon/defeat and restart pass in J1045/J1046 (J726/J730 resolve J710).
-- [ ] Identify the intermittent LightningStake nonfinite transition across projectile
-      identity turnover; retain native elite behavior while collecting evidence (J667).
-- [ ] Play the nine staged DLC scenes once a truthful expansion-availability path exists (J488).
-- [ ] Repair J1105’s charged-teleporter navigation stall on Scorched Acres;
-      preserve original movement/out-of-bounds semantics before repeating the Siren route.
-- [ ] Resolve native Siren egg targeting/interaction after source entry and exact
-      Listening registration (J812); validate boss start/defeat, rewards, disabled
-      MapZones, exact egg retirement and stage teardown.
-- [ ] Moon/finale/escape: manual sessions only, never navigated autonomously.
+- [ ] Close the three remaining whole-game record selectors: two Clips and one
+      AssetBundle. The former 345-record frontier is closed except for these
+      [three](PORTING_JOURNAL.md#j1347--reconstruct-whole-game-customrendertextures);
+      provider additions through PR #324 do not prove a complete bundle.
+- [ ] Assemble and qualify complete groups, bundles, scene/player/lab data and
+      catalogs from public producers and legitimate current PC input. Historical
+      readiness remains [693/705 available, 685 raw-exact](accepted-build-reconstruction.md);
+      record closure and final-file readiness are separate checks.
+- [ ] Qualify lighting numerically and visually against J850 and document the
+      smallest practical tolerance in an ADR. The GPU floating-point/sampling
+      tolerance class is decided; geometry-probe differences up to 134/255 remain
+      unexplained ([local measurement](../work/coordination/p1-scenes-w/snowy-native-explicit-bake-v2/job.done.json)).
+      Other asset classes remain raw-exact; report raw-exact, drift-explained and
+      tolerance-accepted results separately.
+- [ ] Complete on-phone production without Unity on the phone, retaining IL2CPP,
+      original behaviour and authorized toolchain/distribution boundaries.
+- [ ] Qualify fresh install, in-place update with the same on-device signing key,
+      save retention and **Check for updates** against a public release. Installer
+      UI/release fetch/session install and manifest/incremental rebuild/signing
+      must pass together; partial host or installer tests do not close P1.
 
 ## Stability and performance
 
-- [ ] Qualify J914's retained dependencies over a long repeated-session series
-      while preserving ordinary survivor/profile/entitlement checks. The native
-      menu/restart boundary now has J1045/J1046
-      and [J1066](history/journal-J1-J1177/PORTING_JOURNAL.md#j1066--qualify-native-settings-feedback-and-two-step-end-run-controls)
-      device coverage; original Term/disarm and bounded application-owned Quit pass
-      in J1077. Long-run retention remains open.
-- [ ] Bound corrected repeated-session managed usage and PSS over a completed
-      internal-device series, then qualify a sustained session. J1086 supplies
-      the completed uncorrected measurement;
-      [J1091](history/journal-J1-J1177/PORTING_JOURNAL.md#j1091--qualify-native-heap-capture-and-identify-retained-laboratory-log-payloads)
-      attributes captured retention to diagnostic JSON and returned bullet hits.
-      [J1092](history/journal-J1-J1177/PORTING_JOURNAL.md#j1092--correct-captured-retention-producers-and-preserve-a-failed-commando-series)
-      builds and installs the corrections; preserve its zero-session failure.
-      [J1100](history/journal-J1-J1177/PORTING_JOURNAL.md#j1100--complete-twelve-corrected-commando-sessions-and-retain-a-smaller-growth-frontier)
-      completes all 12 corrected Commando sessions with no runtime errors, but
-      the consistent menu samples retain 0.579 MiB/session positive growth.
-      Attribute that smaller frontier with a separate native heap pair before
-      claiming a full bound; retain the post-collection spike in the evidence.
-- [ ] Integrate original position indicators (`TeamComponent.Init`, player/NPC/boss
-      indicator prefabs and Nameplate text), compared against PC captures (J787).
-- [ ] Attribute the crowded-stage enumeration hot path from the app-scope trace
-  (J761), then reduce measured frame time; 60 FPS is release acceptance.
+- [ ] Attribute remaining managed retention and demonstrate a plateau, then run a
+      sustained session. Matched assisted-session growth fell from about 680 to
+      [219 KB/session](PORTING_JOURNAL.md#j1350--restore-original-console-retention-default-at-composed-startup);
+      the positive slope remains open. Use the
+      [final-menu heap](PORTING_JOURNAL.md#j1353--capture-the-requested-final-menu-heap)
+      for attribution rather than repeating the completed corrections.
+- [ ] Close the [performance release gate](public-alpha.md#performance-release-gate):
+      profile converter time/memory/heat/storage per stage and sustained gameplay
+      FPS, frame pacing, battery and visual fidelity; optimize measured costs
+      without changing bytes or original behaviour. Startup now requests
+      [300 FPS](https://github.com/danielbuva/ror2-android-port/pull/322);
+      sustained 60 FPS acceptance remains open.
+- [ ] Complete physical controls, long-run dependency retention and remaining
+      interrupted-write/ENOSPC/recovery cases in the [alpha checklist](public-alpha.md).
+- [ ] Integrate original position indicators and compare player/NPC/boss/nameplate
+      output against matched PC captures (J787).
+
+## Gameplay integration
+
+- [ ] Resolve source-view color/lighting differences against a matched PC reference.
+- [ ] Complete original audio mix, spatial/event attribution and audibility acceptance;
+      preserve the qualified source clients and bounded release/restart (J1080).
+- [ ] Complete an unassisted normal-difficulty run; current route evidence is assisted.
+- [ ] Commit an actually earned alternate loadout through the profile; observe the
+      remaining near-death charge, two-stack Mountain Shrine and loop achievements,
+      plus ordinary positive unlock grants (J493/J503).
+- [ ] Complete default and alternate base-survivor ability effects against the live
+      variant inventories (J673/J684/J685).
+- [ ] Observe natural teleporter/boss rewards and exit through the source-stage
+      lifecycle, preserving source retirement and effect-reference guards.
+- [ ] Identify the intermittent LightningStake NaN producer across projectile
+      identity turnover; finite controls have not resolved it
+      ([observer owner](ARCHITECTURE.md#lightningstake-source-call-observer)).
+- [ ] Repair native navigation/recovery on the Siren route, then qualify exact egg
+      interaction, boss start/defeat, rewards, MapZones, retirement and teardown.
+- [ ] Play the nine staged DLC scenes after truthful expansion availability (J488).
+- [ ] Moon/finale/escape: manual sessions only.
 
 ## Structural cleanup
 
-Order and rationale: [ARCHITECTURE.md](ARCHITECTURE.md#known-structural-debt).
+Retain the open [architecture debt](ARCHITECTURE.md#known-structural-debt):
 
-Release prerequisites, deferred by operator decision (Phase 2 paused 2026-10-20, J766):
-
-- [ ] `Hidden/Compositing`: R9 builds inside `-executeMethod -quit`, before the startup callback
-      that records the shader (J766). Land `claude/r9-compositing-fix`, then prove it with a
-      working-project build, both baseline checks and an R9 run.
-- [ ] R7's runtime-contracts result: replace the editor export with a host producer (as J714 did
-      for the catalog).
-- [ ] The 46 shader recovery inputs (hash-pinned local analysis inputs).
-- [ ] The 14 inherited-store files (12 need an exact-editor `RecoveredHudBuilder` step).
-- [ ] The provenance map's role in selecting step membership.
-- [ ] Switch the working project's own build to the rebuild path (migration-removal commit 9,
-      [plan](migration-removal-plan.md)).
-
-Open:
-
-- [ ] Drift check after every few accepted baselines: refresh the provenance map from the working
-      project (keep a backup), then replay R1–R8 from a clean checkout of the accepted commit
-      (host only, about 25 min, J750).
-- [ ] Have `Start` call `GameSession` directly instead of selecting the session by id.
-- [ ] Replace the hard-coded run folders in historical actions with named receipts, or retire
-      those actions. The input-update optional-guard dependency now uses an explicit
-      hash-pinned named receipt; scene preparation/audio/teleport dependencies remain.
+- [ ] Finish rebuild equivalence (`Hidden/Compositing`) and replace remaining local
+      runtime-contract/shader/inherited-content/provenance inputs; switch the working
+      build to the rebuild path ([migration plan](migration-removal-plan.md)).
+- [ ] Check provenance drift after accepted baselines and replay R1–R8 when needed.
+- [ ] Have `Start` call `GameSession` directly; reduce shared coordinator state.
+- [ ] Replace historical timestamped input dependencies with named receipts or retire
+      those actions; move still-needed gameplay drivers into tracked owners.
