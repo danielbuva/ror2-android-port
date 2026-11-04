@@ -1316,6 +1316,11 @@ def registry(pc, editor_resources, managed_production, authored_root, packages_r
                 return body[:start] + properties + body[start + 16 :]
             return _script_body(identity, properties)
 
+        # Source importers are registered before CLR loading; measure their
+        # current provider too, including package-owned UI components.
+        for imported in rows:
+            imported["body"] = body_for(imported["identity"], _script_record(imported["body"]))
+
         for identity in original_identities:
             assembly, namespace, class_name = identity
             importer_guid = uuid.UUID(bytes_le=hashlib.md5(assembly.removesuffix(".dll").encode()).digest()).hex
