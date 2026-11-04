@@ -2373,6 +2373,20 @@ Discovery 104.94 s, production 4.73 s, qualification 4.61 s; peak discovery RSS
 Host-only; heat unmeasured. EditorKit typed ownership and J1340 SDK hashes inform
 selection; bounded source recipe only, producer unchanged. Residual three unchanged;
 readiness 693/705 available, 685 raw-exact. Bundle/phone/install/update gates open.
+## J1362 — Cache validated import progress totals
+
+2026-11-04. Existing `owner-apk/game_import.py` tracks completed bytes as files
+are validated/adopted and resets the total for each run, avoiding repeated sums.
+Same 2,749-file input: independently reopened output sizes and SHA-256s all exact;
+output manifest `0279c32cef6e7d4818e14a10fc3970c423e29be392e151bdb00f74237232481a`.
+Evidence: `work/coordination/p1-scenes-w/converter-import-optimization-v1/`;
+`before-v3/done.json` and `after/done.json` include metrics and successful cleanup.
+Profiled host harness wall 78.122 → 63.522 s; user CPU 21.023 → 8.313 s.
+Peak RSS 39,059,456 → 39,747,584 bytes; allocated workspace 4,161,007,616 →
+4,128,145,408 bytes. Sequential host/cache/profile effects limit speedup claims.
+Ruff and 33 focused import checks pass, including same-instance resume/adoption.
+No device/heat/full-pipeline measurement; phone performance remains open.
+Readiness unchanged: 693/705 available, 685 raw-exact; no new reconstruction closure.
 ## J1361 — Prune analyzed heaps and removed build-lane leftovers
 
 2026-11-04. `prune-generated.py` recognizes finished session-memory captures
