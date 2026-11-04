@@ -400,8 +400,12 @@ returns source-sorted script IDs, native layout and bodies; `player_data.py`
 writes them through the existing serialized writer and rechecks all providers.
 `script_registry.py` exposes that same phase independently, using the existing
 registry recipe, game/SDK inputs, code request and managed production. It writes
-one serialized registry and a provider-pinned receipt into a new caller-owned
-directory; the existing identity owner closes CLR/SDK readers before return.
+one serialized registry, receipt-pinned `schemas.json` with the actual current
+CLR transfer trees, and a provider-pinned receipt into a new caller-owned
+directory. Unsupported native transfers retain explicit unchanged-provider hashes
+and original schema witnesses rather than claiming a computed current tree.
+These trees support body compatibility checks; they do not prove loadability.
+The existing identity owner closes CLR/SDK readers before return.
 `record_remap.py` consumes the receipt through its serialized-supplier interface,
 preserving native type hashes as well as body and source provenance. No accepted
 player file or private schema packet is required by this route.
