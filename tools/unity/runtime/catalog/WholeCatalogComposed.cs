@@ -683,8 +683,11 @@ public static class WholeCatalogComposed
     }
     public static void PopulateBodyFields(GameObject[] prefabs)
     {
+        PopulateBodyFields(ReadDefinitionManifest(), prefabs);
+    }
+    internal static void PopulateBodyFields(JObject manifest, GameObject[] prefabs)
+    {
         var byName = prefabs.ToDictionary(value => value.name, StringComparer.Ordinal);
-        var manifest = JObject.Parse(File.ReadAllText(Path.Combine(Application.persistentDataPath, "payload", "whole-catalog.json")));
         foreach (var provider in manifest["providers"])
         {
             var holder = Type.GetType((string)provider["type"], true).GetNestedType("BodyPrefabs");

@@ -2638,6 +2638,21 @@ maximum trace gap 0.421 s; sampled peak PSS 3,828,398 KiB includes startup.
 Adopted update/hash and unchanged profile/settings verified; app stopped, OLED asleep,
 scratch removed, prune complete, lease released. Sustained FPS/speed/alpha gates remain open.
 
+## J1380 — Share a scoped manifest across native holder binding
+
+2026-11-04. Existing PortSession/catalog owners share one synchronous snapshot for
+artifact/item/equipment/body holders; native population/identity/restoration stay intact.
+APK `9a85db8bff938df67fc1adb33e7516e7b9c618ff486d63c31711ea884960a035`, source `48393d8c`.
+Evidence: `work/coordination/alpha-holder-manifest-device-20261104T222126Z/`.
+Production-method identity/restoration fixture and exact-editor code build passed.
+Ordinary menu 22.836 s, Start → world 74.165 s, launch → world 98.010 s;
+holder seam 1.253 s versus prior 4.614 s is diagnostic, without matched cache/stage.
+Distant Roost/HUD and natural StandardLoss observed; report saved/reloaded, no first failure;
+153 native banks ready. Known scene-bank/empty-prop issues remain; no parity claim.
+CPU/GPU peak 87.6 C, 2.988 s above 80 C; battery 30 to 31 C, runtime max gap 0.506 s;
+sampled peak PSS 3,648,539 KiB includes startup. Adopted update/hash, unchanged profiles/settings,
+stopped process, OLED sleep, scratch/prune/lease cleanup verified. Prior art: pinned R2API
+content phases, J432 native holders and J1376 scoped manifests. Sustained/alpha gates remain open.
 ## J1379 — Resolve produced pointer fields and inventory scoped CLR signatures
 
 2026-11-04. The existing record owner accepts exact serialized field paths for

@@ -3677,6 +3677,10 @@ preparation call releases that reference on return; family-cache lifetime and
 relationship registration/restoration remain under their existing owners.
 `test_scoped_definition_manifest.py` exercises the production methods against
 authored source snapshots, including replacement input and identity checks.
+`PortSession` likewise shares a local manifest across synchronous artifact,
+item, equipment and body holder binding. `WholeCatalogComposed` keeps native
+population, identity checks and the existing field-restoration owner; the local
+snapshot ends before drone preparation and adds no retained cache.
 
 Each staged runtime file starts with a two-line header naming its subsystem, whether it is
 on the game path, and its setup and teardown methods (J516).

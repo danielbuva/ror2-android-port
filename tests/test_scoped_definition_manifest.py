@@ -21,6 +21,8 @@ class ScopedDefinitionManifestTests(unittest.TestCase):
                 "internal static T[] CategoryFamily<T>(JObject manifest, string category, IEnumerable<T> selected)",
                 'public static void PopulateDefinitionFields<T>(string family, T[] definitions, string prefix = "")',
                 'internal static void PopulateDefinitionFields<T>(JObject manifest, string family, T[] definitions, string prefix = "")',
+                "public static void PopulateBodyFields(GameObject[] prefabs)",
+                "internal static void PopulateBodyFields(JObject manifest, GameObject[] prefabs)",
             )
         ]
         host = (ROOT / "tests/fixtures/scoped_definition_manifest_host.cs").read_text()
