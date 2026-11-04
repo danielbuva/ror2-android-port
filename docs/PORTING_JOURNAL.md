@@ -2307,3 +2307,14 @@ Production 1.71 s, qualification 3.79 s, peak RSS 287,227,904 bytes.
 Host-only; heat unmeasured. Bounded source recipe only; producer unchanged.
 Residual three unchanged. Readiness stays 693/705 available, 685 raw-exact;
 complete groups, bundle, phone/install/update and runtime gates remain open.
+
+## J1356 — Honor thermal admission exclusions above 80 C
+
+2026-11-04. The existing alpha stability owner removes the historical all-zone
+80 C admission abort. Hot cores wait asleep for the existing 50 C cool-start
+limit; battery still requires at most 35 C. Excluded power/charger/USB heat stays
+in traces and peaks, including above 80 C. Runtime CPU/GPU 95 C duration,
+battery 43 C, charging and sampling-gap checks are unchanged.
+Focused host suite: 53 checks pass; Ruff and staged public audit pass.
+Evidence: `work/coordination/alpha-cooldown-policy-20261104/host-checks.json`.
+No APK generated or installed; sustained device acceptance remains open.
