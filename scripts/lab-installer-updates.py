@@ -579,6 +579,11 @@ class Phone:
         print(encoded({"mode": "ui-null-root-diagnostics", "fallback_reason": fallback_reason, "observed": summary}).decode(), end="", flush=True)
 
     def tap_visible(self, label):
+        # Building can outlast the display timeout after start(). Refresh wake
+        # before each UI interaction without relaunching the Activity: Android's
+        # PackageInstaller consent window must keep its existing focus. WAKEUP
+        # never toggles an already-awake display off; cleanup still sleeps it.
+        self.shell("input", "keyevent", "KEYCODE_WAKEUP", label="device-display-wake")
         tree = self.ui_for((PACKAGE, "com.android.packageinstaller", "com.google.android.packageinstaller")) if label == "Install" else self.ui()
         for node in tree.iter("node"):
             if node.get("text", "").casefold() == label.casefold() and node.get("enabled") == "true":

@@ -978,13 +978,42 @@ class LabInstallerUpdatesTests(unittest.TestCase):
             if document is None:
                 read.assert_not_called()
 
+    def test_ui_interaction_wakes_before_read_without_relaunching_consent(self):
+        phone = LAB.Phone("synthetic-private-selector", 1)
+        events = []
+        tree = ET.fromstring('<hierarchy><node text="Install" enabled="true" bounds="[0,0][20,20]" /></hierarchy>')
+        with (
+            patch.object(phone, "shell", side_effect=lambda *args, **kwargs: events.append(args)),
+            patch.object(phone, "ui_for", side_effect=lambda packages: events.append(("read", packages)) or tree),
+        ):
+            for _ in range(2):
+                self.assertTrue(phone.tap_visible("Install"))
+        self.assertEqual(
+            events,
+            [
+                ("input", "keyevent", "KEYCODE_WAKEUP"),
+                ("read", (LAB.PACKAGE, "com.android.packageinstaller", "com.google.android.packageinstaller")),
+                ("input", "tap", "10", "10"),
+            ]
+            * 2,
+        )
+
+    def test_wake_failure_does_not_read_or_tap_ui(self):
+        phone = LAB.Phone("synthetic-private-selector", 1)
+        with patch.object(phone, "shell", side_effect=LAB.Failure("device-display-wake")) as shell, patch.object(phone, "ui_for") as read:
+            with self.assertRaisesRegex(LAB.Failure, "^device-display-wake$"):
+                phone.tap_visible("Install")
+        shell.assert_called_once_with("input", "keyevent", "KEYCODE_WAKEUP", label="device-display-wake")
+        read.assert_not_called()
+
     def test_install_consent_window_packages_are_scoped_to_install_action(self):
         phone = LAB.Phone("synthetic-private-selector", 1)
-        with patch.object(phone, "ui_for", return_value=ET.Element("hierarchy")) as read:
+        with patch.object(phone, "shell") as shell, patch.object(phone, "ui_for", return_value=ET.Element("hierarchy")) as read:
             self.assertFalse(phone.tap_visible("Install"))
             self.assertEqual(read.call_args.args, ((LAB.PACKAGE, "com.android.packageinstaller", "com.google.android.packageinstaller"),))
             self.assertFalse(phone.tap_visible("Check for updates"))
             self.assertEqual(read.call_args.args, ((LAB.PACKAGE,),))
+            self.assertEqual([call.args for call in shell.call_args_list], [("input", "keyevent", "KEYCODE_WAKEUP")] * 2)
         for package in ("com.android.permissioncontroller", "com.android.packageinstaller", "com.google.android.packageinstaller"):
             with self.subTest(package=package):
                 with self.assertRaises(LAB.Failure):
