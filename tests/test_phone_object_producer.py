@@ -2383,6 +2383,80 @@ class ReflectionProbeImportTests(unittest.TestCase):
 
 
 class FieldlessScriptMetadataTests(unittest.TestCase):
+    def test_sdk_event_system_defaults_require_matching_current_schema(self):
+        def pointer(name):
+            return FIXTURE.node(name, kind="PPtr<Object>", children=[FIXTURE.node("m_FileID", 4, kind="int"), FIXTURE.node("m_PathID", 8, kind="SInt64")])
+
+        fields = [pointer("m_GameObject"), FIXTURE.node("m_Enabled", 1, kind="UInt8", meta=0x4000), pointer("m_Script"), FIXTURE.node("m_Name", 4, kind="int")]
+        stream = io.BytesIO(RECORD_FIXTURE.serialized(b"", FIXTURE.node("Base", kind="MonoBehaviour", children=fields), class_id=114))
+        stream.size = len(stream.getvalue())
+        typ = P.W.read_serialized(stream)["types"][0]
+        nodes = LEGACY_IDENTITY.tree_nodes(typ["tree"])
+        node = LEGACY_IDENTITY._node
+        sdk = LEGACY_IDENTITY._tree(nodes + [node("string", "m_EditorClassIdentifier", -1)])
+        custom = [
+            node("PPtr<$GameObject>", "m_FirstSelected", 12),
+            node("int", "m_FileID", 4, 2),
+            node("SInt64", "m_PathID", 8, 2),
+            node("UInt8", "m_sendNavigationEvents", 1, meta=0x4000),
+            node("int", "m_DragThreshold", 4),
+        ]
+        tree = LEGACY_IDENTITY._tree(nodes + custom)
+        names = ("EventSystem", "UnityEngine.EventSystems", "UnityEngine.UI.dll")
+        properties = LEGACY_IDENTITY.properties_hash(*names, tree, sdk)
+        stream = io.BytesIO()
+        P.aligned_string(stream, "EventSystem")
+        stream.write(bytes(4) + properties)
+        for value in names:
+            P.aligned_string(stream, value)
+        script = stream.getvalue()
+        source = """[SerializeField] [FormerlySerializedAs("oldSelection")] private GameObject m_FirstSelected;
+        [SerializeField] private bool m_sendNavigationEvents = true;
+        [SerializeField] private int m_DragThreshold = 10;"""
+        body = struct.pack("<iqB3xiqI", 0, 41, 1, 0, 99, 0)
+        made, revised = P.sdk_event_system(body, typ, script, source, sdk, LEGACY_IDENTITY)
+        self.assertEqual(made, body + struct.pack("<iqB3xi", 0, 0, 1, 10))
+        self.assertEqual(revised["hash"], properties)
+        self.assertEqual(revised["tree"], tree)
+        changed, _ = P.sdk_event_system(body, typ, script, source.replace("= true", "= false").replace("= 10", "= 15"), sdk, LEGACY_IDENTITY)
+        self.assertEqual(changed[-8:], struct.pack("<B3xi", 0, 15))
+        for invalid in (
+            source.replace("m_DragThreshold", "newField"),
+            source + "[SerializeField] private int extra = 1;",
+            source.replace("= true", "= SomeCall()"),
+        ):
+            with self.subTest(source=invalid), self.assertRaises(ValueError):
+                P.sdk_event_system(body, typ, script, invalid, sdk, LEGACY_IDENTITY)
+        mutation = bytearray(script)
+        mutation[P.script_fields(script)[0]] ^= 1
+        with self.assertRaisesRegex(ValueError, "properties"):
+            P.sdk_event_system(body, typ, bytes(mutation), source, sdk, LEGACY_IDENTITY)
+
+    def test_current_fieldless_supplier_keeps_receipt_and_script_identity_checks(self):
+        stream = io.BytesIO()
+        P.aligned_string(stream, "AuthoredBoundary")
+        stream.write(bytes(20))
+        for value in ("AuthoredBoundary", "Fixture", "Authored.dll"):
+            P.aligned_string(stream, value)
+        script = stream.getvalue()
+        identity = ["Authored.dll", "Fixture", "AuthoredBoundary"]
+        selected = {"record": {}, "script_identity": identity, "sha256": "historical"}
+        row = {"source_produced": {"script_identity": identity}}
+        pin = hashlib.sha256(script).hexdigest()
+        self.assertEqual(P.supplied_script_identity(script, 115, selected, row), pin)
+        for class_id, selection, supplier in (
+            (114, selected, row),
+            (115, selected, {}),
+            (115, {**selected, "script_identity": ["Other.dll", *identity[1:]]}, row),
+        ):
+            with self.subTest(class_id=class_id, selection=selection, supplier=supplier), self.assertRaises(ValueError):
+                P.supplied_script_identity(script, class_id, selection, supplier)
+        with self.assertRaisesRegex(ValueError, "script identity differs"):
+            P.supplied_script_identity(script.replace(b"Authored.dll", b"Mutation.dll"), 115, selected, row)
+        self.assertEqual(P.supplied_script_identity(script, 115, {"sha256": pin}, {}), pin)
+        with self.assertRaisesRegex(ValueError, "record identity differs"):
+            P.supplied_script_identity(script, 115, {"sha256": "historical"}, {})
+
     def test_owned_script_properties_prove_base_only_schema(self):
         def pointer(name):
             return FIXTURE.node(name, kind="PPtr<Object>", children=[FIXTURE.node("m_FileID", 4, kind="int"), FIXTURE.node("m_PathID", 8, kind="SInt64")])
