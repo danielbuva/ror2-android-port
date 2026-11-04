@@ -24,7 +24,7 @@ class PhoneContentTests(unittest.TestCase):
         source = Path(__file__).resolve().parents[1] / "tools/phone-build"
         with tempfile.TemporaryDirectory() as root:
             args = [str(mono), str(compiler), "/nologo", "/target:library", "/define:UNITY_EDITOR", "/out:" + str(Path(root) / "fixture.dll")]
-            args += ["/r:" + str(path) for path in sorted((sdk / "Managed/UnityEngine").glob("*.dll"))]
+            args += ["/r:" + str(path) for path in sorted((sdk / "Managed/UnityEngine").glob("UnityEngine*.dll"))]
             args += ["/r:" + str(sdk / "Managed/UnityEditor.dll")]
             args += [str(source / name) for name in ("ContentFixtureBuilder.cs", "ContentFixture.cs", "NativeScriptSchemaFixture.cs")]
             result = subprocess.run(args, capture_output=True, text=True, timeout=45)
@@ -32,7 +32,7 @@ class PhoneContentTests(unittest.TestCase):
 
     def test_native_content_requires_each_typed_load_and_bound_bundle_destruction(self):
         with tempfile.TemporaryDirectory() as root:
-            attempt = Path(root)
+            attempt = Path(root).resolve()
             bundle = attempt / "authored.bundle"
             bundle.write_bytes(b"authored native request control")
             request = {
