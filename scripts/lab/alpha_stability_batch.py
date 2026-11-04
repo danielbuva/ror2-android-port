@@ -251,8 +251,6 @@ class _GameThermalOwner:
             if self.battery["level"] > 85:
                 raise RuntimeError("Battery charge separation/limit admission refused; report without retry")
             self.hot_core_zones.clear()
-            if maximum > 80:
-                raise RuntimeError("Readable thermal zone exceeded 80 C hard abort")
         else:
             if self.battery["celsius"] >= 43:
                 raise RuntimeError("Battery at or above 43 C")
