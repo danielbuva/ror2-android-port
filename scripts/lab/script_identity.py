@@ -1285,6 +1285,7 @@ def registry(pc, editor_resources, managed_production, authored_root, packages_r
     with closing(_RegistryTypes(managed, providers, pin, native, native_templates)) as clr:
         schemas = {identity: trees for identity, trees in schemas.items() if identity[0] in providers or (managed / identity[0]).is_file()}
         clr.cache_fields(schemas)
+        transfer_schemas = []
 
         def body_for(identity, previous=None):
             assembly, namespace, class_name = identity
@@ -1297,8 +1298,18 @@ def registry(pc, editor_resources, managed_production, authored_root, packages_r
                 provider_path = Path(provider["path"]) if provider else original_path
                 if previous is None or pin(provider_path)["sha256"] != actual["sha256"]:
                     raise ValueError("unsupported native registry transfer with changed/new provider: " + str(identity))
+                transfer_schemas.append(
+                    {
+                        "identity": identity,
+                        "unsupported": unsupported,
+                        "unchanged_provider_sha256": actual["sha256"],
+                        "source_trees": [tree.hex() for tree in schemas.get(identity, [])],
+                    }
+                )
                 return previous["body"]
-            properties = clr.script_hash(identity, schemas)
+            tree = clr.script_schema(identity, schemas)
+            properties = properties_hash(class_name, namespace, assembly, tree, native) if tree is not None else bytes(16)
+            transfer_schemas.append({"identity": identity, "tree": tree.hex() if tree is not None else None, "properties": properties.hex()})
             if previous:
                 body = previous["body"]
                 start = (4 + struct.unpack_from("<I", body)[0] + 3) // 4 * 4 + 4
@@ -1361,6 +1372,7 @@ def registry(pc, editor_resources, managed_production, authored_root, packages_r
             "layout": layout,
             "bodies": bodies,
             "script_ids": script_ids,
+            "transfer_schemas": transfer_schemas,
             "provider_pins": pins,
             "original_script_identities": {(member, pid): identity for member, scripts in member_scripts.items() for pid, identity in scripts.items()},
         }
