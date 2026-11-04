@@ -301,6 +301,8 @@ The extra MCP assembly name is hash metadata only: no MCP DLL is a supplier,
 root or output. Those API defines are independent of the IL2CPP managed compiler
 defines and do not change the player's backend.
 
+The acquired runtime may contain both pinned macOS and Linux LLVM backends;
+the receipt records all verified backends and the compiler loads its host library.
 The owner invokes unchanged `bcl.exe +burstc`, writes a fresh ARM64 library and
 preservation XML, and requires the XML to equal the target's existing linker
 roots before stripping. `--burst-only` is a current bounded qualification that

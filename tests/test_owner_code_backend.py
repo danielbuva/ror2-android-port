@@ -23,12 +23,12 @@ class OwnerCodeBackendTests(unittest.TestCase):
         for folder in (managed, runtime, ndk):
             folder.mkdir()
         (managed / "Authored.dll").write_bytes(b"independent managed input witness")
-        for name in ("bcl.exe", "libfixture.so"):
+        for name in ("bcl.exe", "libfixture.so", "libfixture.dylib"):
             (runtime / name).write_bytes(b"independent acquired-tool witness")
         tools = {"command": [str(Path(sys.executable).resolve())], "runtime": str(runtime), "ndk": str(ndk)}
         policy = {
             "runtime_files": {"bcl.exe": BACKEND.native.sha(runtime / "bcl.exe")},
-            "backends": {"libfixture.so": BACKEND.native.sha(runtime / "libfixture.so")},
+            "backends": {name: BACKEND.native.sha(runtime / name) for name in ("libfixture.so", "libfixture.dylib")},
             "roots": ["Authored.dll"],
             "assembly_defines": {"Authored": ["AUTHORED"], "DeveloperMetadataOnly": ["SDK_FLAG"]},
             "options": ["--platform=Android", "--debug=Full"],
@@ -58,6 +58,7 @@ class OwnerCodeBackendTests(unittest.TestCase):
                 result = BACKEND.burst(tools, policy, managed, output)
             self.assertTrue(result["success"])
             self.assertFalse(result["runtime_qualified"])
+            self.assertEqual(json.loads((output / "inputs.json").read_text())["backends"], ["libfixture.so", "libfixture.dylib"])
             self.assertFalse((managed / "DeveloperMetadataOnly.dll").exists())
 
     def test_burst_refuses_missing_roots_and_tool_drift_before_output(self):

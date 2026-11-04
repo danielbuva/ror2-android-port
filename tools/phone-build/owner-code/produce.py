@@ -164,8 +164,8 @@ def burst(tools, policy, managed, output):
         if native.sha(runtime / native.relative(name)) != expected:
             raise ValueError("pinned Burst compiler drift: " + name)
     backends = [name for name, expected in policy["backends"].items() if (runtime / name).is_file() and native.sha(runtime / name) == expected]
-    if len(backends) != 1:
-        raise ValueError("one pinned Burst LLVM backend required")
+    if not backends:
+        raise ValueError("pinned Burst LLVM backend required")
     providers, compiler = file_map(managed), file_map(runtime)
     runner = native.sha(executable)
     roots = [native.relative(name) for name in policy["roots"]]
@@ -188,7 +188,7 @@ def burst(tools, policy, managed, output):
         options += ["--root-assembly=" + str(managed / name) for name in roots]
         response = output / "options.rsp"
         response.write_text("\n".join(options) + "\n")
-        native.write(output / "inputs.json", {"managed": providers, "runtime": compiler, "runner_sha256": runner, "backend": backends[0]})
+        native.write(output / "inputs.json", {"managed": providers, "runtime": compiler, "runner_sha256": runner, "backends": backends})
         environment = dict(os.environ, ANDROID_NDK_ROOT=str(ndk), BURST_ANDROID_MIN_API_LEVEL=str(policy["api_level"]), TMPDIR=str(output / "tmp"))
         native.invoke([*tools["command"], str(runtime / "bcl.exe"), "+burstc", "@" + str(response)], output, "burst", env=environment)
         library = output / "lib_burst_generated.so"
