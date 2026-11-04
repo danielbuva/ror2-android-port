@@ -2077,15 +2077,27 @@ runs the same host checks directly; macOS retains its Unity-read sandbox and
 optional case-sensitive volume. Its support helper
 `scripts/ci-hdiutil-volume.py` requests a 30 s timeout for each optional image
 create/attach CLI, killing and reaping only its own timed-out caller. Ordinary
-setup failure uses the existing temporary-directory fallback; an uncertain
-attach preserves the scratch image without detach/removal. Verification retains
-its original exit status. Linux scratch removal completes before exit so a terminated
-executor cannot strand the checkout. Disposable macOS host-volume cleanup runs
-separately after verification, with phase logs in Git-private `ci-cleanup/`
-metadata; a failed detach preserves
-the scratch directory rather than deleting a mounted volume. Cleanup never
-opens or stops an editor or uses a device. A blocked cleanup cannot hold a
-completed verification, and failing verification still refuses the push.
+setup failure uses the existing temporary-directory fallback.
+`scripts/ci-scratch.py` supervises each CI shell in a separate process group,
+records its owner PID and child group, and performs synchronous cleanup after
+ordinary completion (exit 0–127). This relies on CI's synchronous child contract:
+check/cache helpers and test fixtures must join their work before returning.
+PID/group checks are additional removal vetoes, not proof that arbitrary detached
+descendants are gone. INT/TERM/HUP terminate the owned group but preserve uncertain
+descendant state. Startup recovery considers only same-user, recorded, ordinarily
+completed dead-owner `ci-local.*` directories older than 30 minutes. Live groups,
+missing ownership records, aliases and concurrent cleanup locks refuse removal.
+SIGKILL and other abnormal exits leave durable uncertainty: age alone never
+clears it. These runs require owner reconciliation; automatic SIGKILL recovery
+is not claimed.
+On macOS, current `hdiutil info -plist` must identify the exact owned image before
+device-based detach (with a forced fallback). An interrupted attachment retains
+an explicit pending marker: empty inventory does not prove the service cannot
+attach later. Pending attachments, uncertain mappings, remaining mounts or failed
+detach preserve scratch. Linux checks mountinfo, including same-device bind mounts,
+and removes only scratch without an image. Original verification exit status is
+retained. Cleanup never opens an editor or uses a lab device.
+
 
 The user's legitimate PC installation goes in; an ARM64 IL2CPP APK plus an independently
 synced content payload comes out. Everything game-derived stays under the ignored `work/`.
