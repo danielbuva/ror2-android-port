@@ -252,6 +252,16 @@ class ScriptRegistryTests(unittest.TestCase):
                 with self.assertRaises(DiscoveryReached):
                     S.registry(root, root / "sdk", root, root, root, root / "input-hashes.json", profile, writer)
 
+            # Current receipts retain source hashes and require original metadata.
+            (root / "Fixture.cs").write_text("authored fixture")
+            (root / "input-hashes.json").write_text(json.dumps({"packages": [{"inputs": {"Fixture.cs": "0" * 64}}]}))
+            with patch.object(S, "_native_subtrees", return_value=[[S._node("int", "tangentMode", 4)]]):
+                with self.assertRaises(FileNotFoundError):
+                    S.registry(root, root / "sdk", root, root, root, root / "input-hashes.json", profile, writer)
+                (root / "Fixture.cs.meta").write_text("guid: " + "a" * 32)
+                with self.assertRaisesRegex(ValueError, "source provider drift"):
+                    S.registry(root, root / "sdk", root, root, root, root / "input-hashes.json", profile, writer)
+
     def test_original_membership_discards_parser_ownership_after_discovery(self):
         with tempfile.TemporaryDirectory() as directory:
             managed = Path(directory)

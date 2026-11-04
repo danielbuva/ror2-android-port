@@ -77,6 +77,8 @@ and actual managed compiler source hashes. Historical target requests retain
 their pinned cohort. Existing importer GUIDs survive; first-import owners use
 stable converter path identities. The registry and all dependent writers share
 the freshly allocated script ID map; compiler/manifest/layout receipts stay pinned.
+Current package importers use the fresh compiler's source hashes and selection,
+with original adjacent metadata pinned by the registry owner.
 
 `player_ui.py` owns current source Menu graph normalization, deterministic local
 IDs, SDK component construction and typed links to the existing player suppliers.
