@@ -79,6 +79,10 @@ stable converter path identities. The registry and all dependent writers share
 the freshly allocated script ID map; compiler/manifest/layout receipts stay pinned.
 Current package importers use the fresh compiler's source hashes and selection,
 with original adjacent metadata pinned by the registry owner.
+Standalone scripted resource files resolve their original MonoScript member and
+object identity through that same registry before writing body pointers and native
+script tables. Historical destination IDs remain diagnostics; original body and
+reference contracts are checked before the current identity is applied.
 
 `player_ui.py` owns current source Menu graph normalization, deterministic local
 IDs, SDK component construction and typed links to the existing player suppliers.
