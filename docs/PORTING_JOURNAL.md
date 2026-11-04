@@ -2372,6 +2372,16 @@ Peak RSS 39,059,456 → 39,747,584 bytes; allocated workspace 4,161,007,616 →
 Ruff and 33 focused import checks pass, including same-instance resume/adoption.
 No device/heat/full-pipeline measurement; phone performance remains open.
 Readiness unchanged: 693/705 available, 685 raw-exact; no new reconstruction closure.
+## J1361 — Prune analyzed heaps and removed build-lane leftovers
+
+2026-11-04. `prune-generated.py` recognizes finished session-memory captures
+with matching successful analysis receipts and lane leftovers with owned removal
+evidence. It preserves logs/receipts, recent content, keep markers and protected
+paths; cold-storage symlinks are unlinked without deleting targets. Linked
+worktrees use the shared canonical roots.
+Evidence: `work/coordination/prune-snapshots-20261104/focused-checks.json`
+(16 synthetic host tests; Ruff passed). No APK or device behaviour changed.
+Older heaps without successful matching analysis remain retained.
 ## J1360 — Measure host APK finalization and private packet packaging
 
 2026-11-04. Reusable `profile_stage.py` records wall/CPU/RSS, sampled logical and
