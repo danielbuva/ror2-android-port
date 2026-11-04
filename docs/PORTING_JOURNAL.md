@@ -2371,6 +2371,15 @@ Evidence: `work/coordination/p1-menuhud/current-menu-v1/`; 15 focused tests pass
 Host production 13.659 s, peak RSS 367,804,416 bytes; cleanup passes.
 No readiness closure or device claim; complete phone/install/update gates remain open.
 
+## J1366 — Exercise projectile impact, pause and disposal on the host
+
+2026-11-04. Existing LightningStake host fixture executes extracted production
+finite checks and observation/disposal paths with authored scalar collaborators.
+Finite terrain-impact inputs survive paused observations and resume; an injected
+physical NaN is detected despite finite network position and collider geometry.
+Detach-before-destruction retains scalar history and prevents stale reads.
+Evidence: `tests/fixtures/lightning_stake_observer_host.cs`; focused host test passes.
+No APK, runtime behavior or device claim; native NaN producer remains unresolved.
 
 ## J1365 — Supply source-derived bundle managed providers
 
