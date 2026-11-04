@@ -1156,16 +1156,18 @@ def registry_records(profile_root, selected, pc, editor_resources, code_request,
     current_pins = {}
     if "target" in request:
         authored_root = request["target"]["source"]
+        package_manifest = packages.parent / "input-hashes.json"
     else:
         authored_root = Path(__file__).resolve().parents[3]
         registry_recipe, current_pins = current_registry_bindings(registry_recipe, managed_production, authored_root)
+        package_manifest = Path(managed_production) / "packages/inputs.json"
     value = SCRIPT.registry(
         pc,
         editor_resources,
         managed_production,
         authored_root,
         packages,
-        packages.parent / "input-hashes.json",
+        package_manifest,
         registry_recipe,
         W,
     )

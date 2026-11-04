@@ -1473,6 +1473,7 @@ class RegistryRequestAdapterTests(unittest.TestCase):
         with patch.object(P, "current_registry_bindings", return_value=(bound, pins)), patch.object(P.SCRIPT, "registry", return_value=value) as leaf:
             self.run_adapter()
         self.assertEqual(leaf.call_args.args[6], bound)
+        self.assertEqual(leaf.call_args.args[5], self.managed / "packages/inputs.json")
         self.assertEqual(value["provider_pins"][str(self.input_hashes)], pins[str(self.input_hashes)])
 
     def test_early_recipe_drift_is_refused_before_registry_production(self):
