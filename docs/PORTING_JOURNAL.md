@@ -2371,6 +2371,15 @@ Evidence: `work/coordination/p1-menuhud/current-menu-v1/`; 15 focused tests pass
 Host production 13.659 s, peak RSS 367,804,416 bytes; cleanup passes.
 No readiness closure or device claim; complete phone/install/update gates remain open.
 
+## J1367 — Inventory fallback Material local input and unblock host audit
+
+2026-11-04. LOCAL_STATE names the exact-SDK builtin Shader file required by the
+fallback Material keyword producer, its pins and generated record-pack owner.
+Audit of build/producer changes since 2026-10-30 found no new implicit work paths.
+Observed shared-host hook/profile fixture timeouts now have bounded 300 s deadlines;
+profile deadlines reuse the existing CI-fix work. Assertions remain unchanged.
+Evidence: `work/coordination/local-state-doc/audit.md`; 30 producer and 3 fixture tests pass.
+No APK or device claim; bootstrap and phone install/update gates remain open.
 ## J1366 — Exercise projectile impact, pause and disposal on the host
 
 2026-11-04. Existing LightningStake host fixture executes extracted production
