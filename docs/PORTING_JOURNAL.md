@@ -2371,7 +2371,7 @@ Evidence: `work/coordination/p1-menuhud/current-menu-v1/`; 15 focused tests pass
 Host production 13.659 s, peak RSS 367,804,416 bytes; cleanup passes.
 No readiness closure or device claim; complete phone/install/update gates remain open.
 
-## J1360 — Enforce dev command and action lifecycle labels
+## J1365 — Enforce dev command and action lifecycle labels
 
 2026-11-04. `./dev --help` labels all 24 top-level commands; lane help labels
 create/list/remove. ARCHITECTURE classifies editor/perf selectors and defaults;
