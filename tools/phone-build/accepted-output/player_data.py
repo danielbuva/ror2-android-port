@@ -1161,7 +1161,10 @@ def current_registry_bindings(recipe, managed_production, root):
     files, identities = {}, {}
     for name in runtime:
         path = OBJECTS.M.safe_input(root, name)
-        digest = sources.get(str(path))
+        # Compiler receipts may come from another checkout of the same sources.
+        # Relative identity must be unique and the local bytes must still match.
+        matches = [digest for source, digest in sources.items() if source.endswith("/" + name)]
+        digest = matches[0] if len(matches) == 1 else None
         if digest is None or sha(path) != digest:
             raise ValueError("current registry source was not compiled: " + name)
         files[name] = digest

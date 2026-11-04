@@ -1506,6 +1506,14 @@ class RegistryRequestAdapterTests(unittest.TestCase):
         self.assertRegex(bound["authored"]["guids"][names[0]], "^[a-f0-9]{32}$")
         self.assertEqual(bound, P.current_registry_bindings(recipe, self.managed, self.root)[0])
         self.assertEqual(len(pins), 4)
+        other_sources = {str(self.root / "other-checkout" / Path(name).relative_to(self.root)): digest for name, digest in sources.items()}
+        compiler = self.managed / "gameplay/inputs.json"
+        compiler.write_text(json.dumps({"sources": other_sources}))
+        self.assertEqual(bound, P.current_registry_bindings(recipe, self.managed, self.root)[0])
+        compiler.write_text(json.dumps({"sources": dict(sources, **other_sources)}))
+        with self.assertRaisesRegex(ValueError, "was not compiled"):
+            P.current_registry_bindings(recipe, self.managed, self.root)
+        compiler.write_text(json.dumps({"sources": other_sources}))
         (self.root / names[0]).write_text("changed after compilation")
         with self.assertRaisesRegex(ValueError, "was not compiled"):
             P.current_registry_bindings(recipe, self.managed, self.root)
