@@ -14,7 +14,7 @@ import stat
 ROOT = Path(__file__).resolve().parents[5]
 WORK = (ROOT / "work").resolve()
 STAGER = Path(__file__).resolve().parent / "stage_original_game_banks.py"
-STAGER_SHA256 = "ecc8889a12935870bb69f1914b6f3d855199fb245c527ac32dcf54b0977f5d01"
+STAGER_SHA256 = "922eb5012296683c646c7a0272645bfa895f7ae591f45c64ba8a3fca68d15026"
 INPUT_ID = "6af7ed94619fe1b4346974b4486afa03a8d1625a7820e92da0ff74d57208fe88"
 PREFAB_SHA256 = "7f074267744a3f7652349572f4aa88f48cd3d43328ba629f686288f08c4be6af"
 BANK_INDEX_SHA256 = "f1d41954cb78c582a6c8a5fbbca58148057a120b01e4bb09cd47f8f107d66326"
