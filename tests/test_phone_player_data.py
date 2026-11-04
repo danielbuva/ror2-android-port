@@ -1441,6 +1441,40 @@ class RegistryRequestAdapterTests(unittest.TestCase):
         for path, expected in result["provider_pins"].items():
             P.checked(Path(path), (expected["bytes"], expected["sha256"]))
 
+    def test_current_binding_uses_compiled_sources_and_stable_importers(self):
+        recipe = {"authored": {"guids": {"android/Assets/LabDiagnostics.cs": "a" * 32}, "support_sources": [], "generated": [], "execution_orders": {}}}
+        (self.root / "recipe/runtime-sources.json").write_text(json.dumps(["runtime/New.cs"]))
+        (self.root / "recipe/project-layout.json").write_text(json.dumps({"runtime_source_guids": {"runtime/New.cs": None}}))
+        names = ["tools/unity/runtime/New.cs", "android/Assets/LabDiagnostics.cs"]
+        sources = {}
+        for name in names:
+            path = self.root / name
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text("public class " + path.stem + " {}")
+            sources[str(path)] = P.sha(path)
+        (self.managed / "gameplay").mkdir()
+        (self.managed / "gameplay/inputs.json").write_text(json.dumps({"sources": sources}))
+        (self.managed / "result.json").write_text(json.dumps({"success": True, "phase": "managed-produced"}))
+        bound, pins = P.current_registry_bindings(recipe, self.managed, self.root)
+        self.assertEqual(bound["authored"]["runtime_sources"], names)
+        self.assertEqual(bound["authored"]["guids"][names[1]], "a" * 32)
+        self.assertRegex(bound["authored"]["guids"][names[0]], "^[a-f0-9]{32}$")
+        self.assertEqual(bound, P.current_registry_bindings(recipe, self.managed, self.root)[0])
+        self.assertEqual(len(pins), 4)
+        (self.root / names[0]).write_text("changed after compilation")
+        with self.assertRaisesRegex(ValueError, "was not compiled"):
+            P.current_registry_bindings(recipe, self.managed, self.root)
+
+    def test_current_request_uses_current_binding_and_keeps_its_pins(self):
+        self.request.write_text(json.dumps({"source_inputs": {"packages": str(self.packages)}}))
+        value = self.leaf_result()
+        bound = {"authored": {"current": True}}
+        pins = {str(self.input_hashes): {"bytes": self.input_hashes.stat().st_size, "sha256": P.sha(self.input_hashes)}}
+        with patch.object(P, "current_registry_bindings", return_value=(bound, pins)), patch.object(P.SCRIPT, "registry", return_value=value) as leaf:
+            self.run_adapter()
+        self.assertEqual(leaf.call_args.args[6], bound)
+        self.assertEqual(value["provider_pins"][str(self.input_hashes)], pins[str(self.input_hashes)])
+
     def test_early_recipe_drift_is_refused_before_registry_production(self):
         self.recipe.write_text(self.recipe.read_text() + " ")
         with patch.object(P.SCRIPT, "registry") as leaf, self.assertRaisesRegex(ValueError, "bytes differ"):
