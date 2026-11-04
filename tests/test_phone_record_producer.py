@@ -66,7 +66,7 @@ def fixture():
     return body, schema
 
 
-def serialized(body, schema, class_id=74):
+def serialized(body, schema, class_id=74, native_type_hash=bytes(16)):
     strings, nodes = bytearray(), []
 
     def label(value):
@@ -83,7 +83,7 @@ def serialized(body, schema, class_id=74):
 
     visit(schema, 0)
     tree = struct.pack("<II", len(nodes), len(strings)) + b"".join(nodes) + strings
-    typ = {"class_id": class_id, "stripped": 0, "script_type": -1, "hash": bytes(16), "tree": tree, "dependencies": []}
+    typ = {"class_id": class_id, "stripped": 0, "script_type": -1, "hash": native_type_hash, "tree": tree, "dependencies": []}
     if class_id == 114:
         typ["script_id"] = bytes(range(16))
     layout = {
@@ -663,6 +663,84 @@ class AnimationProducerTests(unittest.TestCase):
                 path.write_text(json.dumps(profile))
                 with self.assertRaisesRegex(ValueError, "generic object operation"):
                     A.produce(path, A.B.sha(path), pc, root / "operation-drift")
+
+    def test_release_lighting_records_preserve_schema_native_identity_and_data(self):
+        name = F.text("m_Name")
+        fixtures = [
+            (
+                850595691,
+                F.node("Base", kind="LightingSettings", children=[name, F.node("m_AlbedoBoost", 4, kind="float"), F.node("m_BounceScale", 4, kind="float")]),
+                F.vector(b"Authored", 8) + struct.pack("<II", 1, 2048),
+            ),
+            (
+                363,
+                F.node(
+                    "Base",
+                    kind="OcclusionCullingData",
+                    children=[
+                        name,
+                        F.array("m_PVSData", F.node("data", 1)),
+                        F.array(
+                            "m_Scenes",
+                            F.node(
+                                "data",
+                                children=[
+                                    F.node("scene", 16, kind="GUID"),
+                                    *(F.node(n, 4) for n in ("indexRenderers", "sizeRenderers", "indexPortals", "sizePortals")),
+                                ],
+                            ),
+                        ),
+                    ],
+                ),
+                F.vector(b"Authored", 8) + F.vector(b"PVS", 3) + F.vector(bytes(range(16)) + struct.pack("<4I", 0, 2, 2, 1), 1),
+            ),
+        ]
+        native_hash = bytes(range(16))
+        for class_id, schema, body in fixtures:
+            with self.subTest(class_id=class_id), tempfile.TemporaryDirectory() as temporary:
+                root = Path(temporary)
+                pc = root / "pc"
+                pc.mkdir()
+                source = pc / "authored.bundle"
+                source.write_bytes(F.bundle([("CAB-authored", serialized(body, schema, class_id, native_hash), 4)]))
+                target = {
+                    "bundle": "authored-target",
+                    "member": "CAB-target",
+                    "path_id": -88,
+                    "bytes": len(body),
+                    "sha256": hashlib.sha256(body).hexdigest(),
+                    "native_type_hash": native_hash.hex(),
+                    "transform": {"references": []},
+                }
+                profile = {
+                    "input_id": A.M.INPUT_ID,
+                    "bundles": [
+                        {
+                            "path": source.name,
+                            "sha256": A.B.sha(source),
+                            "members": [
+                                {"name": "CAB-authored", "objects": [{"path_id": 77, "class_id": class_id, "sha256": target["sha256"], "outputs": [target]}]}
+                            ],
+                        }
+                    ],
+                }
+                path = root / "profile.json"
+                path.write_text(json.dumps(profile))
+                self.assertTrue(A.produce(path, A.B.sha(path), pc, root / "output")["success"])
+                self.assertEqual((root / "output/objects.bin").read_bytes(), body)
+                row = json.loads((root / "output/index.jsonl").read_text())
+                self.assertEqual(row["native_type_hash"], native_hash.hex())
+                target["native_type_hash"] = bytes(16).hex()
+                path.write_text(json.dumps(profile))
+                with self.assertRaisesRegex(ValueError, "native type identity"):
+                    A.produce(path, A.B.sha(path), pc, root / "hash-drift")
+                source_stream = io.BytesIO(serialized(body, schema, class_id))
+                source_stream.size = len(source_stream.getvalue())
+                native_type = A.W.read_serialized(source_stream)["types"][0]
+                with self.assertRaisesRegex(ValueError, "unparsed|outside original body"):
+                    A.transform_generic(body + b"extra", class_id, {}, source_type=native_type)
+                with self.assertRaisesRegex(ValueError, "preserve release data"):
+                    A.transform_generic(body, class_id, {"canonical": "zero-and-nan"}, source_type=native_type)
 
     def test_expanding_wave_callback_uses_source_fields_and_retains_other_bytes(self):
         def scalar(name, number, kind="float"):

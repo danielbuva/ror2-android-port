@@ -12,6 +12,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 | --- | --- | --- | --- |
 | [J1378](PORTING_JOURNAL.md#j1378--attribute-ordinary-startup-within-existing-audio-and-body-owners) | 2026-11-04 | Attribute ordinary startup within existing audio and body owners | 2026-11-04. |
 | [J1377](PORTING_JOURNAL.md#j1377--bind-sdk-metadata-for-release-graph-object-producers) | 2026-11-04 | Bind SDK metadata for release-graph object producers | 2026-11-04. |
+| [J1378](PORTING_JOURNAL.md#j1378--source-release-lighting-records-and-typed-native-loading) | 2026-11-04 | Source release lighting records and typed native loading | 2026-11-04. |
 | [J1376](PORTING_JOURNAL.md#j1376--share-a-scoped-relationship-manifest-during-results-preparation) | 2026-11-04 | Share a scoped relationship manifest during results preparation | 2026-11-04. |
 | [J1375](PORTING_JOURNAL.md#j1375--attribute-ordinary-results-preparation-on-device) | 2026-11-04 | Attribute ordinary results preparation on device | Existing results seams emit monotonic/frame markers with Save/order unchanged. |
 | [J1373](PORTING_JOURNAL.md#j1373--partition-ordinary-world-preparation-on-device) | 2026-11-04 | Partition ordinary world preparation on device | Six early seams in the existing world owner separate seven preparation blocks; markers keep report writes, scheduling and original logging policy intact. |
