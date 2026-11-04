@@ -6,6 +6,9 @@ Current. Every agent runs this when it finishes a build/run task (AGENTS.md
 build-cache entries, staged symbol packages, APK/AAB/symbol/libil2cpp copies,
 payload copies and Unity Library/Bee/il2cppOutput trees inside experiment, coordination and old
 rebuild roots. Receipts, logs, captures, JSON evidence and recipes stay.
+Finished session-memory heaps are disposable after successful analysis; removed
+build-lane leftovers are disposable with their owner's removal receipt. Cold
+storage symlinks are unlinked only, never deleted through.
 
 Protected: every APK SHA-256 named in PORTING_STATE.md, docs/BASELINE.md,
 docs/history-retention.md, the codex coordination lock, current-build, iteration-base and
@@ -92,7 +95,9 @@ def protected_state(work, extra):
             candidate = Path(match[1])
             candidate = candidate if candidate.is_absolute() else ROOT / candidate
             # Shallow roots such as work/experiments would protect everything.
-            if candidate.is_relative_to(work) and len(candidate.relative_to(work).parts) >= 3:
+            if (candidate.is_relative_to(work) and len(candidate.relative_to(work).parts) >= 3) or (
+                candidate.is_relative_to(ROOT / ".local/build-lanes") and len(candidate.relative_to(ROOT / ".local/build-lanes").parts) >= 1
+            ):
                 paths.add(candidate.resolve())
     return hashes, paths
 
@@ -105,6 +110,14 @@ def kept(path, work):
             return True
         current = current.parent
     return False
+
+
+def read_receipt(path):
+    try:
+        value = json.loads(path.read_text())
+        return value if isinstance(value, dict) else {}
+    except (OSError, ValueError):
+        return {}
 
 
 def is_protected_path(path, paths):
@@ -129,13 +142,17 @@ class Planner:
         sys.path.insert(0, str(ROOT / "scripts/lab"))
         from build_lock import host_build_lock
 
-        for marker in sorted((ROOT / ".local/build-lanes").glob("*/lane.json")):
-            lane = marker.parent
+        removed = [read_receipt(p) for p in (self.work / "coordination/build-lanes").glob("*/removed.json")]
+        root = ROOT / ".local/build-lanes"
+        for lane in sorted(root.iterdir()) if root.is_dir() and not root.is_symlink() else []:
+            if lane.name.startswith(".") or not lane.is_dir():
+                continue
+            marker = lane / "lane.json"
             lock = lane.parent / ".locks" / (lane.name + ".lock")
-            if max(marker.stat().st_mtime, lock.stat().st_mtime if lock.exists() else 0) >= self.cutoff:
+            if max(marker.stat().st_mtime if marker.exists() else 0, lock.stat().st_mtime if lock.exists() else 0) >= self.cutoff:
                 self.keep(lane, "recent build lane operation; shared APFS blocks")
                 continue
-            if not self.old(lane):
+            if not self.old(lane) or lane.is_symlink() and not self.old(lane.resolve()):
                 self.keep(lane, "recent build lane; shared APFS blocks")
                 continue
             receipts = [lane / "server.json", lane / "checkout/work/editor/lab-process.json"]
@@ -159,11 +176,72 @@ class Planner:
             except TimeoutError:
                 self.keep(lane, "build lane lock is held")
                 continue
-            self.add(lane, "build lane", name=lane.name)
+            facts = read_receipt(marker)
+            removal = any(
+                r.get("removed") is True
+                and r.get("name") == lane.name
+                and r.get("checkout") == str(lane / "checkout")
+                and all(r.get(k) == v for k, v in facts.items())
+                for r in removed
+            )
+            if removal:
+                self.add(lane, "removed build lane")
+            elif marker.is_file() and not lane.is_symlink():
+                self.add(lane, "build lane", name=lane.name)
+            else:
+                self.keep(lane, "no matching lane removal receipt")
+
+    def snapshots(self):
+        """Keep capture receipts; discard only heaps with successful analysis."""
+        analyzed = set()
+        for receipt in (self.work / "coordination").glob("*/*.done.json"):
+            result = read_receipt(receipt)
+            if result.get("success") is not True or result.get("compare_returncode", 0) != 0:
+                continue
+            for row in result.get("exports", [result]):
+                snapshot = row.get("snapshot", {})
+                if row.get("returncode") == 0:
+                    analyzed.add((snapshot.get("file"), snapshot.get("sha256"), snapshot.get("bytes")))
+        for run in sorted((self.work / "device").glob("*/experiments/session-memory/*")):
+            if not run.is_dir():
+                continue
+            # Never delete through a symlink above the run; that link may own other runs.
+            if any(p.is_symlink() for p in run.parents if p != self.work and p.is_relative_to(self.work)):
+                continue
+            result = read_receipt(run / "result.json")
+            manifest = read_receipt(run / "memory-snapshots.json")
+            heaps = sorted(run.glob("*.snap"))
+            identities = {r.get("file"): r for r in manifest.values() if isinstance(r, dict)}
+            if not isinstance(result.get("success"), bool) or not heaps:
+                self.keep(run, "snapshot run is unfinished")
+                continue
+            if not self.old(run) or run.is_symlink() and not self.old(run.resolve()):
+                self.keep(run, "recent snapshot run")
+                continue
+            if not all(
+                (p.name, identities.get(p.name, {}).get("sha256"), p.stat().st_size) in analyzed and identities.get(p.name, {}).get("bytes") == p.stat().st_size
+                for p in heaps
+            ):
+                self.keep(run, "snapshot analysis missing or mismatched")
+                continue
+            if run.is_symlink():
+                self.add(run, "analyzed snapshot run link")
+            else:
+                for heap in heaps:
+                    self.add(heap, "analyzed heap snapshot")
 
     def add(self, path, kind, **extra):
-        if kept(path, self.work):
+        boundary = self.work if path.is_relative_to(self.work) else ROOT
+        if (
+            kept(path, boundary)
+            or any(path.rglob(KEEP_MARKER))
+            or path.is_symlink()
+            and any((p / KEEP_MARKER).exists() for p in (path.resolve(), *path.resolve().parents))
+        ):
             self.keep(path, KEEP_MARKER)
+            return
+        if is_protected_path(path, self.paths):
+            self.keep(path, "named by a protection receipt")
             return
         self.items.append({"path": path, "kind": kind, "bytes": tree_size(path), **extra})
 
@@ -243,7 +321,7 @@ def apply(plan, work, ledger_path):
     reason = "Rebuildable generated output discarded by scripts/prune-generated.py; rebuild from the recorded source commit"
     for item in plan:
         path = item["path"]
-        if not path.exists():
+        if not path.exists() and not path.is_symlink():
             continue
         if item["kind"] == "build lane":
             from build_lanes import remove
@@ -262,7 +340,9 @@ def apply(plan, work, ledger_path):
         else:
             marker = path.with_name(path.name + ".retired.json")
             try:
-                if path.is_dir():
+                if path.is_symlink():
+                    path.unlink()
+                elif path.is_dir():
                     shutil.rmtree(path)
                 else:
                     path.unlink()
@@ -284,6 +364,9 @@ def apply(plan, work, ledger_path):
 
 
 def main():
+    global ROOT
+    # Linked worktrees share the canonical ignored work/ and build-lane owners.
+    ROOT = Path(subprocess.check_output(["git", "-C", str(ROOT), "rev-parse", "--path-format=absolute", "--git-common-dir"], text=True).strip()).parent
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--work-dir", default=str(ROOT / "work"))
     parser.add_argument("--min-age-hours", type=float, default=24.0)
@@ -300,6 +383,7 @@ def main():
     planner.build_cache()
     planner.lab_build()
     planner.lanes()
+    planner.snapshots()
     for name in SCAN_ROOTS:
         planner.scan(name)
     total = sum(i["bytes"] for i in planner.items)

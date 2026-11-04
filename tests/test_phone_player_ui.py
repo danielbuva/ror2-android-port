@@ -97,6 +97,16 @@ class PlayerUiTests(unittest.TestCase):
             with self.subTest(message=message), self.assertRaisesRegex(ValueError, message):
                 U.assign_saved_ids(copy.deepcopy(rows), invalid)
 
+    def test_saved_external_ids_append_new_provider_without_changing_destinations(self):
+        files = ["registry", "new-source-sprite", "existing-sprite"]
+        fields = [dict(local=pointer(17), new=pointer(1, 2), existing=pointer(23, 3), value=3)]
+        U.assign_saved_external_order(fields, files, ["registry", "existing-sprite"])
+        self.assertEqual(files, ["registry", "existing-sprite", "new-source-sprite"])
+        self.assertEqual(fields, [dict(local=pointer(17), new=pointer(1, 3), existing=pointer(23, 2), value=3)])
+        for saved in (["unknown"], ["registry", "registry"]):
+            with self.assertRaisesRegex(ValueError, "resolved providers"):
+                U.assign_saved_external_order(fields, files, saved)
+
     def test_only_typed_pointer_structures_are_relocated(self):
         value = dict(reference=pointer(41, 2), scalar=41, partial=dict(m_PathID=41, unrelated=2), array=[pointer(0)])
         U.map_pointers(value, lambda p: pointer(p["m_PathID"] + 1, p["m_FileID"]))
