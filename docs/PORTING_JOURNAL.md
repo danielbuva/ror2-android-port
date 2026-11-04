@@ -2608,3 +2608,19 @@ Evidence (ignored): `work/coordination/p1-scenes-w/current-commando-sdk-note.md`
 and `current-commando-production-v7/`; v7 took 2684.037 s, peak RSS 5,854,445,568 B.
 The regression contract covers the Objective SDK resource root; no APK is produced
 by this change. Complete source bundle, APK and ordinary-launch device gates remain open.
+
+## J1378 — Attribute ordinary startup within existing audio and body owners
+
+2026-11-04. Sparse no-stack seams retain scheduling/checks; reviewed source pins refresh
+as one cohort; build snapshots retain checks and identify failed predicates.
+APK `4f0a83155cc124a79d2ffd9210b00f1569767cc50c0c4e4129133e82e438eaaf`, source `cccf270a`.
+Evidence: `work/coordination/alpha-startup-partition-device-20261104T214820Z/`.
+Exact-editor build and focused host checks passed; 25/25 startup markers monotonic.
+Menu 22.305 s; Start → world 76.842 s; audio owner 12.334 s, media 6.792 s,
+buffs → adoption 5.338 s, definition holders 4.614 s. Prior art: pinned R2API.Sound.
+Native audio 153 banks; natural loss generated/persisted/reloaded; no first failure.
+Scene-bank AK_FileNotFound and known empty prop mesh remain; no full-audio/parity claim.
+CPU/GPU peak 95.5 C, 67.436 s above 80 C, no sustained >95 C; battery 30 to 31 C;
+maximum trace gap 0.421 s; sampled peak PSS 3,828,398 KiB includes startup.
+Adopted update/hash and unchanged profile/settings verified; app stopped, OLED asleep,
+scratch removed, prune complete, lease released. Sustained FPS/speed/alpha gates remain open.

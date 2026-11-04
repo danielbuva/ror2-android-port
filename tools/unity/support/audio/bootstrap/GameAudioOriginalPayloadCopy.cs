@@ -70,6 +70,14 @@ public sealed class GameAudioOriginalPayloadCopy : IGameAudioOriginalPayloadCopy
         if (expectedNames.Count != 153) throw new ArgumentException("Expected current source cohort is exactly 153 names.", nameof(sourceBankNames));
     }
 
+    // Sparse setup seams only: no report writes, stack capture or coroutine yields.
+    static void TraceStartup(string step)
+    {
+        Debug.LogFormat(LogType.Log, LogOption.NoStacktrace, null, "{0}",
+                        "Original startup step=" + step + " at=" +
+                        Time.realtimeSinceStartup.ToString("R", System.Globalization.CultureInfo.InvariantCulture) +
+                        " frame=" + Time.frameCount);
+    }
     public string Refusal { get { return refusal; } }
     public string PersistentRoot { get { return persistentRoot; } }
 
@@ -80,6 +88,7 @@ public sealed class GameAudioOriginalPayloadCopy : IGameAudioOriginalPayloadCopy
         // nonempty bank subfolder is not qualified by this copy operation.
         if (!NativeSearchRootMatches(persistentRoot, Application.persistentDataPath))
         { refusal = "persistent_bank_subfolder_not_qualified_for_native_io"; yield break; }
+        TraceStartup("audio-payload-receipt-begin");
         float deadline = Time.realtimeSinceStartup + CopyDeadlineSeconds;
         Receipt receipt = null;
         using (var request = UnityWebRequest.Get(Url("stage-receipt.json")))
@@ -101,6 +110,7 @@ public sealed class GameAudioOriginalPayloadCopy : IGameAudioOriginalPayloadCopy
         if (receipt.streamed_media.Length > 0 && !EnsurePrivateDirectoryTree(Path.Combine(persistentRoot, "Media"), Application.persistentDataPath))
         { refusal = "persistent_media_directory_missing_or_reparse"; yield break; }
 
+        TraceStartup("audio-payload-preflight-begin");
         long pendingBytes = 0;
         long largestPending = 0;
         foreach (Entry entry in receipt.outputs)
@@ -127,6 +137,7 @@ public sealed class GameAudioOriginalPayloadCopy : IGameAudioOriginalPayloadCopy
         if (!TryAvailableBytes(persistentRoot, out available) || available < checked(pendingBytes + largestPending))
         { refusal = "persistent_payload_space_insufficient_or_unknown"; yield break; }
 
+        TraceStartup("audio-payload-banks-begin");
         foreach (Entry entry in receipt.outputs)
         {
             if (Time.realtimeSinceStartup >= deadline)
@@ -169,6 +180,7 @@ public sealed class GameAudioOriginalPayloadCopy : IGameAudioOriginalPayloadCopy
                     catch { refusal = refusal ?? "persistent_bank_temporary_cleanup_failed:" + entry.filename; }
             }
         }
+        TraceStartup("audio-payload-banks-ready");
         long remainingMediaBytes = 0;
         long largestRemainingMedia = 0;
         foreach (MediaEntry entry in receipt.streamed_media)
@@ -182,6 +194,7 @@ public sealed class GameAudioOriginalPayloadCopy : IGameAudioOriginalPayloadCopy
         }
         if (!TryAvailableBytes(persistentRoot, out available) || available < checked(remainingMediaBytes + largestRemainingMedia))
         { refusal = "persistent_media_space_insufficient_or_unknown"; yield break; }
+        TraceStartup("audio-payload-media-begin");
         foreach (MediaEntry entry in receipt.streamed_media)
         {
             if (Time.realtimeSinceStartup >= deadline)
@@ -225,6 +238,7 @@ public sealed class GameAudioOriginalPayloadCopy : IGameAudioOriginalPayloadCopy
                     catch { refusal = refusal ?? "persistent_media_temporary_cleanup_failed:" + entry.media_id; }
             }
         }
+        TraceStartup("audio-payload-media-ready");
     }
 
     internal static bool NativeSearchRootMatches(string bankRoot, string appRoot)

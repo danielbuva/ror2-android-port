@@ -2613,9 +2613,12 @@ setting. The host Unity build mutex is mandatory for every caller.
 Its first host gate calls `native_view_camera_build_hook.build_hook_pins` before
 reading local configuration. The current `./dev build-hook-pins` command checks
 every `source_paths`/`source_sha256` role in
-`recipe/native-view-camera-transform.json` without game inputs or an editor.
+`recipe/native-view-camera-transform.json`, the audio-owner source cohort and
+its producer/camera manifest bindings without game inputs or an editor.
 After source review and Python formatting, `--action refresh` updates only those
-source hashes, including the hook's own hash; all input, output, profile,
+source hashes and audio manifest bindings, including the hook's own hash.
+The explicit refresh updates reviewed Python hash literals by syntax position;
+builds only validate them. All game input, output, profile,
 receipt and toolchain pins remain unchanged. Check reports all stale sources
 without writing. Existing stage/transform validators still enforce their
 contracts. The command owns no persistent state beyond the tracked recipe and
@@ -5431,6 +5434,14 @@ record packs and a separate new output directory. The existing object pack
 and member-aware layout feed `unity_write.py`; process exit tears down the
 producer while receipts and evidence remain local. No runtime state, Editor,
 new owner or private target-tree supplier is added.
+
+`PortSession`, `PortSessionOriginalAudioOwner` and
+`GameAudioOriginalPayloadCopy` emit the same sparse startup seam format for
+payload receipt/preflight, banks/media, native initialization, body adoption,
+skill setup and catalog preparation. Markers carry process time/frame without
+stacks, report writes, yields or retained state; existing owners retain setup
+and teardown. Adjacent markers bound work, including intervening callbacks;
+returned/ready markers require separate failure, audio and world checks.
 
 `IntegratedWorldSession.TracePreparation` emits a bounded log marker at each
 initial world-preparation seam, including the existing loot report write,

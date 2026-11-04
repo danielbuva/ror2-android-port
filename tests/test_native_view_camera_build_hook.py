@@ -126,9 +126,27 @@ class BuildHookPinCommandTests(unittest.TestCase):
             path.write_text("authored synthetic source: " + role)
             self.pins["source_sha256"][role] = self.hook.sha256(path)
         self.hook.CAMERA_PINS.write_text(json.dumps(self.pins, indent=2, sort_keys=True) + "\n")
+        for relative in (
+            "recipe/original-audio-owner-sources.json",
+            "scripts/lab/original_game_audio_produce.py",
+            "scripts/lab/native_view_camera_build_hook.py",
+        ):
+            target = self.root / relative
+            target.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copyfile(CANDIDATE / relative, target)
+        owner = json.loads((self.root / "recipe/original-audio-owner-sources.json").read_text())
+        for relative in owner["owner_source_hashes"]:
+            target = self.root / "tools/unity/support/audio" / relative
+            target.parent.mkdir(parents=True, exist_ok=True)
+            if not target.exists():
+                target.write_text("authored synthetic audio owner")
+        self.hook._audio_owner_pins("refresh")
+        self.pins["source_sha256"] = self.hook._tracked_source_hashes(self.pins)
+        self.hook.CAMERA_PINS.write_text(json.dumps(self.pins, indent=2, sort_keys=True) + "\n")
         self.changed_roles = ["build_hook", "music_observer_stage"]
         for role in self.changed_roles:
-            (self.root / self.pins["source_paths"][role]).write_text("reviewed synthetic change: " + role)
+            path = self.root / self.pins["source_paths"][role]
+            path.write_text(path.read_text() + "\n# reviewed synthetic change: " + role)
 
     def test_check_reports_all_changed_sources_without_writing(self):
         before = self.hook.CAMERA_PINS.read_bytes()
@@ -152,6 +170,39 @@ class BuildHookPinCommandTests(unittest.TestCase):
         unchanged = self.hook.CAMERA_PINS.read_bytes()
         self.assertEqual(self.hook.build_hook_pins("refresh")["updated_roles"], [])
         self.assertEqual(self.hook.CAMERA_PINS.read_bytes(), unchanged)
+
+    def test_audio_refresh_repairs_source_and_manifest_bindings_before_camera_hash(self):
+        recipe = self.root / "recipe/original-audio-owner-sources.json"
+        before = json.loads(recipe.read_text())
+        changed = ["../../runtime/session/PortSession.cs", "bootstrap/GameAudioOriginalPayloadCopy.cs"]
+        for relative in changed:
+            (self.root / "tools/unity/support/audio" / relative).write_text("reviewed timing markers")
+        with self.assertRaisesRegex(ValueError, "reviewed audio owner source drift") as failure:
+            self.hook.build_hook_pins()
+        for relative in changed:
+            self.assertIn(relative, str(failure.exception))
+        self.assertEqual(json.loads(recipe.read_text()), before)
+        with patch.object(sys, "path", [str(CANDIDATE / "scripts/lab"), *sys.path]):
+            import build
+        with (
+            patch.dict(sys.modules, {"native_view_camera_build_hook": self.hook}),
+            patch.object(build, "config", side_effect=AssertionError("configuration read too early")) as config,
+            self.assertRaisesRegex(ValueError, "reviewed audio owner source drift"),
+        ):
+            build.preflight_host()
+        config.assert_not_called()
+        result = self.hook.build_hook_pins("refresh")
+        self.assertEqual(result["audio_owner"]["updated_sources"], changed)
+        after = json.loads(recipe.read_text())
+        for key in before.keys() - {"owner_source_hashes"}:
+            self.assertEqual(after[key], before[key])
+        producer = self.root / "scripts/lab/original_game_audio_produce.py"
+        camera = self.root / "scripts/lab/native_view_camera_build_hook.py"
+        self.assertEqual(self.hook._source_pin(producer, "OWNER_SOURCE_HASHES"), after["owner_source_hashes"])
+        self.assertEqual(self.hook._source_pin(producer, "OWNER_ANCESTOR_MANIFEST_SHA256"), self.hook.sha256(recipe))
+        self.assertEqual(self.hook._source_pin(camera, "HASHES", "r4_manifest_sha256"), self.hook.sha256(recipe))
+        self.assertTrue(self.hook.build_hook_pins()["success"])
+        self.assertEqual(self.hook.build_hook_pins("refresh")["audio_owner"]["updated_sources"], [])
 
     def test_preflight_refuses_stale_sources_before_local_configuration(self):
         with patch.object(sys, "path", [str(CANDIDATE / "scripts/lab"), *sys.path]):
