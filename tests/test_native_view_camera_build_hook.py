@@ -3,10 +3,16 @@ from __future__ import annotations
 import importlib.util
 import hashlib
 import json
+import os
 from pathlib import Path
+import contextlib
+import io
+import runpy
 import shutil
+import sys
 import tempfile
 import unittest
+from unittest.mock import patch
 
 CANDIDATE = Path(__file__).resolve().parents[1]
 
@@ -21,6 +27,14 @@ def load(name: str, path: Path):
 
 
 class TrackedCameraSourcesTests(unittest.TestCase):
+    def test_checked_in_source_pins_are_fresh(self):
+        hook = load("camera_hook_checked_in_pins", CANDIDATE / "scripts/lab/native_view_camera_build_hook.py")
+        result = hook.build_hook_pins()
+        pins = json.loads(hook.CAMERA_PINS.read_text())
+        self.assertTrue(result["success"])
+        self.assertEqual(result["source_count"], len(pins["source_paths"]))
+        self.assertEqual(result["updated_roles"], [])
+
     def test_no_private_preview_source_root_is_selected(self):
         build_hook = (CANDIDATE / "scripts/lab/native_view_camera_build_hook.py").read_text()
         transform = (CANDIDATE / "scripts/lab/native_view_camera_transform.py").read_text()
@@ -95,6 +109,81 @@ class TrackedCameraSourcesTests(unittest.TestCase):
         d540["passive_pcm_capture_requested"] = False
         d540["lineage"]["composed_api_sha256"] = hook.HASHES["composed_api"]
         self.assertEqual(hook._select_point_sound_profile(d540, game_hash, hook.HASHES["composed_api"])[0], "post-audio-point-sound-6f96-api-d540")
+
+
+class BuildHookPinCommandTests(unittest.TestCase):
+    def setUp(self):
+        self.hook = load("camera_hook_pin_command", CANDIDATE / "scripts/lab/native_view_camera_build_hook.py")
+        temporary = tempfile.TemporaryDirectory()
+        self.addCleanup(temporary.cleanup)
+        self.root = Path(temporary.name)
+        self.hook.CAMERA_SOURCE_ROOT = self.root
+        self.hook.CAMERA_PINS = self.root / "pins.json"
+        self.pins = json.loads((CANDIDATE / "recipe/native-view-camera-transform.json").read_text())
+        for role, relative in self.pins["source_paths"].items():
+            path = self.root / relative
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text("authored synthetic source: " + role)
+            self.pins["source_sha256"][role] = self.hook.sha256(path)
+        self.hook.CAMERA_PINS.write_text(json.dumps(self.pins, indent=2, sort_keys=True) + "\n")
+        self.changed_roles = ["build_hook", "music_observer_stage"]
+        for role in self.changed_roles:
+            (self.root / self.pins["source_paths"][role]).write_text("reviewed synthetic change: " + role)
+
+    def test_check_reports_all_changed_sources_without_writing(self):
+        before = self.hook.CAMERA_PINS.read_bytes()
+        with self.assertRaises(ValueError) as failure:
+            self.hook.build_hook_pins()
+        for role in self.changed_roles:
+            self.assertIn(self.pins["source_paths"][role], str(failure.exception))
+        self.assertIn("./dev build-hook-pins --action refresh", str(failure.exception))
+        self.assertEqual(self.hook.CAMERA_PINS.read_bytes(), before)
+
+    def test_refresh_updates_every_changed_source_preserving_other_values(self):
+        result = self.hook.build_hook_pins("refresh")
+        self.assertEqual(result["updated_roles"], self.changed_roles)
+        after = json.loads(self.hook.CAMERA_PINS.read_text())
+        for key, value in self.pins.items():
+            if key != "source_sha256":
+                self.assertEqual(after[key], value, key)
+        for role, relative in self.pins["source_paths"].items():
+            self.assertEqual(after["source_sha256"][role], self.hook.sha256(self.root / relative), role)
+        self.assertTrue(self.hook.build_hook_pins()["success"])
+        unchanged = self.hook.CAMERA_PINS.read_bytes()
+        self.assertEqual(self.hook.build_hook_pins("refresh")["updated_roles"], [])
+        self.assertEqual(self.hook.CAMERA_PINS.read_bytes(), unchanged)
+
+    def test_preflight_refuses_stale_sources_before_local_configuration(self):
+        with patch.object(sys, "path", [str(CANDIDATE / "scripts/lab"), *sys.path]):
+            import build
+        with (
+            patch.dict(sys.modules, {"native_view_camera_build_hook": self.hook}),
+            patch.object(build, "config", side_effect=AssertionError("configuration read too early")) as config,
+        ):
+            with self.assertRaisesRegex(ValueError, "reviewed camera source drift"):
+                build.preflight_host()
+            config.assert_not_called()
+            self.hook.build_hook_pins("refresh")
+            with self.assertRaisesRegex(AssertionError, "configuration read too early"):
+                build.preflight_host()
+            config.assert_called_once_with()
+
+    def test_cli_defaults_to_check_and_explicit_refresh_uses_same_owner(self):
+        with patch.object(sys, "path", [str(CANDIDATE / "scripts/lab"), *sys.path]):
+            from device import Device
+        for arguments, action in (([], "check"), (["--action", "refresh"], "refresh")):
+            with (
+                self.subTest(action=action),
+                patch.dict(os.environ, {"LAB_LANE": ""}),
+                patch.object(sys, "argv", ["dev", "build-hook-pins", *arguments]),
+                patch.dict(sys.modules, {"native_view_camera_build_hook": self.hook}),
+                patch.object(self.hook, "build_hook_pins", return_value={"success": True}) as command,
+                patch.object(Device, "sleep_awakened", return_value=[]),
+                patch.object(sys, "path", [str(CANDIDATE / "scripts/lab"), *sys.path]),
+                contextlib.redirect_stdout(io.StringIO()),
+            ):
+                runpy.run_path(str(CANDIDATE / "scripts/lab/main.py"), run_name="__main__")
+                command.assert_called_once_with(action)
 
 
 class RestoreOnly793ReceiptTests(unittest.TestCase):

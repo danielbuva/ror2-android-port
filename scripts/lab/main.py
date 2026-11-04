@@ -24,6 +24,7 @@ p = argparse.ArgumentParser(
   decompile: current
   export-project: current
   preflight: current
+  build-hook-pins: current
   check-baseline: current
   build: current
   install: current
@@ -57,6 +58,7 @@ p.add_argument(
         "decompile",
         "export-project",
         "preflight",
+        "build-hook-pins",
         "check-baseline",
         "build",
         "install",
@@ -139,7 +141,7 @@ p.add_argument(
 )
 p.add_argument("--assembly")
 p.add_argument("--target", default="lab")
-p.add_argument("--action", default="inspect")
+p.add_argument("--action", help="Current build-hook-pins: check (default) or refresh reviewed source hashes; other command actions default to inspect")
 p.add_argument(
     "--profile-scope",
     choices=("pid", "app"),
@@ -184,6 +186,8 @@ p.add_argument(
 )
 p.add_argument("--compare", nargs=2, metavar=("A", "B"), help="Current: compare two project-manifest receipts")
 a = p.parse_args()
+if a.action is None:
+    a.action = "check" if a.command == "build-hook-pins" else "inspect"
 from device_context import set_command_selector
 
 set_command_selector(a.device, os.environ.get("LAB_DEVICE"))
@@ -331,6 +335,10 @@ try:
         d.write_receipt("diagnostics.json", {"enabled": not a.disable, "subtree": a.subtree, "fields": a.fields})
         d.cmd("push", str(payload), path + "/diagnostics.json")
         print(json.dumps({"success": True, "config": read(payload)}))
+    elif a.command == "build-hook-pins":
+        from native_view_camera_build_hook import build_hook_pins
+
+        print(json.dumps(build_hook_pins(a.action), indent=2))
     elif a.command == "preflight":
         from build import preflight, preflight_host
 

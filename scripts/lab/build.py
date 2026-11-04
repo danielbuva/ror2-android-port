@@ -87,6 +87,9 @@ def validate_project_generation(project, input_id):
 
 def preflight_host():
     """Validate accepted host inputs and toolchain without querying a device."""
+    from native_view_camera_build_hook import build_hook_pins
+
+    build_hook_pins()
     cfg = config()
     base = game()
     inv = read(WORK / "inventory/files.json")

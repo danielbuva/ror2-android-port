@@ -2533,3 +2533,14 @@ CPU/GPU peak 81.2 C, 1.600 s above 80 C; battery 30 C, runtime gaps <= 0.433 s.
 Adopted placement/hash, stopped process, sleeping display, scratch and lease cleanup verified.
 Prior art: pinned R2API.Sound initialization order and J940 revalidation-at-reuse contract.
 Same-size corruption, wrong-size/type/link fixture retained; alpha, sustained FPS and parity remain open.
+
+## J1372 — Check and refresh reviewed build-hook source pins
+
+2026-11-04. The existing camera build-hook owner checks all 18 reviewed source
+roles before host preflight reads local configuration. `./dev build-hook-pins`
+checks without game inputs; explicit `--action refresh` updates only source hashes
+following review and formatting, retaining every input/output/toolchain pin.
+Host contracts cover checked-in freshness, aggregate drift reporting, refresh
+preservation and CLI/preflight integration; focused camera/help/generation/build
+checks passed. Existing transform and stage validation remain enforced.
+No runtime behaviour changes; device and alpha readiness gates remain open.
