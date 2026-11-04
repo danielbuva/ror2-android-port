@@ -6772,3 +6772,13 @@ change. No asset bytes, private paths or runtime capture are included.
 | Recipe | SHA-256 |
 | --- | --- |
 | `owner-whole-scene-standard-shader-remap.json` | `367d8fc933e722d167036230a28446879695703d10859d202ae71f25433e10da` |
+
+Meridian post-processing Shader identities reuse the current source-produced
+Habitatfall cohort through `record_remap.py`. Only destination indices change;
+source bodies and supplier receipts remain checked. The consumer retains native
+type, serialized-reference and pointer validation. This recipe contains authored
+relationships and integrity pins, with no game-derived bodies or pixels.
+
+| Authored recipe | SHA-256 |
+| --- | --- |
+| `owner-whole-scene-postprocess-shader-remap.json` | `a88c83cd062eca5241bdd8a57b2b34a0d211cd093d3e474ac90c9b0c8df138cc` |
