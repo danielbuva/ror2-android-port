@@ -257,17 +257,23 @@ public sealed partial class PortSession
                 bundleName = stageName + "-source-lab";
             }
             coordinator.r.stage.originalStageObjects = coordinator.stageSourceObjects;
-            coordinator.stageGeometryBundle =
-                AssetBundle.LoadFromFile(System.IO.Path.Combine(Application.persistentDataPath, "payload", bundleName));
+            TraceStartup("stage-bundle-begin");
+            using (new Unity.Profiling.ProfilerMarker("RoR2Lab.Stage.Bundle").Auto())
+                coordinator.stageGeometryBundle =
+                    AssetBundle.LoadFromFile(System.IO.Path.Combine(Application.persistentDataPath, "payload", bundleName));
+            TraceStartup("stage-bundle-ready");
             coordinator.Check(coordinator.stageGeometryBundle, "Recovered stage geometry bundle missing");
             var scenes = coordinator.stageGeometryBundle.GetAllScenePaths();
             coordinator.Check(scenes.Length == 1, "Expected one recovered stage geometry scene");
+            TraceStartup("stage-scene-begin");
             yield return SceneManager.LoadSceneAsync(scenes[0], LoadSceneMode.Additive);
+            TraceStartup("stage-scene-returned");
             coordinator.stageGeometryScene = SceneManager.GetSceneByPath(scenes[0]);
             coordinator.r.stage.loaded = coordinator.stageGeometryScene.IsValid() && coordinator.stageGeometryScene.isLoaded;
             coordinator.r.stage.scene = coordinator.stageGeometryScene.name;
             coordinator.Check(coordinator.r.stage.loaded, "Stage geometry did not load");
             yield return null; // Allow original scene preview Start callbacks; no manual deactivation.
+            TraceStartup("stage-callbacks-returned-hierarchy-begin");
             var roots = coordinator.stageGeometryScene.GetRootGameObjects();
             coordinator.stageStaticRoots = new HashSet<GameObject>(roots);
             var transforms = roots.SelectMany(x => x.GetComponentsInChildren<Transform>(true)).ToArray();
@@ -345,6 +351,7 @@ public sealed partial class PortSession
                                                           ((x is NetworkIdentity || x is TeamFilter) && x.GetComponent<MapZone>()))) &&
                           previewContract && coordinator.r.stage.activeRoots > 0,
                 "Original stage scene missing scripts, duplicate global owners, or preview contract mismatch");
+            TraceStartup("stage-hierarchy-ready-materials-begin");
             Shader terrainShader = Resources.Load<Shader>("StageTerrainPreview"),
                    surfaceShader = Resources.Load<Shader>("StageSurfacePreview");
             coordinator.Check(terrainShader && terrainShader.isSupported && surfaceShader && surfaceShader.isSupported,
@@ -463,6 +470,7 @@ public sealed partial class PortSession
                     }
                 }
             }
+            TraceStartup("stage-materials-ready-collider-validation-begin");
             coordinator.r.stage.emptyMeshPaths = emptyMeshes.ToArray();
             coordinator.r.stage.emptyColliderPaths = emptyColliders.ToArray();
             var expectedMeshes = spec == null ? new string[0] : spec.emptyMeshPaths ?? new string[0];
