@@ -3646,6 +3646,13 @@ order and each `finally`) is in
 
 ## Ownership
 
+`IntegratedResultsSession` reads one local definition manifest for relationship
+types, providers and holder binding through `WholeCatalogComposed`. The synchronous
+preparation call releases that reference on return; family-cache lifetime and
+relationship registration/restoration remain under their existing owners.
+`test_scoped_definition_manifest.py` exercises the production methods against
+authored source snapshots, including replacement input and identity checks.
+
 Each staged runtime file starts with a two-line header naming its subsystem, whether it is
 on the game path, and its setup and teardown methods (J516).
 
