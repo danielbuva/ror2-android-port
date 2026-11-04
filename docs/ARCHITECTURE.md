@@ -1568,6 +1568,10 @@ index. Its standalone metadata/group/new-output invocation verifies every
 forwarding entry, binds the inventory hash, refuses output overwrite or input
 drift, and emits a private observation report. No game build or linker stage
 consumes this helper.
+The inventory also records declared field flags and recursive scoped signatures
+for named types, arrays and generic instances/parameters, plus structured base
+signatures. Unsupported CLR type specifications are explicit. These observations
+do not by themselves prove serialized-field or endpoint assignability.
 
 `phone_native_flags.py` owns separate current experimental native flag metadata.
 Its standalone owner-SDK/new-report invocation checks the pinned binary and
@@ -5764,7 +5768,10 @@ and file provenance. No player producer is rerun for extraction.
 For independently produced records, the object owner optionally applies
 `record_references`: the original type schema must identify every edited extent
 as a PPtr, each prior value must match, and destination external slots must
-exist. Scene preload dependencies follow these relocations. Existing
+exist. A relocation may select an exact serialized field path instead of a byte
+offset; supplying both requires agreement. The owner reparses the rewritten body
+and checks field extents and pointer readback before returning it. Endpoint type
+and final dependency closure remain separate checks. Scene preload dependencies follow these relocations. Existing
 `references` metadata keeps its previous meaning for produced records. Explicit
 supplier receipts and a fresh output directory set up reuse; process exit
 releases file handles and the resulting receipts persist.
