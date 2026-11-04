@@ -10,6 +10,8 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J1372](PORTING_JOURNAL.md#j1372--check-and-refresh-reviewed-build-hook-source-pins) | 2026-11-04 | Check and refresh reviewed build-hook source pins | 2026-11-04. |
+| [J1371](PORTING_JOURNAL.md#j1371--avoid-duplicate-audio-payload-hashing-during-capacity-preflight) | 2026-11-04 | Avoid duplicate audio payload hashing during capacity preflight | 2026-11-04. |
 | [J1370](PORTING_JOURNAL.md#j1370--ordinary-player-launch-and-typed-gameplay-discovery) | 2026-11-04 | Ordinary player launch and typed gameplay discovery | 2026-11-04. |
 | [J1369](PORTING_JOURNAL.md#j1369--extend-source-content-suppliers-with-strict-graph-admission) | 2026-11-04 | Extend source content suppliers with strict graph admission | 2026-11-04. |
 | [J1367](PORTING_JOURNAL.md#j1367--compile-source-producer-release-graphs) | 2026-11-04 | Compile source producer release graphs | 2026-11-04. |

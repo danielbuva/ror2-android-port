@@ -32,7 +32,7 @@ STAGE_SCHEMA = "native-view-camera-project-stage-r1"
 AUDIO_SCHEMA = "original-game-audio-project-stage-r1"
 HASHES = {
     "accepted_input_id": "6af7ed94619fe1b4346974b4486afa03a8d1625a7820e92da0ff74d57208fe88",
-    "r4_manifest_sha256": "3cd37ce588b298e0c3576bcfe493a09112e2475ae6b4589d8defb44833cb974c",
+    "r4_manifest_sha256": "100d8330182fdd1699f05ead17a9c1760acd47892fb1327f23cc3a023ccd5a34",
     "stage_receipt_sha256": "db1969babb2db2f4201ebdb6c971b084c5ab9336fff5623187555dfcc7b18978",
     "ordinary_api": "107295e478a58ef295a83228111f375c536861bc9081f482d638c59899bf495c",
     "ordinary_game": "3124a2ed9cf458acee78b1beaf969590b184be452e2b3aa5a8852df82ff95d30",
@@ -108,14 +108,43 @@ def _audio_receipt(project: Path) -> tuple[dict, str]:
     return receipt, hashlib.sha256(raw).hexdigest()
 
 
-def _verify_tracked_sources(pins: dict) -> None:
-    for role, expected in pins.get("source_sha256", {}).items():
-        relative = pins.get("source_paths", {}).get(role)
+def _tracked_source_hashes(pins: dict) -> dict[str, str]:
+    sources = pins["source_paths"]
+    if not sources or sources.keys() != pins["source_sha256"].keys():
+        raise ValueError("camera producer source paths and hashes must name the same roles")
+    hashes = {}
+    for role, relative in sources.items():
         if not isinstance(relative, str) or Path(relative).is_absolute() or ".." in Path(relative).parts:
             raise ValueError(f"camera producer pins omit a safe tracked source role: {role}")
         path = CAMERA_SOURCE_ROOT / relative
-        if not path.is_file() or path.is_symlink() or sha256(path) != expected:
-            raise ValueError(f"reviewed camera source drift: {relative}")
+        if not path.is_file() or path.is_symlink():
+            raise ValueError(f"camera producer source is missing or symlinked: {relative}")
+        hashes[role] = sha256(path)
+    return hashes
+
+
+def _verify_tracked_sources(pins: dict) -> None:
+    actual = _tracked_source_hashes(pins)
+    drift = [pins["source_paths"][role] for role, value in actual.items() if pins["source_sha256"][role] != value]
+    if drift:
+        raise ValueError("reviewed camera source drift: " + ", ".join(drift) + "; review source changes, then run ./dev build-hook-pins --action refresh")
+
+
+def build_hook_pins(action: str = "check") -> dict:
+    """Check reviewed source pins, or explicitly refresh only their hashes."""
+    if action not in ("check", "refresh"):
+        raise ValueError("build-hook-pins --action must be check or refresh")
+    pins = json.loads(CAMERA_PINS.read_text())
+    if action == "check":
+        _verify_tracked_sources(pins)
+        changed = []
+    else:
+        actual = _tracked_source_hashes(pins)
+        changed = [role for role, value in actual.items() if pins["source_sha256"][role] != value]
+        if changed:
+            pins["source_sha256"] = actual
+            CAMERA_PINS.write_text(json.dumps(pins, indent=2, sort_keys=True) + "\n")
+    return {"success": True, "action": action, "source_count": len(pins["source_paths"]), "updated_roles": changed}
 
 
 def _audio_resolver_sources(project: Path, generation: Path, manifest: dict, audio: dict) -> list[dict]:
