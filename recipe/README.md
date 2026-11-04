@@ -6792,3 +6792,14 @@ The early world-preparation timing seams refresh the reviewed authored
 `IntegratedWorldBoundary.cs` source pin and its audio-owner manifest consumers.
 The change adds six scalar, stack-free diagnostic markers only; no protected
 content, identifiers, generated data or native/audio bytes are published.
+
+## Commando controller supplier refresh (2026-11-04)
+
+The complete Commando recipe selects the current public AnimatorController
+supplier. All 32 selected path IDs retain their qualified lengths and hashes;
+only the supplier identity changes. Existing source, schema and PPtr checks remain.
+No game-derived bodies or new external inputs are included.
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-commando-objects.json` | `e5c0c13f07f2a57d99681c45d17e732c0cf5c77ed0007f526ab17eec8e91e98e` |
