@@ -5435,6 +5435,14 @@ and member-aware layout feed `unity_write.py`; process exit tears down the
 producer while receipts and evidence remain local. No runtime state, Editor,
 new owner or private target-tree supplier is added.
 
+`PortSession`, `PortSessionOriginalAudioOwner` and
+`GameAudioOriginalPayloadCopy` emit the same sparse startup seam format for
+payload receipt/preflight, banks/media, native initialization, body adoption,
+skill setup and catalog preparation. Markers carry process time/frame without
+stacks, report writes, yields or retained state; existing owners retain setup
+and teardown. Adjacent markers bound work, including intervening callbacks;
+returned/ready markers require separate failure, audio and world checks.
+
 `IntegratedWorldSession.TracePreparation` emits a bounded log marker at each
 initial world-preparation seam, including the existing loot report write,
 asynchronous resource waits, equipment/displays and stage population. Markers
