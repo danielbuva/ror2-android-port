@@ -6067,6 +6067,14 @@ the existing scene pointer checks. Setup requires the source Shader pack and
 a fresh output directory; process exit releases readers and retains receipts.
 No runtime owner is added; complete APK and device gates remain open.
 
+`recipe/owner-whole-scene-postprocess-shader-remap.json` uses the same
+`record_remap.py` owner for Meridian's 24 post-processing Shaders. The current
+Habitatfall source producer supplies the bodies; destination indices retain
+Meridian's original native schemas and checked reference contracts. Setup takes
+the receipt-pinned source pack and a fresh output directory; scoped readers close
+on process exit and receipts persist. This adds no runtime owner. Complete APK
+and device gates remain open.
+
 ### Typed gameplay startup discovery
 
 `IntegratedWorldBoundary` discovers only the requested method-attribute family

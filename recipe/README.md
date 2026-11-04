@@ -6777,3 +6777,13 @@ Audit: 2026-11-04. `original-audio-owner-sources.json` refreshes only the
 payload-copy owner's authored source hash. Capacity preflight now checks
 path/type/size; actual bank/media reuse retains complete integrity hashing.
 No original audio bytes, identifiers, local paths or third-party code are added.
+
+Meridian post-processing Shader identities reuse the current source-produced
+Habitatfall cohort through `record_remap.py`. Only destination indices change;
+source bodies and supplier receipts remain checked. The consumer retains native
+type, serialized-reference and pointer validation. This recipe contains authored
+relationships and integrity pins, with no game-derived bodies or pixels.
+
+| Authored recipe | SHA-256 |
+| --- | --- |
+| `owner-whole-scene-postprocess-shader-remap.json` | `a88c83cd062eca5241bdd8a57b2b34a0d211cd093d3e474ac90c9b0c8df138cc` |

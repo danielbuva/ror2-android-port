@@ -448,6 +448,19 @@ class ShaderHashTests(unittest.TestCase):
         self.assertEqual(normal["m_Name"], "_Detail")
         self.assertEqual(normal["m_Flags"], 8)
         self.assertEqual(normal["m_DefTexture"], {"m_DefaultName": "bump", "m_TexDim": 2})
+        sky, gain = N.properties(
+            prop,
+            """Properties {
+                // Fixture description
+                _Sky ("Fixture /* literal */ // label", Cube)
+                    = "black" { /* fixture texture annotation } */ }
+                _Gain ("Fixture gain", Float) = 0.25 // trailing comment
+            } SubShader {}""",
+        )
+        self.assertEqual(sky["m_Description"], "Fixture /* literal */ // label")
+        self.assertEqual(sky["m_Type"], 4)
+        self.assertEqual(sky["m_DefTexture"], {"m_DefaultName": "black", "m_TexDim": 4})
+        self.assertEqual(gain["m_DefValue[0]"], 0.25)
         cube = N.properties(prop, 'Properties { _Sky ("Fixture cube", Cube)="black"{} } SubShader {}')[0]
         self.assertEqual(cube["m_Type"], 4)
         self.assertEqual(cube["m_DefTexture"], {"m_DefaultName": "black", "m_TexDim": 4})
