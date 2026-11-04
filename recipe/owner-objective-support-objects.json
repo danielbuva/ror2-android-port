@@ -9565,7 +9565,8 @@
     ],
     "resource_alignment": {
       "CAB-d621b06adada9dbd86ac345cd5e6cc93.resS": 16
-    }
+    },
+    "comparison": "diagnostic"
   },
   "objects": [
     {

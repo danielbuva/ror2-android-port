@@ -63,6 +63,10 @@ from measured commands. Sampling gives a peak lower bound; child RSS accounting
 is not simultaneous process-tree RSS. These host metrics do not qualify phone
 heat, installation or complete converter performance.
 
+Objective-support and Commando object recipes use diagnostic final-file hash
+comparison for current script/schema layouts; source, record, native-type and
+reference checks remain strict, and device loadability remains open.
+
 `object_produce.py` emits complete source object bundles through
 `object_stream.py`, which owns checked-body spooling, lazy graph reads and bounded
 resource copying. Setup requires a new caller-owned output and the existing
