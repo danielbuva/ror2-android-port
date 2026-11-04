@@ -5673,6 +5673,11 @@ updates only the public `PortSession.cs` hash for the default-off settings
 write observer startup request. Provenance, privacy, licensing and sensitive-content
 audit: authored source hash only; no game content, private inputs or identifiers.
 
+2026-11-04 ordinary-player startup build pin refresh: the camera build-hook
+source hash now includes the reviewed audio owner manifest pin from the startup
+change. Only the authored build-hook hash changes; no game-derived content or
+new input is introduced. A host contract verifies the camera source pin set.
+
 2026-10-31 camera build-hook pin refresh: `native-view-camera-transform.json`
 tracks the authored hook hash after its owner-manifest pin update. Provenance,
 privacy, licensing and sensitive-content audit: public authored hash only; no
