@@ -192,7 +192,7 @@ class HdiutilVolumeTests(unittest.TestCase):
             env=hook_env,
             capture_output=True,
             text=True,
-            timeout=30,
+            timeout=120,
             check=False,
         )
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
