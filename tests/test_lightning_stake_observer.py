@@ -41,6 +41,20 @@ def production_host():
         (ROOT / "tools/unity/runtime/input/NovaInputBoundary.cs").read_text(encoding="utf-8"),
         "if (coordinator.offlineSettingsPaused)",
     )
+    declarations = [
+        "sealed class TrackedStake",
+        "public bool Observe(float runSeconds)",
+        "bool ObserveActive(float runSeconds)",
+        "void RetireTrackedAt(int index)",
+        "bool ObserveStake(TrackedStake stake, GameObject obj, float runSeconds)",
+        "int FindOldestOrdinarySampleIndex()",
+        "void MarkHistoryCapped()",
+        "void SetSetupStatus(string value)",
+    ]
+    methods = "\n".join(extract_block(source, declaration) for declaration in declarations)
+    disposal = source[source.rindex("    public void Dispose()") : source.rindex("}")]
+    finite = "\n".join(line for line in source.splitlines() if line.strip().startswith("static bool Finite("))
+    fixture = fixture.replace("__EXTRACTED_PROJECTILE_METHODS__", methods + "\n" + disposal + "\n" + finite)
     fixture = fixture.replace("__EXTRACTED_RETIREMENT_METHOD__", retirement).replace("__EXTRACTED_PAUSED_BRANCH__", paused)
     return "using System;\nusing System.Collections.Generic;\n" + policy + "\n" + fixture
 

@@ -2382,6 +2382,39 @@ Validation: 243 focused host tests, Ruff and host-only preflight pass.
 Shared-host CI timeout follow-up reuses deterministic hdiutil failure coverage
 and bounds nested CI/Java fixture work at 300 s; eight affected host tests pass.
 Host-only tooling change; no APK, device evidence or game-readiness claim.
+## J1367 — Inventory fallback Material local input and unblock host audit
+
+2026-11-04. LOCAL_STATE names the exact-SDK builtin Shader file required by the
+fallback Material keyword producer, its pins and generated record-pack owner.
+Audit of build/producer changes since 2026-10-30 found no new implicit work paths.
+Observed shared-host hook/profile fixture timeouts now have bounded 300 s deadlines;
+profile deadlines reuse the existing CI-fix work. Assertions remain unchanged.
+Evidence: `work/coordination/local-state-doc/audit.md`; 30 producer and 3 fixture tests pass.
+No APK or device claim; bootstrap and phone install/update gates remain open.
+## J1366 — Exercise projectile impact, pause and disposal on the host
+
+2026-11-04. Existing LightningStake host fixture executes extracted production
+finite checks and observation/disposal paths with authored scalar collaborators.
+Finite terrain-impact inputs survive paused observations and resume; an injected
+physical NaN is detected despite finite network position and collider geometry.
+Detach-before-destruction retains scalar history and prevents stale reads.
+Evidence: `tests/fixtures/lightning_stake_observer_host.cs`; focused host test passes.
+No APK, runtime behavior or device claim; native NaN producer remains unresolved.
+
+## J1365 — Supply source-derived bundle managed providers
+
+2026-11-04. Existing generic managed record owner supplies 221 MonoBehaviours via
+reciprocal GameObject ownership, unique typed endpoints and original MonoScripts.
+All 18,880 persisted bytes raw-exact to J850; 26 nonexact candidates excluded.
+Candidate pack SHA-256:
+`b6b67d2c93f920b33ce47ccdaf439fdb99b071607c7a2602d193bfe9d24309cd`.
+Evidence: `work/coordination/p1-wholegame-1031/bundle-managed-persisted-qualification-v1/done.json`;
+source witnesses: sibling `bundle-managed-source-frontier-v1/witnesses.jsonl`.
+Discovery 104.94 s, production 4.73 s, qualification 4.61 s; peak discovery RSS
+1,550,417,920 bytes, production/qualification RSS 280,363,008 bytes; cleanup passed.
+Host-only; heat unmeasured. EditorKit typed ownership and J1340 SDK hashes inform
+selection; bounded source recipe only, producer unchanged. Residual three unchanged;
+readiness 693/705 available, 685 raw-exact. Bundle/phone/install/update gates open.
 ## J1364 — Stabilize audited Menu external provider IDs
 
 2026-11-04. Menu retains 20 audited external provider filenames/order only after
@@ -2440,3 +2473,16 @@ Signed output `c0b78163d5b00425592f271b49519ba01c9f8d16164368afc796af58b9d12026`
 signature/alignment and unchanged existing key verified. SDK 34 uses `-p 4`;
 rejected `-P 16` and shared-prune disk-baseline change retained in local notes.
 Host-only; independent full reconstruction, phone heat/install/update remain open.
+
+## J1367 — Compile source producer release graphs
+
+2026-11-04. PR #341 shipped SHA-linked source profiles into incremental job
+descriptors; missing suppliers fail explicitly and owner structural checks stay.
+Current-input death-effect bundle produced through the generated dispatcher:
+`268501d748109ffb6d61aeeaa871875445d3b8e7481b1fa9f94e59efeed979f8`.
+Wall 52.260 s, CPU 51.727 s, peak RSS 6,341,328,896 bytes; logical growth
+521,201 bytes. Evidence: `work/coordination/p1-scenes-w/end-to-end-v2/`.
+Player/shader wiring retains top-level serialized and nested record-pack receipt
+contracts, texture dependencies and authored release closure inputs. Host
+contracts cover graph dispatch/reuse and real player/shader supplier selection.
+Complete source-only APK, fresh runtime inputs and ordinary gameplay remain open.

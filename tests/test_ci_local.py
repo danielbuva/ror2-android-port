@@ -8,8 +8,9 @@ import tempfile
 import unittest
 
 
-# Nested environment creation also performs disk writes on the shared CI host.
-CI_LOCAL_TIMEOUT = 300
+# Fresh dependency environments and cloned repositories share the host disk.
+# Keep subprocesses bounded while allowing observed concurrent-run contention.
+HOOK_PROCESS_TIMEOUT = 300
 
 
 class CiLocalHookEnvironmentTests(unittest.TestCase):
@@ -74,7 +75,7 @@ class CiLocalHookEnvironmentTests(unittest.TestCase):
                 env=hook_env,
                 capture_output=True,
                 text=True,
-                timeout=CI_LOCAL_TIMEOUT,
+                timeout=HOOK_PROCESS_TIMEOUT,
             )
             self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
             self.assertIn("all CI steps pass", result.stdout)
@@ -86,7 +87,7 @@ class CiLocalHookEnvironmentTests(unittest.TestCase):
                 env=hook_env,
                 capture_output=True,
                 text=True,
-                timeout=CI_LOCAL_TIMEOUT,
+                timeout=HOOK_PROCESS_TIMEOUT,
             )
             self.assertEqual(second.returncode, 0, second.stdout + second.stderr)
             self.assertIn("dependency environment reused", second.stderr)
@@ -107,7 +108,7 @@ class CiLocalHookEnvironmentTests(unittest.TestCase):
                 env=hook_env,
                 capture_output=True,
                 text=True,
-                timeout=CI_LOCAL_TIMEOUT,
+                timeout=HOOK_PROCESS_TIMEOUT,
             )
             self.assertEqual(failure.returncode, 19, failure.stdout + failure.stderr)
             self.assertIn("runner failure sentinel", failure.stdout)

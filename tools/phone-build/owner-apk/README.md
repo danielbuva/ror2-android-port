@@ -543,3 +543,51 @@ every output to match its complete local producer pins; historical metadata
 exceptions cannot override those pins. Both routes use the same assembler and
 retained signing key. Real phone installation and saved-data survival remain
 acceptance gates.
+
+
+### Source bundle job compilation
+
+`release_graph.py` is the current host authoring step for selected complete
+source-bundle profiles. Pass `--repo`, repeated repo-relative `--profile`, and a
+new `--output` staging root. It resolves supplier profile hashes, emits standard
+`recipe/jobs/*.json` descriptors and `source-index.json`, and reports missing or
+unsupported suppliers before writing output. Player data and shaders expose
+their complete serialized files; remapping uses their top-level receipts, while
+player data consumes the nested shader pack and five texture suppliers.
+Sprite/native providers still need explicit wiring; this is not the complete
+705-file release.
+
+Dispatcher bindings `pc`, `sdk` and `codec` select canonical private input paths.
+Only producers requiring SDK data receive the default SDK argument. For object
+profiles that derive script properties, supply it explicitly. Optional
+`--extra-arguments` reads a JSON map from producer name to additional argv, e.g.
+`{"object_produce": ["--sdk", "${input:sdk}"]}`. Use this for the existing
+codec/helper/template tool options; no command shell or private output fallback
+is introduced. `input_sha256:NAME` hashes a declared regular input file, and
+`job_directory:JOB:ARTIFACT` selects the parent of a declared supplier receipt.
+Private input identity must cover acquired tools as well as original files, as
+required by the existing updater.
+
+Player jobs additionally bind `sdk_contents` (Unity Contents data), `converter`,
+`converter_receipt` (that directory's result.json), `code_request` and `managed`
+to freshly source-produced inputs. Shader jobs use `sdk_contents` and require
+their existing public recovery/compiler tool arguments through
+`--extra-arguments`. Player Menu/HUD/manager phases likewise use their existing
+explicit extra arguments. Missing inputs fail through the producer contracts;
+this compiler does not generate managed/native runtime inputs. Authored shader
+files, player registry/manifests/bootstrap/config and imported lab Python owners
+are included in the signed dependency closure.
+
+Overlay generated recipe files into a release source checkout, inspect/audit and
+commit them, then use the existing public publisher. The generated index is an
+input to release planning, not an issued or signed release. It conservatively
+includes the Python producer cohort because owners use dynamic imports.
+Production retains existing producer schema/reference checks and byte checks;
+this wiring does not relax a producer's historical comparison contract.
+
+Host evidence: `work/coordination/p1-scenes-w/end-to-end-v2/` rebuilt the current
+original death-effect bundle through the generated graph and dispatcher (one job).
+Wall 52.260 s, user/system CPU 50.315/1.412 s, peak RSS 6,341,328,896 bytes;
+sampled converter workspace grew by 521,201 logical bytes. This is one bundle,
+not APK or gameplay acceptance. The generated two-job synthetic fixture also
+checks receipt identity and reuse on the second run.

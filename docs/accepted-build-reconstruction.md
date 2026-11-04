@@ -1,13 +1,30 @@
 # Reconstruct the accepted Android build from owner inputs
 
-The public converter targets functional native Android compatibility from
-legitimate game files, permitted SDK inputs and public recipes. J850 remains
-strict for code, asset identities, serialized relationships and runtime
-compatibility. Incidental build identifiers and development connections may be
-generated or omitted through named source producers; private historical values
-are never required public inputs. Raw-exact results, generated metadata and
-device acceptance are reported separately. Historical replay results below
-retain their original byte-exact meaning.
+The public converter must produce a playable Android APK from the user's legitimate
+game files, permitted SDK inputs and public recipes, retaining Architecture C and
+native IL2CPP. Acceptance is device-verified installation and play, matching the
+latest lab build in behaviour, content, visuals and performance as closely as
+possible without regressing its features. The current reference is APK
+`9f904392d02abc3854f9efc4b51cd03daec7afb6b7192a4c074f30fabc12fa22`,
+source `6c12b506`; future port releases advance that reference.
+
+PPtr/file IDs, serialized objects and type trees, MonoScript/script bindings,
+colliders and other gameplay-critical relationships remain strict structural and
+functional checks. Byte equality with J850 or the latest build is a diagnostic,
+never an acceptance gate; investigate differences when they explain a functional
+problem. Historical byte-exact results and counters below retain their original
+meaning and do not establish current playability. Remaining content outputs close
+through correct, loadable source-derived files and in-game verification.
+
+First deliver the fully playable APK; then qualify the complete phone-only flow:
+import → convert → install → play → update to a newer port release. Updates mean
+our recipes, code and content: retain the package identity, durable on-device
+signing key, profiles and settings, and rebuild only changed outputs where possible.
+Check for updates must lead through that same in-place update path. Discovery of
+newer Steam input versions is secondary; changed or unknown assets must be reported
+clearly, with no silent omission. Private historical values remain unnecessary
+public inputs; ownership, provenance and privacy boundaries are unchanged.
+
 J1254 supplies the two incidental startup files through a public producer;
 current historical host readiness is 693/705 available (685 raw-exact, three
 generated metadata/context files), with 12 reference entries still missing. Complete phone acceptance remains
@@ -76,7 +93,7 @@ experience. Experiment evidence is recorded once in [J1036](history/journal-J1-J
 
 ## What the accepted build actually contains
 
-The immutable comparison target is J850: source `1780ea9545f1597c033a8d32e08074b03c7f38c8`,
+The historical byte-comparison target is J850: source `1780ea9545f1597c033a8d32e08074b03c7f38c8`,
 APK SHA-256 `f1550ce0ff030ea0fa7a1ab66de19d54ee7894a7ae2f5b344f993157d6713949`,
 accepted input `6af7ed94619fe1b4346974b4486afa03a8d1625a7820e92da0ff74d57208fe88`.
 Its two standard assisted checks passed. It is a laboratory baseline, not a
