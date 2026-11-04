@@ -87,6 +87,62 @@ def validate_oracle(report):
         raise RuntimeError("Exact-editor oracle version/content contract failed")
 
 
+def native_content_request(path):
+    """Validate an explicit bundle request before starting the exact editor."""
+    path = Path(path)
+    if not path.is_absolute():
+        raise RuntimeError("Absolute native-content request required")
+    request = json.loads(path.read_text())
+    bundle = Path(request["path"])
+    assets = request["assets"]
+    if not bundle.is_absolute() or not bundle.is_file():
+        raise RuntimeError("Native-content bundle needs an existing absolute path")
+    with bundle.open("rb") as stream:
+        actual_hash = hashlib.file_digest(stream, "sha256").hexdigest()
+    if actual_hash != request["sha256"]:
+        raise RuntimeError("Native-content bundle SHA-256 mismatch")
+    if not isinstance(assets, list) or not assets:
+        raise RuntimeError("Native-content request needs typed assets")
+    names = set()
+    for asset in assets:
+        name = asset.get("name")
+        if not isinstance(name, str) or not name or name in names or asset.get("type") not in {"LightingSettings", "OcclusionCullingData"}:
+            raise RuntimeError("Native-content asset name/type absent, duplicated or unsupported")
+        names.add(name)
+    return request
+
+
+def validate_native_content(attempt, commit):
+    """Require typed native deserialization and destruction for every requested asset."""
+    attempt = Path(attempt)
+    request_path = attempt / "native-content-request.json"
+    request = native_content_request(request_path)
+    report = json.loads((attempt / "native-content-check.json").read_text())
+    expected = {
+        "unity": VERSION,
+        "source_commit": commit,
+        "request_sha256": hashlib.sha256(request_path.read_bytes()).hexdigest(),
+        "path": str(Path(request["path"]).resolve()),
+        "sha256": request["sha256"],
+        "count": len(request["assets"]),
+        "unloaded": True,
+    }
+    if report.get("failure") or any(report.get(key) != value for key, value in expected.items()) or report.get("unloaded") is not True:
+        raise RuntimeError("Native-content identity/count/unload contract failed")
+    rows = report.get("assets")
+    if not isinstance(rows, list) or len(rows) != len(request["assets"]):
+        raise RuntimeError("Native-content typed asset count mismatch")
+    for asset, row in zip(request["assets"], rows, strict=True):
+        if (
+            row.get("name") != asset["name"]
+            or row.get("type") != asset["type"]
+            or row.get("loaded_type") != "UnityEngine." + asset["type"]
+            or not isinstance(row.get("loaded_name"), str)
+        ):
+            raise RuntimeError("Native-content typed load mismatch")
+    return report
+
+
 def validate_ambient_oracle(report):
     if report.get("unity") != VERSION or report.get("gpu") != "Metal" or report.get("captureCompleted") is not True or report.get("failure"):
         raise RuntimeError("Exact-editor ambient capture did not complete")
@@ -178,6 +234,13 @@ def run_editor(project, *, build=False, ambient=False):
     method = "AmbientSkyFixture.Begin" if ambient else "ContentFixtureBuilder.Build" if build else "ContentFixtureBuilder.Check"
     env = dict(os.environ)
     env["ROR2_PHONE_ORACLE_REPORT"] = str(attempt / "oracle.json")
+    if env.get("ROR2_PHONE_NATIVE_CONTENT_CHECK"):
+        if ambient:
+            raise RuntimeError("Native-content typed loads require the content fixture")
+        request = native_content_request(env["ROR2_PHONE_NATIVE_CONTENT_CHECK"])
+        request_path = attempt / "native-content-request.json"
+        request_path.write_text(json.dumps(request, indent=2) + "\n")
+        env["ROR2_PHONE_NATIVE_CONTENT_CHECK"] = str(request_path)
     if ambient:
         env["ROR2_AMBIENT_CAPTURE"] = str(attempt)
     env["ROR2_PHONE_BUILD_SOURCE"] = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip()
@@ -205,9 +268,12 @@ def run_editor(project, *, build=False, ambient=False):
     oracle_error = None
     linker_capture = None
     ambient_capture = None
+    native_content = None
     try:
         oracle = json.loads((attempt / "oracle.json").read_text())
         (validate_ambient_oracle if ambient else validate_oracle)(oracle)
+        if env.get("ROR2_PHONE_NATIVE_CONTENT_CHECK"):
+            native_content = validate_native_content(attempt, env["ROR2_PHONE_BUILD_SOURCE"])
         if ambient and result.returncode == 0:
             ambient_capture = validate_ambient_capture(attempt)
         if build and result.returncode == 0:
@@ -224,6 +290,7 @@ def run_editor(project, *, build=False, ambient=False):
         "oracle_error": oracle_error,
         "linker_capture": linker_capture,
         "ambient_capture": ambient_capture,
+        "native_content": native_content,
     }
     (attempt / "receipt.json").write_text(json.dumps(outcome, indent=2) + "\n")
     print(json.dumps(outcome, indent=2))

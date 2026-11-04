@@ -1429,6 +1429,12 @@ the authored `NativeScriptSchemaFixture.cs` fields. It destroys the temporary
 objects after capture; the host must inspect actual type-tree presence before
 using the output as schema evidence. The fixture class is Editor-only and has
 no game-build consumer.
+An optional `ROR2_PHONE_NATIVE_CONTENT_CHECK` request uses this same owner for
+source-produced LightingSettings/OcclusionCullingData bundles: snapshot and hash
+the explicit request, load every address with its exact engine type, record the
+native type/name and destroy loaded objects on unload. `phone_content.py`
+validates the complete count, types, request/bundle hashes and unload receipt.
+This is desktop loadability evidence; device appearance/playability remains open.
 See [probe setup and boundaries](../tools/phone-build/README.md). No game-runtime
 owner or whole-catalog build calls this support path.
 
