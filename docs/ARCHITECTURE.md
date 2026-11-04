@@ -986,6 +986,11 @@ graph by their compressed hash and header; the existing record owner streams
 their source groups at execution. Explicit extra argv selects acquired public tools; unresolved
 profiles fail before staging. Generated JSON is overlaid into the release source
 checkout and audited/committed before the existing tracked-only publisher runs.
+The graph's optional `--bundle-manifest` fans every selected payload bundle into
+`bundle_manifest.py` through declared path, digest and integer byte-size artifacts.
+The existing native owner reads actual bundle dependencies and rejects missing
+providers; it never substitutes a historical manifest. Its generated file shares
+the signed supplier closure and private incremental cache with those bundles.
 The dispatcher resolves supplier directories from declared receipt artifacts;
 input-file hash tokens bind acquired tools without embedding host paths.
 Player/shader jobs declare complete serialized outputs; remapping consumes their

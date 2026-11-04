@@ -163,6 +163,16 @@ class ReleaseGraphTests(unittest.TestCase):
                 stream.write(json.dumps({"path": "original.bundle", "sha256": "b" * 64, "members": [{"objects": []}]}) + "\n")
             final = repo / "recipe/owner-final.json"
             final.write_text(json.dumps({"sources": [], "bundle": {"name": "authored"}, "objects": [{"record": G.digest(supplier)}]}))
+            # Use the real manifest owner and its authored native fixture.
+            for folder in ("tools/phone-build", "scripts/lab"):
+                for source in (ROOT / folder).rglob("*.py"):
+                    target = repo / source.relative_to(ROOT)
+                    target.parent.mkdir(parents=True, exist_ok=True)
+                    shutil.copyfile(source, target)
+            spec = importlib.util.spec_from_file_location("graph_manifest_fixture", ROOT / G.PREFIX / "bundle_manifest.py")
+            manifest = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(manifest)
+            bundle = manifest.F.make_bundle()
             # Each owner checks receipt substitution before producing its output.
             script = """import argparse,gzip,hashlib,json,pathlib
 p=argparse.ArgumentParser();p.add_argument('--output');p.add_argument('--profile');p.add_argument('--profile-sha256');p.add_argument('--record-pack',nargs=2,action='append',default=[])
@@ -178,8 +188,10 @@ for name in ('objects.bin','index.jsonl','result.json'):(out/name).write_text('a
 """
             for producer in ("record_produce", "object_produce"):
                 (repo / G.PREFIX / (producer + ".py")).write_text(script)
+            script += "\n(out/'payload/authored').write_bytes(" + repr(bundle) + ")\n"
+            (repo / G.PREFIX / "object_produce.py").write_text(script)
             graph = G.Graph(repo, {})
-            index = graph.compile(["recipe/owner-final.json"])
+            index = graph.compile(["recipe/owner-final.json"], bundle_manifest=True)
             for name, job in graph.jobs.items():
                 path = repo / name
                 path.parent.mkdir(parents=True, exist_ok=True)
@@ -202,8 +214,16 @@ for name in ('objects.bin','index.jsonl','result.json'):(out/name).write_text('a
             )
             destination = root / "final"
             dispatcher.produce("payload/authored", release["entries"]["payload/authored"], destination)
-            self.assertEqual(destination.read_text(), "source output")
+            self.assertEqual(destination.read_bytes(), bundle)
             self.assertEqual(progress, [False, False])
+            manifest_target = "payload/generated-android-data"
+            dispatcher.produce(manifest_target, release["entries"][manifest_target], root / "manifest")
+            import UnityPy
+
+            objects = list(UnityPy.load(str(root / "manifest")).objects)
+            native_manifest = next(obj.read_typetree() for obj in objects if obj.type.value == 290)
+            self.assertEqual(dict(native_manifest["AssetBundleNames"]), {0: "authored"})
+            self.assertEqual(progress[-1], False)
             second = J.Dispatcher(
                 repo,
                 index,
@@ -218,6 +238,17 @@ for name in ('objects.bin','index.jsonl','result.json'):(out/name).write_text('a
             )
             second.produce("payload/authored", release["entries"]["payload/authored"], destination)
             self.assertEqual(progress[-2:], [True, True])
+            second.produce(manifest_target, release["entries"][manifest_target], root / "manifest-reused")
+            self.assertEqual(progress[-1], True)
+            self.assertEqual((root / "manifest").read_bytes(), (root / "manifest-reused").read_bytes())
+            request = dispatcher.descriptor("recipe/jobs/owner-bundle-manifest.json")
+            row = request["request"]["bundles"][0]
+            output = dispatcher.jobs_root / "attempt/output"
+            expanded = dispatcher.expand(row, request, output, root / "request.json")
+            self.assertIs(type(expanded["bytes"]), int)
+            self.assertEqual(expanded["bytes"], len(bundle))
+            with self.assertRaisesRegex(ValueError, "declared job dependency"):
+                dispatcher.expand(row, {"needs": []}, output, root / "request.json")
             final.write_text(json.dumps({"sources": [], "bundle": {"name": "authored"}, "objects": [{"record": "f" * 64}]}))
             with self.assertRaisesRegex(ValueError, "missing source supplier"):
                 G.Graph(repo, {}).compile(["recipe/owner-final.json"])
