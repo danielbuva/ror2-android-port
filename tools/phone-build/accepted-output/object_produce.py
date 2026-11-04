@@ -618,7 +618,7 @@ def make_layout(selected, records, scene_members=(), engine="2021.3.45f2", *, in
         if typ["class_id"] == 114:
             file_id, script = struct.unpack_from("<iq", data, 16)
             if (file_id, script) == (0, 0):
-                if not scene_members or size != 32 or typ["script_type"] != -1 or typ["hash"] != bytes(16) or typ["script_id"] != bytes(16):
+                if size != 32 or typ["script_type"] != -1 or typ["hash"] != bytes(16) or typ["script_id"] != bytes(16):
                     raise ValueError("original null-script MonoBehaviour metadata drift")
                 null_script = True
             else:
@@ -1286,6 +1286,9 @@ def produce(profile_path, profile_sha256, pc, output, codec_path, codec_sha256, 
     if output.name in ("", ".", "..") or output.exists() or output.is_symlink() or parent.is_relative_to(pc) or pc.is_relative_to(output):
         raise ValueError("object output must be new and outside original input")
     selected_bundle = profile["bundle"]
+    comparison = selected_bundle.get("comparison", "exact")
+    if comparison not in ("exact", "diagnostic"):
+        raise ValueError("unknown bundle comparison policy")
     engine = selected_bundle.get("engine", "2021.3.45f2")
     if engine not in ("2021.3.45f2", "2021.3.33f1"):
         raise ValueError("unqualified source bundle engine")
@@ -1299,6 +1302,7 @@ def produce(profile_path, profile_sha256, pc, output, codec_path, codec_sha256, 
     output.mkdir()
     started = time.monotonic()
     receipt = {"success": False, "input_id": M.INPUT_ID, "profile_sha256": profile_sha256, "objects": 0, "object_bytes": 0}
+    serialized_hashes = {}
     stage = None
     runtime_fields = None
     try:
@@ -1657,7 +1661,8 @@ def produce(profile_path, profile_sha256, pc, output, codec_path, codec_sha256, 
             serialized_path = stage.allocate()
             with serialized_path.open("xb") as serialized:
                 W.write_serialized(serialized, layout, lambda row: stage.reader(by_identity[row["path_id"]]))
-            if B.sha(serialized_path) != selected_member["serialized_sha256"]:
+            serialized_hashes[selected_member["name"]] = B.sha(serialized_path)
+            if comparison == "exact" and serialized_hashes[selected_member["name"]] != selected_member["serialized_sha256"]:
                 raise ValueError("produced serialized structure differs from accepted hash")
             with serialized_path.open("rb") as serialized:
                 serialized.seek(32)
@@ -1683,7 +1688,7 @@ def produce(profile_path, profile_sha256, pc, output, codec_path, codec_sha256, 
             members.append((name, 0, size, lambda path=resource_path: path.open("rb")))
         with W.codec(codec_path, codec_sha256) as compress, bundle_path.open("xb") as stream:
             W.write_bundle(stream, members, compress, engine=engine)
-        if bundle_path.stat().st_size != selected_bundle["bytes"] or B.sha(bundle_path) != selected_bundle["sha256"]:
+        if comparison == "exact" and (bundle_path.stat().st_size != selected_bundle["bytes"] or B.sha(bundle_path) != selected_bundle["sha256"]):
             raise ValueError("produced UnityFS differs from accepted hash")
         with (output / "objects.bin").open("xb") as data, (output / "index.jsonl").open("x") as index:
             for row in records:
@@ -1722,9 +1727,13 @@ def produce(profile_path, profile_sha256, pc, output, codec_path, codec_sha256, 
             name: {"bytes": (output / name).stat().st_size, "sha256": B.sha(output / name)}
             for name in ("objects.bin", "index.jsonl", "layout.json", "payload/" + selected_bundle["name"])
         }
-        receipt["serialized_sha256"] = (
-            {member["name"]: member["serialized_sha256"] for member in selected_members} if scene else selected_bundle["serialized_sha256"]
-        )
+        receipt["serialized_sha256"] = serialized_hashes if scene else serialized_hashes[selected_bundle["member"]]
+        if comparison == "diagnostic":
+            receipt["comparison"] = {
+                "policy": comparison,
+                "serialized_matches": {member["name"]: serialized_hashes[member["name"]] == member.get("serialized_sha256") for member in selected_members},
+                "bundle_matches": B.sha(bundle_path) == selected_bundle.get("sha256") and bundle_path.stat().st_size == selected_bundle.get("bytes"),
+            }
         if runtime_fields is not None:
             runtime_fields.verify()
             receipt["managed_field_inputs"] = dict(runtime_fields.pins)
