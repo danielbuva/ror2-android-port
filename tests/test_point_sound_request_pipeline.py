@@ -237,7 +237,10 @@ class RequestPipelineTests(unittest.TestCase):
             self.assertEqual(expected["composed_game_sha256"], request["composed_game_sha256"])
             self.assertIs(request["passive_pcm_capture_requested"], True)
             self.assertIs(request["passive_pcm_capture_music_output_requested"], True)
-            generator.ROOT = root
+            checkout = root / "checkout"
+            checkout.mkdir()
+            (checkout / "work").symlink_to(work, target_is_directory=True)
+            generator.ROOT = checkout
             generator.WORK = work
             generator.streamed_media_rows = lambda receipt: receipt["streamed_media"]
             generator.EXPECTED = expected
@@ -246,7 +249,8 @@ class RequestPipelineTests(unittest.TestCase):
             self.assertEqual(request["request_id"], validated["request"]["request_id"])
             self.assertEqual(120, validated["streamed_media_count"])
             generated_pin = work / "generated-pin.cs"
-            generator.emit(request_path, contract_path, stage_path, generated_pin)
+            emitted = generator.emit(request_path, contract_path, stage_path, generated_pin)
+            self.assertEqual("work/generated-pin.cs", emitted["output"])
             generated_text = generated_pin.read_text()
             self.assertIn(expected["composed_game_sha256"], generated_text)
             self.assertIn("PassivePcmCaptureMusicOutputRequested = true;", generated_text)
@@ -262,7 +266,10 @@ class RequestPipelineTests(unittest.TestCase):
             root = Path(temp).resolve()
             work = root / "work"
             work.mkdir()
-            runtime.ROOT = root
+            checkout = root / "checkout"
+            checkout.mkdir()
+            (checkout / "work").symlink_to(work, target_is_directory=True)
+            runtime.ROOT = checkout
             runtime.WORK = work
             prefab = work / "global.prefab"
             bank_index = work / "bank-index.json"
@@ -322,6 +329,7 @@ class RequestPipelineTests(unittest.TestCase):
             runtime.streamed_media_rows = lambda value: value["streamed_media"]
             output = work / "generated/StagePin.cs"
             result = runtime.generate(receipt_path, stage_root, output, prefab, bank_index, init_file, init_receipt)
+            self.assertEqual("work/generated/StagePin.cs", result["output"])
             self.assertEqual(153, result["bank_count"])
             self.assertEqual(120, result["streamed_media_count"])
             self.assertEqual(153, output.read_text(encoding="utf-8").count('"Bank'))

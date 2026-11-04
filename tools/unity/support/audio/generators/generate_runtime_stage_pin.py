@@ -191,7 +191,7 @@ def generate(receipt_path: Path, stage_root: Path, output: Path, prefab: Path, b
     return {
         "receipt_sha256": sha_file(receipt_path),
         "source_sha256": sha_file(absolute),
-        "output": str(absolute.relative_to(ROOT)),
+        "output": str(Path("work") / absolute.relative_to(WORK)),
         "bank_count": len(names),
         "streamed_media_count": len(media_rows),
         "soundbanks_info_sha256": SOUNDBANKS_INFO_SHA256,
