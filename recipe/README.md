@@ -6568,3 +6568,104 @@ message delivery and original/error stack policies. Pinned BepInEx `5b766a3b`
 log callback observation informs the subscriber boundary; exact Unity 2021.3.45f2
 CoreModule API documents the per-call option. Recipes contain authored source
 hashes only, with no captured text, protected code, game bytes or private paths.
+
+### Composed Console retention default
+
+The authored offline application owner applies the original private `maxMessages`
+convar's own metadata default when composed startup omits Console initialization.
+It does not copy the logger, suppress warnings, purge logs or change subscriptions.
+The default is process-wide; live Console configuration and later explicit values
+remain authoritative. The synthetic host fixture tests startup and replacement
+lifetime without game source or assets. Provenance/privacy review: authored field
+access only; original implementation, raw heap strings and evidence remain ignored.
+Device qualification remains required before claiming bounded session growth.
+
+### Whole-game Bandit Sprite source relationship
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-whole-game-sprite-relationships.json` | `f0fe7954defbc1de2d408f693577abb30408562db5bbdf32ae4b368f4cc0eb19` |
+
+The recipe selects one original Sprite, its source hash, the
+current export texture GUID and one checked Texture2D relocation. The original
+source container independently supplies the Sprite root; current PNG metadata
+witnesses the GUID and single-Sprite importer context. Pinned AssetRipper
+`1ac666f` TextureExportCollection single-Sprite relationships and the existing
+J1285 exporter audit supply prior art. Existing `record_produce.py` applies
+`player_data.sprite_key` before pointer relocation; no new reconstruction rule,
+pixels, geometry, native output or proprietary implementation is published.
+The complete 476-byte persisted record matches J850. This fills a provider gap;
+residual three and historical readiness remain unchanged. Complete bundle and
+phone/install/update qualification stay open.
+
+
+### Whole-game bundle Material provider records
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-whole-game-bundle-material-records.json` | `f195b009ae494b3bc4dccc203753d2365c2da12f0281c426c45a7c6ed0db7a08` |
+
+Audit: 2026-10-31. The existing generic record owner selects 58 original
+Materials with unique typed Shader/Texture endpoints. Mandatory inverse-source
+ambiguity exclusions retain unresolved alternatives. Published SingleColor dummy
+Shader selectors witness the existing `dummy-shader-sort-invalid` policy
+(J1274/J1321): original keyword strings are demoted and sorted ordinally; all
+other native fields remain source-owned. Pinned AssetRipper DummyShaderTextExporter
+and TemplateList selection inform the dummy declaration boundary; EditorKit typed
+EntryLookup informs identity (docs/community-prior-art.md). Only source selectors,
+hashes and checked pointer relationships ship; no native bodies, keyword strings,
+pixels, target repairs or private paths ship. Independent persisted production
+matches all 58 J850 records, 116,100 bytes. This supplies 80 group occurrences;
+complete groups have not been requalified. Saved residual three and file readiness
+remain unchanged; complete bundle, phone/install/update and runtime stay open.
+
+Nine further Materials use published Default/TransparentDiffuse dummy Shader
+selectors with the same source-owned policy and ambiguity exclusions. Independent
+persisted qualification matches all nine J850 records (29,860 bytes); the owner
+now supplies 67 records. Source selectors, hashes and typed relationships only;
+no new producer logic or protected content is published. The 59 previously
+completed source groups compare exact diagnostically; final bundle qualification
+and readiness remain open.
+
+
+### Whole-game bundle CanvasRenderer provider records
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-whole-game-bundle-canvas-records.jsonl.gz` | `24452f8b3a4365fea92e96f9c391586fa7d18c67825494eb31fbf1d920e66df7` |
+
+Audit: 2026-10-31. The existing generic `record_produce.py` native owner selects
+10,870 original CanvasRenderers across 66 source members. Qualified original
+GameObject component PPtrs and reciprocal CanvasRenderer GameObject pointers
+supply unique source identities and checked pointer relocations. Pinned
+EditorKit `4128710` EntryLookup component requirements/child searches require
+actual typed ownership; J1290's ordered component/backlink technique supplies
+prior art. Only selectors, source/output hashes and checked relationships ship;
+no native body, scalar template, target repair, protected implementation or
+private path is included. The deterministic gzip JSONL profile uses the existing
+bounded source-group reader. Native schema is derived from original input;
+optional native type hashes are omitted. Independent persisted production
+matches all 10,870 J850 records (141,310 bytes). Saved residual three and final
+file readiness remain unchanged; complete groups, bundle, phone/install/update
+and runtime gates stay open.
+
+### Whole-game bundle Tree provider records
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-whole-game-bundle-tree-records.jsonl.gz` | `4345adb71b8cb29b5c4d7ffe2801ed3483003fe5e1aebdf8a07eb4426dfaccda` |
+
+Audit: 2026-10-31. The existing generic native record owner selects 62 original
+Trees across 37 source members. Qualified GameObject component edges and
+reciprocal original GameObject pointers establish unique typed identities and
+checked relocations. Additional nonzero pointers exclude 2,028 candidates;
+no WindAsset endpoint is guessed. Pinned EditorKit `4128710` EntryLookup
+component requirements (lines 48–68), documented in community-prior-art.md,
+and the J1354 reciprocal ownership technique inform selection. Only source
+selectors, source/output hashes and checked relationships ship; no native
+bodies, target repairs, protected implementation or private paths ship.
+The deterministic gzip JSONL profile uses the existing bounded reader;
+all native scalar fields and schemas remain source-owned. Independent
+persisted production matches all 62 J850 records (1,488 bytes). Saved residual
+three and final-file readiness remain unchanged; group, complete bundle,
+phone/install/update and runtime gates remain open.

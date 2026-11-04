@@ -10,6 +10,13 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J1355](PORTING_JOURNAL.md#j1355--supply-source-derived-bundle-tree-providers) | 2026-10-31 | Supply source-derived bundle Tree providers | 2026-10-31. |
+| [J1353](PORTING_JOURNAL.md#j1353--capture-the-requested-final-menu-heap) | 2026-10-31 | Capture the requested final menu heap | 2026-10-31. |
+| [J1354](PORTING_JOURNAL.md#j1354--supply-source-derived-bundle-canvasrenderer-providers) | 2026-10-31 | Supply source-derived bundle CanvasRenderer providers | 2026-10-31. |
+| [J1352](PORTING_JOURNAL.md#j1352--extend-source-derived-bundle-material-providers) | 2026-10-31 | Extend source-derived bundle Material providers | 2026-10-31. |
+| [J1351](PORTING_JOURNAL.md#j1351--supply-source-derived-bundle-material-providers) | 2026-10-31 | Supply source-derived bundle Material providers | 2026-10-31. |
+| [J1350](PORTING_JOURNAL.md#j1350--restore-original-console-retention-default-at-composed-startup) | 2026-10-31 | Restore original Console retention default at composed startup | 2026-10-31. |
+| [J1349](PORTING_JOURNAL.md#j1349--supply-the-whole-game-bandit-achievement-sprite) | 2026-10-31 | Supply the whole-game Bandit achievement Sprite | 2026-10-31. |
 | [J1348](PORTING_JOURNAL.md#j1348--preserve-preparation-markers-without-redundant-diagnostic-stacks) | 2026-10-31 | Preserve preparation markers without redundant diagnostic stacks | 2026-10-31. |
 | [J1347](PORTING_JOURNAL.md#j1347--reconstruct-whole-game-customrendertextures) | 2026-10-31 | Reconstruct whole-game CustomRenderTextures | 2026-10-31. |
 | [J1346](PORTING_JOURNAL.md#j1346--qualify-whole-game-recorded-animation-source) | 2026-10-31 | Qualify whole-game Recorded animation source | 2026-10-31. |

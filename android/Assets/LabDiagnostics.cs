@@ -26,6 +26,7 @@ public sealed class LabDiagnostics : MonoBehaviour
   if(referenceCube)referenceCube.enabled=visible&&cubeVisibility;
  }
  IEnumerator Start() {
+  Application.targetFrameRate = 300;
   root=Application.persistentDataPath; Directory.CreateDirectory(root); Application.logMessageReceived+=OnLog;
   string proof=SimpleJSON.JSON.Parse("{\"assembly\":\"preserved\"}")["assembly"].Value;
   Debug.Log("LAB_MANAGED_ASSEMBLY_OK "+proof);

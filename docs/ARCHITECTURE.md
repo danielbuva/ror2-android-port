@@ -1965,7 +1965,10 @@ exit and session cleanup clear notes and consent. The settings/application/GUI
 owners give the visible modal input priority while retaining the owned pause.
 Android clipboard, browser handoff and the composed settings route require
 device acceptance; host fixtures exercise the authored flow and refusal paths.
-`LabDiagnostics` replaces `snapshot.json` on its existing periodic schedule.
+`LabDiagnostics` requests 300 FPS at startup, before its first frame yield and
+the lab menu. Gameplay retains its existing 300 FPS request and restores this
+startup value on exit. This is a request; actual FPS depends on device load.
+It replaces `snapshot.json` on its existing periodic schedule.
 Only its startup/lifecycle snapshots use the full `LAB_SNAPSHOT` console record;
 periodic JSON is not retained by the original console. Original and error logging
 stay unchanged. During completed-session reclamation, `SessionResourceBoundary`
@@ -1999,7 +2002,9 @@ explicit exit and hard deadline for historical use; the service never calls it.
 This does not simulate power loss or ENOSPC; device qualification remains open.
 The current `session-memory-check --memory-snapshots` diagnostic extends
 `SessionResourceBoundary` with native/managed heap captures before presentation
-at menus 2 and 4, after the completed worlds have been reclaimed. It requires an
+at menu 2 and the requested series' final menu, after the completed worlds have
+been reclaimed. The host binds the final capture index to `sessions + 1`;
+selectors without that field retain the historical menu-4 default. It requires an
 attempt-matched opt-in and an idle Development player. Native callback completion
 and a nonempty owned file are required before the host proceeds. The host copies
 only that generated snapshot, verifies its SHA-256, then removes the exact device
@@ -2150,6 +2155,12 @@ The body-input iterator keeps its historical screen lease only for non-playable
 experiments, so playable input cleanup cannot overwrite application teardown.
 Explicit Android sleep/background actions remain available. The production
 lifetime methods execute in the native-feedback host fixture.
+
+At playable startup this owner also applies the original Console retention convar
+metadata default once when the original Console is absent and its limit is still
+uninitialized. The process-wide default survives coordinator replacement; a live
+Console, preconfigured nonzero limit and later user values retain authority.
+The original log handler continues to trim and notify subscribers itself.
 
 The exact editor is started with `./dev editor --target lab --action open`; send it one
 mutation at a time. Device acceptance is always the real device, never the editor.
@@ -5782,3 +5793,44 @@ external metadata. All other native fields remain source-owned. Setup requires
 pinned original bundles and a fresh output pack; scoped readers close on process
 exit and receipts persist. Three records are host raw-exact to J850. No runtime
 owner is added; complete bundle and phone/runtime acceptance remain open.
+
+`recipe/owner-whole-game-sprite-relationships.json` selects the original Bandit
+achievement Sprite through the existing `record_produce.py` native owner. Its
+current exported PNG GUID witnesses the imported Sprite identity; the original
+Sprite supplies geometry and native schema, and a checked Texture2D pointer
+supplies its dependency. Setup pins original input and creates a fresh record
+pack; scoped readers close on process exit and receipts persist. The record is
+host raw-exact to J850. This adds no runtime owner; bundle and phone gates remain
+open.
+
+
+`recipe/owner-whole-game-bundle-material-records.json` selects 67 original
+Materials through the existing `record_produce.py` generic native owner. Unique
+typed Shader/Texture relationships supply relocated endpoints; published
+SingleColor, Default and TransparentDiffuse dummy Shader identities select the
+existing ordinal invalid-keyword
+policy. Inverse-source ambiguity exclusions preserve unresolved alternatives.
+Setup pins original bundles and creates a fresh record pack; scoped readers close
+on process exit and receipts persist. All 67 persisted records are host raw-exact
+to J850. This adds no runtime owner; group, complete bundle and phone gates remain
+open.
+
+
+`recipe/owner-whole-game-bundle-canvas-records.jsonl.gz` selects 10,870 original
+CanvasRenderers through the existing `record_produce.py` native owner. Qualified
+GameObject component edges and reciprocal original ownership supply checked
+pointer relocations; remaining native fields and schemas stay source-owned.
+Setup pins original bundles and streams bounded source groups into a fresh record
+pack. Scoped readers close on process exit and persisted receipts remain.
+All records are host raw-exact to J850; no runtime owner is added. Complete
+bundle and phone/install/update gates remain open.
+
+`recipe/owner-whole-game-bundle-tree-records.jsonl.gz` selects 62 original Trees
+through the existing `record_produce.py` native owner. Qualified GameObject
+component edges and reciprocal original ownership establish checked pointer
+relocations; additional nonzero pointers remain excluded until their endpoints
+are source-qualified. Native scalars and schemas remain original-input owned.
+Setup pins original bundles and streams bounded source groups into a fresh pack;
+scoped readers close on process exit and persisted receipts remain. All 62 records
+are host raw-exact to J850. Complete bundle and phone/install/update gates remain
+open; no runtime owner is added.

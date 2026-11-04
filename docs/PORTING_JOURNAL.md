@@ -2211,3 +2211,99 @@ CPU/GPU peak 79.2 C, above 80 C for 0 s; battery 33 → 36 C.
 Snapshots hash-verified in cold storage; process/selectors absent, OLED asleep.
 This qualifies diagnostic string retention only; ordinary repeated-session memory,
 error-callback delivery, physical controls and sustained performance remain open.
+
+## J1349 — Supply the whole-game Bandit achievement Sprite
+
+2026-10-31. Existing generic record owner reconstructs one original Sprite through
+an independently witnessed export GUID and checked original Texture2D edge.
+All 476 persisted bytes raw-exact to J850; pack SHA-256
+`2913ee69057433e8fa1c16d50ffe6982eed1d03cfaf109c1aa3232cd04d68e2b`.
+Evidence: `work/coordination/p1-wholegame-1031/bandit-sprite-public-v1/done.json`;
+source metadata witnesses: parent `source-export-witness-20261031.json`.
+Production 1.430 s, qualification 5.036 s, peak RSS 284,934,144 bytes.
+Host-only; heat unmeasured. Provider gap filled; residual three unchanged.
+Readiness stays 693/705 available, 685 raw-exact; full bundle, phone production,
+installation/update and runtime remain open.
+
+## J1350 — Restore original Console retention default at composed startup
+
+2026-10-31. OfflineApplicationSession applies the original convar metadata default
+once when Console is absent and its value is zero; existing/later settings prevail.
+APK SHA-256 `e605c0423d6c4b3efe0693c096aba61d4937c020ed51c0a7795a83740c7edb6a`.
+Diagnostic: `work/coordination/alpha-console-default-deps-device-20261031T185340Z/terminal.done.json`;
+menus 2/4 both retain 25 logs, original warning stacks and cleared unused slots.
+Ordinary: `work/coordination/alpha-console-default-ordinary-device-20261031T191200Z/terminal.done.json`;
+12 assisted same-process sessions, 2792.63 s; matched menu slope +218,749 B/session.
+CPU/GPU peak 83.6 C, above 80 C for 25.39 s; battery 35 → 38 C.
+Evidence hash-verified in cold storage; process/selectors absent, OLED asleep.
+Host lifecycle, feedback and producer/pin checks pass. No logger rewrite or purge.
+Repeated-session memory bound, callback delivery, physical controls and sustained
+performance remain open; the observation does not establish a pool plateau.
+
+
+## J1351 — Supply source-derived bundle Material providers
+
+2026-10-31. Existing generic record owner reconstructs 58 original Materials with
+unique typed Shader/Texture edges and the existing dummy invalid-keyword policy.
+All 116,100 persisted bytes raw-exact to J850; pack SHA-256
+`6e41bee9610a35d3e51b343d790ef21053e0385b67906f7de0837e0f74cc8dc0`.
+Evidence: `work/coordination/p1-wholegame-1031/bundle-material-sorted-persisted-qualification-v1/done.json`;
+source witnesses: sibling `bundle-material-source-sorted-v1/source-witnesses.json`.
+Production 13.00 s, qualification 3.72 s, peak RSS 279,396,352 bytes.
+Host-only; heat unmeasured. Provider gaps filled across 80 group occurrences;
+complete groups unqualified, residual three unchanged. Readiness stays
+693/705 available, 685 raw-exact; bundle, phone/install/update and runtime open.
+
+## J1352 — Extend source-derived bundle Material providers
+
+2026-10-31. Existing generic record owner supplies nine more original Materials
+through published dummy Shader policies and unique typed dependency endpoints.
+All 29,860 persisted bytes raw-exact to J850; pack SHA-256
+`466c0ed39cd96ca8e8476dbabda2ec7ef227be4f968a5e26d5b31d8c73418fa2`.
+Evidence: `work/coordination/p1-wholegame-1031/bundle-material-remaining-persisted-qualification-v1/done.json`;
+source witnesses: sibling `bundle-material-source-remaining-v1/source-witnesses.json`.
+Production 5.28 s, qualification 8.46 s, peak RSS 278,085,632 bytes.
+Host-only; heat unmeasured. Owner now supplies 67 Materials; residual three
+unchanged. Readiness stays 693/705 available, 685 raw-exact; complete bundle,
+phone/install/update and runtime remain open.
+
+
+## J1354 — Supply source-derived bundle CanvasRenderer providers
+
+2026-10-31. Existing generic native record owner supplies 10,870 original
+CanvasRenderers through checked GameObject component/backlink relationships.
+All 141,310 persisted bytes raw-exact to J850; pack SHA-256
+`ad320acb6f36ee2618fa1c0e5cf7fd4c8f856376c945e30a0fc8ce63c1d97a12`.
+Evidence: `work/coordination/p1-wholegame-1031/bundle-canvas-persisted-qualification-v1/done.json`;
+source witnesses: sibling `bundle-canvas-source-frontier-v1/witnesses.jsonl`.
+Production 33.55 s, qualification 4.23 s, peak RSS 338,952,192 bytes.
+Host-only; heat unmeasured. Bounded source recipe only; producer unchanged.
+Residual three unchanged. Readiness stays 693/705 available, 685 raw-exact;
+complete groups, bundle, phone/install/update and runtime gates remain open.
+## J1353 — Capture the requested final menu heap
+
+2026-10-31. Existing SessionResourceBoundary snapshot selection now uses the requested
+final session instead of always menu 4; the host selector records that same endpoint.
+Device acceptance: twelve assisted sessions capture only menus 2 and 13; both native
+snapshots complete and transfer with matching hashes. This is attribution evidence;
+ordinary-play managed-memory plateau and sustained-performance gates remain open.
+Evidence: `work/coordination/alpha-final-menu-heap-device-20261031T204335Z/terminal.done.json`.
+Source `097c75e5`; APK SHA-256
+`d9009691ddccbefb3bdca3aad45bf5120dd011ccb2de66056c9a591a636b038a`.
+Prior art: existing pinned Unity MemorySnapshotDataTools and SDK capture contract.
+Focused 247 host checks, Ruff, public audit and source-pin checks pass; cleanup,
+selector removal, process exit and sleeping display verified; native heaps retained cold.
+
+## J1355 — Supply source-derived bundle Tree providers
+
+2026-10-31. Existing generic native record owner supplies 62 original Trees
+through checked GameObject component/backlink relationships; 2,028 candidates
+with unresolved nonowner pointers remain excluded.
+All 1,488 persisted bytes raw-exact to J850; pack SHA-256
+`e5b45276dba618706c75be5a11c31f8344aa67591cb4f07a669a929f50f7f4e2`.
+Evidence: `work/coordination/p1-wholegame-1031/bundle-tree-persisted-qualification-v1/done.json`;
+source witnesses: sibling `bundle-tree-source-frontier-v1/witnesses.jsonl`.
+Production 1.71 s, qualification 3.79 s, peak RSS 287,227,904 bytes.
+Host-only; heat unmeasured. Bounded source recipe only; producer unchanged.
+Residual three unchanged. Readiness stays 693/705 available, 685 raw-exact;
+complete groups, bundle, phone/install/update and runtime gates remain open.

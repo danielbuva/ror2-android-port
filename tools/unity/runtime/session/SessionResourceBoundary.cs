@@ -40,7 +40,7 @@ public sealed partial class PortSession
         public int rootWalkNodes, rootWalkRoots, rootWalkReadFailures;
         public float rootWalkSeconds;
         public string[] rootWalkPaths, rootWalkFailureSamples, rootWalkCensus, rootWalkRootAttribution;
-        // Private diagnostic snapshots at menus 2/4; not ordinary growth/performance samples.
+        // Private diagnostic snapshots; not ordinary growth/performance samples.
         public bool memorySnapshotRequested, memorySnapshotComplete, memorySnapshotSuccess;
         public string memorySnapshotFile, memorySnapshotError;
     }
@@ -50,6 +50,7 @@ public sealed partial class PortSession
         public string attempt;
         public int diagnosticCompletedRootWalkSession;
         public bool diagnosticCompletedMemorySnapshots;
+        public int diagnosticCompletedMemorySnapshotFinalSession = 4;
     }
     const int RootWalkNodeBudget = 2000000;
     // Reads only the launch selector's opt-in session index; the coordinator's own parsing is
@@ -79,7 +80,8 @@ public sealed partial class PortSession
     void CaptureCompletedMemorySnapshot(SessionResourceSample sample)
     {
         var selection = ReadResourceDiagnostics();
-        if (selection == null || !selection.diagnosticCompletedMemorySnapshots || (sessionIndex != 2 && sessionIndex != 4))
+        if (selection == null || !selection.diagnosticCompletedMemorySnapshots ||
+            (sessionIndex != 2 && sessionIndex != selection.diagnosticCompletedMemorySnapshotFinalSession))
             return;
         sample.memorySnapshotRequested = true;
         if (!Debug.isDebugBuild || Run.instance || NetworkServer.active || NetworkClient.active)
