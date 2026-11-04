@@ -662,6 +662,24 @@ class PlayerDataTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "script relationship"):
             P.object_file(self.pc, selected, self.root / "wrong-script")
 
+    def test_current_script_identity_replaces_historical_body_and_type_binding(self):
+        selected, sdk, sdk_pin, _, target_body = script_properties_fixture(self.root, self.pc)
+        identity = ("Fixture.dll", "Invented", "Fixture")
+        registry = {"original_script_identities": {("CAB-script", -77): identity}, "script_ids": {identity: 91}}
+        destination = self.root / "current-script-player"
+        P.object_file(self.pc, selected, destination, P.script_sdk_schema(sdk, sdk_pin), registry)
+        expected = bytearray(target_body)
+        struct.pack_into("<iq", expected, 16, 1, 91)
+        with destination.open("rb") as stream:
+            stream.size = destination.stat().st_size
+            layout = P.W.read_serialized(stream)
+            self.assertEqual(layout["scripts"], [(1, 91)])
+            stream.seek(layout["data_offset"])
+            self.assertEqual(stream.read(), expected)
+        registry["script_ids"].clear()
+        with self.assertRaisesRegex(ValueError, "no current registry identity"):
+            P.object_file(self.pc, selected, self.root / "missing-current-script", P.script_sdk_schema(sdk, sdk_pin), registry)
+
     def test_selected_script_hash_uses_actual_original_identity_and_sdk_base(self):
         selected, sdk, sdk_pin, expected_hash, target_body = script_properties_fixture(self.root, self.pc)
         native = P.script_sdk_schema(sdk, sdk_pin)

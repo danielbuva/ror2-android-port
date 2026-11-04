@@ -1357,4 +1357,10 @@ def registry(pc, editor_resources, managed_production, authored_root, packages_r
         layout["objects"] = sorted(objects, key=lambda row: row["path_id"])
         for path, expected in list(pins.items()):
             pin(Path(path), expected)
-        return {"layout": layout, "bodies": bodies, "script_ids": script_ids, "provider_pins": pins}
+        return {
+            "layout": layout,
+            "bodies": bodies,
+            "script_ids": script_ids,
+            "provider_pins": pins,
+            "original_script_identities": {(member, pid): identity for member, scripts in member_scripts.items() for pid, identity in scripts.items()},
+        }
