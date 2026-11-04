@@ -152,6 +152,85 @@ out.mkdir();(out/'global-metadata.dat').write_bytes(metadata)
             self.assertEqual((root / "global-metadata.dat").read_bytes(), metadata.read_bytes())
             self.assertEqual((root / "libil2cpp.so").read_bytes(), b"independent native output")
 
+    def test_sdk_job_signs_java_helper_expands_tools_and_reuses_complete_cohort(self):
+        spec = importlib.util.spec_from_file_location("test_sdk_graph_owner", ROOT / G.PREFIX / "sdk_package.py")
+        sdk = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(sdk)
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory).resolve()
+            repo, inputs = root / "repo", root / "inputs"
+            (repo / "recipe").mkdir(parents=True)
+            (inputs / "work").mkdir(parents=True)
+            template = "recipe/owner-sdk-job-inputs.json"
+            shutil.copyfile(ROOT / template, repo / template)
+            producer = repo / G.PREFIX / "sdk_package.py"
+            producer.parent.mkdir(parents=True)
+            producer.write_text(
+                "SDK_ENTRIES = "
+                + repr(sdk.SDK_ENTRIES)
+                + "\n"
+                + """if __name__ == '__main__':
+    import json,pathlib,sys
+    assert sys.argv[1]=='--request'
+    request=json.loads(pathlib.Path(sys.argv[2]).read_text())
+    assert len(request['jars'])==13
+    for name in ('sdk','android_jar','aapt','java','javac'):
+        assert pathlib.Path(request[name]).is_file()
+    assert all(pathlib.Path(value).is_file() for value in request['jars'].values())
+    out=pathlib.Path(request['output']);out.mkdir()
+    for name in SDK_ENTRIES:
+        path=out/'resources/apk'/name;path.parent.mkdir(parents=True,exist_ok=True)
+        path.write_bytes(('authored '+name).encode())
+    (out/'result.json').write_text('{"success":true}')
+"""
+            )
+            helper = G.PREFIX + "SdkAndroidCode.java"
+            (repo / helper).write_text("// authored helper fixture\n")
+            request = json.loads((repo / template).read_text())
+            bindings = {}
+            for token in [request[name] for name in ("sdk", "android_jar", "aapt", "java", "javac")] + list(request["jars"].values()):
+                key = token.removeprefix("${input:").removesuffix("}")
+                bindings[key] = key
+                (inputs / key).write_text("authored tool input")
+            graph = G.Graph(repo, {})
+            index = graph.compile([], sdk_request=template)
+            self.assertEqual(set(index["entries"]), {"apk/" + name for name in sdk.SDK_ENTRIES})
+            self.assertIn(helper, index["files"])
+            self.assertIn(template, index["files"])
+            for name, descriptor in graph.jobs.items():
+                path = repo / name
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_text(json.dumps(descriptor))
+                index["files"][name] = G.digest(path)
+            release = {"entries": {name: J.UPDATES.public().entry_dependencies(index, name) for name in index["entries"]}}
+            runtime, native = root / "runtime", root / "native"
+            runtime.mkdir()
+            native.mkdir()
+            progress = []
+            for _ in range(2):
+                dispatcher = J.Dispatcher(
+                    repo,
+                    index,
+                    release,
+                    inputs,
+                    runtime,
+                    native,
+                    {"bindings": bindings},
+                    "a" * 64,
+                    python=[sys.executable],
+                    progress=lambda name, reused: progress.append(reused),
+                )
+                for name, dependencies in release["entries"].items():
+                    destination = root / "results" / name
+                    destination.parent.mkdir(parents=True, exist_ok=True)
+                    dispatcher.produce(name, dependencies, destination)
+                    self.assertEqual(destination.read_bytes(), ("authored " + name.removeprefix("apk/")).encode())
+            self.assertEqual(progress, [False, True])
+            (repo / helper).write_text("// changed helper\n")
+            dispatcher = J.Dispatcher(repo, index, release, inputs, runtime, native, {"bindings": bindings}, "a" * 64, python=[sys.executable])
+            with self.assertRaisesRegex(ValueError, "verified public source changed"):
+                dispatcher.execute("recipe/jobs/owner-sdk-package.json")
+
     def test_startup_source_job_executes_and_reuses_through_dispatcher(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory).resolve()

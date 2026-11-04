@@ -1004,6 +1004,12 @@ SDK; the native policy travels in the signed closure. The native owner rechecks
 the converter cohort after linking and verifies its metadata copy before success.
 Planning and measured partial builds emit neither final metadata nor a complete
 release. Burst remains a separate upstream production requirement.
+The optional `--sdk-request` adds the existing `sdk_package.py` owner as one
+cached job for all 15 SDK APK entries. Its public request binds the acquired
+SDK, platform, AAPT2, Java tools and pinned public jars. The authored Java helper
+travels in the signed closure alongside Python producers. SDK resources, dex
+and engine libraries share production/reuse; temporary helper/tool files stay
+private and are excluded from declared outputs.
 Generated jobs retain producer checks and do not establish complete APK or phone
 readiness. Setup uses explicit source checkout/profile/output paths; teardown
 keeps generated descriptors and caller-owned producer results. The managed-host
