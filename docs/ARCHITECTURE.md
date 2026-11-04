@@ -1112,8 +1112,12 @@ SDK ARM64 target data remain inputs. Android Clang 21/LLD remains the explicit
 fallback; whole-player Linux app hosting and runtime parity are separate gates.
 
 `owner-code/produce.py::burst` owns the unchanged acquired Burst compiler
-invocation over freshly produced managed assemblies. Fixed-target metadata
-selects its roots, actual SDK compilation API defines, options and tool hashes.
+invocation over freshly produced managed assemblies. The existing public Burst
+policy selects roots, SDK compilation API defines, options and tool hashes.
+Without a fixed target, the backend reuses only the `burst` policy from
+`owner-j850-code.json`; current managed generation and preservation roots remain
+selected. Its receipt records the policy profile hash and checks it after
+compilation. Fixed targets continue to select their own policy.
 `GnuToolAdapter.c` supplies only the GNU build-tool low-address mappings and
 explicit emulated child execution required by Mono/LLVM under QEMU. It is foreign
 tool data, never linked into the ARM64 game. `native.py::compiled_jobs` validates

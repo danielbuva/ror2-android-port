@@ -76,6 +76,12 @@ class OwnerCodeBackendTests(unittest.TestCase):
             self.assertFalse(output.exists())
 
     def test_default_backend_reaches_native_without_a_fixed_target(self):
+        self.default_backend()
+
+    def test_current_burst_uses_current_managed_cohort_without_fixed_target(self):
+        self.default_backend(burst_only=True)
+
+    def default_backend(self, burst_only=False):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary).resolve()
             work, sdk, game = [root / name for name in ("work", "sdk", "game")]
@@ -109,7 +115,20 @@ class OwnerCodeBackendTests(unittest.TestCase):
                 "managed": {assembly.name: {"path": str(assembly), "sha256": BACKEND.native.sha(assembly)}},
                 "output": str(output),
             }
+            if burst_only:
+                request["burst_tools"] = {"command": ["fixture-runner"], "runtime": "fixture-runtime"}
+
+            def burst(tools, policy, managed, output):
+                self.assertEqual((managed / assembly.name).read_bytes(), assembly.read_bytes())
+                self.assertEqual(policy, json.loads(BACKEND.BURST_PROFILE.read_text())["burst"])
+                output.mkdir()
+                (output / "burst.xml").write_text("<linker />\n")
+                return {"success": True}
+
+            if burst_only:
+                profile.write_text(json.dumps(json.loads(profile.read_text()) | {"xml": {"burst.xml": "<linker />\n"}}))
             with (
+                patch.object(BACKEND, "burst", side_effect=burst),
                 patch.object(BACKEND, "PROFILE", profile),
                 patch.object(BACKEND, "PROFILE_SHA", BACKEND.native.sha(profile)),
                 patch.object(BACKEND.native, "PROFILE", native_profile),
@@ -125,8 +144,14 @@ class OwnerCodeBackendTests(unittest.TestCase):
                 patch.object(BACKEND.native, "generated_profile") as generated,
                 patch.object(BACKEND, "target_inputs") as fixed_target,
             ):
-                result = BACKEND.run(request)
+                result = BACKEND.run(request, burst_only=burst_only)
             self.assertTrue(result["success"])
+            if burst_only:
+                self.assertEqual(result["phase"], "burst-built")
+                self.assertEqual(result["burst_policy_profile_sha256"], BACKEND.native.sha(BACKEND.BURST_PROFILE))
+                build.assert_not_called()
+                fixed_target.assert_not_called()
+                return
             self.assertEqual(result["phase"], "native-built")
             self.assertEqual(result["source_frames"], 1)
             build.assert_called_once()

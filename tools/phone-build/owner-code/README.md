@@ -291,8 +291,11 @@ shader recovery and serialized content assembly remain separate content gates.
 ## Fixed-target Burst and completed-object relinking
 
 The combined backend optionally accepts `burst_tools: {"command": [EXPLICIT_HOST,
-...], "runtime": PRIVATE_BURST_RUNTIME}`. The fixed target's `burst` metadata
-pins the acquired compiler files/backend, five real managed roots, six recorded
+...], "runtime": PRIVATE_BURST_RUNTIME}`. With no `target`, it reuses only
+the `burst` compiler policy in `recipe/owner-j850-code.json`, compiling the
+current supplied managed cohort. This does not select historical gameplay
+sources. The receipt records and rechecks that profile's hash. Fixed targets
+retain their own `burst` metadata. The policy pins the acquired compiler files/backend, five real managed roots, six recorded
 SDK compilation-API define lists, optimization/debug options and Android API.
 The extra MCP assembly name is hash metadata only: no MCP DLL is a supplier,
 root or output. Those API defines are independent of the IL2CPP managed compiler
