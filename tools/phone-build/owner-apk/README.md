@@ -554,8 +554,39 @@ new `--output` staging root. It resolves supplier profile hashes, emits standard
 unsupported suppliers before writing output. Player data and shaders expose
 their complete serialized files; remapping uses their top-level receipts, while
 player data consumes the nested shader pack and five texture suppliers.
+Compressed native-record recipes (`owner-*.jsonl.gz`) are discovered by their
+compressed SHA-256 and bounded header. Their existing record producer streams
+source groups; graph compilation does not expand the hierarchy.
 Sprite/native providers still need explicit wiring; this is not the complete
-705-file release.
+source release. Optional `--player-phases recipe/owner-player-phases.json` wires
+all five existing player phases and declares their complete 33-file union,
+including generated Sprite/texture dependencies. Phase recipes, texture recipes
+and public policy inputs enter the signed closure. The dispatcher requires the
+player receipt to match declared membership exactly on production and reuse.
+New source media therefore reports a membership difference instead of silently
+omitting a referenced file.
+
+Selecting the manager phase also creates the existing `startup_metadata.py`
+job. Bind `inventory` to the admitted original-game inventory; the smoke
+PlayerSettings and toolchain descriptor travel in the signed public closure.
+The manager consumes this job's receipt/hash, and its two final startup files
+enter the release automatically. No separately supplied startup receipt is
+required. Environment capture remains an explicit source-produced input.
+
+Optional `--burst-request recipe/<request>.json` adds the existing
+`owner-code/produce.py` Burst-only job. The caller's request uses
+`"output": "${output}"` and explicit tool/input bindings, with either `managed`
+providers (each path plus SHA-256) or the producer's `source_inputs` mapping.
+The latter generates its managed cohort first. The final library and linker
+preservation XML share the signed compiler-policy closure and incremental cache.
+No target APK input is required.
+
+Optional `--sdk-request recipe/owner-sdk-job-inputs.json` emits all 15 Android
+SDK entries through the existing pinned SDK package owner. Bind `sdk_install`,
+`sdk_android_jar`, `sdk_aapt`, `sdk_java`, `sdk_javac` and each
+`sdk_jar_<filename>` to acquired inputs. The authored Java helper is signed with
+the producer closure; all entries share one cached job. SDK packaging does not
+qualify gameplay or complete the remaining source bundle suppliers.
 
 Dispatcher bindings `pc`, `sdk` and `codec` select canonical private input paths.
 Only producers requiring SDK data receive the default SDK argument. For object
@@ -572,8 +603,8 @@ Player jobs additionally bind `sdk_contents` (Unity Contents data), `converter`,
 `converter_receipt` (that directory's result.json), `code_request` and `managed`
 to freshly source-produced inputs. Shader jobs use `sdk_contents` and require
 their existing public recovery/compiler tool arguments through
-`--extra-arguments`. Player Menu/HUD/manager phases likewise use their existing
-explicit extra arguments. Missing inputs fail through the producer contracts;
+`--extra-arguments`. `--player-phases` wires the existing optional player
+phase arguments and outputs. Missing inputs fail through the producer contracts;
 this compiler does not generate managed/native runtime inputs. Authored shader
 files, player registry/manifests/bootstrap/config and imported lab Python owners
 are included in the signed dependency closure.
@@ -591,3 +622,11 @@ Wall 52.260 s, user/system CPU 50.315/1.412 s, peak RSS 6,341,328,896 bytes;
 sampled converter workspace grew by 521,201 logical bytes. This is one bundle,
 not APK or gameplay acceptance. The generated two-job synthetic fixture also
 checks receipt identity and reuse on the second run.
+
+The phase declaration additionally binds `ugui_source`, `sdk_binary`,
+`startup_receipt`, `scene_environment_result`, `scene_environment_request`,
+`scene_environment_bundle` and `scene_environment_images`. These are explicit
+source-produced/acquired inputs; startup/environment generation is not yet a
+job in this graph. Manager shaders use the existing shader job directly.
+This declares 210 player files with the current source recipes; it does not
+qualify a complete APK or runtime loading.

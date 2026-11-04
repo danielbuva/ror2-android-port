@@ -312,9 +312,14 @@ The registry lazily imports `dnfile` and `pefile`, pinned in
 `tools/lab-requirements.txt`; use an interpreter containing those packages.
 The earlier player slices remain standard-library only when no registry is
 selected. The code request is the existing original-input code-owner request:
-`target.source` names the immutable public authored source tree and
+When present, `target.source` selects the historical immutable authored cohort.
+Without it, the registry binds the current runtime manifest to the actual
+managed compiler source hashes. Existing importer GUIDs survive; new owners
+without Unity metadata receive stable converter path identities.
 `source_inputs.packages` names original package sources and adjacent `.meta`
-files. Its existing `input-hashes.json` is beside the packages directory.
+files. Historical requests use the adjacent `input-hashes.json`; current requests
+use the fresh managed producer's `packages/inputs.json` source hashes and pin
+the corresponding original importer metadata while constructing the registry.
 The supplied managed directory must contain the successful fresh source
 production and its actual provider/compiler receipts. It is never an accepted
 assembly replay directory. TestRunner and MCP source importers are original

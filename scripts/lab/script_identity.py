@@ -1213,6 +1213,20 @@ def registry(pc, editor_resources, managed_production, authored_root, packages_r
     package_manifest = Path(input_hashes).resolve(strict=True)
     pin(package_manifest)
     package_inputs = json.loads(package_manifest.read_text())
+    if "packages" in package_inputs:
+        # Current compilation records the actual package source selection.
+        # Importer metadata is original package input, read and pinned here.
+        selected = {}
+        for package in package_inputs["packages"]:
+            for name, digest in package["inputs"].items():
+                key = "packages/" + name
+                if key in selected and selected[key] != digest:
+                    raise ValueError("conflicting compiled package input")
+                selected[key] = digest
+                if name.endswith(".cs"):
+                    meta = relative(packages_root, name + ".meta")
+                    selected[key + ".meta"] = pin(meta)["sha256"]
+        package_inputs = selected
     package_files = {}
     for name, digest in package_inputs.items():
         if not name.startswith("packages/"):
@@ -1343,4 +1357,10 @@ def registry(pc, editor_resources, managed_production, authored_root, packages_r
         layout["objects"] = sorted(objects, key=lambda row: row["path_id"])
         for path, expected in list(pins.items()):
             pin(Path(path), expected)
-        return {"layout": layout, "bodies": bodies, "script_ids": script_ids, "provider_pins": pins}
+        return {
+            "layout": layout,
+            "bodies": bodies,
+            "script_ids": script_ids,
+            "provider_pins": pins,
+            "original_script_identities": {(member, pid): identity for member, scripts in member_scripts.items() for pid, identity in scripts.items()},
+        }

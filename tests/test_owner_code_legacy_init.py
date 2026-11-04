@@ -69,6 +69,34 @@ class OwnerCodeLegacyInitTests(unittest.TestCase):
             self.assertEqual(source.parents[3], root)
             self.assertEqual(bank.read_bytes(), data)
 
+    def test_shared_work_symlink_reaches_child_and_preserves_exact_source(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary).resolve()
+            work, game = root / "work", root / "game"
+            work.mkdir()
+            bank = game / LEGACY.BANK
+            bank.parent.mkdir(parents=True)
+            data = b"independently authored source witness"
+            bank.write_bytes(data)
+            checkout = root / "checkout"
+            checkout.mkdir()
+            (checkout / "work").symlink_to(work, target_is_directory=True)
+            state = (LEGACY.INPUT_ID, game, {})
+            with (
+                patch.object(LEGACY, "ROOT", checkout),
+                patch.object(LEGACY, "BANK_SHA", LEGACY.native.sha(bank)),
+                patch.object(LEGACY.native, "input_state", return_value=state),
+                patch.object(LEGACY.native, "invoke", side_effect=RuntimeError("child failure")),
+            ):
+                with self.assertRaisesRegex(RuntimeError, "child failure"):
+                    LEGACY.run(work, work / "output")
+            result = json.loads((work / "output/result.json").read_text())
+            self.assertFalse(result["success"])
+            source = Path(result["materialized_source"])
+            self.assertEqual(LEGACY.native.sha(source), LEGACY.TEMPLATE_SHA)
+            self.assertEqual(source.parents[3], root)
+            self.assertEqual(bank.read_bytes(), data)
+
 
 if __name__ == "__main__":
     unittest.main()
