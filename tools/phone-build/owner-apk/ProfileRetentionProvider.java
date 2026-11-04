@@ -63,18 +63,21 @@ public final class ProfileRetentionProvider extends ContentProvider {
             if (writes != ProfileStore.DATA_SCHEMA || reads.length != 1 || reads[0] != ProfileStore.DATA_SCHEMA)
                 throw new IOException("Native retention schema migration unavailable");
             store = openStore(context);
-            ((Application) context.getApplicationContext()).registerActivityLifecycleCallbacks(new Application.ActivityLifecycleCallbacks() {
-                public void onActivityCreated(Activity activity, Bundle state) { if (activity.getClass().getName().startsWith("com.unity3d.player.")) synchronized (LOCK) { unityStarted = true; } }
-                public void onActivityStarted(Activity activity) {}
-                public void onActivityResumed(Activity activity) {}
-                public void onActivityPaused(Activity activity) {}
-                public void onActivityStopped(Activity activity) {}
-                public void onActivitySaveInstanceState(Activity activity, Bundle state) {}
-                public void onActivityDestroyed(Activity activity) {}
-            });
+            ((Application) context.getApplicationContext()).registerActivityLifecycleCallbacks(new UnityLifecycleCallbacks());
             configured = true;
         } catch (Exception failure) { configured = false; }
         return true; // Fail closed at each call; never expose an unbound bridge.
+    }
+    // Use named static metadata for the callback identified by on-device D8.
+    private static final class UnityLifecycleCallbacks implements Application.ActivityLifecycleCallbacks {
+        UnityLifecycleCallbacks() {}
+        public void onActivityCreated(Activity activity, Bundle state) { if (activity.getClass().getName().startsWith("com.unity3d.player.")) synchronized (LOCK) { unityStarted = true; } }
+        public void onActivityStarted(Activity activity) {}
+        public void onActivityResumed(Activity activity) {}
+        public void onActivityPaused(Activity activity) {}
+        public void onActivityStopped(Activity activity) {}
+        public void onActivitySaveInstanceState(Activity activity, Bundle state) {}
+        public void onActivityDestroyed(Activity activity) {}
     }
     private static ProfileStore openStore(Context context) throws IOException {
         File live = context.getExternalFilesDir(null);
