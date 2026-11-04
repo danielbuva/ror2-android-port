@@ -60,17 +60,35 @@ def remap(body, references):
 
 
 def remap_record(body, typ, references, externals):
-    """Relocate produced bodies only at PPtrs declared by the original schema."""
+    """Relocate produced bodies at checked schema PPtrs, then reparse them."""
     records = module("record_produce")
-    _, spans = records.fields(body, records.SCHEMA.type_tree(io.BytesIO(typ["tree"])))
-    pointers = {start for key, (start, end) in spans.items() if end - start == 12 and key + ("m_FileID",) in spans and key + ("m_PathID",) in spans}
+    root = records.SCHEMA.type_tree(io.BytesIO(typ["tree"]))
+    _, spans = records.fields(body, root)
+    pointers = {key: start for key, (start, end) in spans.items() if end - start == 12 and key + ("m_FileID",) in spans and key + ("m_PathID",) in spans}
+    resolved = []
     for reference in references:
-        if reference["offset"] not in pointers:
+        reference = dict(reference)
+        if "field" in reference:
+            field = tuple(reference["field"])
+            if field not in pointers:
+                raise ValueError("produced record relocation field is not a schema PPtr")
+            if "offset" in reference and reference["offset"] != pointers[field]:
+                raise ValueError("produced record relocation field/offset differs")
+            reference["offset"] = pointers[field]
+        if reference["offset"] not in pointers.values():
             raise ValueError("produced record relocation is not a schema PPtr")
         file_id, _ = reference["to"]
         if not 0 <= file_id <= len(externals):
             raise ValueError("produced record relocation has an absent external file")
-    return remap(body, references)
+        resolved.append(reference)
+    result = remap(body, resolved)
+    _, revised = records.fields(result, root)
+    if revised != spans:
+        raise ValueError("produced record relocation changed field extents")
+    for reference in resolved:
+        if list(struct.unpack_from("<iq", result, reference["offset"])) != reference["to"]:
+            raise ValueError("produced record relocation readback differs")
+    return result
 
 
 def demote_material_keywords(body, *, sort_invalid=False, valid_keywords=()):

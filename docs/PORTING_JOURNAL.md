@@ -2653,3 +2653,14 @@ CPU/GPU peak 87.6 C, 2.988 s above 80 C; battery 30 to 31 C, runtime max gap 0.5
 sampled peak PSS 3,648,539 KiB includes startup. Adopted update/hash, unchanged profiles/settings,
 stopped process, OLED sleep, scratch/prune/lease cleanup verified. Prior art: pinned R2API
 content phases, J432 native holders and J1376 scoped manifests. Sustained/alpha gates remain open.
+## J1379 — Resolve produced pointer fields and inventory scoped CLR signatures
+
+2026-11-04. The existing record owner accepts exact serialized field paths for
+checked pointer rewrites, reparses the result and verifies extents/readback.
+The non-executing metadata reader records scoped field/base signatures, arrays
+and generic arguments/parameters; unsupported specifications remain explicit.
+Evidence: authored host fixtures, 79 object-owner tests and one compiled metadata
+fixture passed. A synthetic longer source string moves the pointer correctly.
+Prior art: pinned EditorKit typed lookup and AssetRipper script identity; source
+and current CLR identity remain required, with no global short-name inference.
+No APK produced; endpoint assignability, complete graph/load and device play remain open.
