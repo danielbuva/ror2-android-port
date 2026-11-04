@@ -21,11 +21,12 @@ namespace UnityEngine
         public static AssetBundle owner = new AssetBundle { name = "source" };
         public static Dictionary<string, Object> assets = new Dictionary<string, Object>();
         public static AssetBundle[] GetAllLoadedAssetBundles() { return new[] { owner }; }
-        public T LoadAsset<T>(string path) where T : Object { return (T)assets[path]; }
+        public static int typedLoads;
+        public T LoadAsset<T>(string path) where T : Object { typedLoads++; return (T)assets[path]; }
     }
 }
 namespace UnityEngine.ResourceManagement.ResourceLocations { public interface IResourceLocator {} }
-namespace RoR2 { public class CharacterBody : Object {} }
+namespace RoR2 { public class CharacterBody : Object {} public class BuffDef : Object {} }
 namespace RoR2.ContentManagement
 {
     public class ContentPack { public bool allowed; }
@@ -123,6 +124,64 @@ public static partial class WholeCatalogComposed
         data["locations"][0]["path"] = "provider";
         File.WriteAllText("payload/whole-catalog.json", data.ToString());
         Check(ReferenceEquals(CategoryFamily("types", new[] { provider }).Single(), provider));
-        Console.WriteLine("scope identity policy restoration PASS");
+        BuffFamilyContract();
+        Console.WriteLine("scope identity policy restoration buffs PASS");
     }
+    static void Refuses(Action action)
+    {
+        bool refused = false;
+        try { action(); } catch (Exception) { refused = true; }
+        Check(refused);
+    }
+    static void BuffFamilyContract()
+    {
+        var first = new RoR2.BuffDef { name = "First" };
+        var second = new RoR2.BuffDef { name = "Second" };
+        var excluded = new RoR2.BuffDef { name = "NotAProviderRoot" };
+        AssetBundle.assets["first"] = first;
+        AssetBundle.assets["second"] = second;
+        AssetBundle.assets["excluded"] = excluded;
+        var data = new JObject {
+            ["provider_roots"] = new JArray(10, 11, 12),
+            ["locations"] = new JArray(
+                new JObject { ["id"] = 10, ["type"] = "RoR2.BuffDef", ["bundle"] = "source", ["path"] = "first" },
+                new JObject { ["id"] = 11, ["type"] = "RoR2.BuffDef", ["bundle"] = "source", ["path"] = "second" },
+                new JObject { ["id"] = 12, ["type"] = "RoR2.BuffDef", ["bundle"] = "source", ["path"] = "first" },
+                new JObject { ["id"] = 13, ["type"] = "RoR2.BuffDef", ["bundle"] = "source", ["path"] = "excluded" }) };
+        definitionFamilies.Clear();
+        File.WriteAllText("payload/whole-catalog.json", data.ToString());
+        int before = AssetBundle.typedLoads;
+        var buffs = BuffDefinitions();
+        Check(buffs.Length == 2 && ReferenceEquals(buffs[0], first) && ReferenceEquals(buffs[1], second));
+        Check(AssetBundle.typedLoads == before + 3); // Alias roots retain one native identity.
+        File.Delete("payload/whole-catalog.json");
+        Check(BuffDefinitions().SequenceEqual(buffs) && AssetBundle.typedLoads == before + 3);
+        Check(DefinitionFamily(new[] { second }).SequenceEqual(buffs));
+        Refuses(() => DefinitionFamily(new[] { excluded }));
+        var previousOwner = owned;
+        owned = null;
+        Refuses(() => BuffDefinitions());
+        owned = previousOwner;
+        // Existing release clears this cache; replacement input must be read again.
+        definitionFamilies.Clear();
+        data["locations"][0]["path"] = "second";
+        data["locations"][1]["path"] = "first";
+        File.WriteAllText("payload/whole-catalog.json", data.ToString());
+        Check(ReferenceEquals(BuffDefinitions()[0], second));
+        definitionFamilies.Clear();
+        second.name = first.name;
+        Refuses(() => BuffDefinitions());
+        second.name = "Second";
+        AssetBundle.assets["second"] = null;
+        Refuses(() => BuffDefinitions());
+        AssetBundle.assets["second"] = second;
+        AssetBundle.owner.name = "other";
+        Refuses(() => BuffDefinitions());
+        AssetBundle.owner.name = "source";
+        data["provider_roots"] = new JArray();
+        File.WriteAllText("payload/whole-catalog.json", data.ToString());
+        Refuses(() => BuffDefinitions());
+        definitionFamilies.Clear();
+    }
+
 }
