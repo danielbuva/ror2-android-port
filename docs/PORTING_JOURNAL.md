@@ -2366,4 +2366,6 @@ the existing prototype registry retains current/historical action status.
 `tests/test_dev_help.py` enforces help coverage, valid visible registry status
 and selector documentation without editor/device access. Dispatch is unchanged.
 Validation: 243 focused host tests, Ruff and host-only preflight pass.
+Shared-host CI timeout follow-up reuses deterministic hdiutil failure coverage
+and bounds nested CI/Java fixture work at 300 s; eight affected host tests pass.
 Host-only tooling change; no APK, device evidence or game-readiness claim.
