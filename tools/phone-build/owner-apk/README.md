@@ -571,3 +571,10 @@ input to release planning, not an issued or signed release. It conservatively
 includes the Python producer cohort because owners use dynamic imports.
 Production retains existing producer schema/reference checks and byte checks;
 this wiring does not relax a producer's historical comparison contract.
+
+Host evidence: `work/coordination/p1-scenes-w/end-to-end-v2/` rebuilt the current
+original death-effect bundle through the generated graph and dispatcher (one job).
+Wall 52.260 s, user/system CPU 50.315/1.412 s, peak RSS 6,341,328,896 bytes;
+sampled converter workspace grew by 521,201 logical bytes. This is one bundle,
+not APK or gameplay acceptance. The generated two-job synthetic fixture also
+checks receipt identity and reuse on the second run.
