@@ -52,6 +52,17 @@ reproduction and framed emission. It verifies supplied target/profile/PC/SDK
 inputs without generating independent Android target information. `assemble.py`
 owns hash-bound unsigned APK assembly and required uncompressed/aligned resource
 storage; canonical alignment and owner signing follow separately.
+
+`tools/phone-build/profile_stage.py` owns host converter stage measurement.
+Call it with an explicit command, workspace and ignored evidence directory;
+optional `--table` extends the existing per-stage table. Each child process
+records wall/user/system time, wait4 RSS, block operations and sampled logical/
+allocated workspace bytes, including failed exits. Process exit stops sampling;
+logs/JSON remain caller-owned. Workspace preparation and validation are separate
+from measured commands. Sampling gives a peak lower bound; child RSS accounting
+is not simultaneous process-tree RSS. These host metrics do not qualify phone
+heat, installation or complete converter performance.
+
 `object_produce.py` emits complete source object bundles through
 `object_stream.py`, which owns checked-body spooling, lazy graph reads and bounded
 resource copying. Setup requires a new caller-owned output and the existing
