@@ -3688,6 +3688,10 @@ preparation call releases that reference on return; family-cache lifetime and
 relationship registration/restoration remain under their existing owners.
 `test_scoped_definition_manifest.py` exercises the production methods against
 authored source snapshots, including replacement input and identity checks.
+`PortSession` likewise shares a local manifest across synchronous artifact,
+item, equipment and body holder binding. `WholeCatalogComposed` keeps native
+population, identity checks and the existing field-restoration owner; the local
+snapshot ends before drone preparation and adds no retained cache.
 
 Each staged runtime file starts with a two-line header naming its subsystem, whether it is
 on the game path, and its setup and teardown methods (J516).
@@ -6196,3 +6200,8 @@ toolchain required by their source operations. Dynamic file hashes enter the
 existing dispatcher cache identity; texture owners retain codec, schema and pixel
 extent validation. Setup supplies pinned tools; scoped producers close on exit
 and retain their receipts. Complete APK and device acceptance remain open.
+
+Fieldless component metadata uses the existing receipt-bound current MonoScript
+identity policy in `object_produce.py`; its schema/properties hash must still
+match the supplied script. Receipts record the actual script hash. Setup and
+teardown remain the scoped source-pack readers and retained producer receipt.

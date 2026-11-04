@@ -1949,3 +1949,13 @@ registry used by `sdk-fallback-sort-invalid`: retain declared original keywords 
 valid and sort the remaining original names as invalid. Material values stay
 unchanged. The same profile includes a catalog-selected Gauntlet Material using
 the existing dummy policy and checked public texture/Shader endpoint mappings.
+
+
+`sdk_event_system` reconstructs the three EventSystem fields from a hash-pinned,
+caller-supplied SDK source file on an original empty-name component base. The
+current receipt-bound MonoScript must match its assembly/namespace/class and the
+constructed properties hash. Original owner/script PPtrs remain checked; the new
+first-selection pointer is null as declared by the SDK. Other fieldless components
+retain their existing schema gate. Output hashes are receipt diagnostics because
+these typed components replace invalid historical fieldless placeholders. This is
+host serialization support; native loading and gameplay remain device gates.

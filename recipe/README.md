@@ -1,5 +1,14 @@
 # Build recipes
 
+2026-11-04 EventSystem audit: objective-support and Commando recipes construct
+32 EventSystem components from the pinned SDK declarations and constructor
+initializers, preserving source base-component references. Current receipt-bound
+MonoScript identity and properties hashes qualify the resulting schema. Recipes
+contain only the SDK-relative source path/hash and authored policy; no SDK source,
+game bytes, private paths or identifiers are added. The other fieldless components
+retain their strict fieldless contract. Provenance, privacy, licensing and
+sensitive-content review passed; Android load/play gates remain open.
+
 2026-11-04 startup-attribution audit: `original-audio-owner-sources.json`
 refreshes three authored session/audio timing-marker hashes. The explicit
 `build-hook-pins` refresh keeps producer/camera manifest bindings consistent;
