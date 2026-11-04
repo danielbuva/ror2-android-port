@@ -2333,6 +2333,19 @@ Bounded source recipe only; producer unchanged; 2,024 candidates remain excluded
 Residual three unchanged; readiness 693/705 available, 685 raw-exact.
 Complete groups, bundle, phone/install/update and runtime gates remain open.
 
+## J1363 — Qualify measured lighting tolerance separately from exact reconstruction
+
+2026-11-04. ADR-003 scopes GPU/sampling tolerance to probes, lightmaps and containers.
+The full-scene comparator derives native sample extents, checks measured per-channel
+bounds and preserves all other bytes, identities and serialized relationships.
+Bound reflection/lightmap pointers are required; unsupported schemas/encodings refuse.
+APK readiness requires pinned numerical recipes and matched visual review, reports
+`tolerance_accepted_count` separately and preserves current bytes during assembly.
+Authored host fixtures cover bounds, scope, exact fields/pointers, visual pins and counts.
+Evidence: `work/coordination/p1-tolerance/host-tests.log`; no APK/build/device run.
+Prior art: pinned AssetRipper LightmapSettings conversion and UnityPy native extents.
+Readiness stays 693/705 available, 685 raw-exact, zero tolerance-accepted; actual
+J850 lighting numerical/visual acceptance and phone install/update remain open.
 ## J1359 — Retained sustained game performance report
 
 2026-11-04. Host-only report owner reads existing sustained and thermal receipts; synthetic fixtures
@@ -2373,6 +2386,15 @@ Discovery 104.94 s, production 4.73 s, qualification 4.61 s; peak discovery RSS
 Host-only; heat unmeasured. EditorKit typed ownership and J1340 SDK hashes inform
 selection; bounded source recipe only, producer unchanged. Residual three unchanged;
 readiness 693/705 available, 685 raw-exact. Bundle/phone/install/update gates open.
+## J1363 — Stabilize host profile and optional-volume failure checks
+
+2026-11-04. ProfileStore's real Java compile/fsync harness uses bounded 300 s process deadlines.
+The optional-volume nonzero test uses fixed child results and exact create/attach ordering;
+real CLI timeout/reaping, arguments and uncertain-mount preservation remain covered.
+Completion establishes child reaping without sleeps; external calls retain bounded deadlines.
+Focused retention/volume tests, Ruff, host preflight and staged public audit pass.
+Evidence: `work/coordination/ci-flakes-20261104/` (repeat log and terminal receipt).
+Host-only test changes; no APK or device behaviour change. Remaining: none for these two flakes.
 ## J1362 — Cache validated import progress totals
 
 2026-11-04. Existing `owner-apk/game_import.py` tracks completed bytes as files
