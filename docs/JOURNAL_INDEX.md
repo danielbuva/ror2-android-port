@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J1380](PORTING_JOURNAL.md#j1380--resolve-current-managed-pointer-field-contracts-by-exact-clr-scope) | 2026-11-04 | Resolve current managed pointer field contracts by exact CLR scope | 2026-11-04. |
 | [J1379](PORTING_JOURNAL.md#j1379--resolve-produced-pointer-fields-and-inventory-scoped-clr-signatures) | 2026-11-04 | Resolve produced pointer fields and inventory scoped CLR signatures | 2026-11-04. |
 | [J1378](PORTING_JOURNAL.md#j1378--attribute-ordinary-startup-within-existing-audio-and-body-owners) | 2026-11-04 | Attribute ordinary startup within existing audio and body owners | 2026-11-04. |
 | [J1377](PORTING_JOURNAL.md#j1377--bind-sdk-metadata-for-release-graph-object-producers) | 2026-11-04 | Bind SDK metadata for release-graph object producers | 2026-11-04. |
