@@ -6830,3 +6830,21 @@ body, game code, private path or credential is included. The pinned AssetRipper
 MonoScriptExtensions full-name comparison informs identity selection. The
 producer retains receipt/file/native-type checks and records historical body
 equality as a diagnostic; generated bodies remain ignored.
+
+## Current-script bundle comparison (2026-11-04)
+
+Objective support and Commando use the existing diagnostic bundle comparison
+policy because their receipt-bound current MonoScripts and SDK EventSystem schemas
+change serialized layout. Original source hashes, per-record checks, script
+bindings, native type identities and reference relocation remain enforced. The
+producer records actual bundle and serialized hashes and historical equality
+separately; this does not establish loadability or device playability.
+Manual provenance, privacy, licensing and sensitive-content audit: only authored
+comparison policy and supplier pins changed; no game-derived bytes or private
+inputs are published.
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-objective-support-objects.json` | `afe5e32ab5f57f19949f672d7cd4a3d91a97a861f332d41ab46330d239baabf0` |
+| `owner-commando-reused-records.json` | `9c587b0edd5bdb2955b2a7d592ab4cf20eae99107c03ea32d5dd1eb2291fdb96` |
+| `owner-commando-objects.json` | `944f28096f69bc509123d9564721cd4845603df65ef073c3caec1fcd2f949a73` |
