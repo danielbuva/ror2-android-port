@@ -152,6 +152,81 @@ out.mkdir();(out/'global-metadata.dat').write_bytes(metadata)
             self.assertEqual((root / "global-metadata.dat").read_bytes(), metadata.read_bytes())
             self.assertEqual((root / "libil2cpp.so").read_bytes(), b"independent native output")
 
+    def test_burst_job_dispatches_both_cohorts_and_invalidates_changed_policy(self):
+        for source in (False, True):
+            with self.subTest(source=source), tempfile.TemporaryDirectory() as directory:
+                root = Path(directory).resolve()
+                repo, inputs = root / "repo", root / "inputs"
+                (repo / "recipe").mkdir(parents=True)
+                (inputs / "work").mkdir(parents=True)
+                policies = ("owner-player-code.json", "owner-native-arm64.json", "owner-j850-code.json")
+                for policy in policies:
+                    (repo / "recipe" / policy).write_text('{"authored_policy":1}')
+                template = "recipe/burst-inputs.json"
+                request = {
+                    "owner_work": "${inputs}/work",
+                    "sdk_install": "${input:sdk}",
+                    "burst_tools": {"command": ["${input:runner}"], "runtime": "${input:compiler}"},
+                    "output": "${output}",
+                }
+                request["source_inputs" if source else "managed"] = {"fixture": "${input:managed}"}
+                (repo / template).write_text(json.dumps(request))
+                producer = repo / "tools/phone-build/owner-code/produce.py"
+                producer.parent.mkdir(parents=True)
+                producer.write_text("""import json,pathlib,sys
+assert sys.argv[2:]==['--burst-only']
+request=json.loads(pathlib.Path(sys.argv[1]).read_text())
+key='source_inputs' if 'source_inputs' in request else 'managed'
+assert pathlib.Path(request[key]['fixture']).read_bytes()==b'authored managed input'
+assert pathlib.Path(request['sdk_install']).is_file()
+assert pathlib.Path(request['burst_tools']['command'][0]).is_file()
+assert pathlib.Path(request['burst_tools']['runtime']).is_file()
+out=pathlib.Path(request['output']);out.mkdir()
+burst=out/('backend/burst' if key=='source_inputs' else 'burst');burst.mkdir(parents=True)
+(burst/'lib_burst_generated.so').write_bytes(b'authored compiled Burst')
+(burst/'burst.xml').write_text('<linker/>')
+(out/'result.json').write_text('{"success":true}')
+""")
+                bindings = {name: name for name in ("sdk", "runner", "compiler", "managed")}
+                for name in bindings:
+                    (inputs / name).write_bytes(b"authored managed input")
+                runtime, native = root / "runtime", root / "native"
+                runtime.mkdir()
+                native.mkdir()
+                progress = []
+                for changed in (False, False, True):
+                    if changed:
+                        (repo / "recipe" / policies[-1]).write_text('{"authored_policy":2}')
+                    graph = G.Graph(repo, {})
+                    index = graph.compile([], burst_request=template)
+                    entry = "apk/lib/arm64-v8a/lib_burst_generated.so"
+                    self.assertEqual(set(index["entries"]), {entry})
+                    self.assertTrue({"recipe/" + name for name in policies} <= index["files"].keys())
+                    for name, descriptor in graph.jobs.items():
+                        path = repo / name
+                        path.parent.mkdir(parents=True, exist_ok=True)
+                        path.write_text(json.dumps(descriptor))
+                        index["files"][name] = G.digest(path)
+                    release = {"entries": {entry: J.UPDATES.public().entry_dependencies(index, entry)}}
+                    dispatcher = J.Dispatcher(
+                        repo,
+                        index,
+                        release,
+                        inputs,
+                        runtime,
+                        native,
+                        {"bindings": bindings},
+                        "a" * 64,
+                        python=[sys.executable],
+                        progress=lambda name, reused: progress.append(reused),
+                    )
+                    dispatcher.produce(entry, release["entries"][entry], root / "library.so")
+                    self.assertEqual((root / "library.so").read_bytes(), b"authored compiled Burst")
+                    output = dispatcher.completed["recipe/jobs/owner-burst-code.json"]
+                    xml = "backend/burst/burst.xml" if source else "burst/burst.xml"
+                    self.assertEqual((output / xml).read_text(), "<linker/>")
+                self.assertEqual(progress, [False, True, False])
+
     def test_sdk_job_signs_java_helper_expands_tools_and_reuses_complete_cohort(self):
         spec = importlib.util.spec_from_file_location("test_sdk_graph_owner", ROOT / G.PREFIX / "sdk_package.py")
         sdk = importlib.util.module_from_spec(spec)

@@ -573,6 +573,14 @@ The manager consumes this job's receipt/hash, and its two final startup files
 enter the release automatically. No separately supplied startup receipt is
 required. Environment capture remains an explicit source-produced input.
 
+Optional `--burst-request recipe/<request>.json` adds the existing
+`owner-code/produce.py` Burst-only job. The caller's request uses
+`"output": "${output}"` and explicit tool/input bindings, with either `managed`
+providers (each path plus SHA-256) or the producer's `source_inputs` mapping.
+The latter generates its managed cohort first. The final library and linker
+preservation XML share the signed compiler-policy closure and incremental cache.
+No target APK input is required.
+
 Optional `--sdk-request recipe/owner-sdk-job-inputs.json` emits all 15 Android
 SDK entries through the existing pinned SDK package owner. Bind `sdk_install`,
 `sdk_android_jar`, `sdk_aapt`, `sdk_java`, `sdk_javac` and each

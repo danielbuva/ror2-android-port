@@ -1003,7 +1003,15 @@ request template binds acquired converter receipt, source frames, metadata and
 SDK; the native policy travels in the signed closure. The native owner rechecks
 the converter cohort after linking and verifies its metadata copy before success.
 Planning and measured partial builds emit neither final metadata nor a complete
-release. Burst remains a separate upstream production requirement.
+release.
+The optional `--burst-request` dispatches `owner-code/produce.py --burst-only`
+with positional request input. Explicit managed providers reuse the current
+cohort; source-input requests first generate that cohort through the existing
+managed owner. Both routes publish `lib_burst_generated.so` and retain linker
+preservation XML with the receipt. Player, native and Burst compiler policies
+travel in the signed closure and invalidate the job cache when changed. The
+existing producer checks provider hashes, preservation roots and compiler inputs;
+no historical APK library supplies output.
 The optional `--sdk-request` adds the existing `sdk_package.py` owner as one
 cached job for all 15 SDK APK entries. Its public request binds the acquired
 SDK, platform, AAPT2, Java tools and pinned public jars. The authored Java helper

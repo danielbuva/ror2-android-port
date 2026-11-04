@@ -364,7 +364,28 @@ class Graph:
         self.job_profiles[name] = {"authored_inputs": {helper: digest(self.repo / helper)}}
         return name
 
-    def compile(self, selected, *, bundle_manifest=False, native_request=None, sdk_request=None):
+    def burst_code(self, request_path):
+        """Compile Burst from the same explicit managed/source input cohort."""
+        request = json.loads((self.repo / request_path).read_text())
+        if request.get("output") != "${output}":
+            raise ValueError("Burst request must use the dispatcher output")
+        root = "backend/burst/" if "source_inputs" in request else "burst/"
+        name = "recipe/jobs/owner-burst-code.json"
+        self.jobs[name] = {
+            "schema": 1,
+            "script": "tools/phone-build/owner-code/produce.py",
+            "arguments": ["${request}", "--burst-only"],
+            "request": request,
+            "needs": [],
+            "outputs": {"apk/lib/arm64-v8a/lib_burst_generated.so": root + "lib_burst_generated.so"},
+            "artifacts": {"receipt": "result.json", "preservation": root + "burst.xml"},
+        }
+        self.profile_files[name] = request_path
+        policies = ("recipe/owner-player-code.json", "recipe/owner-native-arm64.json", "recipe/owner-j850-code.json")
+        self.job_profiles[name] = {"authored_inputs": {path: digest(self.repo / path) for path in policies}}
+        return name
+
+    def compile(self, selected, *, bundle_manifest=False, native_request=None, sdk_request=None, burst_request=None):
         entries = {}
         selected_jobs = [self.build(digest(self.repo / path)) for path in selected]
         startup = "recipe/jobs/owner-startup-metadata.json"
@@ -376,6 +397,8 @@ class Graph:
             selected_jobs.append(self.native_code(native_request))
         if sdk_request:
             selected_jobs.append(self.sdk_package(sdk_request))
+        if burst_request:
+            selected_jobs.append(self.burst_code(burst_request))
         for job in selected_jobs:
             entry = self.entry(job)
             for output in self.jobs[job]["outputs"]:
@@ -404,11 +427,18 @@ def main():
     )
     parser.add_argument("--native-request", help="repo-relative native request template; emits matching library and metadata from acquired converter inputs")
     parser.add_argument("--sdk-request", help="repo-relative SDK request template; emits Android resources, dex and engine libraries")
+    parser.add_argument("--burst-request", help="repo-relative managed/source request template; compiles Burst and retains preservation roots")
     parser.add_argument("--extra-arguments", type=Path, help="JSON producer name -> additional CLI argv, with dispatcher substitutions")
     parser.add_argument("--output", type=Path, required=True, help="new public job staging root; overlay into a release source checkout")
     args = parser.parse_args()
     graph = Graph(args.repo, json.loads(args.extra_arguments.read_text()) if args.extra_arguments else {}, args.player_phases)
-    index = graph.compile(args.profile, bundle_manifest=args.bundle_manifest, native_request=args.native_request, sdk_request=args.sdk_request)
+    index = graph.compile(
+        args.profile,
+        bundle_manifest=args.bundle_manifest,
+        native_request=args.native_request,
+        sdk_request=args.sdk_request,
+        burst_request=args.burst_request,
+    )
     args.output.mkdir(parents=True, exist_ok=False)
     for name, job in graph.jobs.items():
         path = args.output / name
