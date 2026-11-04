@@ -2682,3 +2682,18 @@ battery 30 to 31 C, runtime max gap 0.449 s; sampled peak PSS 3,186,047 KiB incl
 Stopped process, OLED sleep, scratch/prune/lease cleanup verified. Prior art: pinned
 R2API content phases, J432/J1376/J1380. Known scene-bank/empty-prop issues remain;
 no sustained/FPS/parity closure; Perfetto output unusable, logcat/report timings retained.
+## J1381 — Resolve current managed pointer field contracts by exact CLR scope
+
+2026-11-04. The existing metadata owner binds current provider paths/hashes and
+resolves serialized fields through scoped inheritance, nested types, arrays and
+core-provider List elements, substituting each generic base context. Field lookup
+stops after the exact current CoreModule Object root, before framework-only bases.
+Managed subclasses qualify only against the resolved field declaration; static,
+nonserialized, ambiguous or unsupported fields refuse. Accessed definition/export
+collisions remain explicit failures without blocking unrelated types.
+Evidence: 12 authored host metadata tests passed, including native-root boundaries,
+forwarding, collection, wrong-scope/provider and unrelated-endpoint controls.
+Current-input scoped inheritance passed; complete pointer proof remains open.
+Prior art: pinned AssetRipper full script identity and J866 exact scope/forwarding.
+No APK produced; integrated source/body proofs, native bridges, complete graph/load
+and device play remain required independently of this metadata contract.
