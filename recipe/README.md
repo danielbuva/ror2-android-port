@@ -6782,3 +6782,14 @@ relationships and integrity pins, with no game-derived bodies or pixels.
 | Authored recipe | SHA-256 |
 | --- | --- |
 | `owner-whole-scene-postprocess-shader-remap.json` | `a88c83cd062eca5241bdd8a57b2b34a0d211cd093d3e474ac90c9b0c8df138cc` |
+
+## Commando controller supplier refresh (2026-11-04)
+
+The complete Commando recipe selects the current public AnimatorController
+supplier. All 32 selected path IDs retain their qualified lengths and hashes;
+only the supplier identity changes. Existing source, schema and PPtr checks remain.
+No game-derived bodies or new external inputs are included.
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-commando-objects.json` | `e5c0c13f07f2a57d99681c45d17e732c0cf5c77ed0007f526ab17eec8e91e98e` |
