@@ -2358,7 +2358,7 @@ Evidence: `work/coordination/p1-menuhud/current-menu-v1/`; 15 focused tests pass
 Host production 13.659 s, peak RSS 367,804,416 bytes; cleanup passes.
 No readiness closure or device claim; complete phone/install/update gates remain open.
 
-## J1362 — Stabilize host profile and optional-volume failure checks
+## J1363 — Stabilize host profile and optional-volume failure checks
 
 2026-11-04. ProfileStore's real Java compile/fsync harness uses bounded 300 s process deadlines.
 The optional-volume nonzero test uses fixed child results and exact create/attach ordering;
