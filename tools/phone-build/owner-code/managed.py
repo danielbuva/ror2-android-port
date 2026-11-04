@@ -270,7 +270,9 @@ def gameplay(out, sdk, inputs, original, ordinary, raw, package_output, audio_ou
     authored = source_root or ROOT
     public = [authored / "tools/unity" / native.relative(n) for n in names] + [authored / "android/Assets/LabDiagnostics.cs"]
     sources = target_source_order(public, support, maps) if source_root else public + support + maps
-    if (source_root is None and len(public) != 128) or len(support) != 14 or len(maps) != 3:
+    # runtime_sources validates the current authored manifest, including missing
+    # files and staging collisions. A historical count rejects new port releases.
+    if len(support) != 14 or len(maps) != 3:
         raise ValueError("current player source membership changed; review configuration")
     refs = {Path(p).name: sdk / p for p in phone_unity_compile.references(sdk)}
     plugins = {}
