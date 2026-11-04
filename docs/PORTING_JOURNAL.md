@@ -2358,7 +2358,7 @@ Evidence: `work/coordination/p1-menuhud/current-menu-v1/`; 15 focused tests pass
 Host production 13.659 s, peak RSS 367,804,416 bytes; cleanup passes.
 No readiness closure or device claim; complete phone/install/update gates remain open.
 
-## J1361 — Cache validated import progress totals
+## J1362 — Cache validated import progress totals
 
 2026-11-04. Existing `owner-apk/game_import.py` tracks completed bytes as files
 are validated/adopted and resets the total for each run, avoiding repeated sums.
