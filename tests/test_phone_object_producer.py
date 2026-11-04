@@ -203,12 +203,45 @@ class ProducedRecordRelocationTests(unittest.TestCase):
         typ = P.W.read_serialized(stream)["types"][0]
         reference = {"offset": 4, "from": [1, 6], "to": [2, 6]}
         self.assertEqual(P.remap_record(body, typ, [reference], ["old", "new"]), struct.pack("<Iiq", 17, 2, 6))
+        by_field = {"field": ["pointer"], "from": [1, 6], "to": [2, 99]}
+        self.assertEqual(P.remap_record(body, typ, [by_field], ["old", "new"]), struct.pack("<Iiq", 17, 2, 99))
+        self.assertNotIn("offset", by_field)
+        with self.assertRaisesRegex(ValueError, "field/offset differs"):
+            P.remap_record(body, typ, [dict(by_field, offset=0)], ["old", "new"])
+        with self.assertRaisesRegex(ValueError, "not a schema PPtr"):
+            P.remap_record(body, typ, [dict(by_field, field=["scalar"])], ["old", "new"])
+        with self.assertRaisesRegex(ValueError, "overlapping"):
+            P.remap_record(body, typ, [reference, by_field], ["old", "new"])
         with self.assertRaisesRegex(ValueError, "schema PPtr"):
             P.remap_record(body, typ, [dict(reference, offset=0)], ["old", "new"])
         with self.assertRaisesRegex(ValueError, "absent external"):
             P.remap_record(body, typ, [reference], ["old"])
         with self.assertRaisesRegex(ValueError, "identity drift"):
             P.remap_record(body, typ, [dict(reference, **{"from": [1, 7]})], ["old", "new"])
+
+    def test_field_relocation_follows_current_variable_length_body(self):
+        schema = FIXTURE.node(
+            "Base",
+            children=[
+                FIXTURE.text("label"),
+                FIXTURE.node(
+                    "nested",
+                    children=[
+                        FIXTURE.node(
+                            "target", kind="PPtr<Object>", children=[FIXTURE.node("m_FileID", 4, kind="int"), FIXTURE.node("m_PathID", 8, kind="SInt64")]
+                        )
+                    ],
+                ),
+            ],
+        )
+        reference = {"field": ["nested", "target"], "from": [1, 7], "to": [2, 77]}
+        for label in ("old", "a newer source build with a longer label"):
+            prefix = FIXTURE.M.padded_string(label)
+            body = prefix + struct.pack("<iq", 1, 7)
+            stream = io.BytesIO(RECORD_FIXTURE.serialized(body, schema, class_id=114))
+            stream.size = len(stream.getvalue())
+            typ = P.W.read_serialized(stream)["types"][0]
+            self.assertEqual(P.remap_record(body, typ, [reference], ["old", "new"]), prefix + struct.pack("<iq", 2, 77))
 
     def test_preload_uses_relocated_dependency(self):
         bundle = {"preload_dependencies": [], "dependencies": []}
