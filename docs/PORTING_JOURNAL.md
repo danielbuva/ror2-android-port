@@ -2454,7 +2454,7 @@ signature/alignment and unchanged existing key verified. SDK 34 uses `-p 4`;
 rejected `-P 16` and shared-prune disk-baseline change retained in local notes.
 Host-only; independent full reconstruction, phone heat/install/update remain open.
 
-## J1366 — Compile source producer release graphs
+## J1367 — Compile source producer release graphs
 
 2026-11-04. PR #341 shipped SHA-linked source profiles into incremental job
 descriptors; missing suppliers fail explicitly and owner structural checks stay.
