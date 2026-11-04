@@ -19,6 +19,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 | [J1365](PORTING_JOURNAL.md#j1365--supply-source-derived-bundle-managed-providers) | 2026-11-04 | Supply source-derived bundle managed providers | 2026-11-04. |
 | [J1366](PORTING_JOURNAL.md#j1366--exercise-projectile-impact-pause-and-disposal-on-the-host) | 2026-11-04 | Exercise projectile impact, pause and disposal on the host | 2026-11-04. |
 | [J1367](PORTING_JOURNAL.md#j1367--inventory-fallback-material-local-input-and-unblock-host-audit) | 2026-11-04 | Inventory fallback Material local input and unblock host audit | 2026-11-04. |
+| [J1368](PORTING_JOURNAL.md#j1368--enforce-dev-command-and-action-lifecycle-labels) | 2026-11-04 | Enforce dev command and action lifecycle labels | 2026-11-04. |
 | [J1358](PORTING_JOURNAL.md#j1358--retain-audited-menu-build-identities-and-native-provider-order) | 2026-11-03 | Retain audited Menu build identities and native provider order | 2026-11-04. |
 | [J1359](PORTING_JOURNAL.md#j1359--retained-sustained-game-performance-report) | 2026-11-04 | Retained sustained game performance report | 2026-11-04. |
 | [J1363](PORTING_JOURNAL.md#j1363--qualify-measured-lighting-tolerance-separately-from-exact-reconstruction) | 2026-11-04 | Qualify measured lighting tolerance separately from exact reconstruction | 2026-11-04. |
