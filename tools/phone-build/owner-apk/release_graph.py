@@ -164,6 +164,19 @@ class Graph:
         phase_arguments = self.player_arguments(providers) if producer == "player_data" else []
         needs = list(providers.values())
         arguments = ["--profile", "${repo}/" + path, "--profile-sha256", pin, "--output", "${output}"]
+        if producer in {
+            "object_produce",
+            "record_remap",
+            "record_produce",
+            "mesh_produce",
+            "avatar_produce",
+            "texture_produce",
+            "shader_context",
+            "shader_prefab",
+        }:
+            arguments += ["--comparison", "diagnostic"]
+        if producer == "payload_shader_records" and "legacy_sdk" in profile:
+            arguments += ["--legacy-sdk", "${input:legacy_sdk}"]
         if producer != "record_remap":
             arguments += ["--pc-root" if producer in {"shader_context", "shader_prefab", "sprite_produce"} else "--pc", "${input:pc}"]
         if producer in {"record_produce", "shader_context", "shader_prefab", "payload_shader_records", "player_data"}:
