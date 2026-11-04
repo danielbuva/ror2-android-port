@@ -45,6 +45,41 @@ class Failure(Exception):
     """Only fixed, authored reason codes may leave the lab host."""
 
 
+def install_diagnostic_summary(data):
+    """Only the agreed fixed A diagnostic schema may leave the private host."""
+    unavailable = {"status": "unavailable", "reason": "invalid-schema"}
+    if not isinstance(data, bytes) or len(data) > 4096:
+        return {"status": "unavailable", "reason": "size-limit"}
+    try:
+        row = json.loads(data)
+    except (ValueError, UnicodeError):
+        return unavailable
+    if row is None:
+        return {"status": "unavailable", "reason": "missing"}
+    stages = {
+        "prepare",
+        "session-create",
+        "unknown",
+        "session-open",
+        "write-start",
+        "write-complete",
+        "fsync-start",
+        "fsync-complete",
+        "commit-start",
+        "commit-returned",
+    }
+    callbacks = {"none", "pending-user-action", "success", "failure", "unknown"}
+    if not isinstance(row, dict) or set(row) != {"schema", "stage", "callback", "session_match"}:
+        return unavailable
+    if type(row["schema"]) is not int or row["schema"] != 1 or not isinstance(row["stage"], str) or row["stage"] not in stages:
+        return unavailable
+    if not isinstance(row["callback"], str) or row["callback"] not in callbacks:
+        return unavailable
+    if (row["callback"] == "none" and row["session_match"] is not None) or (row["callback"] != "none" and type(row["session_match"]) is not bool):
+        return unavailable
+    return {"status": "observed", "stage": row["stage"], "callback": row["callback"], "session_match": row["session_match"]}
+
+
 def module(name, path):
     spec = importlib.util.spec_from_file_location(name, path)
     value = importlib.util.module_from_spec(spec)
@@ -744,6 +779,18 @@ class Phone:
         # The root lab invocation may pass this flag ONLY after explicit owner
         # authorization for this fresh disposable test package on the leased phone.
         self.shell("appops", "set", PACKAGE, "REQUEST_INSTALL_PACKAGES", "allow", label="device-install-permission-enable")
+
+    def capture_install_diagnostic(self):
+        # Fresh-run ownership and exact installed test APK identity are mandatory.
+        # No alpha/game namespace, broad traversal, or mutation is involved.
+        if not self.owned_installer or not self.installer_hash or self.package_hash(PACKAGE) != self.installer_hash:
+            return {"status": "unavailable", "reason": "ownership-unverified"}
+        command = (
+            'for p in files files/owner-input files/owner-input/install-diagnostic.json; do [ ! -L "$p" ] || exit 1; done; '
+            "if [ -f files/owner-input/install-diagnostic.json ]; then head -c 4097 files/owner-input/install-diagnostic.json; else printf null; fi"
+        )
+        data = self.shell("run-as", PACKAGE, "sh", "-c", "'" + command + "'", label="device-install-diagnostic-read", timeout=15)
+        return install_diagnostic_summary(data)
 
     def capture_apk_logs(self):
         # APK-stage subprocesses in build_owner_apk.build write only these two
@@ -1527,6 +1574,13 @@ def main(argv=None):
         failure_phase = CURRENT_PHASE
     finally:
         if phone is not None:
+            if reason and failure_phase in ("baseline-N-install", "update-N-to-N+1", "same-key-rollback"):
+                try:
+                    observed = phone.capture_install_diagnostic()
+                except Exception:
+                    observed = {"status": "unavailable", "reason": "capture-failed"}
+                # Capture failure must not replace the original failure or cleanup.
+                print(encoded({"mode": "install-diagnostic", "observed": observed}).decode(), end="", flush=True)
             set_phase("cleanup")
             try:
                 cleanup_verified = phone.cleanup() == "verified-absent"
