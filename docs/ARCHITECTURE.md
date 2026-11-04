@@ -963,6 +963,10 @@ profiles fail before staging. Generated JSON is overlaid into the release source
 checkout and audited/committed before the existing tracked-only publisher runs.
 The dispatcher resolves supplier directories from declared receipt artifacts;
 input-file hash tokens bind acquired tools without embedding host paths.
+Player/shader jobs declare complete serialized outputs; remapping consumes their
+top-level receipts, while player data consumes nested shared-shader and texture
+packs. Their authored shader and player configuration inputs travel in the
+signed closure. Fresh converter/managed inputs remain explicit caller bindings.
 Generated jobs retain producer checks and do not establish complete APK or phone
 readiness. Setup uses explicit source checkout/profile/output paths; teardown
 keeps generated descriptors and caller-owned producer results. The managed-host
