@@ -5731,8 +5731,12 @@ behavior remain open.
 
 The same remap owner can extract selected bodies from source-produced player
 serialized files. The supplier receipt pins its profile, relative file, size and
-hash; selected class, path ID, size and body hash must also match. Output index
-rows retain this file provenance. No player producer is rerun for extraction.
+hash; historical selections also require matching class, path ID, size and body
+hash. Current MonoScript selections use an explicit assembly/namespace/class
+identity, resolved uniquely in that same receipt-bound file. Their current body
+and native type remain checked through bundle consumption; historical body
+equality is recorded separately. Output index rows retain the actual source ID
+and file provenance. No player producer is rerun for extraction.
 For independently produced records, the object owner optionally applies
 `record_references`: the original type schema must identify every edited extent
 as a PPtr, each prior value must match, and destination external slots must
