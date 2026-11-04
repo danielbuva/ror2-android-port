@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J1359](PORTING_JOURNAL.md#j1359--stabilize-host-profile-and-optional-volume-failure-checks) | 2026-11-04 | Stabilize host profile and optional-volume failure checks | 2026-11-04. |
 | [J1358](PORTING_JOURNAL.md#j1358--retain-audited-menu-build-identities-and-native-provider-order) | 2026-11-03 | Retain audited Menu build identities and native provider order | 2026-11-04. |
 | [J1357](PORTING_JOURNAL.md#j1357--resolve-source-derived-tree-windasset-endpoints) | 2026-11-03 | Resolve source-derived Tree WindAsset endpoints | 2026-11-04. |
 | [J1356](PORTING_JOURNAL.md#j1356--honor-thermal-admission-exclusions-above-80-c) | 2026-11-03 | Honor thermal admission exclusions above 80 C | 2026-11-04. |
