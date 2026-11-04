@@ -57,6 +57,10 @@ produce the file from the input, prefer tracking the generator.
 
 ## Audit record
 
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-player-phases.json` | `49f3c80455532ce9c3c94db2e8dd4807ab0ceb7a96c144d78a064ddb94dcd8fc` |
+
 `owner-player-phases.json` declares the five existing source phase recipe hashes
 and their complete output filename sets (including UUID5 Sprite/texture names).
 These are minimum reconstruction/layout identities from the current source
