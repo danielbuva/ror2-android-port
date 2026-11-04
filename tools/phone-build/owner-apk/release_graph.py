@@ -80,6 +80,33 @@ class Graph:
         self.profile_files = {}
         self.job_profiles = {}
 
+    def startup(self):
+        """Share source startup identity between final files and managers."""
+        name = "recipe/jobs/owner-startup-metadata.json"
+        if name not in self.jobs:
+            settings = "smoke/ProjectSettings/ProjectSettings.asset"
+            toolchain = "environment/toolchain.json"
+            prefix = "apk/assets/bin/Data/"
+            self.jobs[name] = {
+                "schema": 1,
+                "script": PREFIX + "startup_metadata.py",
+                "arguments": [
+                    "--input-manifest",
+                    "${input:inventory}",
+                    "--settings",
+                    "${repo}/" + settings,
+                    "--toolchain",
+                    "${repo}/" + toolchain,
+                    "--output",
+                    "${output}",
+                ],
+                "needs": [],
+                "outputs": {prefix + target: "targets/" + prefix + target for target in ("boot.config", "unity_app_guid")},
+                "artifacts": {"receipt": "result.json"},
+            }
+            self.job_profiles[name] = {"authored_inputs": {path: digest(self.repo / path) for path in (settings, toolchain)}}
+        return name
+
     def player_arguments(self, providers):
         arguments = []
         for phase, row in self.phases.items():
@@ -101,13 +128,15 @@ class Graph:
             selected = json.loads((self.repo / self.phases["manager"]["profile"]).read_text())
             pin = selected["public_inputs"]["shaders"]["sha256"]
             dependency = providers.setdefault(pin, self.build(pin))
+            startup = self.startup()
+            providers["startup"] = startup
             arguments += [
                 "--manager-shaders",
                 "${job_directory:" + dependency + ":receipt}",
                 "${sha256:" + dependency + ":receipt}",
                 "--manager-startup",
-                "${input:startup_receipt}",
-                "${input_sha256:startup_receipt}",
+                "${job:" + startup + ":receipt}",
+                "${sha256:" + startup + ":receipt}",
             ]
         if {"manager", "scene"} & self.phases.keys():
             arguments += ["--sdk-binary", "${input:sdk_binary}"]
@@ -224,7 +253,9 @@ class Graph:
             if job in visited:
                 return
             visited.add(job)
-            recipes.update((job, self.profile_files[job]))
+            recipes.add(job)
+            if job in self.profile_files:
+                recipes.add(self.profile_files[job])
             profile = self.job_profiles[job]
             producers.update(profile.get("authored_inputs", {}))
             if owner(profile) == "player_data":
@@ -251,8 +282,11 @@ class Graph:
 
     def compile(self, selected):
         entries = {}
-        for path in selected:
-            job = self.build(digest(self.repo / path))
+        selected_jobs = [self.build(digest(self.repo / path)) for path in selected]
+        startup = "recipe/jobs/owner-startup-metadata.json"
+        if startup in self.jobs:
+            selected_jobs.append(startup)
+        for job in selected_jobs:
             entry = self.entry(job)
             for output in self.jobs[job]["outputs"]:
                 if output in entries:

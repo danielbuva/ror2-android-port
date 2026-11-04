@@ -4,6 +4,7 @@ import gzip
 import importlib.util
 import json
 from pathlib import Path
+import shutil
 import sys
 import tempfile
 import unittest
@@ -57,7 +58,13 @@ class ReleaseGraphTests(unittest.TestCase):
         player = "recipe/jobs/owner-player-data.json"
         job = graph.jobs[player]
         self.assertEqual(len(job["outputs"]), 210)
-        self.assertEqual(len(index["entries"]), 579)
+        self.assertEqual(len(index["entries"]), 581)
+        startup = "recipe/jobs/owner-startup-metadata.json"
+        self.assertIn(startup, job["needs"])
+        self.assertIn("${job:" + startup + ":receipt}", job["arguments"])
+        self.assertNotIn("${input:startup_receipt}", job["arguments"])
+        self.assertIn("smoke/ProjectSettings/ProjectSettings.asset", index["files"])
+        self.assertIn("environment/toolchain.json", index["files"])
         for phase, row in graph.phases.items():
             self.assertIn("--" + phase + "-profile", job["arguments"])
             self.assertTrue(all("apk/assets/bin/Data/" + name in job["outputs"] for name in row["outputs"]))
@@ -83,6 +90,51 @@ class ReleaseGraphTests(unittest.TestCase):
             receipt.write_text(json.dumps(dict(success=True, files={})))
             with self.assertRaisesRegex(ValueError, "missing=.*authored"):
                 J.Dispatcher.files_in(output, descriptor)
+
+    def test_startup_source_job_executes_and_reuses_through_dispatcher(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory).resolve()
+            repo, inputs = root / "repo", root / "inputs"
+            (repo / "recipe").mkdir(parents=True)
+            for name in (G.PREFIX + "startup_metadata.py", "smoke/ProjectSettings/ProjectSettings.asset", "environment/toolchain.json"):
+                target = repo / name
+                target.parent.mkdir(parents=True, exist_ok=True)
+                shutil.copyfile(ROOT / name, target)
+            inputs.mkdir()
+            (inputs / "inventory.json").write_text('{"authored_fixture": true}')
+            graph = G.Graph(repo, {})
+            startup = graph.startup()
+            index = graph.compile([])
+            job = repo / startup
+            job.parent.mkdir(parents=True)
+            job.write_text(json.dumps(graph.jobs[startup]))
+            index["files"][startup] = G.digest(job)
+            release = {"entries": {name: J.UPDATES.public().entry_dependencies(index, name) for name in index["entries"]}}
+            runtime, native = root / "runtime", root / "native"
+            runtime.mkdir()
+            native.mkdir()
+            config = {"bindings": {"inventory": "inventory.json"}}
+            progress = []
+            for pass_number in range(2):
+                dispatcher = J.Dispatcher(
+                    repo,
+                    index,
+                    release,
+                    inputs,
+                    runtime,
+                    native,
+                    config,
+                    "a" * 64,
+                    python=[sys.executable],
+                    progress=lambda name, reused: progress.append(reused),
+                )
+                for name, dependency in release["entries"].items():
+                    destination = root / (str(pass_number) + "-" + Path(name).name)
+                    dispatcher.produce(name, dependency, destination)
+                    self.assertTrue(destination.is_file())
+            self.assertEqual(progress, [False, True])
+            self.assertEqual((root / "0-boot.config").read_bytes(), (root / "1-boot.config").read_bytes())
+            self.assertEqual((root / "0-unity_app_guid").read_bytes(), (root / "1-unity_app_guid").read_bytes())
 
     def test_compressed_hierarchy_suppliers_are_signed_without_expansion(self):
         graph = G.Graph(ROOT, {})
