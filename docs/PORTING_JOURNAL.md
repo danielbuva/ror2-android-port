@@ -2358,7 +2358,7 @@ Evidence: `work/coordination/p1-menuhud/current-menu-v1/`; 15 focused tests pass
 Host production 13.659 s, peak RSS 367,804,416 bytes; cleanup passes.
 No readiness closure or device claim; complete phone/install/update gates remain open.
 
-## J1360 — Cache validated import progress totals
+## J1361 — Cache validated import progress totals
 
 2026-11-04. Existing `owner-apk/game_import.py` tracks completed bytes as files
 are validated/adopted and resets the total for each run, avoiding repeated sums.
@@ -2371,7 +2371,6 @@ Peak RSS 39,059,456 → 39,747,584 bytes; allocated workspace 4,161,007,616 →
 4,128,145,408 bytes. Sequential host/cache/profile effects limit speedup claims.
 Ruff and 33 focused import checks pass, including same-instance resume/adoption.
 No device/heat/full-pipeline measurement; phone performance remains open.
-Bounded CI fixture deadlines cover observed shared-host timeouts; focused checks pass.
 Readiness unchanged: 693/705 available, 685 raw-exact; no new reconstruction closure.
 ## J1360 — Measure host APK finalization and private packet packaging
 

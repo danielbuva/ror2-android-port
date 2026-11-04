@@ -8,9 +8,6 @@ import tempfile
 import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
-# The harness performs real file/directory fsyncs; shared-disk contention is not
-# a retention failure. Keep both external Java processes bounded.
-JAVA_PROCESS_TIMEOUT = 300
 
 
 class OwnerProfileStoreTests(unittest.TestCase):
@@ -44,14 +41,14 @@ class OwnerProfileStoreTests(unittest.TestCase):
                 ],
                 capture_output=True,
                 text=True,
-                timeout=JAVA_PROCESS_TIMEOUT,
+                timeout=60,
             )
             self.assertEqual(compile_result.returncode, 0, compile_result.stderr)
             result = subprocess.run(
                 [str(javac.with_name("java")), "-cp", str(classes), "dev.ror2owner.bootstrap.ProfileStoreHarness", str(data)],
                 capture_output=True,
                 text=True,
-                timeout=JAVA_PROCESS_TIMEOUT,
+                timeout=60,
             )
             self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
             self.assertIn('"success":true', result.stdout)
