@@ -2333,6 +2333,18 @@ Bounded source recipe only; producer unchanged; 2,024 candidates remain excluded
 Residual three unchanged; readiness 693/705 available, 685 raw-exact.
 Complete groups, bundle, phone/install/update and runtime gates remain open.
 
+## J1359 — Retained sustained game performance report
+
+2026-11-04. Host-only report owner reads existing sustained and thermal receipts; synthetic fixtures
+check counter subtraction, periodic percentiles, thermal gaps and missing measurements.
+Retained Main Nova: 88,421 frames, 49.061 average FPS, 4,142 >33.334 ms and 1,359 >50 ms.
+Periodic interval-mean p50/p95/p99: 20.06/33.57/35.54 ms; raw frame percentiles unavailable.
+Evidence: `work/coordination/perf-game-1104/report.json`; output SHA-256
+`2a199449a557e586f6f90ba990d826530017d33793b63ace0993fcf1b88f7b90`.
+APK unchanged: `d9009691ddccbefb3bdca3aad45bf5120dd011ccb2de66056c9a591a636b038a`.
+Game baseline documents CPU/render/GC hypotheses and proposed device budgets; no device run or
+optimization was performed. Raw pacing, battery efficiency, causal throttling and ordinary-play
+performance/visual acceptance remain open.
 ## J1358 — Retain audited Menu build identities and native provider order
 
 2026-11-04. Public Menu recipe retains 591 build-assigned IDs/order only; every
@@ -2345,3 +2357,19 @@ Sprite-induced external-index shifts; HUD graph remains 2,021 versus 1,902.
 Evidence: `work/coordination/p1-menuhud/current-menu-v1/`; 15 focused tests pass.
 Host production 13.659 s, peak RSS 367,804,416 bytes; cleanup passes.
 No readiness closure or device claim; complete phone/install/update gates remain open.
+
+## J1360 — Measure host APK finalization and private packet packaging
+
+2026-11-04. Reusable `profile_stage.py` records wall/CPU/RSS, sampled logical and
+allocated workspace bytes, block operations and failed exits; two host tests pass.
+Current original 2,749 source pins and 840 retained J850 target pins verified.
+Retained replay only; warm validation caches, preparation excluded. Wall/peak RSS:
+apk-assembly: 8.255 s / 30,457,856 bytes.
+zipalign: 0.423 s / 8,683,520 bytes.
+signing: 1.245 s / 380,960,768 bytes.
+private-payload-packet-packaging: 137.661 s / 119,685,120 bytes.
+Evidence: `work/coordination/apk-profile/`; shared baseline table extended.
+Signed output `c0b78163d5b00425592f271b49519ba01c9f8d16164368afc796af58b9d12026`;
+signature/alignment and unchanged existing key verified. SDK 34 uses `-p 4`;
+rejected `-P 16` and shared-prune disk-baseline change retained in local notes.
+Host-only; independent full reconstruction, phone heat/install/update remain open.

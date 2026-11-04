@@ -52,6 +52,17 @@ reproduction and framed emission. It verifies supplied target/profile/PC/SDK
 inputs without generating independent Android target information. `assemble.py`
 owns hash-bound unsigned APK assembly and required uncompressed/aligned resource
 storage; canonical alignment and owner signing follow separately.
+
+`tools/phone-build/profile_stage.py` owns host converter stage measurement.
+Call it with an explicit command, workspace and ignored evidence directory;
+optional `--table` extends the existing per-stage table. Each child process
+records wall/user/system time, wait4 RSS, block operations and sampled logical/
+allocated workspace bytes, including failed exits. Process exit stops sampling;
+logs/JSON remain caller-owned. Workspace preparation and validation are separate
+from measured commands. Sampling gives a peak lower bound; child RSS accounting
+is not simultaneous process-tree RSS. These host metrics do not qualify phone
+heat, installation or complete converter performance.
+
 `object_produce.py` emits complete source object bundles through
 `object_stream.py`, which owns checked-body spooling, lazy graph reads and bounded
 resource copying. Setup requires a new caller-owned output and the existing
@@ -2035,6 +2046,15 @@ performance guarantee. Host admission estimates two 4 GiB snapshots plus
 records that budget and observed free bytes. The 100 GiB full-build floor does
 not apply to this capture-only queue. Host fixtures exercise admission and
 failure contracts.
+`scripts/lab/perf_report.py` is the host-only sustained-report owner. Explicit
+session-result and thermal JSONL inputs produce local JSON/Markdown with input
+hashes, active counter deltas, periodic interval-mean percentiles and UTC-aligned
+FPS/temperature bins. Setup reads retained evidence; files close on process exit,
+no runtime/device state is changed, and reports persist at the requested output.
+It cannot recover individual-frame quantiles or causal throttling onset from
+aggregate traces. [Game performance](performance-game.md) owns the baseline and
+attribution limits; [public alpha](public-alpha.md#performance-release-gate) owns
+proposed device budgets. Synthetic host fixtures check window and coverage math.
 `--gameplay-only` selects just the existing heap and sustained owners when the
 independent SDK interruption route is blocked. Its receipt explicitly records
 that scope; it supplies no settings-interruption evidence and cannot combine
