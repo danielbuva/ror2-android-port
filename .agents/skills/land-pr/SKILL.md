@@ -5,7 +5,18 @@ description: Use when updating, verifying and merging a branch or draft PR of th
 
 # Land a branch
 
-1. `git fetch origin && git merge origin/main` in the branch's own worktree (a not-yet-pushed branch may rebase instead; never rebase or force-push a pushed branch). Resolve journal conflicts by renumbering your entry to the next free `J<n>` and rerunning `python3 scripts/journal-index.py`; never renumber someone else's entry.
+1. `git fetch origin && git merge origin/main` in the branch's own worktree (a not-yet-pushed branch may
+   rebase instead; never rebase or force-push a pushed branch). For journal conflicts, preserve main's
+   entries unchanged and keep each branch addition as a separate `## J<n>` heading (temporary duplicate
+   numbers are fine); remove conflict markers, never discard another branch's entry. Then run `python3
+   scripts/journal-renumber.py --dry-run` and `python3 scripts/journal-renumber.py`. This host-only tool
+   compares complete entries against the fetched `origin/main`, renumbers only branch additions above
+   main's highest ID in source order, and regenerates the index. It works during conflict resolution or
+   after the merge completes; it never fetches, stages or commits. Stage the resolved journal/index
+   before completing an in-progress merge. If it refuses missing, edited or duplicate entries, reconcile
+   those explicitly rather than guessing ownership from J numbers. Review branch-owned references/links
+   manually: collided numbers are ambiguous, so only headings and generated index links are rewritten.
+   Never renumber someone else's entry.
 2. `.local/lab-venv/bin/ruff format` + `ruff check` on changed Python; `python3 -m unittest discover -s tests` for affected tests.
 3. `python3 scripts/audit-public.py` on staged content; manually confirm no game-derived bytes, device serials, private paths or credentials.
 4. Push; the pre-push hook runs `scripts/ci-local.sh` in a fresh clone (rerun once if a capture-transfer step flakes).

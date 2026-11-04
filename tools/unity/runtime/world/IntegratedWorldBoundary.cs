@@ -1249,9 +1249,11 @@ public sealed partial class PortSession
         }
         // One marker per preparation seam, never per frame. Keep report phase and
         // coroutine scheduling intact while locating thermal stops in this owner.
+        // The marker identifies its seam; a per-call stack only grows Console history.
         void TracePreparation(string step)
         {
-            Debug.Log("Integrated preparation step=" + step + " at=" +
+            Debug.LogFormat(LogType.Log, LogOption.NoStacktrace, null, "{0}",
+                      "Integrated preparation step=" + step + " at=" +
                       Time.realtimeSinceStartup.ToString("R", System.Globalization.CultureInfo.InvariantCulture) +
                       " frame=" + Time.frameCount);
         }

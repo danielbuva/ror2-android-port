@@ -215,6 +215,50 @@ class QuotaDriverTests(unittest.TestCase):
                 with self.assertRaisesRegex(self.driver.Failure, "diagnostic-log-not-regular"):
                     self.driver.inspect_quota_failure("run-synthetic")
 
+    def test_stderr_markers_are_fixed_observations_not_cause_or_exit_status(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            logs = self.inspection_fixture(root)
+            (logs / "phone-quota.stderr").write_text(
+                "cat: PRIVATE_PATH: Permission denied\n/system/bin/sh: bad number: PRIVATE\n"
+                "CANNOT LINK EXECUTABLE PRIVATE: dlopen failed\nadb: error: device offline\n"
+                "Killed\natomic quota contract\nENOSPC: injected scratch quota\n"
+                "Private directory unavailable\nCould not publish private file\n"
+            )
+            with patch.object(self.driver, "ROOT", root):
+                result = self.driver.inspect_quota_failure("newest")
+            self.assertEqual(
+                result["stderr_markers"],
+                [
+                    "permission-denied-text",
+                    "shell-number-error-text",
+                    "loader-link-error-text",
+                    "adb-error-text",
+                    "adb-device-unavailable-text",
+                    "process-killed-text",
+                    "fixture-contract-error-text",
+                    "fixture-quota-error-text",
+                    "writer-directory-error-text",
+                    "writer-publication-error-text",
+                ],
+            )
+            self.assertEqual(result["marker_interpretation"], "text-observations-not-proven-cause")
+            self.assertIsNone(result["returncode"])
+            self.assertEqual(result["workflow_association"], "unrecorded")
+            self.assertNotIn("PRIVATE", json.dumps(result))
+            self.assertNotIn("SIGKILL", json.dumps(result))
+
+    def test_stderr_markers_ignore_arbitrary_text_and_stdout(self):
+        self.assertEqual(self.driver.stderr_markers("Private output and unknown.exception.Type"), [])
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            logs = self.inspection_fixture(root)
+            (logs / "phone-quota.stderr").write_bytes(b"\xffPRIVATE_UNKNOWN")
+            (logs / "phone-quota.stdout").write_text("Permission denied\nKilled\n")
+            with patch.object(self.driver, "ROOT", root):
+                result = self.driver.inspect_quota_failure("newest")
+            self.assertEqual(result["stderr_markers"], [])
+
     def test_inspection_mode_never_uses_serial_compiler_or_commands(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)

@@ -40,7 +40,7 @@ public sealed partial class PortSession
         public int rootWalkNodes, rootWalkRoots, rootWalkReadFailures;
         public float rootWalkSeconds;
         public string[] rootWalkPaths, rootWalkFailureSamples, rootWalkCensus, rootWalkRootAttribution;
-        // Private diagnostic snapshots at menus 2/4; not ordinary growth/performance samples.
+        // Private diagnostic snapshots; not ordinary growth/performance samples.
         public bool memorySnapshotRequested, memorySnapshotComplete, memorySnapshotSuccess;
         public string memorySnapshotFile, memorySnapshotError;
     }
@@ -50,6 +50,7 @@ public sealed partial class PortSession
         public string attempt;
         public int diagnosticCompletedRootWalkSession;
         public bool diagnosticCompletedMemorySnapshots;
+        public int diagnosticCompletedMemorySnapshotFinalSession = 4;
     }
     const int RootWalkNodeBudget = 2000000;
     // Reads only the launch selector's opt-in session index; the coordinator's own parsing is
@@ -79,7 +80,8 @@ public sealed partial class PortSession
     void CaptureCompletedMemorySnapshot(SessionResourceSample sample)
     {
         var selection = ReadResourceDiagnostics();
-        if (selection == null || !selection.diagnosticCompletedMemorySnapshots || (sessionIndex != 2 && sessionIndex != 4))
+        if (selection == null || !selection.diagnosticCompletedMemorySnapshots ||
+            (sessionIndex != 2 && sessionIndex != selection.diagnosticCompletedMemorySnapshotFinalSession))
             return;
         sample.memorySnapshotRequested = true;
         if (!Debug.isDebugBuild || Run.instance || NetworkServer.active || NetworkClient.active)
@@ -421,6 +423,18 @@ public sealed partial class PortSession
         }
         return removed;
     }
+    // Native menu-4 capture reaches completed player stats through this scratch
+    // list. Original Fire clears it before discovery, but leaves its last targets
+    // afterwards. Release only destroyed targets at the idle teardown boundary.
+    int PruneDestroyedOverlapTargets()
+    {
+        Check(r.world.cleaned && !Run.instance && !NetworkServer.active && !NetworkClient.active,
+              "Refuse overlap-target cleanup in a live session");
+        var field = typeof(OverlapAttack).GetField("discoveredHurtboxes", BindingFlags.Static | BindingFlags.NonPublic);
+        var targets = field == null ? null : field.GetValue(null) as System.Collections.Generic.List<HurtBox>;
+        Check(targets != null, "Original overlap discovery storage changed");
+        return targets.RemoveAll(target => !target);
+    }
     // The captured J1091 graph identifies the original BulletHitPool as a root
     // for completed actors. Its Reset leaves hitHurtBox assigned. Visit only
     // returned items, after teardown, and release only Unity-destroyed targets.
@@ -454,6 +468,7 @@ public sealed partial class PortSession
         int pruned = PruneDestroyedDepossessionSubscribers();
         var registries = PruneDestroyedOriginalRegistries().Concat(new[] {
             "BulletAttack.bulletHitPool.destroyedTargets:" + ReleaseDestroyedPooledHitTargets(),
+            "OverlapAttack.discoveredHurtboxes.destroyedTargets:" + PruneDestroyedOverlapTargets(),
             "CharacterSpawnCard.loadoutAvailability.destroyedTargets:" + PruneDestroyedSpawnCardCallbacks()
         }).ToArray();
         ObserveSessionResources("completed-before-reclaim");

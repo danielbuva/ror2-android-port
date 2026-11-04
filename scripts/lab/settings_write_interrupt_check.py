@@ -45,6 +45,23 @@ def validate_observer_binding(observed, nonce, pid, uid):
         raise RuntimeError("Separate-process observer binding differs")
 
 
+def stop_after_observed_exit(device, observed, expected):
+    """Keep the witnessed writer distinct from an Android activity restart."""
+    if observed.get("success") is not True or observed.get("writerExited") is not True:
+        raise RuntimeError("No successful native writer-exit witness")
+    if _remote_path_state(device, "/proc/" + str(observed["pid"])) != "absent":
+        raise RuntimeError("Witnessed writer PID remains present")
+    processes = device.sh("pidof", PACKAGE, check=False).strip()
+    bind_installed_apk(device.owned(), expected_sha256=expected)
+    device.sh("am", "force-stop", PACKAGE)
+    deadline = time.monotonic() + 10
+    while device.sh("pidof", PACKAGE, check=False).strip():
+        if time.monotonic() >= deadline:
+            raise RuntimeError("Owned package remained after force-stop")
+        time.sleep(0.1)
+    return dict(writer_pid=observed["pid"], writer_absent=True, package_pids_before_stop=processes)
+
+
 def check_settings_write_interrupt(expected_apk_sha256=None, _launch=None):
     expected = validate_expected_apk_sha256(expected_apk_sha256)
     if expected is None:
@@ -188,11 +205,8 @@ def check_settings_write_interrupt(expected_apk_sha256=None, _launch=None):
         stopped_pid = pid
         if capture_owned_errors("interrupted-process"):
             raise RuntimeError("Actual-PID runtime error during native persistence case")
-        deadline = time.monotonic() + 10
-        while device.sh("pidof", PACKAGE, check=False).strip() and time.monotonic() < deadline:
-            time.sleep(0.1)
-        if device.sh("pidof", PACKAGE, check=False).strip():
-            raise RuntimeError("Owned writer remained after force-stop")
+        result["writer_exit"] = stop_after_observed_exit(device, observed, expected)
+        write(out / "writer-exit.json", result["writer_exit"])
         after_raw = _read_raw(device, primary)
         if device.sh("sha256sum", primary).split()[0] != before_hash:
             raise RuntimeError("Interrupted transaction changed the original primary bytes")

@@ -51,6 +51,11 @@ static class Program {
      Need(sample.memorySnapshotRequested==(index==2||index==4),"wrong snapshot menu");
      Need(UnityEngine.Profiling.Memory.Experimental.MemoryProfiler.calls==((index==2||index==4)?1:0),"unexpected native request");
     }
+    Select("{\"attempt\":\"authored\",\"diagnosticCompletedMemorySnapshots\":true,\"diagnosticCompletedMemorySnapshotFinalSession\":13}");
+    for(int index=1;index<=13;index++){
+     UnityEngine.Profiling.Memory.Experimental.MemoryProfiler.Reset();var sample=new PortSession{sessionIndex=index}.Capture();
+     Need(sample.memorySnapshotRequested==(index==2||index==13),"late series captured the wrong menu");
+    }
     Select("{\"attempt\":\"foreign\",\"diagnosticCompletedMemorySnapshots\":true}");
     Need(!new PortSession().Capture().memorySnapshotRequested,"foreign attempt captured memory");
     Select("{\"attempt\":\"authored\"}");Need(!new PortSession().Capture().memorySnapshotRequested,"default-on memory capture");

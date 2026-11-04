@@ -95,6 +95,35 @@ def java_errors(text):
     return [name for name in JAVA_ERRORS if re.search(r"(?m)(?:^|Caused by: |Exception in thread \"[^\"\n]*\" )" + re.escape(name) + r"(?=[:\s]|$)", text)]
 
 
+STDERR_MARKERS = {
+    "permission-denied-text": ("Permission denied", "permission denied"),
+    "missing-path-text": ("No such file or directory",),
+    "command-not-found-text": (": not found", "inaccessible or not found"),
+    "shell-number-error-text": ("bad number", "Bad number", "integer expression expected"),
+    "shell-syntax-error-text": ("syntax error", "Syntax error"),
+    "shell-fork-error-text": ("Cannot fork", "cannot fork", "can't fork"),
+    "loader-link-error-text": ("CANNOT LINK EXECUTABLE", "dlopen failed", "cannot locate symbol"),
+    "runtime-class-load-error-text": ("Could not find class", "Could not find or load main class", "Unable to locate class"),
+    "runtime-verification-error-text": ("java.lang.VerifyError", "java.lang.NoSuchMethodError"),
+    "adb-error-text": ("adb: error:", "adb: failed", "protocol fault"),
+    "adb-device-unavailable-text": ("device offline", "no devices/emulators found", "device unauthorized"),
+    "selinux-denial-text": ("avc: denied",),
+    "process-killed-text": ("Killed",),
+    "process-aborted-text": ("Aborted",),
+    # Fixed messages authored by InstallerQuotaHarness and OwnerInputImport.
+    # GUARD itself prints no refusal reason; its historical exit status is absent.
+    "fixture-contract-error-text": ("atomic quota contract", "fresh scratch required"),
+    "fixture-quota-error-text": ("ENOSPC: injected scratch quota",),
+    "writer-directory-error-text": ("Private directory contains links", "Private directory unavailable"),
+    "writer-publication-error-text": ("Private atomic file contains links", "Could not publish private file"),
+}
+
+
+def stderr_markers(text):
+    """Literal observations only, not proof of a cause, signal or guard exit."""
+    return [name for name, literals in STDERR_MARKERS.items() if any(literal in text for literal in literals)]
+
+
 def inspect_quota_failure(selection):
     """Read only fixed log names under the driver's owned evidence directory.
 
@@ -147,6 +176,8 @@ def inspect_quota_failure(selection):
             "returncode": None,
             "returncode_status": "not-inferred-from-output",
             "java_errors": java_errors("\n".join(raw)),
+            "stderr_markers": stderr_markers(raw[1]),
+            "marker_interpretation": "text-observations-not-proven-cause",
             "stdout_empty": not raw[0],
             "stderr_empty": not raw[1],
             "logs_truncated": truncated,
