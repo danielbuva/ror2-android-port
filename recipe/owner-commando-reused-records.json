@@ -212,7 +212,7 @@
       "sha256": "5a62ae9cd9f6b4d7c8a71bb0ab040abb848f44f1848dc8542ffb3e9c0f5ec846"
     },
     {
-      "source_profile_sha256": "2fdab523dc067eebf70709078ad08b6c854baf3a2fdbd86ee28ce5230f7774cc",
+      "source_profile_sha256": "6177f393bceff837be35af0f5741ed514a11eb5f673fa5632839e65686e0d09c",
       "destination": [
         "commando-prefab-lab",
         "CAB-b0611b01bbffecd06329c6d6eecf278c",
@@ -2149,7 +2149,7 @@
       "sha256": "7d94136c17ff038a31a02991235da1449eabfea3d9ff5b4fb9e82570a0e56adc"
     },
     {
-      "source_profile_sha256": "2fdab523dc067eebf70709078ad08b6c854baf3a2fdbd86ee28ce5230f7774cc",
+      "source_profile_sha256": "6177f393bceff837be35af0f5741ed514a11eb5f673fa5632839e65686e0d09c",
       "destination": [
         "commando-prefab-lab",
         "CAB-b0611b01bbffecd06329c6d6eecf278c",
@@ -3737,7 +3737,12 @@
         1342
       ],
       "bytes": 104,
-      "sha256": "d4b1c09da30beead8bcb54d38e8ba98747c84c72d861cf7acc2f762ce0905a21"
+      "sha256": "d4b1c09da30beead8bcb54d38e8ba98747c84c72d861cf7acc2f762ce0905a21",
+      "script_identity": [
+        "UnityEngine.UI.dll",
+        "UnityEngine.EventSystems",
+        "EventSystem"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -5181,7 +5186,7 @@
       "sha256": "caec78d35a50a9d10529b8b81f91967b96a2c3e55d89b69357fc8ac7926ce095"
     },
     {
-      "source_profile_sha256": "2fdab523dc067eebf70709078ad08b6c854baf3a2fdbd86ee28ce5230f7774cc",
+      "source_profile_sha256": "6177f393bceff837be35af0f5741ed514a11eb5f673fa5632839e65686e0d09c",
       "destination": [
         "commando-prefab-lab",
         "CAB-b0611b01bbffecd06329c6d6eecf278c",
