@@ -320,12 +320,18 @@ public sealed partial class PortSession
             if (!originalDamageMacrosReady)
             {
                 coordinator.Check(DamageMacroCatalog.macroNameToIndexReadOnly.Count == 0, "Unowned original damage-macro catalog");
-                // Original startup scans opted-in assemblies before SystemInitializer runs.
-                HG.Reflection.SearchableAttribute.ScanAssembly(typeof(DamageMacroCatalog).Assembly);
-                HG.Reflection.SearchableAttribute.ScanAssembly(typeof(EntityStates.Chef.Sear).Assembly);
+                // Seed only this native initializer's method family. Preserve native target,
+                // base-type registration, multiple attributes and catalog index assignment.
+                var registered = HG.Reflection.SearchableAttribute.GetInstances<DamageMacroMethodAttribute>();
+                var priorTargets = new HashSet<object>(registered == null ? Enumerable.Empty<object>() : registered.Select(x => x.target));
+                foreach (var entry in OriginalMethodAttributes<DamageMacroMethodAttribute>(typeof(DamageMacroCatalog).Assembly,
+                                                                                          typeof(EntityStates.Chef.Sear).Assembly))
+                    if (!priorTargets.Contains(entry.Value))
+                        PortSession.StaticCall(typeof(HG.Reflection.SearchableAttribute), "RegisterAttribute", entry.Key, entry.Value);
                 var methods = HG.Reflection.SearchableAttribute.GetInstances<DamageMacroMethodAttribute>();
                 coordinator.Check(methods != null && methods.Count == expected.Length &&
                                       methods.Cast<DamageMacroMethodAttribute>().All(method => method.target is MethodInfo &&
+                                                                                               ((MethodInfo)method.target).IsStatic &&
                                                                                                expected.Contains(method.searchableName)),
                                   "Original damage-macro searchable methods differ from accepted input");
                 PortSession.StaticCall(typeof(DamageMacroCatalog), "Initialize");

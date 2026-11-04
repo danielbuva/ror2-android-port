@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J1370](PORTING_JOURNAL.md#j1370--ordinary-player-launch-and-typed-gameplay-discovery) | 2026-11-04 | Ordinary player launch and typed gameplay discovery | 2026-11-04. |
 | [J1369](PORTING_JOURNAL.md#j1369--extend-source-content-suppliers-with-strict-graph-admission) | 2026-11-04 | Extend source content suppliers with strict graph admission | 2026-11-04. |
 | [J1367](PORTING_JOURNAL.md#j1367--compile-source-producer-release-graphs) | 2026-11-04 | Compile source producer release graphs | 2026-11-04. |
 | [J1360](PORTING_JOURNAL.md#j1360--measure-host-apk-finalization-and-private-packet-packaging) | 2026-11-04 | Measure host APK finalization and private packet packaging | 2026-11-04. |

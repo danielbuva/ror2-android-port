@@ -1,11 +1,21 @@
 # Build recipes
 
+2026-11-04 player-startup audit: `original-audio-owner-sources.json` refreshes
+the authored session source hash and its producer/camera manifest pins. Only
+repository source hashes change; no game bytes, private paths or identifiers are
+added. Ordinary startup removes its fixed delay and selects the player lifecycle;
+explicit lab selectors retain their existing contracts.
+
 `owner-sdk-job-inputs.json` binds caller-acquired SDK/platform/Java/AAPT2 and
 public Maven jars to the existing SDK package producer. It contains only
 dispatcher binding names, public artifact filenames and an output token. No
 SDK bytes, game content, private paths or credentials are included. Existing
 producer pins and license boundaries remain unchanged. Provenance, privacy,
 licensing and sensitive-content audit: 2026-11-04.
+
+The typed startup-discovery change refreshes the authored world-owner and
+camera/build source pins. Audit: 2026-11-04; repository source hashes only,
+with no game data, private paths, identifiers or licensing changes.
 
 ## Original assembly placement audit (R1, 2026-10-18)
 
@@ -5687,6 +5697,11 @@ production and install/update gates remain open.
 updates only the public `PortSession.cs` hash for the default-off settings
 write observer startup request. Provenance, privacy, licensing and sensitive-content
 audit: authored source hash only; no game content, private inputs or identifiers.
+
+2026-11-04 ordinary-player startup build pin refresh: the camera build-hook
+source hash now includes the reviewed audio owner manifest pin from the startup
+change. Only the authored build-hook hash changes; no game-derived content or
+new input is introduced. A host contract verifies the camera source pin set.
 
 2026-10-31 camera build-hook pin refresh: `native-view-camera-transform.json`
 tracks the authored hook hash after its owner-manifest pin update. Provenance,
