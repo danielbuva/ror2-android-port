@@ -2367,6 +2367,16 @@ Completion establishes child reaping without sleeps; external calls retain bound
 Focused retention/volume tests, Ruff, host preflight and staged public audit pass.
 Evidence: `work/coordination/ci-flakes-20261104/` (repeat log and terminal receipt).
 Host-only test changes; no APK or device behaviour change. Remaining: none for these two flakes.
+## J1361 — Prune analyzed heaps and removed build-lane leftovers
+
+2026-11-04. `prune-generated.py` recognizes finished session-memory captures
+with matching successful analysis receipts and lane leftovers with owned removal
+evidence. It preserves logs/receipts, recent content, keep markers and protected
+paths; cold-storage symlinks are unlinked without deleting targets. Linked
+worktrees use the shared canonical roots.
+Evidence: `work/coordination/prune-snapshots-20261104/focused-checks.json`
+(16 synthetic host tests; Ruff passed). No APK or device behaviour changed.
+Older heaps without successful matching analysis remain retained.
 ## J1360 — Measure host APK finalization and private packet packaging
 
 2026-11-04. Reusable `profile_stage.py` records wall/CPU/RSS, sampled logical and
