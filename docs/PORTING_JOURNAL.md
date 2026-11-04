@@ -2371,6 +2371,26 @@ Evidence: `work/coordination/p1-menuhud/current-menu-v1/`; 15 focused tests pass
 Host production 13.659 s, peak RSS 367,804,416 bytes; cleanup passes.
 No readiness closure or device claim; complete phone/install/update gates remain open.
 
+## J1368 — Enforce dev command and action lifecycle labels
+
+2026-11-04. `./dev --help` labels all 24 top-level commands; lane help labels
+create/list/remove. ARCHITECTURE classifies editor/perf selectors and defaults;
+the existing prototype registry retains current/historical action status.
+`tests/test_dev_help.py` enforces help coverage, valid visible registry status
+and selector documentation without editor/device access. Dispatch is unchanged.
+Validation: 243 focused host tests, Ruff and host-only preflight pass.
+Shared-host CI timeout follow-up reuses deterministic hdiutil failure coverage
+and bounds nested CI/Java fixture work at 300 s; eight affected host tests pass.
+Host-only tooling change; no APK, device evidence or game-readiness claim.
+## J1367 — Inventory fallback Material local input and unblock host audit
+
+2026-11-04. LOCAL_STATE names the exact-SDK builtin Shader file required by the
+fallback Material keyword producer, its pins and generated record-pack owner.
+Audit of build/producer changes since 2026-10-30 found no new implicit work paths.
+Observed shared-host hook/profile fixture timeouts now have bounded 300 s deadlines;
+profile deadlines reuse the existing CI-fix work. Assertions remain unchanged.
+Evidence: `work/coordination/local-state-doc/audit.md`; 30 producer and 3 fixture tests pass.
+No APK or device claim; bootstrap and phone install/update gates remain open.
 ## J1366 — Exercise projectile impact, pause and disposal on the host
 
 2026-11-04. Existing LightningStake host fixture executes extracted production

@@ -1925,6 +1925,50 @@ Status words used below: **current** (part of the shipped whole-catalog game or 
 commands that build it), **support** (editor builders, host fixtures and tooling around the
 current path) and **historical** (kept for evidence; not reached by current commands).
 
+## Dev action lifecycle
+
+`./dev --help` labels every top-level command. Current includes host tooling,
+fixtures and experiments; it does not imply game readiness. The prototype registry
+in `scripts/lab/actions.py` owns each prototype action's current/historical label,
+shown by `./dev prototype --action list`, including the historical `inspect`
+default and unknown-name fallback. The listing action itself is current.
+`./dev lane --help` labels its explicit create/list/remove actions as current.
+The remaining `--action` selectors are classified here:
+
+| Command | Action | Lifecycle |
+| --- | --- | --- |
+| editor | `open` | current |
+| editor | `inspect` | current |
+| editor | `refresh` | current |
+| editor | `play` | current |
+| editor | `build` | current |
+| editor | `presentation-payload` | current |
+| editor | `siren-input-host` | current |
+| editor | `engineer-laser-host` | current |
+| editor | `lightning-stake-host` | current |
+| editor | `siren-encounter-host` | current |
+| editor | `source-camera-graphics-host` | current |
+| editor | `character-motor-order` | historical |
+| editor | `catalog-addresses` | historical |
+| editor | `reference-identities` | historical |
+| editor | `backend` | historical |
+| editor | `load` | historical |
+| editor | `loadplay` | historical |
+| editor | `probe` | historical |
+| editor | `minimal-build` | historical |
+| perf | `cpu` | current |
+| perf | `inspect` | current |
+| perf | `collect` | current |
+
+Editor `inspect` (also the unknown-name fallback) reads hierarchy/console.
+The historical actions retain their experiment contracts; `minimal-build` is
+unsupported. Editor `build` and `presentation-payload` require their existing
+coordinators. Perf's default `inspect` and explicit `collect` use the current generic
+capture path; `cpu` selects the dedicated profiler and other names are refused. Other top-level commands
+ignore `--action`. `tests/test_dev_help.py` checks command labels, prototype
+registry labels and the editor/perf/lane selectors without starting an editor or
+querying a device. Labels live with existing CLI owners; dispatch is unchanged.
+
 ## Build pipeline
 
 Historical `input-update-check` uses `scripts/lab/historical_receipts.py` to
