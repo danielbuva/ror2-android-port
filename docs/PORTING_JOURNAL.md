@@ -2371,7 +2371,7 @@ Evidence: `work/coordination/p1-menuhud/current-menu-v1/`; 15 focused tests pass
 Host production 13.659 s, peak RSS 367,804,416 bytes; cleanup passes.
 No readiness closure or device claim; complete phone/install/update gates remain open.
 
-## J1365 — Inventory fallback Material local input and unblock host audit
+## J1367 — Inventory fallback Material local input and unblock host audit
 
 2026-11-04. LOCAL_STATE names the exact-SDK builtin Shader file required by the
 fallback Material keyword producer, its pins and generated record-pack owner.
