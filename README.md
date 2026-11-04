@@ -22,14 +22,17 @@ owning the PC game means, and what is still being worked out for installation.
 
 ## Where things stand
 
-- The original offline menu, survivor selection and several stage transitions
-  have run on Android in developer tests.
-- Much of that testing uses automatic input or gameplay assists. A full,
-  unassisted run is still unverified.
-- In-game audio, the Moon finale, complete controls testing, visual polish and
-  sustained performance still need work.
-- Installation for players is being researched. There is no confirmed phone-only
-  setup process or supported-device list to follow yet.
+- Phone-only reconstruction has [host readiness](docs/accepted-build-reconstruction.md)
+  for 693 of 705 final files (685 raw-exact); whole-game content reconstruction is
+  nearly closed. Complete phone production remains unverified.
+- A lighting tolerance class has been decided; accepting lighting differences
+  still requires numerical and visual verification.
+- The lab build plays on the Retroid Nova at about 120 FPS in menus and about
+  50 FPS median in [assisted gameplay tests](docs/performance-game.md). A full,
+  unassisted run and sustained performance acceptance remain open.
+- [Alpha gates](docs/public-alpha.md) still include establishing a memory bound,
+  fixing the LightningStake NaN failure, and accepting phone-only installation
+  and in-place updates.
 
 These are development results, not a promise that the game is ready to play.
 The [technical status](PORTING_STATE.md) records the latest verified results and
