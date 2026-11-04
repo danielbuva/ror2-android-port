@@ -12,6 +12,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 | --- | --- | --- | --- |
 | [J1360](PORTING_JOURNAL.md#j1360--measure-host-apk-finalization-and-private-packet-packaging) | 2026-11-04 | Measure host APK finalization and private packet packaging | 2026-11-04. |
 | [J1361](PORTING_JOURNAL.md#j1361--prune-analyzed-heaps-and-removed-build-lane-leftovers) | 2026-11-04 | Prune analyzed heaps and removed build-lane leftovers | 2026-11-04. |
+| [J1362](PORTING_JOURNAL.md#j1362--cache-validated-import-progress-totals) | 2026-11-04 | Cache validated import progress totals | 2026-11-04. |
 | [J1358](PORTING_JOURNAL.md#j1358--retain-audited-menu-build-identities-and-native-provider-order) | 2026-11-03 | Retain audited Menu build identities and native provider order | 2026-11-04. |
 | [J1359](PORTING_JOURNAL.md#j1359--retained-sustained-game-performance-report) | 2026-11-04 | Retained sustained game performance report | 2026-11-04. |
 | [J1357](PORTING_JOURNAL.md#j1357--resolve-source-derived-tree-windasset-endpoints) | 2026-11-03 | Resolve source-derived Tree WindAsset endpoints | 2026-11-04. |
