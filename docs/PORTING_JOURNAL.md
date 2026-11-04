@@ -2333,6 +2333,19 @@ Bounded source recipe only; producer unchanged; 2,024 candidates remain excluded
 Residual three unchanged; readiness 693/705 available, 685 raw-exact.
 Complete groups, bundle, phone/install/update and runtime gates remain open.
 
+## J1363 — Qualify measured lighting tolerance separately from exact reconstruction
+
+2026-11-04. ADR-003 scopes GPU/sampling tolerance to probes, lightmaps and containers.
+The full-scene comparator derives native sample extents, checks measured per-channel
+bounds and preserves all other bytes, identities and serialized relationships.
+Bound reflection/lightmap pointers are required; unsupported schemas/encodings refuse.
+APK readiness requires pinned numerical recipes and matched visual review, reports
+`tolerance_accepted_count` separately and preserves current bytes during assembly.
+Authored host fixtures cover bounds, scope, exact fields/pointers, visual pins and counts.
+Evidence: `work/coordination/p1-tolerance/host-tests.log`; no APK/build/device run.
+Prior art: pinned AssetRipper LightmapSettings conversion and UnityPy native extents.
+Readiness stays 693/705 available, 685 raw-exact, zero tolerance-accepted; actual
+J850 lighting numerical/visual acceptance and phone install/update remain open.
 ## J1359 — Retained sustained game performance report
 
 2026-11-04. Host-only report owner reads existing sustained and thermal receipts; synthetic fixtures
@@ -2357,3 +2370,108 @@ Sprite-induced external-index shifts; HUD graph remains 2,021 versus 1,902.
 Evidence: `work/coordination/p1-menuhud/current-menu-v1/`; 15 focused tests pass.
 Host production 13.659 s, peak RSS 367,804,416 bytes; cleanup passes.
 No readiness closure or device claim; complete phone/install/update gates remain open.
+
+## J1367 — Inventory fallback Material local input and unblock host audit
+
+2026-11-04. LOCAL_STATE names the exact-SDK builtin Shader file required by the
+fallback Material keyword producer, its pins and generated record-pack owner.
+Audit of build/producer changes since 2026-10-30 found no new implicit work paths.
+Observed shared-host hook/profile fixture timeouts now have bounded 300 s deadlines;
+profile deadlines reuse the existing CI-fix work. Assertions remain unchanged.
+Evidence: `work/coordination/local-state-doc/audit.md`; 30 producer and 3 fixture tests pass.
+No APK or device claim; bootstrap and phone install/update gates remain open.
+## J1366 — Exercise projectile impact, pause and disposal on the host
+
+2026-11-04. Existing LightningStake host fixture executes extracted production
+finite checks and observation/disposal paths with authored scalar collaborators.
+Finite terrain-impact inputs survive paused observations and resume; an injected
+physical NaN is detected despite finite network position and collider geometry.
+Detach-before-destruction retains scalar history and prevents stale reads.
+Evidence: `tests/fixtures/lightning_stake_observer_host.cs`; focused host test passes.
+No APK, runtime behavior or device claim; native NaN producer remains unresolved.
+
+## J1365 — Supply source-derived bundle managed providers
+
+2026-11-04. Existing generic managed record owner supplies 221 MonoBehaviours via
+reciprocal GameObject ownership, unique typed endpoints and original MonoScripts.
+All 18,880 persisted bytes raw-exact to J850; 26 nonexact candidates excluded.
+Candidate pack SHA-256:
+`b6b67d2c93f920b33ce47ccdaf439fdb99b071607c7a2602d193bfe9d24309cd`.
+Evidence: `work/coordination/p1-wholegame-1031/bundle-managed-persisted-qualification-v1/done.json`;
+source witnesses: sibling `bundle-managed-source-frontier-v1/witnesses.jsonl`.
+Discovery 104.94 s, production 4.73 s, qualification 4.61 s; peak discovery RSS
+1,550,417,920 bytes, production/qualification RSS 280,363,008 bytes; cleanup passed.
+Host-only; heat unmeasured. EditorKit typed ownership and J1340 SDK hashes inform
+selection; bounded source recipe only, producer unchanged. Residual three unchanged;
+readiness 693/705 available, 685 raw-exact. Bundle/phone/install/update gates open.
+## J1364 — Stabilize audited Menu external provider IDs
+
+2026-11-04. Menu retains 20 audited external provider filenames/order only after
+source resolution, appending the additional original store Sprite provider.
+Seven Sprite records become raw-exact; current Menu is now 589/591 exact bodies.
+Source alignment 5 versus reference 8 and store Sprite nonnull versus null remain;
+no source field is overridden and full-file/readiness closure stays open.
+Output SHA-256: `b4be78e019c316a79e1bc9cab63d6cbdae85a66ef80738728a86c37761d1b24d`.
+Evidence: `work/coordination/p1-menuhud/current-menu-v2/`; 13 focused UI tests and
+Ruff pass. Host-only; no phone/install/update/runtime acceptance is claimed.
+## J1363 — Stabilize host profile and optional-volume failure checks
+
+2026-11-04. ProfileStore's real Java compile/fsync harness uses bounded 300 s process deadlines.
+The optional-volume nonzero test uses fixed child results and exact create/attach ordering;
+real CLI timeout/reaping, arguments and uncertain-mount preservation remain covered.
+Completion establishes child reaping without sleeps; external calls retain bounded deadlines.
+Focused retention/volume tests, Ruff, host preflight and staged public audit pass.
+Evidence: `work/coordination/ci-flakes-20261104/` (repeat log and terminal receipt).
+Host-only test changes; no APK or device behaviour change. Remaining: none for these two flakes.
+## J1362 — Cache validated import progress totals
+
+2026-11-04. Existing `owner-apk/game_import.py` tracks completed bytes as files
+are validated/adopted and resets the total for each run, avoiding repeated sums.
+Same 2,749-file input: independently reopened output sizes and SHA-256s all exact;
+output manifest `0279c32cef6e7d4818e14a10fc3970c423e29be392e151bdb00f74237232481a`.
+Evidence: `work/coordination/p1-scenes-w/converter-import-optimization-v1/`;
+`before-v3/done.json` and `after/done.json` include metrics and successful cleanup.
+Profiled host harness wall 78.122 → 63.522 s; user CPU 21.023 → 8.313 s.
+Peak RSS 39,059,456 → 39,747,584 bytes; allocated workspace 4,161,007,616 →
+4,128,145,408 bytes. Sequential host/cache/profile effects limit speedup claims.
+Ruff and 33 focused import checks pass, including same-instance resume/adoption.
+No device/heat/full-pipeline measurement; phone performance remains open.
+Readiness unchanged: 693/705 available, 685 raw-exact; no new reconstruction closure.
+## J1361 — Prune analyzed heaps and removed build-lane leftovers
+
+2026-11-04. `prune-generated.py` recognizes finished session-memory captures
+with matching successful analysis receipts and lane leftovers with owned removal
+evidence. It preserves logs/receipts, recent content, keep markers and protected
+paths; cold-storage symlinks are unlinked without deleting targets. Linked
+worktrees use the shared canonical roots.
+Evidence: `work/coordination/prune-snapshots-20261104/focused-checks.json`
+(16 synthetic host tests; Ruff passed). No APK or device behaviour changed.
+Older heaps without successful matching analysis remain retained.
+## J1360 — Measure host APK finalization and private packet packaging
+
+2026-11-04. Reusable `profile_stage.py` records wall/CPU/RSS, sampled logical and
+allocated workspace bytes, block operations and failed exits; two host tests pass.
+Current original 2,749 source pins and 840 retained J850 target pins verified.
+Retained replay only; warm validation caches, preparation excluded. Wall/peak RSS:
+apk-assembly: 8.255 s / 30,457,856 bytes.
+zipalign: 0.423 s / 8,683,520 bytes.
+signing: 1.245 s / 380,960,768 bytes.
+private-payload-packet-packaging: 137.661 s / 119,685,120 bytes.
+Evidence: `work/coordination/apk-profile/`; shared baseline table extended.
+Signed output `c0b78163d5b00425592f271b49519ba01c9f8d16164368afc796af58b9d12026`;
+signature/alignment and unchanged existing key verified. SDK 34 uses `-p 4`;
+rejected `-P 16` and shared-prune disk-baseline change retained in local notes.
+Host-only; independent full reconstruction, phone heat/install/update remain open.
+
+## J1367 — Compile source producer release graphs
+
+2026-11-04. PR #341 shipped SHA-linked source profiles into incremental job
+descriptors; missing suppliers fail explicitly and owner structural checks stay.
+Current-input death-effect bundle produced through the generated dispatcher:
+`268501d748109ffb6d61aeeaa871875445d3b8e7481b1fa9f94e59efeed979f8`.
+Wall 52.260 s, CPU 51.727 s, peak RSS 6,341,328,896 bytes; logical growth
+521,201 bytes. Evidence: `work/coordination/p1-scenes-w/end-to-end-v2/`.
+Player/shader wiring retains top-level serialized and nested record-pack receipt
+contracts, texture dependencies and authored release closure inputs. Host
+contracts cover graph dispatch/reuse and real player/shader supplier selection.
+Complete source-only APK, fresh runtime inputs and ordinary gameplay remain open.

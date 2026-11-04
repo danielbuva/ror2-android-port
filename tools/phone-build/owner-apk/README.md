@@ -210,6 +210,54 @@ it never substitutes historical bytes. Keep these required private evidence
 inputs with their producer receipts as described in
 [LOCAL_STATE](../../../docs/LOCAL_STATE.md).
 
+### Lighting tolerance
+
+[ADR-003](../../../docs/ADR-003-lighting-tolerance.md) defines the narrow lighting
+exception. Optional `lighting_tolerance` maps a final target path to
+`{reference, recipe: {path, sha256}, visual: {path, sha256}}`. The reference is a
+private J850 file used only for qualification. The recipe is reviewed authored
+policy; bounds require recorded measurements, not a guessed epsilon. No actual
+J850 tolerance recipe has been accepted yet.
+
+A recipe contains `reference_sha256` and `members`, mapping UnityFS serialized
+member names to record rules. Use the empty member name for a standalone v22
+file. A rule contains `path_id`, `class_id` and `samples`; each sample contains
+`field` (native path components), `channels`, `max_abs` (one finite nonnegative
+measured bound per channel), and `measurement` (local numerical evidence and
+bound derivation). For example, this **synthetic** ambient rule uses an exactly
+representable fixture delta, not a game lighting bound:
+
+```json
+{"path_id": 1, "class_id": 104, "samples": [{
+  "field": ["m_AmbientProbe"], "channels": 27,
+  "max_abs": [0.125, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+              0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+  "measurement": "Authored fixture maximum"
+}]}
+```
+
+Cubemap rules also name `reflection_owner`, a local RenderSettings or
+ReflectionProbe path ID actually pointing to the cubemap. Texture2D rules name
+`lightmap_owner`, a local LightmapSettings path ID actually pointing to the
+texture in `m_Lightmaps`. Texel samples select `["image data", "Array", "payload"]`;
+LightProbes select `["m_BakedCoefficients", "Array", "payload"]`.
+Ambient recipes require 27 bounds, one per native coefficient in each probe. Missing embedded
+schemas, changed streamed resources and unsupported formats remain blocked.
+
+The visual document contains `reference_sha256`, `candidate_sha256`, `parity: true`
+and a nonempty `review` describing retained matched captures/settings and their
+review. The checker validates pins and recomputes all numerical differences;
+human review establishes that these measurements arise from GPU/sampling
+variation and that the captures show parity. No receipt alone proves that fact.
+
+An admitted file has status `tolerance-accepted`, `target_equal: false`, measured
+per-record maxima in `lighting_comparison`, and pinned `lighting_evidence`.
+`tolerance_accepted_count` counts admitted final files separately from raw-exact,
+drift and generated metadata counts. A changed unrelated byte still blocks the
+file. The assembler preserves current bytes, rechecks evidence and leaves
+`device_qualified` and `source_provenance_verified` false. Production never reads
+J850, bounds or captures to fill missing content.
+
 The normal build writes the same `readiness.json` and refuses all blocked inputs
 before launcher compilation or ZIP creation. Once the content owner materializes
 its final tree, use that unchanged request with `--request`, then pass the new
@@ -495,3 +543,51 @@ every output to match its complete local producer pins; historical metadata
 exceptions cannot override those pins. Both routes use the same assembler and
 retained signing key. Real phone installation and saved-data survival remain
 acceptance gates.
+
+
+### Source bundle job compilation
+
+`release_graph.py` is the current host authoring step for selected complete
+source-bundle profiles. Pass `--repo`, repeated repo-relative `--profile`, and a
+new `--output` staging root. It resolves supplier profile hashes, emits standard
+`recipe/jobs/*.json` descriptors and `source-index.json`, and reports missing or
+unsupported suppliers before writing output. Player data and shaders expose
+their complete serialized files; remapping uses their top-level receipts, while
+player data consumes the nested shader pack and five texture suppliers.
+Sprite/native providers still need explicit wiring; this is not the complete
+705-file release.
+
+Dispatcher bindings `pc`, `sdk` and `codec` select canonical private input paths.
+Only producers requiring SDK data receive the default SDK argument. For object
+profiles that derive script properties, supply it explicitly. Optional
+`--extra-arguments` reads a JSON map from producer name to additional argv, e.g.
+`{"object_produce": ["--sdk", "${input:sdk}"]}`. Use this for the existing
+codec/helper/template tool options; no command shell or private output fallback
+is introduced. `input_sha256:NAME` hashes a declared regular input file, and
+`job_directory:JOB:ARTIFACT` selects the parent of a declared supplier receipt.
+Private input identity must cover acquired tools as well as original files, as
+required by the existing updater.
+
+Player jobs additionally bind `sdk_contents` (Unity Contents data), `converter`,
+`converter_receipt` (that directory's result.json), `code_request` and `managed`
+to freshly source-produced inputs. Shader jobs use `sdk_contents` and require
+their existing public recovery/compiler tool arguments through
+`--extra-arguments`. Player Menu/HUD/manager phases likewise use their existing
+explicit extra arguments. Missing inputs fail through the producer contracts;
+this compiler does not generate managed/native runtime inputs. Authored shader
+files, player registry/manifests/bootstrap/config and imported lab Python owners
+are included in the signed dependency closure.
+
+Overlay generated recipe files into a release source checkout, inspect/audit and
+commit them, then use the existing public publisher. The generated index is an
+input to release planning, not an issued or signed release. It conservatively
+includes the Python producer cohort because owners use dynamic imports.
+Production retains existing producer schema/reference checks and byte checks;
+this wiring does not relax a producer's historical comparison contract.
+
+Host evidence: `work/coordination/p1-scenes-w/end-to-end-v2/` rebuilt the current
+original death-effect bundle through the generated graph and dispatcher (one job).
+Wall 52.260 s, user/system CPU 50.315/1.412 s, peak RSS 6,341,328,896 bytes;
+sampled converter workspace grew by 521,201 logical bytes. This is one bundle,
+not APK or gameplay acceptance. The generated two-job synthetic fixture also
+checks receipt identity and reuse on the second run.

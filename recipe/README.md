@@ -5027,7 +5027,7 @@ recorded under `work/coordination/orchestrator/public-startup-metadata-v2/`.
 
 | Recipe | SHA-256 |
 | --- | --- |
-| `owner-player-menu.json` | `4ee619309ed4a0477bcf5bc5725d085b245847257a7e66b75f75e97585532f1c` |
+| `owner-player-menu.json` | `68cdf84752aceffbeab7f9d975eeaae706e67eb1a7aff0015b974e8e2ee2120b` |
 
 `owner-player-menu.json` selects minimum original UI/script/dependency members,
 the original prefab root, public English tokens and authored hide/action policies.
@@ -6683,3 +6683,31 @@ records (96 bytes); the profile now supplies 66 Trees. Audit: 2026-11-04; only
 source selectors, hashes and checked typed relationships are added. The existing
 producer is unchanged. Of the prior 2,028 exclusions, 2,024 remain unresolved;
 saved residual three and final-file readiness remain unchanged.
+
+
+### Whole-game bundle managed provider records
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-whole-game-bundle-managed-records.json` | `732e8280a4446a4f1472937b1885533d65fd95749d60e551e78d8f653a2a3a79` |
+
+Audit: 2026-11-04. The existing `record_produce.py` managed owner selects 221
+original MonoBehaviours through qualified GameObject component offsets,
+reciprocal original ownership and unique typed source-derived endpoints.
+Original MonoScript selectors and the pinned editor SDK provide the existing
+`properties_hash` policy; all native body fields remain original-input owned.
+Pinned EditorKit `4128710` AddressReferencedAssetDrawer lines 169–181 establish
+typed component requirements and hierarchy search as identity constraints;
+J1295/J1340 supply reciprocal ownership and SDK type-hash prior art.
+Source discovery reads no accepted target. Persisted production precedes
+independent raw-exact qualification: 221 of 247 candidates match J850
+(18,880 bytes), while all 26 nonexact candidates are excluded. Source selectors,
+hashes and checked relationships only; no native bodies, scalar templates,
+target repairs, protected implementation or private paths ship.
+Saved residual three and final-file readiness remain unchanged; complete groups,
+bundle, phone/install/update and runtime gates remain open.
+Menu provider identity follow-up (2026-11-04): the same audited build-identity
+policy retains the 20 external provider filenames/order already declared by the
+public player-data suppliers. The linker resolves all providers from source
+before assigning their saved external IDs; additional source providers append.
+No Sprite, layout value, asset body or null override is retained in this table.

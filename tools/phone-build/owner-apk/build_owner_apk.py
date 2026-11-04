@@ -234,10 +234,15 @@ def check(request):
     profile = assembly_profile(request)
     code = code_paths(request)
     drift = request.get("drift", {})
+    tolerance = request.get("lighting_tolerance", {})
+    if not isinstance(tolerance, dict):
+        raise ValueError("lighting tolerance must map targets to pinned recipes")
+    if set(tolerance) & set(drift):
+        raise ValueError("lighting tolerance policies overlap")
     if not isinstance(drift, dict):
         raise ValueError("drift must map content target paths to pinned proofs")
     targets = Path(request["targets"]).resolve()
-    if request["manifest_sha256"] != PROFILE and {"startup_metadata", "stage_contexts"} & request.keys():
+    if request["manifest_sha256"] != PROFILE and {"startup_metadata", "stage_contexts", "lighting_tolerance"} & request.keys():
         raise ValueError("source assembly requires exact output pins without historical metadata policies")
     startup = {}
     if "startup_metadata" in request:
@@ -253,6 +258,8 @@ def check(request):
         contexts = producer.verify(supplied["path"], supplied["sha256"])
         if set(contexts) & (set(drift) | set(startup)):
             raise ValueError("source stage contexts cannot also claim another content policy")
+    if set(tolerance) & (set(startup) | set(contexts)):
+        raise ValueError("lighting tolerance policies overlap")
     entries, omitted = [], []
     for target in profile["targets"]:
         name = target["path"]
@@ -303,12 +310,18 @@ def check(request):
                         raise ValueError("assembly stage context bytes differ from regenerated source")
                     if not equal:
                         row["status"] = "generated-stage-contexts"
+                if name in tolerance:
+                    if produced or equal:
+                        raise ValueError("lighting tolerance requires changed content")
+                    comparison = module("_owner_lighting", SOURCE.parent / "accepted-output/scene_compare.py")
+                    row["lighting_comparison"], row["lighting_evidence"] = comparison.verify(tolerance[name], row)
+                    row["status"] = "tolerance-accepted"
                 if name in drift:
                     if produced or equal:
                         raise ValueError("drift proof requires changed content, not code or exact output")
                     row["drift_evidence"] = explain_drift(drift[name], row)
                     row["status"] = "drift-explained"
-        except (OSError, ValueError, TypeError, KeyError, AttributeError) as error:
+        except (OSError, ValueError, TypeError, KeyError, AttributeError, IndexError, struct.error) as error:
             row.update(status="invalid", error=str(error))
         entries.append(row)
     selected = {row["path"][4:] for row in entries if row["owner"] == "code"}
@@ -320,12 +333,19 @@ def check(request):
         raise ValueError("startup metadata target not in content selection")
     if set(contexts) - {row["path"] for row in entries if row["owner"] != "code"}:
         raise ValueError("stage context target not in content selection")
-    blocked = [row["path"] for row in entries if row["status"] not in ("ready", "drift-explained", "generated-metadata", "generated-stage-contexts")]
+    if set(tolerance) - {row["path"] for row in entries if row["owner"] != "code"}:
+        raise ValueError("lighting tolerance target not in content selection")
+    blocked = [
+        row["path"]
+        for row in entries
+        if row["status"] not in ("ready", "drift-explained", "tolerance-accepted", "generated-metadata", "generated-stage-contexts")
+    ]
     return {
         "assembly_ready": not blocked,
         "selection": "produced-code-and-sdk" if len(code) > len(CODE_ENTRIES) else "produced-code" if code else "replay-control",
         "blocked_entries": blocked,
         "exact_count": sum(row.get("target_equal") is True and row["status"] == "ready" for row in entries),
+        "tolerance_accepted_count": sum(row["status"] == "tolerance-accepted" for row in entries),
         "drift_explained_count": sum(row["status"] == "drift-explained" for row in entries),
         "generated_stage_context_count": sum(row["status"] == "generated-stage-contexts" for row in entries),
         "generated_metadata_count": sum(row["status"] == "generated-metadata" for row in entries),
@@ -530,7 +550,11 @@ def retention_policy(value):
 def build(request_path, output):
     request = json.loads(Path(request_path).read_text())
     fields = {"manifest", "manifest_sha256", "targets", "frontend", "java", "android_jar", "d8_jar", "wire_helper"}
-    if set(request) - {"version_code", "application_id", "code", "javac", "drift", "retention_policy", "startup_metadata", "stage_contexts"} != fields:
+    if (
+        set(request)
+        - {"version_code", "application_id", "code", "javac", "drift", "retention_policy", "startup_metadata", "stage_contexts", "lighting_tolerance"}
+        != fields
+    ):
         raise ValueError("unsupported owner APK request/profile")
     policy = retention_policy(request["retention_policy"]) if request.get("retention_policy") is not None else None
     if (request.get("application_id") == "dev.ror2lab.alpha") != (policy is not None):
@@ -591,8 +615,10 @@ def build(request_path, output):
         tracked += [Path(row["path"]) for row in code.values()]
         generated_receipts = [request[name] for name in ("startup_metadata", "stage_contexts") if name in request]
         tracked += [Path(pin["path"]) for pin in generated_receipts]
-        drift_evidence = [pin for row in readiness["entries"] for pin in row.get("drift_evidence", [])]
+        drift_evidence = [pin for row in readiness["entries"] for pin in row.get("drift_evidence", []) + row.get("lighting_evidence", [])]
         tracked += [Path(pin["path"]) for pin in drift_evidence]
+        if request.get("lighting_tolerance"):
+            tracked += [SOURCE.parent / "accepted-output" / name for name in ("scene_compare.py", "unity_write.py", "unity_mesh.py", "unity_bundle.py")]
         if "javac" in roots:
             tracked.append(roots["javac"])
         result["inputs"] = {str(p): {"bytes": p.stat().st_size, "sha256": sha(p)} for p in tracked}
