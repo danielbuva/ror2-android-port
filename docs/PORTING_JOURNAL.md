@@ -2486,3 +2486,18 @@ Player/shader wiring retains top-level serialized and nested record-pack receipt
 contracts, texture dependencies and authored release closure inputs. Host
 contracts cover graph dispatch/reuse and real player/shader supplier selection.
 Complete source-only APK, fresh runtime inputs and ordinary gameplay remain open.
+
+## J1369 — Extend source content suppliers with strict graph admission
+
+2026-11-04. Bundle byte comparisons may be diagnostic; reference checks cover
+all records, including orphans. Existing native suppliers admit remaining
+component classes and preserve verified missing-script prefab fields.
+BC1/BC3 conversion preserves source mip chains; TMP Distance Field and Sprite
+production uses pinned real package declarations/includes instead of dummy bodies.
+Focused graph/object/record/texture/shader checks and Ruff passed at checkpoints;
+the TMP change passed 44 shader tests. Evidence:
+`work/coordination/p1-wholegame-1031/complete-source-suppliers-v18/`.
+Supplier delta: 258 records, object SHA-256
+`f248e76764fbdcf4c48c425a16f80c5504de75700180e7c5ce8e5e3a7780ff55`.
+Full graph, fresh registry binding, Unity loadability, visuals and device gates
+remain open; no playable APK or runtime behaviour is claimed.
