@@ -2517,3 +2517,30 @@ CPU/GPU peak 95.1 C (brief), 82.842 s above 80 C; battery 31 to 32 C, sample gap
 Adopted placement/hash, stopped process, sleeping display and lease cleanup verified.
 Prior art: pinned R2API.Networking handler ownership and HG registrar semantics; authored fixture passes.
 Alpha stability, sustained FPS, physical controls and PC visual parity remain open.
+
+## J1371 — Avoid duplicate audio payload hashing during capacity preflight
+
+2026-11-04. Existing audio copy owner checks capacity with path/type/size metadata;
+actual reuse rehashes each bank/media file, including after coroutine yields.
+Exact-editor source `19c96315`; APK `389865d722aa4b5117c95504c1370962f00704909f2f89c1e2ec4ab1c4c29a3a`.
+Ordinary process-cold menu 22.004 s/world 105.106 s versus 31.864 s/135.956 s;
+audio owner startup 11.212 s versus 31.475 s. Single observations; stage differs.
+All 153 banks completed, native initialization returned, audio/first failure empty.
+Blackbeach retained 2,646 renderers/323 colliders, zero missing meshes; live idle view
+averaged 114.2 FPS over 2,315 frames/20.271 s before natural death/results.
+Evidence: `work/coordination/alpha-audio-preflight-device-20261104T183821Z/acceptance.json` and captures.
+CPU/GPU peak 81.2 C, 1.600 s above 80 C; battery 30 C, runtime gaps <= 0.433 s.
+Adopted placement/hash, stopped process, sleeping display, scratch and lease cleanup verified.
+Prior art: pinned R2API.Sound initialization order and J940 revalidation-at-reuse contract.
+Same-size corruption, wrong-size/type/link fixture retained; alpha, sustained FPS and parity remain open.
+
+## J1372 — Check and refresh reviewed build-hook source pins
+
+2026-11-04. The existing camera build-hook owner checks all 18 reviewed source
+roles before host preflight reads local configuration. `./dev build-hook-pins`
+checks without game inputs; explicit `--action refresh` updates only source hashes
+following review and formatting, retaining every input/output/toolchain pin.
+Host contracts cover checked-in freshness, aggregate drift reporting, refresh
+preservation and CLI/preflight integration; focused camera/help/generation/build
+checks passed. Existing transform and stage validation remain enforced.
+No runtime behaviour changes; device and alpha readiness gates remain open.
