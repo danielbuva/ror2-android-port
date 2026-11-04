@@ -573,6 +573,13 @@ The manager consumes this job's receipt/hash, and its two final startup files
 enter the release automatically. No separately supplied startup receipt is
 required. Environment capture remains an explicit source-produced input.
 
+Optional `--sdk-request recipe/owner-sdk-job-inputs.json` emits all 15 Android
+SDK entries through the existing pinned SDK package owner. Bind `sdk_install`,
+`sdk_android_jar`, `sdk_aapt`, `sdk_java`, `sdk_javac` and each
+`sdk_jar_<filename>` to acquired inputs. The authored Java helper is signed with
+the producer closure; all entries share one cached job. SDK packaging does not
+qualify gameplay or complete the remaining source bundle suppliers.
+
 Dispatcher bindings `pc`, `sdk` and `codec` select canonical private input paths.
 Only producers requiring SDK data receive the default SDK argument. For object
 profiles that derive script properties, supply it explicitly. Optional

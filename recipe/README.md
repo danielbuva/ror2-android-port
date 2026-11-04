@@ -1,5 +1,12 @@
 # Build recipes
 
+`owner-sdk-job-inputs.json` binds caller-acquired SDK/platform/Java/AAPT2 and
+public Maven jars to the existing SDK package producer. It contains only
+dispatcher binding names, public artifact filenames and an output token. No
+SDK bytes, game content, private paths or credentials are included. Existing
+producer pins and license boundaries remain unchanged. Provenance, privacy,
+licensing and sensitive-content audit: 2026-11-04.
+
 ## Original assembly placement audit (R1, 2026-10-18)
 
 `original-assemblies.json` records only source/project identities, source SHA-256,
@@ -59,6 +66,7 @@ produce the file from the input, prefer tracking the generator.
 
 | Recipe | SHA-256 |
 | --- | --- |
+| `owner-sdk-job-inputs.json` | `bbcfc451a0320389b0d7e0d79786670a0108e3fcb30991c2c5cead859afa15ad` |
 | `owner-player-phases.json` | `49f3c80455532ce9c3c94db2e8dd4807ab0ceb7a96c144d78a064ddb94dcd8fc` |
 
 `owner-player-phases.json` declares the five existing source phase recipe hashes
