@@ -459,7 +459,7 @@ def target_run(work, sdk, values, target, source_root, output, *, android_tools=
 def run(work, sdk, values, output):
     work, sdk = native.canonical(work), native.canonical(sdk)
     output = Path(output)
-    if work != ROOT / "work":
+    if work != (ROOT / "work").resolve():
         raise ValueError("source owner currently requires this checkout's work root")
     state = native.input_state(work)
     if native.sha(PROFILE) != PROFILE_SHA:
