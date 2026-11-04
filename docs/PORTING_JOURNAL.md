@@ -2599,7 +2599,7 @@ battery 30 to 32 C, maximum runtime sample gap 0.423 s. Adopted install/hash,
 stopped process, OLED sleep, scratch/prune/lease cleanup verified.
 Prior art: pinned R2API content families; sustained/manual/alpha acceptance remains open.
 
-## J1377 — Source release lighting records and typed native loading
+## J1378 — Source release lighting records and typed native loading
 
 2026-11-04. Existing record producer preserves source LightingSettings and
 OcclusionCullingData after complete schema/type validation; authored fixtures
