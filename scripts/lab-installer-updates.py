@@ -177,11 +177,75 @@ class HostTools:
         run(argv, label="compile-authored-resources")
 
 
+WITNESS_FILES = {
+    "android-profile-v1/profile.json": b'{"synthetic_profile":"retain-N"}\n',
+    "offline-settings-v1/preferences.json": b'{"synthetic_settings":"retain-N"}\n',
+}
+WITNESS_CLASS = "dev.ror2lab.synthetic.RetentionWitness"
+
+
+def witness_source():
+    # Fixture-only Activity; never packaged into production inputs. It uses the
+    # same Android root as ProfileRetentionProvider and exports only booleans.
+    paths = ",".join(json.dumps(path) for path in WITNESS_FILES)
+    values = ",".join(json.dumps(value.decode()) for value in WITNESS_FILES.values())
+    return r"""package dev.ror2lab.synthetic;
+import android.app.Activity;
+import android.os.Bundle;
+import java.io.*;
+import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
+import org.json.JSONObject;
+public final class RetentionWitness extends Activity {
+  @Override public void onCreate(Bundle state) {
+    super.onCreate(state);
+    String nonce = getIntent().getStringExtra("nonce"), mode = getIntent().getStringExtra("mode");
+    if (nonce == null || !nonce.matches("[0-9a-f]{32}") || !("seed".equals(mode) || "verify".equals(mode))) { finish(); return; }
+    boolean ok = false;
+    try {
+      File raw = getExternalFilesDir(null);
+      if (raw == null) throw new IOException();
+      File root = raw.getCanonicalFile();
+      String[] paths = new String[]{PATHS};
+      String[] values = new String[]{VALUES};
+      File[] files = new File[paths.length];
+      for (int i=0; i<paths.length; i++) {
+        files[i] = new File(root, paths[i]);
+        if (!files[i].getCanonicalFile().equals(files[i])) throw new IOException();
+        if ("seed".equals(mode) && files[i].exists()) throw new IOException();
+      }
+      for (int i=0; i<files.length; i++) {
+        byte[] expected = values[i].getBytes(StandardCharsets.UTF_8);
+        if ("seed".equals(mode)) {
+          File parent = files[i].getParentFile();
+          if (!parent.isDirectory() && !parent.mkdirs()) throw new IOException();
+          if (!files[i].createNewFile()) throw new IOException();
+          try (FileOutputStream out = new FileOutputStream(files[i])) { out.write(expected); out.getFD().sync(); }
+        }
+        if (!files[i].isFile() || files[i].length() != expected.length) throw new IOException();
+        byte[] actual = new byte[expected.length];
+        try (DataInputStream in = new DataInputStream(new FileInputStream(files[i]))) { in.readFully(actual); if (in.read() != -1) throw new IOException(); }
+        if (!Arrays.equals(actual, expected)) throw new IOException();
+      }
+      ok = true;
+    } catch (Exception failure) { ok = false; }
+    try {
+      JSONObject row = new JSONObject().put("nonce", nonce).put("mode", mode).put("verified", ok).put("files", ok ? 2 : 0);
+      File target = new File(getFilesDir(), "synthetic-retention-witness.json"), temp = new File(getFilesDir(), "synthetic-retention-witness.tmp");
+      try (FileOutputStream out = new FileOutputStream(temp)) { out.write(row.toString().getBytes(StandardCharsets.UTF_8)); out.getFD().sync(); }
+      if (!temp.renameTo(target)) throw new IOException();
+    } catch (Exception failure) { /* Missing receipt fails the host check. */ }
+    finish();
+  }
+}
+""".replace("PATHS", paths).replace("VALUES", values)
+
+
 def synthetic_manifest(temporary):
     """AAPT1 indexes -M by basename and requires AndroidManifest.xml."""
     manifest = temporary / "AndroidManifest.xml"
     manifest.write_text(
-        '<manifest xmlns:android="http://schemas.android.com/apk/res/android" package="dev.ror2lab.alpha" android:versionCode="1"><uses-sdk android:minSdkVersion="24" android:targetSdkVersion="30"/><application android:label="@string/app_name" android:debuggable="true" android:extractNativeLibs="true"><activity android:name="com.unity3d.player.UnityPlayerActivity" android:exported="true"><intent-filter><action android:name="android.intent.action.MAIN"/><category android:name="android.intent.category.LAUNCHER"/></intent-filter></activity></application></manifest>'
+        '<manifest xmlns:android="http://schemas.android.com/apk/res/android" package="dev.ror2lab.alpha" android:versionCode="1"><uses-sdk android:minSdkVersion="24" android:targetSdkVersion="30"/><application android:label="@string/app_name" android:debuggable="true" android:extractNativeLibs="true"><activity android:name="com.unity3d.player.UnityPlayerActivity" android:exported="true"><intent-filter><action android:name="android.intent.action.MAIN"/><category android:name="android.intent.category.LAUNCHER"/></intent-filter></activity><activity android:name="dev.ror2lab.synthetic.RetentionWitness" android:exported="true"/></application></manifest>'
     )
     return manifest
 
@@ -189,8 +253,9 @@ def synthetic_manifest(temporary):
 def synthetic_inputs(tools, temporary):
     """Compile tiny ORIGINAL fixtures, not Unity/game/SDK runtime implementations.
 
-    The alpha is never launched. Only the real authored retention provider runs.
-    These objects exercise packaging/update mechanics, not game readiness.
+    Only the fixture witness Activity and real authored retention provider run
+    in the alpha package; the synthetic Unity Activity is never launched. These
+    objects exercise packaging/update mechanics, not game readiness.
     """
     sdk = module("synthetic_sdk_names", ROOT / "tools/phone-build/accepted-output/sdk_package.py")
     owner = module("synthetic_owner_names", ROOT / "tools/phone-build/owner-apk/build_owner_apk.py")
@@ -202,11 +267,15 @@ def synthetic_inputs(tools, temporary):
     for name in result:
         if name.endswith(".so"):
             result[name] = library.read_bytes()
+    witness = temporary / "RetentionWitness.java"
+    witness.write_text(witness_source())
     for number in range(1, 5):
         name = "UnityPlayerActivity" if number == 1 else "SyntheticMarker" + str(number)
         java = temporary / (name + ".java")
         java.write_text("package com.unity3d.player; public class " + name + (" extends android.app.Activity" if number == 1 else "") + " {}\n")
-        result["apk/classes" + (str(number) if number > 1 else "") + ".dex"] = tools.dex([java], temporary / ("synthetic-dex-" + str(number)))
+        result["apk/classes" + (str(number) if number > 1 else "") + ".dex"] = tools.dex(
+            [java, witness] if number == 1 else [java], temporary / ("synthetic-dex-" + str(number))
+        )
     resources = temporary / "res"
     (resources / "values").mkdir(parents=True)
     (resources / "values/strings.xml").write_text('<resources><string name="app_name">Synthetic update fixture</string></resources>')
@@ -710,6 +779,44 @@ class Phone:
             time.sleep(1)
         raise Failure("install-readback-timeout")
 
+    def retention_witness(self, mode, receipt=None):
+        if mode not in ("seed", "verify") or not self.owned_installer or not self.alpha_hash or self.package_hash(GAME) != self.alpha_hash:
+            raise Failure("retention-witness-ownership")
+        if receipt is not None:
+            backup = receipt.get("retention_backup", {})
+            if (
+                receipt.get("profile_retention_verified") is not True
+                or backup.get("data_schema") != 1
+                or backup.get("bytes") != sum(map(len, WITNESS_FILES.values()))
+                or not re.fullmatch(r"[0-9a-f]{64}", backup.get("snapshot", ""))
+            ):
+                raise Failure("retention-witness-provider-unverified")
+        nonce = secrets.token_hex(16)
+        try:
+            self.shell("am", "force-stop", GAME, label="retention-witness-stop")
+            self.shell("am", "start", "-W", "-n", GAME + "/" + WITNESS_CLASS, "--es", "mode", mode, "--es", "nonce", nonce, label="retention-witness-launch")
+            deadline = time.monotonic() + 15
+            while time.monotonic() < deadline:
+                raw = self.shell(
+                    "run-as",
+                    GAME,
+                    "sh",
+                    "-c",
+                    "'if [ -f files/synthetic-retention-witness.json ]; then cat files/synthetic-retention-witness.json; else printf null; fi'",
+                    label="retention-witness-result",
+                )
+                row = json.loads(raw)
+                if row and row.get("nonce") == nonce:
+                    if row.get("mode") != mode or row.get("verified") is not True or row.get("files") != 2:
+                        raise Failure("retention-witness-mismatch")
+                    break
+                time.sleep(0.2)
+            else:
+                raise Failure("retention-witness-timeout")
+        finally:
+            self.shell("am", "force-stop", GAME, label="retention-witness-stop")
+        self.start()
+
     def await_install_permission(self):
         value = self.shell("appops", "get", PACKAGE, "REQUEST_INSTALL_PACKAGES", label="device-install-permission-query").decode()
         if re.search(r"REQUEST_INSTALL_PACKAGES: allow\b", value):
@@ -843,6 +950,7 @@ def acceptance(phone, config, temporary, passed):
         phone.storage()
         phone.tap("Reconstruct and install verified game")
         first = phone.installed(1)
+        phone.retention_witness("seed")
         set_phase("check-for-updates")
         publish(service, releases[2], 2)
         phone.check(2)
@@ -851,13 +959,16 @@ def acceptance(phone, config, temporary, passed):
         passed("check-for-updates")
         set_phase("update-N-to-N+1")
         phone.storage()
+        phone.retention_witness("verify")
         phone.tap("Reconstruct and install verified game")
         second = phone.installed(2, first)
+        phone.retention_witness("verify", second)
         passed("update-N-to-N+1")
         set_phase("same-key-rollback")
         phone.storage()
         phone.tap("Rebuild and install previous release (same key)")
         rolled = phone.installed(1, second)
+        phone.retention_witness("verify", rolled)
         passed("same-key-rollback")
         tampered = dict(releases[2])
         body = json.loads(tampered["release.json"])
