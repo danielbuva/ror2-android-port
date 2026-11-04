@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Reflection;
+using System.Runtime.InteropServices;
 using System.IO;
 using System.Security.Cryptography;
 using System.Text;
@@ -10,6 +11,9 @@ public static class PayloadCopyReceiptHarness
     private const string InfoHash = "2b8430716d15c1ac9f78e1cc7625dc2206df6b5081b06b54c8048979d99b6407";
     private const string Input = "6af7ed94619fe1b4346974b4486afa03a8d1625a7820e92da0ff74d57208fe88";
     private static int failures;
+
+    [DllImport("libc", SetLastError = true)]
+    private static extern int symlink(string target, string linkpath);
 
     private static void Check(bool value, string name)
     {
@@ -90,14 +94,34 @@ public static class PayloadCopyReceiptHarness
         Directory.CreateDirectory(directory);
         try
         {
-            string path = Path.Combine(directory, "Media.wem");
             byte[] data = Encoding.UTF8.GetBytes("same-payload");
-            File.WriteAllBytes(path, data);
             string hash;
             using (SHA256 sha = SHA256.Create()) hash = BitConverter.ToString(sha.ComputeHash(data)).Replace("-", "").ToLowerInvariant();
-            Check((bool)InvokeStatic("ExistingPayloadMatches", path, hash, (long)data.Length), "matching existing WEM accepted");
-            File.WriteAllText(path, "changed");
-            Check(!(bool)InvokeStatic("ExistingPayloadMatches", path, hash, (long)data.Length), "changed existing WEM refused");
+            foreach (string leaf in new[] { "Bank.bnk", "Media.wem" })
+            {
+                string path = Path.Combine(directory, leaf);
+                File.WriteAllBytes(path, data);
+                Check((bool)InvokeStatic("ExistingPayloadHasExpectedSize", path, (long)data.Length), leaf + " matching metadata accepted");
+                Check((bool)InvokeStatic("ExistingPayloadMatches", path, hash, (long)data.Length), leaf + " matching reuse accepted");
+                File.WriteAllText(path, "evil-payload");
+                Check((bool)InvokeStatic("ExistingPayloadHasExpectedSize", path, (long)data.Length), leaf + " same-size preflight needs no content read");
+                Check(!(bool)InvokeStatic("ExistingPayloadMatches", path, hash, (long)data.Length), leaf + " same-size corruption refused at reuse");
+                File.WriteAllText(path, "changed");
+                Check(!(bool)InvokeStatic("ExistingPayloadHasExpectedSize", path, (long)data.Length), leaf + " changed size refused in preflight");
+                Check(!(bool)InvokeStatic("ExistingPayloadMatches", path, hash, (long)data.Length), leaf + " changed size refused at reuse");
+                File.Delete(path);
+                Directory.CreateDirectory(path);
+                Check(!(bool)InvokeStatic("ExistingPayloadHasExpectedSize", path, (long)data.Length), leaf + " directory refused in preflight");
+                Check(!(bool)InvokeStatic("ExistingPayloadMatches", path, hash, (long)data.Length), leaf + " directory refused at reuse");
+                Directory.Delete(path);
+                string target = path + ".target";
+                File.WriteAllBytes(target, data);
+                Check(symlink(target, path) == 0, leaf + " symlink fixture created");
+                Check(!(bool)InvokeStatic("ExistingPayloadHasExpectedSize", path, (long)data.Length), leaf + " symlink refused in preflight");
+                Check(!(bool)InvokeStatic("ExistingPayloadMatches", path, hash, (long)data.Length), leaf + " symlink refused at reuse");
+                File.Delete(path);
+                File.Delete(target);
+            }
         }
         finally { Directory.Delete(directory, true); }
     }

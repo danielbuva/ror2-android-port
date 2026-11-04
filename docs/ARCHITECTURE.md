@@ -2777,6 +2777,9 @@ runtime source selection. Generated request and bank pins default to disabled;
 build-time generators must write derived sources to ignored output directories.
 Original audio can be admitted only after all declared preparation succeeds;
 actual engine, bank and event results require device evidence.
+The payload copier preflights existing bank/media paths, file types and sizes
+without reading their contents for capacity accounting. It hashes each existing
+payload at the actual reuse point; integrity results never survive a yield.
 
 `WholeCatalogComposed` supplies the existing GUID-bound settings asset and a
 single process-audio lease over its existing content bundle and declared

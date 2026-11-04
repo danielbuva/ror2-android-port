@@ -6772,3 +6772,8 @@ change. No asset bytes, private paths or runtime capture are included.
 | Recipe | SHA-256 |
 | --- | --- |
 | `owner-whole-scene-standard-shader-remap.json` | `367d8fc933e722d167036230a28446879695703d10859d202ae71f25433e10da` |
+
+Audit: 2026-11-04. `original-audio-owner-sources.json` refreshes only the
+payload-copy owner's authored source hash. Capacity preflight now checks
+path/type/size; actual bank/media reuse retains complete integrity hashing.
+No original audio bytes, identifiers, local paths or third-party code are added.
