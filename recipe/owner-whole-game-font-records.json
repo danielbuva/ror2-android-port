@@ -1,0 +1,57 @@
+{
+  "input_id": "6af7ed94619fe1b4346974b4486afa03a8d1625a7820e92da0ff74d57208fe88",
+  "bundles": [
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-base-common-fonts-noto_assets_all_577d99b3ba49181d5b80de3725245e01.bundle",
+      "sha256": "ce5332be8285053f057f9ee0aaca65701c898ccfba69495b3adfcce966209ff9",
+      "members": [
+        {
+          "name": "CAB-6c8c13484990024e48f0af7d1ab3d2e1",
+          "objects": [
+            {
+              "path_id": -4907756795729362039,
+              "class_id": 128,
+              "sha256": "68d3398836e0690ae067f496423ec4f10ea96cd8857970e587c193c1be5ff41f",
+              "outputs": [
+                {
+                  "bundle": "whole-game-content",
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "path_id": 1713114281902991165,
+                  "bytes": 16412474,
+                  "sha256": "78df32cae9a626e7f64856eac7ed9f7561ddc36c8ca1e93440255c71ba833fa4",
+                  "native_type_hash": "6a15532222689268bc8a148f4e84e7ab",
+                  "transform": {
+                    "references": [
+                      {
+                        "offset": 32,
+                        "from": [
+                          0,
+                          -622288119451106423
+                        ],
+                        "to": [
+                          0,
+                          8766779975379757676
+                        ]
+                      },
+                      {
+                        "offset": 48,
+                        "from": [
+                          0,
+                          -2687115588010982519
+                        ],
+                        "to": [
+                          0,
+                          8808357054952292451
+                        ]
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

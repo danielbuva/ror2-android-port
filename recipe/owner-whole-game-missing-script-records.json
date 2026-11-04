@@ -1,0 +1,67 @@
+{
+  "input_id": "6af7ed94619fe1b4346974b4486afa03a8d1625a7820e92da0ff74d57208fe88",
+  "bundles": [
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-base-core-rewired_assets_all_2ef7429ff6b30a3eea0d4738a671cd3d.bundle",
+      "sha256": "9edbaa92e11bbeda4b3b63248ebce24cc720086e77bf82e24ad486d49ff86dcc",
+      "members": [
+        {
+          "name": "CAB-1375c1e04b0b07b1ef9228ca2c72b459",
+          "objects": [
+            {
+              "path_id": 3903120820972508679,
+              "class_id": 114,
+              "sha256": "dca63372e7ae3fa769a7e748cd902437359a1dbe60c2ea31c52194a3391c27e9",
+              "missing_script_base": {
+                "bytes": 32,
+                "type_source": {
+                  "bundle": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-base-blackbeach2_scenes_all_05a40145977047d42a4a2dd88536692d.bundle",
+                  "bundle_sha256": "9f3997369a1ca61552fbda27990b11d336593c8df4897ed93d9219100e6a2c40",
+                  "member": "CAB-2d10abe9f8dc7c51f1b012c3b3732760",
+                  "path_id": 17132,
+                  "sha256": "c376f8932b96a1f4ac8fab3a125fad2af147919f723962c3524dbdda7dc39714"
+                }
+              },
+              "outputs": [
+                {
+                  "bundle": "whole-game-content",
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "path_id": 6025329845457327538,
+                  "bytes": 32,
+                  "sha256": "b04876ed61d613f36346074f8cf1b27f91af58a8a4d44b1b63c67147b8d3a7c0",
+                  "native_type_hash": "00000000000000000000000000000000",
+                  "transform": {
+                    "references": [
+                      {
+                        "offset": 0,
+                        "from": [
+                          0,
+                          3749765140853708295
+                        ],
+                        "to": [
+                          0,
+                          8932242990797750951
+                        ]
+                      },
+                      {
+                        "offset": 16,
+                        "from": [
+                          1,
+                          5652007046343880527
+                        ],
+                        "to": [
+                          0,
+                          0
+                        ]
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
