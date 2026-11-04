@@ -2598,3 +2598,13 @@ CPU/GPU peak 96.7 C, 67.455 s above 80 C; no sustained 3 s above 95 C;
 battery 30 to 32 C, maximum runtime sample gap 0.423 s. Adopted install/hash,
 stopped process, OLED sleep, scratch/prune/lease cleanup verified.
 Prior art: pinned R2API content families; sustained/manual/alpha acceptance remains open.
+
+## J1377 — Bind SDK metadata for release-graph object producers
+
+2026-11-04. SDK-declaring object profiles now receive the pinned application root
+through the existing release graph; original script/schema/hash checks remain strict.
+V7 stopped before Objective object production because this required argument was absent.
+Evidence (ignored): `work/coordination/p1-scenes-w/current-commando-sdk-note.md`
+and `current-commando-production-v7/`; v7 took 2684.037 s, peak RSS 5,854,445,568 B.
+The regression contract covers the Objective SDK resource root; no APK is produced
+by this change. Complete source bundle, APK and ordinary-launch device gates remain open.
