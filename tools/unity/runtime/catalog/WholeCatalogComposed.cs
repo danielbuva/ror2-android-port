@@ -546,13 +546,25 @@ public static class WholeCatalogComposed
     public static T[] CategoryFamily<T>(string category, IEnumerable<T> selected)
         where T : UnityEngine.Object
     {
+        return CategoryFamily(null, category, selected);
+    }
+    // Callers preparing related families can share one local parse without
+    // retaining the catalog beyond that synchronous preparation boundary.
+    internal static JObject ReadDefinitionManifest()
+    {
+        return JObject.Parse(File.ReadAllText(Path.Combine(Application.persistentDataPath, "payload", "whole-catalog.json")));
+    }
+    internal static T[] CategoryFamily<T>(JObject manifest, string category, IEnumerable<T> selected)
+        where T : UnityEngine.Object
+    {
         if (!owned)
             throw new Exception("Complete category owner unavailable: " + category);
         string key = typeof(T).FullName + ":" + category;
         UnityEngine.Object[] values;
         if (!definitionFamilies.TryGetValue(key, out values))
         {
-            var manifest = JObject.Parse(File.ReadAllText(Path.Combine(Application.persistentDataPath, "payload", "whole-catalog.json")));
+            if (manifest == null)
+                manifest = ReadDefinitionManifest();
             var locations = manifest["locations"].ToDictionary(row => (int)row["id"]);
             values = FamilyLocationGroups(manifest, category)
                          .SelectMany(group =>
@@ -629,7 +641,11 @@ public static class WholeCatalogComposed
     public static void PopulateDefinitionFields<T>(string family, T[] definitions, string prefix = "")
         where T : UnityEngine.Object
     {
-        var manifest = JObject.Parse(File.ReadAllText(Path.Combine(Application.persistentDataPath, "payload", "whole-catalog.json")));
+        PopulateDefinitionFields(ReadDefinitionManifest(), family, definitions, prefix);
+    }
+    internal static void PopulateDefinitionFields<T>(JObject manifest, string family, T[] definitions, string prefix = "")
+        where T : UnityEngine.Object
+    {
         var byName = definitions.ToDictionary(value => value.name, StringComparer.Ordinal);
         foreach (var provider in manifest["providers"])
         {
