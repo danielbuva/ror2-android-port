@@ -51,6 +51,39 @@ class ReleaseGraphTests(unittest.TestCase):
         for row in index["entries"].values():
             self.assertTrue(set(row["recipe_files"]) <= set(index["files"]) | set(graph.jobs))
 
+    def test_complete_player_phases_declare_media_and_sign_policy(self):
+        graph = G.Graph(ROOT, {}, "recipe/owner-player-phases.json")
+        index = graph.compile(["recipe/owner-player-data.json", "recipe/owner-player-shaders.json"])
+        player = "recipe/jobs/owner-player-data.json"
+        job = graph.jobs[player]
+        self.assertEqual(len(job["outputs"]), 210)
+        self.assertEqual(len(index["entries"]), 579)
+        for phase, row in graph.phases.items():
+            self.assertIn("--" + phase + "-profile", job["arguments"])
+            self.assertTrue(all("apk/assets/bin/Data/" + name in job["outputs"] for name in row["outputs"]))
+            self.assertIn(row["profile"], graph.entry(player)["recipe_files"])
+        self.assertIn("recipe/owner-player-phases.json", index["files"])
+        self.assertIn("recipe/composition-export-copies.json", index["files"])
+        self.assertIn("smoke/Assets/Bootstrap.unity", index["files"])
+        self.assertIn("${job_directory:recipe/jobs/owner-player-shaders.json:receipt}", job["arguments"])
+        self.assertIn("${input_sha256:scene_environment_result}", job["arguments"])
+        with tempfile.TemporaryDirectory() as directory:
+            output = Path(directory).resolve()
+            target = "apk/assets/bin/Data/authored"
+            selected = output / target
+            selected.parent.mkdir(parents=True)
+            selected.write_text("authored body")
+            descriptor = dict(script=G.PREFIX + "player_data.py", outputs={target: target}, artifacts={"receipt": "result.json"})
+            receipt = output / "result.json"
+            receipt.write_text(json.dumps(dict(success=True, files={target: {}})))
+            self.assertIn(target, J.Dispatcher.files_in(output, descriptor))
+            receipt.write_text(json.dumps(dict(success=True, files={target: {}, "apk/assets/bin/Data/missing-media": {}})))
+            with self.assertRaisesRegex(ValueError, "undeclared=.*missing-media"):
+                J.Dispatcher.files_in(output, descriptor)
+            receipt.write_text(json.dumps(dict(success=True, files={})))
+            with self.assertRaisesRegex(ValueError, "missing=.*authored"):
+                J.Dispatcher.files_in(output, descriptor)
+
     def test_compressed_hierarchy_suppliers_are_signed_without_expansion(self):
         graph = G.Graph(ROOT, {})
         for path in sorted((ROOT / "recipe").glob("owner-*.jsonl.gz")):

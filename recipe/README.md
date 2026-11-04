@@ -57,6 +57,15 @@ produce the file from the input, prefer tracking the generator.
 
 ## Audit record
 
+`owner-player-phases.json` declares the five existing source phase recipe hashes
+and their complete output filename sets (including UUID5 Sprite/texture names).
+These are minimum reconstruction/layout identities from the current source
+producer receipts, without file bodies, target hashes, images or private paths.
+The declaration supplies no content; all files must be regenerated from original
+inputs and checked by their existing owners. Provenance, privacy, licensing and
+sensitive-content audit: 2026-11-04. No entitlement or historical-byte claim.
+
+
 `owner-j850-code.json` additionally names the 69 legitimate debug-symbol
 companions required by the fixed target's managed closure. These are SDK or
 freshly produced package/gameplay PDB inputs, kept private and verified before

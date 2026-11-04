@@ -59,9 +59,12 @@ def suppliers(value):
 
 
 class Graph:
-    def __init__(self, repo, extra_arguments):
+    def __init__(self, repo, extra_arguments, player_phases=None):
         self.repo = Path(repo).resolve()
         self.extra = extra_arguments
+        self.phase_path = player_phases
+        self.phases = json.loads((self.repo / player_phases).read_text()) if player_phases else {}
+        self.phase_files = set()
         self.profiles = {}
         for path in sorted((self.repo / "recipe").glob("owner-*.json")):
             self.profiles[digest(path)] = (path.relative_to(self.repo).as_posix(), json.loads(path.read_text()))
@@ -77,6 +80,44 @@ class Graph:
         self.profile_files = {}
         self.job_profiles = {}
 
+    def player_arguments(self, providers):
+        arguments = []
+        for phase, row in self.phases.items():
+            if phase not in {"ui", "hud", "stage-context", "manager", "scene"}:
+                raise ValueError("unknown player phase: " + phase)
+            path = self.repo / row["profile"]
+            if digest(path) != row["sha256"]:
+                raise ValueError("player phase profile drift: " + row["profile"])
+            selected = json.loads(path.read_text())
+            self.phase_files.add(row["profile"])
+            # These owners read additional authored policy/schema inputs. Include
+            # their public paths in the signed closure, never their private data.
+            self.phase_files.update(item["path"] for item in selected.get("public_inputs", {}).values())
+            self.phase_files.update("recipe/" + item["path"] for item in selected.get("texture_profiles", []))
+            arguments += ["--" + phase + "-profile", "${repo}/" + row["profile"], row["sha256"]]
+        if "ui" in self.phases:
+            arguments += ["--ugui-source", "${input:ugui_source}"]
+        if "manager" in self.phases:
+            selected = json.loads((self.repo / self.phases["manager"]["profile"]).read_text())
+            pin = selected["public_inputs"]["shaders"]["sha256"]
+            dependency = providers.setdefault(pin, self.build(pin))
+            arguments += [
+                "--manager-shaders",
+                "${job_directory:" + dependency + ":receipt}",
+                "${sha256:" + dependency + ":receipt}",
+                "--manager-startup",
+                "${input:startup_receipt}",
+                "${input_sha256:startup_receipt}",
+            ]
+        if {"manager", "scene"} & self.phases.keys():
+            arguments += ["--sdk-binary", "${input:sdk_binary}"]
+        if "scene" in self.phases:
+            for name in ("result", "request", "bundle"):
+                binding = "scene_environment_" + name
+                arguments += ["--scene-environment-" + name, "${input:" + binding + "}", "${input_sha256:" + binding + "}"]
+            arguments += ["--scene-environment-images", "${input:scene_environment_images}"]
+        return arguments
+
     def build(self, pin, active=()):
         if pin in active:
             raise ValueError("cyclic profile supplier: " + pin)
@@ -90,6 +131,7 @@ class Graph:
         if producer is None or producer == "sprite_produce":
             raise ValueError("explicit producer wiring required for " + path)
         providers = {dependency: self.build(dependency, (*active, pin)) for dependency in suppliers(profile)}
+        phase_arguments = self.player_arguments(providers) if producer == "player_data" else []
         needs = list(providers.values())
         arguments = ["--profile", "${repo}/" + path, "--profile-sha256", pin, "--output", "${output}"]
         if producer != "record_remap":
@@ -135,7 +177,7 @@ class Graph:
         extra = self.extra.get(producer, [])
         if not isinstance(extra, list) or not all(isinstance(arg, str) for arg in extra):
             raise ValueError("producer extra arguments must be an argv list")
-        arguments += extra
+        arguments += phase_arguments + extra
         outputs = {}
         artifacts = {"receipt": "result.json", "objects": "objects.bin", "index": "index.jsonl"}
         if "original_bundle" in profile:
@@ -163,6 +205,8 @@ class Graph:
                     "unity default resources",
                     *["Managed/Resources/" + name + "-resources.dat" for name in ("System.Data.dll", "System.Drawing.dll", "mscorlib.dll")],
                 ]
+                for row in self.phases.values():
+                    targets.extend(row["outputs"])
                 if "registry" in profile:
                     targets.append(profile["registry"]["file"])
                 if "shared_defaults" in profile:
@@ -184,6 +228,10 @@ class Graph:
             profile = self.job_profiles[job]
             producers.update(profile.get("authored_inputs", {}))
             if owner(profile) == "player_data":
+                if self.phase_path:
+                    recipes.add(self.phase_path)
+                    for path in self.phase_files:
+                        (recipes if path.startswith("recipe/") else producers).add(path)
                 for row in profile.get("text_assets", {}).get("files", []):
                     if "recipe" in row:
                         recipes.add("recipe/" + row["recipe"]["path"])
@@ -224,10 +272,11 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--repo", type=Path, required=True)
     parser.add_argument("--profile", action="append", required=True, help="repo-relative complete output profile; repeat for a cohort")
+    parser.add_argument("--player-phases", help="repo-relative complete optional player phase/output declaration")
     parser.add_argument("--extra-arguments", type=Path, help="JSON producer name -> additional CLI argv, with dispatcher substitutions")
     parser.add_argument("--output", type=Path, required=True, help="new public job staging root; overlay into a release source checkout")
     args = parser.parse_args()
-    graph = Graph(args.repo, json.loads(args.extra_arguments.read_text()) if args.extra_arguments else {})
+    graph = Graph(args.repo, json.loads(args.extra_arguments.read_text()) if args.extra_arguments else {}, args.player_phases)
     index = graph.compile(args.profile)
     args.output.mkdir(parents=True, exist_ok=False)
     for name, job in graph.jobs.items():
