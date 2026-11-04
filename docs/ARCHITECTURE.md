@@ -4331,7 +4331,10 @@ binds the build receipt, old owned APK and frozen payload cohort, and verifies t
 exact runtime files read-only before and after ordinary in-place installation.
 It never syncs payloads, resets data, uninstalls, or falls back to a splice/full
 build. Candidate provenance is not runtime or memory-bound qualification.
-`session_heap_growth.py` reads the selected capture receipt and exact exported
+`session_heap_growth.py` requires the expected capture receipt SHA-256 before
+reading artifacts and rechecks it before emitting a summary. It rejects nested
+receipt aliases and paths outside private coordination storage. It reads the
+selected capture receipt and exact exported
 DuckDB pair (`duckdb==1.4.4` in the pinned requirements), verifying local snapshot
 hashes and export provenance. Its `--export-dir` mode archives the pinned public
 parser, applies the reviewed empty-array/root-label patches and retains private

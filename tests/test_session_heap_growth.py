@@ -67,13 +67,26 @@ def capture(root, before, after):
         connection.close()
     stage = {"success": True, "apk_sha256": "a" * 64, "runtime_errors": [], "failures": [], "memory_snapshots": snapshots}
     (evidence / "result.json").write_text(json.dumps(stage))
-    receipt = root / "work/capture.json"
+    receipt = root / "work/coordination/capture.json"
+    receipt.parent.mkdir(parents=True, exist_ok=True)
     receipt.write_text(json.dumps(dict(stage, mode="capture", stage_evidence="work/evidence")))
     return receipt
 
 
 def arguments(export_receipt="export.json", receipt="capture.json"):
-    return ["--export-receipt", str(export_receipt), "--menus", "2", "4", "--receipt", str(receipt), "--expected-apk-sha256", "a" * 64]
+    return [
+        "--export-receipt",
+        str(export_receipt),
+        "--menus",
+        "2",
+        "4",
+        "--receipt",
+        str(receipt),
+        "--expected-apk-sha256",
+        "a" * 64,
+        "--expected-receipt-sha256",
+        heap.file_sha256(receipt) if Path(receipt).is_file() else "a" * 64,
+    ]
 
 
 def copy_patches(root):
@@ -288,6 +301,17 @@ class SessionHeapGrowthTests(unittest.TestCase):
             self.assertNotIn(temporary, stdout.getvalue())
             self.assertEqual(json.loads(stdout.getvalue())["managed_total"]["growth_bytes"], 40)
             self.assertEqual(hashes, [hashlib.sha256(path.read_bytes()).hexdigest() for path in (before, after)])
+            stdout, stderr = io.StringIO(), io.StringIO()
+            with (
+                mock.patch.object(heap, "REPOSITORY", Path(temporary)),
+                mock.patch.object(heap, "verify_capture_receipt", side_effect=[receipt, heap.AnalysisError("capture_receipt_hash_mismatch")]) as binding,
+                redirect_stdout(stdout),
+                redirect_stderr(stderr),
+            ):
+                self.assertEqual(heap.main(arguments(export_receipt, receipt)), 2)
+            self.assertEqual(binding.call_count, 2)
+            self.assertEqual(stdout.getvalue(), "")
+            self.assertEqual(json.loads(stderr.getvalue()), {"error": "capture_receipt_hash_mismatch"})
 
     def test_cli_errors_do_not_echo_arguments_or_backend_exception_content(self):
         for argv in (["PRIVATE_ARGUMENT"], arguments("PRIVATE_PATH", "OTHER_PRIVATE_PATH")):
@@ -298,6 +322,7 @@ class SessionHeapGrowthTests(unittest.TestCase):
             self.assertEqual(stdout.getvalue(), "")
             self.assertNotIn("PRIVATE", stderr.getvalue())
         with (
+            mock.patch.object(heap, "verify_capture_receipt"),
             mock.patch.object(heap, "database", side_effect=RuntimeError("PRIVATE_BACKEND_VALUE")),
             mock.patch.object(heap, "capture_pair", return_value=[(None, ""), (None, "")]),
             mock.patch.object(heap, "read_export_pair", return_value=[(Path("a.db"), Path("a.log")), (Path("b.db"), Path("b.log"))]),
@@ -553,11 +578,68 @@ class SessionHeapExporterTests(unittest.TestCase):
         argv = arguments()
         argv[:2] = ["--export-dir", "work/coordination/export"]
         stdout, stderr = io.StringIO(), io.StringIO()
-        with mock.patch.object(heap, "capture_pair", return_value=[]), mock.patch.object(heap, "export_pair", side_effect=KeyboardInterrupt("PRIVATE")):
+        with (
+            mock.patch.object(heap, "verify_capture_receipt"),
+            mock.patch.object(heap, "capture_pair", return_value=[]),
+            mock.patch.object(heap, "export_pair", side_effect=KeyboardInterrupt("PRIVATE")),
+        ):
             with redirect_stdout(stdout), redirect_stderr(stderr):
                 self.assertEqual(heap.main(argv), 130)
         self.assertEqual(signal.getsignal(signal.SIGTERM), original)
         self.assertEqual(json.loads(stderr.getvalue()), {"error": "heap_analysis_interrupted"})
+
+
+class CaptureReceiptBindingTests(unittest.TestCase):
+    def test_owned_digest_and_reject_drift_missing_outside_or_alias(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            receipt = root / "work/coordination/capture.json"
+            receipt.parent.mkdir(parents=True)
+            receipt.write_text('{"authored": true}')
+            digest = heap.file_sha256(receipt)
+            self.assertEqual(heap.verify_capture_receipt(receipt, digest, root), receipt)
+            self.assertEqual(heap.verify_capture_receipt("work/coordination/capture.json", digest, root), receipt)
+            for invalid in ("", "PRIVATE_VALUE", "a" * 64):
+                with self.assertRaises(heap.AnalysisError):
+                    heap.verify_capture_receipt(receipt, invalid, root)
+            alias = receipt.parent / "alias.json"
+            alias.symlink_to(receipt)
+            outside = root / "outside.json"
+            outside.write_text("PRIVATE")
+            for path in (alias, outside, receipt.parent / "missing.json", receipt.parent / "../coordination/capture.json"):
+                with self.assertRaises(heap.AnalysisError):
+                    heap.verify_capture_receipt(path, digest, root)
+            receipt.write_text("PRIVATE_CHANGED_RECEIPT")
+            with self.assertRaisesRegex(heap.AnalysisError, "capture_receipt_hash_mismatch"):
+                heap.verify_capture_receipt(receipt, digest, root)
+
+    def test_intentional_work_link_allowed_nested_directory_link_refused(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            base = Path(temporary)
+            root = base / "repo"
+            root.mkdir()
+            canonical = base / "canonical"
+            (canonical / "coordination").mkdir(parents=True)
+            (root / "work").symlink_to(canonical, target_is_directory=True)
+            receipt = canonical / "coordination/capture.json"
+            receipt.write_text("{}")
+            digest = heap.file_sha256(receipt)
+            self.assertEqual(heap.verify_capture_receipt("work/coordination/capture.json", digest, root), receipt)
+            (canonical / "coordination/alias").symlink_to(receipt.parent, target_is_directory=True)
+            with self.assertRaisesRegex(heap.AnalysisError, "capture_receipt_missing_or_aliased"):
+                heap.verify_capture_receipt("work/coordination/alias/capture.json", digest, root)
+
+    def test_hash_mismatch_stops_before_artifact_access_and_redacts(self):
+        stdout, stderr = io.StringIO(), io.StringIO()
+        with (
+            mock.patch.object(heap, "verify_capture_receipt", side_effect=heap.AnalysisError("capture_receipt_hash_mismatch")),
+            mock.patch.object(heap, "capture_pair") as pair,
+        ):
+            with redirect_stdout(stdout), redirect_stderr(stderr):
+                self.assertEqual(heap.main(arguments()), 2)
+            pair.assert_not_called()
+        self.assertEqual(stdout.getvalue(), "")
+        self.assertEqual(json.loads(stderr.getvalue()), {"error": "capture_receipt_hash_mismatch"})
 
 
 if __name__ == "__main__":

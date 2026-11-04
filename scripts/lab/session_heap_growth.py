@@ -231,6 +231,29 @@ def read_export_pair(export_receipt, capture_receipt, pair, menus, expected_apk_
     return result
 
 
+def verify_capture_receipt(receipt_path, expected_sha256, root=None):
+    """Bind the selected owned receipt before reads and again before output."""
+    root = REPOSITORY if root is None else Path(root)
+    if not isinstance(expected_sha256, str) or not re.fullmatch(r"[0-9a-f]{64}", expected_sha256):
+        raise AnalysisError("invalid_expected_receipt_digest")
+    path = Path(receipt_path)
+    path = path if path.is_absolute() else root / path
+    # Resolve only the intentional work link; reject nested aliases.
+    work = (root / "work").resolve()
+    try:
+        relative = path.relative_to(root / "work")
+    except ValueError:
+        raise AnalysisError("capture_receipt_outside_coordination") from None
+    selected = work / relative
+    if relative.parts[:1] != ("coordination",) or ".." in relative.parts or selected.suffix != ".json":
+        raise AnalysisError("capture_receipt_outside_coordination")
+    if selected != selected.resolve() or not selected.is_file():
+        raise AnalysisError("capture_receipt_missing_or_aliased")
+    if file_sha256(selected) != expected_sha256:
+        raise AnalysisError("capture_receipt_hash_mismatch")
+    return selected
+
+
 def capture_pair(receipt_path, menus, expected_apk_sha256, root=None):
     """Select exact snapshot records, never latest folders or filename guesses."""
     root = REPOSITORY if root is None else Path(root)
@@ -535,6 +558,7 @@ def main(argv=None):
     source.add_argument("--export-receipt", help="Explicit existing export receipt; verify and analyze read-only")
     parser.add_argument("--receipt", required=True, help="Explicit successful private session_memory_batch capture receipt")
     parser.add_argument("--expected-apk-sha256", required=True)
+    parser.add_argument("--expected-receipt-sha256", required=True, help="Exact successful capture receipt digest")
     parser.add_argument("--menus", nargs=2, type=int, required=True, metavar=("BEFORE", "AFTER"))
     parser.add_argument("--top", type=int, default=20)
     previous_term = None
@@ -544,6 +568,7 @@ def main(argv=None):
             raise AnalysisError("invalid_menu_interval")
         if not 1 <= args.top <= 100:
             raise AnalysisError("invalid_top_count")
+        verify_capture_receipt(args.receipt, args.expected_receipt_sha256)
         pair = capture_pair(args.receipt, args.menus, args.expected_apk_sha256)
         export_receipt = args.export_receipt
         if args.export_dir:
@@ -561,6 +586,8 @@ def main(argv=None):
             verify_export(connection, pair[1][0])
             after = summarize(connection, root_lines)
         result = compare(before, after, args.menus, args.top)
+        verify_capture_receipt(args.receipt, args.expected_receipt_sha256)
+        result["capture_receipt_sha256"] = args.expected_receipt_sha256
     except AnalysisError as error:
         print(json.dumps({"error": str(error)}), file=sys.stderr)
         return 2
