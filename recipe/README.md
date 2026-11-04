@@ -3722,7 +3722,7 @@ complete Title assembly, phone production and runtime qualification remain open.
 | Recipe | SHA-256 |
 | --- | --- |
 | `owner-title-whole-objects.json` | `1f4ea96d713b60b159e5c1cd030bb5b49e7df1e387d9cbe10831290b033498ee` |
-| `owner-satellitescene-whole-objects.json` | `a035d84e5f5e930eb24bf23bd3ef37bd400d34bce1b0a7d9f665c63a672cd911` |
+| `owner-satellitescene-whole-objects.json` | `80531ba46512543942b88c586f2c31700e39ae5cda3cb4d43dc292603123e676` |
 
 Manual provenance, privacy, licensing and sensitive-content audit: these
 profiles contain source selectors, hashes, checked pointer relationships and
@@ -4101,7 +4101,7 @@ redistribution boundaries apply; phone production and runtime remain open.
 
 | Recipe | SHA-256 |
 | --- | --- |
-| `owner-meridian-whole-objects.json` | `bc6d4093b53ea0d345855e51360dd1983f43b35f947eb9ab491eb69555c60f9f` |
+| `owner-meridian-whole-objects.json` | `f5845e43875b94e900374c34221e51630e0dfffcd1dff7858428ac2c0623170b` |
 
 Manual provenance, privacy, licensing and sensitive-content audit: this profile
 contains source selectors, hashes, checked pointer relationships and authored
@@ -4244,7 +4244,7 @@ This policy records explicit build stripping, without supplying program bytes.
 | `owner-frozenwall-source-lab-shader-remap.json` | `7dfbdb627abd591fdb29b89135362be539efff15b5b854bbc7d680cc6fa59f3d` |
 | `owner-villagenight-source-objects.json` | `f66f0fa9e4743dcd8094c9ae1be7b8bdd373d583133a5979c8075971e480c423` |
 | `owner-villagenight-source-lab-shader-remap.json` | `99f4c31e05205ea7f7f63f9c19dd64c0f1b3ffd53099c05ff0a4cac72fc8d126` |
-| `owner-foggyswamp-source-objects.json` | `c1c477f06c4a845cf947ab6a93229bfe8658b00440341090178916bcc2ae3129` |
+| `owner-foggyswamp-source-objects.json` | `fd127632b42ede902cf0609a4a4ee7a4ab394a73843d766c43c9af8a97139763` |
 | `owner-foggyswamp-source-lab-shader-remap.json` | `5ca166d5b4f672050fd12f72f5ae29f437e21cb8f89a0f96ac2d79e7144c2b49` |
 | `owner-skymeadow-spine-objects.json` | `e650c9495f22ff2e7f74d60bf35d5e896cdf725a375a5fab0bfc45c293ab38cf` |
 | `owner-skymeadow-spine-lab-particles-shaders.json` | `cfc075285f7edbed499356558389e2d94f04889f7c8280448a7a80980f995b76` |
@@ -4717,19 +4717,19 @@ unchanged. Their original provenance/privacy/licensing audits remain applicable.
 
 | Recipe | SHA-256 |
 | --- | --- |
-| `owner-intro-whole-objects.json` | `1b489277f5e0f1c36ed62ebd2d312be59b7227aaa18d840caf47b26c83d1bc30` |
+| `owner-intro-whole-objects.json` | `4c2b26d74e53b26396c90b408d2b2320c7f312925151ee0d476c5d708e08dd3b` |
 | `owner-intro-whole-standard-shaders.json` | `8de2632786c035a1f4d14f17e7b1b791161a262a49a0cb79a28c1de0f6f76537` |
 | `owner-intro-whole-postprocess-shaders.json` | `8bdbbacfabe38d510fe51281eb539ee090520b95815500268fce92fb88c2899b` |
 | `owner-intro-director-records.json` | `48c603ad0fc7e48fd392b9a3ca98b7b1099c8fbc051d8dbee0e34410397a5caf` |
-| `owner-outro-whole-objects.json` | `f7222172230ff961dcf9df9e01cfaf3c49c5cca77451cddec66a79d0754a6a86` |
+| `owner-outro-whole-objects.json` | `0b3707206ccb85b269b4ffb7fdbc2281e29996f6102b823b1a5f3a8e4939f5b7` |
 | `owner-outro-whole-standard-shaders.json` | `071612d2d698a5a9a888e8011c2b9ba61c2e2849fca43be01fe990914b500586` |
 | `owner-outro-whole-postprocess-shaders.json` | `ac901312c73648ff7a69474cd46cc96e9c1e5c8f156e3a0b17c58a3e6ded587e` |
 | `owner-outro-director-records.json` | `c197ee4c189c077d4bed6f829ffec2f840e5390c55fc85f960907a49df5292f2` |
-| `owner-promorailgunner-whole-objects.json` | `cd701336853ba2f7d6fbdc31993536aa8aa945322bd173da6c5d2bdb190d9717` |
+| `owner-promorailgunner-whole-objects.json` | `465ee55dcb13fd58aaeacb0aec4e620756444822c43e4eaaccb8547e08dd3509` |
 | `owner-promorailgunner-whole-standard-shaders.json` | `83f35d4aa060d96397cb805364bf8ef8e8ff4bed36a89ebde6b960c7ac88ec0c` |
 | `owner-promorailgunner-whole-postprocess-shaders.json` | `151995096acce879007a27a352a880c65c363d20a3b5b03552a6d9b5d9dddcbe` |
 | `owner-promorailgunner-director-records.json` | `8650ff9af49eb78e9f742ee8ae64a9c2af36dad4334ef8b89d05c24ea700f216` |
-| `owner-voidoutro-whole-objects.json` | `3214fac0283fc9d8b03ab9c43e0d2ffc19682e92b2b5dee7fa2945561befb4dd` |
+| `owner-voidoutro-whole-objects.json` | `362766b8df0d529abf265f0073d4dc7664841f3da1c401c8f5c9656188a69012` |
 | `owner-voidoutro-whole-standard-shaders.json` | `cc29702a3737f8da1448b653838914a9934f6f7b7bfdda69e5c6e929718a9aec` |
 | `owner-voidoutro-whole-postprocess-shaders.json` | `a4f65b9fe72339efb40bda7db0fb422abd365aa6881c9f051ffc65051b6b37b3` |
 | `owner-voidoutro-whole-particles-shaders.json` | `864c09f923538e53efb9a8223779f1804ca826122f184ea6c051d772d4dd918a` |
@@ -4955,7 +4955,7 @@ curve value, node table, program, private path or device identifier is tracked.
 
 | Recipe | SHA-256 |
 | --- | --- |
-| `owner-commando-objects.json` | `84fc4e68b52ba80ca101333b0b9e4735b5f3dc96db468f73a7086cbcdd457605` |
+| `owner-commando-objects.json` | `bfd084b6e1d649f0e0b62eb56714bc12535d5c2fd4720b708e313aa0f7641def` |
 | `owner-commando-reused-records.json` | `5440ce0007c9d69c6f5bd82f500a97caae8fffe1ed1b6dc7f76be96ad45ee37f` |
 | `owner-commando-original-sprites-1.json` | `503c9feb21cf0865a6429c4a5d51f5b97ee2767b8235e9454635041bf1efb09f` |
 | `owner-commando-sdk-shaders.json` | `9d109f1048dbc1bdddbae266dd4fee798be5328ef759226611262adbcf8e3ede` |
@@ -6743,3 +6743,17 @@ This request contains only dispatcher bindings for acquired SDK/converter inputs
 output location. No game bytes, generated sources, native binaries, private paths
 or credentials are retained. The existing native policy and converter receipt
 checks own compilation and metadata provenance; APK/device gates remain open.
+
+## Complete converter supplier wiring (2026-11-04)
+
+The seven scene/prefab animation consumers select the current audited original-
+AnimationClip producer. All 622 destination identities, sizes and hashes match;
+source selectors, native schemas and checked pointer relationships are unchanged.
+Meridian and Satellite reuse the independently source-produced Sulfurpools
+Standard Shader through the existing record index adapter. Its body, type and
+dependencies stay source-owned; only the two explicit destination identities
+change. No asset bytes, private paths or runtime capture are included.
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-whole-scene-standard-shader-remap.json` | `367d8fc933e722d167036230a28446879695703d10859d202ae71f25433e10da` |
