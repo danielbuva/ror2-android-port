@@ -2604,6 +2604,16 @@ authentication. Migration always refuses while the file exists, regardless of th
 setting. The host Unity build mutex is mandatory for every caller.
 
 `./dev preflight` combines host/input validation with selected-device live storage checks.
+Its first host gate calls `native_view_camera_build_hook.build_hook_pins` before
+reading local configuration. The current `./dev build-hook-pins` command checks
+every `source_paths`/`source_sha256` role in
+`recipe/native-view-camera-transform.json` without game inputs or an editor.
+After source review and Python formatting, `--action refresh` updates only those
+source hashes, including the hook's own hash; all input, output, profile,
+receipt and toolchain pins remain unchanged. Check reports all stale sources
+without writing. Existing stage/transform validators still enforce their
+contracts. The command owns no persistent state beyond the tracked recipe and
+opens no device or editor session.
 `./dev build` runs host preflight only and holds the global Unity build lock at
 `work/coordination/unity-build.lock`; install, sync and gameplay actions do not take that
 lock. Every install still queries live storage and free space and enforces the selected
