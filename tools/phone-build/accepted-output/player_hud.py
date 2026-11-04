@@ -321,7 +321,9 @@ def construct(U, store, scripts, roots, labels):
     bind("level", g.field(g.field(native, "levelText"), "targetText"))
     bind("money", g.field(g.field(native, "moneyText"), "targetText"))
     bind("experienceFill", g.field(g.field(native, "expBar"), "fillRectTransform"))
-    style = g.field(health, "_style")
+    # Historical originals expose the builder's public style field; newer
+    # originals serialize its backing field instead.
+    style = g.field(health, "_style" if "_style" in health["fields"] else "style")
     container = g.field(health, "barContainer")
     for field, style_name, name in [
         ("healthFill", "trailingOverHealthBarStyle", "Owned health fill"),
