@@ -2318,3 +2318,17 @@ battery 43 C, charging and sampling-gap checks are unchanged.
 Focused host suite: 53 checks pass; Ruff and staged public audit pass.
 Evidence: `work/coordination/alpha-cooldown-policy-20261104/host-checks.json`.
 No APK generated or installed; sustained device acceptance remains open.
+
+## J1357 — Resolve source-derived Tree WindAsset endpoints
+
+2026-11-04. Existing generic native record owner supplies four more Trees via
+reciprocal GameObject ownership and qualified WindAsset external-member routes.
+All 96 persisted bytes raw-exact to J850; pack SHA-256
+`15f11a50407a82b07938a7aab9ea443d104873541223df6717bfde051d121a4c`.
+Evidence: `work/coordination/p1-wholegame-1031/bundle-tree-wind-source-v1/pipeline.done.json`;
+source witnesses: sibling `witnesses.jsonl`. Profile now supplies 66 Trees.
+Production 0.44 s, qualification 3.89 s, peak RSS 285,065,216 bytes; cleanup passed.
+Host-only; heat unmeasured. EditorKit typed ownership and J1351 routes inform selection.
+Bounded source recipe only; producer unchanged; 2,024 candidates remain excluded.
+Residual three unchanged; readiness 693/705 available, 685 raw-exact.
+Complete groups, bundle, phone/install/update and runtime gates remain open.

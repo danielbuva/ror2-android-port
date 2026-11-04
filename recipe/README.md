@@ -6653,7 +6653,7 @@ and runtime gates stay open.
 
 | Recipe | SHA-256 |
 | --- | --- |
-| `owner-whole-game-bundle-tree-records.jsonl.gz` | `4345adb71b8cb29b5c4d7ffe2801ed3483003fe5e1aebdf8a07eb4426dfaccda` |
+| `owner-whole-game-bundle-tree-records.jsonl.gz` | `d4151bf43fee3a6512203eb3a346bcdb986e54665984fc1deacc976adac2f302` |
 
 Audit: 2026-10-31. The existing generic native record owner selects 62 original
 Trees across 37 source members. Qualified GameObject component edges and
@@ -6669,3 +6669,12 @@ all native scalar fields and schemas remain source-owned. Independent
 persisted production matches all 62 J850 records (1,488 bytes). Saved residual
 three and final-file readiness remain unchanged; group, complete bundle,
 phone/install/update and runtime gates remain open.
+
+Four additional original Trees resolve their nonzero WindAsset pointer through
+qualified class-228 suppliers, using actual recipe bundle/member/object identity
+and unique original external-member routes (J1351), while retaining reciprocal
+GameObject ownership. Independent persisted qualification matches all four J850
+records (96 bytes); the profile now supplies 66 Trees. Audit: 2026-11-04; only
+source selectors, hashes and checked typed relationships are added. The existing
+producer is unchanged. Of the prior 2,028 exclusions, 2,024 remain unresolved;
+saved residual three and final-file readiness remain unchanged.
