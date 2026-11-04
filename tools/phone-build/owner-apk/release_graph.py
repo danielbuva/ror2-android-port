@@ -183,6 +183,19 @@ class Graph:
             ]
         if producer == "shader_produce":
             arguments += ["--sdk", "${input:sdk_contents}"]
+        if producer == "texture_produce":
+            textures = [texture for bundle in profile["bundles"] for member in bundle["members"] for texture in member["textures"]]
+            operations = {texture["operation"] for texture in textures}
+            bindings = []
+            if operations & {"rgb-jpeg", "dxt1-rgb-jpeg"} or any(texture["operation"] in {"etc1", "etc1-mips"} and texture["jpeg"] for texture in textures):
+                bindings.append("jpeg_codec")
+            if operations & {"alpha8-etc2", "etc1", "etc1-mips", "sdk-rgba", "sdk-rgba-mips", "cube-mips", "cube-hdr", "cube-rgba-mips"}:
+                bindings.append("etc_codec")
+            if operations & {"sdk-rgba", "sdk-rgba-mips", "etc1-mips", "cube-mips", "cube-hdr", "cube-rgba-mips"}:
+                bindings.append("sdk_toolchain")
+            for binding in bindings:
+                flag = "--" + binding.replace("_", "-")
+                arguments += [flag, "${input:" + binding + "}", flag + "-sha256", "${input_sha256:" + binding + "}"]
         if producer in {"object_produce", "shader_prefab", "payload_shader_records", "shader_produce"} and "original_bundle" not in profile:
             arguments += ["--codec", "${input:codec}", "--codec-sha256", "${input_sha256:codec}"]
         if producer == "shader_context":
