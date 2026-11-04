@@ -2444,3 +2444,16 @@ Signed output `c0b78163d5b00425592f271b49519ba01c9f8d16164368afc796af58b9d12026`
 signature/alignment and unchanged existing key verified. SDK 34 uses `-p 4`;
 rejected `-P 16` and shared-prune disk-baseline change retained in local notes.
 Host-only; independent full reconstruction, phone heat/install/update remain open.
+
+## J1366 — Compile source producer release graphs
+
+2026-11-04. PR #341 shipped SHA-linked source profiles into incremental job
+descriptors; missing suppliers fail explicitly and owner structural checks stay.
+Current-input death-effect bundle produced through the generated dispatcher:
+`268501d748109ffb6d61aeeaa871875445d3b8e7481b1fa9f94e59efeed979f8`.
+Wall 52.260 s, CPU 51.727 s, peak RSS 6,341,328,896 bytes; logical growth
+521,201 bytes. Evidence: `work/coordination/p1-scenes-w/end-to-end-v2/`.
+Player/shader wiring retains top-level serialized and nested record-pack receipt
+contracts, texture dependencies and authored release closure inputs. Host
+contracts cover graph dispatch/reuse and real player/shader supplier selection.
+Complete source-only APK, fresh runtime inputs and ordinary gameplay remain open.
