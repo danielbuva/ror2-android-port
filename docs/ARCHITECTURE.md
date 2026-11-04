@@ -65,6 +65,8 @@ matches canonical bytes with bounded payload memory; full phone production is op
 IDs, SDK component construction and typed links to the existing player suppliers.
 Its audited Menu recipe may retain build-assigned IDs/order; the source graph
 must match the full identity cohort before local pointers are relocated.
+Its audited external provider order applies only after source resolution;
+additional source providers append without shifting retained provider IDs.
 Graphic material providers reserve their position before Image Sprite providers,
 following the native schema field order. All body values remain source-derived.
 The optional player-data `--ui-profile` selects its audited source recipe;

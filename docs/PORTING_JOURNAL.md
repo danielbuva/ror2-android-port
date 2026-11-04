@@ -2345,3 +2345,14 @@ Sprite-induced external-index shifts; HUD graph remains 2,021 versus 1,902.
 Evidence: `work/coordination/p1-menuhud/current-menu-v1/`; 15 focused tests pass.
 Host production 13.659 s, peak RSS 367,804,416 bytes; cleanup passes.
 No readiness closure or device claim; complete phone/install/update gates remain open.
+
+## J1359 — Stabilize audited Menu external provider IDs
+
+2026-11-04. Menu retains 20 audited external provider filenames/order only after
+source resolution, appending the additional original store Sprite provider.
+Seven Sprite records become raw-exact; current Menu is now 589/591 exact bodies.
+Source alignment 5 versus reference 8 and store Sprite nonnull versus null remain;
+no source field is overridden and full-file/readiness closure stays open.
+Output SHA-256: `b4be78e019c316a79e1bc9cab63d6cbdae85a66ef80738728a86c37761d1b24d`.
+Evidence: `work/coordination/p1-menuhud/current-menu-v2/`; 13 focused UI tests and
+Ruff pass. Host-only; no phone/install/update/runtime acceptance is claimed.
