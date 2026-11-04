@@ -685,7 +685,6 @@ public sealed partial class PortSession : MonoBehaviour
         if (File.Exists(System.IO.Path.Combine(Application.persistentDataPath, "whole-catalog-selection.json")))
             yield break;
         ReadSettingsWriteObserverRequest();
-        yield return new WaitForSeconds(8);
         // MovementBatchProbe is the unchanged resource/file name.
         var path = System.IO.Path.Combine(Application.persistentDataPath, "movement-batch-selection.json");
         var config = JsonUtility.FromJson<SessionConfig>(Resources.Load<TextAsset>("MovementBatchProbe").text);
@@ -850,7 +849,9 @@ public sealed partial class PortSession : MonoBehaviour
                 while (!NovaInputBridge.MappingStore.TryLoad(mappingPath, config.attempt, out _))
                     yield return new WaitForSeconds(1);
             }
-            r = new SessionReport { attempt = config.attempt, id = "body-state-spawn-state-auto-nova-spine", freePlay = true };
+            // Retain the shared spawn/state setup family, without selecting a lab probe.
+            // freePlay owns the normal menu and untimed player session, not diagnostic input.
+            r = new SessionReport { attempt = config.attempt, id = "body-state-spawn-state-auto-player", freePlay = true };
         }
         if (r.nativeSourceSkinLifecycleDiagnosticRequested &&
             (!config.integratedWorld || (r.id != "body-state-spawn-state-auto-nova-spine" &&
@@ -1236,7 +1237,7 @@ public sealed partial class PortSession : MonoBehaviour
             passivePcmActivityArmPolicy?.Close();
         }
     }
-    // The shipped game: both playable-spine ids (IsPlayableSpine) run the original body
+    // The shipped player and explicit playable-spine selectors run the original body
     // lifecycle directly, not through the experiment switch in LabExperiments.cs.
     IEnumerator GameSession()
     {

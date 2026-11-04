@@ -1,5 +1,11 @@
 # Build recipes
 
+2026-11-04 player-startup audit: `original-audio-owner-sources.json` refreshes
+the authored session source hash and its producer/camera manifest pins. Only
+repository source hashes change; no game bytes, private paths or identifiers are
+added. Ordinary startup removes its fixed delay and selects the player lifecycle;
+explicit lab selectors retain their existing contracts.
+
 ## Original assembly placement audit (R1, 2026-10-18)
 
 `original-assemblies.json` records only source/project identities, source SHA-256,

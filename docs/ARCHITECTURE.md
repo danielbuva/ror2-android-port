@@ -2031,8 +2031,13 @@ for remaining source identities. Host contracts feed that mapping to
 catalog production remains open. The later importer-identities stage is excluded.
 `whole-catalog-run` installs, syncs and launches, but it pushes `whole-catalog-selection.json`,
 which makes `PortSession.Start` exit: it checks catalog registration
-(`whole-catalog-result.json`), not gameplay. Gameplay is launched by a runner that pushes an
-attempt-bound `movement-batch-selection.json` and then launches the app.
+(`whole-catalog-result.json`), not gameplay. Ordinary launcher startup selects
+`body-state-spawn-state-auto-player` and runs the existing `GameSession` body,
+catalog, menu and input lifecycle without a fixed startup sleep. The shared
+spawn/state prefix retains its setup contracts; `freePlay` keeps the menu and
+untimed gameplay active. Physical input still waits for its attempt-bound mapping.
+Lab probes require an explicit `movement-batch-selection.json`; existing playable
+spine and bringup selectors retain their routes and diagnostic input policies.
 The standard `baseline.py` owner checks selector absence with a successful,
 complete runtime-directory observation before writes. Process replies are typed;
 transport errors are never absence. Live reports remain bound to the launched

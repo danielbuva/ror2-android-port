@@ -43,6 +43,8 @@ class PortableInputPolicyTests(unittest.TestCase):
         if not mono.exists() or not compiler.exists():
             self.skipTest("matching Unity Mono compiler is unavailable")
         owner = (RUNTIME_ROOT / "input/NovaInputBoundary.cs").read_text()
+        primary = (RUNTIME_ROOT / "world/PrimaryFireBoundary.cs").read_text()
+        bridge = (RUNTIME_ROOT / "input/NovaInputBridge.cs").read_text()
         source = (RUNTIME_ROOT / "session/PortSession.cs").read_text()
         start = source.index("        else\n        {\n            if (!config.launchPlayableSlice)")
         opening = source.index("{", start)
@@ -56,9 +58,19 @@ class PortableInputPolicyTests(unittest.TestCase):
             """using System; using System.IO; using System.Collections;
 class Application { public static string persistentDataPath; }
 class WaitForSeconds { public WaitForSeconds(float seconds) {} }
-class NovaInputBridge { public class Mapping { public string attempt; } }
-class JsonUtility { public static int reads; public static T FromJson<T>(string text) { reads++; return (T)(object)new NovaInputBridge.Mapping { attempt=text }; } }
+class JsonUtility {
+ public static int reads;
+ public static void FromJsonOverwrite(string text, object value) { reads++; ((NovaInputBridge.Mapping)value).attempt=text; }
+ public static string ToJson(NovaInputBridge.Mapping value, bool pretty) { return value.attempt; }
+}
+class NovaInputBridge {
+ public class Mapping {
+  public string attempt;
+  public void Validate(string expected) { if(attempt!=expected)throw new ArgumentException("stale mapping"); }
+ }
 """
+            + extract_class(bridge, "public static class MappingStore")
+            + "}\n"
             + extract_class(owner, "public static class InputSessionPolicy")
             + """
 class Fixture {
@@ -68,6 +80,8 @@ class Fixture {
  string CurrentDeviceModel() { return model; }
 """
             + extract_method(owner, "    bool UsesTouchUi()")
+            + extract_method(primary, "    bool IsPlayableSpine()").replace("bool IsPlayableSpine()", "public bool IsPlayableSpine()")
+            + extract_method(owner, "    bool IsNovaInput()").replace("bool IsNovaInput()", "public bool IsNovaInput()")
             + "\n public IEnumerator DefaultStart() {"
             + block
             + "\n} }\n"
@@ -79,6 +93,14 @@ class Program {
   Directory.CreateDirectory(path);
   var touch=new Fixture { model="AYN Thor" };
   Need(!touch.DefaultStart().MoveNext() && touch.r.freePlay && JsonUtility.reads==0,"touch read or waited for a physical map");
+  Need(touch.r.id=="body-state-spawn-state-auto-player" && touch.IsPlayableSpine() && touch.IsNovaInput(),"default did not select the player lifecycle/input");
+  Need(touch.r.id.StartsWith("body-state-spawn-state-auto-") && !touch.r.id.EndsWith("-bringup"),"player lost automatic body setup or enabled diagnostic input");
+  foreach(var id in new[]{"body-state-spawn-state-auto-nova-spine","body-state-spawn-state-auto-nova-spine-bringup"}) {
+   touch.r.id=id; Need(touch.IsPlayableSpine() && touch.IsNovaInput(),"explicit spine selector lost game/input route");
+  }
+  touch.r.id="body-state-spawn-state-auto-nova-controls";
+  Need(!touch.IsPlayableSpine() && touch.IsNovaInput(),"explicit controls probe changed route");
+  touch.r.id="buttons"; Need(!touch.IsPlayableSpine() && !touch.IsNovaInput(),"lab probe entered game route");
   Directory.Delete(path);
   var nova=new Fixture { model="Retroid Pocket Nova" }; var wait=nova.DefaultStart();
   Need(wait.MoveNext() && nova.r==null,"Nova proceeded without mapping");
