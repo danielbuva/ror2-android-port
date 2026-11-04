@@ -127,6 +127,14 @@ native fields, roots, policy and provider receipts. The output is a complete
 native `globalgamemanagers` candidate with a fresh script-hash map and public
 Personal capability policy. Historical cache/UI differences and full phone/native
 runtime acceptance remain open; this introduces no gameplay/runtime owner.
+`shader_produce.py` also owns real TMP Distance Field and Sprite production
+through `tmp_source`: pinned Essential Resources provide original declarations
+and required includes; original material keywords select compiled variants.
+The legacy mobile selector retains its declaration contract. Output comparison
+is exact by default; explicit diagnostic comparison records both expected and
+actual hashes. Setup requires pinned original/SDK/package inputs and fresh
+output; compiler and codec contexts close on exit. Source compilation, complete
+bundle loading and visual acceptance remain separate gates.
 `tools/phone-build/environment/RuntimeEnvironmentProducer.cs` is the experimental
 source library for an owner-built native converter tool player. It owns SDK-sky
 ambient/reflection rendering, face/mip readback and output receipts, restoring

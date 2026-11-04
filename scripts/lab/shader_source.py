@@ -512,7 +512,16 @@ def package_member(archive, name):
     return archive.extractfile(matches[0]).read()
 
 
-def package_mobile_source(sdk, package):
+def package_source(sdk, package, shader):
+    """Read pinned TMP source and its own includes without rewriting declarations."""
+    selections = {
+        "TMP_SDF-Mobile.shader": ("TextMeshPro/Mobile/Distance Field", ["TMPro_Properties.cginc"]),
+        "TMP_SDF.shader": ("TextMeshPro/Distance Field", ["TMPro_Properties.cginc", "TMPro.cginc"]),
+        "TMP_Sprite.shader": ("TextMeshPro/Sprite", []),
+    }
+    if shader not in selections:
+        raise ValueError("unsupported TMP package shader")
+    declaration_name, include_names = selections[shader]
     path = sdk / "Resources/PackageManager/Editor" / (package["name"] + "-" + package["version"] + ".tgz")
     raw = path.read_bytes()
     if hashlib.sha256(raw).hexdigest() != package["sha256"]:
@@ -521,7 +530,7 @@ def package_mobile_source(sdk, package):
         resource = package_member(archive, package["resource"])
     if hashlib.sha256(resource).hexdigest() != package["resource_sha256"]:
         raise ValueError("TMP Essential Resources drift")
-    wanted = {"Assets/TextMesh Pro/Shaders/TMP_SDF-Mobile.shader": "shader", "Assets/TextMesh Pro/Shaders/TMPro_Properties.cginc": "include"}
+    wanted = {"Assets/TextMesh Pro/Shaders/" + name: name for name in [shader, *include_names]}
     sources = {}
     with tarfile.open(fileobj=io.BytesIO(resource)) as archive:
         for row in archive.getmembers():
@@ -532,13 +541,19 @@ def package_mobile_source(sdk, package):
                     if kind in sources:
                         raise ValueError("ambiguous TMP package selector")
                     sources[kind] = package_member(archive, row.name.rsplit("/", 1)[0] + "/asset")
-    if set(sources) != {"shader", "include"}:
+    if set(sources) != {shader, *include_names}:
         raise ValueError("missing TMP package shader/include")
-    # This authored declaration rename is the ONLY mutation of package source.
-    # Keep the UTF-8 BOM, whitespace, original instructions and include bytes.
-    text = sources["shader"].decode("utf-8")
+    text = sources[shader].decode("utf-8")
     declaration = re.search(r'\bShader\s+"([^"]+)"', text)
-    if declaration is None or declaration[1] != "TextMeshPro/Mobile/Distance Field":
+    if declaration is None or declaration[1] != declaration_name:
         raise ValueError("unexpected package shader declaration")
-    sources["shader"] = (text[: declaration.start(1)] + "PortingLab/RecoveredFontSDF" + text[declaration.end(1) :]).encode("utf-8")
-    return sources
+    return {"shader": sources[shader], "includes": {name: sources[name] for name in include_names}}
+
+
+def package_mobile_source(sdk, package):
+    """Retain the historical mobile selector and declaration rename contract."""
+    source = package_source(sdk, package, "TMP_SDF-Mobile.shader")
+    text = source["shader"].decode("utf-8")
+    declaration = re.search(r'\bShader\s+"([^"]+)"', text)
+    renamed = (text[: declaration.start(1)] + "PortingLab/RecoveredFontSDF" + text[declaration.end(1) :]).encode("utf-8")
+    return {"shader": renamed, "include": source["includes"]["TMPro_Properties.cginc"]}
