@@ -2568,7 +2568,7 @@ no sustained/manual/PC-parity claim. Peak 93.5 C, 11.294 s above 80 C, battery 3
 thermal trace gaps below one second. Adopted placement/hash and idle cleanup verified.
 Startup still varies across stages/cache state; individual results costs remain open.
 
-## J1374 — Attribute ordinary results preparation on device
+## J1375 — Attribute ordinary results preparation on device
 
 Existing results seams emit monotonic/frame markers with Save/order unchanged.
 APK `5d2f99c08121e67d1ad044150b5561d509df8f9af119d9b83c579208a4b2ea31`,
