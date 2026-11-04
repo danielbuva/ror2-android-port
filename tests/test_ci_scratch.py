@@ -5,6 +5,7 @@ import json
 import os
 from pathlib import Path
 import plistlib
+import selectors
 import signal
 import subprocess
 import sys
@@ -245,12 +246,117 @@ class ScratchTests(unittest.TestCase):
             cleanup.kill_and_reap(process)
         process.wait.assert_called_once_with()
 
+    def ownership(self, process):
+        for scratch in self.root.glob("ci-local.*"):
+            try:
+                record = json.loads((scratch / "owner.json").read_text())
+                pid = int((scratch / "owner.pid").read_text())
+                if (
+                    isinstance(record, dict)
+                    and type(record.get("pid")) is int
+                    and record["pid"] == pid == process.pid
+                    and type(record.get("pgid")) is int
+                    and 1 < record["pgid"] <= 2147483647
+                    and record.get("completed") is False
+                ):
+                    return scratch, record
+            except (OSError, ValueError):
+                continue
+        return None
+
+    def stop_process(self, process):
+        owned = self.ownership(process)
+        if process.poll() is None:
+            process.terminate()
+        try:
+            process.communicate(timeout=7)
+        except subprocess.TimeoutExpired:
+            if owned:
+                try:
+                    os.killpg(owned[1]["pgid"], signal.SIGKILL)
+                except ProcessLookupError:
+                    pass
+            if process.poll() is None:
+                process.kill()
+            process.communicate(timeout=5)
+        # Tests that kill the supervisor may leave its owned shell alive.
+        if owned:
+            try:
+                os.killpg(owned[1]["pgid"], signal.SIGTERM)
+            except ProcessLookupError:
+                pass
+
+    def start_process(self, command):
+        process = subprocess.Popen(command, env=os.environ | {"TMPDIR": str(self.root)}, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        self.addCleanup(self.stop_process, process)
+        return process
+
+    def ready(self, process, timeout=10):
+        # Child stdout does not order the supervisor's owner.json write. Require
+        # both child readiness and a complete record bound to this exact Popen.
+        deadline = time.monotonic() + timeout
+        output = b""
+        with selectors.DefaultSelector() as selector:
+            selector.register(process.stdout, selectors.EVENT_READ)
+            while time.monotonic() < deadline:
+                owned = self.ownership(process)
+                if b"ready\n" in output and owned:
+                    return owned
+                if process.poll() is not None:
+                    self.fail("fixture exited before valid ownership readiness")
+                for key, _events in selector.select(min(0.02, max(0, deadline - time.monotonic()))):
+                    output += os.read(key.fd, 1024)
+                    if len(output) > 4096:
+                        self.fail("fixture readiness output exceeded bound")
+        self.fail("fixture ownership readiness timed out")
+
+    def stop_detached(self, pidfile):
+        try:
+            pid = int(pidfile.read_text())
+            pidfile.unlink()
+            if pid > 1:
+                os.kill(pid, signal.SIGTERM)
+        except (OSError, ValueError):
+            pass
+
     def launch(self, body):
         script = self.root / "fixture.sh"
         script.write_text(body)
-        return subprocess.Popen(
-            [sys.executable, str(HELPER), str(script)], env=os.environ | {"TMPDIR": str(self.root)}, stdout=subprocess.PIPE, stderr=subprocess.PIPE
+        return self.start_process([sys.executable, str(HELPER), str(script)])
+
+    def test_readiness_waits_for_missing_then_partial_owner_record(self):
+        os.utime(self.path, None)
+        script = self.root / "fixture.sh"
+        script.write_text("echo ready; exec sleep 30\n")
+        launcher = (
+            "import pathlib,runpy,sys,time\n"
+            "original=pathlib.Path.write_text\n"
+            "def delayed(path,data,*args,**kwargs):\n"
+            " if path.name=='owner.json':\n"
+            "  time.sleep(0.1)\n"
+            "  original(path,'{')\n"
+            "  time.sleep(0.1)\n"
+            " return original(path,data,*args,**kwargs)\n"
+            "pathlib.Path.write_text=delayed\n"
+            "sys.argv=sys.argv[1:]\n"
+            "runpy.run_path(sys.argv[0],run_name='__main__')\n"
         )
+        process = self.start_process([sys.executable, "-c", launcher, str(HELPER), str(script)])
+        scratch, record = self.ready(process)
+        self.assertEqual(record["pid"], process.pid)
+        self.assertEqual(record, json.loads((scratch / "owner.json").read_text()))
+        process.terminate()
+        process.communicate(timeout=10)
+
+    def test_readiness_failure_stops_spawned_fixture(self):
+        os.utime(self.path, None)
+        process = self.launch("echo ready; exec sleep 30\n")
+        self.ready(process)
+        with mock.patch.object(self, "ownership", return_value=None):
+            with self.assertRaisesRegex(AssertionError, "readiness timed out"):
+                self.ready(process, timeout=0.05)
+        self.stop_process(process)
+        self.assertIsNotNone(process.poll())
 
     def test_normal_and_failure_exit_clean_synchronously(self):
         # Existing fixture belongs to a fake dead PID; leave it recent so the
@@ -274,7 +380,7 @@ class ScratchTests(unittest.TestCase):
         os.utime(self.path, None)
         for sig in (signal.SIGTERM, signal.SIGINT, signal.SIGHUP):
             process = self.launch("echo ready; exec sleep 30\n")
-            self.assertEqual(process.stdout.readline(), b"ready\n")
+            self.ready(process)
             process.send_signal(sig)
             _, err = process.communicate(timeout=10)
             self.assertEqual(process.returncode, 128 + sig, err)
@@ -283,9 +389,7 @@ class ScratchTests(unittest.TestCase):
     def test_killed_child_is_reaped_but_preserved(self):
         os.utime(self.path, None)
         process = self.launch("echo ready; exec sleep 30\n")
-        self.assertEqual(process.stdout.readline(), b"ready\n")
-        scratch = next(p for p in self.root.glob("ci-local.*") if p != self.path)
-        record = json.loads((scratch / "owner.json").read_text())
+        scratch, record = self.ready(process)
         os.killpg(record["pgid"], signal.SIGKILL)
         _, err = process.communicate(timeout=10)
         self.assertEqual(process.returncode, 137, err)
@@ -313,9 +417,9 @@ class ScratchTests(unittest.TestCase):
                 str(HELPER),
                 str(script),
             ]
-            process = subprocess.Popen(command, env=os.environ | {"TMPDIR": str(self.root)}, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            process = self.start_process(command)
             if terminate:
-                self.assertEqual(process.stdout.readline(), b"ready\n")
+                self.ready(process)
                 process.terminate()
             _, err = process.communicate(timeout=10)
             self.assertEqual(process.returncode, 143 if terminate else 19, err)
@@ -329,12 +433,11 @@ class ScratchTests(unittest.TestCase):
     def test_shell_term_trap_cannot_certify_detached_grandchild(self):
         os.utime(self.path, None)
         pidfile = self.root / "detached.pid"
+        self.addCleanup(self.stop_detached, pidfile)
         body = f"trap 'exit 143' TERM\n{sys.executable} - <<'CHILD'\nimport subprocess,pathlib\np=subprocess.Popen(['sleep','30'],start_new_session=True,stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)\npathlib.Path({str(pidfile)!r}).write_text(str(p.pid))\nCHILD\necho ready; while :; do sleep 0.1; done\n"
         process = self.launch(body)
-        self.assertEqual(process.stdout.readline(), b"ready\n")
+        scratch, record = self.ready(process)
         detached = int(pidfile.read_text())
-        scratch = next(p for p in self.root.glob("ci-local.*") if p != self.path)
-        record = json.loads((scratch / "owner.json").read_text())
         try:
             os.kill(record["pgid"], signal.SIGTERM)
             _, err = process.communicate(timeout=10)
@@ -343,17 +446,16 @@ class ScratchTests(unittest.TestCase):
             os.utime(scratch, (0, 0))
             self.assertEqual(cleanup.reclaim(scratch), "uncertain-descendants")
         finally:
-            os.kill(detached, signal.SIGTERM)
+            self.stop_detached(pidfile)
 
     def test_detached_grandchild_keeps_abnormal_scratch_uncertain(self):
         os.utime(self.path, None)
         pidfile = self.root / "detached.pid"
+        self.addCleanup(self.stop_detached, pidfile)
         body = f"{sys.executable} - <<'CHILD'\nimport subprocess,pathlib\np=subprocess.Popen(['sleep','30'],start_new_session=True,stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)\npathlib.Path({str(pidfile)!r}).write_text(str(p.pid))\nCHILD\necho ready; exec sleep 30\n"
         process = self.launch(body)
-        self.assertEqual(process.stdout.readline(), b"ready\n")
+        scratch, record = self.ready(process)
         detached = int(pidfile.read_text())
-        scratch = next(p for p in self.root.glob("ci-local.*") if p != self.path)
-        record = json.loads((scratch / "owner.json").read_text())
         try:
             process.kill()
             process.wait(timeout=5)
@@ -364,14 +466,12 @@ class ScratchTests(unittest.TestCase):
             self.assertEqual(cleanup.reclaim(scratch), "uncertain-descendants")
             self.assertTrue(scratch.exists())
         finally:
-            os.kill(detached, signal.SIGTERM)
+            self.stop_detached(pidfile)
 
     def test_sigkill_leaves_recorded_live_child_untouched(self):
         os.utime(self.path, None)
         process = self.launch("echo ready; exec sleep 30\n")
-        self.assertEqual(process.stdout.readline(), b"ready\n")
-        scratch = next(p for p in self.root.glob("ci-local.*") if p != self.path)
-        record = json.loads((scratch / "owner.json").read_text())
+        scratch, record = self.ready(process)
         process.kill()
         process.wait(timeout=5)
         os.utime(scratch, (0, 0))
