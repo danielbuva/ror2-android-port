@@ -195,6 +195,13 @@ class Dispatcher:
         Declared files and prerequisite artifacts must remain canonical, regular
         private results; a scratch link is never followed or cached as output.
         """
+        if job.get("script") == "tools/phone-build/accepted-output/player_data.py":
+            receipt = UPDATES.public().load_json(UPDATES.within(output, "result.json", exists=True).read_bytes())
+            actual, declared = set(receipt["files"]), set(job["outputs"])
+            if receipt.get("success") is not True or actual != declared:
+                raise ValueError(
+                    "player output membership differs: undeclared=" + str(sorted(actual - declared)) + "; missing=" + str(sorted(declared - actual))
+                )
         files = {}
         for name in {*job["outputs"].values(), *job.get("artifacts", {}).values()}:
             selected = UPDATES.within(output, name, exists=True)

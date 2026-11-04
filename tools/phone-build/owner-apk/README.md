@@ -557,8 +557,14 @@ player data consumes the nested shader pack and five texture suppliers.
 Compressed native-record recipes (`owner-*.jsonl.gz`) are discovered by their
 compressed SHA-256 and bounded header. Their existing record producer streams
 source groups; graph compilation does not expand the hierarchy.
-Sprite/native providers and complete player phases still need explicit wiring;
-this is not the complete source release.
+Sprite/native providers still need explicit wiring; this is not the complete
+source release. Optional `--player-phases recipe/owner-player-phases.json` wires
+all five existing player phases and declares their complete 33-file union,
+including generated Sprite/texture dependencies. Phase recipes, texture recipes
+and public policy inputs enter the signed closure. The dispatcher requires the
+player receipt to match declared membership exactly on production and reuse.
+New source media therefore reports a membership difference instead of silently
+omitting a referenced file.
 
 Dispatcher bindings `pc`, `sdk` and `codec` select canonical private input paths.
 Only producers requiring SDK data receive the default SDK argument. For object
@@ -575,8 +581,8 @@ Player jobs additionally bind `sdk_contents` (Unity Contents data), `converter`,
 `converter_receipt` (that directory's result.json), `code_request` and `managed`
 to freshly source-produced inputs. Shader jobs use `sdk_contents` and require
 their existing public recovery/compiler tool arguments through
-`--extra-arguments`. Player Menu/HUD/manager phases likewise use their existing
-explicit extra arguments. Missing inputs fail through the producer contracts;
+`--extra-arguments`. `--player-phases` wires the existing optional player
+phase arguments and outputs. Missing inputs fail through the producer contracts;
 this compiler does not generate managed/native runtime inputs. Authored shader
 files, player registry/manifests/bootstrap/config and imported lab Python owners
 are included in the signed dependency closure.
@@ -594,3 +600,11 @@ Wall 52.260 s, user/system CPU 50.315/1.412 s, peak RSS 6,341,328,896 bytes;
 sampled converter workspace grew by 521,201 logical bytes. This is one bundle,
 not APK or gameplay acceptance. The generated two-job synthetic fixture also
 checks receipt identity and reuse on the second run.
+
+The phase declaration additionally binds `ugui_source`, `sdk_binary`,
+`startup_receipt`, `scene_environment_result`, `scene_environment_request`,
+`scene_environment_bundle` and `scene_environment_images`. These are explicit
+source-produced/acquired inputs; startup/environment generation is not yet a
+job in this graph. Manager shaders use the existing shader job directly.
+This declares 210 player files with the current source recipes; it does not
+qualify a complete APK or runtime loading.
