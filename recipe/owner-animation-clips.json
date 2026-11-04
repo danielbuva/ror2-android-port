@@ -233996,6 +233996,27 @@
                   }
                 }
               ]
+            },
+            {
+              "path_id": 7813652615075188649,
+              "class_id": 74,
+              "sha256": "95b8a226161680ee904c809ea3da2fc9294cf9e995e6484819b964cf09dbacfd",
+              "outputs": [
+                {
+                  "bundle": "whole-game-content",
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "path_id": 7475921267688756750,
+                  "bytes": 262216,
+                  "sha256": "e9a5bab2332e929fcfdfdd78c28917ea2875a886f4cec0336a84594ec10f25f6",
+                  "transform": {
+                    "clear_reference_pose": true,
+                    "native_stream": true,
+                    "normalize_root_quaternions": true,
+                    "root_average": true,
+                    "root_average_atan2": true
+                  }
+                }
+              ]
             }
           ]
         }
@@ -265206,6 +265227,49 @@
                   "transform": {
                     "clear_reference_pose": true,
                     "native_stream": true
+                  }
+                }
+              ]
+            },
+            {
+              "path_id": -5294015683357796770,
+              "class_id": 74,
+              "sha256": "e698559c0ab80bf25916922d4d22be91b24ee7f46cc93891e93af2a671404da0",
+              "outputs": [
+                {
+                  "bundle": "whole-game-content",
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "path_id": 667716993894962822,
+                  "bytes": 2460,
+                  "sha256": "d821b7219ca531137dd9975f8a510771b0e77f7eb1c03bc2679841002ce98d30",
+                  "native_type_hash": "1ece1117b1e6a8b84516b3eb77051cc3",
+                  "transform": {
+                    "clear_reference_pose": true,
+                    "native_stream": true,
+                    "references": [
+                      {
+                        "offset": 2400,
+                        "from": [
+                          1,
+                          361505007434667735
+                        ],
+                        "to": [
+                          0,
+                          -5268874598339644868
+                        ]
+                      },
+                      {
+                        "offset": 2428,
+                        "from": [
+                          1,
+                          -7616057909809384989
+                        ],
+                        "to": [
+                          0,
+                          -8803441813990917712
+                        ]
+                      }
+                    ]
                   }
                 }
               ]

@@ -10,6 +10,55 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J1355](PORTING_JOURNAL.md#j1355--supply-source-derived-bundle-tree-providers) | 2026-10-31 | Supply source-derived bundle Tree providers | 2026-10-31. |
+| [J1353](PORTING_JOURNAL.md#j1353--capture-the-requested-final-menu-heap) | 2026-10-31 | Capture the requested final menu heap | 2026-10-31. |
+| [J1354](PORTING_JOURNAL.md#j1354--supply-source-derived-bundle-canvasrenderer-providers) | 2026-10-31 | Supply source-derived bundle CanvasRenderer providers | 2026-10-31. |
+| [J1352](PORTING_JOURNAL.md#j1352--extend-source-derived-bundle-material-providers) | 2026-10-31 | Extend source-derived bundle Material providers | 2026-10-31. |
+| [J1351](PORTING_JOURNAL.md#j1351--supply-source-derived-bundle-material-providers) | 2026-10-31 | Supply source-derived bundle Material providers | 2026-10-31. |
+| [J1350](PORTING_JOURNAL.md#j1350--restore-original-console-retention-default-at-composed-startup) | 2026-10-31 | Restore original Console retention default at composed startup | 2026-10-31. |
+| [J1349](PORTING_JOURNAL.md#j1349--supply-the-whole-game-bandit-achievement-sprite) | 2026-10-31 | Supply the whole-game Bandit achievement Sprite | 2026-10-31. |
+| [J1348](PORTING_JOURNAL.md#j1348--preserve-preparation-markers-without-redundant-diagnostic-stacks) | 2026-10-31 | Preserve preparation markers without redundant diagnostic stacks | 2026-10-31. |
+| [J1347](PORTING_JOURNAL.md#j1347--reconstruct-whole-game-customrendertextures) | 2026-10-31 | Reconstruct whole-game CustomRenderTextures | 2026-10-31. |
+| [J1346](PORTING_JOURNAL.md#j1346--qualify-whole-game-recorded-animation-source) | 2026-10-31 | Qualify whole-game Recorded animation source | 2026-10-31. |
+| [J1345](PORTING_JOURNAL.md#j1345--reconstruct-whole-game-shader-material-signature-template) | 2026-10-31 | Reconstruct whole-game Shader material-signature template | 2026-10-31. |
+| [J1344](PORTING_JOURNAL.md#j1344--reconstruct-whole-game-overlapping-sdk-shader-axes) | 2026-10-31 | Reconstruct whole-game overlapping SDK Shader axes | 2026-10-31. |
+| [J1342](PORTING_JOURNAL.md#j1342--restore-original-point-sound-timeout-dispatch) | 2026-10-31 | Restore original point-sound timeout dispatch | 2026-10-31. |
+| [J1343](PORTING_JOURNAL.md#j1343--reconstruct-whole-game-surface-shader-stage-context) | 2026-10-31 | Reconstruct whole-game surface Shader stage context | 2026-10-31. |
+| [J1341](PORTING_JOURNAL.md#j1341--reconstruct-whole-game-original-noto-font) | 2026-10-31 | Reconstruct whole-game original Noto Font | 2026-10-31. |
+| [J1339](PORTING_JOURNAL.md#j1339--reconstruct-billboard-material-feature-shader-ordering) | 2026-10-31 | Reconstruct Billboard material-feature Shader ordering | 2026-10-31. |
+| [J1340](PORTING_JOURNAL.md#j1340--recover-beetlequeen-ghost-fx-managed-records-from-their-hierarchy) | 2026-10-31 | Recover BeetleQueen ghost FX managed records from their hierarchy | 2026-10-31. |
+| [J1338](PORTING_JOURNAL.md#j1338--restore-native-null-avatarmask-defaults-for-acolyte) | 2026-10-31 | Restore native null AvatarMask defaults for Acolyte | 2026-10-31. |
+| [J1337](PORTING_JOURNAL.md#j1337--reconstruct-populated-synchronized-controller-tree-allocation) | 2026-10-31 | Reconstruct populated synchronized controller tree allocation | 2026-10-31. |
+| [J1336](PORTING_JOURNAL.md#j1336--normalize-retained-synchronized-controller-trees-to-base-motion) | 2026-10-31 | Normalize retained synchronized controller trees to base motion | 2026-10-31. |
+| [J1334](PORTING_JOURNAL.md#j1334--reconstruct-the-voidsurvivor-synchronized-layer-chain) | 2026-10-31 | Reconstruct the VoidSurvivor synchronized layer chain | 2026-10-31. |
+| [J1335](PORTING_JOURNAL.md#j1335--reconstruct-reaper-secondary-swing-animation) | 2026-10-31 | Reconstruct Reaper secondary-swing animation | 2026-10-31. |
+| [J1333](PORTING_JOURNAL.md#j1333--reconstruct-expanding-wave-callback-transform-scales) | 2026-10-31 | Reconstruct expanding-wave callback Transform scales | 2026-10-31. |
+| [J1331](PORTING_JOURNAL.md#j1331--reconstruct-the-false-son-boss-controller) | 2026-10-31 | Reconstruct the False Son Boss controller | 2026-10-31. |
+| [J1332](PORTING_JOURNAL.md#j1332--reconstruct-four-remaining-alpha-renderer-records) | 2026-10-31 | Reconstruct four remaining alpha renderer records | 2026-10-31. |
+| [J1330](PORTING_JOURNAL.md#j1330--reconstruct-the-seeker-synchronized-controller) | 2026-10-31 | Reconstruct the Seeker synchronized controller | 2026-10-31. |
+| [J1329](PORTING_JOURNAL.md#j1329--reconstruct-ui-and-railgunner-display-synchronized-controllers) | 2026-10-31 | Reconstruct UI and Railgunner display synchronized controllers | 2026-10-31. |
+| [J1327](PORTING_JOURNAL.md#j1327--release-destroyed-overlap-discovery-targets-after-session-teardown) | 2026-10-31 | Release destroyed overlap discovery targets after session teardown | 2026-10-31. |
+| [J1328](PORTING_JOURNAL.md#j1328--reconstruct-false-son-synchronized-behaviour-controller) | 2026-10-31 | Reconstruct False Son synchronized behaviour controller | 2026-10-31. |
+| [J1325](PORTING_JOURNAL.md#j1325--reconstruct-voidward-synced-motion-controller) | 2026-10-31 | Reconstruct VoidWard synced motion controller | 2026-10-31. |
+| [J1324](PORTING_JOURNAL.md#j1324--reconstruct-powerorb-synced-motion-controller) | 2026-10-31 | Reconstruct PowerOrb synced motion controller | 2026-10-31. |
+| [J1326](PORTING_JOURNAL.md#j1326--reconstruct-legacy-transparent-shader-from-original-materials) | 2026-10-31 | Reconstruct Legacy Transparent Shader from original Materials | 2026-10-31. |
+| [J1322](PORTING_JOURNAL.md#j1322--reconstruct-synced-motion-and-mimic-controllers) | 2026-10-31 | Reconstruct synced motion and Mimic controllers | 2026-10-31. |
+| [J1323](PORTING_JOURNAL.md#j1323--reconstruct-whole-game-scope-shader-texture-declaration) | 2026-10-31 | Reconstruct whole-game Scope Shader texture declaration | 2026-10-31. |
+| [J1321](PORTING_JOURNAL.md#j1321--reconstruct-whole-game-fallback-material-keyword-spaces) | 2026-10-31 | Reconstruct whole-game fallback Material keyword spaces | 2026-10-31. |
+| [J1320](PORTING_JOURNAL.md#j1320--reconstruct-whole-game-missing-script-base-component) | 2026-10-31 | Reconstruct whole-game missing-script base component | 2026-10-31. |
+| [J1318](PORTING_JOURNAL.md#j1318--reconstruct-whole-game-shrine-component-relationships) | 2026-10-31 | Reconstruct whole-game shrine component relationships | 2026-10-31. |
+| [J1319](PORTING_JOURNAL.md#j1319--reconstruct-whole-game-native-component-and-material-suppliers) | 2026-10-31 | Reconstruct whole-game native component and Material suppliers | 2026-10-31. |
+| [J1316](PORTING_JOURNAL.md#j1316--reconstruct-whole-game-controller-state-range-managed-records) | 2026-10-31 | Reconstruct whole-game controller state-range managed records | 2026-10-31. |
+| [J1313](PORTING_JOURNAL.md#j1313--reconstruct-duplicate-clip-name-controller-relationships) | 2026-10-31 | Reconstruct duplicate clip-name controller relationships | 2026-10-31. |
+| [J1314](PORTING_JOURNAL.md#j1314--reconstruct-whole-game-controller-owned-managed-identity) | 2026-10-31 | Reconstruct whole-game controller-owned managed identity | 2026-10-31. |
+| [J1312](PORTING_JOURNAL.md#j1312--reconstruct-empty-terraindata-detail-shaders) | 2026-10-31 | Reconstruct empty-TerrainData detail Shaders | 2026-10-31. |
+| [J1310](PORTING_JOURNAL.md#j1310--reconstruct-whole-game-terraindata-preload-shaders) | 2026-10-31 | Reconstruct whole-game TerrainData preload Shaders | 2026-10-31. |
+| [J1308](PORTING_JOURNAL.md#j1308--resolve-whole-game-inserted-component-managed-identities) | 2026-10-31 | Resolve whole-game inserted-component managed identities | 2026-10-31. |
+| [J1309](PORTING_JOURNAL.md#j1309--complete-original-champrush-director-ownership) | 2026-10-31 | Complete original Champrush Director ownership | 2026-10-31. |
+| [J1306](PORTING_JOURNAL.md#j1306--source-ordered-whole-game-standard-fallback-shader-records) | 2026-10-31 | Source-ordered whole-game Standard fallback Shader records | 2026-10-31. |
+| [J1303](PORTING_JOURNAL.md#j1303--publish-original-whole-game-meridian-material-relationships) | 2026-10-31 | Publish original whole-game Meridian Material relationships | 2026-10-31. |
+| [J1305](PORTING_JOURNAL.md#j1305--reconstruct-whole-game-original-director-ownership) | 2026-10-31 | Reconstruct whole-game original Director ownership | 2026-10-31. |
+| [J1311](PORTING_JOURNAL.md#j1311--recover-native-settings-after-writer-termination-and-activity-restart) | 2026-10-31 | Recover native settings after writer termination and activity restart | 2026-10-31. |
 | [J1304](PORTING_JOURNAL.md#j1304--reconstruct-whole-game-original-lodgroup-ownership) | 2026-10-31 | Reconstruct whole-game original LODGroup ownership | 2026-10-31. |
 | [J1302](PORTING_JOURNAL.md#j1302--reconstruct-whole-game-original-billboard-ownership) | 2026-10-31 | Reconstruct whole-game original Billboard ownership | 2026-10-31. |
 | [J1301](PORTING_JOURNAL.md#j1301--reconstruct-whole-game-original-transform-ownership) | 2026-10-31 | Reconstruct whole-game original Transform ownership | 2026-10-31. |

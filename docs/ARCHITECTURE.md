@@ -458,6 +458,8 @@ The optional `preserve_original_script_hash` selection delegates to the object
 owner's existing unchanged-schema check after verifying the actual original
 MonoScript binding. The hierarchy path recipes select original records using
 proven roots and unique reciprocal child paths; output state remains exact.
+The path-managed profile also selects BeetleQueenAcidGhost/FX components via
+the original root/child hierarchy, preserving script identity and scalar bytes.
 The generic path also delegates `inactive_scene_object` to the object owner's
 named-active-source check. `owner-whole-game-activation-records.json` selects
 three original HUD roots under existing authored activation policies, preserving
@@ -487,7 +489,13 @@ through qualified GameObject component slots and reciprocal ownership. Original
 parent/child pointer shape, native schemas and every nonpointer bit remain checked;
 the existing generic owner relocates only explicit references. Setup takes pinned
 original bundles and a fresh output pack; existing scoped readers close at exit
-and pack receipts persist. No runtime owner is added.
+and pack receipts persist. Eight additional expanding-wave Transforms use the same
+owner's source callback endpoint-distance projection: pinned script identity, typed
+radius/segments/curve/root fields, reciprocal hierarchy and hitbox/ghost membership
+supply the calculation. Only local scale X changes before checked pointer relocation;
+other native bytes remain source-owned. The existing original-record reader owns
+pinned inputs and teardown. These records are host raw-exact; phone/runtime gates
+remain open. No runtime owner is added.
 `owner-whole-game-billboard-records.json` selects two original BillboardRenderers
 through unique native component slots and reciprocal public GameObject ownership,
 plus their two referenced BillboardAssets. Original material endpoints resolve to
@@ -525,8 +533,10 @@ renderer/program preconditions and native type hashes remain checked. Compute
 shells retain declarations and keywords; they contain no executable Android
 compute programs. The material/compute recipe adds no runtime behavior.
 Its `controller_clear_skeleton_masks` policy follows the pinned
-exporter's omitted layer masks: it removes original mask entries and subtracts
-their native allocation sizes, preserving all other controller fields.
+exporter's omitted layer masks: it removes original skeleton mask entries and
+subtracts their native allocation sizes. Exact-editor `BuildAsset` applies the
+full 83-bit human mask to every layer whose exported AvatarMask is null; the
+same operation restores that default while preserving other controller fields.
 `controller_state_order` relocates whole original state records using checked
 source-index bijections. Default states and direct transition destinations move
 with those records; selector and entry/exit indices retain their source values.
@@ -540,6 +550,21 @@ pinned exporter's filename suffix before deriving the path CRC from source text.
 no motion, retaining its state and remapping that tree's indices to the native
 unavailable sentinel. Its size adjustment derives from the original subtree and
 the admitted native array layout.
+`controller_omit_synced_overrides` retains the pinned exporter's first motion
+tree and surviving source clip occurrences. A retained tree becomes base motion
+with index zero even when only an original synchronized slot referenced it;
+all override indices become unavailable. `controller_tree_allocation` derives
+omitted empty and populated 1D/2D tree blob sizes from original node/child counts,
+primitive arrays and nested neighbor lists using exact-editor native strides
+and alignment. Direct blend payloads remain unsupported. It also omits synchronized layers’
+behaviour overrides, retaining source index order and remapping surviving ranges
+without synthesizing behaviour bodies or changing controller blob allocation.
+`controller_resolve_synced_layers` follows exported synchronized layer chains to
+an unsynchronized base, then derives machine groups, layer ordinals and state
+index slots from those source relationships after override omission. Controller
+blob-size changes follow 8-byte-aligned native index allocations; no target size
+constant or controller body is stored in the recipe.
+Setup, pack state and teardown remain with the same generic record owner.
 `scripts/lab/sprite_native_fixture.py` stages the current SDK-only Sprite runtime
 diagnostic with `SpriteNativeFixture.cs`. It references source PNGs by path/hash
 in a fresh ignored project. Under the editor mutex, the pinned Unity MCP invokes
@@ -1940,13 +1965,20 @@ exit and session cleanup clear notes and consent. The settings/application/GUI
 owners give the visible modal input priority while retaining the owned pause.
 Android clipboard, browser handoff and the composed settings route require
 device acceptance; host fixtures exercise the authored flow and refusal paths.
-`LabDiagnostics` replaces `snapshot.json` on its existing periodic schedule.
+`LabDiagnostics` requests 300 FPS at startup, before its first frame yield and
+the lab menu. Gameplay retains its existing 300 FPS request and restores this
+startup value on exit. This is a request; actual FPS depends on device load.
+It replaces `snapshot.json` on its existing periodic schedule.
 Only its startup/lifecycle snapshots use the full `LAB_SNAPSHOT` console record;
 periodic JSON is not retained by the original console. Original and error logging
 stay unchanged. During completed-session reclamation, `SessionResourceBoundary`
 releases already-destroyed HurtBox targets from returned bullet-hit pool entries,
 with no live world/network, after deferred destruction. It preserves live and
 checked-out hits and records its release count with existing registry cleanup.
+It also removes already-destroyed targets from the original overlap discovery
+scratch list at that same boundary, preserving live targets, order and capacity.
+Native captured roots identify the retained completed-character graph; ordinary
+session memory acceptance remains open.
 The same owner prunes deferred loadout callbacks targeting already-destroyed
 `CharacterSpawnCard` clones after world/network teardown. It writes the boxed
 original availability struct back, preserving its availability flag, live and
@@ -1970,7 +2002,9 @@ explicit exit and hard deadline for historical use; the service never calls it.
 This does not simulate power loss or ENOSPC; device qualification remains open.
 The current `session-memory-check --memory-snapshots` diagnostic extends
 `SessionResourceBoundary` with native/managed heap captures before presentation
-at menus 2 and 4, after the completed worlds have been reclaimed. It requires an
+at menu 2 and the requested series' final menu, after the completed worlds have
+been reclaimed. The host binds the final capture index to `sessions + 1`;
+selectors without that field retain the historical menu-4 default. It requires an
 attempt-matched opt-in and an idle Development player. Native callback completion
 and a nonempty owned file are required before the host proceeds. The host copies
 only that generated snapshot, verifies its SHA-256, then removes the exact device
@@ -2121,6 +2155,12 @@ The body-input iterator keeps its historical screen lease only for non-playable
 experiments, so playable input cleanup cannot overwrite application teardown.
 Explicit Android sleep/background actions remain available. The production
 lifetime methods execute in the native-feedback host fixture.
+
+At playable startup this owner also applies the original Console retention convar
+metadata default once when the original Console is absent and its limit is still
+uninitialized. The process-wide default survives coordinator replacement; a live
+Console, preconfigured nonzero limit and later user values retain authority.
+The original log handler continues to trim and notify subscribers itself.
 
 The exact editor is started with `./dev editor --target lab --action open`; send it one
 mutation at a time. Device acceptance is always the real device, never the editor.
@@ -2619,6 +2659,12 @@ hash but must differ as complete pairs; unknown pairs refuse.
 
 The per-session `pointSoundDiagnosticRequested` selector defaults false and
 requires the integrated route, ready selected audio and instrumented callsites.
+`PortSessionOriginalAudioOwner.Update` also dispatches the original point-sound
+timeout processor while the original application is inactive and opted-in native
+audio is ready. The cached original-method delegate preserves the original clock,
+timeout and emitter pool; active application dispatch and original Term close this
+seam. It adds no pool cleanup or global application update dispatch.
+
 `PortSessionOriginalAudioOwner` owns the matching Unity log subscription;
 the Core observer stores bounded scalar values only, never raw messages/stacks
 or Unity objects. `PortSession.Save` refreshes its snapshot. Completion, lifecycle
@@ -5158,7 +5204,10 @@ new owner or private target-tree supplier is added.
 initial world-preparation seam, including the existing loot report write,
 asynchronous resource waits, equipment/displays and stage population. Markers
 contain monotonic process time and frame count so thermal traces can identify
-the interrupted operation. They add no retained state, report writes or yields;
+the interrupted operation. Per-call `LogOption.NoStacktrace` preserves marker
+text without adding preparation stacks to the original Console history. Original
+and error logging keep their existing stack policy. They add no owner state,
+report writes or yields;
 the existing report phase and resource teardown remain authoritative. A marker
 names the operation about to begin; the next marker bounds its elapsed time.
 
@@ -5617,3 +5666,174 @@ graph. Setup takes original PC/SDK roots, explicit receipt-pinned provider packs
 the public-source Mesh helper and a fresh output directory. Process exit releases
 file/codec handles; receipts persist. All 10 objects, the member and compressed
 bundle are host raw-exact to J850. Complete phone production remains open.
+
+`owner-whole-game-director-records.json` selects three original PlayableDirectors
+through unique component slots and reciprocal public GameObject owners. Shipped
+selectors, compressed hierarchy outputs and checked typed PPtr witnesses supply
+all endpoints; Champrush follows an original Transform graph rooted at a
+published GameObject and reciprocal Animator component ownership.
+The existing generic record owner applies its signed exposed-name
+reimport and checked pointer relocation, retaining native schema and other fields.
+Setup requires pinned original bundles and a fresh output pack; scoped readers
+close on process exit and pack receipts persist. No runtime owner is added.
+
+The whole-game Meridian Material profile
+`recipe/owner-whole-game-meridian-material-records.json` uses the existing
+`record_produce.py` owner to preserve original fields and keywords while
+relocating schema-checked Shader/texture relationships. Its four persisted
+records are host raw-exact; shared Shader and complete bundle/device gates
+remain separate. It owns no runtime state or teardown.
+
+The existing `shader_prefab.py` owner registers inherited fallback keywords in
+snippet/stage order, merging global/local declarations and builtin names within
+each stage while retaining existing flags. The whole-game Standard fallback
+profile `recipe/owner-whole-game-shader-standard-fallback.json` selects two
+original records through pinned public exporter templates and acquired SDK
+metadata. Setup uses explicit PC/SDK/template/codec inputs and a fresh output;
+process exit releases source/compiler handles and receipts persist. Both records
+are host raw-exact to J850; complete bundle and phone production remain open.
+
+`owner-whole-game-terrain-shaders.json` selects eleven original TerrainData preload
+Shader dependencies through the existing `shader_prefab.py` owner. Checked original
+external pointers supply source identity; acquired SDK metadata supplies Android
+records. Setup uses pinned original/SDK/tool roots and a fresh record pack; process
+exit releases compiler/source handles and receipts persist. Records are host
+raw-exact to J850; complete bundle and phone gates remain open.
+
+`owner-whole-game-terrain-detail-shaders.json` extends `shader_prefab.py` with
+original TerrainData usage witnesses. Three checked default Shader pointers and
+an empty detail prototype array select the existing fresh-mono instancing policy;
+original Shader and acquired SDK records supply identity and compilation inputs.
+Setup pins the original TerrainData alongside Shader/SDK/tool inputs and creates
+a fresh record pack; process exit releases source/compiler handles while receipts
+persist. Three records are host raw-exact to J850; complete bundle/phone gates
+remain open. This adds no runtime owner.
+
+`owner-whole-game-missing-script-records.json` uses the existing J1225
+`object_produce.py` base-type policy through `record_produce.py`. A pinned
+original base MonoBehaviour supplies the complete type; original component
+ownership supplies the selected record and checked pointer relocations. Setup
+requires pinned original bundles and a fresh output pack. Scoped readers close
+on process exit; receipts persist. No runtime owner or input backend is added.
+
+`owner-whole-game-fallback-material-records.json` extends the existing generic
+record owner with SDK-declared fallback keyword partitioning. `shader_sdk.py`
+and `shader_prefab.py` provide the checked Standard declaration registry; original
+material strings and property values remain source-owned. The Gauntlet selection
+reuses dummy sorting and published Shader/texture relationships. Setup requires
+pinned original/SDK roots and fresh output; scoped readers close on process exit
+and receipts persist. Twelve records are host raw-exact to J850. This adds no
+runtime owner; complete bundle and phone production remain open.
+
+`owner-whole-game-scope-shader.json` uses the existing `shader_produce.py`
+property owner and pinned exporter template to retain native dimension-one
+texture declarations (`any`). Setup takes explicit original/SDK/template/codec
+inputs and a fresh output pack; process exit releases source/compiler handles
+and receipts persist. The record is host raw-exact to J850. This adds no runtime
+owner; complete bundle and phone production remain open.
+
+
+`owner-whole-game-legacy-transparent-shader.json` uses the existing
+`shader_prefab.py` SDK owner with pinned original Material witnesses. Checked
+native Shader pointers and original instancing flags select the existing no-scene
+variant policy; particle SDK identity 211 retains its feature-specific policy.
+Setup requires pinned original/SDK/template/codec inputs and a fresh output pack;
+existing compiler/codec teardown releases processes and receipts persist.
+One record is host raw-exact to J850; complete bundle and phone/runtime gates
+remain open. This introduces no runtime owner.
+
+`owner-whole-game-billboard-shader.json` extends the existing `shader_prefab.py`
+owner with original Material feature combinations and vertex-stage variant order.
+The existing SDK compiler native-order mechanism preserves source program
+interning. Setup pins original Shader/Material bundles, SDK/tool inputs and a
+fresh record pack; process exit releases source/compiler handles and receipts
+persist. One record is host raw-exact to J850; complete bundle and phone/runtime
+gates remain open. No runtime owner is added.
+
+`owner-whole-game-font-records.json` selects the original Noto Font through the
+existing `record_produce.py` generic native owner. Published Material/Texture
+relationships relocate its two checked pointers while FontData and native schema
+remain source-owned. Setup pins original PC input and creates a fresh record
+pack; scoped readers close on process exit and receipts persist. This adds no
+runtime owner; complete bundle and phone/runtime acceptance remain open.
+
+`owner-whole-game-surface-shader.json` extends the existing `shader_prefab.py`
+SDK owner with two original Material witnesses. `payload_shader_records.py`
+matches source passes by name/LightMode and lifts fragment cyclic keyword order
+over original vertex-only contexts. `shader_sdk.py` derives the compile-only
+UNITY_PASS_DEFERRED declaration from source LightMode; serialized keyword axes
+remain source-owned. Setup pins original Shader/Material bundles, SDK/tool
+inputs and a fresh output pack; scoped source/compiler processes close on exit
+and receipts persist. One record is host raw-exact to J850; complete bundle and
+phone/runtime acceptance remain open. No runtime owner is added.
+
+`owner-whole-game-overlapping-axis-shader.json` extends the existing
+`shader_prefab.py`/`payload_shader_records.py` owners with SDK-declared default
+features and overlapping cross-stage axes over original vertex contexts.
+Serialized tier rows retain duplicate identities; the existing SDK compiler
+receives first-seen unique native identities. Eleven original Material witnesses
+select feature combinations. Setup pins original Shader/Material bundles,
+SDK/tool inputs and a fresh output pack; scoped source/compiler processes close
+on exit and receipts persist. One record is host raw-exact to J850; complete
+bundle and phone/runtime acceptance remain open. No runtime owner is added.
+
+`owner-whole-game-material-template-shader.json` extends the existing
+`shader_prefab.py`/`payload_shader_records.py` owners with complete cyclic
+material-signature templates inferred from original fragment records. The
+entire source sequence must match before lifting over original vertex contexts;
+SDK user and builtin declarations jointly identify runtime keywords. Existing
+stage/axis contracts remain first choices. Setup pins original Shader/Material
+bundles, SDK/tool inputs and a fresh output pack; scoped source/compiler processes
+close on exit and receipts persist. One record is host raw-exact to J850;
+complete bundle and phone/runtime acceptance remain open. No runtime owner is added.
+
+
+`owner-whole-game-custom-render-textures.json` selects three original
+CustomRenderTextures through the existing `record_produce.py` generic native
+owner. Native schemas validate three typed PPtrs per record; published Material
+and Texture suppliers provide relocated endpoints, checked against original
+external metadata. All other native fields remain source-owned. Setup requires
+pinned original bundles and a fresh output pack; scoped readers close on process
+exit and receipts persist. Three records are host raw-exact to J850. No runtime
+owner is added; complete bundle and phone/runtime acceptance remain open.
+
+`recipe/owner-whole-game-sprite-relationships.json` selects the original Bandit
+achievement Sprite through the existing `record_produce.py` native owner. Its
+current exported PNG GUID witnesses the imported Sprite identity; the original
+Sprite supplies geometry and native schema, and a checked Texture2D pointer
+supplies its dependency. Setup pins original input and creates a fresh record
+pack; scoped readers close on process exit and receipts persist. The record is
+host raw-exact to J850. This adds no runtime owner; bundle and phone gates remain
+open.
+
+
+`recipe/owner-whole-game-bundle-material-records.json` selects 67 original
+Materials through the existing `record_produce.py` generic native owner. Unique
+typed Shader/Texture relationships supply relocated endpoints; published
+SingleColor, Default and TransparentDiffuse dummy Shader identities select the
+existing ordinal invalid-keyword
+policy. Inverse-source ambiguity exclusions preserve unresolved alternatives.
+Setup pins original bundles and creates a fresh record pack; scoped readers close
+on process exit and receipts persist. All 67 persisted records are host raw-exact
+to J850. This adds no runtime owner; group, complete bundle and phone gates remain
+open.
+
+
+`recipe/owner-whole-game-bundle-canvas-records.jsonl.gz` selects 10,870 original
+CanvasRenderers through the existing `record_produce.py` native owner. Qualified
+GameObject component edges and reciprocal original ownership supply checked
+pointer relocations; remaining native fields and schemas stay source-owned.
+Setup pins original bundles and streams bounded source groups into a fresh record
+pack. Scoped readers close on process exit and persisted receipts remain.
+All records are host raw-exact to J850; no runtime owner is added. Complete
+bundle and phone/install/update gates remain open.
+
+`recipe/owner-whole-game-bundle-tree-records.jsonl.gz` selects 62 original Trees
+through the existing `record_produce.py` native owner. Qualified GameObject
+component edges and reciprocal original ownership establish checked pointer
+relocations; additional nonzero pointers remain excluded until their endpoints
+are source-qualified. Native scalars and schemas remain original-input owned.
+Setup pins original bundles and streams bounded source groups into a fresh pack;
+scoped readers close on process exit and persisted receipts remain. All 62 records
+are host raw-exact to J850. Complete bundle and phone/install/update gates remain
+open; no runtime owner is added.

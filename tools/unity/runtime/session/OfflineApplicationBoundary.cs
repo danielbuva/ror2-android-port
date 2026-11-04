@@ -98,6 +98,24 @@ public sealed partial class PortSession
         {
             this.coordinator = coordinator;
         }
+        // The composed entry has no original Console Awake/InitConVars. Its static
+        // Unity log subscriber still runs, so apply this original default once.
+        // Console-owned configuration and later explicit values remain authoritative.
+        static bool consoleRetentionInitialized;
+        public static void InitializeConsoleRetention()
+        {
+            if (consoleRetentionInitialized)
+                return;
+            if (!RoR2.Console.instance)
+            {
+                var field = typeof(RoR2.Console).GetField("maxMessages",
+                    System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.NonPublic);
+                var limit = (RoR2.ConVar.IntConVar)field.GetValue(null);
+                if (limit.value == 0)
+                    limit.AttemptSetString(limit.defaultValue);
+            }
+            consoleRetentionInitialized = true;
+        }
         // Application screen lifetime: include catalog loading and next-menu
         // preparation, before the body-input iterator can hold NeverSleep.
         int priorScreenSleepTimeout;

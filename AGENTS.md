@@ -82,6 +82,15 @@ Documentation serves the next implementer; keep it short and current.
 - Superseded material moves to `docs/history/`; nothing labelled "current" lives there.
 - Wrap prose at a readable width and put spaces between numbers and words.
 
+## Performance goals
+
+- The phone converter minimizes installation time, memory, heat and storage use.
+- The game maximizes sustained FPS, frame pacing, battery efficiency and visual fidelity.
+- Neither sacrifices correctness for benchmark numbers: reconstructed bytes, original behaviour
+  and visual output stay exact. Closing reconstruction gaps remains the priority; full-pipeline
+  profiling and optimization is a release gate in [docs/public-alpha.md](docs/public-alpha.md#performance-release-gate).
+  Record per-stage time/memory/heat/storage when you already run the converter or the game.
+
 ## Working speed and token efficiency
 
 The goal is speed of implementation, not theoretical safety; boundaries above still apply in full.
