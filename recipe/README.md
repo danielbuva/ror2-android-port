@@ -4804,9 +4804,9 @@ production remain open. Generated outputs and raw comparison evidence remain ign
 | Recipe | SHA-256 |
 | --- | --- |
 | `owner-native-alias-records.json` | `4f041c4fdb4b9b928c1301fb8fa207e060ad94cc4b1e40ad8e1ef43c5b54aab2` |
-| `owner-objective-reused-records.json` | `59af5ea81ad9473f39c27cbd88e9f34b5be866c49a915bf479de10cbff27ad29` |
+| `owner-objective-reused-records.json` | `0f03acd21a7000bd31127aed63acd0957ebb3d72bdd3737c0cbd40c71619742c` |
 | `owner-objective-legacy-particle-shader.json` | `0c8c53f8075478878bf812b6bb89df9a34b44bc034d09bc928cb813e2b008304` |
-| `owner-objective-support-objects.json` | `2fdab523dc067eebf70709078ad08b6c854baf3a2fdbd86ee28ce5230f7774cc` |
+| `owner-objective-support-objects.json` | `6177f393bceff837be35af0f5741ed514a11eb5f673fa5632839e65686e0d09c` |
 
 Manual provenance, privacy, licensing and sensitive-content audit: these profiles
 contain original source selectors, expected hashes, checked pointer/component
@@ -4966,7 +4966,7 @@ curve value, node table, program, private path or device identifier is tracked.
 | Recipe | SHA-256 |
 | --- | --- |
 | `owner-commando-objects.json` | `bfd084b6e1d649f0e0b62eb56714bc12535d5c2fd4720b708e313aa0f7641def` |
-| `owner-commando-reused-records.json` | `5440ce0007c9d69c6f5bd82f500a97caae8fffe1ed1b6dc7f76be96ad45ee37f` |
+| `owner-commando-reused-records.json` | `7e5f9478375a58032aa204a1f57979faaf29f212b3c9b40e2a1fbe90dbdfb6d7` |
 | `owner-commando-original-sprites-1.json` | `503c9feb21cf0865a6429c4a5d51f5b97ee2767b8235e9454635041bf1efb09f` |
 | `owner-commando-sdk-shaders.json` | `9d109f1048dbc1bdddbae266dd4fee798be5328ef759226611262adbcf8e3ede` |
 | `owner-commando-native-sprites-2.json` | `12f487a6c66e4645820a8a73b4e597fd9134b906ccf68bc7a323ae0bd2b9b594` |
@@ -6802,4 +6802,16 @@ No game-derived bodies or new external inputs are included.
 
 | Recipe | SHA-256 |
 | --- | --- |
-| `owner-commando-objects.json` | `e5c0c13f07f2a57d99681c45d17e732c0cf5c77ed0007f526ab17eec8e91e98e` |
+| `owner-commando-objects.json` | `b7029a2b1dbb5f417c393840ab8545170b4d46f1b2d0708c1159ec04ab08d25c` |
+
+## Current EventSystem supplier identity (2026-11-04)
+
+The objective and Commando remap/object profiles above select EventSystem by
+assembly, namespace and class in the fresh source-produced player registry.
+Their audited hash rows include this policy and the refreshed supplier links.
+Manual provenance, privacy, licensing and sensitive-content audit: the change
+adds only a public script identity and authored selection policy; no serialized
+body, game code, private path or credential is included. The pinned AssetRipper
+MonoScriptExtensions full-name comparison informs identity selection. The
+producer retains receipt/file/native-type checks and records historical body
+equality as a diagnostic; generated bodies remain ignored.

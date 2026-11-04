@@ -989,6 +989,15 @@ def script_fields(body):
     return offset, (string(), string(), string())
 
 
+def current_script_identity(body, class_id, expected):
+    """Check a receipt-bound current MonoScript by assembly, namespace and class."""
+    if class_id != 115:
+        raise ValueError("current script selection requires MonoScript")
+    _, (name, namespace, assembly) = script_fields(body)
+    if [assembly, namespace, name] != expected:
+        raise ValueError("current script identity differs")
+
+
 def original_script_properties(script, script_type, behaviour_type, current_type, identity_owner):
     """Retain the original editor hash only for the same unchanged script schema."""
     offset, names = script_fields(script)
@@ -1649,7 +1658,16 @@ def produce(profile_path, profile_sha256, pc, output, codec_path, codec_sha256, 
                     typ = copy.deepcopy(base_type)
                     typ.update(derived)
                     receipt.setdefault("managed_schema_inputs", {}).update(inputs)
-                if len(body) != selected["bytes"] or hashlib.sha256(body).hexdigest() != selected["sha256"]:
+                if "script_identity" in selected:
+                    if "record" not in selected or row.get("source_produced", {}).get("script_identity") != selected["script_identity"]:
+                        raise ValueError("current script requires receipt-bound serialized supplier")
+                    current_script_identity(body, typ["class_id"], selected["script_identity"])
+                    receipt.setdefault("current_script_records", {})[str(selected["path_id"])] = {
+                        "identity": selected["script_identity"],
+                        "sha256": hashlib.sha256(body).hexdigest(),
+                        "historical_raw_exact": len(body) == selected["bytes"] and hashlib.sha256(body).hexdigest() == selected["sha256"],
+                    }
+                elif len(body) != selected["bytes"] or hashlib.sha256(body).hexdigest() != selected["sha256"]:
                     raise ValueError("produced object differs from accepted hash")
                 if record_type_hash is not None and typ["hash"].hex() != record_type_hash:
                     raise ValueError("produced record native type identity differs")
