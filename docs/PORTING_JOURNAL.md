@@ -2333,7 +2333,7 @@ Bounded source recipe only; producer unchanged; 2,024 candidates remain excluded
 Residual three unchanged; readiness 693/705 available, 685 raw-exact.
 Complete groups, bundle, phone/install/update and runtime gates remain open.
 
-## J1358 — Retained sustained game performance report
+## J1359 — Retained sustained game performance report
 
 2026-11-04. Host-only report owner reads existing sustained and thermal receipts; synthetic fixtures
 check counter subtraction, periodic percentiles, thermal gaps and missing measurements.
