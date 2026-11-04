@@ -72,6 +72,12 @@ all existing hashes, then closes/removes its temporary store on success or failu
 Profile/native metadata remains resident. The aggregate member bound is 8 GiB;
 individual records retain the existing 256 MiB bound. An authored 257 MiB control
 matches canonical bytes with bounded payload memory; full phone production is open.
+`player_data.py` binds no-target code requests to the current runtime manifest
+and actual managed compiler source hashes. Historical target requests retain
+their pinned cohort. Existing importer GUIDs survive; first-import owners use
+stable converter path identities. The registry and all dependent writers share
+the freshly allocated script ID map; compiler/manifest/layout receipts stay pinned.
+
 `player_ui.py` owns current source Menu graph normalization, deterministic local
 IDs, SDK component construction and typed links to the existing player suppliers.
 Its audited `recipe/owner-player-menu.json` may retain build-assigned IDs/order; the source graph
