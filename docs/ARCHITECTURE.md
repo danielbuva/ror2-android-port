@@ -4205,7 +4205,12 @@ transform correction or error filter is added. Diagnostic read failures expose
 an inert status separately from native runtime errors. The source-asset/policy
 fixture checks minimum imported identity/geometry and actual sampling limits;
 `test_lightning_stake_observer.py` executes the extracted policy and identity
-retirement with authored host collaborators. Report replacement/status remain
+retirement with authored host collaborators. It also executes the extracted
+per-projectile finite predicate and live/disposed observation paths through
+synthetic terrain impact, paused updates, resume and detach-before-destruction.
+An invalid physical-position control verifies detection while network position
+and collider geometry remain finite. This scalar fixture does not simulate
+native impact physics or establish a causal fix. Report replacement/status remain
 source-inspected there. Only a device trace can identify a runtime transition,
 and neither fixture nor
 first sample proves native fire input. J623's intermittent corruption remains
