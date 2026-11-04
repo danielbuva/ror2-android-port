@@ -2582,3 +2582,19 @@ Cached live estimate 2915 frames/25.302 s (~115.2 FPS) before death, not sustain
 Peak 88.8 C, 11.009 s above 80 C, battery peak 33 C; maximum trace gap 0.783 s.
 Adopted install/hash, stopped process, OLED sleep, scratch/prune/lease cleanup verified.
 Relationship loading is the next measured lead; prior lakes prop observation remains open.
+
+## J1376 — Share a scoped relationship manifest during results preparation
+
+2026-11-04. Existing catalog/results owners share one local manifest across
+relationship type/provider loads and holder binding; no retained cache added.
+APK `bf6ff35203e9d7c6ea80dcc981b4aeddfbfdf6f55f544da7fb6b5ca5c6623934`,
+source `dd87950a`; production-method host fixture and exact-editor build passed.
+Evidence: `work/coordination/alpha-relationship-manifest-device-20261104T205722Z/`.
+Ordinary launch: menu 22.389 s, Start → world 85.757 s, launch → world 109.157 s.
+Relationship seam 1.539 s; original order/identity guards, 1 type/1 provider/32 pairs
+retained; natural StandardLoss generated, persisted and reloaded without first failure.
+Verdant Falls stage/HUD captured; prior empty prop mesh remains; no parity/speed claim.
+CPU/GPU peak 96.7 C, 67.455 s above 80 C; no sustained 3 s above 95 C;
+battery 30 to 32 C, maximum runtime sample gap 0.423 s. Adopted install/hash,
+stopped process, OLED sleep, scratch/prune/lease cleanup verified.
+Prior art: pinned R2API content families; sustained/manual/alpha acceptance remains open.
