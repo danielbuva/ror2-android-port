@@ -8,6 +8,11 @@ import tempfile
 import unittest
 
 
+# Fresh dependency environments and cloned repositories share the host disk.
+# Keep subprocesses bounded while allowing observed concurrent-run contention.
+HOOK_PROCESS_TIMEOUT = 300
+
+
 class CiLocalHookEnvironmentTests(unittest.TestCase):
     def test_hook_repository_variables_do_not_leak_into_clone(self):
         source = Path(__file__).resolve().parents[1] / "scripts/ci-local.sh"
@@ -70,7 +75,7 @@ class CiLocalHookEnvironmentTests(unittest.TestCase):
                 env=hook_env,
                 capture_output=True,
                 text=True,
-                timeout=30,
+                timeout=HOOK_PROCESS_TIMEOUT,
             )
             self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
             self.assertIn("all CI steps pass", result.stdout)
@@ -82,7 +87,7 @@ class CiLocalHookEnvironmentTests(unittest.TestCase):
                 env=hook_env,
                 capture_output=True,
                 text=True,
-                timeout=30,
+                timeout=HOOK_PROCESS_TIMEOUT,
             )
             self.assertEqual(second.returncode, 0, second.stdout + second.stderr)
             self.assertIn("dependency environment reused", second.stderr)
@@ -103,7 +108,7 @@ class CiLocalHookEnvironmentTests(unittest.TestCase):
                 env=hook_env,
                 capture_output=True,
                 text=True,
-                timeout=30,
+                timeout=HOOK_PROCESS_TIMEOUT,
             )
             self.assertEqual(failure.returncode, 19, failure.stdout + failure.stderr)
             self.assertIn("runner failure sentinel", failure.stdout)

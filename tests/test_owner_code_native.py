@@ -227,8 +227,8 @@ class OwnerCodeNativeTests(unittest.TestCase):
                 patch.object(NATIVE, "invoke", side_effect=invoke),
             ):
                 # Metadata result must carry the validated source receipt hash.
-                with patch.object(NATIVE, "converter_inputs", return_value=({}, {"sha256": "metadata witness"})):
-                    inputs["metadata"] = {"sha256": "metadata witness"}
+                with patch.object(NATIVE, "converter_inputs", return_value=({}, {"sha256": NATIVE.sha(metadata), "bytes": metadata.stat().st_size})):
+                    inputs["metadata"] = {"sha256": NATIVE.sha(metadata), "bytes": metadata.stat().st_size}
                     (failed / "inputs.json").write_text(json.dumps(inputs))
                     for selection in ([], [True], [-1], [500], [497, 497]):
                         with self.assertRaisesRegex(ValueError, "measurement job indexes"):
@@ -239,11 +239,14 @@ class OwnerCodeNativeTests(unittest.TestCase):
                     self.assertEqual(invoked, ["497", "499"])
                     self.assertEqual((measured["phase"], measured["compile_tasks"], measured["reused_compile_tasks"]), ("native-measured", 2, 0))
                     self.assertFalse((measured_output / "libil2cpp.so").exists())
+                    self.assertFalse((measured_output / "global-metadata.dat").exists())
                     self.assertNotEqual((measured_output / "objects/497.o").stat().st_ino, (failed / "objects/497.o").stat().st_ino)
                     with self.assertRaisesRegex(ValueError, "complete original compilation"):
                         NATIVE.compiled_jobs(measured_output, NATIVE.plan(profile, sdk, root / "measurement-relink"), profile, sdk, inputs)
                     invoked.clear()
                     result = NATIVE.run(request, profile=profile)
+                    self.assertEqual((output / "global-metadata.dat").read_bytes(), metadata.read_bytes())
+                    self.assertEqual(result["metadata_sha256"], NATIVE.sha(metadata))
                     invoked.clear()
                     with patch.object(NATIVE.os, "link", side_effect=OSError("fixture hardlink failure")):
                         with self.assertRaisesRegex(OSError, "fixture hardlink failure"):

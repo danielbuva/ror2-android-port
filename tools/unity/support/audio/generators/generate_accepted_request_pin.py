@@ -284,7 +284,7 @@ def emit(request_path: Path, manifest_path: Path, stage_path: Path, output: Path
     output.parent.mkdir(parents=True, exist_ok=True)
     output.write_text(source, encoding="utf-8")
     return {
-        "output": str(output.relative_to(ROOT)),
+        "output": str(Path("work") / output.relative_to(WORK)),
         "source_sha256": sha_file(output),
         **{k: v for k, v in result.items() if k != "request"},
     }

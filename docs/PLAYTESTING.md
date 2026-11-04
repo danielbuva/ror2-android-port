@@ -11,6 +11,28 @@ records matching artifact/install receipts, both assisted controls, strict nativ
 restart, a complete software-touch transaction and bounded recovery cases.
 Hardware controls and fresh public-input installation remain unqualified.
 
+## Current lab expectations
+
+Commando and Huntress are available. In the lab lobby, use the **left stick to
+select a survivor**, the **right stick to select difficulty**, then **A to start**.
+These are lobby controls; physical gameplay mapping still needs qualification.
+
+Startup FPS is uncapped for the test display (the lab requests 300 FPS from its
+first startup action, [#322](https://github.com/danielbuva/ror2-android-port/pull/322)).
+The reported menu rate is about 120 FPS on a 120 Hz Nova. A harness-started
+30-minute gameplay run reported a median of about 50 FPS, but that path differs
+from an ordinary player launch. These are workload-specific observations, not a
+sustained-performance guarantee or a completed release gate.
+
+Known issues: an ordinary launch from the app icon is currently not playable. In the
+2026-11-04 owner playtest it took one to two minutes to reach the menu, another one
+to two minutes after survivor selection, and the first stage ran at about 4 FPS
+without fully loading; always time those phases on the ordinary path. `LightningStake` can produce a NaN error during teardown in some
+long sessions; measured memory growth is about 0.2 MB per session, with its bound
+still open. Roster/UI rendering is approximated. Player audio and Steam profiles
+are unavailable; Android-local profiles are separate. Record these limitations
+and the actual build identity with each playtest; do not claim release readiness.
+
 ## Prepare and install a matching build
 
 Set `PLAYTEST_DEVICE` to the explicitly authorized, allowlisted serial. In a

@@ -1,5 +1,12 @@
 # Build recipes
 
+`owner-sdk-job-inputs.json` binds caller-acquired SDK/platform/Java/AAPT2 and
+public Maven jars to the existing SDK package producer. It contains only
+dispatcher binding names, public artifact filenames and an output token. No
+SDK bytes, game content, private paths or credentials are included. Existing
+producer pins and license boundaries remain unchanged. Provenance, privacy,
+licensing and sensitive-content audit: 2026-11-04.
+
 ## Original assembly placement audit (R1, 2026-10-18)
 
 `original-assemblies.json` records only source/project identities, source SHA-256,
@@ -56,6 +63,20 @@ record the result below, and run `python3 scripts/audit-public.py`. Where a gene
 produce the file from the input, prefer tracking the generator.
 
 ## Audit record
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-sdk-job-inputs.json` | `bbcfc451a0320389b0d7e0d79786670a0108e3fcb30991c2c5cead859afa15ad` |
+| `owner-player-phases.json` | `49f3c80455532ce9c3c94db2e8dd4807ab0ceb7a96c144d78a064ddb94dcd8fc` |
+
+`owner-player-phases.json` declares the five existing source phase recipe hashes
+and their complete output filename sets (including UUID5 Sprite/texture names).
+These are minimum reconstruction/layout identities from the current source
+producer receipts, without file bodies, target hashes, images or private paths.
+The declaration supplies no content; all files must be regenerated from original
+inputs and checked by their existing owners. Provenance, privacy, licensing and
+sensitive-content audit: 2026-11-04. No entitlement or historical-byte claim.
+
 
 `owner-j850-code.json` additionally names the 69 legitimate debug-symbol
 companions required by the fixed target's managed closure. These are SDK or
@@ -5027,16 +5048,21 @@ recorded under `work/coordination/orchestrator/public-startup-metadata-v2/`.
 
 | Recipe | SHA-256 |
 | --- | --- |
-| `owner-player-menu.json` | `c4b96578385df9882b4253dd37f5eb50e5aadafef423205a358deff966a3361c` |
+| `owner-player-menu.json` | `68cdf84752aceffbeab7f9d975eeaae706e67eb1a7aff0015b974e8e2ee2120b` |
 
 `owner-player-menu.json` selects minimum original UI/script/dependency members,
 the original prefab root, public English tokens and authored hide/action policies.
 It pins four separately supplied SDK UGUI source files and existing public texture
 recipes. `player_ui.py` derives all component values, geometry, pixels, script
-metadata and references locally; no saved prefab or historical ID map is supplied.
-Manual provenance/privacy/licensing review: the profile contains identifiers,
-source hashes and authored policy only, with no copied game/SDK code, asset body,
-pixel/geometry table, private path, connection value or credential. Outputs and
+metadata and references locally. The audited `saved_object_ids` rows retain only
+build-assigned path/component IDs and order, under the explicit 2026-10-31
+build-identity decision; no saved prefab, body or field value is supplied.
+Manual provenance/privacy/licensing review (updated 2026-11-04): the 591 saved
+rows contain only minimum hierarchy paths, component identities and allocated
+integers. These describe build identity, not asset content or ownership/authentication.
+The profile contains source hashes and authored policy, with no copied game/SDK
+code, asset body, pixel/geometry table, private path, connection value or credential.
+Outputs and
 receipts remain ignored. Genuine J850 field differences and phone/runtime
 acceptance remain open; evidence: `work/coordination/orchestrator/menu-public-source-v1/`.
 
@@ -6653,7 +6679,7 @@ and runtime gates stay open.
 
 | Recipe | SHA-256 |
 | --- | --- |
-| `owner-whole-game-bundle-tree-records.jsonl.gz` | `4345adb71b8cb29b5c4d7ffe2801ed3483003fe5e1aebdf8a07eb4426dfaccda` |
+| `owner-whole-game-bundle-tree-records.jsonl.gz` | `d4151bf43fee3a6512203eb3a346bcdb986e54665984fc1deacc976adac2f302` |
 
 Audit: 2026-10-31. The existing generic native record owner selects 62 original
 Trees across 37 source members. Qualified GameObject component edges and
@@ -6669,3 +6695,51 @@ all native scalar fields and schemas remain source-owned. Independent
 persisted production matches all 62 J850 records (1,488 bytes). Saved residual
 three and final-file readiness remain unchanged; group, complete bundle,
 phone/install/update and runtime gates remain open.
+
+Four additional original Trees resolve their nonzero WindAsset pointer through
+qualified class-228 suppliers, using actual recipe bundle/member/object identity
+and unique original external-member routes (J1351), while retaining reciprocal
+GameObject ownership. Independent persisted qualification matches all four J850
+records (96 bytes); the profile now supplies 66 Trees. Audit: 2026-11-04; only
+source selectors, hashes and checked typed relationships are added. The existing
+producer is unchanged. Of the prior 2,028 exclusions, 2,024 remain unresolved;
+saved residual three and final-file readiness remain unchanged.
+
+
+### Whole-game bundle managed provider records
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-whole-game-bundle-managed-records.json` | `732e8280a4446a4f1472937b1885533d65fd95749d60e551e78d8f653a2a3a79` |
+
+Audit: 2026-11-04. The existing `record_produce.py` managed owner selects 221
+original MonoBehaviours through qualified GameObject component offsets,
+reciprocal original ownership and unique typed source-derived endpoints.
+Original MonoScript selectors and the pinned editor SDK provide the existing
+`properties_hash` policy; all native body fields remain original-input owned.
+Pinned EditorKit `4128710` AddressReferencedAssetDrawer lines 169–181 establish
+typed component requirements and hierarchy search as identity constraints;
+J1295/J1340 supply reciprocal ownership and SDK type-hash prior art.
+Source discovery reads no accepted target. Persisted production precedes
+independent raw-exact qualification: 221 of 247 candidates match J850
+(18,880 bytes), while all 26 nonexact candidates are excluded. Source selectors,
+hashes and checked relationships only; no native bodies, scalar templates,
+target repairs, protected implementation or private paths ship.
+Saved residual three and final-file readiness remain unchanged; complete groups,
+bundle, phone/install/update and runtime gates remain open.
+Menu provider identity follow-up (2026-11-04): the same audited build-identity
+policy retains the 20 external provider filenames/order already declared by the
+public player-data suppliers. The linker resolves all providers from source
+before assigning their saved external IDs; additional source providers append.
+No Sprite, layout value, asset body or null override is retained in this table.
+
+Native release job request audit (2026-11-04):
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-native-job-inputs.json` | `8aac45cbe864a1364ab2e306fae59ff3d94e1ac07a51b2940a473a565125f9cf` |
+
+This request contains only dispatcher bindings for acquired SDK/converter inputs and a private
+output location. No game bytes, generated sources, native binaries, private paths
+or credentials are retained. The existing native policy and converter receipt
+checks own compilation and metadata provenance; APK/device gates remain open.
