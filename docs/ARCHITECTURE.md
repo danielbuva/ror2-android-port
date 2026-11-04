@@ -79,6 +79,8 @@ stable converter path identities. The registry and all dependent writers share
 the freshly allocated script ID map; compiler/manifest/layout receipts stay pinned.
 Current package importers use the fresh compiler's source hashes and selection,
 with original adjacent metadata pinned by the registry owner.
+Package MonoScript properties and exported transfer trees are measured against
+the same current CLR providers as original and authored scripts.
 Standalone scripted resource files resolve their original MonoScript member and
 object identity through that same registry before writing body pointers and native
 script tables. Historical destination IDs remain diagnostics; original body and
