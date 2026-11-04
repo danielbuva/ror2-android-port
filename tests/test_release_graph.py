@@ -1,5 +1,6 @@
 """Source graph contracts with authored supplier bodies; no game inputs."""
 
+import gzip
 import importlib.util
 import json
 from pathlib import Path
@@ -50,6 +51,15 @@ class ReleaseGraphTests(unittest.TestCase):
         for row in index["entries"].values():
             self.assertTrue(set(row["recipe_files"]) <= set(index["files"]) | set(graph.jobs))
 
+    def test_compressed_hierarchy_suppliers_are_signed_without_expansion(self):
+        graph = G.Graph(ROOT, {})
+        for path in sorted((ROOT / "recipe").glob("owner-*.jsonl.gz")):
+            job = graph.build(G.digest(path))
+            self.assertEqual(graph.jobs[job]["script"], G.PREFIX + "record_produce.py")
+            self.assertIn(path.relative_to(ROOT).as_posix(), graph.entry(job)["recipe_files"])
+            self.assertEqual(graph.jobs[job]["needs"], [])
+            self.assertEqual(set(graph.job_profiles[job]), {"input_id"})
+
     def test_generated_supplier_graph_executes_through_dispatcher_and_reuses(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
@@ -62,14 +72,19 @@ class ReleaseGraphTests(unittest.TestCase):
             runtime, native = root / "runtime", root / "native"
             runtime.mkdir()
             native.mkdir()
-            supplier = repo / "recipe/owner-supplier.json"
-            supplier.write_text(json.dumps({"bundles": [{"members": [{"objects": []}]}]}))
+            supplier = repo / "recipe/owner-supplier.jsonl.gz"
+            with gzip.open(supplier, "wt") as stream:
+                stream.write(json.dumps({"input_id": "a" * 64}) + "\n")
+                stream.write(json.dumps({"path": "original.bundle", "sha256": "b" * 64, "members": [{"objects": []}]}) + "\n")
             final = repo / "recipe/owner-final.json"
             final.write_text(json.dumps({"sources": [], "bundle": {"name": "authored"}, "objects": [{"record": G.digest(supplier)}]}))
             # Each owner checks receipt substitution before producing its output.
-            script = """import argparse,hashlib,json,pathlib
-p=argparse.ArgumentParser();p.add_argument('--output');p.add_argument('--record-pack',nargs=2,action='append',default=[])
+            script = """import argparse,gzip,hashlib,json,pathlib
+p=argparse.ArgumentParser();p.add_argument('--output');p.add_argument('--profile');p.add_argument('--profile-sha256');p.add_argument('--record-pack',nargs=2,action='append',default=[])
 a,_=p.parse_known_args()
+assert hashlib.sha256(pathlib.Path(a.profile).read_bytes()).hexdigest()==a.profile_sha256
+if a.profile.endswith('.jsonl.gz'):
+ with gzip.open(a.profile,'rt') as stream: assert json.loads(stream.readline())=={'input_id':'a'*64}
 for path,pin in a.record_pack:
  assert hashlib.sha256((pathlib.Path(path)/'result.json').read_bytes()).hexdigest()==pin
 out=pathlib.Path(a.output);out.mkdir()

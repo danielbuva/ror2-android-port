@@ -973,7 +973,9 @@ publishes these on authorized version tags using an externally provisioned key.
 verification and the private update transaction; `release_jobs.py` dispatches
 signed job recipes to existing source-only producers. `release_graph.py` compiles selected
 complete bundle profiles and their SHA-linked suppliers into those descriptors
-and a source index. Explicit extra argv selects acquired public tools; unresolved
+and a source index. Compressed native-record profiles enter the same supplier
+graph by their compressed hash and header; the existing record owner streams
+their source groups at execution. Explicit extra argv selects acquired public tools; unresolved
 profiles fail before staging. Generated JSON is overlaid into the release source
 checkout and audited/committed before the existing tracked-only publisher runs.
 The dispatcher resolves supplier directories from declared receipt artifacts;
