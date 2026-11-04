@@ -2638,7 +2638,7 @@ maximum trace gap 0.421 s; sampled peak PSS 3,828,398 KiB includes startup.
 Adopted update/hash and unchanged profile/settings verified; app stopped, OLED asleep,
 scratch removed, prune complete, lease released. Sustained FPS/speed/alpha gates remain open.
 
-## J1379 — Share a scoped manifest across native holder binding
+## J1380 — Share a scoped manifest across native holder binding
 
 2026-11-04. Existing PortSession/catalog owners share one synchronous snapshot for
 artifact/item/equipment/body holders; native population/identity/restoration stay intact.
