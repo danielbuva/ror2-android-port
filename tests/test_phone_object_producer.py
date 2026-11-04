@@ -2350,6 +2350,31 @@ class ReflectionProbeImportTests(unittest.TestCase):
 
 
 class FieldlessScriptMetadataTests(unittest.TestCase):
+    def test_current_fieldless_supplier_keeps_receipt_and_script_identity_checks(self):
+        stream = io.BytesIO()
+        P.aligned_string(stream, "AuthoredBoundary")
+        stream.write(bytes(20))
+        for value in ("AuthoredBoundary", "Fixture", "Authored.dll"):
+            P.aligned_string(stream, value)
+        script = stream.getvalue()
+        identity = ["Authored.dll", "Fixture", "AuthoredBoundary"]
+        selected = {"record": {}, "script_identity": identity, "sha256": "historical"}
+        row = {"source_produced": {"script_identity": identity}}
+        pin = hashlib.sha256(script).hexdigest()
+        self.assertEqual(P.supplied_script_identity(script, 115, selected, row), pin)
+        for class_id, selection, supplier in (
+            (114, selected, row),
+            (115, selected, {}),
+            (115, {**selected, "script_identity": ["Other.dll", *identity[1:]]}, row),
+        ):
+            with self.subTest(class_id=class_id, selection=selection, supplier=supplier), self.assertRaises(ValueError):
+                P.supplied_script_identity(script, class_id, selection, supplier)
+        with self.assertRaisesRegex(ValueError, "script identity differs"):
+            P.supplied_script_identity(script.replace(b"Authored.dll", b"Mutation.dll"), 115, selected, row)
+        self.assertEqual(P.supplied_script_identity(script, 115, {"sha256": pin}, {}), pin)
+        with self.assertRaisesRegex(ValueError, "record identity differs"):
+            P.supplied_script_identity(script, 115, {"sha256": "historical"}, {})
+
     def test_owned_script_properties_prove_base_only_schema(self):
         def pointer(name):
             return FIXTURE.node(name, kind="PPtr<Object>", children=[FIXTURE.node("m_FileID", 4, kind="int"), FIXTURE.node("m_PathID", 8, kind="SInt64")])

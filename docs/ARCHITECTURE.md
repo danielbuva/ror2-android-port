@@ -6166,3 +6166,8 @@ toolchain required by their source operations. Dynamic file hashes enter the
 existing dispatcher cache identity; texture owners retain codec, schema and pixel
 extent validation. Setup supplies pinned tools; scoped producers close on exit
 and retain their receipts. Complete APK and device acceptance remain open.
+
+Fieldless component metadata uses the existing receipt-bound current MonoScript
+identity policy in `object_produce.py`; its schema/properties hash must still
+match the supplied script. Receipts record the actual script hash. Setup and
+teardown remain the scoped source-pack readers and retained producer receipt.

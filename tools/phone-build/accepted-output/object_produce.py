@@ -998,6 +998,17 @@ def current_script_identity(body, class_id, expected):
         raise ValueError("current script identity differs")
 
 
+def supplied_script_identity(body, class_id, selected, row):
+    """Validate a current supplier identity or the legacy exact script contract."""
+    if "script_identity" in selected:
+        if "record" not in selected or row.get("source_produced", {}).get("script_identity") != selected["script_identity"]:
+            raise ValueError("current script requires receipt-bound serialized supplier")
+        current_script_identity(body, class_id, selected["script_identity"])
+    elif class_id != 115 or hashlib.sha256(body).hexdigest() != selected["sha256"]:
+        raise ValueError("fieldless MonoScript record identity differs")
+    return hashlib.sha256(body).hexdigest()
+
+
 def original_script_properties(script, script_type, behaviour_type, current_type, identity_owner):
     """Retain the original editor hash only for the same unchanged script schema."""
     offset, names = script_fields(script)
@@ -1641,10 +1652,9 @@ def produce(profile_path, profile_sha256, pc, output, codec_path, codec_sha256, 
                     _, script_type = source_record(sources, script_selection["type_source"])
                     directory, script_row = packed[selected_member["name"], script_id]
                     script = record_extent(directory / "objects.bin", script_row)
-                    if script_type["class_id"] != 115 or hashlib.sha256(script).hexdigest() != script_selection["sha256"]:
-                        raise ValueError("fieldless MonoScript record identity differs")
+                    script_pin = supplied_script_identity(script, script_type["class_id"], script_selection, script_row)
                     typ = fieldless_script_type(body, typ, script, sdk_tree, identity_owner)
-                    receipt.setdefault("fieldless_script_records", {})[str(script_id)] = script_selection["sha256"]
+                    receipt.setdefault("fieldless_script_records", {})[str(script_id)] = script_pin
                 if "managed_pointer_schema" in selected:
                     if sdk_tree is None or typ["class_id"] != 114:
                         raise ValueError("managed pointer schema requires SDK and MonoBehaviour")
@@ -1659,9 +1669,7 @@ def produce(profile_path, profile_sha256, pc, output, codec_path, codec_sha256, 
                     typ.update(derived)
                     receipt.setdefault("managed_schema_inputs", {}).update(inputs)
                 if "script_identity" in selected:
-                    if "record" not in selected or row.get("source_produced", {}).get("script_identity") != selected["script_identity"]:
-                        raise ValueError("current script requires receipt-bound serialized supplier")
-                    current_script_identity(body, typ["class_id"], selected["script_identity"])
+                    supplied_script_identity(body, typ["class_id"], selected, row)
                     receipt.setdefault("current_script_records", {})[str(selected["path_id"])] = {
                         "identity": selected["script_identity"],
                         "sha256": hashlib.sha256(body).hexdigest(),
