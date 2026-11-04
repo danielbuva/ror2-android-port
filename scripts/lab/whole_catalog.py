@@ -2440,6 +2440,9 @@ def stage_build_sources(io, runtime_sources, manifest, contracts):
         "RoR2.Achievements.*",
     }
     roots.setdefault("RoR2", set()).update(progression)
+    # The stage owner seeds only damage-macro method attributes through the
+    # original private registrar; retain its target/base-list contract under IL2CPP.
+    roots.setdefault("HGCSharpUtils", set()).add("HG.Reflection.SearchableAttribute")
     link_path = project / "Assets/LabLoadingScene/WholeCatalogPreservation/link.xml"
     io.apply(link_path, preservation_descriptor(roots))
 

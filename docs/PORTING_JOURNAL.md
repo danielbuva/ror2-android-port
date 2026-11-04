@@ -2501,3 +2501,19 @@ Supplier delta: 258 records, object SHA-256
 `f248e76764fbdcf4c48c425a16f80c5504de75700180e7c5ce8e5e3a7780ff55`.
 Full graph, fresh registry binding, Unity loadability, visuals and device gates
 remain open; no playable APK or runtime behaviour is claimed.
+
+## J1370 — Ordinary player launch and typed gameplay discovery
+
+2026-11-04. Ordinary launcher entry uses the existing player/menu lifecycle without a lab delay.
+Typed method discovery retains native registration, private/multiple attributes, original macro indices
+and session-owned network-handler teardown.
+Exact-editor source `0b8055a3`; APK `6ed15c2ac1d3d7f7aca80cac689fa7c58e7c8c2bd42d818ff98f40a03b144572`.
+Ordinary process-cold device launch: menu 31.864 s, world 135.956 s versus prior 38.477 s/190.128 s;
+world-message setup 0.09845 s versus 48.562 s. Single observations; integrity reads warmed APK pages.
+Retained 23 client/20 server handlers, zero message failures/first failure, original stage/HUD,
+1,104 renderers/196 colliders, zero missing meshes; macro assertions passed before stage entry.
+Evidence: `work/coordination/alpha-typed-startup-device-20261104T175829Z/acceptance.json`, phases and captures.
+CPU/GPU peak 95.1 C (brief), 82.842 s above 80 C; battery 31 to 32 C, sample gaps at most 0.453 s.
+Adopted placement/hash, stopped process, sleeping display and lease cleanup verified.
+Prior art: pinned R2API.Networking handler ownership and HG registrar semantics; authored fixture passes.
+Alpha stability, sustained FPS, physical controls and PC visual parity remain open.

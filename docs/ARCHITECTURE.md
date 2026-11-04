@@ -2145,8 +2145,13 @@ for remaining source identities. Host contracts feed that mapping to
 catalog production remains open. The later importer-identities stage is excluded.
 `whole-catalog-run` installs, syncs and launches, but it pushes `whole-catalog-selection.json`,
 which makes `PortSession.Start` exit: it checks catalog registration
-(`whole-catalog-result.json`), not gameplay. Gameplay is launched by a runner that pushes an
-attempt-bound `movement-batch-selection.json` and then launches the app.
+(`whole-catalog-result.json`), not gameplay. Ordinary launcher startup selects
+`body-state-spawn-state-auto-player` and runs the existing `GameSession` body,
+catalog, menu and input lifecycle without a fixed startup sleep. The shared
+spawn/state prefix retains its setup contracts; `freePlay` keeps the menu and
+untimed gameplay active. Physical input still waits for its attempt-bound mapping.
+Lab probes require an explicit `movement-batch-selection.json`; existing playable
+spine and bringup selectors retain their routes and diagnostic input policies.
 The standard `baseline.py` owner checks selector absence with a successful,
 complete runtime-directory observation before writes. Process replies are typed;
 transport errors are never absence. Live reports remain bound to the launched
@@ -6066,3 +6071,18 @@ Meridian's original native schemas and checked reference contracts. Setup takes
 the receipt-pinned source pack and a fresh output directory; scoped readers close
 on process exit and receipts persist. This adds no runtime owner. Complete APK
 and device gates remain open.
+
+### Typed gameplay startup discovery
+
+`IntegratedWorldBoundary` discovers only the requested method-attribute family
+from the original assemblies, including private methods and all attributes on
+each declared method. Its process-lived network metadata cache supplies the
+existing session-owned handlers; teardown still unregisters only owned IDs.
+`IntegratedStageBoundary` uses the same discovery for damage macros, seeds the
+original HG registrar once, then retains native catalog initialization and index
+assignment. Already registered method targets are preserved. The whole-catalog
+linker roots the original registrar type for IL2CPP reflection. Setup refuses
+ambiguous network IDs and invalid instance handlers; assembly/type failures remain
+visible. `test_original_method_discovery.py` exercises discovery and native-style
+registration with authored peers. Ordinary-launch device timing and retained
+source handlers are recorded in the shipped journal; sustained performance stays open.
