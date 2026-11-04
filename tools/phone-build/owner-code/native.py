@@ -665,6 +665,11 @@ def run(request, *, plan_only=False, profile=None):
             metadata_row,
         ):
             raise ValueError("converter providers changed during native production")
+        if not plan_only and measured is None:
+            destination = output / "global-metadata.dat"
+            shutil.copyfile(metadata, destination)
+            if destination.stat().st_size != metadata_row["bytes"] or sha(destination) != metadata_row["sha256"]:
+                raise ValueError("copied metadata differs from native converter cohort")
         result.update(
             success=True,
             phase="planned" if plan_only else "native-measured" if measured is not None else "native-built",

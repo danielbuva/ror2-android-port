@@ -997,6 +997,13 @@ Player/shader jobs declare complete serialized outputs; remapping consumes their
 top-level receipts, while player data consumes nested shared-shader and texture
 packs. Their authored shader and player configuration inputs travel in the
 signed closure. Fresh converter/managed inputs remain explicit caller bindings.
+The optional `--native-request` adds `owner-code/native.py` as one cached job
+with final `libil2cpp.so` and matching `global-metadata.dat` outputs. Its public
+request template binds acquired converter receipt, source frames, metadata and
+SDK; the native policy travels in the signed closure. The native owner rechecks
+the converter cohort after linking and verifies its metadata copy before success.
+Planning and measured partial builds emit neither final metadata nor a complete
+release. Burst remains a separate upstream production requirement.
 Generated jobs retain producer checks and do not establish complete APK or phone
 readiness. Setup uses explicit source checkout/profile/output paths; teardown
 keeps generated descriptors and caller-owned producer results. The managed-host
