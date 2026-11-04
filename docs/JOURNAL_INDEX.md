@@ -12,6 +12,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 | --- | --- | --- | --- |
 | [J1359](PORTING_JOURNAL.md#j1359--enforce-dev-command-and-action-lifecycle-labels) | 2026-11-03 | Enforce dev command and action lifecycle labels | 2026-11-04. |
 | [J1358](PORTING_JOURNAL.md#j1358--retain-audited-menu-build-identities-and-native-provider-order) | 2026-11-03 | Retain audited Menu build identities and native provider order | 2026-11-04. |
+| [J1359](PORTING_JOURNAL.md#j1359--retained-sustained-game-performance-report) | 2026-11-03 | Retained sustained game performance report | 2026-11-04. |
 | [J1357](PORTING_JOURNAL.md#j1357--resolve-source-derived-tree-windasset-endpoints) | 2026-11-03 | Resolve source-derived Tree WindAsset endpoints | 2026-11-04. |
 | [J1356](PORTING_JOURNAL.md#j1356--honor-thermal-admission-exclusions-above-80-c) | 2026-11-03 | Honor thermal admission exclusions above 80 C | 2026-11-04. |
 | [J1355](PORTING_JOURNAL.md#j1355--supply-source-derived-bundle-tree-providers) | 2026-10-31 | Supply source-derived bundle Tree providers | 2026-10-31. |
