@@ -42,6 +42,27 @@ class ReleaseGraphTests(unittest.TestCase):
         arguments = graph.jobs[name]["arguments"]
         self.assertEqual(arguments[arguments.index("--asset-ripper") + 1], "${input:asset_ripper}")
 
+    def test_texture_jobs_bind_required_pinned_tools(self):
+        graph = G.Graph(ROOT, {})
+        for profile, bindings in (
+            ("rgb", {"jpeg_codec", "etc_codec"}),
+            ("uncompressed", {"jpeg_codec"}),
+            ("alpha", {"etc_codec"}),
+            ("rgba", {"etc_codec", "sdk_toolchain"}),
+            ("rgb-mip", {"jpeg_codec", "etc_codec", "sdk_toolchain"}),
+            ("cubemap", {"etc_codec", "sdk_toolchain"}),
+        ):
+            with self.subTest(profile=profile):
+                name = graph.build(G.digest(ROOT / f"recipe/owner-{profile}-textures.json"))
+                arguments = graph.jobs[name]["arguments"]
+                for binding in ("jpeg_codec", "etc_codec", "sdk_toolchain"):
+                    if binding in bindings:
+                        flag = "--" + binding.replace("_", "-")
+                        self.assertEqual(arguments[arguments.index(flag) + 1], "${input:" + binding + "}")
+                        self.assertEqual(arguments[arguments.index(flag + "-sha256") + 1], "${input_sha256:" + binding + "}")
+                    else:
+                        self.assertNotIn("${input:" + binding + "}", arguments)
+
     def test_player_shader_suppliers_keep_serialized_and_nested_pack_contracts(self):
         graph = G.Graph(ROOT, {})
         player_path = ROOT / "recipe/owner-player-data.json"
