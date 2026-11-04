@@ -2345,3 +2345,13 @@ Sprite-induced external-index shifts; HUD graph remains 2,021 versus 1,902.
 Evidence: `work/coordination/p1-menuhud/current-menu-v1/`; 15 focused tests pass.
 Host production 13.659 s, peak RSS 367,804,416 bytes; cleanup passes.
 No readiness closure or device claim; complete phone/install/update gates remain open.
+
+## J1359 — Enforce dev command and action lifecycle labels
+
+2026-11-04. `./dev --help` labels all 24 top-level commands; lane help labels
+create/list/remove. ARCHITECTURE classifies editor/perf selectors and defaults;
+the existing prototype registry retains current/historical action status.
+`tests/test_dev_help.py` enforces help coverage, valid visible registry status
+and selector documentation without editor/device access. Dispatch is unchanged.
+Validation: 243 focused host tests, Ruff and host-only preflight pass.
+Host-only tooling change; no APK, device evidence or game-readiness claim.
