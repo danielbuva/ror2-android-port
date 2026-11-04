@@ -15,8 +15,8 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 | [J1362](PORTING_JOURNAL.md#j1362--cache-validated-import-progress-totals) | 2026-11-04 | Cache validated import progress totals | 2026-11-04. |
 | [J1363](PORTING_JOURNAL.md#j1363--stabilize-host-profile-and-optional-volume-failure-checks) | 2026-11-04 | Stabilize host profile and optional-volume failure checks | 2026-11-04. |
 | [J1364](PORTING_JOURNAL.md#j1364--stabilize-audited-menu-external-provider-ids) | 2026-11-04 | Stabilize audited Menu external provider IDs | 2026-11-04. |
-| [J1365](PORTING_JOURNAL.md#j1365--exercise-projectile-impact-pause-and-disposal-on-the-host) | 2026-11-04 | Exercise projectile impact, pause and disposal on the host | 2026-11-04. |
 | [J1365](PORTING_JOURNAL.md#j1365--supply-source-derived-bundle-managed-providers) | 2026-11-04 | Supply source-derived bundle managed providers | 2026-11-04. |
+| [J1366](PORTING_JOURNAL.md#j1366--exercise-projectile-impact-pause-and-disposal-on-the-host) | 2026-11-04 | Exercise projectile impact, pause and disposal on the host | 2026-11-04. |
 | [J1358](PORTING_JOURNAL.md#j1358--retain-audited-menu-build-identities-and-native-provider-order) | 2026-11-03 | Retain audited Menu build identities and native provider order | 2026-11-04. |
 | [J1359](PORTING_JOURNAL.md#j1359--retained-sustained-game-performance-report) | 2026-11-04 | Retained sustained game performance report | 2026-11-04. |
 | [J1363](PORTING_JOURNAL.md#j1363--qualify-measured-lighting-tolerance-separately-from-exact-reconstruction) | 2026-11-04 | Qualify measured lighting tolerance separately from exact reconstruction | 2026-11-04. |
