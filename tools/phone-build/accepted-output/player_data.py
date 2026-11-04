@@ -62,6 +62,17 @@ def checked(path, expected):
         raise ValueError("player-data bytes differ: " + path.name)
 
 
+def verify_player_outputs(output, expected, files, current_pins):
+    """Recheck persisted producer pins; keep historical hashes as diagnostics."""
+    for name, row in expected.items():
+        path = output / (TARGET + name)
+        pin = current_pins.get(name, row)
+        checked(path, (pin["bytes"], pin["sha256"]))
+        files[TARGET + name].update(pin)
+        if name in current_pins:
+            files[TARGET + name]["historical_raw_exact"] = pin == row
+
+
 def metadata(scripting, initializers, projects):
     """Keep original engine order/initializer records and authored project order."""
     if len(scripting["names"]) != len(scripting["types"]) or len(projects) != len(set(projects)):
@@ -1308,7 +1319,8 @@ def produce(
         registry = None
         if "registry" in profile:
             registry = registry_records(profile_path.parent.resolve(strict=True), profile["registry"], pc, editor_resources, code_request, managed_production)
-        current_object_files = set()
+        current_output_pins = {}
+        current_registry = registry is not None and "target" not in json.loads(Path(code_request).read_text())
         font = profile["font"]
         name = font["file"]
         if name in ("", ".", "..") or PurePosixPath(name).name != name or "\\" in name:
@@ -1323,7 +1335,8 @@ def produce(
                 raise ValueError("unsafe object player filename")
             object_file(pc, selection, output / (TARGET + name), script_sdk_tree, registry)
             if registry is not None and "script" in selection:
-                current_object_files.add(name)
+                path = output / (TARGET + name)
+                current_output_pins[name] = dict(bytes=path.stat().st_size, sha256=sha(path))
             result["files"][TARGET + name] = {**profile["outputs"][name], "source_role": "pc-objects", "source": selection["source"]["path"]}
         texture_files(pc, profile["font"]["source"], profile.get("textures", []), texture_packs, output, result)
         if "builtin_ui" in profile:
@@ -1353,6 +1366,9 @@ def produce(
             with (output / (TARGET + name)).open("xb") as target:
                 W.write_serialized(target, registry["layout"], lambda row: io.BytesIO(registry["bodies"][row["path_id"]]))
             result["files"][TARGET + name] = {"source_role": "pc-sdk-and-authored", "source": profile["registry"]["path"]}
+            if current_registry:
+                path = output / (TARGET + name)
+                current_output_pins[name] = dict(bytes=path.stat().st_size, sha256=sha(path))
             registry_pins = [(Path(path), (pin["bytes"], pin["sha256"])) for path, pin in registry["provider_pins"].items()]
             if "shared_defaults" in profile:
                 selected = profile["shared_defaults"]
@@ -1361,6 +1377,9 @@ def produce(
                     raise ValueError("unsafe shared-default player filename")
                 registry_pins.extend(shared_defaults(pc, selected, sdk, builtin_extra, registry, record_packs, output / (TARGET + name)))
                 result["files"][TARGET + name] = {"source_role": "pc-sdk-and-record-packs", "source": selected["source"]["path"]}
+                if current_registry:
+                    path = output / (TARGET + name)
+                    current_output_pins[name] = dict(bytes=path.stat().st_size, sha256=sha(path))
             result["registry_inputs"] = {str(path): {"bytes": pin[0], "sha256": pin[1]} for path, pin in registry_pins}
         elif "shared_defaults" in profile:
             raise ValueError("shared defaults require the source registry")
@@ -1434,15 +1453,7 @@ def produce(
         for name, pin in expected.items():
             checked(output / (TARGET + name), pin)
             checked(sources[name], pin)
-        for name, row in profile["outputs"].items():
-            path = output / (TARGET + name)
-            if name in current_object_files:
-                if path.stat().st_size != row["bytes"]:
-                    raise ValueError("current player object size differs")
-                result["files"][TARGET + name].update(bytes=path.stat().st_size, sha256=sha(path))
-            else:
-                checked(path, (row["bytes"], row["sha256"]))
-                result["files"][TARGET + name].update(row)
+        verify_player_outputs(output, profile["outputs"], result["files"], current_output_pins)
         for name, source in pc_sources.items():
             row = profile["sources"][name]
             checked(source, (row["bytes"], row["sha256"]))

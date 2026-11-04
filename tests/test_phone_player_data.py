@@ -131,6 +131,33 @@ def script_properties_fixture(root, pc, script_kind=115, sdk_kind=114, custom_na
     return selected, sdk, sdk_pin, P.SCRIPT.md4(feed), target_body
 
 
+class CurrentOutputReceiptTests(unittest.TestCase):
+    def test_fresh_registry_hash_is_diagnostic_and_receipt_stays_exact(self):
+        with tempfile.TemporaryDirectory() as folder:
+            output = Path(folder).resolve()
+            path = output / P.TARGET / "globalgamemanagers.assets"
+            path.parent.mkdir(parents=True)
+            path.write_bytes(b"authored current registry fixture")
+            current = dict(bytes=path.stat().st_size, sha256=P.sha(path))
+            old = dict(bytes=1, sha256="0" * 64)
+            files = {P.TARGET + path.name: {"source_role": "pc-sdk-and-authored"}}
+            P.verify_player_outputs(output, {path.name: old}, files, {path.name: current})
+            self.assertEqual(files[P.TARGET + path.name]["sha256"], current["sha256"])
+            self.assertFalse(files[P.TARGET + path.name]["historical_raw_exact"])
+            path.write_bytes(b"changed after producer completed")
+            with self.assertRaisesRegex(ValueError, "bytes differ"):
+                P.verify_player_outputs(output, {path.name: old}, files, {path.name: current})
+
+    def test_legacy_output_still_requires_historical_pin(self):
+        with tempfile.TemporaryDirectory() as folder:
+            output = Path(folder).resolve()
+            path = output / P.TARGET / "globalgamemanagers.assets"
+            path.parent.mkdir(parents=True)
+            path.write_bytes(b"authored changed registry fixture")
+            with self.assertRaisesRegex(ValueError, "bytes differ"):
+                P.verify_player_outputs(output, {path.name: dict(bytes=1, sha256="0" * 64)}, {P.TARGET + path.name: {}}, {})
+
+
 class SourceMetadataTests(unittest.TestCase):
     def fixture(self):
         tree = metadata_tree(

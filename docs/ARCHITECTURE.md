@@ -83,6 +83,9 @@ Standalone scripted resource files resolve their original MonoScript member and
 object identity through that same registry before writing body pointers and native
 script tables. Historical destination IDs remain diagnostics; original body and
 reference contracts are checked before the current identity is applied.
+The current registry, shared defaults and rebound scripted files retain their
+fresh producer hashes for final readback; historical output hashes are reported
+as diagnostics. Source/provider pins and structural checks remain strict.
 
 `player_ui.py` owns current source Menu graph normalization, deterministic local
 IDs, SDK component construction and typed links to the existing player suppliers.
