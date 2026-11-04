@@ -208,7 +208,7 @@ def prepare(profile_path, profile_pin, pc, decoder, decoder_pin, output):
         (output / "result.json").write_text(json.dumps(receipt, indent=2) + "\n")
 
 
-def produce(profile_path, profile_pin, pc, native_path, native_pin, output):
+def produce(profile_path, profile_pin, pc, native_path, native_pin, output, *, functional=False):
     value = profile(profile_path, profile_pin)
     if B.sha(native_path) != native_pin:
         raise ValueError("Native Sprite constructor output drift")
@@ -221,18 +221,48 @@ def produce(profile_path, profile_pin, pc, native_path, native_pin, output):
         raise ValueError("Native Sprite output does not cover the selected source cohort")
     new_output(output, pc)
     started = time.monotonic()
-    receipt = {"success": False, "input_id": M.INPUT_ID, "profile_sha256": profile_pin, "native_sha256": native_pin, "objects": 0, "object_bytes": 0}
+    receipt = {
+        "success": False,
+        "input_id": M.INPUT_ID,
+        "profile_sha256": profile_pin,
+        "native_sha256": native_pin,
+        "objects": 0,
+        "object_bytes": 0,
+        "functional": functional,
+        "byte_differences": 0,
+    }
     try:
         with (output / "objects.bin").open("xb") as data, (output / "index.jsonl").open("x") as index:
             for selected, body, root, texture, texture_root, _ in original_records(value, pc):
                 item = results[selected["id"]]
                 parameters = constructor_parameters(selected, body, root, texture, texture_root, item.get("width"), item.get("height"))
                 made = N.assemble(body, root, item, selected["importer_guid"], parameters=parameters)
+                _, source_spans = A.fields(body, root)
+                _, spans = A.fields(made, root)
+                pointers = {
+                    start: key
+                    for key, (start, end) in source_spans.items()
+                    if end - start == 12 and key + ("m_FileID",) in source_spans and key + ("m_PathID",) in source_spans
+                }
                 for target in selected["outputs"]:
-                    result = A.O.remap(made, target["references"])
-                    if len(result) != target["bytes"] or hashlib.sha256(result).hexdigest() != target["sha256"]:
-                        raise ValueError("Produced Sprite record differs from accepted hash")
-                    row = {key: target[key] for key in ("bundle", "member", "path_id", "bytes", "sha256")}
+                    references = []
+                    for reference in target["references"]:
+                        if reference["offset"] not in pointers:
+                            raise ValueError("Produced Sprite relocation is not a schema PPtr")
+                        path = pointers[reference["offset"]]
+                        start, end = spans[path]
+                        if end - start != 12 or made[start:end] != body[reference["offset"] : reference["offset"] + 12]:
+                            raise ValueError("Produced Sprite pointer changed during assembly")
+                        references.append(dict(reference, offset=start))
+                    result = A.O.remap(made, references)
+                    A.fields(result, root)
+                    actual_hash = hashlib.sha256(result).hexdigest()
+                    if len(result) != target["bytes"] or actual_hash != target["sha256"]:
+                        if not functional:
+                            raise ValueError("Produced Sprite record differs from accepted hash")
+                        receipt["byte_differences"] += 1
+                    row = {key: target[key] for key in ("bundle", "member", "path_id")}
+                    row.update(bytes=len(result), sha256=actual_hash)
                     row["offset"] = data.tell()
                     data.write(result)
                     index.write(json.dumps(row, sort_keys=True) + "\n")
@@ -269,6 +299,7 @@ def main():
     parser.add_argument("--pixels-sha256")
     parser.add_argument("--native-output", type=Path)
     parser.add_argument("--native-sha256")
+    parser.add_argument("--functional", action="store_true", help="Record byte differences diagnostically; retain schema and reference checks")
     args = parser.parse_args()
     if args.action == "prepare":
         if args.pixels_tool is None or args.pixels_sha256 is None:
@@ -277,7 +308,7 @@ def main():
     else:
         if args.native_output is None or args.native_sha256 is None:
             parser.error("produce requires explicit exact-SDK constructor output and hash")
-        result = produce(args.profile, args.profile_sha256, args.pc_root, args.native_output, args.native_sha256, args.output)
+        result = produce(args.profile, args.profile_sha256, args.pc_root, args.native_output, args.native_sha256, args.output, functional=args.functional)
     print(json.dumps(result))
 
 

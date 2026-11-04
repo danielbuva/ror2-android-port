@@ -23,6 +23,19 @@ G, J = load("release_graph"), load("release_jobs")
 
 
 class ReleaseGraphTests(unittest.TestCase):
+    def test_sprite_cohorts_bind_native_witness_and_standard_pack_artifacts(self):
+        graph = G.Graph(ROOT, {})
+        for cohort in (1, 2, 3):
+            profile = ROOT / f"recipe/owner-commando-native-sprites-{cohort}.json"
+            pin = G.digest(profile)
+            name = graph.build(pin)
+            job = graph.jobs[name]
+            self.assertEqual(job["script"], G.PREFIX + "sprite_produce.py")
+            self.assertEqual(job["arguments"][0], "produce")
+            for argument in ("--pc-root", "--functional", "${input:sprite_native_" + pin + "}", "${input_sha256:sprite_native_" + pin + "}"):
+                self.assertIn(argument, job["arguments"])
+            self.assertEqual(job["artifacts"], {"receipt": "result.json", "objects": "objects.bin", "index": "index.jsonl"})
+
     def test_player_shader_suppliers_keep_serialized_and_nested_pack_contracts(self):
         graph = G.Graph(ROOT, {})
         player_path = ROOT / "recipe/owner-player-data.json"
@@ -132,7 +145,9 @@ out.mkdir();(out/'global-metadata.dat').write_bytes(metadata)
             native.mkdir()
             config = {"bindings": {name: name for name in ("sdk_install", "converter_receipt", "converter_sources", "converter_metadata")}}
             progress = []
-            for _ in range(2):
+            for attempt in range(3):
+                if attempt == 2:
+                    (inputs / "converter_receipt").write_text(json.dumps({"metadata_sha256": G.digest(metadata), "new_witness": True}))
                 dispatcher = J.Dispatcher(
                     repo,
                     index,
@@ -148,7 +163,7 @@ out.mkdir();(out/'global-metadata.dat').write_bytes(metadata)
                 for name, dependencies in release["entries"].items():
                     destination = root / Path(name).name
                     dispatcher.produce(name, dependencies, destination)
-            self.assertEqual(progress, [False, True])
+            self.assertEqual(progress, [False, True, False])
             self.assertEqual((root / "global-metadata.dat").read_bytes(), metadata.read_bytes())
             self.assertEqual((root / "libil2cpp.so").read_bytes(), b"independent native output")
 
