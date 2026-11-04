@@ -69,9 +69,13 @@ and A to start. This does not qualify every physical controller or gameplay mapp
 
 Startup FPS is uncapped for the test display (the lab requests 300 FPS;
 [#322](https://github.com/danielbuva/ror2-android-port/pull/322)). The menu has been
-reported at about 120 FPS on a 120 Hz Nova, with a gameplay median of about
-50 FPS in a 30-minute run. These observations are not a device-support or
-sustained-performance guarantee.
+reported at about 120 FPS on a 120 Hz Nova. A harness-started 30-minute run
+reported a median of about 50 FPS, but an ordinary launch from the app icon
+(2026-11-04 owner playtest) took one to two minutes to reach the menu, another
+one to two minutes after selecting a survivor, and ran the first stage at about
+4 FPS without fully loading. That ordinary-launch path is under investigation and
+is not yet playable; none of these figures is a device-support or performance
+guarantee.
 
 Important work remains:
 
