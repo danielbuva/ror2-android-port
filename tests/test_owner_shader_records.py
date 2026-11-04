@@ -433,6 +433,9 @@ class ShaderHashTests(unittest.TestCase):
         self.assertEqual(gain["m_DefValue[0]"], -2.5)
         self.assertEqual(gain["m_DefValue[1]"], 0)
         self.assertEqual(gain["m_DefTexture"], {"m_DefaultName": "", "m_TexDim": 1})
+        texture = N.properties(prop, 'Properties { _Texture ("Fixture texture", any) = "" {} } SubShader {}')[0]
+        self.assertEqual(texture["m_Type"], 4)
+        self.assertEqual(texture["m_DefTexture"], {"m_DefaultName": "", "m_TexDim": 1})
         self.assertEqual(N.properties(prop, "SubShader {}"), [])
         ranged, vector = N.properties(
             prop, 'Properties { _Range ("Fixture range", Range(-2,3)) = 0.5 _Vector ("Fixture vector", Vector)=(1,2,3,4) } SubShader {}'

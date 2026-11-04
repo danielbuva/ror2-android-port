@@ -13,6 +13,7 @@ public sealed class PortSessionOriginalAudioOwner : MonoBehaviour
     private static PortSessionOriginalAudioOwner instance;
     private static int sessionEntries;
     private static bool pointSoundLogObserverAttached;
+    private static Action processOriginalPointSoundTimeouts;
     private bool started;
     private bool completed;
     private float elapsed;
@@ -444,8 +445,29 @@ public sealed class PortSessionOriginalAudioOwner : MonoBehaviour
 
     private void OnDestroy() => DetachOriginalBankReleaseWakeup();
 
+    // The composed session keeps RoR2Application inactive. Dispatch only this
+    // original subscriber; its own clock, timeout and emitter pool stay authoritative.
+    private static void TickOriginalPointSoundTimeouts()
+    {
+        if (!GameAudioOriginalOwner.Ready || !GameAudioOriginalOwner.OptInRequested ||
+            !GameAudioOriginalOwner.NativeApiCallsAvailable || GameAudioOriginalOwner.OriginalTermsReturned ||
+            RoR2.WwiseIntegrationManager.noAudio)
+            return;
+        var application = RoR2.RoR2Application.instance;
+        if (application && application.isActiveAndEnabled) return;
+        if (processOriginalPointSoundTimeouts == null)
+        {
+            var type = typeof(RoR2.RoR2Application).Assembly.GetType("RoR2.Audio.PointSoundManager", true);
+            var method = type.GetMethod("ProcessTimeoutQueue",
+                System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.NonPublic);
+            processOriginalPointSoundTimeouts = (Action)Delegate.CreateDelegate(typeof(Action), method);
+        }
+        processOriginalPointSoundTimeouts();
+    }
+
     private void Update()
     {
+        TickOriginalPointSoundTimeouts();
         GameAudioOriginalOwner.TickPassiveCapture(Time.realtimeSinceStartup);
         if (GameAudioOriginalOwner.OriginalTermsReturned)
         {

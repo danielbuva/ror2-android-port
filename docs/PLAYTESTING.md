@@ -226,8 +226,10 @@ native-heap pause/allocation effects separate from repeated-session measurement.
 
 The settings case observes a native pending-file creation and terminates only
 the bound writer from its own Development-package UID, preserving the existing
-preference values. It requires standard debug `run-as` access; ordinary package
-stop remains failure teardown. It accepts recovery
+preference values. It requires standard debug `run-as` access. After independently
+proving the bound writer exited, it stops any replacement activity before cold
+recovery; package stop alone is not interruption evidence. J1305 verifies this
+restart case, unchanged primary, native resave and 48 protected files. It accepts recovery
 only after proving that the old primary and an actual uncommitted pending file
 survived, including a hash-verified private copy of the initial primary. The
 SDK actor has a bounded lifetime independent of Android observer threads;

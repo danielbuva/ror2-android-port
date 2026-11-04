@@ -24,20 +24,20 @@ import unity_write as W
 
 
 def keyword_registry(source, seed):
-    """Merge SDK snippet declarations in their serialized source order."""
+    """Merge SDK declarations by snippet, stage, global/local axes, builtins."""
     names, flags = (list(values) for values in seed)
     for _, snippet in source["m_CompileInfo"]["m_Snippets"]:
-        for group, flag in (("m_VariantsUserGlobal", 0), ("m_VariantsUserLocal", 1)):
-            for stage in range(7):
+        for stage in range(7):
+            for group, flag in (("m_VariantsUserGlobal", 0), ("m_VariantsUserLocal", 1)):
                 for axis in snippet[group + str(stage)]:
                     for name in axis:
                         if name.strip("_") and name not in names:
                             names.append(name)
                             flags.append(flag)
-        for name in snippet["m_BuiltinKeywords"].split():
-            if name not in names:
-                names.append(name)
-                flags.append(0)
+            for name in snippet["m_BuiltinKeywords"].split():
+                if name not in names:
+                    names.append(name)
+                    flags.append(0)
     return names, flags
 
 
@@ -56,11 +56,12 @@ def original_fallback_dependencies(source, selected, original):
     return [{"m_FileID": row["to"][0], "m_PathID": row["to"][1]} for row in witnesses]
 
 
-def prefab_selections(source, *, retain_instancing=True):
+def prefab_selections(source, *, retain_instancing=True, material_keywords=None, carrier=None):
     """Keep no-scene runtime axes, including source instancing alternatives."""
     snippets = dict(source["m_CompileInfo"]["m_Snippets"])
     selections = {}
-    for sub in source["m_ParsedForm"]["m_SubShaders"]:
+    for sub_index, sub in enumerate(source["m_ParsedForm"]["m_SubShaders"]):
+        original_passes = list(sub["m_Passes"])
         sub["m_Passes"] = [
             row
             for row in sub["m_Passes"]
@@ -71,8 +72,65 @@ def prefab_selections(source, *, retain_instancing=True):
         for row in sub["m_Passes"]:
             if row["m_Type"] == 0:
                 identity = row["m_State"]["gpuProgramID"]
-                selections[identity] = [P.sdk_scene_variants(snippets[identity], set(), retain_instancing=retain_instancing) for _ in range(3)]
+                snippet = snippets[identity]
+                runtime = set(snippet["m_NonStrippedUserKeywords"].split())
+                features = (
+                    {
+                        keyword
+                        for group in ("m_VariantsUserGlobal", "m_VariantsUserLocal")
+                        for stage in range(7)
+                        for axis in snippet[group + str(stage)]
+                        for keyword in axis
+                    }
+                    - runtime
+                    - {"_", "__"}
+                )
+                if material_keywords is None:
+                    variants = P.sdk_scene_variants(snippet, set(), retain_instancing=retain_instancing)
+                else:
+                    # Retain the default and actual material feature combinations.
+                    defaults = frozenset(
+                        axis[0]
+                        for group in ("m_VariantsUserGlobal", "m_VariantsUserLocal")
+                        for stage in range(7)
+                        for axis in snippet[group + str(stage)]
+                        if axis and axis[0].strip("_") and axis[0] in features
+                    )
+                    admitted = {defaults, *(frozenset(keys & features) for keys in material_keywords)}
+                    variants = [
+                        variant
+                        for variant in P.sdk_scene_variants(snippet, retain_instancing=retain_instancing)
+                        if frozenset(set(variant) & features) in admitted
+                    ]
+                if carrier is not None:
+                    declared = set().union(*(set(keys) for keys in variants))
+                    # Vertex records include vertex-only runtime alternatives
+                    # absent from original fragment records (e.g. vertex lights).
+                    try:
+                        variants = A.original_feature_order(
+                            carrier,
+                            sub_index,
+                            original_passes.index(row),
+                            row,
+                            declared,
+                            variants,
+                            stage="progVertex",
+                            runtime=runtime | set(snippet["m_BuiltinKeywords"].split()),
+                        )
+                    except ValueError:
+                        variants = A.original_sdk_axis_order(carrier, sub_index, row, declared, variants, snippet)
+                selections[identity] = [deepcopy(variants) for _ in range(3)]
     return selections
+
+
+def terrain_selections(source, terrain, pointer):
+    """Empty original detail prototypes create no instancing users."""
+    database = terrain["m_DetailDatabase"]
+    if pointer not in [database[f"m_DefaultShaders[{i}]"] for i in range(3)]:
+        raise ValueError("Prefab TerrainData default Shader identity differs")
+    if database["m_DetailPrototypes"]:
+        raise ValueError("Prefab TerrainData has detail prototype usage")
+    return prefab_selections(source, retain_instancing=False)
 
 
 def particle_selections(source, original, material):
@@ -110,6 +168,9 @@ def produce(profile_path, profile_pin, pc, sdk, asset_ripper, codec, codec_pin, 
     for record in profile["records"]:
         pins.append((P.relative(pc, record["original"]["path"]), record["original"]))
         pins.extend((P.relative(pc, material["path"]), material) for material in record.get("materials", []))
+        if "terrain" in record:
+            witness = record["terrain"]["original"]
+            pins.append((P.relative(pc, witness["path"]), witness))
         pins.extend((P.relative(pc, row["original"]["path"]), row["original"]) for row in record.get("fallback_original", []))
     for path, pin in pins:
         P.checked(path, pin)
@@ -129,17 +190,17 @@ def produce(profile_path, profile_pin, pc, sdk, asset_ripper, codec, codec_pin, 
             templates[name] = raw.decode().replace("\r", "")
     originals, sdk_objects = {}, {}
 
-    def original(selected):
+    def original(selected, class_name="Shader"):
         path = P.relative(pc, selected["path"])
         originals.setdefault(path, None)
         if originals[path] is None:
             originals[path] = UnityPy.load(str(path))
         obj = next(obj for obj in originals[path].objects if (obj.assets_file.name, obj.path_id) == (selected["member"], selected["path_id"]))
-        if obj.type.name != "Shader" or hashlib.sha256(obj.get_raw_data()).hexdigest() != selected["body_sha256"]:
+        if obj.type.name != class_name or hashlib.sha256(obj.get_raw_data()).hexdigest() != selected["body_sha256"]:
             raise ValueError("Prefab original Shader body differs")
         return obj
 
-    def particle_materials(selected):
+    def original_materials(selected):
         materials = []
         for witness in selected["materials"]:
             path = P.relative(pc, witness["path"])
@@ -147,13 +208,13 @@ def produce(profile_path, profile_pin, pc, sdk, asset_ripper, codec, codec_pin, 
                 originals[path] = UnityPy.load(str(path))
             obj = next(obj for obj in originals[path].objects if (obj.assets_file.name, obj.path_id) == (witness["member"], witness["path_id"]))
             if obj.type.name != "Material" or hashlib.sha256(obj.get_raw_data()).hexdigest() != witness["body_sha256"]:
-                raise ValueError("Prefab original particle material body differs")
+                raise ValueError("Prefab original material body differs")
             material = obj.read_typetree()
             pointer = material["m_Shader"]
             file_id = pointer["m_FileID"]
             member = obj.assets_file.name if file_id == 0 else obj.assets_file.externals[file_id - 1].path.rsplit("/", 1)[-1]
             if (member, pointer["m_PathID"]) != (selected["original"]["member"], selected["original"]["path_id"]):
-                raise ValueError("Prefab original particle material shader differs")
+                raise ValueError("Prefab original material shader differs")
             materials.append(material)
         return materials
 
@@ -218,9 +279,29 @@ def produce(profile_path, profile_pin, pc, sdk, asset_ripper, codec, codec_pin, 
                     if any(source["m_ParsedForm"][key] != runtime["m_ParsedForm"][key] for key in ("m_Name", "m_PropInfo")):
                         raise ValueError("Prefab original/SDK Shader properties differ")
                     if "materials" in selected:
-                        if identity != 211:
-                            raise ValueError("Prefab original materials require the particle shader")
-                        runtime, selections = A.particles_selections(runtime, particle_materials(selected), None, carrier=source)
+                        materials = original_materials(selected)
+                        if identity == 211:
+                            runtime, selections = A.particles_selections(runtime, materials, None, carrier=source)
+                        else:
+                            selections = prefab_selections(
+                                runtime,
+                                retain_instancing=any(material["m_EnableInstancingVariants"] for material in materials),
+                                carrier=source,
+                                material_keywords=[
+                                    set(material.get("m_ValidKeywords", []))
+                                    | set(material.get("m_InvalidKeywords", []))
+                                    | set(material.get("m_ShaderKeywords", "").split())
+                                    for material in materials
+                                ],
+                            )
+                    elif "terrain" in selected:
+                        witness = selected["terrain"]
+                        terrain = original(witness["original"], "TerrainData")
+                        file_id = witness["shader_file_id"]
+                        member = terrain.assets_file.externals[file_id - 1].path.rsplit("/", 1)[-1] if file_id else terrain.assets_file.name
+                        if member != selected["original"]["member"]:
+                            raise ValueError("Prefab TerrainData Shader member differs")
+                        selections = terrain_selections(runtime, terrain.read_typetree(), {"m_FileID": file_id, "m_PathID": obj.path_id})
                     elif "sdk_material" in selected:
                         material = next(
                             obj
@@ -251,7 +332,9 @@ def produce(profile_path, profile_pin, pc, sdk, asset_ripper, codec, codec_pin, 
                         common,
                         compress,
                         leaf,
-                        native_order={i: rows[0] for i, rows in selections.items()} if identity == 211 else None,
+                        native_order={i: list(dict.fromkeys(tuple(keys) for keys in rows[0])) for i, rows in selections.items()}
+                        if identity == 211 or "materials" in selected
+                        else None,
                     )
                 elif selected["kind"] == "dummy":
                     filename = selected["source_filename"]
@@ -293,6 +376,8 @@ def produce(profile_path, profile_pin, pc, sdk, asset_ripper, codec, codec_pin, 
             P.checked(path, pin)
         for selected in profile["records"]:
             original(selected["original"])
+            if "terrain" in selected:
+                original(selected["terrain"]["original"], "TerrainData")
         if P.includes(sdk / "CGIncludes")[0] != inventory:
             raise ValueError("Prefab Shader include inputs changed")
         receipt.update(

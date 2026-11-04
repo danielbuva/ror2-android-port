@@ -40,6 +40,14 @@ class Compiler:
 
 
 class SDKSource(unittest.TestCase):
+    def test_deferred_pass_context_is_compile_only(self):
+        row = {"m_State": {"m_Tags": {"tags": [("LightMode", "Deferred")]}}}
+        keys = ["FEATURE"]
+        self.assertEqual(S.compile_keywords(row, keys), ["FEATURE", "UNITY_PASS_DEFERRED"])
+        self.assertEqual(keys, ["FEATURE"])
+        row["m_State"]["m_Tags"]["tags"] = [("LightMode", "ForwardBase")]
+        self.assertEqual(S.compile_keywords(row, keys), keys)
+
     def test_resource_buffers_preserve_sdk_indices_and_factor_shared_rows(self):
         rows = ["texbind: image 3 4 0 2", "cbbind: Draws 7", "bufferbind: Instances 67108864 0"]
         reflected = S.P.reflection(rows)
