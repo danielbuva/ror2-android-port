@@ -30,6 +30,9 @@ def fixture(directory):
     pc = directory / "original"
     pc.mkdir()
     body, root, native = S.fixture()
+    rd = next(node for node in root.children if node.name == "m_RD")
+    pointer = next(node for node in rd.children if node.name == "texture")
+    pointer.children = [F.node("m_FileID", 4), F.node("m_PathID", 8)]
     _, spans = P.A.fields(body, root)
     point = spans[("m_RD", "textureRect")][0]
     body = body[:point] + struct.pack("<I", 64) + body[point:]
@@ -173,6 +176,32 @@ class SpriteProduceTests(unittest.TestCase):
             self.assertEqual((output / "objects.bin").read_bytes(), expected)
             self.assertEqual(json.loads((output / "index.jsonl").read_text())["offset"], 0)
             self.assertEqual(P.B.sha(bundle), original_hash)
+
+    def test_functional_output_records_actual_identity_and_keeps_pointer_checks(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            directory = Path(temporary)
+            pc, _, profile, native, _, _, expected = fixture(directory)
+            value = json.loads(profile.read_text())
+            target = value["bundles"][0]["members"][0]["objects"][0]["outputs"][0]
+            native_value = json.loads(native.read_text())
+            native_value["items"][0]["vertex_xy_bits"].extend([0, 0])
+            native.write_text(json.dumps(native_value))
+            target.update(bytes=1, sha256="0" * 64)
+            profile.write_text(json.dumps(value))
+            with self.assertRaisesRegex(ValueError, "accepted hash"):
+                P.produce(profile, P.B.sha(profile), pc, native, P.B.sha(native), directory / "strict")
+            output = directory / "functional"
+            result = P.produce(profile, P.B.sha(profile), pc, native, P.B.sha(native), output, functional=True)
+            self.assertEqual(result["byte_differences"], 1)
+            row = json.loads((output / "index.jsonl").read_text())
+            actual = (output / "objects.bin").read_bytes()
+            self.assertNotEqual(len(actual), len(expected))
+            self.assertEqual(row["bytes"], len(actual))
+            self.assertEqual(row["sha256"], hashlib.sha256(actual).hexdigest())
+            target["references"][0]["offset"] = 0
+            profile.write_text(json.dumps(value))
+            with self.assertRaisesRegex(ValueError, "schema PPtr"):
+                P.produce(profile, P.B.sha(profile), pc, native, P.B.sha(native), directory / "bad-pointer", functional=True)
 
     def test_provider_drift_and_output_inside_original_are_refused(self):
         with tempfile.TemporaryDirectory() as temporary:

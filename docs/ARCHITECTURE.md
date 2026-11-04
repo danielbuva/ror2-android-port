@@ -6086,3 +6086,12 @@ ambiguous network IDs and invalid instance handlers; assembly/type failures rema
 visible. `test_original_method_discovery.py` exercises discovery and native-style
 registration with authored peers. Ordinary-launch device timing and retained
 source handlers are recorded in the shipped journal; sustained performance stays open.
+
+The release graph dispatches the existing Commando `sprite_produce.py` cohorts
+with profile-keyed native constructor witnesses. The dispatcher includes dynamic
+file-witness hashes across supplier jobs in cache identity. Sprite functional
+production reparses source and output schemas, relocates checked PPtrs by field
+path, and records actual output sizes/hashes; historical byte differences are
+diagnostic. Setup requires current original bundles and a pinned exact-SDK
+constructor witness; scoped readers close on exit and receipts persist. Complete
+APK and device acceptance remain open.
