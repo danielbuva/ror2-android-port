@@ -589,10 +589,10 @@ the producer closure; all entries share one cached job. SDK packaging does not
 qualify gameplay or complete the remaining source bundle suppliers.
 
 Dispatcher bindings `pc`, `sdk` and `codec` select canonical private input paths.
-Only producers requiring SDK data receive the default SDK argument. For object
-profiles that derive script properties, supply it explicitly. Optional
-`--extra-arguments` reads a JSON map from producer name to additional argv, e.g.
-`{"object_produce": ["--sdk", "${input:sdk}"]}`. Use this for the existing
+Only producers requiring SDK data receive the default SDK argument. Object
+profiles declaring SDK metadata bind `sdk_contents/..` as their Unity application
+root, preserving their pinned `Contents/Resources` paths. Optional
+`--extra-arguments` reads a JSON map from producer name to additional argv. Use this for the existing
 codec/helper/template tool options; no command shell or private output fallback
 is introduced. `input_sha256:NAME` hashes a declared regular input file, and
 `job_directory:JOB:ARTIFACT` selects the parent of a declared supplier receipt.

@@ -2612,3 +2612,12 @@ Eleven focused fixture tests passed; native Occlusion consumer validation,
 whole-game graph/loadability and device visuals/playability remain open.
 Prior art: pinned EditorKit typed lookup; AssetRipper release occlusion omission.
 No new APK or device claim; byte equality remains diagnostic.
+## J1377 — Bind SDK metadata for release-graph object producers
+
+2026-11-04. SDK-declaring object profiles now receive the pinned application root
+through the existing release graph; original script/schema/hash checks remain strict.
+V7 stopped before Objective object production because this required argument was absent.
+Evidence (ignored): `work/coordination/p1-scenes-w/current-commando-sdk-note.md`
+and `current-commando-production-v7/`; v7 took 2684.037 s, peak RSS 5,854,445,568 B.
+The regression contract covers the Objective SDK resource root; no APK is produced
+by this change. Complete source bundle, APK and ordinary-launch device gates remain open.
