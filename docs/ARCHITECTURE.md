@@ -6127,6 +6127,14 @@ Release-graph Shader jobs with pinned template inputs receive the explicit publi
 AssetRipper Git provider. Existing Shader owners validate its revision and resource
 hashes before compiling; the dispatcher retains the resulting pack and receipt.
 
+The existing `record_produce.py` native owner also preserves source release
+LightingSettings and OcclusionCullingData. It parses the complete pointer-free
+source schema, checks native type identity and persists unchanged record bodies;
+it does not synthesize editor-only bake settings or renderer/portal tables.
+Setup requires pinned source bundles and a fresh record pack; scoped readers
+close on exit and receipts persist. Authored host fixtures cover both native
+shapes. Complete bundle, exact-editor load and device acceptance remain open.
+
 Release-graph Texture jobs bind the public JPEG/ETC codecs and native SDK texture
 toolchain required by their source operations. Dynamic file hashes enter the
 existing dispatcher cache identity; texture owners retain codec, schema and pixel
