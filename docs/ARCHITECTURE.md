@@ -1560,8 +1560,10 @@ references, base-type scopes and exported/forwarded types without resolving or
 executing them. `phone_managed_types.py` owns pure investigation support for an
 explicitly selected metadata group: it resolves exact scopes and forwarding
 chains, including nested exports, and proves managed inheritance only when
-every required definition is present. Duplicate assembly/type identities,
-unsupported module exports, cycles and missing dependencies refuse. It never
+every required definition is present. Duplicate assembly/type definitions,
+unsupported module exports, cycles and missing dependencies refuse. A type
+with both a definition and an export refuses when accessed; unrelated types
+remain available in the same inventory. It never
 fills gaps from another group or substitutes managed bases for native bases.
 Setup is an explicit schema-2 inventory/group; teardown releases the in-memory
 index. Its standalone metadata/group/new-output invocation verifies every
@@ -1572,6 +1574,15 @@ The inventory also records declared field flags and recursive scoped signatures
 for named types, arrays and generic instances/parameters, plus structured base
 signatures. Unsupported CLR type specifications are explicit. These observations
 do not by themselves prove serialized-field or endpoint assignability.
+The same metadata owner binds selected modules to current provider paths/hashes
+and resolves exact serialized field paths through inherited/nested declarations,
+arrays and core-provider `List<T>` elements. Generic base arguments are substituted
+at each inheritance step; static, nonserialized, ambiguous and unsupported fields
+refuse. Serialized-field lookup stops after the exact bound CoreModule Object root;
+its framework base does not supply serialized fields. Managed endpoint assignability uses complete scoped identities and explicit
+forwarders. Callers must separately validate source identity, integrated full types,
+produced bodies and actual PPtr readback; this helper supplies no native-class bridge
+and does not admit graph endpoints by itself.
 
 `phone_native_flags.py` owns separate current experimental native flag metadata.
 Its standalone owner-SDK/new-report invocation checks the pinned binary and
