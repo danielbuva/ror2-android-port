@@ -2545,7 +2545,7 @@ preservation and CLI/preflight integration; focused camera/help/generation/build
 checks passed. Existing transform and stage validation remain enforced.
 No runtime behaviour changes; device and alpha readiness gates remain open.
 
-## J1373 — Bind source texture tools in the release graph
+## J1374 — Bind source texture tools in the release graph
 
 2026-11-04. Existing release-graph texture jobs pass the public JPEG/ETC codecs
 and SDK texture toolchain required by their source operations, with file-hash
