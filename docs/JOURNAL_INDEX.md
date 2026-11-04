@@ -10,7 +10,9 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J1375](PORTING_JOURNAL.md#j1375--attribute-ordinary-results-preparation-on-device) | 2026-11-04 | Attribute ordinary results preparation on device | Existing results seams emit monotonic/frame markers with Save/order unchanged. |
 | [J1373](PORTING_JOURNAL.md#j1373--partition-ordinary-world-preparation-on-device) | 2026-11-04 | Partition ordinary world preparation on device | Six early seams in the existing world owner separate seven preparation blocks; markers keep report writes, scheduling and original logging policy intact. |
+| [J1374](PORTING_JOURNAL.md#j1374--bind-source-texture-tools-in-the-release-graph) | 2026-11-04 | Bind source texture tools in the release graph | 2026-11-04. |
 | [J1372](PORTING_JOURNAL.md#j1372--check-and-refresh-reviewed-build-hook-source-pins) | 2026-11-04 | Check and refresh reviewed build-hook source pins | 2026-11-04. |
 | [J1371](PORTING_JOURNAL.md#j1371--avoid-duplicate-audio-payload-hashing-during-capacity-preflight) | 2026-11-04 | Avoid duplicate audio payload hashing during capacity preflight | 2026-11-04. |
 | [J1370](PORTING_JOURNAL.md#j1370--ordinary-player-launch-and-typed-gameplay-discovery) | 2026-11-04 | Ordinary player launch and typed gameplay discovery | 2026-11-04. |

@@ -6134,3 +6134,9 @@ APK and device acceptance remain open.
 Release-graph Shader jobs with pinned template inputs receive the explicit public
 AssetRipper Git provider. Existing Shader owners validate its revision and resource
 hashes before compiling; the dispatcher retains the resulting pack and receipt.
+
+Release-graph Texture jobs bind the public JPEG/ETC codecs and native SDK texture
+toolchain required by their source operations. Dynamic file hashes enter the
+existing dispatcher cache identity; texture owners retain codec, schema and pixel
+extent validation. Setup supplies pinned tools; scoped producers close on exit
+and retain their receipts. Complete APK and device acceptance remain open.

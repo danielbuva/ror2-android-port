@@ -2545,6 +2545,15 @@ preservation and CLI/preflight integration; focused camera/help/generation/build
 checks passed. Existing transform and stage validation remain enforced.
 No runtime behaviour changes; device and alpha readiness gates remain open.
 
+## J1374 — Bind source texture tools in the release graph
+
+2026-11-04. Existing release-graph texture jobs pass the public JPEG/ETC codecs
+and SDK texture toolchain required by their source operations, with file-hash
+bindings for incremental cache identity. Existing texture schema, source and
+pixel-extent checks remain enforced; no target bytes are supplied.
+Evidence: `work/coordination/p1-scenes-w/current-commando-production-v4/` records
+the missing-codec failure after source shader production; authored graph contracts
+cover six published texture cohorts. Complete source APK/device gates stay open.
 ## J1373 — Partition ordinary world preparation on device
 
 Six early seams in the existing world owner separate seven preparation blocks;
@@ -2558,3 +2567,18 @@ Live cached-report estimate: 1718 frames/19.114 s (~89.9 FPS), before death/resu
 no sustained/manual/PC-parity claim. Peak 93.5 C, 11.294 s above 80 C, battery 30 C;
 thermal trace gaps below one second. Adopted placement/hash and idle cleanup verified.
 Startup still varies across stages/cache state; individual results costs remain open.
+
+## J1375 — Attribute ordinary results preparation on device
+
+Existing results seams emit monotonic/frame markers with Save/order unchanged.
+APK `5d2f99c08121e67d1ad044150b5561d509df8f9af119d9b83c579208a4b2ea31`,
+source `dcc6c8c1`; `work/coordination/alpha-results-preparation-capture-20261104T202314Z/acceptance.json`.
+Ordinary launcher: menu 26.588 s, Start → world 84.936 s, launch → world 112.534 s;
+no cross-stage/cache speed claim. Relationships 4.081 s, Android profile 3.639 s,
+item groups 0.379 s; all existing results seams retain order on frame 2417.
+Golemplains2: 1104 renderers/196 colliders, zero missing meshes or first failure;
+natural StandardLoss persisted/reloaded. Native audio/153 banks; audibility open.
+Cached live estimate 2915 frames/25.302 s (~115.2 FPS) before death, not sustained.
+Peak 88.8 C, 11.009 s above 80 C, battery peak 33 C; maximum trace gap 0.783 s.
+Adopted install/hash, stopped process, OLED sleep, scratch/prune/lease cleanup verified.
+Relationship loading is the next measured lead; prior lakes prop observation remains open.
