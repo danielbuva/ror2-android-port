@@ -2333,6 +2333,18 @@ Bounded source recipe only; producer unchanged; 2,024 candidates remain excluded
 Residual three unchanged; readiness 693/705 available, 685 raw-exact.
 Complete groups, bundle, phone/install/update and runtime gates remain open.
 
+## J1359 — Retained sustained game performance report
+
+2026-11-04. Host-only report owner reads existing sustained and thermal receipts; synthetic fixtures
+check counter subtraction, periodic percentiles, thermal gaps and missing measurements.
+Retained Main Nova: 88,421 frames, 49.061 average FPS, 4,142 >33.334 ms and 1,359 >50 ms.
+Periodic interval-mean p50/p95/p99: 20.06/33.57/35.54 ms; raw frame percentiles unavailable.
+Evidence: `work/coordination/perf-game-1104/report.json`; output SHA-256
+`2a199449a557e586f6f90ba990d826530017d33793b63ace0993fcf1b88f7b90`.
+APK unchanged: `d9009691ddccbefb3bdca3aad45bf5120dd011ccb2de66056c9a591a636b038a`.
+Game baseline documents CPU/render/GC hypotheses and proposed device budgets; no device run or
+optimization was performed. Raw pacing, battery efficiency, causal throttling and ordinary-play
+performance/visual acceptance remain open.
 ## J1358 — Retain audited Menu build identities and native provider order
 
 2026-11-04. Public Menu recipe retains 591 build-assigned IDs/order only; every

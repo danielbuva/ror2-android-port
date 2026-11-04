@@ -2035,6 +2035,15 @@ performance guarantee. Host admission estimates two 4 GiB snapshots plus
 records that budget and observed free bytes. The 100 GiB full-build floor does
 not apply to this capture-only queue. Host fixtures exercise admission and
 failure contracts.
+`scripts/lab/perf_report.py` is the host-only sustained-report owner. Explicit
+session-result and thermal JSONL inputs produce local JSON/Markdown with input
+hashes, active counter deltas, periodic interval-mean percentiles and UTC-aligned
+FPS/temperature bins. Setup reads retained evidence; files close on process exit,
+no runtime/device state is changed, and reports persist at the requested output.
+It cannot recover individual-frame quantiles or causal throttling onset from
+aggregate traces. [Game performance](performance-game.md) owns the baseline and
+attribution limits; [public alpha](public-alpha.md#performance-release-gate) owns
+proposed device budgets. Synthetic host fixtures check window and coverage math.
 `--gameplay-only` selects just the existing heap and sustained owners when the
 independent SDK interruption route is blocked. Its receipt explicitly records
 that scope; it supplies no settings-interruption evidence and cannot combine
