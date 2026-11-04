@@ -62,6 +62,17 @@ def checked(path, expected):
         raise ValueError("player-data bytes differ: " + path.name)
 
 
+def verify_player_outputs(output, expected, files, current_pins):
+    """Recheck persisted producer pins; keep historical hashes as diagnostics."""
+    for name, row in expected.items():
+        path = output / (TARGET + name)
+        pin = current_pins.get(name, row)
+        checked(path, (pin["bytes"], pin["sha256"]))
+        files[TARGET + name].update(pin)
+        if name in current_pins:
+            files[TARGET + name]["historical_raw_exact"] = pin == row
+
+
 def metadata(scripting, initializers, projects):
     """Keep original engine order/initializer records and authored project order."""
     if len(scripting["names"]) != len(scripting["types"]) or len(projects) != len(set(projects)):
@@ -298,7 +309,7 @@ def original_script_hash(pc, selected, original, body, typ, sdk_tree):
     return result
 
 
-def object_file(pc, selected, destination, script_sdk_tree=None):
+def object_file(pc, selected, destination, script_sdk_tree=None, registry=None):
     """Reuse original player-object bodies and source type identities.
 
     UnityPy/AssetRipper's PPtr relationship is the same checked remap performed
@@ -363,6 +374,27 @@ def object_file(pc, selected, destination, script_sdk_tree=None):
             "user": "",
         }
 
+        current_script = None
+        if registry is not None and "script" in selected:
+            # Resolve the checked original relationship, never the old destination ID.
+            target, row = next(iter(selections.values()))
+            member.seek(original["data_offset"] + row["offset"])
+            raw_body = W.B.exact(member, row["bytes"])
+            if hashlib.sha256(raw_body).hexdigest() != target["source_sha256"]:
+                raise ValueError("original player object body drift")
+            fid, pid = struct.unpack_from("<iq", raw_body, 16)
+            if not 0 <= fid <= len(original["externals"]):
+                raise ValueError("original player script external differs")
+            provider = original["externals"][fid - 1]["path"].rsplit("/", 1)[-1] if fid else source.get("member", source["path"])
+            identity = registry["original_script_identities"].get((provider, pid))
+            if identity is None or identity not in registry["script_ids"]:
+                raise ValueError("original player script has no current registry identity")
+            target_fid = selected["script"][0]
+            if not 0 < target_fid <= len(layout["externals"]) or layout["externals"][target_fid - 1]["path"] != "globalgamemanagers.assets":
+                raise ValueError("current player script provider differs")
+            current_script = [target_fid, registry["script_ids"][identity]]
+            layout["scripts"] = [current_script]
+
         def body(target):
             selection, row = selections[target["path_id"]]
             member.seek(original["data_offset"] + row["offset"])
@@ -396,6 +428,10 @@ def object_file(pc, selected, destination, script_sdk_tree=None):
                 raise ValueError("player object script relationship differs")
             if hashlib.sha256(data).hexdigest() != selection["sha256"]:
                 raise ValueError("produced player object differs")
+            if current_script is not None:
+                data = bytearray(data)
+                struct.pack_into("<iq", data, 16, *current_script)
+                data = bytes(data)
             return io.BytesIO(data)
 
         with destination.open("xb") as output:
@@ -1280,6 +1316,11 @@ def produce(
                 raise ValueError("generated player metadata differs: " + name)
             (output / (TARGET + name)).write_bytes(body)
             result["files"][TARGET + name] = {**row, "source_role": "pc-and-authored", "source": profile["sources"][name]["path"]}
+        registry = None
+        if "registry" in profile:
+            registry = registry_records(profile_path.parent.resolve(strict=True), profile["registry"], pc, editor_resources, code_request, managed_production)
+        current_output_pins = {}
+        current_registry = registry is not None and "target" not in json.loads(Path(code_request).read_text())
         font = profile["font"]
         name = font["file"]
         if name in ("", ".", "..") or PurePosixPath(name).name != name or "\\" in name:
@@ -1292,7 +1333,10 @@ def produce(
             name = selection["file"]
             if name in ("", ".", "..") or PurePosixPath(name).name != name or "\\" in name:
                 raise ValueError("unsafe object player filename")
-            object_file(pc, selection, output / (TARGET + name), script_sdk_tree)
+            object_file(pc, selection, output / (TARGET + name), script_sdk_tree, registry)
+            if registry is not None and "script" in selection:
+                path = output / (TARGET + name)
+                current_output_pins[name] = dict(bytes=path.stat().st_size, sha256=sha(path))
             result["files"][TARGET + name] = {**profile["outputs"][name], "source_role": "pc-objects", "source": selection["source"]["path"]}
         texture_files(pc, profile["font"]["source"], profile.get("textures", []), texture_packs, output, result)
         if "builtin_ui" in profile:
@@ -1316,13 +1360,15 @@ def produce(
                 else profile["text_assets"]["source"]["path"],
             }
         if "registry" in profile:
-            registry = registry_records(profile_path.parent.resolve(strict=True), profile["registry"], pc, editor_resources, code_request, managed_production)
             name = profile["registry"]["file"]
             if PurePosixPath(name).name != name or name in ("", ".", "..") or "\\" in name:
                 raise ValueError("unsafe registry player filename")
             with (output / (TARGET + name)).open("xb") as target:
                 W.write_serialized(target, registry["layout"], lambda row: io.BytesIO(registry["bodies"][row["path_id"]]))
             result["files"][TARGET + name] = {"source_role": "pc-sdk-and-authored", "source": profile["registry"]["path"]}
+            if current_registry:
+                path = output / (TARGET + name)
+                current_output_pins[name] = dict(bytes=path.stat().st_size, sha256=sha(path))
             registry_pins = [(Path(path), (pin["bytes"], pin["sha256"])) for path, pin in registry["provider_pins"].items()]
             if "shared_defaults" in profile:
                 selected = profile["shared_defaults"]
@@ -1331,6 +1377,9 @@ def produce(
                     raise ValueError("unsafe shared-default player filename")
                 registry_pins.extend(shared_defaults(pc, selected, sdk, builtin_extra, registry, record_packs, output / (TARGET + name)))
                 result["files"][TARGET + name] = {"source_role": "pc-sdk-and-record-packs", "source": selected["source"]["path"]}
+                if current_registry:
+                    path = output / (TARGET + name)
+                    current_output_pins[name] = dict(bytes=path.stat().st_size, sha256=sha(path))
             result["registry_inputs"] = {str(path): {"bytes": pin[0], "sha256": pin[1]} for path, pin in registry_pins}
         elif "shared_defaults" in profile:
             raise ValueError("shared defaults require the source registry")
@@ -1404,9 +1453,7 @@ def produce(
         for name, pin in expected.items():
             checked(output / (TARGET + name), pin)
             checked(sources[name], pin)
-        for name, row in profile["outputs"].items():
-            checked(output / (TARGET + name), (row["bytes"], row["sha256"]))
-            result["files"][TARGET + name].update(row)
+        verify_player_outputs(output, profile["outputs"], result["files"], current_output_pins)
         for name, source in pc_sources.items():
             row = profile["sources"][name]
             checked(source, (row["bytes"], row["sha256"]))

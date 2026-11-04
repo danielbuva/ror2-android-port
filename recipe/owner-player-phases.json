@@ -1,0 +1,65 @@
+{
+  "ui": {
+    "profile": "recipe/owner-player-menu.json",
+    "sha256": "68cdf84752aceffbeab7f9d975eeaae706e67eb1a7aff0015b974e8e2ee2120b",
+    "outputs": [
+      "30a097a0963a5c0b83de72bdca0d74e5",
+      "8a0ff9c5f0c5502fba3bd2bf113b4cf1",
+      "974d3403001904c3d83f41d5f2c3bad4"
+    ]
+  },
+  "hud": {
+    "profile": "recipe/owner-player-hud.json",
+    "sha256": "471b7f74f5e9143c0dfe7bba03c5138389a019d9f55b40fa581f881f75bd2241",
+    "outputs": [
+      "01894180ad6f5bdd850e079708adb118",
+      "10b299540a5e52a49b0fb02e521a1b06",
+      "15dc4c97af39540ba2bca356a2df7b84",
+      "1a80bbb8f9df56429b656633da69016a",
+      "22525d76c80c5b8289b5cb45d3f1a6b6",
+      "22547d16b83c54a1b3152b83c7e9af73",
+      "2497c74abd2b5c1daaca008a070e3e6a",
+      "32ceeb3d8127504b9df99bec75891db8",
+      "5d437ffe1f765736a42d9888e93bafe6",
+      "67272a3a247e5aaab1829df4a7f19a49",
+      "6b0f21f8722755c6b32dfdaa9c763e69",
+      "8aa6f108767c5020bbb05579a68a2a77",
+      "8bf560c0443c5c4194f37b3ae0f7006e",
+      "8d9f78be6e7a5a0b900ec728f3a057f5",
+      "946c0a9b766954a8b584b87301d0b622",
+      "9606454f678d537882b1518d851810a7",
+      "a0a6fe1562e4557fa17b81c2526dd2c0",
+      "af2c47caea9174d649e9f9997fd416d9",
+      "bf47a42c759b5a5cb17ef5a5ac0aa3c3",
+      "c0cbadb2f27c50668bc3ed12ac34133d",
+      "c9001adf697155cfb04f64d73b32b480",
+      "d1321da9d0e450839074da8dac8ec028",
+      "dd0f6245dcb052d7b666eb75147e203d",
+      "ef3a88b704b05fbfae1f49c4995690b6",
+      "f176c745fd3d54e2b48a3365dad72795",
+      "f78ba550492d5df4875f03b1d0a2852f",
+      "feb1f0b2a57d553ca4bf4b96e8553312"
+    ]
+  },
+  "stage-context": {
+    "profile": "recipe/owner-stage-contexts.json",
+    "sha256": "e9098b415c66f74530b23aac1206443f0932daf7619b6c6ad192ef6e254ea807",
+    "outputs": [
+      "2be99f2f55a9941d98f7de611a7b9288"
+    ]
+  },
+  "manager": {
+    "profile": "recipe/owner-player-managers.json",
+    "sha256": "0ec07f8658fb40f22cf3d8db4ea3e2878888d94aa9f184a756b9475626d24350",
+    "outputs": [
+      "globalgamemanagers"
+    ]
+  },
+  "scene": {
+    "profile": "recipe/owner-default-scene.json",
+    "sha256": "c02e13f130379c3d33eaf35260f28cc09173cd4e33179f6771013a0585c44a6d",
+    "outputs": [
+      "level0"
+    ]
+  }
+}

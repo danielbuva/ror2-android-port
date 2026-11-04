@@ -79,6 +79,13 @@ stable converter path identities. The registry and all dependent writers share
 the freshly allocated script ID map; compiler/manifest/layout receipts stay pinned.
 Current package importers use the fresh compiler's source hashes and selection,
 with original adjacent metadata pinned by the registry owner.
+Standalone scripted resource files resolve their original MonoScript member and
+object identity through that same registry before writing body pointers and native
+script tables. Historical destination IDs remain diagnostics; original body and
+reference contracts are checked before the current identity is applied.
+The current registry, shared defaults and rebound scripted files retain their
+fresh producer hashes for final readback; historical output hashes are reported
+as diagnostics. Source/provider pins and structural checks remain strict.
 
 `player_ui.py` owns current source Menu graph normalization, deterministic local
 IDs, SDK component construction and typed links to the existing player suppliers.
@@ -964,17 +971,53 @@ signatures and tracked-only bundles; `.github/workflows/public-release.yml`
 publishes these on authorized version tags using an externally provisioned key.
 `owner-apk/updates.py` owns bounded GitHub acquisition, signature/archive
 verification and the private update transaction; `release_jobs.py` dispatches
-signed job recipes to existing source-only producers. `release_graph.py` compiles selected
+signed job recipes to existing source-only producers. Optional
+`recipe/owner-player-phases.json` selects the five existing source player phases,
+including all Sprite/texture outputs, their profile argv and signed policy
+closure. Manager shaders use the existing shader job. A shared startup job
+derives the manager build identity and final `boot.config`/`unity_app_guid`
+from the admitted inventory binding and signed smoke settings/toolchain.
+Environment remains an explicit source-produced input. Dispatcher production/reuse rejects
+player receipt membership differences before caching. No additional runtime
+owner or process lifetime is introduced. `release_graph.py` compiles selected
 complete bundle profiles and their SHA-linked suppliers into those descriptors
-and a source index. Explicit extra argv selects acquired public tools; unresolved
+and a source index. Compressed native-record profiles enter the same supplier
+graph by their compressed hash and header; the existing record owner streams
+their source groups at execution. Explicit extra argv selects acquired public tools; unresolved
 profiles fail before staging. Generated JSON is overlaid into the release source
 checkout and audited/committed before the existing tracked-only publisher runs.
+The graph's optional `--bundle-manifest` fans every selected payload bundle into
+`bundle_manifest.py` through declared path, digest and integer byte-size artifacts.
+The existing native owner reads actual bundle dependencies and rejects missing
+providers; it never substitutes a historical manifest. Its generated file shares
+the signed supplier closure and private incremental cache with those bundles.
 The dispatcher resolves supplier directories from declared receipt artifacts;
 input-file hash tokens bind acquired tools without embedding host paths.
 Player/shader jobs declare complete serialized outputs; remapping consumes their
 top-level receipts, while player data consumes nested shared-shader and texture
 packs. Their authored shader and player configuration inputs travel in the
 signed closure. Fresh converter/managed inputs remain explicit caller bindings.
+The optional `--native-request` adds `owner-code/native.py` as one cached job
+with final `libil2cpp.so` and matching `global-metadata.dat` outputs. Its public
+request template binds acquired converter receipt, source frames, metadata and
+SDK; the native policy travels in the signed closure. The native owner rechecks
+the converter cohort after linking and verifies its metadata copy before success.
+Planning and measured partial builds emit neither final metadata nor a complete
+release.
+The optional `--burst-request` dispatches `owner-code/produce.py --burst-only`
+with positional request input. Explicit managed providers reuse the current
+cohort; source-input requests first generate that cohort through the existing
+managed owner. Both routes publish `lib_burst_generated.so` and retain linker
+preservation XML with the receipt. Player, native and Burst compiler policies
+travel in the signed closure and invalidate the job cache when changed. The
+existing producer checks provider hashes, preservation roots and compiler inputs;
+no historical APK library supplies output.
+The optional `--sdk-request` adds the existing `sdk_package.py` owner as one
+cached job for all 15 SDK APK entries. Its public request binds the acquired
+SDK, platform, AAPT2, Java tools and pinned public jars. The authored Java helper
+travels in the signed closure alongside Python producers. SDK resources, dex
+and engine libraries share production/reuse; temporary helper/tool files stay
+private and are excluded from declared outputs.
 Generated jobs retain producer checks and do not establish complete APK or phone
 readiness. Setup uses explicit source checkout/profile/output paths; teardown
 keeps generated descriptors and caller-owned producer results. The managed-host
@@ -1083,8 +1126,12 @@ SDK ARM64 target data remain inputs. Android Clang 21/LLD remains the explicit
 fallback; whole-player Linux app hosting and runtime parity are separate gates.
 
 `owner-code/produce.py::burst` owns the unchanged acquired Burst compiler
-invocation over freshly produced managed assemblies. Fixed-target metadata
-selects its roots, actual SDK compilation API defines, options and tool hashes.
+invocation over freshly produced managed assemblies. The existing public Burst
+policy selects roots, SDK compilation API defines, options and tool hashes.
+Without a fixed target, the backend reuses only the `burst` policy from
+`owner-j850-code.json`; current managed generation and preservation roots remain
+selected. Its receipt records the policy profile hash and checks it after
+compilation. Fixed targets continue to select their own policy.
 `GnuToolAdapter.c` supplies only the GNU build-tool low-address mappings and
 explicit emulated child execution required by Mono/LLVM under QEMU. It is foreign
 tool data, never linked into the ARM64 game. `native.py::compiled_jobs` validates

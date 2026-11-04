@@ -1,5 +1,12 @@
 # Build recipes
 
+`owner-sdk-job-inputs.json` binds caller-acquired SDK/platform/Java/AAPT2 and
+public Maven jars to the existing SDK package producer. It contains only
+dispatcher binding names, public artifact filenames and an output token. No
+SDK bytes, game content, private paths or credentials are included. Existing
+producer pins and license boundaries remain unchanged. Provenance, privacy,
+licensing and sensitive-content audit: 2026-11-04.
+
 ## Original assembly placement audit (R1, 2026-10-18)
 
 `original-assemblies.json` records only source/project identities, source SHA-256,
@@ -56,6 +63,20 @@ record the result below, and run `python3 scripts/audit-public.py`. Where a gene
 produce the file from the input, prefer tracking the generator.
 
 ## Audit record
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-sdk-job-inputs.json` | `bbcfc451a0320389b0d7e0d79786670a0108e3fcb30991c2c5cead859afa15ad` |
+| `owner-player-phases.json` | `49f3c80455532ce9c3c94db2e8dd4807ab0ceb7a96c144d78a064ddb94dcd8fc` |
+
+`owner-player-phases.json` declares the five existing source phase recipe hashes
+and their complete output filename sets (including UUID5 Sprite/texture names).
+These are minimum reconstruction/layout identities from the current source
+producer receipts, without file bodies, target hashes, images or private paths.
+The declaration supplies no content; all files must be regenerated from original
+inputs and checked by their existing owners. Provenance, privacy, licensing and
+sensitive-content audit: 2026-11-04. No entitlement or historical-byte claim.
+
 
 `owner-j850-code.json` additionally names the 69 legitimate debug-symbol
 companions required by the fixed target's managed closure. These are SDK or
@@ -6711,3 +6732,14 @@ policy retains the 20 external provider filenames/order already declared by the
 public player-data suppliers. The linker resolves all providers from source
 before assigning their saved external IDs; additional source providers append.
 No Sprite, layout value, asset body or null override is retained in this table.
+
+Native release job request audit (2026-11-04):
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-native-job-inputs.json` | `8aac45cbe864a1364ab2e306fae59ff3d94e1ac07a51b2940a473a565125f9cf` |
+
+This request contains only dispatcher bindings for acquired SDK/converter inputs and a private
+output location. No game bytes, generated sources, native binaries, private paths
+or credentials are retained. The existing native policy and converter receipt
+checks own compilation and metadata provenance; APK/device gates remain open.
