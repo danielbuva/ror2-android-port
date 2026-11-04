@@ -164,7 +164,7 @@ class Dispatcher:
                         raise ValueError("input hash requires a regular file")
                     return UPDATES.RELEASE.digest(selected)
                 return str(selected.relative_to(self.inputs) if key.startswith("input_relative:") else selected)
-            if key.startswith(("job:", "job_relative:", "job_directory:", "sha256:")):
+            if key.startswith(("job:", "job_relative:", "job_directory:", "sha256:", "bytes:")):
                 parts = key.split(":")
                 if len(parts) != 3 or parts[1] not in job.get("needs", []):
                     raise ValueError("artifact must name a declared job dependency")
@@ -175,17 +175,17 @@ class Dispatcher:
                 selected = UPDATES.within(self.completed[parts[1]], artifact, exists=True)
                 if parts[0] == "job_directory":
                     return str(selected.parent)
-                if parts[0] == "sha256":
+                if parts[0] in {"sha256", "bytes"}:
                     if not selected.is_file():
                         raise ValueError("receipt hash requires a regular artifact file")
-                    return UPDATES.RELEASE.digest(selected)
+                    return str(selected.stat().st_size) if parts[0] == "bytes" else UPDATES.RELEASE.digest(selected)
                 return str(selected.relative_to(self.inputs) if parts[0] == "job_relative" else selected)
             raise ValueError("unknown release job substitution: " + key)
 
         result = TOKEN.sub(replace, value)
         if "${" in result:
             raise ValueError("malformed release job substitution")
-        return result
+        return int(result) if value.startswith("${bytes:") and TOKEN.fullmatch(value) else result
 
     @staticmethod
     def files_in(output, job):

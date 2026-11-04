@@ -280,12 +280,50 @@ class Graph:
         producers.update(path.relative_to(self.repo).as_posix() for path in (self.repo / "scripts/lab").rglob("*.py"))
         return {"job": name, "recipe_files": sorted(recipes), "producer_files": sorted(producers)}
 
-    def compile(self, selected):
+    def bundle_manifest(self, selected_jobs):
+        """Fan in final bundle artifacts; the existing owner checks dependencies."""
+        bundles = []
+        needs = []
+        for job in sorted(set(selected_jobs)):
+            descriptor = self.jobs[job]
+            for target, path in sorted(descriptor["outputs"].items()):
+                if not target.startswith("payload/"):
+                    continue
+                artifact = "manifest_bundle_" + str(len(bundles))
+                descriptor["artifacts"][artifact] = path
+                bundles.append(
+                    {
+                        "name": target.removeprefix("payload/"),
+                        "path": "${job:" + job + ":" + artifact + "}",
+                        "sha256": "${sha256:" + job + ":" + artifact + "}",
+                        "bytes": "${bytes:" + job + ":" + artifact + "}",
+                    }
+                )
+                if job not in needs:
+                    needs.append(job)
+        if not bundles:
+            raise ValueError("bundle manifest requires selected complete bundle profiles")
+        name = "recipe/jobs/owner-bundle-manifest.json"
+        self.jobs[name] = {
+            "schema": 1,
+            "script": PREFIX + "bundle_manifest.py",
+            "arguments": ["--inputs", "${request}", "--output", "${output}"],
+            "request": {"schema": "owner-produced-bundle-inputs-v1", "bundles": bundles},
+            "needs": needs,
+            "outputs": {"payload/generated-android-data": "generated-android-data"},
+            "artifacts": {"receipt": "result.json"},
+        }
+        self.job_profiles[name] = {}
+        return name
+
+    def compile(self, selected, *, bundle_manifest=False):
         entries = {}
         selected_jobs = [self.build(digest(self.repo / path)) for path in selected]
         startup = "recipe/jobs/owner-startup-metadata.json"
         if startup in self.jobs:
             selected_jobs.append(startup)
+        if bundle_manifest:
+            selected_jobs.append(self.bundle_manifest(selected_jobs))
         for job in selected_jobs:
             entry = self.entry(job)
             for output in self.jobs[job]["outputs"]:
@@ -307,11 +345,16 @@ def main():
     parser.add_argument("--repo", type=Path, required=True)
     parser.add_argument("--profile", action="append", required=True, help="repo-relative complete output profile; repeat for a cohort")
     parser.add_argument("--player-phases", help="repo-relative complete optional player phase/output declaration")
+    parser.add_argument(
+        "--bundle-manifest",
+        action="store_true",
+        help="generate the native manifest from every selected payload bundle; missing native dependencies fail production",
+    )
     parser.add_argument("--extra-arguments", type=Path, help="JSON producer name -> additional CLI argv, with dispatcher substitutions")
     parser.add_argument("--output", type=Path, required=True, help="new public job staging root; overlay into a release source checkout")
     args = parser.parse_args()
     graph = Graph(args.repo, json.loads(args.extra_arguments.read_text()) if args.extra_arguments else {}, args.player_phases)
-    index = graph.compile(args.profile)
+    index = graph.compile(args.profile, bundle_manifest=args.bundle_manifest)
     args.output.mkdir(parents=True, exist_ok=False)
     for name, job in graph.jobs.items():
         path = args.output / name
