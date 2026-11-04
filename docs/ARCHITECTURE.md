@@ -1910,7 +1910,13 @@ contract are in [LOCAL_STATE.md](LOCAL_STATE.md#named-historical-optional-guard-
 `scripts/prune-generated.py` (current) discards rebuildable build outputs under
 `work/` while protecting the APKs pinned by `PORTING_STATE.md`, `docs/BASELINE.md`,
 device receipts and the coordination lock; agents run it after each build/run task
-(AGENTS.md "Storage hygiene").
+(AGENTS.md "Storage hygiene"). Finished session-memory heaps older than 24 h
+require a successful coordination analysis receipt matching their capture manifest
+(filename, SHA-256 and size); capture/analysis receipts and logs remain. Finished
+lane leftovers require the lane owner's matching `removed.json`; managed stale
+lanes still use owned teardown. Keep markers and receipt paths protect both.
+Cold-storage run/lane symlinks are unlinked only, preserving their targets.
+Linked worktrees resolve the canonical ignored work and lane roots.
 
 `scripts/journal-renumber.py` (support) owns branch-only journal numbering after
 merging fetched `origin/main`. It compares complete entries, preserves main,
