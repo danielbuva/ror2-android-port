@@ -42,6 +42,7 @@ EXTRA = {
         import org.json.JSONObject;import java.io.*;public class ToolHostActivity {
         static java.util.Map<String,JSONObject> values=new java.util.HashMap<>();public static String checkpointState;
         public static void updateInstallCheckpoint(android.content.Context c,String s,String m){checkpointState=s;}
+        public static void updateInstallDiagnostic(android.content.Context c,String stage,String callback,boolean match){}
         public static JSONObject readJson(File f)throws Exception{if(!f.isFile())throw new IOException("absent "+f);return values.get(f.getCanonicalPath());}
         public static void writeJson(File f,JSONObject v)throws Exception{f.getParentFile().mkdirs();try(FileOutputStream o=new FileOutputStream(f)){o.write(1);}values.put(f.getCanonicalPath(),v);}}
     """,
