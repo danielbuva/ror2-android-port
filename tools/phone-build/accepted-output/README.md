@@ -1702,8 +1702,11 @@ directory is the exact editor's `com.unity.ugui/Runtime/UI/Core`; four pinned so
 files supply constructor defaults. This is a current experimental producer.
 
 The parent generates its registry first; the UI owner receives that value rather
-than a separate registry packet. It reads original UI/scripts/English data and
-public player supplier recipes, preserves asset identities and resolves every
+than a separate registry packet. The public Menu recipe retains 591 audited
+build-assigned object IDs/order; full path/component coverage and the complete
+allocation must match before relocation. These constants supply no object fields.
+It reads original UI/scripts/English data and public player supplier recipes,
+preserves asset identities and resolves every
 nonzero pointer. Native schemas may cross original files only with matching
 class IDs/hashes. Common-string names use the pinned parser's vocabulary; no
 class-database schema supplies content. Original Sprite copies require matching

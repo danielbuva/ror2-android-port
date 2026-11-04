@@ -2332,3 +2332,16 @@ Host-only; heat unmeasured. EditorKit typed ownership and J1351 routes inform se
 Bounded source recipe only; producer unchanged; 2,024 candidates remain excluded.
 Residual three unchanged; readiness 693/705 available, 685 raw-exact.
 Complete groups, bundle, phone/install/update and runtime gates remain open.
+
+## J1358 — Retain audited Menu build identities and native provider order
+
+2026-11-04. Public Menu recipe retains 591 build-assigned IDs/order only; every
+body remains source/SDK-derived. Native Graphic material precedes Image Sprite
+provider allocation; HUD accepts the original public/backing health-style field.
+Current-input Menu: 582/591 bodies raw-exact, SHA-256
+`6bb0c96c61cbef10e22c27755e278a20500f6a6e451c8637032f181408a9b2c4`.
+Remaining: store Sprite nonnull versus null, alignment 5 versus 8, and seven
+Sprite-induced external-index shifts; HUD graph remains 2,021 versus 1,902.
+Evidence: `work/coordination/p1-menuhud/current-menu-v1/`; 15 focused tests pass.
+Host production 13.659 s, peak RSS 367,804,416 bytes; cleanup passes.
+No readiness closure or device claim; complete phone/install/update gates remain open.

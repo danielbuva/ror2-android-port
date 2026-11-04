@@ -63,6 +63,10 @@ individual records retain the existing 256 MiB bound. An authored 257 MiB contro
 matches canonical bytes with bounded payload memory; full phone production is open.
 `player_ui.py` owns current source Menu graph normalization, deterministic local
 IDs, SDK component construction and typed links to the existing player suppliers.
+Its audited Menu recipe may retain build-assigned IDs/order; the source graph
+must match the full identity cohort before local pointers are relocated.
+Graphic material providers reserve their position before Image Sprite providers,
+following the native schema field order. All body values remain source-derived.
 The optional player-data `--ui-profile` selects its audited source recipe;
 `--ugui-source` supplies the exact SDK's constructor declarations. The parent
 passes its freshly derived registry value. Original type trees and matching
