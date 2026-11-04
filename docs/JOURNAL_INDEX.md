@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J1357](PORTING_JOURNAL.md#j1357--resolve-source-derived-tree-windasset-endpoints) | 2026-11-03 | Resolve source-derived Tree WindAsset endpoints | 2026-11-04. |
 | [J1356](PORTING_JOURNAL.md#j1356--honor-thermal-admission-exclusions-above-80-c) | 2026-11-03 | Honor thermal admission exclusions above 80 C | 2026-11-04. |
 | [J1355](PORTING_JOURNAL.md#j1355--supply-source-derived-bundle-tree-providers) | 2026-10-31 | Supply source-derived bundle Tree providers | 2026-10-31. |
 | [J1353](PORTING_JOURNAL.md#j1353--capture-the-requested-final-menu-heap) | 2026-10-31 | Capture the requested final menu heap | 2026-10-31. |
