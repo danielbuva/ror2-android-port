@@ -618,7 +618,7 @@ def make_layout(selected, records, scene_members=(), engine="2021.3.45f2", *, in
         if typ["class_id"] == 114:
             file_id, script = struct.unpack_from("<iq", data, 16)
             if (file_id, script) == (0, 0):
-                if not scene_members or size != 32 or typ["script_type"] != -1 or typ["hash"] != bytes(16) or typ["script_id"] != bytes(16):
+                if size != 32 or typ["script_type"] != -1 or typ["hash"] != bytes(16) or typ["script_id"] != bytes(16):
                     raise ValueError("original null-script MonoBehaviour metadata drift")
                 null_script = True
             else:
