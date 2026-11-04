@@ -202,10 +202,16 @@ class MetadataUniverse:
 
     def field(self, signature, name):
         matches = []
+        native = self.modules.get("UnityEngine.CoreModule.dll")
         for _, key, typ, arguments in self.hierarchy(signature):
             for field in typ["fields"]:
                 if field["name"] == name and not field["is_static"] and not field["is_not_serialized"]:
                     matches.append(self.scoped_signature(key[0], field["signature"], arguments))
+            # Unity's native object root ends serialized managed-field lookup.
+            # Its framework base is not another serialized field provider; SDK
+            # references there can differ from the selected AOT framework.
+            if native is not None and key == (native["assembly_identity"], "UnityEngine.Object"):
+                break
         if len(matches) != 1:
             raise ValueError("serialized field absent or ambiguous")
         return matches[0]

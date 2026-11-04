@@ -1578,7 +1578,8 @@ The same metadata owner binds selected modules to current provider paths/hashes
 and resolves exact serialized field paths through inherited/nested declarations,
 arrays and core-provider `List<T>` elements. Generic base arguments are substituted
 at each inheritance step; static, nonserialized, ambiguous and unsupported fields
-refuse. Managed endpoint assignability uses complete scoped identities and explicit
+refuse. Serialized-field lookup stops after the exact bound CoreModule Object root;
+its framework base does not supply serialized fields. Managed endpoint assignability uses complete scoped identities and explicit
 forwarders. Callers must separately validate source identity, integrated full types,
 produced bodies and actual PPtr readback; this helper supplies no native-class bridge
 and does not admit graph endpoints by itself.

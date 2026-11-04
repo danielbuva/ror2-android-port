@@ -260,3 +260,29 @@ class ManagedFieldContractTests(unittest.TestCase):
         )
         self.resolver.types[identity("Game"), middle["name"]] = middle
         self.assertTrue(self.resolver.prove_field_endpoint(self.owner, ["target", "Array", "0"], self.child))
+
+    def test_serialized_fields_stop_at_bound_native_object_without_framework_alias(self):
+        native_identity = identity("UnityEngine.CoreModule")
+        framework = self.named("System.Object", "mscorlib", False)
+        framework["scope"]["assembly_identity"] = identity("mscorlib", "2.0.0.0")
+        native = assembly("UnityEngine.CoreModule", references=["mscorlib"])
+        native["references"] = [identity("mscorlib", "2.0.0.0")]
+        native["types"] = [self.typ("UnityEngine.Object", framework)]
+        self.resolver.assemblies[native_identity] = native
+        self.resolver.modules["UnityEngine.CoreModule.dll"] = native
+        self.resolver.types[native_identity, "UnityEngine.Object"] = native["types"][0]
+        parent = self.rows[0]["types"][3]
+        parent["base_signature"] = self.named("UnityEngine.Object", "UnityEngine.CoreModule", False)
+        self.rows[0]["references"].append(native_identity)
+        self.assertTrue(self.resolver.prove_field_endpoint(self.owner, ["target"], self.child))
+        with self.assertRaisesRegex(ValueError, "field absent"):
+            self.resolver.field_type(self.owner, ["missing"])
+        # Managed inheritance still requires the exact framework dependency.
+        with self.assertRaisesRegex(ValueError, "Missing exact assembly"):
+            list(self.resolver.hierarchy(self.resolver.registry(self.owner)))
+        # A same-name type in the game assembly cannot create a native boundary.
+        parent["base_signature"] = self.named("UnityEngine.Object")
+        self.resolver.types[identity("Game"), "UnityEngine.Object"] = self.typ("UnityEngine.Object", framework)
+        self.rows[0]["references"].append(identity("mscorlib", "2.0.0.0"))
+        with self.assertRaisesRegex(ValueError, "Missing exact assembly"):
+            self.resolver.field_type(self.owner, ["target"])
