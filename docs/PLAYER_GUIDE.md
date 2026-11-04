@@ -63,15 +63,29 @@ results and settings also run. Many of these tests use automatic input,
 invincibility or other diagnostic assists; they do not establish a complete,
 normal-difficulty playthrough.
 
+**Commando and Huntress are available in the current lab build.** In its lobby,
+use the left stick to select a survivor, the right stick to select difficulty,
+and A to start. This does not qualify every physical controller or gameplay mapping.
+
+Startup FPS is uncapped for the test display (the lab requests 300 FPS;
+[#322](https://github.com/danielbuva/ror2-android-port/pull/322)). The menu has been
+reported at about 120 FPS on a 120 Hz Nova, with a gameplay median of about
+50 FPS in a 30-minute run. These observations are not a device-support or
+sustained-performance guarantee.
+
 Important work remains:
 
-- Audible music and sound effects are not yet verified in normal play.
+- Player audio is unavailable in the current lab setup.
+- `LightningStake` can produce a NaN error during teardown in some long sessions.
+- Slow memory growth of about 0.2 MB per session remains unresolved.
+- Roster and UI rendering are approximated; visual parity is unfinished.
 - A full unassisted run, the Moon finale and escape are not verified.
 - Touch controls, physical controllers and ordinary player navigation still need
   qualification; automated test input does not prove those experiences work.
-- Complete survivor abilities, expansion content and visual parity are unfinished.
+- Complete survivor abilities and expansion content are unfinished.
 - Sustained performance, heat and long-session stability remain open.
-- Steam identity and cloud saves are unavailable in the current game setup.
+- Steam profiles, identity and cloud saves are unavailable; Android-local profiles
+  are separate.
 
 Test-device results are not a supported-device list or a performance guarantee.
 The [current technical status](../PORTING_STATE.md) is the source for detailed
