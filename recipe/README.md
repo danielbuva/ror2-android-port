@@ -5027,7 +5027,7 @@ recorded under `work/coordination/orchestrator/public-startup-metadata-v2/`.
 
 | Recipe | SHA-256 |
 | --- | --- |
-| `owner-player-menu.json` | `4ee619309ed4a0477bcf5bc5725d085b245847257a7e66b75f75e97585532f1c` |
+| `owner-player-menu.json` | `68cdf84752aceffbeab7f9d975eeaae706e67eb1a7aff0015b974e8e2ee2120b` |
 
 `owner-player-menu.json` selects minimum original UI/script/dependency members,
 the original prefab root, public English tokens and authored hide/action policies.
@@ -6683,3 +6683,9 @@ records (96 bytes); the profile now supplies 66 Trees. Audit: 2026-11-04; only
 source selectors, hashes and checked typed relationships are added. The existing
 producer is unchanged. Of the prior 2,028 exclusions, 2,024 remain unresolved;
 saved residual three and final-file readiness remain unchanged.
+
+Menu provider identity follow-up (2026-11-04): the same audited build-identity
+policy retains the 20 external provider filenames/order already declared by the
+public player-data suppliers. The linker resolves all providers from source
+before assigning their saved external IDs; additional source providers append.
+No Sprite, layout value, asset body or null override is retained in this table.

@@ -36,6 +36,13 @@ PRODUCERS = {
             "player_data",
             "sdk_package",
             "payload_shader_records",
+            "shader_context",
+            "shader_prefab",
+            "record_remap",
+            "sprite_produce",
+            "bundle_manifest",
+            "stage_contexts",
+            "startup_metadata",
         )
     },
 }
@@ -149,11 +156,15 @@ class Dispatcher:
             key = match.group(1)
             if key in roots:
                 return str(roots[key])
-            if key.startswith(("input:", "input_relative:")):
+            if key.startswith(("input:", "input_relative:", "input_sha256:")):
                 binding = self.config.get("bindings", {}).get(key.split(":", 1)[1])
                 selected = UPDATES.within(self.inputs, binding, exists=True)
+                if key.startswith("input_sha256:"):
+                    if not selected.is_file():
+                        raise ValueError("input hash requires a regular file")
+                    return UPDATES.RELEASE.digest(selected)
                 return str(selected.relative_to(self.inputs) if key.startswith("input_relative:") else selected)
-            if key.startswith(("job:", "job_relative:", "sha256:")):
+            if key.startswith(("job:", "job_relative:", "job_directory:", "sha256:")):
                 parts = key.split(":")
                 if len(parts) != 3 or parts[1] not in job.get("needs", []):
                     raise ValueError("artifact must name a declared job dependency")
@@ -162,6 +173,8 @@ class Dispatcher:
                 if artifact is None:
                     raise ValueError("unknown producer artifact")
                 selected = UPDATES.within(self.completed[parts[1]], artifact, exists=True)
+                if parts[0] == "job_directory":
+                    return str(selected.parent)
                 if parts[0] == "sha256":
                     if not selected.is_file():
                         raise ValueError("receipt hash requires a regular artifact file")

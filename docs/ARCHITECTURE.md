@@ -76,6 +76,8 @@ matches canonical bytes with bounded payload memory; full phone production is op
 IDs, SDK component construction and typed links to the existing player suppliers.
 Its audited `recipe/owner-player-menu.json` may retain build-assigned IDs/order; the source graph
 must match the full identity cohort before local pointers are relocated.
+Its audited external provider order applies only after source resolution;
+additional source providers append without shifting retained provider IDs.
 Graphic material providers reserve their position before Image Sprite providers,
 following the native schema field order. All body values remain source-derived.
 The optional player-data `--ui-profile` selects its audited source recipe;
@@ -907,6 +909,17 @@ and refuses blocked inputs before compiling its launcher. Check-only teardown
 retains one new private report; it starts no compiler or device action. Complete
 record packs do not satisfy final bundle/player-data paths, and this byte check
 does not establish source provenance or device qualification.
+Its optional `lighting_tolerance` selection uses
+`accepted-output/scene_compare.py`, the host-only full-scene comparison owner
+built on `unity_write.py` structural reads. Setup supplies the actual produced
+file, private reference and pinned measured recipe/visual review. Native schemas
+select lighting sample fields; all non-lighting bytes, identities and references
+stay exact. All other bundle members are checked. Numerical maxima and visual
+pins are retained in readiness; process exit closes inputs, assembly rechecks
+pins, and teardown retains the existing private report. No runtime state or
+production dependency on comparison artifacts is added. Readiness counts
+`tolerance_accepted_count` independently of exact/drift; actual lighting admission
+remains zero. Supported fields, formats and open gates are in [ADR-003](ADR-003-lighting-tolerance.md).
 Its optional `drift` selection admits changed content only through three pinned
 private qualification documents: historical exact production, repeated current
 production by the same public producer, and a named original-input/output extent
@@ -943,7 +956,16 @@ signatures and tracked-only bundles; `.github/workflows/public-release.yml`
 publishes these on authorized version tags using an externally provisioned key.
 `owner-apk/updates.py` owns bounded GitHub acquisition, signature/archive
 verification and the private update transaction; `release_jobs.py` dispatches
-signed job recipes to existing source-only producers. The managed-host
+signed job recipes to existing source-only producers. `release_graph.py` compiles selected
+complete bundle profiles and their SHA-linked suppliers into those descriptors
+and a source index. Explicit extra argv selects acquired public tools; unresolved
+profiles fail before staging. Generated JSON is overlaid into the release source
+checkout and audited/committed before the existing tracked-only publisher runs.
+The dispatcher resolves supplier directories from declared receipt artifacts;
+input-file hash tokens bind acquired tools without embedding host paths.
+Generated jobs retain producer checks and do not establish complete APK or phone
+readiness. Setup uses explicit source checkout/profile/output paths; teardown
+keeps generated descriptors and caller-owned producer results. The managed-host
 `ToolHostActivity` presents check/download/rebuild/install states, while
 `OwnerUpdateState` is Android-free presentation policy. PR #119
 `OwnerInstaller` remains the PackageInstaller owner, including streamed hashing,
