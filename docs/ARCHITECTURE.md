@@ -5446,7 +5446,11 @@ text without adding preparation stacks to the original Console history. Original
 and error logging keep their existing stack policy. They add no owner state,
 report writes or yields;
 the existing report phase and resource teardown remain authoritative. A marker
-names the operation about to begin; the next marker bounds its elapsed time.
+names the operation about to begin or the completed seam (`-ready`); adjacent
+markers bound the intervening work. Early seams distinguish client connection,
+authority observers, availability/display rules, pickup catalogs, loot setup and
+cost catalogs. Availability and display rules share one interval, so it does
+not identify their individual costs.
 
 J1183 adds eight scene object selections and eleven Shader selections to those
 same owners. Explicit original scene renderer roots select spine Shader variants;

@@ -2544,3 +2544,17 @@ Host contracts cover checked-in freshness, aggregate drift reporting, refresh
 preservation and CLI/preflight integration; focused camera/help/generation/build
 checks passed. Existing transform and stage validation remain enforced.
 No runtime behaviour changes; device and alpha readiness gates remain open.
+
+## J1373 — Partition ordinary world preparation on device
+
+Six early seams in the existing world owner separate seven preparation blocks;
+markers keep report writes, scheduling and original logging policy intact.
+APK `cdda422dda5b7ab7e2320588294195c2ae68d92bd1749c9247e7d6745c652345`,
+source `bc20d95e`; `work/coordination/alpha-world-preparation-device-20261104T193038Z/acceptance.json`.
+Ordinary launcher: menu 52.987 s, Start → world 135.472 s, original golemplains
+1323 renderers/203 colliders, no missing meshes or first failure; 153 banks/native init.
+Largest early block: profile/results/loot 9.287 s in one frame; explicit GC skipped.
+Live cached-report estimate: 1718 frames/19.114 s (~89.9 FPS), before death/results;
+no sustained/manual/PC-parity claim. Peak 93.5 C, 11.294 s above 80 C, battery 30 C;
+thermal trace gaps below one second. Adopted placement/hash and idle cleanup verified.
+Startup still varies across stages/cache state; individual results costs remain open.

@@ -6788,6 +6788,11 @@ relationships and integrity pins, with no game-derived bodies or pixels.
 | --- | --- |
 | `owner-whole-scene-postprocess-shader-remap.json` | `a88c83cd062eca5241bdd8a57b2b34a0d211cd093d3e474ac90c9b0c8df138cc` |
 
+The early world-preparation timing seams refresh the reviewed authored
+`IntegratedWorldBoundary.cs` source pin and its audio-owner manifest consumers.
+The change adds six scalar, stack-free diagnostic markers only; no protected
+content, identifiers, generated data or native/audio bytes are published.
+
 ## Commando controller supplier refresh (2026-11-04)
 
 The complete Commando recipe selects the current public AnimatorController
