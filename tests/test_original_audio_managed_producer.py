@@ -35,6 +35,24 @@ class ManagedProducerTests(unittest.TestCase):
                 with self.assertRaisesRegex(RuntimeError, "not ignored by Git"):
                     PRODUCER.output_directory(shared / "public-output")
 
+    def test_receipt_paths_use_canonical_shared_work_root(self):
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder).resolve()
+            shared = root / "shared"
+            shared.mkdir()
+            work = root / "work"
+            work.symlink_to(shared, target_is_directory=True)
+            output = shared / "production"
+            output.mkdir()
+            artifact = output / "assembly.dll"
+            artifact.write_bytes(b"authored fixture")
+            with mock.patch.object(PRODUCER, "WORK", work):
+                self.assertEqual(PRODUCER.work_relative(output), "production")
+                self.assertEqual(PRODUCER.work_relative(artifact), "production/assembly.dll")
+                self.assertEqual(PRODUCER.work_relative(work / "production/assembly.dll"), "production/assembly.dll")
+                with self.assertRaises(ValueError):
+                    PRODUCER.work_relative(root / "outside")
+
     def test_editor_identity_requires_both_version_and_revision(self):
         with tempfile.TemporaryDirectory() as folder:
             root = Path(folder)
