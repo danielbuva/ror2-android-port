@@ -212,7 +212,7 @@
       "sha256": "5a62ae9cd9f6b4d7c8a71bb0ab040abb848f44f1848dc8542ffb3e9c0f5ec846"
     },
     {
-      "source_profile_sha256": "6177f393bceff837be35af0f5741ed514a11eb5f673fa5632839e65686e0d09c",
+      "source_profile_sha256": "67486c4e2823b26b3b21fdfe2b3bcbcf02e45667dbcf8535e5e84af00c32cd56",
       "destination": [
         "commando-prefab-lab",
         "CAB-b0611b01bbffecd06329c6d6eecf278c",
@@ -2149,7 +2149,7 @@
       "sha256": "7d94136c17ff038a31a02991235da1449eabfea3d9ff5b4fb9e82570a0e56adc"
     },
     {
-      "source_profile_sha256": "6177f393bceff837be35af0f5741ed514a11eb5f673fa5632839e65686e0d09c",
+      "source_profile_sha256": "67486c4e2823b26b3b21fdfe2b3bcbcf02e45667dbcf8535e5e84af00c32cd56",
       "destination": [
         "commando-prefab-lab",
         "CAB-b0611b01bbffecd06329c6d6eecf278c",
@@ -5186,7 +5186,7 @@
       "sha256": "caec78d35a50a9d10529b8b81f91967b96a2c3e55d89b69357fc8ac7926ce095"
     },
     {
-      "source_profile_sha256": "6177f393bceff837be35af0f5741ed514a11eb5f673fa5632839e65686e0d09c",
+      "source_profile_sha256": "67486c4e2823b26b3b21fdfe2b3bcbcf02e45667dbcf8535e5e84af00c32cd56",
       "destination": [
         "commando-prefab-lab",
         "CAB-b0611b01bbffecd06329c6d6eecf278c",

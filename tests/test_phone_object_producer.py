@@ -2350,6 +2350,55 @@ class ReflectionProbeImportTests(unittest.TestCase):
 
 
 class FieldlessScriptMetadataTests(unittest.TestCase):
+    def test_sdk_event_system_defaults_require_matching_current_schema(self):
+        def pointer(name):
+            return FIXTURE.node(name, kind="PPtr<Object>", children=[FIXTURE.node("m_FileID", 4, kind="int"), FIXTURE.node("m_PathID", 8, kind="SInt64")])
+
+        fields = [pointer("m_GameObject"), FIXTURE.node("m_Enabled", 1, kind="UInt8", meta=0x4000), pointer("m_Script"), FIXTURE.node("m_Name", 4, kind="int")]
+        stream = io.BytesIO(RECORD_FIXTURE.serialized(b"", FIXTURE.node("Base", kind="MonoBehaviour", children=fields), class_id=114))
+        stream.size = len(stream.getvalue())
+        typ = P.W.read_serialized(stream)["types"][0]
+        nodes = LEGACY_IDENTITY.tree_nodes(typ["tree"])
+        node = LEGACY_IDENTITY._node
+        sdk = LEGACY_IDENTITY._tree(nodes + [node("string", "m_EditorClassIdentifier", -1)])
+        custom = [
+            node("PPtr<$GameObject>", "m_FirstSelected", 12),
+            node("int", "m_FileID", 4, 2),
+            node("SInt64", "m_PathID", 8, 2),
+            node("UInt8", "m_sendNavigationEvents", 1, meta=0x4000),
+            node("int", "m_DragThreshold", 4),
+        ]
+        tree = LEGACY_IDENTITY._tree(nodes + custom)
+        names = ("EventSystem", "UnityEngine.EventSystems", "UnityEngine.UI.dll")
+        properties = LEGACY_IDENTITY.properties_hash(*names, tree, sdk)
+        stream = io.BytesIO()
+        P.aligned_string(stream, "EventSystem")
+        stream.write(bytes(4) + properties)
+        for value in names:
+            P.aligned_string(stream, value)
+        script = stream.getvalue()
+        source = """[SerializeField] [FormerlySerializedAs("oldSelection")] private GameObject m_FirstSelected;
+        [SerializeField] private bool m_sendNavigationEvents = true;
+        [SerializeField] private int m_DragThreshold = 10;"""
+        body = struct.pack("<iqB3xiqI", 0, 41, 1, 0, 99, 0)
+        made, revised = P.sdk_event_system(body, typ, script, source, sdk, LEGACY_IDENTITY)
+        self.assertEqual(made, body + struct.pack("<iqB3xi", 0, 0, 1, 10))
+        self.assertEqual(revised["hash"], properties)
+        self.assertEqual(revised["tree"], tree)
+        changed, _ = P.sdk_event_system(body, typ, script, source.replace("= true", "= false").replace("= 10", "= 15"), sdk, LEGACY_IDENTITY)
+        self.assertEqual(changed[-8:], struct.pack("<B3xi", 0, 15))
+        for invalid in (
+            source.replace("m_DragThreshold", "newField"),
+            source + "[SerializeField] private int extra = 1;",
+            source.replace("= true", "= SomeCall()"),
+        ):
+            with self.subTest(source=invalid), self.assertRaises(ValueError):
+                P.sdk_event_system(body, typ, script, invalid, sdk, LEGACY_IDENTITY)
+        mutation = bytearray(script)
+        mutation[P.script_fields(script)[0]] ^= 1
+        with self.assertRaisesRegex(ValueError, "properties"):
+            P.sdk_event_system(body, typ, bytes(mutation), source, sdk, LEGACY_IDENTITY)
+
     def test_current_fieldless_supplier_keeps_receipt_and_script_identity_checks(self):
         stream = io.BytesIO()
         P.aligned_string(stream, "AuthoredBoundary")

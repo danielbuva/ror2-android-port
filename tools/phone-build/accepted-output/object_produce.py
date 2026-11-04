@@ -12,6 +12,7 @@ import hashlib
 import importlib.util
 import io
 import json
+import re
 from pathlib import Path
 import shutil
 import struct
@@ -1040,6 +1041,49 @@ def fieldless_script_type(body, typ, script, sdk_tree, identity_owner):
     return {**typ, "hash": properties, "script_id": identity_owner.md4("".join(names).encode())}
 
 
+def sdk_event_system(body, typ, script, source, sdk_tree, identity_owner):
+    """Construct the SDK EventSystem fields on a checked source base component."""
+    if typ["class_id"] != 114 or len(body) != 32 or body[28:] != bytes(4):
+        raise ValueError("EventSystem requires the original empty-name base component")
+    nodes = identity_owner.tree_nodes(typ["tree"])
+    if [n["name"] for n in nodes if n["level"] == 1] != ["m_GameObject", "m_Enabled", "m_Script", "m_Name"]:
+        raise ValueError("EventSystem prototype has custom fields")
+    offset, names = script_fields(script)
+    if names != ("EventSystem", "UnityEngine.EventSystems", "UnityEngine.UI.dll"):
+        raise ValueError("EventSystem MonoScript identity differs")
+    text = re.sub(r"/\*.*?\*/|//[^\n]*", "", source, flags=re.S)
+    text = re.sub(r'\[FormerlySerializedAs\("[^"\n]*"\)\]', "", text)
+    declarations = re.findall(r"\[SerializeField\]\s*private\s+(\w+)\s+(\w+)\s*(?:=\s*([^;]+))?;", text)
+    if len(declarations) != 3 or [(kind, name) for kind, name, _ in declarations] != [
+        ("GameObject", "m_FirstSelected"),
+        ("bool", "m_sendNavigationEvents"),
+        ("int", "m_DragThreshold"),
+    ]:
+        raise ValueError("unsupported SDK EventSystem serialized declarations")
+    if (
+        declarations[0][2].strip() not in ("", "null")
+        or declarations[1][2].strip() not in ("true", "false")
+        or not re.fullmatch(r"[0-9]+", declarations[2][2].strip())
+    ):
+        raise ValueError("unsupported SDK EventSystem initializer")
+    node = identity_owner._node
+    tree = identity_owner._tree(
+        nodes
+        + [
+            node("PPtr<$GameObject>", "m_FirstSelected", 12),
+            node("int", "m_FileID", 4, 2),
+            node("SInt64", "m_PathID", 8, 2),
+            node("UInt8", "m_sendNavigationEvents", 1, meta=0x4000),
+            node("int", "m_DragThreshold", 4),
+        ]
+    )
+    properties = identity_owner.properties_hash(*names, tree, sdk_tree)
+    if properties != script[offset : offset + 16]:
+        raise ValueError("EventSystem schema differs from produced MonoScript properties")
+    body += struct.pack("<iqB3xi", 0, 0, declarations[1][2].strip() == "true", int(declarations[2][2]))
+    return body, {**typ, "tree": tree, "hash": properties, "script_id": identity_owner.md4("".join(names).encode())}
+
+
 def copy_original_bundle(profile, profile_sha256, pc, output):
     """Preserve prepare.py's original Windows bundle copy without a project."""
     if set(profile) != {"input_id", "original_bundle"}:
@@ -1639,8 +1683,8 @@ def produce(profile_path, profile_sha256, pc, output, codec_path, codec_sha256, 
                     if script_type["class_id"] != 115:
                         raise ValueError("fieldless script source must be an original MonoScript")
                     typ = fieldless_script_type(body, typ, script, sdk_tree, identity_owner)
-                if "fieldless_script_record" in selected:
-                    if sdk_tree is None or selected["fieldless_script_record"] is not True:
+                if "fieldless_script_record" in selected or "sdk_event_system" in selected:
+                    if sdk_tree is None or ("fieldless_script_record" in selected and selected["fieldless_script_record"] is not True):
                         raise ValueError("fieldless script record requires the named SDK policy")
                     if typ["class_id"] != 114 or len(body) < 28:
                         raise ValueError("fieldless script record requires a MonoBehaviour")
@@ -1653,8 +1697,20 @@ def produce(profile_path, profile_sha256, pc, output, codec_path, codec_sha256, 
                     directory, script_row = packed[selected_member["name"], script_id]
                     script = record_extent(directory / "objects.bin", script_row)
                     script_pin = supplied_script_identity(script, script_type["class_id"], script_selection, script_row)
-                    typ = fieldless_script_type(body, typ, script, sdk_tree, identity_owner)
-                    receipt.setdefault("fieldless_script_records", {})[str(script_id)] = script_pin
+                    if "sdk_event_system" in selected:
+                        policy = selected["sdk_event_system"]
+                        source_path = M.safe_input(sdk.resolve(strict=True), policy["path"])
+                        if B.sha(source_path) != policy["sha256"]:
+                            raise ValueError("SDK EventSystem source drift")
+                        body, typ = sdk_event_system(body, typ, script, source_path.read_text(), sdk_tree, identity_owner)
+                        receipt.setdefault("sdk_event_system_records", {})[str(selected["path_id"])] = {
+                            "script_sha256": script_pin,
+                            "source_sha256": policy["sha256"],
+                            "sha256": hashlib.sha256(body).hexdigest(),
+                        }
+                    else:
+                        typ = fieldless_script_type(body, typ, script, sdk_tree, identity_owner)
+                        receipt.setdefault("fieldless_script_records", {})[str(script_id)] = script_pin
                 if "managed_pointer_schema" in selected:
                     if sdk_tree is None or typ["class_id"] != 114:
                         raise ValueError("managed pointer schema requires SDK and MonoBehaviour")
@@ -1675,7 +1731,7 @@ def produce(profile_path, profile_sha256, pc, output, codec_path, codec_sha256, 
                         "sha256": hashlib.sha256(body).hexdigest(),
                         "historical_raw_exact": len(body) == selected["bytes"] and hashlib.sha256(body).hexdigest() == selected["sha256"],
                     }
-                elif len(body) != selected["bytes"] or hashlib.sha256(body).hexdigest() != selected["sha256"]:
+                elif "sdk_event_system" not in selected and (len(body) != selected["bytes"] or hashlib.sha256(body).hexdigest() != selected["sha256"]):
                     raise ValueError("produced object differs from accepted hash")
                 if record_type_hash is not None and typ["hash"].hex() != record_type_hash:
                     raise ValueError("produced record native type identity differs")

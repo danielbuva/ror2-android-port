@@ -9789,7 +9789,10 @@
           ]
         }
       ],
-      "fieldless_script_record": true
+      "sdk_event_system": {
+        "path": "Contents/Resources/PackageManager/BuiltInPackages/com.unity.ugui/Runtime/EventSystem/EventSystem.cs",
+        "sha256": "05e486c5d37e88335df9d8dafbb42208331bddb0441c94949b208f4180a36e65"
+      }
     },
     {
       "path_id": -9048412504190879658,
@@ -14234,7 +14237,10 @@
           ]
         }
       ],
-      "fieldless_script_record": true
+      "sdk_event_system": {
+        "path": "Contents/Resources/PackageManager/BuiltInPackages/com.unity.ugui/Runtime/EventSystem/EventSystem.cs",
+        "sha256": "05e486c5d37e88335df9d8dafbb42208331bddb0441c94949b208f4180a36e65"
+      }
     },
     {
       "path_id": -5857962428119707782,
@@ -25024,7 +25030,10 @@
           ]
         }
       ],
-      "fieldless_script_record": true
+      "sdk_event_system": {
+        "path": "Contents/Resources/PackageManager/BuiltInPackages/com.unity.ugui/Runtime/EventSystem/EventSystem.cs",
+        "sha256": "05e486c5d37e88335df9d8dafbb42208331bddb0441c94949b208f4180a36e65"
+      }
     },
     {
       "path_id": 2948180784589753914,
@@ -25163,7 +25172,10 @@
           ]
         }
       ],
-      "fieldless_script_record": true
+      "sdk_event_system": {
+        "path": "Contents/Resources/PackageManager/BuiltInPackages/com.unity.ugui/Runtime/EventSystem/EventSystem.cs",
+        "sha256": "05e486c5d37e88335df9d8dafbb42208331bddb0441c94949b208f4180a36e65"
+      }
     },
     {
       "path_id": 3004753090809230107,
@@ -29719,7 +29731,10 @@
           ]
         }
       ],
-      "fieldless_script_record": true
+      "sdk_event_system": {
+        "path": "Contents/Resources/PackageManager/BuiltInPackages/com.unity.ugui/Runtime/EventSystem/EventSystem.cs",
+        "sha256": "05e486c5d37e88335df9d8dafbb42208331bddb0441c94949b208f4180a36e65"
+      }
     },
     {
       "path_id": 6411183946209198156,
@@ -32208,7 +32223,10 @@
           ]
         }
       ],
-      "fieldless_script_record": true
+      "sdk_event_system": {
+        "path": "Contents/Resources/PackageManager/BuiltInPackages/com.unity.ugui/Runtime/EventSystem/EventSystem.cs",
+        "sha256": "05e486c5d37e88335df9d8dafbb42208331bddb0441c94949b208f4180a36e65"
+      }
     },
     {
       "path_id": 8579305234156075945,
