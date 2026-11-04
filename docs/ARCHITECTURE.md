@@ -6039,3 +6039,11 @@ original/SDK inputs and creates a fresh record pack; scoped readers close on
 process exit and receipts persist. All 221 records are host raw-exact to J850.
 Complete groups, bundle and phone/install/update gates remain open; no runtime
 owner is added.
+
+`recipe/owner-whole-scene-standard-shader-remap.json` uses the existing
+`record_remap.py` owner to select the source-produced Sulfurpools Standard
+Shader for Meridian and Satellite. The pinned supplier receipt, body and
+dependency provenance are retained while explicit destination identities feed
+the existing scene pointer checks. Setup requires the source Shader pack and
+a fresh output directory; process exit releases readers and retains receipts.
+No runtime owner is added; complete APK and device gates remain open.
