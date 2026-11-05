@@ -94,6 +94,48 @@ class LabInstallerUpdatesTests(unittest.TestCase):
         result, elapsed, _, _ = self.run_install_poll(diagnostic=lambda _: none, timeout=30)
         self.assertEqual((result, elapsed), ("install-readback-timeout", 30))
 
+    def test_schema_two_callback_entry_prevents_false_absence_timeout(self):
+        raw = {"schema": 2, "stage": "commit-returned", "callback": "none", "session_match": None, "receiver_registration": "private", "callback_entry": "none"}
+        none = LAB.install_diagnostic_summary(LAB.encoded(raw))
+        result, elapsed, _, _ = self.run_install_poll(diagnostic=lambda _: none)
+        self.assertEqual((result, elapsed), ("install-first-callback-timeout", 60))
+        entered = LAB.install_diagnostic_summary(LAB.encoded(raw | {"callback_entry": "entered"}))
+        result, elapsed, captures, _ = self.run_install_poll(diagnostic=lambda now: entered if now == 59 else none)
+        self.assertEqual((result, elapsed, captures), ("install-readback-timeout", 120, 60))
+        unknown = LAB.install_diagnostic_summary(LAB.encoded(raw | {"callback_entry": "unknown"}))
+        result, elapsed, _, _ = self.run_install_poll(diagnostic=lambda _: unknown)
+        self.assertEqual((result, elapsed), ("install-readback-timeout", 120))
+
+    def test_install_diagnostic_schema_two_strict_fixed_receiver_and_entry_values(self):
+        base = {
+            "schema": 2,
+            "stage": "commit-returned",
+            "callback": "none",
+            "session_match": None,
+            "receiver_registration": "private",
+            "callback_entry": "none",
+        }
+        for registration in ("private", "exported", "disabled", "missing", "unavailable"):
+            for entry in ("none", "entered", "unknown"):
+                row = base | {"receiver_registration": registration, "callback_entry": entry}
+                self.assertEqual(
+                    LAB.install_diagnostic_summary(LAB.encoded(row)), {"status": "observed"} | {key: value for key, value in row.items() if key != "schema"}
+                )
+        for row in (
+            base | {"schema": 1},
+            base | {"schema": 3},
+            base | {"schema": True},
+            base | {"receiver_registration": "private-secret"},
+            base | {"receiver_registration": []},
+            base | {"callback_entry": "private-secret"},
+            base | {"callback_entry": False},
+            base | {"extra": "private-secret"},
+            {key: value for key, value in base.items() if key != "callback_entry"},
+        ):
+            result = LAB.install_diagnostic_summary(LAB.encoded(row))
+            self.assertEqual(result, {"status": "unavailable", "reason": "invalid-schema"})
+            self.assertNotIn("private-secret", json.dumps(result))
+
     def test_install_diagnostic_contract_is_strict_and_never_exports_unknown_values(self):
         base = {"schema": 1, "stage": "commit-returned", "callback": "none", "session_match": None}
         self.assertEqual(

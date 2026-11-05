@@ -69,15 +69,31 @@ def install_diagnostic_summary(data):
         "commit-returned",
     }
     callbacks = {"none", "pending-user-action", "success", "failure", "unknown"}
-    if not isinstance(row, dict) or set(row) != {"schema", "stage", "callback", "session_match"}:
+    if not isinstance(row, dict) or type(row.get("schema")) is not int or row["schema"] not in (1, 2):
         return unavailable
-    if type(row["schema"]) is not int or row["schema"] != 1 or not isinstance(row["stage"], str) or row["stage"] not in stages:
+    keys = {"schema", "stage", "callback", "session_match"}
+    if row["schema"] == 2:
+        keys |= {"receiver_registration", "callback_entry"}
+    if set(row) != keys or not isinstance(row["stage"], str) or row["stage"] not in stages:
         return unavailable
     if not isinstance(row["callback"], str) or row["callback"] not in callbacks:
         return unavailable
     if (row["callback"] == "none" and row["session_match"] is not None) or (row["callback"] != "none" and type(row["session_match"]) is not bool):
         return unavailable
-    return {"status": "observed", "stage": row["stage"], "callback": row["callback"], "session_match": row["session_match"]}
+    result = {"status": "observed", "stage": row["stage"], "callback": row["callback"], "session_match": row["session_match"]}
+    if row["schema"] == 2:
+        if not isinstance(row["receiver_registration"], str) or row["receiver_registration"] not in {
+            "private",
+            "exported",
+            "disabled",
+            "missing",
+            "unavailable",
+        }:
+            return unavailable
+        if not isinstance(row["callback_entry"], str) or row["callback_entry"] not in {"none", "entered", "unknown"}:
+            return unavailable
+        result.update(receiver_registration=row["receiver_registration"], callback_entry=row["callback_entry"])
+    return result
 
 
 def module(name, path):
@@ -735,10 +751,16 @@ class Phone:
                     # Optional evidence loss must not replace the install result
                     # or manufacture proof that a callback remained absent.
                     diagnostic = {"status": "unavailable"}
-                if diagnostic.get("status") == "observed" and diagnostic.get("callback") != "none":
+                if diagnostic.get("status") == "observed" and (diagnostic.get("callback") != "none" or diagnostic.get("callback_entry") == "entered"):
                     callback_observed = True
                     callback_absent_since = None
-                elif diagnostic == {"status": "observed", "stage": "commit-returned", "callback": "none", "session_match": None}:
+                elif (
+                    diagnostic.get("status") == "observed"
+                    and diagnostic.get("stage") == "commit-returned"
+                    and diagnostic.get("callback") == "none"
+                    and diagnostic.get("session_match") is None
+                    and diagnostic.get("callback_entry", "none") == "none"
+                ):
                     now = time.monotonic()
                     if callback_absent_since is None:
                         callback_absent_since = now
