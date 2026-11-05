@@ -7,6 +7,7 @@ owner workspace. Incomplete producer cohorts fail rather than selecting replay.
 
 import hashlib
 import importlib.util
+import json
 import os
 from pathlib import Path
 import re
@@ -36,6 +37,14 @@ PRODUCERS = {
             "player_data",
             "sdk_package",
             "payload_shader_records",
+            "shader_context",
+            "shader_prefab",
+            "record_remap",
+            "sprite_produce",
+            "bundle_manifest",
+            "catalog_complete",
+            "stage_contexts",
+            "startup_metadata",
         )
     },
 }
@@ -149,11 +158,15 @@ class Dispatcher:
             key = match.group(1)
             if key in roots:
                 return str(roots[key])
-            if key.startswith(("input:", "input_relative:")):
+            if key.startswith(("input:", "input_relative:", "input_sha256:")):
                 binding = self.config.get("bindings", {}).get(key.split(":", 1)[1])
                 selected = UPDATES.within(self.inputs, binding, exists=True)
+                if key.startswith("input_sha256:"):
+                    if not selected.is_file():
+                        raise ValueError("input hash requires a regular file")
+                    return UPDATES.RELEASE.digest(selected)
                 return str(selected.relative_to(self.inputs) if key.startswith("input_relative:") else selected)
-            if key.startswith(("job:", "job_relative:", "sha256:")):
+            if key.startswith(("job:", "job_relative:", "job_directory:", "sha256:", "bytes:")):
                 parts = key.split(":")
                 if len(parts) != 3 or parts[1] not in job.get("needs", []):
                     raise ValueError("artifact must name a declared job dependency")
@@ -162,17 +175,19 @@ class Dispatcher:
                 if artifact is None:
                     raise ValueError("unknown producer artifact")
                 selected = UPDATES.within(self.completed[parts[1]], artifact, exists=True)
-                if parts[0] == "sha256":
+                if parts[0] == "job_directory":
+                    return str(selected.parent)
+                if parts[0] in {"sha256", "bytes"}:
                     if not selected.is_file():
                         raise ValueError("receipt hash requires a regular artifact file")
-                    return UPDATES.RELEASE.digest(selected)
+                    return str(selected.stat().st_size) if parts[0] == "bytes" else UPDATES.RELEASE.digest(selected)
                 return str(selected.relative_to(self.inputs) if parts[0] == "job_relative" else selected)
             raise ValueError("unknown release job substitution: " + key)
 
         result = TOKEN.sub(replace, value)
         if "${" in result:
             raise ValueError("malformed release job substitution")
-        return result
+        return int(result) if value.startswith("${bytes:") and TOKEN.fullmatch(value) else result
 
     @staticmethod
     def files_in(output, job):
@@ -182,6 +197,13 @@ class Dispatcher:
         Declared files and prerequisite artifacts must remain canonical, regular
         private results; a scratch link is never followed or cached as output.
         """
+        if job.get("script") == "tools/phone-build/accepted-output/player_data.py":
+            receipt = UPDATES.public().load_json(UPDATES.within(output, "result.json", exists=True).read_bytes())
+            actual, declared = set(receipt["files"]), set(job["outputs"])
+            if receipt.get("success") is not True or actual != declared:
+                raise ValueError(
+                    "player output membership differs: undeclared=" + str(sorted(actual - declared)) + "; missing=" + str(sorted(declared - actual))
+                )
         files = {}
         for name in {*job["outputs"].values(), *job.get("artifacts", {}).values()}:
             selected = UPDATES.within(output, name, exists=True)
@@ -195,6 +217,26 @@ class Dispatcher:
                     raise ValueError("producer declared a nonregular artifact")
         return files
 
+    def input_pins(self, name):
+        """Pin dynamic file witnesses, including suppliers, before cache reuse."""
+        pins, seen = {}, set()
+
+        def visit(job_name):
+            if job_name in seen:
+                return
+            seen.add(job_name)
+            descriptor = self.descriptor(job_name)
+            for binding in re.findall(r"\$\{input_sha256:([^}]+)\}", json.dumps(descriptor)):
+                selected = UPDATES.within(self.inputs, self.config.get("bindings", {}).get(binding), exists=True)
+                if not selected.is_file():
+                    raise ValueError("input hash requires a regular file")
+                pins[binding] = UPDATES.RELEASE.digest(selected)
+            for dependency in descriptor.get("needs", []):
+                visit(dependency)
+
+        visit(name)
+        return pins
+
     def execute(self, name):
         if name in self.completed:
             return self.completed[name]
@@ -207,7 +249,9 @@ class Dispatcher:
                 self.execute(needed)
             files = self.closure(name)
             self.verify_sources(files)
-            identity = hashlib.sha256(UPDATES.RELEASE.signed_bytes({"job": name, "files": files, "input_sha256": self.input_sha256})).hexdigest()
+            identity = hashlib.sha256(
+                UPDATES.RELEASE.signed_bytes({"job": name, "files": files, "input_sha256": self.input_sha256, "input_pins": self.input_pins(name)})
+            ).hexdigest()
             receipt_path = self.jobs_root / (identity + ".json")
             if receipt_path.exists():
                 receipt = UPDATES.public().load_json(receipt_path.read_bytes())

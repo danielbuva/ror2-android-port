@@ -12,6 +12,7 @@ import hashlib
 import importlib.util
 import io
 import json
+import re
 from pathlib import Path
 import shutil
 import struct
@@ -60,17 +61,35 @@ def remap(body, references):
 
 
 def remap_record(body, typ, references, externals):
-    """Relocate produced bodies only at PPtrs declared by the original schema."""
+    """Relocate produced bodies at checked schema PPtrs, then reparse them."""
     records = module("record_produce")
-    _, spans = records.fields(body, records.SCHEMA.type_tree(io.BytesIO(typ["tree"])))
-    pointers = {start for key, (start, end) in spans.items() if end - start == 12 and key + ("m_FileID",) in spans and key + ("m_PathID",) in spans}
+    root = records.SCHEMA.type_tree(io.BytesIO(typ["tree"]))
+    _, spans = records.fields(body, root)
+    pointers = {key: start for key, (start, end) in spans.items() if end - start == 12 and key + ("m_FileID",) in spans and key + ("m_PathID",) in spans}
+    resolved = []
     for reference in references:
-        if reference["offset"] not in pointers:
+        reference = dict(reference)
+        if "field" in reference:
+            field = tuple(reference["field"])
+            if field not in pointers:
+                raise ValueError("produced record relocation field is not a schema PPtr")
+            if "offset" in reference and reference["offset"] != pointers[field]:
+                raise ValueError("produced record relocation field/offset differs")
+            reference["offset"] = pointers[field]
+        if reference["offset"] not in pointers.values():
             raise ValueError("produced record relocation is not a schema PPtr")
         file_id, _ = reference["to"]
         if not 0 <= file_id <= len(externals):
             raise ValueError("produced record relocation has an absent external file")
-    return remap(body, references)
+        resolved.append(reference)
+    result = remap(body, resolved)
+    _, revised = records.fields(result, root)
+    if revised != spans:
+        raise ValueError("produced record relocation changed field extents")
+    for reference in resolved:
+        if list(struct.unpack_from("<iq", result, reference["offset"])) != reference["to"]:
+            raise ValueError("produced record relocation readback differs")
+    return result
 
 
 def demote_material_keywords(body, *, sort_invalid=False, valid_keywords=()):
@@ -618,7 +637,7 @@ def make_layout(selected, records, scene_members=(), engine="2021.3.45f2", *, in
         if typ["class_id"] == 114:
             file_id, script = struct.unpack_from("<iq", data, 16)
             if (file_id, script) == (0, 0):
-                if not scene_members or size != 32 or typ["script_type"] != -1 or typ["hash"] != bytes(16) or typ["script_id"] != bytes(16):
+                if size != 32 or typ["script_type"] != -1 or typ["hash"] != bytes(16) or typ["script_id"] != bytes(16):
                     raise ValueError("original null-script MonoBehaviour metadata drift")
                 null_script = True
             else:
@@ -860,10 +879,9 @@ def legacy_animate_fields(body, tree, identity_owner):
     return body[: ranges[0][0]] + body[ranges[-1][1] :], projected
 
 
-def legacy_animate_hash_tree(tree, sdk_tree, identity_owner):
-    """Hash SDK editor Curve/Keyframe nodes; preserve serialized runtime schema."""
+def editor_curve_hash_tree(tree, sdk_trees, identity_owner, *, source_field=None, sdk_field=None):
+    """Hash editor curves only after checking their complete runtime projection."""
     source = identity_owner.tree_nodes(tree)
-    native = identity_owner.tree_nodes(sdk_tree)
 
     def extent(nodes, index):
         end = index + 1
@@ -871,38 +889,36 @@ def legacy_animate_hash_tree(tree, sdk_tree, identity_owner):
             end += 1
         return end
 
-    src = [i for i, node in enumerate(source) if node["type"] == "AnimationCurve" and node["name"] == "alphaCurve"]
-    sdk = [i for i, node in enumerate(native) if node["type"] == "AnimationCurve" and node["name"] == "m_Falloff"]
-    if len(src) != 1 or len(sdk) != 1:
-        raise ValueError("original/SDK AnimateShaderAlpha curve schema absent")
-    i, j = src[0], sdk[0]
-    end = extent(source, i)
-    shift = source[i]["level"] - native[j]["level"]
-    editor = [{**node, "level": node["level"] + shift} for node in native[j : extent(native, j)]]
-    editor[0]["name"] = source[i]["name"]
-    key = [k for k, node in enumerate(editor) if node["type"] == "Keyframe"]
-    tangent = [k for k, node in enumerate(editor) if node["name"] == "tangentMode"]
-    if len(key) != 1 or len(tangent) != 1 or editor[key[0]]["size"] != 32 or editor[tangent[0]]["type"] != "int" or editor[tangent[0]]["size"] != 4:
-        raise ValueError("SDK editor Keyframe tangent schema drift")
-    runtime = [dict(node) for k, node in enumerate(editor) if k != tangent[0]]
-    runtime[key[0]]["size"] -= 4
-    if runtime != source[i:end]:
-        raise ValueError("original runtime AnimationCurve differs from SDK editor projection")
-    revised = source[:i] + editor + source[end:]
-    strings = bytearray()
-    labels = {}
-
-    def label(value):
-        if value not in labels:
-            labels[value] = len(strings)
-            strings.extend(value.encode() + bytes(1))
-        return labels[value]
-
-    rows = [
-        struct.pack("<HBBIIiiiQ", n["version"], n["level"], n["flags"], label(n["type"]), label(n["name"]), n["size"], k, n["meta"], 0)
-        for k, n in enumerate(revised)
+    src = [i for i, node in enumerate(source) if node["type"] == "AnimationCurve" and (source_field is None or node["name"] == source_field)]
+    templates = [
+        nodes for blob in sdk_trees for nodes in identity_owner._native_subtrees(blob, "AnimationCurve") if sdk_field is None or nodes[0]["name"] == sdk_field
     ]
-    return struct.pack("<II", len(rows), len(strings)) + b"".join(rows) + strings
+    if not src or not templates or (source_field is not None and len(src) != 1):
+        raise ValueError("original/SDK AnimateShaderAlpha curve schema absent")
+    for i in reversed(src):
+        end = extent(source, i)
+        matches = {}
+        for nodes in templates:
+            shift = source[i]["level"] - nodes[0]["level"]
+            editor = [{**node, "level": node["level"] + shift} for node in nodes]
+            editor[0]["name"] = source[i]["name"]
+            key = [k for k, node in enumerate(editor) if node["type"] == "Keyframe"]
+            tangent = [k for k, node in enumerate(editor) if node["name"] == "tangentMode"]
+            if len(key) != 1 or len(tangent) != 1 or editor[key[0]]["size"] != 32 or editor[tangent[0]]["type"] != "int" or editor[tangent[0]]["size"] != 4:
+                continue
+            runtime = [dict(node) for k, node in enumerate(editor) if k != tangent[0]]
+            runtime[key[0]]["size"] -= 4
+            if runtime == source[i:end] or editor == source[i:end]:
+                matches[json.dumps(editor, sort_keys=True)] = editor
+        if len(matches) != 1:
+            raise ValueError("SDK editor Keyframe tangent schema or original runtime AnimationCurve differs from SDK editor projection")
+        source[i:end] = next(iter(matches.values()))
+    return identity_owner._tree(source)
+
+
+def legacy_animate_hash_tree(tree, sdk_tree, identity_owner):
+    """Retain the original single-field policy over the shared curve checker."""
+    return editor_curve_hash_tree(tree, [sdk_tree], identity_owner, source_field="alphaCurve", sdk_field="m_Falloff")
 
 
 def omit_character_master_field(tree, identity_owner):
@@ -989,6 +1005,66 @@ def script_fields(body):
     return offset, (string(), string(), string())
 
 
+def current_script_identity(body, class_id, expected):
+    """Check a receipt-bound current MonoScript by assembly, namespace and class."""
+    if class_id != 115:
+        raise ValueError("current script selection requires MonoScript")
+    _, (name, namespace, assembly) = script_fields(body)
+    if [assembly, namespace, name] != expected:
+        raise ValueError("current script identity differs")
+
+
+def supplied_script_identity(body, class_id, selected, row):
+    """Validate a current supplier identity or the legacy exact script contract."""
+    if "script_identity" in selected:
+        if "record" not in selected or row.get("source_produced", {}).get("script_identity") != selected["script_identity"]:
+            raise ValueError("current script requires receipt-bound serialized supplier")
+        current_script_identity(body, class_id, selected["script_identity"])
+    elif class_id != 115 or hashlib.sha256(body).hexdigest() != selected["sha256"]:
+        raise ValueError("fieldless MonoScript record identity differs")
+    return hashlib.sha256(body).hexdigest()
+
+
+def script_binding_errors(members, read_type, identity_owner):
+    """Check all declared local script relationships before expensive emission."""
+    errors = []
+    for member in members:
+        scripts = {row["path_id"]: row["script_identity"] for row in member["objects"] if "script_identity" in row}
+        for selected in member["objects"]:
+            references = [row for row in selected.get("references", []) if row.get("offset") == 16]
+            if not references:
+                continue
+            selector = selected.get("properties_hash", {}).get("behaviour", selected.get("source", selected.get("type_source")))
+            if selector is None:
+                continue
+            typ = read_type(selector)
+            if typ["class_id"] != 114:
+                continue
+            file_id, script_id = references[-1]["to"]
+            if file_id or script_id == 0 or script_id not in scripts:
+                continue
+            assembly, namespace, name = scripts[script_id]
+            if "sdk_event_system" in selected:
+                valid = [assembly, namespace, name] == ["UnityEngine.UI.dll", "UnityEngine.EventSystems", "EventSystem"]
+            elif selected.get("fieldless_script_record"):
+                # These components deliberately start from a generic base schema;
+                # fieldless_script_type checks their current SDK properties later.
+                continue
+            else:
+                valid = typ["script_id"] == identity_owner.md4((name + namespace + assembly).encode())
+            if not valid:
+                errors.append(
+                    {
+                        "member": member["name"],
+                        "path_id": selected["path_id"],
+                        "script_path_id": script_id,
+                        "script_identity": scripts[script_id],
+                        "source_script_id": typ["script_id"].hex(),
+                    }
+                )
+    return errors
+
+
 def original_script_properties(script, script_type, behaviour_type, current_type, identity_owner):
     """Retain the original editor hash only for the same unchanged script schema."""
     offset, names = script_fields(script)
@@ -1018,6 +1094,49 @@ def fieldless_script_type(body, typ, script, sdk_tree, identity_owner):
     if properties != script[offset : offset + 16]:
         raise ValueError("fieldless schema differs from produced MonoScript properties")
     return {**typ, "hash": properties, "script_id": identity_owner.md4("".join(names).encode())}
+
+
+def sdk_event_system(body, typ, script, source, sdk_tree, identity_owner):
+    """Construct the SDK EventSystem fields on a checked source base component."""
+    if typ["class_id"] != 114 or len(body) != 32 or body[28:] != bytes(4):
+        raise ValueError("EventSystem requires the original empty-name base component")
+    nodes = identity_owner.tree_nodes(typ["tree"])
+    if [n["name"] for n in nodes if n["level"] == 1] != ["m_GameObject", "m_Enabled", "m_Script", "m_Name"]:
+        raise ValueError("EventSystem prototype has custom fields")
+    offset, names = script_fields(script)
+    if names != ("EventSystem", "UnityEngine.EventSystems", "UnityEngine.UI.dll"):
+        raise ValueError("EventSystem MonoScript identity differs")
+    text = re.sub(r"/\*.*?\*/|//[^\n]*", "", source, flags=re.S)
+    text = re.sub(r'\[FormerlySerializedAs\("[^"\n]*"\)\]', "", text)
+    declarations = re.findall(r"\[SerializeField\]\s*private\s+(\w+)\s+(\w+)\s*(?:=\s*([^;]+))?;", text)
+    if len(declarations) != 3 or [(kind, name) for kind, name, _ in declarations] != [
+        ("GameObject", "m_FirstSelected"),
+        ("bool", "m_sendNavigationEvents"),
+        ("int", "m_DragThreshold"),
+    ]:
+        raise ValueError("unsupported SDK EventSystem serialized declarations")
+    if (
+        declarations[0][2].strip() not in ("", "null")
+        or declarations[1][2].strip() not in ("true", "false")
+        or not re.fullmatch(r"[0-9]+", declarations[2][2].strip())
+    ):
+        raise ValueError("unsupported SDK EventSystem initializer")
+    node = identity_owner._node
+    tree = identity_owner._tree(
+        nodes
+        + [
+            node("PPtr<$GameObject>", "m_FirstSelected", 12),
+            node("int", "m_FileID", 4, 2),
+            node("SInt64", "m_PathID", 8, 2),
+            node("UInt8", "m_sendNavigationEvents", 1, meta=0x4000),
+            node("int", "m_DragThreshold", 4),
+        ]
+    )
+    properties = identity_owner.properties_hash(*names, tree, sdk_tree)
+    if properties != script[offset : offset + 16]:
+        raise ValueError("EventSystem schema differs from produced MonoScript properties")
+    body += struct.pack("<iqB3xi", 0, 0, declarations[1][2].strip() == "true", int(declarations[2][2]))
+    return body, {**typ, "tree": tree, "hash": properties, "script_id": identity_owner.md4("".join(names).encode())}
 
 
 def copy_original_bundle(profile, profile_sha256, pc, output):
@@ -1266,7 +1385,7 @@ def missing_script_base(body, typ, base, read_type):
     return body[: base["bytes"]], copy.deepcopy(base_type)
 
 
-def produce(profile_path, profile_sha256, pc, output, codec_path, codec_sha256, packs=(), sdk=None):
+def produce(profile_path, profile_sha256, pc, output, codec_path, codec_sha256, packs=(), sdk=None, comparison=None, preflight=False):
     if B.sha(profile_path) != profile_sha256:
         raise ValueError("object profile drift")
     profile = json.loads(profile_path.read_text())
@@ -1276,6 +1395,8 @@ def produce(profile_path, profile_sha256, pc, output, codec_path, codec_sha256, 
         return copy_original_bundle(profile, profile_sha256, pc, output)
     if codec_path is None or codec_sha256 is None:
         raise ValueError("object serialization requires the pinned codec")
+    if preflight and B.sha(codec_path) != codec_sha256:
+        raise ValueError("object codec input drift")
     scene = "members" in profile["bundle"]
     required = {"input_id", "sources", "bundle"} | (set() if scene else {"objects"})
     if set(profile) - {"sdk", "managed"} != required or profile["input_id"] != M.INPUT_ID:
@@ -1286,6 +1407,9 @@ def produce(profile_path, profile_sha256, pc, output, codec_path, codec_sha256, 
     if output.name in ("", ".", "..") or output.exists() or output.is_symlink() or parent.is_relative_to(pc) or pc.is_relative_to(output):
         raise ValueError("object output must be new and outside original input")
     selected_bundle = profile["bundle"]
+    comparison = comparison or selected_bundle.get("comparison", "exact")
+    if comparison not in ("exact", "diagnostic"):
+        raise ValueError("unknown bundle comparison policy")
     engine = selected_bundle.get("engine", "2021.3.45f2")
     if engine not in ("2021.3.45f2", "2021.3.33f1"):
         raise ValueError("unqualified source bundle engine")
@@ -1299,6 +1423,7 @@ def produce(profile_path, profile_sha256, pc, output, codec_path, codec_sha256, 
     output.mkdir()
     started = time.monotonic()
     receipt = {"success": False, "input_id": M.INPUT_ID, "profile_sha256": profile_sha256, "objects": 0, "object_bytes": 0}
+    serialized_hashes = {}
     stage = None
     runtime_fields = None
     try:
@@ -1330,9 +1455,23 @@ def produce(profile_path, profile_sha256, pc, output, codec_path, codec_sha256, 
             metadata = W.read_serialized(member)
             sources.append((path, before, member, metadata, {row["path_id"]: row for row in metadata["objects"]}))
         check_preload_dependencies(sources, profile["sources"], selected_bundle.get("preload_dependencies", []))
-        records, layouts, members = [], [], []
+        if identity_owner is not None:
+            errors = script_binding_errors(
+                selected_members, lambda selector: sources[selector[0]][3]["types"][sources[selector[0]][4][selector[1]]["type_id"]], identity_owner
+            )
+            receipt["script_binding_errors"] = errors
+            if errors:
+                raise ValueError(f"{len(errors)} component/script identity mismatches; see result.json")
         packed, providers = record_packs(selected_members, packs, selected_bundle)
         receipt["record_packs"] = {profile: pin for profile, (_, pin, _) in providers.items()}
+        if preflight:
+            receipt.update(
+                success=True,
+                preflight=True,
+                scope="source/SDK pins, preload dependencies, declared local script bindings and supplier receipts/record extents; generated-body transformations and device loadability remain open",
+            )
+            return receipt
+        records, layouts, members = [], [], []
         resources = {}
         # Load only when needed: the player owner already shares this writer and
         # owns the qualified standalone Sprite recovery arithmetic.
@@ -1615,8 +1754,8 @@ def produce(profile_path, profile_sha256, pc, output, codec_path, codec_sha256, 
                     if script_type["class_id"] != 115:
                         raise ValueError("fieldless script source must be an original MonoScript")
                     typ = fieldless_script_type(body, typ, script, sdk_tree, identity_owner)
-                if "fieldless_script_record" in selected:
-                    if sdk_tree is None or selected["fieldless_script_record"] is not True:
+                if "fieldless_script_record" in selected or "sdk_event_system" in selected:
+                    if sdk_tree is None or ("fieldless_script_record" in selected and selected["fieldless_script_record"] is not True):
                         raise ValueError("fieldless script record requires the named SDK policy")
                     if typ["class_id"] != 114 or len(body) < 28:
                         raise ValueError("fieldless script record requires a MonoBehaviour")
@@ -1628,10 +1767,21 @@ def produce(profile_path, profile_sha256, pc, output, codec_path, codec_sha256, 
                     _, script_type = source_record(sources, script_selection["type_source"])
                     directory, script_row = packed[selected_member["name"], script_id]
                     script = record_extent(directory / "objects.bin", script_row)
-                    if script_type["class_id"] != 115 or hashlib.sha256(script).hexdigest() != script_selection["sha256"]:
-                        raise ValueError("fieldless MonoScript record identity differs")
-                    typ = fieldless_script_type(body, typ, script, sdk_tree, identity_owner)
-                    receipt.setdefault("fieldless_script_records", {})[str(script_id)] = script_selection["sha256"]
+                    script_pin = supplied_script_identity(script, script_type["class_id"], script_selection, script_row)
+                    if "sdk_event_system" in selected:
+                        policy = selected["sdk_event_system"]
+                        source_path = M.safe_input(sdk.resolve(strict=True), policy["path"])
+                        if B.sha(source_path) != policy["sha256"]:
+                            raise ValueError("SDK EventSystem source drift")
+                        body, typ = sdk_event_system(body, typ, script, source_path.read_text(), sdk_tree, identity_owner)
+                        receipt.setdefault("sdk_event_system_records", {})[str(selected["path_id"])] = {
+                            "script_sha256": script_pin,
+                            "source_sha256": policy["sha256"],
+                            "sha256": hashlib.sha256(body).hexdigest(),
+                        }
+                    else:
+                        typ = fieldless_script_type(body, typ, script, sdk_tree, identity_owner)
+                        receipt.setdefault("fieldless_script_records", {})[str(script_id)] = script_pin
                 if "managed_pointer_schema" in selected:
                     if sdk_tree is None or typ["class_id"] != 114:
                         raise ValueError("managed pointer schema requires SDK and MonoBehaviour")
@@ -1645,8 +1795,23 @@ def produce(profile_path, profile_sha256, pc, output, codec_path, codec_sha256, 
                     typ = copy.deepcopy(base_type)
                     typ.update(derived)
                     receipt.setdefault("managed_schema_inputs", {}).update(inputs)
-                if len(body) != selected["bytes"] or hashlib.sha256(body).hexdigest() != selected["sha256"]:
+                if "script_identity" in selected:
+                    supplied_script_identity(body, typ["class_id"], selected, row)
+                    receipt.setdefault("current_script_records", {})[str(selected["path_id"])] = {
+                        "identity": selected["script_identity"],
+                        "sha256": hashlib.sha256(body).hexdigest(),
+                        "historical_raw_exact": len(body) == selected["bytes"] and hashlib.sha256(body).hexdigest() == selected["sha256"],
+                    }
+                elif (
+                    comparison == "exact"
+                    and "sdk_event_system" not in selected
+                    and (len(body) != selected["bytes"] or hashlib.sha256(body).hexdigest() != selected["sha256"])
+                ):
                     raise ValueError("produced object differs from accepted hash")
+                if comparison == "diagnostic" and (len(body) != selected["bytes"] or hashlib.sha256(body).hexdigest() != selected["sha256"]):
+                    receipt.setdefault("historical_object_mismatches", []).append(
+                        {"member": selected_member["name"], "path_id": selected["path_id"], "bytes": len(body), "sha256": hashlib.sha256(body).hexdigest()}
+                    )
                 if record_type_hash is not None and typ["hash"].hex() != record_type_hash:
                     raise ValueError("produced record native type identity differs")
                 member_records.append(stage.append(selected_member["name"], selected["path_id"], body, typ))
@@ -1657,7 +1822,8 @@ def produce(profile_path, profile_sha256, pc, output, codec_path, codec_sha256, 
             serialized_path = stage.allocate()
             with serialized_path.open("xb") as serialized:
                 W.write_serialized(serialized, layout, lambda row: stage.reader(by_identity[row["path_id"]]))
-            if B.sha(serialized_path) != selected_member["serialized_sha256"]:
+            serialized_hashes[selected_member["name"]] = B.sha(serialized_path)
+            if comparison == "exact" and serialized_hashes[selected_member["name"]] != selected_member["serialized_sha256"]:
                 raise ValueError("produced serialized structure differs from accepted hash")
             with serialized_path.open("rb") as serialized:
                 serialized.seek(32)
@@ -1683,7 +1849,7 @@ def produce(profile_path, profile_sha256, pc, output, codec_path, codec_sha256, 
             members.append((name, 0, size, lambda path=resource_path: path.open("rb")))
         with W.codec(codec_path, codec_sha256) as compress, bundle_path.open("xb") as stream:
             W.write_bundle(stream, members, compress, engine=engine)
-        if bundle_path.stat().st_size != selected_bundle["bytes"] or B.sha(bundle_path) != selected_bundle["sha256"]:
+        if comparison == "exact" and (bundle_path.stat().st_size != selected_bundle["bytes"] or B.sha(bundle_path) != selected_bundle["sha256"]):
             raise ValueError("produced UnityFS differs from accepted hash")
         with (output / "objects.bin").open("xb") as data, (output / "index.jsonl").open("x") as index:
             for row in records:
@@ -1722,9 +1888,13 @@ def produce(profile_path, profile_sha256, pc, output, codec_path, codec_sha256, 
             name: {"bytes": (output / name).stat().st_size, "sha256": B.sha(output / name)}
             for name in ("objects.bin", "index.jsonl", "layout.json", "payload/" + selected_bundle["name"])
         }
-        receipt["serialized_sha256"] = (
-            {member["name"]: member["serialized_sha256"] for member in selected_members} if scene else selected_bundle["serialized_sha256"]
-        )
+        receipt["serialized_sha256"] = serialized_hashes if scene else serialized_hashes[selected_bundle["member"]]
+        if comparison == "diagnostic":
+            receipt["comparison"] = {
+                "policy": comparison,
+                "serialized_matches": {member["name"]: serialized_hashes[member["name"]] == member.get("serialized_sha256") for member in selected_members},
+                "bundle_matches": B.sha(bundle_path) == selected_bundle.get("sha256") and bundle_path.stat().st_size == selected_bundle.get("bytes"),
+            }
         if runtime_fields is not None:
             runtime_fields.verify()
             receipt["managed_field_inputs"] = dict(runtime_fields.pins)
@@ -1759,8 +1929,12 @@ def main():
         metavar=("DIRECTORY", "RECEIPT_SHA256"),
         help="independently produced record pack and pinned result.json; repeat for each producer",
     )
+    parser.add_argument(
+        "--preflight", action="store_true", help="check source/SDK pins, preload, local scripts and supplied record packs without emitting a bundle"
+    )
+    parser.add_argument("--comparison", choices=("exact", "diagnostic"), help="historical output comparison; source/schema/reference checks remain strict")
     args = parser.parse_args()
-    produce(args.profile, args.profile_sha256, args.pc, args.output, args.codec, args.codec_sha256, args.record_pack, args.sdk)
+    produce(args.profile, args.profile_sha256, args.pc, args.output, args.codec, args.codec_sha256, args.record_pack, args.sdk, args.comparison, args.preflight)
 
 
 if __name__ == "__main__":

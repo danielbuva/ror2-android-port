@@ -5,6 +5,10 @@ This tool uses supplied Cecil to read managed metadata without executing inspect
 assemblies. It records type/base identity and explicit native-class/type attributes,
 with input hashes before and after reading. It never emits a linker root or edits
 an SDK/game assembly. Raw SDK-derived reports stay under ignored `work/`.
+Schema 2 additionally records declared field flags and recursive scoped type
+signatures, including arrays, generic instances/parameters and structured base
+signatures. Unsupported type specifications are explicit; no field or endpoint
+assignability is inferred from a short type name.
 
 Build using .NET 10 and `-p:CecilPath=SUPPLIED_CECIL.dll`, then pass an ignored
 input JSON and a new output path. Input rows are `assemblies` entries with explicit

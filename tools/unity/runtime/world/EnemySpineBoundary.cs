@@ -289,6 +289,7 @@ public sealed partial class PortSession
             var context = PrepareEnemyContext(player, cfg);
             while (context.MoveNext())
                 yield return context.Current;
+            TraceStartup("enemy-context-ready");
             var fixture = SpawnAndObserveEnemyFixture(player, cfg);
             while (fixture.MoveNext())
                 yield return fixture.Current;

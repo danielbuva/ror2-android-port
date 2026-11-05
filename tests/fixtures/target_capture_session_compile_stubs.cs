@@ -9,6 +9,7 @@ namespace UnityEngine.Scripting
 
 namespace UnityEngine
 {
+    public enum LogOption { NoStacktrace }
     public enum LogType { Error, Assert, Warning, Log, Exception }
     public class Object
     {
@@ -54,7 +55,7 @@ namespace UnityEngine
         public void SetActive(bool active) { activeSelf = active; }
     }
 
-    public static class Time { public static float realtimeSinceStartup; }
+    public static class Time { public static float realtimeSinceStartup; public static int frameCount; }
     public static class Application
     {
         public static string streamingAssetsPath = "/tmp";
@@ -102,6 +103,7 @@ namespace RoR2
     using UnityEngine;
     using UnityEngine.ResourceManagement.AsyncOperations;
 
+    public sealed class RoR2Application : UnityEngine.MonoBehaviour { public static RoR2Application instance; }
     public sealed class TriggerIntroMusicStart : MonoBehaviour { }
 
     public class MusicController : MonoBehaviour
@@ -217,6 +219,7 @@ namespace UnityEngine
 {
     public static class Debug
     {
+        public static void LogFormat(LogType type, LogOption option, Object context, string format, params object[] args) { }
         public static void Log(object value) { }
         public static void LogWarning(object value) { }
     }

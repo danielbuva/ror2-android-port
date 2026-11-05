@@ -325,6 +325,7 @@ public sealed partial class PortSession
             input.moveVector = Vector3.zero;
             r.phase = "automatic-spawn-state-start";
             Save();
+            TraceStartup("automatic-native-spawn-start-begin");
             body.gameObject.SetActive(true);
             yield return null;
             Check(machine.state is SpawnTeleporterState && body.GetBuffCount(RoR2Content.Buffs.HiddenInvincibility) == 1 &&
@@ -356,6 +357,7 @@ public sealed partial class PortSession
             else
                 Check(!solver.enabled && !KinematicCharacterSystem.CharacterMotors_Important.Contains(solver),
                       "State-only probe unexpectedly schedules solver");
+            TraceStartup("automatic-native-spawn-delay-begin");
             var deadline = Time.realtimeSinceStartup + cfg.sourceSpawnDelay + 3;
             while (machine.state is SpawnTeleporterState && Time.realtimeSinceStartup < deadline)
             {
@@ -364,6 +366,7 @@ public sealed partial class PortSession
                 yield return null;
             }
             // The final spawn tick and transition can occur before the coroutine resumes.
+            TraceStartup("automatic-native-spawn-delay-returned");
             ObserveTeleportOverlays(body);
             r.spawnState = machine.state.GetType().FullName;
             r.hiddenBuffCount = body.GetBuffCount(RoR2Content.Buffs.HiddenInvincibility);

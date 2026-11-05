@@ -44,6 +44,11 @@
         "objective-support-lab",
         "CAB-d621b06adada9dbd86ac345cd5e6cc93",
         3231134817632079172
+      ],
+      "script_identity": [
+        "UnityEngine.UI.dll",
+        "UnityEngine.EventSystems",
+        "EventSystem"
       ]
     },
     {

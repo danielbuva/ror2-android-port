@@ -115,6 +115,39 @@ class ProducedCatalogTests(unittest.TestCase):
 
 
 class IntegrationMetadataTests(unittest.TestCase):
+    def test_selected_profiles_follow_native_container_declarations(self):
+        from whole_catalog import integration_profile_builds
+
+        profiles = [
+            dict(bundle=dict(name="grouped", asset_groups=[dict(path="Assets/Body.prefab"), dict(path="assets/body.prefab")])),
+            dict(bundle=dict(name="scene", scene_path="Assets/Stage.unity")),
+            dict(bundle=dict(name="multi", assets=[dict(path="Assets/B.asset"), dict(path="Assets/A.asset"), dict(path="Assets/A.asset")])),
+            dict(bundle=dict(name="single", asset="Assets/Single.asset")),
+        ]
+        builds = integration_profile_builds(profiles)
+        self.assertEqual(
+            builds,
+            [
+                dict(assetBundleName="grouped", assetNames=["Assets/Body.prefab"]),
+                dict(assetBundleName="multi", assetNames=["Assets/A.asset", "Assets/B.asset"]),
+                dict(assetBundleName="scene", assetNames=["Assets/Stage.unity"]),
+                dict(assetBundleName="single", assetNames=["Assets/Single.asset"]),
+            ],
+        )
+        metadata = dict(locations=[dict(path="ASSETS/BODY.PREFAB"), dict(path="Assets/Stage.unity")])
+        owned = integration_bundle_metadata(metadata, builds)
+        self.assertEqual([row["bundle"] for row in owned["locations"]], ["grouped", "scene"])
+        self.assertEqual(len(profiles[0]["bundle"]["asset_groups"]), 2)
+        with self.assertRaisesRegex(RuntimeError, "Duplicate selected bundle profile"):
+            integration_profile_builds([profiles[0], profiles[0]])
+
+    def test_selected_profiles_keep_conflicting_explicit_owners_visible(self):
+        from whole_catalog import integration_profile_builds
+
+        profiles = [dict(bundle=dict(name=name, asset="Assets/Shared.asset")) for name in ("one", "two")]
+        with self.assertRaisesRegex(RuntimeError, "Duplicate explicit bundle ownership"):
+            integration_bundle_metadata(dict(locations=[]), integration_profile_builds(profiles))
+
     def test_bundle_owners_preserve_rows_and_override_scene_fallback_without_io(self):
         rows = [
             dict(id=1, path="Assets/Explicit.UNITY", root=True),
@@ -832,7 +865,7 @@ class AuthoredIntegrationHookTests(unittest.TestCase):
     def compact(self, name):
         return "".join((self.UNITY / name).read_text().split())
 
-    def test_start_yields_to_the_catalog_scan_before_the_session_wait(self):
+    def test_start_yields_to_the_catalog_scan_without_a_fixed_player_delay(self):
         text = self.compact("runtime/session/PortSession.cs")
         start = text[text.index("IEnumeratorStart(){") :]
         self.assertTrue(
@@ -840,7 +873,8 @@ class AuthoredIntegrationHookTests(unittest.TestCase):
                 'IEnumeratorStart(){if(File.Exists(System.IO.Path.Combine(Application.persistentDataPath,"whole-catalog-selection.json")))yieldbreak;'
             )
         )
-        self.assertLess(start.index("yieldbreak;"), start.index("WaitForSeconds(8)"))
+        startup = start[: start.index("if(File.Exists(path))")]
+        self.assertNotIn("WaitForSeconds", startup)
 
     def test_body_catalog_prepares_and_releases_the_composed_catalog(self):
         text = self.compact("runtime/catalog/BodyCatalogBoundary.cs")

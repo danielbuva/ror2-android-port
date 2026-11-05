@@ -8,6 +8,14 @@ using UnityEngine;
 // termination delegate owns the narrow Android bank-release resume seam.
 public sealed class PortSessionOriginalAudioOwner : MonoBehaviour
 {
+    // Sparse setup seams only: no report writes, stack capture or coroutine yields.
+    static void TraceStartup(string step)
+    {
+        Debug.LogFormat(LogType.Log, LogOption.NoStacktrace, null, "{0}",
+                        "Original startup step=" + step + " at=" +
+                        Time.realtimeSinceStartup.ToString("R", System.Globalization.CultureInfo.InvariantCulture) +
+                        " frame=" + Time.frameCount);
+    }
     private const float StartupDeadlineSeconds = 180.0f;
     private static readonly object Sync = new object();
     private static PortSessionOriginalAudioOwner instance;
@@ -301,6 +309,7 @@ public sealed class PortSessionOriginalAudioOwner : MonoBehaviour
                 }
             }
 
+            TraceStartup("audio-preparation-begin");
             IEnumerator preparation = null;
             try { preparation = GameAudioOriginalOwner.PrepareBeforeOriginalManagerInit(); }
             catch (Exception error)
@@ -327,6 +336,7 @@ public sealed class PortSessionOriginalAudioOwner : MonoBehaviour
                     yield return current;
                 }
             }
+            TraceStartup("audio-preparation-returned");
             if (!GameAudioOriginalOwner.StartupSelected) yield break;
 
             if (UnityEngine.Object.FindObjectOfType<AkInitializer>())
@@ -342,7 +352,9 @@ public sealed class PortSessionOriginalAudioOwner : MonoBehaviour
                 {
                     // Exact accepted static manager call; its unchanged body issues
                     // both LegacyResourcesAPI requests and preserves their callbacks.
+                    TraceStartup("audio-manager-init-begin");
                     RoR2.WwiseIntegrationManager.Init();
+                    TraceStartup("audio-manager-init-returned");
                     GameAudioOriginalOwner.RecordOriginalManagerInitReturned();
                 }
                 catch (Exception error) { managerError = error; }
@@ -365,6 +377,7 @@ public sealed class PortSessionOriginalAudioOwner : MonoBehaviour
                 GameAudioOriginalOwner.RecordStartupTimeout();
                 GameAudioOriginalOwner.AbandonPreparationBeforeOriginalInit();
             }
+            TraceStartup("audio-readiness-observed");
             if (GameAudioOriginalOwner.Ready && GameAudioOriginalOwner.OptInRequested)
             {
                 if (!RoR2.WwiseIntegrationManager.noAudio)

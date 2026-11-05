@@ -1,11 +1,9 @@
 # Porting state
 
-Updated 2026-10-31 UTC. This laboratory is not a finished port. Full results belong in the
-[journal](docs/PORTING_JOURNAL.md) (index: [JOURNAL_INDEX](docs/JOURNAL_INDEX.md); J1–J1177 frozen in
-[history](docs/history/journal-J1-J1177/JOURNAL_INDEX.md)).
-
-APK hashes named here are the only builds the pruner protects through this file; every other old build
-is disposable (user-approved cleanup, 2026-10-27).
+Updated 2026-11-05 UTC. This laboratory is not a finished port. Results belong in the
+[journal](docs/PORTING_JOURNAL.md) ([index](docs/JOURNAL_INDEX.md); J1–J1177 are
+[frozen](docs/history/journal-J1-J1177/JOURNAL_INDEX.md)). Named APK hashes are
+protected by the pruner; other old build outputs are disposable.
 
 ## Snapshot
 
@@ -13,28 +11,32 @@ is disposable (user-approved cleanup, 2026-10-27).
 | --- | --- |
 | Accepted input | Steam 25475991; input `6af7ed94619fe1b4346974b4486afa03a8d1625a7820e92da0ff74d57208fe88` |
 | Toolchain | Unity 2021.3.45f2 (88f88f591b2e), IL2CPP ARM64, Vulkan; `environment/toolchain.json` |
-| Compatibility reference (P1) | J850 `f1550ce0ff030ea0fa7a1ab66de19d54ee7894a7ae2f5b344f993157d6713949`, source `1780ea9`. Strict reference for game code, asset identities, serialized relationships and runtime compatibility; incidental metadata may be generated or omitted. [Converter contract](docs/accepted-build-reconstruction.md). |
-| Latest device-verified APK | J1121/R58 `4386916991386bdf5b747e69786be58fa72ccfb0d3fc0220f59061ede495d0f5`, source `55149b48`; installed and verified on the shared Nova. Siren-route recovery and destination capture remain device gates. |
-| Installed now (Main Nova) | `c570dfd740902e6501a1ae1a6f953a61473d74ccea722b757bc5a1e09b61d61a`, source `fb28a00c`, adopted storage; J1311 verifies settings interruption/recovery only. Shared handoffs may advance receipts; never infer installation from Git. |
-| Runtime source since that APK | Frozen Siren candidate `4f2274d49ba10474299ffa7a58de5da49ffd70327897e532806a519d0ee24cea`, source `5dc99b6c` (native navigation detours); its assisted Siren stage still fails in gameplay and is the current Main gate. |
-| Phone-only production | Host readiness 693 of 705 final files (685 raw-exact), through J1274. Remaining: 12 scene/player/lab/catalog files, including native Cubemaps; complete phone production and install/update acceptance remain open. Details: [reconstruction](docs/accepted-build-reconstruction.md), [public alpha](docs/public-alpha.md). |
-| Historical executable rollbacks | J425 `5a25bb9fe001440a01316bbe79f4e8269ac37e6bf33e91d4c20e91f1f9ae63b0`; paused J323 Moon `893b03c4162a79d4cc9b194fb07b412695e34c1b50439434230902289bd385a9`. [Retention policy](docs/history-retention.md). |
-| Retained old input | Steam 21587608 / Unity 2021.3.33f1 retained for old rollbacks only. |
+| Compatibility reference (P1) | Latest lab APK `9f904392d02abc3854f9efc4b51cd03daec7afb6b7192a4c074f30fabc12fa22`, source `6c12b506`: device-verified playability with matching behaviour, content, visuals and performance. Structural/gameplay checks remain strict; J850 byte equality is diagnostic. |
+| Latest device-verified APK | Audio-receipt APK `64b8741f45e5f94f54d95ca56b88040c72548795541c2daffc153e2fbca232e7`, source `80452b72`; ordinary Start reached stage/HUD with source audio ready 153/153. Install-bound full verification/cache and corruption refusal/restoration passed (J1386); sustained gameplay remains open. |
+| Installed now (Main Nova) | Audio-receipt APK above on adopted storage; installed hash/backing verified in `work/coordination/alpha-loading-audio-receipt-integrity-start-20261105T020900Z/`. App stopped, display asleep, scratch removed and lease released. |
+| Runtime source since that APK | Audio-receipt APK includes runtime through `80452b72`; subsequent source is not implied installed. Retained Siren candidate `4f2274d49ba10474299ffa7a58de5da49ffd70327897e532806a519d0ee24cea`, source `5dc99b6c`, remains an assisted failing candidate. |
+| Retained gameplay baseline | J1121/R58 `4386916991386bdf5b747e69786be58fa72ccfb0d3fc0220f59061ede495d0f5`, source `55149b48`; Siren recovery/destination gates remain open. |
+| Phone-only production | First produce a fully playable source-derived APK close to the latest lab build; then qualify import → convert → install → play → port-release update, retaining profiles/settings and rebuilding changed outputs. Check for updates and complete device acceptance remain open. Historical diagnostics: 693/705 files available, 685 raw-exact; not a playability gate. |
+| Whole-game reconstruction | Three records remain in the separate whole-game record frontier, per current workstream handoff; this is not the 12-file final-output frontier. |
+| Lighting tolerance | [ADR-003](docs/ADR-003-lighting-tolerance.md) scopes measured numerical and visual admission. Host validator/reporting shipped; no real record has completed both gates. |
+| Historical executable rollbacks | J425 `5a25bb9fe001440a01316bbe79f4e8269ac37e6bf33e91d4c20e91f1f9ae63b0`; paused J323 Moon `893b03c4162a79d4cc9b194fb07b412695e34c1b50439434230902289bd385a9`. [Retention](docs/history-retention.md). |
+| Old input | Steam 21587608 / Unity 2021.3.33f1 retained for historical rollbacks. |
 
 The public converter uses legitimate game files, permitted SDK inputs and public
-recipes. Random build IDs, private development connections and machine metadata
-need not reproduce historical bytes. Private J850 artifacts or inaccessible
-development settings are never required public inputs. Raw-exact results,
+recipes. J850 artifacts, development settings and visual captures are private
+qualification inputs only. Raw-exact, drift-explained, tolerance-accepted,
 generated metadata and device acceptance remain separate facts.
 
 ## Remaining gates
 
-1. Siren: repair the native navigation/recovery failure, then the native Siren/egg boss mission and
-   unassisted normal runs.
-2. Rendering parity against a matched PC reference; complete original audio mix/spatial/audibility.
-3. Physical controls, memory bound, sustained performance and thermal acceptance.
-4. Phone-only installation, in-place update and Check for updates (P1), then the alpha checklist (P2).
+1. Phone-only installation, in-place update and Check for updates, then the
+   [public alpha checklist](docs/public-alpha.md).
+2. Native Siren recovery/egg boss mission and unassisted normal runs.
+3. Matched PC rendering parity and complete original audio mix/spatial/audibility.
+4. Physical controls, bounded memory and sustained FPS/frame pacing/battery/heat
+   profiling. Heat is a metric; safety admission/abort rules remain in force.
 
-Scopes and evidence: [milestones](docs/milestones.md), [subsystem coverage](docs/subsystem-coverage.md),
-[execution backlog](docs/execution-backlog.md), [policy](docs/ALPHA_POLICY.md),
-[architecture](docs/ARCHITECTURE.md). Identity, online services and Steam Cloud remain unavailable.
+Current owners: [architecture](docs/ARCHITECTURE.md); work:
+[backlog](docs/execution-backlog.md), [milestones](docs/milestones.md),
+[coverage](docs/subsystem-coverage.md). Identity, online services and Steam Cloud
+remain unavailable. No build or host test establishes game readiness.

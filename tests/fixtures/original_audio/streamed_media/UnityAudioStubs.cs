@@ -3,15 +3,37 @@ using System.Collections;
 
 namespace UnityEngine
 {
-    public static class Time { public static float realtimeSinceStartup { get { return 0f; } } }
-    public static class Application { public static string persistentDataPath { get { return "/tmp/app"; } } }
-    public sealed class AndroidJavaObject : IDisposable
+    public enum LogType { Log }
+    public enum LogOption { NoStacktrace }
+    public static class Debug
     {
+        public static void LogFormat(LogType type, LogOption option, object context, string format, params object[] args) { }
+    }
+    public static class Time { public static int frameCount; public static float realtimeSinceStartup { get { return 0f; } } }
+    public static class Application { public static string persistentDataPath { get { return "/tmp/app"; } } }
+    public class AndroidJavaObject : IDisposable
+    {
+        public System.Collections.Generic.Dictionary<string, object> fields = new System.Collections.Generic.Dictionary<string, object>();
+        public Func<string, object[], object> onCall;
         public AndroidJavaObject(string name, params object[] args) { }
-        public T Call<T>(string method, params object[] args) { return default(T); }
+        public T Call<T>(string method, params object[] args) { return onCall == null ? default(T) : (T)onCall(method, args); }
+        public T Get<T>(string field) { return (T)fields[field]; }
         public void Dispose() { }
     }
-    public static class JsonUtility { public static T FromJson<T>(string value) { return default(T); } }
+    public sealed class AndroidJavaClass : AndroidJavaObject
+    {
+        public static Func<string, object[], object> onCallStatic;
+        public static object currentActivity;
+        public AndroidJavaClass(string name) : base(name) { }
+        public T GetStatic<T>(string field) { return (T)currentActivity; }
+        public T CallStatic<T>(string method, params object[] args) { return (T)onCallStatic(method, args); }
+    }
+    public static class JsonUtility
+    {
+        public static object decoded;
+        public static T FromJson<T>(string value) { return decoded == null ? default(T) : (T)decoded; }
+        public static string ToJson(object value) { return ""; }
+    }
 }
 
 namespace UnityEngine.Networking

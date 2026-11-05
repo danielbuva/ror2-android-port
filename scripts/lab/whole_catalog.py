@@ -1732,6 +1732,34 @@ def integration_catalog(metadata, bundles, *, bundle_names):
     return json.dumps(dict(metadata, bundles=completed), ensure_ascii=False, separators=(",", ":")).encode("utf-8")
 
 
+def integration_profile_builds(profiles):
+    """Recover explicit catalog ownership from selected object-producer profiles.
+
+    The native container writer uses these same four declarations. Repeated
+    subobject roots share one asset path; they must not become duplicate owners.
+    Record suppliers do not declare final containers and are deliberately absent.
+    """
+    builds = {}
+    for profile in profiles:
+        bundle = profile["bundle"]
+        name = bundle["name"]
+        if "asset_groups" in bundle:
+            paths = [row["path"] for row in bundle["asset_groups"]]
+        elif "scene_path" in bundle:
+            paths = [bundle["scene_path"]]
+        elif "assets" in bundle:
+            paths = [row["path"] for row in bundle["assets"]]
+        else:
+            paths = [bundle["asset"]]
+        if name in builds:
+            raise RuntimeError("Duplicate selected bundle profile: " + name)
+        unique = {}
+        for path in paths:
+            unique.setdefault(path.casefold(), path)
+        builds[name] = dict(assetBundleName=name, assetNames=sorted(unique.values(), key=str.casefold))
+    return [builds[name] for name in sorted(builds)]
+
+
 def integration_bundle_metadata(metadata, builds):
     """Assign location owners from explicit AssetBundleBuild declarations, without I/O.
 
@@ -2440,6 +2468,9 @@ def stage_build_sources(io, runtime_sources, manifest, contracts):
         "RoR2.Achievements.*",
     }
     roots.setdefault("RoR2", set()).update(progression)
+    # The stage owner seeds only damage-macro method attributes through the
+    # original private registrar; retain its target/base-list contract under IL2CPP.
+    roots.setdefault("HGCSharpUtils", set()).add("HG.Reflection.SearchableAttribute")
     link_path = project / "Assets/LabLoadingScene/WholeCatalogPreservation/link.xml"
     io.apply(link_path, preservation_descriptor(roots))
 

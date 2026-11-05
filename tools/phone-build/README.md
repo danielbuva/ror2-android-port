@@ -123,6 +123,22 @@ hash and saved bytes are verification evidence; inspect the actual serialized
 metadata before claiming that type trees were retained. Temporary objects are
 destroyed after capture. These files are never production inputs.
 
+For source-produced native content qualification, set
+`ROR2_PHONE_NATIVE_CONTENT_CHECK` to an absolute JSON request path before
+`phone-content-check`. The request is
+`{"path":"<absolute bundle>","sha256":"<bundle SHA-256>","assets":[{"name":"<container address>","type":"LightingSettings"}]}`;
+Supported exact types are `LightingSettings`, `Mesh`, `Avatar`, `AnimationClip`,
+`Material`, `Shader`, `Texture2D`, `Sprite`, `GameObject`, `AvatarMask`,
+`PhysicMaterial` and `AnimatorOverrideController`. The exact SDK has no managed
+`OcclusionCullingData` type; its consumer/native-load check remains open. The
+runner snapshots the request beside the oracle. `native-content-check.json`
+records each actual native name/type and verifies destruction after
+`Unload(true)`; failures persist and fail the check. Host validation binds the
+request, bundle hash and complete typed count. This desktop loadability check
+does not establish in-game lighting, visuals or device acceptance. As in the
+pinned EditorKit typed lookup and R2API handle lifecycle prior art, a container
+load alone is insufficient evidence for a requested asset and its lifetime.
+
 `phone-wrapper-oracle` is separate current **desktop verification** support.
 Its explicit request is either `{"operation":"stage"}` or
 `{"operation":"check","project":"<absolute generated project>"}`. Stage writes

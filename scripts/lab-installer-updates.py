@@ -45,6 +45,57 @@ class Failure(Exception):
     """Only fixed, authored reason codes may leave the lab host."""
 
 
+def install_diagnostic_summary(data):
+    """Only the agreed fixed A diagnostic schema may leave the private host."""
+    unavailable = {"status": "unavailable", "reason": "invalid-schema"}
+    if not isinstance(data, bytes) or len(data) > 4096:
+        return {"status": "unavailable", "reason": "size-limit"}
+    try:
+        row = json.loads(data)
+    except (ValueError, UnicodeError):
+        return unavailable
+    if row is None:
+        return {"status": "unavailable", "reason": "missing"}
+    stages = {
+        "prepare",
+        "session-create",
+        "unknown",
+        "session-open",
+        "write-start",
+        "write-complete",
+        "fsync-start",
+        "fsync-complete",
+        "commit-start",
+        "commit-returned",
+    }
+    callbacks = {"none", "pending-user-action", "success", "failure", "unknown"}
+    if not isinstance(row, dict) or type(row.get("schema")) is not int or row["schema"] not in (1, 2):
+        return unavailable
+    keys = {"schema", "stage", "callback", "session_match"}
+    if row["schema"] == 2:
+        keys |= {"receiver_registration", "callback_entry"}
+    if set(row) != keys or not isinstance(row["stage"], str) or row["stage"] not in stages:
+        return unavailable
+    if not isinstance(row["callback"], str) or row["callback"] not in callbacks:
+        return unavailable
+    if (row["callback"] == "none" and row["session_match"] is not None) or (row["callback"] != "none" and type(row["session_match"]) is not bool):
+        return unavailable
+    result = {"status": "observed", "stage": row["stage"], "callback": row["callback"], "session_match": row["session_match"]}
+    if row["schema"] == 2:
+        if not isinstance(row["receiver_registration"], str) or row["receiver_registration"] not in {
+            "private",
+            "exported",
+            "disabled",
+            "missing",
+            "unavailable",
+        }:
+            return unavailable
+        if not isinstance(row["callback_entry"], str) or row["callback_entry"] not in {"none", "entered", "unknown"}:
+            return unavailable
+        result.update(receiver_registration=row["receiver_registration"], callback_entry=row["callback_entry"])
+    return result
+
+
 def module(name, path):
     spec = importlib.util.spec_from_file_location(name, path)
     value = importlib.util.module_from_spec(spec)
@@ -748,6 +799,8 @@ class Phone:
 
     def installed(self, publisher, previous=None):
         deadline = time.monotonic() + self.timeout
+        callback_absent_since = None
+        callback_observed = False
         while time.monotonic() < deadline:
             receipt = self.read("installed-release.json")
             if receipt and receipt.get("release", {}).get("version_code") == publisher and receipt.get("installed_readback_verified") is True:
@@ -773,6 +826,34 @@ class Phone:
                     # prevent normal owned-package cleanup.
                     pass
                 raise Failure("installer-build-error")
+            if not callback_observed and row and row.get("state") == "INSTALLING":
+                try:
+                    diagnostic = self.capture_install_diagnostic()
+                except Exception:
+                    # Optional evidence loss must not replace the install result
+                    # or manufacture proof that a callback remained absent.
+                    diagnostic = {"status": "unavailable"}
+                if diagnostic.get("status") == "observed" and (diagnostic.get("callback") != "none" or diagnostic.get("callback_entry") == "entered"):
+                    callback_observed = True
+                    callback_absent_since = None
+                elif (
+                    diagnostic.get("status") == "observed"
+                    and diagnostic.get("stage") == "commit-returned"
+                    and diagnostic.get("callback") == "none"
+                    and diagnostic.get("session_match") is None
+                    and diagnostic.get("callback_entry", "none") == "none"
+                ):
+                    now = time.monotonic()
+                    if callback_absent_since is None:
+                        callback_absent_since = now
+                    elif now - callback_absent_since >= 60:
+                        # Diagnostic harness bound only: never mark the runtime
+                        # failed or initiate another sealed install session.
+                        raise Failure("install-first-callback-timeout")
+                else:
+                    callback_absent_since = None
+            else:
+                callback_absent_since = None
             # Consent is always the real Android PackageInstaller UI. Never forge
             # success receipts or use adb install to replace the alpha package.
             self.tap("Install", required=False)
@@ -826,6 +907,18 @@ class Phone:
         # The root lab invocation may pass this flag ONLY after explicit owner
         # authorization for this fresh disposable test package on the leased phone.
         self.shell("appops", "set", PACKAGE, "REQUEST_INSTALL_PACKAGES", "allow", label="device-install-permission-enable")
+
+    def capture_install_diagnostic(self):
+        # Fresh-run ownership and exact installed test APK identity are mandatory.
+        # No alpha/game namespace, broad traversal, or mutation is involved.
+        if not self.owned_installer or not self.installer_hash or self.package_hash(PACKAGE) != self.installer_hash:
+            return {"status": "unavailable", "reason": "ownership-unverified"}
+        command = (
+            'for p in files files/owner-input files/owner-input/install-diagnostic.json; do [ ! -L "$p" ] || exit 1; done; '
+            "if [ -f files/owner-input/install-diagnostic.json ]; then head -c 4097 files/owner-input/install-diagnostic.json; else printf null; fi"
+        )
+        data = self.shell("run-as", PACKAGE, "sh", "-c", "'" + command + "'", label="device-install-diagnostic-read", timeout=15)
+        return install_diagnostic_summary(data)
 
     def capture_apk_logs(self):
         # APK-stage subprocesses in build_owner_apk.build write only these two
@@ -1603,15 +1696,26 @@ def main(argv=None):
         reason = "unexpected-local-error-see-private-lab-environment"
         failure_phase = CURRENT_PHASE
     finally:
-        if phone is not None:
-            set_phase("cleanup")
-            try:
-                cleanup_verified = phone.cleanup() == "verified-absent"
-            except Failure as error:
-                cleanup_reason = str(error)
-            except Exception:
-                cleanup_reason = "unexpected-cleanup-error-see-private-lab-environment"
-        DIAGNOSTICS = None
+        try:
+            if phone is not None and reason and failure_phase in ("baseline-N-install", "update-N-to-N+1", "same-key-rollback"):
+                try:
+                    observed = phone.capture_install_diagnostic()
+                except Exception:
+                    observed = {"status": "unavailable", "reason": "capture-failed"}
+                print(encoded({"mode": "install-diagnostic", "observed": observed}).decode(), end="", flush=True)
+        except Exception:
+            # Optional diagnostics, including output, cannot replace the install failure.
+            pass
+        finally:
+            if phone is not None:
+                set_phase("cleanup")
+                try:
+                    cleanup_verified = phone.cleanup() == "verified-absent"
+                except Failure as error:
+                    cleanup_reason = str(error)
+                except Exception:
+                    cleanup_reason = "unexpected-cleanup-error-see-private-lab-environment"
+            DIAGNOSTICS = None
     if reason:
         if args.host_only:
             print("FAIL host-fixture-build phase=" + failure_phase + " reason=" + reason, flush=True)

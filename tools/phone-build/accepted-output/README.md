@@ -312,9 +312,14 @@ The registry lazily imports `dnfile` and `pefile`, pinned in
 `tools/lab-requirements.txt`; use an interpreter containing those packages.
 The earlier player slices remain standard-library only when no registry is
 selected. The code request is the existing original-input code-owner request:
-`target.source` names the immutable public authored source tree and
+When present, `target.source` selects the historical immutable authored cohort.
+Without it, the registry binds the current runtime manifest to the actual
+managed compiler source hashes. Existing importer GUIDs survive; new owners
+without Unity metadata receive stable converter path identities.
 `source_inputs.packages` names original package sources and adjacent `.meta`
-files. Its existing `input-hashes.json` is beside the packages directory.
+files. Historical requests use the adjacent `input-hashes.json`; current requests
+use the fresh managed producer's `packages/inputs.json` source hashes and pin
+the corresponding original importer metadata while constructing the registry.
 The supplied managed directory must contain the successful fresh source
 production and its actual provider/compiler receipts. It is never an accepted
 assembly replay directory. TestRunner and MCP source importers are original
@@ -1702,8 +1707,13 @@ directory is the exact editor's `com.unity.ugui/Runtime/UI/Core`; four pinned so
 files supply constructor defaults. This is a current experimental producer.
 
 The parent generates its registry first; the UI owner receives that value rather
-than a separate registry packet. It reads original UI/scripts/English data and
-public player supplier recipes, preserves asset identities and resolves every
+than a separate registry packet. The public Menu recipe retains 591 audited
+build-assigned object IDs/order; full path/component coverage and the complete
+allocation must match before relocation. Its 20 audited external provider
+filenames/order likewise retain build-assigned IDs after source resolution;
+additional source providers append. These constants supply no object fields.
+It reads original UI/scripts/English data and public player supplier recipes,
+preserves asset identities and resolves every
 nonzero pointer. Native schemas may cross original files only with matching
 class IDs/hashes. Common-string names use the pinned parser's vocabulary; no
 class-database schema supplies content. Original Sprite copies require matching
@@ -1939,3 +1949,45 @@ registry used by `sdk-fallback-sort-invalid`: retain declared original keywords 
 valid and sort the remaining original names as invalid. Material values stay
 unchanged. The same profile includes a catalog-selected Gauntlet Material using
 the existing dummy policy and checked public texture/Shader endpoint mappings.
+
+
+`sdk_event_system` reconstructs the three EventSystem fields from a hash-pinned,
+caller-supplied SDK source file on an original empty-name component base. The
+current receipt-bound MonoScript must match its assembly/namespace/class and the
+constructed properties hash. Original owner/script PPtrs remain checked; the new
+first-selection pointer is null as declared by the SDK. Other fieldless components
+retain their existing schema gate. Output hashes are receipt diagnostics because
+these typed components replace invalid historical fieldless placeholders. This is
+host serialization support; native loading and gameplay remain device gates.
+
+
+### Partial closed native bundle qualification
+
+The existing preload owner can emit a closed, single-member native subset from
+an explicitly selected source-producer graph. This is a current qualification
+command; it does not replace complete whole-game graph production.
+
+```sh
+python3 -I -S tools/phone-build/accepted-output/bundle_preload.py \
+  --graph "$QUALIFIED_GRAPH" --schema "$NATIVE_TYPES" \
+  --bundle "$BUNDLE_NAME" --member "$SERIALIZED_MEMBER" --output "$FRESH_OUTPUT"
+```
+
+`--schema` is repeatable. The graph directory contains `done.json` with a
+successful qualification, `selected-records.jsonl` and `selected-roots.jsonl`.
+Record rows identify destination tuples, provider directories/profile hashes,
+provider source tuples, schema digests, native classes/hashes, body sizes/hashes
+and typed pointer edges. Schema pools map tree SHA-256 to complete native type
+metadata (binary fields encoded as hexadecimal). Each provider supplies its
+successful `result.json`, receipt-pinned `index.jsonl` and `objects.bin`.
+
+The emitter checks actual body extents/hashes, type identities and complete
+schema-declared pointers before deriving closure. Managed records, streamed
+resources, external edges and their incomplete local dependants are omitted.
+Only unique single-object native root paths are admitted; ordered Sprite and
+subasset cohorts retain their existing owner. The final UnityFS member is read
+back to check IDs, types and every body hash. `result.json` always declares
+`whole_game_complete: false`; `gaps.json` lists omitted counts and graph blocks.
+Temporary serialization/body staging is removed on success or failure.
+`request.json` feeds the exact-editor native-content fixture documented above;
+structural emission alone does not imply native loadability or device play.

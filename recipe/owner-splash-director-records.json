@@ -1,0 +1,252 @@
+{
+  "input_id": "6af7ed94619fe1b4346974b4486afa03a8d1625a7820e92da0ff74d57208fe88",
+  "bundles": [
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-base-splash_scenes_all_7fcb7dd49c8ad1d82685037b1f53d860.bundle",
+      "sha256": "777852d571d13c70f536fd0ae05d86249d242ec76117d937b4d8998a3075a65d",
+      "members": [
+        {
+          "name": "CAB-cbcf36d5203e5078f4b8d08bcc621e36",
+          "objects": [
+            {
+              "class_id": 320,
+              "path_id": 68,
+              "sha256": "cb48c3e842b4fb9b024acaeafd3a05d759bd9d5035c6adb20e81109bc01877f4",
+              "outputs": [
+                {
+                  "bundle": "whole-scene-splash",
+                  "member": "BuildPlayer-splash",
+                  "path_id": 67,
+                  "bytes": 180,
+                  "sha256": "173a7dfb614567e5c4d9df6bef658d04fb7687ea2444408dda08f52e1bdbe65c",
+                  "transform": {
+                    "director_exposed_names": true,
+                    "references": [
+                      {
+                        "offset": 0,
+                        "from": [
+                          0,
+                          3
+                        ],
+                        "to": [
+                          0,
+                          2
+                        ]
+                      },
+                      {
+                        "offset": 16,
+                        "from": [
+                          4,
+                          1460217027551523728
+                        ],
+                        "to": [
+                          3,
+                          4263365774957605098
+                        ]
+                      },
+                      {
+                        "offset": 52,
+                        "from": [
+                          4,
+                          6208301921661580176
+                        ],
+                        "to": [
+                          3,
+                          6581703482156393057
+                        ]
+                      },
+                      {
+                        "offset": 64,
+                        "from": [
+                          0,
+                          38
+                        ],
+                        "to": [
+                          0,
+                          37
+                        ]
+                      },
+                      {
+                        "offset": 76,
+                        "from": [
+                          4,
+                          -5417271830522399856
+                        ],
+                        "to": [
+                          3,
+                          -1049254376820807088
+                        ]
+                      },
+                      {
+                        "offset": 88,
+                        "from": [
+                          0,
+                          6
+                        ],
+                        "to": [
+                          0,
+                          5
+                        ]
+                      },
+                      {
+                        "offset": 100,
+                        "from": [
+                          4,
+                          8296456279645057936
+                        ],
+                        "to": [
+                          3,
+                          -824545399351229660
+                        ]
+                      },
+                      {
+                        "offset": 112,
+                        "from": [
+                          0,
+                          10
+                        ],
+                        "to": [
+                          0,
+                          9
+                        ]
+                      },
+                      {
+                        "offset": 124,
+                        "from": [
+                          4,
+                          -482143026913840240
+                        ],
+                        "to": [
+                          3,
+                          7934460230453033656
+                        ]
+                      },
+                      {
+                        "offset": 136,
+                        "from": [
+                          0,
+                          8
+                        ],
+                        "to": [
+                          0,
+                          7
+                        ]
+                      },
+                      {
+                        "offset": 168,
+                        "from": [
+                          0,
+                          3
+                        ],
+                        "to": [
+                          0,
+                          2
+                        ]
+                      }
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "class_id": 320,
+              "path_id": 69,
+              "sha256": "b96471ac88cfa5c8b6ece32605fe23ccf21fa3d435fc15514a65b02175f7f8ac",
+              "outputs": [
+                {
+                  "bundle": "whole-scene-splash",
+                  "member": "BuildPlayer-splash",
+                  "path_id": 68,
+                  "bytes": 132,
+                  "sha256": "ac2372c7d7f99ad128e460fbb420413626980381e71a4ed71b633efccf6874c1",
+                  "transform": {
+                    "director_exposed_names": true,
+                    "references": [
+                      {
+                        "offset": 0,
+                        "from": [
+                          0,
+                          12
+                        ],
+                        "to": [
+                          0,
+                          11
+                        ]
+                      },
+                      {
+                        "offset": 16,
+                        "from": [
+                          4,
+                          2091566152738805645
+                        ],
+                        "to": [
+                          3,
+                          661252176256650954
+                        ]
+                      },
+                      {
+                        "offset": 52,
+                        "from": [
+                          4,
+                          -198683492922550387
+                        ],
+                        "to": [
+                          3,
+                          8986019204300356685
+                        ]
+                      },
+                      {
+                        "offset": 64,
+                        "from": [
+                          0,
+                          39
+                        ],
+                        "to": [
+                          0,
+                          38
+                        ]
+                      },
+                      {
+                        "offset": 76,
+                        "from": [
+                          4,
+                          -74780137381161075
+                        ],
+                        "to": [
+                          3,
+                          623800003668561012
+                        ]
+                      },
+                      {
+                        "offset": 88,
+                        "from": [
+                          0,
+                          11
+                        ],
+                        "to": [
+                          0,
+                          10
+                        ]
+                      },
+                      {
+                        "offset": 120,
+                        "from": [
+                          0,
+                          3
+                        ],
+                        "to": [
+                          0,
+                          2
+                        ]
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -96,6 +96,277 @@ class LabInstallerUpdatesTests(unittest.TestCase):
             final = json.loads((diagnostics.directory / "00001-device-ui-dump.json").read_text())
             self.assertEqual(final["outcome"], "TimeoutExpired")
 
+    def run_install_poll(self, *, diagnostic, state=lambda _: "INSTALLING", receipt_at=None, timeout=120):
+        phone = LAB.Phone("synthetic", timeout)
+        clock = [0]
+        receipt = {"release": {"version_code": 1}, "installed_readback_verified": True, "sha256": "a" * 64}
+
+        def read(name):
+            if name == "installed-release.json":
+                return receipt if receipt_at is not None and clock[0] >= receipt_at else None
+            self.assertEqual(name, "update-state.json")
+            return {"state": state(clock[0])}
+
+        def sleep(seconds):
+            clock[0] += seconds
+
+        with (
+            patch.object(LAB.time, "monotonic", side_effect=lambda: clock[0]),
+            patch.object(LAB.time, "sleep", side_effect=sleep),
+            patch.object(phone, "read", side_effect=read),
+            patch.object(phone, "capture_install_diagnostic", side_effect=lambda: diagnostic(clock[0])) as capture,
+            patch.object(phone, "tap") as tap,
+            patch.object(phone, "package_hash", return_value=receipt["sha256"]),
+            patch.object(phone, "storage"),
+            patch.object(phone, "start"),
+            patch.object(phone, "put") as put,
+            patch.object(phone, "shell") as shell,
+        ):
+            try:
+                result = phone.installed(1)
+            except LAB.Failure as error:
+                result = str(error)
+            put.assert_not_called()
+            shell.assert_not_called()
+        return result, clock[0], capture.call_count, tap.call_count
+
+    def test_first_callback_bound_starts_only_after_observed_commit_return(self):
+        none = {"status": "observed", "stage": "commit-returned", "callback": "none", "session_match": None}
+        result, elapsed, _, taps = self.run_install_poll(diagnostic=lambda now: none if now >= 70 else none | {"stage": "fsync-start"}, timeout=180)
+        self.assertEqual((result, elapsed, taps), ("install-first-callback-timeout", 130, 130))
+
+    def test_first_callback_bound_requires_installing_state_and_available_evidence(self):
+        none = {"status": "observed", "stage": "commit-returned", "callback": "none", "session_match": None}
+        result, elapsed, captures, _ = self.run_install_poll(diagnostic=lambda _: none, state=lambda _: "READY", timeout=65)
+        self.assertEqual((result, elapsed, captures), ("install-readback-timeout", 65, 0))
+        for interrupted in ({"status": "unavailable", "reason": "missing"}, none | {"stage": "prepare"}):
+            with self.subTest(interrupted=interrupted):
+                result, elapsed, _, _ = self.run_install_poll(diagnostic=lambda now: interrupted if now == 59 else none, timeout=125)
+                self.assertEqual((result, elapsed), ("install-first-callback-timeout", 120))
+
+        def unavailable(_):
+            raise OSError("synthetic-private")
+
+        result, elapsed, _, _ = self.run_install_poll(diagnostic=unavailable, timeout=65)
+        self.assertEqual((result, elapsed), ("install-readback-timeout", 65))
+
+    def test_any_observed_callback_disables_only_the_first_callback_bound(self):
+        none = {"status": "observed", "stage": "commit-returned", "callback": "none", "session_match": None}
+        for callback in ("pending-user-action", "success", "failure", "unknown"):
+            for matched in (True, False):
+                with self.subTest(callback=callback, matched=matched):
+                    observed = none | {"callback": callback, "session_match": matched}
+                    result, elapsed, captures, taps = self.run_install_poll(diagnostic=lambda now: observed if now == 59 else none)
+                    self.assertEqual((result, elapsed, captures, taps), ("install-readback-timeout", 120, 60, 120))
+
+    def test_callback_bound_never_overrides_success_error_or_original_deadline(self):
+        none = {"status": "observed", "stage": "commit-returned", "callback": "none", "session_match": None}
+        result, elapsed, _, _ = self.run_install_poll(diagnostic=lambda _: none, receipt_at=60)
+        self.assertEqual(result["release"]["version_code"], 1)
+        self.assertEqual(elapsed, 60)
+        result, elapsed, _, _ = self.run_install_poll(diagnostic=lambda _: none, state=lambda now: "ERROR" if now == 60 else "INSTALLING")
+        self.assertEqual((result, elapsed), ("installer-build-error", 60))
+        result, elapsed, _, _ = self.run_install_poll(diagnostic=lambda _: none, timeout=30)
+        self.assertEqual((result, elapsed), ("install-readback-timeout", 30))
+
+    def test_schema_two_callback_entry_prevents_false_absence_timeout(self):
+        raw = {"schema": 2, "stage": "commit-returned", "callback": "none", "session_match": None, "receiver_registration": "private", "callback_entry": "none"}
+        none = LAB.install_diagnostic_summary(LAB.encoded(raw))
+        result, elapsed, _, _ = self.run_install_poll(diagnostic=lambda _: none)
+        self.assertEqual((result, elapsed), ("install-first-callback-timeout", 60))
+        entered = LAB.install_diagnostic_summary(LAB.encoded(raw | {"callback_entry": "entered"}))
+        result, elapsed, captures, _ = self.run_install_poll(diagnostic=lambda now: entered if now == 59 else none)
+        self.assertEqual((result, elapsed, captures), ("install-readback-timeout", 120, 60))
+        unknown = LAB.install_diagnostic_summary(LAB.encoded(raw | {"callback_entry": "unknown"}))
+        result, elapsed, _, _ = self.run_install_poll(diagnostic=lambda _: unknown)
+        self.assertEqual((result, elapsed), ("install-readback-timeout", 120))
+
+    def test_install_diagnostic_schema_two_strict_fixed_receiver_and_entry_values(self):
+        base = {
+            "schema": 2,
+            "stage": "commit-returned",
+            "callback": "none",
+            "session_match": None,
+            "receiver_registration": "private",
+            "callback_entry": "none",
+        }
+        for registration in ("private", "exported", "disabled", "missing", "unavailable"):
+            for entry in ("none", "entered", "unknown"):
+                row = base | {"receiver_registration": registration, "callback_entry": entry}
+                self.assertEqual(
+                    LAB.install_diagnostic_summary(LAB.encoded(row)), {"status": "observed"} | {key: value for key, value in row.items() if key != "schema"}
+                )
+        for row in (
+            base | {"schema": 1},
+            base | {"schema": 3},
+            base | {"schema": True},
+            base | {"receiver_registration": "private-secret"},
+            base | {"receiver_registration": []},
+            base | {"callback_entry": "private-secret"},
+            base | {"callback_entry": False},
+            base | {"extra": "private-secret"},
+            {key: value for key, value in base.items() if key != "callback_entry"},
+        ):
+            result = LAB.install_diagnostic_summary(LAB.encoded(row))
+            self.assertEqual(result, {"status": "unavailable", "reason": "invalid-schema"})
+            self.assertNotIn("private-secret", json.dumps(result))
+
+    def test_install_diagnostic_contract_is_strict_and_never_exports_unknown_values(self):
+        base = {"schema": 1, "stage": "commit-returned", "callback": "none", "session_match": None}
+        self.assertEqual(
+            LAB.install_diagnostic_summary(LAB.encoded(base)), {"status": "observed", "stage": "commit-returned", "callback": "none", "session_match": None}
+        )
+        for stage in (
+            "prepare",
+            "session-create",
+            "session-open",
+            "write-start",
+            "write-complete",
+            "fsync-start",
+            "fsync-complete",
+            "commit-start",
+            "commit-returned",
+            "unknown",
+        ):
+            self.assertEqual(LAB.install_diagnostic_summary(LAB.encoded(base | {"stage": stage}))["stage"], stage)
+        for callback in ("pending-user-action", "success", "failure", "unknown"):
+            for matched in (True, False):
+                row = base | {"callback": callback, "session_match": matched}
+                self.assertEqual(LAB.install_diagnostic_summary(LAB.encoded(row))["session_match"], matched)
+        for row in (
+            base | {"schema": True},
+            base | {"stage": "private-secret"},
+            base | {"callback": "private-secret"},
+            base | {"session_match": False},
+            base | {"callback": "success", "session_match": 1},
+            base | {"extra": "private-secret"},
+            ["private-secret"],
+        ):
+            result = LAB.install_diagnostic_summary(LAB.encoded(row))
+            self.assertEqual(result, {"status": "unavailable", "reason": "invalid-schema"})
+            self.assertNotIn("private-secret", json.dumps(result))
+        for data in (b"{", b"\xff", b'"private-secret"'):
+            self.assertEqual(LAB.install_diagnostic_summary(data)["status"], "unavailable")
+        self.assertEqual(LAB.install_diagnostic_summary(b"null")["reason"], "missing")
+        self.assertEqual(LAB.install_diagnostic_summary(b"x" * 4097)["reason"], "size-limit")
+
+    def test_install_diagnostic_capture_is_bounded_owned_and_read_only(self):
+        phone = LAB.Phone("synthetic", 1)
+        row = {"schema": 1, "stage": "fsync-start", "callback": "none", "session_match": None}
+        with patch.object(phone, "shell") as shell, patch.object(phone, "package_hash") as hash_read:
+            self.assertEqual(phone.capture_install_diagnostic()["reason"], "ownership-unverified")
+            shell.assert_not_called()
+            hash_read.assert_not_called()
+        phone.owned_installer, phone.installer_hash = True, "a" * 64
+        with patch.object(phone, "shell") as shell, patch.object(phone, "package_hash", return_value="b" * 64):
+            self.assertEqual(phone.capture_install_diagnostic()["reason"], "ownership-unverified")
+            shell.assert_not_called()
+        with (
+            patch.object(phone, "shell", return_value=LAB.encoded(row)) as shell,
+            patch.object(phone, "package_hash", return_value=phone.installer_hash) as hash_read,
+        ):
+            self.assertEqual(phone.capture_install_diagnostic()["stage"], "fsync-start")
+        hash_read.assert_called_once_with(LAB.PACKAGE)
+        self.assertEqual(shell.call_args.args[:4], ("run-as", LAB.PACKAGE, "sh", "-c"))
+        self.assertIn("head -c 4097 files/owner-input/install-diagnostic.json", shell.call_args.args[4])
+        self.assertIn('[ ! -L "$p" ] || exit 1', shell.call_args.args[4])
+        self.assertEqual(shell.call_args.kwargs, {"label": "device-install-diagnostic-read", "timeout": 15})
+
+    def test_install_failure_capture_precedes_cleanup_and_keeps_original_error(self):
+        for fail_capture, reason in (
+            (False, "install-readback-timeout"),
+            (True, "install-readback-timeout"),
+            (False, "install-first-callback-timeout"),
+            (True, "install-first-callback-timeout"),
+        ):
+            with self.subTest(fail_capture=fail_capture, reason=reason), tempfile.TemporaryDirectory() as tmp:
+                output, events = io.StringIO(), []
+                phone = Mock()
+
+                def fail(*args):
+                    LAB.set_phase("baseline-N-install")
+                    raise LAB.Failure(reason)
+
+                def capture():
+                    events.append("capture")
+                    if fail_capture:
+                        raise ValueError("private-secret")
+                    return {"status": "observed", "stage": "commit-returned", "callback": "none", "session_match": None}
+
+                phone.capture_install_diagnostic.side_effect = capture
+                phone.cleanup.side_effect = lambda: events.append("cleanup") or "verified-absent"
+                with (
+                    patch.object(LAB, "ROOT", Path(tmp)),
+                    patch.dict(os.environ, {"LAB_DEVICE_SERIAL": "synthetic"}),
+                    patch.object(LAB, "read_context", return_value={}),
+                    patch.object(LAB, "Phone", return_value=phone),
+                    patch.object(LAB, "acceptance", side_effect=fail),
+                    redirect_stdout(output),
+                ):
+                    self.assertEqual(LAB.main([]), 1)
+                self.assertEqual(events, ["capture", "cleanup"])
+                self.assertIn("reason=" + reason, output.getvalue())
+                self.assertIn("PASS cleanup packages=verified-absent", output.getvalue())
+                self.assertNotIn("private-secret", output.getvalue())
+                diagnostic = json.loads(output.getvalue().splitlines()[0])
+                self.assertEqual(diagnostic["mode"], "install-diagnostic")
+                if fail_capture:
+                    self.assertEqual(diagnostic["observed"], {"status": "unavailable", "reason": "capture-failed"})
+
+    def test_install_diagnostic_output_failure_cannot_skip_cleanup_or_replace_failure(self):
+        for mode in ("write", "flush"):
+            for fail_capture in (False, True):
+                with self.subTest(mode=mode, fail_capture=fail_capture), tempfile.TemporaryDirectory() as tmp:
+                    events = []
+
+                    class BrokenDiagnosticOutput(io.StringIO):
+                        pending = False
+
+                        def write(self, value):
+                            if '"mode":"install-diagnostic"' in value:
+                                events.append("diagnostic-output")
+                                if mode == "write":
+                                    raise BrokenPipeError("private-output-error")
+                                self.pending = True
+                            return super().write(value)
+
+                        def flush(self):
+                            if self.pending:
+                                self.pending = False
+                                raise BrokenPipeError("private-output-error")
+                            return super().flush()
+
+                    output, phone = BrokenDiagnosticOutput(), Mock()
+
+                    def fail(*args):
+                        LAB.set_phase("baseline-N-install")
+                        raise LAB.Failure("install-readback-timeout")
+
+                    def capture():
+                        events.append("capture")
+                        if fail_capture:
+                            raise ValueError("private-capture-error")
+                        return {"status": "observed", "stage": "commit-returned", "callback": "none", "session_match": None}
+
+                    phone.capture_install_diagnostic.side_effect = capture
+                    phone.cleanup.side_effect = lambda: events.append("cleanup") or "verified-absent"
+                    with (
+                        patch.object(LAB, "ROOT", Path(tmp)),
+                        patch.dict(os.environ, {"LAB_DEVICE_SERIAL": "synthetic"}),
+                        patch.object(LAB, "read_context", return_value={}),
+                        patch.object(LAB, "Phone", return_value=phone),
+                        patch.object(LAB, "acceptance", side_effect=fail),
+                        redirect_stdout(output),
+                    ):
+                        self.assertEqual(LAB.main([]), 1)
+                    self.assertEqual(events, ["capture", "diagnostic-output", "cleanup"])
+                    phone.cleanup.assert_called_once_with()
+                    self.assertIsNone(LAB.DIAGNOSTICS)
+                    self.assertIn("reason=install-readback-timeout", output.getvalue())
+                    self.assertIn("PASS cleanup packages=verified-absent", output.getvalue())
+                    self.assertNotIn("private-output-error", output.getvalue())
+                    self.assertNotIn("private-capture-error", output.getvalue())
+
     def toolhost_inspection(self, root, args):
         output = io.StringIO()
         with ExitStack() as stack:
@@ -633,11 +904,13 @@ class LabInstallerUpdatesTests(unittest.TestCase):
         phone.ui.return_value = ET.fromstring('<hierarchy><node text="TEST RELEASE SOURCE"/></hierarchy>')
         phone.installed.side_effect = [{"sha256": "first"}, {"sha256": "second"}, {"sha256": "rolled"}]
         phone.read.return_value = {"sha256": "rolled"}
-        phone.package_hash.return_value = "rolled"
+        phone.package_hash.side_effect = lambda package: LAB.sha(b"synthetic test input") if package == LAB.PACKAGE else "rolled"
         phone.wait_state.return_value = {"message": "signature refused"}
         phone.attach_mock(Mock(), "passed")
         releases = {n: {"release.json": LAB.encoded({"version": "synthetic"})} for n in (1, 2)}
-        with patch.object(LAB, "prepare_artifacts", return_value=(Path("synthetic"), {}, b"key", releases, releases[2])):
+        apk = Mock()
+        apk.read_bytes.return_value = b"synthetic test input"
+        with patch.object(LAB, "prepare_artifacts", return_value=(apk, {}, b"key", releases, releases[2])):
             LAB.acceptance(phone, {}, Path("unused"), phone.passed)
         calls = [(call[0], call.args) for call in phone.mock_calls if call[0] in ("installed", "retention_witness", "passed")]
         self.assertEqual(
