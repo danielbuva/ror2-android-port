@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J1391](PORTING_JOURNAL.md#j1391--attribute-native-scheduled-spawn-waiting-during-ordinary-startup) | 2026-11-04 | Attribute native scheduled-spawn waiting during ordinary startup | 2026-11-05. |
 | [J1390](PORTING_JOURNAL.md#j1390--reuse-typed-item-provider-discovery-during-ordinary-startup) | 2026-11-04 | Reuse typed item-provider discovery during ordinary startup | 2026-11-05. |
 | [J1388](PORTING_JOURNAL.md#j1388--emit-and-typed-load-a-closed-source-native-bundle-subset) | 2026-11-04 | Emit and typed-load a closed source-native bundle subset | 2026-11-05. |
 | [J1389](PORTING_JOURNAL.md#j1389--report-final-ten-minute-sustained-frame-counters) | 2026-11-04 | Report final-ten-minute sustained frame counters | 2026-11-05. |

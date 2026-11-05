@@ -593,6 +593,7 @@ public sealed partial class PortSession
             float previous = 0;
             try
             {
+                TraceStartup("director-scheduled-spawn-wait-begin");
                 while (!coordinator.enemyBody && Time.realtimeSinceStartup - coordinator.automaticDirectorBegan < 55)
                 {
                     yield return new WaitForEndOfFrame();
@@ -613,6 +614,7 @@ public sealed partial class PortSession
             }
             coordinator.Check(coordinator.enemyBody && coordinator.r.rewards.spawnEvents == 1 && coordinator.r.rewards.summonEvents == 1,
                               "Original scheduled spawn timed out");
+            TraceStartup("director-scheduled-spawn-ready");
             yield return null;
             coordinator.r.director.creditAfter = coordinator.rewardDirector.monsterCredit;
             coordinator.r.director.spent = coordinator.rewardDirector.totalCreditsSpent;

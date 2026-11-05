@@ -2815,3 +2815,18 @@ Separate process-cold, uncontrolled-page-cache captures: no whole-load causal cl
 CPU/GPU peak 67.7 C, above 80 C 0 s, battery 27–28 C; stopped/asleep/lease released.
 Pinned R2API load/copy/finalize phases informed typed ownership reuse.
 Sustained gameplay, audibility, remaining preparation and whole-load comparison stay open.
+
+## J1391 — Attribute native scheduled-spawn waiting during ordinary startup
+2026-11-05. Existing enemy/director owners add three sparse startup markers;
+native scheduling, yields, RNG, credits, callbacks, validation and cleanup stay unchanged.
+APK `2ab7319b22f4c6f47c6ec6babff9a0c348059b1372503011892fe9d810d34711`, source `d74d5b0b`.
+Evidence: `work/coordination/alpha-enemy-startup-device-20261105T044622Z/`;
+ranked spans: `work/coordination/alpha-load-breakdown-20261104/notes.md`.
+One ordered marker trio: context 96.709 s, scheduled wait 102.101–115.404 s.
+The 13.303 s wait is inside 21.274 s enemy preparation; no speedup claim.
+Ordinary Start reached Titanic Plains/HUD, native catalogs and source audio ready 153/153;
+no first failure, full verification 274/274 and profiles/settings preserved.
+CPU/GPU peak 63.4 C, above 80 C 0 s, battery 28 C; stopped/asleep/lease released.
+Build copies also accept ctime-only changes after source/destination SHA equality;
+real mid-copy xattr fixtures cover verified/unverified and equal/corrupt copies.
+Pinned R2API load/copy/finalize phases informed attribution; sustained play and audibility stay open.
