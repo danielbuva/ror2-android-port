@@ -38,5 +38,10 @@ jobs:
         run: |
           set -euo pipefail
           git -C "$LAB_REPO" fetch -q origin main
-          git -C "$LAB_REPO" show origin/main:scripts/lab/lab_runner.py > "$RUNNER_TEMP/lab_runner.py"
-          python3 -I "$RUNNER_TEMP/lab_runner.py"
+          trusted_main=$(git -C "$LAB_REPO" rev-parse origin/main)
+          bootstrap=$(mktemp -d "$RUNNER_TEMP/lab-bootstrap.XXXXXXXX")
+          trap 'rm -rf "$bootstrap"' EXIT
+          git -C "$LAB_REPO" show "$trusted_main:scripts/lab/lab_runner.py" > "$bootstrap/lab_runner.py"
+          git -C "$LAB_REPO" show "$trusted_main:scripts/lab/adb_transport.py" > "$bootstrap/adb_transport.py"
+          python3 -I "$bootstrap/lab_runner.py"
+
