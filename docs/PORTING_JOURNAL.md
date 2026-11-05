@@ -2845,7 +2845,7 @@ Actual-method family fixture and host preflight pass; existing worktree doctor l
 Pinned R2API load/copy/finalize phases informed attribution; cache ownership/reset unchanged.
 Sustained play, audibility and lossless reduction of the measured parse cost remain open.
 
-## J1393 — Exact required-set bundle emission
+## J1394 — Exact required-set bundle emission
 
 2026-11-05. The existing preload emitter accepts an explicit object set without pruning,
 selects complete native/script types by full identity, and preserves grouped GUID/subasset roots.
