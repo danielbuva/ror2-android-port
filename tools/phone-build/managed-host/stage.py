@@ -8,6 +8,7 @@ import re
 import shutil
 import subprocess
 import xml.etree.ElementTree as ET
+import zipfile
 
 SOURCE = Path(__file__).resolve().parent
 ROOT = SOURCE.parents[2]
@@ -104,6 +105,14 @@ def tool_manifest(source, destination, package=None, game_package=None):
     manifest.set("package", package)
     ET.register_namespace("android", "http://schemas.android.com/apk/res/android")
     tree.write(destination, encoding="utf-8", xml_declaration=True)
+
+
+def archive_java_classes(classes, destination):
+    """Preserve every compiled class, including nested callback receivers, for D8."""
+    classes = Path(classes)
+    with zipfile.ZipFile(destination, "w", zipfile.ZIP_DEFLATED) as archive:
+        for path in classes.rglob("*.class"):
+            archive.write(path, path.relative_to(classes).as_posix())
 
 
 def stage(profile_source, sdk, destination, *, root=ROOT, owner_backend=False, release_trust=None):

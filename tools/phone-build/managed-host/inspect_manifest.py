@@ -1,4 +1,4 @@
-"""Read one hash-bound cached test installer manifest; never build or use a phone.
+"""Read one hash-bound cached installer manifest/DEX; never build or use a phone.
 
 Only fixed classifications leave this process. An observed declaration is not
 device acceptance. Receipt paths are never followed and APK bytes are unchanged.
@@ -16,6 +16,7 @@ import re
 import stat
 import struct
 import zipfile
+import zlib
 
 ROOT = Path(__file__).resolve().parents[3]
 PACKAGE = "dev.ror2lab.installertest"
@@ -24,6 +25,8 @@ ANDROID = "http://schemas.android.com/apk/res/android"
 NONE = 0xFFFFFFFF
 MAX_APK = 2 * 1024**3
 MAX_MANIFEST = 1024**2
+MAX_DEX = 64 * 1024**2
+MAX_DEX_TOTAL = 128 * 1024**2
 ATTR_IDS = {"name": 0x01010003, "enabled": 0x0101000E, "exported": 0x01010010, "versionCode": 0x0101021B}
 SPEC = importlib.util.spec_from_file_location("installer_manifest_wire", ROOT / "scripts/lab/phone_apk.py")
 WIRE = importlib.util.module_from_spec(SPEC)
@@ -32,6 +35,93 @@ SPEC.loader.exec_module(WIRE)
 
 class Refused(Exception):
     pass
+
+
+def dex_receiver_definitions(data):
+    """Count the exact receiver in class_defs, never strings/type references alone.
+
+    This bounded observation is not a verifier for method bodies or installability.
+    Only ordinary little-endian DEX 035-040 is supported; other formats refuse.
+    """
+    try:
+        if not 112 <= len(data) <= MAX_DEX or data[:8] not in (b"dex\n035\0", b"dex\n037\0", b"dex\n038\0", b"dex\n039\0", b"dex\n040\0"):
+            raise ValueError
+        checksum = struct.unpack_from("<I", data, 8)[0]
+        if checksum != zlib.adler32(memoryview(data)[12:]) or data[12:32] != hashlib.sha1(memoryview(data)[32:]).digest():
+            raise ValueError
+        size, header, endian = struct.unpack_from("<III", data, 32)
+        if size != len(data) or header != 112 or endian != 0x12345678:
+            raise ValueError
+        data_size, data_offset = struct.unpack_from("<II", data, 104)
+        if data_offset < 112 or data_offset % 4 or data_offset + data_size != size:
+            raise ValueError
+        ranges = []
+
+        def table(at, width, maximum):
+            count, offset = struct.unpack_from("<II", data, at)
+            if count > maximum or (count == 0 and offset != 0):
+                raise ValueError
+            if count and (offset < 112 or offset % 4 or offset + count * width > data_offset):
+                raise ValueError
+            if count:
+                ranges.append((offset, offset + count * width))
+            return count, offset
+
+        string_count, string_offset = table(56, 4, 1048576)
+        type_count, type_offset = table(64, 4, 65536)
+        class_count, class_offset = table(96, 32, 65536)
+        ordered = sorted(ranges)
+        if any(left[1] > right[0] for left, right in zip(ordered, ordered[1:])):
+            raise ValueError
+        target = ("L" + RECEIVER.replace(".", "/") + ";").encode("ascii")
+        seen, found = set(), 0
+        for index in range(class_count):
+            class_index = struct.unpack_from("<I", data, class_offset + 32 * index)[0]
+            if class_index >= type_count or class_index in seen:
+                raise ValueError
+            seen.add(class_index)
+            string_index = struct.unpack_from("<I", data, type_offset + 4 * class_index)[0]
+            if string_index >= string_count:
+                raise ValueError
+            position = struct.unpack_from("<I", data, string_offset + 4 * string_index)[0]
+            if not data_offset <= position < size:
+                raise ValueError
+            units = 0
+            for shift in range(0, 35, 7):
+                if position >= size:
+                    raise ValueError
+                value = data[position]
+                position += 1
+                if shift == 28 and value > 15:
+                    raise ValueError
+                units |= (value & 127) << shift
+                if value < 128:
+                    break
+            else:
+                raise ValueError
+            if units == len(target) and data[position : position + len(target) + 1] == target + b"\0":
+                found += 1
+        return found
+    except (ValueError, IndexError, TypeError, struct.error):
+        raise Refused("dex-invalid") from None
+
+
+def packaged_receiver_definition(archive, entries):
+    selected = [row for row in entries if re.fullmatch(r"classes(?:[1-9][0-9]*)?\.dex", row.filename)]
+    names = {row.filename for row in selected}
+    expected = {"classes.dex", *("classes" + str(index) + ".dex" for index in range(2, len(selected) + 1))} if selected else set()
+    if len(selected) > 16 or len(names) != len(selected) or names != expected or sum(row.file_size for row in selected) > MAX_DEX_TOTAL:
+        raise Refused("apk-dex-unavailable")
+    found = 0
+    for row in selected:
+        if not 0 < row.file_size <= MAX_DEX:
+            raise Refused("apk-dex-unavailable")
+        with archive.open(row) as member:
+            data = member.read(MAX_DEX + 1)
+        if len(data) != row.file_size:
+            raise Refused("apk-dex-unavailable")
+        found += dex_receiver_definitions(data)
+    return "defined" if found == 1 else "missing" if found == 0 else "duplicate"
 
 
 def bounded_strings(data, start, header, size):
@@ -76,7 +166,7 @@ def bounded_strings(data, start, header, size):
     return WIRE._strings(data, start, header, size)
 
 
-def binary_manifest(data, version):
+def binary_manifest(data, version, *, package=PACKAGE):
     """Inspect bounded binary XML, without editing it or reading APK resources."""
     try:
         if len(data) > MAX_MANIFEST or len(data) < 8 or struct.unpack_from("<HHI", data) != (3, 8, len(data)):
@@ -158,7 +248,7 @@ def binary_manifest(data, version):
                 raise ValueError
         if stack or namespaces or not ended or manifest is None or application is None:
             raise ValueError
-        if manifest.get((None, "package")) != (3, PACKAGE):
+        if manifest.get((None, "package")) != (3, package):
             raise Refused("manifest-package-mismatch")
         actual_version = manifest.get((ANDROID, "versionCode"))
         if actual_version is None or actual_version[0] not in (0x10, 0x11) or actual_version[1] != version:
@@ -178,7 +268,7 @@ def binary_manifest(data, version):
             if value is None or value[0] != 3 or not re.fullmatch(r"\.?[A-Za-z_$][A-Za-z0-9_$]*(?:\.[A-Za-z_$][A-Za-z0-9_$]*)*", value[1]):
                 raise ValueError
             name = value[1]
-            resolved = PACKAGE + name if name.startswith(".") else PACKAGE + "." + name if "." not in name else name
+            resolved = package + name if name.startswith(".") else package + "." + name if "." not in name else name
             if resolved == RECEIVER:
                 exact.append(receiver)
             elif name.rsplit(".", 1)[-1] == "OwnerInstaller$Result":
@@ -294,7 +384,8 @@ def inspect(root, source, expected_hash):
                     data = member.read(MAX_MANIFEST + 1)
                 if len(data) != selected[0].file_size:
                     raise Refused("apk-manifest-unavailable")
-            result = binary_manifest(data, version)
+                result = binary_manifest(data, version)
+                result["receiver_dex_definition"] = packaged_receiver_definition(archive, entries)
             after = os.fstat(stream.fileno())
             if (before.st_size, before.st_mtime_ns, before.st_ctime_ns) != (after.st_size, after.st_mtime_ns, after.st_ctime_ns):
                 raise Refused("cache-artifact-changed")

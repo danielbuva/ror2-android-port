@@ -280,9 +280,7 @@ try:
         source / "OwnerInputSource.java",
     )
     jar = out / "classes.jar"
-    with zipfile.ZipFile(jar, "w", zipfile.ZIP_DEFLATED) as z:
-        for p in classes.rglob("*.class"):
-            z.write(p, p.relative_to(classes).as_posix())
+    staging.archive_java_classes(classes, jar)
     dex = out / "dex"
     dex.mkdir()
     run("dex", java, "-cp", source / "d8.jar", "com.android.tools.r8.D8", "--min-api", "24", "--lib", source / "android.jar", "--output", dex, jar)

@@ -14,6 +14,7 @@ import unittest
 from unittest.mock import patch
 import warnings
 import zipfile
+import zlib
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -28,6 +29,44 @@ def load(name, path):
 M = load("installer_manifest_inspect", "tools/phone-build/managed-host/inspect_manifest.py")
 WIRE_WRITER = load("authored_manifest_pool", "tools/phone-build/owner-apk/binary_manifest.py")
 SOURCE = "a" * 40
+
+
+def dex(names=(M.RECEIVER,), definitions=None):
+    """Authored DEX header/tables only; no method bodies, SDK, or game material."""
+    definitions = list(range(len(names))) if definitions is None else definitions
+    string_offset = 112
+    type_offset = string_offset + 4 * len(names)
+    class_offset = type_offset + 4 * len(names)
+    data_offset = class_offset + 32 * len(definitions)
+    content, positions = bytearray(), []
+    for name in names:
+        value = ("L" + name.replace(".", "/") + ";").encode("ascii")
+        assert len(value) < 128
+        positions.append(data_offset + len(content))
+        content.extend(bytes([len(value)]) + value + b"\0")
+    value = bytearray(data_offset) + content
+    value[:8] = b"dex\n035\0"
+    struct.pack_into("<III", value, 32, len(value), 112, 0x12345678)
+    for at, count, offset in (
+        (56, len(names), string_offset),
+        (64, len(names), type_offset),
+        (96, len(definitions), class_offset),
+        (104, len(content), data_offset),
+    ):
+        struct.pack_into("<II", value, at, count, offset if count else 0)
+    for index, position in enumerate(positions):
+        struct.pack_into("<I", value, string_offset + 4 * index, position)
+        struct.pack_into("<I", value, type_offset + 4 * index, index)
+    for index, definition in enumerate(definitions):
+        struct.pack_into("<I", value, class_offset + 32 * index, definition)
+    return dex_digest(value)
+
+
+def dex_digest(value):
+    value = bytearray(value)
+    value[12:32] = hashlib.sha1(value[32:]).digest()
+    struct.pack_into("<I", value, 8, zlib.adler32(value[12:]))
+    return bytes(value)
 
 
 def manifest(names=(M.RECEIVER,), *, exported=False, enabled=None, app_enabled=None, package=M.PACKAGE, version=3, utf8=True, duplicate=False):
@@ -89,7 +128,7 @@ class InstallerManifestInspectTests(unittest.TestCase):
         self.receipt = self.cache / "result.json"
         self.write_cache()
 
-    def write_cache(self, data=None, *, duplicate=False, entries=True):
+    def write_cache(self, data=None, *, duplicate=False, entries=True, dex_entries=None):
         with warnings.catch_warnings(), zipfile.ZipFile(self.apk, "w", zipfile.ZIP_DEFLATED) as archive:
             warnings.simplefilter("ignore", UserWarning)
             if entries:
@@ -97,6 +136,8 @@ class InstallerManifestInspectTests(unittest.TestCase):
                 if duplicate:
                     archive.writestr("AndroidManifest.xml", manifest())
             archive.writestr("assets/unrelated", b"UNSHARED_SENTINEL")
+            for name, content in ({"classes.dex": dex()} if dex_entries is None else dex_entries).items():
+                archive.writestr(name, content)
         self.bind()
 
     def bind(self):
@@ -131,6 +172,7 @@ class InstallerManifestInspectTests(unittest.TestCase):
                         receiver_exported="false",
                         receiver_enabled="true",
                         application_enabled="true",
+                        receiver_dex_definition="defined",
                     ),
                 )
                 self.assertEqual(before, {p.name: p.read_bytes() for p in self.cache.iterdir()})
@@ -227,7 +269,7 @@ class InstallerManifestInspectTests(unittest.TestCase):
         self.receipt.write_text(self.receipt.read_text()[:-1] + ', "success": true}')
         self.assertEqual(self.invoke()[1]["reason"], "cache-receipt-invalid")
 
-    def test_receipt_paths_are_ignored_and_only_manifest_member_is_opened(self):
+    def test_receipt_paths_are_ignored_and_only_manifest_and_dex_are_opened(self):
         value = json.loads(self.receipt.read_text())
         value["apk"] = "UNSHARED_SENTINEL"
         self.receipt.write_text(json.dumps(value))
@@ -240,7 +282,68 @@ class InstallerManifestInspectTests(unittest.TestCase):
 
         with patch.object(M.zipfile.ZipFile, "open", observe):
             self.assertEqual(self.invoke()[0], 0)
-        self.assertEqual(opened, ["AndroidManifest.xml"])
+        self.assertEqual(opened, ["AndroidManifest.xml", "classes.dex"])
+
+    def test_dex_definition_is_not_a_string_or_type_reference(self):
+        self.write_cache(dex_entries={"classes.dex": dex(definitions=[])})
+        self.assertEqual(self.invoke()[1]["receiver_dex_definition"], "missing")
+        self.write_cache(dex_entries={"classes.dex": dex([M.PACKAGE + ".OwnerInstaller$Result"])})
+        self.assertEqual(self.invoke()[1]["receiver_dex_definition"], "missing")
+        self.write_cache(dex_entries={})
+        self.assertEqual(self.invoke()[1]["receiver_dex_definition"], "missing")
+
+    def test_multidex_exact_definition_and_duplicate_are_distinct(self):
+        for first, expected in ((dex(["authored.Other"]), "defined"), (dex(), "duplicate")):
+            self.write_cache(dex_entries={"classes.dex": first, "classes2.dex": dex()})
+            self.assertEqual(self.invoke()[1]["receiver_dex_definition"], expected)
+
+    def test_dex_headers_checksums_and_table_bounds_refuse(self):
+        original = dex()
+        samples = [b"UNSHARED_SENTINEL", original[:-1], original[:8] + bytes(4) + original[12:]]
+        for offset, changed in ((32, len(original) + 1), (36, 120), (40, 0x78563412), (56, 1048577), (60, 0), (68, 112), (100, len(original)), (104, 0)):
+            value = bytearray(original)
+            struct.pack_into("<I", value, offset, changed)
+            samples.append(dex_digest(value))
+        for value in samples:
+            with self.subTest(length=len(value)):
+                self.write_cache(dex_entries={"classes.dex": value})
+                self.assertEqual(self.invoke()[1]["reason"], "dex-invalid")
+
+    def test_dex_indices_offsets_and_uleb_are_bounded(self):
+        original = dex()
+        strings, types, classes, content = (struct.unpack_from("<I", original, at)[0] for at in (60, 68, 100, 108))
+        for offset, changed in ((strings, len(original)), (types, 1), (classes, 1)):
+            value = bytearray(original)
+            struct.pack_into("<I", value, offset, changed)
+            self.write_cache(dex_entries={"classes.dex": dex_digest(value)})
+            self.assertEqual(self.invoke()[1]["reason"], "dex-invalid")
+        value = bytearray(original)
+        value[content : content + 5] = b"\x80" * 5
+        self.write_cache(dex_entries={"classes.dex": dex_digest(value)})
+        self.assertEqual(self.invoke()[1]["reason"], "dex-invalid")
+        self.write_cache(dex_entries={"classes.dex": dex(definitions=[0, 0])})
+        self.assertEqual(self.invoke()[1]["reason"], "dex-invalid")
+
+    def test_dex_count_and_member_size_bounds_precede_reading(self):
+        for files in (
+            {"classes2.dex": dex()},
+            {"classes.dex": dex(), "classes1.dex": dex()},
+            {"classes.dex": dex(), **{f"classes{index}.dex": dex() for index in range(2, 18)}},
+        ):
+            self.write_cache(dex_entries=files)
+            self.assertEqual(self.invoke()[1]["reason"], "apk-dex-unavailable")
+        self.write_cache()
+        with patch.object(M, "MAX_DEX", 100):
+            self.assertEqual(self.invoke()[1]["reason"], "apk-dex-unavailable")
+        with patch.object(M, "MAX_DEX_TOTAL", 100):
+            self.assertEqual(self.invoke()[1]["reason"], "apk-dex-unavailable")
+
+    def test_duplicate_dex_zip_entries_refuse(self):
+        with warnings.catch_warnings(), zipfile.ZipFile(self.apk, "a") as archive:
+            warnings.simplefilter("ignore", UserWarning)
+            archive.writestr("classes.dex", dex())
+        self.bind()
+        self.assertEqual(self.invoke()[1]["reason"], "apk-dex-unavailable")
 
     def test_missing_duplicate_and_oversized_manifest_refuse(self):
         for kwargs in ({"entries": False}, {"duplicate": True}, {"data": b"x" * (M.MAX_MANIFEST + 1)}):
