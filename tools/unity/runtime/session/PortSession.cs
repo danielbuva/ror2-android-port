@@ -466,7 +466,7 @@ public sealed partial class PortSession : MonoBehaviour
 
         public static LoadingProfileCapture Begin(string directory)
         {
-            var request = Path.Combine(directory, "loading-profiler.request");
+            var request = System.IO.Path.Combine(directory, "loading-profiler.request");
             if (!File.Exists(request)) return null;
             File.Delete(request);
             var capture = new LoadingProfileCapture();
@@ -477,11 +477,11 @@ public sealed partial class PortSession : MonoBehaviour
             capture.priorMemory = UnityEngine.Profiling.Profiler.GetAreaEnabled(UnityEngine.Profiling.ProfilerArea.Memory);
             capture.priorCallstacks = UnityEngine.Profiling.Profiler.enableAllocationCallstacks;
             capture.startedAt = Time.realtimeSinceStartup;
-            capture.path = Path.Combine(directory, "diagnostics", "loading-profile.raw");
+            capture.path = System.IO.Path.Combine(directory, "diagnostics", "loading-profile.raw");
             capture.active = true;
             try
             {
-                Directory.CreateDirectory(Path.GetDirectoryName(capture.path));
+                Directory.CreateDirectory(System.IO.Path.GetDirectoryName(capture.path));
                 File.Delete(capture.path);
                 UnityEngine.Profiling.Profiler.enabled = false;
                 UnityEngine.Profiling.Profiler.logFile = capture.path;

@@ -3,6 +3,10 @@ using System.IO;
 using System.Collections;
 using UnityEngine;
 using UnityEngine.Profiling;
+using RoR2;
+
+// The production owner imports RoR2, which also declares Path.
+namespace RoR2 { public sealed class Path {} }
 
 namespace UnityEngine
 {
@@ -47,18 +51,18 @@ public static class Harness
     }
     public static void Main()
     {
-        string root = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"));
+        string root = System.IO.Path.Combine(System.IO.Path.GetTempPath(), Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(root);
         try
         {
             Check(LoadingProfileCapture.Begin(root) == null, "unrequested capture");
             Restored();
-            string request = Path.Combine(root, "loading-profiler.request");
+            string request = System.IO.Path.Combine(root, "loading-profiler.request");
             File.WriteAllText(request, "");
             var capture = LoadingProfileCapture.Begin(root);
             Check(!File.Exists(request) && capture.active && Profiler.enabled && Profiler.enableBinaryLog &&
                   Profiler.cpu && Profiler.memory && !Profiler.enableAllocationCallstacks, "capture setup failed");
-            Check(capture.path == Path.Combine(root, "diagnostics", "loading-profile.raw"), "unowned output path");
+            Check(capture.path == System.IO.Path.Combine(root, "diagnostics", "loading-profile.raw"), "unowned output path");
             File.WriteAllBytes(capture.path, new byte[] { 1, 2, 3, 4 });
             Time.realtimeSinceStartup = 20;
             capture.Stop("first-playable-frame");
