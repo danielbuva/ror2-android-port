@@ -5498,6 +5498,10 @@ skill setup and catalog preparation. Markers carry process time/frame without
 stacks, report writes, yields or retained state; existing owners retain setup
 and teardown. Adjacent markers bound work, including intervening callbacks;
 returned/ready markers require separate failure, audio and world checks.
+The same seams in `StageGeometryBoundary`, `NovaInputBoundary` and
+`AutomaticDirectorBoundary` separate collider validation/physics/entry, landing
+and display/run/enemy preparation, and objective templates/master catalog/player
+setup. These remain bounded owner-boundary logs, with no per-object recording.
 
 `IntegratedWorldSession.TracePreparation` emits a bounded log marker at each
 initial world-preparation seam, including the existing loot report write,

@@ -487,7 +487,9 @@ public sealed partial class PortSession
                 coordinator.Check(SceneManager.SetActiveScene(coordinator.stageGeometryScene), "Moon active scene context missing");
                 coordinator.ActivateMoonSource(spec);
             }
+            TraceStartup("stage-collider-validation-ready-physics-begin");
             Physics.SyncTransforms();
+            TraceStartup("stage-physics-ready-entry-begin");
             Vector3 entryOrigin = Vector3.zero;
             if (moon)
             {
@@ -560,7 +562,9 @@ public sealed partial class PortSession
                 }
             }
             coordinator.Check(coordinator.r.stage.groundHit, "No measured walkable original stage entry");
+            TraceStartup("stage-entry-ready-save-begin");
             coordinator.Save();
+            TraceStartup("stage-geometry-ready");
         }
         public void EnableStageMapZones()
         {

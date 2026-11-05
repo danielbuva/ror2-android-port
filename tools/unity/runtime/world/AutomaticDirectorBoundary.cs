@@ -318,6 +318,7 @@ public sealed partial class PortSession
         // deliberately does not select a one-card deck, activate a director, or spawn actors.
         MasterCatalog.MasterIndex PrepareNativeDirectorCatalogAndPlayerContext(GameObject template, CharacterBody player, SessionConfig cfg)
         {
+            TraceStartup("director-catalog-preparation-begin");
             foreach (var name in new[] { "masterPrefabs", "masterPrefabMasterComponents", "aiMasterPrefabs", "masterNames" })
             {
                 var field = RewardField(typeof(MasterCatalog), name);
@@ -328,8 +329,10 @@ public sealed partial class PortSession
             directorMasterMap = (IDictionary)RewardField(typeof(MasterCatalog), "nameToIndexMap").GetValue(null);
             coordinator.Check(directorMasterMap.Count == 0 && DirectorRequestedMasters().Count == 0 && DirectorMessageMasters().Count == 0,
                               "Existing preload/catalog state");
+            TraceStartup("director-objective-templates-begin");
             if (cfg.teleporterLoop)
                 coordinator.PrepareObjectiveActorTemplates(cfg);
+            TraceStartup("director-objective-templates-ready-master-family-begin");
             var adaptedMasters = (template ? new[] { template } : Array.Empty<GameObject>())
                                      .Concat(coordinator.objectiveTemplates.Where(x => x.GetComponent<CharacterMaster>()))
                                      .ToArray();
@@ -341,12 +344,16 @@ public sealed partial class PortSession
                 var byName = adaptedMasters.ToDictionary(value => value.name, StringComparer.Ordinal);
                 coordinator.Check(byName.Keys.All(name => originals.Any(value => value.name == name)),
                                   "Owned adapted master absent from original provider category");
+                TraceStartup("director-master-family-ready-templates-begin");
                 masters = coordinator.PrepareWholeMasterTemplates(originals, adaptedMasters);
+                TraceStartup("director-master-templates-ready");
                 coordinator.r.liveCatalogs.masters = masters.Length;
                 coordinator.r.liveCatalogs.adaptedMasters =
                     masters.Count(value => coordinator.objectiveTemplates.Contains(value) || adaptedMasters.Contains(value));
             }
+            TraceStartup("director-master-catalog-set-begin");
             StaticCall(typeof(MasterCatalog), "SetEntries", new object[] { masters });
+            TraceStartup("director-master-catalog-set-ready");
             var catalogTemplate = template;
             if (!catalogTemplate)
             {
@@ -371,6 +378,7 @@ public sealed partial class PortSession
                                   !coordinator.directorPlayer.networkUser,
                               "Original participant/body counts or unavailable user contract changed");
             coordinator.StartOriginalRunClock();
+            TraceStartup("director-catalog-player-ready");
             return index;
         }
 

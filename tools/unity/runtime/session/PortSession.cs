@@ -3146,7 +3146,9 @@ public sealed partial class PortSession : MonoBehaviour
             }
             r.phase = "original-master-spawn";
             Save();
+            TraceStartup("master-spawn-body-begin");
             var spawned = master.SpawnBody(cfg.stageGeometry ? r.stage.spawnPosition : new Vector3(0, 12, 0), Quaternion.identity);
+            TraceStartup("master-spawn-body-returned");
             if (spawned)
                 spawned.gameObject.SetActive(false);
             Check(spawned && spawned != body, "Original body creation");
