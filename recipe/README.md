@@ -6846,5 +6846,14 @@ inputs are published.
 | Recipe | SHA-256 |
 | --- | --- |
 | `owner-objective-support-objects.json` | `afe5e32ab5f57f19949f672d7cd4a3d91a97a861f332d41ab46330d239baabf0` |
-| `owner-commando-reused-records.json` | `9c587b0edd5bdb2955b2a7d592ab4cf20eae99107c03ea32d5dd1eb2291fdb96` |
-| `owner-commando-objects.json` | `944f28096f69bc509123d9564721cd4845603df65ef073c3caec1fcd2f949a73` |
+| `owner-commando-reused-records.json` | `8973a72b12827e9f01c8d0591a26bd1c8423ff7eeac3ff14147ad0820a0077c5` |
+| `owner-commando-objects.json` | `6265fa380d497d29ca5b85a4a94c5776ccccaf64efbd0bd91d0c302c679b9ed4` |
+
+Commando reused MonoScripts select assembly, namespace and class identities from
+the receipt-pinned source-produced player registry. All 347 body hashes uniquely
+match that current registry; numeric IDs from the historical registry are not
+identity selectors. The object recipe carries the same explicit identities,
+checked by the existing serialized-supplier and native-type contracts. Only
+minimal reconstruction relationships are tracked; generated script bodies and
+local registry evidence remain ignored. Provenance/privacy audit: no game code,
+asset bodies, private paths or account data added.
