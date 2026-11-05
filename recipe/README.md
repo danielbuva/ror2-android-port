@@ -6894,3 +6894,9 @@ pointer relocations; its consumer selects the newly published supplier.
 | --- | --- |
 | `owner-conduitcanyon-director-records.json` | `5899bf05658d41d38794ca5e1a3fe89413613b45c9931ae041f8b313c026b632` |
 | `owner-conduitcanyon-objects.json` | `28241c71cbe333cb25a2ac210c75cf10c91e92aab7887dec0179248e37827474` |
+
+The generic record owner's opt-in `editor_curve_properties` policy reuses the
+strict SDK curve projection from the legacy animation owner (J1163). Only a
+temporary properties-hash tree gains editor tangent metadata; original record
+bytes and runtime schemas remain source-owned. The pinned public toolchain
+supplies editor layouts. Authored fixtures contain no original game data.
