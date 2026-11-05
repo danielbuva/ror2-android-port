@@ -1447,11 +1447,24 @@ objects after capture; the host must inspect actual type-tree presence before
 using the output as schema evidence. The fixture class is Editor-only and has
 no game-build consumer.
 An optional `ROR2_PHONE_NATIVE_CONTENT_CHECK` request uses this same owner for
-source-produced LightingSettings bundles: snapshot and hash
-the explicit request, load every address with its exact engine type, record the
+source-produced native bundles (lighting settings, meshes, avatars, animation,
+materials, shaders, textures, sprites and supported native asset roots): snapshot
+and hash the explicit request, load every address with its exact engine type, record the
 native type/name and destroy loaded objects on unload. `phone_content.py`
 validates the complete count, types, request/bundle hashes and unload receipt.
 This is desktop loadability evidence; device appearance/playability remains open.
+
+The existing `bundle_preload.py` owner exposes an explicit partial native emission
+CLI. It consumes a qualified selected graph, receipt-bound source record packs
+and complete native schema pools, removes records with missing local dependencies,
+and generates single-object native container roots and transitive preloads.
+Actual source bodies, PPtrs, native type identities and final serialized bodies
+are checked; managed bindings, external endpoints, streamed resources and ordered
+Sprite cohorts remain excluded and reported. Setup takes explicit local graph and
+schema paths plus a fresh output directory. Temporary body/serialization staging
+is deleted on exit; bundle, roots, typed-load request, gap list and receipt remain.
+This is a partial qualification output, not the complete whole-game bundle or a
+runtime owner. Complete APK/device play remains open.
 See [probe setup and boundaries](../tools/phone-build/README.md). No game-runtime
 owner or whole-catalog build calls this support path.
 
