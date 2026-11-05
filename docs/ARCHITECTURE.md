@@ -70,6 +70,12 @@ results; output indices pin actual produced extents. Source, supplier, native-ty
 schema, script and reference checks remain strict; device loadability remains open.
 Barrier shader jobs bind their separately pinned legacy SDK metadata explicitly.
 
+`object_produce.py --preflight` is a current host check for pinned source/SDK/
+codec inputs, preload relationships and declared local script bindings. It
+aggregates binding mismatches before record emission, without serializing or
+compressing a bundle. Supplier generation, full reference closure and device
+loadability remain separate gates.
+
 `object_produce.py` emits complete source object bundles through
 `object_stream.py`, which owns checked-body spooling, lazy graph reads and bounded
 resource copying. Setup requires a new caller-owned output and the existing
