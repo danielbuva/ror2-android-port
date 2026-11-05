@@ -10,6 +10,7 @@ All generated binaries/keys stay on the lab host/device, never in GitHub output.
 """
 
 import argparse
+import ast
 from contextlib import contextmanager
 import hashlib
 import http.server
@@ -42,6 +43,57 @@ CURRENT_PHASE = "setup"
 
 class Failure(Exception):
     """Only fixed, authored reason codes may leave the lab host."""
+
+
+def install_diagnostic_summary(data):
+    """Only the agreed fixed A diagnostic schema may leave the private host."""
+    unavailable = {"status": "unavailable", "reason": "invalid-schema"}
+    if not isinstance(data, bytes) or len(data) > 4096:
+        return {"status": "unavailable", "reason": "size-limit"}
+    try:
+        row = json.loads(data)
+    except (ValueError, UnicodeError):
+        return unavailable
+    if row is None:
+        return {"status": "unavailable", "reason": "missing"}
+    stages = {
+        "prepare",
+        "session-create",
+        "unknown",
+        "session-open",
+        "write-start",
+        "write-complete",
+        "fsync-start",
+        "fsync-complete",
+        "commit-start",
+        "commit-returned",
+    }
+    callbacks = {"none", "pending-user-action", "success", "failure", "unknown"}
+    if not isinstance(row, dict) or type(row.get("schema")) is not int or row["schema"] not in (1, 2):
+        return unavailable
+    keys = {"schema", "stage", "callback", "session_match"}
+    if row["schema"] == 2:
+        keys |= {"receiver_registration", "callback_entry"}
+    if set(row) != keys or not isinstance(row["stage"], str) or row["stage"] not in stages:
+        return unavailable
+    if not isinstance(row["callback"], str) or row["callback"] not in callbacks:
+        return unavailable
+    if (row["callback"] == "none" and row["session_match"] is not None) or (row["callback"] != "none" and type(row["session_match"]) is not bool):
+        return unavailable
+    result = {"status": "observed", "stage": row["stage"], "callback": row["callback"], "session_match": row["session_match"]}
+    if row["schema"] == 2:
+        if not isinstance(row["receiver_registration"], str) or row["receiver_registration"] not in {
+            "private",
+            "exported",
+            "disabled",
+            "missing",
+            "unavailable",
+        }:
+            return unavailable
+        if not isinstance(row["callback_entry"], str) or row["callback_entry"] not in {"none", "entered", "unknown"}:
+            return unavailable
+        result.update(receiver_registration=row["receiver_registration"], callback_entry=row["callback_entry"])
+    return result
 
 
 def module(name, path):
@@ -176,11 +228,75 @@ class HostTools:
         run(argv, label="compile-authored-resources")
 
 
+WITNESS_FILES = {
+    "android-profile-v1/profile.json": b'{"synthetic_profile":"retain-N"}\n',
+    "offline-settings-v1/preferences.json": b'{"synthetic_settings":"retain-N"}\n',
+}
+WITNESS_CLASS = "dev.ror2lab.synthetic.RetentionWitness"
+
+
+def witness_source():
+    # Fixture-only Activity; never packaged into production inputs. It uses the
+    # same Android root as ProfileRetentionProvider and exports only booleans.
+    paths = ",".join(json.dumps(path) for path in WITNESS_FILES)
+    values = ",".join(json.dumps(value.decode()) for value in WITNESS_FILES.values())
+    return r"""package dev.ror2lab.synthetic;
+import android.app.Activity;
+import android.os.Bundle;
+import java.io.*;
+import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
+import org.json.JSONObject;
+public final class RetentionWitness extends Activity {
+  @Override public void onCreate(Bundle state) {
+    super.onCreate(state);
+    String nonce = getIntent().getStringExtra("nonce"), mode = getIntent().getStringExtra("mode");
+    if (nonce == null || !nonce.matches("[0-9a-f]{32}") || !("seed".equals(mode) || "verify".equals(mode))) { finish(); return; }
+    boolean ok = false;
+    try {
+      File raw = getExternalFilesDir(null);
+      if (raw == null) throw new IOException();
+      File root = raw.getCanonicalFile();
+      String[] paths = new String[]{PATHS};
+      String[] values = new String[]{VALUES};
+      File[] files = new File[paths.length];
+      for (int i=0; i<paths.length; i++) {
+        files[i] = new File(root, paths[i]);
+        if (!files[i].getCanonicalFile().equals(files[i])) throw new IOException();
+        if ("seed".equals(mode) && files[i].exists()) throw new IOException();
+      }
+      for (int i=0; i<files.length; i++) {
+        byte[] expected = values[i].getBytes(StandardCharsets.UTF_8);
+        if ("seed".equals(mode)) {
+          File parent = files[i].getParentFile();
+          if (!parent.isDirectory() && !parent.mkdirs()) throw new IOException();
+          if (!files[i].createNewFile()) throw new IOException();
+          try (FileOutputStream out = new FileOutputStream(files[i])) { out.write(expected); out.getFD().sync(); }
+        }
+        if (!files[i].isFile() || files[i].length() != expected.length) throw new IOException();
+        byte[] actual = new byte[expected.length];
+        try (DataInputStream in = new DataInputStream(new FileInputStream(files[i]))) { in.readFully(actual); if (in.read() != -1) throw new IOException(); }
+        if (!Arrays.equals(actual, expected)) throw new IOException();
+      }
+      ok = true;
+    } catch (Exception failure) { ok = false; }
+    try {
+      JSONObject row = new JSONObject().put("nonce", nonce).put("mode", mode).put("verified", ok).put("files", ok ? 2 : 0);
+      File target = new File(getFilesDir(), "synthetic-retention-witness.json"), temp = new File(getFilesDir(), "synthetic-retention-witness.tmp");
+      try (FileOutputStream out = new FileOutputStream(temp)) { out.write(row.toString().getBytes(StandardCharsets.UTF_8)); out.getFD().sync(); }
+      if (!temp.renameTo(target)) throw new IOException();
+    } catch (Exception failure) { /* Missing receipt fails the host check. */ }
+    finish();
+  }
+}
+""".replace("PATHS", paths).replace("VALUES", values)
+
+
 def synthetic_manifest(temporary):
     """AAPT1 indexes -M by basename and requires AndroidManifest.xml."""
     manifest = temporary / "AndroidManifest.xml"
     manifest.write_text(
-        '<manifest xmlns:android="http://schemas.android.com/apk/res/android" package="dev.ror2lab.alpha" android:versionCode="1"><uses-sdk android:minSdkVersion="24" android:targetSdkVersion="30"/><application android:label="@string/app_name" android:debuggable="true" android:extractNativeLibs="true"><activity android:name="com.unity3d.player.UnityPlayerActivity" android:exported="true"><intent-filter><action android:name="android.intent.action.MAIN"/><category android:name="android.intent.category.LAUNCHER"/></intent-filter></activity></application></manifest>'
+        '<manifest xmlns:android="http://schemas.android.com/apk/res/android" package="dev.ror2lab.alpha" android:versionCode="1"><uses-sdk android:minSdkVersion="24" android:targetSdkVersion="30"/><application android:label="@string/app_name" android:debuggable="true" android:extractNativeLibs="true"><activity android:name="com.unity3d.player.UnityPlayerActivity" android:exported="true"><intent-filter><action android:name="android.intent.action.MAIN"/><category android:name="android.intent.category.LAUNCHER"/></intent-filter></activity><activity android:name="dev.ror2lab.synthetic.RetentionWitness" android:exported="true"/></application></manifest>'
     )
     return manifest
 
@@ -188,8 +304,9 @@ def synthetic_manifest(temporary):
 def synthetic_inputs(tools, temporary):
     """Compile tiny ORIGINAL fixtures, not Unity/game/SDK runtime implementations.
 
-    The alpha is never launched. Only the real authored retention provider runs.
-    These objects exercise packaging/update mechanics, not game readiness.
+    Only the fixture witness Activity and real authored retention provider run
+    in the alpha package; the synthetic Unity Activity is never launched. These
+    objects exercise packaging/update mechanics, not game readiness.
     """
     sdk = module("synthetic_sdk_names", ROOT / "tools/phone-build/accepted-output/sdk_package.py")
     owner = module("synthetic_owner_names", ROOT / "tools/phone-build/owner-apk/build_owner_apk.py")
@@ -201,11 +318,15 @@ def synthetic_inputs(tools, temporary):
     for name in result:
         if name.endswith(".so"):
             result[name] = library.read_bytes()
+    witness = temporary / "RetentionWitness.java"
+    witness.write_text(witness_source())
     for number in range(1, 5):
         name = "UnityPlayerActivity" if number == 1 else "SyntheticMarker" + str(number)
         java = temporary / (name + ".java")
         java.write_text("package com.unity3d.player; public class " + name + (" extends android.app.Activity" if number == 1 else "") + " {}\n")
-        result["apk/classes" + (str(number) if number > 1 else "") + ".dex"] = tools.dex([java], temporary / ("synthetic-dex-" + str(number)))
+        result["apk/classes" + (str(number) if number > 1 else "") + ".dex"] = tools.dex(
+            [java, witness] if number == 1 else [java], temporary / ("synthetic-dex-" + str(number))
+        )
     resources = temporary / "res"
     (resources / "values").mkdir(parents=True)
     (resources / "values/strings.xml").write_text('<resources><string name="app_name">Synthetic update fixture</string></resources>')
@@ -321,9 +442,10 @@ def publish(service, files, version):
 
 
 class Phone:
-    def __init__(self, serial, timeout, allow_test_installs=False):
+    def __init__(self, serial, timeout, allow_test_installs=False, allow_test_notifications=False):
         self.serial, self.timeout = serial, timeout
         self.allow_test_installs = allow_test_installs
+        self.allow_test_notifications = allow_test_notifications
         self.adb = Path("/opt/homebrew/bin/adb")
         self.owned_installer = False
         self.install_attempted = False
@@ -430,6 +552,10 @@ class Phone:
             result = execute([self.adb, "-s", self.serial, "shell", "uiautomator", "dump", self.ui_path], label="device-ui-dump", timeout=30)
             if result.returncode:
                 raise Failure("device-ui-dump")
+            # Both AOSP dump modes wait for idle before acquiring any root.
+            # Timeout exits 0 without writing XML; never read a stale/missing file.
+            if "idle-timeout" in (ui_output_classification(result.stdout), ui_output_classification(result.stderr)):
+                raise Failure("device-ui-idle-timeout")
             if "null-root" not in (ui_output_classification(result.stdout), ui_output_classification(result.stderr)):
                 break
             if attempt == 2:
@@ -491,6 +617,11 @@ class Phone:
         print(encoded({"mode": "ui-null-root-diagnostics", "fallback_reason": fallback_reason, "observed": summary}).decode(), end="", flush=True)
 
     def tap_visible(self, label):
+        # Building can outlast the display timeout after start(). Refresh wake
+        # before each UI interaction without relaunching the Activity: Android's
+        # PackageInstaller consent window must keep its existing focus. WAKEUP
+        # never toggles an already-awake display off; cleanup still sleeps it.
+        self.shell("input", "keyevent", "KEYCODE_WAKEUP", label="device-display-wake")
         tree = self.ui_for((PACKAGE, "com.android.packageinstaller", "com.google.android.packageinstaller")) if label == "Install" else self.ui()
         for node in tree.iter("node"):
             if node.get("text", "").casefold() == label.casefold() and node.get("enabled") == "true":
@@ -541,8 +672,9 @@ class Phone:
     def dismiss_notification_permission(self):
         # ToolHostActivity.onCreate requests only POST_NOTIFICATIONS. This is
         # not the separately authorized unknown-source install permission.
-        # Decline only this owned test app's notification prompt, never grant
-        # an unidentified permission or rely on localized button text.
+        # Decline by default; allow only with explicit owner authorization for
+        # this owned test app. Never act on an unidentified permission or rely
+        # on localized button text.
         if not self.owned_installer:
             raise Failure("notification-dialog-installer-not-owned")
         controller = "com.android.permissioncontroller"
@@ -552,14 +684,15 @@ class Phone:
         messages = [node.get("text", "").casefold() for node in nodes if node.get("resource-id") == controller + ":id/permission_message"]
         if len(messages) != 1 or "owner game installer" not in messages[0] or not re.search(r"\bnotifications\b", messages[0]):
             raise Failure("notification-dialog-not-identified")
-        buttons = [node for node in nodes if node.get("resource-id") == controller + ":id/permission_deny_button" and node.get("enabled") == "true"]
+        action = "allow" if self.allow_test_notifications else "deny"
+        buttons = [node for node in nodes if node.get("resource-id") == controller + ":id/permission_" + action + "_button" and node.get("enabled") == "true"]
         if len(buttons) != 1:
-            raise Failure("notification-denial-unavailable")
+            raise Failure("notification-allow-unavailable" if self.allow_test_notifications else "notification-denial-unavailable")
         bounds = re.fullmatch(r"\[(\d+),(\d+)\]\[(\d+),(\d+)\]", buttons[0].get("bounds", ""))
         if not bounds:
             raise Failure("ui-button-bounds")
         x1, y1, x2, y2 = map(int, bounds.groups())
-        self.shell("input", "tap", str((x1 + x2) // 2), str((y1 + y2) // 2), label="device-notification-deny")
+        self.shell("input", "tap", str((x1 + x2) // 2), str((y1 + y2) // 2), label="device-notification-" + action)
         if any(node.get("package") == controller for node in self.ui_for((PACKAGE, controller)).iter("node")):
             raise Failure("notification-dialog-not-dismissed")
         return True
@@ -584,6 +717,8 @@ class Phone:
 
     def installed(self, publisher, previous=None):
         deadline = time.monotonic() + self.timeout
+        callback_absent_since = None
+        callback_observed = False
         while time.monotonic() < deadline:
             receipt = self.read("installed-release.json")
             if receipt and receipt.get("release", {}).get("version_code") == publisher and receipt.get("installed_readback_verified") is True:
@@ -601,12 +736,85 @@ class Phone:
                 return receipt
             row = self.read("update-state.json")
             if row and row.get("state") == "ERROR":
+                try:
+                    if CURRENT_PHASE == "baseline-N-install" and row.get("pipeline", {}).get("first_failure", {}).get("stage") == "apk":
+                        self.capture_apk_logs()
+                except Exception:
+                    # Diagnostic loss must not replace the first failure or
+                    # prevent normal owned-package cleanup.
+                    pass
                 raise Failure("installer-build-error")
+            if not callback_observed and row and row.get("state") == "INSTALLING":
+                try:
+                    diagnostic = self.capture_install_diagnostic()
+                except Exception:
+                    # Optional evidence loss must not replace the install result
+                    # or manufacture proof that a callback remained absent.
+                    diagnostic = {"status": "unavailable"}
+                if diagnostic.get("status") == "observed" and (diagnostic.get("callback") != "none" or diagnostic.get("callback_entry") == "entered"):
+                    callback_observed = True
+                    callback_absent_since = None
+                elif (
+                    diagnostic.get("status") == "observed"
+                    and diagnostic.get("stage") == "commit-returned"
+                    and diagnostic.get("callback") == "none"
+                    and diagnostic.get("session_match") is None
+                    and diagnostic.get("callback_entry", "none") == "none"
+                ):
+                    now = time.monotonic()
+                    if callback_absent_since is None:
+                        callback_absent_since = now
+                    elif now - callback_absent_since >= 60:
+                        # Diagnostic harness bound only: never mark the runtime
+                        # failed or initiate another sealed install session.
+                        raise Failure("install-first-callback-timeout")
+                else:
+                    callback_absent_since = None
+            else:
+                callback_absent_since = None
             # Consent is always the real Android PackageInstaller UI. Never forge
             # success receipts or use adb install to replace the alpha package.
             self.tap("Install", required=False)
             time.sleep(1)
         raise Failure("install-readback-timeout")
+
+    def retention_witness(self, mode, receipt=None):
+        if mode not in ("seed", "verify") or not self.owned_installer or not self.alpha_hash or self.package_hash(GAME) != self.alpha_hash:
+            raise Failure("retention-witness-ownership")
+        if receipt is not None:
+            backup = receipt.get("retention_backup", {})
+            if (
+                receipt.get("profile_retention_verified") is not True
+                or backup.get("data_schema") != 1
+                or backup.get("bytes") != sum(map(len, WITNESS_FILES.values()))
+                or not re.fullmatch(r"[0-9a-f]{64}", backup.get("snapshot", ""))
+            ):
+                raise Failure("retention-witness-provider-unverified")
+        nonce = secrets.token_hex(16)
+        try:
+            self.shell("am", "force-stop", GAME, label="retention-witness-stop")
+            self.shell("am", "start", "-W", "-n", GAME + "/" + WITNESS_CLASS, "--es", "mode", mode, "--es", "nonce", nonce, label="retention-witness-launch")
+            deadline = time.monotonic() + 15
+            while time.monotonic() < deadline:
+                raw = self.shell(
+                    "run-as",
+                    GAME,
+                    "sh",
+                    "-c",
+                    "'if [ -f files/synthetic-retention-witness.json ]; then cat files/synthetic-retention-witness.json; else printf null; fi'",
+                    label="retention-witness-result",
+                )
+                row = json.loads(raw)
+                if row and row.get("nonce") == nonce:
+                    if row.get("mode") != mode or row.get("verified") is not True or row.get("files") != 2:
+                        raise Failure("retention-witness-mismatch")
+                    break
+                time.sleep(0.2)
+            else:
+                raise Failure("retention-witness-timeout")
+        finally:
+            self.shell("am", "force-stop", GAME, label="retention-witness-stop")
+        self.start()
 
     def await_install_permission(self):
         value = self.shell("appops", "get", PACKAGE, "REQUEST_INSTALL_PACKAGES", label="device-install-permission-query").decode()
@@ -617,6 +825,33 @@ class Phone:
         # The root lab invocation may pass this flag ONLY after explicit owner
         # authorization for this fresh disposable test package on the leased phone.
         self.shell("appops", "set", PACKAGE, "REQUEST_INSTALL_PACKAGES", "allow", label="device-install-permission-enable")
+
+    def capture_install_diagnostic(self):
+        # Fresh-run ownership and exact installed test APK identity are mandatory.
+        # No alpha/game namespace, broad traversal, or mutation is involved.
+        if not self.owned_installer or not self.installer_hash or self.package_hash(PACKAGE) != self.installer_hash:
+            return {"status": "unavailable", "reason": "ownership-unverified"}
+        command = (
+            'for p in files files/owner-input files/owner-input/install-diagnostic.json; do [ ! -L "$p" ] || exit 1; done; '
+            "if [ -f files/owner-input/install-diagnostic.json ]; then head -c 4097 files/owner-input/install-diagnostic.json; else printf null; fi"
+        )
+        data = self.shell("run-as", PACKAGE, "sh", "-c", "'" + command + "'", label="device-install-diagnostic-read", timeout=15)
+        return install_diagnostic_summary(data)
+
+    def capture_apk_logs(self):
+        # APK-stage subprocesses in build_owner_apk.build write only these two
+        # logs. Never traverse producer artifacts, keys, or other app namespaces.
+        if not self.owned_installer or self.package_hash(PACKAGE) != self.installer_hash:
+            raise Failure("apk-log-installer-not-owned")
+        for tool in ("javac", "dex"):
+            script = (
+                'for p in files files/owner-input files/owner-input/work files/owner-input/work/releases; do [ ! -L "$p" ] || exit 1; done; '
+                "n=0; for d in files/owner-input/work/releases/build-*; do "
+                '[ ! -L "$d" ] && [ ! -L "$d/assembly" ] || continue; '
+                'p="$d/assembly/' + tool + '.log"; [ ! -L "$p" ] && [ -f "$p" ] || continue; '
+                'n=$((n+1)); [ "$n" -le 4 ] || break; printf "ROR2_APK_LOG_BEGIN\\n"; head -c 65536 "$p" || exit 1; printf "\\n"; done'
+            )
+            self.shell("run-as", PACKAGE, "sh", "-c", "'" + script + "'", label="device-apk-" + tool + "-log", timeout=15)
 
     def cleanup(self):
         # Only delete exact packages installed by this fresh run. Unknown or
@@ -731,6 +966,7 @@ def acceptance(phone, config, temporary, passed):
         phone.storage()
         phone.tap("Reconstruct and install verified game")
         first = phone.installed(1)
+        phone.retention_witness("seed")
         set_phase("check-for-updates")
         publish(service, releases[2], 2)
         phone.check(2)
@@ -739,13 +975,16 @@ def acceptance(phone, config, temporary, passed):
         passed("check-for-updates")
         set_phase("update-N-to-N+1")
         phone.storage()
+        phone.retention_witness("verify")
         phone.tap("Reconstruct and install verified game")
         second = phone.installed(2, first)
+        phone.retention_witness("verify", second)
         passed("update-N-to-N+1")
         set_phase("same-key-rollback")
         phone.storage()
         phone.tap("Rebuild and install previous release (same key)")
         rolled = phone.installed(1, second)
+        phone.retention_witness("verify", rolled)
         passed("same-key-rollback")
         tampered = dict(releases[2])
         body = json.loads(tampered["release.json"])
@@ -765,7 +1004,7 @@ def acceptance(phone, config, temporary, passed):
             passed(case)
 
 
-def focused_ui_hierarchy(document, allowed_packages):
+def focused_window_hierarchy(document):
     # AOSP Android 13 AccessibilityNodeInfoDumper.dumpWindowsToFile schema:
     # displays/display/window/(child windows...)/DIRECT hierarchy/node.
     # Never flatten background, child, accessibility-focused or other-display
@@ -781,11 +1020,42 @@ def focused_ui_hierarchy(document, allowed_packages):
     hierarchies = windows[0].findall("hierarchy")
     if len(hierarchies) != 1 or len(hierarchies[0].findall("node")) != 1:
         raise Failure("ui-window-root-unavailable")
-    hierarchy = hierarchies[0]
+    return hierarchies[0]
+
+
+def focused_ui_hierarchy(document, allowed_packages):
+    hierarchy = focused_window_hierarchy(document)
     package = hierarchy.find("node").get("package")
     if package not in allowed_packages or any(node.get("package") not in (None, "", package) for node in hierarchy.iter("node")):
         raise Failure("ui-window-package-not-allowed")
     return hierarchy
+
+
+def ui_window_summary(data):
+    """Read-only fixed foreground categories; never export window/node values."""
+    try:
+        start, end = data.find(b"<?xml"), data.rfind(b"</displays>")
+        if start < 0 or end < 0:
+            raise Failure("ui-window-schema")
+        hierarchy = focused_window_hierarchy(ET.fromstring(data[start : end + len(b"</displays>")]))
+        package = hierarchy.find("node").get("package")
+        category = {
+            PACKAGE: "test-installer",
+            "com.android.permissioncontroller": "permission-controller",
+            "com.android.systemui": "system-ui",
+            "android": "android-system",
+            "com.android.packageinstaller": "package-installer",
+            "com.google.android.packageinstaller": "package-installer",
+        }.get(package, "other" if package else "unknown")
+        return {
+            "status": "observed",
+            "package_category": category,
+            "mixed_node_packages": any(node.get("package") not in (None, "", package) for node in hierarchy.iter("node")),
+        }
+    except Failure as error:
+        return {"status": "unknown", "reason": str(error)}
+    except (ET.ParseError, ValueError):
+        return {"status": "unknown", "reason": "ui-window-schema"}
 
 
 def ui_environment_summary(outputs):
@@ -853,8 +1123,102 @@ def ui_output_classification(data):
     return "other-output" if value.strip() else "empty"
 
 
-def inspect_ui_failure(selection, *, conflicting_mode=False):
-    result = {"mode": "inspect-ui-failure", "status": "observed", "selection": "newest" if selection == "newest" else "explicit", "records": [], "errors": []}
+def backend_error_summary(message):
+    """Match public source literals/locations, never print private message text."""
+    sources = tuple(
+        "tools/phone-build/owner-apk/" + name
+        for name in ("updates.py", "release_source.py", "release.py", "public_release.py", "alpha_policy.py", "install_flow.py", "build_owner_apk.py")
+    ) + (
+        "tools/phone-build/accepted-output/sdk_package.py",
+        "tools/phone-build/owner-code/native.py",
+        "tools/phone-build/managed-host/ToolHostActivity.java",
+        "tools/phone-build/managed-host/OwnerBuildService.java",
+    )
+    classes = (
+        "ValueError",
+        "TypeError",
+        "KeyError",
+        "ImportError",
+        "ModuleNotFoundError",
+        "OSError",
+        "FileNotFoundError",
+        "PermissionError",
+        "TimeoutError",
+        "ConnectionRefusedError",
+        "HTTPError",
+        "URLError",
+        "RuntimeError",
+        "java.io.IOException",
+        "java.io.FileNotFoundException",
+        "java.lang.IllegalStateException",
+        "java.lang.IllegalArgumentException",
+        "java.lang.SecurityException",
+        "android.system.ErrnoException",
+        "org.json.JSONException",
+    )
+    lines = message.splitlines()
+    exceptions = sorted({name for name in classes if re.search(r"(?:^|\n)\s*" + re.escape(name) + r":", message)})
+    normalized = [re.sub(r"^(?:" + "|".join(map(re.escape, classes)) + r"):\s*", "", line.strip()) for line in lines]
+    matches, frames = [], []
+    for source in sources:
+        path = ROOT / source
+        if not path.is_file():
+            continue
+        code = path.read_text()
+        templates = []
+        if source.endswith(".py"):
+            for node in ast.walk(ast.parse(code)):
+                if not isinstance(node, ast.Raise) or not isinstance(node.exc, ast.Call) or not node.exc.args:
+                    continue
+                value = node.exc.args[0]
+                suffix = isinstance(value, ast.BinOp) and isinstance(value.op, ast.Add)
+                while isinstance(value, ast.BinOp) and isinstance(value.op, ast.Add):
+                    value = value.left
+                if isinstance(value, ast.Constant) and isinstance(value.value, str):
+                    templates.append((node.lineno, value.value, suffix))
+        else:
+            for found in re.finditer(r'throw new [A-Za-z.]+\("((?:[^"\\]|\\.)*)"\s*(\+|\))', code):
+                templates.append((code.count("\n", 0, found.start()) + 1, json.loads('"' + found.group(1) + '"'), found.group(2) == "+"))
+        for line, literal, suffix in templates:
+            if len(literal) >= 8 and any(value.startswith(literal) if suffix else value == literal for value in normalized):
+                matches.append({"source": source, "line": line, "public_message": literal, "dynamic_suffix_omitted": suffix})
+        for found in re.finditer(r'File "[^"\n]*' + re.escape(source) + r'", line ([0-9]+)', message):
+            frames.append({"source": source, "line": int(found.group(1))})
+    result = {"exception_classes": exceptions, "public_templates": matches[:8], "public_traceback_frames": frames[-8:]}
+    # Python's OSError string contains private filenames after the standard
+    # errno/strerror prefix. Classify only exact known prefixes, never the suffix.
+    for prefix, label in (
+        ("[Errno 2] No such file or directory", "missing-file"),
+        ("[Errno 5] Input/output error", "io-error"),
+        ("[Errno 8] Exec format error", "exec-format"),
+        ("[Errno 12] Cannot allocate memory", "out-of-memory"),
+        ("[Errno 13] Permission denied", "permission-denied"),
+        ("[Errno 17] File exists", "file-exists"),
+        ("[Errno 20] Not a directory", "not-directory"),
+        ("[Errno 21] Is a directory", "is-directory"),
+        ("[Errno 28] No space left on device", "no-space"),
+        ("[Errno 30] Read-only file system", "read-only-filesystem"),
+    ):
+        if any(value == prefix or value.startswith(prefix + ":") for value in normalized):
+            result["os_error"] = label
+            break
+    producer = re.fullmatch(r"Source producer exited with code (-?[0-9]{1,3}); private producer log retained\.", message)
+    if producer:
+        result["producer_exit"] = int(producer.group(1))
+    child = re.match(r"(?:java\.io\.IOException: )?owner-backend exit (-?[0-9]+) ", message)
+    if child:
+        result["owner_backend_exit"] = int(child.group(1))
+    return result
+
+
+def inspect_ui_failure(selection, *, conflicting_mode=False, update_failure=False):
+    result = {
+        "mode": "inspect-update-failure" if update_failure else "inspect-ui-failure",
+        "status": "observed",
+        "selection": "newest" if selection == "newest" else "explicit",
+        "records": [],
+        "errors": [],
+    }
     try:
         if conflicting_mode:
             raise Failure("log-inspection-cannot-run-other-modes")
@@ -879,31 +1243,133 @@ def inspect_ui_failure(selection, *, conflicting_mode=False):
                 raise Failure("log-inspection-record-unavailable")
             return path.read_bytes()
 
-        failure_sequence = None
-        for path in sorted(directory.glob("[0-9][0-9][0-9][0-9][0-9]-device-ui-read.json")):
-            metadata = json.loads(read(path.name))
-            if metadata.get("phase") == "baseline-N-check" and metadata.get("category") == "device-ui-read":
+        if update_failure:
+            for path in sorted(directory.glob("[0-9][0-9][0-9][0-9][0-9]-device-state-read.json")):
+                metadata = json.loads(read(path.name))
+                if metadata.get("phase") not in ("baseline-N-check", "baseline-N-install") or metadata.get("category") != "device-state-read":
+                    continue
                 if metadata.get("returncode") != 0 or metadata.get("outcome") != "returned":
-                    failure_sequence = int(path.name[:5])
+                    continue
+                state = json.loads(read(path.stem + ".stdout.log"))
+                if isinstance(state, dict) and state.get("state") == "ERROR":
+                    message = state.get("message")
+                    if not isinstance(message, str):
+                        raise Failure("log-inspection-update-error-shape")
+                    result["phase"] = metadata["phase"]
+                    result["backend_error"] = backend_error_summary(message)
+                    pipeline = state.get("pipeline")
+                    first = pipeline.get("first_failure") if isinstance(pipeline, dict) else None
+                    if isinstance(first, dict):
+                        stage, reason = first.get("stage"), first.get("reason")
+                        result["pipeline_first_failure"] = {
+                            "stage": stage if stage in ("admission", "staging", "assembly", "textures", "native", "apk", "signing", "install") else "unknown",
+                            "reason": backend_error_summary(reason) if isinstance(reason, str) else {"status": "unavailable"},
+                        }
+                    result["apk_logs"] = []
+                    for log_path in sorted(directory.glob("[0-9][0-9][0-9][0-9][0-9]-device-apk-*-log.json")):
+                        match = re.fullmatch(r"([0-9]{5})-device-apk-(javac|dex)-log\.json", log_path.name)
+                        if not match or not int(path.name[:5]) < int(match.group(1)) <= int(path.name[:5]) + 4:
+                            continue
+                        log_meta = json.loads(read(log_path.name))
+                        if log_meta.get("phase") != metadata["phase"] or log_meta.get("category") != "device-apk-" + match.group(2) + "-log":
+                            raise Failure("log-inspection-record-mismatch")
+                        entry = {"tool": match.group(2), "status": "unavailable"}
+                        if log_meta.get("returncode") == 0 and log_meta.get("outcome") == "returned":
+                            output = read(log_path.stem + ".stdout.log").decode(errors="replace")
+                            entry["status"] = "captured" if output.startswith("ROR2_APK_LOG_BEGIN\n") else "not-found"
+                            if entry["status"] == "captured":
+                                entry["error"] = toolhost_error_summary(output)
+                                entry["backend_error"] = backend_error_summary(output)
+                        result["apk_logs"].append(entry)
                     break
-        if failure_sequence is None or failure_sequence < 2:
+            else:
+                raise Failure("log-inspection-update-error-not-found")
+            print(encoded(result).decode(), end="", flush=True)
+            return 0
+
+        failure_sequence = None
+        dump_category = "device-ui-dump"
+        selected_records = None
+        for path in sorted(directory.glob("[0-9][0-9][0-9][0-9][0-9]-device-ui-*.json")):
+            match = re.fullmatch(r"([0-9]{5})-(device-ui-(?:dump|windows-dump|read))\.json", path.name)
+            if not match:
+                continue
+            metadata = json.loads(read(path.name))
+            if metadata.get("phase") != "baseline-N-check":
+                continue
+            sequence, category = int(match.group(1)), match.group(2)
+            if metadata.get("category") != category:
+                raise Failure("log-inspection-record-mismatch")
+            if metadata.get("returncode") != 0 or metadata.get("outcome") != "returned":
+                selected_records = [(sequence, category)]
+                if category == "device-ui-read":
+                    for previous in ("device-ui-dump", "device-ui-windows-dump"):
+                        if (directory / f"{sequence - 1:05d}-{previous}.json").is_file():
+                            dump_category = previous
+                            selected_records.insert(0, (sequence - 1, previous))
+                            break
+                break
+        if selected_records is None:
+            # A windows dump may read successfully yet be rejected by the
+            # focused-root/package guard. Inspect its retained XML, never retry
+            # the phone or relax the tap-target whitelist to diagnose it.
+            for path in sorted(directory.glob("[0-9][0-9][0-9][0-9][0-9]-device-ui-windows-dump.json")):
+                metadata = json.loads(read(path.name))
+                if metadata.get("phase") == "baseline-N-check" and metadata.get("category") == "device-ui-windows-dump":
+                    sequence = int(path.name[:5])
+                    # Successful fallbacks can precede the failure. Require the
+                    # rejection-only diagnostic after this read and dump removal.
+                    marker = f"{sequence + 3:05d}-device-ui-diagnostic-power.json"
+                    if not (directory / marker).is_file():
+                        continue
+                    diagnostic = json.loads(read(marker))
+                    if diagnostic.get("phase") != "baseline-N-check" or diagnostic.get("category") != "device-ui-diagnostic-power":
+                        raise Failure("log-inspection-record-mismatch")
+                    failure_sequence = sequence + 1
+                    dump_category = "device-ui-windows-dump"
+                    break
+            if failure_sequence is not None:
+                selected_records = [(failure_sequence - 1, dump_category), (failure_sequence, "device-ui-read")]
+        if selected_records is None:
             raise Failure("log-inspection-ui-read-failure-not-found")
-        for sequence, category in ((failure_sequence - 1, "device-ui-dump"), (failure_sequence, "device-ui-read")):
+        for sequence, category in selected_records:
             prefix = f"{sequence:05d}-{category}"
             metadata = json.loads(read(prefix + ".json"))
             if metadata.get("phase") != "baseline-N-check" or metadata.get("category") != category:
                 raise Failure("log-inspection-record-mismatch")
             outcome = metadata.get("outcome")
+            returncode = metadata.get("returncode")
+            termination = "unavailable"
+            if type(returncode) is int:
+                # subprocess uses negative POSIX signal numbers for the local
+                # child. Do not infer a signal from a remote shell exit (128+N).
+                termination = "exit-zero" if returncode == 0 else "exit-nonzero"
+                if returncode < 0:
+                    termination = {
+                        -1: "signal-SIGHUP",
+                        -2: "signal-SIGINT",
+                        -6: "signal-SIGABRT",
+                        -9: "signal-SIGKILL",
+                        -11: "signal-SIGSEGV",
+                        -15: "signal-SIGTERM",
+                    }.get(returncode, "signal-other")
             result["records"].append(
                 {
                     "phase": "baseline-N-check",
                     "category": category,
                     "returncode": "zero" if metadata.get("returncode") == 0 else "nonzero" if type(metadata.get("returncode")) is int else "unavailable",
+                    "termination": termination,
                     "outcome": outcome if outcome in ("returned", "OSError", "TimeoutExpired") else "unknown",
                     "stdout": ui_output_classification(read(prefix + ".stdout.log")),
                     "stderr": ui_output_classification(read(prefix + ".stderr.log")),
                 }
             )
+            if dump_category == "device-ui-windows-dump" and category == "device-ui-read":
+                result["foreground"] = (
+                    ui_window_summary(read(prefix + ".stdout.log"))
+                    if metadata.get("returncode") == 0 and outcome == "returned"
+                    else {"status": "unknown", "reason": "ui-window-read-unavailable"}
+                )
     except Exception as error:
         result["status"] = "error"
         result["errors"].append(str(error) if isinstance(error, Failure) else "log-inspection-local-read-error")
@@ -968,6 +1434,94 @@ def inspect_state(expected_installer_hash, timeout, *, conflicting_mode=False):
     return 1 if result["errors"] else 0
 
 
+def toolhost_error_summary(text):
+    """First recognized error only; never return a log excerpt or unknown name."""
+    java_files = (
+        "PayloadStore.java",
+        "PayloadBootstrapActivity.java",
+        "ProfileStore.java",
+        "ProfileRetentionProvider.java",
+        "ToolHostActivity.java",
+        "OwnerUpdateState.java",
+        "OwnerInstaller.java",
+        "OwnerAlphaInstall.java",
+        "OwnerBuildService.java",
+        "OwnerInputImport.java",
+        "OwnerInputSource.java",
+    )
+    fallback = {"category": "unclassified"}
+    for line in text.splitlines():
+        java = re.search(r"(?:^|[/\\])(" + "|".join(map(re.escape, java_files)) + r"):(\d+): error: (.*)$", line)
+        value = (java.group(3) if java else line).lower()
+        for marker, category in (
+            ("cannot find symbol", "java-symbol-not-found"),
+            ("incompatible types", "java-incompatible-types"),
+            ("already defined", "java-duplicate-definition"),
+            ("does not override", "java-override-error"),
+            ("does not exist", "dependency-missing"),
+            ("no space left on device", "storage-exhausted"),
+            ("permission denied", "permission-denied"),
+            ("no such file or directory", "file-missing"),
+            ("build input changed", "input-drift"),
+            ("timed out", "timeout"),
+            ("timeout after", "timeout"),
+            ("fatal error:", "native-compiler-error"),
+        ):
+            if marker in value:
+                return {"category": category, **({"source": java.group(1), "line": int(java.group(2))} if java else {})}
+        if java:
+            return {"category": "java-compiler-error", "source": java.group(1), "line": int(java.group(2))}
+        if "traceback (most recent call last)" in value:
+            fallback = {"category": "python-error"}
+        stage = re.search(r"\b(native-build|javac|dex|aapt|owner-sign) exit -?[0-9]+\b", value)
+        if stage:
+            return {"category": "build-command-failed", "stage": stage.group(1)}
+    return fallback
+
+
+def inspect_toolhost_failure(source, run_id, *, conflicting_mode=False):
+    result = {"mode": "inspect-toolhost-failure", "status": "observed", "errors": []}
+    try:
+        if conflicting_mode:
+            raise Failure("toolhost-inspection-cannot-run-other-modes")
+        if not re.fullmatch(r"[0-9a-f]{40}", source or "") or not re.fullmatch(r"[0-9]{1,20}", run_id or ""):
+            raise Failure("toolhost-inspection-requires-source-and-run")
+        configured = os.environ.get("LAB_TOOLHOST_ROOT")
+        if not configured:
+            raise Failure("LAB_TOOLHOST_ROOT-required")
+        root = Path(configured).resolve(strict=True)
+        build, run_directory = root / source, root.parent / run_id
+        if build.is_symlink() or run_directory.is_symlink():
+            raise Failure("toolhost-inspection-record-unavailable")
+
+        def read(path):
+            if path.is_symlink() or not path.is_file() or path.stat().st_size > 32 * 1024**2:
+                raise Failure("toolhost-inspection-record-unavailable")
+            return path.read_text(errors="replace")
+
+        receipt = json.loads(read(build / "result.json"))
+        if not isinstance(receipt, dict):
+            raise Failure("toolhost-inspection-receipt-shape")
+        if receipt.get("source_commit", source) != source or receipt.get("package", PACKAGE) != PACKAGE:
+            raise Failure("toolhost-inspection-receipt-mismatch")
+        result["build_success"] = receipt.get("success") if type(receipt.get("success")) is bool else None
+        result["receipt_source_present"] = "source_commit" in receipt
+        result["receipt_failure_present"] = any(isinstance(receipt.get(key), str) and receipt[key] for key in ("failure", "error"))
+        result["receipt_failure"] = toolhost_error_summary("\n".join(receipt[key] for key in ("failure", "error") if isinstance(receipt.get(key), str)))
+        # Public lab_runner.py writes this exact job log. It records --source
+        # on the local builder command; no arbitrary receipt paths are followed.
+        log = read(run_directory / "output.log")
+        sources = re.findall(r"(?:^|\s)--source\s+([0-9a-f]{40})(?=\s|$)", log)
+        if not sources or set(sources) != {source}:
+            raise Failure("toolhost-inspection-log-source-mismatch")
+        result["log_error"] = toolhost_error_summary(log)
+    except Exception as error:
+        result["status"] = "error"
+        result["errors"].append(str(error) if isinstance(error, Failure) else "toolhost-inspection-local-read-error")
+    print(encoded(result).decode(), end="", flush=True)
+    return 1 if result["errors"] else 0
+
+
 def main(argv=None):
     global DIAGNOSTICS
     set_phase("setup")
@@ -979,23 +1533,55 @@ def main(argv=None):
     parser.add_argument(
         "--allow-test-installs", action="store_true", help="Only after explicit owner authorization: allow installs for this fresh disposable test package"
     )
+    parser.add_argument(
+        "--allow-test-notifications", action="store_true", help="Only after explicit owner authorization: allow this owned test app's POST_NOTIFICATIONS prompt"
+    )
     parser.add_argument("--inspect-state", action="store_true", help="Read-only fixed-package presence/hash and installer permission; no build, UI or cleanup")
     parser.add_argument(
         "--expected-installer-sha256", help="Required for --inspect-state: last known installer hash, used only for comparison, never ownership"
     )
     parser.add_argument("--inspect-ui-failure", action="store_true", help="Read-only fixed classification of this driver's retained UI dump/read failure logs")
     parser.add_argument(
-        "--diagnostic-run", help="Required for --inspect-ui-failure: newest or one private run-directory basename; never prints paths or raw logs"
+        "--inspect-update-failure", action="store_true", help="Read-only public-source error matches from the retained first baseline check/install ERROR"
+    )
+    parser.add_argument(
+        "--inspect-toolhost-failure", metavar="SOURCE_COMMIT", help="Read-only fixed build-error classification for one exact toolhost source commit"
+    )
+    parser.add_argument(
+        "--diagnostic-run", help="Inspection selection: UI newest/private run basename, or toolhost numeric lab run ID; never prints paths or raw logs"
     )
     args = parser.parse_args(argv)
+    if args.inspect_toolhost_failure is not None:
+        DIAGNOSTICS = None
+        return inspect_toolhost_failure(
+            args.inspect_toolhost_failure,
+            args.diagnostic_run,
+            conflicting_mode=args.inspect_ui_failure
+            or args.inspect_update_failure
+            or args.inspect_state
+            or args.host_only
+            or args.allow_test_installs
+            or args.allow_test_notifications,
+        )
+    if args.inspect_update_failure:
+        DIAGNOSTICS = None
+        return inspect_ui_failure(
+            args.diagnostic_run,
+            conflicting_mode=args.inspect_ui_failure or args.inspect_state or args.host_only or args.allow_test_installs or args.allow_test_notifications,
+            update_failure=True,
+        )
     if args.inspect_ui_failure:
         DIAGNOSTICS = None
-        return inspect_ui_failure(args.diagnostic_run, conflicting_mode=args.inspect_state or args.host_only or args.allow_test_installs)
+        return inspect_ui_failure(
+            args.diagnostic_run, conflicting_mode=args.inspect_state or args.host_only or args.allow_test_installs or args.allow_test_notifications
+        )
     if args.inspect_state:
         # This driver-only observation makes no claim about APK source identity.
         # Bypass cache/toolchain setup, private log writes and all cleanup paths.
         DIAGNOSTICS = None
-        return inspect_state(args.expected_installer_sha256, args.timeout, conflicting_mode=args.host_only or args.allow_test_installs)
+        return inspect_state(
+            args.expected_installer_sha256, args.timeout, conflicting_mode=args.host_only or args.allow_test_installs or args.allow_test_notifications
+        )
     completed = set()
     phone = None
     reason = None
@@ -1014,7 +1600,7 @@ def main(argv=None):
         DIAGNOSTICS = PrivateDiagnostics(ROOT / "work/coordination/installer-update-acceptance")
         config = read_context()
         if not args.host_only:
-            phone = Phone(serial, args.timeout, args.allow_test_installs)
+            phone = Phone(serial, args.timeout, args.allow_test_installs, args.allow_test_notifications)
         # Explicit /tmp, never TMPDIR (which might point inside a checkout).
         with tempfile.TemporaryDirectory(prefix="ror2-synthetic-updates-", dir="/tmp") as name:
             temporary = Path(name).resolve()
@@ -1033,15 +1619,26 @@ def main(argv=None):
         reason = "unexpected-local-error-see-private-lab-environment"
         failure_phase = CURRENT_PHASE
     finally:
-        if phone is not None:
-            set_phase("cleanup")
-            try:
-                cleanup_verified = phone.cleanup() == "verified-absent"
-            except Failure as error:
-                cleanup_reason = str(error)
-            except Exception:
-                cleanup_reason = "unexpected-cleanup-error-see-private-lab-environment"
-        DIAGNOSTICS = None
+        try:
+            if phone is not None and reason and failure_phase in ("baseline-N-install", "update-N-to-N+1", "same-key-rollback"):
+                try:
+                    observed = phone.capture_install_diagnostic()
+                except Exception:
+                    observed = {"status": "unavailable", "reason": "capture-failed"}
+                print(encoded({"mode": "install-diagnostic", "observed": observed}).decode(), end="", flush=True)
+        except Exception:
+            # Optional diagnostics, including output, cannot replace the install failure.
+            pass
+        finally:
+            if phone is not None:
+                set_phase("cleanup")
+                try:
+                    cleanup_verified = phone.cleanup() == "verified-absent"
+                except Failure as error:
+                    cleanup_reason = str(error)
+                except Exception:
+                    cleanup_reason = "unexpected-cleanup-error-see-private-lab-environment"
+            DIAGNOSTICS = None
     if reason:
         if args.host_only:
             print("FAIL host-fixture-build phase=" + failure_phase + " reason=" + reason, flush=True)
