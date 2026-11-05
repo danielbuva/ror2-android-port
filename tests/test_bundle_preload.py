@@ -288,6 +288,85 @@ class BundlePreloadTests(unittest.TestCase):
         )
         return graph, types, rows, required
 
+    def test_required_emission_follows_mixed_retained_profiles_and_actual_extents(self):
+        import UnityPy
+
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            graph, types, selected, required = self.required_graph(root)
+            original = [dict(row) for row in selected[:2]]
+
+            def retain(name, values):
+                folder = root / name
+                directory = folder / "records"
+                directory.mkdir(parents=True)
+                index, blob = [], bytearray()
+                for value in values:
+                    before = Path(value["provider"])
+                    prior = next(row for row in P.json_rows(before / "index.jsonl") if row["path_id"] == value["record_source"][2])
+                    body = P.O.record_extent(before / "objects.bin", prior)
+                    index.append({**prior, "offset": len(blob), "provider_before": str(before), "body_before_sha256": value["sha256"]})
+                    blob.extend(body)
+                    value["provider"] = str(directory)
+                (directory / "objects.bin").write_bytes(blob)
+                (directory / "index.jsonl").write_text("".join(json.dumps(row) + "\n" for row in index))
+                (directory / "witnesses.jsonl").write_text("")
+                receipt = dict(
+                    success=True,
+                    index_sha256=P.O.B.sha(directory / "index.jsonl"),
+                    objects_sha256=P.O.B.sha(directory / "objects.bin"),
+                    witnesses_sha256=P.O.B.sha(directory / "witnesses.jsonl"),
+                )
+                (folder / "terminal.json").write_text(json.dumps(receipt))
+                return directory
+
+            retain("first", selected[:2])
+            retained = retain("second", selected[:2])
+            (graph / "selected-records.jsonl").write_text("".join(json.dumps(row) + "\n" for row in selected))
+            result = P.emit_closed_native(graph, [types], root / "emitted", "authored", "CAB-authored", required=required)
+            objects = {obj.path_id: obj.read_typetree() for obj in UnityPy.load(result["bundle"]).objects}
+            self.assertEqual((objects[10]["link"]["m_PathID"], objects[20]["link"]["m_PathID"]), (20, 10))
+            self.assertEqual(len(result["producer_pins"]), 4)
+            for before, value in zip(original, selected):
+                self.assertEqual(P.ProducerRecords().record(value)[1], (Path(before["provider"]) / "objects.bin").read_bytes())
+            wrong_profile = {**selected[0], "record": selected[1]["record"]}
+            with self.assertRaisesRegex(ValueError, "profile differs"):
+                P.ProducerRecords().record(wrong_profile)
+            (Path(original[0]["provider"]) / "objects.bin").write_bytes(b"x" * 12)
+            with self.assertRaisesRegex(ValueError, "extent drift"):
+                P.ProducerRecords().record(selected[0])
+            (retained / "witnesses.jsonl").write_text("changed\n")
+            with self.assertRaisesRegex(ValueError, "witness drift"):
+                P.ProducerRecords().record(selected[0])
+
+    def test_provider_duplicate_copies_require_identical_metadata_and_valid_extents(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            _, _, selected, _ = self.required_graph(Path(tmp))
+            value = selected[0]
+            provider = Path(value["provider"])
+            index = provider / "index.jsonl"
+            row = next(P.json_rows(index))
+            body = (provider / "objects.bin").read_bytes()
+            copy = {**row, "offset": len(body)}
+            (provider / "objects.bin").write_bytes(body + body)
+
+            def pin_rows(rows):
+                index.write_text("".join(json.dumps(item) + "\n" for item in rows))
+                receipt = provider / "result.json"
+                document = json.loads(receipt.read_text())
+                document["outputs"]["index.jsonl"]["sha256"] = P.O.B.sha(index)
+                receipt.write_text(json.dumps(document))
+
+            pin_rows([row, copy])
+            self.assertEqual(P.ProducerRecords().record(value)[1], body)
+            pin_rows([row, {**copy, "native_type_hash": "cd" * 16}])
+            with self.assertRaisesRegex(ValueError, "Conflicting native provider identity"):
+                P.ProducerRecords().record(value)
+            pin_rows([row, copy])
+            (provider / "objects.bin").write_bytes(body + b"x" * len(body))
+            with self.assertRaisesRegex(ValueError, "extent drift"):
+                P.ProducerRecords().record(value)
+
     def test_required_emission_preserves_exact_objects_and_multiple_subasset_roots(self):
         import UnityPy
 
