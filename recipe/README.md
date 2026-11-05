@@ -1,5 +1,11 @@
 # Build recipes
 
+2026-11-05 item-discovery attribution audit: the original-audio owner source
+pin and producer/camera manifest bindings follow two authored timing markers
+around the existing comparison-item discovery call. Only repository source
+hashes change; no game data, private paths, identifiers or license changes are
+introduced. Provenance, privacy and sensitive-content review passed.
+
 2026-11-04 EventSystem audit: objective-support and Commando recipes construct
 32 EventSystem components from the pinned SDK declarations and constructor
 initializers, preserving source base-component references. Current receipt-bound
@@ -6866,6 +6872,19 @@ relationships before emission and aggregates mismatches in its receipt. Pinned
 source/SDK/codec and preload checks remain strict. Provenance/privacy review:
 only authored policy, script names and relationship checks changed; generated
 bodies and local audit evidence remain ignored. No device admission is claimed.
+
+Audit: 2026-11-05. `original-audio-owner-sources.json` and the camera
+transform recipe refresh only reviewed authored source and manifest hashes for
+bounded startup/transport timing seams. No new inputs, game-derived bytes,
+private paths, identifiers or third-party code are included. Full audio integrity
+verification and native bank initialization order are unchanged.
+
+The same authored audio-owner pins now include the install-bound private
+verification cache. Native payload bytes, packaged cohort validation
+and bank order are unchanged. The receipt uses kernel change time as well as
+modification time and inode; J1386 records adopted-storage corruption refusal,
+restoration and measured cache hits.
+No private cached receipts or captured identities are tracked.
 
 ## Scene source record suppliers (2026-11-05)
 

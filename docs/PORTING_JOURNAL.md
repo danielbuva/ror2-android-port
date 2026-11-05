@@ -2698,6 +2698,22 @@ Prior art: pinned AssetRipper full script identity and J866 exact scope/forwardi
 No APK produced; integrated source/body proofs, native bridges, complete graph/load
 and device play remain required independently of this metadata contract.
 
+## J1386 — Reuse install-bound audio verification and partition loading costs
+
+2026-11-05. Existing audio copier caches full verification against install/cohort
+identity and path, expected hash, size, device/inode, nanosecond mtime/ctime.
+Install/update or Clear cache requires full verification; missing metadata falls back.
+APK `64b8741f45e5f94f54d95ca56b88040c72548795541c2daffc153e2fbca232e7`, source `80452b72`.
+Evidence: `work/coordination/alpha-loading-audio-receipt-integrity-start-20261105T020900Z/`;
+first/cached runs and ranked waits: `work/coordination/alpha-load-breakdown-20261104/notes.md`.
+First/cached verification: 274/0 then 0/274 full/cached; banks 3.765→0.044 s,
+media 8.959→0.032 s. Same-size/inode bank edit refused before native init;
+full-SHA restoration passed, then 273 cached/1 full; source audio ready 153/153.
+Ordinary Start reached stage/HUD; profiles/settings retained; stopped/asleep/lease released.
+Integrity run: CPU/GPU peak 67.7 C, time above 80 C 0 s, battery 29 C.
+Pinned R2API Sound/provider informed scope; native credit waits retained, page cache uncontrolled.
+No whole-load/FPS/audibility or metadata-invisible bitrot claim.
+
 ## J1383 — Publish source scene suppliers for the converter graph
 
 2026-11-04. Four source-record profiles supply Artifactworld01 AkTriggerDisable
@@ -2709,6 +2725,17 @@ local receipts: `work/coordination/p1-scenes-w/current-scene-supplier-preflight-
 Public recipes contain selectors and transformations, no generated record bodies.
 No APK produced; complete graph, current-code assembly and device play remain open.
 
+## J1385 — Complete catalogs against produced serialized containers
+
+2026-11-05. The source catalog owner derives bundle ownership from selected final
+object profiles and pins metadata, produced bundles and the current script registry.
+Final container roots, preload intervals, PPtrs, native types and MonoScript hashes
+must agree before catalog emission; duplicate keys retain every root.
+Evidence: 43 catalog ownership tests and seven final-container host fixtures pass,
+including real serialized managed bindings and wrong-type/absent-script rejection.
+Prior art: pinned R2API typed handles and UnityPy duplicate container ownership.
+No APK produced. Complete produced cohort, managed subtype assignability, remaining
+gameplay reference closure and device play remain open; byte identity is diagnostic.
 ## J1384 — Qualify managed curve hashes against complete SDK runtime projections
 
 2026-11-04. The existing generic record owner can derive editor curve properties
@@ -2731,3 +2758,18 @@ now pass name/property, full native schema and PPtr readback with the SDK7 → S
 Evidence: `work/coordination/p1-wholegame-1031/qualified-retained-sdk-shaders-v2/done.json`;
 candidate index SHA-256 `a6d02319cc5d2f19eb92ec762a1c414de6e4385c013e4bf181a79a422a1b4adb`.
 Host-only; full graph emission, Unity loading and device play remain open; APK unchanged.
+
+## J1387 — Attribute comparison-item discovery during ordinary startup
+
+2026-11-05. Existing body-catalog owner adds two sparse markers around the unchanged
+comparison-item discovery call; reviewed audio/camera source pins follow the change.
+APK `636f906639380c8a1e406d8d0cda0a458c03b927d1f338d1e33b48907996022c`, source `2b3b1088`.
+Evidence: `work/coordination/alpha-item-discovery-device-20261105T032514Z/`;
+ranked spans: `work/coordination/alpha-load-breakdown-20261104/notes.md`.
+One same-process child pair: 4.702 s inside 9.006 s body adoption; no speedup claim.
+Ordinary Start reached Distant Roost/HUD, native catalogs and source audio ready 153/153;
+first installed launch fully verified 274 audio files; profiles/settings retained.
+CPU/GPU peak 65.8 C, above 80 C 0 s, battery 27 C; stopped/asleep/lease released.
+Pinned R2API content load/generate/finalize phases informed observation scope.
+Enemy preparation remains the largest paired span in this capture (17.905 s);
+residual body time, sustained FPS, audibility and whole-load causal comparison remain open.

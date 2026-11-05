@@ -70,6 +70,18 @@ results; output indices pin actual produced extents. Source, supplier, native-ty
 schema, script and reference checks remain strict; device loadability remains open.
 Barrier shader jobs bind their separately pinned legacy SDK metadata explicitly.
 
+`accepted-output/catalog_complete.py --inputs REQUEST --output NEW_DIRECTORY`
+owns current host catalog completion. The request pins source metadata, selected
+final object profiles, every produced bundle and the current runtime script
+registry, plus input/startup identity. Existing catalog helpers resolve ownership
+and dependency closure; final serialized containers independently check endpoint
+PPtrs, preload extents, native types and exact MonoScript/runtime bindings.
+Duplicate container keys retain every root. Managed subtype assignability is not
+yet admitted. Inputs are rechecked before output; teardown releases local readers.
+The owner emits `whole-catalog.json` and a receipt only after all checks pass.
+Complete cohort availability, gameplay reference closure and device play remain
+separate gates; this command does not qualify them.
+
 `object_produce.py --preflight` is a current host check for pinned source/SDK/
 codec inputs, preload relationships and declared local script bindings. It
 aggregates binding mismatches before record emission, without serializing or
@@ -5513,6 +5525,28 @@ skill setup and catalog preparation. Markers carry process time/frame without
 stacks, report writes, yields or retained state; existing owners retain setup
 and teardown. Adjacent markers bound work, including intervening callbacks;
 returned/ready markers require separate failure, audio and world checks.
+The same seams in `StageGeometryBoundary`, `NovaInputBoundary` and
+`AutomaticDirectorBoundary` separate collider validation/physics/entry, landing
+and display/run/enemy preparation, and objective templates/master catalog/player
+setup. These remain bounded owner-boundary logs, with no per-object recording.
+
+`GameAudioOriginalPayloadCopy` also owns the private Android app-cache receipt
+`original-audio-verified.json`. Setup still authenticates the packaged cohort
+and checks paths, types, sizes, space and deadlines. Actual reuse can skip SHA
+only for the same installed package path/update time, request receipt and file
+path/hash/size/device/inode/nanosecond modification and kernel change times.
+A miss or unavailable metadata uses full-file SHA; matching stamps before and
+after hashing populate a receipt only after the complete cohort succeeds.
+The first startup after install/update verifies fully before native audio init;
+Android Clear cache forces the same repair verification. Process exit releases
+streams/Java handles; only the private cache persists. File writes, including
+same-size edits with restored mtime, invalidate kernel ctime under normal
+filesystem semantics. This is metadata reuse, not protection against storage
+corruption that preserves every kernel identity field. Adopted/FUSE device
+qualification observed changed timestamps after a same-size,
+same-inode edit, refusal before native initialization and selective re-verification
+after full-SHA restoration (J1386). Metadata-invisible storage corruption remains
+outside this cache contract.
 
 `IntegratedWorldSession.TracePreparation` emits a bounded log marker at each
 initial world-preparation seam, including the existing loot report write,
@@ -6253,3 +6287,14 @@ object-producer checker admits only the complete source runtime projection of
 the editor curve, preserving the serialized body and source type tree. Original
 MonoScript pointers and script identities remain checked; current CLR bindings
 and bundle/device loadability are separate gates.
+
+The release graph's `--catalog-request` binds source catalog metadata to selected
+final object bundles and the player's actual runtime script registry through
+`catalog_complete.py`. Supplier packs, Windows shader passthrough and derived
+manifest/catalog outputs are excluded from native catalog ownership. The signed
+closure retains the metadata pin, final profiles and embedded bootstrap recipe;
+metadata contents stay in private input bindings. Compilation checks the embedded
+bootstrap pin and shared input/attempt identity before emission.
+Setup requires complete produced containers; the scoped producer checks native
+endpoints, types and script bindings and retains its receipt on exit. This adds
+no runtime owner. Complete APK and device acceptance remain open.

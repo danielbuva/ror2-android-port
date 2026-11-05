@@ -42,6 +42,7 @@ PRODUCERS = {
             "record_remap",
             "sprite_produce",
             "bundle_manifest",
+            "catalog_complete",
             "stage_contexts",
             "startup_metadata",
         )

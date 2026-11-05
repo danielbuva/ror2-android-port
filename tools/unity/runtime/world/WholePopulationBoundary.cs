@@ -332,6 +332,7 @@ public sealed partial class PortSession
             // The original Beetle Gland behavior loads this card by legacy key each time
             // it summons. Bind only its prefab to the same owned master used by the native
             // catalog; restore the source card before releasing the content owner.
+            TraceStartup("director-master-template-loop-ready-ally-card-begin");
             const string allyPath = "SpawnCards/CharacterSpawnCards/cscBeetleGuardAlly";
             string allyKey;
             coordinator.Check(LegacyResourcesAPI.GetGuid(allyPath, out allyKey) && !string.IsNullOrEmpty(allyKey),
