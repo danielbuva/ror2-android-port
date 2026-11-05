@@ -5544,8 +5544,12 @@ and display/run/enemy preparation, and objective templates/master catalog/player
 setup. `EnemySpineBoundary` marks completed context preparation;
 `AutomaticDirectorBoundary` bounds the existing scheduled-spawn wait after
 director activation. That interval includes native scheduling and callbacks,
-so it is not exclusive load time. These remain bounded owner-boundary logs,
-with no per-object recording.
+so it is not exclusive load time. The same director owner passes an optional
+sparse callback into `WholeCatalogComposed.CategoryFamily` to separate manifest
+parsing, location indexing/provider grouping and native asset collection loading
+inside master-family setup. The callback runs only on a family-cache miss and
+retains no state; family-cache ownership and reset remain unchanged. These remain
+bounded owner-boundary logs, with no per-object recording.
 
 `GameAudioOriginalPayloadCopy` also owns the private Android app-cache receipt
 `original-audio-verified.json`. Setup still authenticates the packaged cohort
