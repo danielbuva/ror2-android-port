@@ -376,6 +376,69 @@ class Graph:
         self.job_profiles[name] = {}
         return name
 
+    def catalog_complete(self, selected_jobs, request_path):
+        """Bind the source catalog to final containers and the embedded bootstrap."""
+        request = json.loads((self.repo / request_path).read_text())
+        if set(request) != {"schema", "metadata", "input_id", "attempt"} or request["schema"] != "owner-catalog-inputs-v1":
+            raise ValueError("unsupported catalog request template")
+        metadata = request["metadata"]
+        if set(metadata) != {"path", "sha256", "bytes"}:
+            raise ValueError("unsupported catalog metadata pin")
+        if not metadata["path"].startswith("${input:") or not metadata["path"].endswith("}"):
+            raise ValueError("catalog metadata must use a private input binding")
+        profiles, bundles, needs, registries = [], {}, [], []
+        for job in sorted(set(selected_jobs)):
+            profile = self.job_profiles[job]
+            descriptor = self.jobs[job]
+            if owner(profile) == "player_data":
+                bootstrap = [row["recipe"] for row in profile.get("text_assets", {}).get("files", []) if row.get("name") == "WholeCatalogBootstrap"]
+                if len(bootstrap) != 1:
+                    raise ValueError("catalog requires one embedded bootstrap")
+                pin = bootstrap[0]
+                path = self.repo / "recipe" / pin["path"]
+                if path.stat().st_size != pin["bytes"] or digest(path) != pin["sha256"]:
+                    raise ValueError("catalog bootstrap pin differs")
+                identity = json.loads(path.read_text())
+                if any(identity[key] != request[key] for key in ("input_id", "attempt")):
+                    raise ValueError("catalog/bootstrap identity differs")
+                target = "apk/assets/bin/Data/" + profile["registry"]["file"]
+                descriptor["artifacts"]["catalog_registry"] = descriptor["outputs"][target]
+                registries.append(self.artifact_pin(job, "catalog_registry"))
+                needs.append(job)
+            if owner(profile) != "object_produce" or "original_bundle" in profile:
+                continue
+            path = self.profile_files[job]
+            source = self.repo / path
+            profiles.append(dict(path="${repo}/" + path, sha256=digest(source), bytes=source.stat().st_size))
+            target = "payload/" + profile["bundle"]["name"]
+            descriptor["artifacts"]["catalog_bundle"] = descriptor["outputs"][target]
+            bundles[profile["bundle"]["name"]] = self.artifact_pin(job, "catalog_bundle")
+            needs.append(job)
+        if len(registries) != 1 or not bundles:
+            raise ValueError("catalog requires final bundles and one selected player registry")
+        request.update(profiles=profiles, bundles=bundles, registry=registries[0])
+        name = "recipe/jobs/owner-catalog-complete.json"
+        self.jobs[name] = {
+            "schema": 1,
+            "script": PREFIX + "catalog_complete.py",
+            "arguments": ["--inputs", "${request}", "--output", "${output}"],
+            "request": request,
+            "needs": sorted(set(needs)),
+            "outputs": {"payload/whole-catalog.json": "whole-catalog.json"},
+            "artifacts": {"receipt": "result.json"},
+        }
+        self.profile_files[name] = request_path
+        self.job_profiles[name] = {}
+        return name
+
+    @staticmethod
+    def artifact_pin(job, artifact):
+        return {
+            "path": "${job:" + job + ":" + artifact + "}",
+            "sha256": "${sha256:" + job + ":" + artifact + "}",
+            "bytes": "${bytes:" + job + ":" + artifact + "}",
+        }
+
     def native_code(self, request_path):
         """Produce native code and its matching metadata from one converter cohort."""
         request = json.loads((self.repo / request_path).read_text())
@@ -444,14 +507,17 @@ class Graph:
         self.job_profiles[name] = {"authored_inputs": {path: digest(self.repo / path) for path in policies}}
         return name
 
-    def compile(self, selected, *, bundle_manifest=False, native_request=None, sdk_request=None, burst_request=None):
+    def compile(self, selected, *, bundle_manifest=False, native_request=None, sdk_request=None, burst_request=None, catalog_request=None):
         entries = {}
         selected_jobs = [self.build(digest(self.repo / path)) for path in selected]
         startup = "recipe/jobs/owner-startup-metadata.json"
         if startup in self.jobs:
             selected_jobs.append(startup)
+        catalog_jobs = list(selected_jobs)
+        if catalog_request:
+            selected_jobs.append(self.catalog_complete(catalog_jobs, catalog_request))
         if bundle_manifest:
-            selected_jobs.append(self.bundle_manifest(selected_jobs))
+            selected_jobs.append(self.bundle_manifest(catalog_jobs))
         if native_request:
             selected_jobs.append(self.native_code(native_request))
         if sdk_request:
@@ -484,6 +550,7 @@ def main():
         action="store_true",
         help="generate the native manifest from every selected payload bundle; missing native dependencies fail production",
     )
+    parser.add_argument("--catalog-request", help="repo-relative source catalog metadata template; validates actual final containers and runtime registry")
     parser.add_argument("--native-request", help="repo-relative native request template; emits matching library and metadata from acquired converter inputs")
     parser.add_argument("--sdk-request", help="repo-relative SDK request template; emits Android resources, dex and engine libraries")
     parser.add_argument("--burst-request", help="repo-relative managed/source request template; compiles Burst and retains preservation roots")
@@ -494,6 +561,7 @@ def main():
     index = graph.compile(
         args.profile,
         bundle_manifest=args.bundle_manifest,
+        catalog_request=args.catalog_request,
         native_request=args.native_request,
         sdk_request=args.sdk_request,
         burst_request=args.burst_request,

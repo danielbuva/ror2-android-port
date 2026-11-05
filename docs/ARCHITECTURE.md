@@ -6274,3 +6274,14 @@ object-producer checker admits only the complete source runtime projection of
 the editor curve, preserving the serialized body and source type tree. Original
 MonoScript pointers and script identities remain checked; current CLR bindings
 and bundle/device loadability are separate gates.
+
+The release graph's `--catalog-request` binds source catalog metadata to selected
+final object bundles and the player's actual runtime script registry through
+`catalog_complete.py`. Supplier packs, Windows shader passthrough and derived
+manifest/catalog outputs are excluded from native catalog ownership. The signed
+closure retains the metadata pin, final profiles and embedded bootstrap recipe;
+metadata contents stay in private input bindings. Compilation checks the embedded
+bootstrap pin and shared input/attempt identity before emission.
+Setup requires complete produced containers; the scoped producer checks native
+endpoints, types and script bindings and retains its receipt on exit. This adds
+no runtime owner. Complete APK and device acceptance remain open.
