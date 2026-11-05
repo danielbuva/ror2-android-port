@@ -2708,3 +2708,15 @@ Evidence: four-consumer release-graph fixture and host-only preflight passed;
 local receipts: `work/coordination/p1-scenes-w/current-scene-supplier-preflight-v1/`.
 Public recipes contain selectors and transformations, no generated record bodies.
 No APK produced; complete graph, current-code assembly and device play remain open.
+
+## J1384 — Qualify managed curve hashes against complete SDK runtime projections
+
+2026-11-04. The existing generic record owner can derive editor curve properties
+hashes from its pinned SDK while preserving source bodies, runtime type trees,
+original script identities and MonoScript pointers. Complete runtime projections
+must match; unrelated field changes still refuse. The legacy owner shares this
+checker. Prior art: existing J1163 SDK tangent metadata policy.
+Evidence: 83 object and 32 record host tests passed; current-input qualification
+produced 31 managed records with current CLR properties and checked pointers.
+Local receipts: `work/coordination/p1-wholegame-1031/source-component-material-frontier-v6/`.
+No APK produced; complete graph, exact-editor load and device play remain open.
