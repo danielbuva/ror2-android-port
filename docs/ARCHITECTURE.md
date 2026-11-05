@@ -1480,6 +1480,16 @@ container size without changing member bytes; final body/resource checks still
 read the compressed output. The receipt records compression and the codec pin.
 Managed bindings, external
 endpoints and ordered Sprite cohorts remain excluded and reported.
+The same owner supplies per-field external qualification for strict graph
+assembly. It binds each proof to the effective provider, actual owner body,
+schema and field path; checks the selected endpoint's persisted bytes and full
+native/script type against its source identity and producer witness; and refuses
+missing or conflicting field routes. Checked relocation then allocates members
+from those targets and reparses every PPtr, preserving unrelated bytes. Shared
+old file IDs or pointers never substitute for complete field coverage. Callers
+own receipt/index validation and final-container metadata readback before
+supplying endpoint bodies. These pure helpers retain no state; current CLR,
+complete emission, typed load and device admission remain separate gates.
 The shared `object_produce.make_layout` writer accepts explicitly qualified
 external MonoScript pointers separately from scene membership. It checks each
 managed body's script against the local records or supplied external allowlist,

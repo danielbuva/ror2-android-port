@@ -27,6 +27,148 @@ def pointer(name):
 
 
 class BundlePreloadTests(unittest.TestCase):
+    def external_contract(self, root):
+        M = P.module("bundle_manifest")
+        nodes = [dict(type="PhysicMaterial", name="Base", size=-1, level=0, meta=0, flags=0, version=1)]
+        for name in ("first", "second"):
+            nodes.extend(
+                dict(type=kind, name=field, size=size, level=level, meta=0, flags=0, version=1)
+                for kind, field, size, level in (("PPtr<Object>", name, 12, 1), ("int", "m_FileID", 4, 2), ("SInt64", "m_PathID", 8, 2))
+            )
+        nodes.append(dict(type="int", name="tail", size=4, level=1, meta=0, flags=0, version=1))
+        typ = dict(class_id=134, stripped=0, script_type=-1, hash=bytes.fromhex("ab" * 16), tree=M.S._tree(nodes))
+        body = struct.pack("<iqiqi", 1, 100, 1, 100, 73)
+
+        def selected(destination, raw, provider):
+            return dict(
+                destination=destination,
+                source=["original", "source-member", destination[2]],
+                provider=provider,
+                record_source=["producer-source", "producer-member", destination[2] + 1],
+                bytes=len(raw),
+                sha256=hashlib.sha256(raw).hexdigest(),
+                schema=hashlib.sha256(typ["tree"]).hexdigest(),
+                full_type=P.full_type_key(typ),
+                class_id=134,
+                native_type_hash=typ["hash"].hex(),
+                edges=sorted(set(P.pointers(raw, typ, {}).values())),
+            )
+
+        owner = selected(["authored", "CAB-authored", 10], body, "effective-provider")
+        raw = struct.pack("<iqiqi", 0, 0, 0, 0, 91)
+        endpoints = {}
+        proofs = []
+        for field, target in (("first", ["dependency", "CAB-dependency", 100]), ("second", ["authored", "CAB-authored", 20])):
+            endpoint = selected(target, raw, "endpoint-provider")
+            path = root / field
+            path.write_bytes(raw)
+            endpoints[tuple(target)] = endpoint, path, typ
+            proofs.append(
+                dict(
+                    provider="original-provider",
+                    effective_provider=owner["provider"],
+                    owner=owner["destination"],
+                    field=[field],
+                    owner_sha256=owner["sha256"],
+                    schema_sha256=owner["schema"],
+                    **{"from": [1, 100]},
+                    source_target=endpoint["source"],
+                    target=target,
+                    endpoint_type=dict(
+                        class_id=134,
+                        native_type_hash=typ["hash"].hex(),
+                        full_type=endpoint["full_type"],
+                        source_sha256="cd" * 32,
+                        emitted_witnesses=[[endpoint["provider"], endpoint["record_source"], endpoint["sha256"], len(raw), endpoint["full_type"]]],
+                    ),
+                )
+            )
+
+        def read_endpoint(target):
+            endpoint, path, endpoint_type = endpoints[target]
+            return endpoint, path.read_bytes(), endpoint_type
+
+        return owner, body, typ, proofs, endpoints, read_endpoint
+
+    def test_external_fields_qualify_distinct_routes_for_the_same_old_pointer(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            owner, body, typ, proofs, _, read = self.external_contract(Path(tmp))
+            targets = P.qualify_external_fields(owner, body, typ, proofs + [proofs[0]], read)
+            actual = P.relocate_external_fields(owner, body, typ, targets, ["CAB-dependency"])
+            self.assertEqual(P.pointers(actual, typ, {}), {("first",): (1, 100), ("second",): (0, 20)})
+            self.assertEqual(actual[-4:], body[-4:])
+            self.assertEqual(set(targets), {("first",), ("second",)})
+
+    def test_external_fields_require_each_field_proof_and_effective_provider(self):
+        import copy
+
+        for failure in ("missing", "provider", "body", "schema", "pointer", "source", "aggregate", "witness"):
+            with self.subTest(failure=failure), tempfile.TemporaryDirectory() as tmp:
+                owner, body, typ, proofs, _, read = self.external_contract(Path(tmp))
+                proofs = copy.deepcopy(proofs)
+                if failure == "missing":
+                    proofs.pop()
+                elif failure == "provider":
+                    proofs[1]["effective_provider"] = "original-provider"
+                elif failure == "body":
+                    proofs[1]["owner_sha256"] = "00" * 32
+                elif failure == "schema":
+                    proofs[1]["schema_sha256"] = "00" * 32
+                elif failure == "pointer":
+                    proofs[1]["from"] = [1, 999]
+                elif failure == "source":
+                    proofs[1]["source_target"] = ["other", "source-member", 20]
+                elif failure == "aggregate":
+                    proofs[1]["field"] = ["first"]
+                else:
+                    proofs[1]["endpoint_type"]["emitted_witnesses"][0][1] = proofs[1]["target"]
+                with self.assertRaisesRegex(ValueError, "unique persisted endpoint"):
+                    P.qualify_external_fields(owner, body, typ, proofs, read)
+
+    def test_external_fields_reject_conflicting_qualified_targets(self):
+        import copy
+
+        with tempfile.TemporaryDirectory() as tmp:
+            owner, body, typ, proofs, _, read = self.external_contract(Path(tmp))
+            conflict = copy.deepcopy(proofs[1])
+            conflict["field"] = ["first"]
+            with self.assertRaisesRegex(ValueError, r"unique persisted endpoint.*\(2\)"):
+                P.qualify_external_fields(owner, body, typ, proofs + [conflict], read)
+
+    def test_external_fields_read_actual_endpoint_bytes_and_full_types(self):
+        for failure in ("bytes", "native", "script", "class", "destination"):
+            with self.subTest(failure=failure), tempfile.TemporaryDirectory() as tmp:
+                owner, body, typ, proofs, endpoints, read = self.external_contract(Path(tmp))
+                key = tuple(proofs[0]["target"])
+                endpoint, path, endpoint_type = endpoints[key]
+                endpoint_type = dict(endpoint_type)
+                if failure == "bytes":
+                    path.write_bytes(path.read_bytes()[:-1] + b"x")
+                elif failure == "native":
+                    endpoint_type["hash"] = bytes.fromhex("ef" * 16)
+                elif failure == "script":
+                    endpoint_type["script_type"] = 2
+                elif failure == "class":
+                    endpoint_type["class_id"] = 21
+                else:
+                    endpoint["destination"] = ["other", "CAB-dependency", 100]
+                endpoints[key] = endpoint, path, endpoint_type
+                with self.assertRaisesRegex(ValueError, "unique persisted endpoint"):
+                    P.qualify_external_fields(owner, body, typ, proofs, read)
+
+    def test_external_relocation_cannot_omit_fields_or_reuse_ambiguous_members(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            owner, body, typ, proofs, _, read = self.external_contract(Path(tmp))
+            targets = P.qualify_external_fields(owner, body, typ, proofs, read)
+            with self.assertRaisesRegex(ValueError, "complete per-field coverage"):
+                P.relocate_external_fields(owner, body, typ, {("first",): targets[("first",)]}, ["CAB-dependency"])
+            for externals in ([], ["CAB-dependency", "CAB-dependency"], ["CAB-dependency", "CAB-authored"]):
+                with self.subTest(externals=externals), self.assertRaisesRegex(ValueError, "member.*absent|Ambiguous"):
+                    P.relocate_external_fields(owner, body, typ, targets, externals)
+            ambiguous = {**targets, ("second",): ("other-bundle", "CAB-dependency", 20)}
+            with self.assertRaisesRegex(ValueError, "Ambiguous"):
+                P.relocate_external_fields(owner, body, typ, ambiguous, ["CAB-dependency"])
+
     def native_graph(self, root):
         M = P.module("bundle_manifest")
         tree = M.S._tree(
