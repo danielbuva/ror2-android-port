@@ -2844,3 +2844,16 @@ CPU/GPU peak 62.2 C, above 80 C 0 s, battery 28–29 C; stopped/asleep/lease rel
 Actual-method family fixture and host preflight pass; existing worktree doctor lacks private inputs.
 Pinned R2API load/copy/finalize phases informed attribution; cache ownership/reset unchanged.
 Sustained play, audibility and lossless reduction of the measured parse cost remain open.
+
+## J1393 — Exact required-set bundle emission
+
+2026-11-05. The existing preload emitter accepts an explicit object set without pruning,
+selects complete native/script types by full identity, and preserves grouped GUID/subasset roots.
+External references require per-field producer witnesses and actual endpoint readback;
+managed objects require a caller-supplied current-CLR checker before writing and after final readback.
+Final metadata, bodies, references and resources are checked; request/endpoint identities are receipted.
+Evidence: `tests/test_bundle_preload.py`, 20 host fixtures, including independent UnityPy readback,
+missing/dangling object rejection and dependency mutation between qualification and final readback.
+Ruff and staged public audit pass. Prior art: pinned EditorKit typed/subasset EntryLookup; J1271/J1279.
+Host integration API only: complete graph, current-CLR adapter, Unity typed load and device gates remain open.
+No APK or device change.

@@ -246,6 +246,148 @@ class BundlePreloadTests(unittest.TestCase):
             self.assertEqual(request["assets"], [dict(name="assets/root.asset", type="PhysicMaterial")])
             self.assertEqual(sorted(path.name for path in output.iterdir()), ["authored.bundle", "gaps.json", "request.json", "result.json", "roots.json"])
 
+    def required_graph(self, root):
+        graph, types, rows = self.native_graph(root)
+        typ = next(iter(json.loads(types.read_text()).values()))
+        typ["dependencies"] = []
+        binary = {**typ, "tree": bytes.fromhex(typ["tree"]), "hash": bytes.fromhex(typ["hash"])}
+        key = P.full_type_key(binary)
+        types.write_text(json.dumps({key: typ}))
+        for row in rows:
+            row["full_type"] = key
+        (graph / "selected-records.jsonl").write_text("".join(json.dumps(row) + "\n" for row in rows))
+        required = dict(
+            path_ids=[10, 20],
+            externals=[],
+            dependencies=[],
+            asset_groups=[dict(guid="12" * 16, path="Assets/Root.asset", roots=[10, 20])],
+            assets=[dict(name="assets/root.asset", type="PhysicMaterial")],
+        )
+        return graph, types, rows, required
+
+    def test_required_emission_preserves_exact_objects_and_multiple_subasset_roots(self):
+        import UnityPy
+
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            graph, types, _, required = self.required_graph(root)
+            result = P.emit_closed_native(graph, [types], root / "emitted", "authored", "CAB-authored", required=required)
+            self.assertTrue(result["required_set_accepted"])
+            self.assertEqual((result["records"], result["roots"], result["preloads"]), (2, 2, 2))
+            objects = {obj.path_id: obj.read_typetree() for obj in UnityPy.load(result["bundle"]).objects}
+            self.assertEqual(set(objects), {1, 10, 20})
+            containers = objects[1]["m_Container"]
+            self.assertEqual([row[0] for row in containers], ["assets/root.asset"] * 2)
+            self.assertEqual([row[1]["asset"]["m_PathID"] for row in containers], [10, 20])
+            self.assertEqual([row[1]["preloadIndex"] for row in containers], [0, 0])
+            self.assertFalse(result["whole_game_complete"])
+            self.assertFalse(result["typed_load_accepted"])
+
+    def test_required_emission_rejects_missing_and_dangling_objects_without_pruning(self):
+        for identities, message in (([10, 999], "Required produced objects absent"), ([10, 30], "absent produced local object"), ([10, 10], "distinct")):
+            with self.subTest(identities=identities), tempfile.TemporaryDirectory() as tmp:
+                root = Path(tmp)
+                graph, types, _, required = self.required_graph(root)
+                required["path_ids"] = identities
+                with self.assertRaisesRegex(ValueError, message):
+                    P.emit_closed_native(graph, [types], root / "emitted", "authored", "CAB-authored", required=required)
+
+    def test_required_emission_does_not_resolve_full_type_by_shared_schema(self):
+        for failure in ("absent_full_type", "changed_native_hash"):
+            with self.subTest(failure=failure), tempfile.TemporaryDirectory() as tmp:
+                root = Path(tmp)
+                graph, types, _, required = self.required_graph(root)
+                table = json.loads(types.read_text())
+                key, typ = next(iter(table.items()))
+                if failure == "absent_full_type":
+                    table = {hashlib.sha256(bytes.fromhex(typ["tree"])).hexdigest(): typ}
+                else:
+                    typ["hash"] = "00" * 16
+                types.write_text(json.dumps(table))
+                with self.assertRaises((KeyError, ValueError)):
+                    P.emit_closed_native(graph, [types], root / "emitted", "authored", "CAB-authored", required=required)
+
+    def test_required_emission_rejects_unqualified_managed_objects(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            graph, types, rows, required = self.required_graph(root)
+            rows[0]["class_id"] = 114
+            (graph / "selected-records.jsonl").write_text("".join(json.dumps(row) + "\n" for row in rows))
+            with self.assertRaisesRegex(ValueError, "current CLR qualification"):
+                P.emit_closed_native(graph, [types], root / "emitted", "authored", "CAB-authored", required=required)
+
+    def test_required_emission_relocates_fields_and_rereads_actual_external_endpoints(self):
+        import UnityPy
+
+        for drift in (False, True):
+            with self.subTest(drift=drift), tempfile.TemporaryDirectory() as tmp:
+                root = Path(tmp)
+                owner, body, typ, proofs, endpoints, read = self.external_contract(root)
+                typ["dependencies"] = []
+                full_type = P.full_type_key(typ)
+                local = endpoints["authored", "CAB-authored", 20][0]
+                rows = [owner, local]
+                for value, raw in ((owner, body), (local, endpoints[tuple(local["destination"])][1].read_bytes())):
+                    directory = root / str(value["destination"][2])
+                    directory.mkdir()
+                    value.update(provider=str(directory), full_type=full_type, record="profile")
+                    (directory / "objects.bin").write_bytes(raw)
+                    index = dict(zip(("bundle", "member", "path_id"), value["record_source"]))
+                    index.update(offset=0, bytes=len(raw), sha256=value["sha256"])
+                    (directory / "index.jsonl").write_text(json.dumps(index) + "\n")
+                    (directory / "result.json").write_text(
+                        json.dumps(dict(success=True, profile_sha256="profile", outputs={"index.jsonl": dict(sha256=P.O.B.sha(directory / "index.jsonl"))}))
+                    )
+                for proof in proofs:
+                    endpoint, _, _ = endpoints[tuple(proof["target"])]
+                    endpoint["full_type"] = full_type
+                    proof["effective_provider"] = owner["provider"]
+                    proof["endpoint_type"].update(
+                        full_type=full_type,
+                        emitted_witnesses=[[endpoint["provider"], endpoint["record_source"], endpoint["sha256"], endpoint["bytes"], full_type]],
+                    )
+                graph = root / "graph"
+                graph.mkdir()
+                (graph / "done.json").write_text(json.dumps(dict(success=True)))
+                (graph / "selected-records.jsonl").write_text("".join(json.dumps(row) + "\n" for row in rows))
+                types = root / "types.json"
+                types.write_text(json.dumps({full_type: P.O.json_layout(typ)}))
+                required = dict(
+                    path_ids=[10, 20],
+                    externals=["CAB-dependency"],
+                    dependencies=["dependency"],
+                    asset_groups=[dict(guid="12" * 16, path="Assets/Root.asset", roots=[10])],
+                    assets=[dict(name="assets/root.asset", type="PhysicMaterial")],
+                )
+                calls = 0
+
+                def read_actual(target):
+                    nonlocal calls
+                    if target == ("dependency", "CAB-dependency", 100):
+                        calls += 1
+                        if drift and calls == 2:
+                            endpoints[target][1].write_bytes(b"changed")
+                    return read(target)
+
+                def emit():
+                    return P.emit_closed_native(
+                        graph, [types], root / "emitted", "authored", "CAB-authored", required=required, field_proofs=proofs, endpoint_record=read_actual
+                    )
+
+                if drift:
+                    with self.assertRaisesRegex(ValueError, "Persisted external endpoint drift"):
+                        emit()
+                    self.assertFalse((root / "emitted/result.json").exists())
+                else:
+                    result = emit()
+                    self.assertEqual(calls, 2)
+                    self.assertEqual(len(result["qualified_endpoint_pins"]), 2)
+                    objects = {obj.path_id: obj.read_typetree() for obj in UnityPy.load(result["bundle"]).objects}
+                    self.assertEqual(objects[10]["first"], dict(m_FileID=1, m_PathID=100))
+                    self.assertEqual(objects[10]["second"], dict(m_FileID=0, m_PathID=20))
+                    self.assertEqual(objects[1]["m_Dependencies"], ["dependency"])
+                    self.assertEqual(result["preloads"], 3)
+
     def test_native_emission_rejects_observed_duplicate_and_pointer_drift(self):
         for failure in ("duplicate", "pointer", "type", "body", "index"):
             with self.subTest(failure=failure), tempfile.TemporaryDirectory() as tmp:

@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J1393](PORTING_JOURNAL.md#j1393--exact-required-set-bundle-emission) | 2026-11-04 | Exact required-set bundle emission | 2026-11-05. |
 | [J1392](PORTING_JOURNAL.md#j1392--attribute-master-family-preparation-during-ordinary-startup) | 2026-11-04 | Attribute master-family preparation during ordinary startup | 2026-11-05. |
 | [J1391](PORTING_JOURNAL.md#j1391--attribute-native-scheduled-spawn-waiting-during-ordinary-startup) | 2026-11-04 | Attribute native scheduled-spawn waiting during ordinary startup | 2026-11-05. |
 | [J1390](PORTING_JOURNAL.md#j1390--reuse-typed-item-provider-discovery-during-ordinary-startup) | 2026-11-04 | Reuse typed item-provider discovery during ordinary startup | 2026-11-05. |
