@@ -1465,16 +1465,16 @@ def produce(profile_path, profile_sha256, pc, output, codec_path, codec_sha256, 
             receipt["script_binding_errors"] = errors
             if errors:
                 raise ValueError(f"{len(errors)} component/script identity mismatches; see result.json")
+        packed, providers = record_packs(selected_members, packs, selected_bundle)
+        receipt["record_packs"] = {profile: pin for profile, (_, pin, _) in providers.items()}
         if preflight:
             receipt.update(
                 success=True,
                 preflight=True,
-                scope="source/SDK pins, preload dependencies and declared local script bindings; supplier emission and device loadability remain open",
+                scope="source/SDK pins, preload dependencies, declared local script bindings and supplier receipts/record extents; generated-body transformations and device loadability remain open",
             )
             return receipt
         records, layouts, members = [], [], []
-        packed, providers = record_packs(selected_members, packs, selected_bundle)
-        receipt["record_packs"] = {profile: pin for profile, (_, pin, _) in providers.items()}
         resources = {}
         # Load only when needed: the player owner already shares this writer and
         # owns the qualified standalone Sprite recovery arithmetic.
@@ -1932,7 +1932,9 @@ def main():
         metavar=("DIRECTORY", "RECEIPT_SHA256"),
         help="independently produced record pack and pinned result.json; repeat for each producer",
     )
-    parser.add_argument("--preflight", action="store_true", help="check source/SDK pins, preload and local script contracts without emitting a bundle")
+    parser.add_argument(
+        "--preflight", action="store_true", help="check source/SDK pins, preload, local scripts and supplied record packs without emitting a bundle"
+    )
     parser.add_argument("--comparison", choices=("exact", "diagnostic"), help="historical output comparison; source/schema/reference checks remain strict")
     args = parser.parse_args()
     produce(args.profile, args.profile_sha256, args.pc, args.output, args.codec, args.codec_sha256, args.record_pack, args.sdk, args.comparison, args.preflight)

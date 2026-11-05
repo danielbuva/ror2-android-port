@@ -23,6 +23,16 @@ G, J = load("release_graph"), load("release_jobs")
 
 
 class ReleaseGraphTests(unittest.TestCase):
+    def test_player_defaults_use_android_player_without_changing_shader_sdk(self):
+        graph = G.Graph(ROOT, {})
+        name = graph.build(G.digest(ROOT / "recipe/owner-player-data.json"))
+        arguments = graph.jobs[name]["arguments"]
+        self.assertEqual(arguments[arguments.index("--sdk") + 1], "${input:sdk_contents}/../../PlaybackEngines/AndroidPlayer")
+        for job in graph.jobs.values():
+            if Path(job["script"]).stem in {"shader_context", "shader_prefab", "payload_shader_records"}:
+                args = job["arguments"]
+                self.assertEqual(args[args.index("--sdk") + 1], "${input:sdk}")
+
     def test_barrier_job_binds_legacy_sdk_and_current_output_policy(self):
         graph = G.Graph(ROOT, {})
         barrier = graph.build(G.digest(ROOT / "recipe/owner-barrier-shaders.json"))
