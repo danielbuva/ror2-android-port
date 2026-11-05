@@ -196,7 +196,7 @@ def repack_stream(body, typ, resource, offset, path, schemas):
     return result, emitted
 
 
-def emit_closed_native(graph_directory, schema_paths, output, name, member):
+def emit_closed_native(graph_directory, schema_paths, output, name, member, *, codec=None, codec_sha256=None):
     """Emit the declared local/native subset of a qualified producer graph.
 
     This is explicitly partial, even when all eligible records close. Bodies,
@@ -204,6 +204,7 @@ def emit_closed_native(graph_directory, schema_paths, output, name, member):
     No historical bundle, accepted body or comparator is an input.
     """
     from collections import Counter, defaultdict
+    from contextlib import nullcontext
     import json
     import tempfile
     import time
@@ -213,6 +214,8 @@ def emit_closed_native(graph_directory, schema_paths, output, name, member):
     M = module("bundle_manifest")
     W = M.W
     S = module("object_stream")
+    if (codec is None) != (codec_sha256 is None):
+        raise ValueError("Native bundle compression requires both codec and SHA-256")
     started = time.monotonic()
     graph_directory, output = Path(graph_directory), Path(output)
     retained = json.loads((graph_directory / "done.json").read_text())
@@ -378,8 +381,9 @@ def emit_closed_native(graph_directory, schema_paths, output, name, member):
             S.resource(resource_file, resource_extents, 0, W, O.B.LIMIT)
             members.append((resource_member, 0, resource_file.stat().st_size, lambda: resource_file.open("rb")))
         bundle = output / (name + ".bundle")
-        with bundle.open("wb") as stream:
-            W.write_bundle(stream, members, lambda block, method: block, flags=0x40)
+        compression = W.codec(codec, codec_sha256) if codec is not None else nullcontext(lambda block, method: block)
+        with compression as compress, bundle.open("wb") as stream:
+            W.write_bundle(stream, members, compress, flags=0x243 if codec is not None else 0x40)
         # Read the actual final container, metadata and every persisted body.
         stream = W.B.Bundle(bundle).member(member)
         read = W.read_serialized(stream)
@@ -423,6 +427,7 @@ def emit_closed_native(graph_directory, schema_paths, output, name, member):
         bundle=str(bundle.resolve()),
         sha256=digest,
         bytes=bundle.stat().st_size,
+        compression=dict(method="lz4", codec_sha256=codec_sha256) if codec is not None else dict(method="none"),
         records=len(selected),
         resource_records=len(resource_rows),
         resource_bytes=resource_size,
@@ -460,8 +465,14 @@ def main():
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--bundle", required=True)
     parser.add_argument("--member", required=True)
+    parser.add_argument("--codec", type=Path, help="pinned LZ4 helper; compresses UnityFS blocks without changing member bytes")
+    parser.add_argument("--codec-sha256")
     args = parser.parse_args()
-    print(json.dumps(emit_closed_native(args.graph, args.schema, args.output, args.bundle, args.member), indent=2))
+    print(
+        json.dumps(
+            emit_closed_native(args.graph, args.schema, args.output, args.bundle, args.member, codec=args.codec, codec_sha256=args.codec_sha256), indent=2
+        )
+    )
 
 
 if __name__ == "__main__":
