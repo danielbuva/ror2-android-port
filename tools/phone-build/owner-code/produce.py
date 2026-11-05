@@ -430,8 +430,7 @@ def run(request, *, stop_after_conversion=False, burst_only=False):
         converter = output / "converter"
         files = {folder + "/" + n: row for folder in ("cpp", "data") for n, row in file_map(converter / folder).items()}
         native_profile = json.loads(native.PROFILE.read_text())
-        if target:
-            native_profile = native.generated_profile(native_profile, files)
+        native_profile = native.generated_profile(native_profile, files)
         if {"cpp/" + j["generated"] for j in native_profile["jobs"] if "generated" in j} != {n for n in files if n.endswith((".cpp", ".c"))}:
             raise ValueError("new code generation changes native membership; inspect profile drift")
         if "data/Metadata/global-metadata.dat" not in files:
@@ -462,7 +461,7 @@ def run(request, *, stop_after_conversion=False, burst_only=False):
                 native_request[name] = request[name]
         native.write(output / "native-request.json", native_request)
         result["phase"] = "native-planning" if stop_after_conversion else "native-production"
-        native_result = native.run(native_request, plan_only=stop_after_conversion, **({"profile": native_profile} if target else {}))
+        native_result = native.run(native_request, plan_only=stop_after_conversion, profile=native_profile)
         verify_inputs(request, profile, sdk, sdk_state, before, work, state, output, configs)
         if android_tools and native.android_tool_state(android_tools) != android_state:
             raise ValueError("Android backend tools changed")
