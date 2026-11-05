@@ -2884,3 +2884,18 @@ Authored regression covers reallocation, wrong/absent slots and full-type drift;
 `tests/test_bundle_preload.py`; no APK or device change. Prior art: pinned
 EditorKit typed/collision lookup and existing script_identity relationship check.
 Current-CLR adapter, complete closure, Unity typed load and device gates stay open.
+
+## J1396 — Share one manifest across artifact registration and native holders
+
+2026-11-05. `PortSession` reuses its synchronous definition snapshot for artifact
+family loading and existing artifact/item/equipment/body bindings; native order,
+identity checks and restoration stay intact. Six focused source fixtures pass.
+APK `5df093c7bf1af52f5613f3b5b4084ddf0551bbf7b084a18bef85a308d8564d51`.
+Evidence: `work/coordination/alpha-artifact-holder-device-20261105T063249Z/`.
+Ordinary Start reaches Titanic Plains/player/HUD; native catalogs and source audio
+ready 153/153, no first failure, profiles/settings retained; binary profiler off.
+Artifact 1.832 s + holders 0.011 s = 1.843 s versus J1393 3.377 s combined;
+process-cold, uncontrolled page cache: diagnostic comparison, no general speedup claim.
+CPU/GPU peak 62.6 C, above 80 C 0 s, battery 28 C; app stopped/display asleep,
+scratch removed/lease released/prune passed. Prior art: pinned R2API content phases,
+J1376/J1380 scoped snapshots. Sustained play, audibility and alpha gates stay open.
