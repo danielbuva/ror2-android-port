@@ -55,16 +55,21 @@ def copy_build_artifact(source, destination, *, verify=True):
     failures = []
     if (source_stat.st_dev, source_stat.st_ino) == (destination_stat.st_dev, destination_stat.st_ino):
         failures.append("source and destination share an inode")
-    if after != before:
-        fields = ("device", "inode", "size", "mtime_ns", "ctime_ns")
-        changes = {field: [old, new] for field, old, new in zip(fields, before, after) if old != new}
-        failures.append("source identity changed: " + json.dumps(changes, sort_keys=True))
+    fields = ("device", "inode", "size", "mtime_ns", "ctime_ns")
+    changes = {field: [old, new] for field, old, new in zip(fields, before, after) if old != new}
     if source_stat.st_size != destination_stat.st_size:
         failures.append(f"size differs: source={source_stat.st_size}, destination={destination_stat.st_size}")
-    if verify and sha(source) != sha(destination):
+    ctime_only = set(changes) == {"ctime_ns"}
+    verify_bytes = verify or ctime_only
+    hashes_match = verify_bytes and sha(source) == sha(destination)
+    if verify_bytes and not hashes_match:
         failures.append("SHA-256 differs")
+    if changes and not (ctime_only and hashes_match):
+        failures.append("source identity changed: " + json.dumps(changes, sort_keys=True))
     if failures:
         raise RuntimeError("Build snapshot independence or hash verification failed: " + "; ".join(failures))
+    if changes:
+        print("Build snapshot: benign ctime-only metadata change; source and destination SHA-256 match", file=sys.stderr)
     return str(destination)
 
 

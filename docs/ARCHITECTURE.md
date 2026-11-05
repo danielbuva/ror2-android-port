@@ -2526,7 +2526,9 @@ audio bytes and all other StreamingAssets remain frozen. This uses the existing
 Host contracts: `test_iteration_apk.py`, `test_install_transport.py`,
 `test_build_snapshots.py`. Build/experiment artifact snapshots use APFS clones
 with an independent-copy fallback; snapshot verification can be requested while
-ordinary builds hash each source artifact once.
+ordinary builds hash each source artifact once. A ctime-only source metadata
+change forces source/destination SHA-256 equality even when optional verification
+is disabled; device, inode, size and mtime changes still refuse the snapshot.
 `common.copy_file_clone` is the shared file-copy primitive. Camera/music
 preimages and atomic stage replacements also use it, retaining their existing
 scope checks, expected hashes, fsync and final rename. The hooks load this
