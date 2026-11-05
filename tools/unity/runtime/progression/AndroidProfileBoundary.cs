@@ -1,6 +1,7 @@
 // Subsystem: progression (game path). Owner map: docs/ARCHITECTURE.md#ownership.
 // Session phases: setup PrepareAndroidProfile (AndroidProfileSession.Prepare), ApplyAndroidProfileLoadoutBeforeSpawn; teardown CleanupAndroidProfile (Dispose).
 using System;
+using Newtonsoft.Json.Linq;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
@@ -103,9 +104,9 @@ public sealed partial class PortSession
     {
         return GetAndroidProfileSession().HasOwnedProfileUnlock(definition);
     }
-    void PrepareAndroidProfile(CharacterBody player)
+    void PrepareAndroidProfile(CharacterBody player, JObject manifest)
     {
-        GetAndroidProfileSession().Prepare(player);
+        GetAndroidProfileSession().Prepare(player, manifest);
     }
     void PersistAndroidProfileResult(bool assisted)
     {
@@ -291,7 +292,7 @@ public sealed partial class PortSession
         bool ownsProfileContext;
         AsyncOperationHandle<UserProfileRedirectData> profileRedirectLease;
         bool ownsProfileRedirectLease;
-        public void Prepare(CharacterBody player)
+        public void Prepare(CharacterBody player, JObject manifest)
         {
             if (!Resources.Load<TextAsset>("WholeCatalogBootstrap"))
                 return;
@@ -319,7 +320,7 @@ public sealed partial class PortSession
             ownsProfileContext = true;
             TraceStartup("profile-survivor-family-begin");
             var definitions =
-                WholeCatalogComposed.CategoryFamily(null, RoR2.ContentManagement.AddressablesLabels.survivorDef,
+                WholeCatalogComposed.CategoryFamily(manifest, RoR2.ContentManagement.AddressablesLabels.survivorDef,
                                                     Array.Empty<SurvivorDef>(), step => TraceStartup("profile-survivor-family-" + step));
             TraceStartup("profile-survivor-family-ready-registration-begin");
             foreach (var def in definitions)
@@ -334,7 +335,7 @@ public sealed partial class PortSession
             coordinator.androidProgression = new AndroidProgressionBoundary();
             TraceStartup("profile-unlockable-family-begin");
             var metadata = coordinator.androidProgression.Prepare(
-                WholeCatalogComposed.CategoryFamily(null, RoR2.ContentManagement.AddressablesLabels.unlockableDef,
+                WholeCatalogComposed.CategoryFamily(manifest, RoR2.ContentManagement.AddressablesLabels.unlockableDef,
                                                     Array.Empty<UnlockableDef>(), step => TraceStartup("profile-unlockable-family-" + step)));
             TraceStartup("profile-unlockable-family-ready-metadata-begin");
             // This original initializer yields only scheduling nulls. Any new asynchronous

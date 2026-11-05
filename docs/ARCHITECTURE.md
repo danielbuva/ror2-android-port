@@ -3782,8 +3782,9 @@ order and each `finally`) is in
 ## Ownership
 
 `IntegratedResultsSession` reads one local definition manifest for relationship
-types, providers and holder binding through `WholeCatalogComposed`. The synchronous
-preparation call releases that reference on return; family-cache lifetime and
+types, providers and holder binding through `WholeCatalogComposed`, then passes
+that snapshot to `AndroidProfileSession.Prepare` for survivor/unlockable families.
+The synchronous preparation call releases that reference on return; family-cache lifetime and
 relationship registration/restoration remain under their existing owners.
 The shared reader omits unused JSON source-line annotations while retaining the
 same token values, types, property order and parser error handling.
