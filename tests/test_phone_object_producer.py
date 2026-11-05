@@ -2388,6 +2388,22 @@ class ReflectionProbeImportTests(unittest.TestCase):
 
 
 class FieldlessScriptMetadataTests(unittest.TestCase):
+    def test_preflight_rejects_self_consistent_but_wrong_component_script_bindings(self):
+        identity = ["Fixture.dll", "Fixture", "Expected"]
+        typ = {"class_id": 114, "script_id": LEGACY_IDENTITY.md4(b"ExpectedFixtureFixture.dll")}
+        component = {"path_id": 1, "source": [0, 7], "references": [{"offset": 16, "to": [0, 2]}]}
+        script = {"path_id": 2, "script_identity": identity}
+        members = [{"name": "fixture", "objects": [component, script]}]
+        self.assertEqual(P.script_binding_errors(members, lambda _: typ, LEGACY_IDENTITY), [])
+        script["script_identity"] = ["Fixture.dll", "Fixture", "Other"]
+        errors = P.script_binding_errors(members, lambda _: typ, LEGACY_IDENTITY)
+        self.assertEqual(len(errors), 1)
+        self.assertEqual(errors[0]["script_path_id"], 2)
+        component["sdk_event_system"] = {}
+        self.assertEqual(len(P.script_binding_errors(members, lambda _: typ, LEGACY_IDENTITY)), 1)
+        script["script_identity"] = ["UnityEngine.UI.dll", "UnityEngine.EventSystems", "EventSystem"]
+        self.assertEqual(P.script_binding_errors(members, lambda _: typ, LEGACY_IDENTITY), [])
+
     def test_sdk_event_system_defaults_require_matching_current_schema(self):
         def pointer(name):
             return FIXTURE.node(name, kind="PPtr<Object>", children=[FIXTURE.node("m_FileID", 4, kind="int"), FIXTURE.node("m_PathID", 8, kind="SInt64")])

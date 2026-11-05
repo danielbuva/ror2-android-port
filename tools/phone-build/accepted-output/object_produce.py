@@ -1028,6 +1028,46 @@ def supplied_script_identity(body, class_id, selected, row):
     return hashlib.sha256(body).hexdigest()
 
 
+def script_binding_errors(members, read_type, identity_owner):
+    """Check all declared local script relationships before expensive emission."""
+    errors = []
+    for member in members:
+        scripts = {row["path_id"]: row["script_identity"] for row in member["objects"] if "script_identity" in row}
+        for selected in member["objects"]:
+            references = [row for row in selected.get("references", []) if row.get("offset") == 16]
+            if not references:
+                continue
+            selector = selected.get("properties_hash", {}).get("behaviour", selected.get("source", selected.get("type_source")))
+            if selector is None:
+                continue
+            typ = read_type(selector)
+            if typ["class_id"] != 114:
+                continue
+            file_id, script_id = references[-1]["to"]
+            if file_id or script_id == 0 or script_id not in scripts:
+                continue
+            assembly, namespace, name = scripts[script_id]
+            if "sdk_event_system" in selected:
+                valid = [assembly, namespace, name] == ["UnityEngine.UI.dll", "UnityEngine.EventSystems", "EventSystem"]
+            elif selected.get("fieldless_script_record"):
+                # These components deliberately start from a generic base schema;
+                # fieldless_script_type checks their current SDK properties later.
+                continue
+            else:
+                valid = typ["script_id"] == identity_owner.md4((name + namespace + assembly).encode())
+            if not valid:
+                errors.append(
+                    {
+                        "member": member["name"],
+                        "path_id": selected["path_id"],
+                        "script_path_id": script_id,
+                        "script_identity": scripts[script_id],
+                        "source_script_id": typ["script_id"].hex(),
+                    }
+                )
+    return errors
+
+
 def original_script_properties(script, script_type, behaviour_type, current_type, identity_owner):
     """Retain the original editor hash only for the same unchanged script schema."""
     offset, names = script_fields(script)
@@ -1348,7 +1388,7 @@ def missing_script_base(body, typ, base, read_type):
     return body[: base["bytes"]], copy.deepcopy(base_type)
 
 
-def produce(profile_path, profile_sha256, pc, output, codec_path, codec_sha256, packs=(), sdk=None, comparison=None):
+def produce(profile_path, profile_sha256, pc, output, codec_path, codec_sha256, packs=(), sdk=None, comparison=None, preflight=False):
     if B.sha(profile_path) != profile_sha256:
         raise ValueError("object profile drift")
     profile = json.loads(profile_path.read_text())
@@ -1358,6 +1398,8 @@ def produce(profile_path, profile_sha256, pc, output, codec_path, codec_sha256, 
         return copy_original_bundle(profile, profile_sha256, pc, output)
     if codec_path is None or codec_sha256 is None:
         raise ValueError("object serialization requires the pinned codec")
+    if preflight and B.sha(codec_path) != codec_sha256:
+        raise ValueError("object codec input drift")
     scene = "members" in profile["bundle"]
     required = {"input_id", "sources", "bundle"} | (set() if scene else {"objects"})
     if set(profile) - {"sdk", "managed"} != required or profile["input_id"] != M.INPUT_ID:
@@ -1416,9 +1458,23 @@ def produce(profile_path, profile_sha256, pc, output, codec_path, codec_sha256, 
             metadata = W.read_serialized(member)
             sources.append((path, before, member, metadata, {row["path_id"]: row for row in metadata["objects"]}))
         check_preload_dependencies(sources, profile["sources"], selected_bundle.get("preload_dependencies", []))
-        records, layouts, members = [], [], []
+        if identity_owner is not None:
+            errors = script_binding_errors(
+                selected_members, lambda selector: sources[selector[0]][3]["types"][sources[selector[0]][4][selector[1]]["type_id"]], identity_owner
+            )
+            receipt["script_binding_errors"] = errors
+            if errors:
+                raise ValueError(f"{len(errors)} component/script identity mismatches; see result.json")
         packed, providers = record_packs(selected_members, packs, selected_bundle)
         receipt["record_packs"] = {profile: pin for profile, (_, pin, _) in providers.items()}
+        if preflight:
+            receipt.update(
+                success=True,
+                preflight=True,
+                scope="source/SDK pins, preload dependencies, declared local script bindings and supplier receipts/record extents; generated-body transformations and device loadability remain open",
+            )
+            return receipt
+        records, layouts, members = [], [], []
         resources = {}
         # Load only when needed: the player owner already shares this writer and
         # owns the qualified standalone Sprite recovery arithmetic.
@@ -1876,9 +1932,12 @@ def main():
         metavar=("DIRECTORY", "RECEIPT_SHA256"),
         help="independently produced record pack and pinned result.json; repeat for each producer",
     )
+    parser.add_argument(
+        "--preflight", action="store_true", help="check source/SDK pins, preload, local scripts and supplied record packs without emitting a bundle"
+    )
     parser.add_argument("--comparison", choices=("exact", "diagnostic"), help="historical output comparison; source/schema/reference checks remain strict")
     args = parser.parse_args()
-    produce(args.profile, args.profile_sha256, args.pc, args.output, args.codec, args.codec_sha256, args.record_pack, args.sdk, args.comparison)
+    produce(args.profile, args.profile_sha256, args.pc, args.output, args.codec, args.codec_sha256, args.record_pack, args.sdk, args.comparison, args.preflight)
 
 
 if __name__ == "__main__":

@@ -179,8 +179,11 @@ class Graph:
             arguments += ["--legacy-sdk", "${input:legacy_sdk}"]
         if producer != "record_remap":
             arguments += ["--pc-root" if producer in {"shader_context", "shader_prefab", "sprite_produce"} else "--pc", "${input:pc}"]
-        if producer in {"record_produce", "shader_context", "shader_prefab", "payload_shader_records", "player_data"}:
+        if producer in {"record_produce", "shader_context", "shader_prefab", "payload_shader_records"}:
             arguments += ["--sdk", "${input:sdk}"]
+        if producer == "player_data":
+            # Player defaults belong to AndroidPlayer, not editor Contents.
+            arguments += ["--sdk", "${input:sdk_contents}/../../PlaybackEngines/AndroidPlayer"]
         if producer == "object_produce" and "sdk" in profile:
             # Object profiles pin paths relative to Unity.app, while shader
             # tools bind its Contents directory. Preserve the profile root.
