@@ -2708,3 +2708,15 @@ Evidence: four-consumer release-graph fixture and host-only preflight passed;
 local receipts: `work/coordination/p1-scenes-w/current-scene-supplier-preflight-v1/`.
 Public recipes contain selectors and transformations, no generated record bodies.
 No APK produced; complete graph, current-code assembly and device play remain open.
+
+## J1384 — Complete catalogs against produced serialized containers
+
+2026-11-05. The source catalog owner derives bundle ownership from selected final
+object profiles and pins metadata, produced bundles and the current script registry.
+Final container roots, preload intervals, PPtrs, native types and MonoScript hashes
+must agree before catalog emission; duplicate keys retain every root.
+Evidence: 43 catalog ownership tests and seven final-container host fixtures pass,
+including real serialized managed bindings and wrong-type/absent-script rejection.
+Prior art: pinned R2API typed handles and UnityPy duplicate container ownership.
+No APK produced. Complete produced cohort, managed subtype assignability, remaining
+gameplay reference closure and device play remain open; byte identity is diagnostic.
