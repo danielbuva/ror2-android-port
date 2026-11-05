@@ -229,8 +229,13 @@ def produce(selected, records, sources):
         if row["path_id"] in graph:
             raise ValueError("Duplicate produced prefab graph identity")
         graph[row["path_id"]] = set(pointers(row["body"], row["type"], schemas).values())
+    return produce_graph(selected, graph, sources)
+
+
+def produce_graph(selected, graph, sources):
+    """Frame grouped preloads from the emitter's fully parsed body graph."""
     validate_graph(graph, len(selected["externals"]))
-    owners = external_owners(selected, sources, schemas)
+    owners = external_owners(selected, sources, {})
     ranks = file_ranks(selected)
     groups = sorted(selected["asset_groups"], key=lambda row: guid_key(row["guid"]))
     if not groups or len({row["guid"] for row in groups}) != len(groups) or len({row["path"].lower() for row in groups}) != len(groups):
@@ -314,12 +319,33 @@ def repack_stream(body, typ, resource, offset, path, schemas):
     return result, emitted
 
 
-def emit_closed_native(graph_directory, schema_paths, output, name, member, *, codec=None, codec_sha256=None):
+def emit_closed_native(
+    graph_directory,
+    schema_paths,
+    output,
+    name,
+    member,
+    *,
+    codec=None,
+    codec_sha256=None,
+    required=None,
+    field_proofs=(),
+    endpoint_record=None,
+    managed_check=None,
+):
     """Emit the declared local/native subset of a qualified producer graph.
 
     This is explicitly partial, even when all eligible records close. Bodies,
     native schemas and actual PPtrs are checked independently of graph claims.
     No historical bundle, accepted body or comparator is an input.
+
+    required selects exact path_ids and GUID/asset_groups, with explicit
+    externals/dependencies. This mode never drops an object or root. Its caller
+    supplies the receipt/index/actual-final-container endpoint reader used by
+    qualify_external_fields, and a current-CLR managed_check(value, body, type,
+    read_record). The checker must reject incompatible schemas/scripts; it runs
+    again against persisted output. Without these qualifications emission fails.
+    This Python integration boundary does not admit a whole catalog or player.
     """
     from collections import Counter, defaultdict
     from contextlib import nullcontext
@@ -345,24 +371,40 @@ def emit_closed_native(graph_directory, schema_paths, output, name, member, *, c
         if key in all_records:
             raise ValueError("Duplicate selected destination")
         all_records[key] = row
-    selected = {
-        key: row
-        for key, row in all_records.items()
-        if key[:2] == (name, member)
-        and (Path(row["provider"]) / "result.json").is_file()
-        and row.get("schema")
-        and row["class_id"] not in (114, 115, 142)
-        and (not row.get("resource") or row["class_id"] in (28, 89, 43))
-        and all(edge[0] == 0 for edge in row.get("edges", [[1, 1]]))
-    }
-    while True:
+    selected = (
+        {}
+        if required is not None
+        else {
+            key: row
+            for key, row in all_records.items()
+            if key[:2] == (name, member)
+            and (Path(row["provider"]) / "result.json").is_file()
+            and row.get("schema")
+            and row["class_id"] not in (114, 115, 142)
+            and (not row.get("resource") or row["class_id"] in (28, 89, 43))
+            and all(edge[0] == 0 for edge in row.get("edges", [[1, 1]]))
+        }
+    )
+    if required is not None:
+        identities = required["path_ids"]
+        if not identities or len(set(identities)) != len(identities):
+            raise ValueError("Required object set must be nonempty and distinct")
+        missing = sorted(identity for identity in identities if (name, member, identity) not in all_records)
+        if missing:
+            raise ValueError(f"Required produced objects absent: {missing}")
+        selected = {(name, member, identity): all_records[name, member, identity] for identity in identities}
+        if any(row["class_id"] == 142 for row in selected.values()):
+            raise ValueError("Required object set must exclude the regenerated AssetBundle container")
+        if any(row["class_id"] == 114 for row in selected.values()) and managed_check is None:
+            raise ValueError("Required managed objects need current CLR qualification")
+    while required is None:
         missing = [key for key, row in selected.items() if any(pid and (*key[:2], pid) not in selected for _, pid in row["edges"])]
         if not missing:
             break
         for key in missing:
             del selected[key]
     schemas, schema_pins = {}, {}
-    needed = {row["schema"] for row in selected.values()}
+    needed = {row["full_type"] if required is not None else row["schema"] for row in selected.values()}
     for schema_path in map(Path, schema_paths):
         schema_pins[str(schema_path)] = O.B.sha(schema_path)
         for key, typ in json.loads(schema_path.read_text()).items():
@@ -377,10 +419,30 @@ def emit_closed_native(graph_directory, schema_paths, output, name, member, *, c
         for field in ("tree", "hash", "script_id"):
             if field in typ:
                 typ[field] = bytes.fromhex(typ[field])
-        if hashlib.sha256(typ["tree"]).hexdigest() != key or typ["script_type"] != -1:
+        valid_identity = full_type_key(typ) == key if required is not None else hashlib.sha256(typ["tree"]).hexdigest() == key and typ["script_type"] == -1
+        if not valid_identity:
             raise ValueError("Native schema identity differs")
-        typ.setdefault("dependencies", [])
+        if required is None:
+            typ.setdefault("dependencies", [])
         typed[key] = typ
+    externals = [] if required is None else list(required["externals"])
+    dependencies = [] if required is None else list(required["dependencies"])
+    if len(set(externals)) != len(externals) or member in externals:
+        raise ValueError("Ambiguous required external member table")
+    proofs = {}
+    for proof in field_proofs:
+        proofs.setdefault(tuple(proof["owner"]), []).append(proof)
+    endpoint_pins = {}
+
+    def read_external(target):
+        if endpoint_record is None:
+            raise ValueError("Required external endpoint reader absent")
+        value, raw, typ = endpoint_record(target)
+        pin = json.dumps(value, sort_keys=True), hashlib.sha256(raw).hexdigest(), full_type_key(typ)
+        if endpoint_pins.setdefault(tuple(target), pin) != pin:
+            raise ValueError("Persisted external endpoint drift")
+        return value, raw, typ
+
     by_provider = defaultdict(list)
     for row in selected.values():
         by_provider[row["provider"]].append(row)
@@ -389,6 +451,7 @@ def emit_closed_native(graph_directory, schema_paths, output, name, member, *, c
         store = Path(scratch) / "bodies.bin"
         objects, graph, bodymap, source_pins, cache = [], {}, {}, {}, {}
         resource_extents, resource_rows, emitted_hashes = [], [], {}
+        qualified_targets, managed_rows = {}, {}
         resource_size = 0
         resource_member = member + ".resS"
         resource_path = "archive:/" + member + "/" + resource_member
@@ -411,19 +474,27 @@ def emit_closed_native(graph_directory, schema_paths, output, name, member, *, c
                 for value in values:
                     identity = value["destination"][2]
                     row = index[tuple(value["record_source"])]
-                    typ = typed[value["schema"]]
+                    typ = typed[value["full_type"] if required is not None else value["schema"]]
                     if row.get("resource") != value.get("resource") or (row["bytes"], row["sha256"]) != (value["bytes"], value["sha256"]):
                         raise ValueError("Native provider record or resource drift")
                     if (
                         typ["class_id"] != value["class_id"]
                         or (value.get("native_type_hash") and typ["hash"].hex() != value["native_type_hash"])
                         or (row.get("native_type_hash") and typ["hash"].hex() != row["native_type_hash"])
+                        or hashlib.sha256(typ["tree"]).hexdigest() != value["schema"]
                     ):
                         raise ValueError("Native type identity differs")
                     body = O.record_extent(directory / "objects.bin", row)
                     edges = set(pointers(body, typ, cache).values())
                     if edges != set(map(tuple, value["edges"])):
                         raise ValueError("Measured native pointers differ from selected graph")
+                    if required is not None:
+                        targets = qualify_external_fields(value, body, typ, proofs.get(tuple(value["destination"]), ()), read_external)
+                        qualified_targets[identity] = targets
+                        body = relocate_external_fields(value, body, typ, targets, externals)
+                        if typ["class_id"] == 114:
+                            managed_rows[identity] = value, typ
+                        edges = set(pointers(body, typ, cache).values())
                     if row.get("resource"):
                         resource_size = (resource_size + 15) // 16 * 16
                         body, descriptor = repack_stream(body, typ, row["resource"], resource_size, resource_path, cache)
@@ -443,16 +514,31 @@ def emit_closed_native(graph_directory, schema_paths, output, name, member, *, c
                     bodymap[identity] = destination.tell(), len(body)
                     destination.write(body)
                     objects.append(dict(path_id=identity, type=typ, body_bytes=len(body), prefix=body[:32]))
-        validate_graph(graph, 0)
+        validate_graph(graph, len(externals))
+        if required is not None and set(graph) != set(required["path_ids"]):
+            raise ValueError("Emitted required object set differs")
+
+        def read_produced(target):
+            if tuple(target[:2]) != (name, member):
+                return read_external(target)
+            value = selected[tuple(target)]
+            offset, size = bodymap[target[2]]
+            with store.open("rb") as stream:
+                stream.seek(offset)
+                raw = O.B.exact(stream, size)
+            return value, raw, typed[value["full_type"]]
+
+        for identity, (value, typ) in managed_rows.items():
+            managed_check(value, read_produced((name, member, identity))[1], typ, read_produced)
         grouped = defaultdict(list)
-        for row in json_rows(graph_directory / "selected-roots.jsonl"):
+        for row in () if required is not None else json_rows(graph_directory / "selected-roots.jsonl"):
             key = tuple(row["destination"])
             if key in selected and row["class_id"] in NATIVE_ROOT_TYPES:
                 if row["class_id"] != selected[key]["class_id"]:
                     raise ValueError("Native root type differs from produced object")
                 grouped[row["path"].lower()].append(row)
         roots = [rows[0] for rows in grouped.values() if len({tuple(row["destination"]) for row in rows}) == 1]
-        if not roots:
+        if not roots and required is None:
             raise ValueError("No unambiguous native roots in closed subset")
         preloads, containers, assets = [], [], []
         for root in sorted(roots, key=lambda row: row["path"].lower()):
@@ -476,12 +562,36 @@ def emit_closed_native(graph_directory, schema_paths, output, name, member, *, c
         )
         container_type = M.schemas()[0]
         container_type["dependencies"] = []
-        container_body = W.write_shader_body(W.shader_node(container_type["tree"]), container)
+        if required is None:
+            container_body = W.write_shader_body(W.shader_node(container_type["tree"]), container)
+        else:
+            groups = required["asset_groups"]
+            for group in groups:
+                if any(identity not in graph for identity in group["roots"]):
+                    raise ValueError("Required asset group root absent")
+            # produce retains GUID order and every root/subasset of each path.
+            container_body = produce_graph(dict(name=name, member=member, externals=externals, dependencies=dependencies, asset_groups=groups), graph, {})
+            roots = [
+                dict(path=group["path"], destination=[name, member, identity], class_id=selected[name, member, identity]["class_id"])
+                for group in groups
+                for identity in group["roots"]
+            ]
+            assets = required["assets"]
+            if {row["name"].lower() for row in assets} != {group["path"].lower() for group in groups} or any(not row["type"] for row in assets):
+                raise ValueError("Required typed-load requests must cover every asset group")
+            count_stream = io.BytesIO(container_body)
+            module("catalog_complete").text(count_stream)
+            preloads = range(O.B.unpack(count_stream, "<I")[0])
         container_id = 1
         while container_id in graph:
             container_id += 1
         objects.append(dict(path_id=container_id, type=container_type, body_bytes=len(container_body), prefix=container_body[:32]))
-        layout, _ = O.make_layout(dict(externals=[]), objects, include_bodies=False)
+        external_scripts = {
+            struct.unpack_from("<iq", row["prefix"], 16)
+            for row in objects
+            if row["type"]["class_id"] == 114 and struct.unpack_from("<iq", row["prefix"], 16)[0]
+        }
+        layout, _ = O.make_layout(dict(externals=externals), objects, include_bodies=False, external_scripts=external_scripts)
 
         def body(row):
             if row["path_id"] == container_id:
@@ -505,8 +615,17 @@ def emit_closed_native(graph_directory, schema_paths, output, name, member, *, c
         # Read the actual final container, metadata and every persisted body.
         stream = W.B.Bundle(bundle).member(member)
         read = W.read_serialized(stream)
-        if read["types"] != layout["types"] or read["objects"] != layout["objects"] or read["scripts"] or read["externals"]:
+        if any(read[key] != layout[key] for key in ("types", "objects", "scripts", "externals")):
             raise ValueError("Emitted native metadata differs")
+        final_objects = {row["path_id"]: row for row in read["objects"]}
+
+        def read_final(target):
+            if tuple(target[:2]) != (name, member):
+                return read_produced(target)
+            row = final_objects[target[2]]
+            stream.seek(read["data_offset"] + row["offset"])
+            return selected[tuple(target)], O.B.exact(stream, row["bytes"]), read["types"][row["type_id"]]
+
         for row in read["objects"]:
             stream.seek(read["data_offset"] + row["offset"])
             data = O.B.exact(stream, row["bytes"])
@@ -514,6 +633,23 @@ def emit_closed_native(graph_directory, schema_paths, output, name, member, *, c
             expected = hashlib.sha256(container_body).hexdigest() if identity == container_id else emitted_hashes[identity]
             if hashlib.sha256(data).hexdigest() != expected:
                 raise ValueError("Emitted native body differs")
+            if required is not None and identity != container_id:
+                typ = read["types"][row["type_id"]]
+                fields = pointers(data, typ, cache)
+                if set(fields.values()) != graph[identity]:
+                    raise ValueError("Persisted required object references differ")
+                for field, target in qualified_targets[identity].items():
+                    expected_pointer = (0, target[2]) if tuple(target[:2]) == (name, member) else (externals.index(target[1]) + 1, target[2])
+                    if fields[field] != expected_pointer:
+                        raise ValueError("Persisted qualified external field differs")
+                    endpoint, raw, endpoint_type = read_final(target)
+                    if tuple(target[:2]) != (name, member) and (
+                        (len(raw), hashlib.sha256(raw).hexdigest()) != (endpoint["bytes"], endpoint["sha256"])
+                        or full_type_key(endpoint_type) != endpoint["full_type"]
+                    ):
+                        raise ValueError("Persisted external endpoint drift")
+                if typ["class_id"] == 114:
+                    managed_check(selected[name, member, identity], data, typ, read_final)
         if resource_extents:
             resource_stream = W.B.Bundle(bundle).member(resource_member)
             for row in resource_rows:
@@ -555,12 +691,24 @@ def emit_closed_native(graph_directory, schema_paths, output, name, member, *, c
         typed_classes=dict(Counter(row["type"] for row in assets)),
         graph_receipt_sha256=O.B.sha(graph_directory / "done.json"),
         selected_records_sha256=O.B.sha(graph_directory / "selected-records.jsonl"),
-        selected_roots_sha256=O.B.sha(graph_directory / "selected-roots.jsonl"),
+        selected_roots_sha256=O.B.sha(graph_directory / "selected-roots.jsonl") if required is None else None,
         source_type_pins=schema_pins,
         producer_pins=source_pins,
         seconds=time.monotonic() - started,
         peak_rss_bytes=resource.getrusage(resource.RUSAGE_SELF).ru_maxrss * (1 if sys.platform == "darwin" else 1024),
     )
+    if required is not None:
+        result["required_set_accepted"] = True
+        result["required_request_sha256"] = hashlib.sha256(json.dumps(required, sort_keys=True).encode()).hexdigest()
+        result["qualified_endpoint_pins"] = [
+            dict(destination=list(target), selected_row_sha256=hashlib.sha256(pin[0].encode()).hexdigest(), body_sha256=pin[1], full_type=pin[2])
+            for target, pin in sorted(endpoint_pins.items())
+        ]
+        gaps.update(
+            required_records=len(selected),
+            complete=False,
+            policy="Exact requested object set; whole catalog, Unity typed load and device acceptance remain open.",
+        )
     for filename, value in (
         ("result.json", result),
         ("gaps.json", gaps),
