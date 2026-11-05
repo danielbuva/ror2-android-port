@@ -1670,7 +1670,7 @@ def profile_bundles(path):
         yield from profile["bundles"]
 
 
-def managed_record_hash(body, typ, metadata, member, script, sdk_tree, identity_owner, *, preserve_original=False):
+def managed_record_hash(body, typ, metadata, member, script, sdk_tree, identity_owner, *, preserve_original=False, editor_curve_trees=None):
     """Derive an unchanged managed record's native hash from original schema."""
     if typ["class_id"] != 114 or sdk_tree is None:
         raise ValueError("managed record properties require MonoBehaviour and pinned SDK")
@@ -1690,9 +1690,12 @@ def managed_record_hash(body, typ, metadata, member, script, sdk_tree, identity_
     _, names = O.script_fields(script_body)
     if typ["script_id"] != identity_owner.md4("".join(names).encode()):
         raise ValueError("managed record script identity differs from original schema")
+    if preserve_original and editor_curve_trees is not None:
+        raise ValueError("editor curve properties cannot preserve original script hash")
     if preserve_original:
         return O.original_script_properties(script_body, script_type, typ, typ, identity_owner)
-    return identity_owner.properties_hash(*names, typ["tree"], sdk_tree)
+    tree = typ["tree"] if editor_curve_trees is None else O.editor_curve_hash_tree(typ["tree"], editor_curve_trees, identity_owner)
+    return identity_owner.properties_hash(*names, tree, sdk_tree)
 
 
 def check_native_type(typ, target):
@@ -1700,7 +1703,9 @@ def check_native_type(typ, target):
         raise ValueError("produced record native type identity differs")
 
 
-def produce(profile_path, profile_sha256, pc, output, sdk=None):
+def produce(profile_path, profile_sha256, pc, output, sdk=None, comparison="exact"):
+    if comparison not in ("exact", "diagnostic"):
+        raise ValueError("unknown target comparison policy")
     if B.sha(profile_path) != profile_sha256:
         raise ValueError("object-record profile drift")
     pc = pc.resolve(strict=True)
@@ -1717,8 +1722,9 @@ def produce(profile_path, profile_sha256, pc, output, sdk=None):
     started = time.monotonic()
     receipt = {"success": False, "input_id": M.INPUT_ID, "profile_sha256": profile_sha256, "objects": 0, "object_bytes": 0}
     runtime_fields = None
+    receipt.update(comparison=comparison, historical_mismatches=0)
     try:
-        sdk_path, sdk_tree = None, None
+        sdk_path, sdk_tree, sdk_curve_trees = None, None, None
         if not str(profile_path).endswith(".jsonl.gz") and "sdk" in (profile := json.loads(profile_path.read_text())):
             if sdk is None:
                 raise ValueError("managed record properties require pinned owner SDK")
@@ -1733,6 +1739,7 @@ def produce(profile_path, profile_sha256, pc, output, sdk=None):
             if typ["class_id"] != 114:
                 raise ValueError("SDK script base is not MonoBehaviour")
             sdk_tree = typ["tree"]
+            sdk_curve_trees = [row["tree"] for row in metadata["types"] if row.get("tree")]
         material_keywords, keyword_sdk_path = None, None
         if not str(profile_path).endswith(".jsonl.gz") and "material_keyword_sdk" in profile:
             selected_sdk = profile["material_keyword_sdk"]
@@ -1893,6 +1900,13 @@ def produce(profile_path, profile_sha256, pc, output, sdk=None):
                             or selected.get("preserve_original_script_hash")
                         ):
                             raise ValueError("current script projection requires SDK properties and unchanged original binding")
+                        if "editor_curve_properties" in selected and (
+                            selected["editor_curve_properties"] is not True
+                            or "properties_hash" not in selected
+                            or selected.get("preserve_original_script_hash")
+                            or selected.get("prune_absent_script_fields")
+                        ):
+                            raise ValueError("editor curve properties require unchanged source fields and SDK properties")
                         if "properties_hash" in selected:
                             if set(selected["properties_hash"]) != {"script"}:
                                 raise ValueError("unknown managed record hash policy")
@@ -1907,6 +1921,7 @@ def produce(profile_path, profile_sha256, pc, output, sdk=None):
                                 sdk_tree,
                                 identity_owner,
                                 preserve_original=selected.get("preserve_original_script_hash", False),
+                                editor_curve_trees=sdk_curve_trees if selected.get("editor_curve_properties") else None,
                             )
                             if selected.get("prune_absent_script_fields"):
                                 if "managed" not in profile:
@@ -1942,8 +1957,11 @@ def produce(profile_path, profile_sha256, pc, output, sdk=None):
                                 )
                             digest = hashlib.sha256(result).hexdigest()
                             if digest != target["sha256"] or len(result) != target["bytes"]:
-                                raise ValueError("produced object record differs from accepted hash")
-                            row = {key: target[key] for key in ("bundle", "member", "path_id", "bytes", "sha256")}
+                                if comparison == "exact":
+                                    raise ValueError("produced object record differs from accepted hash")
+                                receipt["historical_mismatches"] += 1
+                            row = {key: target[key] for key in ("bundle", "member", "path_id")}
+                            row.update(bytes=len(result), sha256=digest)
                             row["offset"] = data.tell()
                             if "native_type_hash" in target:
                                 row["native_type_hash"] = typ["hash"].hex()
@@ -1993,8 +2011,14 @@ def main():
     parser.add_argument("--pc", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--sdk", type=Path, help="pinned owner SDK root for original managed type hashes")
+    parser.add_argument(
+        "--comparison",
+        choices=("exact", "diagnostic"),
+        default="exact",
+        help="Record historical output byte differences while retaining source and structural checks",
+    )
     args = parser.parse_args()
-    produce(args.profile, args.profile_sha256, args.pc, args.output, args.sdk)
+    produce(args.profile, args.profile_sha256, args.pc, args.output, args.sdk, comparison=args.comparison)
 
 
 if __name__ == "__main__":

@@ -79,6 +79,11 @@ class RecordRemapTests(unittest.TestCase):
             self.assertEqual(row["source_produced"]["file_sha256"], receipt["files"][path.name]["sha256"])
             self.assertEqual(row["path_id"], 99)
             self.assertEqual(row["native_type_hash"], bytes(16).hex())
+            changed = dict(selected, bytes=1, sha256="0" * 64)
+            row, actual = R.serialized_records(supplier, receipt, changed, comparison="diagnostic")
+            self.assertEqual(actual, body)
+            self.assertEqual(row["bytes"], len(body))
+            self.assertFalse(row["source_produced"]["historical_raw_exact"])
             with self.assertRaisesRegex(ValueError, "native type"):
                 R.serialized_records(supplier, receipt, dict(selected, native_type_hash="ff" * 16))
             with self.assertRaisesRegex(ValueError, "class or size"):

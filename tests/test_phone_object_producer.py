@@ -1795,6 +1795,11 @@ class ObjectProducerTests(unittest.TestCase):
             result = produce(path, P.B.sha(path), pc, root / "produced")
             self.assertEqual(result["serialized_sha256"], digest(expected))
             self.assertEqual(result["comparison"], {"policy": "diagnostic", "serialized_matches": {"CAB-target": False}, "bundle_matches": False})
+            profile["objects"][0]["sha256"] = "0" * 64
+            path.write_text(json.dumps(profile))
+            result = produce(path, P.B.sha(path), pc, root / "changed-target")
+            self.assertEqual(len(result["historical_object_mismatches"]), 1)
+            self.assertEqual(result["serialized_sha256"], digest(expected))
             profile["objects"][0]["source_sha256"] = "0" * 64
             path.write_text(json.dumps(profile))
             with self.assertRaisesRegex(ValueError, "original object body drift"):
@@ -2313,6 +2318,18 @@ class LegacyBarrierPolicyTests(unittest.TestCase):
             LEGACY_IDENTITY.properties_hash("AnimateShaderAlpha", "RoR2", "RoR2.dll", hashed, sdk),
         )
 
+    def test_generic_curve_hash_policy_retains_runtime_layout_and_checks_all_fields(self):
+        body, runtime, sdk = legacy_policy_fixture()
+        changed = runtime.replace(b"alphaCurve\x00", b"otherCurve\x00")
+        normalized = P.editor_curve_hash_tree(changed, [sdk, sdk], LEGACY_IDENTITY)
+        self.assertEqual(next(n["size"] for n in LEGACY_IDENTITY.tree_nodes(changed) if n["type"] == "Keyframe"), 28)
+        self.assertEqual(next(n["size"] for n in LEGACY_IDENTITY.tree_nodes(normalized) if n["type"] == "Keyframe"), 32)
+        self.assertEqual(P.editor_curve_hash_tree(normalized, [sdk], LEGACY_IDENTITY), normalized)
+        # A non-editor source field change cannot be hidden by normalization.
+        with self.assertRaisesRegex(ValueError, "runtime AnimationCurve"):
+            P.editor_curve_hash_tree(changed.replace(b"inSlope\x00", b"badSlop\x00"), [sdk], LEGACY_IDENTITY)
+        self.assertTrue(body)
+
     def test_nonzero_value_or_alignment_padding_is_never_discarded(self):
         body, tree, _ = legacy_policy_fixture()
         for offset in [48, 49, 52, 55]:
@@ -2383,6 +2400,22 @@ class ReflectionProbeImportTests(unittest.TestCase):
 
 
 class FieldlessScriptMetadataTests(unittest.TestCase):
+    def test_preflight_rejects_self_consistent_but_wrong_component_script_bindings(self):
+        identity = ["Fixture.dll", "Fixture", "Expected"]
+        typ = {"class_id": 114, "script_id": LEGACY_IDENTITY.md4(b"ExpectedFixtureFixture.dll")}
+        component = {"path_id": 1, "source": [0, 7], "references": [{"offset": 16, "to": [0, 2]}]}
+        script = {"path_id": 2, "script_identity": identity}
+        members = [{"name": "fixture", "objects": [component, script]}]
+        self.assertEqual(P.script_binding_errors(members, lambda _: typ, LEGACY_IDENTITY), [])
+        script["script_identity"] = ["Fixture.dll", "Fixture", "Other"]
+        errors = P.script_binding_errors(members, lambda _: typ, LEGACY_IDENTITY)
+        self.assertEqual(len(errors), 1)
+        self.assertEqual(errors[0]["script_path_id"], 2)
+        component["sdk_event_system"] = {}
+        self.assertEqual(len(P.script_binding_errors(members, lambda _: typ, LEGACY_IDENTITY)), 1)
+        script["script_identity"] = ["UnityEngine.UI.dll", "UnityEngine.EventSystems", "EventSystem"]
+        self.assertEqual(P.script_binding_errors(members, lambda _: typ, LEGACY_IDENTITY), [])
+
     def test_sdk_event_system_defaults_require_matching_current_schema(self):
         def pointer(name):
             return FIXTURE.node(name, kind="PPtr<Object>", children=[FIXTURE.node("m_FileID", 4, kind="int"), FIXTURE.node("m_PathID", 8, kind="SInt64")])

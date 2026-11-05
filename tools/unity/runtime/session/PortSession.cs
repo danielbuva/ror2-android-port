@@ -2646,12 +2646,15 @@ public sealed partial class PortSession : MonoBehaviour
                 TraceStartup("projectile-catalog-begin");
                 r.liveCatalogs.projectiles = WholeCatalogComposed.PrepareProjectiles();
                 TraceStartup("projectile-catalog-ready");
+                TraceStartup("skins-begin");
                 var skins = RegisterOriginalSkins();
                 while (skins.MoveNext())
                     yield return skins.Current;
+                TraceStartup("skins-ready-buff-holders-begin");
                 WholeCatalogComposed.PopulateDefinitionFields(
                     "Buffs", Enumerable.Range(0, BuffCatalog.buffCount).Select(index => BuffCatalog.GetBuffDef((BuffIndex)index)).ToArray(),
                     "bd");
+                TraceStartup("buff-holders-ready");
             }
             manager = CreateTeamContext(out teamHost);
             Call(team, "Awake");
@@ -3048,7 +3051,9 @@ public sealed partial class PortSession : MonoBehaviour
             }
             r.phase = "original-master-spawn";
             Save();
+            TraceStartup("master-spawn-body-begin");
             var spawned = master.SpawnBody(cfg.stageGeometry ? r.stage.spawnPosition : new Vector3(0, 12, 0), Quaternion.identity);
+            TraceStartup("master-spawn-body-returned");
             if (spawned)
                 spawned.gameObject.SetActive(false);
             Check(spawned && spawned != body, "Original body creation");

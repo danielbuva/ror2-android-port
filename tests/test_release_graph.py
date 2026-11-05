@@ -100,11 +100,50 @@ class ReleaseGraphTests(unittest.TestCase):
 
             for name, job in graph.jobs.items():
                 index["files"][name] = hashlib.sha256(wire(job)).hexdigest()
-            # Captured from the eager implementation before changing its loader:
-            # exact descriptors, dependency closure, ordering and index bytes.
+            # Regenerated from the eager compiler at main 2dfd7651 after merging
+            # its argument changes; lazy bytes match exact descriptors, closure
+            # ordering and index bytes from that independently loaded compiler.
             self.assertEqual(
-                hashlib.sha256(wire({"index": index, "jobs": graph.jobs})).hexdigest(), "b08afa96036b9b10c90b4753fd99c0be13772e485234c5e90a5bfeca0ce369dd"
+                hashlib.sha256(wire({"index": index, "jobs": graph.jobs})).hexdigest(), "5b4428b1c73659bb268100de6857593ba4ce09e978c712f0c2ba541a3a65b393"
             )
+
+    def test_scene_record_suppliers_close_published_consumers(self):
+        graph = G.Graph(ROOT, {})
+        for scene, supplier, count in (
+            ("artifactworld01", "artifactworld01-native-records", 6),
+            ("champrush", "champrush-director-records", 2),
+            ("splash", "splash-director-records", 2),
+            ("conduitcanyon", "conduitcanyon-director-records", 1),
+        ):
+            with self.subTest(scene=scene):
+                profile = ROOT / ("recipe/owner-" + supplier + ".json")
+                source = json.loads(profile.read_text())
+                outputs = [row for bundle in source["bundles"] for member in bundle["members"] for obj in member["objects"] for row in obj["outputs"]]
+                self.assertEqual(len(outputs), count)
+                name = graph.build(G.digest(ROOT / ("recipe/owner-" + scene + ("-objects.json" if scene == "conduitcanyon" else "-whole-objects.json"))))
+                self.assertIn("recipe/" + profile.name, graph.entry(name)["recipe_files"])
+                self.assertIn("payload/whole-scene-" + scene, graph.jobs[name]["outputs"])
+
+    def test_player_defaults_use_android_player_without_changing_shader_sdk(self):
+        graph = G.Graph(ROOT, {})
+        name = graph.build(G.digest(ROOT / "recipe/owner-player-data.json"))
+        arguments = graph.jobs[name]["arguments"]
+        self.assertEqual(arguments[arguments.index("--sdk") + 1], "${input:sdk_contents}/../../PlaybackEngines/AndroidPlayer")
+        for job in graph.jobs.values():
+            if Path(job["script"]).stem in {"shader_context", "shader_prefab", "payload_shader_records"}:
+                args = job["arguments"]
+                self.assertEqual(args[args.index("--sdk") + 1], "${input:sdk}")
+
+    def test_barrier_job_binds_legacy_sdk_and_current_output_policy(self):
+        graph = G.Graph(ROOT, {})
+        barrier = graph.build(G.digest(ROOT / "recipe/owner-barrier-shaders.json"))
+        args = graph.jobs[barrier]["arguments"]
+        self.assertEqual(args[args.index("--legacy-sdk") + 1], "${input:legacy_sdk}")
+        graph.build(G.digest(ROOT / "recipe/owner-commando-objects.json"))
+        supported = {"object_produce", "record_remap", "record_produce", "mesh_produce", "avatar_produce", "texture_produce", "shader_context", "shader_prefab"}
+        for job in graph.jobs.values():
+            if Path(job["script"]).stem in supported:
+                self.assertEqual(job["arguments"][job["arguments"].index("--comparison") + 1], "diagnostic")
 
     def test_object_sdk_profile_keeps_application_relative_resource_root(self):
         graph = G.Graph(ROOT, {})

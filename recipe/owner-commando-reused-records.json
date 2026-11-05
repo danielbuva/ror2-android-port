@@ -14,7 +14,12 @@
         2433
       ],
       "bytes": 72,
-      "sha256": "80f9b68cf26d8948a9a9f94170de59b20f09a29f6f25c8d2e5b5083662106f3a"
+      "sha256": "80f9b68cf26d8948a9a9f94170de59b20f09a29f6f25c8d2e5b5083662106f3a",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2",
+        "Interactor"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -29,7 +34,12 @@
         97
       ],
       "bytes": 96,
-      "sha256": "ce962c88aa7d70ad1dff3109fa2c887ee402c6600da47677cc26e8fadf28cd7b"
+      "sha256": "ce962c88aa7d70ad1dff3109fa2c887ee402c6600da47677cc26e8fadf28cd7b",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2",
+        "HoldoutZoneController"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -44,7 +54,12 @@
         2623
       ],
       "bytes": 64,
-      "sha256": "588397db622011689a16b0c5c39fb8b07e0906333ce81e41c5ffde0ba29b6796"
+      "sha256": "588397db622011689a16b0c5c39fb8b07e0906333ce81e41c5ffde0ba29b6796",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2",
+        "Tracer"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -59,7 +74,12 @@
         137
       ],
       "bytes": 88,
-      "sha256": "044126fe40ea62c8f222ab815611781f9d56472f2ae7c8adfb236caa2d0809bf"
+      "sha256": "044126fe40ea62c8f222ab815611781f9d56472f2ae7c8adfb236caa2d0809bf",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2",
+        "EffectManagerHelper"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -74,7 +94,12 @@
         872
       ],
       "bytes": 128,
-      "sha256": "d5d16e847152d95f31ae522158b6f7a33d6defec5d2bf4fdfd5bbbe351312647"
+      "sha256": "d5d16e847152d95f31ae522158b6f7a33d6defec5d2bf4fdfd5bbbe351312647",
+      "script_identity": [
+        "Unity.Postprocessing.Runtime.dll",
+        "UnityEngine.Rendering.PostProcessing",
+        "ColorGrading"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -89,7 +114,12 @@
         1161
       ],
       "bytes": 88,
-      "sha256": "eeb387696782e0357ed6191c8a49066aee3f49e9bdbbe5cbdbc5330b2555fc30"
+      "sha256": "eeb387696782e0357ed6191c8a49066aee3f49e9bdbbe5cbdbc5330b2555fc30",
+      "script_identity": [
+        "UnityEngine.UI.dll",
+        "UnityEngine.UI",
+        "RawImage"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -104,7 +134,12 @@
         2498
       ],
       "bytes": 92,
-      "sha256": "1636ff7e6ed483648beed80c0ac74ae481d28a97f30da3423e2e7cc846cfc215"
+      "sha256": "1636ff7e6ed483648beed80c0ac74ae481d28a97f30da3423e2e7cc846cfc215",
+      "script_identity": [
+        "RoR2.dll",
+        "",
+        "LunarWispFXController"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -119,7 +154,12 @@
         852
       ],
       "bytes": 92,
-      "sha256": "86cb9e1c5d7e250dae1bec95948ad21dcf6f0e25d1f41b5c66b84c4555f55f56"
+      "sha256": "86cb9e1c5d7e250dae1bec95948ad21dcf6f0e25d1f41b5c66b84c4555f55f56",
+      "script_identity": [
+        "RoR2.dll",
+        "",
+        "RootMotionAccumulator"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -134,7 +174,12 @@
         2554
       ],
       "bytes": 84,
-      "sha256": "5ea59f2268177e80dd071bfb71ba01a3780a59245268fb4efa2988a01438135c"
+      "sha256": "5ea59f2268177e80dd071bfb71ba01a3780a59245268fb4efa2988a01438135c",
+      "script_identity": [
+        "RoR2.dll",
+        "",
+        "Particle_SetMinSize"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -149,7 +194,12 @@
         439
       ],
       "bytes": 112,
-      "sha256": "21544323993ea0d3020590f73b31534201ce1c928752ca4d9134aed95b84cefe"
+      "sha256": "21544323993ea0d3020590f73b31534201ce1c928752ca4d9134aed95b84cefe",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2",
+        "RunPresenceMonoBehaviourToggle"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -164,7 +214,12 @@
         490
       ],
       "bytes": 88,
-      "sha256": "870f5dbba20a2460b561b4d9e384e69a79778a6d68c1a28e79da3cb52f1dab18"
+      "sha256": "870f5dbba20a2460b561b4d9e384e69a79778a6d68c1a28e79da3cb52f1dab18",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2.Mecanim",
+        "CrouchMecanim"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -179,7 +234,12 @@
         139
       ],
       "bytes": 72,
-      "sha256": "68ee50438a03c17e8620bdf32e8979b4dfaf902de77db9e08d7b38c2c91040fd"
+      "sha256": "68ee50438a03c17e8620bdf32e8979b4dfaf902de77db9e08d7b38c2c91040fd",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2",
+        "TeamFilter"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -194,7 +254,12 @@
         443
       ],
       "bytes": 96,
-      "sha256": "9ec21ed2497cba0a76a00ecc04a8efbb0282f5bfa02c903ccf021eb776d3efbb"
+      "sha256": "9ec21ed2497cba0a76a00ecc04a8efbb0282f5bfa02c903ccf021eb776d3efbb",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2",
+        "SharedSufferingManager"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -209,7 +274,12 @@
         793
       ],
       "bytes": 92,
-      "sha256": "5a62ae9cd9f6b4d7c8a71bb0ab040abb848f44f1848dc8542ffb3e9c0f5ec846"
+      "sha256": "5a62ae9cd9f6b4d7c8a71bb0ab040abb848f44f1848dc8542ffb3e9c0f5ec846",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2.UI",
+        "PickupPickerPanel"
+      ]
     },
     {
       "source_profile_sha256": "afe5e32ab5f57f19949f672d7cd4a3d91a97a861f332d41ab46330d239baabf0",
@@ -240,7 +310,12 @@
         1221
       ],
       "bytes": 120,
-      "sha256": "a1db365d0ff858b60e31065f4e8bdeeb414fcc0f788cb3b236236cf162a15add"
+      "sha256": "a1db365d0ff858b60e31065f4e8bdeeb414fcc0f788cb3b236236cf162a15add",
+      "script_identity": [
+        "UnityEngine.UI.dll",
+        "UnityEngine.UI",
+        "HorizontalLayoutGroup"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -255,7 +330,12 @@
         580
       ],
       "bytes": 96,
-      "sha256": "cf4f8cda3024c737be4fa409e3633e6edb634e0d5fac2d2d5dc2bdb9e206c940"
+      "sha256": "cf4f8cda3024c737be4fa409e3633e6edb634e0d5fac2d2d5dc2bdb9e206c940",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2.Stats",
+        "PlayerStatsComponent"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -270,7 +350,12 @@
         1971
       ],
       "bytes": 72,
-      "sha256": "7d8dbc0a5c8edaab4f1471e6a5262825ed0684483e7544c65c2408dc013aa60e"
+      "sha256": "7d8dbc0a5c8edaab4f1471e6a5262825ed0684483e7544c65c2408dc013aa60e",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2",
+        "SurfaceDef"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -285,7 +370,12 @@
         2003
       ],
       "bytes": 144,
-      "sha256": "6630debead8a1855a84f7c4ae14602e20428e9abe84374334f9e3da1989d9163"
+      "sha256": "6630debead8a1855a84f7c4ae14602e20428e9abe84374334f9e3da1989d9163",
+      "script_identity": [
+        "Unity.Postprocessing.Runtime.dll",
+        "UnityEngine.Rendering.PostProcessing",
+        "PostProcessVolume"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -300,7 +390,12 @@
         933
       ],
       "bytes": 88,
-      "sha256": "cb1dd7f147e1115966c5000e16270ecfbca958d4afdac8b4774f3aaf38fddacd"
+      "sha256": "cb1dd7f147e1115966c5000e16270ecfbca958d4afdac8b4774f3aaf38fddacd",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2",
+        "InteractionDriver"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -315,7 +410,12 @@
         55
       ],
       "bytes": 72,
-      "sha256": "4f8acdb520520fc03ee899c0a9166a080ce95fb39896607a45aae3d6a9644d3e"
+      "sha256": "4f8acdb520520fc03ee899c0a9166a080ce95fb39896607a45aae3d6a9644d3e",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2",
+        "LaserPointer"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -330,7 +430,12 @@
         960
       ],
       "bytes": 104,
-      "sha256": "b56c02c9033289be39b7c9d4bd93c914fa94b480acaa2bccc2ceb9d5d4aaded0"
+      "sha256": "b56c02c9033289be39b7c9d4bd93c914fa94b480acaa2bccc2ceb9d5d4aaded0",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2",
+        "ExplodeRigidbodiesOnStart"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -345,7 +450,12 @@
         715
       ],
       "bytes": 92,
-      "sha256": "0fffeb3675b245e7914f08a1e6ced52f4be05e7275381f36508960c9e29a2ffb"
+      "sha256": "0fffeb3675b245e7914f08a1e6ced52f4be05e7275381f36508960c9e29a2ffb",
+      "script_identity": [
+        "Unity.TextMeshPro.dll",
+        "TMPro",
+        "TextMeshPro"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -360,7 +470,12 @@
         1988
       ],
       "bytes": 108,
-      "sha256": "49e2514c2734d04dc8bd3406ffbaab08752d5b065b89cec3521a85c6eb5794c3"
+      "sha256": "49e2514c2734d04dc8bd3406ffbaab08752d5b065b89cec3521a85c6eb5794c3",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2.Projectile",
+        "ProjectileStickOnImpact"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -375,7 +490,12 @@
         109
       ],
       "bytes": 88,
-      "sha256": "257a9ed22d0329bb8330a4322759815a6dc4087a885b84eb46bf1c4f03f55684"
+      "sha256": "257a9ed22d0329bb8330a4322759815a6dc4087a885b84eb46bf1c4f03f55684",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2",
+        "PlayerSpawnInhibitor"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -390,7 +510,12 @@
         2125
       ],
       "bytes": 72,
-      "sha256": "37ba9fee4fb267675011ddca26501a50bfd81d5bc4b6338df1ee43bffd16e272"
+      "sha256": "37ba9fee4fb267675011ddca26501a50bfd81d5bc4b6338df1ee43bffd16e272",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2",
+        "SfxLocator"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -405,7 +530,12 @@
         2016
       ],
       "bytes": 144,
-      "sha256": "016a72ce97b8e2f2d5376e75985ba4006273e189d238b1e1c67b0ccb1b2b94d6"
+      "sha256": "016a72ce97b8e2f2d5376e75985ba4006273e189d238b1e1c67b0ccb1b2b94d6",
+      "script_identity": [
+        "Unity.Postprocessing.Runtime.dll",
+        "UnityEngine.Rendering.PostProcessing",
+        "ChromaticAberration"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -420,7 +550,12 @@
         987
       ],
       "bytes": 72,
-      "sha256": "e1ae16d78dd82d67e0cf9ab94f2baf71b8a267764d964b1850fab901af4eea55"
+      "sha256": "e1ae16d78dd82d67e0cf9ab94f2baf71b8a267764d964b1850fab901af4eea55",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2",
+        "CoinBehavior"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -435,7 +570,12 @@
         155
       ],
       "bytes": 88,
-      "sha256": "39f6df8704eafcfa54bd275ecb6417368d2799167c877e58feb66f4b6c3afd8a"
+      "sha256": "39f6df8704eafcfa54bd275ecb6417368d2799167c877e58feb66f4b6c3afd8a",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2",
+        "ModelPanelParameters"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -450,7 +590,12 @@
         2670
       ],
       "bytes": 96,
-      "sha256": "cc9b2898cb8e4e32dcfe55b864c4b5fa90592c6efbb0b02eaa2c0150f1c847c8"
+      "sha256": "cc9b2898cb8e4e32dcfe55b864c4b5fa90592c6efbb0b02eaa2c0150f1c847c8",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2",
+        "NetworkedBodyAttachment"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -465,7 +610,12 @@
         1084
       ],
       "bytes": 92,
-      "sha256": "026de534b4c5f684473b3806be62352630a6fdf97ba1957301be73211272a107"
+      "sha256": "026de534b4c5f684473b3806be62352630a6fdf97ba1957301be73211272a107",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2.UI",
+        "MPEventSystemLocator"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -480,7 +630,12 @@
         2124
       ],
       "bytes": 108,
-      "sha256": "b1f47fac1638aadf38a7ba6326b25f1ebe221457e2a02ad9196394d37094681c"
+      "sha256": "b1f47fac1638aadf38a7ba6326b25f1ebe221457e2a02ad9196394d37094681c",
+      "script_identity": [
+        "RoR2.dll",
+        "",
+        "GroundedParticleEmissionToggler"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -495,7 +650,12 @@
         562
       ],
       "bytes": 96,
-      "sha256": "9152e9244c34f60e65c9804d545531dcf63fb704eadee6f5e97621d4945671a2"
+      "sha256": "9152e9244c34f60e65c9804d545531dcf63fb704eadee6f5e97621d4945671a2",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2.Orbs",
+        "DroneTakenOrbEffect"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -510,7 +670,12 @@
         481
       ],
       "bytes": 100,
-      "sha256": "c7abf4f3cdc45acd00134bc1acf9e1849642496141cbbe4cb531f7d529138552"
+      "sha256": "c7abf4f3cdc45acd00134bc1acf9e1849642496141cbbe4cb531f7d529138552",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2.Projectile",
+        "BigMushSporeFilter"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -525,7 +690,12 @@
         213
       ],
       "bytes": 76,
-      "sha256": "a580a3b461b86c2f0d883c4afe2ec4a267f7373737ba1f5e1a7f2c909db96a1a"
+      "sha256": "a580a3b461b86c2f0d883c4afe2ec4a267f7373737ba1f5e1a7f2c909db96a1a",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2.UI",
+        "UISkinData"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -540,7 +710,12 @@
         1660
       ],
       "bytes": 88,
-      "sha256": "4e8b38ff6374a5a129f9120503e35d2dc14c8e1cf87747e71051892141291020"
+      "sha256": "4e8b38ff6374a5a129f9120503e35d2dc14c8e1cf87747e71051892141291020",
+      "script_identity": [
+        "UnityEngine.UI.dll",
+        "UnityEngine.UI",
+        "Image"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -555,7 +730,12 @@
         1956
       ],
       "bytes": 112,
-      "sha256": "97e37588c0534c5b190349a3c2117c61b6ce8c173bc65b2679ec07248898c96d"
+      "sha256": "97e37588c0534c5b190349a3c2117c61b6ce8c173bc65b2679ec07248898c96d",
+      "script_identity": [
+        "AK.Wwise.Unity.API.WwiseTypes.dll",
+        "",
+        "WwiseBankReference"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -570,7 +750,12 @@
         57
       ],
       "bytes": 76,
-      "sha256": "8d2ebcf768bb8fd00f20d1b7830e1564b454f1086fb402f364d6a3ee3b70d400"
+      "sha256": "8d2ebcf768bb8fd00f20d1b7830e1564b454f1086fb402f364d6a3ee3b70d400",
+      "script_identity": [
+        "RoR2.dll",
+        "",
+        "QuaternionPID"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -585,7 +770,12 @@
         127
       ],
       "bytes": 84,
-      "sha256": "4b29cfdb8fa326d33cfb472b6323b5b7bf7bb92d694ca85d29dee2952c82cc37"
+      "sha256": "4b29cfdb8fa326d33cfb472b6323b5b7bf7bb92d694ca85d29dee2952c82cc37",
+      "script_identity": [
+        "RoR2.dll",
+        "",
+        "ScorchlingController"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -600,7 +790,12 @@
         1057
       ],
       "bytes": 64,
-      "sha256": "e222e20efdfea99bbf3df81c38a4eff8ca11070040c3edc42d6de4e811233bea"
+      "sha256": "e222e20efdfea99bbf3df81c38a4eff8ca11070040c3edc42d6de4e811233bea",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2",
+        "Corpse"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -615,7 +810,12 @@
         2078
       ],
       "bytes": 72,
-      "sha256": "0c440ac38b6d9da6c1db293e3cb09fb468d184495dac7053ee6e234d7bc14421"
+      "sha256": "0c440ac38b6d9da6c1db293e3cb09fb468d184495dac7053ee6e234d7bc14421",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2",
+        "Highlight"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -630,7 +830,12 @@
         1779
       ],
       "bytes": 96,
-      "sha256": "5507800e6b52ec7608d2ada366e75e07bc5481456bff07f7a000eeaf2ab2a930"
+      "sha256": "5507800e6b52ec7608d2ada366e75e07bc5481456bff07f7a000eeaf2ab2a930",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2.Orbs",
+        "ItemTakenOrbEffect"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -645,7 +850,12 @@
         462
       ],
       "bytes": 72,
-      "sha256": "a263fe0b0d7ce802ee078a38f85b755afed56287ef1a0b2e11e8c30027161d2e"
+      "sha256": "a263fe0b0d7ce802ee078a38f85b755afed56287ef1a0b2e11e8c30027161d2e",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2",
+        "HitBoxGroup"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -660,7 +870,12 @@
         358
       ],
       "bytes": 72,
-      "sha256": "8b21d5f9fb8968836b74c22d33969465ba2c31b45b2818094c2b9f9308df0a18"
+      "sha256": "8b21d5f9fb8968836b74c22d33969465ba2c31b45b2818094c2b9f9308df0a18",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2",
+        "ItemDisplay"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -675,7 +890,12 @@
         1985
       ],
       "bytes": 80,
-      "sha256": "43cbd45391ebc99ceed40b98acdd6c84ff336a5fbc5d84d21842846bfe42bfba"
+      "sha256": "43cbd45391ebc99ceed40b98acdd6c84ff336a5fbc5d84d21842846bfe42bfba",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2",
+        "SigilFollower"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -690,7 +910,12 @@
         1032
       ],
       "bytes": 64,
-      "sha256": "d3a31b56c2da9737d862d6003aebfd06914bd42fd20e317547aa74684db21abc"
+      "sha256": "d3a31b56c2da9737d862d6003aebfd06914bd42fd20e317547aa74684db21abc",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2",
+        "UILayer"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -705,7 +930,12 @@
         16
       ],
       "bytes": 108,
-      "sha256": "2ee07cba3ad8f12e59125cbce26a1f193fee532dc14dc3e4be84cd4f2002c9b4"
+      "sha256": "2ee07cba3ad8f12e59125cbce26a1f193fee532dc14dc3e4be84cd4f2002c9b4",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2.Networking",
+        "NetworkAnimatorParams"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -720,7 +950,12 @@
         1821
       ],
       "bytes": 80,
-      "sha256": "4e3498dcaef14d4556e02f768895dbb754b7287de2e8f39541634b4bc851293f"
+      "sha256": "4e3498dcaef14d4556e02f768895dbb754b7287de2e8f39541634b4bc851293f",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2",
+        "DestroyOnDestroy"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -735,7 +970,12 @@
         1741
       ],
       "bytes": 80,
-      "sha256": "5df98b88509ff1932e6f0bb8ae3b8450f1960f1f8f2b065759ce4dbc76cd7f8f"
+      "sha256": "5df98b88509ff1932e6f0bb8ae3b8450f1960f1f8f2b065759ce4dbc76cd7f8f",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2",
+        "MatchTransform"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -750,7 +990,12 @@
         289
       ],
       "bytes": 76,
-      "sha256": "0706d1f1840f5c492d211b8e9f89aec9ccbeff6ee97eda99b1190609e64d8e35"
+      "sha256": "0706d1f1840f5c492d211b8e9f89aec9ccbeff6ee97eda99b1190609e64d8e35",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2.UI",
+        "CursorOpener"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -765,7 +1010,12 @@
         949
       ],
       "bytes": 92,
-      "sha256": "f01e8480bbe455b3b191b86f376feb5fc95100027b6cf6ce53de6a70e135cb43"
+      "sha256": "f01e8480bbe455b3b191b86f376feb5fc95100027b6cf6ce53de6a70e135cb43",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2.UI",
+        "HGGamepadInputEvent"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -780,7 +1030,12 @@
         1129
       ],
       "bytes": 100,
-      "sha256": "0ec2cad9c06b126e2fc959fcb425b5f731c30a27cd6bc7e29db1a90c7f91549c"
+      "sha256": "0ec2cad9c06b126e2fc959fcb425b5f731c30a27cd6bc7e29db1a90c7f91549c",
+      "script_identity": [
+        "RoR2.dll",
+        "",
+        "GenericInspectInfoProvider"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -810,7 +1065,12 @@
         661
       ],
       "bytes": 108,
-      "sha256": "7f9a6bc5ce45d02b3e7d7d875d7527bf3a1be8ec0c3576f10762768a19bf2629"
+      "sha256": "7f9a6bc5ce45d02b3e7d7d875d7527bf3a1be8ec0c3576f10762768a19bf2629",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2.Projectile",
+        "ProjectileOverlapAttack"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -825,7 +1085,12 @@
         2351
       ],
       "bytes": 72,
-      "sha256": "f9e7ff6825460783a96415d9a83c1fad5f8f07237a14d850134751071469854f"
+      "sha256": "f9e7ff6825460783a96415d9a83c1fad5f8f07237a14d850134751071469854f",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2",
+        "AimAnimator"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -840,7 +1105,12 @@
         950
       ],
       "bytes": 84,
-      "sha256": "6bb16ca724e9b697c28549973d14e8c49f201b69104c073526e5304f0aa62a4c"
+      "sha256": "6bb16ca724e9b697c28549973d14e8c49f201b69104c073526e5304f0aa62a4c",
+      "script_identity": [
+        "RoR2.dll",
+        "",
+        "DestroyOnParticleEnd"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -855,7 +1125,12 @@
         725
       ],
       "bytes": 64,
-      "sha256": "476d4b77bb73441f342988dfad3b88e7cfe3e1a779088a7515adea927a717f39"
+      "sha256": "476d4b77bb73441f342988dfad3b88e7cfe3e1a779088a7515adea927a717f39",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2",
+        "SceneDef"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -870,7 +1145,12 @@
         2309
       ],
       "bytes": 72,
-      "sha256": "bbdb1abca74c24c18976fcf278b011cef550f646ef1682fbe77a2498f76d1220"
+      "sha256": "bbdb1abca74c24c18976fcf278b011cef550f646ef1682fbe77a2498f76d1220",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2",
+        "RadialForce"
+      ]
     },
     {
       "source_profile_sha256": "9ff4e5d552d71bc0f8e68653e2ac5680810bad07a1b18b84290f72b8188aa008",
@@ -900,7 +1180,12 @@
         1006
       ],
       "bytes": 88,
-      "sha256": "6373c362d33a2ee3b03717cbc49c7057f04d0b8e76179941515500bcf2761bc5"
+      "sha256": "6373c362d33a2ee3b03717cbc49c7057f04d0b8e76179941515500bcf2761bc5",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2",
+        "RandomizeSplatBias"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -945,7 +1230,12 @@
         1999
       ],
       "bytes": 108,
-      "sha256": "9f9ccc4f4486107cafde07a12ff739b0cfbd982da3cc3da1ffe2977c0cd29b10"
+      "sha256": "9f9ccc4f4486107cafde07a12ff739b0cfbd982da3cc3da1ffe2977c0cd29b10",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2.Projectile",
+        "MineProximityDetonator"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -960,7 +1250,12 @@
         418
       ],
       "bytes": 80,
-      "sha256": "2b958c7176daf7a44f43d9cba01a9b50cbb1ee7e287da05888a39091ffa875f4"
+      "sha256": "2b958c7176daf7a44f43d9cba01a9b50cbb1ee7e287da05888a39091ffa875f4",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2.Audio",
+        "LoopSoundDef"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -975,7 +1270,12 @@
         196
       ],
       "bytes": 72,
-      "sha256": "f65f2a3852ac6a35f701dbf074f9cc583f09bf6968372877c13bd457a1c63905"
+      "sha256": "f65f2a3852ac6a35f701dbf074f9cc583f09bf6968372877c13bd457a1c63905",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2",
+        "HurtBoxGroup"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -990,7 +1290,12 @@
         1132
       ],
       "bytes": 96,
-      "sha256": "0c51cedb993c69309d68cbf6d8588d19a56e3bac2ee63a55698f47b2ec4de17f"
+      "sha256": "0c51cedb993c69309d68cbf6d8588d19a56e3bac2ee63a55698f47b2ec4de17f",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2",
+        "VelocityRTPCController"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -1005,7 +1310,12 @@
         965
       ],
       "bytes": 96,
-      "sha256": "89c1fb3073c571a265a8e99d7b460791da3e62a4f8cb2173a6f8f996c3fcacec"
+      "sha256": "89c1fb3073c571a265a8e99d7b460791da3e62a4f8cb2173a6f8f996c3fcacec",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2",
+        "NormalizeParticleScale"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -1020,7 +1330,12 @@
         567
       ],
       "bytes": 104,
-      "sha256": "0087247d911fe5ffd3b357cb39e17c89e10e7f2b57ff5443fb6228459ce6b1c9"
+      "sha256": "0087247d911fe5ffd3b357cb39e17c89e10e7f2b57ff5443fb6228459ce6b1c9",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2",
+        "BrotherSuperArmorController"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -1035,7 +1350,12 @@
         970
       ],
       "bytes": 88,
-      "sha256": "6f1977cf6c632facfc1aa725d2d0eefe44cc485388e787c7684c042da641878a"
+      "sha256": "6f1977cf6c632facfc1aa725d2d0eefe44cc485388e787c7684c042da641878a",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2",
+        "TeamAreaIndicator"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -1050,7 +1370,12 @@
         2313
       ],
       "bytes": 88,
-      "sha256": "5f02a463b12bb51f24a7830bfb193a8d0a84f22dda500876d30de1de4481e63e"
+      "sha256": "5f02a463b12bb51f24a7830bfb193a8d0a84f22dda500876d30de1de4481e63e",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2",
+        "ElusiveAntlersPickup"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -1065,7 +1390,12 @@
         2684
       ],
       "bytes": 88,
-      "sha256": "2279a50dfcce33dee463d6b01331de8dfd7506e3a83560f956885a748d8471de"
+      "sha256": "2279a50dfcce33dee463d6b01331de8dfd7506e3a83560f956885a748d8471de",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2",
+        "LightScaleFromParent"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -1080,7 +1410,12 @@
         93
       ],
       "bytes": 104,
-      "sha256": "34174fd4c948afb336c67ac104272892d7fc91566c84171fa83375cf380bbedb"
+      "sha256": "34174fd4c948afb336c67ac104272892d7fc91566c84171fa83375cf380bbedb",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2",
+        "NetworkUIPromptController"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -1095,7 +1430,12 @@
         956
       ],
       "bytes": 96,
-      "sha256": "267cc7278c499f683a36017efe10a98a75f030d8aaaa415e365a86f1cfeb4977"
+      "sha256": "267cc7278c499f683a36017efe10a98a75f030d8aaaa415e365a86f1cfeb4977",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2",
+        "SprintEffectController"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -1110,7 +1450,12 @@
         1226
       ],
       "bytes": 112,
-      "sha256": "36e9d0b19db51823e8e708a39bbd6bed1c44c619426c5473082538973a6a1a57"
+      "sha256": "36e9d0b19db51823e8e708a39bbd6bed1c44c619426c5473082538973a6a1a57",
+      "script_identity": [
+        "UnityEngine.UI.dll",
+        "UnityEngine.UI",
+        "ContentSizeFitter"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -1125,7 +1470,12 @@
         2321
       ],
       "bytes": 104,
-      "sha256": "5894ce180073328239ac5331635d59590d0049b862d5f3c04c44bfe0f1e9625d"
+      "sha256": "5894ce180073328239ac5331635d59590d0049b862d5f3c04c44bfe0f1e9625d",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2",
+        "AurelioniteSummonEffectMover"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -1140,7 +1490,12 @@
         2283
       ],
       "bytes": 68,
-      "sha256": "f2604a0bcfe73cfccd02da7bd7de2ac52ec094aaa935693d2db73801dbcdeee8"
+      "sha256": "f2604a0bcfe73cfccd02da7bd7de2ac52ec094aaa935693d2db73801dbcdeee8",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2.UI",
+        "MPButton"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -1155,7 +1510,12 @@
         1850
       ],
       "bytes": 132,
-      "sha256": "c621c966fa3a2a2799186669456f4d0ef77134699203000668c45aaca646dc09"
+      "sha256": "c621c966fa3a2a2799186669456f4d0ef77134699203000668c45aaca646dc09",
+      "script_identity": [
+        "com.unity.multiplayer-hlapi.Runtime.dll",
+        "UnityEngine.Networking",
+        "NetworkIdentity"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -1170,7 +1530,12 @@
         1169
       ],
       "bytes": 116,
-      "sha256": "e581135c61ae4dd24ff31936c06aa59bb8137f34e288327d4558069439148d82"
+      "sha256": "e581135c61ae4dd24ff31936c06aa59bb8137f34e288327d4558069439148d82",
+      "script_identity": [
+        "Assembly-CSharp.dll",
+        "LeTai.Asset.TranslucentImage",
+        "TranslucentImage"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -1185,7 +1550,12 @@
         2680
       ],
       "bytes": 92,
-      "sha256": "fb68168214b0ea1a7d666deec51c4fcebe8aa8a8d6825e99fcedce6c8532af18"
+      "sha256": "fb68168214b0ea1a7d666deec51c4fcebe8aa8a8d6825e99fcedce6c8532af18",
+      "script_identity": [
+        "RoR2.dll",
+        "",
+        "BeamPointsFromTransforms"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -1200,7 +1570,12 @@
         626
       ],
       "bytes": 88,
-      "sha256": "586f56254749fbe439ded8422c76eb21fe9a37ca65af88127160538deb42c6d7"
+      "sha256": "586f56254749fbe439ded8422c76eb21fe9a37ca65af88127160538deb42c6d7",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2",
+        "JitterBoneBlacklist"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -1215,7 +1590,12 @@
         2464
       ],
       "bytes": 88,
-      "sha256": "87eb52e807f42f36fba29056ddb316118f252b2543def1629d5c1686388adfae"
+      "sha256": "87eb52e807f42f36fba29056ddb316118f252b2543def1629d5c1686388adfae",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2.Mecanim",
+        "ClearLayerWeight"
+      ]
     },
     {
       "source_profile_sha256": "2bf9a8d7b3569a141729fda0c6777dabd29b729602fceb33f7363a0559e39e8e",
@@ -1246,7 +1626,12 @@
         453
       ],
       "bytes": 96,
-      "sha256": "13f8ab0b4974dc36b78a4b92dd26feea54e9e60d43cccef0b5a1754aa9e12fb8"
+      "sha256": "13f8ab0b4974dc36b78a4b92dd26feea54e9e60d43cccef0b5a1754aa9e12fb8",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2",
+        "InteractionsPerPlayer"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -1261,7 +1646,12 @@
         107
       ],
       "bytes": 88,
-      "sha256": "313138ab4d1d4c6b997aff6b1d726563769cf1f1a5944fa73b46440887a13250"
+      "sha256": "313138ab4d1d4c6b997aff6b1d726563769cf1f1a5944fa73b46440887a13250",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2",
+        "RigidbodyDirection"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -1276,7 +1666,12 @@
         2715
       ],
       "bytes": 96,
-      "sha256": "ed790b9ddf0be0954e30645716f67e5e2632ba2a40b2cc81b444d170dd2c63c1"
+      "sha256": "ed790b9ddf0be0954e30645716f67e5e2632ba2a40b2cc81b444d170dd2c63c1",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2",
+        "RigidbodySoundOnImpact"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -1291,7 +1686,12 @@
         2512
       ],
       "bytes": 84,
-      "sha256": "3fb36430e7e3d185bf36ad0f104d5a24d7222550626b4da628d13e4d4a96dc6b"
+      "sha256": "3fb36430e7e3d185bf36ad0f104d5a24d7222550626b4da628d13e4d4a96dc6b",
+      "script_identity": [
+        "RoR2.dll",
+        "",
+        "DynamicBoneCollider"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -1306,7 +1706,12 @@
         2290
       ],
       "bytes": 80,
-      "sha256": "3580db30d907cd00b0fe3e74790880f95694ee729dd7e30fe4a9273430d4060e"
+      "sha256": "3580db30d907cd00b0fe3e74790880f95694ee729dd7e30fe4a9273430d4060e",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2",
+        "GravitateHMMine"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -1321,7 +1726,12 @@
         2752
       ],
       "bytes": 76,
-      "sha256": "5bf8de639a1a22da1fe9b05691a7c3cb8c8eba731082d15d47e2bed28cfb9265"
+      "sha256": "5bf8de639a1a22da1fe9b05691a7c3cb8c8eba731082d15d47e2bed28cfb9265",
+      "script_identity": [
+        "RoR2.dll",
+        "",
+        "RotateIfMoving"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -1336,7 +1746,12 @@
         2730
       ],
       "bytes": 88,
-      "sha256": "25be18cf600d10897fc2f2c920495b6cf5eb751c86ae526de98f760abfb856e9"
+      "sha256": "25be18cf600d10897fc2f2c920495b6cf5eb751c86ae526de98f760abfb856e9",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2",
+        "ApplyForceOnStart"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -1351,7 +1766,12 @@
         2571
       ],
       "bytes": 80,
-      "sha256": "50558ff00698935c273bc6333093541618bc2ea121e960f07ed5eb11dde667dd"
+      "sha256": "50558ff00698935c273bc6333093541618bc2ea121e960f07ed5eb11dde667dd",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2",
+        "DestroyOnTimer"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -1366,7 +1786,12 @@
         1727
       ],
       "bytes": 84,
-      "sha256": "816c953aab9b1cf05e9352a9f69e34d999e1354e549e4eb1df22ad2e6385262d"
+      "sha256": "816c953aab9b1cf05e9352a9f69e34d999e1354e549e4eb1df22ad2e6385262d",
+      "script_identity": [
+        "RoR2.dll",
+        "",
+        "OnParticleEndEvent"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -1381,7 +1806,12 @@
         1121
       ],
       "bytes": 80,
-      "sha256": "afe39a5f1c65393f9c26607b62f2154e85b7f0a3f19f3d90bd14c399d6b5069c"
+      "sha256": "afe39a5f1c65393f9c26607b62f2154e85b7f0a3f19f3d90bd14c399d6b5069c",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2",
+        "SkinDefParams"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -1396,7 +1826,12 @@
         441
       ],
       "bytes": 80,
-      "sha256": "a3ce5132c62481aacbce8db0aa6595f4e4cb7cb194b2de0287c304a4aa3264f0"
+      "sha256": "a3ce5132c62481aacbce8db0aa6595f4e4cb7cb194b2de0287c304a4aa3264f0",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2",
+        "NonSolidToCamera"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -1411,7 +1846,12 @@
         839
       ],
       "bytes": 104,
-      "sha256": "83bafa7b4fccaef39c255835cb59931a635808d94b39b37bb32c94a72f402642"
+      "sha256": "83bafa7b4fccaef39c255835cb59931a635808d94b39b37bb32c94a72f402642",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2",
+        "TinkerableObjectAttributes"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -1426,7 +1866,12 @@
         1987
       ],
       "bytes": 72,
-      "sha256": "377444c1a3cda0918891a6950d9d51c8b1e88a9c276ccabe8ea6bef4e5bbbea3"
+      "sha256": "377444c1a3cda0918891a6950d9d51c8b1e88a9c276ccabe8ea6bef4e5bbbea3",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2",
+        "Deployable"
+      ]
     },
     {
       "source_profile_sha256": "9ff4e5d552d71bc0f8e68653e2ac5680810bad07a1b18b84290f72b8188aa008",
@@ -1456,7 +1901,12 @@
         775
       ],
       "bytes": 100,
-      "sha256": "56e8e0741591819400d3c67567bc4b151842147f7c4da453f75855e2b37dc5ba"
+      "sha256": "56e8e0741591819400d3c67567bc4b151842147f7c4da453f75855e2b37dc5ba",
+      "script_identity": [
+        "Unity.TextMeshPro.dll",
+        "TMPro",
+        "TMP_FontAsset"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -1471,7 +1921,12 @@
         77
       ],
       "bytes": 84,
-      "sha256": "5597874e977611e3c2593273789d8760e2c65ab9e1524a3602b6472385d52d97"
+      "sha256": "5597874e977611e3c2593273789d8760e2c65ab9e1524a3602b6472385d52d97",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2.CharacterAI",
+        "AIOwnership"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -1486,7 +1941,12 @@
         803
       ],
       "bytes": 152,
-      "sha256": "4236cd9ed00eb176d32aaae10b40636a716299678c42e8e3aec00c5774f38136"
+      "sha256": "4236cd9ed00eb176d32aaae10b40636a716299678c42e8e3aec00c5774f38136",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2",
+        "PlayerCharacterMasterControllerEntitlementTracker"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -1501,7 +1961,12 @@
         460
       ],
       "bytes": 80,
-      "sha256": "a37a6096aedcb6cccc8f879796799556fa92379474019c3a88c59e94b054cd01"
+      "sha256": "a37a6096aedcb6cccc8f879796799556fa92379474019c3a88c59e94b054cd01",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2",
+        "LoopSoundPlayer"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -1516,7 +1981,12 @@
         422
       ],
       "bytes": 72,
-      "sha256": "11dc24280901fcee97a38354d0c3abc5db31dc6c0ea9ac089bd4c8c0ea3f335e"
+      "sha256": "11dc24280901fcee97a38354d0c3abc5db31dc6c0ea9ac089bd4c8c0ea3f335e",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2",
+        "LunarCoinDef"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -1531,7 +2001,12 @@
         406
       ],
       "bytes": 104,
-      "sha256": "d1a66631e9023e2b6d7050b0cc38a6168f679651b29947f7aa64de37b6423d62"
+      "sha256": "d1a66631e9023e2b6d7050b0cc38a6168f679651b29947f7aa64de37b6423d62",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2",
+        "ParticleSystemRandomColor"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -1561,7 +2036,12 @@
         1011
       ],
       "bytes": 88,
-      "sha256": "9984c98f43afcb5fd4d5cd27849086b11d5f60b1b506f25187245e1b806dffd8"
+      "sha256": "9984c98f43afcb5fd4d5cd27849086b11d5f60b1b506f25187245e1b806dffd8",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2",
+        "AlterBuffDuration"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -1576,7 +2056,12 @@
         1915
       ],
       "bytes": 68,
-      "sha256": "8249f44d721d9d84c4f1db02cda731d4f41e1fac9930ea239f944dea656671d8"
+      "sha256": "8249f44d721d9d84c4f1db02cda731d4f41e1fac9930ea239f944dea656671d8",
+      "script_identity": [
+        "RoR2.dll",
+        "",
+        "RotateItem"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -1591,7 +2076,12 @@
         2126
       ],
       "bytes": 96,
-      "sha256": "cc48d90d290a4e71dfd9fd981f8d9c2da28c3d055a5248e88a90773a309767d9"
+      "sha256": "cc48d90d290a4e71dfd9fd981f8d9c2da28c3d055a5248e88a90773a309767d9",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2",
+        "CharacterCameraParams"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -1606,7 +2096,12 @@
         2648
       ],
       "bytes": 80,
-      "sha256": "733fa68b241f59dfbefc23f1ffdd3f343449843e7cab550f83a7822b903a2b44"
+      "sha256": "733fa68b241f59dfbefc23f1ffdd3f343449843e7cab550f83a7822b903a2b44",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2",
+        "EnableWithPhase"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -1621,7 +2116,12 @@
         1911
       ],
       "bytes": 80,
-      "sha256": "f00927c19442c88865b6f8b9858a7d1317004b62cea7db5ced4919fa2884440e"
+      "sha256": "f00927c19442c88865b6f8b9858a7d1317004b62cea7db5ced4919fa2884440e",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2",
+        "ObjectScaleCurve"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -1636,7 +2136,12 @@
         2531
       ],
       "bytes": 104,
-      "sha256": "2550e969ec3f8d50102d1b3eb2dcb88574c7051f447bfdcfaebced09d3869630"
+      "sha256": "2550e969ec3f8d50102d1b3eb2dcb88574c7051f447bfdcfaebced09d3869630",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2",
+        "RendererColorFromEffectData"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -1651,7 +2156,12 @@
         501
       ],
       "bytes": 88,
-      "sha256": "c9cdfaeccd8655c77e9c66f197ac1838f5bff5c8cc546a081e25d4665ab9ab18"
+      "sha256": "c9cdfaeccd8655c77e9c66f197ac1838f5bff5c8cc546a081e25d4665ab9ab18",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2",
+        "SetDontDestroyOnLoad"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -1666,7 +2176,12 @@
         2569
       ],
       "bytes": 64,
-      "sha256": "c61b5fa8c6fe4ec30655dd49e0f9fc3178a53e3a63e58198e7f16923dccec366"
+      "sha256": "c61b5fa8c6fe4ec30655dd49e0f9fc3178a53e3a63e58198e7f16923dccec366",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2",
+        "HitBox"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -1681,7 +2196,12 @@
         774
       ],
       "bytes": 84,
-      "sha256": "c9bd456fbcf630537db9edde3e8f1b6ca3f4e661d4ef310b4b02d0f93e74c613"
+      "sha256": "c9bd456fbcf630537db9edde3e8f1b6ca3f4e661d4ef310b4b02d0f93e74c613",
+      "script_identity": [
+        "RoR2.dll",
+        "",
+        "ProximityHighlight"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -1696,7 +2216,12 @@
         1072
       ],
       "bytes": 96,
-      "sha256": "5a08aebc6e54f07c79b3a6c20aa24188b00df7edbf78e2b4b0b92344871a1fc5"
+      "sha256": "5a08aebc6e54f07c79b3a6c20aa24188b00df7edbf78e2b4b0b92344871a1fc5",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2",
+        "GenericPickupController"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -1711,7 +2236,12 @@
         2317
       ],
       "bytes": 112,
-      "sha256": "c7e2853b74e5a160ac6bdb314afcec65aff73f378a840d26af420c170188515f"
+      "sha256": "c7e2853b74e5a160ac6bdb314afcec65aff73f378a840d26af420c170188515f",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2",
+        "ReturnStolenItemsOnGettingHit"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -1726,7 +2256,12 @@
         1743
       ],
       "bytes": 104,
-      "sha256": "49febcc82e11d4ed7b264355e0e0f152f1b79a67b72192b403215ebcf45f7d75"
+      "sha256": "49febcc82e11d4ed7b264355e0e0f152f1b79a67b72192b403215ebcf45f7d75",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2",
+        "SpiritSoulStolenBuffManager"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -1741,7 +2276,12 @@
         119
       ],
       "bytes": 104,
-      "sha256": "76eca4d144a03d389c5c9b5b00afafe712a3758a0562e7dde5a592fea2c0779d"
+      "sha256": "76eca4d144a03d389c5c9b5b00afafe712a3758a0562e7dde5a592fea2c0779d",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2.Skills",
+        "ConditionalSkillOverride"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -1756,7 +2296,12 @@
         2718
       ],
       "bytes": 120,
-      "sha256": "ac7982c9f020805210a6484a7a8a4059d47dab71a91a14eb87fb51104d94e0be"
+      "sha256": "ac7982c9f020805210a6484a7a8a4059d47dab71a91a14eb87fb51104d94e0be",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2",
+        "ParticleSystemColorFromEffectData"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -1771,7 +2316,12 @@
         2352
       ],
       "bytes": 88,
-      "sha256": "36f9738fb16f57d4bdaba39e1c672fa4b30167df580638b0677c662fa0942bd5"
+      "sha256": "36f9738fb16f57d4bdaba39e1c672fa4b30167df580638b0677c662fa0942bd5",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2",
+        "PaintDetailsBelow"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -1786,7 +2336,12 @@
         1749
       ],
       "bytes": 72,
-      "sha256": "7b2f17d4493db5235b2c9eb15438332b19b32b9509a3eb7fcd786f0f838ae443"
+      "sha256": "7b2f17d4493db5235b2c9eb15438332b19b32b9509a3eb7fcd786f0f838ae443",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2",
+        "CampDirector"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -1801,7 +2356,12 @@
         777
       ],
       "bytes": 80,
-      "sha256": "33332ce13fd2df74936d3062532ca32141d322167bda4787d45ecb82bf84847e"
+      "sha256": "33332ce13fd2df74936d3062532ca32141d322167bda4787d45ecb82bf84847e",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2",
+        "TetherVfxOrigin"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -1816,7 +2376,12 @@
         241
       ],
       "bytes": 104,
-      "sha256": "d3e67c97534eaa255e700f5fb093cf0477cee7846f991c286136f261c75946be"
+      "sha256": "d3e67c97534eaa255e700f5fb093cf0477cee7846f991c286136f261c75946be",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2",
+        "MultiPointBezierCurveLine"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -1831,7 +2396,12 @@
         1031
       ],
       "bytes": 64,
-      "sha256": "25fe16f4cf4e6a9cc6f55df26272abd63eff16dcb5bc56c1787a3309aae02a60"
+      "sha256": "25fe16f4cf4e6a9cc6f55df26272abd63eff16dcb5bc56c1787a3309aae02a60",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2",
+        "HurtBox"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -1846,7 +2416,12 @@
         516
       ],
       "bytes": 80,
-      "sha256": "eb071a69aec0d3f55b9f810d605482e0eecae81740ba497d237e4ca9e97d7023"
+      "sha256": "eb071a69aec0d3f55b9f810d605482e0eecae81740ba497d237e4ca9e97d7023",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2",
+        "GenericOwnership"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -1861,7 +2436,12 @@
         2324
       ],
       "bytes": 80,
-      "sha256": "639aa360ff7ae45cde2f565a1fd7985b3ac80032d2a1154d74ab56c6c5140e1d"
+      "sha256": "639aa360ff7ae45cde2f565a1fd7985b3ac80032d2a1154d74ab56c6c5140e1d",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2",
+        "GravitatePickup"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -1876,7 +2456,12 @@
         29
       ],
       "bytes": 144,
-      "sha256": "d9044ec220d3fc4a4653bcfe5db2a2a5b80fc02b0929e2b720747b77b8b05185"
+      "sha256": "d9044ec220d3fc4a4653bcfe5db2a2a5b80fc02b0929e2b720747b77b8b05185",
+      "script_identity": [
+        "Unity.Postprocessing.Runtime.dll",
+        "UnityEngine.Rendering.PostProcessing",
+        "PostProcessProfile"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -1891,7 +2476,12 @@
         2162
       ],
       "bytes": 72,
-      "sha256": "dc5746455560d3d51796efa2192f1900555a338fb8f6dc18eb6f1a41676f297c"
+      "sha256": "dc5746455560d3d51796efa2192f1900555a338fb8f6dc18eb6f1a41676f297c",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2",
+        "ArtifactDef"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -1906,7 +2496,12 @@
         2215
       ],
       "bytes": 80,
-      "sha256": "087da6a69b8c4f1d74d44be5e3797ba65a1444008792b0f1e155bfd53c3d37e7"
+      "sha256": "087da6a69b8c4f1d74d44be5e3797ba65a1444008792b0f1e155bfd53c3d37e7",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2",
+        "CharacterModel"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -1921,7 +2516,12 @@
         1918
       ],
       "bytes": 80,
-      "sha256": "58d8be4ca2e3738981d11872c94ffcf9e70e7cd207d209b47ef1ed423697e747"
+      "sha256": "58d8be4ca2e3738981d11872c94ffcf9e70e7cd207d209b47ef1ed423697e747",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2",
+        "EffectComponent"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -1936,7 +2536,12 @@
         819
       ],
       "bytes": 64,
-      "sha256": "3279cd657b402d738381990c4ee359d231a197245840c3d466087eeec4ed44b8"
+      "sha256": "3279cd657b402d738381990c4ee359d231a197245840c3d466087eeec4ed44b8",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2",
+        "EliteDef"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -1951,7 +2556,12 @@
         978
       ],
       "bytes": 80,
-      "sha256": "9258406e0195e9443a53de81d7e55baa1fd7e160b2ff7db1e1fa5deec87f8b01"
+      "sha256": "9258406e0195e9443a53de81d7e55baa1fd7e160b2ff7db1e1fa5deec87f8b01",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2",
+        "PlaySoundOnEvent"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -1966,7 +2576,12 @@
         2392
       ],
       "bytes": 72,
-      "sha256": "397923deeda444ee8d157d8077140ceaa5c3391580acc797957bc6e7395d533f"
+      "sha256": "397923deeda444ee8d157d8077140ceaa5c3391580acc797957bc6e7395d533f",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2",
+        "KarmaEvent"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -1981,7 +2596,12 @@
         767
       ],
       "bytes": 96,
-      "sha256": "7e6de72053400a9a040c14ab11b86c39f0f06ad336bfe155c6cfe17321466385"
+      "sha256": "7e6de72053400a9a040c14ab11b86c39f0f06ad336bfe155c6cfe17321466385",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2",
+        "TeleporterInteraction"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -1996,7 +2616,12 @@
         925
       ],
       "bytes": 88,
-      "sha256": "8fbf7822f79dee32e8c112608420f8367c7cd9ea7d567ea405f61692db27e9ce"
+      "sha256": "8fbf7822f79dee32e8c112608420f8367c7cd9ea7d567ea405f61692db27e9ce",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2",
+        "CharacterSpawnCard"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -2011,7 +2636,12 @@
         2121
       ],
       "bytes": 80,
-      "sha256": "02708b541c0173d73df2c08df57bcbdfc43cd4b4dd890f62ae7847cb856a14eb"
+      "sha256": "02708b541c0173d73df2c08df57bcbdfc43cd4b4dd890f62ae7847cb856a14eb",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2",
+        "IKTargetPassive"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -2026,7 +2656,12 @@
         667
       ],
       "bytes": 72,
-      "sha256": "124c0f438d549b8d452a5362a91ca56eaacb8dd7b2b88ac0ac246fe820b21ea3"
+      "sha256": "124c0f438d549b8d452a5362a91ca56eaacb8dd7b2b88ac0ac246fe820b21ea3",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2",
+        "StartEvent"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -2041,7 +2676,12 @@
         166
       ],
       "bytes": 64,
-      "sha256": "9dedbd3caea8c13f8a6bd3185904b750dc8e29ba2696e35ebc3e08a242005f65"
+      "sha256": "9dedbd3caea8c13f8a6bd3185904b750dc8e29ba2696e35ebc3e08a242005f65",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2",
+        "BuffWard"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -2056,7 +2696,12 @@
         733
       ],
       "bytes": 120,
-      "sha256": "e38b4fd18ffa9e048730b6c5a2a15c62b1340e1e84658c693de1bbd82fd22d35"
+      "sha256": "e38b4fd18ffa9e048730b6c5a2a15c62b1340e1e84658c693de1bbd82fd22d35",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2",
+        "ScaleParticleDurationFromEffectData"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -2071,7 +2716,12 @@
         2650
       ],
       "bytes": 116,
-      "sha256": "3f43ef8c9b963c32a16069d3a187562006121dd8bc784cb2c1e94c4873021713"
+      "sha256": "3f43ef8c9b963c32a16069d3a187562006121dd8bc784cb2c1e94c4873021713",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2.Projectile",
+        "ProjectileSingleTargetImpact"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -2086,7 +2736,12 @@
         2042
       ],
       "bytes": 92,
-      "sha256": "21df1f1dcb7861a6c0039bfb23f098a783f70acb113e56e9ca35db0c1a9f7451"
+      "sha256": "21df1f1dcb7861a6c0039bfb23f098a783f70acb113e56e9ca35db0c1a9f7451",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2.UI",
+        "CrosshairController"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -2101,7 +2756,12 @@
         191
       ],
       "bytes": 92,
-      "sha256": "56bee5a0a025d9cea0b6d9e281c5e3cdd4f6095e0aa77ef5c7efe93a4bb6364a"
+      "sha256": "56bee5a0a025d9cea0b6d9e281c5e3cdd4f6095e0aa77ef5c7efe93a4bb6364a",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2.CharacterAI",
+        "AISkillDriver"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -2116,7 +2776,12 @@
         2332
       ],
       "bytes": 76,
-      "sha256": "f332c949c0534da26ce80f0f1f000f2eb18e442c32c74aa6c7a7e17a56e43713"
+      "sha256": "f332c949c0534da26ce80f0f1f000f2eb18e442c32c74aa6c7a7e17a56e43713",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2.CharacterAI",
+        "BaseAI"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -2131,7 +2796,12 @@
         2089
       ],
       "bytes": 88,
-      "sha256": "d4b93d0d760f77c4704e152965eb502149f7f0a30d0f0311d7d78ba3f714d030"
+      "sha256": "d4b93d0d760f77c4704e152965eb502149f7f0a30d0f0311d7d78ba3f714d030",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2",
+        "BasicPickupDropTable"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -2146,7 +2816,12 @@
         1083
       ],
       "bytes": 112,
-      "sha256": "7d94136c17ff038a31a02991235da1449eabfea3d9ff5b4fb9e82570a0e56adc"
+      "sha256": "7d94136c17ff038a31a02991235da1449eabfea3d9ff5b4fb9e82570a0e56adc",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2",
+        "DirectorCardCategorySelection"
+      ]
     },
     {
       "source_profile_sha256": "afe5e32ab5f57f19949f672d7cd4a3d91a97a861f332d41ab46330d239baabf0",
@@ -2177,7 +2852,12 @@
         920
       ],
       "bytes": 124,
-      "sha256": "085667ae0ff1d116ac4a8e052552129ad697fcb3929b00f5c76f15ba66f71dc9"
+      "sha256": "085667ae0ff1d116ac4a8e052552129ad697fcb3929b00f5c76f15ba66f71dc9",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2.Projectile",
+        "ProjectileScaleSpeedWithDistance"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -2192,7 +2872,12 @@
         2216
       ],
       "bytes": 80,
-      "sha256": "ef2e7eda03cbf46f4d7cf9d443f8e03bd1ebbc3852c1800207eefbc9325bcb26"
+      "sha256": "ef2e7eda03cbf46f4d7cf9d443f8e03bd1ebbc3852c1800207eefbc9325bcb26",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2",
+        "EquipmentSlot"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -2207,7 +2892,12 @@
         805
       ],
       "bytes": 84,
-      "sha256": "a6434ed39cbabd1a0e2207c6cb936fb8c9fe2b02bc6e9baf22a6cd575469a49c"
+      "sha256": "a6434ed39cbabd1a0e2207c6cb936fb8c9fe2b02bc6e9baf22a6cd575469a49c",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2.Navigation",
+        "NodeGraph"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -2222,7 +2912,12 @@
         896
       ],
       "bytes": 88,
-      "sha256": "9d1b683d25da6003b440f6ba72fd369e69667cdb480b15795f41ad98d015d1ee"
+      "sha256": "9d1b683d25da6003b440f6ba72fd369e69667cdb480b15795f41ad98d015d1ee",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2",
+        "PostProcessDuration"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -2237,7 +2932,12 @@
         864
       ],
       "bytes": 104,
-      "sha256": "61edfbc1d7859d6b0a9e57e64cf0704b911746dc0a9768476500cbeb419106d8"
+      "sha256": "61edfbc1d7859d6b0a9e57e64cf0704b911746dc0a9768476500cbeb419106d8",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2",
+        "ModelTemporaryEffectManager"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -2252,7 +2952,12 @@
         315
       ],
       "bytes": 96,
-      "sha256": "e470ba3e7d628ab5b3bd4b3c005e1fe1427b5fc4326c01ddf27686b257c9caf8"
+      "sha256": "e470ba3e7d628ab5b3bd4b3c005e1fe1427b5fc4326c01ddf27686b257c9caf8",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2",
+        "TemporaryVisualEffect"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -2267,7 +2972,12 @@
         247
       ],
       "bytes": 72,
-      "sha256": "dd7c570697b72acd2812683c0a06e6c3c2e671f5b35a3af9a4c2ef5c448285ab"
+      "sha256": "dd7c570697b72acd2812683c0a06e6c3c2e671f5b35a3af9a4c2ef5c448285ab",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2",
+        "ModelLocator"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -2282,7 +2992,12 @@
         2355
       ],
       "bytes": 120,
-      "sha256": "8f16de048f63e5fd1ceab4568329e3b30c4bc707c63d2f1d1eb18ded3b676f9c"
+      "sha256": "8f16de048f63e5fd1ceab4568329e3b30c4bc707c63d2f1d1eb18ded3b676f9c",
+      "script_identity": [
+        "Rewired_Core.dll",
+        "Rewired.ComponentControls.Effects",
+        "RotateAroundAxis"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -2297,7 +3012,12 @@
         2725
       ],
       "bytes": 124,
-      "sha256": "6d3a4e5fdebf1bd17359fefaeda7bcbc695f8fd9691feaf8670dc65e15f8c6d7"
+      "sha256": "6d3a4e5fdebf1bd17359fefaeda7bcbc695f8fd9691feaf8670dc65e15f8c6d7",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2.Projectile",
+        "AssignTeamFilterToTeamComponent"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -2312,7 +3032,12 @@
         2425
       ],
       "bytes": 80,
-      "sha256": "dacb99695b4a1d7d1b5f44c196dc5db3a752398ad17d322343aacf49dec14fe4"
+      "sha256": "dacb99695b4a1d7d1b5f44c196dc5db3a752398ad17d322343aacf49dec14fe4",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2",
+        "GameEndingDef"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -2327,7 +3052,12 @@
         405
       ],
       "bytes": 96,
-      "sha256": "4287e4a37d49c87d65e01f571689f1cf6bb4fb51299d2492efae2e389b224599"
+      "sha256": "4287e4a37d49c87d65e01f571689f1cf6bb4fb51299d2492efae2e389b224599",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2",
+        "ExplicitPickupDropTable"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -2342,7 +3072,12 @@
         279
       ],
       "bytes": 80,
-      "sha256": "f651e9df33c598dc203e3d21e7d9e4f5f41f21ff9e979803f3ed2bde9da7b171"
+      "sha256": "f651e9df33c598dc203e3d21e7d9e4f5f41f21ff9e979803f3ed2bde9da7b171",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2.Skills",
+        "SkillFamily"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -2357,7 +3092,12 @@
         2584
       ],
       "bytes": 96,
-      "sha256": "0959a560b06f61fa51a934faf4e76b8a4a9e440ccd619a6fa39c45bb55379cd2"
+      "sha256": "0959a560b06f61fa51a934faf4e76b8a4a9e440ccd619a6fa39c45bb55379cd2",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2",
+        "GrandParentSunController"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -2372,7 +3112,12 @@
         629
       ],
       "bytes": 96,
-      "sha256": "678a5e8ec6bd02435e5a334a62c25ce61702997af49a152f89eee03af00de775"
+      "sha256": "678a5e8ec6bd02435e5a334a62c25ce61702997af49a152f89eee03af00de775",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2",
+        "RefreshCanvasDrawOrder"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -2387,7 +3132,12 @@
         1848
       ],
       "bytes": 88,
-      "sha256": "4ee9c65644fbd5c10b53d9ccdc763b6df652e507746735f7ec75c99134b99b00"
+      "sha256": "4ee9c65644fbd5c10b53d9ccdc763b6df652e507746735f7ec75c99134b99b00",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2",
+        "PurchaseInteraction"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -2402,7 +3152,12 @@
         669
       ],
       "bytes": 72,
-      "sha256": "146c6ab492905432f9ab97c89ef0e135d75686d0e2234a9a30b88a69bfabd0e0"
+      "sha256": "146c6ab492905432f9ab97c89ef0e135d75686d0e2234a9a30b88a69bfabd0e0",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2",
+        "SphereZone"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -2417,7 +3172,12 @@
         2337
       ],
       "bytes": 104,
-      "sha256": "68956604e6373a5b925cb07184aab1ee241141c04a94a422f066a66f5426e317"
+      "sha256": "68956604e6373a5b925cb07184aab1ee241141c04a94a422f066a66f5426e317",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2",
+        "MidpointBetweenTwoTransforms"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -2432,7 +3192,12 @@
         1070
       ],
       "bytes": 88,
-      "sha256": "8173f01f62d310d73f2ad90c85f130e4cd79bd2588be9a7ce742427d667093d0"
+      "sha256": "8173f01f62d310d73f2ad90c85f130e4cd79bd2588be9a7ce742427d667093d0",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2",
+        "ApplyTorqueOnStart"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -2447,7 +3212,12 @@
         963
       ],
       "bytes": 116,
-      "sha256": "61c03b2bdc3a638140e4c32da9401e1a19c33ae3b04873678af44685627875f9"
+      "sha256": "61c03b2bdc3a638140e4c32da9401e1a19c33ae3b04873678af44685627875f9",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2.Projectile",
+        "ProjectileImpactExplosion"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -2462,7 +3232,12 @@
         2413
       ],
       "bytes": 80,
-      "sha256": "0aa894910b9acd65b4f5bed4ac89768108a971025b0f887aa254db9df5b05cb3"
+      "sha256": "0aa894910b9acd65b4f5bed4ac89768108a971025b0f887aa254db9df5b05cb3",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2",
+        "FootstepHandler"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -2477,7 +3252,12 @@
         144
       ],
       "bytes": 88,
-      "sha256": "93e0daac0b6b8d9613f0bea14ba07ebf711afa50aaff76558c02d7d6f2e4fda3"
+      "sha256": "93e0daac0b6b8d9613f0bea14ba07ebf711afa50aaff76558c02d7d6f2e4fda3",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2",
+        "ItemDisplayRuleSet"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -2492,7 +3272,12 @@
         1994
       ],
       "bytes": 72,
-      "sha256": "8f577e688dd96d2d1364170b9cc723036ccdec3e39e9e80aaaa1ddb79fa3f500"
+      "sha256": "8f577e688dd96d2d1364170b9cc723036ccdec3e39e9e80aaaa1ddb79fa3f500",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2",
+        "Inventory"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -2507,7 +3292,12 @@
         1731
       ],
       "bytes": 104,
-      "sha256": "ee3a7fed30a0f3b7c78fad87334aaab29f2f1726b9f70743daec4f4618f733e4"
+      "sha256": "ee3a7fed30a0f3b7c78fad87334aaab29f2f1726b9f70743daec4f4618f733e4",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2",
+        "PickupDistributorBehavior"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -2522,7 +3312,12 @@
         792
       ],
       "bytes": 88,
-      "sha256": "a2c760859c2bd7c2def8346b8642177d4edd5eaa0b04668009052898b5eefa81"
+      "sha256": "a2c760859c2bd7c2def8346b8642177d4edd5eaa0b04668009052898b5eefa81",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2",
+        "BrotherSkyLeapHelper"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -2537,7 +3332,12 @@
         436
       ],
       "bytes": 120,
-      "sha256": "a5cb97b299c484cfef335f90624e3251ad62191f304eaebedd2b6f66eb701441"
+      "sha256": "a5cb97b299c484cfef335f90624e3251ad62191f304eaebedd2b6f66eb701441",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2",
+        "TearGasGrenadeReelEffectController"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -2552,7 +3352,12 @@
         246
       ],
       "bytes": 72,
-      "sha256": "e0b2e14a72f7c9e3f7e3a2358b77c2e83f4d6e08ac8cfb9f247688ab88159e1c"
+      "sha256": "e0b2e14a72f7c9e3f7e3a2358b77c2e83f4d6e08ac8cfb9f247688ab88159e1c",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2",
+        "KeyItemSlot"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -2567,7 +3372,12 @@
         2601
       ],
       "bytes": 88,
-      "sha256": "3207d534764f02852991d5e66beee41ddcfd5365092063362d1755cb8dd394b1"
+      "sha256": "3207d534764f02852991d5e66beee41ddcfd5365092063362d1755cb8dd394b1",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2",
+        "TitanRockController"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -2582,7 +3392,12 @@
         2358
       ],
       "bytes": 88,
-      "sha256": "fb60d252ef2ddf9492621960cd47cde1bd4493fbceeed0fa4633d59f9cc98fe9"
+      "sha256": "fb60d252ef2ddf9492621960cd47cde1bd4493fbceeed0fa4633d59f9cc98fe9",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2",
+        "GivePickupsOnStart"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -2597,7 +3412,12 @@
         549
       ],
       "bytes": 96,
-      "sha256": "737571f9efb12bdaeb10f503ea60e0a6ccbd0565915fa85ec482b6ee2e141abf"
+      "sha256": "737571f9efb12bdaeb10f503ea60e0a6ccbd0565915fa85ec482b6ee2e141abf",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2.Mecanim",
+        "SetRandomIntOnEnter"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -2612,7 +3432,12 @@
         578
       ],
       "bytes": 88,
-      "sha256": "4fc11db5cdd0954c0018967501cc450d6ba6807c2af00e80a2e97dee192d5258"
+      "sha256": "4fc11db5cdd0954c0018967501cc450d6ba6807c2af00e80a2e97dee192d5258",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2",
+        "CharacterDirection"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -2642,7 +3467,12 @@
         991
       ],
       "bytes": 116,
-      "sha256": "2fde410c5b76f0f994025c3b2d9a33c74e5906e635ac334a442c702ea5bcd40a"
+      "sha256": "2fde410c5b76f0f994025c3b2d9a33c74e5906e635ac334a442c702ea5bcd40a",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2.Projectile",
+        "ProjectileNetworkTransform"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -2657,7 +3487,12 @@
         1810
       ],
       "bytes": 84,
-      "sha256": "45f44565182eff167d5903a0ade8e552bcf70c1da432bbbf227553a275fc7ee3"
+      "sha256": "45f44565182eff167d5903a0ade8e552bcf70c1da432bbbf227553a275fc7ee3",
+      "script_identity": [
+        "RoR2.dll",
+        "",
+        "LightIntensityCurve"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -2687,7 +3522,12 @@
         203
       ],
       "bytes": 64,
-      "sha256": "bc0b8923d5d1c171b42573b4d7df3d368db4bfd7b2d1d694c5a8d77cfd1721b4"
+      "sha256": "bc0b8923d5d1c171b42573b4d7df3d368db4bfd7b2d1d694c5a8d77cfd1721b4",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2",
+        "BuffDef"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -2702,7 +3542,12 @@
         281
       ],
       "bytes": 104,
-      "sha256": "3bdfc534769869a553d5ad20dddd7a67e14c87cdc51bda9ae5726694c6872856"
+      "sha256": "3bdfc534769869a553d5ad20dddd7a67e14c87cdc51bda9ae5726694c6872856",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2",
+        "GenericDisplayNameProvider"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -2732,7 +3577,12 @@
         634
       ],
       "bytes": 68,
-      "sha256": "487e184d510adaa878de42289efc900d9d4e32bfaae5eb137b24fd9b84955c9b"
+      "sha256": "487e184d510adaa878de42289efc900d9d4e32bfaae5eb137b24fd9b84955c9b",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2.UI",
+        "UIJuice"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -2747,7 +3597,12 @@
         610
       ],
       "bytes": 120,
-      "sha256": "ec8152b1310db478a63cd32179ffec83dbbd5a88ba69f9916a015fe49735ef25"
+      "sha256": "ec8152b1310db478a63cd32179ffec83dbbd5a88ba69f9916a015fe49735ef25",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2",
+        "RemapLightIntensityToParticleAlpha"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -2762,7 +3617,12 @@
         2032
       ],
       "bytes": 120,
-      "sha256": "7f667a9204223d054fdc86b234eeda4b0295147c144246624add0f4952102289"
+      "sha256": "7f667a9204223d054fdc86b234eeda4b0295147c144246624add0f4952102289",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2",
+        "DisableCollisionsBetweenColliders"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -2777,7 +3637,12 @@
         1222
       ],
       "bytes": 104,
-      "sha256": "7163579f6c0612cec62705fb18910dfa787524c70930a72980ef2a11bd7330d4"
+      "sha256": "7163579f6c0612cec62705fb18910dfa787524c70930a72980ef2a11bd7330d4",
+      "script_identity": [
+        "UnityEngine.UI.dll",
+        "UnityEngine.UI",
+        "LayoutElement"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -2792,7 +3657,12 @@
         605
       ],
       "bytes": 92,
-      "sha256": "d4baa95acf524944c21244a4f0f9fbae45a903f207ed5bb9937ec2297f37a685"
+      "sha256": "d4baa95acf524944c21244a4f0f9fbae45a903f207ed5bb9937ec2297f37a685",
+      "script_identity": [
+        "RoR2.dll",
+        "",
+        "EnableTargetsIfRaycast"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -2807,7 +3677,12 @@
         880
       ],
       "bytes": 88,
-      "sha256": "fa804ba23b4f57393d5d7cc70a9de53ad4f1a168887c0fd75ff1839d84fe7c36"
+      "sha256": "fa804ba23b4f57393d5d7cc70a9de53ad4f1a168887c0fd75ff1839d84fe7c36",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2.Mecanim",
+        "ResetFootsteps"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -2822,7 +3697,12 @@
         729
       ],
       "bytes": 80,
-      "sha256": "06464e80ae04d054211ac92b1dcdaf281076ea03d5fbac2457593b074077919a"
+      "sha256": "06464e80ae04d054211ac92b1dcdaf281076ea03d5fbac2457593b074077919a",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2",
+        "SetStateOnHurt"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -2852,7 +3732,12 @@
         378
       ],
       "bytes": 100,
-      "sha256": "9db5a1e3b8cbeb1fb09141b1b1af3a72816f28bc84efd1589d1b74d00ca9c169"
+      "sha256": "9db5a1e3b8cbeb1fb09141b1b1af3a72816f28bc84efd1589d1b74d00ca9c169",
+      "script_identity": [
+        "RoR2.dll",
+        "",
+        "PositionFromParentRaycast"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -2867,7 +3752,12 @@
         163
       ],
       "bytes": 100,
-      "sha256": "24c3bdf3334c3eaa8746e97362f3e855aa6c3136dc3f2e91a9bdb95a2cb0fb4e"
+      "sha256": "24c3bdf3334c3eaa8746e97362f3e855aa6c3136dc3f2e91a9bdb95a2cb0fb4e",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2.Projectile",
+        "ProjectileController"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -2882,7 +3772,12 @@
         618
       ],
       "bytes": 80,
-      "sha256": "bebe6d511010689617ab25ce949a2213b724e4f624bc75414cfcda152a07ab9a"
+      "sha256": "bebe6d511010689617ab25ce949a2213b724e4f624bc75414cfcda152a07ab9a",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2",
+        "PortalSpawner"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -2897,7 +3792,12 @@
         2527
       ],
       "bytes": 76,
-      "sha256": "48a7e06124602f9c00e8ff56eb5acc53c8cdb6cdfe3f2a5aeb87a83715bb3057"
+      "sha256": "48a7e06124602f9c00e8ff56eb5acc53c8cdb6cdfe3f2a5aeb87a83715bb3057",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2.EntityLogic",
+        "Timer"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -2912,7 +3812,12 @@
         184
       ],
       "bytes": 92,
-      "sha256": "12504935ef77b58c2c1e4c0e7fa1d0d30c427580448b472a3286de99ea704304"
+      "sha256": "12504935ef77b58c2c1e4c0e7fa1d0d30c427580448b472a3286de99ea704304",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2.Projectile",
+        "ProjectileSimple"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -2927,7 +3832,12 @@
         939
       ],
       "bytes": 76,
-      "sha256": "c97ce9499fecf270ae46dd2c1f84694b6b203ef916b8414918d5708f8988cac4"
+      "sha256": "c97ce9499fecf270ae46dd2c1f84694b6b203ef916b8414918d5708f8988cac4",
+      "script_identity": [
+        "RoR2.dll",
+        "",
+        "BezierCurveLine"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -2942,7 +3852,12 @@
         784
       ],
       "bytes": 80,
-      "sha256": "9dcd41f1286af83d80f3fe4ccae2195d7fe372f98126bb2a9ee7e7c51c34e07e"
+      "sha256": "9dcd41f1286af83d80f3fe4ccae2195d7fe372f98126bb2a9ee7e7c51c34e07e",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2",
+        "TemporaryOverlay"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -2972,7 +3887,12 @@
         367
       ],
       "bytes": 96,
-      "sha256": "425dfd4a200021ae1071bcde2111884e99e330ffa0e46f47909599a555adc523"
+      "sha256": "425dfd4a200021ae1071bcde2111884e99e330ffa0e46f47909599a555adc523",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2",
+        "VelocityRandomOnStart"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -2987,7 +3907,12 @@
         2340
       ],
       "bytes": 108,
-      "sha256": "5867cffc82984d2b02867e1e4b39c8291bee11f0693f96bc93ef3fcedaef1add"
+      "sha256": "5867cffc82984d2b02867e1e4b39c8291bee11f0693f96bc93ef3fcedaef1add",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2.Projectile",
+        "ProjectileFireChildren"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -3002,7 +3927,12 @@
         753
       ],
       "bytes": 120,
-      "sha256": "6f3af8824c57adc0806cb8bc4e164ae9cd1b1ba8258f39257f531e02408dad62"
+      "sha256": "6f3af8824c57adc0806cb8bc4e164ae9cd1b1ba8258f39257f531e02408dad62",
+      "script_identity": [
+        "Unity.Postprocessing.Runtime.dll",
+        "UnityEngine.Rendering.PostProcessing",
+        "Vignette"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -3017,7 +3947,12 @@
         1798
       ],
       "bytes": 72,
-      "sha256": "a55b2fac211ef6322dc1c062f0c094d906fab74ced92cfb555b4b74179a3dbb6"
+      "sha256": "a55b2fac211ef6322dc1c062f0c094d906fab74ced92cfb555b4b74179a3dbb6",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2",
+        "DitherModel"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -3032,7 +3967,12 @@
         1769
       ],
       "bytes": 128,
-      "sha256": "3d7a020fb0cfa5acad91756b2c40fde05b8f426ff48cb51f11bf73217fdb09d4"
+      "sha256": "3d7a020fb0cfa5acad91756b2c40fde05b8f426ff48cb51f11bf73217fdb09d4",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2",
+        "CursedBookRequirementPresenceCalculator"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -3047,7 +3987,12 @@
         433
       ],
       "bytes": 72,
-      "sha256": "a980b4f7dfaecd92738b7cbca0596beedf1f83b1be263eb568bef491bfb71995"
+      "sha256": "a980b4f7dfaecd92738b7cbca0596beedf1f83b1be263eb568bef491bfb71995",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2",
+        "BossGroup"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -3062,7 +4007,12 @@
         936
       ],
       "bytes": 92,
-      "sha256": "4f5429ab7f38ca20d988e6b33ecc1f7cc62a26b004f65c0a2e61b0a3b4efee50"
+      "sha256": "4f5429ab7f38ca20d988e6b33ecc1f7cc62a26b004f65c0a2e61b0a3b4efee50",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2.UI.MainMenu",
+        "PlatformToggle"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -3077,7 +4027,12 @@
         822
       ],
       "bytes": 72,
-      "sha256": "29023f030defe2cb5a8b57f57780067a3eadc0d4b707fccf6a973b2eae85314c"
+      "sha256": "29023f030defe2cb5a8b57f57780067a3eadc0d4b707fccf6a973b2eae85314c",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2",
+        "DeathRewards"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -3092,7 +4047,12 @@
         2322
       ],
       "bytes": 72,
-      "sha256": "5496c1e28cb3a2d956ac1f7608f32e403303ee9105d27b92b8d41b44406e4f12"
+      "sha256": "5496c1e28cb3a2d956ac1f7608f32e403303ee9105d27b92b8d41b44406e4f12",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2",
+        "WinchEffect"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -3107,7 +4067,12 @@
         1102
       ],
       "bytes": 80,
-      "sha256": "ddd540ddb1a7b43904293bfd578fdfe1bf843f4999e03b44d1e1df6ae08c3b71"
+      "sha256": "ddd540ddb1a7b43904293bfd578fdfe1bf843f4999e03b44d1e1df6ae08c3b71",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2",
+        "AnimationEvents"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -3122,7 +4087,12 @@
         2448
       ],
       "bytes": 80,
-      "sha256": "cba4dbbbe725b336fd1ff129f7480c2990c355bb66ff6be04a8b6e23f6f8aaff"
+      "sha256": "cba4dbbbe725b336fd1ff129f7480c2990c355bb66ff6be04a8b6e23f6f8aaff",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2",
+        "CharacterMotor"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -3137,7 +4107,12 @@
         885
       ],
       "bytes": 84,
-      "sha256": "cd0eab507e87412aefefc495e5479a98821a88f3ba51fffff344acf76c864d89"
+      "sha256": "cd0eab507e87412aefefc495e5479a98821a88f3ba51fffff344acf76c864d89",
+      "script_identity": [
+        "RoR2.dll",
+        "",
+        "SetRandomRotation"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -3152,7 +4127,12 @@
         186
       ],
       "bytes": 140,
-      "sha256": "36b469dc72a708f2937ea8f3e267a4be5364221a9dc52c86fc12eeb5f8577634"
+      "sha256": "36b469dc72a708f2937ea8f3e267a4be5364221a9dc52c86fc12eeb5f8577634",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2.Projectile",
+        "ProjectileTransferOwnershipOnBodyChanged"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -3167,7 +4147,12 @@
         1811
       ],
       "bytes": 72,
-      "sha256": "7ab9dbc6da78a2346e4eb176325108d04537918c57ac21495f6d550530feb190"
+      "sha256": "7ab9dbc6da78a2346e4eb176325108d04537918c57ac21495f6d550530feb190",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2",
+        "GenericSkill"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -3182,7 +4167,12 @@
         1722
       ],
       "bytes": 88,
-      "sha256": "c8c70461a0ae90919f440cc21be33038d850bc349352b23e1aaa71fb90a0875d"
+      "sha256": "c8c70461a0ae90919f440cc21be33038d850bc349352b23e1aaa71fb90a0875d",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2",
+        "SceneExitController"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -3197,7 +4187,12 @@
         2107
       ],
       "bytes": 84,
-      "sha256": "fb168ea7dfe92a70e5a92b77bba42c762cc6240753ad4e18d530a895afa121e6"
+      "sha256": "fb168ea7dfe92a70e5a92b77bba42c762cc6240753ad4e18d530a895afa121e6",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2.EntityLogic",
+        "DelayedEvent"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -3212,7 +4207,12 @@
         1991
       ],
       "bytes": 116,
-      "sha256": "789bfb4f9510dc5f68ae7826e88c1ec364ddeaaa10414a693c2a8c68a2536557"
+      "sha256": "789bfb4f9510dc5f68ae7826e88c1ec364ddeaaa10414a693c2a8c68a2536557",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2.Projectile",
+        "ProjectileGhostController"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -3227,7 +4227,12 @@
         1086
       ],
       "bytes": 76,
-      "sha256": "63f8284cb9588ee3598bb6a748ef2eb3f0e9426dc23c2b1954d226591c2f5879"
+      "sha256": "63f8284cb9588ee3598bb6a748ef2eb3f0e9426dc23c2b1954d226591c2f5879",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2.UI",
+        "UILayerKey"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -3242,7 +4247,12 @@
         1680
       ],
       "bytes": 72,
-      "sha256": "14fcd20f17603f2b8221be2afaad8adeeac55f8897c143af5af602e7d8f2c820"
+      "sha256": "14fcd20f17603f2b8221be2afaad8adeeac55f8897c143af5af602e7d8f2c820",
+      "script_identity": [
+        "RoR2.dll",
+        "HG",
+        "ComboTracker"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -3257,7 +4267,12 @@
         2406
       ],
       "bytes": 112,
-      "sha256": "154b8daf12bfbc955a4fbb627ddc58ace789abe68b814f0076b5eca7073c6bd9"
+      "sha256": "154b8daf12bfbc955a4fbb627ddc58ace789abe68b814f0076b5eca7073c6bd9",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2",
+        "BodyAnimatorSmoothingParameters"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -3272,7 +4287,12 @@
         471
       ],
       "bytes": 64,
-      "sha256": "03c6e7c44ea131eb965c8207f8b799817693481dda29155b1709644507e5bf11"
+      "sha256": "03c6e7c44ea131eb965c8207f8b799817693481dda29155b1709644507e5bf11",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2",
+        "ItemDef"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -3287,7 +4307,12 @@
         650
       ],
       "bytes": 80,
-      "sha256": "0ca39b6eacedcb6c74f996e70782132e2e3f59fdfa2a453c7e4264944e8aac61"
+      "sha256": "0ca39b6eacedcb6c74f996e70782132e2e3f59fdfa2a453c7e4264944e8aac61",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2",
+        "EffectRetimer"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -3302,7 +4327,12 @@
         391
       ],
       "bytes": 120,
-      "sha256": "6412c8fa7e2da84bd8932ecf2326fa10f79f639b2542d80ef16c68429d1ba932"
+      "sha256": "6412c8fa7e2da84bd8932ecf2326fa10f79f639b2542d80ef16c68429d1ba932",
+      "script_identity": [
+        "Unity.Postprocessing.Runtime.dll",
+        "UnityEngine.Rendering.PostProcessing",
+        "Bloom"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -3317,7 +4347,12 @@
         2599
       ],
       "bytes": 116,
-      "sha256": "3e31c4cbe01e44c2975fd9427d6d964ac35b40ee81f5d3affa365d8f9a4f4dbe"
+      "sha256": "3e31c4cbe01e44c2975fd9427d6d964ac35b40ee81f5d3affa365d8f9a4f4dbe",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2.Projectile",
+        "ProjectileSteerTowardTarget"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -3332,7 +4367,12 @@
         823
       ],
       "bytes": 96,
-      "sha256": "31274e2ad2684d09c03c4d3ce1679f2e902919e292ba9f3a62fa68173dd07513"
+      "sha256": "31274e2ad2684d09c03c4d3ce1679f2e902919e292ba9f3a62fa68173dd07513",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2",
+        "PickRandomObjectOnAwake"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -3347,7 +4387,12 @@
         535
       ],
       "bytes": 80,
-      "sha256": "caa59928ff5e23add9443436e97acbfb4a59695215e93fb79a691f37dfefa0bf"
+      "sha256": "caa59928ff5e23add9443436e97acbfb4a59695215e93fb79a691f37dfefa0bf",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2",
+        "DestroyOnUnseen"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -3362,7 +4407,12 @@
         1865
       ],
       "bytes": 104,
-      "sha256": "c9ed31367fb21afb1e77508863af7cdbc0d51540e26f5766b053444cc182da64"
+      "sha256": "c9ed31367fb21afb1e77508863af7cdbc0d51540e26f5766b053444cc182da64",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2.EntitlementManagement",
+        "EntitlementDef"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -3377,7 +4427,12 @@
         2504
       ],
       "bytes": 100,
-      "sha256": "b21fef16a8eb0df860c1950916c80cd928a3fffad36dec9694a32d306e078f2a"
+      "sha256": "b21fef16a8eb0df860c1950916c80cd928a3fffad36dec9694a32d306e078f2a",
+      "script_identity": [
+        "RoR2.dll",
+        "",
+        "InterpolatedTransformUpdater"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -3392,7 +4447,12 @@
         1713
       ],
       "bytes": 96,
-      "sha256": "057818030240274ff78f7986aaa07271e72e60f755d338620c265c8053a614f1"
+      "sha256": "057818030240274ff78f7986aaa07271e72e60f755d338620c265c8053a614f1",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2",
+        "EntityStateConfiguration"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -3407,7 +4467,12 @@
         737
       ],
       "bytes": 104,
-      "sha256": "5d0c56be654454a139260159ac714f928cf2e0333cc0afcad366dfbc953f5b73"
+      "sha256": "5d0c56be654454a139260159ac714f928cf2e0333cc0afcad366dfbc953f5b73",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2",
+        "EffectPassArgsToLocalToken"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -3422,7 +4487,12 @@
         866
       ],
       "bytes": 76,
-      "sha256": "1fe4f017eb07f4905423a4004842eee642bff79114ff822163d75a67c2fd159c"
+      "sha256": "1fe4f017eb07f4905423a4004842eee642bff79114ff822163d75a67c2fd159c",
+      "script_identity": [
+        "RoR2.dll",
+        "",
+        "EnableOnTimer"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -3437,7 +4507,12 @@
         452
       ],
       "bytes": 100,
-      "sha256": "c5e3222afa3a17abd011b978fc90fa347747b9bc2b2f46a5449705628d1319e0"
+      "sha256": "c5e3222afa3a17abd011b978fc90fa347747b9bc2b2f46a5449705628d1319e0",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2.Hologram",
+        "HologramProjector"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -3452,7 +4527,12 @@
         2624
       ],
       "bytes": 100,
-      "sha256": "0342af49603de828149e894a57479085b9be4f125fdf0fbe6a097f30f68b1acc"
+      "sha256": "0342af49603de828149e894a57479085b9be4f125fdf0fbe6a097f30f68b1acc",
+      "script_identity": [
+        "Unity.TextMeshPro.dll",
+        "TMPro",
+        "TMP_SubMeshUI"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -3467,7 +4547,12 @@
         304
       ],
       "bytes": 80,
-      "sha256": "0a555b3861d81a962ca72e3429b408d74ea1115e7777bd69832d845c51749b1a"
+      "sha256": "0a555b3861d81a962ca72e3429b408d74ea1115e7777bd69832d845c51749b1a",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2",
+        "MinionOwnership"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -3482,7 +4567,12 @@
         623
       ],
       "bytes": 68,
-      "sha256": "a962ea27e17a4eed90323de7bbf413c32f75d3f1b590e486c4914496c1f24f1d"
+      "sha256": "a962ea27e17a4eed90323de7bbf413c32f75d3f1b590e486c4914496c1f24f1d",
+      "script_identity": [
+        "RoR2.dll",
+        "",
+        "DynamicBone"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -3497,7 +4587,12 @@
         482
       ],
       "bytes": 64,
-      "sha256": "6dfe294c822cf5888c1dd1d17230456bdd6ace7cdd0771e47e6a8d4e430cd6f2"
+      "sha256": "6dfe294c822cf5888c1dd1d17230456bdd6ace7cdd0771e47e6a8d4e430cd6f2",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2",
+        "SkinDef"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -3512,7 +4607,12 @@
         719
       ],
       "bytes": 68,
-      "sha256": "90923f43dfd026c65ee4dc069ea6d25665837b8e096d9e786ca61e663ed7768e"
+      "sha256": "90923f43dfd026c65ee4dc069ea6d25665837b8e096d9e786ca61e663ed7768e",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2.UI",
+        "HGButton"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -3527,7 +4627,12 @@
         1710
       ],
       "bytes": 76,
-      "sha256": "6f21b788c98d2e42b4c81a6177fdba8aa293dfcfdf4c15e865bdc7eb182888ed"
+      "sha256": "6f21b788c98d2e42b4c81a6177fdba8aa293dfcfdf4c15e865bdc7eb182888ed",
+      "script_identity": [
+        "RoR2.dll",
+        "",
+        "MaintainRotation"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -3542,7 +4647,12 @@
         2005
       ],
       "bytes": 116,
-      "sha256": "b889b18622a60ef1147ea2a3a0b4ab2bab4c3b31227250180e225452bc55b695"
+      "sha256": "b889b18622a60ef1147ea2a3a0b4ab2bab4c3b31227250180e225452bc55b695",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2.Projectile",
+        "ProjectileTargetComponent"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -3557,7 +4667,12 @@
         2169
       ],
       "bytes": 68,
-      "sha256": "591f017a0a7374cb34c54877e7460f21f23172e782a8fe2588492ab866e9f92e"
+      "sha256": "591f017a0a7374cb34c54877e7460f21f23172e782a8fe2588492ab866e9f92e",
+      "script_identity": [
+        "RoR2.dll",
+        "",
+        "RotateObject"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -3572,7 +4687,12 @@
         2059
       ],
       "bytes": 96,
-      "sha256": "5d5ee2b195385cfc7797030a70c79dc47ed9113e8c9e26c230e95ac574249a4f"
+      "sha256": "5d5ee2b195385cfc7797030a70c79dc47ed9113e8c9e26c230e95ac574249a4f",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2",
+        "ShrineRestackBehavior"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -3587,7 +4707,12 @@
         342
       ],
       "bytes": 152,
-      "sha256": "f4d2afb82cd155936997b7924ba8913f529ea403e0b62c2f0847249d31a2f414"
+      "sha256": "f4d2afb82cd155936997b7924ba8913f529ea403e0b62c2f0847249d31a2f414",
+      "script_identity": [
+        "KinematicCharacterController.dll",
+        "KinematicCharacterController",
+        "BasicPhysicsMoverController"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -3602,7 +4727,12 @@
         573
       ],
       "bytes": 104,
-      "sha256": "900c3f5b3f2eb82549b44aa5f5f92b66020e88845569104436cc369aa85a7211"
+      "sha256": "900c3f5b3f2eb82549b44aa5f5f92b66020e88845569104436cc369aa85a7211",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2",
+        "OutsideInteractableLocker"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -3617,7 +4747,12 @@
         932
       ],
       "bytes": 80,
-      "sha256": "648bdcd4b10d75568ef1b4d1a904c2818b76cd45d758067564cfc5cb8d960a87"
+      "sha256": "648bdcd4b10d75568ef1b4d1a904c2818b76cd45d758067564cfc5cb8d960a87",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2",
+        "HealthComponent"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -3632,7 +4767,12 @@
         1000
       ],
       "bytes": 72,
-      "sha256": "ce15781d21b409658f2a6a9c355f90f090457736f2a66800dde6d2c81cdd0a87"
+      "sha256": "ce15781d21b409658f2a6a9c355f90f090457736f2a66800dde6d2c81cdd0a87",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2",
+        "ImpactEffect"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -3647,7 +4787,12 @@
         1035
       ],
       "bytes": 80,
-      "sha256": "a8f85d52110cccc00ca1ca197688362f315146d590e9fa65785a71d2fb3d2ad4"
+      "sha256": "a8f85d52110cccc00ca1ca197688362f315146d590e9fa65785a71d2fb3d2ad4",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2",
+        "CharacterBody"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -3662,7 +4807,12 @@
         536
       ],
       "bytes": 80,
-      "sha256": "d34ae7bc22bdd39804460d3cb7621a0c41c690a6275f4d8993fa8802e3fca8bd"
+      "sha256": "d34ae7bc22bdd39804460d3cb7621a0c41c690a6275f4d8993fa8802e3fca8bd",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2",
+        "EntityLocator"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -3677,7 +4827,12 @@
         1838
       ],
       "bytes": 108,
-      "sha256": "3bc33d618fe8eeff5c09733c174d78b6c693f6554d71a33e7fb4d05c33cb31ab"
+      "sha256": "3bc33d618fe8eeff5c09733c174d78b6c693f6554d71a33e7fb4d05c33cb31ab",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2.Projectile",
+        "ProjectileDamageTrail"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -3692,7 +4847,12 @@
         238
       ],
       "bytes": 72,
-      "sha256": "1bee851b4c1e20cde425be0cc844b63a20cd8db9fb9d8ce6c2067c523b4d4dc0"
+      "sha256": "1bee851b4c1e20cde425be0cc844b63a20cd8db9fb9d8ce6c2067c523b4d4dc0",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2",
+        "CombatSquad"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -3707,7 +4867,12 @@
         2450
       ],
       "bytes": 88,
-      "sha256": "a788a8803f6309beccfccae0a5cc9188b6e2c6836075f78ad57fe2e88042060e"
+      "sha256": "a788a8803f6309beccfccae0a5cc9188b6e2c6836075f78ad57fe2e88042060e",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2",
+        "ModelSkinController"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -3722,7 +4887,12 @@
         2594
       ],
       "bytes": 88,
-      "sha256": "0bb477c7001362d24011fb6261da779c086c3963acdc6dd44e3f61259747fce9"
+      "sha256": "0bb477c7001362d24011fb6261da779c086c3963acdc6dd44e3f61259747fce9",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2",
+        "ShrineBossBehavior"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -3757,7 +4927,12 @@
         910
       ],
       "bytes": 88,
-      "sha256": "5fc472f73d6959a911f81cccc30c6c57109da3635ae527cf788990754610df8d"
+      "sha256": "5fc472f73d6959a911f81cccc30c6c57109da3635ae527cf788990754610df8d",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2",
+        "MultiShopController"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -3772,7 +4947,12 @@
         1048
       ],
       "bytes": 88,
-      "sha256": "40c43299f5b70e7cc2e28dafd89f4a8033857f680ca0f5811016b799304546f1"
+      "sha256": "40c43299f5b70e7cc2e28dafd89f4a8033857f680ca0f5811016b799304546f1",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2",
+        "FalseSonController"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -3787,7 +4967,12 @@
         967
       ],
       "bytes": 80,
-      "sha256": "721bb55ad90d958d914a110e50035f7cb7363a248ac18f639026da60300827a0"
+      "sha256": "721bb55ad90d958d914a110e50035f7cb7363a248ac18f639026da60300827a0",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2",
+        "NetworkParent"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -3802,7 +4987,12 @@
         2435
       ],
       "bytes": 72,
-      "sha256": "771d5ab861191d74d7e4a97086b7c2d6bf4c26feb75f734c53b3695c170d5e12"
+      "sha256": "771d5ab861191d74d7e4a97086b7c2d6bf4c26feb75f734c53b3695c170d5e12",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2",
+        "EquipmentDef"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -3817,7 +5007,12 @@
         31
       ],
       "bytes": 80,
-      "sha256": "a61f69bf806d30bef74e08ccf4c1ff4f7f8d064570bbf90c3c7e6ce78b711fd2"
+      "sha256": "a61f69bf806d30bef74e08ccf4c1ff4f7f8d064570bbf90c3c7e6ce78b711fd2",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2",
+        "CharacterMaster"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -3832,7 +5027,12 @@
         2374
       ],
       "bytes": 88,
-      "sha256": "8d45336fe64c4567d68b1c750430fa7d80506c23219cb54e9f6acf6cb9632c6c"
+      "sha256": "8d45336fe64c4567d68b1c750430fa7d80506c23219cb54e9f6acf6cb9632c6c",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2",
+        "DetachTrailOnDestroy"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -3847,7 +5047,12 @@
         130
       ],
       "bytes": 128,
-      "sha256": "d5fb19c406aeb10ed57fbe02e4ff395a1cb81431847f2013e248da1fcf9e48b6"
+      "sha256": "d5fb19c406aeb10ed57fbe02e4ff395a1cb81431847f2013e248da1fcf9e48b6",
+      "script_identity": [
+        "Unity.Postprocessing.Runtime.dll",
+        "UnityEngine.Rendering.PostProcessing",
+        "DepthOfField"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -3862,7 +5067,12 @@
         1984
       ],
       "bytes": 120,
-      "sha256": "37fc6dea94c55aa67054a7a2b0e197bebaf6d84dd47afc58e8f35b1ce50e3cd1"
+      "sha256": "37fc6dea94c55aa67054a7a2b0e197bebaf6d84dd47afc58e8f35b1ce50e3cd1",
+      "script_identity": [
+        "KinematicCharacterController.dll",
+        "KinematicCharacterController",
+        "PhysicsMover"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -3877,7 +5087,12 @@
         811
       ],
       "bytes": 80,
-      "sha256": "661895c96f8fac1a6a31ac173a23ea634aa3ad119582c4becb1420f04082d5ee"
+      "sha256": "661895c96f8fac1a6a31ac173a23ea634aa3ad119582c4becb1420f04082d5ee",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2",
+        "RigidbodyMotor"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -3892,7 +5107,12 @@
         2014
       ],
       "bytes": 80,
-      "sha256": "6f5b838535268fef574f85c9df7775dde14db2169b1bb735b362670804e05f24"
+      "sha256": "6f5b838535268fef574f85c9df7775dde14db2169b1bb735b362670804e05f24",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2",
+        "EventFunctions"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -3907,7 +5127,12 @@
         2296
       ],
       "bytes": 88,
-      "sha256": "af9d421fad4321555847b9df433be2398b0450971f8716aa093586787b514103"
+      "sha256": "af9d421fad4321555847b9df433be2398b0450971f8716aa093586787b514103",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2",
+        "EntityStateMachine"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -3922,7 +5147,12 @@
         1898
       ],
       "bytes": 104,
-      "sha256": "c47a4c6fc05f6d3cabca83740819ea9d27385235b0e3ef030f116e86ae4385af"
+      "sha256": "c47a4c6fc05f6d3cabca83740819ea9d27385235b0e3ef030f116e86ae4385af",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2",
+        "InstantiatePrefabBehavior"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -3937,7 +5167,12 @@
         1017
       ],
       "bytes": 68,
-      "sha256": "5ecdeb95456c5668ce84e782ec5c99b8c15d6a8bc15dc28d2e6ce3b5c3f1e041"
+      "sha256": "5ecdeb95456c5668ce84e782ec5c99b8c15d6a8bc15dc28d2e6ce3b5c3f1e041",
+      "script_identity": [
+        "RoR2.dll",
+        "",
+        "ChildLocator"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -3952,7 +5187,12 @@
         2349
       ],
       "bytes": 72,
-      "sha256": "25197407f500c644c50bfc52f05adafe495973330ee7e8abdca4ded811474888"
+      "sha256": "25197407f500c644c50bfc52f05adafe495973330ee7e8abdca4ded811474888",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2.Skills",
+        "SkillDef"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -3967,7 +5207,12 @@
         2046
       ],
       "bytes": 88,
-      "sha256": "4e3872a89d568e69373eca882a0ddc357bd043d11f6041acfe557c0ea237453e"
+      "sha256": "4e3872a89d568e69373eca882a0ddc357bd043d11f6041acfe557c0ea237453e",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2",
+        "ObjectTransformCurve"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -3982,7 +5227,12 @@
         20
       ],
       "bytes": 80,
-      "sha256": "b0092c6bb6b7d6b2abfad276a15f961caeaec8508c76296f377c25b0b531bfb3"
+      "sha256": "b0092c6bb6b7d6b2abfad276a15f961caeaec8508c76296f377c25b0b531bfb3",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2",
+        "AlignToNormal"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -3997,7 +5247,12 @@
         2065
       ],
       "bytes": 88,
-      "sha256": "28985e5ca34844984aab4828bf88aeaad3a858a607c3a27b72270dcb7685b508"
+      "sha256": "28985e5ca34844984aab4828bf88aeaad3a858a607c3a27b72270dcb7685b508",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2",
+        "StriderLegController"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -4012,7 +5267,12 @@
         486
       ],
       "bytes": 80,
-      "sha256": "07c9bece76a0770b849f20c8287620bb41bcb7bbe4276d03ed22c2f2a405d7a4"
+      "sha256": "07c9bece76a0770b849f20c8287620bb41bcb7bbe4276d03ed22c2f2a405d7a4",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2",
+        "PickupDisplay"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -4027,7 +5287,12 @@
         929
       ],
       "bytes": 76,
-      "sha256": "20a4cf56469eda9f481bca344bcef3c2464f81390596753089dbfd28a1361ed6"
+      "sha256": "20a4cf56469eda9f481bca344bcef3c2464f81390596753089dbfd28a1361ed6",
+      "script_identity": [
+        "RoR2.dll",
+        "",
+        "EnemyDetection"
+      ]
     },
     {
       "source_profile_sha256": "0c8c53f8075478878bf812b6bb89df9a34b44bc034d09bc928cb813e2b008304",
@@ -4058,7 +5323,12 @@
         1794
       ],
       "bytes": 104,
-      "sha256": "30fcfe3513b8f6b04e6175e233661d0ec519e3b01d61154733e0999f4cce8188"
+      "sha256": "30fcfe3513b8f6b04e6175e233661d0ec519e3b01d61154733e0999f4cce8188",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2",
+        "CharacterEmoteDefinitions"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -4073,7 +5343,12 @@
         693
       ],
       "bytes": 100,
-      "sha256": "e9787c059cda78f2b7f42fae26faf7f57aa46e3271b956c01bf7e579a8e511fe"
+      "sha256": "e9787c059cda78f2b7f42fae26faf7f57aa46e3271b956c01bf7e579a8e511fe",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2.Projectile",
+        "ProjectileDotZone"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -4088,7 +5363,12 @@
         1063
       ],
       "bytes": 76,
-      "sha256": "87a427f41d490eb0d84586aaddcfd953ffa6fa72161fc67d7db258bd3c179364"
+      "sha256": "87a427f41d490eb0d84586aaddcfd953ffa6fa72161fc67d7db258bd3c179364",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2.UI",
+        "HudElement"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -4103,7 +5383,12 @@
         565
       ],
       "bytes": 96,
-      "sha256": "9dbe139858fd5d3054576afe2795aac81e2c94c1fe91d57fc7ad5f8d7578be15"
+      "sha256": "9dbe139858fd5d3054576afe2795aac81e2c94c1fe91d57fc7ad5f8d7578be15",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2",
+        "ShrineHealingBehavior"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -4118,7 +5403,12 @@
         1815
       ],
       "bytes": 72,
-      "sha256": "c269d0114633e9190ed5a956a74e1952fa4cfb12d24cb6c1cecb6b7055701deb"
+      "sha256": "c269d0114633e9190ed5a956a74e1952fa4cfb12d24cb6c1cecb6b7055701deb",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2",
+        "SkillLocator"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -4133,7 +5423,12 @@
         2105
       ],
       "bytes": 104,
-      "sha256": "be585c11068186ed60dee01d6b84e9de6be0cc25305d934d848535d84b79aa46"
+      "sha256": "be585c11068186ed60dee01d6b84e9de6be0cc25305d934d848535d84b79aa46",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2",
+        "ModelEffectDisableObjects"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -4148,7 +5443,12 @@
         1709
       ],
       "bytes": 80,
-      "sha256": "21ff6c05d08509e8e3de0066298e5ecae9fe5260c5e2f5527552166fee31b202"
+      "sha256": "21ff6c05d08509e8e3de0066298e5ecae9fe5260c5e2f5527552166fee31b202",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2",
+        "PrintController"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -4163,7 +5463,12 @@
         583
       ],
       "bytes": 88,
-      "sha256": "25c09308075fb4d40b3580f417612b2c0c21219325e009de16ec8ef2abf54291"
+      "sha256": "25c09308075fb4d40b3580f417612b2c0c21219325e009de16ec8ef2abf54291",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2",
+        "CameraTargetParams"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -4178,7 +5483,12 @@
         26
       ],
       "bytes": 96,
-      "sha256": "5c4ee9f90e8a2c6e09b31a74c9238107a602560673dbd8691e219a368d745459"
+      "sha256": "5c4ee9f90e8a2c6e09b31a74c9238107a602560673dbd8691e219a368d745459",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2",
+        "RigidbodyStickOnImpact"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -4193,7 +5503,12 @@
         964
       ],
       "bytes": 80,
-      "sha256": "453ee7c1df6f252208854acbda2343ed8b49c959531bee698ed226fd2f435c7f"
+      "sha256": "453ee7c1df6f252208854acbda2343ed8b49c959531bee698ed226fd2f435c7f",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2",
+        "TeamComponent"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -4208,7 +5523,12 @@
         1857
       ],
       "bytes": 88,
-      "sha256": "748be1c631d92244ae59be72b2b9ad8637b27fc06d8a76322c5199bbe74e8843"
+      "sha256": "748be1c631d92244ae59be72b2b9ad8637b27fc06d8a76322c5199bbe74e8843",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2",
+        "BarrelInteraction"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -4223,7 +5543,12 @@
         512
       ],
       "bytes": 72,
-      "sha256": "270a0f2613c3790c2820403eaaa89c897d5e649e44ced52e847d78b68dd69da2"
+      "sha256": "270a0f2613c3790c2820403eaaa89c897d5e649e44ced52e847d78b68dd69da2",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2",
+        "DamageTrail"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -4238,7 +5563,12 @@
         2027
       ],
       "bytes": 72,
-      "sha256": "24fd4e6720600517a2b2a1c6bb56ba0ba705aaec0c2ba0bc5c273203cb7cd162"
+      "sha256": "24fd4e6720600517a2b2a1c6bb56ba0ba705aaec0c2ba0bc5c273203cb7cd162",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2",
+        "AwakeEvent"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -4253,7 +5583,12 @@
         467
       ],
       "bytes": 96,
-      "sha256": "572863a11d2fca38f002a4b547b43255d4ea38831a6e1f5979ec6cc6edce3ed4"
+      "sha256": "572863a11d2fca38f002a4b547b43255d4ea38831a6e1f5979ec6cc6edce3ed4",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2",
+        "ElementalRingController"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -4268,7 +5603,12 @@
         1697
       ],
       "bytes": 68,
-      "sha256": "f38df6b5351744443137c0169017b6aafcb038a3f06d03238f3d9f2956f8e8a8"
+      "sha256": "f38df6b5351744443137c0169017b6aafcb038a3f06d03238f3d9f2956f8e8a8",
+      "script_identity": [
+        "RoR2.dll",
+        "",
+        "VectorPID"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -4283,7 +5623,12 @@
         1982
       ],
       "bytes": 88,
-      "sha256": "0f7001426fa11c5f7e0ae96f34916b738aacfefa07b483cf5d9e21b15c4af6ce"
+      "sha256": "0f7001426fa11c5f7e0ae96f34916b738aacfefa07b483cf5d9e21b15c4af6ce",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2",
+        "HollowManMinePickup"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -4298,7 +5643,12 @@
         887
       ],
       "bytes": 80,
-      "sha256": "de145c81f9d1b87d976acf0289e73e5499963e7d7fddc7994ebbaccf53d6e84d"
+      "sha256": "de145c81f9d1b87d976acf0289e73e5499963e7d7fddc7994ebbaccf53d6e84d",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2",
+        "AimAssistTarget"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -4313,7 +5663,12 @@
         2442
       ],
       "bytes": 96,
-      "sha256": "0201c9f6892c202dfa137558ed41e24f01c21bb86059dde10eff9fd8537748d7"
+      "sha256": "0201c9f6892c202dfa137558ed41e24f01c21bb86059dde10eff9fd8537748d7",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2",
+        "ScaleSpriteByCamDistance"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -4328,7 +5683,12 @@
         1403
       ],
       "bytes": 96,
-      "sha256": "e768af136b662cba021faea1b0105b9c33a5081f841a6c44dfc49044a8a92af2"
+      "sha256": "e768af136b662cba021faea1b0105b9c33a5081f841a6c44dfc49044a8a92af2",
+      "script_identity": [
+        "UnityEngine.UI.dll",
+        "UnityEngine.UI",
+        "Selectable"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -4343,7 +5703,12 @@
         2151
       ],
       "bytes": 76,
-      "sha256": "768156e9f588c1e743cb16fe17dd571e1a68664046b111529063e7205c0169af"
+      "sha256": "768156e9f588c1e743cb16fe17dd571e1a68664046b111529063e7205c0169af",
+      "script_identity": [
+        "RoR2.dll",
+        "",
+        "HoverOverHead"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -4358,7 +5723,12 @@
         1917
       ],
       "bytes": 96,
-      "sha256": "79e76402f7715760c0fd67339c910e034df9fbe6f2602c2f9b67fab721f87c9e"
+      "sha256": "79e76402f7715760c0fd67339c910e034df9fbe6f2602c2f9b67fab721f87c9e",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2",
+        "ChampRushOrbController"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -4403,7 +5773,12 @@
         1321
       ],
       "bytes": 80,
-      "sha256": "7f6fd10c91a0a8bec8e8f81f98beadbf63dd295ea21d42505d0f4927ba9fe6ed"
+      "sha256": "7f6fd10c91a0a8bec8e8f81f98beadbf63dd295ea21d42505d0f4927ba9fe6ed",
+      "script_identity": [
+        "Assembly-CSharp.dll",
+        "",
+        "NGSS_Local"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -4418,7 +5793,12 @@
         2156
       ],
       "bytes": 88,
-      "sha256": "e1c522611fff352bf77bd024b64c11e8dd94588f153e6e1d74e2454b658c475b"
+      "sha256": "e1c522611fff352bf77bd024b64c11e8dd94588f153e6e1d74e2454b658c475b",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2",
+        "ChampRushOrbMover"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -4433,7 +5813,12 @@
         274
       ],
       "bytes": 88,
-      "sha256": "5ad63c3ac00087c7019e973c9890d1918adbb2c6910748eadd19205aa566a656"
+      "sha256": "5ad63c3ac00087c7019e973c9890d1918adbb2c6910748eadd19205aa566a656",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2.Mecanim",
+        "PlaySoundOnEnter"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -4448,7 +5833,12 @@
         1742
       ],
       "bytes": 112,
-      "sha256": "bc2b4350d471f677f0b6ded3d5ad38e9ab0d6f173df43f58c72cbadd5022c9c3"
+      "sha256": "bc2b4350d471f677f0b6ded3d5ad38e9ab0d6f173df43f58c72cbadd5022c9c3",
+      "script_identity": [
+        "GenericIK.dll",
+        "Generics.Dynamics",
+        "InverseKinematics"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -4463,7 +5853,12 @@
         275
       ],
       "bytes": 80,
-      "sha256": "087a7737b47b171d854cfae6a1a83f8465d717c6c03dedbac0057951cdde39f5"
+      "sha256": "087a7737b47b171d854cfae6a1a83f8465d717c6c03dedbac0057951cdde39f5",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2",
+        "OnEnableEvent"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -4478,7 +5873,12 @@
         2380
       ],
       "bytes": 96,
-      "sha256": "7732e4adc85cc562817bdcf3356692437e9c8a40851eafbe56ea25c356685f12"
+      "sha256": "7732e4adc85cc562817bdcf3356692437e9c8a40851eafbe56ea25c356685f12",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2.Orbs",
+        "PickupTakenOrbEffect"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -4493,7 +5893,12 @@
         2176
       ],
       "bytes": 108,
-      "sha256": "e76056f0570263273c650b09a158d3dd2c07e4e13b025a3f4b1571dc1b19c588"
+      "sha256": "e76056f0570263273c650b09a158d3dd2c07e4e13b025a3f4b1571dc1b19c588",
+      "script_identity": [
+        "RoR2.dll",
+        "",
+        "ProjectileGhostTriggerOnStick"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -4508,7 +5913,12 @@
         311
       ],
       "bytes": 144,
-      "sha256": "fae7b21e27ff0de52419fbb4b644785d8d926edfc1131088dfd4dacdaa8cd918"
+      "sha256": "fae7b21e27ff0de52419fbb4b644785d8d926edfc1131088dfd4dacdaa8cd918",
+      "script_identity": [
+        "KinematicCharacterController.dll",
+        "KinematicCharacterController",
+        "KinematicCharacterMotor"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -4523,7 +5933,12 @@
         1878
       ],
       "bytes": 72,
-      "sha256": "5e809c27ebee54406a9b0cdb98c81d2073bed3da1ae00b8a182678e8d5ad4808"
+      "sha256": "5e809c27ebee54406a9b0cdb98c81d2073bed3da1ae00b8a182678e8d5ad4808",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2",
+        "Billboard"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -4538,7 +5953,12 @@
         2575
       ],
       "bytes": 92,
-      "sha256": "b8397ca0958959db79317d57c3841e7832c7422edcecf6f1eb055dc0010a8331"
+      "sha256": "b8397ca0958959db79317d57c3841e7832c7422edcecf6f1eb055dc0010a8331",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2.Projectile",
+        "ProjectileDamage"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -4553,7 +5973,12 @@
         2265
       ],
       "bytes": 80,
-      "sha256": "5ee37ed99f08fd990281a27dd036e051b3deed2f96d82066f5021f199f2dfaa2"
+      "sha256": "5ee37ed99f08fd990281a27dd036e051b3deed2f96d82066f5021f199f2dfaa2",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2.Orbs",
+        "OrbEffect"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -4568,7 +5993,12 @@
         257
       ],
       "bytes": 80,
-      "sha256": "09d5a1e49ba688d1f413fcece57bc49427727a59dc5bc100ba2cbd287129d331"
+      "sha256": "09d5a1e49ba688d1f413fcece57bc49427727a59dc5bc100ba2cbd287129d331",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2",
+        "PingerController"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -4583,7 +6013,12 @@
         677
       ],
       "bytes": 76,
-      "sha256": "9d3dd3d52b27454fb36a542e7b78eb7bee905daf01855fdb82628c9672a34fa6"
+      "sha256": "9d3dd3d52b27454fb36a542e7b78eb7bee905daf01855fdb82628c9672a34fa6",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2.UI",
+        "AsyncSprite"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -4598,7 +6033,12 @@
         2748
       ],
       "bytes": 104,
-      "sha256": "794fd6857315dd808d4f63b683b079e817f6ab366a25038f51a5f13fba062f61"
+      "sha256": "794fd6857315dd808d4f63b683b079e817f6ab366a25038f51a5f13fba062f61",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2",
+        "ScaleParticleSystemDuration"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -4613,7 +6053,12 @@
         825
       ],
       "bytes": 108,
-      "sha256": "98432c41ae0dae401d63f7bf1376c5d1e42ab27ae9dada5f48c51bb0bb393082"
+      "sha256": "98432c41ae0dae401d63f7bf1376c5d1e42ab27ae9dada5f48c51bb0bb393082",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2.UI",
+        "LanguageTextMeshController"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -4628,7 +6073,12 @@
         1442
       ],
       "bytes": 104,
-      "sha256": "cafff55e06e4944cea7e7a4542052f7c710490f169304a76a6b63c14874f9323"
+      "sha256": "cafff55e06e4944cea7e7a4542052f7c710490f169304a76a6b63c14874f9323",
+      "script_identity": [
+        "UnityEngine.UI.dll",
+        "UnityEngine.UI",
+        "GridLayoutGroup"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -4643,7 +6093,12 @@
         168
       ],
       "bytes": 104,
-      "sha256": "f6c0caded82c8235ab6416726ec047f16b00990299bbc96b9d17d32248265a9d"
+      "sha256": "f6c0caded82c8235ab6416726ec047f16b00990299bbc96b9d17d32248265a9d",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2.Mecanim",
+        "RandomBlinkController"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -4658,7 +6113,12 @@
         326
       ],
       "bytes": 80,
-      "sha256": "1366abc3865847a3c1e1ffd473dfcf538d90e22bc9a6de3556c6b818e0611480"
+      "sha256": "1366abc3865847a3c1e1ffd473dfcf538d90e22bc9a6de3556c6b818e0611480",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2",
+        "InputBankTest"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -4673,7 +6133,12 @@
         222
       ],
       "bytes": 80,
-      "sha256": "28694b96d666caa77279a475c619193ec0f39dfecba4162750c21037f9324085"
+      "sha256": "28694b96d666caa77279a475c619193ec0f39dfecba4162750c21037f9324085",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2",
+        "UnlockableDef"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -4688,7 +6153,12 @@
         1626
       ],
       "bytes": 96,
-      "sha256": "f4dbe6b4c250db464b2bd8744635b1bb30c0489d138edde21f2db7ab6da80531"
+      "sha256": "f4dbe6b4c250db464b2bd8744635b1bb30c0489d138edde21f2db7ab6da80531",
+      "script_identity": [
+        "Assembly-CSharp.dll",
+        "",
+        "ChefUnlockFXManager"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -4703,7 +6173,12 @@
         905
       ],
       "bytes": 72,
-      "sha256": "b86de44f443defae79c6e8aebcfe7bf07474652a84dd90be332be8dbe2bb6c13"
+      "sha256": "b86de44f443defae79c6e8aebcfe7bf07474652a84dd90be332be8dbe2bb6c13",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2",
+        "TetherVfx"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -4718,7 +6193,12 @@
         527
       ],
       "bytes": 96,
-      "sha256": "8cbdfa561441e7343ae4b8161162b93aafa206bbbcd683f53f534e61c50ce57d"
+      "sha256": "8cbdfa561441e7343ae4b8161162b93aafa206bbbcd683f53f534e61c50ce57d",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2",
+        "PickupPickerController"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -4733,7 +6213,12 @@
         1061
       ],
       "bytes": 128,
-      "sha256": "79eb8e80555e5c6f6c1faf9e922e1c8c228c2cfa34442a86f4d078c65c3a2ec8"
+      "sha256": "79eb8e80555e5c6f6c1faf9e922e1c8c228c2cfa34442a86f4d078c65c3a2ec8",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2.DispatachableEffects",
+        "AddOverlayToReferencedObject"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -4748,7 +6233,12 @@
         621
       ],
       "bytes": 112,
-      "sha256": "26b7ea9165057d1ae166bc7b23b1ad8d80e3c8bfe4155ce0ec896435d25dbd24"
+      "sha256": "26b7ea9165057d1ae166bc7b23b1ad8d80e3c8bfe4155ce0ec896435d25dbd24",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2",
+        "InputBindingDisplayController"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -4763,7 +6253,12 @@
         1976
       ],
       "bytes": 92,
-      "sha256": "8927323bb3af0a4641d45eb47c0fbb6f2544754d0e0310804ebadbbe467b6bdd"
+      "sha256": "8927323bb3af0a4641d45eb47c0fbb6f2544754d0e0310804ebadbbe467b6bdd",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2.UI",
+        "HGTextMeshProUGUI"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -4778,7 +6273,12 @@
         2455
       ],
       "bytes": 72,
-      "sha256": "1da3c0f7199baad695279e09ec82e27e2b68c19cc9a9bb9803c0de273fc8ad88"
+      "sha256": "1da3c0f7199baad695279e09ec82e27e2b68c19cc9a9bb9803c0de273fc8ad88",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2",
+        "InspectDef"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -4793,7 +6293,12 @@
         1802
       ],
       "bytes": 80,
-      "sha256": "4820e9cfec7f196d00b5c3c4b25956fc4268e00b3576296055e6611bcd860df0"
+      "sha256": "4820e9cfec7f196d00b5c3c4b25956fc4268e00b3576296055e6611bcd860df0",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2",
+        "PingInfoProvider"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -4808,7 +6313,12 @@
         204
       ],
       "bytes": 124,
-      "sha256": "bcbb2535482621179647cb5ff6b2707d8425c191df939f4b5cd7f83f6ac8140d"
+      "sha256": "bcbb2535482621179647cb5ff6b2707d8425c191df939f4b5cd7f83f6ac8140d",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2.Projectile",
+        "ProjectileCharacterController"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -4823,7 +6333,12 @@
         2353
       ],
       "bytes": 96,
-      "sha256": "c10644bf49a1e6cb180b9f08ac5c353ef3a4e6764b1870628bf75a1783ec6ab9"
+      "sha256": "c10644bf49a1e6cb180b9f08ac5c353ef3a4e6764b1870628bf75a1783ec6ab9",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2",
+        "DelusionChestController"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -4838,7 +6353,12 @@
         473
       ],
       "bytes": 104,
-      "sha256": "4f8f8341c518b34afb7b1842301c43342c83c3b56511972c9d0e44fa63696a2e"
+      "sha256": "4f8f8341c518b34afb7b1842301c43342c83c3b56511972c9d0e44fa63696a2e",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2",
+        "GameObjectSettingActivator"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -4853,7 +6373,12 @@
         25
       ],
       "bytes": 124,
-      "sha256": "038964ac8b9711b99e0ed23af7626ab734685d6860995e3160368a9103173607"
+      "sha256": "038964ac8b9711b99e0ed23af7626ab734685d6860995e3160368a9103173607",
+      "script_identity": [
+        "RoR2.dll",
+        "",
+        "BeginRapidlyActivatingAndDeactivating"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -4868,7 +6393,12 @@
         8
       ],
       "bytes": 92,
-      "sha256": "ab3b6430e4d293eb24ce33806ac1fe09979a9102da009bea0a2f8b609e747471"
+      "sha256": "ab3b6430e4d293eb24ce33806ac1fe09979a9102da009bea0a2f8b609e747471",
+      "script_identity": [
+        "RoR2.dll",
+        "",
+        "InterpolatedTransform"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -4883,7 +6413,12 @@
         218
       ],
       "bytes": 104,
-      "sha256": "023ea97f4e1c0f940b8291808d4f58f5ffcd378d28f783d251cfbd80825d9ca2"
+      "sha256": "023ea97f4e1c0f940b8291808d4f58f5ffcd378d28f783d251cfbd80825d9ca2",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2",
+        "RunPresenceRendererToggle"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -4898,7 +6433,12 @@
         604
       ],
       "bytes": 88,
-      "sha256": "4bd7dfa100ff12d4fafc48437f63995688531e33e92b64c40478f9880da043d7"
+      "sha256": "4bd7dfa100ff12d4fafc48437f63995688531e33e92b64c40478f9880da043d7",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2",
+        "ShrineChanceBehavior"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -4913,7 +6453,12 @@
         2692
       ],
       "bytes": 100,
-      "sha256": "46e2636c10c5a5025c7d651808b0208230515199ed8639a39b8e98ddd2e6316d"
+      "sha256": "46e2636c10c5a5025c7d651808b0208230515199ed8639a39b8e98ddd2e6316d",
+      "script_identity": [
+        "Unity.TextMeshPro.dll",
+        "TMPro",
+        "TMP_SpriteAsset"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -4928,7 +6473,12 @@
         472
       ],
       "bytes": 128,
-      "sha256": "5a530b0f007c45e53674073cc0845ada5fd29db7ae8936273e7ea1e30839b84d"
+      "sha256": "5a530b0f007c45e53674073cc0845ada5fd29db7ae8936273e7ea1e30839b84d",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2",
+        "DisableParticleEmissionAndDestroyOnTimer"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -4943,7 +6493,12 @@
         2045
       ],
       "bytes": 92,
-      "sha256": "08a84280c95fb753aaf1c102a7e4642db0d48fd0163cca4dfcb0070535ffed85"
+      "sha256": "08a84280c95fb753aaf1c102a7e4642db0d48fd0163cca4dfcb0070535ffed85",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2.ExpansionManagement",
+        "ExpansionDef"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -4958,7 +6513,12 @@
         492
       ],
       "bytes": 96,
-      "sha256": "01229730b14d6e0813d405b40a650b64380b776a3885fdb68ba9c9a0a8c00ba3"
+      "sha256": "01229730b14d6e0813d405b40a650b64380b776a3885fdb68ba9c9a0a8c00ba3",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2",
+        "SpecialObjectAttributes"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -4973,7 +6533,12 @@
         829
       ],
       "bytes": 72,
-      "sha256": "037ff27119cdf75e45de589677e16babf419251ccbc03e1c5dc2ba384df34d0a"
+      "sha256": "037ff27119cdf75e45de589677e16babf419251ccbc03e1c5dc2ba384df34d0a",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2",
+        "ShakeEmitter"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -4988,7 +6553,12 @@
         2579
       ],
       "bytes": 92,
-      "sha256": "5a93b7c1429773259c74595ccf520c57ba93c2373bd9f270fcbf6125c7070f3d"
+      "sha256": "5a93b7c1429773259c74595ccf520c57ba93c2373bd9f270fcbf6125c7070f3d",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2.UI",
+        "InputSourceFilter"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -5003,7 +6573,12 @@
         1041
       ],
       "bytes": 80,
-      "sha256": "63289d65417b21fcb0336a32d34ad1abaf3aff9f8d81375bc482a8a00237db20"
+      "sha256": "63289d65417b21fcb0336a32d34ad1abaf3aff9f8d81375bc482a8a00237db20",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2",
+        "ChestBehavior"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -5018,7 +6593,12 @@
         1734
       ],
       "bytes": 76,
-      "sha256": "802260514fbb15f8a00ed73434ca68a447fca843ed02eff08ec7f61225a8d908"
+      "sha256": "802260514fbb15f8a00ed73434ca68a447fca843ed02eff08ec7f61225a8d908",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2.UI",
+        "AsyncImage"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -5033,7 +6613,12 @@
         1695
       ],
       "bytes": 96,
-      "sha256": "2cbd784c9d50ea4ca6fbcd7d09c1b20222d1d6e6c0763d7ddd84b145908d5a52"
+      "sha256": "2cbd784c9d50ea4ca6fbcd7d09c1b20222d1d6e6c0763d7ddd84b145908d5a52",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2",
+        "ModelEffectLineRenderer"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -5048,7 +6633,12 @@
         2632
       ],
       "bytes": 88,
-      "sha256": "8a19d5326a12c2fa8325b16bd47d81fd550c7b9d6ac74cfa576848c8be5b1d66"
+      "sha256": "8a19d5326a12c2fa8325b16bd47d81fd550c7b9d6ac74cfa576848c8be5b1d66",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2",
+        "NetworkStateMachine"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -5063,7 +6653,12 @@
         1025
       ],
       "bytes": 112,
-      "sha256": "cb7865930148f64b73a8d052b71adb5aaed3a77896fdca9b6f192efea7fa4fb1"
+      "sha256": "cb7865930148f64b73a8d052b71adb5aaed3a77896fdca9b6f192efea7fa4fb1",
+      "script_identity": [
+        "AK.Wwise.Unity.API.WwiseTypes.dll",
+        "",
+        "WwiseEventReference"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -5078,7 +6673,12 @@
         617
       ],
       "bytes": 120,
-      "sha256": "0fcda40c64ca563f9677107fd12a7222fb9f2f85c88ebe18a48c5ba769723dd1"
+      "sha256": "0fcda40c64ca563f9677107fd12a7222fb9f2f85c88ebe18a48c5ba769723dd1",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2.Scripts.GameBehaviors",
+        "ForceIdentityRotation"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -5093,7 +6693,12 @@
         1757
       ],
       "bytes": 112,
-      "sha256": "dadc4c2ecb660ee517a359173c0e80721ea4760658daadb29f057f671b749936"
+      "sha256": "dadc4c2ecb660ee517a359173c0e80721ea4760658daadb29f057f671b749936",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2",
+        "PurchaseAvailabilityIndicator"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -5108,7 +6713,12 @@
         797
       ],
       "bytes": 88,
-      "sha256": "b76e67b527c8aedcbb8ebae0c83d68a2eba88b667ff220ef81f2563e16517be9"
+      "sha256": "b76e67b527c8aedcbb8ebae0c83d68a2eba88b667ff220ef81f2563e16517be9",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2",
+        "BossShrineCounter"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -5123,7 +6733,12 @@
         705
       ],
       "bytes": 104,
-      "sha256": "ed881e50f2cac8577dd5f0d9191039d3aeca3e30d252b0f94cf5717b25a0317e"
+      "sha256": "ed881e50f2cac8577dd5f0d9191039d3aeca3e30d252b0f94cf5717b25a0317e",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2",
+        "DestroyOnTeleporterCharged"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -5138,7 +6753,12 @@
         1064
       ],
       "bytes": 132,
-      "sha256": "75627b8d703232646f537595ccd8656c5a7f56748a6a50a196c636763b3fff2d"
+      "sha256": "75627b8d703232646f537595ccd8656c5a7f56748a6a50a196c636763b3fff2d",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2.ExpansionManagement",
+        "ExpansionRequirementComponent"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -5153,7 +6773,12 @@
         945
       ],
       "bytes": 132,
-      "sha256": "47afc3f3901c37a6dad533c8160fef31ce23c73d332b628e8e3f79c4d9b9ea3d"
+      "sha256": "47afc3f3901c37a6dad533c8160fef31ce23c73d332b628e8e3f79c4d9b9ea3d",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2.Projectile",
+        "ProjectileDirectionalTargetFinder"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -5168,7 +6793,12 @@
         2286
       ],
       "bytes": 80,
-      "sha256": "af8d2af4995530f8d095ce1d5266f270ab2c50b3add901a1465aa1788d8f5fb3"
+      "sha256": "af8d2af4995530f8d095ce1d5266f270ab2c50b3add901a1465aa1788d8f5fb3",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2",
+        "ConsoleFunctions"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -5183,7 +6813,12 @@
         12
       ],
       "bytes": 72,
-      "sha256": "caec78d35a50a9d10529b8b81f91967b96a2c3e55d89b69357fc8ac7926ce095"
+      "sha256": "caec78d35a50a9d10529b8b81f91967b96a2c3e55d89b69357fc8ac7926ce095",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2",
+        "OmniEffect"
+      ]
     },
     {
       "source_profile_sha256": "afe5e32ab5f57f19949f672d7cd4a3d91a97a861f332d41ab46330d239baabf0",
@@ -5214,7 +6849,12 @@
         2301
       ],
       "bytes": 88,
-      "sha256": "22606097c558bc8c443b2ad4b7066feed1418e6e008789c069b7953c36f515ae"
+      "sha256": "22606097c558bc8c443b2ad4b7066feed1418e6e008789c069b7953c36f515ae",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2.Skills",
+        "GroundedSkillDef"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -5229,7 +6869,12 @@
         2175
       ],
       "bytes": 88,
-      "sha256": "2ff6e7586fd3d06ca46e043c30d12a25381cf38fb3cd4dd0ca819831ce0b11e4"
+      "sha256": "2ff6e7586fd3d06ca46e043c30d12a25381cf38fb3cd4dd0ca819831ce0b11e4",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2",
+        "SurfaceDefProvider"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -5244,7 +6889,12 @@
         474
       ],
       "bytes": 96,
-      "sha256": "0b84c33cc7831c11f4c5c90a1993c65b0f9119d88d18754bf1a7ac129059df30"
+      "sha256": "0b84c33cc7831c11f4c5c90a1993c65b0f9119d88d18754bf1a7ac129059df30",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2",
+        "CharacterDeathBehavior"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -5259,7 +6909,12 @@
         1602
       ],
       "bytes": 104,
-      "sha256": "2b47e912167acd1972a2ac31ab7b028b487a45ef298c45ce96757cae00e95272"
+      "sha256": "2b47e912167acd1972a2ac31ab7b028b487a45ef298c45ce96757cae00e95272",
+      "script_identity": [
+        "UnityEngine.UI.dll",
+        "UnityEngine.UI",
+        "GraphicRaycaster"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -5274,7 +6929,12 @@
         1625
       ],
       "bytes": 80,
-      "sha256": "f550a07116f8d6e3b1bd6325a9b7994bd5a67c724c0b1a64b0abf2c77b866e4e"
+      "sha256": "f550a07116f8d6e3b1bd6325a9b7994bd5a67c724c0b1a64b0abf2c77b866e4e",
+      "script_identity": [
+        "Assembly-CSharp.dll",
+        "",
+        "SoundTrigger"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -5289,7 +6949,12 @@
         1737
       ],
       "bytes": 116,
-      "sha256": "1c4406eaddf5cde22163233057d06aa08fb689b2d317df6c6233e53a6473e851"
+      "sha256": "1c4406eaddf5cde22163233057d06aa08fb689b2d317df6c6233e53a6473e851",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2.Networking",
+        "CharacterNetworkTransform"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -5304,7 +6969,12 @@
         2328
       ],
       "bytes": 88,
-      "sha256": "0809f486ee5f3fb071f90855972e7f7753f2e5ce6ab4735c22c9d4ea185c0229"
+      "sha256": "0809f486ee5f3fb071f90855972e7f7753f2e5ce6ab4735c22c9d4ea185c0229",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2.Skills",
+        "SteppedSkillDef"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -5319,7 +6989,12 @@
         2199
       ],
       "bytes": 108,
-      "sha256": "0724dcab5b897adca8fa0d54990cd529d0c292195fc843df0a481095bdc43743"
+      "sha256": "0724dcab5b897adca8fa0d54990cd529d0c292195fc843df0a481095bdc43743",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2.UI.SkinControllers",
+        "ButtonSkinController"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -5334,7 +7009,12 @@
         1901
       ],
       "bytes": 88,
-      "sha256": "272362bc486028d73f580565f82c6a1c43c47ad38614cd57f187527a17b0880e"
+      "sha256": "272362bc486028d73f580565f82c6a1c43c47ad38614cd57f187527a17b0880e",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2",
+        "ChampRushOrbBobber"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -5349,7 +7029,12 @@
         58
       ],
       "bytes": 88,
-      "sha256": "a8a9900ff08e33a6850a80e7190eb1212f14b9f0e2461c24f0b08a2266147dd5"
+      "sha256": "a8a9900ff08e33a6850a80e7190eb1212f14b9f0e2461c24f0b08a2266147dd5",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2",
+        "AnimateShaderAlpha"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -5364,7 +7049,12 @@
         2053
       ],
       "bytes": 80,
-      "sha256": "9810e7c7b78cb19852b58d5a4f29e7ffc306c679bccd51cb99fd1161ded84e46"
+      "sha256": "9810e7c7b78cb19852b58d5a4f29e7ffc306c679bccd51cb99fd1161ded84e46",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2",
+        "VFXAttributes"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -5379,7 +7069,12 @@
         780
       ],
       "bytes": 112,
-      "sha256": "34ecd1624072f8722a6918dd3035b3ad71993c317843fca4e17e4a7f526e51c1"
+      "sha256": "34ecd1624072f8722a6918dd3035b3ad71993c317843fca4e17e4a7f526e51c1",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2",
+        "PlayerCharacterMasterController"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -5394,7 +7089,12 @@
         674
       ],
       "bytes": 72,
-      "sha256": "0088a37b0b17ca81321fed91b7589e0237c3b1a6e037e349ee775ab410e659bd"
+      "sha256": "0088a37b0b17ca81321fed91b7589e0237c3b1a6e037e349ee775ab410e659bd",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2",
+        "FlickerLight"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -5409,7 +7109,12 @@
         2487
       ],
       "bytes": 88,
-      "sha256": "0faf8609a666f05ce8dfd65287cc00de9162d92a51bc6a269b905f9289e31796"
+      "sha256": "0faf8609a666f05ce8dfd65287cc00de9162d92a51bc6a269b905f9289e31796",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2",
+        "ShrineBloodBehavior"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -5424,7 +7129,12 @@
         1054
       ],
       "bytes": 72,
-      "sha256": "3757c8ec8b58d6f4495491058b9445b6dc8c5d3d5b6e03dfabb4499862f6eb8d"
+      "sha256": "3757c8ec8b58d6f4495491058b9445b6dc8c5d3d5b6e03dfabb4499862f6eb8d",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2",
+        "RunPresence"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -5439,7 +7149,12 @@
         865
       ],
       "bytes": 92,
-      "sha256": "4abb793324c7b75046cebc78949c8d1f02fa3f18e4bb0b99f87dea07747265af"
+      "sha256": "4abb793324c7b75046cebc78949c8d1f02fa3f18e4bb0b99f87dea07747265af",
+      "script_identity": [
+        "RoR2.dll",
+        "",
+        "LineBetweenTransforms"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -5454,7 +7169,12 @@
         2555
       ],
       "bytes": 96,
-      "sha256": "d74a5d16934d0b9d62cb3ded3ec83b73a99ac357dd6d5dfe0011a727f2473468"
+      "sha256": "d74a5d16934d0b9d62cb3ded3ec83b73a99ac357dd6d5dfe0011a727f2473468",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2",
+        "MultiTextRiserController"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -5469,7 +7189,12 @@
         855
       ],
       "bytes": 88,
-      "sha256": "477b4bbfb9e264853b897d5d0433975dae13efa95aca8f4b0d2a5adf695851c5"
+      "sha256": "477b4bbfb9e264853b897d5d0433975dae13efa95aca8f4b0d2a5adf695851c5",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2",
+        "RagdollController"
+      ]
     },
     {
       "source_profile_sha256": "8c21890bd1f8939198b9c651b85be07ab7c230ad2a4f4129e950bc990970c767",
@@ -5484,7 +7209,12 @@
         1979
       ],
       "bytes": 80,
-      "sha256": "c5dca3fbee258beea5f99ff9728b682113e6c946a6d32f9d76de142ad924c559"
+      "sha256": "c5dca3fbee258beea5f99ff9728b682113e6c946a6d32f9d76de142ad924c559",
+      "script_identity": [
+        "RoR2.dll",
+        "RoR2",
+        "CombatDirector"
+      ]
     }
   ]
 }

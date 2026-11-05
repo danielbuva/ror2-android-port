@@ -1296,6 +1296,7 @@ def produce(
             checked(source, (row["bytes"], row["sha256"]))
             original[name] = json.loads(source.read_text())
             pc_sources[name] = source
+        current_metadata = code_request is not None and "target" not in json.loads(Path(code_request).read_text())
         generated = metadata(original["ScriptingAssemblies.json"], original["RuntimeInitializeOnLoads.json"], profile["project_assemblies"])
         sources = {}
         for name, pin in expected.items():
@@ -1313,16 +1314,20 @@ def produce(
                 "source_role": role,
                 "source": source.relative_to(source_root).as_posix(),
             }
+        current_output_pins = {}
         for name, body in generated.items():
             row = profile["outputs"][name]
-            if (len(body), hashlib.sha256(body).hexdigest()) != (row["bytes"], row["sha256"]):
+            actual = {"bytes": len(body), "sha256": hashlib.sha256(body).hexdigest()}
+            if not current_metadata and (actual["bytes"], actual["sha256"]) != (row["bytes"], row["sha256"]):
                 raise ValueError("generated player metadata differs: " + name)
             (output / (TARGET + name)).write_bytes(body)
-            result["files"][TARGET + name] = {**row, "source_role": "pc-and-authored", "source": profile["sources"][name]["path"]}
+            result["files"][TARGET + name] = {**row, **actual, "source_role": "pc-and-authored", "source": profile["sources"][name]["path"]}
+            if current_metadata:
+                current_output_pins[name] = actual
+                result.setdefault("metadata_comparison", {})[name] = actual["bytes"] == row["bytes"] and actual["sha256"] == row["sha256"]
         registry = None
         if "registry" in profile:
             registry = registry_records(profile_path.parent.resolve(strict=True), profile["registry"], pc, editor_resources, code_request, managed_production)
-        current_output_pins = {}
         current_registry = registry is not None and "target" not in json.loads(Path(code_request).read_text())
         font = profile["font"]
         name = font["file"]

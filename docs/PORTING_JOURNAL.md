@@ -2697,3 +2697,64 @@ Current-input scoped inheritance passed; complete pointer proof remains open.
 Prior art: pinned AssetRipper full script identity and J866 exact scope/forwarding.
 No APK produced; integrated source/body proofs, native bridges, complete graph/load
 and device play remain required independently of this metadata contract.
+
+## J1386 — Reuse install-bound audio verification and partition loading costs
+
+2026-11-05. Existing audio copier caches full verification against install/cohort
+identity and path, expected hash, size, device/inode, nanosecond mtime/ctime.
+Install/update or Clear cache requires full verification; missing metadata falls back.
+APK `64b8741f45e5f94f54d95ca56b88040c72548795541c2daffc153e2fbca232e7`, source `80452b72`.
+Evidence: `work/coordination/alpha-loading-audio-receipt-integrity-start-20261105T020900Z/`;
+first/cached runs and ranked waits: `work/coordination/alpha-load-breakdown-20261104/notes.md`.
+First/cached verification: 274/0 then 0/274 full/cached; banks 3.765→0.044 s,
+media 8.959→0.032 s. Same-size/inode bank edit refused before native init;
+full-SHA restoration passed, then 273 cached/1 full; source audio ready 153/153.
+Ordinary Start reached stage/HUD; profiles/settings retained; stopped/asleep/lease released.
+Integrity run: CPU/GPU peak 67.7 C, time above 80 C 0 s, battery 29 C.
+Pinned R2API Sound/provider informed scope; native credit waits retained, page cache uncontrolled.
+No whole-load/FPS/audibility or metadata-invisible bitrot claim.
+
+## J1383 — Publish source scene suppliers for the converter graph
+
+2026-11-04. Four source-record profiles supply Artifactworld01 AkTriggerDisable
+and Champrush, Splash and Conduitcanyon directors through the existing native
+record owner. Checked component and director PPtrs retain original relationships;
+Conduit uses the existing exposed-name policy with 13 checked source pointers.
+Evidence: four-consumer release-graph fixture and host-only preflight passed;
+local receipts: `work/coordination/p1-scenes-w/current-scene-supplier-preflight-v1/`.
+Public recipes contain selectors and transformations, no generated record bodies.
+No APK produced; complete graph, current-code assembly and device play remain open.
+
+## J1385 — Complete catalogs against produced serialized containers
+
+2026-11-05. The source catalog owner derives bundle ownership from selected final
+object profiles and pins metadata, produced bundles and the current script registry.
+Final container roots, preload intervals, PPtrs, native types and MonoScript hashes
+must agree before catalog emission; duplicate keys retain every root.
+Evidence: 43 catalog ownership tests and seven final-container host fixtures pass,
+including real serialized managed bindings and wrong-type/absent-script rejection.
+Prior art: pinned R2API typed handles and UnityPy duplicate container ownership.
+No APK produced. Complete produced cohort, managed subtype assignability, remaining
+gameplay reference closure and device play remain open; byte identity is diagnostic.
+## J1384 — Qualify managed curve hashes against complete SDK runtime projections
+
+2026-11-04. The existing generic record owner can derive editor curve properties
+hashes from its pinned SDK while preserving source bodies, runtime type trees,
+original script identities and MonoScript pointers. Complete runtime projections
+must match; unrelated field changes still refuse. The legacy owner shares this
+checker. Prior art: existing J1163 SDK tangent metadata policy.
+Evidence: 83 object and 32 record host tests passed; current-input qualification
+produced 31 managed records with current CLR properties and checked pointers.
+Local receipts: `work/coordination/p1-wholegame-1031/source-component-material-frontier-v6/`.
+No APK produced; complete graph, exact-editor load and device play remain open.
+
+## J1385 — Read complete SDK Shader schemas
+
+2026-11-05. The existing native Shader reader now decodes SDK object flags, prefab pointers and sets.
+A source-selected SDK Shader qualification previously failed at common-string offset 434.
+An authored fixture compares prefab links, keyword sets and the complete body with pinned UnityPy;
+two focused tests pass. Six compiled source-selected Shader records and SDK fallback records 6/7
+now pass name/property, full native schema and PPtr readback with the SDK7 → SDK6 edge preserved.
+Evidence: `work/coordination/p1-wholegame-1031/qualified-retained-sdk-shaders-v2/done.json`;
+candidate index SHA-256 `a6d02319cc5d2f19eb92ec762a1c414de6e4385c013e4bf181a79a422a1b4adb`.
+Host-only; full graph emission, Unity loading and device play remain open; APK unchanged.

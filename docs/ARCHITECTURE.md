@@ -63,9 +63,30 @@ from measured commands. Sampling gives a peak lower bound; child RSS accounting
 is not simultaneous process-tree RSS. These host metrics do not qualify phone
 heat, installation or complete converter performance.
 
-Objective-support and Commando object recipes use diagnostic final-file hash
-comparison for current script/schema layouts; source, record, native-type and
-reference checks remain strict, and device loadability remains open.
+The current release graph selects diagnostic historical-output comparison for
+object, record, remap, mesh, avatar, texture and shader producers. Standalone
+producers retain exact comparison by default. Receipts retain historical match
+results; output indices pin actual produced extents. Source, supplier, native-type,
+schema, script and reference checks remain strict; device loadability remains open.
+Barrier shader jobs bind their separately pinned legacy SDK metadata explicitly.
+
+`accepted-output/catalog_complete.py --inputs REQUEST --output NEW_DIRECTORY`
+owns current host catalog completion. The request pins source metadata, selected
+final object profiles, every produced bundle and the current runtime script
+registry, plus input/startup identity. Existing catalog helpers resolve ownership
+and dependency closure; final serialized containers independently check endpoint
+PPtrs, preload extents, native types and exact MonoScript/runtime bindings.
+Duplicate container keys retain every root. Managed subtype assignability is not
+yet admitted. Inputs are rechecked before output; teardown releases local readers.
+The owner emits `whole-catalog.json` and a receipt only after all checks pass.
+Complete cohort availability, gameplay reference closure and device play remain
+separate gates; this command does not qualify them.
+
+`object_produce.py --preflight` is a current host check for pinned source/SDK/
+codec inputs, preload relationships and declared local script bindings. It
+aggregates binding mismatches before record emission, without serializing or
+compressing a bundle. Supplier generation, full reference closure and device
+loadability remain separate gates.
 
 `object_produce.py` emits complete source object bundles through
 `object_stream.py`, which owns checked-body spooling, lazy graph reads and bounded
@@ -76,6 +97,10 @@ all existing hashes, then closes/removes its temporary store on success or failu
 Profile/native metadata remains resident. The aggregate member bound is 8 GiB;
 individual records retain the existing 256 MiB bound. An authored 257 MiB control
 matches canonical bytes with bounded payload memory; full phone production is open.
+`owner-code/produce.py` derives native translation-unit membership from each fresh
+conversion for both current and historical requests. It retains audited SDK
+compiler flags and link ordering through `native.generated_profile`; source hashes,
+metadata and complete native membership are checked before planning or compilation.
 `player_data.py` binds no-target code requests to the current runtime manifest
 and actual managed compiler source hashes. Historical target requests retain
 their pinned cohort. Existing importer GUIDs survive; first-import owners use
@@ -5487,6 +5512,28 @@ skill setup and catalog preparation. Markers carry process time/frame without
 stacks, report writes, yields or retained state; existing owners retain setup
 and teardown. Adjacent markers bound work, including intervening callbacks;
 returned/ready markers require separate failure, audio and world checks.
+The same seams in `StageGeometryBoundary`, `NovaInputBoundary` and
+`AutomaticDirectorBoundary` separate collider validation/physics/entry, landing
+and display/run/enemy preparation, and objective templates/master catalog/player
+setup. These remain bounded owner-boundary logs, with no per-object recording.
+
+`GameAudioOriginalPayloadCopy` also owns the private Android app-cache receipt
+`original-audio-verified.json`. Setup still authenticates the packaged cohort
+and checks paths, types, sizes, space and deadlines. Actual reuse can skip SHA
+only for the same installed package path/update time, request receipt and file
+path/hash/size/device/inode/nanosecond modification and kernel change times.
+A miss or unavailable metadata uses full-file SHA; matching stamps before and
+after hashing populate a receipt only after the complete cohort succeeds.
+The first startup after install/update verifies fully before native audio init;
+Android Clear cache forces the same repair verification. Process exit releases
+streams/Java handles; only the private cache persists. File writes, including
+same-size edits with restored mtime, invalidate kernel ctime under normal
+filesystem semantics. This is metadata reuse, not protection against storage
+corruption that preserves every kernel identity field. Adopted/FUSE device
+qualification observed changed timestamps after a same-size,
+same-inode edit, refusal before native initialization and selective re-verification
+after full-SHA restoration (J1386). Metadata-invisible storage corruption remains
+outside this cache contract.
 
 `IntegratedWorldSession.TracePreparation` emits a bounded log marker at each
 initial world-preparation seam, including the existing loot report write,
@@ -6213,3 +6260,17 @@ Fieldless component metadata uses the existing receipt-bound current MonoScript
 identity policy in `object_produce.py`; its schema/properties hash must still
 match the supplied script. Receipts record the actual script hash. Setup and
 teardown remain the scoped source-pack readers and retained producer receipt.
+
+The Artifactworld01 native and Champrush/Splash/Conduitcanyon director record profiles use
+the existing `record_produce.py` owner. They relocate checked source component
+and PlayableDirector pointers, preserving the existing exposed-name policy.
+Setup pins original bundles and a fresh pack; process exit closes readers and
+retains receipts. They supply release-graph dependencies without a new runtime
+owner. Complete APK and device acceptance remain open.
+
+The existing generic record producer can explicitly derive managed properties
+hashes using editor AnimationCurve layouts from its pinned SDK. The shared
+object-producer checker admits only the complete source runtime projection of
+the editor curve, preserving the serialized body and source type tree. Original
+MonoScript pointers and script identities remain checked; current CLR bindings
+and bundle/device loadability are separate gates.

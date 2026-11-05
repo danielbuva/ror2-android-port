@@ -69,7 +69,9 @@ def checked_original(pc, selected):
     return body, A.SCHEMA.type_tree(io.BytesIO(typ["tree"]))
 
 
-def produce(profile_path, profile_pin, pc, sdk, asset_ripper, provider, provider_pin, output):
+def produce(profile_path, profile_pin, pc, sdk, asset_ripper, provider, provider_pin, output, comparison="exact"):
+    if comparison not in ("exact", "diagnostic"):
+        raise ValueError("unknown target comparison policy")
     profile_path, pc, sdk, provider = (Path(p).resolve(strict=True) for p in (profile_path, pc, sdk, provider))
     P.checked(profile_path, {"bytes": profile_path.stat().st_size, "sha256": profile_pin})
     profile = json.loads(profile_path.read_text())
@@ -133,6 +135,7 @@ def produce(profile_path, profile_pin, pc, sdk, asset_ripper, provider, provider
         "objects": 0,
         "object_bytes": 0,
     }
+    receipt.update(comparison=comparison, historical_mismatches=0)
     try:
         with (
             compiler.compiler([sdk / "Tools/UnityShaderCompiler"], sdk, output / "compiler-metadata", includes=[sdk / "CGIncludes"]) as connection,
@@ -181,8 +184,11 @@ def produce(profile_path, profile_pin, pc, sdk, asset_ripper, provider, provider
                 for target in selected["outputs"]:
                     result = O.remap(made, target.get("references", []))
                     if len(result) != target["bytes"] or hashlib.sha256(result).hexdigest() != target["sha256"]:
-                        raise ValueError("Shader context record differs from accepted hash")
-                    row = {key: target[key] for key in ("bundle", "member", "path_id", "bytes", "sha256")}
+                        if comparison == "exact":
+                            raise ValueError("Shader context record differs from accepted hash")
+                        receipt["historical_mismatches"] += 1
+                    row = {key: target[key] for key in ("bundle", "member", "path_id")}
+                    row.update(bytes=len(result), sha256=hashlib.sha256(result).hexdigest())
                     row["offset"] = data.tell()
                     data.write(result)
                     index.write(json.dumps(row, sort_keys=True) + "\n")
@@ -222,8 +228,28 @@ def main():
     parser.add_argument("--record-pack", type=Path, required=True)
     parser.add_argument("--receipt-sha256", required=True)
     parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument(
+        "--comparison",
+        choices=("exact", "diagnostic"),
+        default="exact",
+        help="Record historical output byte differences while retaining source and structural checks",
+    )
     args = parser.parse_args()
-    print(json.dumps(produce(args.profile, args.profile_sha256, args.pc_root, args.sdk, args.asset_ripper, args.record_pack, args.receipt_sha256, args.output)))
+    print(
+        json.dumps(
+            produce(
+                args.profile,
+                args.profile_sha256,
+                args.pc_root,
+                args.sdk,
+                args.asset_ripper,
+                args.record_pack,
+                args.receipt_sha256,
+                args.output,
+                comparison=args.comparison,
+            )
+        )
+    )
 
 
 if __name__ == "__main__":

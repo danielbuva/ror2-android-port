@@ -960,6 +960,56 @@ class AnimationProducerTests(unittest.TestCase):
                 with self.assertRaisesRegex(ValueError, "bounded recipe line"):
                     list(A.profile_bundles(path))
 
+    def test_diagnostic_emits_actual_extent_and_keeps_source_body_checks(self):
+        body, schema = fixture()
+        operations = {"clear_reference_pose": True, "canonical": "nan"}
+        expected = A.transform(body, schema, operations)
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            pc = root / "pc"
+            pc.mkdir()
+            source = pc / "authored.bundle"
+            source.write_bytes(F.bundle([("CAB-authored", serialized(body, schema), 4)]))
+            selected = {
+                "path_id": 77,
+                "class_id": 74,
+                "sha256": hashlib.sha256(body).hexdigest(),
+                "outputs": [
+                    {
+                        "bundle": "authored-target",
+                        "member": "CAB-target",
+                        "path_id": -88,
+                        "bytes": len(expected) + 4,
+                        "sha256": "0" * 64,
+                        "transform": operations,
+                    }
+                ],
+            }
+            profile = {
+                "input_id": A.M.INPUT_ID,
+                "bundles": [{"path": source.name, "sha256": A.B.sha(source), "members": [{"name": "CAB-authored", "objects": [selected]}]}],
+            }
+            path = root / "profile.json"
+            path.write_text(json.dumps(profile))
+            with self.assertRaisesRegex(ValueError, "produced object record differs"):
+                A.produce(path, A.B.sha(path), pc, root / "exact")
+            output = root / "diagnostic"
+            receipt = A.produce(path, A.B.sha(path), pc, output, comparison="diagnostic")
+            self.assertTrue(receipt["success"])
+            self.assertEqual(receipt["comparison"], "diagnostic")
+            self.assertEqual(receipt["historical_mismatches"], 1)
+            self.assertEqual((output / "objects.bin").read_bytes(), expected)
+            row = json.loads((output / "index.jsonl").read_text())
+            self.assertEqual(row["offset"], 0)
+            self.assertEqual(row["bytes"], len(expected))
+            self.assertEqual(row["sha256"], hashlib.sha256(expected).hexdigest())
+            selected["sha256"] = "0" * 64
+            path.write_text(json.dumps(profile))
+            with self.assertRaisesRegex(ValueError, "original object-record body drift"):
+                A.produce(path, A.B.sha(path), pc, root / "source-drift", comparison="diagnostic")
+            with self.assertRaisesRegex(ValueError, "unknown target comparison policy"):
+                A.produce(path, A.B.sha(path), pc, root / "bad-policy", comparison="unknown")
+
     def test_source_pack_persistence_and_input_output_drift(self):
         body, schema = fixture()
         transform = {"clear_reference_pose": True, "canonical": "nan"}

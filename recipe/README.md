@@ -6846,5 +6846,70 @@ inputs are published.
 | Recipe | SHA-256 |
 | --- | --- |
 | `owner-objective-support-objects.json` | `afe5e32ab5f57f19949f672d7cd4a3d91a97a861f332d41ab46330d239baabf0` |
-| `owner-commando-reused-records.json` | `9c587b0edd5bdb2955b2a7d592ab4cf20eae99107c03ea32d5dd1eb2291fdb96` |
-| `owner-commando-objects.json` | `944f28096f69bc509123d9564721cd4845603df65ef073c3caec1fcd2f949a73` |
+| `owner-commando-reused-records.json` | `6474d221dbdb80e9d29c4f3a2f6d2ce3a132980c06c4240d48dc25b55592cb2c` |
+| `owner-commando-objects.json` | `42777b5337e15e18a6fd1c8a65fee68b6eb831d03830604851aa2635ed54d972` |
+
+Commando reused MonoScripts select assembly, namespace and class identities from
+the receipt-pinned source-produced player registry. All 347 body hashes uniquely
+match that current registry; numeric IDs from the historical registry are not
+identity selectors. The object recipe carries the same explicit identities,
+checked by the existing serialized-supplier and native-type contracts. Only
+minimal reconstruction relationships are tracked; generated script bodies and
+local registry evidence remain ignored. Provenance/privacy audit: no game code,
+asset bodies, private paths or account data added.
+
+The SDK EventSystem policy retains its explicit EventSystem identity when the
+other Commando scripts are resolved from current source registry matches. A
+hash-unique supplier match does not establish a component's semantic binding.
+The object owner's preflight checks declared local source-schema/script identity
+relationships before emission and aggregates mismatches in its receipt. Pinned
+source/SDK/codec and preload checks remain strict. Provenance/privacy review:
+only authored policy, script names and relationship checks changed; generated
+bodies and local audit evidence remain ignored. No device admission is claimed.
+
+Audit: 2026-11-05. `original-audio-owner-sources.json` and the camera
+transform recipe refresh only reviewed authored source and manifest hashes for
+bounded startup/transport timing seams. No new inputs, game-derived bytes,
+private paths, identifiers or third-party code are included. Full audio integrity
+verification and native bank initialization order are unchanged.
+
+The same authored audio-owner pins now include the install-bound private
+verification cache. Native payload bytes, packaged cohort validation
+and bank order are unchanged. The receipt uses kernel change time as well as
+modification time and inode; J1386 records adopted-storage corruption refusal,
+restoration and measured cache hits.
+No private cached receipts or captured identities are tracked.
+
+## Scene source record suppliers (2026-11-05)
+
+Artifactworld01, Champrush, Splash and Conduitcanyon publish existing source-only record
+selectors through `record_produce.py`. They restore missing release-graph
+suppliers: six original AkTriggerDisable component relationships and five
+original PlayableDirector records with typed pointer relocations and the
+existing exposed-name policy. Source bundles, native schemas and reference
+checks remain authoritative; generated record bodies stay ignored.
+Manual provenance, privacy, licensing and sensitive-content audit: these
+recipes contain only minimum original-input selectors, hashes and authored
+reference relationships, with no asset bodies, game code, private paths,
+identifiers or credentials. They do not establish complete bundle loadability
+or device playability.
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-artifactworld01-native-records.json` | `728ac3483b07550d4f46e1cfa50f011a69e0b24284dc62754a23ec61fb0cec80` |
+| `owner-champrush-director-records.json` | `a7d60a106ef9b5be7c22010acbb2ea9118f4cbe6ad6e6226f034e047ece16536` |
+| `owner-splash-director-records.json` | `66953dab4e23d78963177719232bd2accd92cf47402f88fc5bfc0378370acad8` |
+
+Conduitcanyon uses the same source PlayableDirector transform with 13 checked
+pointer relocations; its consumer selects the newly published supplier.
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-conduitcanyon-director-records.json` | `5899bf05658d41d38794ca5e1a3fe89413613b45c9931ae041f8b313c026b632` |
+| `owner-conduitcanyon-objects.json` | `28241c71cbe333cb25a2ac210c75cf10c91e92aab7887dec0179248e37827474` |
+
+The generic record owner's opt-in `editor_curve_properties` policy reuses the
+strict SDK curve projection from the legacy animation owner (J1163). Only a
+temporary properties-hash tree gains editor tangent metadata; original record
+bytes and runtime schemas remain source-owned. The pinned public toolchain
+supplies editor layouts. Authored fixtures contain no original game data.
