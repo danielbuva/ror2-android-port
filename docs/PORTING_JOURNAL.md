@@ -2872,3 +2872,15 @@ one comparison, no general speedup claim. Peak CPU/GPU 61.4 C, battery 28 C.
 Existing reader lifecycle/ownership retained; R2API phase separation informed scope.
 Display asleep, scratch removed, lease released, prune passed. Sustained play and
 audibility and full-pipeline performance stay open; alpha gate unchanged.
+
+## J1395 — Verify final script-table allocation during required emission
+
+2026-11-05. Existing bundle preload owner checks actual final MonoBehaviour
+script-table slots against schema-parsed m_Script before restoring only the
+qualified preallocation index; all remaining native/script type fields stay exact.
+Required emission uses the check for persisted objects and local endpoint reads.
+Authored regression covers reallocation, wrong/absent slots and full-type drift;
+21 focused tests pass; Ruff passes. Evidence: public host fixture
+`tests/test_bundle_preload.py`; no APK or device change. Prior art: pinned
+EditorKit typed/collision lookup and existing script_identity relationship check.
+Current-CLR adapter, complete closure, Unity typed load and device gates stay open.
