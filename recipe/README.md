@@ -1,5 +1,11 @@
 # Build recipes
 
+2026-11-05 item-discovery attribution audit: the original-audio owner source
+pin and producer/camera manifest bindings follow two authored timing markers
+around the existing comparison-item discovery call. Only repository source
+hashes change; no game data, private paths, identifiers or license changes are
+introduced. Provenance, privacy and sensitive-content review passed.
+
 2026-11-04 EventSystem audit: objective-support and Commando recipes construct
 32 EventSystem components from the pinned SDK declarations and constructor
 initializers, preserving source base-component references. Current receipt-bound
