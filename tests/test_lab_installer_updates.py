@@ -5,11 +5,12 @@ import importlib.util
 import io
 import json
 import os
+import shutil
 from pathlib import Path
 import subprocess
 import tempfile
 import unittest
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 import urllib.request
 import xml.etree.ElementTree as ET
 
@@ -20,6 +21,368 @@ SPEC.loader.exec_module(LAB)
 
 
 class LabInstallerUpdatesTests(unittest.TestCase):
+    def run_install_poll(self, *, diagnostic, state=lambda _: "INSTALLING", receipt_at=None, timeout=120):
+        phone = LAB.Phone("synthetic", timeout)
+        clock = [0]
+        receipt = {"release": {"version_code": 1}, "installed_readback_verified": True, "sha256": "a" * 64}
+
+        def read(name):
+            if name == "installed-release.json":
+                return receipt if receipt_at is not None and clock[0] >= receipt_at else None
+            self.assertEqual(name, "update-state.json")
+            return {"state": state(clock[0])}
+
+        def sleep(seconds):
+            clock[0] += seconds
+
+        with (
+            patch.object(LAB.time, "monotonic", side_effect=lambda: clock[0]),
+            patch.object(LAB.time, "sleep", side_effect=sleep),
+            patch.object(phone, "read", side_effect=read),
+            patch.object(phone, "capture_install_diagnostic", side_effect=lambda: diagnostic(clock[0])) as capture,
+            patch.object(phone, "tap") as tap,
+            patch.object(phone, "package_hash", return_value=receipt["sha256"]),
+            patch.object(phone, "storage"),
+            patch.object(phone, "start"),
+            patch.object(phone, "put") as put,
+            patch.object(phone, "shell") as shell,
+        ):
+            try:
+                result = phone.installed(1)
+            except LAB.Failure as error:
+                result = str(error)
+            put.assert_not_called()
+            shell.assert_not_called()
+        return result, clock[0], capture.call_count, tap.call_count
+
+    def test_first_callback_bound_starts_only_after_observed_commit_return(self):
+        none = {"status": "observed", "stage": "commit-returned", "callback": "none", "session_match": None}
+        result, elapsed, _, taps = self.run_install_poll(diagnostic=lambda now: none if now >= 70 else none | {"stage": "fsync-start"}, timeout=180)
+        self.assertEqual((result, elapsed, taps), ("install-first-callback-timeout", 130, 130))
+
+    def test_first_callback_bound_requires_installing_state_and_available_evidence(self):
+        none = {"status": "observed", "stage": "commit-returned", "callback": "none", "session_match": None}
+        result, elapsed, captures, _ = self.run_install_poll(diagnostic=lambda _: none, state=lambda _: "READY", timeout=65)
+        self.assertEqual((result, elapsed, captures), ("install-readback-timeout", 65, 0))
+        for interrupted in ({"status": "unavailable", "reason": "missing"}, none | {"stage": "prepare"}):
+            with self.subTest(interrupted=interrupted):
+                result, elapsed, _, _ = self.run_install_poll(diagnostic=lambda now: interrupted if now == 59 else none, timeout=125)
+                self.assertEqual((result, elapsed), ("install-first-callback-timeout", 120))
+
+        def unavailable(_):
+            raise OSError("synthetic-private")
+
+        result, elapsed, _, _ = self.run_install_poll(diagnostic=unavailable, timeout=65)
+        self.assertEqual((result, elapsed), ("install-readback-timeout", 65))
+
+    def test_any_observed_callback_disables_only_the_first_callback_bound(self):
+        none = {"status": "observed", "stage": "commit-returned", "callback": "none", "session_match": None}
+        for callback in ("pending-user-action", "success", "failure", "unknown"):
+            for matched in (True, False):
+                with self.subTest(callback=callback, matched=matched):
+                    observed = none | {"callback": callback, "session_match": matched}
+                    result, elapsed, captures, taps = self.run_install_poll(diagnostic=lambda now: observed if now == 59 else none)
+                    self.assertEqual((result, elapsed, captures, taps), ("install-readback-timeout", 120, 60, 120))
+
+    def test_callback_bound_never_overrides_success_error_or_original_deadline(self):
+        none = {"status": "observed", "stage": "commit-returned", "callback": "none", "session_match": None}
+        result, elapsed, _, _ = self.run_install_poll(diagnostic=lambda _: none, receipt_at=60)
+        self.assertEqual(result["release"]["version_code"], 1)
+        self.assertEqual(elapsed, 60)
+        result, elapsed, _, _ = self.run_install_poll(diagnostic=lambda _: none, state=lambda now: "ERROR" if now == 60 else "INSTALLING")
+        self.assertEqual((result, elapsed), ("installer-build-error", 60))
+        result, elapsed, _, _ = self.run_install_poll(diagnostic=lambda _: none, timeout=30)
+        self.assertEqual((result, elapsed), ("install-readback-timeout", 30))
+
+    def test_schema_two_callback_entry_prevents_false_absence_timeout(self):
+        raw = {"schema": 2, "stage": "commit-returned", "callback": "none", "session_match": None, "receiver_registration": "private", "callback_entry": "none"}
+        none = LAB.install_diagnostic_summary(LAB.encoded(raw))
+        result, elapsed, _, _ = self.run_install_poll(diagnostic=lambda _: none)
+        self.assertEqual((result, elapsed), ("install-first-callback-timeout", 60))
+        entered = LAB.install_diagnostic_summary(LAB.encoded(raw | {"callback_entry": "entered"}))
+        result, elapsed, captures, _ = self.run_install_poll(diagnostic=lambda now: entered if now == 59 else none)
+        self.assertEqual((result, elapsed, captures), ("install-readback-timeout", 120, 60))
+        unknown = LAB.install_diagnostic_summary(LAB.encoded(raw | {"callback_entry": "unknown"}))
+        result, elapsed, _, _ = self.run_install_poll(diagnostic=lambda _: unknown)
+        self.assertEqual((result, elapsed), ("install-readback-timeout", 120))
+
+    def test_install_diagnostic_schema_two_strict_fixed_receiver_and_entry_values(self):
+        base = {
+            "schema": 2,
+            "stage": "commit-returned",
+            "callback": "none",
+            "session_match": None,
+            "receiver_registration": "private",
+            "callback_entry": "none",
+        }
+        for registration in ("private", "exported", "disabled", "missing", "unavailable"):
+            for entry in ("none", "entered", "unknown"):
+                row = base | {"receiver_registration": registration, "callback_entry": entry}
+                self.assertEqual(
+                    LAB.install_diagnostic_summary(LAB.encoded(row)), {"status": "observed"} | {key: value for key, value in row.items() if key != "schema"}
+                )
+        for row in (
+            base | {"schema": 1},
+            base | {"schema": 3},
+            base | {"schema": True},
+            base | {"receiver_registration": "private-secret"},
+            base | {"receiver_registration": []},
+            base | {"callback_entry": "private-secret"},
+            base | {"callback_entry": False},
+            base | {"extra": "private-secret"},
+            {key: value for key, value in base.items() if key != "callback_entry"},
+        ):
+            result = LAB.install_diagnostic_summary(LAB.encoded(row))
+            self.assertEqual(result, {"status": "unavailable", "reason": "invalid-schema"})
+            self.assertNotIn("private-secret", json.dumps(result))
+
+    def test_install_diagnostic_contract_is_strict_and_never_exports_unknown_values(self):
+        base = {"schema": 1, "stage": "commit-returned", "callback": "none", "session_match": None}
+        self.assertEqual(
+            LAB.install_diagnostic_summary(LAB.encoded(base)), {"status": "observed", "stage": "commit-returned", "callback": "none", "session_match": None}
+        )
+        for stage in (
+            "prepare",
+            "session-create",
+            "session-open",
+            "write-start",
+            "write-complete",
+            "fsync-start",
+            "fsync-complete",
+            "commit-start",
+            "commit-returned",
+            "unknown",
+        ):
+            self.assertEqual(LAB.install_diagnostic_summary(LAB.encoded(base | {"stage": stage}))["stage"], stage)
+        for callback in ("pending-user-action", "success", "failure", "unknown"):
+            for matched in (True, False):
+                row = base | {"callback": callback, "session_match": matched}
+                self.assertEqual(LAB.install_diagnostic_summary(LAB.encoded(row))["session_match"], matched)
+        for row in (
+            base | {"schema": True},
+            base | {"stage": "private-secret"},
+            base | {"callback": "private-secret"},
+            base | {"session_match": False},
+            base | {"callback": "success", "session_match": 1},
+            base | {"extra": "private-secret"},
+            ["private-secret"],
+        ):
+            result = LAB.install_diagnostic_summary(LAB.encoded(row))
+            self.assertEqual(result, {"status": "unavailable", "reason": "invalid-schema"})
+            self.assertNotIn("private-secret", json.dumps(result))
+        for data in (b"{", b"\xff", b'"private-secret"'):
+            self.assertEqual(LAB.install_diagnostic_summary(data)["status"], "unavailable")
+        self.assertEqual(LAB.install_diagnostic_summary(b"null")["reason"], "missing")
+        self.assertEqual(LAB.install_diagnostic_summary(b"x" * 4097)["reason"], "size-limit")
+
+    def test_install_diagnostic_capture_is_bounded_owned_and_read_only(self):
+        phone = LAB.Phone("synthetic", 1)
+        row = {"schema": 1, "stage": "fsync-start", "callback": "none", "session_match": None}
+        with patch.object(phone, "shell") as shell, patch.object(phone, "package_hash") as hash_read:
+            self.assertEqual(phone.capture_install_diagnostic()["reason"], "ownership-unverified")
+            shell.assert_not_called()
+            hash_read.assert_not_called()
+        phone.owned_installer, phone.installer_hash = True, "a" * 64
+        with patch.object(phone, "shell") as shell, patch.object(phone, "package_hash", return_value="b" * 64):
+            self.assertEqual(phone.capture_install_diagnostic()["reason"], "ownership-unverified")
+            shell.assert_not_called()
+        with (
+            patch.object(phone, "shell", return_value=LAB.encoded(row)) as shell,
+            patch.object(phone, "package_hash", return_value=phone.installer_hash) as hash_read,
+        ):
+            self.assertEqual(phone.capture_install_diagnostic()["stage"], "fsync-start")
+        hash_read.assert_called_once_with(LAB.PACKAGE)
+        self.assertEqual(shell.call_args.args[:4], ("run-as", LAB.PACKAGE, "sh", "-c"))
+        self.assertIn("head -c 4097 files/owner-input/install-diagnostic.json", shell.call_args.args[4])
+        self.assertIn('[ ! -L "$p" ] || exit 1', shell.call_args.args[4])
+        self.assertEqual(shell.call_args.kwargs, {"label": "device-install-diagnostic-read", "timeout": 15})
+
+    def test_install_failure_capture_precedes_cleanup_and_keeps_original_error(self):
+        for fail_capture, reason in (
+            (False, "install-readback-timeout"),
+            (True, "install-readback-timeout"),
+            (False, "install-first-callback-timeout"),
+            (True, "install-first-callback-timeout"),
+        ):
+            with self.subTest(fail_capture=fail_capture, reason=reason), tempfile.TemporaryDirectory() as tmp:
+                output, events = io.StringIO(), []
+                phone = Mock()
+
+                def fail(*args):
+                    LAB.set_phase("baseline-N-install")
+                    raise LAB.Failure(reason)
+
+                def capture():
+                    events.append("capture")
+                    if fail_capture:
+                        raise ValueError("private-secret")
+                    return {"status": "observed", "stage": "commit-returned", "callback": "none", "session_match": None}
+
+                phone.capture_install_diagnostic.side_effect = capture
+                phone.cleanup.side_effect = lambda: events.append("cleanup") or "verified-absent"
+                with (
+                    patch.object(LAB, "ROOT", Path(tmp)),
+                    patch.dict(os.environ, {"LAB_DEVICE_SERIAL": "synthetic"}),
+                    patch.object(LAB, "read_context", return_value={}),
+                    patch.object(LAB, "Phone", return_value=phone),
+                    patch.object(LAB, "acceptance", side_effect=fail),
+                    redirect_stdout(output),
+                ):
+                    self.assertEqual(LAB.main([]), 1)
+                self.assertEqual(events, ["capture", "cleanup"])
+                self.assertIn("reason=" + reason, output.getvalue())
+                self.assertIn("PASS cleanup packages=verified-absent", output.getvalue())
+                self.assertNotIn("private-secret", output.getvalue())
+                diagnostic = json.loads(output.getvalue().splitlines()[0])
+                self.assertEqual(diagnostic["mode"], "install-diagnostic")
+                if fail_capture:
+                    self.assertEqual(diagnostic["observed"], {"status": "unavailable", "reason": "capture-failed"})
+
+    def test_install_diagnostic_output_failure_cannot_skip_cleanup_or_replace_failure(self):
+        for mode in ("write", "flush"):
+            for fail_capture in (False, True):
+                with self.subTest(mode=mode, fail_capture=fail_capture), tempfile.TemporaryDirectory() as tmp:
+                    events = []
+
+                    class BrokenDiagnosticOutput(io.StringIO):
+                        pending = False
+
+                        def write(self, value):
+                            if '"mode":"install-diagnostic"' in value:
+                                events.append("diagnostic-output")
+                                if mode == "write":
+                                    raise BrokenPipeError("private-output-error")
+                                self.pending = True
+                            return super().write(value)
+
+                        def flush(self):
+                            if self.pending:
+                                self.pending = False
+                                raise BrokenPipeError("private-output-error")
+                            return super().flush()
+
+                    output, phone = BrokenDiagnosticOutput(), Mock()
+
+                    def fail(*args):
+                        LAB.set_phase("baseline-N-install")
+                        raise LAB.Failure("install-readback-timeout")
+
+                    def capture():
+                        events.append("capture")
+                        if fail_capture:
+                            raise ValueError("private-capture-error")
+                        return {"status": "observed", "stage": "commit-returned", "callback": "none", "session_match": None}
+
+                    phone.capture_install_diagnostic.side_effect = capture
+                    phone.cleanup.side_effect = lambda: events.append("cleanup") or "verified-absent"
+                    with (
+                        patch.object(LAB, "ROOT", Path(tmp)),
+                        patch.dict(os.environ, {"LAB_DEVICE_SERIAL": "synthetic"}),
+                        patch.object(LAB, "read_context", return_value={}),
+                        patch.object(LAB, "Phone", return_value=phone),
+                        patch.object(LAB, "acceptance", side_effect=fail),
+                        redirect_stdout(output),
+                    ):
+                        self.assertEqual(LAB.main([]), 1)
+                    self.assertEqual(events, ["capture", "diagnostic-output", "cleanup"])
+                    phone.cleanup.assert_called_once_with()
+                    self.assertIsNone(LAB.DIAGNOSTICS)
+                    self.assertIn("reason=install-readback-timeout", output.getvalue())
+                    self.assertIn("PASS cleanup packages=verified-absent", output.getvalue())
+                    self.assertNotIn("private-output-error", output.getvalue())
+                    self.assertNotIn("private-capture-error", output.getvalue())
+
+    def toolhost_inspection(self, root, args):
+        output = io.StringIO()
+        with ExitStack() as stack:
+            stack.enter_context(patch.dict(os.environ, {"LAB_TOOLHOST_ROOT": str(root / "toolhost")}, clear=True))
+            for name in ("read_context", "Phone", "PrivateDiagnostics", "prepare_artifacts", "publisher_keys", "acceptance", "server"):
+                stack.enter_context(patch.object(LAB, name, side_effect=AssertionError("toolhost inspection must not call " + name)))
+            stack.enter_context(patch.object(LAB.subprocess, "run", side_effect=AssertionError("toolhost inspection must not execute commands")))
+            stack.enter_context(redirect_stdout(output))
+            code = LAB.main(["--inspect-toolhost-failure", *args])
+        self.assertEqual(len(output.getvalue().splitlines()), 1)
+        self.assertNotIn(str(root), output.getvalue())
+        self.assertNotIn("synthetic-private", output.getvalue())
+        return code, json.loads(output.getvalue())
+
+    @staticmethod
+    def toolhost_logs(root):
+        build = root / "toolhost" / ("a" * 40)
+        build.mkdir(parents=True)
+        (build / "result.json").write_bytes(
+            LAB.encoded({"source_commit": "a" * 40, "package": LAB.PACKAGE, "success": False, "failure": "javac exit 1", "private": "synthetic-private"})
+        )
+        run = root / "123456"
+        run.mkdir()
+        (run / "output.log").write_text(
+            "$ python /synthetic-private/build.py --source " + "a" * 40 + " --out /synthetic-private\n"
+            "/synthetic-private/ToolHostActivity.java:365: error: cannot find symbol\n"
+            "symbol: synthetic-private-symbol\n"
+        )
+        return build, run
+
+    def test_toolhost_inspector_reads_only_bound_receipt_and_run_log_without_mutation(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            self.toolhost_logs(root)
+            before = {path: path.read_bytes() for path in root.rglob("*") if path.is_file()}
+            code, result = self.toolhost_inspection(root, ["a" * 40, "--diagnostic-run", "123456"])
+            self.assertEqual(code, 0)
+            self.assertFalse(result["build_success"])
+            self.assertTrue(result["receipt_source_present"])
+            self.assertTrue(result["receipt_failure_present"])
+            self.assertEqual(result["receipt_failure"], {"category": "build-command-failed", "stage": "javac"})
+            self.assertEqual(result["log_error"], {"category": "java-symbol-not-found", "source": "ToolHostActivity.java", "line": 365})
+            self.assertEqual(before, {path: path.read_bytes() for path in root.rglob("*") if path.is_file()})
+            self.assertNotIn("a" * 40, json.dumps(result))
+
+    def test_toolhost_inspector_refuses_unbound_selection_and_mutating_modes(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            self.toolhost_logs(root)
+            for args in (
+                ["a" * 40],
+                ["../synthetic-private", "--diagnostic-run", "123456"],
+                ["a" * 40, "--diagnostic-run", "../synthetic-private"],
+                *[
+                    ["a" * 40, "--diagnostic-run", "123456", flag]
+                    for flag in ("--host-only", "--allow-test-installs", "--allow-test-notifications", "--inspect-state", "--inspect-ui-failure")
+                ],
+            ):
+                with self.subTest(args=args):
+                    code, result = self.toolhost_inspection(root, args)
+                    self.assertEqual(code, 1)
+                    self.assertNotIn("log_error", result)
+
+    def test_toolhost_inspector_refuses_log_source_drift_and_symlink(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            build, run = self.toolhost_logs(root)
+            log = run / "output.log"
+            log.write_text("$ build --source " + "b" * 40 + "\n")
+            code, result = self.toolhost_inspection(root, ["a" * 40, "--diagnostic-run", "123456"])
+            self.assertEqual(code, 1)
+            self.assertEqual(result["errors"], ["toolhost-inspection-log-source-mismatch"])
+            log.unlink()
+            log.symlink_to(root / "unrelated-not-read")
+            code, result = self.toolhost_inspection(root, ["a" * 40, "--diagnostic-run", "123456"])
+            self.assertEqual(code, 1)
+            self.assertEqual(result["errors"], ["toolhost-inspection-record-unavailable"])
+
+    def test_toolhost_error_classifier_never_exports_unknown_names_or_error_text(self):
+        self.assertEqual(LAB.toolhost_error_summary("synthetic-private-error"), {"category": "unclassified"})
+        self.assertEqual(
+            LAB.toolhost_error_summary("Traceback (most recent call last):\nOSError: synthetic-private: No space left on device"),
+            {"category": "storage-exhausted"},
+        )
+        self.assertEqual(LAB.toolhost_error_summary("TIMEOUT after 1200 s synthetic-private"), {"category": "timeout"})
+        self.assertEqual(LAB.toolhost_error_summary("/synthetic-private/Unknown.java:99: error: cannot find symbol"), {"category": "java-symbol-not-found"})
+        self.assertEqual(
+            LAB.toolhost_error_summary("/synthetic-private/OwnerUpdateState.java:9: error: synthetic-private-syntax"),
+            {"category": "java-compiler-error", "source": "OwnerUpdateState.java", "line": 9},
+        )
+
     @staticmethod
     def private_ui_logs(root, run_name, dump=b"ERROR: could not get idle state.\n", read_error=b"cat: /synthetic/private/ui.xml: No such file or directory\n"):
         directory = root / "work/coordination/installer-update-acceptance" / run_name
@@ -33,7 +396,7 @@ class LabInstallerUpdatesTests(unittest.TestCase):
             (directory / (prefix + ".stderr.log")).write_bytes(stderr)
         return directory
 
-    def log_inspection(self, root, args):
+    def log_inspection(self, root, args, mode="--inspect-ui-failure"):
         output = io.StringIO()
         with ExitStack() as stack:
             stack.enter_context(patch.object(LAB, "ROOT", root))
@@ -42,11 +405,187 @@ class LabInstallerUpdatesTests(unittest.TestCase):
                 stack.enter_context(patch.object(LAB, name, side_effect=AssertionError("log inspection must not call " + name)))
             run = stack.enter_context(patch.object(LAB.subprocess, "run", side_effect=AssertionError("log inspection must not execute a command")))
             stack.enter_context(redirect_stdout(output))
-            code = LAB.main(["--inspect-ui-failure", *args])
+            code = LAB.main([mode, *args])
         run.assert_not_called()
         self.assertEqual(len(output.getvalue().splitlines()), 1)
         self.assertNotIn(str(root), output.getvalue())
         return code, json.loads(output.getvalue())
+
+    def test_update_error_inspection_selects_first_retained_error_and_emits_only_public_template(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            public = root / "tools/phone-build/owner-apk/updates.py"
+            public.parent.mkdir(parents=True)
+            public.write_text('raise ValueError("public contract failure: " + private)\n')
+            directory = root / "work/coordination/installer-update-acceptance/run-newest00"
+            directory.mkdir(parents=True)
+            for index, state in enumerate(
+                (
+                    {"state": "CHECKING", "message": "synthetic-private"},
+                    {"state": "ERROR", "message": "ValueError: public contract failure: synthetic-private-input"},
+                    {"state": "ERROR", "message": "RuntimeError: synthetic-private-later"},
+                ),
+                1,
+            ):
+                prefix = f"{index:05d}-device-state-read"
+                (directory / (prefix + ".json")).write_bytes(
+                    LAB.encoded({"phase": "baseline-N-check", "category": "device-state-read", "returncode": 0, "outcome": "returned"})
+                )
+                (directory / (prefix + ".stdout.log")).write_bytes(LAB.encoded(state))
+            before = {path: path.read_bytes() for path in root.rglob("*") if path.is_file()}
+            code, result = self.log_inspection(root, ["--diagnostic-run", "newest"], mode="--inspect-update-failure")
+            self.assertEqual(code, 0)
+            self.assertEqual(result["backend_error"]["exception_classes"], ["ValueError"])
+            self.assertEqual(
+                result["backend_error"]["public_templates"],
+                [
+                    {
+                        "source": "tools/phone-build/owner-apk/updates.py",
+                        "line": 1,
+                        "public_message": "public contract failure: ",
+                        "dynamic_suffix_omitted": True,
+                    }
+                ],
+            )
+            self.assertNotIn("synthetic-private", json.dumps(result))
+            self.assertEqual(before, {path: path.read_bytes() for path in root.rglob("*") if path.is_file()})
+            for flag in ("--allow-test-notifications", "--allow-test-installs", "--host-only", "--inspect-ui-failure", "--inspect-state"):
+                code, result = self.log_inspection(root, ["--diagnostic-run", "newest", flag], mode="--inspect-update-failure")
+                self.assertEqual(code, 1)
+                self.assertNotIn("backend_error", result)
+            record = directory / "00002-device-state-read.stdout.log"
+            record.unlink()
+            record.symlink_to(root / "unrelated-not-read")
+            code, result = self.log_inspection(root, ["--diagnostic-run", "newest"], mode="--inspect-update-failure")
+            self.assertEqual(code, 1)
+            self.assertEqual(result["errors"], ["log-inspection-record-unavailable"])
+
+    def test_update_error_inspection_includes_baseline_install_but_not_cleanup(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            public = root / "tools/phone-build/owner-apk/updates.py"
+            public.parent.mkdir(parents=True)
+            public.write_text('raise ValueError("public build failure")\n')
+            directory = root / "work/coordination/installer-update-acceptance/run-newest00"
+            directory.mkdir(parents=True)
+            rows = (
+                ("cleanup", {"state": "ERROR", "message": "synthetic-private-cleanup"}),
+                ("baseline-N-check", {"state": "UPDATE_AVAILABLE"}),
+                ("baseline-N-install", None),
+                ("baseline-N-install", {"state": "ERROR", "message": "ValueError: public build failure"}),
+                ("baseline-N-install", {"state": "ERROR", "message": "synthetic-private-later"}),
+            )
+            for index, (phase, state) in enumerate(rows, 1):
+                prefix = f"{index:05d}-device-state-read"
+                (directory / (prefix + ".json")).write_bytes(
+                    LAB.encoded({"phase": phase, "category": "device-state-read", "returncode": 0, "outcome": "returned"})
+                )
+                (directory / (prefix + ".stdout.log")).write_bytes(LAB.encoded(state))
+            before = {path: path.read_bytes() for path in root.rglob("*") if path.is_file()}
+            code, result = self.log_inspection(root, ["--diagnostic-run", "newest"], mode="--inspect-update-failure")
+            self.assertEqual(code, 0)
+            self.assertEqual(result["phase"], "baseline-N-install")
+            self.assertEqual(result["backend_error"]["public_templates"][0]["public_message"], "public build failure")
+            self.assertNotIn("synthetic-private", json.dumps(result))
+            self.assertEqual(before, {path: path.read_bytes() for path in root.rglob("*") if path.is_file()})
+
+    def test_update_error_inspection_preserves_pipeline_first_failure_without_private_suffixes(self):
+        for stage, reason, expected in (
+            ("apk", "[Errno 2] No such file or directory: '/synthetic-private/input'", {"os_error": "missing-file"}),
+            ("signing", "PermissionError: [Errno 13] Permission denied: '/synthetic-private/key'", {"os_error": "permission-denied"}),
+            ("apk", "[Errno 28] No space left on device: '/synthetic-private/output'", {"os_error": "no-space"}),
+            ("assembly", "Source producer exited with code -9; private producer log retained.", {"producer_exit": -9}),
+            ("apk", "public assembly refusal", {"public_message": "public assembly refusal"}),
+            ("synthetic-private-stage", "[Errno 999] synthetic-private", {}),
+            ("apk", {"synthetic-private": True}, {"status": "unavailable"}),
+        ):
+            with self.subTest(stage=stage, expected=expected), tempfile.TemporaryDirectory() as temporary:
+                root = Path(temporary)
+                source = root / "tools/phone-build/owner-apk/build_owner_apk.py"
+                source.parent.mkdir(parents=True)
+                source.write_text('raise ValueError("public assembly refusal")\n')
+                directory = root / "work/coordination/installer-update-acceptance/run-newest00"
+                directory.mkdir(parents=True)
+                prefix = directory / "00001-device-state-read"
+                prefix.with_suffix(".json").write_bytes(
+                    LAB.encoded({"phase": "baseline-N-install", "category": "device-state-read", "returncode": 0, "outcome": "returned"})
+                )
+                prefix.with_suffix(".stdout.log").write_bytes(
+                    LAB.encoded(
+                        {
+                            "state": "ERROR",
+                            "message": "synthetic-private-wrapper",
+                            "pipeline": {
+                                "current_stage": "install",
+                                "first_failure": {"stage": stage, "reason": reason},
+                                "stages": [{"id": "synthetic-private", "work": "/synthetic-private"}],
+                            },
+                        }
+                    )
+                )
+                before = {path: path.read_bytes() for path in root.rglob("*") if path.is_file()}
+                code, result = self.log_inspection(root, ["--diagnostic-run", "newest"], mode="--inspect-update-failure")
+                self.assertEqual(code, 0)
+                first = result["pipeline_first_failure"]
+                self.assertEqual(first["stage"], "unknown" if stage == "synthetic-private-stage" else stage)
+                for key, value in expected.items():
+                    actual = first["reason"]["public_templates"][0] if key == "public_message" else first["reason"]
+                    self.assertEqual(actual[key], value)
+                if not expected:
+                    self.assertEqual(first["reason"], {"exception_classes": [], "public_templates": [], "public_traceback_frames": []})
+                self.assertEqual(before, {path: path.read_bytes() for path in root.rglob("*") if path.is_file()})
+                self.assertNotIn("synthetic-private", json.dumps(result))
+
+    def test_update_error_inspection_classifies_captured_apk_logs_without_raw_output(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            directory = root / "work/coordination/installer-update-acceptance/run-newest00"
+            directory.mkdir(parents=True)
+            for sequence, category, output in (
+                (1, "device-state-read", LAB.encoded({"state": "ERROR", "message": "synthetic-private"})),
+                (4, "device-apk-javac-log", b"ROR2_APK_LOG_BEGIN\n/synthetic-private/ProfileStore.java:42: error: cannot find symbol\nprivate-symbol\n"),
+                (5, "device-apk-dex-log", b""),
+                (6, "device-apk-javac-log", b"unrelated-later-log"),
+            ):
+                prefix = directory / f"{sequence:05d}-{category}"
+                prefix.with_suffix(".json").write_bytes(
+                    LAB.encoded({"phase": "baseline-N-install", "category": category, "returncode": 0, "outcome": "returned"})
+                )
+                prefix.with_suffix(".stdout.log").write_bytes(output)
+            code, result = self.log_inspection(root, ["--diagnostic-run", "newest"], mode="--inspect-update-failure")
+            self.assertEqual(code, 0)
+            self.assertEqual(len(result["apk_logs"]), 2)
+            self.assertEqual(result["apk_logs"][0]["status"], "captured")
+            self.assertEqual(result["apk_logs"][0]["error"], {"category": "java-symbol-not-found", "source": "ProfileStore.java", "line": 42})
+            self.assertEqual(result["apk_logs"][1], {"tool": "dex", "status": "not-found"})
+            self.assertNotIn("private-symbol", json.dumps(result))
+            self.assertNotIn("unrelated-later-log", json.dumps(result))
+
+    def test_backend_error_summary_preserves_only_public_literals_and_traceback_locations(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            source = "tools/phone-build/owner-apk/updates.py"
+            path = root / source
+            path.parent.mkdir(parents=True)
+            path.write_text('raise ValueError("exact public failure")\nraise ValueError("public prefix: " + value)\n')
+            java = root / "tools/phone-build/managed-host/ToolHostActivity.java"
+            java.parent.mkdir(parents=True)
+            java.write_text('throw new IOException("public native failure " + name);\n')
+            with patch.object(LAB, "ROOT", root):
+                result = LAB.backend_error_summary(
+                    'java.io.IOException: owner-backend exit 1 Traceback:\n  File "/synthetic-private/repo/'
+                    + source
+                    + '", line 17, in private_function\nValueError: public prefix: synthetic-private'
+                )
+                self.assertEqual(result["owner_backend_exit"], 1)
+                self.assertEqual(result["public_traceback_frames"], [{"source": source, "line": 17}])
+                self.assertEqual(result["public_templates"][0]["public_message"], "public prefix: ")
+                self.assertNotIn("synthetic-private", json.dumps(result))
+                self.assertNotIn("private_function", json.dumps(result))
+                result = LAB.backend_error_summary("java.io.IOException: public native failure synthetic-private")
+                self.assertEqual(result["public_templates"][0]["public_message"], "public native failure ")
+                for value in ("exact public failure synthetic-private", "synthetic-private", "SecretException: synthetic-private"):
+                    self.assertEqual(LAB.backend_error_summary(value), {"exception_classes": [], "public_templates": [], "public_traceback_frames": []})
 
     def test_private_ui_log_summary_selects_one_run_and_only_fixed_classifications(self):
         with tempfile.TemporaryDirectory() as temporary:
@@ -72,6 +611,55 @@ class LabInstallerUpdatesTests(unittest.TestCase):
             for private in ("synthetic", "ui.xml", "run-newest00", "run-first000", "UiTestAutomationBridge"):
                 self.assertNotIn(private, json.dumps([result, explicit]))
 
+    def test_private_ui_log_summary_observes_failed_dump_without_inventing_a_read(self):
+        for category, code, outcome, stderr, classification, termination in (
+            ("device-ui-dump", 1, "returned", b"ERROR: null root node synthetic-private", "null-root", "exit-nonzero"),
+            ("device-ui-windows-dump", 1, "returned", b"Permission denied: synthetic-private", "permission-denied", "exit-nonzero"),
+            ("device-ui-dump", None, "TimeoutExpired", b"synthetic-private", "other-output", "unavailable"),
+            ("device-ui-dump", None, "OSError", b"", "empty", "unavailable"),
+            ("device-ui-dump", -9, "returned", b"", "empty", "signal-SIGKILL"),
+            ("device-ui-windows-dump", -15, "returned", b"", "empty", "signal-SIGTERM"),
+            ("device-ui-dump", -999, "returned", b"", "empty", "signal-other"),
+            ("device-ui-dump", 137, "returned", b"", "empty", "exit-nonzero"),
+            ("device-ui-dump", "synthetic-private", "returned", b"", "empty", "unavailable"),
+        ):
+            with self.subTest(category=category, outcome=outcome), tempfile.TemporaryDirectory() as temporary:
+                root = Path(temporary)
+                directory = root / "work/coordination/installer-update-acceptance/run-newest00"
+                directory.mkdir(parents=True)
+                prefix = "00001-" + category
+                (directory / (prefix + ".json")).write_bytes(
+                    LAB.encoded({"phase": "baseline-N-check", "category": category, "returncode": code, "outcome": outcome})
+                )
+                (directory / (prefix + ".stdout.log")).write_bytes(b"")
+                (directory / (prefix + ".stderr.log")).write_bytes(stderr)
+                before = {path: path.read_bytes() for path in directory.iterdir()}
+                status, result = self.log_inspection(root, ["--diagnostic-run", "newest"])
+                self.assertEqual(status, 0)
+                self.assertEqual(len(result["records"]), 1)
+                self.assertEqual(result["records"][0]["category"], category)
+                self.assertEqual(result["records"][0]["outcome"], outcome)
+                self.assertEqual(result["records"][0]["returncode"], "nonzero" if type(code) is int else "unavailable")
+                self.assertEqual(result["records"][0]["termination"], termination)
+                self.assertEqual(result["records"][0]["stderr"], classification)
+                self.assertEqual(before, {path: path.read_bytes() for path in directory.iterdir()})
+                self.assertNotIn("synthetic-private", json.dumps(result))
+
+    def test_private_ui_log_summary_pairs_failed_read_with_actual_windows_dump(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            directory = self.private_ui_logs(root, "run-newest00")
+            for suffix in (".json", ".stdout.log", ".stderr.log"):
+                (directory / ("00001-device-ui-dump" + suffix)).rename(directory / ("00001-device-ui-windows-dump" + suffix))
+            metadata = directory / "00001-device-ui-windows-dump.json"
+            row = json.loads(metadata.read_bytes())
+            row["category"] = "device-ui-windows-dump"
+            metadata.write_bytes(LAB.encoded(row))
+            code, result = self.log_inspection(root, ["--diagnostic-run", "newest"])
+            self.assertEqual(code, 0)
+            self.assertEqual([record["category"] for record in result["records"]], ["device-ui-windows-dump", "device-ui-read"])
+            self.assertEqual(result["foreground"], {"status": "unknown", "reason": "ui-window-read-unavailable"})
+
     def test_private_ui_log_classification_never_echoes_unknown_output(self):
         for data, expected in (
             (b"synthetic-private-error", "other-output"),
@@ -95,6 +683,7 @@ class LabInstallerUpdatesTests(unittest.TestCase):
                 ["--diagnostic-run", str(root)],
                 ["--diagnostic-run", "newest", "--inspect-state"],
                 ["--diagnostic-run", "newest", "--allow-test-installs"],
+                ["--diagnostic-run", "newest", "--allow-test-notifications"],
             ):
                 with self.subTest(args=args):
                     code, result = self.log_inspection(root, args)
@@ -196,6 +785,7 @@ class LabInstallerUpdatesTests(unittest.TestCase):
             (["--expected-installer-sha256", "synthetic-private-invalid"], None),
             (["--expected-installer-sha256", "a" * 64], {}),
             (["--expected-installer-sha256", "a" * 64, "--allow-test-installs"], None),
+            (["--expected-installer-sha256", "a" * 64, "--allow-test-notifications"], None),
             (["--expected-installer-sha256", "a" * 64, "--host-only"], None),
         ):
             with self.subTest(args=args, environment=environment):
@@ -232,6 +822,160 @@ class LabInstallerUpdatesTests(unittest.TestCase):
         with patch.dict(os.environ, {}, clear=True):
             with self.assertRaisesRegex(LAB.Failure, "LAB_TOOLHOST_ROOT-required"):
                 LAB.read_context()
+
+    def test_acceptance_checks_witness_before_marking_update_and_rollback_pass(self):
+        phone = Mock()
+        phone.occupied.return_value = False
+        phone.ui.return_value = ET.fromstring('<hierarchy><node text="TEST RELEASE SOURCE"/></hierarchy>')
+        phone.installed.side_effect = [{"sha256": "first"}, {"sha256": "second"}, {"sha256": "rolled"}]
+        phone.read.return_value = {"sha256": "rolled"}
+        phone.package_hash.side_effect = lambda package: LAB.sha(b"synthetic test input") if package == LAB.PACKAGE else "rolled"
+        phone.wait_state.return_value = {"message": "signature refused"}
+        phone.attach_mock(Mock(), "passed")
+        releases = {n: {"release.json": LAB.encoded({"version": "synthetic"})} for n in (1, 2)}
+        apk = Mock()
+        apk.read_bytes.return_value = b"synthetic test input"
+        with patch.object(LAB, "prepare_artifacts", return_value=(apk, {}, b"key", releases, releases[2])):
+            LAB.acceptance(phone, {}, Path("unused"), phone.passed)
+        calls = [(call[0], call.args) for call in phone.mock_calls if call[0] in ("installed", "retention_witness", "passed")]
+        self.assertEqual(
+            calls[:10],
+            [
+                ("installed", (1,)),
+                ("retention_witness", ("seed",)),
+                ("passed", ("check-for-updates",)),
+                ("retention_witness", ("verify",)),
+                ("installed", (2, {"sha256": "first"})),
+                ("retention_witness", ("verify", {"sha256": "second"})),
+                ("passed", ("update-N-to-N+1",)),
+                ("installed", (1, {"sha256": "second"})),
+                ("retention_witness", ("verify", {"sha256": "rolled"})),
+                ("passed", ("same-key-rollback",)),
+            ],
+        )
+
+    def test_generated_witness_java_behavior_with_android_doubles(self):
+        # Compile the exact generator output, not a Python reimplementation.
+        # These doubles test file behavior, not Android lifecycle/API support.
+        java = shutil.which("java")
+        if not java:
+            self.skipTest("JDK compiler/runtime unavailable")
+        compiler = subprocess.run([java, "com.sun.tools.javac.Main", "-version"], capture_output=True, text=True)
+        if compiler.returncode:
+            self.skipTest("JDK compiler module unavailable")
+        files = {"dev/ror2lab/synthetic/RetentionWitness.java": LAB.witness_source()}
+        files["android/os/Bundle.java"] = r"""package android.os; public class Bundle {}"""
+        files["android/content/Intent.java"] = (
+            r"""package android.content; public class Intent { public String mode,nonce; public String getStringExtra(String key) { return key.equals("mode")?mode:nonce; } }"""
+        )
+        files["android/app/Activity.java"] = (
+            r"""package android.app; import java.io.File; public class Activity { public static File external,internal; public static android.content.Intent intent=new android.content.Intent(); public void onCreate(android.os.Bundle b){} public void finish(){} public android.content.Intent getIntent(){return intent;} public File getExternalFilesDir(String kind){return external;} public File getFilesDir(){return internal;} }"""
+        )
+        files["org/json/JSONObject.java"] = (
+            r"""package org.json; public class JSONObject { StringBuilder s=new StringBuilder(); public JSONObject put(String key,Object value){s.append(key).append("=").append(value).append(";");return this;} public String toString(){return s.toString();} }"""
+        )
+        files["Review.java"] = r"""import java.nio.file.*; import java.io.*; import android.app.Activity; import dev.ror2lab.synthetic.RetentionWitness;
+public class Review {
+ static Path base; static int cases;
+ static void setup(String name)throws Exception { Path p=base.resolve(name);Files.createDirectories(p);Activity.external=p.resolve("external").toFile();Activity.internal=p.resolve("internal").toFile();Activity.external.mkdirs();Activity.internal.mkdirs(); }
+ static String run(String mode)throws Exception { Activity.intent.mode=mode;Activity.intent.nonce=String.format("%032x",++cases);new RetentionWitness().onCreate(null);Path r=Activity.internal.toPath().resolve("synthetic-retention-witness.json");return Files.exists(r)?Files.readString(r):""; }
+ static void check(boolean ok,String name) { if(!ok)throw new AssertionError(name);System.out.println("PASS "+name); }
+ static Path profile(){return Activity.external.toPath().resolve("android-profile-v1/profile.json");}
+ public static void main(String[] args)throws Exception {
+ base=Paths.get(args[0]);
+ setup("ordinary");check(run("seed").contains("verified=true;files=2;"),"seed");byte[] expected=Files.readAllBytes(profile());
+ check(run("verify").contains("verified=true;files=2;"),"verify-after-seed");
+ check(run("seed").contains("verified=false;files=0;"),"repeated-seed-refused");check(java.util.Arrays.equals(expected,Files.readAllBytes(profile())),"repeated-seed-preserves-bytes");
+ byte[] changed=expected.clone();changed[0]^=1;Files.write(profile(),changed);check(run("verify").contains("verified=false;files=0;"),"same-size-changed-data-refused");check(java.util.Arrays.equals(changed,Files.readAllBytes(profile())),"verify-never-reseeds");
+ Files.delete(profile());check(run("verify").contains("verified=false;files=0;"),"missing-data-refused");check(!Files.exists(profile()),"missing-data-not-recreated");
+ setup("symlink");Path outside=base.resolve("outside");Files.createDirectories(outside);Files.createSymbolicLink(Activity.external.toPath().resolve("android-profile-v1"),outside.toAbsolutePath());check(run("seed").contains("verified=false;files=0;"),"symlink-parent-refused");check(!Files.exists(outside.resolve("profile.json")),"symlink-target-untouched");
+ setup("null-root");Activity.external=null;check(run("seed").contains("verified=false;files=0;"),"unavailable-external-root-refused");
+ setup("receipt-error");Files.createDirectory(Activity.internal.toPath().resolve("synthetic-retention-witness.tmp"));check(run("seed").isEmpty(),"receipt-write-failure-no-success");
+ setup("invalid-mode");check(run("unknown").isEmpty(),"invalid-mode-no-receipt");
+ }
+}"""
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            for name, source in files.items():
+                path = root / name
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_text(source)
+            result = subprocess.run(
+                [java, "com.sun.tools.javac.Main", "-source", "8", "-target", "8", "-d", str(root / "classes"), *[str(root / name) for name in files]],
+                capture_output=True,
+                text=True,
+            )
+            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+            for path in (root / "classes").rglob("*.class"):
+                self.assertEqual(int.from_bytes(path.read_bytes()[6:8], "big"), 52)
+            result = subprocess.run([java, "-cp", str(root / "classes"), "Review", str(root / "data")], capture_output=True, text=True)
+            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+            self.assertEqual(len(result.stdout.splitlines()), 13)
+            self.assertTrue(all(line.startswith("PASS ") for line in result.stdout.splitlines()))
+
+    def test_retention_witness_requires_owned_exact_alpha(self):
+        phone = LAB.Phone("synthetic", 1)
+        with patch.object(phone, "shell") as shell:
+            with self.assertRaisesRegex(LAB.Failure, "retention-witness-ownership"):
+                phone.retention_witness("seed")
+        shell.assert_not_called()
+
+    def test_retention_witness_nonce_matching_and_failure_are_fail_closed(self):
+        for verified, count in ((True, 2), (False, 0), (True, 0)):
+            with self.subTest(verified=verified, count=count):
+                phone = LAB.Phone("synthetic", 1)
+                phone.owned_installer, phone.alpha_hash = True, "a" * 64
+                rows = iter([None, {"nonce": "old", "verified": True}, {"nonce": "b" * 32, "mode": "verify", "verified": verified, "files": count}])
+                events = []
+
+                def shell(*args, label, **kwargs):
+                    events.append((args, label))
+                    return LAB.encoded(next(rows)) if label == "retention-witness-result" else b""
+
+                with (
+                    patch.object(phone, "package_hash", return_value=phone.alpha_hash),
+                    patch.object(LAB.secrets, "token_hex", return_value="b" * 32),
+                    patch.object(phone, "shell", side_effect=shell),
+                    patch.object(phone, "start") as start,
+                    patch.object(LAB.time, "sleep"),
+                ):
+                    if verified and count == 2:
+                        phone.retention_witness(
+                            "verify",
+                            {
+                                "profile_retention_verified": True,
+                                "retention_backup": {"snapshot": "c" * 64, "data_schema": 1, "bytes": sum(map(len, LAB.WITNESS_FILES.values()))},
+                            },
+                        )
+                        start.assert_called_once()
+                    else:
+                        with self.assertRaisesRegex(LAB.Failure, "retention-witness-mismatch"):
+                            phone.retention_witness("verify")
+                        start.assert_not_called()
+                self.assertEqual(events[-1], (("am", "force-stop", LAB.GAME), "retention-witness-stop"))
+                launches = [args for args, label in events if label == "retention-witness-launch"]
+                self.assertEqual(len(launches), 1)
+                self.assertIn(LAB.GAME + "/" + LAB.WITNESS_CLASS, launches[0])
+
+    def test_retention_witness_rejects_empty_or_unverified_provider_receipt(self):
+        phone = LAB.Phone("synthetic", 1)
+        phone.owned_installer, phone.alpha_hash = True, "a" * 64
+        for receipt in ({}, {"profile_retention_verified": True, "retention_backup": {"data_schema": 1, "bytes": 0, "snapshot": "c" * 64}}):
+            with patch.object(phone, "package_hash", return_value=phone.alpha_hash), patch.object(phone, "shell") as shell:
+                with self.assertRaisesRegex(LAB.Failure, "retention-witness-provider-unverified"):
+                    phone.retention_witness("verify", receipt)
+            shell.assert_not_called()
+
+    def test_witness_fixture_uses_real_retention_roots_and_no_verify_reseed(self):
+        source = LAB.witness_source()
+        self.assertEqual(set(LAB.WITNESS_FILES), {"android-profile-v1/profile.json", "offline-settings-v1/preferences.json"})
+        self.assertIn("getExternalFilesDir(null)", source)
+        self.assertIn('if ("seed".equals(mode) && files[i].exists()) throw new IOException()', source)
+        self.assertIn('if ("seed".equals(mode)) {', source)
+        self.assertIn("if (!files[i].createNewFile()) throw new IOException()", source)
+        self.assertIn("if (!Arrays.equals(actual, expected)) throw new IOException()", source)
+        self.assertNotIn("com.unity3d", source)
+        self.assertNotIn("listFiles", source)
 
     def test_synthetic_manifest_uses_aapt1_required_basename(self):
         # Only source XML is created: no toolchain invocation, APK or key.
@@ -371,6 +1115,23 @@ class LabInstallerUpdatesTests(unittest.TestCase):
         shell.assert_not_called()
         fallback.assert_called_once_with((LAB.PACKAGE,))
 
+    def test_idle_timeout_never_reads_or_retries_a_missing_dump(self):
+        phone = LAB.Phone("synthetic-private-selector", 1)
+        for stdout, stderr in ((b"", b"ERROR: could not get idle state."), (b"ERROR: could not get idle state.", b"")):
+            with (
+                self.subTest(stdout=stdout),
+                patch.object(LAB, "execute", return_value=subprocess.CompletedProcess([], 0, stdout, stderr)) as dump,
+                patch.object(phone, "shell") as shell,
+                patch.object(phone, "ui_windows") as fallback,
+                patch.object(LAB.time, "sleep") as sleep,
+            ):
+                with self.assertRaisesRegex(LAB.Failure, "^device-ui-idle-timeout$"):
+                    phone.ui()
+            dump.assert_called_once()
+            shell.assert_not_called()
+            fallback.assert_not_called()
+            sleep.assert_not_called()
+
     def test_ui_dump_retry_does_not_retry_nonzero_or_unrelated_read_failure(self):
         phone = LAB.Phone("synthetic-private-selector", 1)
         result = subprocess.CompletedProcess([], 1, b"", b"ERROR: null root node synthetic-private-detail")
@@ -424,6 +1185,78 @@ class LabInstallerUpdatesTests(unittest.TestCase):
         selected = LAB.focused_ui_hierarchy(document, (LAB.PACKAGE,))
         self.assertIs(selected, document.find("display/window/hierarchy"))
         self.assertEqual(len(list(selected.iter("node"))), 1)
+
+    def test_retained_window_summary_exports_only_fixed_categories_and_mixed_package_fact(self):
+        for package, category in (
+            (LAB.PACKAGE, "test-installer"),
+            ("com.android.permissioncontroller", "permission-controller"),
+            ("com.android.systemui", "system-ui"),
+            ("android", "android-system"),
+            ("com.android.packageinstaller", "package-installer"),
+            ("com.google.android.packageinstaller", "package-installer"),
+            ("synthetic.private.foreground", "other"),
+        ):
+            with self.subTest(category=category):
+                document = self.window_document(package)
+                result = LAB.ui_window_summary(ET.tostring(document, xml_declaration=True))
+                self.assertEqual(result, {"status": "observed", "package_category": category, "mixed_node_packages": False})
+                ET.SubElement(document.find("display/window/hierarchy/node"), "node", {"package": "synthetic.private.child"})
+                result = LAB.ui_window_summary(ET.tostring(document, xml_declaration=True))
+                self.assertTrue(result["mixed_node_packages"])
+                self.assertNotIn("synthetic", json.dumps(result))
+                # Classification never authorizes a foreign or mixed tap root.
+                with self.assertRaises(LAB.Failure):
+                    LAB.focused_ui_hierarchy(document, (LAB.PACKAGE, "com.android.permissioncontroller"))
+
+    def test_retained_window_summary_keeps_ambiguous_or_malformed_focus_unknown(self):
+        document = self.window_document()
+        ET.SubElement(document.find("display"), "window", {"active": "true", "focused": "false"})
+        result = LAB.ui_window_summary(ET.tostring(document, xml_declaration=True))
+        self.assertEqual(result, {"status": "unknown", "reason": "ui-window-focus-ambiguous"})
+        for data in (b"synthetic-private", b"<?xml invalid?></displays>", b"<?xml version='1.0'?><hierarchy></hierarchy>"):
+            self.assertEqual(LAB.ui_window_summary(data), {"status": "unknown", "reason": "ui-window-schema"})
+
+    def test_private_ui_log_summary_classifies_successfully_read_rejected_window_without_device_calls(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            directory = root / "work/coordination/installer-update-acceptance/run-newest00"
+            directory.mkdir(parents=True)
+            document = self.window_document("com.android.systemui")
+            for sequence, category, stdout in (
+                (1, "device-ui-dump", b"ERROR: null root node returned\n"),
+                (2, "device-ui-windows-dump", b"UI hierarchy dumped to: /synthetic/private/ui.xml\n"),
+                (3, "device-ui-read", ET.tostring(document, xml_declaration=True)),
+                (4, "device-ui-remove", b""),
+                (5, "device-ui-diagnostic-power", b"synthetic-private-output-not-exported"),
+            ):
+                prefix = f"{sequence:05d}-{category}"
+                (directory / (prefix + ".json")).write_bytes(
+                    LAB.encoded({"phase": "baseline-N-check", "category": category, "returncode": 0, "outcome": "returned"})
+                )
+                (directory / (prefix + ".stdout.log")).write_bytes(stdout)
+                (directory / (prefix + ".stderr.log")).write_bytes(b"")
+            marker = directory / "00005-device-ui-diagnostic-power.json"
+            marker_bytes = marker.read_bytes()
+            marker.unlink()
+            code, result = self.log_inspection(root, ["--diagnostic-run", "newest"])
+            self.assertEqual(code, 1)
+            self.assertNotIn("foreground", result)
+            marker.write_bytes(marker_bytes)
+            before = {path: path.read_bytes() for path in directory.iterdir()}
+            code, result = self.log_inspection(root, ["--diagnostic-run", "newest"])
+            self.assertEqual(code, 0)
+            self.assertEqual([record["category"] for record in result["records"]], ["device-ui-windows-dump", "device-ui-read"])
+            self.assertEqual(result["foreground"], {"status": "observed", "package_category": "system-ui", "mixed_node_packages": False})
+            self.assertEqual(before, {path: path.read_bytes() for path in directory.iterdir()})
+            for private in ("synthetic", "ui.xml", "run-newest00", "com.android.systemui"):
+                self.assertNotIn(private, json.dumps(result))
+            record = directory / "00003-device-ui-read.stdout.log"
+            record.unlink()
+            record.symlink_to(root / "unrelated-not-read")
+            code, result = self.log_inspection(root, ["--diagnostic-run", "newest"])
+            self.assertEqual(code, 1)
+            self.assertEqual(result["errors"], ["log-inspection-record-unavailable"])
+            self.assertNotIn("foreground", result)
 
     def test_window_fallback_refuses_missing_ambiguous_background_or_foreign_roots(self):
         cases = []
@@ -496,13 +1329,42 @@ class LabInstallerUpdatesTests(unittest.TestCase):
             if document is None:
                 read.assert_not_called()
 
+    def test_ui_interaction_wakes_before_read_without_relaunching_consent(self):
+        phone = LAB.Phone("synthetic-private-selector", 1)
+        events = []
+        tree = ET.fromstring('<hierarchy><node text="Install" enabled="true" bounds="[0,0][20,20]" /></hierarchy>')
+        with (
+            patch.object(phone, "shell", side_effect=lambda *args, **kwargs: events.append(args)),
+            patch.object(phone, "ui_for", side_effect=lambda packages: events.append(("read", packages)) or tree),
+        ):
+            for _ in range(2):
+                self.assertTrue(phone.tap_visible("Install"))
+        self.assertEqual(
+            events,
+            [
+                ("input", "keyevent", "KEYCODE_WAKEUP"),
+                ("read", (LAB.PACKAGE, "com.android.packageinstaller", "com.google.android.packageinstaller")),
+                ("input", "tap", "10", "10"),
+            ]
+            * 2,
+        )
+
+    def test_wake_failure_does_not_read_or_tap_ui(self):
+        phone = LAB.Phone("synthetic-private-selector", 1)
+        with patch.object(phone, "shell", side_effect=LAB.Failure("device-display-wake")) as shell, patch.object(phone, "ui_for") as read:
+            with self.assertRaisesRegex(LAB.Failure, "^device-display-wake$"):
+                phone.tap_visible("Install")
+        shell.assert_called_once_with("input", "keyevent", "KEYCODE_WAKEUP", label="device-display-wake")
+        read.assert_not_called()
+
     def test_install_consent_window_packages_are_scoped_to_install_action(self):
         phone = LAB.Phone("synthetic-private-selector", 1)
-        with patch.object(phone, "ui_for", return_value=ET.Element("hierarchy")) as read:
+        with patch.object(phone, "shell") as shell, patch.object(phone, "ui_for", return_value=ET.Element("hierarchy")) as read:
             self.assertFalse(phone.tap_visible("Install"))
             self.assertEqual(read.call_args.args, ((LAB.PACKAGE, "com.android.packageinstaller", "com.google.android.packageinstaller"),))
             self.assertFalse(phone.tap_visible("Check for updates"))
             self.assertEqual(read.call_args.args, ((LAB.PACKAGE,),))
+            self.assertEqual([call.args for call in shell.call_args_list], [("input", "keyevent", "KEYCODE_WAKEUP")] * 2)
         for package in ("com.android.permissioncontroller", "com.android.packageinstaller", "com.google.android.packageinstaller"):
             with self.subTest(package=package):
                 with self.assertRaises(LAB.Failure):
@@ -566,17 +1428,66 @@ class LabInstallerUpdatesTests(unittest.TestCase):
         unknown = LAB.ui_environment_summary({})
         self.assertTrue(all(value is False if key.endswith("_query_ok") else value is None for key, value in unknown.items()))
 
-    def test_notification_dialog_does_not_act_without_prompt_or_fresh_ownership(self):
-        phone = LAB.Phone("synthetic-private-selector", 1)
-        with patch.object(phone, "ui_for") as ui, patch.object(phone, "shell") as shell:
-            with self.assertRaisesRegex(LAB.Failure, "notification-dialog-installer-not-owned"):
-                phone.dismiss_notification_permission()
-            ui.assert_not_called()
-            shell.assert_not_called()
+    def test_notification_opt_in_selects_allow_resource_id_not_button_text(self):
+        phone = LAB.Phone("synthetic-private-selector", 1, allow_test_notifications=True)
         phone.owned_installer = True
-        with patch.object(phone, "ui_for", return_value=ET.Element("hierarchy")), patch.object(phone, "shell") as shell:
-            self.assertFalse(phone.dismiss_notification_permission())
-            shell.assert_not_called()
+        dialog = self.notification_dialog(button="permission_allow_button")
+        deny = self.notification_dialog().findall("node")[-1]
+        deny.set("bounds", "[200,400][300,480]")
+        dialog.append(deny)
+        with patch.object(phone, "ui_for", side_effect=[dialog, ET.Element("hierarchy")]) as ui, patch.object(phone, "shell") as shell:
+            self.assertTrue(phone.dismiss_notification_permission())
+        shell.assert_called_once_with("input", "tap", "60", "60", label="device-notification-allow")
+        self.assertEqual([call.args for call in ui.call_args_list], [((LAB.PACKAGE, "com.android.permissioncontroller"),)] * 2)
+
+    def test_notification_opt_in_rejects_unidentified_or_unavailable_allow_button(self):
+        phone = LAB.Phone("synthetic-private-selector", 1, allow_test_notifications=True)
+        phone.owned_installer = True
+        for message, changes, duplicate, reason in (
+            ("Allow another app to send you notifications?", {}, False, "notification-dialog-not-identified"),
+            ("Allow Owner game installer to access your camera?", {}, False, "notification-dialog-not-identified"),
+            (None, {"enabled": "false"}, False, "notification-allow-unavailable"),
+            (None, {"package": "another.app"}, False, "notification-allow-unavailable"),
+            (None, {"resource-id": "com.android.permissioncontroller:id/permission_deny_button"}, False, "notification-allow-unavailable"),
+            (None, {}, True, "notification-allow-unavailable"),
+            (None, {"bounds": "invalid"}, False, "ui-button-bounds"),
+        ):
+            dialog = self.notification_dialog(button="permission_allow_button")
+            if message is not None:
+                dialog.findall("node")[0].set("text", message)
+            button = dialog.findall("node")[-1]
+            button.attrib.update(changes)
+            if duplicate:
+                dialog.append(ET.fromstring(ET.tostring(button)))
+            with self.subTest(reason=reason, changes=changes), patch.object(phone, "ui_for", return_value=dialog), patch.object(phone, "shell") as shell:
+                with self.assertRaisesRegex(LAB.Failure, reason):
+                    phone.dismiss_notification_permission()
+                shell.assert_not_called()
+
+    def test_notification_opt_in_cli_reaches_phone_without_enabling_installs(self):
+        with (
+            patch.dict(os.environ, {"LAB_DEVICE_SERIAL": "synthetic-private-selector"}),
+            patch.object(LAB, "PrivateDiagnostics"),
+            patch.object(LAB, "read_context", return_value={}),
+            patch.object(LAB, "Phone") as phone,
+            patch.object(LAB, "acceptance"),
+            redirect_stdout(io.StringIO()),
+        ):
+            self.assertEqual(LAB.main(["--allow-test-notifications"]), 0)
+        phone.assert_called_once_with("synthetic-private-selector", 1200, False, True)
+
+    def test_notification_dialog_does_not_act_without_prompt_or_fresh_ownership(self):
+        for allow in (False, True):
+            phone = LAB.Phone("synthetic-private-selector", 1, allow_test_notifications=allow)
+            with self.subTest(allow=allow), patch.object(phone, "ui_for") as ui, patch.object(phone, "shell") as shell:
+                with self.assertRaisesRegex(LAB.Failure, "notification-dialog-installer-not-owned"):
+                    phone.dismiss_notification_permission()
+                ui.assert_not_called()
+                shell.assert_not_called()
+            phone.owned_installer = True
+            with patch.object(phone, "ui_for", return_value=ET.Element("hierarchy")), patch.object(phone, "shell") as shell:
+                self.assertFalse(phone.dismiss_notification_permission())
+                shell.assert_not_called()
 
     def test_notification_dialog_rejects_other_apps_permissions_and_allow_button(self):
         phone = LAB.Phone("synthetic-private-selector", 1)
@@ -592,12 +1503,14 @@ class LabInstallerUpdatesTests(unittest.TestCase):
                 shell.assert_not_called()
 
     def test_notification_dialog_requires_observed_dismissal(self):
-        phone = LAB.Phone("synthetic-private-selector", 1)
-        phone.owned_installer = True
-        with patch.object(phone, "ui_for", return_value=self.notification_dialog()), patch.object(phone, "shell") as shell:
-            with self.assertRaisesRegex(LAB.Failure, "notification-dialog-not-dismissed"):
-                phone.dismiss_notification_permission()
-        self.assertEqual(shell.call_count, 1)
+        for allow in (False, True):
+            phone = LAB.Phone("synthetic-private-selector", 1, allow_test_notifications=allow)
+            phone.owned_installer = True
+            dialog = self.notification_dialog(button="permission_allow_button" if allow else "permission_deny_button")
+            with self.subTest(allow=allow), patch.object(phone, "ui_for", return_value=dialog), patch.object(phone, "shell") as shell:
+                with self.assertRaisesRegex(LAB.Failure, "notification-dialog-not-dismissed"):
+                    phone.dismiss_notification_permission()
+            self.assertEqual(shell.call_count, 1)
 
     def test_occupied_alpha_refuses_before_build_and_key_creation(self):
         phone = LAB.Phone("synthetic-private-selector", 1)
@@ -611,6 +1524,50 @@ class LabInstallerUpdatesTests(unittest.TestCase):
                 LAB.acceptance(phone, {}, Path("/unused"), lambda case: None)
         build.assert_not_called()
         keys.assert_not_called()
+
+    def test_apk_log_capture_is_owned_bounded_and_rejects_symlinks(self):
+        phone = LAB.Phone("synthetic-private-selector", 1)
+        phone.installer_hash = "a" * 64
+        with patch.object(phone, "package_hash", return_value="b" * 64), patch.object(phone, "shell") as shell:
+            for owned in (False, True):
+                phone.owned_installer = owned
+                with self.assertRaisesRegex(LAB.Failure, "apk-log-installer-not-owned"):
+                    phone.capture_apk_logs()
+            shell.assert_not_called()
+        with patch.object(phone, "package_hash", return_value=phone.installer_hash), patch.object(phone, "shell") as shell:
+            phone.capture_apk_logs()
+        self.assertEqual([call.kwargs["label"] for call in shell.call_args_list], ["device-apk-javac-log", "device-apk-dex-log"])
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            releases = root / "files/owner-input/work/releases"
+            for index in range(6):
+                assembly = releases / f"build-{index}" / "assembly"
+                assembly.mkdir(parents=True)
+                (assembly / "javac.log").write_bytes(b"x" * 70000)
+                (assembly / "dex.log").symlink_to(root / "private-log")
+            (root / "private-log").write_text("synthetic-private")
+            for call in shell.call_args_list:
+                self.assertEqual(call.args[:4], ("run-as", LAB.PACKAGE, "sh", "-c"))
+                self.assertEqual(call.kwargs["timeout"], 15)
+                script = call.args[4][1:-1]
+                output = subprocess.run(["sh", "-c", script], cwd=root, capture_output=True, check=True).stdout
+                if call.kwargs["label"] == "device-apk-javac-log":
+                    self.assertEqual(output, (b"ROR2_APK_LOG_BEGIN\n" + b"x" * 65536 + b"\n") * 4)
+                else:
+                    self.assertEqual(output, b"")
+                self.assertNotIn(b"synthetic-private", output)
+
+    def test_apk_log_capture_failure_keeps_original_install_failure(self):
+        phone = LAB.Phone("synthetic-private-selector", 1)
+        state = {"state": "ERROR", "pipeline": {"first_failure": {"stage": "apk"}}}
+        with (
+            patch.object(LAB, "CURRENT_PHASE", "baseline-N-install"),
+            patch.object(phone, "read", side_effect=[None, state]),
+            patch.object(phone, "capture_apk_logs", side_effect=OSError("synthetic-private")) as capture,
+        ):
+            with self.assertRaisesRegex(LAB.Failure, "^installer-build-error$"):
+                phone.installed(1)
+            capture.assert_called_once_with()
 
     def test_unowned_cleanup_never_uninstalls_or_reads_app_data(self):
         phone = LAB.Phone("synthetic-private-selector", 1)
