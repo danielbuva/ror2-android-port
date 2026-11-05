@@ -2697,3 +2697,17 @@ Current-input scoped inheritance passed; complete pointer proof remains open.
 Prior art: pinned AssetRipper full script identity and J866 exact scope/forwarding.
 No APK produced; integrated source/body proofs, native bridges, complete graph/load
 and device play remain required independently of this metadata contract.
+
+## J0 — Partition initial-stage preparation and native transport timings
+
+2026-11-05. Existing stage, input, population and director owners emit bounded
+startup/transport wall-time markers; no scheduling, RNG, lifecycle or content change.
+Evidence: `work/coordination/alpha-loading-owner-seams-device-20261105T010005Z/`;
+APK `44f2e07ac520df5f6f6d036bb550ae0196d1cc8682e6f9dac6fb0baa69effe37`, source `8e047cfb`.
+Ordinary menu 23.333 s; Start → live world 76.960 s; full media verification 8.235 s,
+body adoption 5.273 s, skins 4.144 s; director 11.350 s includes native credit waits.
+Stage validation/physics/entry total under 1 ms here; native shader/mesh/GC unmeasured.
+Audio ready, live Commando/HUD/stage observed; adopted update retained profiles/settings.
+CPU/GPU peak 82 C, 0.727 s above 80 C; battery 29 to 28 C; cleanup verified.
+Prior art: pinned R2API provider/SoundAPI phases; J1371 full-byte reuse validation retained.
+No speedup, sustained FPS, ordinary stage-exit or complete gameplay qualification claimed.

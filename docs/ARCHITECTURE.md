@@ -5494,9 +5494,6 @@ The same seams in `StageGeometryBoundary`, `NovaInputBoundary` and
 `AutomaticDirectorBoundary` separate collider validation/physics/entry, landing
 and display/run/enemy preparation, and objective templates/master catalog/player
 setup. These remain bounded owner-boundary logs, with no per-object recording.
-`GameAudioOriginalPayloadCopy` keeps full per-file SHA-256 verification at reuse
-with a 64 KiB sequential file buffer; receipt, size, path and native initialization
-checks retain their order. The stream is disposed after each file.
 
 `IntegratedWorldSession.TracePreparation` emits a bounded log marker at each
 initial world-preparation seam, including the existing loot report write,

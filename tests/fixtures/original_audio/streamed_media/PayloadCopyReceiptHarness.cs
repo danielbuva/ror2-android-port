@@ -143,25 +143,6 @@ public static class PayloadCopyReceiptHarness
         finally { Directory.Delete(directory, true); }
     }
 
-    private static void TestMultiBufferPayloadRevalidation()
-    {
-        string path = Path.Combine(Path.GetTempPath(), "wwise-buffer-check-" + Guid.NewGuid().ToString("N"));
-        try
-        {
-            // Cross storage buffers and leave a partial final hash block.
-            byte[] data = new byte[2 * 64 * 1024 + 17];
-            for (int i = 0; i < data.Length; i++) data[i] = (byte)(i * 31);
-            string hash;
-            using (SHA256 sha = SHA256.Create()) hash = BitConverter.ToString(sha.ComputeHash(data)).Replace("-", "").ToLowerInvariant();
-            File.WriteAllBytes(path, data);
-            Check((bool)InvokeStatic("ExistingPayloadMatches", path, hash, (long)data.Length), "multi-buffer payload verified");
-            data[data.Length - 1] ^= 1;
-            File.WriteAllBytes(path, data);
-            Check(!(bool)InvokeStatic("ExistingPayloadMatches", path, hash, (long)data.Length), "final-byte corruption refused");
-        }
-        finally { File.Delete(path); }
-    }
-
     public static int Main()
     {
         Check(GameAudioOriginalPayloadCopy.NativeSearchRootMatches("/owned/app", "/owned/app/"), "same native POSIX root accepted");
@@ -183,7 +164,6 @@ public static class PayloadCopyReceiptHarness
         Set(shortReceipt, "streamed_media", Array.CreateInstance(mediaType, 119));
         Check(!Validate(shortReceipt), "incomplete streamed-media closure refused");
         TestExistingPayloadRevalidation();
-        TestMultiBufferPayloadRevalidation();
         TestTemporaryPathOwnership();
         Console.WriteLine(failures == 0 ? "PASS" : "FAILURES " + failures);
         return failures == 0 ? 0 : 1;

@@ -391,9 +391,7 @@ public sealed class GameAudioOriginalPayloadCopy : IGameAudioOriginalPayloadCopy
     {
         var info = new FileInfo(path);
         if (!info.Exists || info.Length != expectedSize) return false;
-        // Full-file verification remains mandatory on reuse. Coalesce the hash
-        // reader's small reads into bounded sequential storage reads.
-        using (var file = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read, 64 * 1024, FileOptions.SequentialScan))
+        using (var file = File.OpenRead(path))
         using (var sha = SHA256.Create())
         {
             string actual = BitConverter.ToString(sha.ComputeHash(file)).Replace("-", "").ToLowerInvariant();

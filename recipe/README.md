@@ -6848,3 +6848,9 @@ inputs are published.
 | `owner-objective-support-objects.json` | `afe5e32ab5f57f19949f672d7cd4a3d91a97a861f332d41ab46330d239baabf0` |
 | `owner-commando-reused-records.json` | `9c587b0edd5bdb2955b2a7d592ab4cf20eae99107c03ea32d5dd1eb2291fdb96` |
 | `owner-commando-objects.json` | `944f28096f69bc509123d9564721cd4845603df65ef073c3caec1fcd2f949a73` |
+
+Audit: 2026-11-05. `original-audio-owner-sources.json` and the camera
+transform recipe refresh only reviewed authored source and manifest hashes for
+bounded startup/transport timing seams. No new inputs, game-derived bytes,
+private paths, identifiers or third-party code are included. Full audio integrity
+verification and native bank initialization order are unchanged.
