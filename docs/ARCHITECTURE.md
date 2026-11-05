@@ -3783,8 +3783,9 @@ same token values, types, property order and parser error handling.
 authored source snapshots, including parser parity, replacement input and identity
 checks.
 `PortSession` likewise shares a local manifest across synchronous artifact-family
-loading and artifact, item, equipment and body holder binding. `WholeCatalogComposed` keeps native
-population, identity checks and the existing field-restoration owner; the local
+loading and artifact, item, equipment and body holder binding.
+`WholeCatalogComposed` keeps native population, identity checks and the existing
+field-restoration owner; the local
 snapshot ends before drone preparation and adds no retained cache.
 Buff discovery uses the existing `DefinitionFamily<BuffDef>` provider-root loader
 and family cache instead of broad bundle loading. Typed root selection, unique
