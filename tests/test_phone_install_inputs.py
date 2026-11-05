@@ -172,6 +172,20 @@ class InstallInputTests(unittest.TestCase):
         }
         with patch.object(OWNER.PACKET, "profile", side_effect=AssertionError("private packet must not be read")):
             self.assertTrue(OWNER.check(request)["assembly_ready"])
+            published = manifest.read_text()
+            local = json.loads(published)
+            local.pop("release_sha256")
+            local.update(schema="owner-local-output-v1", source_commit="a" * 40, input_sha256="b" * 64)
+            manifest.write_text(json.dumps(local))
+            request.update(manifest_sha256=OWNER.sha(manifest), application_id="dev.ror2lab.converted")
+            self.assertTrue(OWNER.check(request)["assembly_ready"])
+            for package in ("dev.ror2lab.arm64", "dev.ror2lab.alpha"):
+                request["application_id"] = package
+                with self.assertRaisesRegex(ValueError, "disposable converted package"):
+                    OWNER.check(request)
+            request.pop("application_id")
+            manifest.write_text(published)
+            request["manifest_sha256"] = digest
             for option in ("startup_metadata", "stage_contexts"):
                 request[option] = {"path": "unused", "sha256": "0" * 64}
                 with self.assertRaisesRegex(ValueError, "source assembly requires exact output pins"):

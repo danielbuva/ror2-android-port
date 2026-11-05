@@ -1480,6 +1480,13 @@ container size without changing member bytes; final body/resource checks still
 read the compressed output. The receipt records compression and the codec pin.
 Managed bindings, external
 endpoints and ordered Sprite cohorts remain excluded and reported.
+The shared `object_produce.make_layout` writer accepts explicitly qualified
+external MonoScript pointers separately from scene membership. It checks each
+managed body's script against the local records or supplied external allowlist,
+assigns the serialized script/type slots and preserves non-scene archive paths.
+The caller still owns endpoint, MonoScript identity and current CLR qualification;
+the writer does not admit external content. Setup supplies the qualified pointers;
+the pure layout operation retains no state and adds no runtime owner.
 Setup takes explicit local graph and
 schema paths plus a fresh output directory. Temporary body/serialization staging
 is deleted on exit; bundle, roots, typed-load request, gap list and receipt remain.
@@ -6346,3 +6353,13 @@ resources also supply external preload endpoints; the release graph binds these
 from the selected player outputs. The scoped producer checks native endpoints,
 types and script bindings and retains its receipt on exit. This adds
 no runtime owner. Complete APK and device acceptance remain open.
+
+The existing `owner-apk/build_owner_apk.py` assembler also accepts an
+`owner-local-output-v1` profile for the disposable `dev.ror2lab.converted`
+package only. This local profile pins the source commit, accepted input inventory
+and complete output cohort without claiming a published release. Code/SDK
+membership, file hashes and bootstrap payload bounds retain their normal checks.
+The binary manifest owner accepts an explicit version name alongside package ID
+and version code; assembly receipts retain all three. Setup supplies local pinned
+outputs; process exit releases readers and retains receipts. Host fixtures cover
+coexistence identities and output verification; APK/device acceptance stays open.
