@@ -582,7 +582,7 @@ def texture_resume(output, profile, pins):
     if not names <= {p.name for p in output.iterdir()} <= names | {"result.json.tmp"} or any(not p.is_file() or p.is_symlink() for p in output.iterdir()):
         raise ValueError("unknown texture checkpoint output")
     previous = json.loads((output / "result.json").read_text())
-    pin_names = {"input_id", "profile_sha256", "jpeg_codec_sha256", "etc_codec_sha256", "sdk_toolchain_sha256"}
+    pin_names = {"input_id", "profile_sha256", "jpeg_codec_sha256", "etc_codec_sha256", "sdk_toolchain_sha256", "comparison"}
     if {k: previous[k] for k in pin_names if k in previous} != {k: pins[k] for k in pin_names if k in pins}:
         raise ValueError("texture checkpoint input/profile/tool drift")
     targets = iter(target for bundle in profile["bundles"] for member in bundle["members"] for texture in member["textures"] for target in texture["outputs"])
@@ -594,7 +594,12 @@ def texture_resume(output, profile, pins):
                 break  # An incomplete final line never committed its data.
             target = next(targets, None)
             row = json.loads(line)
-            if target is None or row != texture_row(target, counts["object_bytes"], counts["resource_bytes"]):
+            expected = texture_row(target, counts["object_bytes"], counts["resource_bytes"]) if target is not None else None
+            if expected is not None and pins.get("comparison") == "diagnostic":
+                expected.update(bytes=row["bytes"], sha256=row["sha256"], historical_raw_exact=row["historical_raw_exact"])
+                if "resource" in expected:
+                    expected["resource"].update(sha256=row["resource"]["sha256"])
+            if target is None or row != expected:
                 raise ValueError("texture checkpoint index order/extent drift")
             for stream, extent in ((objects, row), (resources, row.get("resource"))):
                 if extent is not None:
@@ -625,7 +630,10 @@ def produce(
     sdk_toolchain=None,
     sdk_toolchain_sha256=None,
     resume=False,
+    comparison="exact",
 ):
+    if comparison not in ("exact", "diagnostic"):
+        raise ValueError("unknown output comparison policy")
     if BUNDLE.sha(profile_path) != profile_sha256:
         raise ValueError("texture profile drift")
     profile = json.loads(profile_path.read_text())
@@ -685,6 +693,8 @@ def produce(
     )
     started = time.monotonic()
     receipt = {"success": False, "input_id": MESH.INPUT_ID, "profile_sha256": profile_sha256, "objects": 0, "object_bytes": 0, "resource_bytes": 0}
+    if comparison == "diagnostic":
+        receipt["comparison"] = comparison
     if jpeg_codec is not None:
         receipt["jpeg_codec_sha256"] = jpeg_codec_sha256
     if etc_codec is not None:
@@ -725,13 +735,16 @@ def produce(
                         pixels = pixels_input(bundle, body, selected, jpeg_codec, etc_codec, sdk)
                         pixel_sha = hashlib.sha256(pixels).hexdigest()
                         for target in selected["outputs"][completed:]:
-                            if pixel_sha != target["pixel_sha256"] or len(pixels) != target["pixel_bytes"]:
+                            if comparison == "exact" and (pixel_sha != target["pixel_sha256"] or len(pixels) != target["pixel_bytes"]):
                                 raise ValueError("produced texture pixels differ from accepted hash")
                             result = body_output(body, selected["fields"], pixels, target, selected["operation"])
                             digest = hashlib.sha256(result).hexdigest()
-                            if len(result) != target["bytes"] or digest != target["sha256"]:
+                            if comparison == "exact" and (len(result) != target["bytes"] or digest != target["sha256"]):
                                 raise ValueError("produced texture body differs from accepted hash")
-                            row = texture_row(target, objects.tell(), resources.tell())
+                            actual = dict(target, bytes=len(result), sha256=digest, pixel_bytes=len(pixels), pixel_sha256=pixel_sha)
+                            row = texture_row(actual, objects.tell(), resources.tell())
+                            if comparison == "diagnostic":
+                                row["historical_raw_exact"] = all(actual[key] == target[key] for key in ("bytes", "sha256", "pixel_bytes", "pixel_sha256"))
                             objects.write(result)
                             if not target["inline"] and pixels:
                                 resources.write(pixels)
@@ -788,6 +801,7 @@ def main():
     parser.add_argument("--etc-codec-sha256")
     parser.add_argument("--sdk-toolchain", type=Path)
     parser.add_argument("--sdk-toolchain-sha256")
+    parser.add_argument("--comparison", choices=("exact", "diagnostic"), default="exact")
     args = parser.parse_args()
     produce(
         args.profile,
@@ -801,6 +815,7 @@ def main():
         args.sdk_toolchain,
         args.sdk_toolchain_sha256,
         resume=args.resume,
+        comparison=args.comparison,
     )
 
 

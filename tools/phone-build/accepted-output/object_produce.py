@@ -1348,7 +1348,7 @@ def missing_script_base(body, typ, base, read_type):
     return body[: base["bytes"]], copy.deepcopy(base_type)
 
 
-def produce(profile_path, profile_sha256, pc, output, codec_path, codec_sha256, packs=(), sdk=None):
+def produce(profile_path, profile_sha256, pc, output, codec_path, codec_sha256, packs=(), sdk=None, comparison=None):
     if B.sha(profile_path) != profile_sha256:
         raise ValueError("object profile drift")
     profile = json.loads(profile_path.read_text())
@@ -1368,7 +1368,7 @@ def produce(profile_path, profile_sha256, pc, output, codec_path, codec_sha256, 
     if output.name in ("", ".", "..") or output.exists() or output.is_symlink() or parent.is_relative_to(pc) or pc.is_relative_to(output):
         raise ValueError("object output must be new and outside original input")
     selected_bundle = profile["bundle"]
-    comparison = selected_bundle.get("comparison", "exact")
+    comparison = comparison or selected_bundle.get("comparison", "exact")
     if comparison not in ("exact", "diagnostic"):
         raise ValueError("unknown bundle comparison policy")
     engine = selected_bundle.get("engine", "2021.3.45f2")
@@ -1749,8 +1749,16 @@ def produce(profile_path, profile_sha256, pc, output, codec_path, codec_sha256, 
                         "sha256": hashlib.sha256(body).hexdigest(),
                         "historical_raw_exact": len(body) == selected["bytes"] and hashlib.sha256(body).hexdigest() == selected["sha256"],
                     }
-                elif "sdk_event_system" not in selected and (len(body) != selected["bytes"] or hashlib.sha256(body).hexdigest() != selected["sha256"]):
+                elif (
+                    comparison == "exact"
+                    and "sdk_event_system" not in selected
+                    and (len(body) != selected["bytes"] or hashlib.sha256(body).hexdigest() != selected["sha256"])
+                ):
                     raise ValueError("produced object differs from accepted hash")
+                if comparison == "diagnostic" and (len(body) != selected["bytes"] or hashlib.sha256(body).hexdigest() != selected["sha256"]):
+                    receipt.setdefault("historical_object_mismatches", []).append(
+                        {"member": selected_member["name"], "path_id": selected["path_id"], "bytes": len(body), "sha256": hashlib.sha256(body).hexdigest()}
+                    )
                 if record_type_hash is not None and typ["hash"].hex() != record_type_hash:
                     raise ValueError("produced record native type identity differs")
                 member_records.append(stage.append(selected_member["name"], selected["path_id"], body, typ))
@@ -1868,8 +1876,9 @@ def main():
         metavar=("DIRECTORY", "RECEIPT_SHA256"),
         help="independently produced record pack and pinned result.json; repeat for each producer",
     )
+    parser.add_argument("--comparison", choices=("exact", "diagnostic"), help="historical output comparison; source/schema/reference checks remain strict")
     args = parser.parse_args()
-    produce(args.profile, args.profile_sha256, args.pc, args.output, args.codec, args.codec_sha256, args.record_pack, args.sdk)
+    produce(args.profile, args.profile_sha256, args.pc, args.output, args.codec, args.codec_sha256, args.record_pack, args.sdk, args.comparison)
 
 
 if __name__ == "__main__":

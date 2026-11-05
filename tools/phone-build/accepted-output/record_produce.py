@@ -1700,7 +1700,9 @@ def check_native_type(typ, target):
         raise ValueError("produced record native type identity differs")
 
 
-def produce(profile_path, profile_sha256, pc, output, sdk=None):
+def produce(profile_path, profile_sha256, pc, output, sdk=None, comparison="exact"):
+    if comparison not in ("exact", "diagnostic"):
+        raise ValueError("unknown target comparison policy")
     if B.sha(profile_path) != profile_sha256:
         raise ValueError("object-record profile drift")
     pc = pc.resolve(strict=True)
@@ -1717,6 +1719,7 @@ def produce(profile_path, profile_sha256, pc, output, sdk=None):
     started = time.monotonic()
     receipt = {"success": False, "input_id": M.INPUT_ID, "profile_sha256": profile_sha256, "objects": 0, "object_bytes": 0}
     runtime_fields = None
+    receipt.update(comparison=comparison, historical_mismatches=0)
     try:
         sdk_path, sdk_tree = None, None
         if not str(profile_path).endswith(".jsonl.gz") and "sdk" in (profile := json.loads(profile_path.read_text())):
@@ -1942,8 +1945,11 @@ def produce(profile_path, profile_sha256, pc, output, sdk=None):
                                 )
                             digest = hashlib.sha256(result).hexdigest()
                             if digest != target["sha256"] or len(result) != target["bytes"]:
-                                raise ValueError("produced object record differs from accepted hash")
-                            row = {key: target[key] for key in ("bundle", "member", "path_id", "bytes", "sha256")}
+                                if comparison == "exact":
+                                    raise ValueError("produced object record differs from accepted hash")
+                                receipt["historical_mismatches"] += 1
+                            row = {key: target[key] for key in ("bundle", "member", "path_id")}
+                            row.update(bytes=len(result), sha256=digest)
                             row["offset"] = data.tell()
                             if "native_type_hash" in target:
                                 row["native_type_hash"] = typ["hash"].hex()
@@ -1993,8 +1999,14 @@ def main():
     parser.add_argument("--pc", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--sdk", type=Path, help="pinned owner SDK root for original managed type hashes")
+    parser.add_argument(
+        "--comparison",
+        choices=("exact", "diagnostic"),
+        default="exact",
+        help="Record historical output byte differences while retaining source and structural checks",
+    )
     args = parser.parse_args()
-    produce(args.profile, args.profile_sha256, args.pc, args.output, args.sdk)
+    produce(args.profile, args.profile_sha256, args.pc, args.output, args.sdk, comparison=args.comparison)
 
 
 if __name__ == "__main__":

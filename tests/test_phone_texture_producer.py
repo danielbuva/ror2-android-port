@@ -317,6 +317,16 @@ class TextureProducerTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "pixels differ"):
                 T.produce(profile_path, T.BUNDLE.sha(profile_path), pc, root / "pixel-drift")
             self.assertFalse(json.loads((root / "pixel-drift/result.json").read_text())["success"])
+            outputs[0]["sha256"] = "0" * 64
+            profile_path.write_text(json.dumps(profile))
+            diagnostic = root / "diagnostic"
+            T.produce(profile_path, T.BUNDLE.sha(profile_path), pc, diagnostic, comparison="diagnostic")
+            row = json.loads((diagnostic / "index.jsonl").read_text().splitlines()[0])
+            self.assertEqual(row["sha256"], digest(expected_bodies[0]))
+            self.assertEqual(row["resource"]["sha256"], digest(expected_pixels))
+            self.assertFalse(row["historical_raw_exact"])
+            resumed = T.produce(profile_path, T.BUNDLE.sha(profile_path), pc, diagnostic, resume=True, comparison="diagnostic")
+            self.assertEqual(resumed["objects"], 2)
             source.write_bytes(b"authored drift")
             with self.assertRaisesRegex(ValueError, "bundle drift"):
                 T.produce(profile_path, T.BUNDLE.sha(profile_path), pc, root / "input-drift")
