@@ -6222,3 +6222,10 @@ Fieldless component metadata uses the existing receipt-bound current MonoScript
 identity policy in `object_produce.py`; its schema/properties hash must still
 match the supplied script. Receipts record the actual script hash. Setup and
 teardown remain the scoped source-pack readers and retained producer receipt.
+
+The Artifactworld01 native and Champrush/Splash/Conduitcanyon director record profiles use
+the existing `record_produce.py` owner. They relocate checked source component
+and PlayableDirector pointers, preserving the existing exposed-name policy.
+Setup pins original bundles and a fresh pack; process exit closes readers and
+retains receipts. They supply release-graph dependencies without a new runtime
+owner. Complete APK and device acceptance remain open.

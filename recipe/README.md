@@ -6866,3 +6866,31 @@ relationships before emission and aggregates mismatches in its receipt. Pinned
 source/SDK/codec and preload checks remain strict. Provenance/privacy review:
 only authored policy, script names and relationship checks changed; generated
 bodies and local audit evidence remain ignored. No device admission is claimed.
+
+## Scene source record suppliers (2026-11-05)
+
+Artifactworld01, Champrush, Splash and Conduitcanyon publish existing source-only record
+selectors through `record_produce.py`. They restore missing release-graph
+suppliers: six original AkTriggerDisable component relationships and five
+original PlayableDirector records with typed pointer relocations and the
+existing exposed-name policy. Source bundles, native schemas and reference
+checks remain authoritative; generated record bodies stay ignored.
+Manual provenance, privacy, licensing and sensitive-content audit: these
+recipes contain only minimum original-input selectors, hashes and authored
+reference relationships, with no asset bodies, game code, private paths,
+identifiers or credentials. They do not establish complete bundle loadability
+or device playability.
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-artifactworld01-native-records.json` | `728ac3483b07550d4f46e1cfa50f011a69e0b24284dc62754a23ec61fb0cec80` |
+| `owner-champrush-director-records.json` | `a7d60a106ef9b5be7c22010acbb2ea9118f4cbe6ad6e6226f034e047ece16536` |
+| `owner-splash-director-records.json` | `66953dab4e23d78963177719232bd2accd92cf47402f88fc5bfc0378370acad8` |
+
+Conduitcanyon uses the same source PlayableDirector transform with 13 checked
+pointer relocations; its consumer selects the newly published supplier.
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-conduitcanyon-director-records.json` | `5899bf05658d41d38794ca5e1a3fe89413613b45c9931ae041f8b313c026b632` |
+| `owner-conduitcanyon-objects.json` | `28241c71cbe333cb25a2ac210c75cf10c91e92aab7887dec0179248e37827474` |
