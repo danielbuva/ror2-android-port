@@ -139,6 +139,13 @@ thermal sampling policy; proposed performance budgets do not change those limits
       still shows positive twelve-session growth.
       [J1353](PORTING_JOURNAL.md#j1353--capture-the-requested-final-menu-heap)
       supplies endpoint heaps for attribution, without establishing a plateau.
+      Runner diagnostics use `scripts/lab/session_memory_batch.py`: first
+      `preflight`, then a receipt-bound `capture` for attribution, and a separate
+      no-snapshot `measure` for acceptance. `session_heap_growth.py` requires the
+      capture receipt SHA-256 and compares its exact exported heaps without
+      publishing raw object contents or addresses. Snapshot endpoint deltas and
+      overlapping reachable groups do not establish a memory bound or exclusive
+      retained size; this gate remains open.
 - [ ] Complete real interrupted-write/ENOSPC and sustained performance/thermal
       cases on supported hardware.
       [J1311](PORTING_JOURNAL.md#j1311--recover-native-settings-after-writer-termination-and-activity-restart)
