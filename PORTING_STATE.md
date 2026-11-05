@@ -1,6 +1,6 @@
 # Porting state
 
-Updated 2026-11-04 UTC. This laboratory is not a finished port. Results belong in the
+Updated 2026-11-05 UTC. This laboratory is not a finished port. Results belong in the
 [journal](docs/PORTING_JOURNAL.md) ([index](docs/JOURNAL_INDEX.md); J1–J1177 are
 [frozen](docs/history/journal-J1-J1177/JOURNAL_INDEX.md)). Named APK hashes are
 protected by the pruner; other old build outputs are disposable.
@@ -12,9 +12,9 @@ protected by the pruner; other old build outputs are disposable.
 | Accepted input | Steam 25475991; input `6af7ed94619fe1b4346974b4486afa03a8d1625a7820e92da0ff74d57208fe88` |
 | Toolchain | Unity 2021.3.45f2 (88f88f591b2e), IL2CPP ARM64, Vulkan; `environment/toolchain.json` |
 | Compatibility reference (P1) | Latest lab APK `9f904392d02abc3854f9efc4b51cd03daec7afb6b7192a4c074f30fabc12fa22`, source `6c12b506`: device-verified playability with matching behaviour, content, visuals and performance. Structural/gameplay checks remain strict; J850 byte equality is diagnostic. |
-| Latest device-verified APK | Typed-startup `6ed15c2ac1d3d7f7aca80cac689fa7c58e7c8c2bd42d818ff98f40a03b144572`, source `0b8055a3`; ordinary launcher reached menu in 31.864 s/world in 135.956 s, with source handlers and stage presentation retained. Bounded startup check; sustained gameplay remains open. |
-| Installed now (Main Nova) | Typed-startup APK above on adopted storage; package/data backing and installed hash verified in `work/coordination/alpha-typed-startup-device-20261104T175829Z/`. App stopped and display asleep after capture. |
-| Runtime source since that APK | The typed-startup APK includes runtime through `0b8055a3`; subsequent source is not implied installed. Retained Siren candidate `4f2274d49ba10474299ffa7a58de5da49ffd70327897e532806a519d0ee24cea`, source `5dc99b6c`, remains an assisted failing candidate. |
+| Latest device-verified APK | Audio-receipt APK `64b8741f45e5f94f54d95ca56b88040c72548795541c2daffc153e2fbca232e7`, source `80452b72`; ordinary Start reached stage/HUD with source audio ready 153/153. Install-bound full verification/cache and corruption refusal/restoration passed (J1386); sustained gameplay remains open. |
+| Installed now (Main Nova) | Audio-receipt APK above on adopted storage; installed hash/backing verified in `work/coordination/alpha-loading-audio-receipt-integrity-start-20261105T020900Z/`. App stopped, display asleep, scratch removed and lease released. |
+| Runtime source since that APK | Audio-receipt APK includes runtime through `80452b72`; subsequent source is not implied installed. Retained Siren candidate `4f2274d49ba10474299ffa7a58de5da49ffd70327897e532806a519d0ee24cea`, source `5dc99b6c`, remains an assisted failing candidate. |
 | Retained gameplay baseline | J1121/R58 `4386916991386bdf5b747e69786be58fa72ccfb0d3fc0220f59061ede495d0f5`, source `55149b48`; Siren recovery/destination gates remain open. |
 | Phone-only production | First produce a fully playable source-derived APK close to the latest lab build; then qualify import → convert → install → play → port-release update, retaining profiles/settings and rebuilding changed outputs. Check for updates and complete device acceptance remain open. Historical diagnostics: 693/705 files available, 685 raw-exact; not a playability gate. |
 | Whole-game reconstruction | Three records remain in the separate whole-game record frontier, per current workstream handoff; this is not the 12-file final-output frontier. |
