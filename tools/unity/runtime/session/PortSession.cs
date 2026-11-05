@@ -2640,12 +2640,12 @@ public sealed partial class PortSession : MonoBehaviour
                     WholeCatalogComposed.PopulateDefinitionFields(
                         holderManifest, "Equipment", EquipmentCatalog.allEquipment.Select(index => EquipmentCatalog.GetEquipmentDef(index)).ToArray());
                     WholeCatalogComposed.PopulateBodyFields(holderManifest, BodyCatalog.allBodyPrefabs.ToArray());
+                    TraceStartup("drone-catalog-begin");
+                    PrepareWholeDroneCatalog(holderManifest);
+                    TraceStartup("projectile-catalog-begin");
+                    r.liveCatalogs.projectiles = WholeCatalogComposed.PrepareProjectiles(holderManifest);
+                    TraceStartup("projectile-catalog-ready");
                 }
-                TraceStartup("drone-catalog-begin");
-                PrepareWholeDroneCatalog();
-                TraceStartup("projectile-catalog-begin");
-                r.liveCatalogs.projectiles = WholeCatalogComposed.PrepareProjectiles();
-                TraceStartup("projectile-catalog-ready");
                 TraceStartup("skins-begin");
                 var skins = RegisterOriginalSkins();
                 while (skins.MoveNext())

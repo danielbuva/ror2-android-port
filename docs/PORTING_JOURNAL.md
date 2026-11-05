@@ -2899,3 +2899,20 @@ process-cold, uncontrolled page cache: diagnostic comparison, no general speedup
 CPU/GPU peak 62.6 C, above 80 C 0 s, battery 28 C; app stopped/display asleep,
 scratch removed/lease released/prune passed. Prior art: pinned R2API content phases,
 J1376/J1380 scoped snapshots. Sustained play, audibility and alpha gates stay open.
+
+
+## J1397 — Share the synchronous manifest with drone and projectile registration
+
+2026-11-05. Existing `PortSession` snapshot now feeds drone and projectile catalog
+registration; native setters/order/typed identities/restoration remain unchanged.
+Snapshot ends before skins; public projectile calls retain lazy cache behavior.
+Six focused source fixtures pass; Ruff/pins pass. APK
+`e21675abb85767d2e5ba4233c9078bd219ce33dbf1f8b1c338e42c7918639746`.
+Evidence: `work/coordination/alpha-drone-projectile-device-20261105T070118Z/`.
+Ordinary Start reaches Titanic Plains/player/HUD; native catalogs/source banks
+153/153 ready, no first failure, profiles/settings retained; binary profiler off.
+Drone 0.435 s + projectile 1.921 s = 2.356 s versus J1393 7.034 s combined;
+process-cold, uncontrolled page cache: diagnostic only, no general speedup claim.
+CPU/GPU peak 59.4 C, above 80 C 0 s, battery 28 C; process stopped/OLED asleep,
+scratch removed/lease released/prune passed. Prior art: pinned R2API content phases
+and existing scoped snapshots. Sustained play, audibility and alpha gates stay open.

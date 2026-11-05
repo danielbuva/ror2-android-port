@@ -736,9 +736,13 @@ public static class WholeCatalogComposed
     static global::ResourceAvailability priorProjectileAvailability;
     public static int PrepareProjectiles()
     {
+        return PrepareProjectiles(null);
+    }
+    internal static int PrepareProjectiles(JObject manifest)
+    {
         if (priorProjectileIndices != null || RoR2.ProjectileCatalog.projectilePrefabCount != 0)
             throw new Exception("Projectile catalog has a foreign owner");
-        var values = CategoryFamily(RoR2.ContentManagement.AddressablesLabels.projectile, new GameObject[0]);
+        var values = CategoryFamily(manifest, RoR2.ContentManagement.AddressablesLabels.projectile, new GameObject[0]);
         priorProjectileIndices = values.Select(value => value.GetComponent<RoR2.Projectile.ProjectileController>())
                                      .ToDictionary(value => value, value => value.catalogIndex);
         priorProjectileAvailability = RoR2.ProjectileCatalog.catalogAvailability;

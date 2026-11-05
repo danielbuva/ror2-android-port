@@ -35,9 +35,9 @@ public sealed partial class PortSession
     {
         GetWholePopulationSession().CleanupWholePickups();
     }
-    void PrepareWholeDroneCatalog()
+    void PrepareWholeDroneCatalog(JObject manifest)
     {
-        GetWholePopulationSession().PrepareWholeDroneCatalog();
+        GetWholePopulationSession().PrepareWholeDroneCatalog(manifest);
     }
     void PrepareWholeRunAvailability()
     {
@@ -144,7 +144,7 @@ public sealed partial class PortSession
             }
             ownsWholePickupOrb = false;
         }
-        public void PrepareWholeDroneCatalog()
+        public void PrepareWholeDroneCatalog(JObject manifest)
         {
             coordinator.Check(DroneCatalog.droneCount == 0 && priorWholeDroneFields.Count == 0, "Foreign drone catalog owner");
             var fields = typeof(DroneCatalog).GetFields(BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic);
@@ -154,12 +154,12 @@ public sealed partial class PortSession
             foreach (var field in fields)
                 if (!field.IsLiteral && (field.FieldType.IsArray || field.FieldType == typeof(global::ResourceAvailability)))
                     priorWholeDroneFields.Add(field, field.GetValue(null));
-            var definitions = WholeCatalogComposed.CategoryFamily(RoR2.ContentManagement.AddressablesLabels.droneDef, new DroneDef[0]);
+            var definitions = WholeCatalogComposed.CategoryFamily(manifest, RoR2.ContentManagement.AddressablesLabels.droneDef, new DroneDef[0]);
             foreach (var def in definitions)
                 priorWholeDroneDefinitions.Add(def, new object[] { def.droneIndex, def.requiredExpansion });
             PortSession.StaticCall(typeof(DroneCatalog), "SetDroneDefs", new object[] { definitions });
             DroneCatalog.availability.MakeAvailable();
-            WholeCatalogComposed.PopulateDefinitionFields("DroneDefs", definitions);
+            WholeCatalogComposed.PopulateDefinitionFields(manifest, "DroneDefs", definitions);
             coordinator.Check(definitions.All(def => DroneCatalog.GetDroneDef(def.droneIndex) == def &&
                                                      DroneCatalog.GetBodyIndexFromDroneIndex(def.droneIndex) != BodyIndex.None),
                               "Original drone catalog identity differs");
