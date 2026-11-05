@@ -93,7 +93,7 @@ class OwnerCodeBackendTests(unittest.TestCase):
             profile = root / "player.json"
             profile.write_text(json.dumps({"input_id": "fixture", "managed_assemblies": [assembly.name], "converter_assemblies": [assembly.name]}))
             native_profile = root / "native.json"
-            native_profile.write_text(json.dumps({"jobs": [{"generated": "Fixture.cpp"}]}))
+            native_profile.write_text(json.dumps({"jobs": [{"generated": "Previous.cpp", "arguments": ["-O2"]}], "link": [{"object": 0}]}))
             output = work / "production"
 
             def configuration(profile, sdk, output):
@@ -142,7 +142,6 @@ class OwnerCodeBackendTests(unittest.TestCase):
                 patch.object(BACKEND, "converter_command", return_value=["fixture-converter"]),
                 patch.object(BACKEND.native, "invoke", side_effect=invoke),
                 patch.object(BACKEND.native, "run", return_value={"success": True}) as build,
-                patch.object(BACKEND.native, "generated_profile") as generated,
                 patch.object(BACKEND, "target_inputs") as fixed_target,
             ):
                 result = BACKEND.run(request, burst_only=burst_only)
@@ -156,7 +155,9 @@ class OwnerCodeBackendTests(unittest.TestCase):
             self.assertEqual(result["phase"], "native-built")
             self.assertEqual(result["source_frames"], 1)
             build.assert_called_once()
-            generated.assert_not_called()
+            planned = build.call_args.kwargs["profile"]
+            self.assertEqual(planned["jobs"], [{"generated": "Fixture.cpp", "arguments": ["-O2"]}])
+            self.assertEqual(planned["link"], [{"object": 0}])
             fixed_target.assert_not_called()
 
     def test_android_failure_keeps_wall_memory_and_storage_measurements(self):
