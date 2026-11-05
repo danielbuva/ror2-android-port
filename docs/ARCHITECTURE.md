@@ -63,9 +63,12 @@ from measured commands. Sampling gives a peak lower bound; child RSS accounting
 is not simultaneous process-tree RSS. These host metrics do not qualify phone
 heat, installation or complete converter performance.
 
-Objective-support and Commando object recipes use diagnostic final-file hash
-comparison for current script/schema layouts; source, record, native-type and
-reference checks remain strict, and device loadability remains open.
+The current release graph selects diagnostic historical-output comparison for
+object, record, remap, mesh, avatar, texture and shader producers. Standalone
+producers retain exact comparison by default. Receipts retain historical match
+results; output indices pin actual produced extents. Source, supplier, native-type,
+schema, script and reference checks remain strict; device loadability remains open.
+Barrier shader jobs bind their separately pinned legacy SDK metadata explicitly.
 
 `object_produce.py` emits complete source object bundles through
 `object_stream.py`, which owns checked-body spooling, lazy graph reads and bounded
@@ -3696,6 +3699,10 @@ authored source snapshots, including replacement input and identity checks.
 item, equipment and body holder binding. `WholeCatalogComposed` keeps native
 population, identity checks and the existing field-restoration owner; the local
 snapshot ends before drone preparation and adds no retained cache.
+Buff discovery uses the existing `DefinitionFamily<BuffDef>` provider-root loader
+and family cache instead of broad bundle loading. Typed root selection, unique
+name/selected-identity checks and `Release` cache teardown keep their existing
+owners; native buff registration and holder restoration remain unchanged.
 
 Each staged runtime file starts with a two-line header naming its subsystem, whether it is
 on the game path, and its setup and teardown methods (J516).

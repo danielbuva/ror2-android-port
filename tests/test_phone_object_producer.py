@@ -1795,6 +1795,11 @@ class ObjectProducerTests(unittest.TestCase):
             result = produce(path, P.B.sha(path), pc, root / "produced")
             self.assertEqual(result["serialized_sha256"], digest(expected))
             self.assertEqual(result["comparison"], {"policy": "diagnostic", "serialized_matches": {"CAB-target": False}, "bundle_matches": False})
+            profile["objects"][0]["sha256"] = "0" * 64
+            path.write_text(json.dumps(profile))
+            result = produce(path, P.B.sha(path), pc, root / "changed-target")
+            self.assertEqual(len(result["historical_object_mismatches"]), 1)
+            self.assertEqual(result["serialized_sha256"], digest(expected))
             profile["objects"][0]["source_sha256"] = "0" * 64
             path.write_text(json.dumps(profile))
             with self.assertRaisesRegex(ValueError, "original object body drift"):

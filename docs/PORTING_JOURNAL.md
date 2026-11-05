@@ -2665,6 +2665,23 @@ Prior art: pinned EditorKit typed lookup and AssetRipper script identity; source
 and current CLR identity remain required, with no global short-name inference.
 No APK produced; endpoint assignability, complete graph/load and device play remain open.
 
+
+## J1382 — Load buff definitions through typed provider roots
+
+2026-11-04. Existing catalog owner uses its typed provider-root family/cache;
+native registration, DLC4 selection, identity guards and restoration remain intact.
+APK `833bc50a0f8751c2e3fdd3156bdf94d981f3d9b78423e79d2580efbc9d6607a4`, source `09e47d1d`.
+Evidence: `work/coordination/alpha-buff-family-device-20261104T231758Z/`.
+Production-method identity/refusal fixture and exact-editor code build passed.
+Ordinary Distant Roost/HUD and natural StandardLoss saved/reloaded; no first failure;
+153 native banks ready; adopted update preserved profiles/settings.
+Menu 21.715 s, Start → world 77.357 s, launch → world 100.074 s; buff seam 2.839 s
+versus prior 5.548 s is diagnostic only, without matched cache/stage; no speed claim.
+CPU/GPU peak 96.3 C, 15.931 s above 80 C; no sustained 3 s above 95 C;
+battery 30 to 31 C, runtime max gap 0.449 s; sampled peak PSS 3,186,047 KiB includes startup.
+Stopped process, OLED sleep, scratch/prune/lease cleanup verified. Prior art: pinned
+R2API content phases, J432/J1376/J1380. Known scene-bank/empty-prop issues remain;
+no sustained/FPS/parity closure; Perfetto output unusable, logcat/report timings retained.
 ## J1381 — Resolve current managed pointer field contracts by exact CLR scope
 
 2026-11-04. The existing metadata owner binds current provider paths/hashes and

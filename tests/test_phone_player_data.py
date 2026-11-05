@@ -579,6 +579,18 @@ class PlayerDataTests(unittest.TestCase):
     def failed(self):
         self.assertFalse(json.loads((self.output / "result.json").read_text())["success"])
 
+    def test_current_metadata_keeps_actual_output_pins_when_historical_hash_differs(self):
+        name = "ScriptingAssemblies.json"
+        self.profile["outputs"][name] = {"bytes": 1, "sha256": "0" * 64}
+        self.profile_path.write_text(json.dumps(self.profile))
+        self.profile_hash = P.sha(self.profile_path)
+        request = self.root / "current-code.json"
+        request.write_text("{}")
+        result = P.produce(self.profile_path, self.profile_hash, self.pc, self.sdk, self.converter, self.receipt_hash, self.output, code_request=request)
+        self.assertFalse(result["metadata_comparison"][name])
+        self.assertEqual((self.output / (P.TARGET + name)).read_bytes(), self.generated[name])
+        self.assertEqual(result["files"][P.TARGET + name]["sha256"], hashlib.sha256(self.generated[name]).hexdigest())
+
     def test_source_only_complete_target_tree_and_receipt(self):
         before = (self.pc / "owner.bin").read_bytes()
         result = self.produce()
