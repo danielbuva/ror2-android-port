@@ -2844,3 +2844,19 @@ CPU/GPU peak 62.2 C, above 80 C 0 s, battery 28–29 C; stopped/asleep/lease rel
 Actual-method family fixture and host preflight pass; existing worktree doctor lacks private inputs.
 Pinned R2API load/copy/finalize phases informed attribution; cache ownership/reset unchanged.
 Sustained play, audibility and lossless reduction of the measured parse cost remain open.
+
+## J1393 — Omit unused manifest source-line annotations
+
+2026-11-05. Existing `WholeCatalogComposed.ReadDefinitionManifest` skips JSON line
+annotations; values/types/order, duplicate/comment handling and malformed/trailing
+refusal retain default parser semantics. Exact-editor reader and identity checks: 5 pass.
+APK `55ec987fb90244030b622b78463c2ef07d5ea48928820c1b38e237565311ec1c`.
+Evidence: `work/coordination/alpha-manifest-line-info-device-20261105T060003Z/`.
+Ordinary Start reaches Titanic Plains with player/HUD/native catalogs/source audio
+ready; no first failure, profiles/settings preserved. Binary profiler off.
+Master-family parse 1.722 s, index 0.248 s, assets 1.430 s; parent 3.403 s.
+Prior J1392 parse 1.970 s / parent 3.659 s; process-cold, uncontrolled page cache:
+one comparison, no general speedup claim. Peak CPU/GPU 61.4 C, battery 28 C.
+Existing reader lifecycle/ownership retained; R2API phase separation informed scope.
+Display asleep, scratch removed, lease released, prune passed. Sustained play and
+audibility and full-pipeline performance stay open; alpha gate unchanged.
