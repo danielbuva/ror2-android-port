@@ -552,7 +552,9 @@ public static class WholeCatalogComposed
     // retaining the catalog beyond that synchronous preparation boundary.
     internal static JObject ReadDefinitionManifest()
     {
-        return JObject.Parse(File.ReadAllText(Path.Combine(Application.persistentDataPath, "payload", "whole-catalog.json")));
+        // Native family preparation consumes values and order, never source line annotations.
+        return JObject.Parse(File.ReadAllText(Path.Combine(Application.persistentDataPath, "payload", "whole-catalog.json")),
+            new JsonLoadSettings { LineInfoHandling = LineInfoHandling.Ignore });
     }
     internal static T[] CategoryFamily<T>(JObject manifest, string category, IEnumerable<T> selected)
         where T : UnityEngine.Object
