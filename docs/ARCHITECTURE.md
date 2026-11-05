@@ -1480,6 +1480,13 @@ container size without changing member bytes; final body/resource checks still
 read the compressed output. The receipt records compression and the codec pin.
 Managed bindings, external
 endpoints and ordered Sprite cohorts remain excluded and reported.
+The shared `object_produce.make_layout` writer accepts explicitly qualified
+external MonoScript pointers separately from scene membership. It checks each
+managed body's script against the local records or supplied external allowlist,
+assigns the serialized script/type slots and preserves non-scene archive paths.
+The caller still owns endpoint, MonoScript identity and current CLR qualification;
+the writer does not admit external content. Setup supplies the qualified pointers;
+the pure layout operation retains no state and adds no runtime owner.
 Setup takes explicit local graph and
 schema paths plus a fresh output directory. Temporary body/serialization staging
 is deleted on exit; bundle, roots, typed-load request, gap list and receipt remain.
