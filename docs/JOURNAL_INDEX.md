@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J1387](PORTING_JOURNAL.md#j1387--attribute-comparison-item-discovery-during-ordinary-startup) | 2026-11-04 | Attribute comparison-item discovery during ordinary startup | 2026-11-05. |
 | [J1385](PORTING_JOURNAL.md#j1385--read-complete-sdk-shader-schemas) | 2026-11-04 | Read complete SDK Shader schemas | 2026-11-05. |
 | [J1384](PORTING_JOURNAL.md#j1384--qualify-managed-curve-hashes-against-complete-sdk-runtime-projections) | 2026-11-04 | Qualify managed curve hashes against complete SDK runtime projections | 2026-11-04. |
 | [J1385](PORTING_JOURNAL.md#j1385--complete-catalogs-against-produced-serialized-containers) | 2026-11-04 | Complete catalogs against produced serialized containers | 2026-11-05. |
