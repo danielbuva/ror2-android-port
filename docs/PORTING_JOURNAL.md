@@ -2774,7 +2774,7 @@ Pinned R2API content load/generate/finalize phases informed observation scope.
 Enemy preparation remains the largest paired span in this capture (17.905 s);
 residual body time, sustained FPS, audibility and whole-load causal comparison remain open.
 
-## J1388 — Report final-ten-minute sustained frame counters
+## J1389 — Report final-ten-minute sustained frame counters
 
 2026-11-05. Existing host-only performance reporter separates final-ten-minute
 FPS and hitch totals/percentages from whole-session totals, with retained endpoint
