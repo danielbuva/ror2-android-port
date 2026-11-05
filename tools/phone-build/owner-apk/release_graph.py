@@ -9,6 +9,7 @@ import argparse
 import gzip
 import hashlib
 import importlib.util
+import io
 import json
 from pathlib import Path
 
@@ -66,17 +67,13 @@ class Graph:
         self.phase_path = player_phases
         self.phases = json.loads((self.repo / player_phases).read_text()) if player_phases else {}
         self.phase_files = set()
+        # Index content identities without retaining unrelated parsed recipes.
+        # Dependency pins still resolve in the same sorted, last-match order.
         self.profiles = {}
-        for path in sorted((self.repo / "recipe").glob("owner-*.json")):
-            self.profiles[digest(path)] = (path.relative_to(self.repo).as_posix(), json.loads(path.read_text()))
-        # Large native-record recipes are streamed by record_produce itself.
-        # Discover their identity without expanding the hierarchy into memory.
-        for path in sorted((self.repo / "recipe").glob("owner-*.jsonl.gz")):
-            with gzip.open(path, "rb") as stream:
-                header = json.loads(stream.readline(8 * 1024**2 + 1))
-            if set(header) != {"input_id"}:
-                raise ValueError("unknown compressed record profile header: " + path.name)
-            self.profiles[digest(path)] = (path.relative_to(self.repo).as_posix(), header)
+        for pattern in ("owner-*.json", "owner-*.jsonl.gz"):
+            for path in sorted((self.repo / "recipe").glob(pattern)):
+                self.profiles[digest(path)] = path.relative_to(self.repo).as_posix()
+        self.loaded_profiles = {}
         self.jobs = {}
         self.profile_files = {}
         self.job_profiles = {}
@@ -153,8 +150,24 @@ class Graph:
             raise ValueError("cyclic profile supplier: " + pin)
         if pin not in self.profiles:
             raise ValueError("missing source supplier profile: " + pin)
-        path, profile = self.profiles[pin]
+        path = self.profiles[pin]
         name = "recipe/jobs/" + (Path(path).name.removesuffix(".jsonl.gz") if path.endswith(".jsonl.gz") else Path(path).stem) + ".json"
+        if pin not in self.loaded_profiles:
+            encoded = (self.repo / path).read_bytes()
+            if hashlib.sha256(encoded).hexdigest() != pin:
+                raise ValueError("source supplier profile drift: " + path)
+            if path.endswith(".jsonl.gz"):
+                # Verify compressed identity from the same bytes as the header;
+                # never expand the native-record body into a Python hierarchy.
+                with gzip.GzipFile(fileobj=io.BytesIO(encoded)) as stream:
+                    profile = json.loads(stream.readline(8 * 1024**2 + 1))
+                if set(profile) != {"input_id"}:
+                    raise ValueError("unknown compressed record profile header: " + Path(path).name)
+            else:
+                profile = json.loads(encoded)
+            del encoded
+            self.loaded_profiles[pin] = profile
+        profile = self.loaded_profiles[pin]
         if name in self.jobs:
             return name
         producer = "record_produce" if path.endswith(".jsonl.gz") else owner(profile)
