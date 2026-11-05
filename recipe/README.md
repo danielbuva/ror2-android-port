@@ -6872,3 +6872,9 @@ transform recipe refresh only reviewed authored source and manifest hashes for
 bounded startup/transport timing seams. No new inputs, game-derived bytes,
 private paths, identifiers or third-party code are included. Full audio integrity
 verification and native bank initialization order are unchanged.
+
+The same authored audio-owner pins now include the install-bound private
+verification-cache candidate. Native payload bytes, packaged cohort validation
+and bank order are unchanged. The receipt uses kernel change time as well as
+modification time and inode; device integrity/timing qualification remains open.
+No private cached receipts or captured identities are tracked.
