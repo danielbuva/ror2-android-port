@@ -2126,3 +2126,12 @@ fixture describe their generation. Retained diagnostic files are evidence,
 never implicit historical suppliers. Phone-built tool construction and native
 lighting/load acceptance remain open. The parent copies and rechecks the phase's
 `level0` in its new APK-data tree. No timestamped directory is read by production.
+
+
+Partial native bundle qualification takes an explicit local selected graph
+(`done.json`, `selected-records.jsonl`, `selected-roots.jsonl`), complete native
+schema pools and receipt-bound source-producer packs. These exploratory graph
+selections are required local state for the `bundle_preload.py` qualification
+command, not a production installer input. The public emitter reconstructs the
+bundle from the selected source-produced bodies; no timestamped experiment path
+is embedded in code. Complete release graph integration remains open.

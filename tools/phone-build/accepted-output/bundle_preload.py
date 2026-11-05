@@ -149,3 +149,258 @@ def produce(selected, records, sources):
         O.aligned_string(stream, dependency)
     stream.write(struct.pack("<B3xiii", False, 0, 7, 0))
     return stream.getvalue()
+
+
+# Single-object native roots only. Ordered Sprite/subasset groups retain their
+# existing metadata owner; this partial emitter must not guess those identities.
+NATIVE_ROOT_TYPES = {
+    850595691: "LightingSettings",
+    43: "Mesh",
+    90: "Avatar",
+    74: "AnimationClip",
+    21: "Material",
+    48: "Shader",
+    28: "Texture2D",
+    319: "AvatarMask",
+    134: "PhysicMaterial",
+    221: "AnimatorOverrideController",
+}
+
+
+def json_rows(path):
+    import json
+
+    with path.open() as stream:
+        yield from map(json.loads, stream)
+
+
+def emit_closed_native(graph_directory, schema_paths, output, name, member):
+    """Emit the declared local/native subset of a qualified producer graph.
+
+    This is explicitly partial, even when all eligible records close. Bodies,
+    native schemas and actual PPtrs are checked independently of graph claims.
+    No historical bundle, accepted body or comparator is an input.
+    """
+    from collections import Counter, defaultdict
+    import json
+    import tempfile
+    import time
+    import resource
+    import sys
+
+    M = module("bundle_manifest")
+    W = M.W
+    started = time.monotonic()
+    graph_directory, output = Path(graph_directory), Path(output)
+    retained = json.loads((graph_directory / "done.json").read_text())
+    if retained.get("success") is not True:
+        raise ValueError("Unsuccessful source graph")
+    all_records = {}
+    for row in json_rows(graph_directory / "selected-records.jsonl"):
+        key = tuple(row["destination"])
+        if key in all_records:
+            raise ValueError("Duplicate selected destination")
+        all_records[key] = row
+    selected = {
+        key: row
+        for key, row in all_records.items()
+        if key[:2] == (name, member)
+        and (Path(row["provider"]) / "result.json").is_file()
+        and row.get("schema")
+        and row["class_id"] not in (114, 115, 142)
+        and not row.get("resource")
+        and all(edge[0] == 0 for edge in row.get("edges", [[1, 1]]))
+    }
+    while True:
+        missing = [key for key, row in selected.items() if any(pid and (*key[:2], pid) not in selected for _, pid in row["edges"])]
+        if not missing:
+            break
+        for key in missing:
+            del selected[key]
+    schemas, schema_pins = {}, {}
+    needed = {row["schema"] for row in selected.values()}
+    for schema_path in map(Path, schema_paths):
+        schema_pins[str(schema_path)] = O.B.sha(schema_path)
+        for key, typ in json.loads(schema_path.read_text()).items():
+            if key not in needed:
+                continue
+            if key in schemas and schemas[key] != typ:
+                raise ValueError("Conflicting complete native schema")
+            schemas[key] = typ
+    typed = {}
+    for key in needed:
+        typ = dict(schemas[key])
+        for field in ("tree", "hash", "script_id"):
+            if field in typ:
+                typ[field] = bytes.fromhex(typ[field])
+        if hashlib.sha256(typ["tree"]).hexdigest() != key or typ["script_type"] != -1:
+            raise ValueError("Native schema identity differs")
+        typ.setdefault("dependencies", [])
+        typed[key] = typ
+    by_provider = defaultdict(list)
+    for row in selected.values():
+        by_provider[row["provider"]].append(row)
+    output.mkdir(parents=True, exist_ok=False)
+    with tempfile.TemporaryDirectory(prefix=".emission-", dir=output) as scratch:
+        store = Path(scratch) / "bodies.bin"
+        objects, graph, bodymap, source_pins, cache = [], {}, {}, {}, {}
+        with store.open("wb") as destination:
+            for provider, values in by_provider.items():
+                directory = Path(provider)
+                receipt = json.loads((directory / "result.json").read_text())
+                if receipt.get("success") is not True or {row["record"] for row in values} != {receipt["profile_sha256"]}:
+                    raise ValueError("Unexpected or unsuccessful native provider")
+                pin = dict(receipt_sha256=O.B.sha(directory / "result.json"), index_sha256=O.B.sha(directory / "index.jsonl"))
+                if pin["index_sha256"] != receipt["outputs"]["index.jsonl"]["sha256"]:
+                    raise ValueError("Native provider index drift")
+                source_pins[provider] = pin
+                index = {}
+                for row in json_rows(directory / "index.jsonl"):
+                    identity = row["bundle"], row["member"], row["path_id"]
+                    if identity in index:
+                        raise ValueError("Duplicate native provider identity")
+                    index[identity] = row
+                for value in values:
+                    identity = value["destination"][2]
+                    row = index[tuple(value["record_source"])]
+                    typ = typed[value["schema"]]
+                    if row.get("resource") or (row["bytes"], row["sha256"]) != (value["bytes"], value["sha256"]):
+                        raise ValueError("Native provider record drift or streamed resource")
+                    if (
+                        typ["class_id"] != value["class_id"]
+                        or (value.get("native_type_hash") and typ["hash"].hex() != value["native_type_hash"])
+                        or (row.get("native_type_hash") and typ["hash"].hex() != row["native_type_hash"])
+                    ):
+                        raise ValueError("Native type identity differs")
+                    body = O.record_extent(directory / "objects.bin", row)
+                    edges = set(pointers(body, typ, cache).values())
+                    if edges != set(map(tuple, value["edges"])):
+                        raise ValueError("Measured native pointers differ from selected graph")
+                    graph[identity] = edges
+                    bodymap[identity] = destination.tell(), len(body)
+                    destination.write(body)
+                    objects.append(dict(path_id=identity, type=typ, body_bytes=len(body), prefix=body[:32]))
+        validate_graph(graph, 0)
+        grouped = defaultdict(list)
+        for row in json_rows(graph_directory / "selected-roots.jsonl"):
+            key = tuple(row["destination"])
+            if key in selected and row["class_id"] in NATIVE_ROOT_TYPES:
+                if row["class_id"] != selected[key]["class_id"]:
+                    raise ValueError("Native root type differs from produced object")
+                grouped[row["path"].lower()].append(row)
+        roots = [rows[0] for rows in grouped.values() if len({tuple(row["destination"]) for row in rows}) == 1]
+        if not roots:
+            raise ValueError("No unambiguous native roots in closed subset")
+        preloads, containers, assets = [], [], []
+        for root in sorted(roots, key=lambda row: row["path"].lower()):
+            identity, path = root["destination"][2], root["path"].lower()
+            dependencies = sorted(closure(graph, [identity], {}))
+            containers.append((path, dict(preloadIndex=len(preloads), preloadSize=len(dependencies), asset=dict(m_FileID=0, m_PathID=identity))))
+            preloads.extend(dict(m_FileID=fid, m_PathID=pid) for fid, pid in dependencies)
+            assets.append(dict(name=path, type=NATIVE_ROOT_TYPES[root["class_id"]]))
+        container = dict(
+            m_Name=name,
+            m_PreloadTable=preloads,
+            m_Container=containers,
+            m_MainAsset=dict(preloadIndex=0, preloadSize=0, asset=dict(m_FileID=0, m_PathID=0)),
+            m_RuntimeCompatibility=1,
+            m_AssetBundleName=name,
+            m_Dependencies=[],
+            m_IsStreamedSceneAssetBundle=False,
+            m_ExplicitDataLayout=0,
+            m_PathFlags=7,
+            m_SceneHashes=[],
+        )
+        container_type = M.schemas()[0]
+        container_type["dependencies"] = []
+        container_body = W.write_shader_body(W.shader_node(container_type["tree"]), container)
+        container_id = 1
+        while container_id in graph:
+            container_id += 1
+        objects.append(dict(path_id=container_id, type=container_type, body_bytes=len(container_body), prefix=container_body[:32]))
+        layout, _ = O.make_layout(dict(externals=[]), objects, include_bodies=False)
+
+        def body(row):
+            if row["path_id"] == container_id:
+                return io.BytesIO(container_body)
+            offset, _ = bodymap[row["path_id"]]
+            body_stream.seek(offset)
+            return body_stream
+
+        serialized = Path(scratch) / "serialized.assets"
+        with store.open("rb") as body_stream, serialized.open("wb") as stream:
+            W.write_serialized(stream, layout, body)
+        bundle = output / (name + ".bundle")
+        with bundle.open("wb") as stream:
+            W.write_bundle(stream, [(member, 4, serialized.stat().st_size, lambda: serialized.open("rb"))], lambda block, method: block, flags=0x40)
+        # Read the actual final container, metadata and every persisted body.
+        stream = W.B.Bundle(bundle).member(member)
+        read = W.read_serialized(stream)
+        if read["types"] != layout["types"] or read["objects"] != layout["objects"] or read["scripts"] or read["externals"]:
+            raise ValueError("Emitted native metadata differs")
+        for row in read["objects"]:
+            stream.seek(read["data_offset"] + row["offset"])
+            data = O.B.exact(stream, row["bytes"])
+            identity = row["path_id"]
+            expected = hashlib.sha256(container_body).hexdigest() if identity == container_id else selected[name, member, identity]["sha256"]
+            if hashlib.sha256(data).hexdigest() != expected:
+                raise ValueError("Emitted native body differs")
+        digest = O.B.sha(bundle)
+    gaps = dict(
+        complete=False,
+        full_graph_selected=len(all_records),
+        emitted_records=len(selected),
+        omitted_records=len(all_records) - len(selected),
+        full_graph_blocks=retained.get("blocks"),
+        full_graph_block_counts=retained.get("block_counts"),
+        ambiguous_root_paths=[path for path, rows in grouped.items() if len({tuple(row["destination"]) for row in rows}) > 1],
+        policy="Closed native/local subset; streamed resources, external endpoints, managed bindings and ordered Sprite cohorts remain excluded. No full catalog or gameplay admission.",
+    )
+    result = dict(
+        success=True,
+        structural_accepted=True,
+        typed_load_accepted=False,
+        whole_game_complete=False,
+        device_accepted=False,
+        bundle=str(bundle.resolve()),
+        sha256=digest,
+        bytes=bundle.stat().st_size,
+        records=len(selected),
+        roots=len(roots),
+        preloads=len(preloads),
+        classes=dict(Counter(row["class_id"] for row in selected.values())),
+        typed_classes=dict(Counter(row["type"] for row in assets)),
+        graph_receipt_sha256=O.B.sha(graph_directory / "done.json"),
+        selected_records_sha256=O.B.sha(graph_directory / "selected-records.jsonl"),
+        selected_roots_sha256=O.B.sha(graph_directory / "selected-roots.jsonl"),
+        source_type_pins=schema_pins,
+        producer_pins=source_pins,
+        seconds=time.monotonic() - started,
+        peak_rss_bytes=resource.getrusage(resource.RUSAGE_SELF).ru_maxrss * (1 if sys.platform == "darwin" else 1024),
+    )
+    for filename, value in (
+        ("result.json", result),
+        ("gaps.json", gaps),
+        ("roots.json", roots),
+        ("request.json", dict(path=str(bundle.resolve()), sha256=digest, assets=assets)),
+    ):
+        (output / filename).write_text(json.dumps(value, indent=2) + "\n")
+    return result
+
+
+def main():
+    import argparse
+    import json
+
+    parser = argparse.ArgumentParser(description="Emit an explicitly partial, closed native bundle from source-produced records")
+    parser.add_argument("--graph", type=Path, required=True)
+    parser.add_argument("--schema", type=Path, action="append", required=True)
+    parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument("--bundle", required=True)
+    parser.add_argument("--member", required=True)
+    args = parser.parse_args()
+    print(json.dumps(emit_closed_native(args.graph, args.schema, args.output, args.bundle, args.member), indent=2))
+
+
+if __name__ == "__main__":
+    main()
