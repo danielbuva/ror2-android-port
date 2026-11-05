@@ -2736,3 +2736,14 @@ Evidence: 83 object and 32 record host tests passed; current-input qualification
 produced 31 managed records with current CLR properties and checked pointers.
 Local receipts: `work/coordination/p1-wholegame-1031/source-component-material-frontier-v6/`.
 No APK produced; complete graph, exact-editor load and device play remain open.
+
+## J1385 — Read complete SDK Shader schemas
+
+2026-11-05. The existing native Shader reader now decodes SDK object flags, prefab pointers and sets.
+A source-selected SDK Shader qualification previously failed at common-string offset 434.
+An authored fixture compares prefab links, keyword sets and the complete body with pinned UnityPy;
+two focused tests pass. Six compiled source-selected Shader records and SDK fallback records 6/7
+now pass name/property, full native schema and PPtr readback with the SDK7 → SDK6 edge preserved.
+Evidence: `work/coordination/p1-wholegame-1031/qualified-retained-sdk-shaders-v2/done.json`;
+candidate index SHA-256 `a6d02319cc5d2f19eb92ec762a1c414de6e4385c013e4bf181a79a422a1b4adb`.
+Host-only; full graph emission, Unity loading and device play remain open; APK unchanged.
