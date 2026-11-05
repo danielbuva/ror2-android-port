@@ -79,6 +79,7 @@ public static partial class WholeCatalogComposed
     public static void Main(string[] args)
     {
         Directory.CreateDirectory("payload");
+        ManifestParseContract();
         var type = new Definition { name = "Related" };
         var provider = new Definition { name = "Provider" };
         var player = new GameObject { name = "Player" };
@@ -127,6 +128,37 @@ public static partial class WholeCatalogComposed
         DefinitionFamilyContract<RoR2.BuffDef>(BuffDefinitions);
         DefinitionFamilyContract<RoR2.ItemDef>(ItemDefinitions);
         Console.WriteLine("scope identity policy restoration buffs items PASS");
+    }
+    static void ManifestParseContract()
+    {
+        const string source = @"{
+            /* same default comment handling */
+            ""nested"": { ""z"": [null, true, false, 42, -2.5e3, ""2026-11-04T12:30:00Z""],
+                            ""a"": ""\u03bb\uD83D\uDE80"" },
+            ""duplicate"": 1, ""after"": {}, ""duplicate"": 2
+        } // trailing comment";
+        File.WriteAllText("payload/whole-catalog.json", source);
+        var expected = JObject.Parse(source);
+        var actual = ReadDefinitionManifest();
+        Check(JToken.DeepEquals(expected, actual));
+        var expectedTokens = expected.DescendantsAndSelf().ToArray();
+        var actualTokens = actual.DescendantsAndSelf().ToArray();
+        Check(expectedTokens.Select(token => token.Type).SequenceEqual(actualTokens.Select(token => token.Type)));
+        Check(expectedTokens.Select(token => token.Path).SequenceEqual(actualTokens.Select(token => token.Path)));
+        Check(expectedTokens.OfType<JProperty>().Select(property => property.Name)
+            .SequenceEqual(actualTokens.OfType<JProperty>().Select(property => property.Name)));
+        Check(expectedTokens.Any(token => ((Newtonsoft.Json.IJsonLineInfo)token).HasLineInfo()));
+        Check(actualTokens.All(token => !((Newtonsoft.Json.IJsonLineInfo)token).HasLineInfo()));
+        foreach (string invalid in new[] { "{\"unfinished\":", "{\"items\":[1,}", "{} {}", "{} trailing" })
+        {
+            File.WriteAllText("payload/whole-catalog.json", invalid);
+            foreach (Func<JObject> parse in new Func<JObject>[] { () => JObject.Parse(invalid), ReadDefinitionManifest })
+            {
+                bool refused = false;
+                try { parse(); } catch (Newtonsoft.Json.JsonReaderException) { refused = true; }
+                Check(refused);
+            }
+        }
     }
     static void Refuses(Action action)
     {
