@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J1399](PORTING_JOURNAL.md#j1399--reuse-results-manifest-for-native-profile-families) | 2026-11-04 | Reuse results manifest for native profile families | 2026-11-05. |
 | [J1398](PORTING_JOURNAL.md#j1398--attribute-native-profile-startup-phases) | 2026-11-04 | Attribute native profile startup phases | 2026-11-05. |
 | [J1397](PORTING_JOURNAL.md#j1397--share-the-synchronous-manifest-with-drone-and-projectile-registration) | 2026-11-04 | Share the synchronous manifest with drone and projectile registration | 2026-11-05. |
 | [J1396](PORTING_JOURNAL.md#j1396--share-one-manifest-across-artifact-registration-and-native-holders) | 2026-11-04 | Share one manifest across artifact registration and native holders | 2026-11-05. |
