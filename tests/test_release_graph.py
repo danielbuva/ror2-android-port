@@ -23,6 +23,23 @@ G, J = load("release_graph"), load("release_jobs")
 
 
 class ReleaseGraphTests(unittest.TestCase):
+    def test_scene_record_suppliers_close_published_consumers(self):
+        graph = G.Graph(ROOT, {})
+        for scene, supplier, count in (
+            ("artifactworld01", "artifactworld01-native-records", 6),
+            ("champrush", "champrush-director-records", 2),
+            ("splash", "splash-director-records", 2),
+            ("conduitcanyon", "conduitcanyon-director-records", 1),
+        ):
+            with self.subTest(scene=scene):
+                profile = ROOT / ("recipe/owner-" + supplier + ".json")
+                source = json.loads(profile.read_text())
+                outputs = [row for bundle in source["bundles"] for member in bundle["members"] for obj in member["objects"] for row in obj["outputs"]]
+                self.assertEqual(len(outputs), count)
+                name = graph.build(G.digest(ROOT / ("recipe/owner-" + scene + ("-objects.json" if scene == "conduitcanyon" else "-whole-objects.json"))))
+                self.assertIn("recipe/" + profile.name, graph.entry(name)["recipe_files"])
+                self.assertIn("payload/whole-scene-" + scene, graph.jobs[name]["outputs"])
+
     def test_player_defaults_use_android_player_without_changing_shader_sdk(self):
         graph = G.Graph(ROOT, {})
         name = graph.build(G.digest(ROOT / "recipe/owner-player-data.json"))
