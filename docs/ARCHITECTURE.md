@@ -1474,7 +1474,11 @@ Actual source bodies, PPtrs, native type identities and final serialized bodies
 are checked. Texture2D, Cubemap and Mesh stream descriptors are parsed from their
 native schemas and relocated into one resource member; the bounded disk writer
 checks each source extent and final resource hash. Source/emitted body hashes and
-resource descriptors remain in `resources.jsonl`. Managed bindings, external
+resource descriptors remain in `resources.jsonl`. Optional `--codec` and
+`--codec-sha256` use the existing pinned, roundtrip-checked LZ4 writer to reduce
+container size without changing member bytes; final body/resource checks still
+read the compressed output. The receipt records compression and the codec pin.
+Managed bindings, external
 endpoints and ordered Sprite cohorts remain excluded and reported.
 Setup takes explicit local graph and
 schema paths plus a fresh output directory. Temporary body/serialization staging
