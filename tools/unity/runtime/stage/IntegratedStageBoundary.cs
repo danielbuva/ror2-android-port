@@ -816,6 +816,7 @@ public sealed partial class PortSession
             transportingStage = true;
             report.transporting = true;
             coordinator.r.phase = "integrated-stage-transition";
+            TraceStartup("stage-transport-begin");
             coordinator.Save();
             bridge.enabled = false;
             body.inputBank.moveVector = Vector3.zero;
@@ -919,7 +920,9 @@ public sealed partial class PortSession
                 if (!coordinator.stageStaticRoots.Contains(root))
                     SceneManager.MoveGameObjectToScene(root, coordinator.priorClockScene);
             coordinator.Check(SceneManager.SetActiveScene(coordinator.priorClockScene), "Persistent adapter scene missing");
+            TraceStartup("stage-unload-begin");
             yield return SceneManager.UnloadSceneAsync(old);
+            TraceStartup("stage-unload-returned");
             foreach (var mat in coordinator.stageGeometryMaterials)
                 if (mat)
                     PortSession.Destroy(mat);
@@ -932,6 +935,7 @@ public sealed partial class PortSession
             var geometry = coordinator.LoadStageGeometry(next.bundle, next.previewCallbacks, next);
             while (geometry.MoveNext())
                 yield return geometry.Current;
+            TraceStartup("stage-next-geometry-ready");
             // Moon activates its original scene objects while loading, after selecting its
             // scene. Unity returns false when reselecting the scene that is already active.
             if (SceneManager.GetActiveScene() != coordinator.stageGeometryScene)
@@ -1160,6 +1164,7 @@ public sealed partial class PortSession
                 beetleGland.enabled = true;
             bridge.enabled = true;
             coordinator.r.phase = "integrated-world-playing";
+            TraceStartup("stage-transport-authority-ready");
             coordinator.Save();
         }
         // Retained across a coroutine suspension or refusal. Never reissue a native

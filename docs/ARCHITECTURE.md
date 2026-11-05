@@ -5512,6 +5512,28 @@ skill setup and catalog preparation. Markers carry process time/frame without
 stacks, report writes, yields or retained state; existing owners retain setup
 and teardown. Adjacent markers bound work, including intervening callbacks;
 returned/ready markers require separate failure, audio and world checks.
+The same seams in `StageGeometryBoundary`, `NovaInputBoundary` and
+`AutomaticDirectorBoundary` separate collider validation/physics/entry, landing
+and display/run/enemy preparation, and objective templates/master catalog/player
+setup. These remain bounded owner-boundary logs, with no per-object recording.
+
+`GameAudioOriginalPayloadCopy` also owns the private Android app-cache receipt
+`original-audio-verified.json`. Setup still authenticates the packaged cohort
+and checks paths, types, sizes, space and deadlines. Actual reuse can skip SHA
+only for the same installed package path/update time, request receipt and file
+path/hash/size/device/inode/nanosecond modification and kernel change times.
+A miss or unavailable metadata uses full-file SHA; matching stamps before and
+after hashing populate a receipt only after the complete cohort succeeds.
+The first startup after install/update verifies fully before native audio init;
+Android Clear cache forces the same repair verification. Process exit releases
+streams/Java handles; only the private cache persists. File writes, including
+same-size edits with restored mtime, invalidate kernel ctime under normal
+filesystem semantics. This is metadata reuse, not protection against storage
+corruption that preserves every kernel identity field. Adopted/FUSE device
+qualification observed changed timestamps after a same-size,
+same-inode edit, refusal before native initialization and selective re-verification
+after full-SHA restoration (J1386). Metadata-invisible storage corruption remains
+outside this cache contract.
 
 `IntegratedWorldSession.TracePreparation` emits a bounded log marker at each
 initial world-preparation seam, including the existing loot report write,
