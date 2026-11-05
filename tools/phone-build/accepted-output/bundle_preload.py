@@ -341,6 +341,78 @@ def repack_stream(body, typ, resource, offset, path, schemas):
     return result, emitted
 
 
+class ProducerRecords:
+    """Read original and retained relocation packs with per-record provenance.
+
+    A relocation receipt pins its own extents, index and field witnesses. Each
+    index row retains the preceding provider/body pin; follow those rows to the
+    original profile instead of assigning one profile to a mixed pack. Schema,
+    PPtr and final endpoint qualification still belong to the emitter.
+    """
+
+    def __init__(self):
+        self.cache = {}
+        self.pins = {}
+
+    def provider(self, directory):
+        import json
+
+        directory = Path(directory).resolve()
+        if directory not in self.cache:
+            receipt_path = directory / "result.json"
+            if not receipt_path.is_file():
+                receipt_path = directory.parent / "terminal.json"
+            receipt = json.loads(receipt_path.read_text())
+            if receipt.get("success") is not True:
+                raise ValueError("Unsuccessful native provider")
+            pin = dict(receipt_sha256=O.B.sha(receipt_path), index_sha256=O.B.sha(directory / "index.jsonl"))
+            if "profile_sha256" in receipt:
+                expected = receipt["outputs"]["index.jsonl"]["sha256"]
+            else:
+                expected = receipt["index_sha256"]
+                pin.update(objects_sha256=O.B.sha(directory / "objects.bin"), witnesses_sha256=O.B.sha(directory / "witnesses.jsonl"))
+                if pin["objects_sha256"] != receipt["objects_sha256"] or pin["witnesses_sha256"] != receipt["witnesses_sha256"]:
+                    raise ValueError("Retained native provider extent or witness drift")
+            if pin["index_sha256"] != expected:
+                raise ValueError("Native provider index drift")
+            index = {}
+            for row in json_rows(directory / "index.jsonl"):
+                identity = row["bundle"], row["member"], row["path_id"]
+                copies = index.setdefault(identity, [])
+                if copies and {k: v for k, v in row.items() if k != "offset"} != {k: v for k, v in copies[0].items() if k != "offset"}:
+                    raise ValueError("Conflicting native provider identity")
+                copies.append(row)
+            self.pins[str(directory)] = pin
+            self.cache[directory] = receipt, index
+        return self.cache[directory]
+
+    def record(self, value):
+        directory = Path(value["provider"]).resolve()
+        key, expected = tuple(value["record_source"]), value["sha256"]
+        seen, first = set(), None
+        while True:
+            if directory in seen:
+                raise ValueError("Native provider lineage cycle")
+            seen.add(directory)
+            receipt, index = self.provider(directory)
+            copies = index[key]
+            row = copies[0]
+            if row["sha256"] != expected:
+                raise ValueError("Native provider lineage body differs")
+            body = O.record_extent(directory / "objects.bin", row)
+            for copy in copies[1:]:
+                if O.record_extent(directory / "objects.bin", copy) != body:
+                    raise ValueError("Duplicate native provider extent differs")
+            if first is None:
+                first = row, body
+            if "profile_sha256" in receipt:
+                if value["record"] != receipt["profile_sha256"]:
+                    raise ValueError("Original native provider profile differs")
+                return first
+            expected = row["body_before_sha256"]
+            directory = Path(row["provider_before"]).resolve()
+
+
 def emit_closed_native(
     graph_directory,
     schema_paths,
@@ -471,7 +543,8 @@ def emit_closed_native(
     output.mkdir(parents=True, exist_ok=False)
     with tempfile.TemporaryDirectory(prefix=".emission-", dir=output) as scratch:
         store = Path(scratch) / "bodies.bin"
-        objects, graph, bodymap, source_pins, cache = [], {}, {}, {}, {}
+        objects, graph, bodymap, cache = [], {}, {}, {}
+        providers = ProducerRecords()
         resource_extents, resource_rows, emitted_hashes = [], [], {}
         qualified_targets, managed_rows = {}, {}
         resource_size = 0
@@ -480,22 +553,9 @@ def emit_closed_native(
         with store.open("wb") as destination:
             for provider, values in by_provider.items():
                 directory = Path(provider)
-                receipt = json.loads((directory / "result.json").read_text())
-                if receipt.get("success") is not True or {row["record"] for row in values} != {receipt["profile_sha256"]}:
-                    raise ValueError("Unexpected or unsuccessful native provider")
-                pin = dict(receipt_sha256=O.B.sha(directory / "result.json"), index_sha256=O.B.sha(directory / "index.jsonl"))
-                if pin["index_sha256"] != receipt["outputs"]["index.jsonl"]["sha256"]:
-                    raise ValueError("Native provider index drift")
-                source_pins[provider] = pin
-                index = {}
-                for row in json_rows(directory / "index.jsonl"):
-                    identity = row["bundle"], row["member"], row["path_id"]
-                    if identity in index:
-                        raise ValueError("Duplicate native provider identity")
-                    index[identity] = row
                 for value in values:
                     identity = value["destination"][2]
-                    row = index[tuple(value["record_source"])]
+                    row, body = providers.record(value)
                     typ = typed[value["full_type"] if required is not None else value["schema"]]
                     if row.get("resource") != value.get("resource") or (row["bytes"], row["sha256"]) != (value["bytes"], value["sha256"]):
                         raise ValueError("Native provider record or resource drift")
@@ -506,7 +566,6 @@ def emit_closed_native(
                         or hashlib.sha256(typ["tree"]).hexdigest() != value["schema"]
                     ):
                         raise ValueError("Native type identity differs")
-                    body = O.record_extent(directory / "objects.bin", row)
                     edges = set(pointers(body, typ, cache).values())
                     if edges != set(map(tuple, value["edges"])):
                         raise ValueError("Measured native pointers differ from selected graph")
@@ -721,7 +780,7 @@ def emit_closed_native(
         selected_records_sha256=O.B.sha(graph_directory / "selected-records.jsonl"),
         selected_roots_sha256=O.B.sha(graph_directory / "selected-roots.jsonl") if required is None else None,
         source_type_pins=schema_pins,
-        producer_pins=source_pins,
+        producer_pins=providers.pins,
         seconds=time.monotonic() - started,
         peak_rss_bytes=resource.getrusage(resource.RUSAGE_SELF).ru_maxrss * (1 if sys.platform == "darwin" else 1024),
     )

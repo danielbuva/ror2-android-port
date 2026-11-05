@@ -1509,6 +1509,14 @@ are read back; the receipt pins the request and qualified endpoint identities.
 All request, qualification and spool state is per invocation and temporary
 spools are removed on exit. This integration API has host fixtures; it does not
 establish complete whole-game emission, Unity loadability or device acceptance.
+Its per-invocation `ProducerRecords` reader also accepts retained relocation
+packs whose receipt pins their index, body store and field witnesses. Each
+selected record follows the preceding body/index lineage to its own original
+producer profile; a mixed pack has no invented common profile. Every retained
+and original body extent is read and hash-checked. Repeated source identities
+are accepted only with identical metadata apart from offsets, and every copy
+is read and verified. The emitter still validates
+the selected body's complete type, PPtrs and final endpoints separately.
 The shared `object_produce.make_layout` writer accepts explicitly qualified
 external MonoScript pointers separately from scene membership. It checks each
 managed body's script against the local records or supplied external allowlist,
