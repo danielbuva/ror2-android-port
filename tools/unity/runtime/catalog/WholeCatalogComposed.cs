@@ -557,16 +557,26 @@ public static class WholeCatalogComposed
     internal static T[] CategoryFamily<T>(JObject manifest, string category, IEnumerable<T> selected)
         where T : UnityEngine.Object
     {
+        return CategoryFamily(manifest, category, selected, null);
+    }
+    // Optional sparse timing for the measured synchronous caller; cache and ownership stay unchanged.
+    internal static T[] CategoryFamily<T>(JObject manifest, string category, IEnumerable<T> selected, Action<string> trace)
+        where T : UnityEngine.Object
+    {
         if (!owned)
             throw new Exception("Complete category owner unavailable: " + category);
         string key = typeof(T).FullName + ":" + category;
         UnityEngine.Object[] values;
         if (!definitionFamilies.TryGetValue(key, out values))
         {
+            trace?.Invoke("manifest-begin");
             if (manifest == null)
                 manifest = ReadDefinitionManifest();
+            trace?.Invoke("manifest-ready-index-begin");
             var locations = manifest["locations"].ToDictionary(row => (int)row["id"]);
-            values = FamilyLocationGroups(manifest, category)
+            var groups = FamilyLocationGroups(manifest, category);
+            trace?.Invoke("index-ready-assets-begin");
+            values = groups
                          .SelectMany(group =>
                                      {
                                          var collection =
@@ -595,6 +605,7 @@ public static class WholeCatalogComposed
                          .Distinct()
                          .Cast<UnityEngine.Object>()
                          .ToArray();
+            trace?.Invoke("assets-ready");
             // Native collections enforce names within each provider, not across packs.
             if (values.Length == 0)
                 throw new Exception("Original category is empty: " + category);

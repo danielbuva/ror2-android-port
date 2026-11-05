@@ -2830,3 +2830,17 @@ CPU/GPU peak 63.4 C, above 80 C 0 s, battery 28 C; stopped/asleep/lease released
 Build copies also accept ctime-only changes after source/destination SHA equality;
 real mid-copy xattr fixtures cover verified/unverified and equal/corrupt copies.
 Pinned R2API load/copy/finalize phases informed attribution; sustained play and audibility stay open.
+
+## J1392 — Attribute master-family preparation during ordinary startup
+2026-11-05. Existing director/catalog owners separate manifest parsing, index/provider
+construction and native asset collections; cached families emit no child markers.
+APK `a7c4bff80284f9a103582feb3d060d03cf95b9a1290f310cba10d3260a6c2a4a`, source `097da808`.
+Evidence: `work/coordination/alpha-master-family-device-20261105T051723Z/`.
+Six ordered same-frame markers bound 3.659 s: parse 1.970 s, index/providers 0.201 s,
+asset collections 1.486 s. Timing attribution only; no speedup claim.
+Ordinary Start reached Distant Roost/HUD; native catalogs and source audio ready 153/153;
+full verification 274/274, profiles/settings retained and no first failure.
+CPU/GPU peak 62.2 C, above 80 C 0 s, battery 28–29 C; stopped/asleep/lease released.
+Actual-method family fixture and host preflight pass; existing worktree doctor lacks private inputs.
+Pinned R2API load/copy/finalize phases informed attribution; cache ownership/reset unchanged.
+Sustained play, audibility and lossless reduction of the measured parse cost remain open.
