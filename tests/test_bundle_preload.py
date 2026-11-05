@@ -1,6 +1,7 @@
 """Authored contracts for typed prefab dependency/group framing."""
 
 import hashlib
+from contextlib import nullcontext
 import importlib
 import io
 import json
@@ -229,6 +230,36 @@ class BundlePreloadTests(unittest.TestCase):
                     (root / "60/resources.bin").write_bytes(bytes(24))
                 with self.assertRaisesRegex(ValueError, "resource body descriptor drift|record extent drift"):
                     P.emit_closed_native(graph, [types], root / "emitted", "authored", "CAB-authored")
+
+    def test_compressed_native_preserves_serialized_and_streamed_member_bytes(self):
+        import lz4.block
+        import UnityPy
+
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            graph, types = self.streamed_graph(root)
+            plain = P.emit_closed_native(graph, [types], root / "plain", "authored", "CAB-authored")
+            manifest = P.module("bundle_manifest")
+            original_module = P.module
+
+            def compress(data, method):
+                self.assertEqual(method, 3)
+                return lz4.block.compress(data, store_size=False)
+
+            with (
+                patch.object(P, "module", side_effect=lambda name: manifest if name == "bundle_manifest" else original_module(name)),
+                patch.object(manifest.W, "codec", return_value=nullcontext(compress)) as codec,
+            ):
+                packed = P.emit_closed_native(graph, [types], root / "packed", "authored", "CAB-authored", codec=Path("helper"), codec_sha256="ab" * 32)
+            codec.assert_called_once_with(Path("helper"), "ab" * 32)
+            self.assertEqual(packed["compression"], dict(method="lz4", codec_sha256="ab" * 32))
+            self.assertLess(packed["bytes"], plain["bytes"])
+            a, b = (P.O.B.Bundle(Path(result["bundle"])) for result in (plain, packed))
+            self.assertEqual(a.members, b.members)
+            for name in a.members:
+                with a.member(name) as left, b.member(name) as right:
+                    self.assertEqual(left.read(), right.read())
+            self.assertEqual(len(UnityPy.load(packed["bundle"]).objects), 6)
 
     def test_owner_loads_with_isolated_standard_library_only_python(self):
         path = Path(P.__file__).resolve()
