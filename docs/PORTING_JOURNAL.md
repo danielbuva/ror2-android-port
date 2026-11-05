@@ -2698,19 +2698,22 @@ Prior art: pinned AssetRipper full script identity and J866 exact scope/forwardi
 No APK produced; integrated source/body proofs, native bridges, complete graph/load
 and device play remain required independently of this metadata contract.
 
-## J1384 — Partition initial-stage preparation and native transport timings
+## J1384 — Reuse install-bound audio verification and partition loading costs
 
-2026-11-05. Existing stage, input, population and director owners emit bounded
-startup/transport wall-time markers; no scheduling, RNG, lifecycle or content change.
-Evidence: `work/coordination/alpha-loading-owner-seams-device-20261105T010005Z/`;
-APK `44f2e07ac520df5f6f6d036bb550ae0196d1cc8682e6f9dac6fb0baa69effe37`, source `8e047cfb`.
-Ordinary menu 23.333 s; Start → world ready 76.960 s; full media verification 8.235 s,
-body adoption 5.273 s, skins 4.144 s; director 11.350 s includes native credit waits.
-Stage validation/physics/entry total under 1 ms here; native shader/mesh/GC unmeasured.
-Audio ready, Commando/HUD/stage screenshot observed; adopted update retained profiles/settings.
-CPU/GPU peak 82 C, 0.727 s above 80 C; battery 29 to 28 C; cleanup verified.
-Prior art: pinned R2API provider/SoundAPI phases; J1371 full-byte reuse validation retained.
-No speedup, sustained FPS, ordinary stage-exit or complete gameplay qualification claimed.
+2026-11-05. Existing audio copier caches full verification against install/cohort
+identity and path, expected hash, size, device/inode, nanosecond mtime/ctime.
+Install/update or Clear cache requires full verification; missing metadata falls back.
+APK `64b8741f45e5f94f54d95ca56b88040c72548795541c2daffc153e2fbca232e7`, source `80452b72`.
+Evidence: `work/coordination/alpha-loading-audio-receipt-integrity-start-20261105T020900Z/`;
+first/cached runs and ranked waits: `work/coordination/alpha-load-breakdown-20261104/notes.md`.
+First/cached verification: 274/0 then 0/274 full/cached; banks 3.765→0.044 s,
+media 8.959→0.032 s. Same-size/inode bank edit refused before native init;
+full-SHA restoration passed, then 273 cached/1 full; source audio ready 153/153.
+Ordinary Start reached stage/HUD; profiles/settings retained; stopped/asleep/lease released.
+Integrity run: CPU/GPU peak 67.7 C, time above 80 C 0 s, battery 29 C.
+Pinned R2API Sound/provider informed scope; native credit waits retained, page cache uncontrolled.
+No whole-load/FPS/audibility or metadata-invisible bitrot claim.
+
 ## J1383 — Publish source scene suppliers for the converter graph
 
 2026-11-04. Four source-record profiles supply Artifactworld01 AkTriggerDisable

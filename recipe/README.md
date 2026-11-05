@@ -6874,9 +6874,10 @@ private paths, identifiers or third-party code are included. Full audio integrit
 verification and native bank initialization order are unchanged.
 
 The same authored audio-owner pins now include the install-bound private
-verification-cache candidate. Native payload bytes, packaged cohort validation
+verification cache. Native payload bytes, packaged cohort validation
 and bank order are unchanged. The receipt uses kernel change time as well as
-modification time and inode; device integrity/timing qualification remains open.
+modification time and inode; J1384 records adopted-storage corruption refusal,
+restoration and measured cache hits.
 No private cached receipts or captured identities are tracked.
 
 ## Scene source record suppliers (2026-11-05)

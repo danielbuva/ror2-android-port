@@ -5517,8 +5517,11 @@ Android Clear cache forces the same repair verification. Process exit releases
 streams/Java handles; only the private cache persists. File writes, including
 same-size edits with restored mtime, invalidate kernel ctime under normal
 filesystem semantics. This is metadata reuse, not protection against storage
-corruption that preserves every kernel identity field. Device qualification
-must check adopted/FUSE change-time behavior and measured cache hits.
+corruption that preserves every kernel identity field. Adopted/FUSE device
+qualification observed changed timestamps after a same-size,
+same-inode edit, refusal before native initialization and selective re-verification
+after full-SHA restoration (J1384). Metadata-invisible storage corruption remains
+outside this cache contract.
 
 `IntegratedWorldSession.TracePreparation` emits a bounded log marker at each
 initial world-preparation seam, including the existing loot report write,
