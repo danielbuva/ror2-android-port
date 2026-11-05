@@ -68,7 +68,7 @@ public sealed partial class PortSession
     }
     bool IsPlayableSpine()
     {
-        return r.id.StartsWith("body-state-spawn-state-auto-nova-spine");
+        return r.id == "body-state-spawn-state-auto-player" || r.id.StartsWith("body-state-spawn-state-auto-nova-spine");
     }
     internal static bool IsCommandoPrimaryDiagnosticBody(CharacterBody body)
     {

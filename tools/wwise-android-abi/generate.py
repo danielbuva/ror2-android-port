@@ -81,7 +81,10 @@ def assert_output_path(path: Path, game_root: Path) -> Path:
     require(dest.is_relative_to(WORK.resolve()) and dest != WORK.resolve(), "new output must be inside this repository's ignored work/")
     require(not dest.is_relative_to(game_root), "output cannot be inside the accepted game installation")
     require(raw.parent == resolved_parent, "output parent may not traverse symlinks")
-    check = subprocess.run(["git", "check-ignore", "--quiet", str(dest)], cwd=ROOT)
+    # Isolated checkouts share a canonical work tree outside their Git root.
+    # Validate that subtree above, then check its ignored checkout entry.
+    ignored_path = WORK if WORK.is_symlink() else dest
+    check = subprocess.run(["git", "check-ignore", "--quiet", str(ignored_path)], cwd=ROOT)
     require(check.returncode == 0, "output path is not ignored by Git")
     return dest
 

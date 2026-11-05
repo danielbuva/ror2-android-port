@@ -435,7 +435,7 @@ class Importer:
     def _emit(self, **changes):
         self.report.update(changes)
         self.report["completed_files"] = len(self.completed)
-        self.report["completed_bytes"] = sum(row["bytes"] for row in self.completed.values())
+        self.report["completed_bytes"] = self.completed_bytes
         if self.progress:
             self.progress(json.loads(_encoded(self.report)))
 
@@ -485,6 +485,7 @@ class Importer:
 
     def _execute(self, source, *, progress, control, verify_only):
         self.progress, self.control, self.completed = progress, control, {}
+        self.completed_bytes = 0
         self.report = {
             "status": "validating",
             "manifest_sha256": self.identity,
@@ -539,6 +540,7 @@ class Importer:
                         actual_size, actual_sha = self._digest(stream, row["bytes"], name=name)
                     if actual_size == row["bytes"] and actual_sha == row["sha256"]:
                         self.completed[name] = {"bytes": row["bytes"], "sha256": row["sha256"]}
+                        self.completed_bytes += row["bytes"]
                     elif verify_only and actual_size == row["bytes"]:
                         self.report["mismatched"].append({"path": name, "reason": "sha256", "expected": row["sha256"], "actual": actual_sha})
                 source_size = source.inventory.get(name)
@@ -596,6 +598,7 @@ class Importer:
                 ATOMIC.publish(partial, destination)
                 partial = None
                 self.completed[name] = {"bytes": row["bytes"], "sha256": row["sha256"]}
+                self.completed_bytes += row["bytes"]
                 remaining -= row["bytes"]
                 self._checkpoint()
                 self._emit(current_path=name, current_bytes=row["bytes"])

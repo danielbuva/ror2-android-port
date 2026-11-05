@@ -10,6 +10,46 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J1391](PORTING_JOURNAL.md#j1391--attribute-native-scheduled-spawn-waiting-during-ordinary-startup) | 2026-11-04 | Attribute native scheduled-spawn waiting during ordinary startup | 2026-11-05. |
+| [J1390](PORTING_JOURNAL.md#j1390--reuse-typed-item-provider-discovery-during-ordinary-startup) | 2026-11-04 | Reuse typed item-provider discovery during ordinary startup | 2026-11-05. |
+| [J1388](PORTING_JOURNAL.md#j1388--emit-and-typed-load-a-closed-source-native-bundle-subset) | 2026-11-04 | Emit and typed-load a closed source-native bundle subset | 2026-11-05. |
+| [J1389](PORTING_JOURNAL.md#j1389--report-final-ten-minute-sustained-frame-counters) | 2026-11-04 | Report final-ten-minute sustained frame counters | 2026-11-05. |
+| [J1387](PORTING_JOURNAL.md#j1387--attribute-comparison-item-discovery-during-ordinary-startup) | 2026-11-04 | Attribute comparison-item discovery during ordinary startup | 2026-11-05. |
+| [J1385](PORTING_JOURNAL.md#j1385--read-complete-sdk-shader-schemas) | 2026-11-04 | Read complete SDK Shader schemas | 2026-11-05. |
+| [J1384](PORTING_JOURNAL.md#j1384--qualify-managed-curve-hashes-against-complete-sdk-runtime-projections) | 2026-11-04 | Qualify managed curve hashes against complete SDK runtime projections | 2026-11-04. |
+| [J1385](PORTING_JOURNAL.md#j1385--complete-catalogs-against-produced-serialized-containers) | 2026-11-04 | Complete catalogs against produced serialized containers | 2026-11-05. |
+| [J1383](PORTING_JOURNAL.md#j1383--publish-source-scene-suppliers-for-the-converter-graph) | 2026-11-04 | Publish source scene suppliers for the converter graph | 2026-11-04. |
+| [J1386](PORTING_JOURNAL.md#j1386--reuse-install-bound-audio-verification-and-partition-loading-costs) | 2026-11-04 | Reuse install-bound audio verification and partition loading costs | 2026-11-05. |
+| [J1381](PORTING_JOURNAL.md#j1381--resolve-current-managed-pointer-field-contracts-by-exact-clr-scope) | 2026-11-04 | Resolve current managed pointer field contracts by exact CLR scope | 2026-11-04. |
+| [J1382](PORTING_JOURNAL.md#j1382--load-buff-definitions-through-typed-provider-roots) | 2026-11-04 | Load buff definitions through typed provider roots | 2026-11-04. |
+| [J1379](PORTING_JOURNAL.md#j1379--resolve-produced-pointer-fields-and-inventory-scoped-clr-signatures) | 2026-11-04 | Resolve produced pointer fields and inventory scoped CLR signatures | 2026-11-04. |
+| [J1380](PORTING_JOURNAL.md#j1380--share-a-scoped-manifest-across-native-holder-binding) | 2026-11-04 | Share a scoped manifest across native holder binding | 2026-11-04. |
+| [J1378](PORTING_JOURNAL.md#j1378--attribute-ordinary-startup-within-existing-audio-and-body-owners) | 2026-11-04 | Attribute ordinary startup within existing audio and body owners | 2026-11-04. |
+| [J1377](PORTING_JOURNAL.md#j1377--bind-sdk-metadata-for-release-graph-object-producers) | 2026-11-04 | Bind SDK metadata for release-graph object producers | 2026-11-04. |
+| [J1378](PORTING_JOURNAL.md#j1378--source-release-lighting-records-and-typed-native-loading) | 2026-11-04 | Source release lighting records and typed native loading | 2026-11-04. |
+| [J1376](PORTING_JOURNAL.md#j1376--share-a-scoped-relationship-manifest-during-results-preparation) | 2026-11-04 | Share a scoped relationship manifest during results preparation | 2026-11-04. |
+| [J1375](PORTING_JOURNAL.md#j1375--attribute-ordinary-results-preparation-on-device) | 2026-11-04 | Attribute ordinary results preparation on device | Existing results seams emit monotonic/frame markers with Save/order unchanged. |
+| [J1373](PORTING_JOURNAL.md#j1373--partition-ordinary-world-preparation-on-device) | 2026-11-04 | Partition ordinary world preparation on device | Six early seams in the existing world owner separate seven preparation blocks; markers keep report writes, scheduling and original logging policy intact. |
+| [J1374](PORTING_JOURNAL.md#j1374--bind-source-texture-tools-in-the-release-graph) | 2026-11-04 | Bind source texture tools in the release graph | 2026-11-04. |
+| [J1372](PORTING_JOURNAL.md#j1372--check-and-refresh-reviewed-build-hook-source-pins) | 2026-11-04 | Check and refresh reviewed build-hook source pins | 2026-11-04. |
+| [J1371](PORTING_JOURNAL.md#j1371--avoid-duplicate-audio-payload-hashing-during-capacity-preflight) | 2026-11-04 | Avoid duplicate audio payload hashing during capacity preflight | 2026-11-04. |
+| [J1370](PORTING_JOURNAL.md#j1370--ordinary-player-launch-and-typed-gameplay-discovery) | 2026-11-04 | Ordinary player launch and typed gameplay discovery | 2026-11-04. |
+| [J1369](PORTING_JOURNAL.md#j1369--extend-source-content-suppliers-with-strict-graph-admission) | 2026-11-04 | Extend source content suppliers with strict graph admission | 2026-11-04. |
+| [J1367](PORTING_JOURNAL.md#j1367--compile-source-producer-release-graphs) | 2026-11-04 | Compile source producer release graphs | 2026-11-04. |
+| [J1360](PORTING_JOURNAL.md#j1360--measure-host-apk-finalization-and-private-packet-packaging) | 2026-11-04 | Measure host APK finalization and private packet packaging | 2026-11-04. |
+| [J1361](PORTING_JOURNAL.md#j1361--prune-analyzed-heaps-and-removed-build-lane-leftovers) | 2026-11-04 | Prune analyzed heaps and removed build-lane leftovers | 2026-11-04. |
+| [J1362](PORTING_JOURNAL.md#j1362--cache-validated-import-progress-totals) | 2026-11-04 | Cache validated import progress totals | 2026-11-04. |
+| [J1363](PORTING_JOURNAL.md#j1363--stabilize-host-profile-and-optional-volume-failure-checks) | 2026-11-04 | Stabilize host profile and optional-volume failure checks | 2026-11-04. |
+| [J1364](PORTING_JOURNAL.md#j1364--stabilize-audited-menu-external-provider-ids) | 2026-11-04 | Stabilize audited Menu external provider IDs | 2026-11-04. |
+| [J1365](PORTING_JOURNAL.md#j1365--supply-source-derived-bundle-managed-providers) | 2026-11-04 | Supply source-derived bundle managed providers | 2026-11-04. |
+| [J1366](PORTING_JOURNAL.md#j1366--exercise-projectile-impact-pause-and-disposal-on-the-host) | 2026-11-04 | Exercise projectile impact, pause and disposal on the host | 2026-11-04. |
+| [J1367](PORTING_JOURNAL.md#j1367--inventory-fallback-material-local-input-and-unblock-host-audit) | 2026-11-04 | Inventory fallback Material local input and unblock host audit | 2026-11-04. |
+| [J1368](PORTING_JOURNAL.md#j1368--enforce-dev-command-and-action-lifecycle-labels) | 2026-11-04 | Enforce dev command and action lifecycle labels | 2026-11-04. |
+| [J1358](PORTING_JOURNAL.md#j1358--retain-audited-menu-build-identities-and-native-provider-order) | 2026-11-03 | Retain audited Menu build identities and native provider order | 2026-11-04. |
+| [J1359](PORTING_JOURNAL.md#j1359--retained-sustained-game-performance-report) | 2026-11-04 | Retained sustained game performance report | 2026-11-04. |
+| [J1363](PORTING_JOURNAL.md#j1363--qualify-measured-lighting-tolerance-separately-from-exact-reconstruction) | 2026-11-04 | Qualify measured lighting tolerance separately from exact reconstruction | 2026-11-04. |
+| [J1357](PORTING_JOURNAL.md#j1357--resolve-source-derived-tree-windasset-endpoints) | 2026-11-03 | Resolve source-derived Tree WindAsset endpoints | 2026-11-04. |
+| [J1356](PORTING_JOURNAL.md#j1356--honor-thermal-admission-exclusions-above-80-c) | 2026-11-03 | Honor thermal admission exclusions above 80 C | 2026-11-04. |
 | [J1355](PORTING_JOURNAL.md#j1355--supply-source-derived-bundle-tree-providers) | 2026-10-31 | Supply source-derived bundle Tree providers | 2026-10-31. |
 | [J1353](PORTING_JOURNAL.md#j1353--capture-the-requested-final-menu-heap) | 2026-10-31 | Capture the requested final menu heap | 2026-10-31. |
 | [J1354](PORTING_JOURNAL.md#j1354--supply-source-derived-bundle-canvasrenderer-providers) | 2026-10-31 | Supply source-derived bundle CanvasRenderer providers | 2026-10-31. |

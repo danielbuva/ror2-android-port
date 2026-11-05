@@ -194,7 +194,7 @@ def field(body, fields, name):
 def body_output(body, fields, pixels, target, operation):
     required = {"m_Name", "m_CompleteImageSize", "m_TextureFormat", "m_IsAlphaChannelOptional", "m_LightmapFormat", "image data", "m_StreamData"}
     cube = operation in {"cube-mips", "cube-hdr", "cube-rgba-mips", "cube-preserve"}
-    if operation in {"etc1-mips", "sdk-rgba-mips"} or cube:
+    if operation in {"etc1-mips", "sdk-rgba-mips", "source-rgba-mips"} or cube:
         required |= {"m_MipCount", "m_ColorSpace"}
     if set(fields) != required:
         raise ValueError("unknown texture field selection")
@@ -213,15 +213,17 @@ def body_output(body, fields, pixels, target, operation):
         replacements["m_TextureFormat"] = struct.pack("<i", 47)
     elif operation in {"etc1", "etc1-mips", "cube-mips", "cube-hdr"}:
         replacements["m_TextureFormat"] = struct.pack("<i", 34)
-    if operation in {"etc1-mips", "sdk-rgba-mips"} or cube:
+    if operation in {"etc1-mips", "sdk-rgba-mips", "source-rgba-mips"} or cube:
         replacements["m_MipCount"] = struct.pack("<i", target["mips"])
         replacements["m_ColorSpace"] = struct.pack("<i", target["colour_space"])
-    if operation == "cube-preserve":
+    if operation == "source-rgba-mips":
+        replacements["m_TextureFormat"] = struct.pack("<i", 4)
+    if operation in {"cube-preserve", "source-rgba-mips"}:
         for key, name, code in (("mips", "m_MipCount", "<i"), ("colour_space", "m_ColorSpace", "<i"), ("usage", "m_LightmapFormat", "<i")):
             if target[key] != struct.unpack(code, field(body, fields, name))[0]:
-                raise ValueError("preserved cubemap metadata differs from source")
+                raise ValueError("preserved texture metadata differs from source")
         if target["alpha_optional"] != bool(field(body, fields, "m_IsAlphaChannelOptional")[0]):
-            raise ValueError("preserved cubemap alpha metadata differs from source")
+            raise ValueError("preserved texture alpha metadata differs from source")
     stream = target["stream"]
     if target["inline"] or not pixels:
         if stream != {"offset": 0, "size": 0, "path": ""}:
@@ -308,6 +310,31 @@ def source_rgba(pixels, width, height, fmt, sdk):
             raise ValueError("native BC decoder failed or returned a different extent")
         return decoded.stdout
     return rgba_source(pixels, width, height, fmt)
+
+
+def source_rgba_mips(pixels, width, height, fmt, mips, sdk=None):
+    """Decode each original BC mip, preserving its pixels, alpha and dimensions."""
+    if (
+        type(width) is not int
+        or type(height) is not int
+        or not 0 < width <= 8192
+        or not 0 < height <= 8192
+        or type(mips) is not int
+        or not 1 <= mips <= max(width, height).bit_length()
+        or fmt not in (10, 12)
+    ):
+        raise ValueError("unqualified source BC mip chain")
+    sizes = [((max(1, width >> mip) + 3) // 4) * ((max(1, height >> mip) + 3) // 4) * (8 if fmt == 10 else 16) for mip in range(mips)]
+    if len(pixels) != sum(sizes):
+        raise ValueError("source BC mip chain extent differs")
+    if sum(max(1, width >> mip) * max(1, height >> mip) * 4 for mip in range(mips)) > BUNDLE.LIMIT:
+        raise ValueError("decoded source mip chain exceeds limit")
+    parts = []
+    offset = 0
+    for mip, size in enumerate(sizes):
+        parts.append(source_rgba(pixels[offset : offset + size], max(1, width >> mip), max(1, height >> mip), fmt, sdk))
+        offset += size
+    return b"".join(parts)
 
 
 def sdk_rgba_mips(rgba, width, height, selected, sdk, etc_codec):
@@ -430,6 +457,10 @@ def pixels_input(bundle, body, selected, jpeg_codec=None, etc_codec=None, sdk=No
         return preserve_cube_mips(pixels, body, selected)
     if operation == "copy":
         return pixels
+    if operation == "source-rgba-mips":
+        fmt = struct.unpack("<i", field(body, selected["fields"], "m_TextureFormat"))[0]
+        mips = struct.unpack("<i", field(body, selected["fields"], "m_MipCount"))[0]
+        return source_rgba_mips(pixels, selected["width"], selected["height"], fmt, mips, sdk)
     if operation in {"sdk-rgba", "sdk-rgba-mips"}:
         if sdk is None:
             raise ValueError("pinned SDK texture toolchain required")
@@ -551,7 +582,7 @@ def texture_resume(output, profile, pins):
     if not names <= {p.name for p in output.iterdir()} <= names | {"result.json.tmp"} or any(not p.is_file() or p.is_symlink() for p in output.iterdir()):
         raise ValueError("unknown texture checkpoint output")
     previous = json.loads((output / "result.json").read_text())
-    pin_names = {"input_id", "profile_sha256", "jpeg_codec_sha256", "etc_codec_sha256", "sdk_toolchain_sha256"}
+    pin_names = {"input_id", "profile_sha256", "jpeg_codec_sha256", "etc_codec_sha256", "sdk_toolchain_sha256", "comparison"}
     if {k: previous[k] for k in pin_names if k in previous} != {k: pins[k] for k in pin_names if k in pins}:
         raise ValueError("texture checkpoint input/profile/tool drift")
     targets = iter(target for bundle in profile["bundles"] for member in bundle["members"] for texture in member["textures"] for target in texture["outputs"])
@@ -563,7 +594,12 @@ def texture_resume(output, profile, pins):
                 break  # An incomplete final line never committed its data.
             target = next(targets, None)
             row = json.loads(line)
-            if target is None or row != texture_row(target, counts["object_bytes"], counts["resource_bytes"]):
+            expected = texture_row(target, counts["object_bytes"], counts["resource_bytes"]) if target is not None else None
+            if expected is not None and pins.get("comparison") == "diagnostic":
+                expected.update(bytes=row["bytes"], sha256=row["sha256"], historical_raw_exact=row["historical_raw_exact"])
+                if "resource" in expected:
+                    expected["resource"].update(sha256=row["resource"]["sha256"])
+            if target is None or row != expected:
                 raise ValueError("texture checkpoint index order/extent drift")
             for stream, extent in ((objects, row), (resources, row.get("resource"))):
                 if extent is not None:
@@ -594,7 +630,10 @@ def produce(
     sdk_toolchain=None,
     sdk_toolchain_sha256=None,
     resume=False,
+    comparison="exact",
 ):
+    if comparison not in ("exact", "diagnostic"):
+        raise ValueError("unknown output comparison policy")
     if BUNDLE.sha(profile_path) != profile_sha256:
         raise ValueError("texture profile drift")
     profile = json.loads(profile_path.read_text())
@@ -654,6 +693,8 @@ def produce(
     )
     started = time.monotonic()
     receipt = {"success": False, "input_id": MESH.INPUT_ID, "profile_sha256": profile_sha256, "objects": 0, "object_bytes": 0, "resource_bytes": 0}
+    if comparison == "diagnostic":
+        receipt["comparison"] = comparison
     if jpeg_codec is not None:
         receipt["jpeg_codec_sha256"] = jpeg_codec_sha256
     if etc_codec is not None:
@@ -694,13 +735,16 @@ def produce(
                         pixels = pixels_input(bundle, body, selected, jpeg_codec, etc_codec, sdk)
                         pixel_sha = hashlib.sha256(pixels).hexdigest()
                         for target in selected["outputs"][completed:]:
-                            if pixel_sha != target["pixel_sha256"] or len(pixels) != target["pixel_bytes"]:
+                            if comparison == "exact" and (pixel_sha != target["pixel_sha256"] or len(pixels) != target["pixel_bytes"]):
                                 raise ValueError("produced texture pixels differ from accepted hash")
                             result = body_output(body, selected["fields"], pixels, target, selected["operation"])
                             digest = hashlib.sha256(result).hexdigest()
-                            if len(result) != target["bytes"] or digest != target["sha256"]:
+                            if comparison == "exact" and (len(result) != target["bytes"] or digest != target["sha256"]):
                                 raise ValueError("produced texture body differs from accepted hash")
-                            row = texture_row(target, objects.tell(), resources.tell())
+                            actual = dict(target, bytes=len(result), sha256=digest, pixel_bytes=len(pixels), pixel_sha256=pixel_sha)
+                            row = texture_row(actual, objects.tell(), resources.tell())
+                            if comparison == "diagnostic":
+                                row["historical_raw_exact"] = all(actual[key] == target[key] for key in ("bytes", "sha256", "pixel_bytes", "pixel_sha256"))
                             objects.write(result)
                             if not target["inline"] and pixels:
                                 resources.write(pixels)
@@ -757,6 +801,7 @@ def main():
     parser.add_argument("--etc-codec-sha256")
     parser.add_argument("--sdk-toolchain", type=Path)
     parser.add_argument("--sdk-toolchain-sha256")
+    parser.add_argument("--comparison", choices=("exact", "diagnostic"), default="exact")
     args = parser.parse_args()
     produce(
         args.profile,
@@ -770,6 +815,7 @@ def main():
         args.sdk_toolchain,
         args.sdk_toolchain_sha256,
         resume=args.resume,
+        comparison=args.comparison,
     )
 
 

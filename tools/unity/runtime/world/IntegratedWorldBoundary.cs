@@ -21,6 +21,18 @@ using UnityEngine.ResourceManagement.ResourceProviders;
 // remain in the preserved assemblies. The shell supplies content/context and unavailable audio UI.
 public sealed partial class PortSession
 {
+    // Read only the method-attribute family this owner consumes. The stock broad
+    // scan constructs unrelated attributes on every kind of member (~49 s on device).
+    static IEnumerable<KeyValuePair<T, MethodInfo>> OriginalMethodAttributes<T>(params Assembly[] assemblies) where T : Attribute
+    {
+        foreach (var assembly in assemblies.Distinct())
+            foreach (var type in assembly.GetTypes())
+                foreach (var method in type.GetMethods(BindingFlags.Static | BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic |
+                                                      BindingFlags.DeclaredOnly))
+                    foreach (T attribute in method.GetCustomAttributes(typeof(T), false))
+                        yield return new KeyValuePair<T, MethodInfo>(attribute, method);
+    }
+
     [Serializable]
     public class WorldPickupObservation
     {
@@ -1332,12 +1344,14 @@ public sealed partial class PortSession
             PrepareUnavailableWorldPresentation(player);
             coordinator.r.phase = "integrated-world-client";
             coordinator.Save();
+            TracePreparation("client-connect-begin");
             var connect = coordinator.ConnectActiveBodyClient(player);
             while (connect.MoveNext())
                 yield return connect.Current;
             coordinator.r.world.authority =
                 player.networkIdentity.hasAuthority && coordinator.activeBodyClient.isConnected && coordinator.activeBodyOwner.isReady;
             coordinator.Check(coordinator.r.world.authority, "Integrated local authority missing");
+            TracePreparation("client-authority-ready");
             Action skillActivity = PortSessionOriginalAudioOwner.PassivePcmCaptureAfterAuthoritySkillRequested
                 ? new Action(coordinator.OnRecognizedAuthoritySkillForPassivePcm) : null;
             survivorSkills = new SurvivorSkillObserver(player, skillActivity);
@@ -1353,10 +1367,12 @@ public sealed partial class PortSession
                 engiNativeOutputs = new EngineerNativeOutputObserver(player);
                 coordinator.r.world.engiNativeOutputs = engiNativeOutputs.report;
             }
+            TracePreparation("run-availability-begin");
             coordinator.PrepareWholeRunAvailability();
             var displayRules = coordinator.PrepareWholeModelDisplayRules();
             while (displayRules.MoveNext())
                 yield return displayRules.Current;
+            TracePreparation("display-rules-ready");
             // Source catalogs persist for the session, rather than being rebuilt around each interaction.
             var flags = BindingFlags.Static | BindingFlags.NonPublic;
             coordinator.Check(!coordinator.ownsPickupCatalog && PickupCatalog.pickupCount == 0, "Unowned integrated pickup catalog");
@@ -1413,6 +1429,7 @@ public sealed partial class PortSession
                                              .Concat(coordinator.EligibleWorldEquipment().Select(x => x.CreatePickupDef()))
                                              .Concat(new[] { lunarPickup })
                                              .ToArray());
+            TracePreparation("pickup-catalog-ready");
             // Native profiles size discovery storage from this complete pickup catalog.
             // Load earned state before native rules and the first stage choose loot.
             if (coordinator.r.nativeFirstStageLifecycleDiagnosticAttempt)
@@ -1481,6 +1498,7 @@ public sealed partial class PortSession
             coordinator.Check(coordinator.r.world.lootTier1 + coordinator.r.world.lootTier2 + coordinator.r.world.lootTier3 ==
                                   coordinator.worldLootDefinitions.Length,
                               "Original composed drop lists differ from eligible item domain");
+            TracePreparation("cost-catalog-begin");
             coordinator.moneyCatalogField = typeof(CostTypeCatalog).GetField("costTypeDefs", flags);
             coordinator.priorMoneyCatalog = coordinator.moneyCatalogField.GetValue(null);
             coordinator.Check((coordinator.priorMoneyCatalog == null || ((Array)coordinator.priorMoneyCatalog).Length == 0) &&
@@ -1894,22 +1912,28 @@ public sealed partial class PortSession
             ObserveWorldHandlers(false);
             ObserveWorldHandlers(true);
         }
+        static KeyValuePair<NetworkMessageHandlerAttribute, MethodInfo>[] originalWorldMessageMethods;
+
         public void RegisterMissingOriginalWorldMessages()
         {
             // Stock NetworkManagerSystem registers these searched source methods during
             // OnStartServer/OnStartClient. The owned offline loopback has neither manager.
-            SearchableAttribute.ScanAssembly(typeof(CharacterBody).Assembly);
-            var attributes = SearchableAttribute.GetInstances<NetworkMessageHandlerAttribute>();
-            coordinator.Check(attributes != null, "Original network-message attributes were not discovered");
-            var source = attributes.Cast<NetworkMessageHandlerAttribute>().Where(x => x.server || x.client).ToArray();
-            coordinator.Check(source.All(x => x.target is MethodInfo && ((MethodInfo)x.target).IsStatic),
-                              "Original network-message method contract changed");
-            coordinator.Check(source.Where(x => x.server).Select(x => x.msgType).Distinct().Count() == source.Count(x => x.server) &&
-                                  source.Where(x => x.client).Select(x => x.msgType).Distinct().Count() == source.Count(x => x.client),
+            // Metadata is process-lived, while handler ownership remains session-lived.
+            if (originalWorldMessageMethods == null)
+                originalWorldMessageMethods = OriginalMethodAttributes<NetworkMessageHandlerAttribute>(typeof(CharacterBody).Assembly)
+                                                  .Where(x => x.Key.server || x.Key.client).ToArray();
+            var source = originalWorldMessageMethods;
+            coordinator.Check(source.Length > 0, "Original network-message attributes were not discovered");
+            coordinator.Check(source.All(x => x.Value.IsStatic), "Original network-message method contract changed");
+            coordinator.Check(source.Where(x => x.Key.server).Select(x => x.Key.msgType).Distinct().Count() ==
+                                  source.Count(x => x.Key.server) &&
+                                  source.Where(x => x.Key.client).Select(x => x.Key.msgType).Distinct().Count() ==
+                                  source.Count(x => x.Key.client),
                               "Original network-message IDs are ambiguous");
-            foreach (var attribute in source)
+            foreach (var entry in source)
             {
-                var handler = (NetworkMessageDelegate)Delegate.CreateDelegate(typeof(NetworkMessageDelegate), (MethodInfo)attribute.target);
+                var attribute = entry.Key;
+                var handler = (NetworkMessageDelegate)Delegate.CreateDelegate(typeof(NetworkMessageDelegate), entry.Value);
                 if (attribute.server && !NetworkServer.handlers.ContainsKey(attribute.msgType))
                 {
                     NetworkServer.RegisterHandler(attribute.msgType, handler);

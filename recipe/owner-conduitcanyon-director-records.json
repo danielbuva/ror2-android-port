@@ -1,0 +1,178 @@
+{
+  "input_id": "6af7ed94619fe1b4346974b4486afa03a8d1625a7820e92da0ff74d57208fe88",
+  "bundles": [
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-dlc3-conduitcanyon_scenes_all_830ea6c76708fff7789dcd879d55c6c9.bundle",
+      "sha256": "0bb3516cbc006e85adc500dc1555e874899c26a1690a3c4898cd34358cc1b1ac",
+      "members": [
+        {
+          "name": "CAB-67bbd55dd8d7f7e66c9c60d71a025912",
+          "objects": [
+            {
+              "class_id": 320,
+              "path_id": 47347,
+              "sha256": "b83359c28ebbff60f495262f15b83b1af099a0e633946a7ec887173cdf4d2027",
+              "outputs": [
+                {
+                  "bundle": "whole-scene-conduitcanyon",
+                  "member": "BuildPlayer-conduitcanyon",
+                  "path_id": 47340,
+                  "bytes": 420,
+                  "sha256": "4307bd5d93a87d82ed6505ea9a7087fe097302d8b49ac3dea5969273a5c5bec9",
+                  "transform": {
+                    "director_exposed_names": true,
+                    "references": [
+                      {
+                        "offset": 0,
+                        "from": [
+                          0,
+                          9208
+                        ],
+                        "to": [
+                          0,
+                          9201
+                        ]
+                      },
+                      {
+                        "offset": 16,
+                        "from": [
+                          11,
+                          3826198557210790976
+                        ],
+                        "to": [
+                          2,
+                          -2886735481452610871
+                        ]
+                      },
+                      {
+                        "offset": 72,
+                        "from": [
+                          0,
+                          8839
+                        ],
+                        "to": [
+                          0,
+                          8832
+                        ]
+                      },
+                      {
+                        "offset": 128,
+                        "from": [
+                          0,
+                          938
+                        ],
+                        "to": [
+                          0,
+                          931
+                        ]
+                      },
+                      {
+                        "offset": 156,
+                        "from": [
+                          0,
+                          9741
+                        ],
+                        "to": [
+                          0,
+                          9734
+                        ]
+                      },
+                      {
+                        "offset": 212,
+                        "from": [
+                          0,
+                          5219
+                        ],
+                        "to": [
+                          0,
+                          5212
+                        ]
+                      },
+                      {
+                        "offset": 240,
+                        "from": [
+                          0,
+                          11155
+                        ],
+                        "to": [
+                          0,
+                          11148
+                        ]
+                      },
+                      {
+                        "offset": 268,
+                        "from": [
+                          0,
+                          6555
+                        ],
+                        "to": [
+                          0,
+                          6548
+                        ]
+                      },
+                      {
+                        "offset": 296,
+                        "from": [
+                          0,
+                          943
+                        ],
+                        "to": [
+                          0,
+                          936
+                        ]
+                      },
+                      {
+                        "offset": 324,
+                        "from": [
+                          0,
+                          4347
+                        ],
+                        "to": [
+                          0,
+                          4340
+                        ]
+                      },
+                      {
+                        "offset": 352,
+                        "from": [
+                          0,
+                          4926
+                        ],
+                        "to": [
+                          0,
+                          4919
+                        ]
+                      },
+                      {
+                        "offset": 380,
+                        "from": [
+                          0,
+                          6496
+                        ],
+                        "to": [
+                          0,
+                          6489
+                        ]
+                      },
+                      {
+                        "offset": 408,
+                        "from": [
+                          0,
+                          3034
+                        ],
+                        "to": [
+                          0,
+                          3027
+                        ]
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

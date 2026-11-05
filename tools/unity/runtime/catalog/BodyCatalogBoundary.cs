@@ -1109,7 +1109,9 @@ public sealed partial class PortSession
         {
             if (!cfg.integratedWorld || !Resources.Load<TextAsset>("WholeCatalogBootstrap"))
                 return new ItemDef[0];
+            TraceStartup("comparison-items-discovery-begin");
             var definitions = WholeCatalogComposed.ItemDefinitions();
+            TraceStartup("comparison-items-discovery-ready");
             var fields = typeof(DLC4Content.Items).GetFields(BindingFlags.Public | BindingFlags.Static);
             var selected = fields.Select(field => definitions.SingleOrDefault(def => def.name == field.Name)).ToArray();
             coordinator.Check(selected.All(def => def) && selected.Distinct().Count() == fields.Length,

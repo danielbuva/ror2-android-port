@@ -1,0 +1,23 @@
+{
+  "android_jar": "${input:sdk_android_jar}",
+  "aapt": "${input:sdk_aapt}",
+  "java": "${input:sdk_java}",
+  "javac": "${input:sdk_javac}",
+  "sdk": "${input:sdk_install}",
+  "jars": {
+    "r8-4.0.52.jar": "${input:sdk_jar_r8-4.0.52.jar}",
+    "gradle-7.4.2.jar": "${input:sdk_jar_gradle-7.4.2.jar}",
+    "gradle-api-7.4.2.jar": "${input:sdk_jar_gradle-api-7.4.2.jar}",
+    "builder-7.4.2.jar": "${input:sdk_jar_builder-7.4.2.jar}",
+    "sdk-common-30.4.2.jar": "${input:sdk_jar_sdk-common-30.4.2.jar}",
+    "common-30.4.2.jar": "${input:sdk_jar_common-30.4.2.jar}",
+    "layoutlib-api-30.4.2.jar": "${input:sdk_jar_layoutlib-api-30.4.2.jar}",
+    "guava-31.1-jre.jar": "${input:sdk_jar_guava-31.1-jre.jar}",
+    "javawriter-2.5.0.jar": "${input:sdk_jar_javawriter-2.5.0.jar}",
+    "kotlin-stdlib-1.7.10.jar": "${input:sdk_jar_kotlin-stdlib-1.7.10.jar}",
+    "asm-9.2.jar": "${input:sdk_jar_asm-9.2.jar}",
+    "asm-commons-9.2.jar": "${input:sdk_jar_asm-commons-9.2.jar}",
+    "zipflinger-7.4.2.jar": "${input:sdk_jar_zipflinger-7.4.2.jar}"
+  },
+  "output": "${output}"
+}

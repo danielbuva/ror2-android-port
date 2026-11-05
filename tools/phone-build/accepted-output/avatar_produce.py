@@ -47,7 +47,9 @@ def reorder(body, field, order):
     return body[: start + 4] + b"".join(entries[index] for index in order) + body[end:]
 
 
-def produce(profile_path, profile_sha256, pc, output):
+def produce(profile_path, profile_sha256, pc, output, comparison="exact"):
+    if comparison not in ("exact", "diagnostic"):
+        raise ValueError("unknown target comparison policy")
     if BUNDLE.sha(profile_path) != profile_sha256:
         raise ValueError("Avatar profile drift")
     profile = json.loads(profile_path.read_text())
@@ -66,6 +68,7 @@ def produce(profile_path, profile_sha256, pc, output):
     output.mkdir()
     started = time.monotonic()
     receipt = {"success": False, "input_id": MESH.INPUT_ID, "profile_sha256": profile_sha256, "objects": 0, "object_bytes": 0}
+    receipt.update(comparison=comparison, historical_mismatches=0)
     try:
         with (output / "objects.bin").open("xb") as data, (output / "index.jsonl").open("x") as index:
             for selected in profile["bundles"]:
@@ -85,7 +88,9 @@ def produce(profile_path, profile_sha256, pc, output):
                             result = reorder(body, avatar["tos_field"], target["order"]) if "order" in target else body
                             digest = hashlib.sha256(result).hexdigest()
                             if digest != target["sha256"] or len(result) != target["bytes"]:
-                                raise ValueError("produced Avatar differs from accepted hash")
+                                if comparison == "exact":
+                                    raise ValueError("produced Avatar differs from accepted hash")
+                                receipt["historical_mismatches"] += 1
                             row = {
                                 "bundle": target["bundle"],
                                 "member": target["member"],
@@ -124,8 +129,14 @@ def main():
     parser.add_argument("--profile-sha256", required=True)
     parser.add_argument("--pc", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument(
+        "--comparison",
+        choices=("exact", "diagnostic"),
+        default="exact",
+        help="Record historical output byte differences while retaining source and structural checks",
+    )
     args = parser.parse_args()
-    produce(args.profile, args.profile_sha256, args.pc, args.output)
+    produce(args.profile, args.profile_sha256, args.pc, args.output, comparison=args.comparison)
 
 
 if __name__ == "__main__":

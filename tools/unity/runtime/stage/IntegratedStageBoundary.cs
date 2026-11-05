@@ -320,12 +320,18 @@ public sealed partial class PortSession
             if (!originalDamageMacrosReady)
             {
                 coordinator.Check(DamageMacroCatalog.macroNameToIndexReadOnly.Count == 0, "Unowned original damage-macro catalog");
-                // Original startup scans opted-in assemblies before SystemInitializer runs.
-                HG.Reflection.SearchableAttribute.ScanAssembly(typeof(DamageMacroCatalog).Assembly);
-                HG.Reflection.SearchableAttribute.ScanAssembly(typeof(EntityStates.Chef.Sear).Assembly);
+                // Seed only this native initializer's method family. Preserve native target,
+                // base-type registration, multiple attributes and catalog index assignment.
+                var registered = HG.Reflection.SearchableAttribute.GetInstances<DamageMacroMethodAttribute>();
+                var priorTargets = new HashSet<object>(registered == null ? Enumerable.Empty<object>() : registered.Select(x => x.target));
+                foreach (var entry in OriginalMethodAttributes<DamageMacroMethodAttribute>(typeof(DamageMacroCatalog).Assembly,
+                                                                                          typeof(EntityStates.Chef.Sear).Assembly))
+                    if (!priorTargets.Contains(entry.Value))
+                        PortSession.StaticCall(typeof(HG.Reflection.SearchableAttribute), "RegisterAttribute", entry.Key, entry.Value);
                 var methods = HG.Reflection.SearchableAttribute.GetInstances<DamageMacroMethodAttribute>();
                 coordinator.Check(methods != null && methods.Count == expected.Length &&
                                       methods.Cast<DamageMacroMethodAttribute>().All(method => method.target is MethodInfo &&
+                                                                                               ((MethodInfo)method.target).IsStatic &&
                                                                                                expected.Contains(method.searchableName)),
                                   "Original damage-macro searchable methods differ from accepted input");
                 PortSession.StaticCall(typeof(DamageMacroCatalog), "Initialize");
@@ -810,6 +816,7 @@ public sealed partial class PortSession
             transportingStage = true;
             report.transporting = true;
             coordinator.r.phase = "integrated-stage-transition";
+            TraceStartup("stage-transport-begin");
             coordinator.Save();
             bridge.enabled = false;
             body.inputBank.moveVector = Vector3.zero;
@@ -913,7 +920,9 @@ public sealed partial class PortSession
                 if (!coordinator.stageStaticRoots.Contains(root))
                     SceneManager.MoveGameObjectToScene(root, coordinator.priorClockScene);
             coordinator.Check(SceneManager.SetActiveScene(coordinator.priorClockScene), "Persistent adapter scene missing");
+            TraceStartup("stage-unload-begin");
             yield return SceneManager.UnloadSceneAsync(old);
+            TraceStartup("stage-unload-returned");
             foreach (var mat in coordinator.stageGeometryMaterials)
                 if (mat)
                     PortSession.Destroy(mat);
@@ -926,6 +935,7 @@ public sealed partial class PortSession
             var geometry = coordinator.LoadStageGeometry(next.bundle, next.previewCallbacks, next);
             while (geometry.MoveNext())
                 yield return geometry.Current;
+            TraceStartup("stage-next-geometry-ready");
             // Moon activates its original scene objects while loading, after selecting its
             // scene. Unity returns false when reselecting the scene that is already active.
             if (SceneManager.GetActiveScene() != coordinator.stageGeometryScene)
@@ -1154,6 +1164,7 @@ public sealed partial class PortSession
                 beetleGland.enabled = true;
             bridge.enabled = true;
             coordinator.r.phase = "integrated-world-playing";
+            TraceStartup("stage-transport-authority-ready");
             coordinator.Save();
         }
         // Retained across a coroutine suspension or refusal. Never reissue a native

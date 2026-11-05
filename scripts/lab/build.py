@@ -51,13 +51,25 @@ def copy_build_artifact(source, destination, *, verify=True):
     copy_file_clone(source, destination, runner=run)
     source_stat = source.stat()
     destination_stat = destination.stat()
-    if (
-        (source_stat.st_dev, source_stat.st_ino) == (destination_stat.st_dev, destination_stat.st_ino)
-        or file_identity(source) != before
-        or source_stat.st_size != destination_stat.st_size
-        or (verify and sha(source) != sha(destination))
-    ):
-        raise RuntimeError("Build snapshot independence or hash verification failed")
+    after = file_identity(source)
+    failures = []
+    if (source_stat.st_dev, source_stat.st_ino) == (destination_stat.st_dev, destination_stat.st_ino):
+        failures.append("source and destination share an inode")
+    fields = ("device", "inode", "size", "mtime_ns", "ctime_ns")
+    changes = {field: [old, new] for field, old, new in zip(fields, before, after) if old != new}
+    if source_stat.st_size != destination_stat.st_size:
+        failures.append(f"size differs: source={source_stat.st_size}, destination={destination_stat.st_size}")
+    ctime_only = set(changes) == {"ctime_ns"}
+    verify_bytes = verify or ctime_only
+    hashes_match = verify_bytes and sha(source) == sha(destination)
+    if verify_bytes and not hashes_match:
+        failures.append("SHA-256 differs")
+    if changes and not (ctime_only and hashes_match):
+        failures.append("source identity changed: " + json.dumps(changes, sort_keys=True))
+    if failures:
+        raise RuntimeError("Build snapshot independence or hash verification failed: " + "; ".join(failures))
+    if changes:
+        print("Build snapshot: benign ctime-only metadata change; source and destination SHA-256 match", file=sys.stderr)
     return str(destination)
 
 
@@ -87,6 +99,9 @@ def validate_project_generation(project, input_id):
 
 def preflight_host():
     """Validate accepted host inputs and toolchain without querying a device."""
+    from native_view_camera_build_hook import build_hook_pins
+
+    build_hook_pins()
     cfg = config()
     base = game()
     inv = read(WORK / "inventory/files.json")

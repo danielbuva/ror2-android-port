@@ -1511,6 +1511,17 @@ def expanding_wave_scale(body, root, selected, read_record):
 
 
 def transform_generic(body, class_id, selected, root=None, read_clip=None, source_type=None, material_keywords=None, read_record=None):
+    if class_id in (363, 850595691):
+        if source_type is None or source_type["class_id"] != class_id:
+            raise ValueError("source lighting record requires its native schema")
+        if set(selected) - {"references"} or selected.get("references"):
+            raise ValueError("source lighting record must preserve release data")
+        # Release occlusion data has no editor renderer/portal ID tables.
+        # Parse the complete source layout without synthesizing those fields.
+        _, spans = fields(body, SCHEMA.type_tree(io.BytesIO(source_type["tree"])))
+        if any(path + ("m_FileID",) in spans and path + ("m_PathID",) in spans for path in spans):
+            raise ValueError("source lighting record requires a pointer-free release schema")
+        return body
     if set(selected) - {
         "references",
         "demote_keywords",
@@ -1659,7 +1670,7 @@ def profile_bundles(path):
         yield from profile["bundles"]
 
 
-def managed_record_hash(body, typ, metadata, member, script, sdk_tree, identity_owner, *, preserve_original=False):
+def managed_record_hash(body, typ, metadata, member, script, sdk_tree, identity_owner, *, preserve_original=False, editor_curve_trees=None):
     """Derive an unchanged managed record's native hash from original schema."""
     if typ["class_id"] != 114 or sdk_tree is None:
         raise ValueError("managed record properties require MonoBehaviour and pinned SDK")
@@ -1679,9 +1690,12 @@ def managed_record_hash(body, typ, metadata, member, script, sdk_tree, identity_
     _, names = O.script_fields(script_body)
     if typ["script_id"] != identity_owner.md4("".join(names).encode()):
         raise ValueError("managed record script identity differs from original schema")
+    if preserve_original and editor_curve_trees is not None:
+        raise ValueError("editor curve properties cannot preserve original script hash")
     if preserve_original:
         return O.original_script_properties(script_body, script_type, typ, typ, identity_owner)
-    return identity_owner.properties_hash(*names, typ["tree"], sdk_tree)
+    tree = typ["tree"] if editor_curve_trees is None else O.editor_curve_hash_tree(typ["tree"], editor_curve_trees, identity_owner)
+    return identity_owner.properties_hash(*names, tree, sdk_tree)
 
 
 def check_native_type(typ, target):
@@ -1689,7 +1703,9 @@ def check_native_type(typ, target):
         raise ValueError("produced record native type identity differs")
 
 
-def produce(profile_path, profile_sha256, pc, output, sdk=None):
+def produce(profile_path, profile_sha256, pc, output, sdk=None, comparison="exact"):
+    if comparison not in ("exact", "diagnostic"):
+        raise ValueError("unknown target comparison policy")
     if B.sha(profile_path) != profile_sha256:
         raise ValueError("object-record profile drift")
     pc = pc.resolve(strict=True)
@@ -1706,8 +1722,9 @@ def produce(profile_path, profile_sha256, pc, output, sdk=None):
     started = time.monotonic()
     receipt = {"success": False, "input_id": M.INPUT_ID, "profile_sha256": profile_sha256, "objects": 0, "object_bytes": 0}
     runtime_fields = None
+    receipt.update(comparison=comparison, historical_mismatches=0)
     try:
-        sdk_path, sdk_tree = None, None
+        sdk_path, sdk_tree, sdk_curve_trees = None, None, None
         if not str(profile_path).endswith(".jsonl.gz") and "sdk" in (profile := json.loads(profile_path.read_text())):
             if sdk is None:
                 raise ValueError("managed record properties require pinned owner SDK")
@@ -1722,6 +1739,7 @@ def produce(profile_path, profile_sha256, pc, output, sdk=None):
             if typ["class_id"] != 114:
                 raise ValueError("SDK script base is not MonoBehaviour")
             sdk_tree = typ["tree"]
+            sdk_curve_trees = [row["tree"] for row in metadata["types"] if row.get("tree")]
         material_keywords, keyword_sdk_path = None, None
         if not str(profile_path).endswith(".jsonl.gz") and "material_keyword_sdk" in profile:
             selected_sdk = profile["material_keyword_sdk"]
@@ -1805,32 +1823,49 @@ def produce(profile_path, profile_sha256, pc, output, sdk=None):
                         if typ["class_id"] != selected["class_id"] or selected["class_id"] not in (
                             1,
                             4,
+                            20,
                             21,
                             23,
                             33,
                             54,
+                            59,
                             64,
                             65,
                             72,
                             74,
+                            75,
+                            81,
                             86,
                             91,
                             95,
                             96,
                             104,
                             108,
+                            111,
                             114,
                             119,
                             120,
+                            124,
                             128,
+                            134,
                             135,
                             136,
                             137,
+                            138,
+                            143,
+                            144,
+                            145,
+                            146,
+                            153,
                             156,
+                            182,
+                            192,
                             193,
                             198,
                             199,
                             205,
+                            208,
+                            212,
                             213,
                             215,
                             221,
@@ -1841,8 +1876,13 @@ def produce(profile_path, profile_sha256, pc, output, sdk=None):
                             226,
                             227,
                             228,
+                            319,
                             320,
                             330,
+                            363,
+                            850595691,
+                            1773428102,
+                            1818360608,
                         ):
                             raise ValueError("unqualified original object class")
                         member.seek(metadata["data_offset"] + obj["offset"])
@@ -1860,6 +1900,13 @@ def produce(profile_path, profile_sha256, pc, output, sdk=None):
                             or selected.get("preserve_original_script_hash")
                         ):
                             raise ValueError("current script projection requires SDK properties and unchanged original binding")
+                        if "editor_curve_properties" in selected and (
+                            selected["editor_curve_properties"] is not True
+                            or "properties_hash" not in selected
+                            or selected.get("preserve_original_script_hash")
+                            or selected.get("prune_absent_script_fields")
+                        ):
+                            raise ValueError("editor curve properties require unchanged source fields and SDK properties")
                         if "properties_hash" in selected:
                             if set(selected["properties_hash"]) != {"script"}:
                                 raise ValueError("unknown managed record hash policy")
@@ -1874,6 +1921,7 @@ def produce(profile_path, profile_sha256, pc, output, sdk=None):
                                 sdk_tree,
                                 identity_owner,
                                 preserve_original=selected.get("preserve_original_script_hash", False),
+                                editor_curve_trees=sdk_curve_trees if selected.get("editor_curve_properties") else None,
                             )
                             if selected.get("prune_absent_script_fields"):
                                 if "managed" not in profile:
@@ -1897,6 +1945,8 @@ def produce(profile_path, profile_sha256, pc, output, sdk=None):
                                 trees[obj["type_id"]] = SCHEMA.type_tree(io.BytesIO(typ["tree"]))
                             root = trees[obj["type_id"]]
                         for target in selected["outputs"]:
+                            if typ["class_id"] in (363, 850595691) and "native_type_hash" not in target:
+                                raise ValueError("source lighting record requires native type identity")
                             check_native_type(typ, target)
                             operations = target.get("transform", {})
                             if typ["class_id"] == 74:
@@ -1907,8 +1957,11 @@ def produce(profile_path, profile_sha256, pc, output, sdk=None):
                                 )
                             digest = hashlib.sha256(result).hexdigest()
                             if digest != target["sha256"] or len(result) != target["bytes"]:
-                                raise ValueError("produced object record differs from accepted hash")
-                            row = {key: target[key] for key in ("bundle", "member", "path_id", "bytes", "sha256")}
+                                if comparison == "exact":
+                                    raise ValueError("produced object record differs from accepted hash")
+                                receipt["historical_mismatches"] += 1
+                            row = {key: target[key] for key in ("bundle", "member", "path_id")}
+                            row.update(bytes=len(result), sha256=digest)
                             row["offset"] = data.tell()
                             if "native_type_hash" in target:
                                 row["native_type_hash"] = typ["hash"].hex()
@@ -1958,8 +2011,14 @@ def main():
     parser.add_argument("--pc", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--sdk", type=Path, help="pinned owner SDK root for original managed type hashes")
+    parser.add_argument(
+        "--comparison",
+        choices=("exact", "diagnostic"),
+        default="exact",
+        help="Record historical output byte differences while retaining source and structural checks",
+    )
     args = parser.parse_args()
-    produce(args.profile, args.profile_sha256, args.pc, args.output, args.sdk)
+    produce(args.profile, args.profile_sha256, args.pc, args.output, args.sdk, comparison=args.comparison)
 
 
 if __name__ == "__main__":
