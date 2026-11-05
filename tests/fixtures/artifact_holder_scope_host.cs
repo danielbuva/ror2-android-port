@@ -63,10 +63,25 @@ public static class WholeCatalogComposed
         Check(ReferenceEquals(manifest, snapshot) && values.SequenceEqual(BodyCatalog.allBodyPrefabs));
         events.Add("bodies");
     }
+    public static int PrepareProjectiles(JObject manifest)
+    {
+        Check(ReferenceEquals(manifest, snapshot));
+        events.Add("projectiles");
+        return 7;
+    }
+    public static void CheckSnapshot(JObject manifest) { Check(ReferenceEquals(manifest, snapshot)); }
     public static void Check(bool value) { if (!value) throw new Exception("Artifact/holder contract differs"); }
 }
 public static partial class PortSession
 {
+    class Catalogs { public int projectiles; }
+    class Report { public Catalogs liveCatalogs = new Catalogs(); }
+    static Report r = new Report();
+    static void PrepareWholeDroneCatalog(JObject manifest)
+    {
+        WholeCatalogComposed.CheckSnapshot(manifest);
+        WholeCatalogComposed.events.Add("drones");
+    }
     static void TraceStartup(string step) => WholeCatalogComposed.events.Add(step);
     static void StaticCall(Type type, string method, object[] args = null)
     {
@@ -87,7 +102,9 @@ public static partial class PortSession
         Prepare();
         WholeCatalogComposed.Check(WholeCatalogComposed.events.SequenceEqual(new[] {
             "artifact-family-begin", "read", "family", "register", "definition-holders-begin",
-            "Artifacts", "init", "Items", "Equipment", "bodies" }));
-        Console.WriteLine("artifact holder snapshot order identity PASS");
+            "Artifacts", "init", "Items", "Equipment", "bodies", "drone-catalog-begin", "drones",
+            "projectile-catalog-begin", "projectiles", "projectile-catalog-ready" }));
+        WholeCatalogComposed.Check(r.liveCatalogs.projectiles == 7);
+        Console.WriteLine("artifact holder drone projectile snapshot order identity PASS");
     }
 }
