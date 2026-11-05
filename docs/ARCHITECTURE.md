@@ -1490,6 +1490,25 @@ old file IDs or pointers never substitute for complete field coverage. Callers
 own receipt/index validation and final-container metadata readback before
 supplying endpoint bodies. These pure helpers retain no state; current CLR,
 complete emission, typed load and device admission remain separate gates.
+The final-type helper verifies a persisted MonoBehaviour's schema-declared
+`m_Script` against its actual final script-table slot before restoring only the
+qualified preallocation index. Every other type field remains exact. Required
+emission applies this check during final readback and endpoint callbacks; external
+adapters supply body, type and script table from the same final member. The helper
+retains no state and adds no runtime owner.
+The same emitter's Python `required` mode selects an exact object set and
+declared GUID/path/root groups without pruning. Complete types are keyed by
+their full identity, preserving types that share a schema. Every external field
+uses those qualifications; the caller supplies a receipt/index/final-container
+endpoint reader and, for managed objects, a current-CLR checker. The checker
+runs on relocated bodies before writing and again on actual final bodies and
+script types after script-table allocation. It can resolve local or external
+MonoScripts through the supplied reader. Grouped roots retain their shared
+preload ranges. Final metadata, bodies, fields, endpoints and resource extents
+are read back; the receipt pins the request and qualified endpoint identities.
+All request, qualification and spool state is per invocation and temporary
+spools are removed on exit. This integration API has host fixtures; it does not
+establish complete whole-game emission, Unity loadability or device acceptance.
 The shared `object_produce.make_layout` writer accepts explicitly qualified
 external MonoScript pointers separately from scene membership. It checks each
 managed body's script against the local records or supplied external allowlist,

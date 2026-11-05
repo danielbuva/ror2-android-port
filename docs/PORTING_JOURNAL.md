@@ -2845,6 +2845,18 @@ Actual-method family fixture and host preflight pass; existing worktree doctor l
 Pinned R2API load/copy/finalize phases informed attribution; cache ownership/reset unchanged.
 Sustained play, audibility and lossless reduction of the measured parse cost remain open.
 
+## J1394 — Exact required-set bundle emission
+
+2026-11-05. The existing preload emitter accepts an explicit object set without pruning,
+selects complete native/script types by full identity, and preserves grouped GUID/subasset roots.
+External references require per-field producer witnesses and actual endpoint readback;
+managed objects require a caller-supplied current-CLR checker before writing and after final readback.
+Final metadata, bodies, references and resources are checked; request/endpoint identities are receipted.
+Evidence: `tests/test_bundle_preload.py`, 20 host fixtures, including independent UnityPy readback,
+missing/dangling object rejection and dependency mutation between qualification and final readback.
+Ruff and staged public audit pass. Prior art: pinned EditorKit typed/subasset EntryLookup; J1271/J1279.
+Host integration API only: complete graph, current-CLR adapter, Unity typed load and device gates remain open.
+No APK or device change.
 ## J1393 — Omit unused manifest source-line annotations
 
 2026-11-05. Existing `WholeCatalogComposed.ReadDefinitionManifest` skips JSON line
@@ -2860,3 +2872,15 @@ one comparison, no general speedup claim. Peak CPU/GPU 61.4 C, battery 28 C.
 Existing reader lifecycle/ownership retained; R2API phase separation informed scope.
 Display asleep, scratch removed, lease released, prune passed. Sustained play and
 audibility and full-pipeline performance stay open; alpha gate unchanged.
+
+## J1395 — Verify final script-table allocation during required emission
+
+2026-11-05. Existing bundle preload owner checks actual final MonoBehaviour
+script-table slots against schema-parsed m_Script before restoring only the
+qualified preallocation index; all remaining native/script type fields stay exact.
+Required emission uses the check for persisted objects and local endpoint reads.
+Authored regression covers reallocation, wrong/absent slots and full-type drift;
+21 focused tests pass; Ruff passes. Evidence: public host fixture
+`tests/test_bundle_preload.py`; no APK or device change. Prior art: pinned
+EditorKit typed/collision lookup and existing script_identity relationship check.
+Current-CLR adapter, complete closure, Unity typed load and device gates stay open.
