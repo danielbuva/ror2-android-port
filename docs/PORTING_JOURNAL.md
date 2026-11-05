@@ -2697,3 +2697,14 @@ Current-input scoped inheritance passed; complete pointer proof remains open.
 Prior art: pinned AssetRipper full script identity and J866 exact scope/forwarding.
 No APK produced; integrated source/body proofs, native bridges, complete graph/load
 and device play remain required independently of this metadata contract.
+
+## J1383 — Publish source scene suppliers for the converter graph
+
+2026-11-04. Four source-record profiles supply Artifactworld01 AkTriggerDisable
+and Champrush, Splash and Conduitcanyon directors through the existing native
+record owner. Checked component and director PPtrs retain original relationships;
+Conduit uses the existing exposed-name policy with 13 checked source pointers.
+Evidence: four-consumer release-graph fixture and host-only preflight passed;
+local receipts: `work/coordination/p1-scenes-w/current-scene-supplier-preflight-v1/`.
+Public recipes contain selectors and transformations, no generated record bodies.
+No APK produced; complete graph, current-code assembly and device play remain open.
