@@ -2698,7 +2698,7 @@ Prior art: pinned AssetRipper full script identity and J866 exact scope/forwardi
 No APK produced; integrated source/body proofs, native bridges, complete graph/load
 and device play remain required independently of this metadata contract.
 
-## J1384 — Reuse install-bound audio verification and partition loading costs
+## J1385 — Reuse install-bound audio verification and partition loading costs
 
 2026-11-05. Existing audio copier caches full verification against install/cohort
 identity and path, expected hash, size, device/inode, nanosecond mtime/ctime.

@@ -12,7 +12,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 | --- | --- | --- | --- |
 | [J1384](PORTING_JOURNAL.md#j1384--qualify-managed-curve-hashes-against-complete-sdk-runtime-projections) | 2026-11-04 | Qualify managed curve hashes against complete SDK runtime projections | 2026-11-04. |
 | [J1383](PORTING_JOURNAL.md#j1383--publish-source-scene-suppliers-for-the-converter-graph) | 2026-11-04 | Publish source scene suppliers for the converter graph | 2026-11-04. |
-| [J1384](PORTING_JOURNAL.md#j1384--reuse-install-bound-audio-verification-and-partition-loading-costs) | 2026-11-04 | Reuse install-bound audio verification and partition loading costs | 2026-11-05. |
+| [J1385](PORTING_JOURNAL.md#j1385--reuse-install-bound-audio-verification-and-partition-loading-costs) | 2026-11-04 | Reuse install-bound audio verification and partition loading costs | 2026-11-05. |
 | [J1381](PORTING_JOURNAL.md#j1381--resolve-current-managed-pointer-field-contracts-by-exact-clr-scope) | 2026-11-04 | Resolve current managed pointer field contracts by exact CLR scope | 2026-11-04. |
 | [J1382](PORTING_JOURNAL.md#j1382--load-buff-definitions-through-typed-provider-roots) | 2026-11-04 | Load buff definitions through typed provider roots | 2026-11-04. |
 | [J1379](PORTING_JOURNAL.md#j1379--resolve-produced-pointer-fields-and-inventory-scoped-clr-signatures) | 2026-11-04 | Resolve produced pointer fields and inventory scoped CLR signatures | 2026-11-04. |

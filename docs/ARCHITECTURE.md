@@ -5520,7 +5520,7 @@ filesystem semantics. This is metadata reuse, not protection against storage
 corruption that preserves every kernel identity field. Adopted/FUSE device
 qualification observed changed timestamps after a same-size,
 same-inode edit, refusal before native initialization and selective re-verification
-after full-SHA restoration (J1384). Metadata-invisible storage corruption remains
+after full-SHA restoration (J1385). Metadata-invisible storage corruption remains
 outside this cache contract.
 
 `IntegratedWorldSession.TracePreparation` emits a bounded log marker at each
