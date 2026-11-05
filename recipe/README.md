@@ -6876,7 +6876,7 @@ verification and native bank initialization order are unchanged.
 The same authored audio-owner pins now include the install-bound private
 verification cache. Native payload bytes, packaged cohort validation
 and bank order are unchanged. The receipt uses kernel change time as well as
-modification time and inode; J1385 records adopted-storage corruption refusal,
+modification time and inode; J1386 records adopted-storage corruption refusal,
 restoration and measured cache hits.
 No private cached receipts or captured identities are tracked.
 
