@@ -11,7 +11,16 @@ from unittest.mock import patch
 import UnityPy
 
 from phone_bundle import ASSET, PAYLOAD, make_bundle
-from phone_content import native_content_request, run_editor, stage, validate_ambient_capture, validate_linker_capture, validate_native_content, validate_oracle
+from phone_content import (
+    NATIVE_CONTENT_TYPES,
+    native_content_request,
+    run_editor,
+    stage,
+    validate_ambient_capture,
+    validate_linker_capture,
+    validate_native_content,
+    validate_oracle,
+)
 
 
 class PhoneContentTests(unittest.TestCase):
@@ -38,7 +47,7 @@ class PhoneContentTests(unittest.TestCase):
             request = {
                 "path": str(bundle),
                 "sha256": hashlib.sha256(bundle.read_bytes()).hexdigest(),
-                "assets": [{"name": "lighting", "type": "LightingSettings"}, {"name": "lighting2", "type": "LightingSettings"}],
+                "assets": [*({"name": name.lower(), "type": name} for name in sorted(NATIVE_CONTENT_TYPES))],
             }
             request_path = attempt / "native-content-request.json"
             request_path.write_text(json.dumps(request))
@@ -48,13 +57,13 @@ class PhoneContentTests(unittest.TestCase):
                 "request_sha256": hashlib.sha256(request_path.read_bytes()).hexdigest(),
                 "path": str(bundle),
                 "sha256": request["sha256"],
-                "count": 2,
+                "count": len(NATIVE_CONTENT_TYPES),
                 "unloaded": True,
                 "assets": [asset | {"loaded_name": "", "loaded_type": "UnityEngine." + asset["type"]} for asset in request["assets"]],
             }
             output = attempt / "native-content-check.json"
             output.write_text(json.dumps(report))
-            self.assertEqual(validate_native_content(attempt, "c" * 40)["count"], 2)
+            self.assertEqual(validate_native_content(attempt, "c" * 40)["count"], len(NATIVE_CONTENT_TYPES))
             for mutate in (
                 lambda r: r.update(sha256="0" * 64),
                 lambda r: r.update(request_sha256="0" * 64),
@@ -73,7 +82,7 @@ class PhoneContentTests(unittest.TestCase):
             for change in (
                 {"assets": [{"name": "occlusion", "type": "OcclusionCullingData"}]},
                 {"assets": []},
-                {"assets": [{"name": "shader", "type": "Shader"}]},
+                {"assets": [{"name": "script", "type": "MonoScript"}]},
                 {"assets": request["assets"] * 2},
                 {"path": "relative.bundle"},
             ):

@@ -1959,3 +1959,35 @@ first-selection pointer is null as declared by the SDK. Other fieldless componen
 retain their existing schema gate. Output hashes are receipt diagnostics because
 these typed components replace invalid historical fieldless placeholders. This is
 host serialization support; native loading and gameplay remain device gates.
+
+
+### Partial closed native bundle qualification
+
+The existing preload owner can emit a closed, single-member native subset from
+an explicitly selected source-producer graph. This is a current qualification
+command; it does not replace complete whole-game graph production.
+
+```sh
+python3 -I -S tools/phone-build/accepted-output/bundle_preload.py \
+  --graph "$QUALIFIED_GRAPH" --schema "$NATIVE_TYPES" \
+  --bundle "$BUNDLE_NAME" --member "$SERIALIZED_MEMBER" --output "$FRESH_OUTPUT"
+```
+
+`--schema` is repeatable. The graph directory contains `done.json` with a
+successful qualification, `selected-records.jsonl` and `selected-roots.jsonl`.
+Record rows identify destination tuples, provider directories/profile hashes,
+provider source tuples, schema digests, native classes/hashes, body sizes/hashes
+and typed pointer edges. Schema pools map tree SHA-256 to complete native type
+metadata (binary fields encoded as hexadecimal). Each provider supplies its
+successful `result.json`, receipt-pinned `index.jsonl` and `objects.bin`.
+
+The emitter checks actual body extents/hashes, type identities and complete
+schema-declared pointers before deriving closure. Managed records, streamed
+resources, external edges and their incomplete local dependants are omitted.
+Only unique single-object native root paths are admitted; ordered Sprite and
+subasset cohorts retain their existing owner. The final UnityFS member is read
+back to check IDs, types and every body hash. `result.json` always declares
+`whole_game_complete: false`; `gaps.json` lists omitted counts and graph blocks.
+Temporary serialization/body staging is removed on success or failure.
+`request.json` feeds the exact-editor native-content fixture documented above;
+structural emission alone does not imply native loadability or device play.
