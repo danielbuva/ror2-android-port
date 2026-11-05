@@ -6245,3 +6245,10 @@ and PlayableDirector pointers, preserving the existing exposed-name policy.
 Setup pins original bundles and a fresh pack; process exit closes readers and
 retains receipts. They supply release-graph dependencies without a new runtime
 owner. Complete APK and device acceptance remain open.
+
+The existing generic record producer can explicitly derive managed properties
+hashes using editor AnimationCurve layouts from its pinned SDK. The shared
+object-producer checker admits only the complete source runtime projection of
+the editor curve, preserving the serialized body and source type tree. Original
+MonoScript pointers and script identities remain checked; current CLR bindings
+and bundle/device loadability are separate gates.

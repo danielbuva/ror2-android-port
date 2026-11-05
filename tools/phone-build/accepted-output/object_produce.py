@@ -879,10 +879,9 @@ def legacy_animate_fields(body, tree, identity_owner):
     return body[: ranges[0][0]] + body[ranges[-1][1] :], projected
 
 
-def legacy_animate_hash_tree(tree, sdk_tree, identity_owner):
-    """Hash SDK editor Curve/Keyframe nodes; preserve serialized runtime schema."""
+def editor_curve_hash_tree(tree, sdk_trees, identity_owner, *, source_field=None, sdk_field=None):
+    """Hash editor curves only after checking their complete runtime projection."""
     source = identity_owner.tree_nodes(tree)
-    native = identity_owner.tree_nodes(sdk_tree)
 
     def extent(nodes, index):
         end = index + 1
@@ -890,38 +889,36 @@ def legacy_animate_hash_tree(tree, sdk_tree, identity_owner):
             end += 1
         return end
 
-    src = [i for i, node in enumerate(source) if node["type"] == "AnimationCurve" and node["name"] == "alphaCurve"]
-    sdk = [i for i, node in enumerate(native) if node["type"] == "AnimationCurve" and node["name"] == "m_Falloff"]
-    if len(src) != 1 or len(sdk) != 1:
-        raise ValueError("original/SDK AnimateShaderAlpha curve schema absent")
-    i, j = src[0], sdk[0]
-    end = extent(source, i)
-    shift = source[i]["level"] - native[j]["level"]
-    editor = [{**node, "level": node["level"] + shift} for node in native[j : extent(native, j)]]
-    editor[0]["name"] = source[i]["name"]
-    key = [k for k, node in enumerate(editor) if node["type"] == "Keyframe"]
-    tangent = [k for k, node in enumerate(editor) if node["name"] == "tangentMode"]
-    if len(key) != 1 or len(tangent) != 1 or editor[key[0]]["size"] != 32 or editor[tangent[0]]["type"] != "int" or editor[tangent[0]]["size"] != 4:
-        raise ValueError("SDK editor Keyframe tangent schema drift")
-    runtime = [dict(node) for k, node in enumerate(editor) if k != tangent[0]]
-    runtime[key[0]]["size"] -= 4
-    if runtime != source[i:end]:
-        raise ValueError("original runtime AnimationCurve differs from SDK editor projection")
-    revised = source[:i] + editor + source[end:]
-    strings = bytearray()
-    labels = {}
-
-    def label(value):
-        if value not in labels:
-            labels[value] = len(strings)
-            strings.extend(value.encode() + bytes(1))
-        return labels[value]
-
-    rows = [
-        struct.pack("<HBBIIiiiQ", n["version"], n["level"], n["flags"], label(n["type"]), label(n["name"]), n["size"], k, n["meta"], 0)
-        for k, n in enumerate(revised)
+    src = [i for i, node in enumerate(source) if node["type"] == "AnimationCurve" and (source_field is None or node["name"] == source_field)]
+    templates = [
+        nodes for blob in sdk_trees for nodes in identity_owner._native_subtrees(blob, "AnimationCurve") if sdk_field is None or nodes[0]["name"] == sdk_field
     ]
-    return struct.pack("<II", len(rows), len(strings)) + b"".join(rows) + strings
+    if not src or not templates or (source_field is not None and len(src) != 1):
+        raise ValueError("original/SDK AnimateShaderAlpha curve schema absent")
+    for i in reversed(src):
+        end = extent(source, i)
+        matches = {}
+        for nodes in templates:
+            shift = source[i]["level"] - nodes[0]["level"]
+            editor = [{**node, "level": node["level"] + shift} for node in nodes]
+            editor[0]["name"] = source[i]["name"]
+            key = [k for k, node in enumerate(editor) if node["type"] == "Keyframe"]
+            tangent = [k for k, node in enumerate(editor) if node["name"] == "tangentMode"]
+            if len(key) != 1 or len(tangent) != 1 or editor[key[0]]["size"] != 32 or editor[tangent[0]]["type"] != "int" or editor[tangent[0]]["size"] != 4:
+                continue
+            runtime = [dict(node) for k, node in enumerate(editor) if k != tangent[0]]
+            runtime[key[0]]["size"] -= 4
+            if runtime == source[i:end] or editor == source[i:end]:
+                matches[json.dumps(editor, sort_keys=True)] = editor
+        if len(matches) != 1:
+            raise ValueError("SDK editor Keyframe tangent schema or original runtime AnimationCurve differs from SDK editor projection")
+        source[i:end] = next(iter(matches.values()))
+    return identity_owner._tree(source)
+
+
+def legacy_animate_hash_tree(tree, sdk_tree, identity_owner):
+    """Retain the original single-field policy over the shared curve checker."""
+    return editor_curve_hash_tree(tree, [sdk_tree], identity_owner, source_field="alphaCurve", sdk_field="m_Falloff")
 
 
 def omit_character_master_field(tree, identity_owner):
