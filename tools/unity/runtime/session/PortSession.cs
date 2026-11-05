@@ -182,7 +182,6 @@ public sealed partial class PortSession : MonoBehaviour
     [Serializable]
     public class SessionReport
     {
-        public LoadingProfileCapture loadingProfile;
         public PerformanceReport performance;
         public bool combatPerformanceFocus;
         public bool commerceSweep;
@@ -451,96 +450,6 @@ public sealed partial class PortSession : MonoBehaviour
     NetworkConnection recoveredOwner;
     NetworkIdentity recoveredOwnedIdentity;
     SessionReport r;
-    LoadingProfileCapture loadingProfile;
-
-    // Explicit one-process diagnostic only. No selectors or gameplay settings change.
-    [Serializable]
-    public sealed class LoadingProfileCapture : IDisposable
-    {
-        public string path, stopReason, error;
-        public bool active, completed;
-        public float startedAt, stoppedAt;
-        public long bytes;
-        bool priorEnabled, priorBinary, priorCpu, priorMemory, priorCallstacks;
-        string priorPath;
-
-        public static LoadingProfileCapture Begin(string directory)
-        {
-            var request = System.IO.Path.Combine(directory, "loading-profiler.request");
-            if (!File.Exists(request)) return null;
-            File.Delete(request);
-            var capture = new LoadingProfileCapture();
-            capture.priorEnabled = UnityEngine.Profiling.Profiler.enabled;
-            capture.priorBinary = UnityEngine.Profiling.Profiler.enableBinaryLog;
-            capture.priorPath = UnityEngine.Profiling.Profiler.logFile;
-            capture.priorCpu = UnityEngine.Profiling.Profiler.GetAreaEnabled(UnityEngine.Profiling.ProfilerArea.CPU);
-            capture.priorMemory = UnityEngine.Profiling.Profiler.GetAreaEnabled(UnityEngine.Profiling.ProfilerArea.Memory);
-            capture.priorCallstacks = UnityEngine.Profiling.Profiler.enableAllocationCallstacks;
-            capture.startedAt = Time.realtimeSinceStartup;
-            capture.path = System.IO.Path.Combine(directory, "diagnostics", "loading-profile.raw");
-            capture.active = true;
-            try
-            {
-                Directory.CreateDirectory(System.IO.Path.GetDirectoryName(capture.path));
-                File.Delete(capture.path);
-                UnityEngine.Profiling.Profiler.enabled = false;
-                UnityEngine.Profiling.Profiler.logFile = capture.path;
-                UnityEngine.Profiling.Profiler.enableAllocationCallstacks = false;
-                UnityEngine.Profiling.Profiler.SetAreaEnabled(UnityEngine.Profiling.ProfilerArea.CPU, true);
-                UnityEngine.Profiling.Profiler.SetAreaEnabled(UnityEngine.Profiling.ProfilerArea.Memory, true);
-                UnityEngine.Profiling.Profiler.enableBinaryLog = true;
-                UnityEngine.Profiling.Profiler.enabled = true;
-            }
-            catch (Exception e)
-            {
-                capture.error = e.ToString();
-                capture.Stop("setup-failed");
-            }
-            return capture;
-        }
-
-        public void Stop(string reason)
-        {
-            if (!active) return;
-            active = false;
-            stopReason = reason;
-            stoppedAt = Time.realtimeSinceStartup;
-            try
-            {
-                UnityEngine.Profiling.Profiler.enabled = false;
-                UnityEngine.Profiling.Profiler.enableBinaryLog = false;
-            }
-            finally
-            {
-                UnityEngine.Profiling.Profiler.logFile = priorPath;
-                UnityEngine.Profiling.Profiler.SetAreaEnabled(UnityEngine.Profiling.ProfilerArea.CPU, priorCpu);
-                UnityEngine.Profiling.Profiler.SetAreaEnabled(UnityEngine.Profiling.ProfilerArea.Memory, priorMemory);
-                UnityEngine.Profiling.Profiler.enableAllocationCallstacks = priorCallstacks;
-                UnityEngine.Profiling.Profiler.enableBinaryLog = priorBinary;
-                UnityEngine.Profiling.Profiler.enabled = priorEnabled;
-            }
-            bytes = File.Exists(path) ? new FileInfo(path).Length : 0;
-            completed = bytes > 0 && string.IsNullOrEmpty(error);
-        }
-
-        public void Dispose() { Stop("destroyed"); }
-    }
-
-    IEnumerator ObserveLoadingProfile()
-    {
-        while (loadingProfile.active)
-        {
-            yield return new WaitForEndOfFrame();
-            string reason = null;
-            if (r != null && (!string.IsNullOrEmpty(r.firstFailure) || !string.IsNullOrEmpty(r.error))) reason = "failure";
-            else if (r != null && r.phase == "integrated-world-playing" && r.world != null && r.world.seconds > 0)
-                reason = "first-playable-frame";
-            else if (Time.realtimeSinceStartup - loadingProfile.startedAt >= 240) reason = "deadline";
-            if (reason == null) continue;
-            loadingProfile.Stop(reason);
-            if (r != null) Save();
-        }
-    }
     GameObject host, obstacle, eventHost, artifactHost;
     bool passivePcmGameplayArmBoundaryAttempted;
     GameAudioOriginalPassivePcmActivityArmPolicy passivePcmActivityArmPolicy;
@@ -680,7 +589,6 @@ public sealed partial class PortSession : MonoBehaviour
     {
         if (r != null)
         {
-            r.loadingProfile = loadingProfile;
             // The PCM window may arm only after an existing authoritative world
             // producer has reported playable phase and positive simulation time.
             // In particular, body creation while its GameObject is inactive is
@@ -746,7 +654,6 @@ public sealed partial class PortSession : MonoBehaviour
 
     private void OnDestroy()
     {
-        loadingProfile?.Dispose();
         offlineApplicationSession?.Dispose();
         // Close scheduling before teardown so a late callback cannot arm.
         passivePcmActivityArmPolicy?.Close();
@@ -777,8 +684,6 @@ public sealed partial class PortSession : MonoBehaviour
     {
         if (File.Exists(System.IO.Path.Combine(Application.persistentDataPath, "whole-catalog-selection.json")))
             yield break;
-        loadingProfile = LoadingProfileCapture.Begin(Application.persistentDataPath);
-        if (loadingProfile != null && loadingProfile.active) StartCoroutine(ObserveLoadingProfile());
         ReadSettingsWriteObserverRequest();
         // MovementBatchProbe is the unchanged resource/file name.
         var path = System.IO.Path.Combine(Application.persistentDataPath, "movement-batch-selection.json");

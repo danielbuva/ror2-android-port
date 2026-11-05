@@ -3689,17 +3689,6 @@ order and each `finally`) is in
 
 ## Ownership
 
-`PortSession.LoadingProfileCapture` owns an opt-in Development-player binary
-Unity profile. A local `loading-profiler.request` in the app's external files
-directory is consumed at session startup, before catalog/menu work. CPU and
-memory profiling writes `diagnostics/loading-profile.raw` without allocation
-callstacks. The first end-of-frame with positive playable-world time, a recorded
-failure, the 240-second deadline or destruction closes the log and restores the
-previous profiler settings. The session report records closure and file size;
-raw data stays private. Stage bundle CPU samples and monotonic scene, callback,
-hierarchy, material and collider seams supplement native Unity samples. This
-capture does not itself qualify transition latency or loading performance.
-
 `IntegratedResultsSession` reads one local definition manifest for relationship
 types, providers and holder binding through `WholeCatalogComposed`. The synchronous
 preparation call releases that reference on return; family-cache lifetime and
@@ -5505,6 +5494,9 @@ The same seams in `StageGeometryBoundary`, `NovaInputBoundary` and
 `AutomaticDirectorBoundary` separate collider validation/physics/entry, landing
 and display/run/enemy preparation, and objective templates/master catalog/player
 setup. These remain bounded owner-boundary logs, with no per-object recording.
+`GameAudioOriginalPayloadCopy` keeps full per-file SHA-256 verification at reuse
+with a 64 KiB sequential file buffer; receipt, size, path and native initialization
+checks retain their order. The stream is disposed after each file.
 
 `IntegratedWorldSession.TracePreparation` emits a bounded log marker at each
 initial world-preparation seam, including the existing loot report write,

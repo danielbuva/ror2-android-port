@@ -258,9 +258,8 @@ public sealed partial class PortSession
             }
             coordinator.r.stage.originalStageObjects = coordinator.stageSourceObjects;
             TraceStartup("stage-bundle-begin");
-            using (new Unity.Profiling.ProfilerMarker("RoR2Lab.Stage.Bundle").Auto())
-                coordinator.stageGeometryBundle =
-                    AssetBundle.LoadFromFile(System.IO.Path.Combine(Application.persistentDataPath, "payload", bundleName));
+            coordinator.stageGeometryBundle =
+                AssetBundle.LoadFromFile(System.IO.Path.Combine(Application.persistentDataPath, "payload", bundleName));
             TraceStartup("stage-bundle-ready");
             coordinator.Check(coordinator.stageGeometryBundle, "Recovered stage geometry bundle missing");
             var scenes = coordinator.stageGeometryBundle.GetAllScenePaths();
