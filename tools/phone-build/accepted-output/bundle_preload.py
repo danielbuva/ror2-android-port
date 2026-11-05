@@ -35,6 +35,124 @@ def pointers(body, typ, schemas):
     }
 
 
+def full_type_key(typ):
+    """Identity before make_layout assigns destination script-table indices."""
+    import json
+
+    return hashlib.sha256(json.dumps(O.json_layout(typ), sort_keys=True).encode()).hexdigest()
+
+
+def qualify_external_fields(value, body, typ, proofs, endpoint_record):
+    """Qualify each non-null external field against a persisted endpoint.
+
+    endpoint_record(target) returns (selected_row, actual_body, qualified_type).
+    Its caller owns receipt/index validation and final-file metadata readback;
+    these bytes must come from the container being qualified. Type identity is
+    the qualified type before destination script-table index allocation.
+    This proves field routes, not current CLR compatibility or loadability.
+    """
+    import json
+
+    owner = tuple(value["destination"])
+    schema = hashlib.sha256(typ["tree"]).hexdigest()
+    owner_sha = hashlib.sha256(body).hexdigest()
+    if (
+        (len(body), owner_sha) != (value["bytes"], value["sha256"])
+        or schema != value["schema"]
+        or full_type_key(typ) != value["full_type"]
+        or typ["class_id"] != value["class_id"]
+        or typ["hash"].hex() != value["native_type_hash"]
+    ):
+        raise ValueError("External field owner body or full type differs")
+    fields = pointers(body, typ, {})
+    if set(fields.values()) != set(map(tuple, value["edges"])):
+        raise ValueError("External field owner measured pointers differ")
+    candidates = {}
+    for proof in proofs:
+        key = (
+            proof.get("effective_provider", proof["provider"]),
+            tuple(proof["owner"]),
+            proof["owner_sha256"],
+            proof["schema_sha256"],
+        )
+        if key != (value["provider"], owner, owner_sha, schema) or proof.get("rewrite_required"):
+            continue
+        candidates.setdefault(tuple(proof["field"]), []).append(proof)
+    targets = {}
+    endpoint_cache = {}
+    for field, pointer in fields.items():
+        if not pointer[0] or not pointer[1]:
+            continue
+        valid = {}
+        for proof in candidates.get(field, []):
+            if tuple(proof["from"]) != pointer:
+                continue
+            target = tuple(proof["target"])
+            if target not in endpoint_cache:
+                endpoint_cache[target] = endpoint_record(target)
+            endpoint, raw, endpoint_type = endpoint_cache[target]
+            digest = hashlib.sha256(raw).hexdigest()
+            full = full_type_key(endpoint_type)
+            expected = proof["endpoint_type"]
+            if (
+                tuple(endpoint["destination"]) != target
+                or endpoint.get("source") != proof["source_target"]
+                or (len(raw), digest) != (endpoint["bytes"], endpoint["sha256"])
+                or full != endpoint["full_type"]
+                or hashlib.sha256(endpoint_type["tree"]).hexdigest() != endpoint["schema"]
+                or endpoint_type["class_id"] != endpoint["class_id"]
+                or endpoint_type["hash"].hex() != endpoint["native_type_hash"]
+                or (endpoint_type["class_id"], endpoint_type["hash"].hex(), full) != (expected["class_id"], expected["native_type_hash"], expected["full_type"])
+            ):
+                continue
+            # source_sha256 witnesses the ORIGINAL body, not the produced body.
+            # The produced extent is bound by emitted_witnesses instead.
+            if not any(
+                (w[0], tuple(w[1]), w[2], w[3], w[4]) == (endpoint["provider"], tuple(endpoint["record_source"]), digest, len(raw), full)
+                for w in expected["emitted_witnesses"]
+            ):
+                continue
+            pointers(raw, endpoint_type, {})
+            signature = target, tuple(proof["source_target"]), json.dumps(expected, sort_keys=True)
+            valid[signature] = target
+        if len(valid) != 1:
+            raise ValueError(f"External field lacks a unique persisted endpoint: {owner} {field} ({len(valid)})")
+        targets[field] = next(iter(valid.values()))
+    return targets
+
+
+def relocate_external_fields(value, body, typ, targets, externals):
+    """Allocate qualified fields by destination member, never by an old slot."""
+    if len(set(externals)) != len(externals) or value["destination"][1] in externals:
+        raise ValueError("Ambiguous external member allocation")
+    members = {value["destination"][1]: tuple(value["destination"][:2])}
+    for target in targets.values():
+        identity = tuple(target[:2])
+        if members.setdefault(target[1], identity) != identity:
+            raise ValueError("Ambiguous external member allocation")
+    fields = pointers(body, typ, {})
+    required = {field for field, (fid, pid) in fields.items() if fid and pid}
+    if set(targets) != required:
+        raise ValueError("External relocation requires complete per-field coverage")
+    references = []
+    for field, target in targets.items():
+        if not target[2]:
+            raise ValueError("External relocation target is null")
+        if tuple(target[:2]) == tuple(value["destination"][:2]):
+            pointer = (0, target[2])
+        else:
+            if target[1] == value["destination"][1] or target[1] not in externals:
+                raise ValueError("External relocation member absent or ambiguous")
+            pointer = (externals.index(target[1]) + 1, target[2])
+        references.append(dict(field=list(field), **{"from": list(fields[field]), "to": list(pointer)}))
+    result = O.remap_record(body, typ, references, externals)
+    actual = pointers(result, typ, {})
+    revised = {tuple(row["field"]): tuple(row["to"]) for row in references}
+    if actual != {field: revised.get(field, pointer) for field, pointer in fields.items()}:
+        raise ValueError("External relocation changed an unqualified field")
+    return result
+
+
 def external_owners(selected, sources, schemas):
     result = {}
     for row in selected.get("external_component_owners", []):
