@@ -41,6 +41,14 @@ class ScopedDefinitionManifestTests(unittest.TestCase):
         ]
         host = (ROOT / "tests/fixtures/scoped_definition_manifest_host.cs").read_text()
         host += "\npublic static partial class WholeCatalogComposed {\n" + "\n".join(methods) + "\n}\n"
+        profile = (ROOT / "tools/unity/runtime/progression/AndroidProfileBoundary.cs").read_text()
+        calls = []
+        for label in ("survivorDef", "unlockableDef"):
+            start = profile.index("WholeCatalogComposed.CategoryFamily(manifest, RoR2.ContentManagement.AddressablesLabels." + label)
+            end = profile.index(";", start)
+            calls.append(profile[start : end - 1] if label == "unlockableDef" else profile[start:end])
+        host += "\npublic partial class ProfileScope {\n" + braced_block(profile, "void PrepareAndroidProfile(CharacterBody player, JObject manifest)")
+        host += "\nvoid Prepare(CharacterBody player, JObject manifest) { survivors = " + calls[0] + "; unlockables = " + calls[1] + "; }\n}\n"
         result = execute_host(host, "scope")
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         self.assertEqual(result.stdout.strip(), "scope identity policy restoration buffs items PASS")
