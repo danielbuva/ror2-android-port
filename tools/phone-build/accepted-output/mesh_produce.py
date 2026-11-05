@@ -39,7 +39,9 @@ def safe_input(root, relative):
     return path
 
 
-def produce(profile_path, profile_sha256, pc, output, obj_helper=None):
+def produce(profile_path, profile_sha256, pc, output, obj_helper=None, comparison="exact"):
+    if comparison not in ("exact", "diagnostic"):
+        raise ValueError("unknown target comparison policy")
     started = time.monotonic()
     if sha(profile_path) != profile_sha256:
         raise ValueError("mesh profile drift")
@@ -73,6 +75,7 @@ def produce(profile_path, profile_sha256, pc, output, obj_helper=None):
         "resource_bytes": 0,
         "excluded": profile["excluded"],
     }
+    receipt.update(comparison=comparison, historical_mismatches=0)
     try:
         with (output / "objects.bin").open("xb") as objects, (output / "resources.bin").open("xb") as resources, (output / "index.jsonl").open("x") as index:
             for selected in profile["bundles"]:
@@ -109,7 +112,9 @@ def produce(profile_path, profile_sha256, pc, output, obj_helper=None):
                                 result, external = transform(body, schema, target["ops"], vertex)
                             digest = hashlib.sha256(result).hexdigest()
                             if len(result) != target["bytes"] or digest != target["sha256"]:
-                                raise ValueError("produced mesh differs: " + target["bundle"] + ":" + str(target["path_id"]))
+                                if comparison == "exact":
+                                    raise ValueError("produced mesh differs: " + target["bundle"] + ":" + str(target["path_id"]))
+                                receipt["historical_mismatches"] += 1
                             row = {
                                 "bundle": target["bundle"],
                                 "member": target["member"],
@@ -169,8 +174,14 @@ def main():
     parser.add_argument("--pc", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--obj-helper", type=Path, help="Current pinned public OBJ helper build directory; required only by OBJ profiles")
+    parser.add_argument(
+        "--comparison",
+        choices=("exact", "diagnostic"),
+        default="exact",
+        help="Record historical output byte differences while retaining source and structural checks",
+    )
     args = parser.parse_args()
-    produce(args.profile, args.profile_sha256, args.pc, args.output, args.obj_helper)
+    produce(args.profile, args.profile_sha256, args.pc, args.output, args.obj_helper, comparison=args.comparison)
 
 
 if __name__ == "__main__":

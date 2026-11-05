@@ -34,6 +34,10 @@ EXPECTED = {
 }
 
 
+def work_relative(path: Path) -> str:
+    return path.resolve().relative_to(WORK.resolve()).as_posix()
+
+
 def sha(path: Path) -> str:
     digest = hashlib.sha256()
     with path.open("rb") as stream:
@@ -79,7 +83,10 @@ def output_directory(raw: Path) -> Path:
         require(not component.is_symlink(), "output path contains a symlink")
         if component == WORK.resolve():
             break
-    ignored = subprocess.run(["git", "check-ignore", "--quiet", str(absolute)], cwd=ROOT)
+    # Git cannot descend through the shared work/ symlink in isolated checkouts.
+    # Its ignored root covers the canonical subtree validated above.
+    ignored_path = WORK if WORK.is_symlink() else absolute
+    ignored = subprocess.run(["git", "check-ignore", "--quiet", str(ignored_path)], cwd=ROOT)
     require(ignored.returncode == 0, "output path is not ignored by Git")
     absolute.mkdir()
     return absolute
@@ -574,14 +581,14 @@ def main() -> None:
             "stage_to_apk_binding": False,
             "dispatch_ready": False,
         },
-        "outputs_relative_to_work": {str(p.relative_to(WORK)): sha(p) for p in sorted(out.rglob("*")) if p.is_file() and p.name != "manifest.json"},
+        "outputs_relative_to_work": {work_relative(p): sha(p) for p in sorted(out.rglob("*")) if p.is_file() and p.name != "manifest.json"},
     }
     manifest_path = out / "manifest.json"
     manifest_path.write_text(json.dumps(manifest, sort_keys=True, indent=2) + "\n", encoding="utf-8")
     print(
         json.dumps(
             {
-                "output_dir_relative_to_work": str(out.relative_to(WORK)),
+                "output_dir_relative_to_work": work_relative(out),
                 "manifest_sha256": sha(manifest_path),
                 "hashes": manifest["source_input_hashes"],
                 "full_enable_ready": False,

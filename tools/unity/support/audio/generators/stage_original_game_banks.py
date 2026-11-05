@@ -335,7 +335,11 @@ def write_exclusive(source: Path, dest: Path, expected: str) -> None:
 def subprocess_check_ignore(path: Path) -> bool:
     import subprocess
 
-    relative = path.relative_to(ROOT).as_posix()
+    if not path.is_relative_to(WORK.resolve(strict=True)):
+        return False
+    # Git cannot descend through the shared work symlink in isolated checkouts.
+    ignored_path = WORK if WORK.is_symlink() else path
+    relative = ignored_path.relative_to(ROOT).as_posix()
     return (
         subprocess.run(
             ["git", "check-ignore", "--quiet", "--no-index", "--", relative],

@@ -89,7 +89,7 @@ EXPECTED_HELPERS = {
     "shader_metadata.py": "1701b9a0f621cd29c4f16fbb594676401d4a81cf2d02b5ab10664ce8aa629318",
     "shader_ramp_fog.py": "a81eade20c1771e4511925a64d6c3b66fe7acab6ef3687fc19b08fe3b17dfece",
     "shader_segments.py": "914dbee65a172770325df03b269999bc6100469b91eb7e731f0957ad35383be7",
-    "shader_source.py": "f6b78e8ca9862e40e1443198939b3d288d90d6ed3e40270680fedbadb662e1aa",
+    "shader_source.py": "3c768c15f29f312347f2e99b0e3ddf8612207db8023f220dcb52c5d51218212a",
 }
 
 sys.path.insert(0, str(ROOT / "scripts/lab"))

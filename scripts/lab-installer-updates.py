@@ -45,6 +45,57 @@ class Failure(Exception):
     """Only fixed, authored reason codes may leave the lab host."""
 
 
+def install_diagnostic_summary(data):
+    """Only the agreed fixed A diagnostic schema may leave the private host."""
+    unavailable = {"status": "unavailable", "reason": "invalid-schema"}
+    if not isinstance(data, bytes) or len(data) > 4096:
+        return {"status": "unavailable", "reason": "size-limit"}
+    try:
+        row = json.loads(data)
+    except (ValueError, UnicodeError):
+        return unavailable
+    if row is None:
+        return {"status": "unavailable", "reason": "missing"}
+    stages = {
+        "prepare",
+        "session-create",
+        "unknown",
+        "session-open",
+        "write-start",
+        "write-complete",
+        "fsync-start",
+        "fsync-complete",
+        "commit-start",
+        "commit-returned",
+    }
+    callbacks = {"none", "pending-user-action", "success", "failure", "unknown"}
+    if not isinstance(row, dict) or type(row.get("schema")) is not int or row["schema"] not in (1, 2):
+        return unavailable
+    keys = {"schema", "stage", "callback", "session_match"}
+    if row["schema"] == 2:
+        keys |= {"receiver_registration", "callback_entry"}
+    if set(row) != keys or not isinstance(row["stage"], str) or row["stage"] not in stages:
+        return unavailable
+    if not isinstance(row["callback"], str) or row["callback"] not in callbacks:
+        return unavailable
+    if (row["callback"] == "none" and row["session_match"] is not None) or (row["callback"] != "none" and type(row["session_match"]) is not bool):
+        return unavailable
+    result = {"status": "observed", "stage": row["stage"], "callback": row["callback"], "session_match": row["session_match"]}
+    if row["schema"] == 2:
+        if not isinstance(row["receiver_registration"], str) or row["receiver_registration"] not in {
+            "private",
+            "exported",
+            "disabled",
+            "missing",
+            "unavailable",
+        }:
+            return unavailable
+        if not isinstance(row["callback_entry"], str) or row["callback_entry"] not in {"none", "entered", "unknown"}:
+            return unavailable
+        result.update(receiver_registration=row["receiver_registration"], callback_entry=row["callback_entry"])
+    return result
+
+
 def module(name, path):
     spec = importlib.util.spec_from_file_location(name, path)
     value = importlib.util.module_from_spec(spec)
@@ -177,11 +228,75 @@ class HostTools:
         run(argv, label="compile-authored-resources")
 
 
+WITNESS_FILES = {
+    "android-profile-v1/profile.json": b'{"synthetic_profile":"retain-N"}\n',
+    "offline-settings-v1/preferences.json": b'{"synthetic_settings":"retain-N"}\n',
+}
+WITNESS_CLASS = "dev.ror2lab.synthetic.RetentionWitness"
+
+
+def witness_source():
+    # Fixture-only Activity; never packaged into production inputs. It uses the
+    # same Android root as ProfileRetentionProvider and exports only booleans.
+    paths = ",".join(json.dumps(path) for path in WITNESS_FILES)
+    values = ",".join(json.dumps(value.decode()) for value in WITNESS_FILES.values())
+    return r"""package dev.ror2lab.synthetic;
+import android.app.Activity;
+import android.os.Bundle;
+import java.io.*;
+import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
+import org.json.JSONObject;
+public final class RetentionWitness extends Activity {
+  @Override public void onCreate(Bundle state) {
+    super.onCreate(state);
+    String nonce = getIntent().getStringExtra("nonce"), mode = getIntent().getStringExtra("mode");
+    if (nonce == null || !nonce.matches("[0-9a-f]{32}") || !("seed".equals(mode) || "verify".equals(mode))) { finish(); return; }
+    boolean ok = false;
+    try {
+      File raw = getExternalFilesDir(null);
+      if (raw == null) throw new IOException();
+      File root = raw.getCanonicalFile();
+      String[] paths = new String[]{PATHS};
+      String[] values = new String[]{VALUES};
+      File[] files = new File[paths.length];
+      for (int i=0; i<paths.length; i++) {
+        files[i] = new File(root, paths[i]);
+        if (!files[i].getCanonicalFile().equals(files[i])) throw new IOException();
+        if ("seed".equals(mode) && files[i].exists()) throw new IOException();
+      }
+      for (int i=0; i<files.length; i++) {
+        byte[] expected = values[i].getBytes(StandardCharsets.UTF_8);
+        if ("seed".equals(mode)) {
+          File parent = files[i].getParentFile();
+          if (!parent.isDirectory() && !parent.mkdirs()) throw new IOException();
+          if (!files[i].createNewFile()) throw new IOException();
+          try (FileOutputStream out = new FileOutputStream(files[i])) { out.write(expected); out.getFD().sync(); }
+        }
+        if (!files[i].isFile() || files[i].length() != expected.length) throw new IOException();
+        byte[] actual = new byte[expected.length];
+        try (DataInputStream in = new DataInputStream(new FileInputStream(files[i]))) { in.readFully(actual); if (in.read() != -1) throw new IOException(); }
+        if (!Arrays.equals(actual, expected)) throw new IOException();
+      }
+      ok = true;
+    } catch (Exception failure) { ok = false; }
+    try {
+      JSONObject row = new JSONObject().put("nonce", nonce).put("mode", mode).put("verified", ok).put("files", ok ? 2 : 0);
+      File target = new File(getFilesDir(), "synthetic-retention-witness.json"), temp = new File(getFilesDir(), "synthetic-retention-witness.tmp");
+      try (FileOutputStream out = new FileOutputStream(temp)) { out.write(row.toString().getBytes(StandardCharsets.UTF_8)); out.getFD().sync(); }
+      if (!temp.renameTo(target)) throw new IOException();
+    } catch (Exception failure) { /* Missing receipt fails the host check. */ }
+    finish();
+  }
+}
+""".replace("PATHS", paths).replace("VALUES", values)
+
+
 def synthetic_manifest(temporary):
     """AAPT1 indexes -M by basename and requires AndroidManifest.xml."""
     manifest = temporary / "AndroidManifest.xml"
     manifest.write_text(
-        '<manifest xmlns:android="http://schemas.android.com/apk/res/android" package="dev.ror2lab.alpha" android:versionCode="1"><uses-sdk android:minSdkVersion="24" android:targetSdkVersion="30"/><application android:label="@string/app_name" android:debuggable="true" android:extractNativeLibs="true"><activity android:name="com.unity3d.player.UnityPlayerActivity" android:exported="true"><intent-filter><action android:name="android.intent.action.MAIN"/><category android:name="android.intent.category.LAUNCHER"/></intent-filter></activity></application></manifest>'
+        '<manifest xmlns:android="http://schemas.android.com/apk/res/android" package="dev.ror2lab.alpha" android:versionCode="1"><uses-sdk android:minSdkVersion="24" android:targetSdkVersion="30"/><application android:label="@string/app_name" android:debuggable="true" android:extractNativeLibs="true"><activity android:name="com.unity3d.player.UnityPlayerActivity" android:exported="true"><intent-filter><action android:name="android.intent.action.MAIN"/><category android:name="android.intent.category.LAUNCHER"/></intent-filter></activity><activity android:name="dev.ror2lab.synthetic.RetentionWitness" android:exported="true"/></application></manifest>'
     )
     return manifest
 
@@ -189,8 +304,9 @@ def synthetic_manifest(temporary):
 def synthetic_inputs(tools, temporary):
     """Compile tiny ORIGINAL fixtures, not Unity/game/SDK runtime implementations.
 
-    The alpha is never launched. Only the real authored retention provider runs.
-    These objects exercise packaging/update mechanics, not game readiness.
+    Only the fixture witness Activity and real authored retention provider run
+    in the alpha package; the synthetic Unity Activity is never launched. These
+    objects exercise packaging/update mechanics, not game readiness.
     """
     sdk = module("synthetic_sdk_names", ROOT / "tools/phone-build/accepted-output/sdk_package.py")
     owner = module("synthetic_owner_names", ROOT / "tools/phone-build/owner-apk/build_owner_apk.py")
@@ -202,11 +318,15 @@ def synthetic_inputs(tools, temporary):
     for name in result:
         if name.endswith(".so"):
             result[name] = library.read_bytes()
+    witness = temporary / "RetentionWitness.java"
+    witness.write_text(witness_source())
     for number in range(1, 5):
         name = "UnityPlayerActivity" if number == 1 else "SyntheticMarker" + str(number)
         java = temporary / (name + ".java")
         java.write_text("package com.unity3d.player; public class " + name + (" extends android.app.Activity" if number == 1 else "") + " {}\n")
-        result["apk/classes" + (str(number) if number > 1 else "") + ".dex"] = tools.dex([java], temporary / ("synthetic-dex-" + str(number)))
+        result["apk/classes" + (str(number) if number > 1 else "") + ".dex"] = tools.dex(
+            [java, witness] if number == 1 else [java], temporary / ("synthetic-dex-" + str(number))
+        )
     resources = temporary / "res"
     (resources / "values").mkdir(parents=True)
     (resources / "values/strings.xml").write_text('<resources><string name="app_name">Synthetic update fixture</string></resources>')
@@ -321,12 +441,21 @@ def publish(service, files, version):
     return base
 
 
+TRANSPORT = module("lab_adb_transport", ROOT / "scripts/lab/adb_transport.py")
+
+
+def adb_diagnostic(label, **record):
+    if DIAGNOSTICS is not None:
+        DIAGNOSTICS.record(label, **record)
+
+
 class Phone:
     def __init__(self, serial, timeout, allow_test_installs=False, allow_test_notifications=False):
         self.serial, self.timeout = serial, timeout
         self.allow_test_installs = allow_test_installs
         self.allow_test_notifications = allow_test_notifications
         self.adb = Path("/opt/homebrew/bin/adb")
+        self.transport = TRANSPORT.AdbTransport(self.adb, serial, observer=adb_diagnostic)
         self.owned_installer = False
         self.install_attempted = False
         self.installer_hash = None
@@ -335,16 +464,91 @@ class Phone:
         self.install_volume = None
         self.ui_path = "/data/local/tmp/ror2-installer-ui-" + secrets.token_hex(8) + ".xml"
 
-    def command(self, *args, stdin=None, label, timeout=60):
-        return run([self.adb, "-s", self.serial, *args], label=label, stdin=stdin, timeout=timeout)
+    def execute(self, *args, stdin=None, label, timeout=60, idempotent=False):
+        try:
+            return self.transport.execute(*args, label=label, stdin=stdin, timeout=timeout, idempotent=idempotent)
+        except TRANSPORT.AdbError:
+            raise Failure(label) from None
+
+    def command(self, *args, stdin=None, label, timeout=60, idempotent=False):
+        result = self.execute(*args, label=label, stdin=stdin, timeout=timeout, idempotent=idempotent)
+        if result.returncode:
+            raise Failure(label)
+        return result.stdout
+
+    def detached(self, command, *, label, timeout=30):
+        # Long accessibility commands survive a killed host adb client. Polling
+        # never relaunches the job; final logical records preserve the existing
+        # private UI diagnostic inspector's dump/read adjacency contract.
+        with tempfile.TemporaryDirectory(prefix="ror2-adb-logs-") as temporary:
+            logs = Path(temporary)
+            try:
+                job = self.transport.start_detached(command, label=label, timeout=min(10, timeout))
+                if DIAGNOSTICS is not None:
+                    # Retain the exact private handle and partial logs if waiting
+                    # times out. No device identifiers or paths are published.
+                    name = Path(job.directory).name
+                    DIAGNOSTICS.write(name + ".json", encoded({"directory": job.directory, "phase": CURRENT_PHASE, "category": label}))
+                    logs = DIAGNOSTICS.directory / name
+                    logs.mkdir(mode=0o700)
+                result = self.transport.wait_detached(job, logs, label=label, timeout=timeout)
+                try:
+                    self.transport.cleanup_detached(job)
+                except TRANSPORT.AdbError:
+                    pass  # Terminal evidence exists; retain the exact directory.
+            except TRANSPORT.AdbError as error:
+                adb_diagnostic(
+                    label,
+                    stdout=(logs / "stdout.log").read_bytes() if (logs / "stdout.log").is_file() else b"",
+                    stderr=(logs / "stderr.log").read_bytes() if (logs / "stderr.log").is_file() else b"",
+                    outcome="TimeoutExpired" if isinstance(error, TRANSPORT.DetachedUncertain) else "transport-error",
+                )
+                raise Failure(label) from None
+        adb_diagnostic(label, stdout=result.stdout, stderr=result.stderr, returncode=result.returncode)
+        return result
+
+    def install(self, apk):
+        self.install_attempted = True
+        self.installer_hash = sha(apk.read_bytes())
+        try:
+            self.transport.install(
+                apk,
+                self.install_volume,
+                label="install-fresh-test-installer",
+                timeout=600,
+                reconcile=lambda: self.package_hash(PACKAGE) == self.installer_hash,
+            )
+        except TRANSPORT.AdbError:
+            raise Failure("test-installer-install-unverified") from None
+        self.owned_installer = True
 
     def shell(self, *args, **kwargs):
-        return self.command("shell", *args, **kwargs)
+        # Exact read-only command shapes; mutations (taps, appops set, launches,
+        # writes, uninstalls) are not silently replayed after an uncertain result.
+        readonly = (
+            args[:1] in (("cat",), ("sha256sum",), ("df",))
+            or args[:2]
+            in (
+                ("sm", "list-volumes"),
+                ("appops", "get"),
+                ("am", "get-current-user"),
+            )
+            or args
+            in (
+                ("dumpsys", "power"),
+                ("dumpsys", "window"),
+                ("dumpsys", "activity", "activities"),
+                ("dumpsys", "accessibility"),
+                ("dumpsys", "activity", "processes"),
+            )
+            or (len(args) >= 3 and args[:1] == ("run-as",) and args[2] == "df")
+        )
+        return self.command("shell", *args, idempotent=readonly, **kwargs)
 
     def package_paths(self, package):
         # Android pm path reports an absent package with either exit 0 or 1.
         # This exception belongs only to this read-only query, not generic ADB.
-        result = execute([self.adb, "-s", self.serial, "shell", "pm", "path", package], label="device-package-path-query", timeout=60)
+        result = self.execute("shell", "pm", "path", package, label="device-package-path-query", timeout=60, idempotent=True)
         if result.returncode in (0, 1) and result.stdout == b"" and result.stderr == b"":
             return []
         if result.returncode or result.stderr:
@@ -429,7 +633,7 @@ class Phone:
         # uiautomator still exits 0 and creates no file. Retry only that observed
         # result, never cat a missing dump or retry unrelated command failures.
         for attempt in range(3):
-            result = execute([self.adb, "-s", self.serial, "shell", "uiautomator", "dump", self.ui_path], label="device-ui-dump", timeout=30)
+            result = self.detached(["uiautomator", "dump", self.ui_path], label="device-ui-dump", timeout=30)
             if result.returncode:
                 raise Failure("device-ui-dump")
             # Both AOSP dump modes wait for idle before acquiring any root.
@@ -462,9 +666,7 @@ class Phone:
         try:
             if not self.owned_installer:
                 raise Failure("ui-window-installer-not-owned")
-            result = execute(
-                [self.adb, "-s", self.serial, "shell", "uiautomator", "dump", "--windows", self.ui_path], label="device-ui-windows-dump", timeout=30
-            )
+            result = self.detached(["uiautomator", "dump", "--windows", self.ui_path], label="device-ui-windows-dump", timeout=30)
             if result.returncode or ui_output_classification(result.stdout) != "dump-reported-written":
                 raise Failure("ui-window-dump-unavailable")
             hierarchy = focused_ui_hierarchy(self.read_ui_dump("displays"), allowed_packages)
@@ -497,6 +699,11 @@ class Phone:
         print(encoded({"mode": "ui-null-root-diagnostics", "fallback_reason": fallback_reason, "observed": summary}).decode(), end="", flush=True)
 
     def tap_visible(self, label):
+        # Building can outlast the display timeout after start(). Refresh wake
+        # before each UI interaction without relaunching the Activity: Android's
+        # PackageInstaller consent window must keep its existing focus. WAKEUP
+        # never toggles an already-awake display off; cleanup still sleeps it.
+        self.shell("input", "keyevent", "KEYCODE_WAKEUP", label="device-display-wake")
         tree = self.ui_for((PACKAGE, "com.android.packageinstaller", "com.google.android.packageinstaller")) if label == "Install" else self.ui()
         for node in tree.iter("node"):
             if node.get("text", "").casefold() == label.casefold() and node.get("enabled") == "true":
@@ -592,6 +799,8 @@ class Phone:
 
     def installed(self, publisher, previous=None):
         deadline = time.monotonic() + self.timeout
+        callback_absent_since = None
+        callback_observed = False
         while time.monotonic() < deadline:
             receipt = self.read("installed-release.json")
             if receipt and receipt.get("release", {}).get("version_code") == publisher and receipt.get("installed_readback_verified") is True:
@@ -617,11 +826,77 @@ class Phone:
                     # prevent normal owned-package cleanup.
                     pass
                 raise Failure("installer-build-error")
+            if not callback_observed and row and row.get("state") == "INSTALLING":
+                try:
+                    diagnostic = self.capture_install_diagnostic()
+                except Exception:
+                    # Optional evidence loss must not replace the install result
+                    # or manufacture proof that a callback remained absent.
+                    diagnostic = {"status": "unavailable"}
+                if diagnostic.get("status") == "observed" and (diagnostic.get("callback") != "none" or diagnostic.get("callback_entry") == "entered"):
+                    callback_observed = True
+                    callback_absent_since = None
+                elif (
+                    diagnostic.get("status") == "observed"
+                    and diagnostic.get("stage") == "commit-returned"
+                    and diagnostic.get("callback") == "none"
+                    and diagnostic.get("session_match") is None
+                    and diagnostic.get("callback_entry", "none") == "none"
+                ):
+                    now = time.monotonic()
+                    if callback_absent_since is None:
+                        callback_absent_since = now
+                    elif now - callback_absent_since >= 60:
+                        # Diagnostic harness bound only: never mark the runtime
+                        # failed or initiate another sealed install session.
+                        raise Failure("install-first-callback-timeout")
+                else:
+                    callback_absent_since = None
+            else:
+                callback_absent_since = None
             # Consent is always the real Android PackageInstaller UI. Never forge
             # success receipts or use adb install to replace the alpha package.
             self.tap("Install", required=False)
             time.sleep(1)
         raise Failure("install-readback-timeout")
+
+    def retention_witness(self, mode, receipt=None):
+        if mode not in ("seed", "verify") or not self.owned_installer or not self.alpha_hash or self.package_hash(GAME) != self.alpha_hash:
+            raise Failure("retention-witness-ownership")
+        if receipt is not None:
+            backup = receipt.get("retention_backup", {})
+            if (
+                receipt.get("profile_retention_verified") is not True
+                or backup.get("data_schema") != 1
+                or backup.get("bytes") != sum(map(len, WITNESS_FILES.values()))
+                or not re.fullmatch(r"[0-9a-f]{64}", backup.get("snapshot", ""))
+            ):
+                raise Failure("retention-witness-provider-unverified")
+        nonce = secrets.token_hex(16)
+        try:
+            self.shell("am", "force-stop", GAME, label="retention-witness-stop")
+            self.shell("am", "start", "-W", "-n", GAME + "/" + WITNESS_CLASS, "--es", "mode", mode, "--es", "nonce", nonce, label="retention-witness-launch")
+            deadline = time.monotonic() + 15
+            while time.monotonic() < deadline:
+                raw = self.shell(
+                    "run-as",
+                    GAME,
+                    "sh",
+                    "-c",
+                    "'if [ -f files/synthetic-retention-witness.json ]; then cat files/synthetic-retention-witness.json; else printf null; fi'",
+                    label="retention-witness-result",
+                )
+                row = json.loads(raw)
+                if row and row.get("nonce") == nonce:
+                    if row.get("mode") != mode or row.get("verified") is not True or row.get("files") != 2:
+                        raise Failure("retention-witness-mismatch")
+                    break
+                time.sleep(0.2)
+            else:
+                raise Failure("retention-witness-timeout")
+        finally:
+            self.shell("am", "force-stop", GAME, label="retention-witness-stop")
+        self.start()
 
     def await_install_permission(self):
         value = self.shell("appops", "get", PACKAGE, "REQUEST_INSTALL_PACKAGES", label="device-install-permission-query").decode()
@@ -632,6 +907,18 @@ class Phone:
         # The root lab invocation may pass this flag ONLY after explicit owner
         # authorization for this fresh disposable test package on the leased phone.
         self.shell("appops", "set", PACKAGE, "REQUEST_INSTALL_PACKAGES", "allow", label="device-install-permission-enable")
+
+    def capture_install_diagnostic(self):
+        # Fresh-run ownership and exact installed test APK identity are mandatory.
+        # No alpha/game namespace, broad traversal, or mutation is involved.
+        if not self.owned_installer or not self.installer_hash or self.package_hash(PACKAGE) != self.installer_hash:
+            return {"status": "unavailable", "reason": "ownership-unverified"}
+        command = (
+            'for p in files files/owner-input files/owner-input/install-diagnostic.json; do [ ! -L "$p" ] || exit 1; done; '
+            "if [ -f files/owner-input/install-diagnostic.json ]; then head -c 4097 files/owner-input/install-diagnostic.json; else printf null; fi"
+        )
+        data = self.shell("run-as", PACKAGE, "sh", "-c", "'" + command + "'", label="device-install-diagnostic-read", timeout=15)
+        return install_diagnostic_summary(data)
 
     def capture_apk_logs(self):
         # APK-stage subprocesses in build_owner_apk.build write only these two
@@ -731,12 +1018,7 @@ def acceptance(phone, config, temporary, passed):
     set_phase("pre-install-storage")
     phone.storage()
     set_phase("installer-install")
-    phone.install_attempted = True
-    phone.command("install", "--force-uuid", phone.install_volume, str(apk), timeout=600, label="install-fresh-test-installer")
-    phone.installer_hash = sha(apk.read_bytes())
-    if phone.package_hash(PACKAGE) != phone.installer_hash:
-        raise Failure("test-installer-readback")
-    phone.owned_installer = True
+    phone.install(apk)
     set_phase("installer-storage")
     phone.storage()
     set_phase("installer-permission")
@@ -761,6 +1043,7 @@ def acceptance(phone, config, temporary, passed):
         phone.storage()
         phone.tap("Reconstruct and install verified game")
         first = phone.installed(1)
+        phone.retention_witness("seed")
         set_phase("check-for-updates")
         publish(service, releases[2], 2)
         phone.check(2)
@@ -769,13 +1052,16 @@ def acceptance(phone, config, temporary, passed):
         passed("check-for-updates")
         set_phase("update-N-to-N+1")
         phone.storage()
+        phone.retention_witness("verify")
         phone.tap("Reconstruct and install verified game")
         second = phone.installed(2, first)
+        phone.retention_witness("verify", second)
         passed("update-N-to-N+1")
         set_phase("same-key-rollback")
         phone.storage()
         phone.tap("Rebuild and install previous release (same key)")
         rolled = phone.installed(1, second)
+        phone.retention_witness("verify", rolled)
         passed("same-key-rollback")
         tampered = dict(releases[2])
         body = json.loads(tampered["release.json"])
@@ -1410,15 +1696,26 @@ def main(argv=None):
         reason = "unexpected-local-error-see-private-lab-environment"
         failure_phase = CURRENT_PHASE
     finally:
-        if phone is not None:
-            set_phase("cleanup")
-            try:
-                cleanup_verified = phone.cleanup() == "verified-absent"
-            except Failure as error:
-                cleanup_reason = str(error)
-            except Exception:
-                cleanup_reason = "unexpected-cleanup-error-see-private-lab-environment"
-        DIAGNOSTICS = None
+        try:
+            if phone is not None and reason and failure_phase in ("baseline-N-install", "update-N-to-N+1", "same-key-rollback"):
+                try:
+                    observed = phone.capture_install_diagnostic()
+                except Exception:
+                    observed = {"status": "unavailable", "reason": "capture-failed"}
+                print(encoded({"mode": "install-diagnostic", "observed": observed}).decode(), end="", flush=True)
+        except Exception:
+            # Optional diagnostics, including output, cannot replace the install failure.
+            pass
+        finally:
+            if phone is not None:
+                set_phase("cleanup")
+                try:
+                    cleanup_verified = phone.cleanup() == "verified-absent"
+                except Failure as error:
+                    cleanup_reason = str(error)
+                except Exception:
+                    cleanup_reason = "unexpected-cleanup-error-see-private-lab-environment"
+            DIAGNOSTICS = None
     if reason:
         if args.host_only:
             print("FAIL host-fixture-build phase=" + failure_phase + " reason=" + reason, flush=True)

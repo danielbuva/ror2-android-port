@@ -39,6 +39,7 @@ class ScriptRegistryTests(unittest.TestCase):
                 "layout": S.P.W.read_serialized(stream),
                 "bodies": {77: body},
                 "script_ids": {("Authored.dll", "", "Demo"): 77},
+                "transfer_schemas": [{"identity": ["Authored.dll", "", "Demo"], "tree": "00000000", "properties": "00" * 16}],
                 "provider_pins": {str(source): {"bytes": source.stat().st_size, "sha256": S.P.sha(source)}},
             }
             with patch.object(S.P, "registry_records", return_value=value) as owner:
@@ -48,6 +49,9 @@ class ScriptRegistryTests(unittest.TestCase):
             self.assertEqual(result["scripts"], 1)
             path = root / "output" / S.NAME
             self.assertEqual(result["files"][S.NAME]["sha256"], S.P.sha(path))
+            schemas = root / "output/schemas.json"
+            self.assertEqual(json.loads(schemas.read_text()), value["transfer_schemas"])
+            self.assertEqual(result["schemas"], {"bytes": schemas.stat().st_size, "sha256": S.P.sha(schemas)})
             with path.open("rb") as f:
                 f.size = path.stat().st_size
                 metadata = S.P.W.read_serialized(f)

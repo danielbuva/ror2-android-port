@@ -172,10 +172,13 @@ SHADER_COMMON = {
     241: "map",
     387: "m_Index",
     427: "m_Name",
+    434: "m_ObjectHideFlags",
     519: "m_Type",
     543: "pair",
+    646: "PPtr<Prefab>",
     688: "PPtr<Texture>",
     778: "second",
+    785: "set",
     795: "size",
     814: "SInt64",
     821: "SInt8",
@@ -184,6 +187,9 @@ SHADER_COMMON = {
     928: "UInt8",
     934: "unsigned int",
     981: "vector",
+    1093: "m_CorrespondingSourceObject",
+    1121: "m_PrefabInstance",
+    1138: "m_PrefabAsset",
     1161: "Hash128",
 }
 SHADER_SCALARS = {

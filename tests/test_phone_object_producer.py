@@ -203,12 +203,45 @@ class ProducedRecordRelocationTests(unittest.TestCase):
         typ = P.W.read_serialized(stream)["types"][0]
         reference = {"offset": 4, "from": [1, 6], "to": [2, 6]}
         self.assertEqual(P.remap_record(body, typ, [reference], ["old", "new"]), struct.pack("<Iiq", 17, 2, 6))
+        by_field = {"field": ["pointer"], "from": [1, 6], "to": [2, 99]}
+        self.assertEqual(P.remap_record(body, typ, [by_field], ["old", "new"]), struct.pack("<Iiq", 17, 2, 99))
+        self.assertNotIn("offset", by_field)
+        with self.assertRaisesRegex(ValueError, "field/offset differs"):
+            P.remap_record(body, typ, [dict(by_field, offset=0)], ["old", "new"])
+        with self.assertRaisesRegex(ValueError, "not a schema PPtr"):
+            P.remap_record(body, typ, [dict(by_field, field=["scalar"])], ["old", "new"])
+        with self.assertRaisesRegex(ValueError, "overlapping"):
+            P.remap_record(body, typ, [reference, by_field], ["old", "new"])
         with self.assertRaisesRegex(ValueError, "schema PPtr"):
             P.remap_record(body, typ, [dict(reference, offset=0)], ["old", "new"])
         with self.assertRaisesRegex(ValueError, "absent external"):
             P.remap_record(body, typ, [reference], ["old"])
         with self.assertRaisesRegex(ValueError, "identity drift"):
             P.remap_record(body, typ, [dict(reference, **{"from": [1, 7]})], ["old", "new"])
+
+    def test_field_relocation_follows_current_variable_length_body(self):
+        schema = FIXTURE.node(
+            "Base",
+            children=[
+                FIXTURE.text("label"),
+                FIXTURE.node(
+                    "nested",
+                    children=[
+                        FIXTURE.node(
+                            "target", kind="PPtr<Object>", children=[FIXTURE.node("m_FileID", 4, kind="int"), FIXTURE.node("m_PathID", 8, kind="SInt64")]
+                        )
+                    ],
+                ),
+            ],
+        )
+        reference = {"field": ["nested", "target"], "from": [1, 7], "to": [2, 77]}
+        for label in ("old", "a newer source build with a longer label"):
+            prefix = FIXTURE.M.padded_string(label)
+            body = prefix + struct.pack("<iq", 1, 7)
+            stream = io.BytesIO(RECORD_FIXTURE.serialized(body, schema, class_id=114))
+            stream.size = len(stream.getvalue())
+            typ = P.W.read_serialized(stream)["types"][0]
+            self.assertEqual(P.remap_record(body, typ, [reference], ["old", "new"]), prefix + struct.pack("<iq", 2, 77))
 
     def test_preload_uses_relocated_dependency(self):
         bundle = {"preload_dependencies": [], "dependencies": []}
@@ -1753,6 +1786,25 @@ class ObjectProducerTests(unittest.TestCase):
                 self.assertFalse(receipt["success"])
                 self.assertIn("error", receipt)
 
+    def test_diagnostic_bundle_hashes_record_actual_output_and_keep_source_pins(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            pc, path, profile, _, expected = fixture(root)
+            profile["bundle"].update(comparison="diagnostic", sha256="0" * 64, serialized_sha256="0" * 64, bytes=0)
+            path.write_text(json.dumps(profile))
+            result = produce(path, P.B.sha(path), pc, root / "produced")
+            self.assertEqual(result["serialized_sha256"], digest(expected))
+            self.assertEqual(result["comparison"], {"policy": "diagnostic", "serialized_matches": {"CAB-target": False}, "bundle_matches": False})
+            profile["objects"][0]["sha256"] = "0" * 64
+            path.write_text(json.dumps(profile))
+            result = produce(path, P.B.sha(path), pc, root / "changed-target")
+            self.assertEqual(len(result["historical_object_mismatches"]), 1)
+            self.assertEqual(result["serialized_sha256"], digest(expected))
+            profile["objects"][0]["source_sha256"] = "0" * 64
+            path.write_text(json.dumps(profile))
+            with self.assertRaisesRegex(ValueError, "original object body drift"):
+                produce(path, P.B.sha(path), pc, root / "bad-source")
+
     def test_checked_remap_rejects_overlaps_escape_and_wrong_identity(self):
         body = b"KEEP" + struct.pack("<iq", 4, -500) + b"TAIL"
         row = {"offset": 4, "from": [4, -500], "to": [0, 123]}
@@ -1815,6 +1867,31 @@ class ObjectProducerTests(unittest.TestCase):
         self.assertEqual(bodies, {row["path_id"]: row["body"] for row in records})
         self.assertEqual(null_type["script_type"], -1)
 
+    def test_prefab_null_script_requires_original_zero_metadata(self):
+        null_type = {**typ(114), "hash": bytes(16), "script_id": bytes(16)}
+        for failure in (None, "length", "hash", "script_id", "script_type", "dangling"):
+            with self.subTest(failure=failure):
+                original_type = copy.deepcopy(null_type)
+                body = bytes(32)
+                if failure == "length":
+                    body += bytes(4)
+                elif failure in ("hash", "script_id"):
+                    original_type[failure] = bytes([1]) * 16
+                elif failure == "script_type":
+                    original_type["script_type"] = 0
+                elif failure == "dangling":
+                    body = bytes(16) + struct.pack("<iq", 0, 999) + bytes(4)
+                records = [{"path_id": pid, "type": original_type, "body": body} for pid in (8, 9)]
+                if failure:
+                    with self.assertRaisesRegex(ValueError, "null-script|script absent"):
+                        P.make_layout({"externals": []}, records)
+                else:
+                    layout, bodies = P.make_layout({"externals": []}, records)
+                    self.assertEqual(layout["scripts"], [])
+                    self.assertEqual(layout["types"], [null_type, null_type])
+                    self.assertEqual([row["type_id"] for row in layout["objects"]], [0, 1])
+                    self.assertEqual(bodies, {8: bytes(32), 9: bytes(32)})
+
     def test_script_table_and_type_indices_follow_produced_script_order(self):
         mono = {**typ(114), "script_id": bytes(16), "script_type": 99}
         body = bytes(16) + struct.pack("<iq", 0, 12) + b"PRESERVED"
@@ -1829,6 +1906,37 @@ class ObjectProducerTests(unittest.TestCase):
         self.assertEqual(mono["script_type"], 99)
         self.assertEqual(bodies[8], body)
         self.assertEqual([(row["path_id"], row["offset"]) for row in layout["objects"]], [(-8, 0), (8, 16), (12, 8)])
+
+    def test_non_scene_external_scripts_require_explicit_qualified_endpoints(self):
+        mono = {**typ(114), "script_id": bytes(16), "script_type": 99}
+        records = [
+            {"path_id": 8, "type": mono, "body": bytes(16) + struct.pack("<iq", 1, 42) + b"RETAINED"},
+            {"path_id": 9, "type": mono, "body": bytes(16) + struct.pack("<iq", 0, 12) + b"LOCAL"},
+            {"path_id": 12, "type": typ(115), "body": b"SCRIPT"},
+        ]
+        selected = {"externals": ["CAB-owner.sharedAssets"]}
+        for allowed in ((), [(1, 43)], [(0, 42)], [(2, 42)], [(1, 0)]):
+            with self.subTest(allowed=allowed), self.assertRaisesRegex(ValueError, "script absent|MonoScript pointer"):
+                P.make_layout(selected, records, external_scripts=allowed)
+        for streamed in (False, True):
+            supplied = [dict(row, prefix=row["body"][:32], body_bytes=len(row["body"])) for row in records] if streamed else records
+            layout, bodies = P.make_layout(selected, supplied, external_scripts=[(1, 42)], include_bodies=not streamed)
+            self.assertEqual(layout["scripts"], [(0, 12), (1, 42)])
+            self.assertEqual(layout["externals"][0]["path"], "archive:/CAB-owner.sharedAssets/CAB-owner.sharedAssets")
+            types = {row["path_id"]: layout["types"][row["type_id"]] for row in layout["objects"]}
+            self.assertEqual((types[8]["script_type"], types[9]["script_type"]), (1, 0))
+            self.assertEqual(mono["script_type"], 99)
+            stream = io.BytesIO()
+            original = {row["path_id"]: row["body"] for row in records}
+            P.W.write_serialized(stream, layout, lambda row: io.BytesIO(original[row["path_id"]]))
+            stream.size = len(stream.getvalue())
+            stream.seek(0)
+            read = P.W.read_serialized(stream)
+            self.assertEqual({key: read[key] for key in layout}, layout)
+            for row in read["objects"]:
+                stream.seek(read["data_offset"] + row["offset"])
+                self.assertEqual(stream.read(row["bytes"]), original[row["path_id"]])
+            self.assertEqual(bodies, {} if streamed else original)
 
 
 CURVE_RECORD_FIXTURE = load("curve_record_fixture", ROOT / "tests/test_phone_record_producer.py")
@@ -2241,6 +2349,18 @@ class LegacyBarrierPolicyTests(unittest.TestCase):
             LEGACY_IDENTITY.properties_hash("AnimateShaderAlpha", "RoR2", "RoR2.dll", hashed, sdk),
         )
 
+    def test_generic_curve_hash_policy_retains_runtime_layout_and_checks_all_fields(self):
+        body, runtime, sdk = legacy_policy_fixture()
+        changed = runtime.replace(b"alphaCurve\x00", b"otherCurve\x00")
+        normalized = P.editor_curve_hash_tree(changed, [sdk, sdk], LEGACY_IDENTITY)
+        self.assertEqual(next(n["size"] for n in LEGACY_IDENTITY.tree_nodes(changed) if n["type"] == "Keyframe"), 28)
+        self.assertEqual(next(n["size"] for n in LEGACY_IDENTITY.tree_nodes(normalized) if n["type"] == "Keyframe"), 32)
+        self.assertEqual(P.editor_curve_hash_tree(normalized, [sdk], LEGACY_IDENTITY), normalized)
+        # A non-editor source field change cannot be hidden by normalization.
+        with self.assertRaisesRegex(ValueError, "runtime AnimationCurve"):
+            P.editor_curve_hash_tree(changed.replace(b"inSlope\x00", b"badSlop\x00"), [sdk], LEGACY_IDENTITY)
+        self.assertTrue(body)
+
     def test_nonzero_value_or_alignment_padding_is_never_discarded(self):
         body, tree, _ = legacy_policy_fixture()
         for offset in [48, 49, 52, 55]:
@@ -2311,6 +2431,96 @@ class ReflectionProbeImportTests(unittest.TestCase):
 
 
 class FieldlessScriptMetadataTests(unittest.TestCase):
+    def test_preflight_rejects_self_consistent_but_wrong_component_script_bindings(self):
+        identity = ["Fixture.dll", "Fixture", "Expected"]
+        typ = {"class_id": 114, "script_id": LEGACY_IDENTITY.md4(b"ExpectedFixtureFixture.dll")}
+        component = {"path_id": 1, "source": [0, 7], "references": [{"offset": 16, "to": [0, 2]}]}
+        script = {"path_id": 2, "script_identity": identity}
+        members = [{"name": "fixture", "objects": [component, script]}]
+        self.assertEqual(P.script_binding_errors(members, lambda _: typ, LEGACY_IDENTITY), [])
+        script["script_identity"] = ["Fixture.dll", "Fixture", "Other"]
+        errors = P.script_binding_errors(members, lambda _: typ, LEGACY_IDENTITY)
+        self.assertEqual(len(errors), 1)
+        self.assertEqual(errors[0]["script_path_id"], 2)
+        component["sdk_event_system"] = {}
+        self.assertEqual(len(P.script_binding_errors(members, lambda _: typ, LEGACY_IDENTITY)), 1)
+        script["script_identity"] = ["UnityEngine.UI.dll", "UnityEngine.EventSystems", "EventSystem"]
+        self.assertEqual(P.script_binding_errors(members, lambda _: typ, LEGACY_IDENTITY), [])
+
+    def test_sdk_event_system_defaults_require_matching_current_schema(self):
+        def pointer(name):
+            return FIXTURE.node(name, kind="PPtr<Object>", children=[FIXTURE.node("m_FileID", 4, kind="int"), FIXTURE.node("m_PathID", 8, kind="SInt64")])
+
+        fields = [pointer("m_GameObject"), FIXTURE.node("m_Enabled", 1, kind="UInt8", meta=0x4000), pointer("m_Script"), FIXTURE.node("m_Name", 4, kind="int")]
+        stream = io.BytesIO(RECORD_FIXTURE.serialized(b"", FIXTURE.node("Base", kind="MonoBehaviour", children=fields), class_id=114))
+        stream.size = len(stream.getvalue())
+        typ = P.W.read_serialized(stream)["types"][0]
+        nodes = LEGACY_IDENTITY.tree_nodes(typ["tree"])
+        node = LEGACY_IDENTITY._node
+        sdk = LEGACY_IDENTITY._tree(nodes + [node("string", "m_EditorClassIdentifier", -1)])
+        custom = [
+            node("PPtr<$GameObject>", "m_FirstSelected", 12),
+            node("int", "m_FileID", 4, 2),
+            node("SInt64", "m_PathID", 8, 2),
+            node("UInt8", "m_sendNavigationEvents", 1, meta=0x4000),
+            node("int", "m_DragThreshold", 4),
+        ]
+        tree = LEGACY_IDENTITY._tree(nodes + custom)
+        names = ("EventSystem", "UnityEngine.EventSystems", "UnityEngine.UI.dll")
+        properties = LEGACY_IDENTITY.properties_hash(*names, tree, sdk)
+        stream = io.BytesIO()
+        P.aligned_string(stream, "EventSystem")
+        stream.write(bytes(4) + properties)
+        for value in names:
+            P.aligned_string(stream, value)
+        script = stream.getvalue()
+        source = """[SerializeField] [FormerlySerializedAs("oldSelection")] private GameObject m_FirstSelected;
+        [SerializeField] private bool m_sendNavigationEvents = true;
+        [SerializeField] private int m_DragThreshold = 10;"""
+        body = struct.pack("<iqB3xiqI", 0, 41, 1, 0, 99, 0)
+        made, revised = P.sdk_event_system(body, typ, script, source, sdk, LEGACY_IDENTITY)
+        self.assertEqual(made, body + struct.pack("<iqB3xi", 0, 0, 1, 10))
+        self.assertEqual(revised["hash"], properties)
+        self.assertEqual(revised["tree"], tree)
+        changed, _ = P.sdk_event_system(body, typ, script, source.replace("= true", "= false").replace("= 10", "= 15"), sdk, LEGACY_IDENTITY)
+        self.assertEqual(changed[-8:], struct.pack("<B3xi", 0, 15))
+        for invalid in (
+            source.replace("m_DragThreshold", "newField"),
+            source + "[SerializeField] private int extra = 1;",
+            source.replace("= true", "= SomeCall()"),
+        ):
+            with self.subTest(source=invalid), self.assertRaises(ValueError):
+                P.sdk_event_system(body, typ, script, invalid, sdk, LEGACY_IDENTITY)
+        mutation = bytearray(script)
+        mutation[P.script_fields(script)[0]] ^= 1
+        with self.assertRaisesRegex(ValueError, "properties"):
+            P.sdk_event_system(body, typ, bytes(mutation), source, sdk, LEGACY_IDENTITY)
+
+    def test_current_fieldless_supplier_keeps_receipt_and_script_identity_checks(self):
+        stream = io.BytesIO()
+        P.aligned_string(stream, "AuthoredBoundary")
+        stream.write(bytes(20))
+        for value in ("AuthoredBoundary", "Fixture", "Authored.dll"):
+            P.aligned_string(stream, value)
+        script = stream.getvalue()
+        identity = ["Authored.dll", "Fixture", "AuthoredBoundary"]
+        selected = {"record": {}, "script_identity": identity, "sha256": "historical"}
+        row = {"source_produced": {"script_identity": identity}}
+        pin = hashlib.sha256(script).hexdigest()
+        self.assertEqual(P.supplied_script_identity(script, 115, selected, row), pin)
+        for class_id, selection, supplier in (
+            (114, selected, row),
+            (115, selected, {}),
+            (115, {**selected, "script_identity": ["Other.dll", *identity[1:]]}, row),
+        ):
+            with self.subTest(class_id=class_id, selection=selection, supplier=supplier), self.assertRaises(ValueError):
+                P.supplied_script_identity(script, class_id, selection, supplier)
+        with self.assertRaisesRegex(ValueError, "script identity differs"):
+            P.supplied_script_identity(script.replace(b"Authored.dll", b"Mutation.dll"), 115, selected, row)
+        self.assertEqual(P.supplied_script_identity(script, 115, {"sha256": pin}, {}), pin)
+        with self.assertRaisesRegex(ValueError, "record identity differs"):
+            P.supplied_script_identity(script, 115, {"sha256": "historical"}, {})
+
     def test_owned_script_properties_prove_base_only_schema(self):
         def pointer(name):
             return FIXTURE.node(name, kind="PPtr<Object>", children=[FIXTURE.node("m_FileID", 4, kind="int"), FIXTURE.node("m_PathID", 8, kind="SInt64")])

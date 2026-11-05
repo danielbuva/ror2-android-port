@@ -75,7 +75,7 @@ public final class PayloadBootstrapActivity extends Activity {
         web.getSettings().setAllowContentAccess(false);
         web.getSettings().setBlockNetworkLoads(true);
         web.getSettings().setDomStorageEnabled(false);
-        web.addJavascriptInterface(new Bridge(), "OwnerPayload");
+        web.addJavascriptInterface(new Bridge(this), "OwnerPayload");
         web.setWebViewClient(new LocalAssetClient(getAssets()));
         setContentView(web);
         web.loadUrl(ORIGIN + "index.html#setup");
@@ -148,7 +148,12 @@ public final class PayloadBootstrapActivity extends Activity {
         reviewDialog.show();
     }
 
-    private final class Bridge {
+    // Use explicit references after the on-device D8 reader rejected the
+    // non-static Bridge class; preserve its existing Activity lifetime.
+    private static final class Bridge {
+        private final PayloadBootstrapActivity activity;
+        private final Backend backend;
+        Bridge(PayloadBootstrapActivity activity) { this.activity = activity; this.backend = activity.backend; }
         @JavascriptInterface public String getState() { return backend.snapshot(); }
         @JavascriptInterface public boolean invoke(String action) {
             if ("pause".equals(action)) return backend.pause();
@@ -161,10 +166,10 @@ public final class PayloadBootstrapActivity extends Activity {
                     if (observed != null) backend.reviewPending = true;
                 }
                 if (observed == null) return backend.retry();
-                MAIN.post(() -> reviewUpdate(observed));
+                MAIN.post(() -> activity.reviewUpdate(observed));
                 return true;
             }
-            if ("launch".equals(action)) return backend.launch(new WeakReference<>(PayloadBootstrapActivity.this));
+            if ("launch".equals(action)) return backend.launch(new WeakReference<>(activity));
             return false;
         }
     }

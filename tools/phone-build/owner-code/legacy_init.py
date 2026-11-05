@@ -26,7 +26,7 @@ BANK_SHA = "3182093b59cf48034b2715b224f3f217b34eaecf104d10940528ea20c4baffc6"
 def run(work, output):
     work, output = native.canonical(work), Path(output)
     # The exact archived producer's root/path guard requires this repository layout.
-    if work != ROOT / "work":
+    if work != (ROOT / "work").resolve():
         raise ValueError("historical Init compatibility requires this checkout's owner work")
     state = native.input_state(work)
     if state[0] != INPUT_ID:
@@ -56,7 +56,7 @@ def run(work, output):
         materialized = Path(tempfile.mkdtemp(prefix="owner-", dir=tool_parent)) / "transform_init.py"
         with materialized.open("xb") as stream:
             stream.write(TEMPLATE.read_bytes())
-        if materialized.parents[3] != ROOT or native.sha(materialized) != TEMPLATE_SHA:
+        if materialized.parents[3] != work.parent or native.sha(materialized) != TEMPLATE_SHA:
             raise ValueError("historical tool bytes/root layout differ")
         result["materialized_source"] = str(materialized)
         native.invoke(
