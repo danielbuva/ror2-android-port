@@ -2,8 +2,10 @@ package dev.ror2lab.phonebuildhostfixture;
 
 import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.ActivityInfo;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageInstaller;
 import android.content.pm.PackageManager;
@@ -93,6 +95,32 @@ public final class OwnerInstaller {
         catch (RuntimeException ignored) { }
     }
 
+    private static void receiverDiagnostic(Context app, String registration, boolean entered) {
+        try { ToolHostActivity.updateInstallReceiverDiagnostic(app, registration, entered); }
+        catch (RuntimeException ignored) { }
+    }
+
+    // Query only our exact packaged receiver; report no class/package/device identities.
+    // This is observation only: it must not change permission, commit or recovery behavior.
+    private static String receiverRegistration(Context app) {
+        try {
+            PackageManager manager = app.getPackageManager();
+            ComponentName component = new ComponentName(app, Result.class);
+            ActivityInfo receiver = manager.getReceiverInfo(component, PackageManager.MATCH_DISABLED_COMPONENTS);
+            if (receiver == null || receiver.applicationInfo == null) return "unavailable";
+            int setting = manager.getComponentEnabledSetting(component);
+            boolean enabled;
+            if (setting == PackageManager.COMPONENT_ENABLED_STATE_DEFAULT) enabled = receiver.enabled;
+            else if (setting == PackageManager.COMPONENT_ENABLED_STATE_ENABLED) enabled = true;
+            else if (setting == PackageManager.COMPONENT_ENABLED_STATE_DISABLED || setting == PackageManager.COMPONENT_ENABLED_STATE_DISABLED_USER
+                    || setting == PackageManager.COMPONENT_ENABLED_STATE_DISABLED_UNTIL_USED) enabled = false;
+            else return "unavailable";
+            if (!enabled || !receiver.applicationInfo.enabled) return "disabled";
+            return receiver.exported ? "exported" : "private";
+        } catch (PackageManager.NameNotFoundException missing) { return "missing"; }
+        catch (RuntimeException unavailable) { return "unavailable"; }
+    }
+
     public static synchronized void install(Context app, File apk, String expectedHash, String expectedPackage, long expectedVersion) throws Exception {
         if (busy(app)) throw new IOException("An installation is already pending");
         PackageManager manager = app.getPackageManager();
@@ -154,6 +182,7 @@ public final class OwnerInstaller {
             int flags = PendingIntent.FLAG_UPDATE_CURRENT;
             if (Build.VERSION.SDK_INT >= 31) flags |= PendingIntent.FLAG_MUTABLE;
             PendingIntent result = PendingIntent.getBroadcast(app, id, callback, flags);
+            receiverDiagnostic(app, receiverRegistration(app), false);
             diagnostic(app, "commit-start", null, false);
             session.commit(result.getIntentSender());
             diagnostic(app, "commit-returned", null, false);
@@ -197,6 +226,7 @@ public final class OwnerInstaller {
 
     public static final class Result extends BroadcastReceiver {
         @Override public void onReceive(Context app, Intent intent) {
+            receiverDiagnostic(app, null, true);
             String session = app.getSharedPreferences(STATUS, 0).getString("session", "");
             boolean matches = session.equals(Integer.toString(intent.getIntExtra(PackageInstaller.EXTRA_SESSION_ID, -1)));
             int code = intent.getIntExtra(PackageInstaller.EXTRA_STATUS, PackageInstaller.STATUS_FAILURE);

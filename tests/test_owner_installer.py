@@ -16,12 +16,22 @@ STUBS = {
     "dev/ror2lab/phonebuildhostfixture/OwnerAlphaInstall.java": """package dev.ror2lab.phonebuildhostfixture; public class OwnerAlphaInstall {public static final String PACKAGE="dev.ror2lab.alpha";public static boolean pending(android.content.Context c){return false;}public static void prepare(android.content.Context c,java.io.File f,String h,android.content.pm.PackageInfo n,android.content.pm.PackageInfo o){}public static void complete(android.content.Context c,android.content.pm.PackageInfo p){}public static boolean recover(android.content.Context c){return false;}}""",
     "dev/ror2lab/phonebuildhostfixture/ToolHostActivity.java": """package dev.ror2lab.phonebuildhostfixture;
 public class ToolHostActivity {public static String checkpointState;
-public static java.util.List<String> diagnosticEvents=new java.util.ArrayList<>();public static boolean failDiagnostic;
+public static java.util.List<String> diagnosticEvents=new java.util.ArrayList<>(),receiverEvents=new java.util.ArrayList<>();public static boolean failDiagnostic;
+public static void updateInstallReceiverDiagnostic(android.content.Context c,String registration,boolean entered){
+if(failDiagnostic)throw new IllegalStateException("synthetic diagnostic error");receiverEvents.add(entered?"entry":registration);}
 public static void updateInstallDiagnostic(android.content.Context c,String stage,String callback,boolean match){
 if(failDiagnostic)throw new IllegalStateException("synthetic diagnostic error");
 diagnosticEvents.add(stage==null?"callback:"+callback+":"+match:stage);}
 public static void updateInstallCheckpoint(android.content.Context c,String state,String message){checkpointState=state;}}""",
     "android/os/Build.java": "package android.os; public class Build { public static class VERSION { public static int SDK_INT=33; } }",
+    "android/content/ComponentName.java": """package android.content; public class ComponentName {
+        public final String packageName; public final Class<?> target;
+        public ComponentName(Context c,Class<?> t){packageName=c.getPackageName();target=t;}}
+    """,
+    "android/content/pm/ApplicationInfo.java": "package android.content.pm; public class ApplicationInfo {public boolean enabled=true;}",
+    "android/content/pm/ActivityInfo.java": """package android.content.pm; public class ActivityInfo {
+        public boolean enabled=true,exported;public ApplicationInfo applicationInfo=new ApplicationInfo();}
+    """,
     "android/content/IntentSender.java": """package android.content; public class IntentSender {
         public final Intent callback; public final int requestCode,flags;
         public IntentSender(Intent i,int id,int f){callback=i;requestCode=id;flags=f;}
@@ -42,9 +52,9 @@ public static void updateInstallCheckpoint(android.content.Context c,String stat
     "android/content/BroadcastReceiver.java": "package android.content; public abstract class BroadcastReceiver {public abstract void onReceive(Context c,Intent i);}",
     "android/content/Context.java": """package android.content; import android.content.pm.*;
         public class Context {public PackageManager manager=new PackageManager(); public Intent started;
-        public boolean startFails; public String stateAtStart;
+        public boolean startFails,prefsFail; public String stateAtStart;
         public Prefs prefs=new Prefs(); public PackageManager getPackageManager(){return manager;}
-        public String getPackageName(){return "authored.tool";} public Prefs getSharedPreferences(String s,int m){return prefs;}
+        public String getPackageName(){return "authored.tool";} public Prefs getSharedPreferences(String s,int m){if(prefsFail)throw new IllegalStateException("synthetic preference failure");return prefs;}
         public void startActivity(Intent i){stateAtStart=prefs.getString("state","");
         if(startFails)throw new SecurityException("synthetic confirmation launch failure");started=i;} public static class Prefs {java.util.Map<String,String> values=new java.util.HashMap<>();
         public String getString(String k,String d){return values.containsKey(k)?values.get(k):d;} public Prefs edit(){return this;}
@@ -65,7 +75,17 @@ public static void updateInstallCheckpoint(android.content.Context c,String stat
         public boolean equals(Object x){return x instanceof Signature && text.equals(((Signature)x).text);}}
     """,
     "android/content/pm/PackageManager.java": """package android.content.pm; public class PackageManager {
-        public static final int GET_SIGNATURES=64; public PackageInfo next=new PackageInfo(),current;
+        public static final int GET_SIGNATURES=64,MATCH_DISABLED_COMPONENTS=512;
+        public static final int COMPONENT_ENABLED_STATE_DEFAULT=0,COMPONENT_ENABLED_STATE_ENABLED=1,COMPONENT_ENABLED_STATE_DISABLED=2,
+            COMPONENT_ENABLED_STATE_DISABLED_USER=3,COMPONENT_ENABLED_STATE_DISABLED_UNTIL_USED=4;
+        public PackageInfo next=new PackageInfo(),current;
+        public ActivityInfo receiver=new ActivityInfo();public boolean receiverMissing,receiverFail;
+        public android.content.ComponentName queriedReceiver;public int receiverQueries,receiverFlags,receiverSetting;
+        public int getComponentEnabledSetting(android.content.ComponentName name){
+            if(name!=queriedReceiver)throw new AssertionError("different receiver query");return receiverSetting;}
+        public ActivityInfo getReceiverInfo(android.content.ComponentName name,int flags) throws NameNotFoundException {
+            queriedReceiver=name;receiverQueries++;receiverFlags=flags;
+            if(receiverMissing)throw new NameNotFoundException();if(receiverFail)throw new SecurityException("synthetic query failure");return receiver;}
         public PackageInstaller installer=new PackageInstaller(); public PackageInfo getPackageArchiveInfo(String p,int f){return next;}
         public PackageInfo getPackageInfo(String p,int f) throws NameNotFoundException {if(current==null)throw new NameNotFoundException();return current;}
         public PackageInstaller getPackageInstaller(){return installer;} public static class NameNotFoundException extends Exception {}}
@@ -121,9 +141,35 @@ public class Harness {
         StringBuilder digest=new StringBuilder();for(byte b:MessageDigest.getInstance("SHA-256").digest(bytes))digest.append(String.format("%02x",b&255));
         String hash=digest.toString(); Context c=new Context(); OwnerInstaller.install(c,apk,hash);
         check(c.manager.installer.session.committed && c.manager.installer.session.synced && c.manager.installer.session.closed);
+        check(c.manager.receiverQueries==1 && c.manager.receiverFlags==PackageManager.MATCH_DISABLED_COMPONENTS);
+        check(c.manager.queriedReceiver.packageName.equals(c.getPackageName()) && c.manager.queriedReceiver.target==OwnerInstaller.Result.class);
+        check(ToolHostActivity.receiverEvents.toString().equals("[private]"));
         check(ToolHostActivity.diagnosticEvents.toString().equals("[prepare, session-create, session-open, write-start, write-complete, fsync-start, fsync-complete, commit-start, commit-returned]"));
         ToolHostActivity.failDiagnostic=true;Context diagnosticFailure=new Context();OwnerInstaller.install(diagnosticFailure,apk,hash);
         check(diagnosticFailure.manager.installer.session.committed);ToolHostActivity.failDiagnostic=false;
+        for(String registration:new String[]{"private","exported","disabled","app-disabled","missing","unavailable","null-info","null-application"}) {
+            Context observed=new Context();
+            if(registration.equals("exported"))observed.manager.receiver.exported=true;
+            if(registration.equals("disabled"))observed.manager.receiver.enabled=false;
+            if(registration.equals("app-disabled"))observed.manager.receiver.applicationInfo.enabled=false;
+            if(registration.equals("missing"))observed.manager.receiverMissing=true;
+            if(registration.equals("unavailable"))observed.manager.receiverFail=true;
+            if(registration.equals("null-info"))observed.manager.receiver=null;
+            if(registration.equals("null-application"))observed.manager.receiver.applicationInfo=null;
+            OwnerInstaller.install(observed,apk,hash);
+            String expected=registration.equals("app-disabled")?"disabled":registration.startsWith("null-")?"unavailable":registration;
+            check(ToolHostActivity.receiverEvents.get(ToolHostActivity.receiverEvents.size()-1).equals(expected));
+            check(observed.manager.installer.session.committed && !observed.manager.installer.abandoned);
+        }
+        for(int setting:new int[]{0,1,2,3,4,99}) {
+            Context observed=new Context();observed.manager.receiverSetting=setting;
+            // An explicit enable overrides a disabled manifest declaration.
+            observed.manager.receiver.enabled=setting!=1;
+            OwnerInstaller.install(observed,apk,hash);
+            String expected=setting<=1?"private":setting==99?"unavailable":"disabled";
+            check(ToolHostActivity.receiverEvents.get(ToolHostActivity.receiverEvents.size()-1).equals(expected));
+            check(observed.manager.installer.session.committed && !observed.manager.installer.abandoned);
+        }
         check(java.util.Arrays.equals(bytes,c.manager.installer.session.bytes.toByteArray()));
         check(c.manager.installer.params.mode==PackageInstaller.SessionParams.MODE_FULL_INSTALL && c.manager.installer.params.action==0);
         c=update();OwnerInstaller.install(c,apk,hash);check(c.manager.installer.params.action==2);
@@ -142,7 +188,17 @@ public class Harness {
             callback.send(c,7,PackageInstaller.STATUS_PENDING_USER_ACTION,confirmation);
             check(c.started==confirmation && confirmation.flags==(8|Intent.FLAG_ACTIVITY_NEW_TASK));
             check("AWAITING_CONFIRMATION".equals(c.stateAtStart) && OwnerInstaller.busy(c));
+            check(ToolHostActivity.receiverEvents.get(ToolHostActivity.receiverEvents.size()-1).equals("entry"));
         }
+        Context callbackDiagnosticFailure=new Context();OwnerInstaller.install(callbackDiagnosticFailure,apk,hash);
+        ToolHostActivity.failDiagnostic=true;Intent stillConfirms=new Intent();
+        callbackDiagnosticFailure.manager.installer.session.receiver.send(callbackDiagnosticFailure,7,PackageInstaller.STATUS_PENDING_USER_ACTION,stillConfirms);
+        ToolHostActivity.failDiagnostic=false;
+        check(callbackDiagnosticFailure.started==stillConfirms && OwnerInstaller.busy(callbackDiagnosticFailure));
+        Context earlyEntry=new Context();OwnerInstaller.install(earlyEntry,apk,hash);earlyEntry.prefsFail=true;
+        try {earlyEntry.manager.installer.session.receiver.send(earlyEntry,7,PackageInstaller.STATUS_PENDING_USER_ACTION,new Intent());
+            throw new AssertionError("preference failure ignored");}catch(IllegalStateException expected){}
+        check(ToolHostActivity.receiverEvents.get(ToolHostActivity.receiverEvents.size()-1).equals("entry"));
         Build.VERSION.SDK_INT=30;c=update();OwnerInstaller.install(c,apk,hash);check(c.manager.installer.params.action==0);Build.VERSION.SDK_INT=33;
         c=update();c.manager.next.versionCode=1;refusal(c,apk,hash,"version");check(c.manager.installer.params==null);
         c=update();c.manager.next.signatures=new android.content.pm.Signature[]{new android.content.pm.Signature("lost-key")};refusal(c,apk,hash,"signing key");check(c.manager.installer.params==null);

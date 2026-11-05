@@ -37,12 +37,13 @@ EXTRA = {
             if(method.equals("release"))released=true;
             if(method.equals("restore"))mismatch=false;Bundle b=new Bundle();b.putString("status","verified");if(method.equals("status"))b.putString("state",released?"released":"active");b.putInt("data_schema",extras.getInt("expected_schema",-1));
             b.putString("snapshot","aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");return b;}}""",
-    "android/content/pm/ApplicationInfo.java": """package android.content.pm; public class ApplicationInfo {public String sourceDir;}""",
+    "android/content/pm/ApplicationInfo.java": """package android.content.pm; public class ApplicationInfo {public String sourceDir;public boolean enabled=true;}""",
     "dev/ror2lab/phonebuildhostfixture/ToolHostActivity.java": """package dev.ror2lab.phonebuildhostfixture;
         import org.json.JSONObject;import java.io.*;public class ToolHostActivity {
         static java.util.Map<String,JSONObject> values=new java.util.HashMap<>();public static String checkpointState;
         public static void updateInstallCheckpoint(android.content.Context c,String s,String m){checkpointState=s;}
         public static void updateInstallDiagnostic(android.content.Context c,String stage,String callback,boolean match){}
+        public static void updateInstallReceiverDiagnostic(android.content.Context c,String registration,boolean entered){}
         public static JSONObject readJson(File f)throws Exception{if(!f.isFile())throw new IOException("absent "+f);return values.get(f.getCanonicalPath());}
         public static void writeJson(File f,JSONObject v)throws Exception{f.getParentFile().mkdirs();try(FileOutputStream o=new FileOutputStream(f)){o.write(1);}values.put(f.getCanonicalPath(),v);}}
     """,

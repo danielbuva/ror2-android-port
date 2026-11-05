@@ -38,19 +38,33 @@ METHOD
         Context c=new Context(new File(args[0]));
         updateInstallDiagnostic(c,"prepare",null,false);
         check(saved.opt("session_match")==JSONObject.NULL && saved.opt("callback").equals("none"));
-        check(saved.data.size()==4 && saved.opt("schema").equals(1));
+        check(saved.data.size()==6 && saved.opt("schema").equals(2));
+        check(saved.opt("receiver_registration").equals("unavailable") && saved.opt("callback_entry").equals("none"));
+        for(String registration:new String[]{"private","exported","disabled","missing","unavailable"}) {
+            updateInstallReceiverDiagnostic(c,registration,false);check(saved.opt("receiver_registration").equals(registration));
+        }
+        updateInstallReceiverDiagnostic(c,"private",false);
         updateInstallDiagnostic(c,"commit-start",null,false);
+        updateInstallReceiverDiagnostic(c,null,true);
+        check(saved.opt("callback_entry").equals("entered") && saved.opt("callback").equals("none"));
         updateInstallDiagnostic(c,null,"pending-user-action",true);
         updateInstallDiagnostic(c,"commit-returned",null,false);
         check(saved.opt("stage").equals("commit-returned") && saved.opt("callback").equals("pending-user-action") && saved.opt("session_match").equals(true));
+        check(saved.opt("receiver_registration").equals("private") && saved.opt("callback_entry").equals("entered"));
         updateInstallDiagnostic(c,null,"failure",false);
         check(saved.opt("stage").equals("commit-returned") && saved.opt("session_match").equals(false));
         updateInstallDiagnostic(c,"prepare",null,false);
         check(saved.opt("session_match")==JSONObject.NULL && saved.opt("callback").equals("none"));
-        saved.put("stage","private-path").put("callback","private-error").put("session_match","private-id").put("extra","private-key");
+        check(saved.opt("receiver_registration").equals("unavailable") && saved.opt("callback_entry").equals("none"));
+        // A successfully classified callback also proves entry if the early best-effort write failed.
+        updateInstallDiagnostic(c,null,"success",true);check(saved.opt("callback_entry").equals("entered"));
+        saved.put("stage","private-path").put("callback","private-error").put("session_match","private-id").put("extra","private-key")
+             .put("receiver_registration","private-package").put("callback_entry","private-stack");
         updateInstallDiagnostic(c,null,null,false);
-        check(saved.opt("stage").equals("unknown") && saved.opt("callback").equals("unknown") && saved.opt("session_match")==JSONObject.NULL && saved.data.size()==4);
+        check(saved.opt("stage").equals("unknown") && saved.opt("callback").equals("unknown") && saved.opt("session_match")==JSONObject.NULL && saved.data.size()==6);
+        check(saved.opt("receiver_registration").equals("unavailable") && saved.opt("callback_entry").equals("unknown"));
         JSONObject prior=saved;fail=true;updateInstallDiagnostic(c,"prepare",null,false);check(saved==prior);
+        updateInstallReceiverDiagnostic(c,"private",true);check(saved==prior);
         System.out.println("install-diagnostic-contracts-pass");
     }
 }
