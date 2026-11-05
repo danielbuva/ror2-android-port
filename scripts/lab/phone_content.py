@@ -20,6 +20,7 @@ NATIVE_CONTENT_TYPES = frozenset(
         "Material",
         "Shader",
         "Texture2D",
+        "Cubemap",
         "Sprite",
         "GameObject",
         "AvatarMask",

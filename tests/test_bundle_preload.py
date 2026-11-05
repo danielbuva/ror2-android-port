@@ -125,6 +125,111 @@ class BundlePreloadTests(unittest.TestCase):
                 ):
                     P.emit_closed_native(graph, [types], root / "emitted", "authored", "CAB-authored")
 
+    def streamed_graph(self, root):
+        graph, types, rows = self.native_graph(root)
+        schemas = json.loads(types.read_text())
+        M = P.module("bundle_manifest")
+        for identity, cid in ((60, 28), (70, 89), (80, 43)):
+            tree = M.S._tree(
+                [
+                    dict(type=P.NATIVE_ROOT_TYPES[cid], name="Base", size=-1, level=0, meta=0, flags=0, version=1),
+                    dict(type="PPtr<Object>", name="link", size=12, level=1, meta=0, flags=0, version=1),
+                    dict(type="int", name="m_FileID", size=4, level=2, meta=0, flags=0, version=1),
+                    dict(type="SInt64", name="m_PathID", size=8, level=2, meta=0, flags=0, version=1),
+                    dict(type="StreamingInfo", name="m_StreamData", size=-1, level=1, meta=0, flags=0, version=1),
+                    dict(type="UInt64", name="offset", size=8, level=2, meta=0, flags=0, version=1),
+                    dict(type="unsigned int", name="size", size=4, level=2, meta=0, flags=0, version=1),
+                    dict(type="string", name="path", size=-1, level=2, meta=0, flags=0, version=1),
+                    dict(type="Array", name="Array", size=-1, level=3, meta=0x4000, flags=1, version=1),
+                    dict(type="int", name="size", size=4, level=4, meta=0, flags=0, version=1),
+                    dict(type="char", name="data", size=1, level=4, meta=0, flags=0, version=1),
+                    dict(type="int", name="tail", size=4, level=1, meta=0, flags=0, version=1),
+                ]
+            )
+            schema = hashlib.sha256(tree).hexdigest()
+            schemas[schema] = dict(class_id=cid, stripped=0, script_type=-1, hash="cd" * 16, tree=tree.hex())
+            provider = root / str(identity)
+            provider.mkdir()
+            payload = bytes([identity]) * 19
+            resource = dict(offset=5, bytes=len(payload), sha256=hashlib.sha256(payload).hexdigest())
+            descriptor = dict(offset=0, size=len(payload), path="old-" + str(identity) + ".resS")
+            resource["destination" if cid == 43 else "stream"] = descriptor
+            body = struct.pack("<iqQI", 0, 10, 0, len(payload)) + P.module("texture_produce").text(descriptor["path"]) + struct.pack("<i", 123)
+            (provider / "objects.bin").write_bytes(body)
+            (provider / "resources.bin").write_bytes(b"pad!!" + payload)
+            index = dict(
+                bundle="source", member="native", path_id=identity, offset=0, bytes=len(body), sha256=hashlib.sha256(body).hexdigest(), resource=resource
+            )
+            index_path = provider / "index.jsonl"
+            index_path.write_text(json.dumps(index) + "\n")
+            receipt = dict(success=True, profile_sha256="stream-" + str(identity), outputs={"index.jsonl": dict(sha256=P.O.B.sha(index_path))})
+            (provider / "result.json").write_text(json.dumps(receipt))
+            rows.append(
+                dict(
+                    destination=["authored", "CAB-authored", identity],
+                    provider=str(provider),
+                    schema=schema,
+                    class_id=cid,
+                    native_type_hash="cd" * 16,
+                    record=receipt["profile_sha256"],
+                    record_source=["source", "native", identity],
+                    bytes=len(body),
+                    sha256=index["sha256"],
+                    resource=resource,
+                    edges=[[0, 10]],
+                )
+            )
+        types.write_text(json.dumps(schemas))
+        (graph / "selected-records.jsonl").write_text("".join(json.dumps(row) + "\n" for row in rows))
+        with (graph / "selected-roots.jsonl").open("a") as stream:
+            for row in rows[-3:]:
+                stream.write(
+                    json.dumps(dict(path="Assets/" + str(row["class_id"]) + ".asset", destination=row["destination"], class_id=row["class_id"])) + "\n"
+                )
+        return graph, types
+
+    def test_streamed_native_records_repack_independent_offsets_and_preserve_pointers(self):
+        import UnityPy
+
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            graph, types = self.streamed_graph(root)
+            result = P.emit_closed_native(graph, [types], root / "emitted", "authored", "CAB-authored")
+            self.assertEqual((result["records"], result["resource_records"], result["resource_bytes"]), (5, 3, 83))
+            objects = {obj.path_id: obj.read_typetree() for obj in UnityPy.load(result["bundle"]).objects}
+            resource = P.O.B.Bundle(Path(result["bundle"])).member("CAB-authored.resS")
+            receipts = [json.loads(line) for line in (root / "emitted/resources.jsonl").read_text().splitlines()]
+            for identity, offset, receipt in zip((60, 70, 80), (0, 32, 64), receipts):
+                descriptor = objects[identity]["m_StreamData"]
+                self.assertEqual(descriptor, dict(offset=offset, size=19, path="archive:/CAB-authored/CAB-authored.resS"))
+                self.assertEqual(objects[identity]["link"], dict(m_FileID=0, m_PathID=10))
+                self.assertEqual(objects[identity]["tail"], 123)
+                resource.seek(offset)
+                self.assertEqual(resource.read(19), bytes([identity]) * 19)
+                self.assertNotEqual(receipt["source_body_sha256"], receipt["emitted_body_sha256"])
+
+    def test_streamed_native_rejects_descriptor_or_resource_extent_drift(self):
+        for failure in ("descriptor", "resource"):
+            with self.subTest(failure=failure), tempfile.TemporaryDirectory() as tmp:
+                root = Path(tmp)
+                graph, types = self.streamed_graph(root)
+                if failure == "descriptor":
+                    rows = [json.loads(line) for line in (graph / "selected-records.jsonl").read_text().splitlines()]
+                    rows[-1]["resource"]["destination"]["offset"] = 100
+                    index_path = root / "80/index.jsonl"
+                    index = json.loads(index_path.read_text())
+                    index["resource"] = rows[-1]["resource"]
+                    index_path.write_text(json.dumps(index) + "\n")
+                    receipt_path = root / "80/result.json"
+                    receipt = json.loads(receipt_path.read_text())
+                    receipt["outputs"]["index.jsonl"]["sha256"] = P.O.B.sha(index_path)
+                    receipt_path.write_text(json.dumps(receipt))
+                    (graph / "selected-records.jsonl").write_text("".join(json.dumps(row) + "\n" for row in rows))
+                else:
+                    (root / "60/resources.bin").write_bytes(bytes(24))
+                with self.assertRaisesRegex(ValueError, "resource body descriptor drift|record extent drift"):
+                    P.emit_closed_native(graph, [types], root / "emitted", "authored", "CAB-authored")
+
     def test_owner_loads_with_isolated_standard_library_only_python(self):
         path = Path(P.__file__).resolve()
         code = (
