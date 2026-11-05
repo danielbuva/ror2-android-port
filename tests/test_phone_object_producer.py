@@ -1907,6 +1907,37 @@ class ObjectProducerTests(unittest.TestCase):
         self.assertEqual(bodies[8], body)
         self.assertEqual([(row["path_id"], row["offset"]) for row in layout["objects"]], [(-8, 0), (8, 16), (12, 8)])
 
+    def test_non_scene_external_scripts_require_explicit_qualified_endpoints(self):
+        mono = {**typ(114), "script_id": bytes(16), "script_type": 99}
+        records = [
+            {"path_id": 8, "type": mono, "body": bytes(16) + struct.pack("<iq", 1, 42) + b"RETAINED"},
+            {"path_id": 9, "type": mono, "body": bytes(16) + struct.pack("<iq", 0, 12) + b"LOCAL"},
+            {"path_id": 12, "type": typ(115), "body": b"SCRIPT"},
+        ]
+        selected = {"externals": ["CAB-owner.sharedAssets"]}
+        for allowed in ((), [(1, 43)], [(0, 42)], [(2, 42)], [(1, 0)]):
+            with self.subTest(allowed=allowed), self.assertRaisesRegex(ValueError, "script absent|MonoScript pointer"):
+                P.make_layout(selected, records, external_scripts=allowed)
+        for streamed in (False, True):
+            supplied = [dict(row, prefix=row["body"][:32], body_bytes=len(row["body"])) for row in records] if streamed else records
+            layout, bodies = P.make_layout(selected, supplied, external_scripts=[(1, 42)], include_bodies=not streamed)
+            self.assertEqual(layout["scripts"], [(0, 12), (1, 42)])
+            self.assertEqual(layout["externals"][0]["path"], "archive:/CAB-owner.sharedAssets/CAB-owner.sharedAssets")
+            types = {row["path_id"]: layout["types"][row["type_id"]] for row in layout["objects"]}
+            self.assertEqual((types[8]["script_type"], types[9]["script_type"]), (1, 0))
+            self.assertEqual(mono["script_type"], 99)
+            stream = io.BytesIO()
+            original = {row["path_id"]: row["body"] for row in records}
+            P.W.write_serialized(stream, layout, lambda row: io.BytesIO(original[row["path_id"]]))
+            stream.size = len(stream.getvalue())
+            stream.seek(0)
+            read = P.W.read_serialized(stream)
+            self.assertEqual({key: read[key] for key in layout}, layout)
+            for row in read["objects"]:
+                stream.seek(read["data_offset"] + row["offset"])
+                self.assertEqual(stream.read(row["bytes"]), original[row["path_id"]])
+            self.assertEqual(bodies, {} if streamed else original)
+
 
 CURVE_RECORD_FIXTURE = load("curve_record_fixture", ROOT / "tests/test_phone_record_producer.py")
 CURVE_MESH_FIXTURE = CURVE_RECORD_FIXTURE.F
