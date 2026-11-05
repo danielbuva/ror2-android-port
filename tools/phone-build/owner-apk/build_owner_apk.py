@@ -186,8 +186,9 @@ def validate_source_payload(names, sizes=None):
 def assembly_profile(request):
     """Accept legacy qualification profiles or locally hashed source-only output.
 
-    The latter is a production receipt, not a claim of byte parity with a
-    historical game. The signed release dispatcher owns provenance and coverage.
+    Source receipts pin complete output cohorts. The signed release dispatcher
+    owns release provenance; disposable local cohorts instead name their source
+    commit and accepted input inventory, without claiming a published release.
     """
     expected = request["manifest_sha256"]
     path = Path(request["manifest"])
@@ -196,11 +197,19 @@ def assembly_profile(request):
     if not isinstance(expected, str) or len(expected) != 64 or any(c not in "0123456789abcdef" for c in expected) or sha(path) != expected:
         raise ValueError("source assembly profile pin differs")
     value = json.loads(path.read_text())
-    if not isinstance(value, dict) or set(value) != {"schema", "release_sha256", "targets"} or value["schema"] != "owner-source-output-v1":
+    local = isinstance(value, dict) and value.get("schema") == "owner-local-output-v1"
+    if local:
+        if set(value) != {"schema", "source_commit", "input_sha256", "targets"} or request.get("application_id") != "dev.ror2lab.converted":
+            raise ValueError("local output profile requires disposable converted package")
+        if not isinstance(value["source_commit"], str) or not re.fullmatch(r"[0-9a-f]{40}", value["source_commit"]):
+            raise ValueError("local output source commit required")
+        digest = value["input_sha256"]
+    elif isinstance(value, dict) and set(value) == {"schema", "release_sha256", "targets"} and value["schema"] == "owner-source-output-v1":
+        digest = value["release_sha256"]
+    else:
         raise ValueError("unsupported owner APK request/profile")
-    digest = value["release_sha256"]
     if not isinstance(digest, str) or len(digest) != 64 or any(c not in "0123456789abcdef" for c in digest):
-        raise ValueError("signed release identity required")
+        raise ValueError("input inventory identity required" if local else "signed release identity required")
     if not isinstance(value["targets"], list) or not value["targets"] or request.get("drift"):
         raise ValueError("nonempty source output receipt required; no historical drift")
     names = set()
@@ -552,7 +561,18 @@ def build(request_path, output):
     fields = {"manifest", "manifest_sha256", "targets", "frontend", "java", "android_jar", "d8_jar", "wire_helper"}
     if (
         set(request)
-        - {"version_code", "application_id", "code", "javac", "drift", "retention_policy", "startup_metadata", "stage_contexts", "lighting_tolerance"}
+        - {
+            "version_code",
+            "version_name",
+            "application_id",
+            "code",
+            "javac",
+            "drift",
+            "retention_policy",
+            "startup_metadata",
+            "stage_contexts",
+            "lighting_tolerance",
+        }
         != fields
     ):
         raise ValueError("unsupported owner APK request/profile")
@@ -684,7 +704,14 @@ def build(request_path, output):
         manifest_bytes = manifest_source.read_bytes()
         if "AndroidManifest.xml" in code and hashlib.sha256(manifest_bytes).hexdigest() != code["AndroidManifest.xml"]["sha256"]:
             raise ValueError("owner APK source bytes differ")
-        patched = MANIFEST.patch(manifest_bytes, wire, version_code=version_code, application_id=request.get("application_id"), retention=policy is not None)
+        patched = MANIFEST.patch(
+            manifest_bytes,
+            wire,
+            version_code=version_code,
+            version_name=request.get("version_name"),
+            application_id=request.get("application_id"),
+            retention=policy is not None,
+        )
         (output / "AndroidManifest.xml").write_bytes(patched)
         payload = [row for name, row in content.items() if name.startswith("payload/")]
         index = {
@@ -779,6 +806,7 @@ def build(request_path, output):
             signed=False,
             device_qualified=False,
             requested_version_code=version_code,
+            requested_version_name=request.get("version_name"),
             requested_application_id=request.get("application_id"),
         )
         return result
