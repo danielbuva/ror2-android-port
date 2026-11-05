@@ -23,6 +23,17 @@ G, J = load("release_graph"), load("release_jobs")
 
 
 class ReleaseGraphTests(unittest.TestCase):
+    def test_barrier_job_binds_legacy_sdk_and_current_output_policy(self):
+        graph = G.Graph(ROOT, {})
+        barrier = graph.build(G.digest(ROOT / "recipe/owner-barrier-shaders.json"))
+        args = graph.jobs[barrier]["arguments"]
+        self.assertEqual(args[args.index("--legacy-sdk") + 1], "${input:legacy_sdk}")
+        graph.build(G.digest(ROOT / "recipe/owner-commando-objects.json"))
+        supported = {"object_produce", "record_remap", "record_produce", "mesh_produce", "avatar_produce", "texture_produce", "shader_context", "shader_prefab"}
+        for job in graph.jobs.values():
+            if Path(job["script"]).stem in supported:
+                self.assertEqual(job["arguments"][job["arguments"].index("--comparison") + 1], "diagnostic")
+
     def test_object_sdk_profile_keeps_application_relative_resource_root(self):
         graph = G.Graph(ROOT, {})
         name = graph.build(G.digest(ROOT / "recipe/owner-objective-support-objects.json"))
