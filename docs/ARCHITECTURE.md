@@ -1459,11 +1459,24 @@ objects after capture; the host must inspect actual type-tree presence before
 using the output as schema evidence. The fixture class is Editor-only and has
 no game-build consumer.
 An optional `ROR2_PHONE_NATIVE_CONTENT_CHECK` request uses this same owner for
-source-produced LightingSettings bundles: snapshot and hash
-the explicit request, load every address with its exact engine type, record the
+source-produced native bundles (lighting settings, meshes, avatars, animation,
+materials, shaders, textures, sprites and supported native asset roots): snapshot
+and hash the explicit request, load every address with its exact engine type, record the
 native type/name and destroy loaded objects on unload. `phone_content.py`
 validates the complete count, types, request/bundle hashes and unload receipt.
 This is desktop loadability evidence; device appearance/playability remains open.
+
+The existing `bundle_preload.py` owner exposes an explicit partial native emission
+CLI. It consumes a qualified selected graph, receipt-bound source record packs
+and complete native schema pools, removes records with missing local dependencies,
+and generates single-object native container roots and transitive preloads.
+Actual source bodies, PPtrs, native type identities and final serialized bodies
+are checked; managed bindings, external endpoints, streamed resources and ordered
+Sprite cohorts remain excluded and reported. Setup takes explicit local graph and
+schema paths plus a fresh output directory. Temporary body/serialization staging
+is deleted on exit; bundle, roots, typed-load request, gap list and receipt remain.
+This is a partial qualification output, not the complete whole-game bundle or a
+runtime owner. Complete APK/device play remains open.
 See [probe setup and boundaries](../tools/phone-build/README.md). No game-runtime
 owner or whole-catalog build calls this support path.
 
@@ -2369,6 +2382,9 @@ session-result and thermal JSONL inputs produce local JSON/Markdown with input
 hashes, active counter deltas, periodic interval-mean percentiles and UTC-aligned
 FPS/temperature bins. Setup reads retained evidence; files close on process exit,
 no runtime/device state is changed, and reports persist at the requested output.
+Final-ten-minute active counter totals use retained endpoints inside the last
+600 host seconds, reporting actual coverage and uncovered boundary time without
+interpolating missing counters; fewer than two endpoints leaves totals unavailable.
 It cannot recover individual-frame quantiles or causal throttling onset from
 aggregate traces. [Game performance](performance-game.md) owns the baseline and
 attribution limits; [public alpha](public-alpha.md#performance-release-gate) owns
@@ -6282,6 +6298,8 @@ manifest/catalog outputs are excluded from native catalog ownership. The signed
 closure retains the metadata pin, final profiles and embedded bootstrap recipe;
 metadata contents stay in private input bindings. Compilation checks the embedded
 bootstrap pin and shared input/attempt identity before emission.
-Setup requires complete produced containers; the scoped producer checks native
-endpoints, types and script bindings and retains its receipt on exit. This adds
+Setup requires complete produced containers. Receipt-pinned player built-in
+resources also supply external preload endpoints; the release graph binds these
+from the selected player outputs. The scoped producer checks native endpoints,
+types and script bindings and retains its receipt on exit. This adds
 no runtime owner. Complete APK and device acceptance remain open.

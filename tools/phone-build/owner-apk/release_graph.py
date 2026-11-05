@@ -387,6 +387,7 @@ class Graph:
         if not metadata["path"].startswith("${input:") or not metadata["path"].endswith("}"):
             raise ValueError("catalog metadata must use a private input binding")
         profiles, bundles, needs, registries = [], {}, [], []
+        resources = {}
         for job in sorted(set(selected_jobs)):
             profile = self.job_profiles[job]
             descriptor = self.jobs[job]
@@ -405,6 +406,17 @@ class Graph:
                 descriptor["artifacts"]["catalog_registry"] = descriptor["outputs"][target]
                 registries.append(self.artifact_pin(job, "catalog_registry"))
                 needs.append(job)
+            for target, member in (
+                ("apk/assets/bin/Data/Resources/unity_builtin_extra", "unity_builtin_extra"),
+                ("apk/assets/bin/Data/unity default resources", "unity default resources"),
+            ):
+                if target in descriptor["outputs"]:
+                    artifact = "catalog_resource_" + str(len(resources))
+                    descriptor["artifacts"][artifact] = descriptor["outputs"][target]
+                    if member in resources:
+                        raise ValueError("duplicate catalog player resource: " + member)
+                    resources[member] = self.artifact_pin(job, artifact)
+                    needs.append(job)
             if owner(profile) != "object_produce" or "original_bundle" in profile:
                 continue
             path = self.profile_files[job]
@@ -417,6 +429,8 @@ class Graph:
         if len(registries) != 1 or not bundles:
             raise ValueError("catalog requires final bundles and one selected player registry")
         request.update(profiles=profiles, bundles=bundles, registry=registries[0])
+        if resources:
+            request["resources"] = resources
         name = "recipe/jobs/owner-catalog-complete.json"
         self.jobs[name] = {
             "schema": 1,

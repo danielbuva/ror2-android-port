@@ -1,4 +1,5 @@
 import copy
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 import sys
 import unittest
@@ -31,6 +32,48 @@ def fixture():
 
 
 class PerfReportTests(unittest.TestCase):
+    def sustained(self, times):
+        start = datetime(2026, 1, 1, tzinfo=timezone.utc)
+        return dict(
+            samples=[
+                dict(
+                    host_seconds=seconds,
+                    snapshot_utc=(start + timedelta(seconds=seconds)).isoformat(),
+                    pacing_frames=1000 + 60 * min(seconds, 1200) + 30 * max(0, seconds - 1200),
+                    pacing_total_ms=200000 + seconds * 1000,
+                    pacing_over33=500 + min(seconds, 1200) * 0.6 + max(0, seconds - 1200) * 3,
+                    pacing_over50=200 + max(0, seconds - 1200) * 0.6,
+                )
+                for seconds in times
+            ]
+        )
+
+    def test_final_ten_minutes_distinguishes_slow_tail_from_whole_session(self):
+        result = perf.analyze(self.sustained([0, 600, 1200, 1500, 1800]), [])
+        tail = result["final_ten_minutes"]
+        self.assertEqual(result["frame_window"]["average_fps"], 50)
+        self.assertEqual(tail["frame_window"]["average_fps"], 30)
+        self.assertEqual(tail["frame_window"]["frames"], 18000)
+        self.assertEqual(tail["over33ms_percent"], 10)
+        self.assertEqual(tail["over50ms_percent"], 2)
+        self.assertEqual(tail["boundary_uncovered_seconds"], 0)
+        self.assertIn("Final ten-minute coverage: 600.000/600 s", perf.markdown(result))
+
+    def test_sparse_tail_uses_retained_endpoints_without_interpolation(self):
+        result = perf.analyze(self.sustained([0, 1190, 1210, 1800]), [])
+        tail = result["final_ten_minutes"]
+        self.assertEqual(tail["start_host_seconds"], 1210)
+        self.assertEqual(tail["observed_seconds"], 590)
+        self.assertEqual(tail["boundary_uncovered_seconds"], 10)
+        self.assertEqual(tail["frame_window"]["frames"], 17700)
+        self.assertEqual(tail["over50ms_percent"], 2)
+
+    def test_tail_without_two_observations_is_unavailable(self):
+        result = perf.analyze(self.sustained([0, 1190, 1800]), [])
+        self.assertIsNone(result["final_ten_minutes"]["frame_window"])
+        self.assertEqual(result["final_ten_minutes"]["boundary_uncovered_seconds"], 600)
+        self.assertIn("fewer than two retained observations", perf.markdown(result))
+
     def test_counter_window_and_proxy_percentiles_do_not_invent_frames(self):
         session, thermal = fixture()
         result = perf.analyze(session, thermal)
@@ -40,6 +83,8 @@ class PerfReportTests(unittest.TestCase):
         self.assertIsNone(result["throttling_onset_seconds"])
         self.assertIsNone(result["cpu_frame_ms"]["p50"])
         self.assertIn("Individual-frame p50/p95/p99: unavailable", perf.markdown(result))
+        self.assertEqual(result["final_ten_minutes"]["observed_seconds"], 3)
+        self.assertEqual(result["final_ten_minutes"]["boundary_uncovered_seconds"], 597)
 
     def test_admission_and_uncovered_gaps_are_not_thermal_exposure(self):
         session, thermal = fixture()

@@ -183,7 +183,10 @@ def produce(inputs, output):
     inputs = Path(inputs).resolve(strict=True)
     request_bytes = inputs.read_bytes()
     request = json.loads(request_bytes)
-    if set(request) != {"schema", "metadata", "profiles", "bundles", "registry", "input_id", "attempt"} or request["schema"] != "owner-catalog-inputs-v1":
+    if (
+        set(request) - {"resources"} != {"schema", "metadata", "profiles", "bundles", "registry", "input_id", "attempt"}
+        or request["schema"] != "owner-catalog-inputs-v1"
+    ):
         raise ValueError("unsupported catalog completion input contract")
     pins = {}
 
@@ -204,6 +207,9 @@ def produce(inputs, output):
     profiles = [json.loads(pinned(row).read_bytes()) for row in request["profiles"]]
     files = {name: pinned(row) for name, row in request["bundles"].items()}
     registry = pinned(request["registry"])
+    resources = {name: pinned(row) for name, row in request.get("resources", {}).items()}
+    if not set(resources) <= {"unity_builtin_extra", "unity default resources"}:
+        raise ValueError("unsupported player resource member")
     sys.path.insert(0, str(ROOT / "scripts/lab"))
     from whole_catalog import integration_bundle_metadata, integration_catalog, integration_profile_builds, produced_bundle_metadata
 
@@ -220,6 +226,10 @@ def produce(inputs, output):
         for member in bundle.members:
             if not member.endswith((".resS", ".resource")):
                 members.add(member, bundle.member(member), name)
+    for name, path in resources.items():
+        resource = io.BytesIO(path.read_bytes())
+        resource.size = len(resource.getbuffer())
+        members.add(name, resource, "@player-resources")
     stream = io.BytesIO(registry.read_bytes())
     stream.size = len(stream.getbuffer())
     members.add(registry.name, stream, "@runtime-registry")

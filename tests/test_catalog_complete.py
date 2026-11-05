@@ -71,6 +71,26 @@ class CatalogCompletionTests(unittest.TestCase):
             self.assertEqual(emitted["locations"][0]["bundle"], "generated-android-data")
             self.assertEqual(emitted["bundles"]["generated-android-data"]["sha256"], result["bundles"]["generated-android-data"]["sha256"])
 
+    def test_player_resource_is_pinned_and_loaded_for_pointer_resolution(self):
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder)
+            path, request = self.fixture(root)
+            resource = root / "unity_builtin_extra"
+            resource.write_bytes(registry_bytes())
+            request["resources"] = {resource.name: pin(resource)}
+            path.write_text(json.dumps(request))
+            original = C.validate_locations
+
+            def validate(metadata, members, registry):
+                self.assertIn("unity_builtin_extra", members.members)
+                return original(metadata, members, registry)
+
+            with patch.object(C, "validate_locations", side_effect=validate):
+                C.produce(path, root / "output")
+            resource.write_bytes(b"changed")
+            with self.assertRaisesRegex(ValueError, "catalog input differs"):
+                C.produce(path, root / "other")
+
     def test_final_type_mismatch_refuses_output(self):
         with tempfile.TemporaryDirectory() as folder:
             root = Path(folder)
