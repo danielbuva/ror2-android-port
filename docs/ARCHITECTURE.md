@@ -70,6 +70,18 @@ results; output indices pin actual produced extents. Source, supplier, native-ty
 schema, script and reference checks remain strict; device loadability remains open.
 Barrier shader jobs bind their separately pinned legacy SDK metadata explicitly.
 
+`accepted-output/catalog_complete.py --inputs REQUEST --output NEW_DIRECTORY`
+owns current host catalog completion. The request pins source metadata, selected
+final object profiles, every produced bundle and the current runtime script
+registry, plus input/startup identity. Existing catalog helpers resolve ownership
+and dependency closure; final serialized containers independently check endpoint
+PPtrs, preload extents, native types and exact MonoScript/runtime bindings.
+Duplicate container keys retain every root. Managed subtype assignability is not
+yet admitted. Inputs are rechecked before output; teardown releases local readers.
+The owner emits `whole-catalog.json` and a receipt only after all checks pass.
+Complete cohort availability, gameplay reference closure and device play remain
+separate gates; this command does not qualify them.
+
 `object_produce.py --preflight` is a current host check for pinned source/SDK/
 codec inputs, preload relationships and declared local script bindings. It
 aggregates binding mismatches before record emission, without serializing or
