@@ -2774,6 +2774,18 @@ Pinned R2API content load/generate/finalize phases informed observation scope.
 Enemy preparation remains the largest paired span in this capture (17.905 s);
 residual body time, sustained FPS, audibility and whole-load causal comparison remain open.
 
+## J1389 — Report final-ten-minute sustained frame counters
+
+2026-11-05. Existing host-only performance reporter separates final-ten-minute
+FPS and hitch totals/percentages from whole-session totals, with retained endpoint
+coverage and uncovered boundary time; missing counters are never interpolated.
+Eight focused host tests and Ruff pass, including slow-tail and sparse-boundary fixtures.
+Retained assisted observation: 599.900 s covered, 50.032 FPS, 1.274% above 50 ms;
+whole-session results remain 49.061 FPS and 1.537% above 50 ms.
+Evidence: `work/coordination/alpha-tail-performance-20261105/report.json`;
+output SHA-256 `4ddf756ea31339fc27e60da2f9e2922dfcbd19fc092178f9feb99bfcffd9a92b`.
+Host analysis only; APK unchanged. Raw frame percentiles, throttling attribution,
+battery efficiency and ordinary sustained-play acceptance remain open.
 
 ## J1388 — Emit and typed-load a closed source-native bundle subset
 

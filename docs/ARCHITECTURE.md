@@ -2386,6 +2386,9 @@ session-result and thermal JSONL inputs produce local JSON/Markdown with input
 hashes, active counter deltas, periodic interval-mean percentiles and UTC-aligned
 FPS/temperature bins. Setup reads retained evidence; files close on process exit,
 no runtime/device state is changed, and reports persist at the requested output.
+Final-ten-minute active counter totals use retained endpoints inside the last
+600 host seconds, reporting actual coverage and uncovered boundary time without
+interpolating missing counters; fewer than two endpoints leaves totals unavailable.
 It cannot recover individual-frame quantiles or causal throttling onset from
 aggregate traces. [Game performance](performance-game.md) owns the baseline and
 attribution limits; [public alpha](public-alpha.md#performance-release-gate) owns
