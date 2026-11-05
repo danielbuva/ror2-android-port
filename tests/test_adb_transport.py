@@ -51,7 +51,7 @@ if len(args) == 2:
         polls = sum('printf pending' in ' '.join(row) for row in calls)
         if polls <= config['poll_failures']:
             sys.exit(1)
-    code = subprocess.run(['sh', '-c', command]).returncode
+    code = subprocess.run(['sh', '-c', command], env=dict(os.environ, PATH=str(root) + os.pathsep + os.environ['PATH'])).returncode
     if mode == 'lost-launch' and 'setsid sh -c' in command:
         os.kill(os.getpid(), signal.SIGKILL)
     if mode == 'disconnected-launch' and 'setsid sh -c' in command:
@@ -70,6 +70,10 @@ class TransportTests(unittest.TestCase):
         self.fake = self.root / "fake-adb"
         self.fake.write_text(FAKE)
         self.fake.chmod(0o700)
+        # Android supplies setsid; macOS hosts need an equivalent fixture launcher.
+        launcher = self.root / "setsid"
+        launcher.write_text("#!/usr/bin/env python3\nimport os, sys\nos.setsid()\nos.execvp(sys.argv[1], sys.argv[1:])\n")
+        launcher.chmod(0o700)
         self.configure()
         self.records = []
         self.adb = ADB.AdbTransport(self.fake, "synthetic-target", observer=lambda label, **row: self.records.append((label, row)), retry_delay=0)
