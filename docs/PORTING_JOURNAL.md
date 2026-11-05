@@ -2800,3 +2800,18 @@ and `closed-native-typed-load-v1/`; seven emission host tests and host preflight
 Prior art: pinned EditorKit typed asset lookup; existing J1271 preload closure.
 Managed/external/stream-resource and ordered Sprite cohorts remain excluded in
 the gap receipt. No APK produced; complete graph, device play and updates remain open.
+
+## J1390 — Reuse typed item-provider discovery during ordinary startup
+
+2026-11-05. Existing catalog owner now shares its typed ItemDef provider family
+instead of broad bundle enumeration; final native registration/teardown stay unchanged.
+Actual-method BuffDef/ItemDef fixtures pass order, alias/identity, cache/reset and refusals.
+APK `a0b17ab5d7e2f9f2f5d89ea3ba5bacdc8cfa9cebc873ed0e4adb687d0217af98`, source `bbdf074a`.
+Evidence: `work/coordination/alpha-item-provider-device-20261105T040044Z/`.
+Ordinary Start reached Verdant Falls/HUD, native catalogs and source audio ready 153/153;
+first installed launch fully verified 274 audio files; profiles/settings retained.
+One item-discovery pair: 2.206 s versus 4.702 s; body adoption 4.338 s versus 9.006 s.
+Separate process-cold, uncontrolled-page-cache captures: no whole-load causal claim.
+CPU/GPU peak 67.7 C, above 80 C 0 s, battery 27–28 C; stopped/asleep/lease released.
+Pinned R2API load/copy/finalize phases informed typed ownership reuse.
+Sustained gameplay, audibility, remaining preparation and whole-load comparison stay open.

@@ -16,6 +16,7 @@ class ScopedDefinitionManifestTests(unittest.TestCase):
             braced_block(source, signature)
             for signature in (
                 "public static RoR2.BuffDef[] BuffDefinitions()",
+                "public static RoR2.ItemDef[] ItemDefinitions()",
                 "public static T[] DefinitionFamily<T>(System.Collections.Generic.IEnumerable<T> selected)",
                 "public static int[][] FamilyLocationGroups(JObject manifest, string category)",
                 "public static T[] CategoryFamily<T>(string category, IEnumerable<T> selected)",
@@ -31,7 +32,7 @@ class ScopedDefinitionManifestTests(unittest.TestCase):
         host += "\npublic static partial class WholeCatalogComposed {\n" + "\n".join(methods) + "\n}\n"
         result = execute_host(host, "scope")
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
-        self.assertEqual(result.stdout.strip(), "scope identity policy restoration buffs PASS")
+        self.assertEqual(result.stdout.strip(), "scope identity policy restoration buffs items PASS")
 
 
 if __name__ == "__main__":
