@@ -97,6 +97,124 @@ def install_diagnostic_summary(data):
     return result
 
 
+def settings_window_identity(activity, displays):
+    """Private join: ActivityRecord-owned window to display 0 current focus.
+
+    WindowToken.dump supplies windows; DisplayContent.dump supplies current
+    focus. AccessibilityWindowInfo.isFocused uses that same WMS focus predicate.
+    The private fingerprint is compared in memory only, never reported.
+    """
+    if not isinstance(activity, bytes) or len(activity) > 65536 or not isinstance(displays, bytes) or len(displays) > 131072:
+        return False, None
+    try:
+        rows = activity.decode("utf-8").splitlines()
+        text = displays.decode("utf-8")
+    except UnicodeError:
+        return False, None
+    owned = [row for row in rows if row.startswith("windows=")]
+    if len(owned) != 1 or not owned[0].startswith("windows=[") or not owned[0].endswith("]"):
+        return False, None
+    window_pattern = r"Window\{[0-9a-fA-F]+ u[0-9]+ [^{}\n]+\}"
+    content = owned[0][len("windows=[") : -1]
+    windows = re.findall(window_pattern, content)
+    if not windows or len(set(windows)) != len(windows) or ", ".join(windows) != content:
+        return False, None
+    header = "WINDOW MANAGER DISPLAY CONTENTS (dumpsys window displays)"
+    lines = text.splitlines()
+    if not lines or lines[0] != header or lines.count(header) != 1:
+        return False, None
+    starts = [(index, match.group(1)) for index, line in enumerate(lines) if (match := re.match(r"^\s*Display: mDisplayId=([0-9]+)(?:\s|$)", line))]
+    if len([item for item in starts if item[1] == "0"]) != 1 or len({item[1] for item in starts}) != len(starts):
+        return False, None
+    position = next(index for index, item in enumerate(starts) if item[1] == "0")
+    start = starts[position][0]
+    end = starts[position + 1][0] if position + 1 < len(starts) else len(lines)
+    focused = [line.strip()[len("mCurrentFocus=") :] for line in lines[start:end] if line.strip().startswith("mCurrentFocus=")]
+    if len(focused) != 1 or re.fullmatch(window_pattern, focused[0]) is None or focused[0].endswith(" EXITING}") or focused[0] not in windows:
+        return False, None
+    return True, sha(focused[0].encode())
+
+
+def settings_activity_summary(data, current_user, displays=None):
+    """Fixed booleans from one Android 13 server-side top-resumed record.
+
+    This relies on the hash-owned app's fixed, no-extra Settings deep link:
+    dumpsys Intent text is not an adversarially unambiguous serialization.
+    A resumed record is not a visible click target; the UI gate remains required.
+    AOSP android-13.0.0_r1: ActivityTaskManagerService.dumpTopResumedActivityLocked
+    and ActivityRecord.dump. No record identities or raw fields leave this helper.
+    """
+    result = dict.fromkeys(
+        (
+            "record_verified",
+            "component_verified",
+            "target_verified",
+            "caller_verified",
+            "user_verified",
+            "resumed_verified",
+            "visible_verified",
+            "focused_window_verified",
+        ),
+        False,
+    )
+    if not isinstance(data, bytes) or len(data) > 65536 or not isinstance(current_user, bytes) or len(current_user) > 64:
+        return result
+    try:
+        lines = data.decode("utf-8").splitlines()
+        user = current_user.decode("ascii").strip()
+    except UnicodeError:
+        return result
+    header = "ACTIVITY MANAGER TOP-RESUMED (dumpsys activity top-resumed)"
+    prefixes = ("packageName=", "launchedFromUid=", "Intent { ", "mActivityComponent=", "state=", "occludesParent=", "mVisibleRequested=")
+    records = {prefix: [line for line in lines if line.startswith(prefix)] for prefix in prefixes}
+    if (
+        not lines
+        or lines[0] != header
+        or lines.count(header) != 1
+        or not all(len(rows) == 1 for rows in records.values())
+        or sum("Intent {" in line for line in lines) != 1
+    ):
+        return result
+    # Primary record starts immediately after the header; reject another record
+    # or nested/indented stand-ins rather than matching independent substrings.
+    if (
+        len(lines) < 5
+        or lines[1] != records["packageName="][0]
+        or lines[2] != records["launchedFromUid="][0]
+        or not lines[3].startswith("app=")
+        or lines[4] != records["Intent { "][0]
+    ):
+        return result
+    result["record_verified"] = True
+    result["focused_window_verified"] = settings_window_identity(data, displays)[0]
+    component = "com.android.settings/.Settings$ManageAppExternalSourcesActivity"
+    result["component_verified"] = (
+        records["packageName="][0] == "packageName=com.android.settings processName=com.android.settings"
+        and records["mActivityComponent="][0] == "mActivityComponent=" + component
+    )
+    caller = re.fullmatch(
+        r"launchedFromUid=[0-9]+ launchedFromPackage=" + re.escape(PACKAGE) + r" launchedFromFeature=null userId=([0-9]+)", records["launchedFromUid="][0]
+    )
+    result["caller_verified"] = caller is not None
+    result["user_verified"] = caller is not None and re.fullmatch(r"[0-9]+", user) is not None and caller.group(1) == user
+    # No selector, extras, task/base Intent or pending replacement Intent can
+    # supply this URI. Optional flags are the only additional admitted field.
+    intent = (
+        r"Intent \{ act=android\.settings\.MANAGE_UNKNOWN_APP_SOURCES dat=package:"
+        + re.escape(PACKAGE)
+        + r" (?:flg=0x[0-9a-fA-F]+ )?cmp="
+        + re.escape(component)
+        + r" \}"
+    )
+    result["target_verified"] = re.fullmatch(intent, records["Intent { "][0]) is not None
+    result["resumed_verified"] = records["state="][0] == "state=RESUMED stopped=false delayedResume=false finishing=false"
+    result["visible_verified"] = (
+        re.fullmatch(r"occludesParent=(?:true|false) noDisplay=false immersive=(?:true|false) launchMode=[0-9]+", records["occludesParent="][0]) is not None
+        and records["mVisibleRequested="][0] == "mVisibleRequested=true mVisible=true mClientVisible=true reportedDrawn=true reportedVisible=true"
+    )
+    return result
+
+
 def module(name, path):
     spec = importlib.util.spec_from_file_location(name, path)
     value = importlib.util.module_from_spec(spec)
@@ -138,14 +256,14 @@ def set_phase(phase):
     CURRENT_PHASE = phase
 
 
-def execute(argv, *, label, stdin=None, timeout=300):
+def execute(argv, *, label, stdin=None, timeout=300, record_output=True):
     try:
         result = subprocess.run(list(map(str, argv)), input=stdin, stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=timeout, check=False)
     except (OSError, subprocess.TimeoutExpired) as error:
-        if DIAGNOSTICS is not None:
+        if DIAGNOSTICS is not None and record_output:
             DIAGNOSTICS.record(label, stdout=getattr(error, "stdout", b""), stderr=getattr(error, "stderr", b""), outcome=type(error).__name__)
         raise Failure(label) from error
-    if DIAGNOSTICS is not None:
+    if DIAGNOSTICS is not None and record_output:
         DIAGNOSTICS.record(label, stdout=result.stdout, stderr=result.stderr, returncode=result.returncode)
     return result
 
@@ -454,6 +572,7 @@ class Phone:
         self.alpha_hash = None
         self.reverse_port = None
         self.install_volume = None
+        self.settings_focus_key = None
         self.ui_path = "/data/local/tmp/ror2-installer-ui-" + secrets.token_hex(8) + ".xml"
 
     def command(self, *args, stdin=None, label, timeout=60):
@@ -575,7 +694,7 @@ class Phone:
             raise Failure("ui-hierarchy-unavailable")
         return ET.fromstring(value[start : end + len(closing)])
 
-    def ui_windows(self, allowed_packages):
+    def ui_windows(self, allowed_packages, *, recovery=True):
         # Android 13 DumpCommand's --windows uses getWindowsOnAllDisplays,
         # unlike the failed single active-root query. Older binaries may ignore
         # the option, so neither exit 0 nor a success message proves a hierarchy.
@@ -589,14 +708,14 @@ class Phone:
             if result.returncode or ui_output_classification(result.stdout) != "dump-reported-written":
                 raise Failure("ui-window-dump-unavailable")
             hierarchy = focused_ui_hierarchy(self.read_ui_dump("displays"), allowed_packages)
-            print("INFO ui-null-root-recovered source=focused-window", flush=True)
+            print("INFO ui-null-root-recovered source=focused-window" if recovery else "INFO settings-ui source=focused-default-window", flush=True)
             return hierarchy
         except Failure as error:
             reason = str(error)
         except Exception:
             reason = "ui-window-fallback-invalid"
         self.ui_diagnostics(reason)
-        raise Failure("device-ui-null-root-retry-exhausted")
+        raise Failure("device-ui-null-root-retry-exhausted" if recovery else "settings-ui-focused-window-unavailable")
 
     def ui_diagnostics(self, fallback_reason):
         # Observation only: never start instrumentation, unlock, grant a
@@ -631,6 +750,8 @@ class Phone:
                     raise Failure("ui-button-bounds")
                 x1, y1, x2, y2 = map(int, bounds.groups())
                 self.shell("input", "tap", str((x1 + x2) // 2), str((y1 + y2) // 2), label="device-ui-tap")
+                if label == "Install":
+                    print("INFO android-install-consent actor=harness", flush=True)
                 return True
         return False
 
@@ -882,22 +1003,50 @@ class Phone:
             raise Failure("ui-button-bounds")
         self.shell("input", "tap", str((x1 + x2) // 2), str((y1 + y2) // 2), label=label)
 
+    def settings_identity(self):
+        self.require_owned_installer()
+        summary = settings_activity_summary(None, None)
+        self.settings_focus_key = None
+        try:
+            outputs = []
+            for command in ("dumpsys activity top-resumed | head -c 65537", "am get-current-user | head -c 65", "dumpsys window displays | head -c 131073"):
+                result = execute(
+                    [self.adb, "-s", self.serial, "shell", "sh", "-c", "'" + command + "'"],
+                    label="device-settings-identity-query",
+                    timeout=15,
+                    record_output=False,
+                )
+                if result.returncode or result.stderr:
+                    break
+                outputs.append(result.stdout)
+            if len(outputs) == 3:
+                summary = settings_activity_summary(*outputs)
+                if all(summary.values()):
+                    self.settings_focus_key = settings_window_identity(outputs[0], outputs[2])[1]
+        except Failure:
+            pass
+        # Raw top-activity text/user IDs are neither retained nor exported.
+        if DIAGNOSTICS is not None:
+            DIAGNOSTICS.record("device-settings-identity", stdout=encoded(summary), returncode=0)
+        return summary
+
     def allow_visible_install_permission(self):
         self.require_ungranted_install_permission()
         # The app, not an adb deep link, must open its own per-app Settings page.
         self.tap("Install verified owner build")
         settings = "com.android.settings"
         deadline = time.monotonic() + 30
+        identity = settings_activity_summary(None, None)
         while time.monotonic() < deadline:
-            package, nodes = self.prompt_nodes(self.ui_for((PACKAGE, settings)), (PACKAGE, settings))
-            if package == settings:
+            identity = self.settings_identity()
+            package, nodes = self.prompt_nodes(self.ui_windows((PACKAGE, settings), recovery=False), (PACKAGE, settings))
+            if package == settings and all(identity.values()):
+                focus_key = self.settings_focus_key
                 break
             time.sleep(1)
         else:
-            raise Failure("install-settings-prompt-not-visible")
-        texts = {node.get("text", "").casefold() for node in nodes}
-        if not {"install unknown apps", "owner game installer", "allow from this source"}.issubset(texts):
-            raise Failure("install-settings-prompt-not-identified")
+            print(encoded({"mode": "settings-prompt-identity", "observed": identity}).decode(), end="", flush=True)
+            raise Failure("install-settings-identity-not-verified")
         switches = [
             node
             for node in nodes
@@ -907,11 +1056,18 @@ class Phone:
         ]
         if len(switches) != 1 or switches[0].get("checked") != "false":
             raise Failure("install-settings-ungranted-switch-not-visible")
+        # Recheck the same target after reading the UI, before using its bounds.
+        identity = self.settings_identity()
+        unchanged = bool(focus_key) and self.settings_focus_key == focus_key
+        print(encoded({"mode": "settings-prompt-identity", "observed": identity, "focus_unchanged": unchanged}).decode(), end="", flush=True)
+        if not all(identity.values()) or not unchanged:
+            raise Failure("install-settings-identity-changed")
         self.tap_prompt_node(switches[0], "device-install-permission-visible-enable")
+        print("INFO install-permission-switch actor=harness", flush=True)
         # Require both visible checked state and read-only effective app-op.
         deadline = time.monotonic() + 15
         while time.monotonic() < deadline:
-            _, nodes = self.prompt_nodes(self.ui_for((settings,)), (settings,))
+            _, nodes = self.prompt_nodes(self.ui_windows((settings,), recovery=False), (settings,))
             observed = [node for node in nodes if node.get("resource-id") == switches[0].get("resource-id")]
             if len(observed) == 1 and observed[0].get("checked") == "true" and self.install_permission_mode() == "allow":
                 break
@@ -944,6 +1100,7 @@ class Phone:
         if len(buttons) != 1:
             raise Failure("install-consent-button-not-identified")
         self.tap_prompt_node(buttons[0], "device-synthetic-install-consent")
+        print("INFO android-install-consent actor=harness", flush=True)
         return True
 
     def await_install_permission(self):
