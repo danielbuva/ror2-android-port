@@ -42,6 +42,28 @@ def full_type_key(typ):
     return hashlib.sha256(json.dumps(O.json_layout(typ), sort_keys=True).encode()).hexdigest()
 
 
+def qualified_final_type(body, typ, scripts, qualified):
+    """Recover a qualified type identity from actual final-file metadata.
+
+    make_layout allocates script indices in the destination file. Prove that
+    allocation against the persisted object's schema-declared m_Script before
+    restoring only the original index; every other type field must stay exact.
+    The caller must obtain body, typ and scripts from the same final member.
+    """
+    restored = dict(typ)
+    if typ["class_id"] == 114:
+        fields = pointers(body, typ, {})
+        script = fields.get(("m_Script",), fields.get(("#490",)))
+        index = typ["script_type"]
+        if script != (0, 0):
+            if script is None or not 0 <= index < len(scripts) or tuple(scripts[index]) != script:
+                raise ValueError("Final object and type script relationship differ")
+            restored["script_type"] = qualified["script_type"]
+    if full_type_key(restored) != full_type_key(qualified):
+        raise ValueError("Final full type identity differs")
+    return restored
+
+
 def qualify_external_fields(value, body, typ, proofs, endpoint_record):
     """Qualify each non-null external field against a persisted endpoint.
 
@@ -624,7 +646,12 @@ def emit_closed_native(
                 return read_produced(target)
             row = final_objects[target[2]]
             stream.seek(read["data_offset"] + row["offset"])
-            return selected[tuple(target)], O.B.exact(stream, row["bytes"]), read["types"][row["type_id"]]
+            value = selected[tuple(target)]
+            raw = O.B.exact(stream, row["bytes"])
+            typ = read["types"][row["type_id"]]
+            if required is not None:
+                typ = qualified_final_type(raw, typ, read["scripts"], typed[value["full_type"]])
+            return value, raw, typ
 
         for row in read["objects"]:
             stream.seek(read["data_offset"] + row["offset"])
@@ -634,7 +661,8 @@ def emit_closed_native(
             if hashlib.sha256(data).hexdigest() != expected:
                 raise ValueError("Emitted native body differs")
             if required is not None and identity != container_id:
-                typ = read["types"][row["type_id"]]
+                value = selected[name, member, identity]
+                typ = qualified_final_type(data, read["types"][row["type_id"]], read["scripts"], typed[value["full_type"]])
                 fields = pointers(data, typ, cache)
                 if set(fields.values()) != graph[identity]:
                     raise ValueError("Persisted required object references differ")

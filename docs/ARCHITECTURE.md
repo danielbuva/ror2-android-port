@@ -1490,6 +1490,12 @@ old file IDs or pointers never substitute for complete field coverage. Callers
 own receipt/index validation and final-container metadata readback before
 supplying endpoint bodies. These pure helpers retain no state; current CLR,
 complete emission, typed load and device admission remain separate gates.
+The final-type helper verifies a persisted MonoBehaviour's schema-declared
+`m_Script` against its actual final script-table slot before restoring only the
+qualified preallocation index. Every other type field remains exact. Required
+emission applies this check during final readback and endpoint callbacks; external
+adapters supply body, type and script table from the same final member. The helper
+retains no state and adds no runtime owner.
 The same emitter's Python `required` mode selects an exact object set and
 declared GUID/path/root groups without pruning. Complete types are keyed by
 their full identity, preserving types that share a schema. Every external field

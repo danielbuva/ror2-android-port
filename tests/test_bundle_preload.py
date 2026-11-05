@@ -27,6 +27,29 @@ def pointer(name):
 
 
 class BundlePreloadTests(unittest.TestCase):
+    def test_final_type_proves_reallocated_script_slot_and_preserves_full_identity(self):
+        M = P.module("bundle_manifest")
+        nodes = [dict(type="MonoBehaviour", name="Base", size=-1, level=0, meta=0, flags=0, version=1)]
+        nodes.extend(
+            dict(type=kind, name=field, size=size, level=level, meta=0, flags=0, version=1)
+            for kind, field, size, level in (
+                ("PPtr<MonoScript>", "m_Script", 12, 1),
+                ("int", "m_FileID", 4, 2),
+                ("SInt64", "m_PathID", 8, 2),
+            )
+        )
+        qualified = dict(class_id=114, stripped=0, script_type=19, script_id=b"s" * 16, hash=b"h" * 16, tree=M.S._tree(nodes), dependencies=[])
+        final = {**qualified, "script_type": 0}
+        body = struct.pack("<iq", 2, 45)
+        self.assertEqual(P.qualified_final_type(body, final, [(2, 45)], qualified), qualified)
+        self.assertEqual(final["script_type"], 0)
+        for scripts in ([], [(2, 46)], [(0, 45)]):
+            with self.subTest(scripts=scripts), self.assertRaisesRegex(ValueError, "script relationship"):
+                P.qualified_final_type(body, final, scripts, qualified)
+        for field, value in (("hash", b"x" * 16), ("script_id", b"x" * 16), ("stripped", 1), ("dependencies", [3])):
+            with self.subTest(field=field), self.assertRaisesRegex(ValueError, "full type identity"):
+                P.qualified_final_type(body, {**final, field: value}, [(2, 45)], qualified)
+
     def external_contract(self, root):
         M = P.module("bundle_manifest")
         nodes = [dict(type="PhysicMaterial", name="Base", size=-1, level=0, meta=0, flags=0, version=1)]
