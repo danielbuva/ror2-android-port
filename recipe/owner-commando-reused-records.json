@@ -4909,9 +4909,9 @@
       "bytes": 104,
       "sha256": "d4b1c09da30beead8bcb54d38e8ba98747c84c72d861cf7acc2f762ce0905a21",
       "script_identity": [
-        "Assembly-CSharp.dll",
-        "",
-        "SilentProjectileBoundary"
+        "UnityEngine.UI.dll",
+        "UnityEngine.EventSystems",
+        "EventSystem"
       ]
     },
     {

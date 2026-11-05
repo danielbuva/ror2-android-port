@@ -6846,8 +6846,8 @@ inputs are published.
 | Recipe | SHA-256 |
 | --- | --- |
 | `owner-objective-support-objects.json` | `afe5e32ab5f57f19949f672d7cd4a3d91a97a861f332d41ab46330d239baabf0` |
-| `owner-commando-reused-records.json` | `8973a72b12827e9f01c8d0591a26bd1c8423ff7eeac3ff14147ad0820a0077c5` |
-| `owner-commando-objects.json` | `6265fa380d497d29ca5b85a4a94c5776ccccaf64efbd0bd91d0c302c679b9ed4` |
+| `owner-commando-reused-records.json` | `6474d221dbdb80e9d29c4f3a2f6d2ce3a132980c06c4240d48dc25b55592cb2c` |
+| `owner-commando-objects.json` | `42777b5337e15e18a6fd1c8a65fee68b6eb831d03830604851aa2635ed54d972` |
 
 Commando reused MonoScripts select assembly, namespace and class identities from
 the receipt-pinned source-produced player registry. All 347 body hashes uniquely
@@ -6857,3 +6857,12 @@ checked by the existing serialized-supplier and native-type contracts. Only
 minimal reconstruction relationships are tracked; generated script bodies and
 local registry evidence remain ignored. Provenance/privacy audit: no game code,
 asset bodies, private paths or account data added.
+
+The SDK EventSystem policy retains its explicit EventSystem identity when the
+other Commando scripts are resolved from current source registry matches. A
+hash-unique supplier match does not establish a component's semantic binding.
+The object owner's preflight checks declared local source-schema/script identity
+relationships before emission and aggregates mismatches in its receipt. Pinned
+source/SDK/codec and preload checks remain strict. Provenance/privacy review:
+only authored policy, script names and relationship checks changed; generated
+bodies and local audit evidence remain ignored. No device admission is claimed.
