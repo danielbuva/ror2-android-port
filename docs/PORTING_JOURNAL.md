@@ -2709,7 +2709,7 @@ local receipts: `work/coordination/p1-scenes-w/current-scene-supplier-preflight-
 Public recipes contain selectors and transformations, no generated record bodies.
 No APK produced; complete graph, current-code assembly and device play remain open.
 
-## J1384 — Complete catalogs against produced serialized containers
+## J1385 — Complete catalogs against produced serialized containers
 
 2026-11-05. The source catalog owner derives bundle ownership from selected final
 object profiles and pins metadata, produced bundles and the current script registry.
