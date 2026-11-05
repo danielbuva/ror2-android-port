@@ -1,6 +1,7 @@
 """Source graph contracts with authored supplier bodies; no game inputs."""
 
 import gzip
+import hashlib
 import importlib.util
 import json
 from pathlib import Path
@@ -8,6 +9,7 @@ import shutil
 import sys
 import tempfile
 import unittest
+from unittest import mock
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -23,6 +25,88 @@ G, J = load("release_graph"), load("release_jobs")
 
 
 class ReleaseGraphTests(unittest.TestCase):
+    @staticmethod
+    def selected_fixture(repo):
+        (repo / "recipe").mkdir()
+        supplier = repo / "recipe/owner-supplier.json"
+        supplier.write_text(json.dumps({"bundles": [{"members": [{"objects": []}]}]}))
+        selected = repo / "recipe/owner-selected.json"
+        selected.write_text(json.dumps({"sources": [], "bundle": {"name": "authored.bundle"}, "objects": [{"record": G.digest(supplier)}]}))
+        for name in ("object_produce", "record_produce", "bundle_manifest"):
+            path = repo / G.PREFIX / (name + ".py")
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text("# authored fixture\n")
+        return selected, supplier
+
+    def test_single_profile_selection_only_parses_selected_dependency_closure(self):
+        with tempfile.TemporaryDirectory() as directory:
+            repo = Path(directory).resolve()
+            selected, supplier = self.selected_fixture(repo)
+            # Unselected malformed bodies must not be parsed during indexing.
+            (repo / "recipe/owner-unselected.json").write_text("not JSON")
+            with gzip.open(repo / "recipe/owner-unselected.jsonl.gz", "wt") as stream:
+                stream.write('{"not_a_header": true}\n')
+            reads = []
+            read_bytes = Path.read_bytes
+
+            def tracked(path, *args, **kwargs):
+                reads.append(path)
+                return read_bytes(path, *args, **kwargs)
+
+            with mock.patch.object(Path, "read_bytes", tracked), mock.patch.object(G.gzip, "GzipFile", wraps=gzip.GzipFile) as compressed:
+                graph = G.Graph(repo, {})
+                self.assertEqual(reads, [])
+                graph.compile([selected.relative_to(repo).as_posix()])
+                self.assertEqual(reads, [selected, supplier])
+                graph.build(G.digest(selected))
+                self.assertEqual(reads, [selected, supplier])
+                compressed.assert_not_called()
+            with self.assertRaisesRegex(ValueError, "unknown compressed record profile header"):
+                graph.build(G.digest(repo / "recipe/owner-unselected.jsonl.gz"))
+            with self.assertRaises(json.JSONDecodeError):
+                graph.build(G.digest(repo / "recipe/owner-unselected.json"))
+
+    def test_supplier_changed_after_index_is_rejected_before_parsing(self):
+        with tempfile.TemporaryDirectory() as directory:
+            repo = Path(directory).resolve()
+            selected, supplier = self.selected_fixture(repo)
+            graph = G.Graph(repo, {})
+            supplier.write_text("not JSON")
+            with self.assertRaisesRegex(ValueError, "source supplier profile drift"):
+                graph.build(G.digest(selected))
+            self.assertEqual(graph.jobs, {})
+
+    def test_selected_compressed_header_is_checked_despite_job_name_collision(self):
+        with tempfile.TemporaryDirectory() as directory:
+            repo = Path(directory).resolve()
+            _, supplier = self.selected_fixture(repo)
+            compressed = supplier.with_suffix(".jsonl.gz")
+            with gzip.open(compressed, "wt") as stream:
+                stream.write('{"invalid_header": true}\n')
+            graph = G.Graph(repo, {})
+            graph.build(G.digest(supplier))
+            with self.assertRaisesRegex(ValueError, "unknown compressed record profile header"):
+                graph.build(G.digest(compressed))
+
+    def test_lazy_graph_output_matches_eager_serialized_fixture(self):
+        with tempfile.TemporaryDirectory() as directory:
+            repo = Path(directory).resolve()
+            self.selected_fixture(repo)
+            graph = G.Graph(repo, {})
+            index = graph.compile(["recipe/owner-selected.json"], bundle_manifest=True)
+
+            def wire(value):
+                return (json.dumps(value, sort_keys=True, indent=2) + "\n").encode()
+
+            for name, job in graph.jobs.items():
+                index["files"][name] = hashlib.sha256(wire(job)).hexdigest()
+            # Regenerated from the eager compiler at main 2dfd7651 after merging
+            # its argument changes; lazy bytes match exact descriptors, closure
+            # ordering and index bytes from that independently loaded compiler.
+            self.assertEqual(
+                hashlib.sha256(wire({"index": index, "jobs": graph.jobs})).hexdigest(), "5b4428b1c73659bb268100de6857593ba4ce09e978c712f0c2ba541a3a65b393"
+            )
+
     def test_scene_record_suppliers_close_published_consumers(self):
         graph = G.Graph(ROOT, {})
         for scene, supplier, count in (
