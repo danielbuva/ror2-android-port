@@ -6282,6 +6282,8 @@ manifest/catalog outputs are excluded from native catalog ownership. The signed
 closure retains the metadata pin, final profiles and embedded bootstrap recipe;
 metadata contents stay in private input bindings. Compilation checks the embedded
 bootstrap pin and shared input/attempt identity before emission.
-Setup requires complete produced containers; the scoped producer checks native
-endpoints, types and script bindings and retains its receipt on exit. This adds
+Setup requires complete produced containers. Receipt-pinned player built-in
+resources also supply external preload endpoints; the release graph binds these
+from the selected player outputs. The scoped producer checks native endpoints,
+types and script bindings and retains its receipt on exit. This adds
 no runtime owner. Complete APK and device acceptance remain open.
