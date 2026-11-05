@@ -23,6 +23,90 @@ G, J = load("release_graph"), load("release_jobs")
 
 
 class ReleaseGraphTests(unittest.TestCase):
+    def test_catalog_fanin_binds_actual_outputs_and_embedded_bootstrap(self):
+        with tempfile.TemporaryDirectory() as directory:
+            repo = Path(directory)
+            (repo / "recipe").mkdir()
+            identity = dict(input_id="a" * 64, attempt="authored-startup")
+            bootstrap = repo / "recipe/bootstrap.json"
+            bootstrap.write_text(json.dumps(identity))
+            metadata = repo / "recipe/metadata.json"
+            metadata.write_text(json.dumps(identity))
+            request = repo / "recipe/catalog-request.json"
+            request.write_text(
+                json.dumps(
+                    dict(
+                        schema="owner-catalog-inputs-v1",
+                        metadata=dict(path="${input:catalog_metadata}", bytes=metadata.stat().st_size, sha256=G.digest(metadata)),
+                        **identity,
+                    )
+                )
+            )
+            graph = G.Graph(repo, {})
+            profiles = {
+                "final": dict(sources=[], bundle=dict(name="authored", asset="asset")),
+                "supplier": dict(bundles=[]),
+                "windows": dict(original_bundle={}),
+                "player": dict(
+                    project_assemblies=[],
+                    outputs={},
+                    registry=dict(file="registry.assets", path="registry-policy.json"),
+                    text_assets=dict(
+                        files=[
+                            dict(name="WholeCatalogBootstrap", recipe=dict(path="bootstrap.json", bytes=bootstrap.stat().st_size, sha256=G.digest(bootstrap)))
+                        ]
+                    ),
+                ),
+            }
+            for name, profile in profiles.items():
+                path = repo / ("recipe/" + name + ".json")
+                path.write_text(json.dumps(profile))
+                graph.profile_files[name] = path.relative_to(repo).as_posix()
+                graph.job_profiles[name] = profile
+                target = "apk/assets/bin/Data/registry.assets" if name == "player" else "payload/" + name
+                if name == "final":
+                    target = "payload/authored"
+                graph.jobs[name] = dict(script=G.PREFIX + "object_produce.py", outputs={target: "actual/" + name}, artifacts={}, needs=[])
+            name = graph.catalog_complete(list(profiles), "recipe/catalog-request.json")
+            job = graph.jobs[name]
+            self.assertIn(job["script"], J.PRODUCERS)
+            self.assertEqual(job["needs"], ["final", "player"])
+            self.assertEqual(set(job["request"]["bundles"]), {"authored"})
+            self.assertEqual(len(job["request"]["profiles"]), 1)
+            self.assertEqual(graph.jobs["final"]["artifacts"]["catalog_bundle"], "actual/final")
+            self.assertEqual(graph.jobs["player"]["artifacts"]["catalog_registry"], "actual/player")
+            closure = graph.entry(name)
+            for path in ("recipe/catalog-request.json", "recipe/final.json", "recipe/player.json", "recipe/bootstrap.json"):
+                self.assertIn(path, closure["recipe_files"])
+            self.assertNotIn("recipe/metadata.json", closure["producer_files"])
+            # Derived outputs must never feed back into the bundle population.
+            (repo / "recipe/registry-policy.json").write_text("{}")
+            for producer in ("catalog_complete", "bundle_manifest", "object_produce"):
+                script = repo / G.PREFIX / (producer + ".py")
+                script.parent.mkdir(parents=True, exist_ok=True)
+                script.write_text("# authored fixture\n")
+            selected = [graph.profile_files[value] for value in profiles]
+            names = {G.digest(repo / graph.profile_files[value]): value for value in profiles}
+            graph.build = lambda pin: names[pin]
+            index = graph.compile(selected, bundle_manifest=True, catalog_request="recipe/catalog-request.json")
+            self.assertIn("payload/whole-catalog.json", index["entries"])
+            manifest = graph.jobs["recipe/jobs/owner-bundle-manifest.json"]["request"]
+            self.assertNotIn("whole-catalog.json", [row["name"] for row in manifest["bundles"]])
+            self.assertEqual(set(job["request"]["bundles"]), {"authored"})
+            changed = json.loads(request.read_text())
+            changed["attempt"] = "other"
+            request.write_text(json.dumps(changed))
+            with self.assertRaisesRegex(ValueError, "catalog/bootstrap identity differs"):
+                graph.catalog_complete(list(profiles), "recipe/catalog-request.json")
+            changed["attempt"] = identity["attempt"]
+            request.write_text(json.dumps(changed))
+            bootstrap.write_text(json.dumps(dict(identity, attempt="other")))
+            with self.assertRaisesRegex(ValueError, "bootstrap pin differs"):
+                graph.catalog_complete(list(profiles), "recipe/catalog-request.json")
+            graph.job_profiles["player"]["text_assets"]["files"][0]["recipe"].update(bytes=bootstrap.stat().st_size, sha256=G.digest(bootstrap))
+            with self.assertRaisesRegex(ValueError, "catalog/bootstrap identity differs"):
+                graph.catalog_complete(list(profiles), "recipe/catalog-request.json")
+
     def test_scene_record_suppliers_close_published_consumers(self):
         graph = G.Graph(ROOT, {})
         for scene, supplier, count in (
