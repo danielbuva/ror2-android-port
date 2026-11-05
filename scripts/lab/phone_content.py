@@ -11,6 +11,23 @@ import uuid
 
 from phone_bundle import VERSION, make_bundle
 
+NATIVE_CONTENT_TYPES = frozenset(
+    (
+        "LightingSettings",
+        "Mesh",
+        "Avatar",
+        "AnimationClip",
+        "Material",
+        "Shader",
+        "Texture2D",
+        "Sprite",
+        "GameObject",
+        "AvatarMask",
+        "PhysicMaterial",
+        "AnimatorOverrideController",
+    )
+)
+
 SOURCES = {
     "ContentFixture.cs": "Assets",
     "NativeScriptSchemaFixture.cs": "Assets",
@@ -106,7 +123,7 @@ def native_content_request(path):
     names = set()
     for asset in assets:
         name = asset.get("name")
-        if not isinstance(name, str) or not name or name in names or asset.get("type") != "LightingSettings":
+        if not isinstance(name, str) or not name or name in names or asset.get("type") not in NATIVE_CONTENT_TYPES:
             raise RuntimeError("Native-content asset name/type absent, duplicated or unsupported")
         names.add(name)
     return request

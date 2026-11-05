@@ -2773,3 +2773,18 @@ CPU/GPU peak 65.8 C, above 80 C 0 s, battery 27 C; stopped/asleep/lease released
 Pinned R2API content load/generate/finalize phases informed observation scope.
 Enemy preparation remains the largest paired span in this capture (17.905 s);
 residual body time, sustained FPS, audibility and whole-load causal comparison remain open.
+
+
+## J1388 — Emit and typed-load a closed source-native bundle subset
+
+2026-11-05. The existing preload owner now emits an explicitly partial native
+bundle from selected producer packs and complete schemas; actual PPtrs, native
+identities and every final body/type/ID are checked. The exact-editor fixture
+now accepts 12 native root types. Public emission reproduces 6,863 records and
+3,122 uniquely named roots; all roots passed typed native load and unload.
+Bundle SHA-256 `954d64dec692be533896ced85b74091165ad98c65f4d164058d6a7d37b1a587f`.
+Evidence: `work/coordination/p1-wholegame-1031/closed-native-public-v1/`
+and `closed-native-typed-load-v1/`; seven emission host tests and host preflight pass.
+Prior art: pinned EditorKit typed asset lookup; existing J1271 preload closure.
+Managed/external/stream-resource and ordered Sprite cohorts remain excluded in
+the gap receipt. No APK produced; complete graph, device play and updates remain open.
