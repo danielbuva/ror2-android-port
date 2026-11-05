@@ -3699,6 +3699,10 @@ authored source snapshots, including replacement input and identity checks.
 item, equipment and body holder binding. `WholeCatalogComposed` keeps native
 population, identity checks and the existing field-restoration owner; the local
 snapshot ends before drone preparation and adds no retained cache.
+Buff discovery uses the existing `DefinitionFamily<BuffDef>` provider-root loader
+and family cache instead of broad bundle loading. Typed root selection, unique
+name/selected-identity checks and `Release` cache teardown keep their existing
+owners; native buff registration and holder restoration remain unchanged.
 
 Each staged runtime file starts with a two-line header naming its subsystem, whether it is
 on the game path, and its setup and teardown methods (J516).

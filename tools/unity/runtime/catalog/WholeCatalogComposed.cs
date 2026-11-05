@@ -796,7 +796,7 @@ public static class WholeCatalogComposed
     {
         if (!owned)
             throw new Exception("Shared original buff owner unavailable");
-        return owned.LoadAllAssets<RoR2.BuffDef>();
+        return DefinitionFamily(new RoR2.BuffDef[0]);
     }
     public static RoR2.ItemDef[] ItemDefinitions()
     {
