@@ -3790,10 +3790,18 @@ same token values, types, property order and parser error handling.
 `test_scoped_definition_manifest.py` exercises the production methods against
 authored source snapshots, including parser parity, replacement input and identity
 checks.
-`PortSession` likewise shares a local manifest across synchronous artifact,
-item, equipment and body holder binding. `WholeCatalogComposed` keeps native
-population, identity checks and the existing field-restoration owner; the local
-snapshot ends before drone preparation and adds no retained cache.
+`PortSession` likewise shares a local manifest across synchronous artifact-family
+loading, artifact, item, equipment and body holder binding, and drone/projectile
+registration through `WholePopulationSession` and `WholeCatalogComposed`.
+`WholeCatalogComposed` keeps native population, identity checks and the existing
+field-restoration owner; the local
+snapshot ends before the skins coroutine and adds no retained cache.
+`AndroidProfileSession.Prepare` emits sparse survivor/unlockable family and
+progression-metadata startup timing through the existing `TraceStartup` owner.
+The existing family loader emits child phases only on a cache miss; registration,
+profile restoration and cache teardown retain their existing owners.
+The metadata-ready marker precedes objective rules, redirects and local profile
+setup; it does not describe completion of the entire profile boundary.
 Buff discovery uses the existing `DefinitionFamily<BuffDef>` provider-root loader
 and family cache instead of broad bundle loading. Typed root selection, unique
 name/selected-identity checks and `Release` cache teardown keep their existing

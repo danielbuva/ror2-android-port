@@ -96,7 +96,9 @@ public static partial class WholeCatalogComposed
         File.WriteAllText("payload/whole-catalog.json", data.ToString());
         var snapshot = ReadDefinitionManifest();
         File.Delete("payload/whole-catalog.json"); // All three operations must use the supplied snapshot.
-        var types = CategoryFamily(snapshot, "types", new[] { type });
+        var trace = new List<string>();
+        var types = CategoryFamily(snapshot, "types", new[] { type }, trace.Add);
+        Check(trace.SequenceEqual(new[] { "manifest-begin", "manifest-ready-index-begin", "index-ready-assets-begin", "assets-ready" }));
         var providers = CategoryFamily(snapshot, "providers", new[] { provider });
         PopulateDefinitionFields(snapshot, "ItemRelationshipTypes", types);
         PopulateBodyFields(snapshot, new[] { player });
@@ -113,6 +115,9 @@ public static partial class WholeCatalogComposed
         Check(ReferenceEquals(SourceProvider.ItemRelationshipTypes.Related, type));
         // A public cache hit keeps membership validation and needs no parse.
         Check(ReferenceEquals(CategoryFamily("types", new[] { type }).Single(), type));
+        trace.Clear();
+        Check(ReferenceEquals(CategoryFamily<Definition>(null, "types", new[] { type }, trace.Add).Single(), type));
+        Check(trace.Count == 0);
         bool rejected = false;
         try { CategoryFamily(snapshot, "types", new[] { provider }); } catch (Exception) { rejected = true; }
         Check(rejected);

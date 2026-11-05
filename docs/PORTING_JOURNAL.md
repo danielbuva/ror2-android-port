@@ -2884,3 +2884,51 @@ Authored regression covers reallocation, wrong/absent slots and full-type drift;
 `tests/test_bundle_preload.py`; no APK or device change. Prior art: pinned
 EditorKit typed/collision lookup and existing script_identity relationship check.
 Current-CLR adapter, complete closure, Unity typed load and device gates stay open.
+
+## J1396 — Share one manifest across artifact registration and native holders
+
+2026-11-05. `PortSession` reuses its synchronous definition snapshot for artifact
+family loading and existing artifact/item/equipment/body bindings; native order,
+identity checks and restoration stay intact. Six focused source fixtures pass.
+APK `5df093c7bf1af52f5613f3b5b4084ddf0551bbf7b084a18bef85a308d8564d51`.
+Evidence: `work/coordination/alpha-artifact-holder-device-20261105T063249Z/`.
+Ordinary Start reaches Titanic Plains/player/HUD; native catalogs and source audio
+ready 153/153, no first failure, profiles/settings retained; binary profiler off.
+Artifact 1.832 s + holders 0.011 s = 1.843 s versus J1393 3.377 s combined;
+process-cold, uncontrolled page cache: diagnostic comparison, no general speedup claim.
+CPU/GPU peak 62.6 C, above 80 C 0 s, battery 28 C; app stopped/display asleep,
+scratch removed/lease released/prune passed. Prior art: pinned R2API content phases,
+J1376/J1380 scoped snapshots. Sustained play, audibility and alpha gates stay open.
+
+
+## J1397 — Share the synchronous manifest with drone and projectile registration
+
+2026-11-05. Existing `PortSession` snapshot now feeds drone and projectile catalog
+registration; native setters/order/typed identities/restoration remain unchanged.
+Snapshot ends before skins; public projectile calls retain lazy cache behavior.
+Six focused source fixtures pass; Ruff/pins pass. APK
+`e21675abb85767d2e5ba4233c9078bd219ce33dbf1f8b1c338e42c7918639746`.
+Evidence: `work/coordination/alpha-drone-projectile-device-20261105T070118Z/`.
+Ordinary Start reaches Titanic Plains/player/HUD; native catalogs/source banks
+153/153 ready, no first failure, profiles/settings retained; binary profiler off.
+Drone 0.435 s + projectile 1.921 s = 2.356 s versus J1393 7.034 s combined;
+process-cold, uncontrolled page cache: diagnostic only, no general speedup claim.
+CPU/GPU peak 59.4 C, above 80 C 0 s, battery 28 C; process stopped/OLED asleep,
+scratch removed/lease released/prune passed. Prior art: pinned R2API content phases
+and existing scoped snapshots. Sustained play, audibility and alpha gates stay open.
+
+## J1398 — Attribute native profile startup phases
+
+2026-11-05. `AndroidProfileSession.Prepare` times survivor/unlockable families and
+progression metadata; registration/order/cache/restoration remain unchanged.
+Two focused production fixtures pass; existing cache-hit/miss traces stay sparse.
+APK `1f172f957dbb280c0b232ea6b63836ba0cfe7f47d1e8ab8d09f775bd57bca614`.
+Evidence: `work/coordination/alpha-profile-startup-device-20261105T072755Z/`.
+Ordinary Start reaches Titanic Plains/player/HUD; native catalogs/source banks
+153/153 ready, no first failure; update retains profiles/settings; profiler off.
+Same-frame timings: survivor family 0.000204 s, registration 0.008469 s,
+unlockables 1.825 s (manifest 1.516 s, index 0.273 s, assets 0.035 s), metadata
+0.031 s. Process-cold, uncontrolled page cache; attribution only, no speedup claim.
+CPU/GPU peak 61.8 C, above 80 C 0 s, battery 28 C; stopped/asleep, scratch removed,
+lease released/prune passed. Prior art: community startup/profile graph and pinned
+R2API content phases. Sustained play, audibility and full-pipeline gates stay open.
