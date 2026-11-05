@@ -22,27 +22,39 @@ if(failDiagnostic)throw new IllegalStateException("synthetic diagnostic error");
 diagnosticEvents.add(stage==null?"callback:"+callback+":"+match:stage);}
 public static void updateInstallCheckpoint(android.content.Context c,String state,String message){checkpointState=state;}}""",
     "android/os/Build.java": "package android.os; public class Build { public static class VERSION { public static int SDK_INT=33; } }",
-    "android/content/IntentSender.java": "package android.content; public class IntentSender {}",
+    "android/content/IntentSender.java": """package android.content; public class IntentSender {
+        public final Intent callback; public final int requestCode,flags;
+        public IntentSender(Intent i,int id,int f){callback=i;requestCode=id;flags=f;}
+        public void send(Context app,int session,int status,Intent confirmation) throws Exception {
+            Intent delivery=new Intent();delivery.session=session;delivery.code=status;delivery.confirmation=confirmation;
+            delivery.target=callback.target;delivery.action=callback.action;
+            ((BroadcastReceiver)callback.target.getDeclaredConstructor().newInstance()).onReceive(app,delivery);
+        }
+    }""",
     "android/content/Intent.java": """package android.content; public class Intent {
         public static final String EXTRA_INTENT="intent"; public static final int FLAG_ACTIVITY_NEW_TASK=1;
-        public int code=1,session=7; public Intent confirmation; public Intent(){} public Intent(Context c,Class<?> t){}
-        public Intent setAction(String a){return this;} public Intent addFlags(int f){return this;}
-        public int getIntExtra(String k,int d){return k.equals("session")?session:code;} public String getStringExtra(String k){return "denied";}
-        public Intent getParcelableExtra(String k){return confirmation;}
+        public int code=1,session=7,flags; public Intent confirmation; public Class<?> target; public String action;
+        public Intent(){} public Intent(Context c,Class<?> t){target=t;}
+        public Intent setAction(String a){action=a;return this;} public Intent addFlags(int f){flags|=f;return this;}
+        public int getIntExtra(String k,int d){return k.equals("session")?session:k.equals("status")?code:d;} public String getStringExtra(String k){return "denied";}
+        public Intent getParcelableExtra(String k){return EXTRA_INTENT.equals(k)?confirmation:null;}
     }""",
     "android/content/BroadcastReceiver.java": "package android.content; public abstract class BroadcastReceiver {public abstract void onReceive(Context c,Intent i);}",
     "android/content/Context.java": """package android.content; import android.content.pm.*;
         public class Context {public PackageManager manager=new PackageManager(); public Intent started;
+        public boolean startFails; public String stateAtStart;
         public Prefs prefs=new Prefs(); public PackageManager getPackageManager(){return manager;}
         public String getPackageName(){return "authored.tool";} public Prefs getSharedPreferences(String s,int m){return prefs;}
-        public void startActivity(Intent i){started=i;} public static class Prefs {java.util.Map<String,String> values=new java.util.HashMap<>();
+        public void startActivity(Intent i){stateAtStart=prefs.getString("state","");
+        if(startFails)throw new SecurityException("synthetic confirmation launch failure");started=i;} public static class Prefs {java.util.Map<String,String> values=new java.util.HashMap<>();
         public String getString(String k,String d){return values.containsKey(k)?values.get(k):d;} public Prefs edit(){return this;}
         public Prefs putString(String k,String v){values.put(k,v);return this;} public boolean commit(){return true;}}
     }""",
     "android/app/PendingIntent.java": """package android.app; import android.content.*;
         public class PendingIntent {public static final int FLAG_UPDATE_CURRENT=1,FLAG_MUTABLE=2; public static int flags;
-        public static PendingIntent getBroadcast(Context c,int id,Intent i,int f){flags=f;return new PendingIntent();}
-        public IntentSender getIntentSender(){return new IntentSender();}}
+        private IntentSender sender; public static PendingIntent getBroadcast(Context c,int id,Intent i,int f){
+        flags=f;PendingIntent result=new PendingIntent();result.sender=new IntentSender(i,id,f);return result;}
+        public IntentSender getIntentSender(){return sender;}}
     """,
     "android/content/pm/PackageInfo.java": """package android.content.pm; public class PackageInfo {
         public String packageName="authored.game"; public int versionCode=2; public Signature[] signatures={new Signature("same-key")};
@@ -61,19 +73,19 @@ public static void updateInstallCheckpoint(android.content.Context c,String stat
     "android/content/pm/PackageInstaller.java": """package android.content.pm; import java.io.*; import android.content.*;
         public class PackageInstaller {public static final String EXTRA_STATUS="status",EXTRA_STATUS_MESSAGE="message",EXTRA_SESSION_ID="session";
         public static final int STATUS_FAILURE=1,STATUS_SUCCESS=0,STATUS_PENDING_USER_ACTION=-1;
-        public SessionParams params; public Session session=new Session(); public boolean abandoned,fail; public SessionInfo info=new SessionInfo();
+        public SessionParams params; public Session session=new Session(); public int created; public boolean abandoned,fail; public SessionInfo info=new SessionInfo();
         public SessionInfo getSessionInfo(int id){return info;}
         public static class SessionInfo {public boolean sealed=true; public boolean isSealed(){return sealed;}}
-        public int createSession(SessionParams p){params=p;return 7;} public Session openSession(int id) throws IOException {
+        public int createSession(SessionParams p){created++;params=p;return 7;} public Session openSession(int id) throws IOException {
         if(fail)throw new IOException("open failed");return session;} public void abandonSession(int id){abandoned=true;}
         public static class SessionParams {public static final int MODE_FULL_INSTALL=1,USER_ACTION_NOT_REQUIRED=2;
         public int action,mode; public String name; public long size; public SessionParams(int m){mode=m;}
         public void setAppPackageName(String n){name=n;} public void setSize(long s){size=s;} public void setRequireUserAction(int a){action=a;}}
         public static class Session implements AutoCloseable {public boolean committed,synced,closed,writeFail,syncFail,commitFail;
-        public ByteArrayOutputStream bytes=new ByteArrayOutputStream(); public OutputStream openWrite(String n,long o,long s) throws IOException {
+        public IntentSender receiver; public ByteArrayOutputStream bytes=new ByteArrayOutputStream(); public OutputStream openWrite(String n,long o,long s) throws IOException {
         if(writeFail)throw new IOException("write failed");return bytes;}
         public void fsync(OutputStream o) throws IOException {if(syncFail)throw new IOException("sync failed");synced=true;}
-        public void commit(IntentSender s){if(commitFail)throw new IllegalStateException("commit failed");committed=true;}
+        public void commit(IntentSender s){if(commitFail)throw new IllegalStateException("commit failed");receiver=s;committed=true;}
         public void close(){closed=true;}}
     }""",
 }
@@ -97,6 +109,13 @@ public class Harness {
         catch(IOException e){check(e.getMessage().contains(expected));}
         check(!c.manager.installer.session.committed);
     }
+    static void noSecondInstall(Context c,File apk,String hash) throws Exception {
+        PackageInstaller.Session original=c.manager.installer.session;int created=c.manager.installer.created;
+        try {OwnerInstaller.install(c,apk,hash);throw new AssertionError("second install accepted");}
+        catch(IOException expected){check(expected.getMessage().contains("already pending"));}
+        check(c.manager.installer.session==original && original.committed && !c.manager.installer.abandoned);
+        check(c.manager.installer.created==created);
+    }
     public static void main(String[] args) throws Exception {
         File apk=new File(args[0]); byte[] bytes="authored APK stream".getBytes("UTF-8");Files.write(apk.toPath(),bytes);
         StringBuilder digest=new StringBuilder();for(byte b:MessageDigest.getInstance("SHA-256").digest(bytes))digest.append(String.format("%02x",b&255));
@@ -108,7 +127,22 @@ public class Harness {
         check(java.util.Arrays.equals(bytes,c.manager.installer.session.bytes.toByteArray()));
         check(c.manager.installer.params.mode==PackageInstaller.SessionParams.MODE_FULL_INSTALL && c.manager.installer.params.action==0);
         c=update();OwnerInstaller.install(c,apk,hash);check(c.manager.installer.params.action==2);
-        check((android.app.PendingIntent.flags&android.app.PendingIntent.FLAG_MUTABLE)!=0);
+        for(int api:new int[]{24,30,31,33}) {
+            Build.VERSION.SDK_INT=api;c=new Context();OwnerInstaller.install(c,apk,hash);
+            IntentSender callback=c.manager.installer.session.receiver;
+            check(callback!=null && callback.requestCode==7);
+            check(callback.callback.target==OwnerInstaller.Result.class);
+            check(callback.callback.action.equals(c.getPackageName()+".OWNER_INSTALL"));
+            int expected=android.app.PendingIntent.FLAG_UPDATE_CURRENT;
+            if(api>=31)expected|=android.app.PendingIntent.FLAG_MUTABLE;
+            check(callback.flags==expected);
+            // Deliver through the IntentSender passed to the real Session.commit,
+            // not a separately selected receiver. Android delivery remains a phone gate.
+            Intent confirmation=new Intent();confirmation.flags=8;
+            callback.send(c,7,PackageInstaller.STATUS_PENDING_USER_ACTION,confirmation);
+            check(c.started==confirmation && confirmation.flags==(8|Intent.FLAG_ACTIVITY_NEW_TASK));
+            check("AWAITING_CONFIRMATION".equals(c.stateAtStart) && OwnerInstaller.busy(c));
+        }
         Build.VERSION.SDK_INT=30;c=update();OwnerInstaller.install(c,apk,hash);check(c.manager.installer.params.action==0);Build.VERSION.SDK_INT=33;
         c=update();c.manager.next.versionCode=1;refusal(c,apk,hash,"version");check(c.manager.installer.params==null);
         c=update();c.manager.next.signatures=new android.content.pm.Signature[]{new android.content.pm.Signature("lost-key")};refusal(c,apk,hash,"signing key");check(c.manager.installer.params==null);
@@ -143,8 +177,22 @@ public class Harness {
         OwnerInstaller.reconcile(c);check(OwnerInstaller.state(c).equals("INSTALLED"));check(ToolHostActivity.checkpointState.equals("INSTALLED"));
         c=new Context();OwnerInstaller.install(c,apk,hash);c.manager.installer.info=null;
         OwnerInstaller.reconcile(c);check(OwnerInstaller.state(c).equals("ERROR"));
-        c=new Context();OwnerInstaller.install(c,apk,hash);i=new Intent();i.code=-1;
-        receiver.onReceive(c,i);check(OwnerInstaller.state(c).equals("AWAITING_CONFIRMATION") && c.started==null);
+        c=new Context();OwnerInstaller.install(c,apk,hash);
+        c.manager.installer.session.receiver.send(c,7,PackageInstaller.STATUS_PENDING_USER_ACTION,null);
+        check(OwnerInstaller.state(c).equals("AWAITING_CONFIRMATION") && c.started==null);
+        check(OwnerInstaller.busy(c) && !c.manager.installer.abandoned);
+        noSecondInstall(c,apk,hash);
+        c=new Context();OwnerInstaller.install(c,apk,hash);c.startFails=true;
+        c.manager.installer.session.receiver.send(c,7,PackageInstaller.STATUS_PENDING_USER_ACTION,new Intent());
+        check(OwnerInstaller.state(c).equals("AWAITING_CONFIRMATION") && c.started==null);
+        check("AWAITING_CONFIRMATION".equals(c.stateAtStart));
+        check(OwnerInstaller.busy(c) && !c.manager.installer.abandoned);
+        noSecondInstall(c,apk,hash);
+        // No observed callback is not permission to abandon a sealed session or
+        // create a second install. The harness alone bounds its acceptance wait.
+        c=new Context();OwnerInstaller.install(c,apk,hash);OwnerInstaller.reconcile(c);
+        check(OwnerInstaller.state(c).equals("INSTALLING") && !c.manager.installer.abandoned);
+        noSecondInstall(c,apk,hash);
         OwnerUpdateState state=new OwnerUpdateState();check(state.canCheck() && !state.canBuild() && !state.canInstall());
         state.beginCheck();check(state.busy() && !state.canCheck());
         try {state.beginCheck();throw new AssertionError();}catch(IllegalStateException expected){}
