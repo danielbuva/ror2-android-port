@@ -3758,8 +3758,11 @@ order and each `finally`) is in
 types, providers and holder binding through `WholeCatalogComposed`. The synchronous
 preparation call releases that reference on return; family-cache lifetime and
 relationship registration/restoration remain under their existing owners.
+The shared reader omits unused JSON source-line annotations while retaining the
+same token values, types, property order and parser error handling.
 `test_scoped_definition_manifest.py` exercises the production methods against
-authored source snapshots, including replacement input and identity checks.
+authored source snapshots, including parser parity, replacement input and identity
+checks.
 `PortSession` likewise shares a local manifest across synchronous artifact,
 item, equipment and body holder binding. `WholeCatalogComposed` keeps native
 population, identity checks and the existing field-restoration owner; the local
