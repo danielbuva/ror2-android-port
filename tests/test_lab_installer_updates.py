@@ -96,6 +96,38 @@ class LabInstallerUpdatesTests(unittest.TestCase):
                     phone.require_ungranted_install_permission()
                 shell.assert_not_called()
 
+    def test_unset_permission_accepts_only_observed_default_mode_shape(self):
+        phone = self.owned_phone()
+        value = b"No operations.\nDefault mode: default\n"
+        with patch.object(phone, "package_hash", return_value=phone.installer_hash), patch.object(phone, "shell", return_value=value) as shell:
+            self.assertEqual(phone.install_permission_mode(), "default")
+            phone.require_ungranted_install_permission()
+            self.assertTrue(all(call.args == ("appops", "get", LAB.PACKAGE, "REQUEST_INSTALL_PACKAGES") for call in shell.call_args_list))
+        for value in (
+            "No operations.\nDefault mode: allow",
+            "No operations.\nDefault mode: foreground",
+            "No operations.\nDefault mode: unknown",
+            "No operations.\nDefault mode: deny",
+            "No operations.\nDefault mode: default\nsynthetic-private",
+            "synthetic-private\nNo operations.\nDefault mode: default",
+            "No operations.\nDefault mode: default\nREQUEST_INSTALL_PACKAGES: deny",
+            "No operations.\nDefault mode: default\nDefault mode: default",
+            "No operations.\n\nDefault mode: default",
+            "Default mode: default",
+        ):
+            with (
+                self.subTest(value=value),
+                patch.object(phone, "package_hash", return_value=phone.installer_hash),
+                patch.object(phone, "shell", return_value=value.encode()),
+            ):
+                with self.assertRaisesRegex(LAB.Failure, "^device-install-permission-shape$"):
+                    phone.require_ungranted_install_permission()
+        phone.allow_test_installs = True
+        with patch.object(phone, "package_hash", return_value=phone.installer_hash), patch.object(phone, "shell") as shell:
+            with self.assertRaisesRegex(LAB.Failure, "install-prompt-permission-already-granted"):
+                phone.require_ungranted_install_permission()
+            shell.assert_not_called()
+
     def test_settings_permission_is_app_opened_visibly_enabled_and_read_back(self):
         phone = self.owned_phone()
         app = ET.fromstring('<hierarchy><node package="' + LAB.PACKAGE + '"/></hierarchy>')

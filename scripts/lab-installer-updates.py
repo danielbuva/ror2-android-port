@@ -843,11 +843,17 @@ class Phone:
 
     def install_permission_mode(self):
         value = self.shell("appops", "get", PACKAGE, "REQUEST_INSTALL_PACKAGES", label="device-install-permission-query").decode()
+        # Android 13 reports an unset operation with its default on a second
+        # line. This exact default is ungranted, not evidence of permission.
+        if value.strip() == "No operations.":
+            return "unset"
+        if value.strip() == "No operations.\nDefault mode: default":
+            return "default"
+        if "No operations." in value:
+            raise Failure("device-install-permission-shape")
         modes = re.findall(r"\bREQUEST_INSTALL_PACKAGES: (allow|ignore|deny|default|foreground)\b", value)
         if len(modes) == 1:
             return modes[0]
-        if value.strip() == "No operations.":
-            return "unset"
         raise Failure("device-install-permission-shape")
 
     def require_ungranted_install_permission(self):
