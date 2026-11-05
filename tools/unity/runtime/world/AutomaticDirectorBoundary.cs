@@ -340,7 +340,8 @@ public sealed partial class PortSession
             if (coordinator.r.liveCatalogs != null)
             {
                 var originals =
-                    WholeCatalogComposed.CategoryFamily(RoR2.ContentManagement.AddressablesLabels.characterMaster, new GameObject[0]);
+                    WholeCatalogComposed.CategoryFamily(null, RoR2.ContentManagement.AddressablesLabels.characterMaster,
+                                                        new GameObject[0], step => TraceStartup("director-master-family-" + step));
                 var byName = adaptedMasters.ToDictionary(value => value.name, StringComparer.Ordinal);
                 coordinator.Check(byName.Keys.All(name => originals.Any(value => value.name == name)),
                                   "Owned adapted master absent from original provider category");
