@@ -2698,7 +2698,7 @@ Prior art: pinned AssetRipper full script identity and J866 exact scope/forwardi
 No APK produced; integrated source/body proofs, native bridges, complete graph/load
 and device play remain required independently of this metadata contract.
 
-## J1383 — Partition initial-stage preparation and native transport timings
+## J1384 — Partition initial-stage preparation and native transport timings
 
 2026-11-05. Existing stage, input, population and director owners emit bounded
 startup/transport wall-time markers; no scheduling, RNG, lifecycle or content change.
@@ -2711,3 +2711,13 @@ Audio ready, Commando/HUD/stage screenshot observed; adopted update retained pro
 CPU/GPU peak 82 C, 0.727 s above 80 C; battery 29 to 28 C; cleanup verified.
 Prior art: pinned R2API provider/SoundAPI phases; J1371 full-byte reuse validation retained.
 No speedup, sustained FPS, ordinary stage-exit or complete gameplay qualification claimed.
+## J1383 — Publish source scene suppliers for the converter graph
+
+2026-11-04. Four source-record profiles supply Artifactworld01 AkTriggerDisable
+and Champrush, Splash and Conduitcanyon directors through the existing native
+record owner. Checked component and director PPtrs retain original relationships;
+Conduit uses the existing exposed-name policy with 13 checked source pointers.
+Evidence: four-consumer release-graph fixture and host-only preflight passed;
+local receipts: `work/coordination/p1-scenes-w/current-scene-supplier-preflight-v1/`.
+Public recipes contain selectors and transformations, no generated record bodies.
+No APK produced; complete graph, current-code assembly and device play remain open.

@@ -85,6 +85,10 @@ all existing hashes, then closes/removes its temporary store on success or failu
 Profile/native metadata remains resident. The aggregate member bound is 8 GiB;
 individual records retain the existing 256 MiB bound. An authored 257 MiB control
 matches canonical bytes with bounded payload memory; full phone production is open.
+`owner-code/produce.py` derives native translation-unit membership from each fresh
+conversion for both current and historical requests. It retains audited SDK
+compiler flags and link ordering through `native.generated_profile`; source hashes,
+metadata and complete native membership are checked before planning or compilation.
 `player_data.py` binds no-target code requests to the current runtime manifest
 and actual managed compiler source hashes. Historical target requests retain
 their pinned cohort. Existing importer GUIDs survive; first-import owners use
@@ -6241,3 +6245,10 @@ Fieldless component metadata uses the existing receipt-bound current MonoScript
 identity policy in `object_produce.py`; its schema/properties hash must still
 match the supplied script. Receipts record the actual script hash. Setup and
 teardown remain the scoped source-pack readers and retained producer receipt.
+
+The Artifactworld01 native and Champrush/Splash/Conduitcanyon director record profiles use
+the existing `record_produce.py` owner. They relocate checked source component
+and PlayableDirector pointers, preserving the existing exposed-name policy.
+Setup pins original bundles and a fresh pack; process exit closes readers and
+retains receipts. They supply release-graph dependencies without a new runtime
+owner. Complete APK and device acceptance remain open.

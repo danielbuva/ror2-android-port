@@ -1,0 +1,221 @@
+{
+  "input_id": "6af7ed94619fe1b4346974b4486afa03a8d1625a7820e92da0ff74d57208fe88",
+  "bundles": [
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-base-skymeadow_static_assets_all_2d9a8ca65adba6dd0984a208facf1055.bundle",
+      "sha256": "242335607e352a5ba198344d1bb1b1e4934ade5d93febe92b33a3a77dfd551e2",
+      "members": [
+        {
+          "name": "CAB-0fbcdc981adeaefd9313863aea94c2f7",
+          "objects": [
+            {
+              "path_id": 2941023168742541762,
+              "class_id": 114,
+              "sha256": "6ce9a7205e09e3f8717959c7e9c6a9679bc6259ec2b92964fff8a64705c49633",
+              "outputs": [
+                {
+                  "bundle": "whole-scene-artifactworld01",
+                  "member": "BuildPlayer-artifactworld01",
+                  "path_id": 5487,
+                  "bytes": 32,
+                  "sha256": "9280dc71bfbfa64bdbd55b35de9bfa573072e9cc739641adca447741ef32d1ca",
+                  "transform": {
+                    "references": [
+                      {
+                        "offset": 0,
+                        "from": [
+                          0,
+                          -7822054015931987518
+                        ],
+                        "to": [
+                          0,
+                          1108
+                        ]
+                      },
+                      {
+                        "offset": 16,
+                        "from": [
+                          1,
+                          3643145687524155295
+                        ],
+                        "to": [
+                          1,
+                          179
+                        ]
+                      }
+                    ]
+                  }
+                },
+                {
+                  "bundle": "whole-scene-artifactworld01",
+                  "member": "BuildPlayer-artifactworld01",
+                  "path_id": 5488,
+                  "bytes": 32,
+                  "sha256": "4d59a260fd9aedfca3d03a7d3a05de958a132d79e896360b22cce6dbfd9165b7",
+                  "transform": {
+                    "references": [
+                      {
+                        "offset": 0,
+                        "from": [
+                          0,
+                          -7822054015931987518
+                        ],
+                        "to": [
+                          0,
+                          1107
+                        ]
+                      },
+                      {
+                        "offset": 16,
+                        "from": [
+                          1,
+                          3643145687524155295
+                        ],
+                        "to": [
+                          1,
+                          179
+                        ]
+                      }
+                    ]
+                  }
+                },
+                {
+                  "bundle": "whole-scene-artifactworld01",
+                  "member": "BuildPlayer-artifactworld01",
+                  "path_id": 5489,
+                  "bytes": 32,
+                  "sha256": "78e1b5d25680df45ef5a53626b1e356aec1d7830dae42d027febba3a27715ffb",
+                  "transform": {
+                    "references": [
+                      {
+                        "offset": 0,
+                        "from": [
+                          0,
+                          -7822054015931987518
+                        ],
+                        "to": [
+                          0,
+                          1106
+                        ]
+                      },
+                      {
+                        "offset": 16,
+                        "from": [
+                          1,
+                          3643145687524155295
+                        ],
+                        "to": [
+                          1,
+                          179
+                        ]
+                      }
+                    ]
+                  }
+                },
+                {
+                  "bundle": "whole-scene-artifactworld01",
+                  "member": "BuildPlayer-artifactworld01",
+                  "path_id": 5490,
+                  "bytes": 32,
+                  "sha256": "ea2ae42bab484190b47022bdc242fbcec5dd486ca89dea2f9ee48e60dd3020de",
+                  "transform": {
+                    "references": [
+                      {
+                        "offset": 0,
+                        "from": [
+                          0,
+                          -7822054015931987518
+                        ],
+                        "to": [
+                          0,
+                          1109
+                        ]
+                      },
+                      {
+                        "offset": 16,
+                        "from": [
+                          1,
+                          3643145687524155295
+                        ],
+                        "to": [
+                          1,
+                          179
+                        ]
+                      }
+                    ]
+                  }
+                },
+                {
+                  "bundle": "whole-scene-artifactworld01",
+                  "member": "BuildPlayer-artifactworld01",
+                  "path_id": 5491,
+                  "bytes": 32,
+                  "sha256": "049d4c86011ce02487522b36d4c66846534e7f2cd835df2bc07e0bd6f009c6c9",
+                  "transform": {
+                    "references": [
+                      {
+                        "offset": 0,
+                        "from": [
+                          0,
+                          -7822054015931987518
+                        ],
+                        "to": [
+                          0,
+                          1110
+                        ]
+                      },
+                      {
+                        "offset": 16,
+                        "from": [
+                          1,
+                          3643145687524155295
+                        ],
+                        "to": [
+                          1,
+                          179
+                        ]
+                      }
+                    ]
+                  }
+                },
+                {
+                  "bundle": "whole-scene-artifactworld01",
+                  "member": "BuildPlayer-artifactworld01",
+                  "path_id": 5492,
+                  "bytes": 32,
+                  "sha256": "5ad590cbec6aa5567ead856a7339b7cd3bea1e1971d00dc1beb2ed1edc845403",
+                  "transform": {
+                    "references": [
+                      {
+                        "offset": 0,
+                        "from": [
+                          0,
+                          -7822054015931987518
+                        ],
+                        "to": [
+                          0,
+                          84
+                        ]
+                      },
+                      {
+                        "offset": 16,
+                        "from": [
+                          1,
+                          3643145687524155295
+                        ],
+                        "to": [
+                          1,
+                          179
+                        ]
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
