@@ -802,7 +802,7 @@ public static class WholeCatalogComposed
     {
         if (!owned)
             throw new Exception("Shared original item owner unavailable");
-        return owned.LoadAllAssets<RoR2.ItemDef>();
+        return DefinitionFamily(new RoR2.ItemDef[0]);
     }
     public static RoR2.EliteDef[] EliteDefinitions()
     {
