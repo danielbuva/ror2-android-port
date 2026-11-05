@@ -1471,8 +1471,12 @@ CLI. It consumes a qualified selected graph, receipt-bound source record packs
 and complete native schema pools, removes records with missing local dependencies,
 and generates single-object native container roots and transitive preloads.
 Actual source bodies, PPtrs, native type identities and final serialized bodies
-are checked; managed bindings, external endpoints, streamed resources and ordered
-Sprite cohorts remain excluded and reported. Setup takes explicit local graph and
+are checked. Texture2D, Cubemap and Mesh stream descriptors are parsed from their
+native schemas and relocated into one resource member; the bounded disk writer
+checks each source extent and final resource hash. Source/emitted body hashes and
+resource descriptors remain in `resources.jsonl`. Managed bindings, external
+endpoints and ordered Sprite cohorts remain excluded and reported.
+Setup takes explicit local graph and
 schema paths plus a fresh output directory. Temporary body/serialization staging
 is deleted on exit; bundle, roots, typed-load request, gap list and receipt remain.
 This is a partial qualification output, not the complete whole-game bundle or a
