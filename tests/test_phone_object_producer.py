@@ -2318,6 +2318,18 @@ class LegacyBarrierPolicyTests(unittest.TestCase):
             LEGACY_IDENTITY.properties_hash("AnimateShaderAlpha", "RoR2", "RoR2.dll", hashed, sdk),
         )
 
+    def test_generic_curve_hash_policy_retains_runtime_layout_and_checks_all_fields(self):
+        body, runtime, sdk = legacy_policy_fixture()
+        changed = runtime.replace(b"alphaCurve\x00", b"otherCurve\x00")
+        normalized = P.editor_curve_hash_tree(changed, [sdk, sdk], LEGACY_IDENTITY)
+        self.assertEqual(next(n["size"] for n in LEGACY_IDENTITY.tree_nodes(changed) if n["type"] == "Keyframe"), 28)
+        self.assertEqual(next(n["size"] for n in LEGACY_IDENTITY.tree_nodes(normalized) if n["type"] == "Keyframe"), 32)
+        self.assertEqual(P.editor_curve_hash_tree(normalized, [sdk], LEGACY_IDENTITY), normalized)
+        # A non-editor source field change cannot be hidden by normalization.
+        with self.assertRaisesRegex(ValueError, "runtime AnimationCurve"):
+            P.editor_curve_hash_tree(changed.replace(b"inSlope\x00", b"badSlop\x00"), [sdk], LEGACY_IDENTITY)
+        self.assertTrue(body)
+
     def test_nonzero_value_or_alignment_padding_is_never_discarded(self):
         body, tree, _ = legacy_policy_fixture()
         for offset in [48, 49, 52, 55]:
