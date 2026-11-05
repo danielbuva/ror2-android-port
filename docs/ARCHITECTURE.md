@@ -6359,3 +6359,13 @@ resources also supply external preload endpoints; the release graph binds these
 from the selected player outputs. The scoped producer checks native endpoints,
 types and script bindings and retains its receipt on exit. This adds
 no runtime owner. Complete APK and device acceptance remain open.
+
+The existing `owner-apk/build_owner_apk.py` assembler also accepts an
+`owner-local-output-v1` profile for the disposable `dev.ror2lab.converted`
+package only. This local profile pins the source commit, accepted input inventory
+and complete output cohort without claiming a published release. Code/SDK
+membership, file hashes and bootstrap payload bounds retain their normal checks.
+The binary manifest owner accepts an explicit version name alongside package ID
+and version code; assembly receipts retain all three. Setup supplies local pinned
+outputs; process exit releases readers and retains receipts. Host fixtures cover
+coexistence identities and output verification; APK/device acceptance stays open.
