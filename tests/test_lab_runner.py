@@ -88,6 +88,52 @@ class RefusedLeaseTest(unittest.TestCase):
             self.assertFalse(any("KEYCODE_SLEEP" in call.args[0] for call in run.call_args_list if call.args))
 
 
+class TransportIntegrationTest(unittest.TestCase):
+    def test_battery_read_retries_signal_and_refuses_nonzero_or_incomplete_observation(self):
+        with tempfile.TemporaryDirectory() as repo:
+            runner = lab_runner.Runner(repo, {"LAB_RUN_ID": "synthetic"})
+            killed = subprocess.CompletedProcess([], -9, b"", b"")
+            battery = subprocess.CompletedProcess([], 0, b"level: 70\ntemperature: 260\n", b"")
+            current = subprocess.CompletedProcess([], 0, b"0\n", b"")
+            with (
+                mock.patch.object(lab_runner.subprocess, "run", side_effect=[killed, battery, current]) as run,
+                mock.patch.object(lab_runner._TRANSPORT.time, "sleep"),
+            ):
+                self.assertEqual(runner.battery("synthetic-target"), (70, 0, 260))
+            self.assertEqual(run.call_count, 3)
+            for output in (subprocess.CompletedProcess([], 1, b"", b""), subprocess.CompletedProcess([], 0, b"", b"")):
+                with mock.patch.object(lab_runner.subprocess, "run", return_value=output), self.assertRaises(lab_runner.CommandError):
+                    runner.battery("synthetic-target")
+
+    def test_cleanup_releases_lease_after_failed_sleep_without_replaying_job(self):
+        with tempfile.TemporaryDirectory() as repo:
+            runner = lab_runner.Runner(repo, {"LAB_RUN_ID": "synthetic"})
+            runner.devices = {"synthetic-alias": "synthetic-target"}
+            runner.worktree = lambda ref: Path(repo)
+            with mock.patch.object(runner, "battery", return_value=(70, 0, 260)), mock.patch.object(runner, "run", return_value=0) as job:
+                with mock.patch.object(lab_runner.subprocess, "run", return_value=subprocess.CompletedProcess([], -9, b"", b"")) as adb:
+                    with mock.patch.object(lab_runner._TRANSPORT.time, "sleep"):
+                        self.assertEqual(runner.execute(lab_runner.parse_command("/lab script device=synthetic-alias -- scripts/synthetic.py")), (0, None))
+            self.assertFalse((runner.leases / "synthetic-target").exists())
+            self.assertEqual(adb.call_count, 3)
+            self.assertEqual(job.call_count, 3)  # job, worktree cleanup, prune; never replay the job
+            self.assertIn("display sleep unverified", runner.log.read_text())
+
+    def test_isolated_bootstrap_loads_only_both_pinned_main_files(self):
+        workflow = (ROOT / ".github/workflows/lab-runner.yml").read_text()
+        self.assertIn('trusted_main=$(git -C "$LAB_REPO" rev-parse origin/main)', workflow)
+        for name in ("lab_runner.py", "adb_transport.py"):
+            self.assertIn('show "$trusted_main:scripts/lab/' + name + '"', workflow)
+        self.assertIn('python3 -I "$bootstrap/lab_runner.py"', workflow)
+        with tempfile.TemporaryDirectory() as directory:
+            for name in ("lab_runner.py", "adb_transport.py"):
+                (Path(directory) / name).write_bytes((ROOT / "scripts/lab" / name).read_bytes())
+            env = {"PATH": os.environ["PATH"], "LAB_COMMENT_AUTHOR": "not-owner", "LAB_REPOSITORY_OWNER": "owner", "LAB_REPO": "/synthetic-unused"}
+            result = subprocess.run([sys.executable, "-I", str(Path(directory) / "lab_runner.py")], env=env, capture_output=True)
+        self.assertEqual(result.returncode, 3)
+        self.assertNotIn(b"Traceback", result.stderr)
+
+
 class GuardHookTest(unittest.TestCase):
     def guard(self, **overrides):
         env = {
