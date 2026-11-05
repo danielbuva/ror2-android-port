@@ -49,6 +49,7 @@ public static class ContentFixtureBuilder
             case "Material": return typeof(Material);
             case "Shader": return typeof(Shader);
             case "Texture2D": return typeof(Texture2D);
+            case "Cubemap": return typeof(Cubemap);
             case "Sprite": return typeof(Sprite);
             case "GameObject": return typeof(GameObject);
             case "AvatarMask": return typeof(AvatarMask);

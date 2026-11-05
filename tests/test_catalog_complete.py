@@ -204,6 +204,10 @@ class CatalogCompletionTests(unittest.TestCase):
             members.record("a", (1, 22))
         with self.assertRaisesRegex(ValueError, "invalid produced PPtr"):
             members.record("a", (2, 22))
+        row = dict(path_id=22, offset=0, bytes=1000000)
+        members.members["CAB-b"][2][22] = row
+        # A preload validates the endpoint without reading its potentially large body.
+        self.assertEqual(members.resolve("a", (1, 22)), ("CAB-b", row))
 
 
 if __name__ == "__main__":

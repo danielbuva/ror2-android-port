@@ -100,7 +100,7 @@ class ProducedMembers:
         self.members[name] = (stream, layout, {row["path_id"]: row for row in layout["objects"]})
         self.bundles.setdefault(bundle, []).append(name)
 
-    def record(self, member, pointer):
+    def resolve(self, member, pointer):
         file_id, path_id = pointer
         layout = self.members[member][1]
         if not 0 <= file_id <= len(layout["externals"]) or not path_id:
@@ -109,8 +109,11 @@ class ProducedMembers:
             member = layout["externals"][file_id - 1]["path"].rsplit("/", 1)[-1]
         if member not in self.members or path_id not in self.members[member][2]:
             raise ValueError("missing produced PPtr target: " + member + ":" + str(path_id))
-        stream, layout, records = self.members[member]
-        row = records[path_id]
+        return member, self.members[member][2][path_id]
+
+    def record(self, member, pointer):
+        member, row = self.resolve(member, pointer)
+        stream, layout, _ = self.members[member]
         stream.seek(layout["data_offset"] + row["offset"])
         return member, layout["types"][row["type_id"]], W.B.exact(stream, row["bytes"])
 
@@ -145,7 +148,7 @@ def validate_locations(metadata, members, registry):
                 entries, scene = containers(body)
                 for path, pointer, preload in entries:
                     for reference in preload:
-                        members.record(member, reference)
+                        members.resolve(member, reference)
                     if pointer == (0, 0):
                         if not scene or not path.lower().endswith(".unity") or preload:
                             raise ValueError("null container root requires streamed scene")
