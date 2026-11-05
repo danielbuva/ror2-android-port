@@ -5541,7 +5541,11 @@ returned/ready markers require separate failure, audio and world checks.
 The same seams in `StageGeometryBoundary`, `NovaInputBoundary` and
 `AutomaticDirectorBoundary` separate collider validation/physics/entry, landing
 and display/run/enemy preparation, and objective templates/master catalog/player
-setup. These remain bounded owner-boundary logs, with no per-object recording.
+setup. `EnemySpineBoundary` marks completed context preparation;
+`AutomaticDirectorBoundary` bounds the existing scheduled-spawn wait after
+director activation. That interval includes native scheduling and callbacks,
+so it is not exclusive load time. These remain bounded owner-boundary logs,
+with no per-object recording.
 
 `GameAudioOriginalPayloadCopy` also owns the private Android app-cache receipt
 `original-audio-verified.json`. Setup still authenticates the packaged cohort
