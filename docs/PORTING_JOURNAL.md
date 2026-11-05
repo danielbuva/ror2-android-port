@@ -2916,3 +2916,19 @@ process-cold, uncontrolled page cache: diagnostic only, no general speedup claim
 CPU/GPU peak 59.4 C, above 80 C 0 s, battery 28 C; process stopped/OLED asleep,
 scratch removed/lease released/prune passed. Prior art: pinned R2API content phases
 and existing scoped snapshots. Sustained play, audibility and alpha gates stay open.
+
+## J1398 — Attribute native profile startup phases
+
+2026-11-05. `AndroidProfileSession.Prepare` times survivor/unlockable families and
+progression metadata; registration/order/cache/restoration remain unchanged.
+Two focused production fixtures pass; existing cache-hit/miss traces stay sparse.
+APK `1f172f957dbb280c0b232ea6b63836ba0cfe7f47d1e8ab8d09f775bd57bca614`.
+Evidence: `work/coordination/alpha-profile-startup-device-20261105T072755Z/`.
+Ordinary Start reaches Titanic Plains/player/HUD; native catalogs/source banks
+153/153 ready, no first failure; update retains profiles/settings; profiler off.
+Same-frame timings: survivor family 0.000204 s, registration 0.008469 s,
+unlockables 1.825 s (manifest 1.516 s, index 0.273 s, assets 0.035 s), metadata
+0.031 s. Process-cold, uncontrolled page cache; attribution only, no speedup claim.
+CPU/GPU peak 61.8 C, above 80 C 0 s, battery 28 C; stopped/asleep, scratch removed,
+lease released/prune passed. Prior art: community startup/profile graph and pinned
+R2API content phases. Sustained play, audibility and full-pipeline gates stay open.
