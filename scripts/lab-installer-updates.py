@@ -701,6 +701,8 @@ class Phone:
 
     def installed(self, publisher, previous=None):
         deadline = time.monotonic() + self.timeout
+        callback_absent_since = None
+        callback_observed = False
         while time.monotonic() < deadline:
             receipt = self.read("installed-release.json")
             if receipt and receipt.get("release", {}).get("version_code") == publisher and receipt.get("installed_readback_verified") is True:
@@ -726,6 +728,28 @@ class Phone:
                     # prevent normal owned-package cleanup.
                     pass
                 raise Failure("installer-build-error")
+            if not callback_observed and row and row.get("state") == "INSTALLING":
+                try:
+                    diagnostic = self.capture_install_diagnostic()
+                except Exception:
+                    # Optional evidence loss must not replace the install result
+                    # or manufacture proof that a callback remained absent.
+                    diagnostic = {"status": "unavailable"}
+                if diagnostic.get("status") == "observed" and diagnostic.get("callback") != "none":
+                    callback_observed = True
+                    callback_absent_since = None
+                elif diagnostic == {"status": "observed", "stage": "commit-returned", "callback": "none", "session_match": None}:
+                    now = time.monotonic()
+                    if callback_absent_since is None:
+                        callback_absent_since = now
+                    elif now - callback_absent_since >= 60:
+                        # Diagnostic harness bound only: never mark the runtime
+                        # failed or initiate another sealed install session.
+                        raise Failure("install-first-callback-timeout")
+                else:
+                    callback_absent_since = None
+            else:
+                callback_absent_since = None
             # Consent is always the real Android PackageInstaller UI. Never forge
             # success receipts or use adb install to replace the alpha package.
             self.tap("Install", required=False)

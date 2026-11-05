@@ -21,6 +21,79 @@ SPEC.loader.exec_module(LAB)
 
 
 class LabInstallerUpdatesTests(unittest.TestCase):
+    def run_install_poll(self, *, diagnostic, state=lambda _: "INSTALLING", receipt_at=None, timeout=120):
+        phone = LAB.Phone("synthetic", timeout)
+        clock = [0]
+        receipt = {"release": {"version_code": 1}, "installed_readback_verified": True, "sha256": "a" * 64}
+
+        def read(name):
+            if name == "installed-release.json":
+                return receipt if receipt_at is not None and clock[0] >= receipt_at else None
+            self.assertEqual(name, "update-state.json")
+            return {"state": state(clock[0])}
+
+        def sleep(seconds):
+            clock[0] += seconds
+
+        with (
+            patch.object(LAB.time, "monotonic", side_effect=lambda: clock[0]),
+            patch.object(LAB.time, "sleep", side_effect=sleep),
+            patch.object(phone, "read", side_effect=read),
+            patch.object(phone, "capture_install_diagnostic", side_effect=lambda: diagnostic(clock[0])) as capture,
+            patch.object(phone, "tap") as tap,
+            patch.object(phone, "package_hash", return_value=receipt["sha256"]),
+            patch.object(phone, "storage"),
+            patch.object(phone, "start"),
+            patch.object(phone, "put") as put,
+            patch.object(phone, "shell") as shell,
+        ):
+            try:
+                result = phone.installed(1)
+            except LAB.Failure as error:
+                result = str(error)
+            put.assert_not_called()
+            shell.assert_not_called()
+        return result, clock[0], capture.call_count, tap.call_count
+
+    def test_first_callback_bound_starts_only_after_observed_commit_return(self):
+        none = {"status": "observed", "stage": "commit-returned", "callback": "none", "session_match": None}
+        result, elapsed, _, taps = self.run_install_poll(diagnostic=lambda now: none if now >= 70 else none | {"stage": "fsync-start"}, timeout=180)
+        self.assertEqual((result, elapsed, taps), ("install-first-callback-timeout", 130, 130))
+
+    def test_first_callback_bound_requires_installing_state_and_available_evidence(self):
+        none = {"status": "observed", "stage": "commit-returned", "callback": "none", "session_match": None}
+        result, elapsed, captures, _ = self.run_install_poll(diagnostic=lambda _: none, state=lambda _: "READY", timeout=65)
+        self.assertEqual((result, elapsed, captures), ("install-readback-timeout", 65, 0))
+        for interrupted in ({"status": "unavailable", "reason": "missing"}, none | {"stage": "prepare"}):
+            with self.subTest(interrupted=interrupted):
+                result, elapsed, _, _ = self.run_install_poll(diagnostic=lambda now: interrupted if now == 59 else none, timeout=125)
+                self.assertEqual((result, elapsed), ("install-first-callback-timeout", 120))
+
+        def unavailable(_):
+            raise OSError("synthetic-private")
+
+        result, elapsed, _, _ = self.run_install_poll(diagnostic=unavailable, timeout=65)
+        self.assertEqual((result, elapsed), ("install-readback-timeout", 65))
+
+    def test_any_observed_callback_disables_only_the_first_callback_bound(self):
+        none = {"status": "observed", "stage": "commit-returned", "callback": "none", "session_match": None}
+        for callback in ("pending-user-action", "success", "failure", "unknown"):
+            for matched in (True, False):
+                with self.subTest(callback=callback, matched=matched):
+                    observed = none | {"callback": callback, "session_match": matched}
+                    result, elapsed, captures, taps = self.run_install_poll(diagnostic=lambda now: observed if now == 59 else none)
+                    self.assertEqual((result, elapsed, captures, taps), ("install-readback-timeout", 120, 60, 120))
+
+    def test_callback_bound_never_overrides_success_error_or_original_deadline(self):
+        none = {"status": "observed", "stage": "commit-returned", "callback": "none", "session_match": None}
+        result, elapsed, _, _ = self.run_install_poll(diagnostic=lambda _: none, receipt_at=60)
+        self.assertEqual(result["release"]["version_code"], 1)
+        self.assertEqual(elapsed, 60)
+        result, elapsed, _, _ = self.run_install_poll(diagnostic=lambda _: none, state=lambda now: "ERROR" if now == 60 else "INSTALLING")
+        self.assertEqual((result, elapsed), ("installer-build-error", 60))
+        result, elapsed, _, _ = self.run_install_poll(diagnostic=lambda _: none, timeout=30)
+        self.assertEqual((result, elapsed), ("install-readback-timeout", 30))
+
     def test_install_diagnostic_contract_is_strict_and_never_exports_unknown_values(self):
         base = {"schema": 1, "stage": "commit-returned", "callback": "none", "session_match": None}
         self.assertEqual(
@@ -83,14 +156,19 @@ class LabInstallerUpdatesTests(unittest.TestCase):
         self.assertEqual(shell.call_args.kwargs, {"label": "device-install-diagnostic-read", "timeout": 15})
 
     def test_install_failure_capture_precedes_cleanup_and_keeps_original_error(self):
-        for fail_capture in (False, True):
-            with self.subTest(fail_capture=fail_capture), tempfile.TemporaryDirectory() as tmp:
+        for fail_capture, reason in (
+            (False, "install-readback-timeout"),
+            (True, "install-readback-timeout"),
+            (False, "install-first-callback-timeout"),
+            (True, "install-first-callback-timeout"),
+        ):
+            with self.subTest(fail_capture=fail_capture, reason=reason), tempfile.TemporaryDirectory() as tmp:
                 output, events = io.StringIO(), []
                 phone = Mock()
 
                 def fail(*args):
                     LAB.set_phase("baseline-N-install")
-                    raise LAB.Failure("install-readback-timeout")
+                    raise LAB.Failure(reason)
 
                 def capture():
                     events.append("capture")
@@ -110,7 +188,7 @@ class LabInstallerUpdatesTests(unittest.TestCase):
                 ):
                     self.assertEqual(LAB.main([]), 1)
                 self.assertEqual(events, ["capture", "cleanup"])
-                self.assertIn("reason=install-readback-timeout", output.getvalue())
+                self.assertIn("reason=" + reason, output.getvalue())
                 self.assertIn("PASS cleanup packages=verified-absent", output.getvalue())
                 self.assertNotIn("private-secret", output.getvalue())
                 diagnostic = json.loads(output.getvalue().splitlines()[0])
