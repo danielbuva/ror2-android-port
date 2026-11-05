@@ -11,6 +11,11 @@ play, visual parity, battery efficiency or the performance release gate.
 and the supervisor's `session-sustained-thermal.jsonl`. It writes local JSON and
 Markdown, including input SHA-256 values, counter deltas, periodic percentiles,
 five-minute FPS/temperature tables and thermal coverage. No device access occurs.
+The report also separates final-ten-minute FPS and hitch counts/percentages from
+whole-session totals. It uses the first retained observation inside the last
+600 host seconds and reports actual endpoint coverage; missing boundary counters
+are never interpolated. Short sessions report partial coverage, and fewer than
+two retained endpoints leaves tail frame statistics unavailable.
 
 ```sh
 python3 scripts/lab/perf_report.py RESULT_JSON THERMAL_JSONL --output work/perf/report.json
@@ -50,6 +55,13 @@ Observation spans 1,803.151 s. First/last cumulative counter subtraction gives
 Hitch counters: **4,142 frames >33.334 ms (4.684%)**, including **1,359 frames
 >50 ms (1.537%)**. These count frames, not separate hitch episodes. Their timing
 and longest active-frame duration cannot be recovered from cumulative counters.
+
+The final-ten-minute counter window covers host seconds 1,203.251–1,803.151:
+599.900 s of the requested 600 s, leaving 0.100 s unmeasured at its boundary.
+Its 30,053 active frames average 19.987 ms (50.032 FPS), with 771 frames above
+33.334 ms (2.565%) and 383 above 50 ms (1.274%). These are retained endpoint
+deltas, without interpolation. Host-only analysis:
+`work/coordination/alpha-tail-performance-20261105/report.json`.
 
 Five-minute medians, aligned by snapshot and thermal UTC; temperatures are maxima
 across the readable CPU or GPU zones at each thermal sample:
