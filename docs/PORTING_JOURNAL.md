@@ -3072,3 +3072,15 @@ Adopted in-place install retains profile/settings hashes; later sessions continu
 1,426 runtime thermal samples, maximum gap 0.494 s. App/selectors absent, OLED asleep,
 lease released and prune complete. Final-two menu/collected managed deltas remain
 +2.76/+0.97 MiB; memory plateau, ordinary long play and physical input remain open.
+
+## J1409 — Emit complete graphs with current structural field routes
+
+2026-11-11. The existing native subset emitter accepts every current nonnull
+field route without requiring historical per-field source provenance. Complete
+body/type hashes, local member identity, endpoint checks, relocation and final
+readback remain strict; managed emission still requires its current CLR checker.
+All 28 focused host tests pass, including emission without source proofs and
+rejection of missing routes or endpoint drift. Host preflight passes. Evidence:
+`work/coordination/p1-wholegame-1031/current-structural-route-emission-v1/checks.json`.
+No APK produced; complete current CLR field assignability, Unity typed loading
+and converted-device play remain open.

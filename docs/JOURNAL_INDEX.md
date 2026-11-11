@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J1409](PORTING_JOURNAL.md#j1409--emit-complete-graphs-with-current-structural-field-routes) | 2026-11-11 | Emit complete graphs with current structural field routes | 2026-11-11. |
 | [J1408](PORTING_JOURNAL.md#j1408--reclaim-measured-returned-pool-storage-after-completed-sessions) | 2026-11-11 | Reclaim measured returned pool storage after completed sessions | 2026-11-11. |
 | [J1407](PORTING_JOURNAL.md#j1407--preserve-cooldown-admission-readings-across-display-wake) | 2026-11-11 | Preserve cooldown admission readings across display wake | 2026-11-11. |
 | [J1406](PORTING_JOURNAL.md#j1406--bound-unacknowledged-session-start-requests) | 2026-11-11 | Bound unacknowledged session Start requests | 2026-11-11. |
