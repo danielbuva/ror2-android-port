@@ -21,6 +21,81 @@ SPEC.loader.exec_module(LAB)
 
 
 class LabInstallerUpdatesTests(unittest.TestCase):
+    def test_transport_reads_retry_signals_but_taps_do_not(self):
+        phone = LAB.Phone("synthetic-private-selector", 1)
+        killed = subprocess.CompletedProcess([], -9, b"", b"")
+        success = subprocess.CompletedProcess([], 0, b"synthetic", b"")
+        with patch.object(LAB.subprocess, "run", side_effect=[killed, success]) as run, patch.object(LAB.TRANSPORT.time, "sleep"):
+            self.assertEqual(phone.shell("cat", "synthetic", label="read"), b"synthetic")
+        self.assertEqual(run.call_count, 2)
+        with patch.object(LAB.subprocess, "run", return_value=killed) as run:
+            with self.assertRaisesRegex(LAB.Failure, "^tap$"):
+                phone.shell("input", "tap", "1", "2", label="tap")
+        self.assertEqual(run.call_count, 1)
+
+    def test_install_ownership_requires_exact_readback_even_after_lost_adb(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            apk = Path(temporary) / "synthetic-input"
+            apk.write_bytes(b"authored synthetic text, not an APK")
+            phone = LAB.Phone("synthetic-private-selector", 1)
+            phone.install_volume = "synthetic-volume"
+            with patch.object(LAB.subprocess, "run", return_value=subprocess.CompletedProcess([], -9, b"", b"")) as run:
+                with patch.object(phone, "package_hash", return_value=LAB.sha(apk.read_bytes())):
+                    phone.install(apk)
+            self.assertTrue(phone.install_attempted)
+            self.assertTrue(phone.owned_installer)
+            self.assertEqual(run.call_count, 1)
+            self.assertEqual(run.call_args.args[0][3:7], ["install", "-r", "--force-uuid", "synthetic-volume"])
+
+    def test_install_unknown_outcome_grants_no_cleanup_ownership(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            apk = Path(temporary) / "synthetic-input"
+            apk.write_bytes(b"synthetic text")
+            phone = LAB.Phone("synthetic-private-selector", 1)
+            phone.install_volume = "synthetic-volume"
+            with patch.object(LAB.subprocess, "run", return_value=subprocess.CompletedProcess([], -9, b"", b"")) as run:
+                with patch.object(phone, "package_hash", side_effect=LAB.Failure("unavailable")):
+                    with self.assertRaisesRegex(LAB.Failure, "test-installer-install-unverified"):
+                        phone.install(apk)
+            self.assertTrue(phone.install_attempted)
+            self.assertFalse(phone.owned_installer)
+            self.assertEqual(run.call_count, 1)
+
+    def test_detached_ui_preserves_final_dump_record_after_transport_cleanup(self):
+        phone = LAB.Phone("synthetic-private-selector", 1)
+        result = subprocess.CompletedProcess([], 0, b"synthetic dump", b"")
+        with (
+            patch.object(phone.transport, "start_detached", return_value=object()) as start,
+            patch.object(phone.transport, "wait_detached", return_value=result) as wait,
+        ):
+            with patch.object(phone.transport, "cleanup_detached") as cleanup, patch.object(LAB, "adb_diagnostic") as record:
+                self.assertIs(phone.detached(["uiautomator", "dump", phone.ui_path], label="device-ui-dump"), result)
+        start.assert_called_once()
+        wait.assert_called_once()
+        cleanup.assert_called_once()
+        record.assert_called_once_with("device-ui-dump", stdout=b"synthetic dump", stderr=b"", returncode=0)
+
+    def test_detached_timeout_retains_private_handle_and_partial_logs_without_cleanup(self):
+        phone = LAB.Phone("synthetic-private-selector", 1)
+        job = LAB.TRANSPORT.DetachedJob("/data/local/tmp/ror2-adb-job-" + "a" * 32)
+
+        def timeout(handle, logs, **kwargs):
+            (logs / "stdout.log").write_bytes(b"synthetic partial")
+            raise LAB.TRANSPORT.DetachedUncertain(handle)
+
+        with tempfile.TemporaryDirectory() as temporary:
+            diagnostics = LAB.PrivateDiagnostics(Path(temporary))
+            with patch.object(LAB, "DIAGNOSTICS", diagnostics), patch.object(phone.transport, "start_detached", return_value=job):
+                with patch.object(phone.transport, "wait_detached", side_effect=timeout), patch.object(phone.transport, "cleanup_detached") as cleanup:
+                    with self.assertRaisesRegex(LAB.Failure, "^device-ui-dump$"):
+                        phone.detached(["uiautomator", "dump", phone.ui_path], label="device-ui-dump")
+            cleanup.assert_not_called()
+            handle = json.loads((diagnostics.directory / (Path(job.directory).name + ".json")).read_text())
+            self.assertEqual(handle["directory"], job.directory)
+            self.assertEqual((diagnostics.directory / Path(job.directory).name / "stdout.log").read_bytes(), b"synthetic partial")
+            final = json.loads((diagnostics.directory / "00001-device-ui-dump.json").read_text())
+            self.assertEqual(final["outcome"], "TimeoutExpired")
+
     def run_install_poll(
         self, *, diagnostic, state=lambda _: "INSTALLING", receipt_at=None, timeout=120, require_pending_prompt=False, confirm_prompt=lambda: True
     ):
@@ -77,6 +152,7 @@ class LabInstallerUpdatesTests(unittest.TestCase):
         phone = LAB.Phone("synthetic", 5)
         phone.owned_installer, phone.installer_hash = True, "a" * 64
         phone.settings_focus_key = "f" * 64
+        phone.install_focus_key = "e" * 64
         return phone
 
     @staticmethod
@@ -442,7 +518,8 @@ class LabInstallerUpdatesTests(unittest.TestCase):
         phone = self.owned_phone()
         with (
             patch.object(phone, "package_hash", return_value=phone.installer_hash),
-            patch.object(phone, "ui_for", return_value=self.consent_prompt()),
+            patch.object(phone, "install_identity", return_value=self.install_verified()),
+            patch.object(phone, "ui_windows", return_value=self.consent_prompt()),
             patch.object(phone, "shell") as shell,
         ):
             self.assertTrue(phone.confirm_synthetic_install())
@@ -462,12 +539,134 @@ class LabInstallerUpdatesTests(unittest.TestCase):
             with (
                 self.subTest(change=change),
                 patch.object(phone, "require_owned_installer"),
-                patch.object(phone, "ui_for", return_value=tree),
+                patch.object(phone, "install_identity", return_value=self.install_verified()),
+                patch.object(phone, "ui_windows", return_value=tree),
                 patch.object(phone, "shell") as shell,
             ):
                 with self.assertRaises(LAB.Failure):
                     phone.confirm_synthetic_install()
                 self.assertFalse(any(c.args[:2] == ("input", "tap") for c in shell.call_args_list))
+
+    @classmethod
+    def install_activity(cls):
+        return (
+            cls.settings_activity()
+            .replace(b"com.android.settings/.Settings$ManageAppExternalSourcesActivity", b"com.android.packageinstaller/.PackageInstallerActivity")
+            .replace(
+                b"com.android.settings/com.android.settings.Settings$ManageAppExternalSourcesActivity",
+                b"com.android.packageinstaller/com.android.packageinstaller.PackageInstallerActivity",
+            )
+            .replace(b"com.android.settings", b"com.android.packageinstaller")
+            .replace(b"launchedFromPackage=" + LAB.PACKAGE.encode(), b"launchedFromPackage=com.android.packageinstaller")
+            .replace(
+                b"act=android.settings.MANAGE_UNKNOWN_APP_SOURCES dat=package:" + LAB.PACKAGE.encode(),
+                b"act=android.content.pm.action.CONFIRM_INSTALL flg=0x2000001",
+            )
+            .replace(b".PackageInstallerActivity }", b".PackageInstallerActivity (has extras) }")
+        )
+
+    @classmethod
+    def install_displays(cls):
+        return cls.settings_displays().replace(
+            b"com.android.settings/com.android.settings.Settings$ManageAppExternalSourcesActivity",
+            b"com.android.packageinstaller/com.android.packageinstaller.PackageInstallerActivity",
+        )
+
+    def install_verified(self):
+        return LAB.install_activity_summary(self.install_activity(), b"7", self.install_displays())
+
+    def test_install_snapshot_binds_confirmation_activity_user_forwarder_and_focus(self):
+        result = self.install_verified()
+        self.assertTrue(all(result.values()))
+        self.assertEqual(len(result), 8)
+        for value in ("10007", "u7", "synthetic-private", "PackageInstallerActivity"):
+            self.assertNotIn(value, json.dumps(result))
+        for before, after in (
+            (b".PackageInstallerActivity", b".InstallStart"),
+            (b"CONFIRM_INSTALL", b"INSTALL_PACKAGE"),
+            (b"launchedFromPackage=com.android.packageinstaller", b"launchedFromPackage=another.app"),
+            (b"userId=7", b"userId=8"),
+            (b"state=RESUMED", b"state=PAUSING"),
+            (b"mVisible=true", b"mVisible=false"),
+            (b"finishing=false", b"finishing=true"),
+            (b" (has extras)", b""),
+        ):
+            with self.subTest(after=after):
+                self.assertFalse(all(LAB.install_activity_summary(self.install_activity().replace(before, after), b"7", self.install_displays()).values()))
+        for data in (self.settings_activity(), self.install_activity() * 2):
+            self.assertFalse(all(LAB.install_activity_summary(data, b"7", self.install_displays()).values()))
+        self.assertFalse(all(LAB.install_activity_summary(self.install_activity(), b"7", self.settings_displays()).values()))
+
+    def test_install_identity_query_keeps_raw_records_private(self):
+        phone = self.owned_phone()
+        outputs = (self.install_activity(), b"7", self.install_displays())
+        with (
+            patch.object(phone, "require_owned_installer"),
+            patch.object(LAB, "execute", side_effect=[subprocess.CompletedProcess([], 0, value, b"") for value in outputs]) as execute,
+            patch.object(LAB, "DIAGNOSTICS", Mock()) as diagnostics,
+        ):
+            self.assertTrue(all(phone.install_identity().values()))
+        self.assertIsNotNone(phone.install_focus_key)
+        self.assertTrue(all(call.kwargs["record_output"] is False for call in execute.call_args_list))
+        self.assertEqual(json.loads(diagnostics.record.call_args.kwargs["stdout"]), self.install_verified())
+        self.assertEqual(diagnostics.record.call_args.args, ("device-install-identity",))
+
+    def test_install_consent_uses_focused_window_not_covered_app_root(self):
+        phone = self.owned_phone()
+        for caption in ("Install", "Update"):
+            tree = self.consent_prompt()
+            tree.find("node")[1].set("text", caption)
+            with (
+                self.subTest(caption=caption),
+                patch.object(phone, "require_owned_installer"),
+                patch.object(phone, "install_identity", return_value=self.install_verified()),
+                patch.object(phone, "ui_for", side_effect=AssertionError("active root must not be used")),
+                patch.object(phone, "ui_windows", return_value=tree) as ui,
+                patch.object(phone, "shell") as shell,
+                redirect_stdout(io.StringIO()) as output,
+            ):
+                self.assertTrue(phone.confirm_synthetic_install())
+            ui.assert_called_once_with(("com.android.packageinstaller", "com.google.android.packageinstaller"), recovery=False)
+            self.assertEqual(sum(call.args[:2] == ("input", "tap") for call in shell.call_args_list), 1)
+            self.assertIn("android-install-consent actor=harness", output.getvalue())
+
+    def test_install_consent_waits_without_tapping_an_unverified_activity(self):
+        phone = self.owned_phone()
+        with (
+            patch.object(phone, "require_owned_installer"),
+            patch.object(phone, "install_identity", return_value=self.install_verified() | {"component_verified": False}),
+            patch.object(phone, "ui_windows") as ui,
+            patch.object(phone, "shell") as shell,
+            redirect_stdout(io.StringIO()),
+        ):
+            self.assertFalse(phone.confirm_synthetic_install())
+        ui.assert_not_called()
+        self.assertFalse(any(call.args[:2] == ("input", "tap") for call in shell.call_args_list))
+
+    def test_install_consent_rechecks_activity_and_window_before_tapping(self):
+        for changed_window in (False, True):
+            phone, count = self.owned_phone(), [0]
+
+            def identity():
+                count[0] += 1
+                if count[0] == 2:
+                    if changed_window:
+                        phone.install_focus_key = "b" * 64
+                    else:
+                        return self.install_verified() | {"caller_verified": False}
+                return self.install_verified()
+
+            with (
+                self.subTest(changed_window=changed_window),
+                patch.object(phone, "require_owned_installer"),
+                patch.object(phone, "install_identity", side_effect=identity),
+                patch.object(phone, "ui_windows", return_value=self.consent_prompt()),
+                patch.object(phone, "shell") as shell,
+                redirect_stdout(io.StringIO()),
+            ):
+                with self.assertRaisesRegex(LAB.Failure, "^install-consent-identity-changed$"):
+                    phone.confirm_synthetic_install()
+            self.assertFalse(any(call.args[:2] == ("input", "tap") for call in shell.call_args_list))
 
     def test_pending_prompt_requires_matching_callback_state_visible_consent_and_receipt(self):
         pending = {"status": "observed", "stage": "commit-returned", "callback": "pending-user-action", "session_match": True, "callback_entry": "entered"}
@@ -1588,7 +1787,7 @@ public class Review {
                     return xml if args[0] == "cat" else b""
 
                 with (
-                    patch.object(LAB, "execute", side_effect=execute) as dump,
+                    patch.object(phone, "detached", side_effect=execute) as dump,
                     patch.object(phone, "shell", side_effect=shell) as command,
                     patch.object(LAB.time, "sleep", side_effect=lambda seconds: events.append("wait")),
                 ):
@@ -1602,7 +1801,7 @@ public class Review {
         phone = LAB.Phone("synthetic-private-selector", 1)
         result = subprocess.CompletedProcess([], 0, b"", b"ERROR: null root node synthetic-private-detail")
         with (
-            patch.object(LAB, "execute", return_value=result) as dump,
+            patch.object(phone, "detached", return_value=result) as dump,
             patch.object(phone, "shell") as shell,
             patch.object(LAB.time, "sleep") as sleep,
             patch.object(phone, "ui_windows", side_effect=LAB.Failure("device-ui-null-root-retry-exhausted")) as fallback,
@@ -1619,7 +1818,7 @@ public class Review {
         for stdout, stderr in ((b"", b"ERROR: could not get idle state."), (b"ERROR: could not get idle state.", b"")):
             with (
                 self.subTest(stdout=stdout),
-                patch.object(LAB, "execute", return_value=subprocess.CompletedProcess([], 0, stdout, stderr)) as dump,
+                patch.object(phone, "detached", return_value=subprocess.CompletedProcess([], 0, stdout, stderr)) as dump,
                 patch.object(phone, "shell") as shell,
                 patch.object(phone, "ui_windows") as fallback,
                 patch.object(LAB.time, "sleep") as sleep,
@@ -1634,14 +1833,14 @@ public class Review {
     def test_ui_dump_retry_does_not_retry_nonzero_or_unrelated_read_failure(self):
         phone = LAB.Phone("synthetic-private-selector", 1)
         result = subprocess.CompletedProcess([], 1, b"", b"ERROR: null root node synthetic-private-detail")
-        with patch.object(LAB, "execute", return_value=result) as dump, patch.object(phone, "shell") as shell, patch.object(LAB.time, "sleep") as sleep:
+        with patch.object(phone, "detached", return_value=result) as dump, patch.object(phone, "shell") as shell, patch.object(LAB.time, "sleep") as sleep:
             with self.assertRaisesRegex(LAB.Failure, "^device-ui-dump$"):
                 phone.ui()
         dump.assert_called_once()
         shell.assert_not_called()
         sleep.assert_not_called()
         with (
-            patch.object(LAB, "execute", return_value=subprocess.CompletedProcess([], 0, b"UI hierarchy dumped to: /synthetic/private", b"")) as dump,
+            patch.object(phone, "detached", return_value=subprocess.CompletedProcess([], 0, b"UI hierarchy dumped to: /synthetic/private", b"")) as dump,
             patch.object(phone, "shell", side_effect=[LAB.Failure("device-ui-read"), b""]) as shell,
             patch.object(LAB.time, "sleep") as sleep,
         ):
@@ -1794,7 +1993,7 @@ public class Review {
         xml = ET.tostring(self.window_document(), encoding="utf-8", xml_declaration=True)
         output = io.StringIO()
         with (
-            patch.object(LAB, "execute", side_effect=[null, null, null, success]) as dump,
+            patch.object(phone, "detached", side_effect=[null, null, null, success]) as dump,
             patch.object(phone, "shell", side_effect=[xml, b""]) as shell,
             patch.object(LAB.time, "sleep"),
             patch.object(phone, "ui_diagnostics") as diagnostics,
@@ -1817,7 +2016,7 @@ public class Review {
         ):
             with (
                 self.subTest(reason=reason),
-                patch.object(LAB, "execute", return_value=result) as dump,
+                patch.object(phone, "detached", return_value=result) as dump,
                 patch.object(phone, "read_ui_dump", side_effect=document if isinstance(document, Exception) else None, return_value=document) as read,
                 patch.object(phone, "ui_diagnostics") as diagnostics,
             ):

@@ -135,7 +135,7 @@ def settings_window_identity(activity, displays):
     return True, sha(focused[0].encode())
 
 
-def settings_activity_summary(data, current_user, displays=None):
+def prompt_activity_summary(data, current_user, displays=None, *, install=False):
     """Fixed booleans from one Android 13 server-side top-resumed record.
 
     This relies on the hash-owned app's fixed, no-extra Settings deep link:
@@ -187,25 +187,40 @@ def settings_activity_summary(data, current_user, displays=None):
         return result
     result["record_verified"] = True
     result["focused_window_verified"] = settings_window_identity(data, displays)[0]
-    component = "com.android.settings/.Settings$ManageAppExternalSourcesActivity"
-    result["component_verified"] = (
-        records["packageName="][0] == "packageName=com.android.settings processName=com.android.settings"
-        and records["mActivityComponent="][0] == "mActivityComponent=" + component
-    )
+    if install:
+        # AOSP android-13.0.0_r1 InstallStart forwards CONFIRM_INSTALL to
+        # PackageInstallerActivity with the sealed session in extras. That
+        # forward makes the system installer, not the test app, the caller.
+        component = records["mActivityComponent="][0].removeprefix("mActivityComponent=")
+        components = {
+            package + "/" + activity: package
+            for package in ("com.android.packageinstaller", "com.google.android.packageinstaller")
+            for activity in (".PackageInstallerActivity", "com.android.packageinstaller.PackageInstallerActivity")
+        }
+        package = components.get(component)
+        result["component_verified"] = package is not None and records["packageName="][0] == f"packageName={package} processName={package}"
+        caller_package = re.escape(package or "invalid")
+        intent = r"Intent \{ act=android\.content\.pm\.action\.CONFIRM_INSTALL (?:flg=0x[0-9a-fA-F]+ )?cmp=" + re.escape(component) + r" \(has extras\) \}"
+    else:
+        component = "com.android.settings/.Settings$ManageAppExternalSourcesActivity"
+        result["component_verified"] = (
+            records["packageName="][0] == "packageName=com.android.settings processName=com.android.settings"
+            and records["mActivityComponent="][0] == "mActivityComponent=" + component
+        )
+        caller_package = re.escape(PACKAGE)
+        # The hash-owned app supplies this fixed no-extra Settings deep link.
+        intent = (
+            r"Intent \{ act=android\.settings\.MANAGE_UNKNOWN_APP_SOURCES dat=package:"
+            + re.escape(PACKAGE)
+            + r" (?:flg=0x[0-9a-fA-F]+ )?cmp="
+            + re.escape(component)
+            + r" \}"
+        )
     caller = re.fullmatch(
-        r"launchedFromUid=[0-9]+ launchedFromPackage=" + re.escape(PACKAGE) + r" launchedFromFeature=null userId=([0-9]+)", records["launchedFromUid="][0]
+        r"launchedFromUid=[0-9]+ launchedFromPackage=" + caller_package + r" launchedFromFeature=null userId=([0-9]+)", records["launchedFromUid="][0]
     )
     result["caller_verified"] = caller is not None
     result["user_verified"] = caller is not None and re.fullmatch(r"[0-9]+", user) is not None and caller.group(1) == user
-    # No selector, extras, task/base Intent or pending replacement Intent can
-    # supply this URI. Optional flags are the only additional admitted field.
-    intent = (
-        r"Intent \{ act=android\.settings\.MANAGE_UNKNOWN_APP_SOURCES dat=package:"
-        + re.escape(PACKAGE)
-        + r" (?:flg=0x[0-9a-fA-F]+ )?cmp="
-        + re.escape(component)
-        + r" \}"
-    )
     result["target_verified"] = re.fullmatch(intent, records["Intent { "][0]) is not None
     result["resumed_verified"] = records["state="][0] == "state=RESUMED stopped=false delayedResume=false finishing=false"
     result["visible_verified"] = (
@@ -213,6 +228,16 @@ def settings_activity_summary(data, current_user, displays=None):
         and records["mVisibleRequested="][0] == "mVisibleRequested=true mVisible=true mClientVisible=true reportedDrawn=true reportedVisible=true"
     )
     return result
+
+
+def settings_activity_summary(data, current_user, displays=None):
+    return prompt_activity_summary(data, current_user, displays)
+
+
+def install_activity_summary(data, current_user, displays=None):
+    # Session-match diagnostics and the synthetic label are required separately;
+    # dumpsys does not expose the sealed session ID inside Intent extras.
+    return prompt_activity_summary(data, current_user, displays, install=True)
 
 
 def module(name, path):
@@ -560,12 +585,21 @@ def publish(service, files, version):
     return base
 
 
+TRANSPORT = module("lab_adb_transport", ROOT / "scripts/lab/adb_transport.py")
+
+
+def adb_diagnostic(label, **record):
+    if DIAGNOSTICS is not None:
+        DIAGNOSTICS.record(label, **record)
+
+
 class Phone:
     def __init__(self, serial, timeout, allow_test_installs=False, allow_test_notifications=False):
         self.serial, self.timeout = serial, timeout
         self.allow_test_installs = allow_test_installs
         self.allow_test_notifications = allow_test_notifications
         self.adb = Path("/opt/homebrew/bin/adb")
+        self.transport = TRANSPORT.AdbTransport(self.adb, serial, observer=adb_diagnostic)
         self.owned_installer = False
         self.install_attempted = False
         self.installer_hash = None
@@ -573,18 +607,94 @@ class Phone:
         self.reverse_port = None
         self.install_volume = None
         self.settings_focus_key = None
+        self.install_focus_key = None
         self.ui_path = "/data/local/tmp/ror2-installer-ui-" + secrets.token_hex(8) + ".xml"
 
-    def command(self, *args, stdin=None, label, timeout=60):
-        return run([self.adb, "-s", self.serial, *args], label=label, stdin=stdin, timeout=timeout)
+    def execute(self, *args, stdin=None, label, timeout=60, idempotent=False):
+        try:
+            return self.transport.execute(*args, label=label, stdin=stdin, timeout=timeout, idempotent=idempotent)
+        except TRANSPORT.AdbError:
+            raise Failure(label) from None
+
+    def command(self, *args, stdin=None, label, timeout=60, idempotent=False):
+        result = self.execute(*args, label=label, stdin=stdin, timeout=timeout, idempotent=idempotent)
+        if result.returncode:
+            raise Failure(label)
+        return result.stdout
+
+    def detached(self, command, *, label, timeout=30):
+        # Long accessibility commands survive a killed host adb client. Polling
+        # never relaunches the job; final logical records preserve the existing
+        # private UI diagnostic inspector's dump/read adjacency contract.
+        with tempfile.TemporaryDirectory(prefix="ror2-adb-logs-") as temporary:
+            logs = Path(temporary)
+            try:
+                job = self.transport.start_detached(command, label=label, timeout=min(10, timeout))
+                if DIAGNOSTICS is not None:
+                    # Retain the exact private handle and partial logs if waiting
+                    # times out. No device identifiers or paths are published.
+                    name = Path(job.directory).name
+                    DIAGNOSTICS.write(name + ".json", encoded({"directory": job.directory, "phase": CURRENT_PHASE, "category": label}))
+                    logs = DIAGNOSTICS.directory / name
+                    logs.mkdir(mode=0o700)
+                result = self.transport.wait_detached(job, logs, label=label, timeout=timeout)
+                try:
+                    self.transport.cleanup_detached(job)
+                except TRANSPORT.AdbError:
+                    pass  # Terminal evidence exists; retain the exact directory.
+            except TRANSPORT.AdbError as error:
+                adb_diagnostic(
+                    label,
+                    stdout=(logs / "stdout.log").read_bytes() if (logs / "stdout.log").is_file() else b"",
+                    stderr=(logs / "stderr.log").read_bytes() if (logs / "stderr.log").is_file() else b"",
+                    outcome="TimeoutExpired" if isinstance(error, TRANSPORT.DetachedUncertain) else "transport-error",
+                )
+                raise Failure(label) from None
+        adb_diagnostic(label, stdout=result.stdout, stderr=result.stderr, returncode=result.returncode)
+        return result
+
+    def install(self, apk):
+        self.install_attempted = True
+        self.installer_hash = sha(apk.read_bytes())
+        try:
+            self.transport.install(
+                apk,
+                self.install_volume,
+                label="install-fresh-test-installer",
+                timeout=600,
+                reconcile=lambda: self.package_hash(PACKAGE) == self.installer_hash,
+            )
+        except TRANSPORT.AdbError:
+            raise Failure("test-installer-install-unverified") from None
+        self.owned_installer = True
 
     def shell(self, *args, **kwargs):
-        return self.command("shell", *args, **kwargs)
+        # Exact read-only command shapes; mutations (taps, appops set, launches,
+        # writes, uninstalls) are not silently replayed after an uncertain result.
+        readonly = (
+            args[:1] in (("cat",), ("sha256sum",), ("df",))
+            or args[:2]
+            in (
+                ("sm", "list-volumes"),
+                ("appops", "get"),
+                ("am", "get-current-user"),
+            )
+            or args
+            in (
+                ("dumpsys", "power"),
+                ("dumpsys", "window"),
+                ("dumpsys", "activity", "activities"),
+                ("dumpsys", "accessibility"),
+                ("dumpsys", "activity", "processes"),
+            )
+            or (len(args) >= 3 and args[:1] == ("run-as",) and args[2] == "df")
+        )
+        return self.command("shell", *args, idempotent=readonly, **kwargs)
 
     def package_paths(self, package):
         # Android pm path reports an absent package with either exit 0 or 1.
         # This exception belongs only to this read-only query, not generic ADB.
-        result = execute([self.adb, "-s", self.serial, "shell", "pm", "path", package], label="device-package-path-query", timeout=60)
+        result = self.execute("shell", "pm", "path", package, label="device-package-path-query", timeout=60, idempotent=True)
         if result.returncode in (0, 1) and result.stdout == b"" and result.stderr == b"":
             return []
         if result.returncode or result.stderr:
@@ -669,7 +779,7 @@ class Phone:
         # uiautomator still exits 0 and creates no file. Retry only that observed
         # result, never cat a missing dump or retry unrelated command failures.
         for attempt in range(3):
-            result = execute([self.adb, "-s", self.serial, "shell", "uiautomator", "dump", self.ui_path], label="device-ui-dump", timeout=30)
+            result = self.detached(["uiautomator", "dump", self.ui_path], label="device-ui-dump", timeout=30)
             if result.returncode:
                 raise Failure("device-ui-dump")
             # Both AOSP dump modes wait for idle before acquiring any root.
@@ -702,13 +812,11 @@ class Phone:
         try:
             if not self.owned_installer:
                 raise Failure("ui-window-installer-not-owned")
-            result = execute(
-                [self.adb, "-s", self.serial, "shell", "uiautomator", "dump", "--windows", self.ui_path], label="device-ui-windows-dump", timeout=30
-            )
+            result = self.detached(["uiautomator", "dump", "--windows", self.ui_path], label="device-ui-windows-dump", timeout=30)
             if result.returncode or ui_output_classification(result.stdout) != "dump-reported-written":
                 raise Failure("ui-window-dump-unavailable")
             hierarchy = focused_ui_hierarchy(self.read_ui_dump("displays"), allowed_packages)
-            print("INFO ui-null-root-recovered source=focused-window" if recovery else "INFO settings-ui source=focused-default-window", flush=True)
+            print("INFO ui-null-root-recovered source=focused-window" if recovery else "INFO prompt-ui source=focused-default-window", flush=True)
             return hierarchy
         except Failure as error:
             reason = str(error)
@@ -1003,16 +1111,19 @@ class Phone:
             raise Failure("ui-button-bounds")
         self.shell("input", "tap", str((x1 + x2) // 2), str((y1 + y2) // 2), label=label)
 
-    def settings_identity(self):
+    def prompt_identity(self, *, install=False):
         self.require_owned_installer()
-        summary = settings_activity_summary(None, None)
-        self.settings_focus_key = None
+        summarize = install_activity_summary if install else settings_activity_summary
+        focus_attribute = "install_focus_key" if install else "settings_focus_key"
+        label = "device-install-identity" if install else "device-settings-identity"
+        summary = summarize(None, None)
+        setattr(self, focus_attribute, None)
         try:
             outputs = []
             for command in ("dumpsys activity top-resumed | head -c 65537", "am get-current-user | head -c 65", "dumpsys window displays | head -c 131073"):
                 result = execute(
                     [self.adb, "-s", self.serial, "shell", "sh", "-c", "'" + command + "'"],
-                    label="device-settings-identity-query",
+                    label=label + "-query",
                     timeout=15,
                     record_output=False,
                 )
@@ -1020,15 +1131,21 @@ class Phone:
                     break
                 outputs.append(result.stdout)
             if len(outputs) == 3:
-                summary = settings_activity_summary(*outputs)
+                summary = summarize(*outputs)
                 if all(summary.values()):
-                    self.settings_focus_key = settings_window_identity(outputs[0], outputs[2])[1]
+                    setattr(self, focus_attribute, settings_window_identity(outputs[0], outputs[2])[1])
         except Failure:
             pass
         # Raw top-activity text/user IDs are neither retained nor exported.
         if DIAGNOSTICS is not None:
-            DIAGNOSTICS.record("device-settings-identity", stdout=encoded(summary), returncode=0)
+            DIAGNOSTICS.record(label, stdout=encoded(summary), returncode=0)
         return summary
+
+    def settings_identity(self):
+        return self.prompt_identity()
+
+    def install_identity(self):
+        return self.prompt_identity(install=True)
 
     def allow_visible_install_permission(self):
         self.require_ungranted_install_permission()
@@ -1086,19 +1203,29 @@ class Phone:
     def confirm_synthetic_install(self):
         self.require_owned_installer()
         self.shell("input", "keyevent", "KEYCODE_WAKEUP", label="device-display-wake")
-        installers = ("com.android.packageinstaller", "com.google.android.packageinstaller")
-        package, nodes = self.prompt_nodes(self.ui_for((PACKAGE, *installers)), (PACKAGE, *installers))
-        if package == PACKAGE:
+        identity = self.install_identity()
+        if not all(identity.values()):
+            print(encoded({"mode": "install-prompt-identity", "observed": identity}).decode(), end="", flush=True)
             return False
+        focus_key = self.install_focus_key
+        installers = ("com.android.packageinstaller", "com.google.android.packageinstaller")
+        # The active accessibility root can still be the covered test app. Use
+        # the focused display-0 window, as for the already qualified Settings UI.
+        _, nodes = self.prompt_nodes(self.ui_windows(installers, recovery=False), installers)
         if not any(node.get("text") == "Synthetic update fixture" for node in nodes):
             raise Failure("install-consent-fixture-not-identified")
         buttons = [
             node
             for node in nodes
-            if node.get("resource-id") == "android:id/button1" and node.get("text", "").casefold() == "install" and node.get("enabled") == "true"
+            if node.get("resource-id") == "android:id/button1" and node.get("text", "").casefold() in ("install", "update") and node.get("enabled") == "true"
         ]
         if len(buttons) != 1:
             raise Failure("install-consent-button-not-identified")
+        identity = self.install_identity()
+        unchanged = bool(focus_key) and self.install_focus_key == focus_key
+        print(encoded({"mode": "install-prompt-identity", "observed": identity, "focus_unchanged": unchanged}).decode(), end="", flush=True)
+        if not all(identity.values()) or not unchanged:
+            raise Failure("install-consent-identity-changed")
         self.tap_prompt_node(buttons[0], "device-synthetic-install-consent")
         print("INFO android-install-consent actor=harness", flush=True)
         return True
@@ -1223,12 +1350,7 @@ def acceptance(phone, config, temporary, passed, *, qualify_install_prompts=Fals
     set_phase("pre-install-storage")
     phone.storage()
     set_phase("installer-install")
-    phone.install_attempted = True
-    phone.command("install", "--force-uuid", phone.install_volume, str(apk), timeout=600, label="install-fresh-test-installer")
-    phone.installer_hash = sha(apk.read_bytes())
-    if phone.package_hash(PACKAGE) != phone.installer_hash:
-        raise Failure("test-installer-readback")
-    phone.owned_installer = True
+    phone.install(apk)
     set_phase("installer-storage")
     phone.storage()
     set_phase("installer-permission")

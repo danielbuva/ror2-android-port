@@ -2626,26 +2626,26 @@ public sealed partial class PortSession : MonoBehaviour
                 Check(r.originalEquipmentHighlightAssets != null && r.originalEquipmentHighlightAssets.ready,
                       "Original equipment-highlight preparation did not complete");
                 TraceStartup("artifact-family-begin");
-                var wholeArtifacts =
-                    WholeCatalogComposed.CategoryFamily(RoR2.ContentManagement.AddressablesLabels.artifactDef,
-                                                        Enumerable.Range(0, ArtifactCatalog.artifactCount)
-                                                            .Select(index => ArtifactCatalog.GetArtifactDef((ArtifactIndex)index)));
-                StaticCall(typeof(ArtifactCatalog), "SetArtifactDefs", new object[] { wholeArtifacts });
-                TraceStartup("definition-holders-begin");
                 {
                     var holderManifest = WholeCatalogComposed.ReadDefinitionManifest();
+                    var wholeArtifacts =
+                        WholeCatalogComposed.CategoryFamily(holderManifest, RoR2.ContentManagement.AddressablesLabels.artifactDef,
+                                                            Enumerable.Range(0, ArtifactCatalog.artifactCount)
+                                                                .Select(index => ArtifactCatalog.GetArtifactDef((ArtifactIndex)index)));
+                    StaticCall(typeof(ArtifactCatalog), "SetArtifactDefs", new object[] { wholeArtifacts });
+                    TraceStartup("definition-holders-begin");
                     WholeCatalogComposed.PopulateDefinitionFields(holderManifest, "Artifacts", wholeArtifacts);
                     StaticCall(typeof(RunArtifactManager), "Init");
                     WholeCatalogComposed.PopulateDefinitionFields(holderManifest, "Items", ItemCatalog.allItemDefs.ToArray());
                     WholeCatalogComposed.PopulateDefinitionFields(
                         holderManifest, "Equipment", EquipmentCatalog.allEquipment.Select(index => EquipmentCatalog.GetEquipmentDef(index)).ToArray());
                     WholeCatalogComposed.PopulateBodyFields(holderManifest, BodyCatalog.allBodyPrefabs.ToArray());
+                    TraceStartup("drone-catalog-begin");
+                    PrepareWholeDroneCatalog(holderManifest);
+                    TraceStartup("projectile-catalog-begin");
+                    r.liveCatalogs.projectiles = WholeCatalogComposed.PrepareProjectiles(holderManifest);
+                    TraceStartup("projectile-catalog-ready");
                 }
-                TraceStartup("drone-catalog-begin");
-                PrepareWholeDroneCatalog();
-                TraceStartup("projectile-catalog-begin");
-                r.liveCatalogs.projectiles = WholeCatalogComposed.PrepareProjectiles();
-                TraceStartup("projectile-catalog-ready");
                 TraceStartup("skins-begin");
                 var skins = RegisterOriginalSkins();
                 while (skins.MoveNext())

@@ -10,6 +10,16 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 class ScopedDefinitionManifestTests(unittest.TestCase):
+    def test_artifacts_holders_drones_and_projectiles_share_one_snapshot(self):
+        source = (ROOT / "tools/unity/runtime/session/PortSession.cs").read_text()
+        start = source.index('TraceStartup("artifact-family-begin");')
+        end = source.index('TraceStartup("skins-begin");', start)
+        host = (ROOT / "tests/fixtures/artifact_holder_scope_host.cs").read_text()
+        host += "\npublic static partial class PortSession { static void Prepare() {\n" + source[start:end] + "\n} }\n"
+        result = execute_host(host, "scope")
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertEqual(result.stdout.strip(), "artifact holder drone projectile snapshot order identity PASS")
+
     def test_related_families_share_snapshot_and_keep_identity_checks(self):
         source = (ROOT / "tools/unity/runtime/catalog/WholeCatalogComposed.cs").read_text()
         methods = [
@@ -22,6 +32,7 @@ class ScopedDefinitionManifestTests(unittest.TestCase):
                 "public static T[] CategoryFamily<T>(string category, IEnumerable<T> selected)",
                 "internal static JObject ReadDefinitionManifest()",
                 "internal static T[] CategoryFamily<T>(JObject manifest, string category, IEnumerable<T> selected)",
+                "internal static T[] CategoryFamily<T>(JObject manifest, string category, IEnumerable<T> selected, Action<string> trace)",
                 'public static void PopulateDefinitionFields<T>(string family, T[] definitions, string prefix = "")',
                 'internal static void PopulateDefinitionFields<T>(JObject manifest, string family, T[] definitions, string prefix = "")',
                 "public static void PopulateBodyFields(GameObject[] prefabs)",
@@ -30,6 +41,14 @@ class ScopedDefinitionManifestTests(unittest.TestCase):
         ]
         host = (ROOT / "tests/fixtures/scoped_definition_manifest_host.cs").read_text()
         host += "\npublic static partial class WholeCatalogComposed {\n" + "\n".join(methods) + "\n}\n"
+        profile = (ROOT / "tools/unity/runtime/progression/AndroidProfileBoundary.cs").read_text()
+        calls = []
+        for label in ("survivorDef", "unlockableDef"):
+            start = profile.index("WholeCatalogComposed.CategoryFamily(manifest, RoR2.ContentManagement.AddressablesLabels." + label)
+            end = profile.index(";", start)
+            calls.append(profile[start : end - 1] if label == "unlockableDef" else profile[start:end])
+        host += "\npublic partial class ProfileScope {\n" + braced_block(profile, "void PrepareAndroidProfile(CharacterBody player, JObject manifest)")
+        host += "\nvoid Prepare(CharacterBody player, JObject manifest) { survivors = " + calls[0] + "; unlockables = " + calls[1] + "; }\n}\n"
         result = execute_host(host, "scope")
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         self.assertEqual(result.stdout.strip(), "scope identity policy restoration buffs items PASS")

@@ -335,7 +335,13 @@ of physical script-first body placement. The existing checked reference
 relationships and pinned record-pack dependency relocations generate sorted
 external PreloadData. Original preload built-in resource pointers retain their
 path IDs after checking preload membership and the original resource external;
-no source object body is required for these SDK-owned identities. Generated
+no source object body is required for these SDK-owned identities.
+`bundle_preload.relocate_pointer_fields` applies qualified routes per parent
+field, including local pointers whose old destination IDs collided across
+original members. It preserves every other field and nonpointer byte; external
+relocation additionally requires complete external-field coverage. Source and
+endpoint qualification remains the caller's responsibility before relocation.
+Generated
 DefaultMaterial records reuse the existing `player_data.shared_default_material`
 projection of a pinned SDK Material and original Shader, followed by checked
 PPtr relocation; their destination native type remains original. Native scene
@@ -1480,6 +1486,50 @@ container size without changing member bytes; final body/resource checks still
 read the compressed output. The receipt records compression and the codec pin.
 Managed bindings, external
 endpoints and ordered Sprite cohorts remain excluded and reported.
+The same owner supplies per-field external qualification for strict graph
+assembly. It binds each proof to the effective provider, actual owner body,
+schema and field path; checks the selected endpoint's persisted bytes and full
+native/script type against its source identity and producer witness; and refuses
+missing or conflicting field routes. Checked relocation then allocates members
+from those targets and reparses every PPtr, preserving unrelated bytes. Shared
+old file IDs or pointers never substitute for complete field coverage. Callers
+own receipt/index validation and final-container metadata readback before
+supplying endpoint bodies. These pure helpers retain no state; current CLR,
+complete emission, typed load and device admission remain separate gates.
+The final-type helper verifies a persisted MonoBehaviour's schema-declared
+`m_Script` against its actual final script-table slot before restoring only the
+qualified preallocation index. Every other type field remains exact. Required
+emission applies this check during final readback and endpoint callbacks; external
+adapters supply body, type and script table from the same final member. The helper
+retains no state and adds no runtime owner.
+The same emitter's Python `required` mode selects an exact object set and
+declared GUID/path/root groups without pruning. Complete types are keyed by
+their full identity, preserving types that share a schema. Every external field
+uses those qualifications; the caller supplies a receipt/index/final-container
+endpoint reader and, for managed objects, a current-CLR checker. The checker
+runs on relocated bodies before writing and again on actual final bodies and
+script types after script-table allocation. It can resolve local or external
+MonoScripts through the supplied reader. Grouped roots retain their shared
+preload ranges. Final metadata, bodies, fields, endpoints and resource extents
+are read back; the receipt pins the request and qualified endpoint identities.
+All request, qualification and spool state is per invocation and temporary
+spools are removed on exit. This integration API has host fixtures; it does not
+establish complete whole-game emission, Unity loadability or device acceptance.
+Its per-invocation `ProducerRecords` reader also accepts retained relocation
+packs whose receipt pins their index, body store and field witnesses. Each
+selected record follows the preceding body/index lineage to its own original
+producer profile; a mixed pack has no invented common profile. Every retained
+and original body extent is read and hash-checked. Repeated source identities
+are accepted only with identical metadata apart from offsets, and every copy
+is read and verified. The emitter still validates
+the selected body's complete type, PPtrs and final endpoints separately.
+The shared `object_produce.make_layout` writer accepts explicitly qualified
+external MonoScript pointers separately from scene membership. It checks each
+managed body's script against the local records or supplied external allowlist,
+assigns the serialized script/type slots and preserves non-scene archive paths.
+The caller still owns endpoint, MonoScript identity and current CLR qualification;
+the writer does not admit external content. Setup supplies the qualified pointers;
+the pure layout operation retains no state and adds no runtime owner.
 Setup takes explicit local graph and
 schema paths plus a fresh output directory. Temporary body/serialization staging
 is deleted on exit; bundle, roots, typed-load request, gap list and receipt remain.
@@ -3738,15 +3788,27 @@ order and each `finally`) is in
 ## Ownership
 
 `IntegratedResultsSession` reads one local definition manifest for relationship
-types, providers and holder binding through `WholeCatalogComposed`. The synchronous
-preparation call releases that reference on return; family-cache lifetime and
+types, providers and holder binding through `WholeCatalogComposed`, then passes
+that snapshot to `AndroidProfileSession.Prepare` for survivor/unlockable families.
+The synchronous preparation call releases that reference on return; family-cache lifetime and
 relationship registration/restoration remain under their existing owners.
+The shared reader omits unused JSON source-line annotations while retaining the
+same token values, types, property order and parser error handling.
 `test_scoped_definition_manifest.py` exercises the production methods against
-authored source snapshots, including replacement input and identity checks.
-`PortSession` likewise shares a local manifest across synchronous artifact,
-item, equipment and body holder binding. `WholeCatalogComposed` keeps native
-population, identity checks and the existing field-restoration owner; the local
-snapshot ends before drone preparation and adds no retained cache.
+authored source snapshots, including parser parity, replacement input and identity
+checks.
+`PortSession` likewise shares a local manifest across synchronous artifact-family
+loading, artifact, item, equipment and body holder binding, and drone/projectile
+registration through `WholePopulationSession` and `WholeCatalogComposed`.
+`WholeCatalogComposed` keeps native population, identity checks and the existing
+field-restoration owner; the local
+snapshot ends before the skins coroutine and adds no retained cache.
+`AndroidProfileSession.Prepare` emits sparse survivor/unlockable family and
+progression-metadata startup timing through the existing `TraceStartup` owner.
+The existing family loader emits child phases only on a cache miss; registration,
+profile restoration and cache teardown retain their existing owners.
+The metadata-ready marker precedes objective rules, redirects and local profile
+setup; it does not describe completion of the entire profile boundary.
 Buff discovery uses the existing `DefinitionFamily<BuffDef>` provider-root loader
 and family cache instead of broad bundle loading. Typed root selection, unique
 name/selected-identity checks and `Release` cache teardown keep their existing
@@ -4816,6 +4878,31 @@ orchestrator device lease, applies the battery rule, posts a sanitized result an
 prunes. `scripts/lab/lab-runner-guard.sh` is its job-started hook, installed outside
 the repository. Setup and command reference: [LAB_RUNNER](LAB_RUNNER.md).
 
+`scripts/lab/adb_transport.py` owns shared explicitly targeted ADB subprocesses
+for the runner and synthetic installer acceptance driver. It retries only
+caller-declared idempotent operations after a negative local signal status, with
+bounded attempts and a shared timeout budget; ordinary failures, timeouts and
+remote `128 + signal` exits never trigger replay. The installer driver marks only
+read-only shell shapes retryable; UI taps, launches and package mutations are not.
+Install uses status-returning `adb install -r --force-uuid`, never `exec-in`.
+Exact artifact readback reconciles an interrupted install without replay and is
+required before the caller acquires package cleanup ownership.
+
+The transport's detached device-job lifecycle exclusively creates a random private
+directory, launches once with `setsid sh -c` and closed stdin/redirected output,
+polls an atomically published remote exit status through transient transport
+failures, and pulls stdout/stderr before reporting. Polling and log collection are
+bounded separately. An unfinished job is not killed, relaunched or removed on a
+host timeout; its private handle remains available for later observation. Cleanup
+accepts only a generated job path with terminal status. The installer uses this
+lifecycle for accessibility dumps and preserves final private dump/read diagnostic
+records. Authorization, storage discovery, exact package identity and lease policy
+remain caller-owned; the transport never discovers a target or grants ownership.
+The workflow stages the runner and transport from one pinned trusted-main commit
+in a fresh bootstrap directory, including under isolated Python. Contracts:
+`test_adb_transport.py`, `test_lab_installer_updates.py`, `test_lab_runner.py`.
+These are fake-ADB/host-only contracts, not device acceptance.
+
 Host CI also runs Ruff (pinned in `tools/lab-requirements.txt`, configured in `ruff.toml`):
 `ruff check` and `ruff format --check` on every Python file a change touches. `scripts/` and
 `tests/` are ruff-formatted (J518); `ruff.toml` lists the rules still off and why.
@@ -5544,8 +5631,12 @@ and display/run/enemy preparation, and objective templates/master catalog/player
 setup. `EnemySpineBoundary` marks completed context preparation;
 `AutomaticDirectorBoundary` bounds the existing scheduled-spawn wait after
 director activation. That interval includes native scheduling and callbacks,
-so it is not exclusive load time. These remain bounded owner-boundary logs,
-with no per-object recording.
+so it is not exclusive load time. The same director owner passes an optional
+sparse callback into `WholeCatalogComposed.CategoryFamily` to separate manifest
+parsing, location indexing/provider grouping and native asset collection loading
+inside master-family setup. The callback runs only on a family-cache miss and
+retains no state; family-cache ownership and reset remain unchanged. These remain
+bounded owner-boundary logs, with no per-object recording.
 
 `GameAudioOriginalPayloadCopy` also owns the private Android app-cache receipt
 `original-audio-verified.json`. Setup still authenticates the packaged cohort
@@ -6317,3 +6408,13 @@ resources also supply external preload endpoints; the release graph binds these
 from the selected player outputs. The scoped producer checks native endpoints,
 types and script bindings and retains its receipt on exit. This adds
 no runtime owner. Complete APK and device acceptance remain open.
+
+The existing `owner-apk/build_owner_apk.py` assembler also accepts an
+`owner-local-output-v1` profile for the disposable `dev.ror2lab.converted`
+package only. This local profile pins the source commit, accepted input inventory
+and complete output cohort without claiming a published release. Code/SDK
+membership, file hashes and bootstrap payload bounds retain their normal checks.
+The binary manifest owner accepts an explicit version name alongside package ID
+and version code; assembly receipts retain all three. Setup supplies local pinned
+outputs; process exit releases readers and retains receipts. Host fixtures cover
+coexistence identities and output verification; APK/device acceptance stays open.

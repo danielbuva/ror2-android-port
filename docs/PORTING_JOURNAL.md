@@ -2830,3 +2830,121 @@ CPU/GPU peak 63.4 C, above 80 C 0 s, battery 28 C; stopped/asleep/lease released
 Build copies also accept ctime-only changes after source/destination SHA equality;
 real mid-copy xattr fixtures cover verified/unverified and equal/corrupt copies.
 Pinned R2API load/copy/finalize phases informed attribution; sustained play and audibility stay open.
+
+## J1392 — Attribute master-family preparation during ordinary startup
+2026-11-05. Existing director/catalog owners separate manifest parsing, index/provider
+construction and native asset collections; cached families emit no child markers.
+APK `a7c4bff80284f9a103582feb3d060d03cf95b9a1290f310cba10d3260a6c2a4a`, source `097da808`.
+Evidence: `work/coordination/alpha-master-family-device-20261105T051723Z/`.
+Six ordered same-frame markers bound 3.659 s: parse 1.970 s, index/providers 0.201 s,
+asset collections 1.486 s. Timing attribution only; no speedup claim.
+Ordinary Start reached Distant Roost/HUD; native catalogs and source audio ready 153/153;
+full verification 274/274, profiles/settings retained and no first failure.
+CPU/GPU peak 62.2 C, above 80 C 0 s, battery 28–29 C; stopped/asleep/lease released.
+Actual-method family fixture and host preflight pass; existing worktree doctor lacks private inputs.
+Pinned R2API load/copy/finalize phases informed attribution; cache ownership/reset unchanged.
+Sustained play, audibility and lossless reduction of the measured parse cost remain open.
+
+## J1394 — Exact required-set bundle emission
+
+2026-11-05. The existing preload emitter accepts an explicit object set without pruning,
+selects complete native/script types by full identity, and preserves grouped GUID/subasset roots.
+External references require per-field producer witnesses and actual endpoint readback;
+managed objects require a caller-supplied current-CLR checker before writing and after final readback.
+Final metadata, bodies, references and resources are checked; request/endpoint identities are receipted.
+Evidence: `tests/test_bundle_preload.py`, 20 host fixtures, including independent UnityPy readback,
+missing/dangling object rejection and dependency mutation between qualification and final readback.
+Ruff and staged public audit pass. Prior art: pinned EditorKit typed/subasset EntryLookup; J1271/J1279.
+Host integration API only: complete graph, current-CLR adapter, Unity typed load and device gates remain open.
+No APK or device change.
+## J1393 — Omit unused manifest source-line annotations
+
+2026-11-05. Existing `WholeCatalogComposed.ReadDefinitionManifest` skips JSON line
+annotations; values/types/order, duplicate/comment handling and malformed/trailing
+refusal retain default parser semantics. Exact-editor reader and identity checks: 5 pass.
+APK `55ec987fb90244030b622b78463c2ef07d5ea48928820c1b38e237565311ec1c`.
+Evidence: `work/coordination/alpha-manifest-line-info-device-20261105T060003Z/`.
+Ordinary Start reaches Titanic Plains with player/HUD/native catalogs/source audio
+ready; no first failure, profiles/settings preserved. Binary profiler off.
+Master-family parse 1.722 s, index 0.248 s, assets 1.430 s; parent 3.403 s.
+Prior J1392 parse 1.970 s / parent 3.659 s; process-cold, uncontrolled page cache:
+one comparison, no general speedup claim. Peak CPU/GPU 61.4 C, battery 28 C.
+Existing reader lifecycle/ownership retained; R2API phase separation informed scope.
+Display asleep, scratch removed, lease released, prune passed. Sustained play and
+audibility and full-pipeline performance stay open; alpha gate unchanged.
+
+## J1395 — Verify final script-table allocation during required emission
+
+2026-11-05. Existing bundle preload owner checks actual final MonoBehaviour
+script-table slots against schema-parsed m_Script before restoring only the
+qualified preallocation index; all remaining native/script type fields stay exact.
+Required emission uses the check for persisted objects and local endpoint reads.
+Authored regression covers reallocation, wrong/absent slots and full-type drift;
+21 focused tests pass; Ruff passes. Evidence: public host fixture
+`tests/test_bundle_preload.py`; no APK or device change. Prior art: pinned
+EditorKit typed/collision lookup and existing script_identity relationship check.
+Current-CLR adapter, complete closure, Unity typed load and device gates stay open.
+
+## J1396 — Share one manifest across artifact registration and native holders
+
+2026-11-05. `PortSession` reuses its synchronous definition snapshot for artifact
+family loading and existing artifact/item/equipment/body bindings; native order,
+identity checks and restoration stay intact. Six focused source fixtures pass.
+APK `5df093c7bf1af52f5613f3b5b4084ddf0551bbf7b084a18bef85a308d8564d51`.
+Evidence: `work/coordination/alpha-artifact-holder-device-20261105T063249Z/`.
+Ordinary Start reaches Titanic Plains/player/HUD; native catalogs and source audio
+ready 153/153, no first failure, profiles/settings retained; binary profiler off.
+Artifact 1.832 s + holders 0.011 s = 1.843 s versus J1393 3.377 s combined;
+process-cold, uncontrolled page cache: diagnostic comparison, no general speedup claim.
+CPU/GPU peak 62.6 C, above 80 C 0 s, battery 28 C; app stopped/display asleep,
+scratch removed/lease released/prune passed. Prior art: pinned R2API content phases,
+J1376/J1380 scoped snapshots. Sustained play, audibility and alpha gates stay open.
+
+
+## J1397 — Share the synchronous manifest with drone and projectile registration
+
+2026-11-05. Existing `PortSession` snapshot now feeds drone and projectile catalog
+registration; native setters/order/typed identities/restoration remain unchanged.
+Snapshot ends before skins; public projectile calls retain lazy cache behavior.
+Six focused source fixtures pass; Ruff/pins pass. APK
+`e21675abb85767d2e5ba4233c9078bd219ce33dbf1f8b1c338e42c7918639746`.
+Evidence: `work/coordination/alpha-drone-projectile-device-20261105T070118Z/`.
+Ordinary Start reaches Titanic Plains/player/HUD; native catalogs/source banks
+153/153 ready, no first failure, profiles/settings retained; binary profiler off.
+Drone 0.435 s + projectile 1.921 s = 2.356 s versus J1393 7.034 s combined;
+process-cold, uncontrolled page cache: diagnostic only, no general speedup claim.
+CPU/GPU peak 59.4 C, above 80 C 0 s, battery 28 C; process stopped/OLED asleep,
+scratch removed/lease released/prune passed. Prior art: pinned R2API content phases
+and existing scoped snapshots. Sustained play, audibility and alpha gates stay open.
+
+## J1398 — Attribute native profile startup phases
+
+2026-11-05. `AndroidProfileSession.Prepare` times survivor/unlockable families and
+progression metadata; registration/order/cache/restoration remain unchanged.
+Two focused production fixtures pass; existing cache-hit/miss traces stay sparse.
+APK `1f172f957dbb280c0b232ea6b63836ba0cfe7f47d1e8ab8d09f775bd57bca614`.
+Evidence: `work/coordination/alpha-profile-startup-device-20261105T072755Z/`.
+Ordinary Start reaches Titanic Plains/player/HUD; native catalogs/source banks
+153/153 ready, no first failure; update retains profiles/settings; profiler off.
+Same-frame timings: survivor family 0.000204 s, registration 0.008469 s,
+unlockables 1.825 s (manifest 1.516 s, index 0.273 s, assets 0.035 s), metadata
+0.031 s. Process-cold, uncontrolled page cache; attribution only, no speedup claim.
+CPU/GPU peak 61.8 C, above 80 C 0 s, battery 28 C; stopped/asleep, scratch removed,
+lease released/prune passed. Prior art: community startup/profile graph and pinned
+R2API content phases. Sustained play, audibility and full-pipeline gates stay open.
+
+## J1399 — Reuse results manifest for native profile families
+
+2026-11-05. Existing results preparation passes its synchronous manifest snapshot to
+native survivor/unlockable loading; no new cache; null/bootstrap fallback retained.
+Two focused production fixtures, Ruff, host preflight and build validation pass.
+APK `16119b8739531010b6da6c38592a75b6255059c78f704f2a494eda7e32cf5bd2`.
+Evidence: `work/coordination/alpha-profile-manifest-device-20261105T075223Z/`.
+Ordinary Start reaches Verdant Falls/player/HUD; no first failure, 21 survivors,
+455 unlockables, native catalogs and source banks 153/153; profiles/settings retained.
+Unlockables 0.244 s versus J1398 1.825 s; manifest 0.000115 s versus 1.516 s.
+Survivor 0.000221 s, registration 0.008072 s, metadata 0.025734 s; ordered sparse traces.
+Process-cold/APK pages warmed; different stage, no controlled total-loading claim.
+Sampled PSS peak 4.14 GiB; adopted free 326.96 GiB; CPU/GPU 67.4 C, above 80 C 0 s,
+battery 28 C. Stopped/asleep, scratch removed, lease released; prune passed.
+Prior art: pinned R2API content phases; J1376/J1398. Sustained play/audibility remain open.
