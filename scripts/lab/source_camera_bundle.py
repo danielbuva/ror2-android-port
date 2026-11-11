@@ -72,7 +72,7 @@ def build(target):
     ]
     try:
         with host_build_lock(HOST_BUILD_LOCK, operation="Source camera program bundle", timeout=1):
-            subprocess.run(args, check=True, timeout=1200)
+            subprocess.run(args, env=dict(os.environ, ANDROID_ADB_SERVER_PORT="5038"), check=True, timeout=1200)
         actual = json.loads((output / "compiled.json").read_text())
         bundle = output / "bundles/source-camera-programs"
         if actual.get("count") != len(manifest["programs"]) or actual.get("unity") != "2021.3.45f2":

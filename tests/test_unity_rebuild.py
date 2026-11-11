@@ -102,6 +102,7 @@ class UnityRebuildTests(unittest.TestCase):
         self.assertEqual(command[command.index("-projectPath") + 1], str(self.dest))
         self.assertNotIn("-cacheServerEndpoint", command)
         self.assertEqual(kwargs["cwd"], self.dest)
+        self.assertEqual(kwargs["env"]["ANDROID_ADB_SERVER_PORT"], "5038")
         scratch = Path(command[command.index("-labWorkRoot") + 1])
         self.assertTrue(scratch.is_relative_to(self.dest))
         self.assertTrue(Path(kwargs["env"]["GRADLE_USER_HOME"]).is_relative_to(scratch))

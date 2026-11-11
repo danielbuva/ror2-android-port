@@ -251,6 +251,7 @@ def run_editor(project, *, build=False, ambient=False):
     log = attempt / "editor.log"
     method = "AmbientSkyFixture.Begin" if ambient else "ContentFixtureBuilder.Build" if build else "ContentFixtureBuilder.Check"
     env = dict(os.environ)
+    env["ANDROID_ADB_SERVER_PORT"] = "5038"
     env["ROR2_PHONE_ORACLE_REPORT"] = str(attempt / "oracle.json")
     if env.get("ROR2_PHONE_NATIVE_CONTENT_CHECK"):
         if ambient:

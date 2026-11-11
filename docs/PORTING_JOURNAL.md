@@ -2991,6 +2991,7 @@ Evidence: `work/device/<device>/experiments/session-memory/20261111T034226.32152
 session 5 lost at 55.53 world seconds; sessions 6–10 subsequently completed in the same process.
 Three-session bounded check passed; 32-session diagnostic stopped after 10 completions when
 thermal sampling lost an ADB command. No runtime errors; completion/plateau remain open.
+Unity child launches isolate bundled ADB on port 5038; host launch contracts cover isolation.
 APK `04df664f66d5ebc32cbc477865e9bfb6a16bfdf1120603b0f2f2f99a310a680d`, source `2575892b`.
 Focused 291 host tests/Ruff/preflight passed; prior art J391/J609 and pinned R2API release lifetimes.
 No new runtime gameplay code. Assisted evidence; physical navigation and sustained qualification open.

@@ -20,6 +20,12 @@ playtest limits and reviewed feedback. It introduces no installer or runtime ste
 [Branding notes](assets/branding/README.md) record the two repository-only
 promotional graphics and their sources; they are not part of the runtime pipeline.
 
+Unity editor and batch launchers set `ANDROID_ADB_SERVER_PORT=5038` only in
+their child environment, isolating the bundled ADB server from the lab's canonical
+ADB on port 5037. `open-smoke.sh` delegates to `./dev editor`; existing editors
+must restart to inherit the isolated port. Child exit retains existing log and
+mutex cleanup; device tooling and thermal cancellation keep their current owners.
+
 Launcher presentation: [`launcher/`](../launcher/README.md) owns the approved
 original background and dependency-free frontend. `controller.js` owns the
 versioned host state/action adapter, subscription teardown and pending-action
