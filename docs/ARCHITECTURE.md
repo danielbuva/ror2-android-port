@@ -37,6 +37,14 @@ package is a public-alpha integration boundary, not an Android shell, new
 build pipeline or runtime owner. Setup, lifecycle and acceptance gates are in
 its README; the existing owner-built delivery route remains unchanged.
 
+`tools/phone-build/owner-apk/graphics/` owns the optional graphics-driver
+foundation: bounded private ZIP staging, reviewed Turnip release pins, driver-hash
+cache identity, a provider boundary and durable pre-native launch/fallback state.
+It is not packaged or connected to Unity yet; System remains unchanged. Its
+[handoff](../tools/phone-build/owner-apk/graphics/README.md) records setup, teardown,
+prior art and the pending native/Android/Thor acceptance gates. Custom load failure
+requires process restart, never hot-swapping a live Vulkan driver.
+
 Public alpha delivery: [ADR-002](ADR-002-public-alpha-distribution.md) accepts
 owner-built APKs and locally reconstructed content; [public-alpha.md](public-alpha.md)
 holds open release work. ADR-001's architecture C and the runtime pipeline below
