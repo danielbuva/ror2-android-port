@@ -6,6 +6,7 @@ import json
 from pathlib import Path
 import struct
 import tempfile
+from types import SimpleNamespace
 import unittest
 from unittest.mock import patch
 
@@ -36,6 +37,27 @@ def pin(path):
 
 
 class CatalogCompletionTests(unittest.TestCase):
+    def test_controller_subassets_follow_explicit_behaviour_array(self):
+        members = C.ProducedMembers()
+        body = struct.pack("<Iiq", 1, 0, 7)
+        records = SimpleNamespace(
+            SCHEMA=SimpleNamespace(type_tree=lambda stream: None),
+            fields=lambda body, root: (body, {("m_StateMachineBehaviours",): (0, len(body))}),
+        )
+        identity = ("ResetFootsteps", "RoR2.Mecanim", "RoR2.dll")
+        with (
+            patch.object(C, "module", return_value=records),
+            patch.object(members, "record", return_value=("CAB", dict(class_id=114), b"behaviour")) as record,
+            patch.object(members, "managed_identity", return_value=identity),
+        ):
+            self.assertEqual(members.controller_behaviours("CAB", dict(tree=b"schema"), body), [identity])
+            record.assert_called_once_with("CAB", (0, 7))
+            with self.assertRaisesRegex(ValueError, "array extent"):
+                members.controller_behaviours("CAB", dict(tree=b"schema"), body + bytes(12))
+            record.return_value = ("CAB", dict(class_id=1), b"wrong type")
+            with self.assertRaisesRegex(ValueError, "not a MonoBehaviour"):
+                members.controller_behaviours("CAB", dict(tree=b"schema"), body)
+
     def fixture(self, root, location_type="UnityEngine.Object, UnityEngine.CoreModule"):
         bundle = root / "bundle"
         bundle.write_bytes(M.build({"sample": dict(sha256="a" * 64, bytes=1, dependencies=[])}))

@@ -128,6 +128,24 @@ class ProducedMembers:
             raise ValueError("produced MonoScript binding differs from serialized type")
         return identity
 
+    def controller_behaviours(self, member, typ, body):
+        """Only explicit controller subassets qualify, never arbitrary preloads."""
+        records = module("_catalog_controller_records", HERE / "record_produce.py")
+        root = records.SCHEMA.type_tree(io.BytesIO(typ["tree"]))
+        _, spans = records.fields(body, root)
+        start, end = spans[("m_StateMachineBehaviours",)]
+        (count,) = struct.unpack_from("<I", body, start)
+        if end - start != 4 + 12 * count:
+            raise ValueError("invalid controller behaviour array extent")
+        identities = []
+        for index in range(count):
+            pointer = struct.unpack_from("<iq", body, start + 4 + 12 * index)
+            owner, behaviour_type, behaviour = self.record(member, pointer)
+            if behaviour_type["class_id"] != 114:
+                raise ValueError("controller behaviour is not a MonoBehaviour")
+            identities.append(self.managed_identity(owner, behaviour_type, behaviour))
+        return identities
+
 
 def validate_locations(metadata, members, registry):
     runtime_scripts = set()
@@ -161,6 +179,11 @@ def validate_locations(metadata, members, registry):
                             if actual not in runtime_scripts:
                                 raise ValueError("catalog MonoScript absent from current runtime registry: " + str(actual))
                     advertised.setdefault((bundle, path.casefold()), []).append(actual)
+                    if actual == 91:
+                        for identity in members.controller_behaviours(owner, root_type, root):
+                            if identity not in runtime_scripts:
+                                raise ValueError("controller MonoScript absent from current runtime registry: " + str(identity))
+                            advertised[(bundle, path.casefold())].append(identity)
     for row in metadata["locations"]:
         expected = row["type"].split(", ")
         qualified = expected[0]
