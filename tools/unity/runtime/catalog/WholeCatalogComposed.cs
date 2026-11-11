@@ -588,6 +588,7 @@ public static class WholeCatalogComposed
             trace?.Invoke("manifest-ready-index-begin");
             var locations = manifest["locations"].ToDictionary(row => (int)row["id"]);
             var groups = FamilyLocationGroups(manifest, category);
+            var familyBundles = new Dictionary<string, AssetBundle>(StringComparer.Ordinal);
             trace?.Invoke("index-ready-assets-begin");
             values = groups
                          .SelectMany(group =>
@@ -601,8 +602,14 @@ public static class WholeCatalogComposed
                                                              var row = locations[id];
                                                              if (!typeof(T).IsAssignableFrom(Type.GetType((string)row["type"], true)))
                                                                  throw new Exception("Original category type differs: " + category);
-                                                             var bundle = AssetBundle.GetAllLoadedAssetBundles().SingleOrDefault(
-                                                                 value => value.name == (string)row["bundle"]);
+                                                             var bundleName = (string)row["bundle"];
+                                                             AssetBundle bundle;
+                                                             if (!familyBundles.TryGetValue(bundleName, out bundle))
+                                                             {
+                                                                 bundle = AssetBundle.GetAllLoadedAssetBundles().SingleOrDefault(
+                                                                     value => value.name == bundleName);
+                                                                 familyBundles.Add(bundleName, bundle);
+                                                             }
                                                              if (!bundle)
                                                                  throw new Exception("Original category owner not loaded: " + category +
                                                                                      "/" + row["bundle"]);
