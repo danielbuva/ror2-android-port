@@ -1,9 +1,11 @@
 # Public alpha checklist
 
-Audited 2026-11-04 against merged journal J1300–J1359 and PRs #239–#326,
-through [J1359](PORTING_JOURNAL.md#j1359--retained-sustained-game-performance-report)
-and [PR #326](https://github.com/danielbuva/ror2-android-port/pull/326).
+Re-audited 2026-11-11 against merged evidence since
+[audit #338](https://github.com/danielbuva/ror2-android-port/pull/338), including
+journal J1380–J1405 and changes through
+[PR #431](https://github.com/danielbuva/ror2-android-port/pull/431).
 All 18 acceptance gates remain open; linked results establish partial progress.
+Remaining actions are listed in the [execution backlog](execution-backlog.md).
 
 The user accepts [owner-built Route A](ADR-002-public-alpha-distribution.md);
 [ADR-001](ADR-001-port-architecture.md) retains Architecture C, native IL2CPP ARM64
@@ -25,12 +27,19 @@ build-pipeline changes. This checklist makes no alpha-readiness claim.
       only changed outputs where possible, including Check for updates.
       Discovering newer Steam inputs is secondary; report unknown/changed assets
       clearly. See the [converter contract](accepted-build-reconstruction.md).
+      [J1388](PORTING_JOURNAL.md#j1388--emit-and-typed-load-a-closed-source-native-bundle-subset)
+      typed-loads a partial native bundle;
+      [#428](https://github.com/danielbuva/ror2-android-port/pull/428)
+      completes source camera-program suppliers. Complete graph/load, APK and
+      device playability remain unqualified.
 - [ ] Qualify permitted tool acquisition, Android app execution, complete game
       AOT/metadata construction, content/shader production, durable owner signing
       and user-mediated installation/update as one complete flow, including
       Check for updates. The [stage evidence](phone-owner-build.md) and
       [host-qualified installer integration](PORTING_JOURNAL.md#j1257--integrate-resumable-public-phone-installation-and-updates)
       do not establish complete game conversion or phone acceptance.
+      [#408](https://github.com/danielbuva/ror2-android-port/pull/408)
+      adds host-tested disposable-package assembly, without APK/device acceptance.
 - [ ] Complete public-input bootstrap without private generated assets or
       workstation analysis receipts ([structural blockers](execution-backlog.md#structural-cleanup)).
       Reuse the [owner assembly prefix](OWNER_ASSEMBLIES.md); resolve remaining
@@ -40,6 +49,8 @@ build-pipeline changes. This checklist makes no alpha-readiness claim.
       and matched performance ([acceptance gates](phone-owner-build.md#proof-gates)).
       Preserve the original installation, Main's editor/build mutex/device and
       desktop fallback. IL2CPP alone does not prove equivalent performance.
+      [J1401](PORTING_JOURNAL.md#j1401--load-typed-results-definitions-before-dependent-drop-tables)
+      verifies bounded ordinary Start on a lab APK, not the converter's output.
 - [ ] Complete the [ADR-002 findings review](ADR-002-public-alpha-distribution.md)
       before adopting a replacement pipeline or final installation architecture.
       Keep other gameplay backends excluded; audit public artifacts and keep
@@ -57,6 +68,9 @@ host contracts from installed-alpha acceptance.
       interruption and cold-start retention.
       [J1258](PORTING_JOURNAL.md#j1258--integrate-owned-alpha-updates-rollback-and-profile-retention)
       qualifies synthetic host contracts only.
+      [J1401](PORTING_JOURNAL.md#j1401--load-typed-results-definitions-before-dependent-drop-tables)
+      retains profile/settings hashes across a lab update; the final alpha
+      identity, owner signing, backup/restore and rollback flow remain unqualified.
 - [ ] Phone-qualify folder/ZIP validation, cancellation and honest supported/unknown
       version refusal with legitimate input cohorts and actual SAF providers
       ([acceptance matrix](ALPHA_POLICY.md#final-flow-acceptance-contract)).
@@ -80,15 +94,28 @@ retain J595/J755 ownership guards; final alpha installation remains separate.
 - [ ] Qualify ordinary hardware navigation and remaining [player screens](SCREEN_COVERAGE.md)
       against [subsystem coverage](subsystem-coverage.md), including complete
       source presentation.
-      [J1358](PORTING_JOURNAL.md#j1358--retain-audited-menu-build-identities-and-native-provider-order)
-      leaves Menu/HUD reconstruction differences and device acceptance open.
+      Source [Menu/HUD graph production](accepted-build-reconstruction.md)
+      still requires current-code loadability, in-game presentation and hardware
+      navigation checks; historical byte differences alone do not block acceptance.
 - [ ] Qualify physical end-run/results navigation and repeated-session memory
       ([session owners](ARCHITECTURE.md#ownership)).
       [J1342](PORTING_JOURNAL.md#j1342--restore-original-point-sound-timeout-dispatch)
       drains the instrumented audio timeout queue;
       [J1350](PORTING_JOURNAL.md#j1350--restore-original-console-retention-default-at-composed-startup)
       retains positive matched-menu growth after twelve assisted sessions.
-      Ordinary long-run dependency retention remains open.
+      [J1402](PORTING_JOURNAL.md#j1402--continue-memory-observations-through-native-loss-and-menu)
+      verifies assisted loss → results → menu → ordinary Start continuation;
+      the 32-session diagnostic stopped after ten completions on lost thermal
+      telemetry. Subsequent [transport](PORTING_JOURNAL.md#j1403--preserve-session-process-transport-failures)
+      and [cooldown](PORTING_JOURNAL.md#j1405--cool-supervised-memory-sessions-between-verified-endings)
+      fixes support a completed 32-session supervised UI-abandon diagnostic
+      ([J1407](PORTING_JOURNAL.md#j1407--preserve-cooldown-admission-readings-across-display-wake)).
+      Final-16 matched-menu managed growth remains positive; physical navigation,
+      a memory plateau and ordinary long-run dependency retention remain open.
+      [J1408](PORTING_JOURNAL.md#j1408--reclaim-measured-returned-pool-storage-after-completed-sessions)
+      clears measured returned BulletHit/Renderer-list storage after each of three
+      supervised sessions, with continuation; positive matched-menu managed growth
+      remains. This scoped cleanup does not close the memory or physical-input gate.
 - [ ] Coordinate gameplay/audio/animation prerequisites with the main session;
       acceptance follows [capability gates](milestones.md), including an
       unassisted run. Keep Moon/finale manual.
@@ -116,6 +143,14 @@ qualified as host-only in [J1359](PORTING_JOURNAL.md#j1359--retained-sustained-g
 The 30-minute Main Nova observation averages 49.06 FPS; 1.537% of active frames
 exceed 50 ms. Raw frame percentiles, battery drain and throttling onset remain
 unmeasured. Periodic interval-mean percentiles cannot close the pacing gate.
+[J1389](PORTING_JOURNAL.md#j1389--report-final-ten-minute-sustained-frame-counters)
+adds retained final-ten-minute aggregate counters: 50.032 FPS and 1.274% of
+frames above 50 ms. This is host analysis of assisted play, not a new run or
+raw frame-percentile qualification.
+Startup [audio-verification reuse](PORTING_JOURNAL.md#j1386--reuse-install-bound-audio-verification-and-partition-loading-costs)
+and [catalog discovery](PORTING_JOURNAL.md#j1390--reuse-typed-item-provider-discovery-during-ordinary-startup)
+provide bounded device evidence; complete converter and sustained-game profiles
+remain required.
 
 Proposed game budgets (targets, not accepted results), at original visual fidelity:
 
@@ -139,6 +174,9 @@ thermal sampling policy; proposed performance budgets do not change those limits
       still shows positive twelve-session growth.
       [J1353](PORTING_JOURNAL.md#j1353--capture-the-requested-final-menu-heap)
       supplies endpoint heaps for attribution, without establishing a plateau.
+      [J1402](PORTING_JOURNAL.md#j1402--continue-memory-observations-through-native-loss-and-menu)
+      extends assisted observations through native loss; the interrupted series
+      does not establish completion or a plateau.
 - [ ] Complete real interrupted-write/ENOSPC and sustained performance/thermal
       cases on supported hardware.
       [J1311](PORTING_JOURNAL.md#j1311--recover-native-settings-after-writer-termination-and-activity-restart)

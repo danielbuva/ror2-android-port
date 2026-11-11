@@ -1,9 +1,11 @@
-"""Observe resource samples across repeated same-process UI-abandon sessions.
+"""Observe resource samples across repeated same-process sessions.
 
 Each session is an ordinary Commando menu start, at least 60 s of ready Lakes
 play with diagnostic automatic input (all gameplay debug assists off), then the
-existing offline settings end-run control. Every completed session must pass the
-session-cleanup runner's abandon contract before the next menu start. The
+existing offline settings end-run control. A native loss may finish earlier;
+return through results to the menu and record its actual live duration. Every
+completed session must pass the session-cleanup runner's actual ending contract
+before the next menu start. The
 runtime's existing SessionResourceBoundary samples and the host's per-menu PSS
 are collected; growth is reported as an observation, never as a leak fix or
 normal-game acceptance.
@@ -24,12 +26,12 @@ from session_cleanup_check import (
     POLL_SECONDS,
     SPINE_ID,
     SessionCleanupDevice,
-    abandon_contract,
     abandon_control_coordinates,
     abandon_observation_failures,
     matches_run,
     menu_start_coordinates,
     report_errors,
+    results_menu_coordinates,
     runtime_stop,
     selection,
     selector_action,
@@ -133,6 +135,9 @@ def growth_summary(sessions, final_menu_samples=None):
         rows.append(
             {
                 "session": entry["session"],
+                "ending": entry.get("ending"),
+                "host_ready_to_end_request_seconds": entry.get("host_ready_to_end_request_seconds"),
+                "world_seconds": entry.get("world_seconds"),
                 "managed_after_collection": _phase_value(samples, "completed-after-managed-collection", "managed"),
                 "reserved_after_collection": _phase_value(samples, "completed-after-managed-collection", "reserved"),
                 "game_objects_after_reclaim": _phase_value(samples, "completed-after-reclaim", "gameObjects"),
@@ -141,6 +146,7 @@ def growth_summary(sessions, final_menu_samples=None):
                 "live_completed_probes_at_start": _phase_value(samples, "before-presentation", "liveCompletedProbes"),
                 "managed_at_start": _phase_value(samples, "before-presentation", "managed"),
                 "menu_pss_kib": entry.get("menu_pss_kib"),
+                "menu_pss_session": entry["session"] + 1,
                 "root_walk_paths_at_start": _phase_value(samples, "before-presentation", "rootWalkPaths"),
                 "static_callback_counts_at_start": _phase_value(samples, "before-presentation", "staticCallbackCounts"),
                 "pruned_destroyed_depossession": _phase_value(samples, "completed-before-reclaim", "prunedDestroyedDepossessionSubscribers"),
@@ -148,11 +154,7 @@ def growth_summary(sessions, final_menu_samples=None):
             }
         )
 
-    def slope(key, final_value=None):
-        # Exclude session 1, whose first collection includes one-time warmup.
-        points = [(row["session"], row[key]) for row in rows[1:] if type(row[key]) is int]
-        if rows and type(final_value) is int:
-            points.append((rows[-1]["session"] + 1, final_value))
+    def slope(points):
         if len(points) < 2:
             return None
         n = len(points)
@@ -161,18 +163,40 @@ def growth_summary(sessions, final_menu_samples=None):
         den = sum((x - mean_x) ** 2 for x, _ in points)
         return round(sum((x - mean_x) * (y - mean_y) for x, y in points) / den) if den else None
 
+    series = {}
+    for metric, key in (
+        ("managed_after_collection_bytes", "managed_after_collection"),
+        ("managed_before_presentation_bytes", "managed_at_start"),
+        ("reserved_after_collection_bytes", "reserved_after_collection"),
+        ("menu_pss_kib", "menu_pss_kib"),
+    ):
+        # Managed samples use session k; PSS is read after completion, at menu k+1.
+        index_key = "menu_pss_session" if key == "menu_pss_kib" else "session"
+        series[metric] = [(row[index_key], row[key]) for row in rows if row[index_key] >= 2 and type(row[key]) is int]
+    final_managed = _phase_value(final_menu_samples, "before-presentation", "managed")
+    if rows and type(final_managed) is int:
+        series["managed_before_presentation_bytes"].append((rows[-1]["session"] + 1, final_managed))
+
+    tail = {}
+    for metric, points in series.items():
+        points = points[len(points) // 2 :]
+        tail[metric] = {
+            "first_index": points[0][0] if points else None,
+            "last_index": points[-1][0] if points else None,
+            "samples": len(points),
+            "slope_per_session": slope(points),
+        }
+
     return {
         "rows": rows,
-        "per_session_slope_from_session_2": {
-            "managed_after_collection_bytes": slope("managed_after_collection"),
-            "managed_before_presentation_bytes": slope("managed_at_start", _phase_value(final_menu_samples, "before-presentation", "managed")),
-            "reserved_after_collection_bytes": slope("reserved_after_collection"),
-            "menu_pss_kib": slope("menu_pss_kib"),
-        },
+        "per_session_slope_from_session_2": {metric: slope(points) for metric, points in series.items()},
+        "last_half_observations": tail,
         "final_menu_samples": final_menu_samples,
         "limits": (
             "Observation only: Boehm/IL2CPP heap usage, PSS and object counts; no retaining root is attributed here. "
             "Inspect both sampling phases: an early post-collection spike can dominate its regression while consistent menu usage still rises."
+            " PSS and before-presentation indices name menus; post-collection indices name completed sessions."
+            " Last-half slopes use the final ceil(n/2) available samples per metric; neither slope establishes a plateau."
         ),
     }
 
@@ -206,7 +230,7 @@ def collect_memory_snapshot(device, runtime, out, name):
     return {"file": name, "sha256": digest, "bytes": local.stat().st_size}
 
 
-def check_session_memory(sessions=DEFAULT_SESSIONS, expected_apk_sha256=None, root_walk=False, memory_snapshots=False, _launch=None):
+def check_session_memory(sessions=DEFAULT_SESSIONS, expected_apk_sha256=None, root_walk=False, memory_snapshots=False, _launch=None, _between_sessions=None):
     if type(sessions) is not int or not MIN_SESSIONS <= sessions <= MAX_SESSIONS:
         raise ValueError("Use %d to %d sessions" % (MIN_SESSIONS, MAX_SESSIONS))
     if type(memory_snapshots) is not bool or memory_snapshots and root_walk:
@@ -237,7 +261,7 @@ def check_session_memory(sessions=DEFAULT_SESSIONS, expected_apk_sha256=None, ro
     out = device.evidence_directory("experiments", "session-memory", now())
     out.mkdir(parents=True, exist_ok=False)
     value = selection(attempt, survivor)
-    value["debugOptions"]["purpose"] = "Repeated UI-abandon sessions for resource observation; automatic input is diagnostic and assisted"
+    value["debugOptions"]["purpose"] = "Repeated sessions for resource observation; UI abandon or native loss; automatic input is diagnostic and assisted"
     if root_walk:
         # Opt-in reachability walk in SessionResourceBoundary, only at the final menu: it may run
         # unrelated static constructors, so it must follow every measured session (J773).
@@ -256,7 +280,7 @@ def check_session_memory(sessions=DEFAULT_SESSIONS, expected_apk_sha256=None, ro
         "attempt": attempt,
         "storage_mode": mode,
         "selected_survivor": survivor,
-        "scope": "diagnostic automatic input; no gameplay debug assists; source UI abandon, no original ending/result",
+        "scope": "diagnostic automatic input; no gameplay debug assists; UI abandon or native loss followed by results/menu; actual outcomes and durations recorded",
     }
     write(out / "frozen.json", frozen)
 
@@ -265,9 +289,15 @@ def check_session_memory(sessions=DEFAULT_SESSIONS, expected_apk_sha256=None, ro
     first_failure = None
     profile_baseline = None
     observed = []  # one entry per completed session
+    endings = {}
+    live_seconds = {}
+    world_seconds = {}
+    results_menu_sent = set()
     snapshot_files = {}
     menu_pss = {}
     menu_started = set()
+    menu_start_requested_at = None
+    cooldowns = []
     live_at = startup_at = None
     settings_sent = end_requested = end_sent = False
     final_menu = None
@@ -325,6 +355,9 @@ def check_session_memory(sessions=DEFAULT_SESSIONS, expected_apk_sha256=None, ro
                     fail(reason, details[0] if details else None)
                     break
                 phase = current.get("phase")
+                if phase == "offline-start-menu" and session in menu_started and time.monotonic() - menu_start_requested_at >= ABANDON_STARTUP_TIMEOUT_SECONDS:
+                    fail("offline-menu-start-not-acknowledged", "session %d stayed at the menu after Start" % session)
+                    break
                 snapshot_ready = True
                 if phase == "offline-start-menu" and memory_snapshots and session in (2, sessions + 1) and session not in snapshot_files:
                     name = memory_snapshot_file(current, session)
@@ -339,12 +372,21 @@ def check_session_memory(sessions=DEFAULT_SESSIONS, expected_apk_sha256=None, ro
                         if view is None:
                             fail("completed-session-report-unavailable", "session %d" % (session - 1))
                             break
-                        failures = abandon_contract(view, pid, attempt, profile_baseline, survivor)
+                        ending = endings.get(session - 1)
+                        failures = cleanup.ending_contract(view, pid, attempt, profile_baseline, survivor, ending)
                         if failures:
                             fail("completed-session-cleanup-failed", "session %d: %s" % (session - 1, failures[0]))
                             break
                         write(out / ("completed-session-%d.json" % (session - 1)), completed)
-                        observed.append({"session": session - 1, "samples": resource_samples(completed)})
+                        observed.append(
+                            {
+                                "session": session - 1,
+                                "ending": ending,
+                                "host_ready_to_end_request_seconds": live_seconds[session - 1],
+                                "world_seconds": world_seconds[session - 1],
+                                "samples": resource_samples(completed),
+                            }
+                        )
                     pss = parse_total_pss_kib(device.sh("dumpsys", "meminfo", PACKAGE, check=False))
                     menu_pss[session] = pss
                     if observed:
@@ -354,11 +396,22 @@ def check_session_memory(sessions=DEFAULT_SESSIONS, expected_apk_sha256=None, ro
                         write(out / "final-menu.json", current)
                         stop = "repeated-sessions-observed"
                         break
+                    if session > 1 and _between_sessions:
+                        pause_started = time.monotonic()
+                        cooled = _between_sessions()
+                        seconds = time.monotonic() - pause_started
+                        cooldowns.append(dict(before_session=session, seconds=seconds, observation=cooled))
+                        write(out / "cooldowns.json", cooldowns)
+                        deadline += seconds
+                        if not cleanup._same_process(device, pid):
+                            fail("process-exited-during-cooldown")
+                            break
                     coords = menu_start_coordinates(current)
                     if coords is None:
                         fail("offline-menu-start-control-unavailable", "session %d" % session)
                         break
                     device.sh("input", "tap", str(coords[0]), str(coords[1]))
+                    menu_start_requested_at = time.monotonic()
                     menu_started.add(session)
                     live_at = startup_at = None
                     settings_sent = end_requested = end_sent = False
@@ -419,9 +472,28 @@ def check_session_memory(sessions=DEFAULT_SESSIONS, expected_apk_sha256=None, ro
                                 end_sent = "endRunConfirmationVisible" not in settings
                             else:
                                 end_sent = True
-                if phase == "commando-defeated":
-                    fail("original-loss-occurred-before-abandon", "session %d" % session)
-                    break
+                            if end_sent:
+                                endings[session] = "abandon"
+                                live_seconds[session] = time.monotonic() - live_at
+                                world_seconds[session] = world.get("seconds")
+                if phase == "commando-defeated" and session not in results_menu_sent:
+                    if session not in menu_started or live_at is None or profile_baseline is None:
+                        fail("native-loss-without-observed-live-session", "session %d" % session)
+                        break
+                    results = current.get("results") or {}
+                    if not results.get("persisted") or not results.get("clientEnding"):
+                        fail("death-result-not-persisted", "session %d" % session)
+                        break
+                    coords = results_menu_coordinates(current, device.sh("wm", "size"), device.sh("dumpsys", "window", "displays"))
+                    if coords is None:
+                        fail("results-menu-control-display-mapping-unavailable", "session %d" % session)
+                        break
+                    device.sh("input", "tap", str(coords[0]), str(coords[1]))
+                    results_menu_sent.add(session)
+                    endings[session] = "loss"
+                    # Includes the native death/results delay; retain runtime time separately.
+                    live_seconds[session] = time.monotonic() - live_at
+                    world_seconds[session] = (current.get("world") or {}).get("seconds")
             if time.monotonic() >= next_log:
                 logs = device.sh("logcat", "-d", "--pid=" + pid, "-v", "threadtime", "Unity:I", "AndroidRuntime:E", "*:S", check=False)
                 runtime_errors = current_errors(logs, pid)
@@ -476,14 +548,20 @@ def check_session_memory(sessions=DEFAULT_SESSIONS, expected_apk_sha256=None, ro
         failures.append("stopped: " + stop)
     if len(observed) != sessions:
         failures.append("observed %d of %d completed sessions" % (len(observed), sessions))
-    # Every completed session already passed abandon_contract's frozen profile counts; the final
+    # Every completed session already passed its ending contract's frozen profile counts; the final
     # menu's profile is not loaded yet, so it carries no further count evidence.
     failures.extend(cleanup_errors)
     summary = growth_summary(observed, resource_samples(final_menu))
+    if "loss" in endings.values():
+        summary["limits"] += (
+            " Includes native losses with recorded live durations; this mixed-ending workload does not establish a uniform 60-second abandon series."
+        )
     if memory_snapshots:
         summary["limits"] += (
             " Native heap captures at menu 2 and the final menu allocate and pause; this is attribution evidence, not an ordinary growth/performance measurement."
         )
+    if _between_sessions:
+        summary["limits"] += " Includes supervised OLED-sleep cooldown between sessions; this is not uninterrupted ordinary play."
     result = {
         "success": not failures,
         "stop": stop,
@@ -491,6 +569,7 @@ def check_session_memory(sessions=DEFAULT_SESSIONS, expected_apk_sha256=None, ro
         "failures": failures,
         "sessions_requested": sessions,
         "sessions_observed": len(observed),
+        "session_outcomes": [{key: entry[key] for key in ("session", "ending", "host_ready_to_end_request_seconds", "world_seconds")} for entry in observed],
         "pid": pid,
         "attempt": attempt,
         "apk_sha256": artifact_hash,
@@ -499,6 +578,7 @@ def check_session_memory(sessions=DEFAULT_SESSIONS, expected_apk_sha256=None, ro
         "menu_pss_kib": menu_pss,
         "growth": summary,
         "memory_snapshots": snapshot_files,
+        "cooldowns": cooldowns,
         "runtime_errors": runtime_errors,
         "evidence": str(out.relative_to(WORK.parent)),
     }

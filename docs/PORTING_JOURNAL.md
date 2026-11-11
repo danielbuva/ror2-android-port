@@ -2948,3 +2948,167 @@ Process-cold/APK pages warmed; different stage, no controlled total-loading clai
 Sampled PSS peak 4.14 GiB; adopted free 326.96 GiB; CPU/GPU 67.4 C, above 80 C 0 s,
 battery 28 C. Stopped/asleep, scratch removed, lease released; prune passed.
 Prior art: pinned R2API content phases; J1376/J1398. Sustained play/audibility remain open.
+
+## J1400 — Reuse profile manifest for native game-mode preparation
+
+2026-11-11. Existing profile snapshot feeds game-mode loading on the synchronous
+rule-preparation stack; native order, identities, null fallback and cleanup remain.
+Three focused production fixtures, Ruff, host preflight and code build pass.
+Source `aa66a2a4`; APK `2d7140f2806f9aa3493f39d4dfb6fa1a567ae91a552417951305b49f34e497ba`.
+Evidence: `work/coordination/alpha-rule-metadata-device-20261111T015021Z/`.
+Ordinary Start reaches Titanic Plains/player/HUD; rules 372, native catalogs and
+source banks 153/153 ready; no first failure, profile/settings hashes retained on update.
+Ordered rule span 0.516632 s: catalog 0.024460 s, book 0.000359 s,
+game-mode family 0.483803 s, registration 0.001480 s; no controlled speedup claim.
+Sampled PSS peak 3.28 GiB; CPU/GPU peak 80.8 C, above 80 C 0.394 s, battery 27 C.
+Process-cold, page cache uncontrolled, profiler off; stopped/asleep, scratch removed,
+lease released/prune passed. Prior art: pinned R2API content phases and J466/J1399.
+Sustained play, audibility, full-pipeline profiling and remaining alpha gates stay open.
+
+
+## J1401 — Load typed results definitions before dependent drop tables
+
+2026-11-11. Existing CategoryFamily loader selects labeled key-item and item-group
+records before native registration, avoiding premature unrelated drop-table activation.
+Correction to J1400: its log contains premature CursedBook key-item activation.
+Three extracted-production fixtures, Ruff, pin checks, preflight and code build pass.
+Source `2575892b`; APK `04df664f66d5ebc32cbc477865e9bfb6a16bfdf1120603b0f2f2f99a310a680d`.
+Evidence: `work/coordination/alpha-item-group-device-20261111T023949Z/`.
+Ordinary launcher Start reaches player/HUD for 5 s; strict current-PID error scan empty;
+native results prepared (not completed), 21 survivors, 455 unlockables, 153 banks ready.
+In-place adopted-storage update preserves profile/settings hashes; profiler off.
+CPU/GPU peak 85.2 C, above 80 C 1.54 s, battery 30 C; safety limits not tripped.
+Stopped/asleep, scratch removed, lease released, prune passed; page cache uncontrolled.
+Prior art: pinned R2API content phases, source typed labels, J1390/J469/J525.
+Full results navigation, repeated-session memory plateau and sustained play remain open.
+
+## J1402 — Continue memory observations through native loss and menu
+
+2026-11-11. Host session-memory runner returns genuine losses through persisted results
+and Return to menu, then ordinary Start; actual ending contracts retain PID/session,
+first-stage, frozen profile and teardown checks. Outcomes and both live clocks are recorded.
+Evidence: `work/device/<device>/experiments/session-memory/20261111T034226.321522Z/`:
+session 5 lost at 55.53 world seconds; sessions 6–10 subsequently completed in the same process.
+Three-session bounded check passed; 32-session diagnostic stopped after 10 completions when
+thermal sampling lost an ADB command. No runtime errors; completion/plateau remain open.
+Unity child launches isolate bundled ADB on port 5038; host launch contracts cover isolation.
+APK `04df664f66d5ebc32cbc477865e9bfb6a16bfdf1120603b0f2f2f99a310a680d`, source `2575892b`.
+Focused 291 host tests/Ruff/preflight passed; prior art J391/J609 and pinned R2API release lifetimes.
+No new runtime gameplay code. Assisted evidence; physical navigation and sustained qualification open.
+Terminal readback verified stopped/asleep, selectors absent and lease released; prune applied.
+
+## J1403 — Preserve session process transport failures
+
+2026-11-11. Shared session process checks reuse the baseline's checked PID observer;
+legitimate no-process remains distinct from command/transport failure. The memory runner
+records transport loss as runner-error and cleanup cannot claim unobserved termination.
+Evidence: this commit; 146 focused host tests and Ruff pass. Host preflight retains
+the known worktree-local configuration gap; no build, install or gameplay rerun.
+No APK change or new gameplay evidence. Repeated-session completion, memory plateau,
+physical navigation and unassisted qualification remain open.
+
+## J1404 — Combine runtime thermal and battery reads
+
+2026-11-11. Existing thermal owner reads all admitted sensors and battery service
+in one bounded ADB transaction, reducing two client startups to one per sample.
+Its one-second timeout leaves measured gaps above one second invalid; sensor
+cardinality, battery completeness and existing safety thresholds remain required.
+Evidence: this commit; 54 focused host tests and Ruff pass, including real shell
+framing, sensor read failure and a 0.8-second read followed by a rejected gap.
+Doctor/preflight retain known worktree-local configuration gaps. No device rerun,
+APK change or gameplay qualification; isolated ADB-stall root cause remains open.
+
+## J1405 — Cool supervised memory sessions between verified endings
+
+2026-11-11. Existing thermal owner sleeps the OLED between verified completed
+memory sessions and resumes at battery service and battery-zone readings <=35 C.
+Continuous runtime sampling and the >=43 C battery stop remain active; no charging
+setting changes. The memory owner preserves pre-pause samples/PSS, rechecks its
+PID before Start and records cooldown duration separately from its session budget.
+The outer three-hour deadline remains unchanged; reports label interrupted play.
+Evidence: this commit; 56 thermal/batch and 16 memory host tests plus Ruff pass.
+Doctor/preflight retain known worktree-local configuration gaps. No APK change,
+new device run or cooldown qualification; active32 uses the previous loaded code.
+Repeated-session completion/plateau and ordinary physical/unassisted gates stay open.
+
+## J1406 — Bound unacknowledged session Start requests
+
+2026-11-11. The existing supervised memory runner stops after 60 seconds when
+a tapped session still reports its start menu, retaining the current report and
+performing owned process/display cleanup. A missed transition no longer waits
+for the outer three-hour deadline or implies a gameplay crash.
+Evidence: 16 focused host tests, including a stalled post-cooldown menu that
+preserves one completion, sends no repeated taps and confirms OLED cleanup; Ruff
+and shared host preflight pass. APK unchanged; no new device acceptance.
+Wake/focus/tap delivery, long-series memory and physical navigation remain open.
+
+## J1407 — Preserve cooldown admission readings across display wake
+
+2026-11-11. Existing thermal owner freezes the <=35 C battery readings used to
+admit cooldown completion; display wake no longer replaces them with later samples.
+Evidence: 57 focused host tests/Ruff; no APK change. Current diagnostic:
+`work/coordination/alpha-captured-cooldown-memory32-20261111T105226Z/terminal.done.json`.
+APK `04df664f66d5ebc32cbc477865e9bfb6a16bfdf1120603b0f2f2f99a310a680d`, source `2575892b`.
+32 supervised UI-abandons plus final menu share one PID; frozen profile counts hold.
+Final-16 managed slopes: menu +0.160 MiB/session, post-collection +0.162; no plateau.
+7,174 s wall, 19,060 thermal samples, maximum gap 0.822 s; CPU/GPU peak 95.1 C,
+above 80 C for 1,517.948 s; battery 32–36 C. No sustained safety-limit breach.
+Prewake admission does not establish exact Start temperature; captures delay Start.
+App/selectors absent, OLED asleep, lease released and prune complete. Ordinary
+play, physical input, retaining-root attribution and sustained qualification remain open.
+
+## J1408 — Reclaim measured returned pool storage after completed sessions
+
+2026-11-11. `SessionResourceBoundary` clears/trims returned BulletHit and HG
+Renderer-list stacks only after world/network teardown; item contents stay intact.
+Build payload identity/copy excludes the local `.prune-keep` retention marker.
+Evidence: `work/coordination/alpha-returned-pool-dependencies-20261111T142246Z/terminal.done.json`.
+APK `8a7d418f6a9fff32aa042e89423c6a0f012df5fbed2e3fd14581a142a1f787c6`, source `1438a859`.
+Three supervised sessions: two abandons (67.52/67.35 s), native loss (55.40 s),
+then menu 4; hit returns 58/101/67 and Renderer lists 72/72/68 each reclaim to 0.
+Adopted in-place install retains profile/settings hashes; later sessions continue.
+88 focused host tests/Ruff pass; backing-capacity and untouched-rental contracts covered.
+544 s wall; CPU/GPU peak 88.4 C, 71.77 s above 80 C; battery 27–30 C;
+1,426 runtime thermal samples, maximum gap 0.494 s. App/selectors absent, OLED asleep,
+lease released and prune complete. Final-two menu/collected managed deltas remain
++2.76/+0.97 MiB; memory plateau, ordinary long play and physical input remain open.
+
+## J1410 — Emit complete graphs with current structural field routes
+
+2026-11-11. The existing native subset emitter accepts every current nonnull
+field route without requiring historical per-field source provenance. Complete
+body/type hashes, local member identity, endpoint checks, relocation and final
+readback remain strict; managed emission still requires its current CLR checker.
+All 28 focused host tests pass, including emission without source proofs and
+rejection of missing routes or endpoint drift. Host preflight passes. Evidence:
+`work/coordination/p1-wholegame-1031/current-structural-route-emission-v1/checks.json`.
+No APK produced; complete current CLR field assignability, Unity typed loading
+and converted-device play remain open.
+## J1409 — Align memory observations with their measured menus
+
+2026-11-11. The existing session-memory report names the following menu for PSS,
+retains menu 2 in its slope and reports late-half slopes with actual sample ranges.
+Managed menu and completed-session collection phases remain separate; no plateau
+threshold or runtime change is introduced. Nineteen focused tests and Ruff pass.
+Host replay: `work/coordination/alpha-post-pool-address-candidates-20261111T173007Z/reporting-replay.json`.
+Output SHA-256 `4588421887660e894fe9c7ade9dceabd10844b3ebb0b7f10da84e5e4cb9fd87b`.
+The retained series reports managed +120,553 B/menu overall and +25,751 B/menu
+at menus 18–33; post-collection sessions 17–32 give −5,578 B/session.
+This is host reporting, with no new APK or device run. Memory plateau, retaining
+owner attribution, ordinary long play and physical input remain open.
+
+## J1411 — Reuse the definition manifest reader for provider-root families
+
+2026-11-11. `WholeCatalogComposed.DefinitionFamily<T>` reuses the existing reader,
+omitting unused JSON line annotations; typed roots, identity checks and cache stay.
+Three extracted-production scope tests and exact-editor code-only build pass.
+Matched reinstall/process-cold pair reached ordinary Start → player/HUD/audio;
+profiles/settings retained, runtime errors empty, 21 survivors/455 unlockables.
+Evidence: `work/coordination/alpha-definition-lines-pair-20261111T175817Z/`.
+APK SHA-256 `a75ebd269db105f6fd418b16a1f5f71efc64f1cf4ffa1d1368d99da1cb08ca2f`.
+Cold-menu 23.339 → 22.354 s; Start-playable 83.885 → 75.697 s are observations:
+blackbeach2 → golemplains2, one pair, uncontrolled page cache; no speedup claim.
+Both audio checks fully verified 274 files. CPU/GPU peaks 84.0/85.2 °C,
+above 80 °C for 0.332/9.941 s; battery peaks 30/31 °C. Raw performance stays local.
+App/selectors/pending absent, OLED asleep, lease released; P1 has device priority.
+Sustained performance, memory plateau and ordinary long play remain open.

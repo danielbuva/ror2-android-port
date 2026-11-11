@@ -189,6 +189,7 @@ def execute_build(destination, work, api):
         (scratch / "graphics-api.txt").write_text(api)
         env = os.environ.copy()
         env.update(
+            ANDROID_ADB_SERVER_PORT="5038",
             ANDROID_SDK_HOME=str(scratch / "android-user"),
             ANDROID_USER_HOME=str(scratch / "android-user/.android"),
             GRADLE_USER_HOME=str(scratch / "gradle"),

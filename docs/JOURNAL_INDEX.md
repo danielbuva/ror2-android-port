@@ -10,6 +10,18 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J1411](PORTING_JOURNAL.md#j1411--reuse-the-definition-manifest-reader-for-provider-root-families) | 2026-11-11 | Reuse the definition manifest reader for provider-root families | 2026-11-11. |
+| [J1409](PORTING_JOURNAL.md#j1409--align-memory-observations-with-their-measured-menus) | 2026-11-11 | Align memory observations with their measured menus | 2026-11-11. |
+| [J1410](PORTING_JOURNAL.md#j1410--emit-complete-graphs-with-current-structural-field-routes) | 2026-11-11 | Emit complete graphs with current structural field routes | 2026-11-11. |
+| [J1408](PORTING_JOURNAL.md#j1408--reclaim-measured-returned-pool-storage-after-completed-sessions) | 2026-11-11 | Reclaim measured returned pool storage after completed sessions | 2026-11-11. |
+| [J1407](PORTING_JOURNAL.md#j1407--preserve-cooldown-admission-readings-across-display-wake) | 2026-11-11 | Preserve cooldown admission readings across display wake | 2026-11-11. |
+| [J1406](PORTING_JOURNAL.md#j1406--bound-unacknowledged-session-start-requests) | 2026-11-11 | Bound unacknowledged session Start requests | 2026-11-11. |
+| [J1405](PORTING_JOURNAL.md#j1405--cool-supervised-memory-sessions-between-verified-endings) | 2026-11-10 | Cool supervised memory sessions between verified endings | 2026-11-11. |
+| [J1404](PORTING_JOURNAL.md#j1404--combine-runtime-thermal-and-battery-reads) | 2026-11-10 | Combine runtime thermal and battery reads | 2026-11-11. |
+| [J1403](PORTING_JOURNAL.md#j1403--preserve-session-process-transport-failures) | 2026-11-10 | Preserve session process transport failures | 2026-11-11. |
+| [J1402](PORTING_JOURNAL.md#j1402--continue-memory-observations-through-native-loss-and-menu) | 2026-11-10 | Continue memory observations through native loss and menu | 2026-11-11. |
+| [J1401](PORTING_JOURNAL.md#j1401--load-typed-results-definitions-before-dependent-drop-tables) | 2026-11-10 | Load typed results definitions before dependent drop tables | 2026-11-11. |
+| [J1400](PORTING_JOURNAL.md#j1400--reuse-profile-manifest-for-native-game-mode-preparation) | 2026-11-10 | Reuse profile manifest for native game-mode preparation | 2026-11-11. |
 | [J1399](PORTING_JOURNAL.md#j1399--reuse-results-manifest-for-native-profile-families) | 2026-11-05 | Reuse results manifest for native profile families | 2026-11-05. |
 | [J1398](PORTING_JOURNAL.md#j1398--attribute-native-profile-startup-phases) | 2026-11-04 | Attribute native profile startup phases | 2026-11-05. |
 | [J1397](PORTING_JOURNAL.md#j1397--share-the-synchronous-manifest-with-drone-and-projectile-registration) | 2026-11-04 | Share the synchronous manifest with drone and projectile registration | 2026-11-05. |

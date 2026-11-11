@@ -102,6 +102,7 @@ class UnityRebuildTests(unittest.TestCase):
         self.assertEqual(command[command.index("-projectPath") + 1], str(self.dest))
         self.assertNotIn("-cacheServerEndpoint", command)
         self.assertEqual(kwargs["cwd"], self.dest)
+        self.assertEqual(kwargs["env"]["ANDROID_ADB_SERVER_PORT"], "5038")
         scratch = Path(command[command.index("-labWorkRoot") + 1])
         self.assertTrue(scratch.is_relative_to(self.dest))
         self.assertTrue(Path(kwargs["env"]["GRADLE_USER_HOME"]).is_relative_to(scratch))
@@ -588,6 +589,8 @@ class UnityRebuildTests(unittest.TestCase):
         apk = self.work / "lab-build/lab-vulkan.apk"
         apk.parent.mkdir(parents=True)
         apk.write_bytes(b"real route fixture")
+        marker = self.work / "generated-android-data/.prune-keep"
+        marker.touch()
         installed = (self.work / "device/installed.json").read_bytes()
 
         def editor(target, action):
@@ -621,6 +624,8 @@ class UnityRebuildTests(unittest.TestCase):
                 self.assertTrue(result["key"].startswith("ordinary-key"))
                 self.assertEqual(result["apk"], str(self.work / "build-cache" / result["key"] / "lab-vulkan.apk"))
                 self.assertEqual(result["payload"], {"keep": sha(self.work / "generated-android-data/keep")})
+                self.assertFalse((Path(result["payload_directory"]) / ".prune-keep").exists())
+                self.assertTrue(marker.is_file())
                 self.assertEqual(read(self.work / "config/current-build.json"), result)
                 self.assertEqual(read(self.work / "build-cache" / result["key"] / "result.json"), result)
                 self.assertEqual((self.work / "device/installed.json").read_bytes(), installed)

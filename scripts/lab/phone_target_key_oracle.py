@@ -166,6 +166,7 @@ def run(root, work, editor):
     output = destination / "oracle.json"
     env = dict(
         os.environ,
+        ANDROID_ADB_SERVER_PORT="5038",
         ROR2_TARGET_KEY_REPORT=str(output),
         ROR2_TARGET_KEY_REQUEST=str(destination / "queries.json"),
         ROR2_PHONE_BUILD_SOURCE=inputs["source_commit"],

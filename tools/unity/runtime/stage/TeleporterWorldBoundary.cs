@@ -5,6 +5,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using Newtonsoft.Json.Linq;
 using EntityStates;
 using RoR2;
 using RoR2.ContentManagement;
@@ -265,13 +266,13 @@ public sealed partial class PortSession
     {
         return GetTeleporterWorldSession().IsObjectiveActor(body);
     }
-    void PrepareObjectiveRuleCatalog()
+    void PrepareObjectiveRuleCatalog(JObject manifest = null)
     {
-        GetTeleporterWorldSession().PrepareObjectiveRuleCatalog();
+        GetTeleporterWorldSession().PrepareObjectiveRuleCatalog(manifest);
     }
-    void PrepareOriginalGameModes()
+    void PrepareOriginalGameModes(JObject manifest = null)
     {
-        GetTeleporterWorldSession().PrepareOriginalGameModes();
+        GetTeleporterWorldSession().PrepareOriginalGameModes(manifest);
     }
     void CleanupOriginalGameModes()
     {
@@ -1003,7 +1004,7 @@ public sealed partial class PortSession
         {
             return body && coordinator.objectiveTemplates.Any(x => x == body.master.bodyPrefab);
         }
-        public void PrepareObjectiveRuleCatalog()
+        public void PrepareObjectiveRuleCatalog(JObject manifest = null)
         {
             // RuleCatalog/RuleBook cache definitions for the process. Restart may reuse this exact
             // catalog signature, but cannot rebuild it while cached RuleBook rule references survive.
@@ -1029,8 +1030,11 @@ public sealed partial class PortSession
                                               def => !def || UnlockableCatalog.GetUnlockableDef(def.cachedName) == def),
                                           "Original Karma rule unlock metadata identity differs");
                     }
+                    TraceStartup("profile-rule-catalog-init-begin");
                     PortSession.StaticCall(typeof(RuleCatalog), "Init");
+                    TraceStartup("profile-rule-catalog-ready-book-init-begin");
                     PortSession.StaticCall(typeof(RuleBook), "Init");
+                    TraceStartup("profile-rule-book-ready");
                     objectiveRuleSignature = signature;
                 }
                 finally
@@ -1040,14 +1044,17 @@ public sealed partial class PortSession
             }
             coordinator.Check(objectiveRuleSignature == signature && RuleCatalog.FindRuleDef("Misc.StageOrder") != null,
                               "Restart rule catalog input changed");
-            PrepareOriginalGameModes();
+            PrepareOriginalGameModes(manifest);
         }
-        public void PrepareOriginalGameModes()
+        public void PrepareOriginalGameModes(JObject manifest = null)
         {
             if (coordinator.r.liveCatalogs == null || !coordinator.stageSourceObjects || ownsGameModeCatalog)
                 return;
             coordinator.Check(GameModeCatalog.gameModeCount == 0, "Unowned original game-mode catalog");
-            var modes = WholeCatalogComposed.CategoryFamily(RoR2.ContentManagement.AddressablesLabels.gameMode, Array.Empty<GameObject>());
+            TraceStartup("profile-game-mode-family-begin");
+            var modes = WholeCatalogComposed.CategoryFamily(manifest, RoR2.ContentManagement.AddressablesLabels.gameMode,
+                                                          Array.Empty<GameObject>(), step => TraceStartup("profile-game-mode-family-" + step));
+            TraceStartup("profile-game-mode-family-ready-registration-begin");
             coordinator.Check(modes.Length > 0 && modes.All(mode => mode && mode.GetComponent<Run>()) &&
                                   modes.Select(mode => mode.name).Distinct().Count() == modes.Length,
                               "Original game-mode prefab family changed");
@@ -1061,6 +1068,7 @@ public sealed partial class PortSession
             coordinator.Check(GameModeCatalog.gameModeCount == modes.Length && classic &&
                                   classic.gameObject == modes.Single(mode => mode.name == "ClassicRun") && classic != Run.instance,
                               "Original ClassicRun catalog identity differs");
+            TraceStartup("profile-game-mode-ready");
         }
         public void CleanupOriginalGameModes()
         {

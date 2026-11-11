@@ -64,6 +64,29 @@ def qualified_final_type(body, typ, scripts, qualified):
     return restored
 
 
+def qualify_null_script_base(body, typ, source_type):
+    """Check the original scriptless base without inventing a CLR binding.
+
+    The caller reads source_type from a hash-pinned original, including an
+    explicit missing_script_base.type_source when the producer used one.
+    Returned pointers still require normal endpoint qualification.
+    """
+    if (
+        full_type_key(typ) != full_type_key(source_type)
+        or typ["class_id"] != 114
+        or len(body) != 32
+        or typ["script_type"] != -1
+        or typ["hash"] != bytes(16)
+        or typ["script_id"] != bytes(16)
+    ):
+        raise ValueError("Scriptless base differs from pinned original type")
+    fields = pointers(body, typ, {})
+    scripts = [pointer for field, pointer in fields.items() if field in (("m_Script",), ("#490",))]
+    if scripts != [(0, 0)]:
+        raise ValueError("Scriptless base requires one null script field")
+    return fields
+
+
 def qualify_external_fields(value, body, typ, proofs, endpoint_record):
     """Qualify each non-null external field against a persisted endpoint.
 
@@ -116,6 +139,14 @@ def qualify_external_fields(value, body, typ, proofs, endpoint_record):
             digest = hashlib.sha256(raw).hexdigest()
             full = full_type_key(endpoint_type)
             expected = proof["endpoint_type"]
+            source_target = proof["source_target"]
+            if source_target is None:
+                # Generated SDK/registry bodies have no original object body.
+                # Their caller-qualified producer evidence must survive into
+                # the field proof, alongside the actual emitted extent below.
+                provenance = endpoint.get("generated_provenance")
+                if not provenance or expected.get("generated_provenance") != provenance or expected.get("source_sha256") is not None:
+                    continue
             if (
                 tuple(endpoint["destination"]) != target
                 or endpoint.get("source") != proof["source_target"]
@@ -135,12 +166,55 @@ def qualify_external_fields(value, body, typ, proofs, endpoint_record):
             ):
                 continue
             pointers(raw, endpoint_type, {})
-            signature = target, tuple(proof["source_target"]), json.dumps(expected, sort_keys=True)
+            signature = target, tuple(source_target) if source_target is not None else None, json.dumps(expected, sort_keys=True)
             valid[signature] = target
         if len(valid) != 1:
             raise ValueError(f"External field lacks a unique persisted endpoint: {owner} {field} ({len(valid)})")
         targets[field] = next(iter(valid.values()))
     return targets
+
+
+def qualify_structural_fields(value, body, typ, routes, endpoint_record):
+    """Check complete current routes without historical field provenance.
+
+    The caller binds routes and selected descriptors to its current census and
+    reads actual complete endpoint bodies/types from pinned inputs. Source
+    provenance is diagnostic; current CLR compatibility remains a separate
+    required emission check. No absent body or inferred type is admitted.
+    """
+
+    def checked(record, raw, native):
+        if (
+            (len(raw), hashlib.sha256(raw).hexdigest()) != (record["bytes"], record["sha256"])
+            or full_type_key(native) != record["full_type"]
+            or hashlib.sha256(native["tree"]).hexdigest() != record["schema"]
+            or native["class_id"] != record["class_id"]
+            or native["hash"].hex() != record["native_type_hash"]
+        ):
+            raise ValueError("Structural route body or full type differs")
+        fields = pointers(raw, native, {})
+        if set(fields.values()) != set(map(tuple, record["edges"])):
+            raise ValueError("Structural route measured pointers differ")
+        return fields
+
+    owner = tuple(value["destination"])
+    fields = checked(value, body, typ)
+    nonnull = {field: pointer for field, pointer in fields.items() if pointer[1]}
+    targets = {}
+    for route in routes:
+        field, pointer, target = tuple(route["field"]), tuple(route["pointer"]), tuple(route["target"])
+        if field in targets or nonnull.get(field) != pointer or len(target) != 3 or target[2] != pointer[1]:
+            raise ValueError("Structural route field or pointer differs")
+        if not pointer[0] and target != (*owner[:2], pointer[1]):
+            raise ValueError("Structural local route changes its member")
+        endpoint, raw, native = endpoint_record(target)
+        if tuple(endpoint["destination"]) != target:
+            raise ValueError("Structural route endpoint identity differs")
+        checked(endpoint, raw, native)
+        targets[field] = target
+    if set(targets) != set(nonnull):
+        raise ValueError("Structural routes require every nonnull field")
+    return {field: target for field, target in targets.items() if nonnull[field][0]}
 
 
 def relocate_external_fields(value, body, typ, targets, externals):
@@ -425,6 +499,74 @@ class ProducerRecords:
             directory = Path(row["provider_before"]).resolve()
 
 
+def retain_type_metadata(records, output, qualify):
+    """Persist checked managed hash corrections without copying object bytes.
+
+    records contains (selected, before_type, current_type). The caller obtains
+    complete layouts from pinned sources and qualify(selected, body, type)
+    must prove the current MonoScript/schema contract, returning its witness.
+    Only the native hash may change; original producer profiles remain pinned
+    through the existing retained-provider lineage. This does not admit a graph.
+    """
+    import json
+    from collections import defaultdict
+
+    output = Path(output)
+    output.mkdir(parents=True, exist_ok=False)
+    providers = ProducerRecords()
+    groups = defaultdict(list)
+    for value, before, current in records:
+        groups[str(Path(value["provider"]).resolve())].append((value, before, current))
+    revised = []
+    for ordinal, (provider, values) in enumerate(sorted(groups.items())):
+        directory = output / str(ordinal)
+        directory.mkdir()
+        (directory / "objects.bin").symlink_to(Path(provider) / "objects.bin")
+        if (Path(provider) / "resources.bin").is_file():
+            (directory / "resources.bin").symlink_to(Path(provider) / "resources.bin")
+        index, witnesses = [], []
+        for value, before, current in values:
+            row, body = providers.record(value)
+            if (
+                before["class_id"] != 114
+                or full_type_key({**current, "hash": before["hash"]}) != full_type_key(before)
+                or before["hash"] == current["hash"]
+                or value.get("native_type_hash") != before["hash"].hex()
+                or row.get("native_type_hash", before["hash"].hex()) != before["hash"].hex()
+                or value["schema"] != hashlib.sha256(current["tree"]).hexdigest()
+                or (value["bytes"], value["sha256"]) != (len(body), hashlib.sha256(body).hexdigest())
+            ):
+                raise ValueError("Retained type correction changes more than native hash or differs from provider")
+            evidence = qualify(value, body, current)
+            if not evidence:
+                raise ValueError("Retained type correction lacks current managed witness")
+            full = full_type_key(current)
+            index.append(
+                {**row, "native_type_hash": current["hash"].hex(), "full_type": full, "provider_before": provider, "body_before_sha256": value["sha256"]}
+            )
+            witnesses.append(
+                dict(
+                    destination=value["destination"],
+                    source=value.get("source"),
+                    body_sha256=value["sha256"],
+                    before_type=O.json_layout(before),
+                    current_type=O.json_layout(current),
+                    current_managed=evidence,
+                )
+            )
+            revised.append({**value, "provider": str(directory.resolve()), "native_type_hash": current["hash"].hex(), "full_type": full})
+        for name, rows in (("index.jsonl", index), ("witnesses.jsonl", witnesses)):
+            (directory / name).write_text("".join(json.dumps(row, sort_keys=True) + "\n" for row in rows))
+        receipt = dict(
+            success=True,
+            index_sha256=O.B.sha(directory / "index.jsonl"),
+            objects_sha256=O.B.sha(directory / "objects.bin"),
+            witnesses_sha256=O.B.sha(directory / "witnesses.jsonl"),
+        )
+        (directory / "result.json").write_text(json.dumps(receipt, indent=2) + "\n")
+    return revised
+
+
 def emit_closed_native(
     graph_directory,
     schema_paths,
@@ -436,6 +578,7 @@ def emit_closed_native(
     codec_sha256=None,
     required=None,
     field_proofs=(),
+    structural_routes=None,
     endpoint_record=None,
     managed_check=None,
 ):
@@ -451,6 +594,9 @@ def emit_closed_native(
     qualify_external_fields, and a current-CLR managed_check(value, body, type,
     read_record). The checker must reject incompatible schemas/scripts; it runs
     again against persisted output. Without these qualifications emission fails.
+    Alternatively structural_routes maps each selected destination tuple to all
+    current nonnull field/pointer/target edges, with original field provenance
+    diagnostic. Complete actual endpoint checks and managed checks still apply.
     This Python integration boundary does not admit a whole catalog or player.
     """
     from collections import Counter, defaultdict
@@ -582,7 +728,10 @@ def emit_closed_native(
                     if edges != set(map(tuple, value["edges"])):
                         raise ValueError("Measured native pointers differ from selected graph")
                     if required is not None:
-                        targets = qualify_external_fields(value, body, typ, proofs.get(tuple(value["destination"]), ()), read_external)
+                        if structural_routes is None:
+                            targets = qualify_external_fields(value, body, typ, proofs.get(tuple(value["destination"]), ()), read_external)
+                        else:
+                            targets = qualify_structural_fields(value, body, typ, structural_routes[tuple(value["destination"])], read_external)
                         qualified_targets[identity] = targets
                         body = relocate_external_fields(value, body, typ, targets, externals)
                         if typ["class_id"] == 114:
@@ -798,6 +947,7 @@ def emit_closed_native(
     )
     if required is not None:
         result["required_set_accepted"] = True
+        result["field_qualification"] = "structural-current-routes" if structural_routes is not None else "source-provenance"
         result["required_request_sha256"] = hashlib.sha256(json.dumps(required, sort_keys=True).encode()).hexdigest()
         result["qualified_endpoint_pins"] = [
             dict(destination=list(target), selected_row_sha256=hashlib.sha256(pin[0].encode()).hexdigest(), body_sha256=pin[1], full_type=pin[2])

@@ -81,7 +81,7 @@ def run_editor(project):
         "-logFile",
         str(log),
     ]
-    env = dict(os.environ, ROR2_TEXTURE_MIP_REPORT=str(output), ROR2_PHONE_BUILD_SOURCE=commit)
+    env = dict(os.environ, ANDROID_ADB_SERVER_PORT="5038", ROR2_TEXTURE_MIP_REPORT=str(output), ROR2_PHONE_BUILD_SOURCE=commit)
     result = {"success": False, "source_commit": commit, "command": args, "inputs": receipt}
     try:
         with host_build_lock(common.parent / "work/coordination/unity-build.lock", operation="owner authored texture mip oracle", timeout=1):

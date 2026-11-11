@@ -5,6 +5,7 @@ from __future__ import annotations
 import hashlib
 import json
 from pathlib import Path, PurePosixPath
+import posixpath
 import re
 import struct
 import tarfile
@@ -139,15 +140,17 @@ def include_closure(files: dict[str, bytes], source_path: str) -> dict[str, byte
     return result
 
 
-def rewrite_includes(shader: bytes, closure: dict[str, bytes], prefix: str = "PostProcessing/") -> bytes:
+def rewrite_includes(shader: bytes, closure: dict[str, bytes], prefix: str = "PostProcessing/", source_path: str = "Builtins/Uber.shader") -> bytes:
     text = shader.decode("utf-8")
-    for path in closure:
-        if path.endswith(".hlsl"):
-            parts = PurePosixPath(path).parts
-            replacement = prefix + "/".join(parts)
-            text = text.replace(f'"../{PurePosixPath(path).name}"', f'"{replacement}"')
-            text = text.replace(f'"{PurePosixPath(path).name}"', f'"{replacement}"')
-    return text.encode("utf-8")
+
+    def relocate(match):
+        include = match.group(1)
+        path = posixpath.normpath(posixpath.join(str(PurePosixPath(source_path).parent), include))
+        if path.endswith(".hlsl") and path in closure:
+            return match.group(0).replace(include, prefix + path)
+        return match.group(0)
+
+    return INCLUDE.sub(relocate, text).encode("utf-8")
 
 
 def validate_programs(export: Path, files: dict[str, bytes], recipe: dict) -> None:
@@ -168,10 +171,22 @@ def validate_programs(export: Path, files: dict[str, bytes], recipe: dict) -> No
             or parse_guid(meta) != row["source_guid"]
             or digest_bytes(package) != row["package_sha256"]
             or digest_bytes(package_meta) != row["package_meta_sha256"]
-            or re.findall(r"(?m)^\s*" + re.escape(row["field"]) + r": \{fileID: [0-9-]+, guid: ([0-9a-f]{32}), type: [0-9]+\}$", resource)
+            or re.findall(
+                r"(?m)^\s*"
+                + re.escape(row["field"])
+                + r": \{fileID: "
+                + ("7200000" if row["kernels"] else "4800000")
+                + r", guid: ([0-9a-f]{32}), type: [0-9]+\}$",
+                resource,
+            )
             != [row["source_guid"]]
         ):
             raise RuntimeError("Source camera program/resource identity changed: " + row["field"])
+        if not row["kernels"]:
+            source_names = re.findall(r'Shader\s+"([^\"]+)"', source.read_text(encoding="utf-8"))
+            package_names = re.findall(r'Shader\s+"([^\"]+)"', package.decode("utf-8"))
+            if len(source_names) != 1 or source_names != package_names:
+                raise RuntimeError("Original and public shader names differ: " + row["field"])
         if row["kernels"]:
             native = re.findall(r"(?m)^ +name: (\S+)$", source.read_text(encoding="utf-8"))
             kernels = re.findall(r"(?m)^\s*#pragma kernel (\w+)", package.decode("utf-8"))
@@ -222,7 +237,7 @@ def generate_candidate(work: Path, export: Path, input_id: str, *, allow_create:
         program_closure = include_closure(files, source_path)
         closure.update(program_closure)
         relative = "programs/" + safe_path(row["target"]).name
-        body = rewrite_includes(files[source_path], program_closure, recipe["include_target_prefix"])
+        body = rewrite_includes(files[source_path], program_closure, recipe["include_target_prefix"], source_path)
         meta = re.sub(rb"(?m)^guid: [0-9a-f]{32}$", ("guid: " + program_guid(row["target"])).encode(), files[source_path + ".meta"])
         output_files[relative], output_files[relative + ".meta"] = body, meta
         program_rows.append({**row, "candidate_path": relative, "sha256": digest_bytes(body), "meta_sha256": digest_bytes(meta)})

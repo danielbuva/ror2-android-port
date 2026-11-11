@@ -27,6 +27,62 @@ def pointer(name):
 
 
 class BundlePreloadTests(unittest.TestCase):
+    def test_scriptless_base_requires_pinned_type_and_preserves_owner_pointer(self):
+        M = P.module("bundle_manifest")
+        nodes = [dict(type="MonoBehaviour", name="Base", size=-1, level=0, meta=0, flags=0, version=1)]
+        for name, kind in (("m_GameObject", "GameObject"), ("m_Script", "MonoScript")):
+            nodes.extend(
+                dict(type=t, name=n, size=s, level=l, meta=0, flags=0, version=1)
+                for t, n, s, l in ((f"PPtr<{kind}>", name, 12, 1), ("int", "m_FileID", 4, 2), ("SInt64", "m_PathID", 8, 2))
+            )
+        nodes.append(dict(type="SInt64", name="authoredTail", size=8, level=1, meta=0, flags=0, version=1))
+        typ = dict(class_id=114, stripped=0, script_type=-1, script_id=bytes(16), hash=bytes(16), tree=M.S._tree(nodes), dependencies=[])
+        body = struct.pack("<iqiqq", 1, 42, 0, 0, 0)
+        fields = P.qualify_null_script_base(body, typ, typ)
+        self.assertEqual(fields, {("m_GameObject",): (1, 42), ("m_Script",): (0, 0)})
+        for field, value in (("class_id", 115), ("script_type", 0), ("hash", b"x" * 16), ("script_id", b"x" * 16)):
+            with self.subTest(field=field), self.assertRaisesRegex(ValueError, "pinned original"):
+                changed = {**typ, field: value}
+                P.qualify_null_script_base(body, changed, changed)
+        with self.assertRaisesRegex(ValueError, "pinned original"):
+            P.qualify_null_script_base(body, typ, {**typ, "dependencies": [1]})
+        with self.assertRaisesRegex(ValueError, "pinned original"):
+            P.qualify_null_script_base(body[:-1], typ, typ)
+        with self.assertRaisesRegex(ValueError, "one null script"):
+            P.qualify_null_script_base(struct.pack("<iqiqq", 1, 42, 0, 7, 0), typ, typ)
+
+    def test_retained_type_metadata_keeps_original_profile_and_immutable_extents(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            _, types, values, _ = self.required_graph(root)
+            source = next(iter(json.loads(types.read_text()).values()))
+            before = {**source, "class_id": 114, "tree": bytes.fromhex(source["tree"]), "hash": bytes.fromhex(source["hash"])}
+            current = {**before, "hash": b"n" * 16}
+            value = {**values[0], "class_id": 114, "full_type": P.full_type_key(before)}
+            original = Path(value["provider"])
+            original_index = (original / "index.jsonl").read_bytes()
+            original_body = (original / "objects.bin").read_bytes()
+            seen = []
+
+            def qualify(selected, body, typ):
+                seen.append((selected, body, typ))
+                return {"identity": ["assembly", "namespace", "script"], "properties": typ["hash"].hex()}
+
+            revised = P.retain_type_metadata([(value, before, current)], root / "corrected", qualify)[0]
+            index, body = P.ProducerRecords().record(revised)
+            self.assertEqual(index["native_type_hash"], current["hash"].hex())
+            self.assertEqual(revised["record"], value["record"])
+            self.assertEqual(revised["sha256"], value["sha256"])
+            self.assertEqual(revised["full_type"], P.full_type_key(current))
+            self.assertEqual(seen, [(value, body, current)])
+            self.assertTrue((Path(revised["provider"]) / "objects.bin").is_symlink())
+            self.assertEqual((original / "index.jsonl").read_bytes(), original_index)
+            self.assertEqual((original / "objects.bin").read_bytes(), original_body)
+            with self.assertRaisesRegex(ValueError, "more than native hash"):
+                P.retain_type_metadata([(value, before, {**current, "dependencies": [3]})], root / "bad-layout", qualify)
+            with self.assertRaisesRegex(ValueError, "lacks current managed witness"):
+                P.retain_type_metadata([(value, before, current)], root / "no-proof", lambda *args: None)
+
     def test_contextual_local_routes_do_not_alias_shared_path_ids(self):
         with tempfile.TemporaryDirectory() as directory:
             owner, body, typ, *_ = self.external_contract(Path(directory))
@@ -139,6 +195,26 @@ class BundlePreloadTests(unittest.TestCase):
             self.assertEqual(actual[-4:], body[-4:])
             self.assertEqual(set(targets), {("first",), ("second",)})
 
+    def test_structural_routes_check_complete_current_fields_without_source_proofs(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            owner, _, typ, proofs, endpoints, read = self.external_contract(Path(tmp))
+            body = struct.pack("<iqiqi", 1, 100, 0, 20, 73)
+            owner.update(bytes=len(body), sha256=hashlib.sha256(body).hexdigest(), edges=[[1, 100], [0, 20]])
+            fields = P.pointers(body, typ, {})
+            routes = [dict(field=p["field"], pointer=fields[tuple(p["field"])], target=p["target"]) for p in proofs]
+            for endpoint, _, _ in endpoints.values():
+                endpoint.pop("source")
+            targets = P.qualify_structural_fields(owner, body, typ, routes, read)
+            self.assertEqual(targets, {("first",): ("dependency", "CAB-dependency", 100)})
+            self.assertEqual(P.relocate_external_fields(owner, body, typ, targets, ["CAB-dependency"]), body)
+            with self.assertRaisesRegex(ValueError, "every nonnull field"):
+                P.qualify_structural_fields(owner, body, typ, routes[:1], read)
+            with self.assertRaisesRegex(ValueError, "field or pointer"):
+                P.qualify_structural_fields(owner, body, typ, routes + routes[:1], read)
+            endpoints["dependency", "CAB-dependency", 100][1].write_bytes(b"changed")
+            with self.assertRaisesRegex(ValueError, "body or full type"):
+                P.qualify_structural_fields(owner, body, typ, routes, read)
+
     def test_external_fields_require_each_field_proof_and_effective_provider(self):
         import copy
 
@@ -164,6 +240,24 @@ class BundlePreloadTests(unittest.TestCase):
                     proofs[1]["endpoint_type"]["emitted_witnesses"][0][1] = proofs[1]["target"]
                 with self.assertRaisesRegex(ValueError, "unique persisted endpoint"):
                     P.qualify_external_fields(owner, body, typ, proofs, read)
+
+    def test_generated_endpoint_keeps_producer_provenance_without_original_source(self):
+        import copy
+
+        with tempfile.TemporaryDirectory() as tmp:
+            owner, body, typ, proofs, endpoints, read = self.external_contract(Path(tmp))
+            proof = proofs[0]
+            endpoint, _, _ = endpoints[tuple(proof["target"])]
+            provenance = {"producer": "registry", "receipt": {"sha256": "ef" * 32}}
+            endpoint.update(source=None, generated_provenance=provenance)
+            proof["source_target"] = None
+            proof["endpoint_type"].update(source_sha256=None, generated_provenance=provenance)
+            self.assertEqual(P.qualify_external_fields(owner, body, typ, proofs, read)[("first",)], tuple(proof["target"]))
+            for change in ({"generated_provenance": None}, {"generated_provenance": {"producer": "other"}}, {"source_sha256": "cd" * 32}):
+                bad = copy.deepcopy(proofs)
+                bad[0]["endpoint_type"].update(change)
+                with self.assertRaisesRegex(ValueError, "unique persisted endpoint"):
+                    P.qualify_external_fields(owner, body, typ, bad, read)
 
     def test_external_fields_reject_conflicting_qualified_targets(self):
         import copy
@@ -438,10 +532,16 @@ class BundlePreloadTests(unittest.TestCase):
     def test_required_emission_relocates_fields_and_rereads_actual_external_endpoints(self):
         import UnityPy
 
-        for drift in (False, True):
-            with self.subTest(drift=drift), tempfile.TemporaryDirectory() as tmp:
+        for structural, drift in ((False, False), (False, True), (True, False), (True, True)):
+            with self.subTest(structural=structural, drift=drift), tempfile.TemporaryDirectory() as tmp:
                 root = Path(tmp)
                 owner, body, typ, proofs, endpoints, read = self.external_contract(root)
+                if structural:
+                    body = struct.pack("<iqiqi", 1, 100, 1, 20, 73)
+                    owner.update(sha256=hashlib.sha256(body).hexdigest(), edges=[[1, 100], [1, 20]])
+                    owner.pop("source")
+                    for endpoint, _, _ in endpoints.values():
+                        endpoint.pop("source")
                 typ["dependencies"] = []
                 full_type = P.full_type_key(typ)
                 local = endpoints["authored", "CAB-authored", 20][0]
@@ -489,8 +589,23 @@ class BundlePreloadTests(unittest.TestCase):
                     return read(target)
 
                 def emit():
+                    routes = None
+                    if structural:
+                        fields = P.pointers(body, typ, {})
+                        routes = {
+                            tuple(owner["destination"]): [dict(field=p["field"], pointer=fields[tuple(p["field"])], target=p["target"]) for p in proofs],
+                            tuple(local["destination"]): [],
+                        }
                     return P.emit_closed_native(
-                        graph, [types], root / "emitted", "authored", "CAB-authored", required=required, field_proofs=proofs, endpoint_record=read_actual
+                        graph,
+                        [types],
+                        root / "emitted",
+                        "authored",
+                        "CAB-authored",
+                        required=required,
+                        field_proofs=() if structural else proofs,
+                        structural_routes=routes,
+                        endpoint_record=read_actual,
                     )
 
                 if drift:
@@ -499,6 +614,7 @@ class BundlePreloadTests(unittest.TestCase):
                     self.assertFalse((root / "emitted/result.json").exists())
                 else:
                     result = emit()
+                    self.assertEqual(result["field_qualification"], "structural-current-routes" if structural else "source-provenance")
                     self.assertEqual(calls, 2)
                     self.assertEqual(len(result["qualified_endpoint_pins"]), 2)
                     objects = {obj.path_id: obj.read_typetree() for obj in UnityPy.load(result["bundle"]).objects}
