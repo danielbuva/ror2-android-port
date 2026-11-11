@@ -126,7 +126,9 @@ PPtrs, preload extents, native types and exact MonoScript/runtime bindings.
 Duplicate container keys retain every root. Managed subtype assignability is not
 yet admitted. AnimatorController typed subassets are resolved only through its
 schema-declared behaviour array, with the same script binding and current runtime
-registration checks as managed roots. Inputs are rechecked before output;
+registration checks as managed roots. TMP font/sprite, Timeline track/clip and
+Sprite/texture aliases require explicit typed ownership pointers; preload
+membership alone cannot advertise a subasset. Inputs are rechecked before output;
 teardown releases local readers.
 The owner emits `whole-catalog.json` and a receipt only after all checks pass.
 Complete cohort availability, gameplay reference closure and device play remain
