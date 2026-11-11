@@ -3187,3 +3187,18 @@ in the private drop receipt; all 13 preload relationships remain.
 APK SHA-256 `7c248d5c4c2ca4773d9c1ff3a8cc7592d60d9a07a97d9ff36de7889db75f8e23`.
 Focused host checks pass. Device continuation stopped before installation:
 no attached authorized device. Converted gameplay and phone-only install stay open.
+
+## J1417 — Reuse checked native bundle emissions for port updates
+
+2026-11-11. Existing emitter caches transformed records and ordered preload
+closures; unchanged output reuse binds provider lineage, routes, schemas, code,
+codec and explicit endpoint/current-CLR checker inputs. Changed emissions retain
+structural, managed and persisted-body checks; retained output hashes are checked.
+Evidence: `work/coordination/p1-wholegame-1031/incremental-emission-benchmark-v4/`.
+The 255,564-record V8 subset takes 2,336.14 s cold and 35.78 s unchanged;
+both produce 547,240,997 bytes, SHA-256
+`930282ca46d699ee29a42fea45ea32075b490174a8bfa54fe85163449c510db2`.
+Cold process peak RSS: 9,292,054,528 bytes; per-stage timings are retained.
+Authored scalar fixture: one record miss, one unaffected hit, preload group hit.
+Focused host checks pass. Phone cache execution, typed load, converted play and
+complete import/install/update acceptance remain separate open gates.

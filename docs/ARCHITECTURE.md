@@ -1569,6 +1569,21 @@ native type/name and destroy loaded objects on unload. `phone_content.py`
 validates the complete count, types, request/bundle hashes and unload receipt.
 This is desktop loadability evidence; device appearance/playability remains open.
 
+`bundle_preload.emit_closed_native` optionally caches transformed records and
+ordered preload groups in a private SQLite file. Record keys bind source bodies,
+complete types, qualified routes, external allocation, resource placement and
+producer code. Every changed emission still runs endpoint, managed and persisted
+body checks. Group keys bind the graph, roots, owners and file ordering; scalar
+body changes reuse their pointer bytes. Complete output reuse hashes provider
+lineages, schemas, requests, routes, codec and code, plus the callback owner's
+explicit `cache_inputs` files (endpoint containers/descriptors and current
+CLR/SDK/checker inputs). It checks actual output hashes and hashes inputs again
+before returning the prior bundle by reference. The caller retains that output
+and cache until superseded; the scoped connection closes on success or failure.
+Receipts report cache counts and per-stage time/peak RSS. Authored host fixtures
+cover unchanged reuse, scalar changes, checker changes, grouping, corrupt outputs
+and provider drift; this does not qualify phone execution or gameplay.
+
 The existing `bundle_preload.py` owner exposes an explicit partial native emission
 CLI. It consumes a qualified selected graph, receipt-bound source record packs
 and complete native schema pools, removes records with missing local dependencies,
