@@ -211,9 +211,10 @@ resource field, source Uber placeholder, run profile settings, and official
 Post Processing 2.3.0 archive/license/source hashes. The shader source declares
 three passes and the accepted caller selects pass 0; generation also pins the
 shader closure and preserves each source asset's `.meta`, resource, and camera
-bytes. The same recipe now binds five AO/LUT compute and two AO/LUT graphics
-programs to the original resource fields, asset identities and 22 kernel/thread
-group contracts. These use new deterministic lab GUIDs under the loading scene's
+bytes. The same recipe binds all 12 compute and 24 graphics programs to the original
+resource fields, asset identities, Shader names and compute kernel/thread-group
+contracts. Typed resource joins distinguish identically named Shader and Compute
+slots. These use new deterministic lab GUIDs under the loading scene's
 Resources directory. No original program body, profile values or code is tracked;
 only the minimum reconstruction identities and compatibility contracts are public.
 The archive and generated source
@@ -281,7 +282,7 @@ visual parity is claimed. Manual provenance/privacy review: 2026-10-24.
 | `owner-avatars.json` | Private replay Avatar bodies (J1075) | Minimum original/destination identities, hashes, source extents and source-entry permutations. | No strings, poses, rig/geometry values, target literals or byte frames; full audit above, 2026-10-24. | Explicit PC-input-only `avatar_produce.py`; no current game-build consumer. |
 | `owner-meshes.json` | Protected mesh bodies in the private replay packet, for the included cohort only (J1070) | Original bundle/object/resource selectors, destination identities/hashes and authored import/conversion settings. | No geometry arrays, collision data, target byte frames or float literals; full audit above, 2026-10-24. Two cases remain excluded. | Explicit original-input-only `mesh_produce.py`; no current game-build consumer. |
 | `shader-postprocessing-bloom-candidate.json` | Exported one-pass Bloom and exact source-camera CopyStd placeholders | Accepted-input source/meta/resource identities, official Unity package/license hashes and pass contracts; authored camera staging pin refreshed without changing camera transforms. | Authored selection metadata only; upstream source and generated content stay local under Unity Companion License. Manual audit 2026-10-23 described above. | `shader_postprocessing_bloom`, whole-catalog preparation and catalog replay comparison; default off. |
-| `shader-postprocessing-uber-candidate.json` | Exact source-camera `PostProcessResources.uber` one-pass constant-white placeholder | Accepted-input Main Camera/resource/shader/profile identities, official archive/license/source hashes, pass-0 call contract, seven original AO/LUT resource joins, 22 kernel/thread groups and transitive includes. | Reconstruction metadata only; official shader/includes and generated candidates stay ignored under Unity Companion License. Package 2.3.0 is a compatible reference, not a shipped-version claim. Audited 2026-10-24. | `shader_postprocessing_uber`, whole-catalog preparation and catalog replay comparison; independent default-off activation. |
+| `shader-postprocessing-uber-candidate.json` | Exact source-camera `PostProcessResources.uber` one-pass constant-white placeholder | Accepted-input Main Camera/resource/shader/profile identities, official archive/license/source hashes, pass-0 call contract, 36 original typed program/resource joins, Shader names and compute kernel/thread groups and transitive includes. | Reconstruction metadata only; official shader/includes and generated candidates stay ignored under Unity Companion License. Package 2.3.0 is a compatible reference, not a shipped-version claim. Audited 2026-10-24. | `shader_postprocessing_uber`, whole-catalog preparation and catalog replay comparison; independent default-off activation. |
 
 | `owner-app-host-tools.json` | Private scoped native-host staging plan | Exact open Python/dependency file hashes, relative package paths/link targets and 21 pinned public producer source hashes; source commit is a retrieval hint. | Authored tool metadata only; no binary, SDK/game content, keys, credentials, private paths or device/storage identifiers. License/distribution boundaries are recorded below. Audited 2026-10-23. | `tools/phone-build/managed-host/stage.py` validates the fixed profile; its staged phone builder verifies file hashes and creates a separate private fixture, with no game/default-build consumer. |
 | `wwise-init-android.json` | Private fixture-only Init metadata generator constants (J744) | Minimum source-bank path, format/identity/size and plugin/device/bus relationships; generated bank bodies remain local. | Authored parsing/serialization and metadata only; accepted full inventory plus explicit source hash required, exclusive ignored outputs, no SDK/media/implementation/private identifiers. Audit details below. | `wwise_init_platform.py`, explicitly invoked support tool; no current game-build dependency. |
@@ -6924,3 +6925,10 @@ strict SDK curve projection from the legacy animation owner (J1163). Only a
 temporary properties-hash tree gains editor tangent metadata; original record
 bytes and runtime schemas remain source-owned. The pinned public toolchain
 supplies editor layouts. Authored fixtures contain no original game data.
+
+The complete source-camera program cohort extends the existing public-package
+recipe with identity/hash selectors and measured kernel/thread-group contracts.
+Manual provenance/privacy review (2026-11-11): no original body, shader math,
+pixels, upstream implementation or private configuration is tracked. Generated
+implementations stay ignored under the pinned package license; compilation and
+device acceptance remain separate gates.

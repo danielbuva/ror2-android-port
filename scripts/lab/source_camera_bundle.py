@@ -11,10 +11,44 @@ from build_lock import HOST_BUILD_LOCK, host_build_lock
 from shader_postprocessing_uber import RECIPE, digest, generate_candidate
 
 
+def validate_vulkan_programs(bundle, programs):
+    """Check actual Android kernels, independently of the editor's Metal reflection."""
+    import UnityPy
+
+    computes = {}
+    for obj in UnityPy.load(str(bundle)).objects:
+        if obj.type.name == "ComputeShader":
+            tree = obj.read_typetree()
+            computes[tree["m_Name"]] = tree
+    for row in programs:
+        if not row["kernels"]:
+            continue
+        tree = computes.get(Path(row["target"]).stem, {})
+        variants = [v for v in tree.get("variants", []) if v["targetRenderer"] == 21]  # Unity Vulkan compiler platform
+        expected = dict(zip(row["kernels"], row["kernel_thread_groups"], strict=True))
+        if not variants:
+            raise ValueError("Vulkan compute variant absent: " + row["field"])
+        for variant in variants:
+            if {k["name"] for k in variant["kernels"]} != set(expected):
+                raise ValueError("Vulkan compute kernels differ: " + row["field"])
+            for kernel in variant["kernels"]:
+                if not kernel["variantMap"]:
+                    raise ValueError("Vulkan compute program absent: " + kernel["name"])
+                for _, native in kernel["variantMap"]:
+                    if native["threadGroupSize"] != expected[kernel["name"]] or not native["code"]:
+                        raise ValueError("Vulkan compute contract differs: " + kernel["name"])
+
+
 def build(target):
     request = json.loads(Path(target).read_text())
     config = json.loads((WORK / "config/reconstruction.json").read_text())
     candidate, manifest = generate_candidate(WORK, ROOT / config["projects"][0], config["input_id"], allow_create=False)
+    if "source_guids" in request:
+        wanted = set(request["source_guids"])
+        programs = [row for row in manifest["programs"] if row["source_guid"] in wanted]
+        if not wanted or {row["source_guid"] for row in programs} != wanted:
+            raise ValueError("Requested source camera program GUIDs are absent")
+        manifest = {**manifest, "programs": programs}
     output = Path(request["output"]).resolve()
     if not output.is_relative_to(WORK):
         raise ValueError("Program bundle output must stay under ignored work")
@@ -77,6 +111,7 @@ def build(target):
         bundle = output / "bundles/source-camera-programs"
         if actual.get("count") != len(manifest["programs"]) or actual.get("unity") != "2021.3.45f2":
             raise ValueError("Program bundle compilation receipt differs")
+        validate_vulkan_programs(bundle, manifest["programs"])
         receipt.update(success=True, compiled=actual, bundle={"path": str(bundle), "sha256": digest(bundle), "bytes": bundle.stat().st_size})
         return receipt
     finally:

@@ -16,6 +16,25 @@ import shader_postprocessing_uber as uber
 
 
 class UberContractTests(unittest.TestCase):
+    def test_bundle_checks_vulkan_groups_independently_of_metal(self):
+        import types
+        import source_camera_bundle
+
+        native = {"threadGroupSize": [16, 8, 1], "code": [1]}
+        vulkan = {"targetRenderer": 21, "kernels": [{"name": "Exposure", "variantMap": [("", native)]}]}
+        metal = {"targetRenderer": 16, "kernels": [{"name": "Exposure", "variantMap": [("", {"threadGroupSize": [8, 8, 1], "code": [1]})]}]}
+        tree = {"m_Name": "Exposure", "variants": [metal, vulkan]}
+        obj = types.SimpleNamespace(type=types.SimpleNamespace(name="ComputeShader"), read_typetree=lambda: tree)
+        rows = [{"target": "Assets/Exposure.compute", "field": "exposure", "kernels": ["Exposure"], "kernel_thread_groups": [[16, 8, 1]]}]
+        with patch("UnityPy.load", return_value=types.SimpleNamespace(objects=[obj])):
+            source_camera_bundle.validate_vulkan_programs("fixture", rows)
+            native["threadGroupSize"] = [8, 8, 1]
+            with self.assertRaisesRegex(ValueError, "Vulkan compute contract differs"):
+                source_camera_bundle.validate_vulkan_programs("fixture", rows)
+            tree["variants"] = [metal]
+            with self.assertRaisesRegex(ValueError, "Vulkan compute variant absent"):
+                source_camera_bundle.validate_vulkan_programs("fixture", rows)
+
     def test_shared_postprocessing_include_replay_and_bloom_only_replay(self):
         import importlib.util
         import shutil
@@ -228,6 +247,12 @@ Pass
         candidate = uber.rewrite_includes(files["Builtins/Uber.shader"], closure)
         self.assertIn(b'"PostProcessing/StdLib.hlsl"', candidate)
         self.assertIn(b'"PostProcessing/Builtins/Distortion.hlsl"', candidate)
+        debug = b'#include "../Builtins/ExposureHistogram.hlsl"\n#include "../StdLib.hlsl"'
+        relocated = uber.rewrite_includes(
+            debug, {"Builtins/ExposureHistogram.hlsl": b"", "StdLib.hlsl": b""}, "Assets/PostProcessing/", "Debug/LightMeter.shader"
+        )
+        self.assertIn(b'"Assets/PostProcessing/Builtins/ExposureHistogram.hlsl"', relocated)
+        self.assertIn(b'"Assets/PostProcessing/StdLib.hlsl"', relocated)
         files["Builtins/Distortion.hlsl"] = b'#include "../../../outside.hlsl"'
         with self.assertRaisesRegex(RuntimeError, "escapes"):
             uber.include_closure(files, "Builtins/Uber.shader")
@@ -356,7 +381,11 @@ Pass
             }
             bodies = {
                 "source_camera_prefab": b"m_Resources: {fileID: 1, guid: " + b"a" * 32 + b", type: 2}\nstopNaNPropagation: 1\n",
-                "resource": b"uber: {fileID: 2, guid: " + b"b" * 32 + b", type: 3}\n  lut3DBaker: {fileID: 3, guid: " + b"f" * 32 + b", type: 2}\n",
+                "resource": b"lut3DBaker: {fileID: 4800000, guid: 0123456789abcdef0123456789abcdef, type: 3}\nuber: {fileID: 2, guid: "
+                + b"b" * 32
+                + b", type: 3}\n  lut3DBaker: {fileID: 7200000, guid: "
+                + b"f" * 32
+                + b", type: 2}\n",
                 "shader": b'Shader "Hidden/Dummy" { Pass {} }\n',
                 "profile": b"--- !u!114\n  m_Name: Bloom\n  active: 1\n  enabled:\n    overrideState: 1\n    value: 1\n--- !u!114\n  m_Name: ColorGrading\n  active: 1\n  enabled:\n    overrideState: 1\n    value: 0\n--- !u!114\n  m_Name: AutoExposure\n  active: 1\n  enabled:\n    overrideState: 1\n    value: 0\n",
             }
