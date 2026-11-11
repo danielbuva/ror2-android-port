@@ -33,6 +33,7 @@ PACKAGE = "dev.ror2lab.installertest"
 GAME = "dev.ror2lab.alpha"
 ACTIVITY = PACKAGE + "/dev.ror2lab.phonebuildhostfixture.ToolHostActivity"
 CASES = ("check-for-updates", "update-N-to-N+1", "same-key-rollback", "tampered-manifest-refused", "wrong-key-release-refused")
+PROMPT_CASES = ("install-unknown-apps-visible", "pending-user-action-visible")
 PRODUCER = "tools/phone-build/accepted-output/record_produce.py"
 JOB = "recipe/synthetic-installer-update-job.json"
 INPUTS = "recipe/synthetic-installer-update-inputs.json"
@@ -96,6 +97,158 @@ def install_diagnostic_summary(data):
     return result
 
 
+def settings_window_identity(activity, displays):
+    """Private join: ActivityRecord-owned window to display 0 current focus.
+
+    WindowToken.dump supplies windows; DisplayContent.dump supplies current
+    focus. AccessibilityWindowInfo.isFocused uses that same WMS focus predicate.
+    The private fingerprint is compared in memory only, never reported.
+    """
+    if not isinstance(activity, bytes) or len(activity) > 65536 or not isinstance(displays, bytes) or len(displays) > 131072:
+        return False, None
+    try:
+        rows = activity.decode("utf-8").splitlines()
+        text = displays.decode("utf-8")
+    except UnicodeError:
+        return False, None
+    owned = [row for row in rows if row.startswith("windows=")]
+    if len(owned) != 1 or not owned[0].startswith("windows=[") or not owned[0].endswith("]"):
+        return False, None
+    window_pattern = r"Window\{[0-9a-fA-F]+ u[0-9]+ [^{}\n]+\}"
+    content = owned[0][len("windows=[") : -1]
+    windows = re.findall(window_pattern, content)
+    if not windows or len(set(windows)) != len(windows) or ", ".join(windows) != content:
+        return False, None
+    header = "WINDOW MANAGER DISPLAY CONTENTS (dumpsys window displays)"
+    lines = text.splitlines()
+    if not lines or lines[0] != header or lines.count(header) != 1:
+        return False, None
+    starts = [(index, match.group(1)) for index, line in enumerate(lines) if (match := re.match(r"^\s*Display: mDisplayId=([0-9]+)(?:\s|$)", line))]
+    if len([item for item in starts if item[1] == "0"]) != 1 or len({item[1] for item in starts}) != len(starts):
+        return False, None
+    position = next(index for index, item in enumerate(starts) if item[1] == "0")
+    start = starts[position][0]
+    end = starts[position + 1][0] if position + 1 < len(starts) else len(lines)
+    focused = [line.strip()[len("mCurrentFocus=") :] for line in lines[start:end] if line.strip().startswith("mCurrentFocus=")]
+    if len(focused) != 1 or re.fullmatch(window_pattern, focused[0]) is None or focused[0].endswith(" EXITING}") or focused[0] not in windows:
+        return False, None
+    return True, sha(focused[0].encode())
+
+
+def prompt_activity_summary(data, current_user, displays=None, *, install=False):
+    """Fixed booleans from one Android 13 server-side top-resumed record.
+
+    This relies on the hash-owned app's fixed, no-extra Settings deep link:
+    dumpsys Intent text is not an adversarially unambiguous serialization.
+    A resumed record is not a visible click target; the UI gate remains required.
+    AOSP android-13.0.0_r1: ActivityTaskManagerService.dumpTopResumedActivityLocked
+    and ActivityRecord.dump. No record identities or raw fields leave this helper.
+    """
+    result = dict.fromkeys(
+        (
+            "record_verified",
+            "component_verified",
+            "target_verified",
+            "caller_verified",
+            "user_verified",
+            "resumed_verified",
+            "visible_verified",
+            "focused_window_verified",
+        ),
+        False,
+    )
+    if not isinstance(data, bytes) or len(data) > 65536 or not isinstance(current_user, bytes) or len(current_user) > 64:
+        return result
+    try:
+        lines = data.decode("utf-8").splitlines()
+        user = current_user.decode("ascii").strip()
+    except UnicodeError:
+        return result
+    header = "ACTIVITY MANAGER TOP-RESUMED (dumpsys activity top-resumed)"
+    prefixes = ("packageName=", "launchedFromUid=", "Intent { ", "mActivityComponent=", "state=", "occludesParent=", "mVisibleRequested=")
+    records = {prefix: [line for line in lines if line.startswith(prefix)] for prefix in prefixes}
+    if (
+        not lines
+        or lines[0] != header
+        or lines.count(header) != 1
+        or not all(len(rows) == 1 for rows in records.values())
+        or sum("Intent {" in line for line in lines) != 1
+    ):
+        return result
+    # Primary record starts immediately after the header; reject another record
+    # or nested/indented stand-ins rather than matching independent substrings.
+    if (
+        len(lines) < 5
+        or lines[1] != records["packageName="][0]
+        or lines[2] != records["launchedFromUid="][0]
+        or not lines[3].startswith("app=")
+        or lines[4] != records["Intent { "][0]
+    ):
+        return result
+    result["record_verified"] = True
+    result["focused_window_verified"] = settings_window_identity(data, displays)[0]
+    if install:
+        # AOSP android-13.0.0_r1 InstallStart forwards CONFIRM_INSTALL to
+        # PackageInstallerActivity with the sealed session in extras. That
+        # forward makes the system installer, not the test app, the caller.
+        # PackageInstallerSession sets the package; InstallStart retains it
+        # while adding the component. Both identities must name the same owner.
+        component = records["mActivityComponent="][0].removeprefix("mActivityComponent=")
+        components = {
+            package + "/" + activity: package
+            for package in ("com.android.packageinstaller", "com.google.android.packageinstaller")
+            for activity in (".PackageInstallerActivity", "com.android.packageinstaller.PackageInstallerActivity")
+        }
+        package = components.get(component)
+        result["component_verified"] = package is not None and records["packageName="][0] == f"packageName={package} processName={package}"
+        caller_package = re.escape(package or "invalid")
+        intent = (
+            r"Intent \{ act=android\.content\.pm\.action\.CONFIRM_INSTALL (?:flg=0x[0-9a-fA-F]+ )?"
+            + r"(?:pkg="
+            + re.escape(package or "invalid")
+            + r" )?cmp="
+            + re.escape(component)
+            + r" \(has extras\) \}"
+        )
+    else:
+        component = "com.android.settings/.Settings$ManageAppExternalSourcesActivity"
+        result["component_verified"] = (
+            records["packageName="][0] == "packageName=com.android.settings processName=com.android.settings"
+            and records["mActivityComponent="][0] == "mActivityComponent=" + component
+        )
+        caller_package = re.escape(PACKAGE)
+        # The hash-owned app supplies this fixed no-extra Settings deep link.
+        intent = (
+            r"Intent \{ act=android\.settings\.MANAGE_UNKNOWN_APP_SOURCES dat=package:"
+            + re.escape(PACKAGE)
+            + r" (?:flg=0x[0-9a-fA-F]+ )?cmp="
+            + re.escape(component)
+            + r" \}"
+        )
+    caller = re.fullmatch(
+        r"launchedFromUid=[0-9]+ launchedFromPackage=" + caller_package + r" launchedFromFeature=null userId=([0-9]+)", records["launchedFromUid="][0]
+    )
+    result["caller_verified"] = caller is not None
+    result["user_verified"] = caller is not None and re.fullmatch(r"[0-9]+", user) is not None and caller.group(1) == user
+    result["target_verified"] = re.fullmatch(intent, records["Intent { "][0]) is not None
+    result["resumed_verified"] = records["state="][0] == "state=RESUMED stopped=false delayedResume=false finishing=false"
+    result["visible_verified"] = (
+        re.fullmatch(r"occludesParent=(?:true|false) noDisplay=false immersive=(?:true|false) launchMode=[0-9]+", records["occludesParent="][0]) is not None
+        and records["mVisibleRequested="][0] == "mVisibleRequested=true mVisible=true mClientVisible=true reportedDrawn=true reportedVisible=true"
+    )
+    return result
+
+
+def settings_activity_summary(data, current_user, displays=None):
+    return prompt_activity_summary(data, current_user, displays)
+
+
+def install_activity_summary(data, current_user, displays=None):
+    # Session-match diagnostics and the synthetic label are required separately;
+    # dumpsys does not expose the sealed session ID inside Intent extras.
+    return prompt_activity_summary(data, current_user, displays, install=True)
+
+
 def module(name, path):
     spec = importlib.util.spec_from_file_location(name, path)
     value = importlib.util.module_from_spec(spec)
@@ -137,14 +290,14 @@ def set_phase(phase):
     CURRENT_PHASE = phase
 
 
-def execute(argv, *, label, stdin=None, timeout=300):
+def execute(argv, *, label, stdin=None, timeout=300, record_output=True):
     try:
         result = subprocess.run(list(map(str, argv)), input=stdin, stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=timeout, check=False)
     except (OSError, subprocess.TimeoutExpired) as error:
-        if DIAGNOSTICS is not None:
+        if DIAGNOSTICS is not None and record_output:
             DIAGNOSTICS.record(label, stdout=getattr(error, "stdout", b""), stderr=getattr(error, "stderr", b""), outcome=type(error).__name__)
         raise Failure(label) from error
-    if DIAGNOSTICS is not None:
+    if DIAGNOSTICS is not None and record_output:
         DIAGNOSTICS.record(label, stdout=result.stdout, stderr=result.stderr, returncode=result.returncode)
     return result
 
@@ -462,6 +615,8 @@ class Phone:
         self.alpha_hash = None
         self.reverse_port = None
         self.install_volume = None
+        self.settings_focus_key = None
+        self.install_focus_key = None
         self.ui_path = "/data/local/tmp/ror2-installer-ui-" + secrets.token_hex(8) + ".xml"
 
     def execute(self, *args, stdin=None, label, timeout=60, idempotent=False):
@@ -658,7 +813,7 @@ class Phone:
             raise Failure("ui-hierarchy-unavailable")
         return ET.fromstring(value[start : end + len(closing)])
 
-    def ui_windows(self, allowed_packages):
+    def ui_windows(self, allowed_packages, *, recovery=True):
         # Android 13 DumpCommand's --windows uses getWindowsOnAllDisplays,
         # unlike the failed single active-root query. Older binaries may ignore
         # the option, so neither exit 0 nor a success message proves a hierarchy.
@@ -670,14 +825,14 @@ class Phone:
             if result.returncode or ui_output_classification(result.stdout) != "dump-reported-written":
                 raise Failure("ui-window-dump-unavailable")
             hierarchy = focused_ui_hierarchy(self.read_ui_dump("displays"), allowed_packages)
-            print("INFO ui-null-root-recovered source=focused-window", flush=True)
+            print("INFO ui-null-root-recovered source=focused-window" if recovery else "INFO prompt-ui source=focused-default-window", flush=True)
             return hierarchy
         except Failure as error:
             reason = str(error)
         except Exception:
             reason = "ui-window-fallback-invalid"
         self.ui_diagnostics(reason)
-        raise Failure("device-ui-null-root-retry-exhausted")
+        raise Failure("device-ui-null-root-retry-exhausted" if recovery else "settings-ui-focused-window-unavailable")
 
     def ui_diagnostics(self, fallback_reason):
         # Observation only: never start instrumentation, unlock, grant a
@@ -712,6 +867,8 @@ class Phone:
                     raise Failure("ui-button-bounds")
                 x1, y1, x2, y2 = map(int, bounds.groups())
                 self.shell("input", "tap", str((x1 + x2) // 2), str((y1 + y2) // 2), label="device-ui-tap")
+                if label == "Install":
+                    print("INFO android-install-consent actor=harness", flush=True)
                 return True
         return False
 
@@ -797,10 +954,12 @@ class Phone:
         if row.get("release", {}).get("version_code") != version:
             raise Failure("release-version-not-observed")
 
-    def installed(self, publisher, previous=None):
+    def installed(self, publisher, previous=None, *, require_pending_prompt=False):
         deadline = time.monotonic() + self.timeout
         callback_absent_since = None
         callback_observed = False
+        pending_observed = False
+        consent_observed = False
         while time.monotonic() < deadline:
             receipt = self.read("installed-release.json")
             if receipt and receipt.get("release", {}).get("version_code") == publisher and receipt.get("installed_readback_verified") is True:
@@ -813,6 +972,8 @@ class Phone:
                     if old["sha256"] != previous["sha256"]:
                         raise Failure("previous-release-not-retained")
                 self.alpha_hash = receipt["sha256"]
+                if require_pending_prompt and not (pending_observed and consent_observed):
+                    raise Failure("install-pending-prompt-not-observed")
                 self.storage()
                 self.start()
                 return receipt
@@ -826,18 +987,33 @@ class Phone:
                     # prevent normal owned-package cleanup.
                     pass
                 raise Failure("installer-build-error")
-            if not callback_observed and row and row.get("state") == "INSTALLING":
+            if (
+                row
+                and row.get("state") in ("INSTALLING", "AWAITING_CONFIRMATION")
+                and (not callback_observed or (require_pending_prompt and not consent_observed))
+            ):
                 try:
                     diagnostic = self.capture_install_diagnostic()
                 except Exception:
                     # Optional evidence loss must not replace the install result
                     # or manufacture proof that a callback remained absent.
                     diagnostic = {"status": "unavailable"}
+                if (
+                    require_pending_prompt
+                    and row.get("state") == "AWAITING_CONFIRMATION"
+                    and diagnostic.get("status") == "observed"
+                    and diagnostic.get("callback") == "pending-user-action"
+                    and diagnostic.get("session_match") is True
+                ):
+                    pending_observed = True
+                    consent_observed = self.confirm_synthetic_install() or consent_observed
                 if diagnostic.get("status") == "observed" and (diagnostic.get("callback") != "none" or diagnostic.get("callback_entry") == "entered"):
                     callback_observed = True
                     callback_absent_since = None
                 elif (
-                    diagnostic.get("status") == "observed"
+                    not callback_observed
+                    and row.get("state") == "INSTALLING"
+                    and diagnostic.get("status") == "observed"
                     and diagnostic.get("stage") == "commit-returned"
                     and diagnostic.get("callback") == "none"
                     and diagnostic.get("session_match") is None
@@ -856,7 +1032,8 @@ class Phone:
                 callback_absent_since = None
             # Consent is always the real Android PackageInstaller UI. Never forge
             # success receipts or use adb install to replace the alpha package.
-            self.tap("Install", required=False)
+            if not require_pending_prompt:
+                self.tap("Install", required=False)
             time.sleep(1)
         raise Failure("install-readback-timeout")
 
@@ -897,6 +1074,174 @@ class Phone:
         finally:
             self.shell("am", "force-stop", GAME, label="retention-witness-stop")
         self.start()
+
+    def require_owned_installer(self):
+        if not self.owned_installer or not self.installer_hash or self.package_hash(PACKAGE) != self.installer_hash:
+            raise Failure("install-prompt-installer-not-owned")
+
+    def install_permission_mode(self):
+        value = self.shell("appops", "get", PACKAGE, "REQUEST_INSTALL_PACKAGES", label="device-install-permission-query").decode()
+        # Android 13 reports an unset operation with its default on a second
+        # line. This exact default is ungranted, not evidence of permission.
+        if value.strip() == "No operations.":
+            return "unset"
+        if value.strip() == "No operations.\nDefault mode: default":
+            return "default"
+        if "No operations." in value:
+            raise Failure("device-install-permission-shape")
+        modes = re.findall(r"\bREQUEST_INSTALL_PACKAGES: (allow|ignore|deny|default|foreground)\b", value)
+        if len(modes) == 1:
+            return modes[0]
+        raise Failure("device-install-permission-shape")
+
+    def require_ungranted_install_permission(self):
+        self.require_owned_installer()
+        # Never revoke a pre-existing grant to manufacture a fresh-run result.
+        if self.allow_test_installs or self.install_permission_mode() not in ("ignore", "deny", "default", "unset"):
+            raise Failure("install-prompt-permission-already-granted")
+
+    @staticmethod
+    def prompt_nodes(tree, packages):
+        roots = tree.findall("node")
+        if len(roots) != 1 or roots[0].get("package") not in packages:
+            raise Failure("install-prompt-foreground-not-identified")
+        nodes = list(tree.iter("node"))
+        package = roots[0].get("package")
+        if any(node.get("package") not in (None, "", package) for node in nodes):
+            raise Failure("install-prompt-foreground-not-identified")
+        return package, nodes
+
+    def tap_prompt_node(self, node, label):
+        bounds = re.fullmatch(r"\[(\d+),(\d+)\]\[(\d+),(\d+)\]", node.get("bounds", ""))
+        if not bounds:
+            raise Failure("ui-button-bounds")
+        x1, y1, x2, y2 = map(int, bounds.groups())
+        if x2 <= x1 or y2 <= y1:
+            raise Failure("ui-button-bounds")
+        self.shell("input", "tap", str((x1 + x2) // 2), str((y1 + y2) // 2), label=label)
+
+    def prompt_identity(self, *, install=False):
+        self.require_owned_installer()
+        summarize = install_activity_summary if install else settings_activity_summary
+        focus_attribute = "install_focus_key" if install else "settings_focus_key"
+        label = "device-install-identity" if install else "device-settings-identity"
+        summary = summarize(None, None)
+        setattr(self, focus_attribute, None)
+        try:
+            outputs = []
+            for command in ("dumpsys activity top-resumed | head -c 65537", "am get-current-user | head -c 65", "dumpsys window displays | head -c 131073"):
+                result = execute(
+                    [self.adb, "-s", self.serial, "shell", "sh", "-c", "'" + command + "'"],
+                    label=label + "-query",
+                    timeout=15,
+                    record_output=False,
+                )
+                if result.returncode or result.stderr:
+                    break
+                outputs.append(result.stdout)
+            if len(outputs) == 3:
+                summary = summarize(*outputs)
+                if all(summary.values()):
+                    setattr(self, focus_attribute, settings_window_identity(outputs[0], outputs[2])[1])
+        except Failure:
+            pass
+        # Raw top-activity text/user IDs are neither retained nor exported.
+        if DIAGNOSTICS is not None:
+            DIAGNOSTICS.record(label, stdout=encoded(summary), returncode=0)
+        return summary
+
+    def settings_identity(self):
+        return self.prompt_identity()
+
+    def install_identity(self):
+        return self.prompt_identity(install=True)
+
+    def allow_visible_install_permission(self):
+        self.require_ungranted_install_permission()
+        # The app, not an adb deep link, must open its own per-app Settings page.
+        self.tap("Install verified owner build")
+        settings = "com.android.settings"
+        deadline = time.monotonic() + 30
+        identity = settings_activity_summary(None, None)
+        while time.monotonic() < deadline:
+            identity = self.settings_identity()
+            package, nodes = self.prompt_nodes(self.ui_windows((PACKAGE, settings), recovery=False), (PACKAGE, settings))
+            if package == settings and all(identity.values()):
+                focus_key = self.settings_focus_key
+                break
+            time.sleep(1)
+        else:
+            print(encoded({"mode": "settings-prompt-identity", "observed": identity}).decode(), end="", flush=True)
+            raise Failure("install-settings-identity-not-verified")
+        switches = [
+            node
+            for node in nodes
+            if node.get("resource-id") in ("android:id/switch_widget", settings + ":id/switch_widget")
+            and node.get("checkable") == "true"
+            and node.get("enabled") == "true"
+        ]
+        if len(switches) != 1 or switches[0].get("checked") != "false":
+            raise Failure("install-settings-ungranted-switch-not-visible")
+        # Recheck the same target after reading the UI, before using its bounds.
+        identity = self.settings_identity()
+        unchanged = bool(focus_key) and self.settings_focus_key == focus_key
+        print(encoded({"mode": "settings-prompt-identity", "observed": identity, "focus_unchanged": unchanged}).decode(), end="", flush=True)
+        if not all(identity.values()) or not unchanged:
+            raise Failure("install-settings-identity-changed")
+        self.tap_prompt_node(switches[0], "device-install-permission-visible-enable")
+        print("INFO install-permission-switch actor=harness", flush=True)
+        # Require both visible checked state and read-only effective app-op.
+        deadline = time.monotonic() + 15
+        while time.monotonic() < deadline:
+            _, nodes = self.prompt_nodes(self.ui_windows((settings,), recovery=False), (settings,))
+            observed = [node for node in nodes if node.get("resource-id") == switches[0].get("resource-id")]
+            if len(observed) == 1 and observed[0].get("checked") == "true" and self.install_permission_mode() == "allow":
+                break
+            time.sleep(1)
+        else:
+            raise Failure("install-settings-grant-not-observed")
+        self.shell("input", "keyevent", "KEYCODE_BACK", label="device-install-settings-return")
+        deadline = time.monotonic() + 15
+        while time.monotonic() < deadline:
+            package, _ = self.prompt_nodes(self.ui_for((PACKAGE, settings)), (PACKAGE, settings))
+            if package == PACKAGE:
+                return
+            time.sleep(1)
+        raise Failure("install-settings-return-not-observed")
+
+    def confirm_synthetic_install(self):
+        self.require_owned_installer()
+        self.shell("input", "keyevent", "KEYCODE_WAKEUP", label="device-display-wake")
+        identity = self.install_identity()
+        if not all(identity.values()):
+            print(encoded({"mode": "install-prompt-identity", "observed": identity}).decode(), end="", flush=True)
+            if identity.get("target_verified") is False and all(value for key, value in identity.items() if key != "target_verified"):
+                # A verified, focused confirmation with the wrong Intent is a
+                # fixed harness gate, not a launch transition to poll for 20 min.
+                raise Failure("install-consent-target-not-verified")
+            return False
+        focus_key = self.install_focus_key
+        installers = ("com.android.packageinstaller", "com.google.android.packageinstaller")
+        # The active accessibility root can still be the covered test app. Use
+        # the focused display-0 window, as for the already qualified Settings UI.
+        _, nodes = self.prompt_nodes(self.ui_windows(installers, recovery=False), installers)
+        if not any(node.get("text") == "Synthetic update fixture" for node in nodes):
+            raise Failure("install-consent-fixture-not-identified")
+        buttons = [
+            node
+            for node in nodes
+            if node.get("resource-id") == "android:id/button1" and node.get("text", "").casefold() in ("install", "update") and node.get("enabled") == "true"
+        ]
+        if len(buttons) != 1:
+            raise Failure("install-consent-button-not-identified")
+        identity = self.install_identity()
+        unchanged = bool(focus_key) and self.install_focus_key == focus_key
+        print(encoded({"mode": "install-prompt-identity", "observed": identity, "focus_unchanged": unchanged}).decode(), end="", flush=True)
+        if not all(identity.values()) or not unchanged:
+            raise Failure("install-consent-identity-changed")
+        self.tap_prompt_node(buttons[0], "device-synthetic-install-consent")
+        print("INFO android-install-consent actor=harness", flush=True)
+        return True
 
     def await_install_permission(self):
         value = self.shell("appops", "get", PACKAGE, "REQUEST_INSTALL_PACKAGES", label="device-install-permission-query").decode()
@@ -1008,7 +1353,7 @@ def prepare_artifacts(config, temporary):
     return apk, inputs, key, releases, wrong
 
 
-def acceptance(phone, config, temporary, passed):
+def acceptance(phone, config, temporary, passed, *, qualify_install_prompts=False):
     set_phase("pre-install-checks")
     if phone.occupied(GAME) or phone.occupied(PACKAGE):
         raise Failure("occupied-package-no-fresh-run-ownership")
@@ -1022,7 +1367,10 @@ def acceptance(phone, config, temporary, passed):
     set_phase("installer-storage")
     phone.storage()
     set_phase("installer-permission")
-    phone.await_install_permission()
+    if qualify_install_prompts:
+        phone.require_ungranted_install_permission()
+    else:
+        phone.await_install_permission()
     set_phase("fixture-provision")
     with server() as service:
         base = publish(service, releases[1], 1)
@@ -1042,7 +1390,15 @@ def acceptance(phone, config, temporary, passed):
         set_phase("baseline-N-install")
         phone.storage()
         phone.tap("Reconstruct and install verified game")
-        first = phone.installed(1)
+        if qualify_install_prompts:
+            phone.wait_state({"READY"})
+            phone.allow_visible_install_permission()
+            passed("install-unknown-apps-visible")
+            phone.tap("Install verified owner build")
+            first = phone.installed(1, require_pending_prompt=True)
+            passed("pending-user-action-visible")
+        else:
+            first = phone.installed(1)
         phone.retention_witness("seed")
         set_phase("check-for-updates")
         publish(service, releases[2], 2)
@@ -1608,6 +1964,11 @@ def main(argv=None):
     )
     parser.add_argument("--timeout", type=int, default=1200)
     parser.add_argument(
+        "--qualify-install-prompts",
+        action="store_true",
+        help="Authorized synthetic workflow only: require ungranted Settings permission and matching pending-user-action consent; never pregrant",
+    )
+    parser.add_argument(
         "--allow-test-installs", action="store_true", help="Only after explicit owner authorization: allow installs for this fresh disposable test package"
     )
     parser.add_argument(
@@ -1628,6 +1989,16 @@ def main(argv=None):
         "--diagnostic-run", help="Inspection selection: UI newest/private run basename, or toolhost numeric lab run ID; never prints paths or raw logs"
     )
     args = parser.parse_args(argv)
+    if args.qualify_install_prompts and (
+        args.allow_test_installs
+        or args.host_only
+        or args.inspect_state
+        or args.inspect_ui_failure
+        or args.inspect_update_failure
+        or args.inspect_toolhost_failure is not None
+    ):
+        print("FAIL install-prompt-mode-conflict", flush=True)
+        return 1
     if args.inspect_toolhost_failure is not None:
         DIAGNOSTICS = None
         return inspect_toolhost_failure(
@@ -1688,7 +2059,10 @@ def main(argv=None):
                 prepare_artifacts(config, temporary)
                 print("PASS host-fixture-build (phone acceptance NOT RUN)", flush=True)
             else:
-                acceptance(phone, config, temporary, passed)
+                if args.qualify_install_prompts:
+                    acceptance(phone, config, temporary, passed, qualify_install_prompts=True)
+                else:
+                    acceptance(phone, config, temporary, passed)
     except Failure as error:
         reason = str(error)
         failure_phase = CURRENT_PHASE
@@ -1720,7 +2094,7 @@ def main(argv=None):
         if args.host_only:
             print("FAIL host-fixture-build phase=" + failure_phase + " reason=" + reason, flush=True)
         else:
-            for case in CASES:
+            for case in (*PROMPT_CASES, *CASES) if args.qualify_install_prompts else CASES:
                 if case not in completed:
                     print("FAIL " + case + " phase=" + failure_phase + " reason=" + reason, flush=True)
     if phone is not None:

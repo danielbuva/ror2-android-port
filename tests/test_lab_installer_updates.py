@@ -96,7 +96,9 @@ class LabInstallerUpdatesTests(unittest.TestCase):
             final = json.loads((diagnostics.directory / "00001-device-ui-dump.json").read_text())
             self.assertEqual(final["outcome"], "TimeoutExpired")
 
-    def run_install_poll(self, *, diagnostic, state=lambda _: "INSTALLING", receipt_at=None, timeout=120):
+    def run_install_poll(
+        self, *, diagnostic, state=lambda _: "INSTALLING", receipt_at=None, timeout=120, require_pending_prompt=False, confirm_prompt=lambda: True
+    ):
         phone = LAB.Phone("synthetic", timeout)
         clock = [0]
         receipt = {"release": {"version_code": 1}, "installed_readback_verified": True, "sha256": "a" * 64}
@@ -116,6 +118,7 @@ class LabInstallerUpdatesTests(unittest.TestCase):
             patch.object(phone, "read", side_effect=read),
             patch.object(phone, "capture_install_diagnostic", side_effect=lambda: diagnostic(clock[0])) as capture,
             patch.object(phone, "tap") as tap,
+            patch.object(phone, "confirm_synthetic_install", side_effect=confirm_prompt),
             patch.object(phone, "package_hash", return_value=receipt["sha256"]),
             patch.object(phone, "storage"),
             patch.object(phone, "start"),
@@ -123,12 +126,629 @@ class LabInstallerUpdatesTests(unittest.TestCase):
             patch.object(phone, "shell") as shell,
         ):
             try:
-                result = phone.installed(1)
+                result = phone.installed(1, require_pending_prompt=require_pending_prompt)
             except LAB.Failure as error:
                 result = str(error)
             put.assert_not_called()
             shell.assert_not_called()
         return result, clock[0], capture.call_count, tap.call_count
+
+    @staticmethod
+    def settings_prompt(checked="false"):
+        tree = ET.fromstring(
+            '<hierarchy><node package="com.android.settings"><node text="Install unknown apps"/><node text="Owner game installer"/><node text="Allow from this source"/><node resource-id="android:id/switch_widget" checkable="true" enabled="true" bounds="[10,20][110,100]"/></node></hierarchy>'
+        )
+        tree.find("node")[-1].set("checked", checked)
+        return tree
+
+    @staticmethod
+    def consent_prompt():
+        return ET.fromstring(
+            '<hierarchy><node package="com.android.packageinstaller"><node text="Synthetic update fixture"/><node resource-id="android:id/button1" text="Install" enabled="true" bounds="[10,20][110,100]"/></node></hierarchy>'
+        )
+
+    @staticmethod
+    def owned_phone():
+        phone = LAB.Phone("synthetic", 5)
+        phone.owned_installer, phone.installer_hash = True, "a" * 64
+        phone.settings_focus_key = "f" * 64
+        phone.install_focus_key = "e" * 64
+        return phone
+
+    @staticmethod
+    def settings_activity():
+        return (
+            "ACTIVITY MANAGER TOP-RESUMED (dumpsys activity top-resumed)\n"
+            "packageName=com.android.settings processName=com.android.settings\n"
+            "launchedFromUid=10007 launchedFromPackage=" + LAB.PACKAGE + " launchedFromFeature=null userId=7\n"
+            "app=ProcessRecord{synthetic-private}\n"
+            "Intent { act=android.settings.MANAGE_UNKNOWN_APP_SOURCES dat=package:"
+            + LAB.PACKAGE
+            + " cmp=com.android.settings/.Settings$ManageAppExternalSourcesActivity }\n"
+            "rootOfTask=false task=Task{synthetic-private}\n"
+            "taskAffinity=com.android.settings\n"
+            "mActivityComponent=com.android.settings/.Settings$ManageAppExternalSourcesActivity\n"
+            "state=RESUMED stopped=false delayedResume=false finishing=false\n"
+            "occludesParent=true noDisplay=false immersive=false launchMode=0\n"
+            "windows=[Window{abc123 u7 com.android.settings/com.android.settings.Settings$ManageAppExternalSourcesActivity}]\n"
+            "mVisibleRequested=true mVisible=true mClientVisible=true reportedDrawn=true reportedVisible=true\n"
+        ).encode()
+
+    @staticmethod
+    def settings_displays():
+        return (
+            "WINDOW MANAGER DISPLAY CONTENTS (dumpsys window displays)\n"
+            "  Display: mDisplayId=0 rootTasks=1\n"
+            "  mCurrentFocus=Window{abc123 u7 com.android.settings/com.android.settings.Settings$ManageAppExternalSourcesActivity}\n"
+            "  mFocusedApp=ActivityRecord{synthetic-private}\n"
+        ).encode()
+
+    def summarize_settings(self, data, user):
+        return LAB.settings_activity_summary(data, user, self.settings_displays())
+
+    def settings_verified(self):
+        return self.summarize_settings(self.settings_activity(), b"7\n")
+
+    def test_settings_snapshot_binds_single_primary_record_without_exporting_values(self):
+        result = self.settings_verified()
+        self.assertEqual(len(result), 8)
+        self.assertTrue(all(value is True for value in result.values()))
+        flagged = self.settings_activity().replace(b" cmp=", b" flg=0x10000000 cmp=")
+        self.assertEqual(self.summarize_settings(flagged, b"7"), result)
+        for forbidden in ("synthetic-private", "10007", LAB.PACKAGE, "ManageAppExternalSourcesActivity"):
+            self.assertNotIn(forbidden, json.dumps(result))
+        for data, user in (
+            (b"", b"7"),
+            (self.settings_activity() * 2, b"7"),
+            (b"x" * 65537, b"7"),
+            (b"\xff", b"7"),
+            (self.settings_activity(), b"7" * 65),
+            (self.settings_activity(), b"\xff"),
+        ):
+            self.assertFalse(all(self.summarize_settings(data, user).values()))
+
+    def test_settings_snapshot_rejects_other_targets_users_state_aliases_and_nested_intents(self):
+        original = self.settings_activity()
+        edits = (
+            (b"dat=package:" + LAB.PACKAGE.encode(), b"dat=package:" + LAB.PACKAGE.encode() + b".other"),
+            (b"dat=package:" + LAB.PACKAGE.encode(), b"dat=package:another.app"),
+            (b"act=android.settings.MANAGE_UNKNOWN_APP_SOURCES", b"act=android.settings.APPLICATION_DETAILS_SETTINGS"),
+            (b"launchedFromPackage=" + LAB.PACKAGE.encode(), b"launchedFromPackage=another.app"),
+            (b"mActivityComponent=com.android.settings/.Settings$ManageAppExternalSourcesActivity", b"mActivityComponent=com.android.settings/.OtherActivity"),
+            (b"cmp=com.android.settings/.Settings$ManageAppExternalSourcesActivity", b"cmp=com.android.settings/.OtherActivity"),
+            (b"userId=7", b"userId=8"),
+            (b"state=RESUMED", b"state=PAUSING"),
+            (b"stopped=false", b"stopped=true"),
+            (b"finishing=false", b"finishing=true"),
+            (b"delayedResume=false", b"delayedResume=true"),
+            (b"noDisplay=false", b"noDisplay=true"),
+            (b"noDisplay=false", b"noDisplay=false noDisplay=true"),
+            (b"mVisible=true", b"mVisible=false"),
+            (b"reportedDrawn=true", b"reportedDrawn=false"),
+            (b" }\nrootOfTask", b" (has extras) }\nrootOfTask"),
+            (b" }\nrootOfTask", b" sel={act=other} }\nrootOfTask"),
+            (b"ACTIVITY MANAGER TOP-RESUMED (dumpsys activity top-resumed)", b"ACTIVITY MANAGER ACTIVITIES (dumpsys activity activities)"),
+        )
+        for before, after in edits:
+            with self.subTest(after=after):
+                result = self.summarize_settings(original.replace(before, after), b"7\n")
+                self.assertFalse(all(result.values()))
+                self.assertTrue(all(type(value) is bool for value in result.values()))
+        for appended in (
+            b"packageName=com.android.settings processName=com.android.settings\n",
+            b"state=RESUMED stopped=false delayedResume=false finishing=false\n",
+            b"  Pending Intent { dat=package:" + LAB.PACKAGE.encode() + b" }\n",
+        ):
+            self.assertFalse(all(self.summarize_settings(original + appended, b"7").values()))
+        wrong_primary = original.replace(b"dat=package:" + LAB.PACKAGE.encode(), b"dat=package:another.app")
+        self.assertFalse(all(self.summarize_settings(wrong_primary + b"  Intent { dat=package:" + LAB.PACKAGE.encode() + b" }\n", b"7").values()))
+
+    def test_settings_window_binding_rejects_other_display_focus_and_ambiguous_records(self):
+        activity, displays = self.settings_activity(), self.settings_displays()
+        verified, key = LAB.settings_window_identity(activity, displays)
+        self.assertTrue(verified)
+        self.assertRegex(key, r"^[0-9a-f]{64}$")
+        for changed_activity, changed_displays in (
+            (activity, displays.replace(b"Window{abc123", b"Window{def456")),
+            (activity, displays.replace(b"mDisplayId=0", b"mDisplayId=1")),
+            (activity, displays + displays.split(b"\n", 1)[1]),
+            (activity, displays + b"  mCurrentFocus=Window{abc123 u7 another}\n"),
+            (
+                activity,
+                displays.replace(b"mCurrentFocus=Window{abc123", b"mCurrentFocus=Window{def456")
+                + b"  Display: mDisplayId=1 rootTasks=1\n  mCurrentFocus=Window{abc123 u7 com.android.settings/com.android.settings.Settings$ManageAppExternalSourcesActivity}\n",
+            ),
+            (activity.replace(b"windows=[", b"unknown=["), displays),
+            (activity + b"windows=[]\n", displays),
+            (activity, b"x" * 131073),
+            (activity, b"\xff"),
+        ):
+            with self.subTest(changed_displays=changed_displays[:80]):
+                self.assertEqual(LAB.settings_window_identity(changed_activity, changed_displays), (False, None))
+                self.assertFalse(all(LAB.settings_activity_summary(changed_activity, b"7", changed_displays).values()))
+        # Another display may exist, but cannot supply the accepted focus.
+        extra = displays + b"  Display: mDisplayId=1 rootTasks=1\n  mCurrentFocus=Window{def456 u7 another}\n"
+        self.assertEqual(LAB.settings_window_identity(activity, extra), (True, key))
+
+    def test_settings_snapshot_queries_are_read_only_bounded_and_retain_only_booleans(self):
+        phone, diagnostics = self.owned_phone(), Mock()
+        results = [
+            subprocess.CompletedProcess([], 0, self.settings_activity(), b""),
+            subprocess.CompletedProcess([], 0, b"7\n", b""),
+            subprocess.CompletedProcess([], 0, self.settings_displays(), b""),
+        ]
+        with (
+            patch.object(phone, "require_owned_installer") as owned,
+            patch.object(LAB, "execute", side_effect=results) as execute,
+            patch.object(LAB, "DIAGNOSTICS", diagnostics),
+        ):
+            self.assertEqual(phone.settings_identity(), self.settings_verified())
+        owned.assert_called_once()
+        self.assertEqual(
+            [c.args[0][-1] for c in execute.call_args_list],
+            ["'dumpsys activity top-resumed | head -c 65537'", "'am get-current-user | head -c 65'", "'dumpsys window displays | head -c 131073'"],
+        )
+        for call in execute.call_args_list:
+            self.assertEqual(call.kwargs, {"label": "device-settings-identity-query", "timeout": 15, "record_output": False})
+        self.assertEqual(json.loads(diagnostics.record.call_args.kwargs["stdout"]), self.settings_verified())
+        self.assertNotIn("synthetic-private", str(diagnostics.record.call_args))
+        for result in (
+            subprocess.CompletedProcess([], 1, b"synthetic-private", b""),
+            subprocess.CompletedProcess([], 0, self.settings_activity(), b"synthetic-private"),
+        ):
+            with patch.object(phone, "require_owned_installer"), patch.object(LAB, "execute", return_value=result), patch.object(LAB, "DIAGNOSTICS", None):
+                self.assertFalse(all(phone.settings_identity().values()))
+        with (
+            patch.object(phone, "require_owned_installer", side_effect=LAB.Failure("install-prompt-installer-not-owned")),
+            patch.object(LAB, "execute") as execute,
+        ):
+            with self.assertRaises(LAB.Failure):
+                phone.settings_identity()
+            execute.assert_not_called()
+
+    def test_snapshot_raw_output_suppression_applies_to_success_and_timeout(self):
+        diagnostics = Mock()
+        with (
+            patch.object(LAB, "DIAGNOSTICS", diagnostics),
+            patch.object(LAB.subprocess, "run", return_value=subprocess.CompletedProcess([], 0, b"synthetic-private", b"synthetic-private")),
+        ):
+            LAB.execute(["synthetic"], label="test", record_output=False)
+        diagnostics.record.assert_not_called()
+        with (
+            patch.object(LAB, "DIAGNOSTICS", diagnostics),
+            patch.object(
+                LAB.subprocess, "run", side_effect=subprocess.TimeoutExpired("synthetic", 1, output=b"synthetic-private", stderr=b"synthetic-private")
+            ),
+        ):
+            with self.assertRaisesRegex(LAB.Failure, "^test$"):
+                LAB.execute(["synthetic"], label="test", record_output=False)
+        diagnostics.record.assert_not_called()
+
+    def test_visible_permission_requires_fresh_owned_ungranted_package_without_writes(self):
+        phone = self.owned_phone()
+        for mode in ("No operations.", "REQUEST_INSTALL_PACKAGES: deny", "REQUEST_INSTALL_PACKAGES: ignore", "REQUEST_INSTALL_PACKAGES: default"):
+            with patch.object(phone, "package_hash", return_value=phone.installer_hash), patch.object(phone, "shell", return_value=mode.encode()) as shell:
+                phone.require_ungranted_install_permission()
+                shell.assert_called_once_with("appops", "get", LAB.PACKAGE, "REQUEST_INSTALL_PACKAGES", label="device-install-permission-query")
+        for mode in ("REQUEST_INSTALL_PACKAGES: allow", "REQUEST_INSTALL_PACKAGES: foreground", "synthetic-private-output"):
+            with patch.object(phone, "package_hash", return_value=phone.installer_hash), patch.object(phone, "shell", return_value=mode.encode()):
+                with self.assertRaises(LAB.Failure) as error:
+                    phone.require_ungranted_install_permission()
+                self.assertNotIn("synthetic-private", str(error.exception))
+        for owned, actual in ((False, "a" * 64), (True, "b" * 64)):
+            phone.owned_installer = owned
+            with patch.object(phone, "package_hash", return_value=actual), patch.object(phone, "shell") as shell:
+                with self.assertRaisesRegex(LAB.Failure, "install-prompt-installer-not-owned"):
+                    phone.require_ungranted_install_permission()
+                shell.assert_not_called()
+
+    def test_unset_permission_accepts_only_observed_default_mode_shape(self):
+        phone = self.owned_phone()
+        value = b"No operations.\nDefault mode: default\n"
+        with patch.object(phone, "package_hash", return_value=phone.installer_hash), patch.object(phone, "shell", return_value=value) as shell:
+            self.assertEqual(phone.install_permission_mode(), "default")
+            phone.require_ungranted_install_permission()
+            self.assertTrue(all(call.args == ("appops", "get", LAB.PACKAGE, "REQUEST_INSTALL_PACKAGES") for call in shell.call_args_list))
+        for value in (
+            "No operations.\nDefault mode: allow",
+            "No operations.\nDefault mode: foreground",
+            "No operations.\nDefault mode: unknown",
+            "No operations.\nDefault mode: deny",
+            "No operations.\nDefault mode: default\nsynthetic-private",
+            "synthetic-private\nNo operations.\nDefault mode: default",
+            "No operations.\nDefault mode: default\nREQUEST_INSTALL_PACKAGES: deny",
+            "No operations.\nDefault mode: default\nDefault mode: default",
+            "No operations.\n\nDefault mode: default",
+            "Default mode: default",
+        ):
+            with (
+                self.subTest(value=value),
+                patch.object(phone, "package_hash", return_value=phone.installer_hash),
+                patch.object(phone, "shell", return_value=value.encode()),
+            ):
+                with self.assertRaisesRegex(LAB.Failure, "^device-install-permission-shape$"):
+                    phone.require_ungranted_install_permission()
+        phone.allow_test_installs = True
+        with patch.object(phone, "package_hash", return_value=phone.installer_hash), patch.object(phone, "shell") as shell:
+            with self.assertRaisesRegex(LAB.Failure, "install-prompt-permission-already-granted"):
+                phone.require_ungranted_install_permission()
+            shell.assert_not_called()
+
+    def test_settings_permission_is_app_opened_visibly_enabled_and_read_back(self):
+        phone = self.owned_phone()
+        app = ET.fromstring('<hierarchy><node package="' + LAB.PACKAGE + '"/></hierarchy>')
+        with (
+            patch.object(phone, "package_hash", return_value=phone.installer_hash),
+            patch.object(phone, "tap") as tap,
+            patch.object(phone, "settings_identity", return_value=self.settings_verified()),
+            patch.object(phone, "shell", side_effect=[b"No operations.", b"", b"REQUEST_INSTALL_PACKAGES: allow", b""]) as shell,
+            patch.object(phone, "ui_windows", side_effect=[self.settings_prompt(), self.settings_prompt("true")]),
+            patch.object(phone, "ui_for", return_value=app),
+        ):
+            phone.allow_visible_install_permission()
+        tap.assert_called_once_with("Install verified owner build")
+        self.assertEqual(
+            [c.args for c in shell.call_args_list],
+            [
+                ("appops", "get", LAB.PACKAGE, "REQUEST_INSTALL_PACKAGES"),
+                ("input", "tap", "60", "60"),
+                ("appops", "get", LAB.PACKAGE, "REQUEST_INSTALL_PACKAGES"),
+                ("input", "keyevent", "KEYCODE_BACK"),
+            ],
+        )
+
+    def test_settings_permission_rejects_foreign_ambiguous_or_already_enabled_prompt(self):
+        for change in ("checked", "mixed", "duplicate", "disabled"):
+            tree = self.settings_prompt()
+            root = tree.find("node")
+            if change == "checked":
+                root[-1].set("checked", "true")
+            elif change == "mixed":
+                root[1].set("package", "another.app")
+            elif change == "duplicate":
+                ET.SubElement(root, "node", dict(root[-1].attrib))
+            else:
+                root[-1].set("enabled", "false")
+            phone = self.owned_phone()
+            with (
+                self.subTest(change=change),
+                patch.object(phone, "require_ungranted_install_permission"),
+                patch.object(phone, "tap"),
+                patch.object(phone, "settings_identity", return_value=self.settings_verified()),
+                patch.object(phone, "ui_windows", return_value=tree),
+                patch.object(phone, "shell") as shell,
+            ):
+                with self.assertRaises(LAB.Failure):
+                    phone.allow_visible_install_permission()
+                shell.assert_not_called()
+
+    def test_settings_permission_requires_effective_grant_before_returning(self):
+        phone, clock = self.owned_phone(), [0]
+
+        def sleep(seconds):
+            clock[0] += seconds
+
+        with (
+            patch.object(phone, "require_ungranted_install_permission"),
+            patch.object(phone, "tap"),
+            patch.object(phone, "settings_identity", return_value=self.settings_verified()),
+            patch.object(phone, "ui_windows", side_effect=[self.settings_prompt()] + [self.settings_prompt("true")] * 15),
+            patch.object(phone, "shell") as shell,
+            patch.object(phone, "install_permission_mode", return_value="deny"),
+            patch.object(LAB.time, "monotonic", side_effect=lambda: clock[0]),
+            patch.object(LAB.time, "sleep", side_effect=sleep),
+        ):
+            with self.assertRaisesRegex(LAB.Failure, "install-settings-grant-not-observed"):
+                phone.allow_visible_install_permission()
+        shell.assert_called_once_with("input", "tap", "60", "60", label="device-install-permission-visible-enable")
+
+    def test_settings_identity_change_or_missing_proof_never_taps_visible_switch(self):
+        phone = self.owned_phone()
+        verified = self.settings_verified()
+        wrong = verified | {"target_verified": False}
+        for identities, expected in (([verified, wrong], "install-settings-identity-changed"), ([wrong] * 30, "install-settings-identity-not-verified")):
+            clock = [0]
+
+            def sleep(seconds):
+                clock[0] += seconds
+
+            output = io.StringIO()
+            with (
+                patch.object(phone, "require_ungranted_install_permission"),
+                patch.object(phone, "tap"),
+                patch.object(phone, "settings_identity", side_effect=identities),
+                patch.object(phone, "ui_windows", return_value=self.settings_prompt()),
+                patch.object(phone, "shell") as shell,
+                patch.object(LAB.time, "monotonic", side_effect=lambda: clock[0]),
+                patch.object(LAB.time, "sleep", side_effect=sleep),
+                redirect_stdout(output),
+            ):
+                with self.assertRaisesRegex(LAB.Failure, expected):
+                    phone.allow_visible_install_permission()
+            shell.assert_not_called()
+            self.assertEqual(json.loads(output.getvalue())["observed"], wrong)
+
+    def test_settings_window_change_after_ui_capture_refuses_tap(self):
+        phone, count = self.owned_phone(), [0]
+
+        def identity():
+            count[0] += 1
+            phone.settings_focus_key = ("a" if count[0] == 1 else "b") * 64
+            return self.settings_verified()
+
+        output = io.StringIO()
+        with (
+            patch.object(phone, "require_ungranted_install_permission"),
+            patch.object(phone, "tap"),
+            patch.object(phone, "settings_identity", side_effect=identity),
+            patch.object(phone, "ui_windows", return_value=self.settings_prompt()),
+            patch.object(phone, "shell") as shell,
+            redirect_stdout(output),
+        ):
+            with self.assertRaisesRegex(LAB.Failure, "install-settings-identity-changed"):
+                phone.allow_visible_install_permission()
+        shell.assert_not_called()
+        self.assertIs(json.loads(output.getvalue())["focus_unchanged"], False)
+
+    def test_settings_verified_identity_still_requires_visible_switch_and_records_harness_actor(self):
+        phone = self.owned_phone()
+        tree = self.settings_prompt()
+        # Missing/variant header text does not replace OS identity or switch proof.
+        for node in tree.iter("node"):
+            node.set("text", "")
+        checked = ET.fromstring(ET.tostring(tree))
+        checked.find("node")[-1].set("checked", "true")
+        app = ET.fromstring('<hierarchy><node package="' + LAB.PACKAGE + '"/></hierarchy>')
+        output = io.StringIO()
+        with (
+            patch.object(phone, "require_ungranted_install_permission"),
+            patch.object(phone, "tap"),
+            patch.object(phone, "settings_identity", return_value=self.settings_verified()),
+            patch.object(phone, "ui_windows", side_effect=[tree, checked]) as ui,
+            patch.object(phone, "ui_for", return_value=app),
+            patch.object(phone, "shell"),
+            patch.object(phone, "install_permission_mode", return_value="allow"),
+            redirect_stdout(output),
+        ):
+            phone.allow_visible_install_permission()
+        self.assertIn("INFO install-permission-switch actor=harness", output.getvalue())
+        self.assertTrue(all(call.kwargs == {"recovery": False} for call in ui.call_args_list))
+
+    def test_synthetic_install_consent_requires_owned_fixture_and_identified_button(self):
+        phone = self.owned_phone()
+        with (
+            patch.object(phone, "package_hash", return_value=phone.installer_hash),
+            patch.object(phone, "install_identity", return_value=self.install_verified()),
+            patch.object(phone, "ui_windows", return_value=self.consent_prompt()),
+            patch.object(phone, "shell") as shell,
+        ):
+            self.assertTrue(phone.confirm_synthetic_install())
+        self.assertEqual(shell.call_args.args, ("input", "tap", "60", "60"))
+        self.assertEqual(shell.call_args.kwargs, {"label": "device-synthetic-install-consent"})
+        for change in ("app", "button", "foreign", "duplicate"):
+            tree = self.consent_prompt()
+            root = tree.find("node")
+            if change == "app":
+                root[0].set("text", "Another app")
+            elif change == "button":
+                root[1].set("text", "Delete")
+            elif change == "foreign":
+                root.set("package", "another.app")
+            else:
+                ET.SubElement(root, "node", dict(root[1].attrib))
+            with (
+                self.subTest(change=change),
+                patch.object(phone, "require_owned_installer"),
+                patch.object(phone, "install_identity", return_value=self.install_verified()),
+                patch.object(phone, "ui_windows", return_value=tree),
+                patch.object(phone, "shell") as shell,
+            ):
+                with self.assertRaises(LAB.Failure):
+                    phone.confirm_synthetic_install()
+                self.assertFalse(any(c.args[:2] == ("input", "tap") for c in shell.call_args_list))
+
+    @classmethod
+    def install_activity(cls):
+        return (
+            cls.settings_activity()
+            .replace(b"com.android.settings/.Settings$ManageAppExternalSourcesActivity", b"com.android.packageinstaller/.PackageInstallerActivity")
+            .replace(
+                b"com.android.settings/com.android.settings.Settings$ManageAppExternalSourcesActivity",
+                b"com.android.packageinstaller/com.android.packageinstaller.PackageInstallerActivity",
+            )
+            .replace(b"com.android.settings", b"com.android.packageinstaller")
+            .replace(b"launchedFromPackage=" + LAB.PACKAGE.encode(), b"launchedFromPackage=com.android.packageinstaller")
+            .replace(
+                b"act=android.settings.MANAGE_UNKNOWN_APP_SOURCES dat=package:" + LAB.PACKAGE.encode(),
+                b"act=android.content.pm.action.CONFIRM_INSTALL flg=0x2000001 pkg=com.android.packageinstaller",
+            )
+            .replace(b".PackageInstallerActivity }", b".PackageInstallerActivity (has extras) }")
+        )
+
+    @classmethod
+    def install_displays(cls):
+        return cls.settings_displays().replace(
+            b"com.android.settings/com.android.settings.Settings$ManageAppExternalSourcesActivity",
+            b"com.android.packageinstaller/com.android.packageinstaller.PackageInstallerActivity",
+        )
+
+    def install_verified(self):
+        return LAB.install_activity_summary(self.install_activity(), b"7", self.install_displays())
+
+    def test_install_snapshot_binds_confirmation_activity_user_forwarder_and_focus(self):
+        result = self.install_verified()
+        self.assertTrue(all(result.values()))
+        self.assertEqual(len(result), 8)
+        for value in ("10007", "u7", "synthetic-private", "PackageInstallerActivity"):
+            self.assertNotIn(value, json.dumps(result))
+        for before, after in (
+            (b".PackageInstallerActivity", b".InstallStart"),
+            (b"CONFIRM_INSTALL", b"INSTALL_PACKAGE"),
+            (b"launchedFromPackage=com.android.packageinstaller", b"launchedFromPackage=another.app"),
+            (b"userId=7", b"userId=8"),
+            (b"state=RESUMED", b"state=PAUSING"),
+            (b"mVisible=true", b"mVisible=false"),
+            (b"finishing=false", b"finishing=true"),
+            (b" (has extras)", b""),
+        ):
+            with self.subTest(after=after):
+                self.assertFalse(all(LAB.install_activity_summary(self.install_activity().replace(before, after), b"7", self.install_displays()).values()))
+        for data in (self.settings_activity(), self.install_activity() * 2):
+            self.assertFalse(all(LAB.install_activity_summary(data, b"7", self.install_displays()).values()))
+        self.assertFalse(all(LAB.install_activity_summary(self.install_activity(), b"7", self.settings_displays()).values()))
+
+    def test_install_snapshot_binds_explicit_system_package_to_component(self):
+        activity = self.install_activity()
+        self.assertTrue(all(self.install_verified().values()))
+        without_package = activity.replace(b"pkg=com.android.packageinstaller ", b"")
+        self.assertTrue(all(LAB.install_activity_summary(without_package, b"7", self.install_displays()).values()))
+        for replacement in (
+            b"pkg=another.app",
+            b"pkg=com.android.packageinstaller.other",
+            b"pkg=com.android.packageinstaller pkg=com.android.packageinstaller",
+        ):
+            with self.subTest(replacement=replacement):
+                changed = activity.replace(b"pkg=com.android.packageinstaller", replacement)
+                summary = LAB.install_activity_summary(changed, b"7", self.install_displays())
+                self.assertIs(summary["target_verified"], False)
+                self.assertIs(summary["component_verified"], True)
+
+    def test_install_identity_query_keeps_raw_records_private(self):
+        phone = self.owned_phone()
+        outputs = (self.install_activity(), b"7", self.install_displays())
+        with (
+            patch.object(phone, "require_owned_installer"),
+            patch.object(LAB, "execute", side_effect=[subprocess.CompletedProcess([], 0, value, b"") for value in outputs]) as execute,
+            patch.object(LAB, "DIAGNOSTICS", Mock()) as diagnostics,
+        ):
+            self.assertTrue(all(phone.install_identity().values()))
+        self.assertIsNotNone(phone.install_focus_key)
+        self.assertTrue(all(call.kwargs["record_output"] is False for call in execute.call_args_list))
+        self.assertEqual(json.loads(diagnostics.record.call_args.kwargs["stdout"]), self.install_verified())
+        self.assertEqual(diagnostics.record.call_args.args, ("device-install-identity",))
+
+    def test_install_consent_uses_focused_window_not_covered_app_root(self):
+        phone = self.owned_phone()
+        for caption in ("Install", "Update"):
+            tree = self.consent_prompt()
+            tree.find("node")[1].set("text", caption)
+            with (
+                self.subTest(caption=caption),
+                patch.object(phone, "require_owned_installer"),
+                patch.object(phone, "install_identity", return_value=self.install_verified()),
+                patch.object(phone, "ui_for", side_effect=AssertionError("active root must not be used")),
+                patch.object(phone, "ui_windows", return_value=tree) as ui,
+                patch.object(phone, "shell") as shell,
+                redirect_stdout(io.StringIO()) as output,
+            ):
+                self.assertTrue(phone.confirm_synthetic_install())
+            ui.assert_called_once_with(("com.android.packageinstaller", "com.google.android.packageinstaller"), recovery=False)
+            self.assertEqual(sum(call.args[:2] == ("input", "tap") for call in shell.call_args_list), 1)
+            self.assertIn("android-install-consent actor=harness", output.getvalue())
+
+    def test_install_consent_waits_without_tapping_an_unverified_activity(self):
+        phone = self.owned_phone()
+        with (
+            patch.object(phone, "require_owned_installer"),
+            patch.object(phone, "install_identity", return_value=self.install_verified() | {"component_verified": False}),
+            patch.object(phone, "ui_windows") as ui,
+            patch.object(phone, "shell") as shell,
+            redirect_stdout(io.StringIO()),
+        ):
+            self.assertFalse(phone.confirm_synthetic_install())
+        ui.assert_not_called()
+        self.assertFalse(any(call.args[:2] == ("input", "tap") for call in shell.call_args_list))
+
+    def test_install_consent_stops_on_focused_confirmation_with_wrong_target(self):
+        phone = self.owned_phone()
+        with (
+            patch.object(phone, "require_owned_installer"),
+            patch.object(phone, "install_identity", return_value=self.install_verified() | {"target_verified": False}),
+            patch.object(phone, "ui_windows") as ui,
+            patch.object(phone, "shell") as shell,
+            redirect_stdout(io.StringIO()),
+        ):
+            with self.assertRaisesRegex(LAB.Failure, "^install-consent-target-not-verified$"):
+                phone.confirm_synthetic_install()
+        ui.assert_not_called()
+        self.assertFalse(any(call.args[:2] == ("input", "tap") for call in shell.call_args_list))
+
+    def test_install_consent_rechecks_activity_and_window_before_tapping(self):
+        for changed_window in (False, True):
+            phone, count = self.owned_phone(), [0]
+
+            def identity():
+                count[0] += 1
+                if count[0] == 2:
+                    if changed_window:
+                        phone.install_focus_key = "b" * 64
+                    else:
+                        return self.install_verified() | {"caller_verified": False}
+                return self.install_verified()
+
+            with (
+                self.subTest(changed_window=changed_window),
+                patch.object(phone, "require_owned_installer"),
+                patch.object(phone, "install_identity", side_effect=identity),
+                patch.object(phone, "ui_windows", return_value=self.consent_prompt()),
+                patch.object(phone, "shell") as shell,
+                redirect_stdout(io.StringIO()),
+            ):
+                with self.assertRaisesRegex(LAB.Failure, "^install-consent-identity-changed$"):
+                    phone.confirm_synthetic_install()
+            self.assertFalse(any(call.args[:2] == ("input", "tap") for call in shell.call_args_list))
+
+    def test_pending_prompt_requires_matching_callback_state_visible_consent_and_receipt(self):
+        pending = {"status": "observed", "stage": "commit-returned", "callback": "pending-user-action", "session_match": True, "callback_entry": "entered"}
+        confirm = Mock(return_value=True)
+        result, _, captures, taps = self.run_install_poll(
+            diagnostic=lambda now: pending if now >= 1 else pending | {"callback": "none", "session_match": None},
+            state=lambda now: "AWAITING_CONFIRMATION" if now >= 1 else "INSTALLING",
+            receipt_at=2,
+            require_pending_prompt=True,
+            confirm_prompt=confirm,
+        )
+        self.assertEqual(result["release"]["version_code"], 1)
+        self.assertEqual((captures, taps, confirm.call_count), (2, 0, 1))
+        for state, diagnostic, visible in (
+            ("INSTALLING", pending, True),
+            ("AWAITING_CONFIRMATION", pending | {"session_match": False}, True),
+            ("AWAITING_CONFIRMATION", {"status": "unavailable"}, True),
+            ("AWAITING_CONFIRMATION", pending, False),
+        ):
+            with self.subTest(state=state, diagnostic=diagnostic, visible=visible):
+                result, _, _, taps = self.run_install_poll(
+                    diagnostic=lambda _: diagnostic, state=lambda _: state, receipt_at=2, require_pending_prompt=True, confirm_prompt=lambda: visible
+                )
+                self.assertEqual(result, "install-pending-prompt-not-observed")
+                self.assertEqual(taps, 0)
+
+    def test_prompt_mode_refuses_pregrant_host_and_inspection_modes_without_setup(self):
+        for flag in ("--allow-test-installs", "--host-only", "--inspect-state", "--inspect-ui-failure", "--inspect-update-failure"):
+            with self.subTest(flag=flag), patch.object(LAB, "read_context") as setup, patch.object(LAB, "Phone") as phone, redirect_stdout(io.StringIO()):
+                self.assertEqual(LAB.main(["--qualify-install-prompts", flag]), 1)
+                setup.assert_not_called()
+                phone.assert_not_called()
+
+    def test_prompt_mode_reports_unrun_cases_and_preserves_cleanup(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            phone = Mock()
+            phone.cleanup.return_value = "verified-absent"
+            output = io.StringIO()
+            with (
+                patch.object(LAB, "ROOT", Path(temporary)),
+                patch.dict(os.environ, {"LAB_DEVICE_SERIAL": "synthetic"}),
+                patch.object(LAB, "read_context", return_value={}),
+                patch.object(LAB, "Phone", return_value=phone),
+                patch.object(LAB, "acceptance", side_effect=LAB.Failure("install-settings-prompt-not-identified")) as acceptance,
+                redirect_stdout(output),
+            ):
+                self.assertEqual(LAB.main(["--qualify-install-prompts", "--allow-test-notifications"]), 1)
+            self.assertEqual(acceptance.call_args.kwargs, {"qualify_install_prompts": True})
+            for case in (*LAB.PROMPT_CASES, *LAB.CASES):
+                self.assertIn("FAIL " + case, output.getvalue())
+            self.assertIn("PASS cleanup packages=verified-absent", output.getvalue())
+            phone.cleanup.assert_called_once()
 
     def test_first_callback_bound_starts_only_after_observed_commit_return(self):
         none = {"status": "observed", "stage": "commit-returned", "callback": "none", "session_match": None}
@@ -928,6 +1548,39 @@ class LabInstallerUpdatesTests(unittest.TestCase):
                 ("passed", ("same-key-rollback",)),
             ],
         )
+
+    def test_prompt_acceptance_requires_settings_and_pending_evidence_before_update_cases(self):
+        phone = Mock()
+        phone.occupied.return_value = False
+        phone.ui.return_value = ET.fromstring('<hierarchy><node text="TEST RELEASE SOURCE"/></hierarchy>')
+        phone.installed.side_effect = [{"sha256": "first"}, {"sha256": "second"}, {"sha256": "rolled"}]
+        phone.read.return_value = {"sha256": "rolled"}
+        phone.package_hash.side_effect = lambda package: LAB.sha(b"synthetic test input") if package == LAB.PACKAGE else "rolled"
+        phone.wait_state.return_value = {"message": "signature refused"}
+        phone.attach_mock(Mock(), "passed")
+        releases = {n: {"release.json": LAB.encoded({"version": "synthetic"})} for n in (1, 2)}
+        apk = Mock()
+        apk.read_bytes.return_value = b"synthetic test input"
+        with patch.object(LAB, "prepare_artifacts", return_value=(apk, {}, b"key", releases, releases[2])):
+            LAB.acceptance(phone, {}, Path("unused"), phone.passed, qualify_install_prompts=True)
+        phone.await_install_permission.assert_not_called()
+        phone.require_ungranted_install_permission.assert_called_once()
+        phone.allow_visible_install_permission.assert_called_once()
+        first_install = phone.installed.call_args_list[0]
+        self.assertEqual(first_install.args, (1,))
+        self.assertEqual(first_install.kwargs, {"require_pending_prompt": True})
+        events = [(c[0], c.args) for c in phone.mock_calls if c[0] in ("wait_state", "allow_visible_install_permission", "passed", "installed")]
+        self.assertEqual(
+            events[:5],
+            [
+                ("wait_state", ({"READY"},)),
+                ("allow_visible_install_permission", ()),
+                ("passed", ("install-unknown-apps-visible",)),
+                ("installed", (1,)),
+                ("passed", ("pending-user-action-visible",)),
+            ],
+        )
+        self.assertEqual([c.args[0] for c in phone.passed.call_args_list], [*LAB.PROMPT_CASES, *LAB.CASES])
 
     def test_generated_witness_java_behavior_with_android_doubles(self):
         # Compile the exact generator output, not a Python reimplementation.
