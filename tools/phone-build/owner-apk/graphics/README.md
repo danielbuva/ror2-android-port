@@ -55,9 +55,9 @@ Remaining before any option can be enabled:
    source-pinned BSD-2 libadrenotools/hook libraries, and attest actual runtime
    driver identity plus first completed frame. A hanging or crashing native load
    requires bounded process recovery. Do not use turbo/clock-control APIs.
-2. Add the Android metadata adapter, app-private catalog/selection ownership,
-   generic System driver name/version from Vulkan properties and availability-
-   checked Graphics Driver Preferences deep link. Never change Android's setting.
+2. Add the Android metadata adapter, app-private catalog/selection ownership and
+   System driver details from Unity's active Vulkan physical device. Follow the
+   property and Android settings constraints below; never change Android's setting.
 3. Implement explicit SAF import and user-tapped, hash-verified Turnip download,
    license display, source review and one-tap reset. Do not list/link/bundle
    extracted proprietary Qualcomm drivers. Historical `turnip-target.json` is
@@ -95,3 +95,63 @@ convention. This verifies the editor API, not Android runtime preload order.
 The current official native-rendering sample is a 2023.1 project with no checked-in
 Android plugin, so it is not evidence for the pinned Android target. No upstream
 SDK/header code is copied into this repository.
+
+
+[SDK inspection run 42985707283](https://github.com/danielbuva/ror2-android-port/issues/177#issuecomment-6790792779)
+compiled the V1 fixture successfully against the installed version's headers and
+bundled ARM64 NDK, with zero Editor/device actions. Runtime preload, exact editor
+revision and custom-driver/frame acceptance remain unverified.
+
+`native/GraphicsDriverPreload.cpp` is an isolated qualification observer, not a
+production driver switch or a packaged launcher plugin. It registers the V1
+callback in `UnityPluginLoad`, returns the original resolver unchanged, and
+exposes fixed bits through `GraphicsDriverPreloadStatus`. The expected `0x7f`
+means loaded, Vulkan interface found, registration accepted, callback called,
+device initialized, callback before initialization and non-null original resolver
+preserved. Bit `0x80` marks invalid/repeated ordering; `0x100` marks unload.
+No custom driver is opened and no completed-frame claim follows. The SDK inspector
+now syntax-checks this source too; the previous published SDK run did not cover
+this new observer. Host tests execute authored interface doubles, not real Unity.
+
+## Isolated runtime qualification build
+
+`scripts/build-graphics-preload-fixture.py --output work/rebuild/graphics-preload-<attempt>`
+is the build owner for the next gate. It requires committed source, the pinned
+Editor binary hash, 100 GiB free and the canonical Unity build mutex. It compiles
+only the authored observer with the bundled ARM64 NDK and builds a new SDK-only
+project. `GraphicsPreloadFixtureBuild.cs` explicitly sets and reads back
+`PluginImporter.isPreloaded`, excludes Editor loading, selects Android ARM64 and
+Vulkan, and requires a successful zero-error build. The resulting APK's plugin
+must match the compiled library byte-for-byte. No game input or custom driver is
+included. Logs, APK and generated project stay in the new ignored output.
+
+`GraphicsPreloadFixture.cs` records the native ordering flags in the separate
+`dev.ror2lab.graphicspreload` app's private result file and fixed JSON log marker.
+It does not report completed-frame or custom-driver acceptance. The diagnostic
+package must later be installed/run only through the serialized, owned-device
+lab workflow, then stopped and removed with its display asleep. The build script
+never installs, launches or touches a phone. Staging, receipt binding and timeout
+cleanup are host-tested; the C# build and actual Android preload are not qualified.
+
+## System details and Android settings
+
+System means Android's selected driver, which may itself be an updatable driver.
+Read properties from Unity's actual physical device, not a separate Vulkan
+instance or the first enumerated GPU. `deviceName` identifies the GPU and
+`apiVersion` the API. `driverVersion` is vendor-specific; retain its raw unsigned
+decimal/hex value rather than universally decoding it as a Vulkan version.
+The richer [`VkPhysicalDeviceDriverProperties`](https://docs.vulkan.org/refpages/latest/refpages/source/VkPhysicalDeviceDriverProperties.html)
+requires Vulkan 1.2 or enumerated `VK_KHR_driver_properties`, plus a valid
+[`vkGetPhysicalDeviceProperties2`](https://docs.vulkan.org/refpages/latest/refpages/source/vkGetPhysicalDeviceProperties2.html)
+route for the existing instance/device. A non-null pointer alone is insufficient.
+`driverInfo` is free-form information; `conformanceVersion` is the CTS version.
+If the instance version or enabled-extension state is unknown, show baseline
+properties and unavailable rich fields rather than adding interception for a label.
+
+The portable public shortcut is
+[`Settings.ACTION_APPLICATION_DEVELOPMENT_SETTINGS`](https://developer.android.com/reference/android/provider/Settings#ACTION_APPLICATION_DEVELOPMENT_SETTINGS),
+labelled **Open Android Developer options**, not a guaranteed direct Graphics
+Driver Preferences link. Check availability with a narrow manifest query for API
+30+ package visibility and catch unavailable/security failures. Never enable
+Developer options or write global driver preferences. These adapters remain
+unimplemented; this source contract does not claim device qualification.

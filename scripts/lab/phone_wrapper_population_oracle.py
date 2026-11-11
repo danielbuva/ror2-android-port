@@ -102,7 +102,7 @@ def run(root, work, editor, *, reverse=False):
 
     validate()
     output, log = destination / "oracle.json", destination / "editor.log"
-    env = dict(os.environ, ROR2_POPULATION_ORACLE_REPORT=str(output), ROR2_PHONE_BUILD_SOURCE=commit)
+    env = dict(os.environ, ANDROID_ADB_SERVER_PORT="5038", ROR2_POPULATION_ORACLE_REPORT=str(output), ROR2_PHONE_BUILD_SOURCE=commit)
     if reverse:
         env.update(ROR2_REVERSE_ORACLE_LAYOUT=str(destination / "layout.json"), ROR2_REVERSE_ORACLE_EDITOR=str(editor), ROR2_REVERSE_ORACLE_MONO=str(mono))
     args = [

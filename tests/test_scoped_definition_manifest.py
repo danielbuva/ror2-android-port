@@ -45,6 +45,9 @@ class ScopedDefinitionManifestTests(unittest.TestCase):
             for signature in (
                 "public static RoR2.BuffDef[] BuffDefinitions()",
                 "public static RoR2.ItemDef[] ItemDefinitions()",
+                "public static RoR2.KeyItemDef[] KeyItemDefinitions()",
+                "public static RoR2.ItemGroupType[] ItemGroupTypes()",
+                "public static RoR2.ItemGroupProvider[] ItemGroupProviders()",
                 "public static T[] DefinitionFamily<T>(System.Collections.Generic.IEnumerable<T> selected)",
                 "public static int[][] FamilyLocationGroups(JObject manifest, string category)",
                 "public static T[] CategoryFamily<T>(string category, IEnumerable<T> selected)",

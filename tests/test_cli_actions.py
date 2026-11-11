@@ -334,6 +334,7 @@ class PrototypeActionTests(unittest.TestCase):
         # Added actions have separate dispatch contracts rather than changing
         # the historical pre-registry snapshot.
         added = {
+            "source-camera-program-bundle",
             "phone-content-ambient-fixture",
             "phone-content-ambient-check",
             "phone-texture-fixture",
@@ -359,6 +360,7 @@ class PrototypeActionTests(unittest.TestCase):
         self.assertEqual(
             {name for name, entry in actions.ACTIONS.items() if entry.status == "current"},
             {
+                "source-camera-program-bundle",
                 "whole-catalog-fast-build",
                 "shared-catalog-code-build",
                 "shared-catalog-fast-build",

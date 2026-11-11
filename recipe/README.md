@@ -98,6 +98,76 @@ Before adding a file, audit it for provenance, privacy, licensing and sensitive 
 record the result below, and run `python3 scripts/audit-public.py`. Where a generator can
 produce the file from the input, prefer tracking the generator.
 
+## Recipe change audit (2026-11-11)
+
+Scope: all 30 paths added or changed under `recipe/` from the last commit before
+2026-11-04 UTC, `e44ada9ed7c48b9ccba6064b3f5c91afa542b01a`, through
+`2d7df7d5`. This includes 29 recipe files and this README's audit additions.
+The subsequent main update through `7d5ad354` changes no recipe files.
+Acceptance: each path has a recorded provenance, privacy, licensing and
+protected-content review, including decompressed JSONL, with any violation fixed
+or explicitly reported. This is a host-only publication audit, not a loadability,
+playability or phone-install qualification.
+
+All 29 recipe files pass the existing Recipe boundaries above. The table pins
+reviewed bytes and identifies the purpose of each change. Original-input
+selectors, hashes, GUIDs, object IDs and pointer relationships are needed to
+locate or link content from the user's installation; none supplies asset bodies,
+serialized gameplay values, shader implementation, pixels, audio or game code.
+No private paths, device/storage/account identifiers, credentials or access-control
+bypasses were found. Repository source pin changes refer to authored tooling;
+SDK/package rows retain acquisition and license checks rather than embedding
+third-party implementation. No new redistribution permission is implied.
+
+Menu's saved path/type/object IDs and provider order are build identities, not
+layout/content replacements. `player_ui.py` checks the complete source graph and
+resolves providers before applying them. Managed/Tree records remain original-
+input gated in `record_produce.py`; the compressed Tree profile was inspected as
+JSON, not treated as an opaque binary. The complete profile contains 66 Trees in
+seven source members, with four new records and unchanged earlier records.
+EventSystem policies name the pinned SDK declaration and hash; constructor
+values are derived locally. Shader remaps bind produced source suppliers;
+Uber's 36 package shader/compute selectors (12 compute) name resources and
+kernel/thread-group contracts while the pinned package supplies implementation.
+Dispatcher requests contain symbolic input/output bindings only.
+
+This README's changed prose and tables were also reviewed: they describe
+provenance and bounded reconstruction relationships, without protected content
+or private capture. Corrected the older Tree member count from 37 to seven.
+No clear recipe boundary violations or unresolved publication findings remain.
+
+| Recipe | Reviewed change | SHA-256 |
+| --- | --- | --- |
+| `native-view-camera-transform.json` | Authored build/camera source pins | `92c77d4d5b5fbd5072502077cfbcacdb4e567243f3d1d5ccfff2db58190d2fb2` |
+| `original-audio-owner-sources.json` | Authored runtime/audio source pins | `90a4d356a5af40fadc94724df38823c1b9ae80a1ef111f4f3248776ba97e4e99` |
+| `owner-artifactworld01-native-records.json` | Original component selectors and pointer relocations | `728ac3483b07550d4f46e1cfa50f011a69e0b24284dc62754a23ec61fb0cec80` |
+| `owner-champrush-director-records.json` | Original director selectors and pointer relocations | `a7d60a106ef9b5be7c22010acbb2ea9118f4cbe6ad6e6226f034e047ece16536` |
+| `owner-commando-objects.json` | SDK EventSystem policy, script identities and supplier pins | `42777b5337e15e18a6fd1c8a65fee68b6eb831d03830604851aa2635ed54d972` |
+| `owner-commando-reused-records.json` | 347 MonoScript identities and supplier pins | `6474d221dbdb80e9d29c4f3a2f6d2ce3a132980c06c4240d48dc25b55592cb2c` |
+| `owner-conduitcanyon-director-records.json` | Original director selectors and pointer relocations | `5899bf05658d41d38794ca5e1a3fe89413613b45c9931ae041f8b313c026b632` |
+| `owner-foggyswamp-source-objects.json` | Existing source-produced supplier hash references | `fd127632b42ede902cf0609a4a4ee7a4ab394a73843d766c43c9af8a97139763` |
+| `owner-intro-whole-objects.json` | Existing source-produced supplier hash references | `4c2b26d74e53b26396c90b408d2b2320c7f312925151ee0d476c5d708e08dd3b` |
+| `owner-meridian-whole-objects.json` | Existing source-produced supplier hash references | `591d9044b0e374c138fc312c32e6beae8dffe3a5bdfa43b7ae29212eb2591afd` |
+| `owner-native-job-inputs.json` | Dispatcher placeholders for acquired native inputs | `8aac45cbe864a1364ab2e306fae59ff3d94e1ac07a51b2940a473a565125f9cf` |
+| `owner-objective-reused-records.json` | SDK EventSystem script identity | `0f03acd21a7000bd31127aed63acd0957ebb3d72bdd3737c0cbd40c71619742c` |
+| `owner-objective-support-objects.json` | SDK EventSystem policy, script identity and supplier pins | `afe5e32ab5f57f19949f672d7cd4a3d91a97a861f332d41ab46330d239baabf0` |
+| `owner-outro-whole-objects.json` | Existing source-produced supplier hash references | `0b3707206ccb85b269b4ffb7fdbc2281e29996f6102b823b1a5f3a8e4939f5b7` |
+| `owner-player-menu.json` | 591 path/type/object IDs and 20 external provider identities | `68cdf84752aceffbeab7f9d975eeaae706e67eb1a7aff0015b974e8e2ee2120b` |
+| `owner-player-phases.json` | Five source profiles and complete output filename sets | `49f3c80455532ce9c3c94db2e8dd4807ab0ceb7a96c144d78a064ddb94dcd8fc` |
+| `owner-promorailgunner-whole-objects.json` | Existing source-produced supplier hash references | `465ee55dcb13fd58aaeacb0aec4e620756444822c43e4eaaccb8547e08dd3509` |
+| `owner-promovoidsurvivor-source-lighting-objects.json` | Existing source-produced supplier hash references | `3a3f55032bc988f25fca554416d433ee2c9d1860a2649f79c475ea30a161013a` |
+| `owner-satellitescene-whole-objects.json` | Existing source-produced supplier hash references | `80531ba46512543942b88c586f2c31700e39ae5cda3cb4d43dc292603123e676` |
+| `owner-sdk-job-inputs.json` | SDK/Maven filenames and dispatcher placeholders | `bbcfc451a0320389b0d7e0d79786670a0108e3fcb30991c2c5cead859afa15ad` |
+| `owner-splash-director-records.json` | Original director selectors and pointer relocations | `66953dab4e23d78963177719232bd2accd92cf47402f88fc5bfc0378370acad8` |
+| `owner-voidoutro-whole-objects.json` | Existing source-produced supplier hash references | `362766b8df0d529abf265f0073d4dc7664841f3da1c401c8f5c9656188a69012` |
+| `owner-whole-game-bundle-managed-records.json` | 221 original managed selectors and 512 pointer relocations | `732e8280a4446a4f1472937b1885533d65fd95749d60e551e78d8f653a2a3a79` |
+| `owner-whole-game-bundle-tree-records.jsonl.gz` | Four added Tree/WindAsset identity relationships | `d4151bf43fee3a6512203eb3a346bcdb986e54665984fc1deacc976adac2f302` |
+| `owner-whole-scene-postprocess-shader-remap.json` | 24 source-produced shader identity remaps | `a88c83cd062eca5241bdd8a57b2b34a0d211cd093d3e474ac90c9b0c8df138cc` |
+| `owner-whole-scene-standard-shader-remap.json` | Two source-produced shader identity remaps | `367d8fc933e722d167036230a28446879695703d10859d202ae71f25433e10da` |
+| `shader-catalog-overrides.json` | Authored generator/recipe pins | `f2cd730b79cb92f5eb797111916e1259ca2e0371172801d83699f251001aff19` |
+| `shader-postprocessing-uber-candidate.json` | Public package selectors and camera program contracts | `948b003b521e440ab6b087093c715624bb0073acb04c8df13056272aa8503805` |
+| `shader-translucent-candidate.json` | Authored shader helper source pin | `5e73e7b54dbd9970ae78f61855b393fb6aa79ef38a03320dd7e1c42ea6d0920b` |
+
 ## Audit record
 
 | Recipe | SHA-256 |
@@ -211,9 +281,10 @@ resource field, source Uber placeholder, run profile settings, and official
 Post Processing 2.3.0 archive/license/source hashes. The shader source declares
 three passes and the accepted caller selects pass 0; generation also pins the
 shader closure and preserves each source asset's `.meta`, resource, and camera
-bytes. The same recipe now binds five AO/LUT compute and two AO/LUT graphics
-programs to the original resource fields, asset identities and 22 kernel/thread
-group contracts. These use new deterministic lab GUIDs under the loading scene's
+bytes. The same recipe binds all 12 compute and 24 graphics programs to the original
+resource fields, asset identities, Shader names and compute kernel/thread-group
+contracts. Typed resource joins distinguish identically named Shader and Compute
+slots. These use new deterministic lab GUIDs under the loading scene's
 Resources directory. No original program body, profile values or code is tracked;
 only the minimum reconstruction identities and compatibility contracts are public.
 The archive and generated source
@@ -281,7 +352,7 @@ visual parity is claimed. Manual provenance/privacy review: 2026-10-24.
 | `owner-avatars.json` | Private replay Avatar bodies (J1075) | Minimum original/destination identities, hashes, source extents and source-entry permutations. | No strings, poses, rig/geometry values, target literals or byte frames; full audit above, 2026-10-24. | Explicit PC-input-only `avatar_produce.py`; no current game-build consumer. |
 | `owner-meshes.json` | Protected mesh bodies in the private replay packet, for the included cohort only (J1070) | Original bundle/object/resource selectors, destination identities/hashes and authored import/conversion settings. | No geometry arrays, collision data, target byte frames or float literals; full audit above, 2026-10-24. Two cases remain excluded. | Explicit original-input-only `mesh_produce.py`; no current game-build consumer. |
 | `shader-postprocessing-bloom-candidate.json` | Exported one-pass Bloom and exact source-camera CopyStd placeholders | Accepted-input source/meta/resource identities, official Unity package/license hashes and pass contracts; authored camera staging pin refreshed without changing camera transforms. | Authored selection metadata only; upstream source and generated content stay local under Unity Companion License. Manual audit 2026-10-23 described above. | `shader_postprocessing_bloom`, whole-catalog preparation and catalog replay comparison; default off. |
-| `shader-postprocessing-uber-candidate.json` | Exact source-camera `PostProcessResources.uber` one-pass constant-white placeholder | Accepted-input Main Camera/resource/shader/profile identities, official archive/license/source hashes, pass-0 call contract, seven original AO/LUT resource joins, 22 kernel/thread groups and transitive includes. | Reconstruction metadata only; official shader/includes and generated candidates stay ignored under Unity Companion License. Package 2.3.0 is a compatible reference, not a shipped-version claim. Audited 2026-10-24. | `shader_postprocessing_uber`, whole-catalog preparation and catalog replay comparison; independent default-off activation. |
+| `shader-postprocessing-uber-candidate.json` | Exact source-camera `PostProcessResources.uber` one-pass constant-white placeholder | Accepted-input Main Camera/resource/shader/profile identities, official archive/license/source hashes, pass-0 call contract, 36 original typed program/resource joins, Shader names and compute kernel/thread groups and transitive includes. | Reconstruction metadata only; official shader/includes and generated candidates stay ignored under Unity Companion License. Package 2.3.0 is a compatible reference, not a shipped-version claim. Audited 2026-10-24. | `shader_postprocessing_uber`, whole-catalog preparation and catalog replay comparison; independent default-off activation. |
 
 | `owner-app-host-tools.json` | Private scoped native-host staging plan | Exact open Python/dependency file hashes, relative package paths/link targets and 21 pinned public producer source hashes; source commit is a retrieval hint. | Authored tool metadata only; no binary, SDK/game content, keys, credentials, private paths or device/storage identifiers. License/distribution boundaries are recorded below. Audited 2026-10-23. | `tools/phone-build/managed-host/stage.py` validates the fixed profile; its staged phone builder verifies file hashes and creates a separate private fixture, with no game/default-build consumer. |
 | `wwise-init-android.json` | Private fixture-only Init metadata generator constants (J744) | Minimum source-bank path, format/identity/size and plugin/device/bus relationships; generated bank bodies remain local. | Authored parsing/serialization and metadata only; accepted full inventory plus explicit source hash required, exclusive ignored outputs, no SDK/media/implementation/private identifiers. Audit details below. | `wwise_init_platform.py`, explicitly invoked support tool; no current game-build dependency. |
@@ -6723,7 +6794,7 @@ and runtime gates stay open.
 | `owner-whole-game-bundle-tree-records.jsonl.gz` | `d4151bf43fee3a6512203eb3a346bcdb986e54665984fc1deacc976adac2f302` |
 
 Audit: 2026-10-31. The existing generic native record owner selects 62 original
-Trees across 37 source members. Qualified GameObject component edges and
+Trees across seven source members. Qualified GameObject component edges and
 reciprocal original GameObject pointers establish unique typed identities and
 checked relocations. Additional nonzero pointers exclude 2,028 candidates;
 no WindAsset endpoint is guessed. Pinned EditorKit `4128710` EntryLookup
@@ -6924,3 +6995,10 @@ strict SDK curve projection from the legacy animation owner (J1163). Only a
 temporary properties-hash tree gains editor tangent metadata; original record
 bytes and runtime schemas remain source-owned. The pinned public toolchain
 supplies editor layouts. Authored fixtures contain no original game data.
+
+The complete source-camera program cohort extends the existing public-package
+recipe with identity/hash selectors and measured kernel/thread-group contracts.
+Manual provenance/privacy review (2026-11-11): no original body, shader math,
+pixels, upstream implementation or private configuration is tracked. Generated
+implementations stay ignored under the pinned package license; compilation and
+device acceptance remain separate gates.

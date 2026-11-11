@@ -17,6 +17,7 @@ import subprocess
 ROOT = Path(__file__).resolve().parents[1]
 HEADERS = ("IUnityInterface.h", "IUnityGraphics.h", "IUnityGraphicsVulkan.h")
 SOURCE = ROOT / "tools/phone-build/owner-apk/graphics/native/UnityVulkanContract.cpp"
+PRELOAD = SOURCE.with_name("GraphicsDriverPreload.cpp")
 LIMIT = 1024 * 1024
 
 
@@ -72,11 +73,21 @@ def inspect(editor, expected_version, *, runner=subprocess.run):
         if not (sysroot / "usr/include/vulkan/vulkan.h").is_file():
             raise Unavailable("bundled-vulkan-header-unavailable")
         # No project, build, temporary source, object, device or Editor invocation.
-        command = [str(compiler), "--target=aarch64-linux-android28", "--sysroot=" + str(sysroot), "-std=c++11", "-fsyntax-only", "-I" + str(api), str(SOURCE)]
+        command = [
+            str(compiler),
+            "--target=aarch64-linux-android28",
+            "--sysroot=" + str(sysroot),
+            "-std=c++11",
+            "-fsyntax-only",
+            "-I" + str(api),
+            str(SOURCE),
+            str(PRELOAD),
+        ]
         completed = runner(command, capture_output=True, timeout=60, check=False)
         result["v1_intercept_compile"] = completed.returncode == 0
         result["classification"] = "header-contract-passed" if completed.returncode == 0 else "header-contract-compile-failed"
         result["fixture_sha256"] = hashlib.sha256(read(SOURCE)).hexdigest()
+        result["preload_fixture_sha256"] = hashlib.sha256(read(PRELOAD)).hexdigest()
     except Unavailable as failure:
         result["classification"] = str(failure)
     except (OSError, ValueError, plistlib.InvalidFileException, subprocess.SubprocessError):

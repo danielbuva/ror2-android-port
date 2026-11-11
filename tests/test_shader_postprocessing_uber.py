@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import json
 import hashlib
+from contextlib import ExitStack
+import os
 from pathlib import Path
 import sys
 import tarfile
@@ -16,6 +18,85 @@ import shader_postprocessing_uber as uber
 
 
 class UberContractTests(unittest.TestCase):
+    def test_bundle_staging_failures_write_receipt_and_remove_only_owned_project(self):
+        import source_camera_bundle as bundle
+
+        for failure in ("before-project", "partial-stage", "missing-source", "missing-editor"):
+            with self.subTest(failure=failure), tempfile.TemporaryDirectory() as temporary, ExitStack() as stack:
+                root = Path(temporary).resolve()
+                work = root / "work"
+                (work / "config").mkdir(parents=True)
+                (work / "config/reconstruction.json").write_text(json.dumps({"projects": ["export"], "input_id": "fixture"}))
+                output = work / "supplier"
+                request = root / "request.json"
+                request.write_text(json.dumps({"output": str(output)}))
+                fixture = root / "tools/phone-build/SourceCameraProgramBundle.cs"
+                fixture.parent.mkdir(parents=True)
+                fixture.write_text("// Authored fixture\n")
+                recipe = root / "recipe.json"
+                recipe.write_text(json.dumps({"include_target_prefix": "Assets/Includes/"}))
+                candidate = root / "candidate"
+                candidate.mkdir()
+                (candidate / "manifest.json").write_text("{}")
+                # Keep caller-owned inputs outside the disposable project.
+                (candidate / "input.shader").write_text("// Authored shader fixture\n")
+                (candidate / "input.shader.meta").write_text("guid: " + "a" * 32 + "\n")
+                manifest = {
+                    "includes": [],
+                    "programs": [{"target": "Assets/Fixture.shader", "candidate_path": "input.shader", "kernels": [], "kernel_thread_groups": []}],
+                }
+
+                def stage(project):
+                    if failure == "before-project":
+                        raise RuntimeError("staging failed before project creation")
+                    (project / "Assets/Editor").mkdir(parents=True)
+                    (project / "Library").mkdir()
+                    (project / "Library/fixture-cache").write_text("rebuildable fixture")
+                    if failure == "partial-stage":
+                        raise RuntimeError("staging failed after project creation")
+
+                for name, value in {"ROOT": root, "WORK": work, "RECIPE": recipe}.items():
+                    stack.enter_context(patch.object(bundle, name, value))
+                stack.enter_context(patch.object(bundle, "generate_candidate", return_value=(candidate, manifest)))
+                stack.enter_context(patch("phone_content.stage", side_effect=stage))
+                stack.enter_context(patch.object(bundle.subprocess, "check_output", return_value="fixture-commit\n"))
+                run = stack.enter_context(patch.object(bundle.subprocess, "run"))
+                stack.enter_context(patch.dict(os.environ, {"UNITY_EDITOR": "fixture-editor"}))
+                if failure == "missing-source":
+                    (candidate / "input.shader.meta").unlink()
+                if failure == "missing-editor":
+                    del os.environ["UNITY_EDITOR"]
+                expected = RuntimeError if failure in ("before-project", "partial-stage") else FileNotFoundError if failure == "missing-source" else KeyError
+                with self.assertRaises(expected):
+                    bundle.build(request)
+                run.assert_not_called()
+                self.assertFalse((output / "project").exists())
+                receipt = json.loads((output / "result.json").read_text())
+                self.assertFalse(receipt["success"])
+                self.assertFalse(receipt["device_accepted"])
+                self.assertFalse(receipt["phone_producer_qualified"])
+                self.assertEqual((candidate / "input.shader").read_text(), "// Authored shader fixture\n")
+                self.assertTrue((output / ".prune-keep").is_file())
+
+    def test_bundle_checks_vulkan_groups_independently_of_metal(self):
+        import types
+        import source_camera_bundle
+
+        native = {"threadGroupSize": [16, 8, 1], "code": [1]}
+        vulkan = {"targetRenderer": 21, "kernels": [{"name": "Exposure", "variantMap": [("", native)]}]}
+        metal = {"targetRenderer": 16, "kernels": [{"name": "Exposure", "variantMap": [("", {"threadGroupSize": [8, 8, 1], "code": [1]})]}]}
+        tree = {"m_Name": "Exposure", "variants": [metal, vulkan]}
+        obj = types.SimpleNamespace(type=types.SimpleNamespace(name="ComputeShader"), read_typetree=lambda: tree)
+        rows = [{"target": "Assets/Exposure.compute", "field": "exposure", "kernels": ["Exposure"], "kernel_thread_groups": [[16, 8, 1]]}]
+        with patch("UnityPy.load", return_value=types.SimpleNamespace(objects=[obj])):
+            source_camera_bundle.validate_vulkan_programs("fixture", rows)
+            native["threadGroupSize"] = [8, 8, 1]
+            with self.assertRaisesRegex(ValueError, "Vulkan compute contract differs"):
+                source_camera_bundle.validate_vulkan_programs("fixture", rows)
+            tree["variants"] = [metal]
+            with self.assertRaisesRegex(ValueError, "Vulkan compute variant absent"):
+                source_camera_bundle.validate_vulkan_programs("fixture", rows)
+
     def test_shared_postprocessing_include_replay_and_bloom_only_replay(self):
         import importlib.util
         import shutil
@@ -228,6 +309,12 @@ Pass
         candidate = uber.rewrite_includes(files["Builtins/Uber.shader"], closure)
         self.assertIn(b'"PostProcessing/StdLib.hlsl"', candidate)
         self.assertIn(b'"PostProcessing/Builtins/Distortion.hlsl"', candidate)
+        debug = b'#include "../Builtins/ExposureHistogram.hlsl"\n#include "../StdLib.hlsl"'
+        relocated = uber.rewrite_includes(
+            debug, {"Builtins/ExposureHistogram.hlsl": b"", "StdLib.hlsl": b""}, "Assets/PostProcessing/", "Debug/LightMeter.shader"
+        )
+        self.assertIn(b'"Assets/PostProcessing/Builtins/ExposureHistogram.hlsl"', relocated)
+        self.assertIn(b'"Assets/PostProcessing/StdLib.hlsl"', relocated)
         files["Builtins/Distortion.hlsl"] = b'#include "../../../outside.hlsl"'
         with self.assertRaisesRegex(RuntimeError, "escapes"):
             uber.include_closure(files, "Builtins/Uber.shader")
@@ -356,7 +443,11 @@ Pass
             }
             bodies = {
                 "source_camera_prefab": b"m_Resources: {fileID: 1, guid: " + b"a" * 32 + b", type: 2}\nstopNaNPropagation: 1\n",
-                "resource": b"uber: {fileID: 2, guid: " + b"b" * 32 + b", type: 3}\n  lut3DBaker: {fileID: 3, guid: " + b"f" * 32 + b", type: 2}\n",
+                "resource": b"lut3DBaker: {fileID: 4800000, guid: 0123456789abcdef0123456789abcdef, type: 3}\nuber: {fileID: 2, guid: "
+                + b"b" * 32
+                + b", type: 3}\n  lut3DBaker: {fileID: 7200000, guid: "
+                + b"f" * 32
+                + b", type: 2}\n",
                 "shader": b'Shader "Hidden/Dummy" { Pass {} }\n',
                 "profile": b"--- !u!114\n  m_Name: Bloom\n  active: 1\n  enabled:\n    overrideState: 1\n    value: 1\n--- !u!114\n  m_Name: ColorGrading\n  active: 1\n  enabled:\n    overrideState: 1\n    value: 0\n--- !u!114\n  m_Name: AutoExposure\n  active: 1\n  enabled:\n    overrideState: 1\n    value: 0\n",
             }

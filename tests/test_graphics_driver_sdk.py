@@ -54,7 +54,7 @@ class GraphicsDriverSdkTests(unittest.TestCase):
         self.assertIn("-fsyntax-only", commands[0])
         self.assertIn("--target=aarch64-linux-android28", commands[0])
         self.assertNotIn("-o", commands[0])
-        self.assertEqual(commands[0][-1], str(SDK.SOURCE))
+        self.assertEqual(commands[0][-2:], [str(SDK.SOURCE), str(SDK.PRELOAD)])
         for field in ("revision_verified", "runtime_preload_verified", "driver_load_verified", "device_actions", "editor_actions"):
             self.assertFalse(result[field])
         text = json.dumps(result)
