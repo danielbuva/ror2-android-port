@@ -335,7 +335,13 @@ of physical script-first body placement. The existing checked reference
 relationships and pinned record-pack dependency relocations generate sorted
 external PreloadData. Original preload built-in resource pointers retain their
 path IDs after checking preload membership and the original resource external;
-no source object body is required for these SDK-owned identities. Generated
+no source object body is required for these SDK-owned identities.
+`bundle_preload.relocate_pointer_fields` applies qualified routes per parent
+field, including local pointers whose old destination IDs collided across
+original members. It preserves every other field and nonpointer byte; external
+relocation additionally requires complete external-field coverage. Source and
+endpoint qualification remains the caller's responsibility before relocation.
+Generated
 DefaultMaterial records reuse the existing `player_data.shared_default_material`
 projection of a pinned SDK Material and original Shader, followed by checked
 PPtr relocation; their destination native type remains original. Native scene

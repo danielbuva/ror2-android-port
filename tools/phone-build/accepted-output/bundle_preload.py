@@ -145,6 +145,19 @@ def qualify_external_fields(value, body, typ, proofs, endpoint_record):
 
 def relocate_external_fields(value, body, typ, targets, externals):
     """Allocate qualified fields by destination member, never by an old slot."""
+    fields = pointers(body, typ, {})
+    required = {field for field, (fid, pid) in fields.items() if fid and pid}
+    if set(targets) != required:
+        raise ValueError("External relocation requires complete per-field coverage")
+    return relocate_pointer_fields(value, body, typ, targets, externals)
+
+
+def relocate_pointer_fields(value, body, typ, targets, externals):
+    """Apply source-qualified, parent-specific routes to local or external fields.
+
+    A shared old path ID does not identify a source object: callers supply each
+    field's qualified endpoint. Other fields and all non-pointer data survive.
+    """
     if len(set(externals)) != len(externals) or value["destination"][1] in externals:
         raise ValueError("Ambiguous external member allocation")
     members = {value["destination"][1]: tuple(value["destination"][:2])}
@@ -153,9 +166,8 @@ def relocate_external_fields(value, body, typ, targets, externals):
         if members.setdefault(target[1], identity) != identity:
             raise ValueError("Ambiguous external member allocation")
     fields = pointers(body, typ, {})
-    required = {field for field, (fid, pid) in fields.items() if fid and pid}
-    if set(targets) != required:
-        raise ValueError("External relocation requires complete per-field coverage")
+    if any(field not in fields or not fields[field][1] for field in targets):
+        raise ValueError("Relocation requires an existing non-null pointer field")
     references = []
     for field, target in targets.items():
         if not target[2]:

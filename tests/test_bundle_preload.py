@@ -27,6 +27,23 @@ def pointer(name):
 
 
 class BundlePreloadTests(unittest.TestCase):
+    def test_contextual_local_routes_do_not_alias_shared_path_ids(self):
+        with tempfile.TemporaryDirectory() as directory:
+            owner, body, typ, *_ = self.external_contract(Path(directory))
+            # Two distinct original source objects had collapsed onto one local
+            # destination. Repair the qualified field, not every matching ID.
+            body = struct.pack("<iqiqi", 0, 100, 0, 100, 73)
+            first = {("first",): ("authored", "CAB-authored", 201)}
+            result = P.relocate_pointer_fields(owner, body, typ, first, [])
+            self.assertEqual(struct.unpack("<iqiqi", result), (0, 201, 0, 100, 73))
+            second = {("second",): ("dependency", "CAB-dependency", 301)}
+            result = P.relocate_pointer_fields(owner, result, typ, second, ["CAB-dependency"])
+            self.assertEqual(struct.unpack("<iqiqi", result), (0, 201, 1, 301, 73))
+            with self.assertRaisesRegex(ValueError, "existing non-null pointer"):
+                P.relocate_pointer_fields(owner, body, typ, {("absent",): first[("first",)]}, [])
+            with self.assertRaisesRegex(ValueError, "complete per-field"):
+                P.relocate_external_fields(owner, result, typ, {}, ["CAB-dependency"])
+
     def test_final_type_proves_reallocated_script_slot_and_preserves_full_identity(self):
         M = P.module("bundle_manifest")
         nodes = [dict(type="MonoBehaviour", name="Base", size=-1, level=0, meta=0, flags=0, version=1)]
