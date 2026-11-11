@@ -293,6 +293,16 @@ class WholePayloadReuseTests(unittest.TestCase):
         with self.assertRaisesRegex(RuntimeError, "Content inputs changed"):
             build.validate_whole_payload_reuse(self.project)
 
+    def test_retention_marker_is_not_payload_but_other_additions_still_refuse(self):
+        payload = self.work / "generated-android-data"
+        marker = payload / ".prune-keep"
+        marker.touch()
+        build.validate_whole_payload_reuse(self.project)
+        self.assertTrue(marker.is_file())
+        (payload / "unexpected").write_text("not frozen content")
+        with self.assertRaisesRegex(RuntimeError, "payload identity changed"):
+            build.validate_whole_payload_reuse(self.project)
+
     def test_authored_bootstrap_migrates_old_receipt_without_changing_payload(self):
         receipt = self.work / "whole-catalog-code-base.json"
         frozen = read(receipt)

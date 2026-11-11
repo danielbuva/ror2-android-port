@@ -398,7 +398,7 @@ def validate_whole_payload_reuse(project, receipt_path=None):
     expected = {path: value for path, value in receipt["files"].items() if path not in added}
     if current != expected:
         raise RuntimeError("Content inputs changed; code-only bundle reuse rejected")
-    current_payload = {p.name: sha(p) for p in (WORK / "generated-android-data").iterdir() if p.is_file()}
+    current_payload = {p.name: sha(p) for p in (WORK / "generated-android-data").iterdir() if p.is_file() and p.name != ".prune-keep"}
     if current_payload != receipt["payload"]:
         raise RuntimeError("Frozen whole-catalog payload identity changed")
     if added:
@@ -986,7 +986,7 @@ def build(
         timing.phases["symbols_clone_hash_validation"] = time.monotonic() - symbols_start if android_symbols == "debugging" else 0.0
         payload = dest / "payload"
         with timing.phase("payload_reference" if iteration_mode else "payload_clone_hash"):
-            r["payload"] = {p.name: sha(p) for p in (WORK / "generated-android-data").glob("*") if p.is_file()}
+            r["payload"] = {p.name: sha(p) for p in (WORK / "generated-android-data").glob("*") if p.is_file() and p.name != ".prune-keep"}
             if iteration_mode:
                 payload = Path(anchor["payload_directory"])
                 if payload.resolve() != (Path(anchor["apk"]).parent / "payload").resolve() or not payload.resolve().is_relative_to(WORK.resolve()):
@@ -995,7 +995,11 @@ def build(
                     raise RuntimeError("Normal-build payload reference is missing or changed")
             else:
                 shutil.copytree(
-                    WORK / "generated-android-data", payload, dirs_exist_ok=True, copy_function=lambda a, b: copy_build_artifact(a, b, verify=False)
+                    WORK / "generated-android-data",
+                    payload,
+                    dirs_exist_ok=True,
+                    ignore=shutil.ignore_patterns(".prune-keep"),
+                    copy_function=lambda a, b: copy_build_artifact(a, b, verify=False),
                 )
             r["payload_directory"] = str(payload)
         from iteration_apk import write_anchor

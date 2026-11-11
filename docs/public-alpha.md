@@ -112,6 +112,10 @@ retain J595/J755 ownership guards; final alpha installation remains separate.
       ([J1407](PORTING_JOURNAL.md#j1407--preserve-cooldown-admission-readings-across-display-wake)).
       Final-16 matched-menu managed growth remains positive; physical navigation,
       a memory plateau and ordinary long-run dependency retention remain open.
+      [J1408](PORTING_JOURNAL.md#j1408--reclaim-measured-returned-pool-storage-after-completed-sessions)
+      clears measured returned BulletHit/Renderer-list storage after each of three
+      supervised sessions, with continuation; positive matched-menu managed growth
+      remains. This scoped cleanup does not close the memory or physical-input gate.
 - [ ] Coordinate gameplay/audio/animation prerequisites with the main session;
       acceptance follows [capability gates](milestones.md), including an
       unassisted run. Keep Moon/finale manual.

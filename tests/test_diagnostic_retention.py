@@ -19,6 +19,7 @@ using System.Collections.Generic;
 using UnityEngine;
 namespace UnityEngine {
  public class Object { public bool destroyed; public static implicit operator bool(Object x){return !ReferenceEquals(x,null)&&!x.destroyed;} }
+ public class Renderer : Object {}
  public static class Debug { public static List<string> logs=new List<string>(); public static void Log(string value){logs.Add(value);} }
  public static class JsonUtility { public static string ToJson(object value,bool pretty=false){return new System.Web.Script.Serialization.JavaScriptSerializer().Serialize(value);} }
 }
@@ -59,6 +60,12 @@ class BulletAttack {
  private static HitPool bulletHitPool=new HitPool();
  public static Stack<BulletHit> Returned {get{return bulletHitPool.Returned;}}
 }
+namespace HG {
+ public abstract class CollectionPool<T,C> where C:ICollection<T>,new() {
+  private static readonly Stack<C> pooledCollections=new Stack<C>();
+  public static Stack<C> Returned {get{return pooledCollections;}}
+ }
+}
 static class Run {public static UnityEngine.Object instance;}
 static class NetworkServer {public static bool active;}
 static class NetworkClient {public static bool active;}
@@ -70,6 +77,32 @@ class ResourceOwner {
  CLEANUP
  OVERLAP_METHOD
  SPAWN_METHOD
+ RETURNED_POOLS
+ public static void VerifyReturnedPools(){
+  var owner=new ResourceOwner();var target=new HurtBox();
+  var rentedHit=new BulletAttack.BulletHit {hitHurtBox=target,other=target};
+  var rentedList=new List<Renderer> {new Renderer()};
+  var returnedHit=new BulletAttack.BulletHit {hitHurtBox=target,other=target};
+  var returnedList=new List<Renderer> {rentedList[0]};
+  var hits=BulletAttack.Returned;var lists=HG.CollectionPool<Renderer,List<Renderer>>.Returned;
+  hits.Push(returnedHit);lists.Push(returnedList);
+  for(int flag=0;flag<4;flag++){
+   owner.r.world.cleaned=flag!=0;Run.instance=flag==1?new UnityEngine.Object():null;NetworkServer.active=flag==2;NetworkClient.active=flag==3;
+   bool refused=false;try{owner.ReclaimReturnedSessionPools();}catch(InvalidOperationException){refused=true;}
+   if(!refused||hits.Count!=1||lists.Count!=1)throw new Exception("Live-session returned storage mutated");
+  }
+  owner.r.world.cleaned=true;Run.instance=null;NetworkServer.active=NetworkClient.active=false;
+  for(int session=0;session<3;session++){
+   // Fresh deserialized/allocated objects may be returned without an earlier rent.
+   for(int i=0;i<100;i++){hits.Push(new BulletAttack.BulletHit());lists.Push(new List<Renderer>());}
+   var counts=owner.ReclaimReturnedSessionPools();
+   if(hits.Count!=0||lists.Count!=0||!counts[0].EndsWith(session==0?":101/0":":100/0")||!counts[1].EndsWith(session==0?":101/0":":100/0"))throw new Exception("Returned storage retained or counts lost");
+   if(((Array)hits.GetType().GetField("_array",BindingFlags.Instance|BindingFlags.NonPublic).GetValue(hits)).Length!=0||((Array)lists.GetType().GetField("_array",BindingFlags.Instance|BindingFlags.NonPublic).GetValue(lists)).Length!=0)throw new Exception("Empty pool backing capacity retained");
+  }
+  if(!ReferenceEquals(rentedHit.hitHurtBox,target)||!ReferenceEquals(rentedHit.other,target)||rentedList.Count!=1||!ReferenceEquals(returnedHit.hitHurtBox,target)||returnedList.Count!=1||!ReferenceEquals(returnedList[0],rentedList[0]))throw new Exception("Pool reclamation mutated an item or a checked-out list");
+  var empty=owner.ReclaimReturnedSessionPools();
+  if(!empty[0].EndsWith(":0/0")||!empty[1].EndsWith(":0/0"))throw new Exception("Reclamation not idempotent");
+ }
  public static void VerifyOverlap(){
   var owner=new ResourceOwner();var dead=new HurtBox {destroyed=true};var live=new HurtBox();var second=new HurtBox();
   var list=OverlapAttack.Targets;list.Add(dead);list.Add(live);list.Add(null);list.Add(dead);list.Add(second);int capacity=list.Capacity;
@@ -111,7 +144,7 @@ class ResourceOwner {
   if(owner.ReleaseDestroyedPooledHitTargets()!=0)throw new Exception("Cleanup not idempotent");
  }
 }
-class Program {static void Main(string[] args){if(args[0]=="publication")LabDiagnostics.Verify(args[1]);else if(args[0]=="overlap")ResourceOwner.VerifyOverlap();else if(args[0]=="spawn")ResourceOwner.VerifySpawn();else ResourceOwner.Verify();Console.WriteLine(args[0]+": PASS");}}
+class Program {static void Main(string[] args){if(args[0]=="publication")LabDiagnostics.Verify(args[1]);else if(args[0]=="returned-pools")ResourceOwner.VerifyReturnedPools();else if(args[0]=="overlap")ResourceOwner.VerifyOverlap();else if(args[0]=="spawn")ResourceOwner.VerifySpawn();else ResourceOwner.Verify();Console.WriteLine(args[0]+": PASS");}}
 """
 
 
@@ -133,6 +166,7 @@ class DiagnosticRetentionTests(unittest.TestCase):
         resource = (ROOT / "tools/unity/runtime/session/SessionResourceBoundary.cs").read_text()
         code = code.replace("OVERLAP_METHOD", extract_method(resource, "    int PruneDestroyedOverlapTargets()"))
         code = code.replace("SPAWN_METHOD", extract_method(resource, "    int PruneDestroyedSpawnCardCallbacks()"))
+        code = code.replace("RETURNED_POOLS", extract_method(resource, "    string[] ReclaimReturnedSessionPools()"))
         code = code.replace("REMOVE_TARGETS", extract_method(resource, "    public static Delegate RemoveTargets("))
         source = directory / "Production.cs"
         source.write_text(code)
@@ -171,6 +205,9 @@ class DiagnosticRetentionTests(unittest.TestCase):
 
     def test_teardown_releases_only_destroyed_targets_of_returned_hits(self):
         self.case("cleanup")
+
+    def test_idle_teardown_reclaims_returned_storage_without_mutating_rentals(self):
+        self.case("returned-pools")
 
     def test_teardown_releases_only_destroyed_spawn_card_callbacks(self):
         self.case("spawn")

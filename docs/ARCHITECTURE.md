@@ -2406,6 +2406,14 @@ stay unchanged. During completed-session reclamation, `SessionResourceBoundary`
 releases already-destroyed HurtBox targets from returned bullet-hit pool entries,
 with no live world/network, after deferred destruction. It preserves live and
 checked-out hits and records its release count with existing registry cleanup.
+After that target cleanup, the owner clears and trims only the original returned
+BulletHit and HG Renderer-list stacks at the same idle boundary. Paired native
+captures identify growing unique returned objects in both; original sphere-cast
+allocations and serialized Highlight lists can enter without an earlier rental.
+This releases their idle storage without mutating any hit or list, including
+checked-out items. Other pools and live-session pooling remain unchanged.
+`tests/test_diagnostic_retention.py` exercises teardown refusal, repeated fresh
+returns, released backing capacity and untouched item/list contents.
 It also removes already-destroyed targets from the original overlap discovery
 scratch list at that same boundary, preserving live targets, order and capacity.
 Native captured roots identify the retained completed-character graph; ordinary

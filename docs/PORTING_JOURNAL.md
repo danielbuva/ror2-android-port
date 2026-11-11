@@ -3056,3 +3056,19 @@ above 80 C for 1,517.948 s; battery 32–36 C. No sustained safety-limit breach.
 Prewake admission does not establish exact Start temperature; captures delay Start.
 App/selectors absent, OLED asleep, lease released and prune complete. Ordinary
 play, physical input, retaining-root attribution and sustained qualification remain open.
+
+## J1408 — Reclaim measured returned pool storage after completed sessions
+
+2026-11-11. `SessionResourceBoundary` clears/trims returned BulletHit and HG
+Renderer-list stacks only after world/network teardown; item contents stay intact.
+Build payload identity/copy excludes the local `.prune-keep` retention marker.
+Evidence: `work/coordination/alpha-returned-pool-dependencies-20261111T142246Z/terminal.done.json`.
+APK `8a7d418f6a9fff32aa042e89423c6a0f012df5fbed2e3fd14581a142a1f787c6`, source `1438a859`.
+Three supervised sessions: two abandons (67.52/67.35 s), native loss (55.40 s),
+then menu 4; hit returns 58/101/67 and Renderer lists 72/72/68 each reclaim to 0.
+Adopted in-place install retains profile/settings hashes; later sessions continue.
+88 focused host tests/Ruff pass; backing-capacity and untouched-rental contracts covered.
+544 s wall; CPU/GPU peak 88.4 C, 71.77 s above 80 C; battery 27–30 C;
+1,426 runtime thermal samples, maximum gap 0.494 s. App/selectors absent, OLED asleep,
+lease released and prune complete. Final-two menu/collected managed deltas remain
++2.76/+0.97 MiB; memory plateau, ordinary long play and physical input remain open.
