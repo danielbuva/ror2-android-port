@@ -31,7 +31,8 @@ public final class OwnerInputImport {
             return;
         }
         Class<?> constants = Class.forName("android.system.OsConstants");
-        int flags = constants.getField("O_RDONLY").getInt(null) | constants.getField("O_DIRECTORY").getInt(null);
+        // O_DIRECTORY is not a public Android OsConstants field. Callers own and validate the directory.
+        int flags = constants.getField("O_RDONLY").getInt(null);
         FileDescriptor descriptor = (FileDescriptor) os.getMethod("open", String.class, int.class, int.class).invoke(null, directory.getPath(), flags, 0);
         try { os.getMethod("fsync", FileDescriptor.class).invoke(null, descriptor); }
         finally { os.getMethod("close", FileDescriptor.class).invoke(null, descriptor); }

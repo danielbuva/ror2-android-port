@@ -142,6 +142,72 @@ with a.writer(Path(sys.argv[2])) as output:
         self.assertEqual(result["reused"], ["apk/a"])
         self.assertEqual(calls, ["apk/a", "apk/b", "apk/b"])
 
+    def test_android_directory_sync_uses_public_flags_and_closes_on_failure(self):
+        compiler = shutil.which("javac")
+        if not compiler:
+            self.skipTest("Java compiler absent")
+        android = self.root / "android/system"
+        android.mkdir(parents=True)
+        constants = android / "OsConstants.java"
+        constants.write_text("package android.system; public final class OsConstants { public static final int O_RDONLY = 0; }")
+        os_source = android / "Os.java"
+        os_source.write_text("""package android.system;
+import java.io.*;
+public final class Os {
+    public static String trace = "";
+    public static boolean failSync;
+    private static FileDescriptor descriptor;
+    public static FileDescriptor open(String path, int flags, int mode) {
+        if (!new File(path).isDirectory() || flags != OsConstants.O_RDONLY || mode != 0)
+            throw new AssertionError("directory open contract");
+        trace += "open "; descriptor = new FileDescriptor(); return descriptor;
+    }
+    public static void fsync(FileDescriptor value) throws IOException {
+        if (value != descriptor) throw new AssertionError("descriptor identity");
+        trace += "fsync "; if (failSync) throw new IOException("injected sync failure");
+    }
+    public static void close(FileDescriptor value) {
+        if (value != descriptor) throw new AssertionError("descriptor identity");
+        trace += "close ";
+    }
+}
+""")
+        harness = self.root / "AndroidDirectorySyncHarness.java"
+        harness.write_text("""import android.system.Os;
+import dev.ror2lab.phonebuildhostfixture.OwnerInputImport;
+import java.io.*;
+public final class AndroidDirectorySyncHarness {
+    public static void main(String[] args) throws Exception {
+        InstallerQuotaHarness.main(args);
+        if (Os.trace.isEmpty() || !Os.trace.replace("open fsync close ", "").isEmpty())
+            throw new AssertionError("sync sequence");
+        Os.trace = ""; Os.failSync = true;
+        try { OwnerInputImport.syncDirectory(new File(args[0])); throw new AssertionError("failure hidden"); }
+        catch (java.lang.reflect.InvocationTargetException expected) {
+            if (!(expected.getCause() instanceof IOException)) throw expected;
+        }
+        if (!Os.trace.equals("open fsync close ")) throw new AssertionError("failed sync did not close");
+    }
+}
+""")
+        sources = [
+            ROOT / "tools/phone-build/managed-host/OwnerInputImport.java",
+            ROOT / "tests/fixtures/InstallerQuotaHarness.java",
+            constants,
+            os_source,
+            harness,
+        ]
+        result = subprocess.run([compiler, "-d", str(self.root), *map(str, sources)], capture_output=True, text=True, timeout=30)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        result = subprocess.run(
+            [str(Path(compiler).with_name("java")), "-cp", str(self.root), "AndroidDirectorySyncHarness", str(self.root / "quota")],
+            capture_output=True,
+            text=True,
+            timeout=30,
+        )
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(result.stdout.count("PASS "), 3)
+
     def test_java_bounded_filled_quota(self):
         compiler = shutil.which("javac")
         if not compiler:

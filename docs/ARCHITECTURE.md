@@ -1118,6 +1118,10 @@ The existing import/release/update owners retain verified-entry retry state.
 bounded retained-log inspection; setup uses fresh owned scratch and teardown
 keeps local evidence while removing disposable device scratch. Its host/phone
 controls do not qualify real filesystem exhaustion or physical power loss.
+`OwnerInputImport.syncDirectory` uses Android's public read-only open flag,
+then fsync and finally close; it does not reflect a hidden `O_DIRECTORY` field.
+A host Android-API fixture exercises the quota harness through that path,
+including propagation of fsync failure with descriptor cleanup.
 
 Alpha packaging extends these owners rather than adding an installer/signing
 pipeline. `owner-apk/alpha_policy.py` owns fixed alpha identity, durable issued
