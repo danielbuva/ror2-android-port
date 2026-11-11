@@ -137,11 +137,12 @@ class SessionMemoryCheckTests(unittest.TestCase):
                 stack.enter_context(mock.patch.object(memory.cleanup, "_stop_process", return_value=True))
                 stack.enter_context(mock.patch.object(memory.time, "monotonic", side_effect=lambda: next(clock)))
                 stack.enter_context(mock.patch.object(memory.time, "sleep"))
+                cooldown = mock.Mock(return_value={"battery": {"celsius": 35}})
                 if fault:
                     with self.assertRaisesRegex(RuntimeError, "Session memory check failed"):
-                        check_session_memory(sessions=3, expected_apk_sha256="0" * 64)
+                        check_session_memory(sessions=3, expected_apk_sha256="0" * 64, _between_sessions=cooldown)
                 else:
-                    check_session_memory(sessions=3, expected_apk_sha256="0" * 64)
+                    check_session_memory(sessions=3, expected_apk_sha256="0" * 64, _between_sessions=cooldown)
                 result = json.loads((out / "result.json").read_text())
                 self.assertEqual(result["success"], fault is None)
                 # One Return to menu tap despite two identical defeat reports; never Restart.
@@ -153,7 +154,12 @@ class SessionMemoryCheckTests(unittest.TestCase):
                     self.assertEqual([row["world_seconds"] for row in result["session_outcomes"]], [10.0, 10.0, 10.0])
                     self.assertIn("mixed-ending", result["growth"]["limits"])
                     self.assertEqual(result["sessions_observed"], 3)
+                    self.assertEqual(cooldown.call_count, 2)
+                    self.assertEqual([row["before_session"] for row in result["cooldowns"]], [2, 3])
+                    self.assertTrue(all(row["seconds"] > 0 for row in result["cooldowns"]))
+                    self.assertIn("OLED-sleep cooldown", result["growth"]["limits"])
                 else:
+                    cooldown.assert_called_once()  # Session 1 passed; the second ending failed before another cooldown.
                     self.assertEqual(result["sessions_observed"], 1)
                     self.assertEqual(device.sh.call_args_list.count(mock.call("input", "tap", "100", "200")), 2)
 

@@ -3017,3 +3017,16 @@ Evidence: this commit; 54 focused host tests and Ruff pass, including real shell
 framing, sensor read failure and a 0.8-second read followed by a rejected gap.
 Doctor/preflight retain known worktree-local configuration gaps. No device rerun,
 APK change or gameplay qualification; isolated ADB-stall root cause remains open.
+
+## J1405 — Cool supervised memory sessions between verified endings
+
+2026-11-11. Existing thermal owner sleeps the OLED between verified completed
+memory sessions and resumes at battery service and battery-zone readings <=35 C.
+Continuous runtime sampling and the >=43 C battery stop remain active; no charging
+setting changes. The memory owner preserves pre-pause samples/PSS, rechecks its
+PID before Start and records cooldown duration separately from its session budget.
+The outer three-hour deadline remains unchanged; reports label interrupted play.
+Evidence: this commit; 56 thermal/batch and 16 memory host tests plus Ruff pass.
+Doctor/preflight retain known worktree-local configuration gaps. No APK change,
+new device run or cooldown qualification; active32 uses the previous loaded code.
+Repeated-session completion/plateau and ordinary physical/unassisted gates stay open.

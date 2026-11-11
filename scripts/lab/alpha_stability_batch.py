@@ -353,6 +353,27 @@ class _GameThermalOwner:
         self.thread.start()
         self.stopper.start()
 
+    def between_sessions(self):
+        """Cool at the verified menu while the runtime observer stays active."""
+        phase = self.phase
+        self.phase = "session-memory-cooldown"
+        try:
+            if not self.device.display(False):
+                raise RuntimeError("Between-session cooldown requires verified OLED sleep")
+            while True:
+                if self.error:
+                    raise ThermalCancelled(self.error)
+                if max(self.battery["celsius"], self.battery_zone_celsius) <= 35:
+                    break
+                time.sleep(THERMAL_INTERVAL_SECONDS)
+            if not self.device.display(True):
+                raise RuntimeError("Between-session cooldown could not restore the menu display")
+            if self.error:
+                raise ThermalCancelled(self.error)
+            return dict(battery=self.battery.copy(), battery_zone_celsius=self.battery_zone_celsius)
+        finally:
+            self.phase = phase
+
     def _terminate_serially(self):
         with self.stop_lock:
             self.terminate_game()
@@ -556,6 +577,8 @@ def check_alpha_stability_batch(*, device_serial, expected_apk_sha256, canonical
                 thermal.cool()  # No game running; admit the next stage at <=50 C.
                 thermal.start()
                 try:
+                    if name == "session-memory":
+                        kwargs["_between_sessions"] = thermal.between_sessions
                     stage = function(expected_apk_sha256=expected, _launch=thermal.launch, **kwargs)
                 except BaseException as error:
                     stage_error = error

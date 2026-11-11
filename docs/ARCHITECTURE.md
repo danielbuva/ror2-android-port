@@ -2403,6 +2403,13 @@ performance guarantee. Host admission estimates two 4 GiB snapshots plus
 records that budget and observed free bytes. The 100 GiB full-build floor does
 not apply to this capture-only queue. Host fixtures exercise admission and
 failure contracts.
+The supervised memory stage sleeps its OLED between verified completed sessions
+and resumes only when both sampled battery temperatures are at most 35 C. The
+existing observer continues sampling and enforcing safety stops during the
+pause. The memory owner records cooldown duration outside its session deadline,
+rechecks the same process before Start and marks the interrupted workload in its
+growth report; the outer three-hour deadline remains unchanged. This host-tested
+path leaves device cooldown acceptance open.
 `--gameplay-only` selects just the existing heap and sustained owners when the
 independent SDK interruption route is blocked. Its receipt explicitly records
 that scope; it supplies no settings-interruption evidence and cannot combine
