@@ -33,7 +33,18 @@ public static class SourceCameraProgramBundle
                 {
                     if (!shader.HasKernel(kernel.name)) throw new Exception("Compute kernel missing: " + kernel.name);
                     shader.GetKernelThreadGroupSizes(shader.FindKernel(kernel.name), out uint x, out uint y, out uint z);
-                    if (x != kernel.x || y != kernel.y || z != kernel.z)
+                    // Public ExposureHistogram.hlsl uses smaller groups on Metal.
+                    // This reflects the host; the serialized Vulkan variants are
+                    // checked against the original contract by the caller.
+                    uint expectedX = kernel.x, expectedY = kernel.y;
+                    if (SystemInfo.graphicsDeviceType == GraphicsDeviceType.Metal)
+                    {
+                        if (kernel.name.StartsWith("KAutoExposureAvgLuminance_", StringComparison.Ordinal))
+                            expectedX = expectedY = 8;
+                        else if (kernel.name == "KEyeHistogram") expectedX = expectedY = 8;
+                        else if (kernel.name == "KEyeHistogramClear") expectedX = 8;
+                    }
+                    if (x != expectedX || y != expectedY || z != kernel.z)
                         throw new Exception("Compute thread group differs: " + kernel.name);
                 }
             }

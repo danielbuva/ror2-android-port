@@ -16,6 +16,25 @@ import shader_postprocessing_uber as uber
 
 
 class UberContractTests(unittest.TestCase):
+    def test_bundle_checks_vulkan_groups_independently_of_metal(self):
+        import types
+        import source_camera_bundle
+
+        native = {"threadGroupSize": [16, 8, 1], "code": [1]}
+        vulkan = {"targetRenderer": 21, "kernels": [{"name": "Exposure", "variantMap": [("", native)]}]}
+        metal = {"targetRenderer": 16, "kernels": [{"name": "Exposure", "variantMap": [("", {"threadGroupSize": [8, 8, 1], "code": [1]})]}]}
+        tree = {"m_Name": "Exposure", "variants": [metal, vulkan]}
+        obj = types.SimpleNamespace(type=types.SimpleNamespace(name="ComputeShader"), read_typetree=lambda: tree)
+        rows = [{"target": "Assets/Exposure.compute", "field": "exposure", "kernels": ["Exposure"], "kernel_thread_groups": [[16, 8, 1]]}]
+        with patch("UnityPy.load", return_value=types.SimpleNamespace(objects=[obj])):
+            source_camera_bundle.validate_vulkan_programs("fixture", rows)
+            native["threadGroupSize"] = [8, 8, 1]
+            with self.assertRaisesRegex(ValueError, "Vulkan compute contract differs"):
+                source_camera_bundle.validate_vulkan_programs("fixture", rows)
+            tree["variants"] = [metal]
+            with self.assertRaisesRegex(ValueError, "Vulkan compute variant absent"):
+                source_camera_bundle.validate_vulkan_programs("fixture", rows)
+
     def test_shared_postprocessing_include_replay_and_bloom_only_replay(self):
         import importlib.util
         import shutil
