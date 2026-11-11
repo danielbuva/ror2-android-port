@@ -93,6 +93,41 @@ public class Harness {
 
 
 class OwnerPhoneFlowTests(unittest.TestCase):
+    def test_managed_host_compiles_with_fixture_android_bootclasspath(self):
+        compiler = Path(os.environ.get("JAVA_HOME", "/absent")) / "bin/javac"
+        if not compiler.is_file():
+            found = shutil.which("javac")
+            if not found:
+                self.skipTest("Java compiler absent")
+            compiler = Path(found)
+        sdk = Path(os.environ.get("ANDROID_SDK_ROOT") or os.environ.get("ANDROID_HOME") or "/absent")
+        android = sdk / "platforms/android-33/android.jar"
+        if not android.is_file():
+            self.skipTest("Android API 33 compile jar absent")
+        # Match managed-host/build_fixture.py; the ordinary JDK classpath hides
+        # missing Android bootstrap APIs such as LambdaMetafactory.
+        sources = ("ToolHostActivity", "OwnerInstaller", "OwnerAlphaInstall", "OwnerUpdateState", "OwnerBuildService", "OwnerInputImport", "OwnerInputSource")
+        with tempfile.TemporaryDirectory() as temporary:
+            result = subprocess.run(
+                [
+                    str(compiler),
+                    "-source",
+                    "8",
+                    "-target",
+                    "8",
+                    "-parameters",
+                    "-bootclasspath",
+                    str(android),
+                    "-d",
+                    temporary,
+                    *(str(SOURCE / (name + ".java")) for name in sources),
+                ],
+                capture_output=True,
+                text=True,
+                timeout=60,
+            )
+            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+
     def test_local_stream_import_contracts(self):
         compiler = Path(os.environ.get("JAVA_HOME", "/absent")) / "bin/javac"
         if not compiler.is_file():
