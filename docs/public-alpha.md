@@ -88,7 +88,10 @@ retain J595/J755 ownership guards; final alpha installation remains separate.
       drains the instrumented audio timeout queue;
       [J1350](PORTING_JOURNAL.md#j1350--restore-original-console-retention-default-at-composed-startup)
       retains positive matched-menu growth after twelve assisted sessions.
-      Ordinary long-run dependency retention remains open.
+      [J1402](PORTING_JOURNAL.md#j1402--continue-memory-observations-through-native-loss-and-menu)
+      verifies assisted loss → results → menu → ordinary Start continuation;
+      the 32-session diagnostic stopped after ten completions on lost thermal
+      telemetry. Ordinary long-run dependency retention remains open.
 - [ ] Coordinate gameplay/audio/animation prerequisites with the main session;
       acceptance follows [capability gates](milestones.md), including an
       unassisted run. Keep Moon/finale manual.

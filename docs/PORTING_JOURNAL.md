@@ -2981,3 +2981,17 @@ CPU/GPU peak 85.2 C, above 80 C 1.54 s, battery 30 C; safety limits not tripped.
 Stopped/asleep, scratch removed, lease released, prune passed; page cache uncontrolled.
 Prior art: pinned R2API content phases, source typed labels, J1390/J469/J525.
 Full results navigation, repeated-session memory plateau and sustained play remain open.
+
+## J1402 — Continue memory observations through native loss and menu
+
+2026-11-11. Host session-memory runner returns genuine losses through persisted results
+and Return to menu, then ordinary Start; actual ending contracts retain PID/session,
+first-stage, frozen profile and teardown checks. Outcomes and both live clocks are recorded.
+Evidence: `work/device/<device>/experiments/session-memory/20261111T034226.321522Z/`:
+session 5 lost at 55.53 world seconds; sessions 6–10 subsequently completed in the same process.
+Three-session bounded check passed; 32-session diagnostic stopped after 10 completions when
+thermal sampling lost an ADB command. No runtime errors; completion/plateau remain open.
+APK `04df664f66d5ebc32cbc477865e9bfb6a16bfdf1120603b0f2f2f99a310a680d`, source `2575892b`.
+Focused 291 host tests/Ruff/preflight passed; prior art J391/J609 and pinned R2API release lifetimes.
+No new runtime gameplay code. Assisted evidence; physical navigation and sustained qualification open.
+Terminal readback verified stopped/asleep, selectors absent and lease released; prune applied.

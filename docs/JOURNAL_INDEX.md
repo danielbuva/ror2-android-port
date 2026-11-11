@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J1402](PORTING_JOURNAL.md#j1402--continue-memory-observations-through-native-loss-and-menu) | 2026-11-10 | Continue memory observations through native loss and menu | 2026-11-11. |
 | [J1401](PORTING_JOURNAL.md#j1401--load-typed-results-definitions-before-dependent-drop-tables) | 2026-11-10 | Load typed results definitions before dependent drop tables | 2026-11-11. |
 | [J1400](PORTING_JOURNAL.md#j1400--reuse-profile-manifest-for-native-game-mode-preparation) | 2026-11-10 | Reuse profile manifest for native game-mode preparation | 2026-11-11. |
 | [J1399](PORTING_JOURNAL.md#j1399--reuse-results-manifest-for-native-profile-families) | 2026-11-05 | Reuse results manifest for native profile families | 2026-11-05. |
