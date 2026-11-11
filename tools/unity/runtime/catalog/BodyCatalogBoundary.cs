@@ -161,6 +161,7 @@ public sealed partial class PortSession
         }
         public IEnumerator RegisterOriginalSkins()
         {
+            TraceStartup("skin-snapshot-begin");
             coordinator.Check(coordinator.r.liveCatalogs != null && BodyCatalog.availability.available &&
                                   ProjectileCatalog.catalogAvailability.available && SkinCatalog.skinCount == 0 && !ownsSkinCatalog,
                               "Original skin catalog dependencies or ownership missing");
@@ -187,16 +188,25 @@ public sealed partial class PortSession
                 priorSkinNames.Add(pair.Key, pair.Value);
             ownsSkinCatalog = true;
             coordinator.r.phase = "original-skin-catalog-register";
+            TraceStartup("skin-snapshot-ready-save-begin");
             coordinator.Save();
+            TraceStartup("skin-save-ready-native-begin");
             var method = typeof(SkinCatalog).GetMethod("Init", BindingFlags.NonPublic | BindingFlags.Static);
             coordinator.Check(method != null, "Original skin initializer missing");
             var routine = (IEnumerator)method.Invoke(null, null);
             var deadline = Time.realtimeSinceStartup + 180f;
+            var firstYield = true;
             while (routine.MoveNext())
             {
+                if (firstYield)
+                {
+                    TraceStartup("skin-native-first-yield");
+                    firstYield = false;
+                }
                 coordinator.Check(Time.realtimeSinceStartup < deadline, "Original skin catalog initialization timed out");
                 yield return routine.Current;
             }
+            TraceStartup("skin-native-ready-validation-begin");
             coordinator.Check(
                 SkinCatalog.availability.available && SkinCatalog.skinCount == priorSkinIndices.Count &&
                     priorSkinIndices.Keys.All(skin => skin.runtimeSkin != null && SkinCatalog.GetSkinDef(skin.skinIndex) == skin),
@@ -204,6 +214,7 @@ public sealed partial class PortSession
             var commando = BodyCatalog.FindBodyIndex("CommandoBody");
             coordinator.Check(SkinCatalog.GetBodySkinCount(commando) > 0 && SkinCatalog.GetBodySkinDef(commando, 0),
                               "Original Commando default skin missing");
+            TraceStartup("skin-validation-ready");
         }
         public void CleanupOriginalSkins()
         {
