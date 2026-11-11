@@ -627,7 +627,7 @@ def build(request_path, output):
                 "build_owner_apk.py",
             )
         ]
-        tracked += [roots["frontend"] / n for n in ("app.js", "controller.js", "style.css", "background.png")]
+        tracked += [roots["frontend"] / n for n in ("app.js", "controller.js", "feedback.js", "style.css", "background.png")]
         tracked += [Path(PACKET.__file__), Path(ASSEMBLY.__file__)]
         if len(code) > len(CODE_ENTRIES):
             tracked.append(SOURCE.parent / "accepted-output/sdk_package.py")
@@ -767,7 +767,7 @@ def build(request_path, output):
                 else:
                     entry(name, source=PACKET.verify(roots["targets"], row), expected_sha=row["sha256"], expected_bytes=row["bytes"])
             entry(next_dex, source=dex / "classes.dex")
-            for name in ("app.js", "controller.js", "style.css", "background.png"):
+            for name in ("app.js", "controller.js", "feedback.js", "style.css", "background.png"):
                 entry("assets/owner-bootstrap/ui/" + name, source=roots["frontend"] / name)
             for name in ("index.html", "owner-host.js"):
                 entry("assets/owner-bootstrap/ui/" + name, source=SOURCE / name)

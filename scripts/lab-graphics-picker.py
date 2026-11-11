@@ -7,6 +7,7 @@ Only fixed results leave the lab; raw UI evidence stays in the owned private run
 """
 
 import argparse
+from datetime import datetime
 import hashlib
 import importlib.util
 import io
@@ -15,6 +16,7 @@ import os
 from pathlib import Path
 import re
 import time
+import xml.etree.ElementTree as ET
 import zipfile
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -32,6 +34,139 @@ CASES = (
     "system-reset-cold-start",
     "close-reopen",
 )
+
+
+def notification_summary(data):
+    """Fixed diagnostic classes only; this does not authorize any permission tap."""
+    controller = "com.android.permissioncontroller"
+    if len(data) > 1024 * 1024 or b"<!" in data:
+        raise LAB.Failure("notification-evidence-shape")
+    start = data.find(b"<?xml")
+    closing = b"</displays>" if b"</displays>" in data else b"</hierarchy>"
+    end = data.rfind(closing)
+    if start < 0 or end < 0:
+        raise LAB.Failure("notification-evidence-shape")
+    tree = ET.fromstring(data[start : end + len(closing)])
+    if tree.tag == "displays":
+        tree = LAB.focused_ui_hierarchy(tree, (controller,))
+    roots = tree.findall("node")
+    if len(roots) != 1 or roots[0].get("package") != controller or any(n.get("package") not in (None, "", controller) for n in tree.iter("node")):
+        raise LAB.Failure("notification-evidence-owner")
+    nodes = list(tree.iter("node"))
+    messages = [n.get("text", "").casefold() for n in nodes if n.get("resource-id") == controller + ":id/permission_message"]
+    if len(messages) != 1 or "owner game installer" not in messages[0] or not re.search(r"\bnotifications\b", messages[0]):
+        raise LAB.Failure("notification-evidence-purpose")
+    classes = ("permission_allow_button", "permission_deny_button", "permission_deny_and_dont_ask_again_button", "permission_deny_dont_ask_again_button")
+    result = {"owned_notification_message": True, "actions": []}
+    for name in (*classes, "other-button"):
+        selected = [
+            n
+            for n in nodes
+            if (
+                n.get("class") == "android.widget.Button" and n.get("resource-id") not in {controller + ":id/" + value for value in classes}
+                if name == "other-button"
+                else n.get("resource-id") == controller + ":id/" + name
+            )
+        ]
+        result["actions"].append(
+            {
+                "class": name,
+                "count": len(selected),
+                "enabled": sum(n.get("enabled") == "true" for n in selected),
+                "clickable": sum(n.get("clickable") == "true" for n in selected),
+                "bounds_valid": sum(bounds(n) is not None for n in selected),
+            }
+        )
+    return result
+
+
+def inspect_notification(run_id):
+    """Read one retained owned namespace; never ADB, toolchain discovery or writes."""
+    result = {"mode": "inspect-picker-notification", "status": "unavailable", "binding": "unavailable"}
+
+    def read(path, limit=1024 * 1024):
+        if path.is_symlink() or not path.is_file() or path.stat().st_size > limit:
+            raise LAB.Failure("notification-record-unavailable")
+        with path.open("rb") as stream:
+            value = stream.read(limit + 1)
+        if len(value) > limit:
+            raise LAB.Failure("notification-record-too-large")
+        return value
+
+    try:
+        if not re.fullmatch(r"[0-9]{1,20}", run_id) or os.environ.get("LAB_DEVICE_SERIAL"):
+            raise LAB.Failure("notification-inspection-requires-host-only-run-id")
+        work = (ROOT / "work").resolve(strict=True)  # Runner's documented shared-work symlink.
+        coordination = work / "coordination"
+        parent, runner = coordination / "graphics-picker-smoke", coordination / "lab-runner"
+        if any(p.is_symlink() or not p.is_dir() for p in (coordination, parent, runner, runner / run_id)):
+            raise LAB.Failure("notification-evidence-directory-unavailable")
+        output = read(runner / run_id / "output.log").decode("utf-8")
+        sources = re.findall(r"^\$ git -C .+ fetch -q origin ([0-9a-f]{40})$", output, re.M)
+        results = [json.loads(line) for line in output.splitlines() if line.startswith('{"mode": "graphics-picker-smoke",')]
+        if (
+            len(sources) != 1
+            or len(results) != 1
+            or results[0].get("reason") != "notification-denial-unavailable"
+            or results[0].get("synthetic_only") is not True
+            or results[0].get("success") is not False
+        ):
+            raise LAB.Failure("notification-run-result-mismatch")
+        directories = [p for p in parent.iterdir() if re.fullmatch(r"run-[a-z0-9_]{8}", p.name)]
+        if len(directories) > 256:
+            raise LAB.Failure("notification-directory-limit")
+        selected, basis = [], "runner-id"
+        for directory in directories:
+            if directory.is_symlink() or not directory.is_dir():
+                continue
+            binding = directory / "runner-binding.json"
+            if binding.is_symlink():
+                raise LAB.Failure("notification-record-unavailable")
+            if binding.exists() and json.loads(read(binding, 4096)).get("lab_run_id") == run_id:
+                selected.append(directory)
+        if not selected and run_id == "43117215117" and sources[0] == "3aeb5702381a4db584323674239af674161633a1":
+            # This shipped run predates runner-binding.json. Public run timestamps
+            # identify candidates, not an exact filesystem-to-run binding.
+            basis = "legacy-unique-source-time-candidate"
+            start = datetime.fromisoformat("2026-11-11T23:06:26+00:00").timestamp()
+            end = datetime.fromisoformat("2026-11-11T23:10:56+00:00").timestamp()
+            selected = [
+                p
+                for p in directories
+                if not p.is_symlink()
+                and p.is_dir()
+                and not (p / "runner-binding.json").exists()
+                and not (p / "00001-resolve-source-commit.json").is_symlink()
+                and (p / "00001-resolve-source-commit.json").is_file()
+                and start <= (p / "00001-resolve-source-commit.json").stat().st_mtime <= end
+            ]
+        if len(selected) != 1:
+            raise LAB.Failure("notification-run-selection-not-unique")
+        directory = selected[0]
+        source_record = json.loads(read(directory / "00001-resolve-source-commit.json", 4096))
+        if source_record.get("category") != "resolve-source-commit" or source_record.get("returncode") != 0 or source_record.get("outcome") != "returned":
+            raise LAB.Failure("notification-source-record-mismatch")
+        if read(directory / "00001-resolve-source-commit.stdout.log", 128).decode().strip() != sources[0]:
+            raise LAB.Failure("notification-source-mismatch")
+        records = sorted(directory.glob("[0-9][0-9][0-9][0-9][0-9]-device-ui-read.json"))
+        if not records or len(records) > 256:
+            raise LAB.Failure("notification-ui-record-limit")
+        record = records[-1]
+        metadata = json.loads(read(record, 4096))
+        if basis == "legacy-unique-source-time-candidate" and not start <= record.stat().st_mtime <= end:
+            raise LAB.Failure("notification-ui-outside-run-window")
+        if (
+            metadata.get("phase") != "picker-ui"
+            or metadata.get("category") != "device-ui-read"
+            or metadata.get("returncode") != 0
+            or metadata.get("outcome") != "returned"
+        ):
+            raise LAB.Failure("notification-ui-record-mismatch")
+        result.update(status="observed", binding=basis, **notification_summary(read(record.with_suffix(".stdout.log"))))
+    except Exception as error:
+        result["reason"] = str(error) if isinstance(error, LAB.Failure) else "notification-local-evidence-unavailable"
+    print(json.dumps(result), flush=True)
+    return 0 if result["status"] == "observed" else 1
 
 
 def fixture_bytes():
@@ -263,8 +398,15 @@ def acceptance(phone, config, passed, timeout):
 
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--timeout", type=int, default=1200)
+    parser.add_argument("--timeout", type=int)
+    parser.add_argument("--inspect-notification-run", help="Host-only retained notification classification; no device action")
     args = parser.parse_args(argv)
+    if args.inspect_notification_run is not None:
+        if args.timeout is not None:
+            print('{"mode":"inspect-picker-notification","status":"unavailable","reason":"inspection-cannot-run-smoke"}')
+            return 1
+        return inspect_notification(args.inspect_notification_run)
+    args.timeout = 1200 if args.timeout is None else args.timeout
     phone, failure, cleanup = None, None, False
     completed = set()
 
@@ -278,6 +420,8 @@ def main(argv=None):
         if not os.environ.get("LAB_DEVICE_SERIAL") or not 30 <= args.timeout <= 1800:
             raise LAB.Failure("picker-requires-authorized-device-and-bounded-timeout")
         LAB.DIAGNOSTICS = LAB.PrivateDiagnostics(ROOT / "work/coordination/graphics-picker-smoke")
+        run_id = os.environ.get("LAB_RUN_ID", "")
+        LAB.DIAGNOSTICS.write("runner-binding.json", LAB.encoded({"lab_run_id": run_id if re.fullmatch(r"[0-9]{1,20}", run_id) else None}))
         config = LAB.read_context()
         phone = LAB.Phone(os.environ["LAB_DEVICE_SERIAL"], args.timeout)
         acceptance(phone, config, passed, args.timeout)

@@ -496,6 +496,97 @@ class BundlePreloadTests(unittest.TestCase):
             self.assertFalse(result["whole_game_complete"])
             self.assertFalse(result["typed_load_accepted"])
 
+    def cached_graph(self, root):
+        graph, types, rows, required = self.required_graph(root)
+        native = next(iter(json.loads(types.read_text()).values()))
+        # Add an authored scalar: changing it leaves reference topology intact.
+        nodes = [
+            dict(type=kind, name=name, size=size, level=level, meta=0, flags=0, version=1)
+            for kind, name, size, level in (
+                ("PhysicMaterial", "Base", -1, 0),
+                ("PPtr<Object>", "link", 12, 1),
+                ("int", "m_FileID", 4, 2),
+                ("SInt64", "m_PathID", 8, 2),
+                ("int", "tail", 4, 1),
+            )
+        ]
+        native["tree"] = P.module("bundle_manifest").S._tree(nodes).hex()
+        key = P.full_type_key({**native, "hash": bytes.fromhex(native["hash"]), "tree": bytes.fromhex(native["tree"])})
+        types.write_text(json.dumps({key: native}))
+        for value in rows[:2]:
+            value.update(full_type=key, schema=hashlib.sha256(bytes.fromhex(native["tree"])).hexdigest())
+            path = Path(value["provider"]) / "objects.bin"
+            self.replace_cached_record(value, path.read_bytes() + struct.pack("<i", 7))
+        (graph / "selected-records.jsonl").write_text("".join(json.dumps(row) + "\n" for row in rows))
+        return graph, types, rows, required
+
+    def replace_cached_record(self, value, body):
+        directory = Path(value["provider"])
+        (directory / "objects.bin").write_bytes(body)
+        value.update(bytes=len(body), sha256=hashlib.sha256(body).hexdigest())
+        index = next(P.json_rows(directory / "index.jsonl"))
+        index.update(bytes=len(body), sha256=value["sha256"])
+        (directory / "index.jsonl").write_text(json.dumps(index) + "\n")
+        receipt = json.loads((directory / "result.json").read_text())
+        receipt["outputs"]["index.jsonl"]["sha256"] = P.O.B.sha(directory / "index.jsonl")
+        (directory / "result.json").write_text(json.dumps(receipt))
+
+    def test_cached_noop_and_scalar_change_reuse_only_identical_records_and_groups(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            graph, types, rows, required = self.cached_graph(root)
+            checker = root / "checker-input.json"
+            checker.write_text('{"current_clr":"authored"}')
+
+            def emit(name):
+                return P.emit_closed_native(
+                    graph, [types], root / name, "authored", "CAB-authored", required=required, cache_directory=root / "cache", cache_inputs=[checker]
+                )
+
+            first = emit("first")
+            self.assertEqual((first["cache"]["records_misses"], first["cache"]["groups_misses"]), (2, 1))
+            with patch.object(P.ProducerRecords, "record", side_effect=AssertionError("unchanged output must reuse checked evidence")):
+                second = emit("second")
+            self.assertTrue(second["cache_reused"])
+            self.assertEqual(second["sha256"], first["sha256"])
+            self.assertEqual(second["bundle"], first["bundle"])
+            self.assertFalse((root / "second/authored.bundle").exists())
+            self.assertIn("reuse_validation", second["stages"])
+            body = (Path(rows[0]["provider"]) / "objects.bin").read_bytes()
+            self.replace_cached_record(rows[0], body[:-4] + struct.pack("<i", 8))
+            (graph / "selected-records.jsonl").write_text("".join(json.dumps(row) + "\n" for row in rows))
+            changed = emit("changed")
+            self.assertEqual((changed["cache"]["records_misses"], changed["cache"]["records_hits"], changed["cache"]["groups_hits"]), (1, 1, 1))
+            self.assertNotEqual(changed["sha256"], first["sha256"])
+            checker.write_text('{"current_clr":"newer-authored"}')
+            rechecked = emit("rechecked")
+            self.assertFalse(rechecked["cache_reused"])
+            self.assertEqual((rechecked["cache"]["records_hits"], rechecked["cache"]["groups_hits"]), (2, 1))
+            self.assertEqual(rechecked["sha256"], changed["sha256"])
+            required["asset_groups"][0]["roots"] = [10]
+            regrouped = emit("regrouped")
+            self.assertEqual((regrouped["cache"]["records_hits"], regrouped["cache"]["groups_misses"]), (2, 1))
+
+    def test_cached_output_corruption_rebuilds_and_provider_drift_still_fails(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            graph, types, rows, required = self.required_graph(root)
+
+            def emit(name):
+                return P.emit_closed_native(
+                    graph, [types], root / name, "authored", "CAB-authored", required=required, cache_directory=root / "cache", cache_inputs=[]
+                )
+
+            first = emit("first")
+            Path(first["bundle"]).write_bytes(b"corrupted")
+            rebuilt = emit("rebuilt")
+            self.assertFalse(rebuilt["cache_reused"])
+            self.assertEqual(rebuilt["sha256"], first["sha256"])
+            self.assertEqual(rebuilt["cache"]["records_hits"], 2)
+            (Path(rows[0]["provider"]) / "objects.bin").write_bytes(bytes(12))
+            with self.assertRaisesRegex(ValueError, "extent drift"):
+                emit("drift")
+
     def test_required_emission_rejects_missing_and_dangling_objects_without_pruning(self):
         for identities, message in (([10, 999], "Required produced objects absent"), ([10, 30], "absent produced local object"), ([10, 10], "distinct")):
             with self.subTest(identities=identities), tempfile.TemporaryDirectory() as tmp:

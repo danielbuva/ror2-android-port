@@ -422,7 +422,7 @@ class OwnerAssemblyTests(unittest.TestCase):
                     new = old + b" and new original input"
                     path.write_bytes(new)
                     _, drift[name] = self.drift_proof(root, name, old, new)
-            for name in ("app.js", "controller.js", "style.css", "background.png"):
+            for name in ("app.js", "controller.js", "feedback.js", "style.css", "background.png"):
                 (frontend / name).write_bytes(("independent frontend " + name).encode())
             for name in ("java", "libjavactool.so", "android.jar", "d8.jar", "manifest.json"):
                 (root / name).write_bytes(("independent tool " + name).encode())
@@ -507,6 +507,9 @@ class OwnerAssemblyTests(unittest.TestCase):
                 self.assertEqual(archive.read(result["new_dex"]), b"independent DEX witness")
                 self.assertEqual(archive.read("assets/authored.txt"), (targets / "apk/assets/authored.txt").read_bytes())
                 self.assertEqual(archive.read("assets/owner-bootstrap/data/authored.bundle"), (targets / "payload/authored.bundle").read_bytes())
+                self.assertEqual(archive.read("assets/owner-bootstrap/ui/feedback.js"), (frontend / "feedback.js").read_bytes())
+                bootstrap = (OWNER.SOURCE / "PayloadBootstrapActivity.java").read_text()
+                self.assertIn("controller.js|feedback.js|", bootstrap)
                 index = json.loads(archive.read("assets/owner-bootstrap/payload-index.json"))
                 payload_file = targets / "payload/authored.bundle"
                 self.assertEqual(index["files"], [{"name": "authored.bundle", "bytes": payload_file.stat().st_size, "sha256": OWNER.sha(payload_file)}])

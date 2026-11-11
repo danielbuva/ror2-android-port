@@ -3158,3 +3158,47 @@ prevent a total-loading speedup claim. Prior art: pinned R2API provider/J426.
 CPU/GPU peak 79.6 °C, 0 s above 80 °C; battery peak 30 °C. App/selectors/pending
 absent, scratch removed, OLED asleep, lease released; P1 notified.
 Sustained performance, physical navigation and ordinary long play remain open.
+
+## J1416 — Retain compatible audio verification across in-place installs
+
+2026-11-11. `GameAudioOriginalPayloadCopy` binds cached proofs to verifier revision
+and authenticated cohort; exact file identities/full-SHA fallback remain (J1386).
+Legacy/incompatible caches reverify. Pinned R2API.Sound lifecycle remains native.
+Copier/producer tests (1/9), Ruff, preflight and exact-editor code build pass.
+Evidence: `work/coordination/alpha-audio-reinstall-application-proof-20261111T204311Z/`.
+APK SHA-256 `bb5d06edf1f71c17bb3939138befbc1998ee93bc40c74da5e4ce21daac6edcd7`.
+Migration observed full274; actual same-APK reinstall changed code path, cached274/
+full0, kept profile/settings hashes; Verdant Falls player/HUD/audio153/results ready.
+Current-process errors empty. Banks/media 6.691/6.289 → 0.031/0.022 s (owner spans;
+page cache uncontrolled, no total-load claim). Private receipt readback unavailable.
+CPU/GPU peak 81.6 °C, 0.694 s above 80 °C; battery 30 °C. App/selectors/pending
+absent, OLED asleep, lease released; P1 notified. Distinct-release update, long play
+and sustained performance remain open; migration wrapper's private-readback gate failed.
+## J1415 — Validate explicit catalog subassets and inspect verified APK archives
+
+2026-11-11. Catalog completion follows typed controller behaviour, TMP, Timeline
+and Sprite/texture ownership fields; unrelated preload objects cannot qualify
+an alias. Managed bindings still require the current runtime registry.
+APK attempt inspection now uses UnityPy's explicit ZIP reader on hashed bytes.
+Evidence: `work/coordination/p1-scenes-w/current-minimal-assembly-attempt-v11/`.
+Strict staged catalog, signing and four representative exact-editor typed loads
+passed; 615 files assembled in 313.87 s. Two unsupported aliases are recorded
+in the private drop receipt; all 13 preload relationships remain.
+APK SHA-256 `7c248d5c4c2ca4773d9c1ff3a8cc7592d60d9a07a97d9ff36de7889db75f8e23`.
+Focused host checks pass. Device continuation stopped before installation:
+no attached authorized device. Converted gameplay and phone-only install stay open.
+
+## J1417 — Reuse checked native bundle emissions for port updates
+
+2026-11-11. Existing emitter caches transformed records and ordered preload
+closures; unchanged output reuse binds provider lineage, routes, schemas, code,
+codec and explicit endpoint/current-CLR checker inputs. Changed emissions retain
+structural, managed and persisted-body checks; retained output hashes are checked.
+Evidence: `work/coordination/p1-wholegame-1031/incremental-emission-benchmark-v4/`.
+The 255,564-record V8 subset takes 2,336.14 s cold and 35.78 s unchanged;
+both produce 547,240,997 bytes, SHA-256
+`930282ca46d699ee29a42fea45ea32075b490174a8bfa54fe85163449c510db2`.
+Cold process peak RSS: 9,292,054,528 bytes; per-stage timings are retained.
+Authored scalar fixture: one record miss, one unaffected hit, preload group hit.
+Focused host checks pass. Phone cache execution, typed load, converted play and
+complete import/install/update acceptance remain separate open gates.

@@ -128,6 +128,17 @@ ignored private diagnostics; only fixed case/result fields are emitted publicly.
 Any failed case or unverified cleanup makes the smoke fail. Host fixtures exercise
 the parser/admission/no-tap/cleanup boundaries but do not prove a device result.
 
+For the observed cold-restart notification refusal, `--inspect-notification-run
+43117215117` is a separate host-only retained-evidence mode. It never creates a
+phone owner, discovers a toolchain, reads an APK, or changes tap behavior. It
+checks the selected runner result and exact source, then emits only fixed
+notification button classes/counts and enabled/clickable/bounds-valid counts.
+Missing, ambiguous, oversized, symlinked or foreign evidence is unavailable.
+That first run predates a persisted runner ID: its unique public source/time-window
+match is explicitly a **legacy candidate**, not an exact filesystem/run binding.
+New smoke runs retain `runner-binding.json` alongside private diagnostics. No raw
+UI text, resource IDs outside the fixed classes, or private paths are published.
+
 ## Prior art and integration gates
 
 Inspected libadrenotools at commit

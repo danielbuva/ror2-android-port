@@ -75,6 +75,10 @@ Each tap/scroll requires the owned top-resumed activity, display-0 window focus
 and unique accessibility control. It injects only authored fixture bytes, reports
 fixed cases, and retains private diagnostics locally. No real driver or Settings
 action occurs; a phone result is separate from host tests.
+Its host-only notification inspector reads retained G evidence and emits fixed
+button classifications without device actions or tap-policy changes. Future
+diagnostics retain the runner ID; the first run's unique source/time candidate
+is explicitly weaker than that binding and refuses ambiguous selection.
 `scripts/inspect-graphics-driver-sdk.py` and its authored native compile fixture
 check the installed version's V1 Vulkan callback with the bundled Android NDK.
 The check emits fixed results/hashes, creates no output artifacts and performs no
@@ -166,7 +170,12 @@ registry, plus input/startup identity. Existing catalog helpers resolve ownershi
 and dependency closure; final serialized containers independently check endpoint
 PPtrs, preload extents, native types and exact MonoScript/runtime bindings.
 Duplicate container keys retain every root. Managed subtype assignability is not
-yet admitted. Inputs are rechecked before output; teardown releases local readers.
+yet admitted. AnimatorController typed subassets are resolved only through its
+schema-declared behaviour array, with the same script binding and current runtime
+registration checks as managed roots. TMP font/sprite, Timeline track/clip and
+Sprite/texture aliases require explicit typed ownership pointers; preload
+membership alone cannot advertise a subasset. Inputs are rechecked before output;
+teardown releases local readers.
 The owner emits `whole-catalog.json` and a receipt only after all checks pass.
 Complete cohort availability, gameplay reference closure and device play remain
 separate gates; this command does not qualify them.
@@ -1605,6 +1614,21 @@ and hash the explicit request, load every address with its exact engine type, re
 native type/name and destroy loaded objects on unload. `phone_content.py`
 validates the complete count, types, request/bundle hashes and unload receipt.
 This is desktop loadability evidence; device appearance/playability remains open.
+
+`bundle_preload.emit_closed_native` optionally caches transformed records and
+ordered preload groups in a private SQLite file. Record keys bind source bodies,
+complete types, qualified routes, external allocation, resource placement and
+producer code. Every changed emission still runs endpoint, managed and persisted
+body checks. Group keys bind the graph, roots, owners and file ordering; scalar
+body changes reuse their pointer bytes. Complete output reuse hashes provider
+lineages, schemas, requests, routes, codec and code, plus the callback owner's
+explicit `cache_inputs` files (endpoint containers/descriptors and current
+CLR/SDK/checker inputs). It checks actual output hashes and hashes inputs again
+before returning the prior bundle by reference. The caller retains that output
+and cache until superseded; the scoped connection closes on success or failure.
+Receipts report cache counts and per-stage time/peak RSS. Authored host fixtures
+cover unchanged reuse, scalar changes, checker changes, grouping, corrupt outputs
+and provider drift; this does not qualify phone execution or gameplay.
 
 The existing `bundle_preload.py` owner exposes an explicit partial native emission
 CLI. It consumes a qualified selected graph, receipt-bound source record packs
@@ -5848,12 +5872,15 @@ profile preparation, separating later redirect/default/local-profile work.
 `GameAudioOriginalPayloadCopy` also owns the private Android app-cache receipt
 `original-audio-verified.json`. Setup still authenticates the packaged cohort
 and checks paths, types, sizes, space and deadlines. Actual reuse can skip SHA
-only for the same installed package path/update time, request receipt and file
+only for the same explicit verifier revision, request receipt and file
 path/hash/size/device/inode/nanosecond modification and kernel change times.
 A miss or unavailable metadata uses full-file SHA; matching stamps before and
 after hashing populate a receipt only after the complete cohort succeeds.
-The first startup after install/update verifies fully before native audio init;
-Android Clear cache forces the same repair verification. Process exit releases
+The first startup, a changed cohort or incompatible verifier requires full
+verification before native audio init. Compatible in-place code updates retain
+proofs only while all file identities still match; legacy unversioned caches
+require full verification. Android Clear cache forces the same repair verification.
+Process exit releases
 streams/Java handles; only the private cache persists. File writes, including
 same-size edits with restored mtime, invalidate kernel ctime under normal
 filesystem semantics. This is metadata reuse, not protection against storage

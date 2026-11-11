@@ -13,6 +13,77 @@ import re
 import struct
 
 
+class EmissionCache:
+    """Private transformed bytes; only a fully checked run publishes reuse evidence.
+
+    Callback owners supply every file read by their endpoint/managed checkers in
+    cache_inputs. Files are hashed again before publishing or reusing evidence.
+    Record entries cache transformations, never endpoint or CLR qualification.
+    """
+
+    def __init__(self, directory):
+        import sqlite3
+        from collections import Counter
+
+        directory = Path(directory)
+        directory.mkdir(parents=True, exist_ok=True)
+        self.connection = sqlite3.connect(directory / "emission.sqlite3")
+        self.connection.execute("CREATE TABLE IF NOT EXISTS entries (kind TEXT, key TEXT, body BLOB, sha TEXT, PRIMARY KEY(kind,key))")
+        self.counts = Counter()
+
+    @staticmethod
+    def key(value):
+        import json
+
+        return hashlib.sha256(json.dumps(value, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
+
+    def get(self, kind, key):
+        row = self.connection.execute("SELECT body,sha FROM entries WHERE kind=? AND key=?", (kind, key)).fetchone()
+        if row is not None and hashlib.sha256(row[0]).hexdigest() == row[1]:
+            self.counts[kind + "_hits"] += 1
+            return row[0]
+        self.counts[kind + "_misses"] += 1
+        return None
+
+    def put(self, kind, key, body):
+        self.connection.execute("INSERT OR REPLACE INTO entries VALUES (?,?,?,?)", (kind, key, body, hashlib.sha256(body).hexdigest()))
+
+    def close(self):
+        self.connection.commit()
+        self.connection.close()
+
+
+def emission_input_pins(selected, graph_directory, schema_paths, codec, cache_inputs):
+    """Hash complete provider lineages and explicit callback/code dependencies."""
+    import json
+
+    paths = {Path(path).resolve() for path in cache_inputs}
+    paths.update(Path(path).resolve() for path in schema_paths)
+    paths.update(Path(__file__).parent.glob("*.py"))
+    paths.update(graph_directory / name for name in ("done.json", "selected-records.jsonl"))
+    if (graph_directory / "selected-roots.jsonl").is_file():
+        paths.add(graph_directory / "selected-roots.jsonl")
+    if codec is not None:
+        paths.add(Path(codec).resolve())
+    pending = {Path(row["provider"]).resolve() for row in selected.values()}
+    seen = set()
+    while pending:
+        directory = pending.pop()
+        if directory in seen:
+            continue
+        seen.add(directory)
+        receipt = directory / "result.json"
+        if not receipt.is_file():
+            receipt = directory.parent / "terminal.json"
+        paths.update((receipt, directory / "index.jsonl", directory / "objects.bin"))
+        for name in ("resources.bin", "witnesses.jsonl"):
+            if (directory / name).is_file():
+                paths.add(directory / name)
+        if "profile_sha256" not in json.loads(receipt.read_text()):
+            pending.update(Path(row["provider_before"]).resolve() for row in json_rows(directory / "index.jsonl"))
+    return {str(path): O.B.sha(path) for path in sorted(paths)}
+
+
 def module(name):
     spec = importlib.util.spec_from_file_location("_preload_" + name, Path(__file__).with_name(name + ".py"))
     value = importlib.util.module_from_spec(spec)
@@ -340,7 +411,7 @@ def produce(selected, records, sources):
     return produce_graph(selected, graph, sources)
 
 
-def produce_graph(selected, graph, sources):
+def produce_graph(selected, graph, sources, *, emission_cache=None):
     """Frame grouped preloads from the emitter's fully parsed body graph."""
     validate_graph(graph, len(selected["externals"]))
     owners = external_owners(selected, sources, {})
@@ -353,18 +424,36 @@ def produce_graph(selected, graph, sources):
     count_offset = stream.tell()
     stream.write(bytes(4))
     preload_count, containers = 0, []
+    graph_key = (
+        EmissionCache.key(
+            dict(
+                code=O.B.sha(Path(__file__)),
+                graph=sorted((key, sorted(edges)) for key, edges in graph.items()),
+                owners=sorted(owners.items()),
+                ranks=sorted(ranks.items()),
+            )
+        )
+        if emission_cache is not None
+        else None
+    )
     for group in groups:
         roots = group["roots"]
         if not roots or len(set(roots)) != len(roots):
             raise ValueError("Prefab asset group requires distinct imported roots")
-        dependencies = closure(graph, roots, owners)
-        if any(file_id not in ranks for file_id, _ in dependencies):
-            raise ValueError("Prefab preload references an absent serialized file")
-        ordered = sorted(dependencies, key=lambda pointer: (ranks[pointer[0]], pointer[1]))
-        containers.extend((group["path"].lower(), preload_count, len(ordered), root) for root in roots)
-        for pointer in ordered:
-            stream.write(struct.pack("<iq", *pointer))
-        preload_count += len(ordered)
+        key = EmissionCache.key([graph_key, roots])
+        packed = emission_cache.get("groups", key) if emission_cache is not None else None
+        if packed is None:
+            dependencies = closure(graph, roots, owners)
+            if any(file_id not in ranks for file_id, _ in dependencies):
+                raise ValueError("Prefab preload references an absent serialized file")
+            ordered = sorted(dependencies, key=lambda pointer: (ranks[pointer[0]], pointer[1]))
+            packed = b"".join(struct.pack("<iq", *pointer) for pointer in ordered)
+            if emission_cache is not None:
+                emission_cache.put("groups", key, packed)
+        count = len(packed) // 12
+        containers.extend((group["path"].lower(), preload_count, count, root) for root in roots)
+        stream.write(packed)
+        preload_count += count
     end = stream.tell()
     stream.seek(count_offset)
     stream.write(struct.pack("<I", preload_count))
@@ -567,7 +656,24 @@ def retain_type_metadata(records, output, qualify):
     return revised
 
 
-def emit_closed_native(
+def emit_closed_native(*args, cache_directory=None, cache_inputs=None, **kwargs):
+    """Emit checked native content, optionally reusing pinned private outputs.
+
+    cache_inputs must enumerate all files consumed by endpoint_record and
+    managed_check, including their code, current CLR/SDK metadata and containers.
+    A whole-output hit returns a reference to the prior bundle (no payload copy).
+    """
+    from contextlib import closing
+
+    if cache_directory is None:
+        return _emit_closed_native(*args, **kwargs)
+    if cache_inputs is None:
+        raise ValueError("Emission cache requires explicit callback input files")
+    with closing(EmissionCache(cache_directory)) as cache:
+        return _emit_closed_native(*args, emission_cache=cache, cache_inputs=cache_inputs, **kwargs)
+
+
+def _emit_closed_native(
     graph_directory,
     schema_paths,
     output,
@@ -581,6 +687,8 @@ def emit_closed_native(
     structural_routes=None,
     endpoint_record=None,
     managed_check=None,
+    emission_cache=None,
+    cache_inputs=(),
 ):
     """Emit the declared local/native subset of a qualified producer graph.
 
@@ -613,7 +721,19 @@ def emit_closed_native(
     if (codec is None) != (codec_sha256 is None):
         raise ValueError("Native bundle compression requires both codec and SHA-256")
     started = time.monotonic()
+    stage_start = started
+    stages = {}
+
+    def stage(label):
+        nonlocal stage_start
+        now = time.monotonic()
+        stages[label] = dict(
+            seconds=now - stage_start, peak_rss_bytes=resource.getrusage(resource.RUSAGE_SELF).ru_maxrss * (1 if sys.platform == "darwin" else 1024)
+        )
+        stage_start = now
+
     graph_directory, output = Path(graph_directory), Path(output)
+    schema_paths, field_proofs = list(schema_paths), list(field_proofs)
     retained = json.loads((graph_directory / "done.json").read_text())
     if retained.get("success") is not True:
         raise ValueError("Unsuccessful source graph")
@@ -655,6 +775,41 @@ def emit_closed_native(
             break
         for key in missing:
             del selected[key]
+    if emission_cache is not None:
+        input_pins = emission_input_pins(selected, graph_directory, schema_paths, codec, cache_inputs)
+        # Routes are field-qualified and can include endpoints outside selected.
+        request_key = EmissionCache.key(
+            dict(
+                inputs=input_pins,
+                name=name,
+                member=member,
+                required=required,
+                codec_sha256=codec_sha256,
+                field_proofs=field_proofs,
+                structural_routes=None if structural_routes is None else sorted((list(key), value) for key, value in structural_routes.items()),
+            )
+        )
+        saved = emission_cache.get("outputs", request_key)
+        if saved is not None:
+            saved = json.loads(saved)
+            if all(Path(path).is_file() and O.B.sha(Path(path)) == digest for path, digest in saved["outputs"].items()):
+                if emission_input_pins(selected, graph_directory, schema_paths, codec, cache_inputs) != input_pins:
+                    raise ValueError("Emission cache input drift")
+                stage("reuse_validation")
+                result = saved["result"]
+                result.update(
+                    seconds=time.monotonic() - started,
+                    stages=stages,
+                    cache=dict(emission_cache.counts),
+                    cache_reused=True,
+                    peak_rss_bytes=resource.getrusage(resource.RUSAGE_SELF).ru_maxrss * (1 if sys.platform == "darwin" else 1024),
+                )
+                output.mkdir(parents=True, exist_ok=False)
+                for filename in ("gaps.json", "roots.json", "request.json"):
+                    (output / filename).write_bytes((Path(result["bundle"]).parent / filename).read_bytes())
+                (output / "result.json").write_text(json.dumps(result, indent=2) + "\n")
+                return result
+    stage("input_identity")
     schemas, schema_pins = {}, {}
     needed = {row["full_type"] if required is not None else row["schema"] for row in selected.values()}
     for schema_path in map(Path, schema_paths):
@@ -685,14 +840,28 @@ def emit_closed_native(
     for proof in field_proofs:
         proofs.setdefault(tuple(proof["owner"]), []).append(proof)
     endpoint_pins = {}
+    from collections import OrderedDict
+
+    external_bodies = OrderedDict()
+    external_bytes = 0
 
     def read_external(target):
+        nonlocal external_bytes
+        target = tuple(target)
+        if target in external_bodies:
+            external_bodies.move_to_end(target)
+            return external_bodies[target]
         if endpoint_record is None:
             raise ValueError("Required external endpoint reader absent")
         value, raw, typ = endpoint_record(target)
         pin = json.dumps(value, sort_keys=True), hashlib.sha256(raw).hexdigest(), full_type_key(typ)
         if endpoint_pins.setdefault(tuple(target), pin) != pin:
             raise ValueError("Persisted external endpoint drift")
+        external_bodies[target] = value, raw, typ
+        external_bytes += len(raw)
+        while external_bytes > 32 * 1024 * 1024 and external_bodies:
+            _, (_, prior, _) = external_bodies.popitem(last=False)
+            external_bytes -= len(prior)
         return value, raw, typ
 
     by_provider = defaultdict(list)
@@ -708,6 +877,11 @@ def emit_closed_native(
         resource_size = 0
         resource_member = member + ".resS"
         resource_path = "archive:/" + member + "/" + resource_member
+        transform_code = (
+            EmissionCache.key({path: digest for path, digest in input_pins.items() if Path(path).parent == Path(__file__).parent})
+            if emission_cache is not None
+            else None
+        )
         with store.open("wb") as destination:
             for provider, values in by_provider.items():
                 directory = Path(provider)
@@ -727,19 +901,48 @@ def emit_closed_native(
                     edges = set(pointers(body, typ, cache).values())
                     if edges != set(map(tuple, value["edges"])):
                         raise ValueError("Measured native pointers differ from selected graph")
+                    targets = {}
                     if required is not None:
                         if structural_routes is None:
                             targets = qualify_external_fields(value, body, typ, proofs.get(tuple(value["destination"]), ()), read_external)
                         else:
                             targets = qualify_structural_fields(value, body, typ, structural_routes[tuple(value["destination"])], read_external)
                         qualified_targets[identity] = targets
-                        body = relocate_external_fields(value, body, typ, targets, externals)
                         if typ["class_id"] == 114:
                             managed_rows[identity] = value, typ
-                        edges = set(pointers(body, typ, cache).values())
+                    offset = (resource_size + 15) // 16 * 16 if row.get("resource") else None
+                    record_key = (
+                        EmissionCache.key(
+                            dict(
+                                body=value["sha256"],
+                                bytes=value["bytes"],
+                                type=full_type_key(typ),
+                                destination=value["destination"],
+                                targets=sorted((list(field), target) for field, target in targets.items()),
+                                externals=externals,
+                                resource=row.get("resource"),
+                                resource_offset=offset,
+                                resource_path=resource_path,
+                                code=transform_code,
+                            )
+                        )
+                        if emission_cache is not None
+                        else None
+                    )
+                    reused = emission_cache.get("records", record_key) if emission_cache is not None else None
+                    if reused is None and required is not None:
+                        body = relocate_external_fields(value, body, typ, targets, externals)
                     if row.get("resource"):
-                        resource_size = (resource_size + 15) // 16 * 16
-                        body, descriptor = repack_stream(body, typ, row["resource"], resource_size, resource_path, cache)
+                        resource_size = offset
+                        descriptor = dict(offset=offset, size=row["resource"]["bytes"], path=resource_path)
+                        if reused is None:
+                            body, descriptor = repack_stream(body, typ, row["resource"], resource_size, resource_path, cache)
+                    if reused is not None:
+                        body = reused
+                    elif emission_cache is not None:
+                        emission_cache.put("records", record_key, body)
+                    edges = set(pointers(body, typ, cache).values())
+                    if row.get("resource"):
                         resource_extents.append((resource_size, directory / "resources.bin", row["resource"]))
                         resource_rows.append(
                             dict(
@@ -756,6 +959,7 @@ def emit_closed_native(
                     bodymap[identity] = destination.tell(), len(body)
                     destination.write(body)
                     objects.append(dict(path_id=identity, type=typ, body_bytes=len(body), prefix=body[:32]))
+        stage("records")
         validate_graph(graph, len(externals))
         if required is not None and set(graph) != set(required["path_ids"]):
             raise ValueError("Emitted required object set differs")
@@ -772,6 +976,7 @@ def emit_closed_native(
 
         for identity, (value, typ) in managed_rows.items():
             managed_check(value, read_produced((name, member, identity))[1], typ, read_produced)
+        stage("managed_qualification")
         grouped = defaultdict(list)
         for row in () if required is not None else json_rows(graph_directory / "selected-roots.jsonl"):
             key = tuple(row["destination"])
@@ -812,7 +1017,9 @@ def emit_closed_native(
                 if any(identity not in graph for identity in group["roots"]):
                     raise ValueError("Required asset group root absent")
             # produce retains GUID order and every root/subasset of each path.
-            container_body = produce_graph(dict(name=name, member=member, externals=externals, dependencies=dependencies, asset_groups=groups), graph, {})
+            container_body = produce_graph(
+                dict(name=name, member=member, externals=externals, dependencies=dependencies, asset_groups=groups), graph, {}, emission_cache=emission_cache
+            )
             roots = [
                 dict(path=group["path"], destination=[name, member, identity], class_id=selected[name, member, identity]["class_id"])
                 for group in groups
@@ -824,6 +1031,7 @@ def emit_closed_native(
             count_stream = io.BytesIO(container_body)
             module("catalog_complete").text(count_stream)
             preloads = range(O.B.unpack(count_stream, "<I")[0])
+        stage("preload_groups")
         container_id = 1
         while container_id in graph:
             container_id += 1
@@ -854,16 +1062,27 @@ def emit_closed_native(
         compression = W.codec(codec, codec_sha256) if codec is not None else nullcontext(lambda block, method: block)
         with compression as compress, bundle.open("wb") as stream:
             W.write_bundle(stream, members, compress, flags=0x243 if codec is not None else 0x40)
+        stage("serialize_compress")
         # Read the actual final container, metadata and every persisted body.
+        # Reset endpoint bytes between phases: a warm read must never hide drift.
+        external_bodies.clear()
+        external_bytes = 0
         stream = W.B.Bundle(bundle).member(member)
         read = W.read_serialized(stream)
         if any(read[key] != layout[key] for key in ("types", "objects", "scripts", "externals")):
             raise ValueError("Emitted native metadata differs")
         final_objects = {row["path_id"]: row for row in read["objects"]}
+        final_bodies = OrderedDict()
+        final_bytes = 0
 
         def read_final(target):
+            nonlocal final_bytes
             if tuple(target[:2]) != (name, member):
                 return read_produced(target)
+            target = tuple(target)
+            if target in final_bodies:
+                final_bodies.move_to_end(target)
+                return final_bodies[target]
             row = final_objects[target[2]]
             stream.seek(read["data_offset"] + row["offset"])
             value = selected[tuple(target)]
@@ -871,6 +1090,11 @@ def emit_closed_native(
             typ = read["types"][row["type_id"]]
             if required is not None:
                 typ = qualified_final_type(raw, typ, read["scripts"], typed[value["full_type"]])
+            final_bodies[target] = value, raw, typ
+            final_bytes += len(raw)
+            while final_bytes > 32 * 1024 * 1024 and final_bodies:
+                _, (_, prior, _) = final_bodies.popitem(last=False)
+                final_bytes -= len(prior)
             return value, raw, typ
 
         for row in read["objects"]:
@@ -910,6 +1134,7 @@ def emit_closed_native(
                 if digest.hexdigest() != row["source_resource"]["sha256"]:
                     raise ValueError("Emitted native resource differs")
         digest = O.B.sha(bundle)
+        stage("persisted_validation")
     gaps = dict(
         complete=False,
         full_graph_selected=len(all_records),
@@ -943,6 +1168,7 @@ def emit_closed_native(
         source_type_pins=schema_pins,
         producer_pins=providers.pins,
         seconds=time.monotonic() - started,
+        stages=stages,
         peak_rss_bytes=resource.getrusage(resource.RUSAGE_SELF).ru_maxrss * (1 if sys.platform == "darwin" else 1024),
     )
     if required is not None:
@@ -967,6 +1193,22 @@ def emit_closed_native(
         (output / filename).write_text(json.dumps(value, indent=2) + "\n")
     if resource_rows:
         (output / "resources.jsonl").write_text("".join(json.dumps(row) + "\n" for row in resource_rows))
+    if emission_cache is not None:
+        if emission_input_pins(selected, graph_directory, schema_paths, codec, cache_inputs) != input_pins:
+            raise ValueError("Emission cache input drift")
+        stage("input_revalidation")
+        result.update(cache=dict(emission_cache.counts), cache_reused=False, seconds=time.monotonic() - started)
+        (output / "result.json").write_text(json.dumps(result, indent=2) + "\n")
+        emission_cache.put(
+            "outputs",
+            request_key,
+            json.dumps(
+                dict(
+                    result=result,
+                    outputs={str(path.resolve()): O.B.sha(path) for path in output.iterdir() if path.is_file()},
+                )
+            ).encode(),
+        )
     return result
 
 
