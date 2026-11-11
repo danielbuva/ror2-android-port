@@ -4725,10 +4725,15 @@ observer lifecycle result. Host contracts remain in
 ordinary Commando menu start, at least 60 s of ready Lakes play and the same UI
 abandon five times by default, then stops at the next menu. Explicit `--sessions`
 selects 3 to 32 sessions for a longer series without changing runtime gameplay.
-Each completed
-`movement-completed-session-<k>.json` must pass `abandon_contract` (reused through
-an index-checked session-1 view) before the next start, and profile counts must
-stay frozen. It collects the existing `SessionResourceBoundary` samples plus host
+An earlier native loss returns through persisted results and Return to menu;
+Restart is excluded because it skips the matched menu. Each completed
+`movement-completed-session-<k>.json` must pass its actual `ending_contract`
+(reused through an index-checked session-1 view) before the next start, and
+profile counts must stay frozen. Outcomes, runtime world seconds and host time
+from ready play to the ending request are recorded per session; the latter
+includes death/results delay for losses. Mixed-loss series are labeled separately
+from uniform 60-second abandon observations.
+It collects the existing `SessionResourceBoundary` samples plus host
 `dumpsys meminfo` TOTAL PSS at every menu and reports per-session slopes from
 session 2 onward. It is an observation runner: it attributes no retaining root
 and certifies no leak fix. It binds only an explicit owned APK hash, refuses a
