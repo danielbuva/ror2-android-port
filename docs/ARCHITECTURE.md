@@ -50,7 +50,8 @@ its README; the existing owner-built delivery route remains unchanged.
 `tools/phone-build/owner-apk/graphics/` owns the optional graphics-driver
 foundation: bounded private ZIP staging, reviewed Turnip release pins, driver-hash
 cache identity, a provider boundary and durable pre-native launch/fallback state.
-The tool-host preview includes these owners, but Unity is not connected; System remains unchanged. Its
+The tool-host preview includes these owners, but Unity is not connected; System
+remains unchanged. Its
 [handoff](../tools/phone-build/owner-apk/graphics/README.md) records setup, teardown,
 prior art and the pending native/Android/Thor acceptance gates. Custom load failure
 requires process restart, never hot-swapping a live Vulkan driver.
