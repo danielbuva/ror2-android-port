@@ -10,8 +10,8 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
-| [J1415](PORTING_JOURNAL.md#j1415--retain-compatible-audio-verification-across-in-place-installs) | 2026-11-11 | Retain compatible audio verification across in-place installs | 2026-11-11. |
 | [J1415](PORTING_JOURNAL.md#j1415--validate-explicit-catalog-subassets-and-inspect-verified-apk-archives) | 2026-11-11 | Validate explicit catalog subassets and inspect verified APK archives | 2026-11-11. |
+| [J1416](PORTING_JOURNAL.md#j1416--retain-compatible-audio-verification-across-in-place-installs) | 2026-11-11 | Retain compatible audio verification across in-place installs | 2026-11-11. |
 | [J1414](PORTING_JOURNAL.md#j1414--reuse-live-definition-manifests-without-retaining-their-graphs) | 2026-11-11 | Reuse live definition manifests without retaining their graphs | 2026-11-11. |
 | [J1413](PORTING_JOURNAL.md#j1413--measure-direct-native-skin-iterator-execution) | 2026-11-11 | Measure direct native skin iterator execution | 2026-11-11. |
 | [J1412](PORTING_JOURNAL.md#j1412--attribute-native-skin-startup-without-changing-its-coroutine) | 2026-11-11 | Attribute native skin startup without changing its coroutine | 2026-11-11. |

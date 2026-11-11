@@ -3159,7 +3159,7 @@ CPU/GPU peak 79.6 °C, 0 s above 80 °C; battery peak 30 °C. App/selectors/pend
 absent, scratch removed, OLED asleep, lease released; P1 notified.
 Sustained performance, physical navigation and ordinary long play remain open.
 
-## J1415 — Retain compatible audio verification across in-place installs
+## J1416 — Retain compatible audio verification across in-place installs
 
 2026-11-11. `GameAudioOriginalPayloadCopy` binds cached proofs to verifier revision
 and authenticated cohort; exact file identities/full-SHA fallback remain (J1386).
