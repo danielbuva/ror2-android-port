@@ -31,8 +31,9 @@ namespace UnityEngine
     public static class JsonUtility
     {
         public static object decoded;
+        public static object encoded;
         public static T FromJson<T>(string value) { return decoded == null ? default(T) : (T)decoded; }
-        public static string ToJson(object value) { return ""; }
+        public static string ToJson(object value) { encoded = value; return "fixture"; }
     }
 }
 

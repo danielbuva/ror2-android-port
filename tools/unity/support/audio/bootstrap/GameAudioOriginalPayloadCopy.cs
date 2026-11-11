@@ -47,6 +47,9 @@ public sealed class GameAudioOriginalPayloadCopy : IGameAudioOriginalPayloadCopy
     private const string ExpectedSoundbanksInfo = "2b8430716d15c1ac9f78e1cc7625dc2206df6b5081b06b54c8048979d99b6407";
     private const string ExpectedDirectory = "Audio/GeneratedSoundBanks/Android";
     private const float CopyDeadlineSeconds = 300.0f;
+    // Bump when verification or file-identity semantics change. Code-only APK
+    // updates may reuse compatible proofs for the same authenticated cohort.
+    private const int VerificationRevision = 1;
     private readonly string streamingRoot;
     private readonly string persistentRoot;
     private readonly HashSet<string> expectedNames;
@@ -61,10 +64,11 @@ public sealed class GameAudioOriginalPayloadCopy : IGameAudioOriginalPayloadCopy
     [Serializable]
     private sealed class VerifiedCohort
     {
-        public string install, receipt;
+        public int verifierRevision;
+        public string receipt;
         public VerifiedFile[] files;
     }
-    private string cachePath, installIdentity;
+    private string cachePath;
     private readonly Dictionary<string, VerifiedFile> verified = new Dictionary<string, VerifiedFile>(StringComparer.Ordinal);
     private readonly List<VerifiedFile> observed = new List<VerifiedFile>();
     private int cacheHits, fullVerifications;
@@ -264,22 +268,18 @@ public sealed class GameAudioOriginalPayloadCopy : IGameAudioOriginalPayloadCopy
     private void LoadVerifiedCohort()
     {
         verified.Clear(); observed.Clear(); cacheHits = fullVerifications = 0;
-        cachePath = installIdentity = null;
+        cachePath = null;
         try
         {
             using (var player = new AndroidJavaClass("com.unity3d.player.UnityPlayer"))
             using (var activity = player.GetStatic<AndroidJavaObject>("currentActivity"))
             using (var directory = activity.Call<AndroidJavaObject>("getCacheDir"))
-            using (var packages = activity.Call<AndroidJavaObject>("getPackageManager"))
-            using (var package = packages.Call<AndroidJavaObject>("getPackageInfo", activity.Call<string>("getPackageName"), 0))
             {
                 cachePath = Path.Combine(directory.Call<string>("getAbsolutePath"), "original-audio-verified.json");
-                installIdentity = activity.Call<string>("getPackageCodePath") + "|" +
-                    package.Get<long>("lastUpdateTime").ToString(System.Globalization.CultureInfo.InvariantCulture);
             }
             if (!File.Exists(cachePath) || IsReparse(cachePath)) return;
             var cohort = JsonUtility.FromJson<VerifiedCohort>(File.ReadAllText(cachePath));
-            if (cohort == null || cohort.install != installIdentity || cohort.receipt != expectedReceiptSha256 || cohort.files == null) return;
+            if (cohort == null || cohort.verifierRevision != VerificationRevision || cohort.receipt != expectedReceiptSha256 || cohort.files == null) return;
             foreach (var file in cohort.files)
                 if (file != null && !String.IsNullOrEmpty(file.path)) verified[file.path] = file;
         }
@@ -288,14 +288,15 @@ public sealed class GameAudioOriginalPayloadCopy : IGameAudioOriginalPayloadCopy
 
     private void SaveVerifiedCohort()
     {
-        if (cachePath == null || installIdentity == null || observed.Count != 274) return;
+        if (cachePath == null || observed.Count != 274) return;
         string temporary = cachePath + ".part";
         try
         {
             // Internal app cache is not shared payload storage. Clearing Android's
-            // app cache is the repair path; install identity changes force rehash.
+            // app cache is the repair path. Receipt/verifier changes force rehash;
+            // unchanged audio can retain proofs across in-place APK updates.
             File.WriteAllText(temporary, JsonUtility.ToJson(new VerifiedCohort {
-                install = installIdentity, receipt = expectedReceiptSha256, files = observed.ToArray() }));
+                verifierRevision = VerificationRevision, receipt = expectedReceiptSha256, files = observed.ToArray() }));
             if (File.Exists(cachePath)) File.Delete(cachePath);
             File.Move(temporary, cachePath);
         }
