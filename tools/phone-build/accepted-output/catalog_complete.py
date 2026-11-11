@@ -146,6 +146,52 @@ class ProducedMembers:
             identities.append(self.managed_identity(owner, behaviour_type, behaviour))
         return identities
 
+    def owned_subassets(self, member, typ, body, identity):
+        """Follow measured TMP and Timeline ownership fields, not preload membership."""
+        records = module("_catalog_subasset_records", HERE / "record_produce.py")
+        pending = [(member, typ, body, identity)]
+        seen = set()
+        identities = []
+        while pending:
+            owner, current_type, current_body, current = pending.pop()
+            if current == ("TMP_FontAsset", "TMPro", "Unity.TextMeshPro.dll"):
+                routes = {("material",): 21, ("atlas",): 28, ("m_AtlasTextures", "Array", "*"): 28}
+            elif current == ("TMP_SpriteAsset", "TMPro", "Unity.TextMeshPro.dll"):
+                routes = {("material",): 21, ("spriteSheet",): 28}
+            elif isinstance(current, tuple) and current[1:] == ("UnityEngine.Timeline", "Unity.Timeline.dll"):
+                routes = dict.fromkeys(
+                    [("m_Tracks", "Array", "*"), ("m_MarkerTrack",), ("m_Children", "Array", "*"), ("m_Parent",), ("m_Clips", "Array", "*", "m_Asset")], 114
+                )
+            else:
+                continue
+            root = records.SCHEMA.type_tree(io.BytesIO(current_type["tree"]))
+            _, spans = records.fields(current_body, root)
+            for path, (start, end) in spans.items():
+                route = tuple("*" if part.isdigit() else part for part in path)
+                if route not in routes:
+                    continue
+                if end - start != 12 or path + ("m_FileID",) not in spans or path + ("m_PathID",) not in spans:
+                    raise ValueError("invalid subasset ownership PPtr: " + str(path))
+                pointer = struct.unpack_from("<iq", current_body, start)
+                if not pointer[1]:
+                    continue
+                target_member, target_row = self.resolve(owner, pointer)
+                key = (target_member, target_row["path_id"])
+                if key in seen:
+                    continue
+                seen.add(key)
+                target_member, target_type, target_body = self.record(owner, pointer)
+                if target_type["class_id"] != routes[route]:
+                    raise ValueError("subasset ownership type differs: " + str(path))
+                target_identity = target_type["class_id"]
+                if target_identity == 114:
+                    target_identity = self.managed_identity(target_member, target_type, target_body)
+                    if target_identity[1:] != ("UnityEngine.Timeline", "Unity.Timeline.dll"):
+                        raise ValueError("Timeline ownership target is not a Timeline subasset")
+                identities.append(target_identity)
+                pending.append((target_member, target_type, target_body, target_identity))
+        return identities
+
 
 def validate_locations(metadata, members, registry):
     runtime_scripts = set()
@@ -179,6 +225,11 @@ def validate_locations(metadata, members, registry):
                             if actual not in runtime_scripts:
                                 raise ValueError("catalog MonoScript absent from current runtime registry: " + str(actual))
                     advertised.setdefault((bundle, path.casefold()), []).append(actual)
+                    if isinstance(actual, tuple) and actual[1:] in {("TMPro", "Unity.TextMeshPro.dll"), ("UnityEngine.Timeline", "Unity.Timeline.dll")}:
+                        for identity in members.owned_subassets(owner, root_type, root, actual):
+                            if isinstance(identity, tuple) and identity not in runtime_scripts:
+                                raise ValueError("subasset MonoScript absent from current runtime registry: " + str(identity))
+                            advertised[(bundle, path.casefold())].append(identity)
                     if actual == 91:
                         for identity in members.controller_behaviours(owner, root_type, root):
                             if identity not in runtime_scripts:

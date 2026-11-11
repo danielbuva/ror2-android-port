@@ -37,6 +37,42 @@ def pin(path):
 
 
 class CatalogCompletionTests(unittest.TestCase):
+    def test_tmp_subassets_require_explicit_typed_ownership_fields(self):
+        members = C.ProducedMembers()
+        identity = ("TMP_FontAsset", "TMPro", "Unity.TextMeshPro.dll")
+        body = struct.pack("<iqiq", 0, 7, 0, 8)
+        spans = {("material",): (0, 12), ("material", "m_FileID"): (0, 4), ("material", "m_PathID"): (4, 12)}
+        records = SimpleNamespace(SCHEMA=SimpleNamespace(type_tree=lambda stream: None), fields=lambda body, root: (body, spans))
+        with (
+            patch.object(C, "module", return_value=records),
+            patch.object(members, "resolve", return_value=("CAB", dict(path_id=7))),
+            patch.object(members, "record", return_value=("CAB", dict(class_id=21), b"material")) as record,
+        ):
+            self.assertEqual(members.owned_subassets("CAB", dict(tree=b"schema"), body, identity), [21])
+            record.assert_called_once_with("CAB", (0, 7))
+            record.return_value = ("CAB", dict(class_id=28), b"wrong")
+            with self.assertRaisesRegex(ValueError, "ownership type differs"):
+                members.owned_subassets("CAB", dict(tree=b"schema"), body, identity)
+
+    def test_timeline_tracks_clips_and_parent_cycles_use_only_owned_fields(self):
+        members = C.ProducedMembers()
+        identities = [(name, "UnityEngine.Timeline", "Unity.Timeline.dll") for name in ("TimelineAsset", "AnimationTrack", "AnimationPlayableAsset")]
+        bodies = [struct.pack("<iq", 0, index) for index in (2, 3, 1)]
+        routes = [("m_Tracks", "Array", "0"), ("m_Clips", "Array", "0", "m_Asset"), ("m_Parent",)]
+        spans = [{route: (0, 12), route + ("m_FileID",): (0, 4), route + ("m_PathID",): (4, 12)} for route in routes]
+        records = SimpleNamespace(SCHEMA=SimpleNamespace(type_tree=lambda stream: None), fields=lambda body, root: (body, spans[bodies.index(body)]))
+        typ = dict(class_id=114, tree=b"schema")
+        with (
+            patch.object(C, "module", return_value=records),
+            patch.object(members, "resolve", side_effect=lambda member, ref: ("CAB", dict(path_id=ref[1]))),
+            patch.object(members, "record", side_effect=lambda member, ref: ("CAB", typ, bodies[ref[1] - 1])),
+            patch.object(members, "managed_identity", side_effect=lambda member, typ, body: identities[bodies.index(body)]),
+        ):
+            self.assertEqual(set(members.owned_subassets("CAB", typ, bodies[0], identities[0])), set(identities))
+            with patch.object(members, "managed_identity", return_value=("Foreign", "Other", "Other.dll")):
+                with self.assertRaisesRegex(ValueError, "not a Timeline subasset"):
+                    members.owned_subassets("CAB", typ, bodies[0], identities[0])
+
     def test_controller_subassets_follow_explicit_behaviour_array(self):
         members = C.ProducedMembers()
         body = struct.pack("<Iiq", 1, 0, 7)
