@@ -357,7 +357,9 @@ public sealed partial class PortSession
             TraceStartup("profile-progression-metadata-ready");
             // Native rule choices capture these catalog unlock references, and replaying
             // saved RunReports later requires RuleBook default-value metadata.
-            coordinator.PrepareObjectiveRuleCatalog();
+            TraceStartup("profile-rule-metadata-begin");
+            coordinator.PrepareObjectiveRuleCatalog(manifest);
+            TraceStartup("profile-rule-metadata-ready");
             // Pair the source serializer's otherwise unretained redirect-asset load with
             // the existing composed provider owner; no extra bundle or input copy.
             profileRedirectLease = Addressables.LoadAssetAsync<UserProfileRedirectData>("RoR2/Base/Core/UserProfileRedirects.asset");

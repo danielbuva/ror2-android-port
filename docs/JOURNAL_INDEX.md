@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J1400](PORTING_JOURNAL.md#j1400--reuse-profile-manifest-for-native-game-mode-preparation) | 2026-11-10 | Reuse profile manifest for native game-mode preparation | 2026-11-11. |
 | [J1399](PORTING_JOURNAL.md#j1399--reuse-results-manifest-for-native-profile-families) | 2026-11-05 | Reuse results manifest for native profile families | 2026-11-05. |
 | [J1398](PORTING_JOURNAL.md#j1398--attribute-native-profile-startup-phases) | 2026-11-04 | Attribute native profile startup phases | 2026-11-05. |
 | [J1397](PORTING_JOURNAL.md#j1397--share-the-synchronous-manifest-with-drone-and-projectile-registration) | 2026-11-04 | Share the synchronous manifest with drone and projectile registration | 2026-11-05. |
