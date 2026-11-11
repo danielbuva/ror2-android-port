@@ -6613,3 +6613,10 @@ resources also supply external preload endpoints; the release graph binds these
 from the selected player outputs. The scoped producer checks native endpoints,
 types and script bindings and retains its receipt on exit. This adds
 no runtime owner. Complete APK and device acceptance remain open.
+
+The owner APK builder binds the Android resource table's package name to an
+explicit installation ID alongside the manifest rewrite. This preserves resource
+IDs and bodies while allowing Unity's context-package string lookup to resolve
+when installing the disposable converted package. Setup uses the verified SDK
+resource table; output hashes record the transformed entry. No runtime state or
+new lifecycle owner is added.
