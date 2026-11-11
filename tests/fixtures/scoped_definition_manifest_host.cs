@@ -24,13 +24,14 @@ namespace UnityEngine
         public static AssetBundle[] GetAllLoadedAssetBundles() { return new[] { owner }; }
         public static int typedLoads;
         public T LoadAsset<T>(string path) where T : Object { typedLoads++; return (T)assets[path]; }
+        public T[] LoadAllAssets<T>() where T : Object { throw new Exception("Unrelated drop table activated before key-item registration"); }
     }
 }
 namespace UnityEngine.ResourceManagement.ResourceLocations { public interface IResourceLocator {} }
-namespace RoR2 { public class CharacterBody : Object {} public class BuffDef : Object {} public class ItemDef : Object {} public class SurvivorDef : Object {} public class UnlockableDef : Object {} }
+namespace RoR2 { public class CharacterBody : Object {} public class BuffDef : Object {} public class ItemDef : Object {} public class KeyItemDef : Object {} public class SurvivorDef : Object {} public class UnlockableDef : Object {} }
 namespace RoR2.ContentManagement
 {
-    public static class AddressablesLabels { public const string survivorDef = "survivors", unlockableDef = "unlockables"; }
+    public static class AddressablesLabels { public const string survivorDef = "survivors", unlockableDef = "unlockables", keyItemDef = "KeyItemDef"; }
     public class ContentPack { public bool allowed; }
     public class AddressablesLoadHelper
     {
@@ -74,7 +75,7 @@ public class ExcludedProvider
 }
 public static partial class WholeCatalogComposed
 {
-    static Object owned = new Object();
+    static AssetBundle owned = AssetBundle.owner;
     static readonly Dictionary<string, Object[]> definitionFamilies = new Dictionary<string, Object[]>();
     static readonly Dictionary<FieldInfo, object> priorDefinitionFields = new Dictionary<FieldInfo, object>();
     static void Check(bool value) { if (!value) throw new Exception("Scoped manifest contract differs"); }
@@ -162,7 +163,38 @@ public static partial class WholeCatalogComposed
         Check(ReferenceEquals(CategoryFamily("types", new[] { provider }).Single(), provider));
         DefinitionFamilyContract<RoR2.BuffDef>(BuffDefinitions);
         DefinitionFamilyContract<RoR2.ItemDef>(ItemDefinitions);
+        KeyItemFamilyContract();
         Console.WriteLine("scope identity policy restoration buffs items PASS");
+    }
+    static void KeyItemFamilyContract()
+    {
+        definitionFamilies.Clear();
+        var first = new RoR2.KeyItemDef { name = "FirstKey" };
+        var second = new RoR2.KeyItemDef { name = "SecondKey" };
+        AssetBundle.assets["first-key"] = first;
+        AssetBundle.assets["second-key"] = second;
+        var data = new JObject {
+            ["providers"] = new JArray(new JObject { ["type"] = "SourceProvider", ["identifier"] = "source" }),
+            ["locations"] = new JArray(
+                new JObject { ["id"] = 1, ["type"] = "RoR2.KeyItemDef", ["bundle"] = "source", ["path"] = "first-key" },
+                new JObject { ["id"] = 2, ["type"] = "RoR2.KeyItemDef", ["bundle"] = "source", ["path"] = "second-key" },
+                new JObject { ["id"] = 3, ["type"] = "Definition", ["bundle"] = "source", ["path"] = "unrelated-drop-table" }),
+            ["keys"] = new JArray(
+                new JObject { ["key"] = "ContentPack:source", ["locations"] = new JArray(1, 2, 3) },
+                new JObject { ["key"] = "KeyItemDef", ["locations"] = new JArray(1, 2) }) };
+        File.WriteAllText("payload/whole-catalog.json", data.ToString());
+        int before = AssetBundle.typedLoads;
+        Check(KeyItemDefinitions().SequenceEqual(new[] { first, second }));
+        Check(AssetBundle.typedLoads == before + 2);
+        File.Delete("payload/whole-catalog.json");
+        Check(KeyItemDefinitions().SequenceEqual(new[] { first, second }));
+        Check(AssetBundle.typedLoads == before + 2);
+        definitionFamilies.Clear(); // A later catalog generation must reload its own definitions.
+        File.WriteAllText("payload/whole-catalog.json", data.ToString());
+        AssetBundle.assets["second-key"] = null;
+        Refuses(() => KeyItemDefinitions());
+        AssetBundle.assets["second-key"] = second;
+        definitionFamilies.Clear();
     }
     static void ManifestParseContract()
     {

@@ -6343,6 +6343,15 @@ and device gates remain open.
 
 ### Typed gameplay startup discovery
 
+`WholeCatalogComposed.KeyItemDefinitions` uses the existing original-provider
+category loader to materialize only labeled key-item definitions before
+`IntegratedResultsSession` registers their native indices. It avoids activating
+unrelated drop tables during registration. The existing definition-family cache
+retains identities until `WholeCatalogComposed.Release` clears it; native
+key-item catalog restoration remains owned by `IntegratedResultsSession`.
+`test_scoped_definition_manifest.py` covers typed selection, identity reuse and
+missing-definition refusal. Android acceptance remains a separate gate.
+
 `IntegratedWorldBoundary` discovers only the requested method-attribute family
 from the original assemblies, including private methods and all attributes on
 each declared method. Its process-lived network metadata cache supplies the
