@@ -1092,6 +1092,10 @@ unchanged, and the installer visibly labels the active test source.
 `scripts/lab-installer-updates.py` owns the synthetic lab acceptance setup,
 local signed fixture server, actual UI/session assertions and owned cleanup.
 Its runner-provided toolhost and generated binaries/keys never leave the lab.
+After verifying the focused consent identity, fixed label/title/button/layout
+classifications are emitted before fixture refusal. No raw UI text or resource
+identifiers are exported. These observations never relax the existing fixture,
+button, identity or focus gates that authorize a synthetic consent tap.
 
 Phone installation uses the same release transaction. `owner-apk/game_import.py`
 owns bounded original-file validation, free-space estimates and resumable private

@@ -514,6 +514,74 @@ class LabInstallerUpdatesTests(unittest.TestCase):
         self.assertIn("INFO install-permission-switch actor=harness", output.getvalue())
         self.assertTrue(all(call.kwargs == {"recovery": False} for call in ui.call_args_list))
 
+    def test_consent_summary_exports_only_fixed_classes_and_counts(self):
+        nodes = [
+            {"resource-id": "android:id/alertTitle", "text": "PRIVATE APP", "content-desc": "PRIVATE DESCRIPTION"},
+            {"resource-id": "android:id/button1", "text": "PRIVATE ACTION", "enabled": "false"},
+            {"resource-id": "android:id/message", "text": "PRIVATE ERROR"},
+            {"resource-id": "PRIVATE RESOURCE", "text": "PRIVATE CONTENT"},
+        ]
+        summary = LAB.install_consent_summary(nodes)
+        self.assertEqual(
+            summary,
+            {
+                "expected_label_location": "neither",
+                "title_class": "other",
+                "button1_count": 1,
+                "button1_enabled_count": 0,
+                "button1_caption_class": "other",
+                "layout_class": "message-dialog",
+            },
+        )
+        self.assertNotIn("PRIVATE", json.dumps(summary))
+        self.assertEqual(LAB.install_consent_summary([])["title_class"], "missing")
+        nodes.append(dict(nodes[0]))
+        nodes.append(dict(nodes[1]))
+        self.assertEqual(LAB.install_consent_summary(nodes)["title_class"], "multiple")
+        self.assertEqual(LAB.install_consent_summary(nodes)["button1_caption_class"], "multiple")
+
+    def test_consent_summary_classifies_known_labels_without_broadening_tap_gate(self):
+        for title, classification in (
+            ("Synthetic update fixture", "synthetic-fixture"),
+            (LAB.GAME, "fixture-package"),
+            ("Owner game installer", "installer-host"),
+        ):
+            nodes = [
+                {"resource-id": "android:id/alertTitle", "text": title},
+                {"resource-id": "com.android.packageinstaller:id/install_confirm_question"},
+                {"resource-id": "android:id/button1", "text": "Update", "enabled": "true"},
+            ]
+            result = LAB.install_consent_summary(nodes)
+            self.assertEqual(result["title_class"], classification)
+            self.assertEqual(result["layout_class"], "confirmation-control")
+            self.assertEqual(result["button1_caption_class"], "update")
+            self.assertEqual(result["button1_enabled_count"], 1)
+        nodes.append({"content-desc": "Synthetic update fixture"})
+        self.assertEqual(LAB.install_consent_summary(nodes)["expected_label_location"], "content-desc")
+        nodes.append({"text": "Synthetic update fixture"})
+        self.assertEqual(LAB.install_consent_summary(nodes)["expected_label_location"], "both")
+
+    def test_refused_consent_emits_fixed_observation_without_a_tap(self):
+        phone = self.owned_phone()
+        tree = self.consent_prompt()
+        tree.find("node")[0].set("text", "PRIVATE APP")
+        tree.find("node")[0].set("content-desc", "Synthetic update fixture")
+        with (
+            patch.object(phone, "require_owned_installer"),
+            patch.object(phone, "install_identity", return_value=self.install_verified()),
+            patch.object(phone, "ui_windows", return_value=tree),
+            patch.object(phone, "shell") as shell,
+            redirect_stdout(io.StringIO()) as output,
+        ):
+            with self.assertRaisesRegex(LAB.Failure, "^install-consent-fixture-not-identified$"):
+                phone.confirm_synthetic_install()
+        result = json.loads(output.getvalue())
+        self.assertEqual(result["mode"], "install-consent-fixture")
+        self.assertTrue(result["identity_verified"])
+        self.assertEqual(result["observed"]["expected_label_location"], "content-desc")
+        self.assertNotIn("PRIVATE", output.getvalue())
+        self.assertFalse(any(call.args[:2] == ("input", "tap") for call in shell.call_args_list))
+
     def test_synthetic_install_consent_requires_owned_fixture_and_identified_button(self):
         phone = self.owned_phone()
         with (

@@ -249,6 +249,35 @@ def install_activity_summary(data, current_user, displays=None):
     return prompt_activity_summary(data, current_user, displays, install=True)
 
 
+def install_consent_summary(nodes):
+    """Fixed classifications only; observation never authorizes a consent tap."""
+    expected = "Synthetic update fixture"
+    text_found = any(node.get("text") == expected for node in nodes)
+    description_found = any(node.get("content-desc") == expected for node in nodes)
+    labels = {expected: "synthetic-fixture", GAME: "fixture-package", "Owner game installer": "installer-host"}
+    titles = [node for node in nodes if node.get("resource-id") == "android:id/alertTitle"]
+    buttons = [node for node in nodes if node.get("resource-id") == "android:id/button1"]
+    title_class = "missing" if not titles else "multiple" if len(titles) > 1 else labels.get(titles[0].get("text"), "other")
+    captions = {"install", "update", "ok", "settings", "cancel"}
+    caption = buttons[0].get("text", "").casefold() if len(buttons) == 1 else ""
+    button_class = "missing" if not buttons else "multiple" if len(buttons) > 1 else caption if caption in captions else "other"
+    confirmation_ids = {
+        package + ":id/" + name
+        for package in ("com.android.packageinstaller", "com.google.android.packageinstaller")
+        for name in ("install_confirm_question", "install_confirm_question_update")
+    }
+    confirmation = any(node.get("resource-id") in confirmation_ids for node in nodes)
+    message = any(node.get("resource-id") == "android:id/message" for node in nodes)
+    return {
+        "expected_label_location": "both" if text_found and description_found else "text" if text_found else "content-desc" if description_found else "neither",
+        "title_class": title_class,
+        "button1_count": len(buttons),
+        "button1_enabled_count": sum(node.get("enabled") == "true" for node in buttons),
+        "button1_caption_class": button_class,
+        "layout_class": "confirmation-control" if confirmation else "message-dialog" if message else "unclassified",
+    }
+
+
 def module(name, path):
     spec = importlib.util.spec_from_file_location(name, path)
     value = importlib.util.module_from_spec(spec)
@@ -1225,6 +1254,7 @@ class Phone:
         # The active accessibility root can still be the covered test app. Use
         # the focused display-0 window, as for the already qualified Settings UI.
         _, nodes = self.prompt_nodes(self.ui_windows(installers, recovery=False), installers)
+        print(encoded({"mode": "install-consent-fixture", "identity_verified": True, "observed": install_consent_summary(nodes)}).decode(), end="", flush=True)
         if not any(node.get("text") == "Synthetic update fixture" for node in nodes):
             raise Failure("install-consent-fixture-not-identified")
         buttons = [
