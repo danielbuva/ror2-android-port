@@ -108,8 +108,10 @@ retain J595/J755 ownership guards; final alpha installation remains separate.
       the 32-session diagnostic stopped after ten completions on lost thermal
       telemetry. Subsequent [transport](PORTING_JOURNAL.md#j1403--preserve-session-process-transport-failures)
       and [cooldown](PORTING_JOURNAL.md#j1405--cool-supervised-memory-sessions-between-verified-endings)
-      fixes improve the host runner only; physical navigation, a completed long series
-      and ordinary long-run dependency retention remain open.
+      fixes support a completed 32-session supervised UI-abandon diagnostic
+      ([J1407](PORTING_JOURNAL.md#j1407--preserve-cooldown-admission-readings-across-display-wake)).
+      Final-16 matched-menu managed growth remains positive; physical navigation,
+      a memory plateau and ordinary long-run dependency retention remain open.
 - [ ] Coordinate gameplay/audio/animation prerequisites with the main session;
       acceptance follows [capability gates](milestones.md), including an
       unassisted run. Keep Moon/finale manual.
