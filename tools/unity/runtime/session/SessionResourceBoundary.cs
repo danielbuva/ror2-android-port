@@ -10,7 +10,8 @@ using UnityEngine.Networking;
 using UnityEngine.Profiling;
 
 // Measurements and reclamation only at an already completed owned session.
-// No gameplay pools, live content, process caches or unrelated files are cleared.
+// Only the two measured returned-item pools are reclaimed, with no live world.
+// Checked-out objects, live content, other process caches and files are untouched.
 public sealed partial class PortSession
 {
     [Serializable]
@@ -459,6 +460,36 @@ public sealed partial class PortSession
         }
         return released;
     }
+    // Paired menu captures show unique returned items growing in these stacks.
+    // Original sphere-cast hits and serialized Highlight lists can enter them
+    // without an earlier rental, so their size is not a concurrency watermark.
+    // Reclaim their idle storage rather than retaining a new high-water mark
+    // after every session. Clearing the stacks never mutates checked-out items
+    // or lists (including any externally referenced returned item).
+    string[] ReclaimReturnedSessionPools()
+    {
+        Check(r.world.cleaned && !Run.instance && !NetworkServer.active && !NetworkClient.active,
+              "Refuse returned-pool reclamation in a live session");
+        var poolField = typeof(BulletAttack).GetField("bulletHitPool", BindingFlags.Static | BindingFlags.NonPublic);
+        var pool = poolField == null ? null : poolField.GetValue(null);
+        Check(pool != null, "Original bullet-hit pool changed");
+        var itemsField = pool.GetType().BaseType.GetField("items", BindingFlags.Instance | BindingFlags.NonPublic);
+        var hits = itemsField == null ? null : itemsField.GetValue(pool) as System.Collections.Generic.Stack<BulletAttack.BulletHit>;
+        var rendererField = typeof(HG.CollectionPool<Renderer, System.Collections.Generic.List<Renderer>>)
+            .GetField("pooledCollections", BindingFlags.Static | BindingFlags.NonPublic);
+        var renderers = rendererField == null ? null : rendererField.GetValue(null)
+            as System.Collections.Generic.Stack<System.Collections.Generic.List<Renderer>>;
+        Check(hits != null && renderers != null, "Original returned-session pool storage changed");
+        int hitCount = hits.Count, rendererCount = renderers.Count;
+        hits.Clear();
+        hits.TrimExcess();
+        renderers.Clear();
+        renderers.TrimExcess();
+        return new[] {
+            "BulletAttack.bulletHitPool.returnedItems:" + hitCount + "/" + hits.Count,
+            "HG.CollectionPool<Renderer,List<Renderer>>.returnedLists:" + rendererCount + "/" + renderers.Count
+        };
+    }
     IEnumerator ReclaimCompletedSessionResources()
     {
         Check(r.world.cleaned && !Run.instance && !NetworkServer.active && !NetworkClient.active,
@@ -470,7 +501,7 @@ public sealed partial class PortSession
             "BulletAttack.bulletHitPool.destroyedTargets:" + ReleaseDestroyedPooledHitTargets(),
             "OverlapAttack.discoveredHurtboxes.destroyedTargets:" + PruneDestroyedOverlapTargets(),
             "CharacterSpawnCard.loadoutAvailability.destroyedTargets:" + PruneDestroyedSpawnCardCallbacks()
-        }).ToArray();
+        }).Concat(ReclaimReturnedSessionPools()).ToArray();
         ObserveSessionResources("completed-before-reclaim");
         r.sessionResources.Last().prunedDestroyedDepossessionSubscribers = pruned;
         r.sessionResources.Last().prunedDestroyedRegistryEntries = registries;
