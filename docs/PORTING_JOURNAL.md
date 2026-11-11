@@ -3158,3 +3158,17 @@ prevent a total-loading speedup claim. Prior art: pinned R2API provider/J426.
 CPU/GPU peak 79.6 °C, 0 s above 80 °C; battery peak 30 °C. App/selectors/pending
 absent, scratch removed, OLED asleep, lease released; P1 notified.
 Sustained performance, physical navigation and ordinary long play remain open.
+
+## J1415 — Validate explicit catalog subassets and inspect verified APK archives
+
+2026-11-11. Catalog completion follows typed controller behaviour, TMP, Timeline
+and Sprite/texture ownership fields; unrelated preload objects cannot qualify
+an alias. Managed bindings still require the current runtime registry.
+APK attempt inspection now uses UnityPy's explicit ZIP reader on hashed bytes.
+Evidence: `work/coordination/p1-scenes-w/current-minimal-assembly-attempt-v11/`.
+Strict staged catalog, signing and four representative exact-editor typed loads
+passed; 615 files assembled in 313.87 s. Two unsupported aliases are recorded
+in the private drop receipt; all 13 preload relationships remain.
+APK SHA-256 `7c248d5c4c2ca4773d9c1ff3a8cc7592d60d9a07a97d9ff36de7889db75f8e23`.
+Focused host checks pass. Device continuation stopped before installation:
+no attached authorized device. Converted gameplay and phone-only install stay open.

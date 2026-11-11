@@ -90,6 +90,7 @@ class ProducedMembers:
     def __init__(self):
         self.members = {}
         self.bundles = {}
+        self.sprite_textures = None
 
     def add(self, name, stream, bundle):
         if name in self.members:
@@ -128,6 +129,100 @@ class ProducedMembers:
             raise ValueError("produced MonoScript binding differs from serialized type")
         return identity
 
+    def texture_has_sprites(self, member, pointer):
+        """A Sprite subasset must explicitly reference this texture as m_RD.texture."""
+        texture_member, texture_row = self.resolve(member, pointer)
+        if self.sprite_textures is None:
+            records = module("_catalog_sprite_records", HERE / "record_produce.py")
+            textures = set()
+            for owner, (_, layout, objects) in self.members.items():
+                for path_id, row in objects.items():
+                    typ = layout["types"][row["type_id"]]
+                    # Player builtin resources omit type trees; they cannot prove ownership.
+                    if typ["class_id"] != 213 or "tree" not in typ:
+                        continue
+                    _, _, body = self.record(owner, (0, path_id))
+                    root = records.SCHEMA.type_tree(io.BytesIO(typ["tree"]))
+                    _, spans = records.fields(body, root)
+                    path = ("m_RD", "texture")
+                    start, end = spans[path]
+                    if end - start != 12 or path + ("m_FileID",) not in spans or path + ("m_PathID",) not in spans:
+                        raise ValueError("invalid Sprite texture ownership PPtr")
+                    reference = struct.unpack_from("<iq", body, start)
+                    target, target_row = self.resolve(owner, reference)
+                    target_type = self.members[target][1]["types"][target_row["type_id"]]
+                    if target_type["class_id"] != 28:
+                        raise ValueError("Sprite texture ownership type differs")
+                    textures.add((target, target_row["path_id"]))
+            self.sprite_textures = textures
+        return (texture_member, texture_row["path_id"]) in self.sprite_textures
+
+    def controller_behaviours(self, member, typ, body):
+        """Only explicit controller subassets qualify, never arbitrary preloads."""
+        records = module("_catalog_controller_records", HERE / "record_produce.py")
+        root = records.SCHEMA.type_tree(io.BytesIO(typ["tree"]))
+        _, spans = records.fields(body, root)
+        start, end = spans[("m_StateMachineBehaviours",)]
+        (count,) = struct.unpack_from("<I", body, start)
+        if end - start != 4 + 12 * count:
+            raise ValueError("invalid controller behaviour array extent")
+        identities = []
+        for index in range(count):
+            pointer = struct.unpack_from("<iq", body, start + 4 + 12 * index)
+            owner, behaviour_type, behaviour = self.record(member, pointer)
+            if behaviour_type["class_id"] != 114:
+                raise ValueError("controller behaviour is not a MonoBehaviour")
+            identities.append(self.managed_identity(owner, behaviour_type, behaviour))
+        return identities
+
+    def owned_subassets(self, member, typ, body, identity):
+        """Follow measured TMP and Timeline ownership fields, not preload membership."""
+        records = module("_catalog_subasset_records", HERE / "record_produce.py")
+        pending = [(member, typ, body, identity)]
+        seen = set()
+        identities = []
+        while pending:
+            owner, current_type, current_body, current = pending.pop()
+            if current == 213:
+                routes = {("m_RD", "texture"): 28}
+            elif current == ("TMP_FontAsset", "TMPro", "Unity.TextMeshPro.dll"):
+                routes = {("material",): 21, ("atlas",): 28, ("m_AtlasTextures", "Array", "*"): 28}
+            elif current == ("TMP_SpriteAsset", "TMPro", "Unity.TextMeshPro.dll"):
+                routes = {("material",): 21, ("spriteSheet",): 28}
+            elif isinstance(current, tuple) and current[1:] == ("UnityEngine.Timeline", "Unity.Timeline.dll"):
+                routes = dict.fromkeys(
+                    [("m_Tracks", "Array", "*"), ("m_MarkerTrack",), ("m_Children", "Array", "*"), ("m_Parent",), ("m_Clips", "Array", "*", "m_Asset")], 114
+                )
+            else:
+                continue
+            root = records.SCHEMA.type_tree(io.BytesIO(current_type["tree"]))
+            _, spans = records.fields(current_body, root)
+            for path, (start, end) in spans.items():
+                route = tuple("*" if part.isdigit() else part for part in path)
+                if route not in routes:
+                    continue
+                if end - start != 12 or path + ("m_FileID",) not in spans or path + ("m_PathID",) not in spans:
+                    raise ValueError("invalid subasset ownership PPtr: " + str(path))
+                pointer = struct.unpack_from("<iq", current_body, start)
+                if not pointer[1]:
+                    continue
+                target_member, target_row = self.resolve(owner, pointer)
+                key = (target_member, target_row["path_id"])
+                if key in seen:
+                    continue
+                seen.add(key)
+                target_member, target_type, target_body = self.record(owner, pointer)
+                if target_type["class_id"] != routes[route]:
+                    raise ValueError("subasset ownership type differs: " + str(path))
+                target_identity = target_type["class_id"]
+                if target_identity == 114:
+                    target_identity = self.managed_identity(target_member, target_type, target_body)
+                    if target_identity[1:] != ("UnityEngine.Timeline", "Unity.Timeline.dll"):
+                        raise ValueError("Timeline ownership target is not a Timeline subasset")
+                identities.append(target_identity)
+                pending.append((target_member, target_type, target_body, target_identity))
+        return identities
+
 
 def validate_locations(metadata, members, registry):
     runtime_scripts = set()
@@ -161,6 +256,20 @@ def validate_locations(metadata, members, registry):
                             if actual not in runtime_scripts:
                                 raise ValueError("catalog MonoScript absent from current runtime registry: " + str(actual))
                     advertised.setdefault((bundle, path.casefold()), []).append(actual)
+                    if isinstance(actual, tuple) and actual[1:] in {("TMPro", "Unity.TextMeshPro.dll"), ("UnityEngine.Timeline", "Unity.Timeline.dll")}:
+                        for identity in members.owned_subassets(owner, root_type, root, actual):
+                            if isinstance(identity, tuple) and identity not in runtime_scripts:
+                                raise ValueError("subasset MonoScript absent from current runtime registry: " + str(identity))
+                            advertised[(bundle, path.casefold())].append(identity)
+                    if actual == 213:
+                        advertised[(bundle, path.casefold())].extend(members.owned_subassets(owner, root_type, root, actual))
+                    if actual == 28 and members.texture_has_sprites(member, pointer):
+                        advertised[(bundle, path.casefold())].append(213)
+                    if actual == 91:
+                        for identity in members.controller_behaviours(owner, root_type, root):
+                            if identity not in runtime_scripts:
+                                raise ValueError("controller MonoScript absent from current runtime registry: " + str(identity))
+                            advertised[(bundle, path.casefold())].append(identity)
     for row in metadata["locations"]:
         expected = row["type"].split(", ")
         qualified = expected[0]

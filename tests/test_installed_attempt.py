@@ -5,6 +5,7 @@ import tempfile
 import unittest
 from pathlib import Path
 from types import SimpleNamespace
+from unittest.mock import patch
 
 TEST_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(TEST_ROOT / "scripts/lab"))
@@ -54,6 +55,15 @@ class InstalledAttemptTests(unittest.TestCase):
         self.apk.write_bytes(b"changed")
         with self.assertRaisesRegex(RuntimeError, "bytes changed"):
             attempt_from_installed(self.receipt, loader=lambda _: self.fail("must not parse"))
+
+    def test_default_parser_uses_explicit_archive_reader_for_verified_snapshot(self):
+        seen = []
+        env = self.loader([{"attempt": "archive-attempt"}])(None)
+        env.load_zip_file = seen.append
+        module = SimpleNamespace(Environment=lambda: env)
+        with patch.dict(sys.modules, {"UnityPy": module}):
+            self.assertEqual(attempt_from_installed(self.receipt), "archive-attempt")
+        self.assertEqual(seen, [self.apk.read_bytes()])
 
     def test_parser_receives_verified_snapshot_if_file_changes_after_hashing(self):
         original = self.apk.read_bytes()
