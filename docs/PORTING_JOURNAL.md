@@ -3112,3 +3112,17 @@ Both audio checks fully verified 274 files. CPU/GPU peaks 84.0/85.2 °C,
 above 80 °C for 0.332/9.941 s; battery peaks 30/31 °C. Raw performance stays local.
 App/selectors/pending absent, OLED asleep, lease released; P1 has device priority.
 Sustained performance, memory plateau and ordinary long play remain open.
+
+## J1412 — Attribute native skin startup without changing its coroutine
+
+2026-11-11. Existing `BodyCatalogSession` emits six sparse startup markers around
+snapshot/save, native first yield/completion and validation; yields/cleanup stay.
+Exact-editor code-only build, 13 focused pin tests and Ruff pass. Ordinary Start
+reached Distant Roost/player/HUD/audio; no runtime errors, profiles/settings kept.
+Evidence: `work/coordination/alpha-skin-attribution-path-fixed-20261111T185526Z/`.
+APK SHA-256 `849f94c2a1df0542c02c74f849cd005e6bc2fa6d6536808c4080c05cab0dcd27`.
+Skin total 7.897 s: native setup 1.524 s, remainder 6.351 s/379 frames;
+snapshot/save/validation 1.019/19.600/0.905 ms. Attribution, no speedup claim.
+All 274 audio files verified; 21 survivors/455 unlockables ready. CPU/GPU peak
+82.0 °C, 1.058 s above 80 °C; battery peak 29 °C. App/selectors/pending absent,
+OLED asleep, lease released and P1 notified. Long play/performance remain open.

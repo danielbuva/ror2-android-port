@@ -3934,6 +3934,10 @@ registration through `WholePopulationSession` and `WholeCatalogComposed`.
 `WholeCatalogComposed` keeps native population, identity checks and the existing
 field-restoration owner; the local
 snapshot ends before the skins coroutine and adds no retained cache.
+`BodyCatalogSession.RegisterOriginalSkins` uses the existing `TraceStartup` owner
+to bound snapshot, save, native setup to first yield, remaining native coroutine
+and validation. It retains the original coroutine yields, deadline, availability
+checks and restoration state; six scalar logs add no retained owner or cache.
 `AndroidProfileSession.Prepare` emits sparse survivor/unlockable family and
 progression-metadata startup timing through the existing `TraceStartup` owner.
 The existing family loader emits child phases only on a cache miss; registration,
