@@ -3072,3 +3072,16 @@ Adopted in-place install retains profile/settings hashes; later sessions continu
 1,426 runtime thermal samples, maximum gap 0.494 s. App/selectors absent, OLED asleep,
 lease released and prune complete. Final-two menu/collected managed deltas remain
 +2.76/+0.97 MiB; memory plateau, ordinary long play and physical input remain open.
+
+## J1409 — Align memory observations with their measured menus
+
+2026-11-11. The existing session-memory report names the following menu for PSS,
+retains menu 2 in its slope and reports late-half slopes with actual sample ranges.
+Managed menu and completed-session collection phases remain separate; no plateau
+threshold or runtime change is introduced. Nineteen focused tests and Ruff pass.
+Host replay: `work/coordination/alpha-post-pool-address-candidates-20261111T173007Z/reporting-replay.json`.
+Output SHA-256 `4588421887660e894fe9c7ade9dceabd10844b3ebb0b7f10da84e5e4cb9fd87b`.
+The retained series reports managed +120,553 B/menu overall and +25,751 B/menu
+at menus 18–33; post-collection sessions 17–32 give −5,578 B/session.
+This is host reporting, with no new APK or device run. Memory plateau, retaining
+owner attribution, ordinary long play and physical input remain open.

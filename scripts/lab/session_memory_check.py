@@ -146,6 +146,7 @@ def growth_summary(sessions, final_menu_samples=None):
                 "live_completed_probes_at_start": _phase_value(samples, "before-presentation", "liveCompletedProbes"),
                 "managed_at_start": _phase_value(samples, "before-presentation", "managed"),
                 "menu_pss_kib": entry.get("menu_pss_kib"),
+                "menu_pss_session": entry["session"] + 1,
                 "root_walk_paths_at_start": _phase_value(samples, "before-presentation", "rootWalkPaths"),
                 "static_callback_counts_at_start": _phase_value(samples, "before-presentation", "staticCallbackCounts"),
                 "pruned_destroyed_depossession": _phase_value(samples, "completed-before-reclaim", "prunedDestroyedDepossessionSubscribers"),
@@ -153,11 +154,7 @@ def growth_summary(sessions, final_menu_samples=None):
             }
         )
 
-    def slope(key, final_value=None):
-        # Exclude session 1, whose first collection includes one-time warmup.
-        points = [(row["session"], row[key]) for row in rows[1:] if type(row[key]) is int]
-        if rows and type(final_value) is int:
-            points.append((rows[-1]["session"] + 1, final_value))
+    def slope(points):
         if len(points) < 2:
             return None
         n = len(points)
@@ -166,18 +163,40 @@ def growth_summary(sessions, final_menu_samples=None):
         den = sum((x - mean_x) ** 2 for x, _ in points)
         return round(sum((x - mean_x) * (y - mean_y) for x, y in points) / den) if den else None
 
+    series = {}
+    for metric, key in (
+        ("managed_after_collection_bytes", "managed_after_collection"),
+        ("managed_before_presentation_bytes", "managed_at_start"),
+        ("reserved_after_collection_bytes", "reserved_after_collection"),
+        ("menu_pss_kib", "menu_pss_kib"),
+    ):
+        # Managed samples use session k; PSS is read after completion, at menu k+1.
+        index_key = "menu_pss_session" if key == "menu_pss_kib" else "session"
+        series[metric] = [(row[index_key], row[key]) for row in rows if row[index_key] >= 2 and type(row[key]) is int]
+    final_managed = _phase_value(final_menu_samples, "before-presentation", "managed")
+    if rows and type(final_managed) is int:
+        series["managed_before_presentation_bytes"].append((rows[-1]["session"] + 1, final_managed))
+
+    tail = {}
+    for metric, points in series.items():
+        points = points[len(points) // 2 :]
+        tail[metric] = {
+            "first_index": points[0][0] if points else None,
+            "last_index": points[-1][0] if points else None,
+            "samples": len(points),
+            "slope_per_session": slope(points),
+        }
+
     return {
         "rows": rows,
-        "per_session_slope_from_session_2": {
-            "managed_after_collection_bytes": slope("managed_after_collection"),
-            "managed_before_presentation_bytes": slope("managed_at_start", _phase_value(final_menu_samples, "before-presentation", "managed")),
-            "reserved_after_collection_bytes": slope("reserved_after_collection"),
-            "menu_pss_kib": slope("menu_pss_kib"),
-        },
+        "per_session_slope_from_session_2": {metric: slope(points) for metric, points in series.items()},
+        "last_half_observations": tail,
         "final_menu_samples": final_menu_samples,
         "limits": (
             "Observation only: Boehm/IL2CPP heap usage, PSS and object counts; no retaining root is attributed here. "
             "Inspect both sampling phases: an early post-collection spike can dominate its regression while consistent menu usage still rises."
+            " PSS and before-presentation indices name menus; post-collection indices name completed sessions."
+            " Last-half slopes use the final ceil(n/2) available samples per metric; neither slope establishes a plateau."
         ),
     }
 
