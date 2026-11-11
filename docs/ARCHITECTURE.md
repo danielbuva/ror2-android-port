@@ -70,6 +70,17 @@ results; output indices pin actual produced extents. Source, supplier, native-ty
 schema, script and reference checks remain strict; device loadability remains open.
 Barrier shader jobs bind their separately pinned legacy SDK metadata explicitly.
 
+`./dev prototype --action source-camera-program-bundle --target REQUEST.json`
+compiles the existing input-qualified source-camera candidate in a disposable SDK
+project. The request names a fresh ignored `output` directory.
+`scripts/lab/source_camera_bundle.py` revalidates original joins, public package
+inputs and generated sources; `tools/phone-build/SourceCameraProgramBundle.cs`
+checks imports, compute kernels/thread groups using the host Metal device and
+builds one strict Android/Vulkan bundle. Null graphics cannot reflect compute
+kernels. The shared editor mutex serializes compilation; teardown removes the
+project and retains pinned sources, receipt and bundle. This is a host supplier
+route; phone compute production and device loadability remain open.
+
 `accepted-output/catalog_complete.py --inputs REQUEST --output NEW_DIRECTORY`
 owns current host catalog completion. The request pins source metadata, selected
 final object profiles, every produced bundle and the current runtime script
