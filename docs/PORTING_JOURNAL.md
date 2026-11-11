@@ -3126,3 +3126,19 @@ snapshot/save/validation 1.019/19.600/0.905 ms. Attribution, no speedup claim.
 All 274 audio files verified; 21 survivors/455 unlockables ready. CPU/GPU peak
 82.0 °C, 1.058 s above 80 °C; battery peak 29 °C. App/selectors/pending absent,
 OLED asleep, lease released and P1 notified. Long play/performance remain open.
+
+## J1413 — Measure direct native skin iterator execution
+
+2026-11-11. `BodyCatalogSession` aggregates invocation/MoveNext wall time and yield
+categories, including final false; original scheduling, identity and cleanup stay.
+Evidence: `work/coordination/alpha-skin-execution-device-20261111T192017Z/`.
+APK SHA-256 `736b656cca5818e232685d95be49429ea3d1c8558ee99cfa10eaf6c1cbf88e67`.
+Exact-editor code build, 13 focused pin tests, Ruff and host preflight pass.
+Ordinary Start reached Distant Roost/player/HUD/audio; current-process errors empty,
+profiles/settings kept, all 274 audio files verified, 21 survivors/455 unlockables.
+Native elapsed 7.867 s: direct execution 1.589 s, maximum call 1.544 s;
+380 calls/379 null yields, no nested/other yields; outside direct calls 6.279 s.
+J1412 native elapsed was 7.875 s/379 frames; uncontrolled page cache, no speedup
+or I/O claim. CPU/GPU peak 83.6 °C, 2.405 s above 80 °C; battery peak 30 °C.
+App/selectors/pending absent, scratch removed, OLED asleep, lease released.
+P1 notified; sustained performance, physical navigation and long play remain open.

@@ -3938,6 +3938,11 @@ snapshot ends before the skins coroutine and adds no retained cache.
 to bound snapshot, save, native setup to first yield, remaining native coroutine
 and validation. It retains the original coroutine yields, deadline, availability
 checks and restoration state; six scalar logs add no retained owner or cache.
+It also aggregates reflection-invocation and direct `MoveNext` execution time,
+maximum call time, calls (including the final false return) and yielded-value
+categories into one completion log. These local scalars add no teardown state.
+Nested enumerators, if yielded, execute outside this timer; time between direct
+calls includes scheduling and other frame work and does not identify I/O.
 `AndroidProfileSession.Prepare` emits sparse survivor/unlockable family and
 progression-metadata startup timing through the existing `TraceStartup` owner.
 The existing family loader emits child phases only on a cache miss; registration,
