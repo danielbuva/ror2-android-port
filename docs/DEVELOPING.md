@@ -147,6 +147,7 @@ by hand. Regenerate with `python3 scripts/readme-actions.py`; CI checks freshnes
 
 | Command | What it does |
 | --- | --- |
+| `./dev prototype --action source-camera-program-bundle` | Current host supplier: compile the input-qualified source-camera graphics/compute candidate into an isolated Android/Vulkan bundle; --target REQUEST.json names a fresh ignored output. Phone production and device loadability remain separate gates. |
 | `./dev prototype --action phone-texture-fixture` | Experimental desktop oracle: stage a fresh SDK-only project for nine authored texture imports. No game inputs, player build or device action. |
 | `./dev prototype --action phone-texture-check` | Experimental desktop oracle: check explicit --target PROJECT with the exact editor under the primary mutex; retain all raw authored mip levels. Never a phone-production input. |
 | `./dev prototype --action phone-wrapper-oracle` | Experimental desktop verification only: --target REQUEST.json selects stage or check for a fresh SDK-only project. The exact editor reports native metadata and concrete Object-descendant wrapper queries under the shared mutex. No game files, player build, installation or phone-build input; preserves existing editors and refuses lock contention. |

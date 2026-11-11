@@ -192,6 +192,15 @@ def _repair_reconstruction(function, kwargs, args):
 # Only the selected action's module is imported by dispatch().
 _ENTRIES = (
     Action(
+        "source-camera-program-bundle",
+        "source_camera_bundle",
+        "build",
+        {},
+        "current",
+        "Current host supplier: compile the input-qualified source-camera graphics/compute candidate into an isolated Android/Vulkan bundle; --target REQUEST.json names a fresh ignored output. Phone production and device loadability remain separate gates.",
+        handler=_target_json_result,
+    ),
+    Action(
         "phone-texture-fixture",
         "phone_texture_oracle",
         "stage_action",
