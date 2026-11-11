@@ -360,6 +360,24 @@ class GameThermalOwnerTests(unittest.TestCase):
         self.assertEqual(self.device.display.call_args_list, [mock.call(False), mock.call(True)])
         self.assertEqual(self.owner.phase, "gameplay")
 
+    def test_between_sessions_preserves_admission_readings_across_wake(self):
+        self.owner.battery = dict(celsius=35, level=80, status=4)
+        self.owner.battery_zone_celsius = 35
+
+        def display(awake):
+            if awake:
+                self.owner.battery["celsius"] = 36
+                self.owner.battery_zone_celsius = 36
+            return True
+
+        self.device.display.side_effect = display
+        result = self.owner.between_sessions()
+        self.assertEqual(result["battery"]["celsius"], 35)
+        self.assertEqual(result["battery_zone_celsius"], 35)
+        self.assertEqual(self.owner.battery["celsius"], 36)
+        self.assertEqual(self.owner.battery_zone_celsius, 36)
+        self.assertEqual(self.device.display.call_args_list, [mock.call(False), mock.call(True)])
+
     def test_between_sessions_cancellation_leaves_oled_asleep(self):
         self.owner.battery = dict(celsius=40)
         self.owner.battery_zone_celsius = 40

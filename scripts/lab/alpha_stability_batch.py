@@ -363,14 +363,17 @@ class _GameThermalOwner:
             while True:
                 if self.error:
                     raise ThermalCancelled(self.error)
-                if max(self.battery["celsius"], self.battery_zone_celsius) <= 35:
+                admitted = dict(battery=self.battery.copy(), battery_zone_celsius=self.battery_zone_celsius)
+                if max(admitted["battery"]["celsius"], admitted["battery_zone_celsius"]) <= 35:
                     break
                 time.sleep(THERMAL_INTERVAL_SECONDS)
             if not self.device.display(True):
                 raise RuntimeError("Between-session cooldown could not restore the menu display")
             if self.error:
                 raise ThermalCancelled(self.error)
-            return dict(battery=self.battery.copy(), battery_zone_celsius=self.battery_zone_celsius)
+            # The observer continues through display wake. Keep the readings
+            # that admitted this session rather than later, mutable readings.
+            return admitted
         finally:
             self.phase = phase
 

@@ -3041,3 +3041,18 @@ Evidence: 16 focused host tests, including a stalled post-cooldown menu that
 preserves one completion, sends no repeated taps and confirms OLED cleanup; Ruff
 and shared host preflight pass. APK unchanged; no new device acceptance.
 Wake/focus/tap delivery, long-series memory and physical navigation remain open.
+
+## J1407 — Preserve cooldown admission readings across display wake
+
+2026-11-11. Existing thermal owner freezes the <=35 C battery readings used to
+admit cooldown completion; display wake no longer replaces them with later samples.
+Evidence: 57 focused host tests/Ruff; no APK change. Current diagnostic:
+`work/coordination/alpha-captured-cooldown-memory32-20261111T105226Z/terminal.done.json`.
+APK `04df664f66d5ebc32cbc477865e9bfb6a16bfdf1120603b0f2f2f99a310a680d`, source `2575892b`.
+32 supervised UI-abandons plus final menu share one PID; frozen profile counts hold.
+Final-16 managed slopes: menu +0.160 MiB/session, post-collection +0.162; no plateau.
+7,174 s wall, 19,060 thermal samples, maximum gap 0.822 s; CPU/GPU peak 95.1 C,
+above 80 C for 1,517.948 s; battery 32–36 C. No sustained safety-limit breach.
+Prewake admission does not establish exact Start temperature; captures delay Start.
+App/selectors absent, OLED asleep, lease released and prune complete. Ordinary
+play, physical input, retaining-root attribution and sustained qualification remain open.
