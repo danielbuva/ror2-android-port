@@ -3073,7 +3073,7 @@ Adopted in-place install retains profile/settings hashes; later sessions continu
 lease released and prune complete. Final-two menu/collected managed deltas remain
 +2.76/+0.97 MiB; memory plateau, ordinary long play and physical input remain open.
 
-## J1409 — Emit complete graphs with current structural field routes
+## J1410 — Emit complete graphs with current structural field routes
 
 2026-11-11. The existing native subset emitter accepts every current nonnull
 field route without requiring historical per-field source provenance. Complete
