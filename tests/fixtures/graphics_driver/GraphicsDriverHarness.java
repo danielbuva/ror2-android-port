@@ -53,6 +53,62 @@ public final class GraphicsDriverHarness {
         }
         public void fallback() { fallbacks++; }
     }
+    private static void pickerContracts(GraphicsDriverPackage.Verified driver) throws Exception {
+        GraphicsDriverPolicy.State state = freshProcess();
+        GraphicsDriverProviders.resetToSystem(state);
+        Provider provider = new Provider(state);
+        check(GraphicsDriverProviders.curatedReleases().isEmpty());
+        check(GraphicsDriverProviders.EMPTY_CATALOG.contains("license-notice"));
+        check(GraphicsDriverProviders.ADRENOTOOLS_LICENSE.equals("BSD-2-Clause"));
+        check(GraphicsDriverProviders.ADRENOTOOLS_SOURCE.endsWith("8fae8ce254dfc1344527e05301e43f37dea2df80"));
+        java.util.List<GraphicsDriverProviders.Choice> choices = GraphicsDriverProviders.choices(ADRENO, null);
+        check(choices.size() == 3);
+        check(choices.get(0).available && choices.get(0).id.equals("system"));
+        check(!choices.get(1).available && choices.get(1).explanation.contains("not connected to Unity"));
+        check(!choices.get(2).available && choices.get(2).id.equals("mesa-panvk"));
+        try { choices.clear(); throw new AssertionError("mutable choices"); }
+        catch (UnsupportedOperationException expected) { checks++; }
+        check(!GraphicsDriverProviders.choices(null, provider).get(1).available);
+        GraphicsDriverPolicy.Device mali = new GraphicsDriverPolicy.Device(0x13b5, 0, 30, true);
+        check(!GraphicsDriverProviders.choices(mali, provider).get(1).available);
+        check(!GraphicsDriverProviders.choices(mali, provider).get(2).available);
+        check(!GraphicsDriverProviders.choices(new GraphicsDriverPolicy.Device(0x5143, 7, 27, true), provider).get(1).available);
+        check(!GraphicsDriverProviders.choices(new GraphicsDriverPolicy.Device(0x5143, 7, 30, false), provider).get(1).available);
+        rejects(() -> GraphicsDriverProviders.selectTurnip(state, null, provider, driver));
+        rejects(() -> GraphicsDriverProviders.selectTurnip(state, mali, provider, driver));
+        rejects(() -> GraphicsDriverProviders.selectTurnip(state, ADRENO, null, driver));
+        provider.available = false;
+        check(!GraphicsDriverProviders.choices(ADRENO, provider).get(1).available);
+        rejects(() -> GraphicsDriverProviders.selectTurnip(state, ADRENO, provider, driver));
+        provider.available = true;
+        provider.valid = false;
+        rejects(() -> GraphicsDriverProviders.selectTurnip(state, ADRENO, provider, driver));
+        provider.valid = true;
+        rejects(() -> GraphicsDriverProviders.selectTurnip(state, ADRENO, provider, null));
+        rejects(() -> GraphicsDriverProviders.selectTurnip(state, new GraphicsDriverPolicy.Device(0x5143, 8, 30, true), provider, driver));
+        check(state.selected().equals("system") && provider.loads == 0 && provider.fallbacks == 0);
+        GraphicsDriverProviders.ActiveDriver active = GraphicsDriverProviders.ActiveDriver.unavailable();
+        check(!active.observed && active.summary().contains("unavailable"));
+        check(GraphicsDriverProviders.choices(ADRENO, provider).get(1).available);
+        GraphicsDriverProviders.selectTurnip(state, ADRENO, provider, driver);
+        check(state.selected().equals(driver.archiveSha256) && freshProcess().selected().equals(driver.archiveSha256));
+        check(!active.observed && provider.loads == 0); // Selection is neither load nor active-driver evidence.
+        GraphicsDriverProviders.resetToSystem(state);
+        check(freshProcess().selected().equals("system") && provider.loads == 0);
+        active = GraphicsDriverProviders.ActiveDriver.fromActivePhysicalDevice("Observed GPU", 0x5143, -1, null, null);
+        check(active.observed && active.driverVersionRaw.equals("4294967295") && active.vendorId.equals("20803"));
+        check(active.driverName.isEmpty() && active.driverInfo.isEmpty());
+        active = GraphicsDriverProviders.ActiveDriver.fromActivePhysicalDevice("Observed GPU", 0x13b5, 42, "Observed driver", "Observed info");
+        check(active.summary().contains("Observed driver") && active.summary().contains("Observed info"));
+        rejects(() -> GraphicsDriverProviders.ActiveDriver.fromActivePhysicalDevice("", 0, 0, null, null));
+        rejects(() -> GraphicsDriverProviders.ActiveDriver.fromActivePhysicalDevice("GPU\ninjected", 0, 0, null, null));
+        rejects(() -> GraphicsDriverProviders.ActiveDriver.fromActivePhysicalDevice("GPU", 0, 0, null, "info\u0000"));
+        check(GraphicsDriverProviders.SETTINGS_EXPLANATION.contains("does not change"));
+        GraphicsDriverPackage.Verified changed = stage("good.zip", release("mesa-turnip", driver.archiveSha256, SOURCE, DOWNLOAD));
+        Files.write(changed.directory.resolve(changed.metadata.library), new byte[] {0});
+        rejects(() -> GraphicsDriverProviders.selectTurnip(state, ADRENO, provider, changed));
+        check(state.selected().equals("system") && provider.loads == 0);
+    }
     public static void main(String[] args) throws Exception {
         root = Paths.get(args[0]);
         String hash = new String(Files.readAllBytes(root.resolve("hash.txt")), StandardCharsets.US_ASCII).trim();
@@ -68,6 +124,7 @@ public final class GraphicsDriverHarness {
         rejects(() -> new GraphicsDriverPackage.Metadata(1, "Turnip", "test", 28, "../libtest.so"));
         GraphicsDriverPackage.Verified driver = stage("good.zip", pinned);
         check(driver.curated && driver.archiveSha256.equals(hash) && GraphicsDriverPackage.verify(driver));
+        pickerContracts(driver);
         try (java.util.stream.Stream<Path> files = Files.list(driver.directory)) { check(files.count() == 3); }
         check(!Files.exists(driver.directory.resolve("extra.so")));
         // Real AdrenoTools recipes can use a non-lib-prefixed name and minApi 27.

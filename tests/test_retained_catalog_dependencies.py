@@ -35,6 +35,7 @@ def production_host(*, unload_mutant=False):
             "public static bool ReleaseOriginalAudioOwnerLease(string expectedIdentity)",
             "public static IEnumerator Prepare()",
             "public static void Release()",
+            "internal static void ResetDefinitionManifest()",
         )
     ]
     cleanup = braced_block(body, "void CleanupBodyCatalog()")

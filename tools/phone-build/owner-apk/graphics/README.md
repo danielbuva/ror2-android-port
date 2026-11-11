@@ -38,6 +38,38 @@ driver or third-party native code is bundled, downloaded or run by this slice.
 - Custom pipeline cache namespaces derive from the archive hash, not mutable ZIP
   labels. The native adapter still needs to bind the Vulkan pipelineCacheUUID,
   implement cache-directory use/teardown and supply a versioned System cache key.
+- `GraphicsDriverProviders` owns the picker-facing System/Turnip/PanVK choices.
+  System is always available; unsupported/unknown hardware and the unconnected
+  Unity loader explain why Turnip is unavailable. Mali/PanVK is an unavailable
+  stub, never a selectable loader. Explicit Turnip selection rechecks package
+  bytes, provider availability and API/generation constraints before persisting
+  the next-launch preference. Selection never loads a library; reset never
+  clears the process-wide native-attempt latch. `ActiveDriver` is separate from
+  that preference and defaults to unavailable. Its populated form requires an
+  observation of Unity's actual active physical device, with unsigned raw
+  vendor/driver-version values and optional driver-properties text. No current
+  runtime supplies that observation, so the UI must not invent an active name.
+
+## Curated catalog admission
+
+The APK-owned `GraphicsDriverProviders.curatedReleases()` is intentionally empty.
+It lists neither unaudited Mesa archives nor proprietary Qualcomm drivers. A
+download SHA alone does not prove an acceptable distribution. Each future row
+needs a pinned Mesa commit and build recipe, independently checked archive hash,
+bundled component license/copyright notices, and reviewed API/device/loader
+constraints. The existing `TurnipRelease` validates those reviewed claims; ZIP
+metadata cannot add a catalog row. libadrenotools remains source-pinned below,
+not packaged or available merely because the picker can name it.
+
+A bounded follow-up reviewed the open Mesa build recipe at
+`rtiangha/Mesa-Turnip-Builder` commit
+`fe76fa770c8d3999ee9d0d1503f90d6000c0d9d5`, upstream Mesa
+`8e87a503ebd91408c88596d1b9eeb5f4c0b2088d` (26.2.6). The downloaded archive's
+SHA-256 matched independently and its recipe, metadata and ELF note agreed on
+API 28. It was **not admitted**: the archive lacked redistribution notices and
+the builder project imposed non-commercial restrictions; fully pinned build
+inputs and loader behavior also remain unqualified. No archive or driver binary
+is committed, recommended or added to the catalog by that audit.
 
 ## Prior art and integration gates
 
@@ -75,7 +107,7 @@ crash recovery, successful first-frame state and one-tap reset policy. The metad
 reader is a test adapter; Android JSON parsing is deliberately not qualified yet.
 
 With `JAVA_HOME` and `ANDROID_SDK_ROOT` (or `ANDROID_HOME`) configured, the suite
-also compiles both production Java owners using the API 33 `android.jar` as the
+also compiles all production Java owners using the API 33 `android.jar` as the
 Java 8 bootclasspath. It does not compile the desktop harness against Android.
 This catches the Android/JDK bootstrap mismatch observed in #274 rather than
 assuming a desktop `javac` pass proves Android compatibility. The check skips

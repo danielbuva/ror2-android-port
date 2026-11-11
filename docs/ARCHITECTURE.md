@@ -54,6 +54,11 @@ It is not packaged or connected to Unity yet; System remains unchanged. Its
 [handoff](../tools/phone-build/owner-apk/graphics/README.md) records setup, teardown,
 prior art and the pending native/Android/Thor acceptance gates. Custom load failure
 requires process restart, never hot-swapping a live Vulkan driver.
+`GraphicsDriverProviders` owns picker choices, the empty reviewed-release catalog,
+explicit verified next-launch selection/reset and separate active-driver display
+data. System is the default; unconnected Turnip and the PanVK stub stay unavailable.
+It performs no native load or Android setting write. Real active details require
+Unity's actual Vulkan physical device; a saved preference is not runtime evidence.
 `scripts/inspect-graphics-driver-sdk.py` and its authored native compile fixture
 check the installed version's V1 Vulkan callback with the bundled Android NDK.
 The check emits fixed results/hashes, creates no output artifacts and performs no
@@ -3944,6 +3949,10 @@ The synchronous preparation call releases that reference on return; family-cache
 relationship registration/restoration remain under their existing owners.
 The shared reader omits unused JSON source-line annotations while retaining the
 same token values, types, property order and parser error handling.
+It reuses a still-live parsed snapshot through a separate weak reference; it
+does not prevent collection. Fresh location setup and session release clear
+that reference, so later sessions read their own generation. Failed parses are
+never cached.
 Provider-root `DefinitionFamily<T>` uses the same reader; its typed selection,
 selected-identity checks and existing family-cache lifetime remain unchanged.
 `test_scoped_definition_manifest.py` exercises the production methods against
@@ -3953,8 +3962,17 @@ checks.
 loading, artifact, item, equipment and body holder binding, and drone/projectile
 registration through `WholePopulationSession` and `WholeCatalogComposed`.
 `WholeCatalogComposed` keeps native population, identity checks and the existing
-field-restoration owner; the local
-snapshot ends before the skins coroutine and adds no retained cache.
+field-restoration owner; the local strong snapshot reference ends before the
+skins coroutine.
+`BodyCatalogSession.RegisterOriginalSkins` uses the existing `TraceStartup` owner
+to bound snapshot, save, native setup to first yield, remaining native coroutine
+and validation. It retains the original coroutine yields, deadline, availability
+checks and restoration state; six scalar logs add no retained owner or cache.
+It also aggregates reflection-invocation and direct `MoveNext` execution time,
+maximum call time, calls (including the final false return) and yielded-value
+categories into one completion log. These local scalars add no teardown state.
+Nested enumerators, if yielded, execute outside this timer; time between direct
+calls includes scheduling and other frame work and does not identify I/O.
 `AndroidProfileSession.Prepare` emits sparse survivor/unlockable family and
 progression-metadata startup timing through the existing `TraceStartup` owner.
 The existing family loader emits child phases only on a cache miss; registration,
