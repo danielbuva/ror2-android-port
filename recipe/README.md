@@ -1,5 +1,10 @@
 # Build recipes
 
+2026-11-05 artifact/holder snapshot audit: refreshed the authored session source
+pin and producer/camera manifest bindings after sharing one synchronous manifest
+read. Only repository source hashes change; provenance, privacy, licensing and
+sensitive-content review passed. No game bytes or private identifiers are added.
+
 2026-11-05 item-discovery attribution audit: the original-audio owner source
 pin and producer/camera manifest bindings follow two authored timing markers
 around the existing comparison-item discovery call. Only repository source

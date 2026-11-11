@@ -611,10 +611,17 @@ def json_layout(value):
     return value
 
 
-def make_layout(selected, records, scene_members=(), engine="2021.3.45f2", *, include_bodies=True):
-    """Canonical release order: script records first, then remaining path IDs."""
+def make_layout(selected, records, scene_members=(), engine="2021.3.45f2", *, include_bodies=True, external_scripts=()):
+    """Canonical release order, with explicit qualified external script pointers.
+
+    External endpoint/type/CLR qualification belongs to the calling producer;
+    this allowlist permits only those pointers without changing scene paths.
+    """
     local_scripts = sorted(row["path_id"] for row in records if row["type"]["class_id"] == 115)
     local_script_ids = set(local_scripts)
+    external_scripts = set(map(tuple, external_scripts))
+    if any(not 1 <= file_id <= len(selected["externals"]) or not path_id for file_id, path_id in external_scripts):
+        raise ValueError("External MonoScript pointer outside produced file table")
 
     def prefix(row):
         return row["prefix"] if "body_bytes" in row else row["body"]
@@ -622,7 +629,7 @@ def make_layout(selected, records, scene_members=(), engine="2021.3.45f2", *, in
     scripts = (
         sorted({pointer for row in records if row["type"]["class_id"] == 114 if (pointer := struct.unpack_from("<iq", prefix(row), 16)) != (0, 0)})
         if scene_members
-        else [(0, identity) for identity in local_scripts]
+        else sorted({(0, identity) for identity in local_scripts} | external_scripts)
     )
     script_indices = {pointer: index for index, pointer in enumerate(scripts)}
     physical = sorted(records, key=lambda row: (row["path_id"] not in local_script_ids, row["path_id"]))
@@ -641,7 +648,11 @@ def make_layout(selected, records, scene_members=(), engine="2021.3.45f2", *, in
                     raise ValueError("original null-script MonoBehaviour metadata drift")
                 null_script = True
             else:
-                if (file_id and not scene_members) or (not file_id and script not in local_script_ids) or not 0 <= file_id <= len(selected["externals"]):
+                if (
+                    (file_id and not scene_members and (file_id, script) not in external_scripts)
+                    or (not file_id and script not in local_script_ids)
+                    or not 0 <= file_id <= len(selected["externals"])
+                ):
                     raise ValueError("MonoBehaviour script absent from produced bundle")
                 typ["script_type"] = script_indices[file_id, script]
         # Unity retains an individual type slot for each missing-script component.

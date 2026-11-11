@@ -35,6 +35,158 @@ def pointers(body, typ, schemas):
     }
 
 
+def full_type_key(typ):
+    """Identity before make_layout assigns destination script-table indices."""
+    import json
+
+    return hashlib.sha256(json.dumps(O.json_layout(typ), sort_keys=True).encode()).hexdigest()
+
+
+def qualified_final_type(body, typ, scripts, qualified):
+    """Recover a qualified type identity from actual final-file metadata.
+
+    make_layout allocates script indices in the destination file. Prove that
+    allocation against the persisted object's schema-declared m_Script before
+    restoring only the original index; every other type field must stay exact.
+    The caller must obtain body, typ and scripts from the same final member.
+    """
+    restored = dict(typ)
+    if typ["class_id"] == 114:
+        fields = pointers(body, typ, {})
+        script = fields.get(("m_Script",), fields.get(("#490",)))
+        index = typ["script_type"]
+        if script != (0, 0):
+            if script is None or not 0 <= index < len(scripts) or tuple(scripts[index]) != script:
+                raise ValueError("Final object and type script relationship differ")
+            restored["script_type"] = qualified["script_type"]
+    if full_type_key(restored) != full_type_key(qualified):
+        raise ValueError("Final full type identity differs")
+    return restored
+
+
+def qualify_external_fields(value, body, typ, proofs, endpoint_record):
+    """Qualify each non-null external field against a persisted endpoint.
+
+    endpoint_record(target) returns (selected_row, actual_body, qualified_type).
+    Its caller owns receipt/index validation and final-file metadata readback;
+    these bytes must come from the container being qualified. Type identity is
+    the qualified type before destination script-table index allocation.
+    This proves field routes, not current CLR compatibility or loadability.
+    """
+    import json
+
+    owner = tuple(value["destination"])
+    schema = hashlib.sha256(typ["tree"]).hexdigest()
+    owner_sha = hashlib.sha256(body).hexdigest()
+    if (
+        (len(body), owner_sha) != (value["bytes"], value["sha256"])
+        or schema != value["schema"]
+        or full_type_key(typ) != value["full_type"]
+        or typ["class_id"] != value["class_id"]
+        or typ["hash"].hex() != value["native_type_hash"]
+    ):
+        raise ValueError("External field owner body or full type differs")
+    fields = pointers(body, typ, {})
+    if set(fields.values()) != set(map(tuple, value["edges"])):
+        raise ValueError("External field owner measured pointers differ")
+    candidates = {}
+    for proof in proofs:
+        key = (
+            proof.get("effective_provider", proof["provider"]),
+            tuple(proof["owner"]),
+            proof["owner_sha256"],
+            proof["schema_sha256"],
+        )
+        if key != (value["provider"], owner, owner_sha, schema) or proof.get("rewrite_required"):
+            continue
+        candidates.setdefault(tuple(proof["field"]), []).append(proof)
+    targets = {}
+    endpoint_cache = {}
+    for field, pointer in fields.items():
+        if not pointer[0] or not pointer[1]:
+            continue
+        valid = {}
+        for proof in candidates.get(field, []):
+            if tuple(proof["from"]) != pointer:
+                continue
+            target = tuple(proof["target"])
+            if target not in endpoint_cache:
+                endpoint_cache[target] = endpoint_record(target)
+            endpoint, raw, endpoint_type = endpoint_cache[target]
+            digest = hashlib.sha256(raw).hexdigest()
+            full = full_type_key(endpoint_type)
+            expected = proof["endpoint_type"]
+            if (
+                tuple(endpoint["destination"]) != target
+                or endpoint.get("source") != proof["source_target"]
+                or (len(raw), digest) != (endpoint["bytes"], endpoint["sha256"])
+                or full != endpoint["full_type"]
+                or hashlib.sha256(endpoint_type["tree"]).hexdigest() != endpoint["schema"]
+                or endpoint_type["class_id"] != endpoint["class_id"]
+                or endpoint_type["hash"].hex() != endpoint["native_type_hash"]
+                or (endpoint_type["class_id"], endpoint_type["hash"].hex(), full) != (expected["class_id"], expected["native_type_hash"], expected["full_type"])
+            ):
+                continue
+            # source_sha256 witnesses the ORIGINAL body, not the produced body.
+            # The produced extent is bound by emitted_witnesses instead.
+            if not any(
+                (w[0], tuple(w[1]), w[2], w[3], w[4]) == (endpoint["provider"], tuple(endpoint["record_source"]), digest, len(raw), full)
+                for w in expected["emitted_witnesses"]
+            ):
+                continue
+            pointers(raw, endpoint_type, {})
+            signature = target, tuple(proof["source_target"]), json.dumps(expected, sort_keys=True)
+            valid[signature] = target
+        if len(valid) != 1:
+            raise ValueError(f"External field lacks a unique persisted endpoint: {owner} {field} ({len(valid)})")
+        targets[field] = next(iter(valid.values()))
+    return targets
+
+
+def relocate_external_fields(value, body, typ, targets, externals):
+    """Allocate qualified fields by destination member, never by an old slot."""
+    fields = pointers(body, typ, {})
+    required = {field for field, (fid, pid) in fields.items() if fid and pid}
+    if set(targets) != required:
+        raise ValueError("External relocation requires complete per-field coverage")
+    return relocate_pointer_fields(value, body, typ, targets, externals)
+
+
+def relocate_pointer_fields(value, body, typ, targets, externals):
+    """Apply source-qualified, parent-specific routes to local or external fields.
+
+    A shared old path ID does not identify a source object: callers supply each
+    field's qualified endpoint. Other fields and all non-pointer data survive.
+    """
+    if len(set(externals)) != len(externals) or value["destination"][1] in externals:
+        raise ValueError("Ambiguous external member allocation")
+    members = {value["destination"][1]: tuple(value["destination"][:2])}
+    for target in targets.values():
+        identity = tuple(target[:2])
+        if members.setdefault(target[1], identity) != identity:
+            raise ValueError("Ambiguous external member allocation")
+    fields = pointers(body, typ, {})
+    if any(field not in fields or not fields[field][1] for field in targets):
+        raise ValueError("Relocation requires an existing non-null pointer field")
+    references = []
+    for field, target in targets.items():
+        if not target[2]:
+            raise ValueError("External relocation target is null")
+        if tuple(target[:2]) == tuple(value["destination"][:2]):
+            pointer = (0, target[2])
+        else:
+            if target[1] == value["destination"][1] or target[1] not in externals:
+                raise ValueError("External relocation member absent or ambiguous")
+            pointer = (externals.index(target[1]) + 1, target[2])
+        references.append(dict(field=list(field), **{"from": list(fields[field]), "to": list(pointer)}))
+    result = O.remap_record(body, typ, references, externals)
+    actual = pointers(result, typ, {})
+    revised = {tuple(row["field"]): tuple(row["to"]) for row in references}
+    if actual != {field: revised.get(field, pointer) for field, pointer in fields.items()}:
+        raise ValueError("External relocation changed an unqualified field")
+    return result
+
+
 def external_owners(selected, sources, schemas):
     result = {}
     for row in selected.get("external_component_owners", []):
@@ -111,8 +263,13 @@ def produce(selected, records, sources):
         if row["path_id"] in graph:
             raise ValueError("Duplicate produced prefab graph identity")
         graph[row["path_id"]] = set(pointers(row["body"], row["type"], schemas).values())
+    return produce_graph(selected, graph, sources)
+
+
+def produce_graph(selected, graph, sources):
+    """Frame grouped preloads from the emitter's fully parsed body graph."""
     validate_graph(graph, len(selected["externals"]))
-    owners = external_owners(selected, sources, schemas)
+    owners = external_owners(selected, sources, {})
     ranks = file_ranks(selected)
     groups = sorted(selected["asset_groups"], key=lambda row: guid_key(row["guid"]))
     if not groups or len({row["guid"] for row in groups}) != len(groups) or len({row["path"].lower() for row in groups}) != len(groups):
@@ -196,12 +353,105 @@ def repack_stream(body, typ, resource, offset, path, schemas):
     return result, emitted
 
 
-def emit_closed_native(graph_directory, schema_paths, output, name, member, *, codec=None, codec_sha256=None):
+class ProducerRecords:
+    """Read original and retained relocation packs with per-record provenance.
+
+    A relocation receipt pins its own extents, index and field witnesses. Each
+    index row retains the preceding provider/body pin; follow those rows to the
+    original profile instead of assigning one profile to a mixed pack. Schema,
+    PPtr and final endpoint qualification still belong to the emitter.
+    """
+
+    def __init__(self):
+        self.cache = {}
+        self.pins = {}
+
+    def provider(self, directory):
+        import json
+
+        directory = Path(directory).resolve()
+        if directory not in self.cache:
+            receipt_path = directory / "result.json"
+            if not receipt_path.is_file():
+                receipt_path = directory.parent / "terminal.json"
+            receipt = json.loads(receipt_path.read_text())
+            if receipt.get("success") is not True:
+                raise ValueError("Unsuccessful native provider")
+            pin = dict(receipt_sha256=O.B.sha(receipt_path), index_sha256=O.B.sha(directory / "index.jsonl"))
+            if "profile_sha256" in receipt:
+                expected = receipt["outputs"]["index.jsonl"]["sha256"]
+            else:
+                expected = receipt["index_sha256"]
+                pin.update(objects_sha256=O.B.sha(directory / "objects.bin"), witnesses_sha256=O.B.sha(directory / "witnesses.jsonl"))
+                if pin["objects_sha256"] != receipt["objects_sha256"] or pin["witnesses_sha256"] != receipt["witnesses_sha256"]:
+                    raise ValueError("Retained native provider extent or witness drift")
+            if pin["index_sha256"] != expected:
+                raise ValueError("Native provider index drift")
+            index = {}
+            for row in json_rows(directory / "index.jsonl"):
+                identity = row["bundle"], row["member"], row["path_id"]
+                copies = index.setdefault(identity, [])
+                if copies and {k: v for k, v in row.items() if k != "offset"} != {k: v for k, v in copies[0].items() if k != "offset"}:
+                    raise ValueError("Conflicting native provider identity")
+                copies.append(row)
+            self.pins[str(directory)] = pin
+            self.cache[directory] = receipt, index
+        return self.cache[directory]
+
+    def record(self, value):
+        directory = Path(value["provider"]).resolve()
+        key, expected = tuple(value["record_source"]), value["sha256"]
+        seen, first = set(), None
+        while True:
+            if directory in seen:
+                raise ValueError("Native provider lineage cycle")
+            seen.add(directory)
+            receipt, index = self.provider(directory)
+            copies = index[key]
+            row = copies[0]
+            if row["sha256"] != expected:
+                raise ValueError("Native provider lineage body differs")
+            body = O.record_extent(directory / "objects.bin", row)
+            for copy in copies[1:]:
+                if O.record_extent(directory / "objects.bin", copy) != body:
+                    raise ValueError("Duplicate native provider extent differs")
+            if first is None:
+                first = row, body
+            if "profile_sha256" in receipt:
+                if value["record"] != receipt["profile_sha256"]:
+                    raise ValueError("Original native provider profile differs")
+                return first
+            expected = row["body_before_sha256"]
+            directory = Path(row["provider_before"]).resolve()
+
+
+def emit_closed_native(
+    graph_directory,
+    schema_paths,
+    output,
+    name,
+    member,
+    *,
+    codec=None,
+    codec_sha256=None,
+    required=None,
+    field_proofs=(),
+    endpoint_record=None,
+    managed_check=None,
+):
     """Emit the declared local/native subset of a qualified producer graph.
 
     This is explicitly partial, even when all eligible records close. Bodies,
     native schemas and actual PPtrs are checked independently of graph claims.
     No historical bundle, accepted body or comparator is an input.
+
+    required selects exact path_ids and GUID/asset_groups, with explicit
+    externals/dependencies. This mode never drops an object or root. Its caller
+    supplies the receipt/index/actual-final-container endpoint reader used by
+    qualify_external_fields, and a current-CLR managed_check(value, body, type,
+    read_record). The checker must reject incompatible schemas/scripts; it runs
+    again against persisted output. Without these qualifications emission fails.
+    This Python integration boundary does not admit a whole catalog or player.
     """
     from collections import Counter, defaultdict
     from contextlib import nullcontext
@@ -227,24 +477,40 @@ def emit_closed_native(graph_directory, schema_paths, output, name, member, *, c
         if key in all_records:
             raise ValueError("Duplicate selected destination")
         all_records[key] = row
-    selected = {
-        key: row
-        for key, row in all_records.items()
-        if key[:2] == (name, member)
-        and (Path(row["provider"]) / "result.json").is_file()
-        and row.get("schema")
-        and row["class_id"] not in (114, 115, 142)
-        and (not row.get("resource") or row["class_id"] in (28, 89, 43))
-        and all(edge[0] == 0 for edge in row.get("edges", [[1, 1]]))
-    }
-    while True:
+    selected = (
+        {}
+        if required is not None
+        else {
+            key: row
+            for key, row in all_records.items()
+            if key[:2] == (name, member)
+            and (Path(row["provider"]) / "result.json").is_file()
+            and row.get("schema")
+            and row["class_id"] not in (114, 115, 142)
+            and (not row.get("resource") or row["class_id"] in (28, 89, 43))
+            and all(edge[0] == 0 for edge in row.get("edges", [[1, 1]]))
+        }
+    )
+    if required is not None:
+        identities = required["path_ids"]
+        if not identities or len(set(identities)) != len(identities):
+            raise ValueError("Required object set must be nonempty and distinct")
+        missing = sorted(identity for identity in identities if (name, member, identity) not in all_records)
+        if missing:
+            raise ValueError(f"Required produced objects absent: {missing}")
+        selected = {(name, member, identity): all_records[name, member, identity] for identity in identities}
+        if any(row["class_id"] == 142 for row in selected.values()):
+            raise ValueError("Required object set must exclude the regenerated AssetBundle container")
+        if any(row["class_id"] == 114 for row in selected.values()) and managed_check is None:
+            raise ValueError("Required managed objects need current CLR qualification")
+    while required is None:
         missing = [key for key, row in selected.items() if any(pid and (*key[:2], pid) not in selected for _, pid in row["edges"])]
         if not missing:
             break
         for key in missing:
             del selected[key]
     schemas, schema_pins = {}, {}
-    needed = {row["schema"] for row in selected.values()}
+    needed = {row["full_type"] if required is not None else row["schema"] for row in selected.values()}
     for schema_path in map(Path, schema_paths):
         schema_pins[str(schema_path)] = O.B.sha(schema_path)
         for key, typ in json.loads(schema_path.read_text()).items():
@@ -259,53 +525,69 @@ def emit_closed_native(graph_directory, schema_paths, output, name, member, *, c
         for field in ("tree", "hash", "script_id"):
             if field in typ:
                 typ[field] = bytes.fromhex(typ[field])
-        if hashlib.sha256(typ["tree"]).hexdigest() != key or typ["script_type"] != -1:
+        valid_identity = full_type_key(typ) == key if required is not None else hashlib.sha256(typ["tree"]).hexdigest() == key and typ["script_type"] == -1
+        if not valid_identity:
             raise ValueError("Native schema identity differs")
-        typ.setdefault("dependencies", [])
+        if required is None:
+            typ.setdefault("dependencies", [])
         typed[key] = typ
+    externals = [] if required is None else list(required["externals"])
+    dependencies = [] if required is None else list(required["dependencies"])
+    if len(set(externals)) != len(externals) or member in externals:
+        raise ValueError("Ambiguous required external member table")
+    proofs = {}
+    for proof in field_proofs:
+        proofs.setdefault(tuple(proof["owner"]), []).append(proof)
+    endpoint_pins = {}
+
+    def read_external(target):
+        if endpoint_record is None:
+            raise ValueError("Required external endpoint reader absent")
+        value, raw, typ = endpoint_record(target)
+        pin = json.dumps(value, sort_keys=True), hashlib.sha256(raw).hexdigest(), full_type_key(typ)
+        if endpoint_pins.setdefault(tuple(target), pin) != pin:
+            raise ValueError("Persisted external endpoint drift")
+        return value, raw, typ
+
     by_provider = defaultdict(list)
     for row in selected.values():
         by_provider[row["provider"]].append(row)
     output.mkdir(parents=True, exist_ok=False)
     with tempfile.TemporaryDirectory(prefix=".emission-", dir=output) as scratch:
         store = Path(scratch) / "bodies.bin"
-        objects, graph, bodymap, source_pins, cache = [], {}, {}, {}, {}
+        objects, graph, bodymap, cache = [], {}, {}, {}
+        providers = ProducerRecords()
         resource_extents, resource_rows, emitted_hashes = [], [], {}
+        qualified_targets, managed_rows = {}, {}
         resource_size = 0
         resource_member = member + ".resS"
         resource_path = "archive:/" + member + "/" + resource_member
         with store.open("wb") as destination:
             for provider, values in by_provider.items():
                 directory = Path(provider)
-                receipt = json.loads((directory / "result.json").read_text())
-                if receipt.get("success") is not True or {row["record"] for row in values} != {receipt["profile_sha256"]}:
-                    raise ValueError("Unexpected or unsuccessful native provider")
-                pin = dict(receipt_sha256=O.B.sha(directory / "result.json"), index_sha256=O.B.sha(directory / "index.jsonl"))
-                if pin["index_sha256"] != receipt["outputs"]["index.jsonl"]["sha256"]:
-                    raise ValueError("Native provider index drift")
-                source_pins[provider] = pin
-                index = {}
-                for row in json_rows(directory / "index.jsonl"):
-                    identity = row["bundle"], row["member"], row["path_id"]
-                    if identity in index:
-                        raise ValueError("Duplicate native provider identity")
-                    index[identity] = row
                 for value in values:
                     identity = value["destination"][2]
-                    row = index[tuple(value["record_source"])]
-                    typ = typed[value["schema"]]
+                    row, body = providers.record(value)
+                    typ = typed[value["full_type"] if required is not None else value["schema"]]
                     if row.get("resource") != value.get("resource") or (row["bytes"], row["sha256"]) != (value["bytes"], value["sha256"]):
                         raise ValueError("Native provider record or resource drift")
                     if (
                         typ["class_id"] != value["class_id"]
                         or (value.get("native_type_hash") and typ["hash"].hex() != value["native_type_hash"])
                         or (row.get("native_type_hash") and typ["hash"].hex() != row["native_type_hash"])
+                        or hashlib.sha256(typ["tree"]).hexdigest() != value["schema"]
                     ):
                         raise ValueError("Native type identity differs")
-                    body = O.record_extent(directory / "objects.bin", row)
                     edges = set(pointers(body, typ, cache).values())
                     if edges != set(map(tuple, value["edges"])):
                         raise ValueError("Measured native pointers differ from selected graph")
+                    if required is not None:
+                        targets = qualify_external_fields(value, body, typ, proofs.get(tuple(value["destination"]), ()), read_external)
+                        qualified_targets[identity] = targets
+                        body = relocate_external_fields(value, body, typ, targets, externals)
+                        if typ["class_id"] == 114:
+                            managed_rows[identity] = value, typ
+                        edges = set(pointers(body, typ, cache).values())
                     if row.get("resource"):
                         resource_size = (resource_size + 15) // 16 * 16
                         body, descriptor = repack_stream(body, typ, row["resource"], resource_size, resource_path, cache)
@@ -325,16 +607,31 @@ def emit_closed_native(graph_directory, schema_paths, output, name, member, *, c
                     bodymap[identity] = destination.tell(), len(body)
                     destination.write(body)
                     objects.append(dict(path_id=identity, type=typ, body_bytes=len(body), prefix=body[:32]))
-        validate_graph(graph, 0)
+        validate_graph(graph, len(externals))
+        if required is not None and set(graph) != set(required["path_ids"]):
+            raise ValueError("Emitted required object set differs")
+
+        def read_produced(target):
+            if tuple(target[:2]) != (name, member):
+                return read_external(target)
+            value = selected[tuple(target)]
+            offset, size = bodymap[target[2]]
+            with store.open("rb") as stream:
+                stream.seek(offset)
+                raw = O.B.exact(stream, size)
+            return value, raw, typed[value["full_type"]]
+
+        for identity, (value, typ) in managed_rows.items():
+            managed_check(value, read_produced((name, member, identity))[1], typ, read_produced)
         grouped = defaultdict(list)
-        for row in json_rows(graph_directory / "selected-roots.jsonl"):
+        for row in () if required is not None else json_rows(graph_directory / "selected-roots.jsonl"):
             key = tuple(row["destination"])
             if key in selected and row["class_id"] in NATIVE_ROOT_TYPES:
                 if row["class_id"] != selected[key]["class_id"]:
                     raise ValueError("Native root type differs from produced object")
                 grouped[row["path"].lower()].append(row)
         roots = [rows[0] for rows in grouped.values() if len({tuple(row["destination"]) for row in rows}) == 1]
-        if not roots:
+        if not roots and required is None:
             raise ValueError("No unambiguous native roots in closed subset")
         preloads, containers, assets = [], [], []
         for root in sorted(roots, key=lambda row: row["path"].lower()):
@@ -358,12 +655,36 @@ def emit_closed_native(graph_directory, schema_paths, output, name, member, *, c
         )
         container_type = M.schemas()[0]
         container_type["dependencies"] = []
-        container_body = W.write_shader_body(W.shader_node(container_type["tree"]), container)
+        if required is None:
+            container_body = W.write_shader_body(W.shader_node(container_type["tree"]), container)
+        else:
+            groups = required["asset_groups"]
+            for group in groups:
+                if any(identity not in graph for identity in group["roots"]):
+                    raise ValueError("Required asset group root absent")
+            # produce retains GUID order and every root/subasset of each path.
+            container_body = produce_graph(dict(name=name, member=member, externals=externals, dependencies=dependencies, asset_groups=groups), graph, {})
+            roots = [
+                dict(path=group["path"], destination=[name, member, identity], class_id=selected[name, member, identity]["class_id"])
+                for group in groups
+                for identity in group["roots"]
+            ]
+            assets = required["assets"]
+            if {row["name"].lower() for row in assets} != {group["path"].lower() for group in groups} or any(not row["type"] for row in assets):
+                raise ValueError("Required typed-load requests must cover every asset group")
+            count_stream = io.BytesIO(container_body)
+            module("catalog_complete").text(count_stream)
+            preloads = range(O.B.unpack(count_stream, "<I")[0])
         container_id = 1
         while container_id in graph:
             container_id += 1
         objects.append(dict(path_id=container_id, type=container_type, body_bytes=len(container_body), prefix=container_body[:32]))
-        layout, _ = O.make_layout(dict(externals=[]), objects, include_bodies=False)
+        external_scripts = {
+            struct.unpack_from("<iq", row["prefix"], 16)
+            for row in objects
+            if row["type"]["class_id"] == 114 and struct.unpack_from("<iq", row["prefix"], 16)[0]
+        }
+        layout, _ = O.make_layout(dict(externals=externals), objects, include_bodies=False, external_scripts=external_scripts)
 
         def body(row):
             if row["path_id"] == container_id:
@@ -387,8 +708,22 @@ def emit_closed_native(graph_directory, schema_paths, output, name, member, *, c
         # Read the actual final container, metadata and every persisted body.
         stream = W.B.Bundle(bundle).member(member)
         read = W.read_serialized(stream)
-        if read["types"] != layout["types"] or read["objects"] != layout["objects"] or read["scripts"] or read["externals"]:
+        if any(read[key] != layout[key] for key in ("types", "objects", "scripts", "externals")):
             raise ValueError("Emitted native metadata differs")
+        final_objects = {row["path_id"]: row for row in read["objects"]}
+
+        def read_final(target):
+            if tuple(target[:2]) != (name, member):
+                return read_produced(target)
+            row = final_objects[target[2]]
+            stream.seek(read["data_offset"] + row["offset"])
+            value = selected[tuple(target)]
+            raw = O.B.exact(stream, row["bytes"])
+            typ = read["types"][row["type_id"]]
+            if required is not None:
+                typ = qualified_final_type(raw, typ, read["scripts"], typed[value["full_type"]])
+            return value, raw, typ
+
         for row in read["objects"]:
             stream.seek(read["data_offset"] + row["offset"])
             data = O.B.exact(stream, row["bytes"])
@@ -396,6 +731,24 @@ def emit_closed_native(graph_directory, schema_paths, output, name, member, *, c
             expected = hashlib.sha256(container_body).hexdigest() if identity == container_id else emitted_hashes[identity]
             if hashlib.sha256(data).hexdigest() != expected:
                 raise ValueError("Emitted native body differs")
+            if required is not None and identity != container_id:
+                value = selected[name, member, identity]
+                typ = qualified_final_type(data, read["types"][row["type_id"]], read["scripts"], typed[value["full_type"]])
+                fields = pointers(data, typ, cache)
+                if set(fields.values()) != graph[identity]:
+                    raise ValueError("Persisted required object references differ")
+                for field, target in qualified_targets[identity].items():
+                    expected_pointer = (0, target[2]) if tuple(target[:2]) == (name, member) else (externals.index(target[1]) + 1, target[2])
+                    if fields[field] != expected_pointer:
+                        raise ValueError("Persisted qualified external field differs")
+                    endpoint, raw, endpoint_type = read_final(target)
+                    if tuple(target[:2]) != (name, member) and (
+                        (len(raw), hashlib.sha256(raw).hexdigest()) != (endpoint["bytes"], endpoint["sha256"])
+                        or full_type_key(endpoint_type) != endpoint["full_type"]
+                    ):
+                        raise ValueError("Persisted external endpoint drift")
+                if typ["class_id"] == 114:
+                    managed_check(selected[name, member, identity], data, typ, read_final)
         if resource_extents:
             resource_stream = W.B.Bundle(bundle).member(resource_member)
             for row in resource_rows:
@@ -437,12 +790,24 @@ def emit_closed_native(graph_directory, schema_paths, output, name, member, *, c
         typed_classes=dict(Counter(row["type"] for row in assets)),
         graph_receipt_sha256=O.B.sha(graph_directory / "done.json"),
         selected_records_sha256=O.B.sha(graph_directory / "selected-records.jsonl"),
-        selected_roots_sha256=O.B.sha(graph_directory / "selected-roots.jsonl"),
+        selected_roots_sha256=O.B.sha(graph_directory / "selected-roots.jsonl") if required is None else None,
         source_type_pins=schema_pins,
-        producer_pins=source_pins,
+        producer_pins=providers.pins,
         seconds=time.monotonic() - started,
         peak_rss_bytes=resource.getrusage(resource.RUSAGE_SELF).ru_maxrss * (1 if sys.platform == "darwin" else 1024),
     )
+    if required is not None:
+        result["required_set_accepted"] = True
+        result["required_request_sha256"] = hashlib.sha256(json.dumps(required, sort_keys=True).encode()).hexdigest()
+        result["qualified_endpoint_pins"] = [
+            dict(destination=list(target), selected_row_sha256=hashlib.sha256(pin[0].encode()).hexdigest(), body_sha256=pin[1], full_type=pin[2])
+            for target, pin in sorted(endpoint_pins.items())
+        ]
+        gaps.update(
+            required_records=len(selected),
+            complete=False,
+            policy="Exact requested object set; whole catalog, Unity typed load and device acceptance remain open.",
+        )
     for filename, value in (
         ("result.json", result),
         ("gaps.json", gaps),

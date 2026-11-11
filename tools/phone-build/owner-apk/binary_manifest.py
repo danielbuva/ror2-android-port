@@ -41,11 +41,13 @@ def string_pool(strings, utf8):
     )
 
 
-def patch(data, wire, *, version_code=None, application_id=None, retention=False):
+def patch(data, wire, *, version_code=None, version_name=None, application_id=None, retention=False):
     if type(retention) is not bool or (retention and (application_id != "dev.ror2lab.alpha" or version_code is None)):
         raise ValueError("retention requires explicit alpha identity and issued version")
     if version_code is not None and (type(version_code) is not int or not 1 <= version_code <= 2100000000):
         raise ValueError("owner version code must be between 1 and 2100000000")
+    if version_name is not None and (not isinstance(version_name, str) or not version_name.strip() or any(ord(c) < 32 for c in version_name)):
+        raise ValueError("literal owner version name required")
     if application_id is not None and (
         not isinstance(application_id, str) or not re.fullmatch(r"[A-Za-z][A-Za-z0-9_]*(?:\.[A-Za-z][A-Za-z0-9_]*)+", application_id)
     ):
@@ -176,6 +178,25 @@ def patch(data, wire, *, version_code=None, application_id=None, retention=False
         changed = bytearray(original)
         struct.pack_into("<I", changed, versions[0][0] + 8, NONE)
         struct.pack_into("<I", changed, versions[0][0] + 16, version_code)
+        manifests[0]["start"] = bytes(changed)
+    if version_name is not None:
+        original = manifests[0]["start"]
+        node_header = struct.unpack_from("<H", original, 2)[0]
+        relative, stride, count = struct.unpack_from("<HHH", original, node_header + 8)
+        versions = []
+        for i in range(count):
+            position = node_header + relative + i * stride
+            ns, key, _, _, _, kind, value = struct.unpack_from("<IIIHBBI", original, position)
+            if ns == android and strings[key] == "versionName":
+                if kind != 3 or value >= original_count:
+                    raise ValueError("literal owner version name required")
+                versions.append(position)
+        if len(versions) != 1:
+            raise ValueError("one original owner version name required")
+        changed = bytearray(original)
+        selected = index(version_name)
+        struct.pack_into("<I", changed, versions[0] + 8, selected)
+        struct.pack_into("<I", changed, versions[0] + 16, selected)
         manifests[0]["start"] = bytes(changed)
     filters = []
     for child in activities[0]["children"]:

@@ -43,6 +43,8 @@ def authored_manifest(utf8=True, unity=PATCH.UNITY, duplicate=False, version_kin
         "authored.marker",
         "Éta𝄞",
         application_name or "AuthoredApplication",
+        "versionName",
+        "authored-version",
     ]
     content, offsets = bytearray(), []
     for text in strings:
@@ -54,7 +56,8 @@ def authored_manifest(utf8=True, unity=PATCH.UNITY, duplicate=False, version_kin
     first = 28 + 4 * len(strings)
     pool = struct.pack("<HHIIIIII", 1, 28, first + len(content), len(strings), 0, 0x100 if utf8 else 0, first, 0)
     pool += struct.pack("<" + "I" * len(offsets), *offsets) + content
-    resources = [0] * 13
+    resources = [0] * len(strings)
+    resources[20] = 0x0101021C
     resources[8], resources[10], resources[11], resources[12] = 0x0101021B, 0x01010003, 0x0101001F, 0x01010024
     resource_map = struct.pack("<HHI", 0x180, 8, 8 + len(resources) * 4) + struct.pack("<" + "I" * len(resources), *resources)
 
@@ -71,7 +74,7 @@ def authored_manifest(utf8=True, unity=PATCH.UNITY, duplicate=False, version_kin
     marker = node(6, [attribute(10, 17), attribute(12, 18)])
     activity = node(2, [attribute(10, 14), attribute(11, 0x700, 0x10)], intent * (2 if duplicate else 1) + marker)
     versions = [] if omit_version else [attribute(8, 7, version_kind)] * (2 if duplicate_version else 1)
-    xml = node(0, [attribute(7, 13, namespace=NONE), *versions], node(1, [attribute(10, 19)] if application_name else [], activity))
+    xml = node(0, [attribute(7, 13, namespace=NONE), *versions, attribute(20, 21)], node(1, [attribute(10, 19)] if application_name else [], activity))
     return struct.pack("<HHI", 3, 8, 8 + len(pool) + len(resource_map) + len(xml)) + pool + resource_map + xml
 
 
@@ -102,6 +105,17 @@ def read(data):
 
 
 class OwnerBinaryManifestTests(unittest.TestCase):
+    def test_disposable_package_has_explicit_version_name_and_preserves_other_attributes(self):
+        for utf8 in (True, False):
+            original = authored_manifest(utf8=utf8)
+            _, _, before = read(original)
+            _, _, after = read(PATCH.patch(original, WIRE, version_code=1, version_name="converted-staged-fixture", application_id="dev.ror2lab.converted"))
+            expected = dict(before[0]["attributes"])
+            expected.update(
+                {(None, "package"): "dev.ror2lab.converted", (PATCH.ANDROID, "versionCode"): 1, (PATCH.ANDROID, "versionName"): "converted-staged-fixture"}
+            )
+            self.assertEqual(after[0]["attributes"], expected)
+
     def test_release_identity_changes_package_without_changing_component_identity(self):
         for utf8 in (True, False):
             for app in (".Application", "Application", "authored.original.Application"):

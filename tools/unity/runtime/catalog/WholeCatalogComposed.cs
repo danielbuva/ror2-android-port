@@ -552,9 +552,17 @@ public static class WholeCatalogComposed
     // retaining the catalog beyond that synchronous preparation boundary.
     internal static JObject ReadDefinitionManifest()
     {
-        return JObject.Parse(File.ReadAllText(Path.Combine(Application.persistentDataPath, "payload", "whole-catalog.json")));
+        // Native family preparation consumes values and order, never source line annotations.
+        return JObject.Parse(File.ReadAllText(Path.Combine(Application.persistentDataPath, "payload", "whole-catalog.json")),
+            new JsonLoadSettings { LineInfoHandling = LineInfoHandling.Ignore });
     }
     internal static T[] CategoryFamily<T>(JObject manifest, string category, IEnumerable<T> selected)
+        where T : UnityEngine.Object
+    {
+        return CategoryFamily(manifest, category, selected, null);
+    }
+    // Optional sparse timing for the measured synchronous caller; cache and ownership stay unchanged.
+    internal static T[] CategoryFamily<T>(JObject manifest, string category, IEnumerable<T> selected, Action<string> trace)
         where T : UnityEngine.Object
     {
         if (!owned)
@@ -563,10 +571,14 @@ public static class WholeCatalogComposed
         UnityEngine.Object[] values;
         if (!definitionFamilies.TryGetValue(key, out values))
         {
+            trace?.Invoke("manifest-begin");
             if (manifest == null)
                 manifest = ReadDefinitionManifest();
+            trace?.Invoke("manifest-ready-index-begin");
             var locations = manifest["locations"].ToDictionary(row => (int)row["id"]);
-            values = FamilyLocationGroups(manifest, category)
+            var groups = FamilyLocationGroups(manifest, category);
+            trace?.Invoke("index-ready-assets-begin");
+            values = groups
                          .SelectMany(group =>
                                      {
                                          var collection =
@@ -595,6 +607,7 @@ public static class WholeCatalogComposed
                          .Distinct()
                          .Cast<UnityEngine.Object>()
                          .ToArray();
+            trace?.Invoke("assets-ready");
             // Native collections enforce names within each provider, not across packs.
             if (values.Length == 0)
                 throw new Exception("Original category is empty: " + category);
@@ -723,9 +736,13 @@ public static class WholeCatalogComposed
     static global::ResourceAvailability priorProjectileAvailability;
     public static int PrepareProjectiles()
     {
+        return PrepareProjectiles(null);
+    }
+    internal static int PrepareProjectiles(JObject manifest)
+    {
         if (priorProjectileIndices != null || RoR2.ProjectileCatalog.projectilePrefabCount != 0)
             throw new Exception("Projectile catalog has a foreign owner");
-        var values = CategoryFamily(RoR2.ContentManagement.AddressablesLabels.projectile, new GameObject[0]);
+        var values = CategoryFamily(manifest, RoR2.ContentManagement.AddressablesLabels.projectile, new GameObject[0]);
         priorProjectileIndices = values.Select(value => value.GetComponent<RoR2.Projectile.ProjectileController>())
                                      .ToDictionary(value => value, value => value.catalogIndex);
         priorProjectileAvailability = RoR2.ProjectileCatalog.catalogAvailability;
