@@ -1,0 +1,7 @@
+Language: CSharp
+BasedOnStyle: Microsoft
+ColumnLimit: 140
+IndentWidth: 4
+BreakStringLiterals: false
+ReflowComments: false
+SortIncludes: Never

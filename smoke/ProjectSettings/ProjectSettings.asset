@@ -1,0 +1,15 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!129 &1
+PlayerSettings:
+  m_ObjectHideFlags: 0
+  companyName: LocalBootstrap
+  productName: X64 Bootstrap Smoke
+  applicationIdentifier:
+    Android: dev.localbootstrap.x64smoke
+  AndroidBundleVersionCode: 1
+  AndroidMinSdkVersion: 23
+  AndroidTargetSdkVersion: 30
+  AndroidTargetArchitectures: 8
+  AndroidTargetDevices: 0
+  AndroidBuildApkPerCpuArchitecture: 0

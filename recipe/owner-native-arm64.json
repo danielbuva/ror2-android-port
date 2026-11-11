@@ -1,0 +1,99 @@
+{
+  "schema": 1,
+  "kind": "owner-native-x86_64-development-configuration",
+  "input_id": "6af7ed94619fe1b4346974b4486afa03a8d1625a7820e92da0ff74d57208fe88",
+  "unity": "2021.3.45f2",
+  "revision": "88f88f591b2e",
+  "ndk": "21.3.6528147",
+  "scope": "Original SDK Clang 9/BFD, Android API 22, x86_64, Os/development, incremental GC; fixed current player translation-unit membership.",
+  "compiler": "PlaybackEngines/AndroidPlayer/NDK/toolchains/llvm/prebuilt/darwin-x86_64/bin/clang++",
+  "objcopy": "PlaybackEngines/AndroidPlayer/NDK/toolchains/llvm/prebuilt/darwin-x86_64/x86_64-linux-android/bin/objcopy",
+  "sdk_files": 12250,
+  "sdk_digest": "426d49af22fcbde919dfbf3f52b598f90b7f1286e848b78f6d1432e53185668b",
+  "arguments": [
+    [
+      "-march=x86-64",
+      "-D__ANDROID_API__=22",
+      "-DANDROID",
+      "-DHAVE_INTTYPES_H",
+      "-no-canonical-prefixes",
+      "-funwind-tables",
+      "-fstack-protector",
+      "-fdiagnostics-format=msvc",
+      "-fomit-frame-pointer",
+      "-fvisibility=hidden",
+      "-fexceptions",
+      "-g",
+      "-Os",
+      "-fPIC",
+      "-fno-strict-overflow",
+      "-ffunction-sections",
+      "-fdata-sections",
+      "-pipe",
+      "-DNDEBUG",
+      {
+        "root": "output",
+        "path": ".",
+        "prefix": "-I"
+      },
+      "-o",
+      "OBJECT",
+      "-target",
+      "x86_64-linux-android22",
+      "-fstrict-aliasing",
+      "-c",
+      "-x",
+      "c++",
+      "SOURCE"
+    ]
+  ],
+  "jobs": [
+    {
+      "arguments": 0,
+      "generated": "Il2CppCodeRegistration.cpp"
+    },
+    {
+      "arguments": 0,
+      "generated": "__Generated.cpp"
+    }
+  ],
+  "link": [
+    "-march=x86-64",
+    "-D__ANDROID_API__=22",
+    "-DANDROID",
+    "-std=c++11",
+    "-fvisibility=hidden",
+    "-fexceptions",
+    "-fno-rtti",
+    "-g",
+    "-Os",
+    "-fPIC",
+    "-o",
+    "LIBRARY",
+    "-target",
+    "x86_64-linux-android22",
+    {
+      "object": 0
+    },
+    {
+      "object": 1
+    },
+    "-Wl,--wrap,sigaction",
+    "-fuse-ld=bfd",
+    "-Wl,--gc-sections",
+    "-Wl,--fatal-warnings",
+    "-Wl,-soname=libil2cpp.so",
+    "-Wl,--no-undefined",
+    "-Wl,--build-id",
+    "-Wl,-z,noexecstack",
+    "-shared",
+    "-rdynamic",
+    "-static-libstdc++",
+    "-Wl,-z,relro",
+    {
+      "root": "sdk",
+      "path": "PlaybackEngines/AndroidPlayer/Variations/il2cpp/Development/StaticLibs/x86_64/baselib.a"
+    },
+    "-llog"
+  ]
+}

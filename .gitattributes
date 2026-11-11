@@ -1,0 +1,5 @@
+*.unity text eol=lf whitespace=-blank-at-eol
+*.asset text eol=lf whitespace=-blank-at-eol
+*.meta text eol=lf whitespace=-blank-at-eol
+docs/PORTING_JOURNAL.md merge=union
+docs/JOURNAL_INDEX.md merge=union

@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="dev.ror2lab.x86_64">
+
+    <application
+        android:label="Risk of Rain 2 (x64)"
+        android:allowBackup="true"
+        android:supportsRtl="true"
+        android:hardwareAccelerated="true"
+        android:theme="@android:style/Theme.DeviceDefault.NoActionBar">
+
+        <activity
+            android:name="dev.ror2owner.bootstrap.PayloadBootstrapActivity"
+            android:exported="true"
+            android:configChanges="orientation|screenSize|keyboardHidden|keyboard|navigation"
+            android:screenOrientation="sensorLandscape">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <activity
+            android:name="com.unity3d.player.UnityPlayerActivity"
+            android:exported="false"
+            android:configChanges="orientation|screenSize|keyboardHidden|keyboard|navigation"
+            android:screenOrientation="sensorLandscape" />
+
+        <provider
+            android:name="dev.ror2owner.bootstrap.ProfileRetentionProvider"
+            android:authorities="dev.ror2lab.x86_64.profiles"
+            android:exported="false" />
+
+        <service
+            android:name="dev.ror2lab.diagnostics.LabSettingsWriteObserver"
+            android:exported="false"
+            android:isolatedProcess="false"
+            android:process=":settings_write_observer"
+            android:stopWithTask="true" />
+    </application>
+</manifest>
