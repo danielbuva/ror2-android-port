@@ -5802,6 +5802,11 @@ skill setup and catalog preparation. Markers carry process time/frame without
 stacks, report writes, yields or retained state; existing owners retain setup
 and teardown. Adjacent markers bound work, including intervening callbacks;
 returned/ready markers require separate failure, audio and world checks.
+`SpawnStateBoundary` partitions family loading, ownership snapshots, selected
+configuration, type membership, report writing, native initialization, adaptation
+and identity validation. `PortSession` separates the following profile report,
+loadout application and serialization check before the existing body-spawn seam.
+The native nested preload routine and all coroutine yields remain unchanged.
 The same seams in `StageGeometryBoundary`, `NovaInputBoundary` and
 `AutomaticDirectorBoundary` separate collider validation/physics/entry, landing
 and display/run/enemy preparation, and objective templates/master catalog/player

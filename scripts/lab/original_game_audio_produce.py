@@ -69,7 +69,7 @@ META_GUIDS = {
 NATIVE_META_GUID = "a2a09e81876b46f2a202e62f96644331"
 NATIVE_TARGET = "Assets/Plugins/Android/arm64-v8a/libAkSoundEngine.so"
 NATIVE_META = "Assets/Plugins/Android/arm64-v8a/libAkSoundEngine.so.meta"
-OWNER_ANCESTOR_MANIFEST_SHA256 = "98627261d91120182213ddb8247de48b65a2b30a9d14af58ec22343e272125e8"
+OWNER_ANCESTOR_MANIFEST_SHA256 = "a6c45619af874cdbbe6fd80aa532f248ab1dd31709fc71c1ba2e1ed7bfcd529c"
 STAGE_PIN_TOOL_SHA256 = "1aae94e738c3c1471244c37f621128c155a3336f9f9ba751ea112e629f3cc92e"
 REQUEST_PIN_TOOL_SHA256 = "945533162905e763869a00480be064e6b3c31ff5b62f6de81ef1393219c1459b"
 MANAGED_PRODUCER_SHA256 = "b3f1806afa9e7f82159052a7524f0ae389df6ab255e735e3344b714ad5dfb34d"
@@ -85,7 +85,7 @@ OWNER_SOURCE_HASHES = {
     "../../runtime/session/MusicPcmJoinObserver.cs": "3c8ceaf8a8ce9ce07c76282adb70f63f8f9487f0682d33056ea6aeaa2139cef9",
     "../../runtime/session/OriginalMusicControllerContract.cs": "bd8f78977722a276409623cea4909b0e41065fda6c195a6b0dee94ef8bb8b485",
     "../../runtime/session/OriginalNetworkSoundEventCatalogOwner.cs": "ca692357d4d6e635136c59529aaf89745f219e5227d4ea7b48be56cdd7fd455f",
-    "../../runtime/session/PortSession.cs": "7168f536c5dab413204b46c9ad684803a74c5a74a648d856e74160aa7c6a8f89",
+    "../../runtime/session/PortSession.cs": "2f4e5b57102311ae7b4361bd11f0cf19200210ab4321f1b6f01c397d06c85071",
     "../../runtime/session/PortSessionOriginalAudioOwner.cs": "54b4dc2c24081fbf1a32967d9cb392541bb9e47e6c55965fe76d65f51db1e1f8",
     "../../runtime/session/PortSessionOriginalMusicControllerOwner.cs": "15272167e3c416edb863797bf35dcbe8ef6704ecac805fdbe38186f4d73d41b0",
     "../../runtime/world/IntegratedWorldBoundary.cs": "5741a611812dc82bd398c88586eabe35f2057b7e88429d323d5d2f96064ea57e",

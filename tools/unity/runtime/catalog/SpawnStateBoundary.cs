@@ -161,6 +161,7 @@ public sealed partial class PortSession
         string priorSpawnSound;
         public IEnumerator PrepareSpawnStateCatalog(SessionConfig cfg)
         {
+            TraceStartup("spawn-state-catalog-begin");
             coordinator.Check(!coordinator.ownsStateCatalog, "Existing state catalog ownership");
             var types = new[] { typeof(Uninitialized), typeof(Idle), typeof(SpawnTeleporterState), typeof(GenericCharacterMain),
                                 typeof(GenericCharacterVehicleSeated) };
@@ -178,10 +179,13 @@ public sealed partial class PortSession
                                 ? WholeCatalogComposed.CategoryFamily(RoR2.ContentManagement.AddressablesLabels.entityStateConfiguration,
                                                                       new EntityStateConfiguration[0])
                                 : null;
+            TraceStartup("spawn-state-family-ready");
             if (originals != null)
                 CaptureWholeStateOwnership(originals);
+            TraceStartup("spawn-state-snapshot-ready");
             var config = coordinator.artifactBundle.LoadAsset<EntityStateConfiguration>(cfg.spawnConfigAsset);
             coordinator.Check(config && (Type)config.targetType == typeof(SpawnTeleporterState), "Actual spawn configuration identity");
+            TraceStartup("spawn-state-config-loaded");
             priorSpawnDelay = SpawnTeleporterState.initialDelay;
             priorSpawnSound = SpawnTeleporterState.soundString;
             ownsSpawnConfig = true;
@@ -227,6 +231,7 @@ public sealed partial class PortSession
                                  .Where(x => x.canBeHitStunned))
                         coordinator.Check(hurt.hurtState.stateType != null && types.Contains(hurt.hurtState.stateType),
                                           "Original actor hurt state absent from selected catalog: " + actor.name);
+            TraceStartup("spawn-state-adapted-configs-ready");
             var selectedTypes = types;
             if (originals != null)
             {
@@ -236,12 +241,15 @@ public sealed partial class PortSession
                 coordinator.r.liveCatalogs.adaptedStateConfigurations = configs.Length;
                 coordinator.r.liveCatalogs.staticStateFields = wholeStateFields.Count;
             }
+            TraceStartup("spawn-state-types-ready");
             coordinator.ownsStateCatalog = true;
             coordinator.r.phase = "original-spawn-state-catalog";
             coordinator.Save();
+            TraceStartup("spawn-state-report-saved");
             var initialize = PortSession.BuildStateCatalogRoutine(types, originals ?? configs);
             while (initialize.MoveNext())
                 yield return initialize.Current;
+            TraceStartup("spawn-state-native-ready");
             // Retain the accepted bounded configuration adaptations without changing the
             // native full configuration/preload ordering or replacing original programs.
             if (originals != null)
@@ -261,6 +269,7 @@ public sealed partial class PortSession
                 StunState.stunVfxPrefab = coordinator.artifactBundle.LoadAsset<GameObject>(cfg.objectiveStunAsset);
                 coordinator.Check(StunState.stunVfxPrefab, "Original composed stun presentation missing");
             }
+            TraceStartup("spawn-state-adaptations-applied");
             foreach (var type in types)
             {
                 var index = EntityStateCatalog.GetStateIndex(type);
@@ -276,6 +285,7 @@ public sealed partial class PortSession
                                   SpawnTeleporterState.initialDelay == cfg.sourceSpawnDelay,
                               "Original configured spawn delay");
             coordinator.Check(SpawnTeleporterState.soundString == cfg.sourceSpawnSound, "Original configured spawn sound");
+            TraceStartup("spawn-state-catalog-validated");
         }
         public void Dispose()
         {
