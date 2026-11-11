@@ -195,6 +195,26 @@ class BundlePreloadTests(unittest.TestCase):
             self.assertEqual(actual[-4:], body[-4:])
             self.assertEqual(set(targets), {("first",), ("second",)})
 
+    def test_structural_routes_check_complete_current_fields_without_source_proofs(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            owner, _, typ, proofs, endpoints, read = self.external_contract(Path(tmp))
+            body = struct.pack("<iqiqi", 1, 100, 0, 20, 73)
+            owner.update(bytes=len(body), sha256=hashlib.sha256(body).hexdigest(), edges=[[1, 100], [0, 20]])
+            fields = P.pointers(body, typ, {})
+            routes = [dict(field=p["field"], pointer=fields[tuple(p["field"])], target=p["target"]) for p in proofs]
+            for endpoint, _, _ in endpoints.values():
+                endpoint.pop("source")
+            targets = P.qualify_structural_fields(owner, body, typ, routes, read)
+            self.assertEqual(targets, {("first",): ("dependency", "CAB-dependency", 100)})
+            self.assertEqual(P.relocate_external_fields(owner, body, typ, targets, ["CAB-dependency"]), body)
+            with self.assertRaisesRegex(ValueError, "every nonnull field"):
+                P.qualify_structural_fields(owner, body, typ, routes[:1], read)
+            with self.assertRaisesRegex(ValueError, "field or pointer"):
+                P.qualify_structural_fields(owner, body, typ, routes + routes[:1], read)
+            endpoints["dependency", "CAB-dependency", 100][1].write_bytes(b"changed")
+            with self.assertRaisesRegex(ValueError, "body or full type"):
+                P.qualify_structural_fields(owner, body, typ, routes, read)
+
     def test_external_fields_require_each_field_proof_and_effective_provider(self):
         import copy
 
@@ -512,10 +532,16 @@ class BundlePreloadTests(unittest.TestCase):
     def test_required_emission_relocates_fields_and_rereads_actual_external_endpoints(self):
         import UnityPy
 
-        for drift in (False, True):
-            with self.subTest(drift=drift), tempfile.TemporaryDirectory() as tmp:
+        for structural, drift in ((False, False), (False, True), (True, False), (True, True)):
+            with self.subTest(structural=structural, drift=drift), tempfile.TemporaryDirectory() as tmp:
                 root = Path(tmp)
                 owner, body, typ, proofs, endpoints, read = self.external_contract(root)
+                if structural:
+                    body = struct.pack("<iqiqi", 1, 100, 1, 20, 73)
+                    owner.update(sha256=hashlib.sha256(body).hexdigest(), edges=[[1, 100], [1, 20]])
+                    owner.pop("source")
+                    for endpoint, _, _ in endpoints.values():
+                        endpoint.pop("source")
                 typ["dependencies"] = []
                 full_type = P.full_type_key(typ)
                 local = endpoints["authored", "CAB-authored", 20][0]
@@ -563,8 +589,23 @@ class BundlePreloadTests(unittest.TestCase):
                     return read(target)
 
                 def emit():
+                    routes = None
+                    if structural:
+                        fields = P.pointers(body, typ, {})
+                        routes = {
+                            tuple(owner["destination"]): [dict(field=p["field"], pointer=fields[tuple(p["field"])], target=p["target"]) for p in proofs],
+                            tuple(local["destination"]): [],
+                        }
                     return P.emit_closed_native(
-                        graph, [types], root / "emitted", "authored", "CAB-authored", required=required, field_proofs=proofs, endpoint_record=read_actual
+                        graph,
+                        [types],
+                        root / "emitted",
+                        "authored",
+                        "CAB-authored",
+                        required=required,
+                        field_proofs=() if structural else proofs,
+                        structural_routes=routes,
+                        endpoint_record=read_actual,
                     )
 
                 if drift:
@@ -573,6 +614,7 @@ class BundlePreloadTests(unittest.TestCase):
                     self.assertFalse((root / "emitted/result.json").exists())
                 else:
                     result = emit()
+                    self.assertEqual(result["field_qualification"], "structural-current-routes" if structural else "source-provenance")
                     self.assertEqual(calls, 2)
                     self.assertEqual(len(result["qualified_endpoint_pins"]), 2)
                     objects = {obj.path_id: obj.read_typetree() for obj in UnityPy.load(result["bundle"]).objects}
