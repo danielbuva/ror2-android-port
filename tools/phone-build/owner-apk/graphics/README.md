@@ -12,10 +12,14 @@ driver or third-party native code is bundled, downloaded or run by this slice.
   retained for provenance/license display. An unsuccessful stage is not selectable;
   the caller removes its own failed stage. Library bytes are rechecked before load.
 - `TurnipRelease` requires source release/download agreement, a SHA-256 pin, Mesa
-  Turnip family, MIT license and supported Adreno generations. These are validated
+  Turnip family, MIT license, reviewed minimum Android API and supported Adreno
+  generations. These are validated
   *reviewed manifest claims*, not proof that an arbitrary ZIP is open-source. The
   curator must audit the release/source/license before adding a row. User-imported
-  packages are explicitly not marked curated. No remote manifest is trusted here.
+  packages are explicitly not marked curated. Metadata may declare an older API
+  or a library name such as `vulkan.ad07XX.so`; admission combines the metadata,
+  provider API 28 floor and reviewed curated API floor. No remote manifest is
+  trusted here.
 - `GraphicsDriverPolicy.Provider` is the detect/available/install/verify/load/
   fallback boundary. System is the default outcome and has no provider calls.
   Future Android/native adapters must not advertise custom-driver availability

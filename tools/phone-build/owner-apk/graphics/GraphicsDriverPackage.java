@@ -35,8 +35,8 @@ public final class GraphicsDriverPackage {
             require(schemaVersion == 1, "Unsupported driver metadata version");
             this.name = label(name);
             this.version = label(version);
-            require(minApi >= 28 && minApi <= 100, "Invalid driver Android requirement");
-            require(library != null && library.matches("lib[A-Za-z0-9_.-]+\\.so"), "Invalid driver library name");
+            require(minApi >= 1 && minApi <= 100, "Invalid driver Android requirement");
+            require(library != null && library.matches("[A-Za-z0-9_][A-Za-z0-9_.-]{0,119}\\.so"), "Invalid driver library name");
             this.minApi = minApi;
             this.library = library;
         }
@@ -46,8 +46,9 @@ public final class GraphicsDriverPackage {
     public static final class TurnipRelease {
         public final String id, name, version, releaseUrl, downloadUrl, sha256, license;
         public final Set<Integer> generations;
+        public final int minApi;
         public TurnipRelease(String family, String id, String name, String version, String releaseUrl,
-                String downloadUrl, String sha256, String license, Set<Integer> generations) throws IOException {
+                String downloadUrl, String sha256, String license, int minApi, Set<Integer> generations) throws IOException {
             require("mesa-turnip".equals(family), "Only Mesa Turnip releases are curated");
             require(id != null && id.matches("[a-z0-9][a-z0-9._-]{0,79}"), "Invalid curated driver identity");
             require(sha256 != null && sha256.matches("[0-9a-f]{64}"), "Curated driver requires SHA-256");
@@ -67,6 +68,8 @@ public final class GraphicsDriverPackage {
             require(generations != null && !generations.isEmpty(), "Supported Adreno generations required");
             for (Integer generation : generations)
                 require(generation != null && generation >= 6 && generation <= 8, "Unsupported Adreno generation");
+            require(minApi >= 28 && minApi <= 100, "Curated release requires a reviewed Android API floor");
+            this.minApi = minApi;
             this.generations = Collections.unmodifiableSet(new HashSet<>(generations));
             this.id = id; this.sha256 = sha256; this.releaseUrl = releaseUrl; this.downloadUrl = downloadUrl;
         }
@@ -78,10 +81,12 @@ public final class GraphicsDriverPackage {
         public final String archiveSha256, librarySha256;
         public final Path directory;
         public final boolean curated;
+        public final int minApi;
         public final Set<Integer> generations;
         private Verified(Metadata metadata, String archiveSha256, String librarySha256, Path directory, TurnipRelease release) {
             this.metadata = metadata; this.archiveSha256 = archiveSha256; this.librarySha256 = librarySha256;
             this.directory = directory; this.curated = release != null;
+            this.minApi = minimumApi(metadata, release);
             this.generations = release == null ? Collections.emptySet() : release.generations;
         }
         public String cacheKey() { return "adreno-turnip-" + archiveSha256; }
@@ -119,7 +124,7 @@ public final class GraphicsDriverPackage {
                 ByteArrayOutputStream json = new ByteArrayOutputStream();
                 try (InputStream input = zip.getInputStream(meta)) { copy(input, json, MAX_METADATA_BYTES, null); }
                 Metadata metadata = reader.read(json.toByteArray());
-                require(metadata != null && metadata.minApi <= api, "Driver requires a newer Android version");
+                require(metadata != null && minimumApi(metadata, release) <= api, "Driver requires a newer Android version");
                 ZipEntry library = zip.getEntry(metadata.library);
                 require(library != null && library.getSize() >= 64, "Driver library missing or truncated");
                 byte[] header = new byte[64];
@@ -146,6 +151,10 @@ public final class GraphicsDriverPackage {
         try (InputStream input = Files.newInputStream(library)) {
             return installed.librarySha256.equals(copy(input, null, MAX_EXPANDED_BYTES, null));
         }
+    }
+
+    private static int minimumApi(Metadata metadata, TurnipRelease release) {
+        return Math.max(28, Math.max(metadata.minApi, release == null ? 28 : release.minApi));
     }
 
     private static String copy(InputStream input, OutputStream output, long limit, byte[] header) throws IOException {

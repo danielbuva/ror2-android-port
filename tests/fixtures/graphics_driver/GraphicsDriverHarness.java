@@ -27,7 +27,7 @@ public final class GraphicsDriverHarness {
     }
     private static GraphicsDriverPackage.TurnipRelease release(String family, String hash, String source, String download) throws IOException {
         return new GraphicsDriverPackage.TurnipRelease(family, "authored-test", "Authored Turnip", "test", source, download, hash,
-                "MIT", new HashSet<>(Arrays.asList(6, 7)));
+                "MIT", 28, new HashSet<>(Arrays.asList(6, 7)));
     }
     private static GraphicsDriverPolicy.State freshProcess() throws IOException {
         return new GraphicsDriverPolicy.State(root.resolve("state"), new GraphicsDriverPolicy.ProcessState());
@@ -70,6 +70,18 @@ public final class GraphicsDriverHarness {
         check(driver.curated && driver.archiveSha256.equals(hash) && GraphicsDriverPackage.verify(driver));
         try (java.util.stream.Stream<Path> files = Files.list(driver.directory)) { check(files.count() == 3); }
         check(!Files.exists(driver.directory.resolve("extra.so")));
+        // Real AdrenoTools recipes can use a non-lib-prefixed name and minApi 27.
+        GraphicsDriverPackage.MetadataReader adrenoMetadata = bytes -> new GraphicsDriverPackage.Metadata(
+                1, "Authored Turnip", "test", 27, "vulkan.ad07XX.so");
+        GraphicsDriverPackage.Verified adreno = GraphicsDriverPackage.stage(Files.newInputStream(root.resolve("adrenotools.zip")),
+                root.resolve("adrenotools"), adrenoMetadata, null, 28);
+        check(adreno.minApi == 28 && GraphicsDriverPackage.verify(adreno));
+        rejects(() -> GraphicsDriverPackage.stage(Files.newInputStream(root.resolve("adrenotools.zip")),
+                root.resolve("adrenotools-old"), adrenoMetadata, null, 27));
+        GraphicsDriverPackage.TurnipRelease newerApi = new GraphicsDriverPackage.TurnipRelease(
+                "mesa-turnip", "reviewed-api", "Authored Turnip", "test", SOURCE, DOWNLOAD, hash, "MIT", 35,
+                new HashSet<>(Arrays.asList(7)));
+        rejects(() -> stage("good.zip", newerApi));
         GraphicsDriverPackage.Verified local = stage("good.zip", null);
         check(!local.curated && local.cacheKey().equals(driver.cacheKey()));
         check(!stage("other.zip", null).cacheKey().equals(driver.cacheKey()));

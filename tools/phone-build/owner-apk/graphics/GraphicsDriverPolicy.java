@@ -100,7 +100,7 @@ public final class GraphicsDriverPolicy {
         if (state.selected().equals(SYSTEM)) return new Launch(Outcome.SYSTEM, "", SYSTEM);
         if (provider == null || driver == null || !provider.detect(device) || !provider.available())
             return system(state, "Custom graphics drivers are unavailable on this device or build.");
-        if (device.api < driver.metadata.minApi || (driver.curated && !driver.generations.contains(device.adrenoGeneration)))
+        if (device.api < driver.minApi || (driver.curated && !driver.generations.contains(device.adrenoGeneration)))
             return system(state, "Graphics driver does not support this Android version or Adreno generation.");
         if (!state.selected().equals(driver.archiveSha256)) return system(state, "Selected graphics driver is missing or changed.");
         try {

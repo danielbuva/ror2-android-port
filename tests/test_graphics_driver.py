@@ -38,6 +38,7 @@ class GraphicsDriverTests(unittest.TestCase):
 
             good = [("meta.json", metadata), ("libvulkan_test.so", library), ("extra.so", b"never extracted")]
             archive("good.zip", good)
+            archive("adrenotools.zip", [("meta.json", metadata), ("vulkan.ad07XX.so", library)])
             archive("other.zip", good + [("LICENSE", b"authored extra bytes change archive identity")])
             archive("traversal.zip", good + [("../escaped", b"not written")])
             archive("nested.zip", good + [("directory/file", b"not written")])
