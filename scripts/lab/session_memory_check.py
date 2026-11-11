@@ -211,7 +211,7 @@ def collect_memory_snapshot(device, runtime, out, name):
     return {"file": name, "sha256": digest, "bytes": local.stat().st_size}
 
 
-def check_session_memory(sessions=DEFAULT_SESSIONS, expected_apk_sha256=None, root_walk=False, memory_snapshots=False, _launch=None):
+def check_session_memory(sessions=DEFAULT_SESSIONS, expected_apk_sha256=None, root_walk=False, memory_snapshots=False, _launch=None, _between_sessions=None):
     if type(sessions) is not int or not MIN_SESSIONS <= sessions <= MAX_SESSIONS:
         raise ValueError("Use %d to %d sessions" % (MIN_SESSIONS, MAX_SESSIONS))
     if type(memory_snapshots) is not bool or memory_snapshots and root_walk:
@@ -277,6 +277,8 @@ def check_session_memory(sessions=DEFAULT_SESSIONS, expected_apk_sha256=None, ro
     snapshot_files = {}
     menu_pss = {}
     menu_started = set()
+    menu_start_requested_at = None
+    cooldowns = []
     live_at = startup_at = None
     settings_sent = end_requested = end_sent = False
     final_menu = None
@@ -334,6 +336,9 @@ def check_session_memory(sessions=DEFAULT_SESSIONS, expected_apk_sha256=None, ro
                     fail(reason, details[0] if details else None)
                     break
                 phase = current.get("phase")
+                if phase == "offline-start-menu" and session in menu_started and time.monotonic() - menu_start_requested_at >= ABANDON_STARTUP_TIMEOUT_SECONDS:
+                    fail("offline-menu-start-not-acknowledged", "session %d stayed at the menu after Start" % session)
+                    break
                 snapshot_ready = True
                 if phase == "offline-start-menu" and memory_snapshots and session in (2, sessions + 1) and session not in snapshot_files:
                     name = memory_snapshot_file(current, session)
@@ -372,11 +377,22 @@ def check_session_memory(sessions=DEFAULT_SESSIONS, expected_apk_sha256=None, ro
                         write(out / "final-menu.json", current)
                         stop = "repeated-sessions-observed"
                         break
+                    if session > 1 and _between_sessions:
+                        pause_started = time.monotonic()
+                        cooled = _between_sessions()
+                        seconds = time.monotonic() - pause_started
+                        cooldowns.append(dict(before_session=session, seconds=seconds, observation=cooled))
+                        write(out / "cooldowns.json", cooldowns)
+                        deadline += seconds
+                        if not cleanup._same_process(device, pid):
+                            fail("process-exited-during-cooldown")
+                            break
                     coords = menu_start_coordinates(current)
                     if coords is None:
                         fail("offline-menu-start-control-unavailable", "session %d" % session)
                         break
                     device.sh("input", "tap", str(coords[0]), str(coords[1]))
+                    menu_start_requested_at = time.monotonic()
                     menu_started.add(session)
                     live_at = startup_at = None
                     settings_sent = end_requested = end_sent = False
@@ -525,6 +541,8 @@ def check_session_memory(sessions=DEFAULT_SESSIONS, expected_apk_sha256=None, ro
         summary["limits"] += (
             " Native heap captures at menu 2 and the final menu allocate and pause; this is attribution evidence, not an ordinary growth/performance measurement."
         )
+    if _between_sessions:
+        summary["limits"] += " Includes supervised OLED-sleep cooldown between sessions; this is not uninterrupted ordinary play."
     result = {
         "success": not failures,
         "stop": stop,
@@ -541,6 +559,7 @@ def check_session_memory(sessions=DEFAULT_SESSIONS, expected_apk_sha256=None, ro
         "menu_pss_kib": menu_pss,
         "growth": summary,
         "memory_snapshots": snapshot_files,
+        "cooldowns": cooldowns,
         "runtime_errors": runtime_errors,
         "evidence": str(out.relative_to(WORK.parent)),
     }

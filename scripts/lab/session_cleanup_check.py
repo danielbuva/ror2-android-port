@@ -11,6 +11,7 @@ import re
 import shlex
 import time
 
+from baseline import process_pid
 from common import ROOT, WORK, now, read, sha, write
 from device import Device, PACKAGE
 from installed_attempt import attempt_from_installed, bind_installed_apk, validate_expected_apk_sha256
@@ -680,7 +681,7 @@ def _remote_path_state(device, path):
 
 
 def _same_process(device, pid):
-    return device.sh("pidof", PACKAGE, check=False).strip() == str(pid)
+    return process_pid(device) == str(pid)
 
 
 def _stop_process(device, pid, deadline=5):

@@ -171,16 +171,21 @@ class _GameThermalOwner:
             else:
                 if not self.runtime_zones:
                     raise RuntimeError("Runtime thermal sampling requires admission discovery")
-                # One cat reads every admitted readable physical sensor. Reading
-                # each unsupported sysfs interface again can itself take seconds.
+                # One ADB transaction reads admitted sensors and battery state.
+                # A second client startup consumed part of the one-second budget.
                 command = "cat " + " ".join(shlex.quote(path) for _, path in self.runtime_zones)
-                raw = self.device.cmd("shell", command, timeout=0.7)
+                raw = self.device.cmd("shell", command + " && printf '\\n__LAB_BATTERY__\\n' && dumpsys battery", timeout=1)
                 observation["runtime_raw"] = raw
-                values = raw.splitlines()
+                sensors, separator, battery = raw.partition("\n__LAB_BATTERY__\n")
+                if not separator:
+                    raise RuntimeError("Missing runtime battery boundary")
+                values = sensors.rstrip("\n").splitlines()
+                self.battery = battery_observation(battery)
                 if len(values) != len(self.runtime_zones) or any(len(value.split()) != 1 for value in values):
                     raise RuntimeError("Malformed runtime thermal observation")
                 text = "\n".join(name + "\t" + value + "\t" + path for (name, path), value in zip(self.runtime_zones, values))
-            self.battery = battery_observation(self.device.sh("dumpsys", "battery", timeout=0.7))
+            if all_zones:
+                self.battery = battery_observation(self.device.sh("dumpsys", "battery", timeout=0.7))
             observation["battery"] = self.battery
             if all_zones:
                 self.battery_current_now = self.battery_current()
@@ -347,6 +352,27 @@ class _GameThermalOwner:
         self.stopper = threading.Thread(target=stop_workload, name="alpha-thermal-stop")
         self.thread.start()
         self.stopper.start()
+
+    def between_sessions(self):
+        """Cool at the verified menu while the runtime observer stays active."""
+        phase = self.phase
+        self.phase = "session-memory-cooldown"
+        try:
+            if not self.device.display(False):
+                raise RuntimeError("Between-session cooldown requires verified OLED sleep")
+            while True:
+                if self.error:
+                    raise ThermalCancelled(self.error)
+                if max(self.battery["celsius"], self.battery_zone_celsius) <= 35:
+                    break
+                time.sleep(THERMAL_INTERVAL_SECONDS)
+            if not self.device.display(True):
+                raise RuntimeError("Between-session cooldown could not restore the menu display")
+            if self.error:
+                raise ThermalCancelled(self.error)
+            return dict(battery=self.battery.copy(), battery_zone_celsius=self.battery_zone_celsius)
+        finally:
+            self.phase = phase
 
     def _terminate_serially(self):
         with self.stop_lock:
@@ -551,6 +577,8 @@ def check_alpha_stability_batch(*, device_serial, expected_apk_sha256, canonical
                 thermal.cool()  # No game running; admit the next stage at <=50 C.
                 thermal.start()
                 try:
+                    if name == "session-memory":
+                        kwargs["_between_sessions"] = thermal.between_sessions
                     stage = function(expected_apk_sha256=expected, _launch=thermal.launch, **kwargs)
                 except BaseException as error:
                     stage_error = error

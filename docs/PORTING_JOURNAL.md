@@ -2996,3 +2996,48 @@ APK `04df664f66d5ebc32cbc477865e9bfb6a16bfdf1120603b0f2f2f99a310a680d`, source `
 Focused 291 host tests/Ruff/preflight passed; prior art J391/J609 and pinned R2API release lifetimes.
 No new runtime gameplay code. Assisted evidence; physical navigation and sustained qualification open.
 Terminal readback verified stopped/asleep, selectors absent and lease released; prune applied.
+
+## J1403 — Preserve session process transport failures
+
+2026-11-11. Shared session process checks reuse the baseline's checked PID observer;
+legitimate no-process remains distinct from command/transport failure. The memory runner
+records transport loss as runner-error and cleanup cannot claim unobserved termination.
+Evidence: this commit; 146 focused host tests and Ruff pass. Host preflight retains
+the known worktree-local configuration gap; no build, install or gameplay rerun.
+No APK change or new gameplay evidence. Repeated-session completion, memory plateau,
+physical navigation and unassisted qualification remain open.
+
+## J1404 — Combine runtime thermal and battery reads
+
+2026-11-11. Existing thermal owner reads all admitted sensors and battery service
+in one bounded ADB transaction, reducing two client startups to one per sample.
+Its one-second timeout leaves measured gaps above one second invalid; sensor
+cardinality, battery completeness and existing safety thresholds remain required.
+Evidence: this commit; 54 focused host tests and Ruff pass, including real shell
+framing, sensor read failure and a 0.8-second read followed by a rejected gap.
+Doctor/preflight retain known worktree-local configuration gaps. No device rerun,
+APK change or gameplay qualification; isolated ADB-stall root cause remains open.
+
+## J1405 — Cool supervised memory sessions between verified endings
+
+2026-11-11. Existing thermal owner sleeps the OLED between verified completed
+memory sessions and resumes at battery service and battery-zone readings <=35 C.
+Continuous runtime sampling and the >=43 C battery stop remain active; no charging
+setting changes. The memory owner preserves pre-pause samples/PSS, rechecks its
+PID before Start and records cooldown duration separately from its session budget.
+The outer three-hour deadline remains unchanged; reports label interrupted play.
+Evidence: this commit; 56 thermal/batch and 16 memory host tests plus Ruff pass.
+Doctor/preflight retain known worktree-local configuration gaps. No APK change,
+new device run or cooldown qualification; active32 uses the previous loaded code.
+Repeated-session completion/plateau and ordinary physical/unassisted gates stay open.
+
+## J1406 — Bound unacknowledged session Start requests
+
+2026-11-11. The existing supervised memory runner stops after 60 seconds when
+a tapped session still reports its start menu, retaining the current report and
+performing owned process/display cleanup. A missed transition no longer waits
+for the outer three-hour deadline or implies a gameplay crash.
+Evidence: 16 focused host tests, including a stalled post-cooldown menu that
+preserves one completion, sends no repeated taps and confirms OLED cleanup; Ruff
+and shared host preflight pass. APK unchanged; no new device acceptance.
+Wake/focus/tap delivery, long-series memory and physical navigation remain open.
