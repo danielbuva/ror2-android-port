@@ -221,6 +221,24 @@ class BundlePreloadTests(unittest.TestCase):
                 with self.assertRaisesRegex(ValueError, "unique persisted endpoint"):
                     P.qualify_external_fields(owner, body, typ, proofs, read)
 
+    def test_generated_endpoint_keeps_producer_provenance_without_original_source(self):
+        import copy
+
+        with tempfile.TemporaryDirectory() as tmp:
+            owner, body, typ, proofs, endpoints, read = self.external_contract(Path(tmp))
+            proof = proofs[0]
+            endpoint, _, _ = endpoints[tuple(proof["target"])]
+            provenance = {"producer": "registry", "receipt": {"sha256": "ef" * 32}}
+            endpoint.update(source=None, generated_provenance=provenance)
+            proof["source_target"] = None
+            proof["endpoint_type"].update(source_sha256=None, generated_provenance=provenance)
+            self.assertEqual(P.qualify_external_fields(owner, body, typ, proofs, read)[("first",)], tuple(proof["target"]))
+            for change in ({"generated_provenance": None}, {"generated_provenance": {"producer": "other"}}, {"source_sha256": "cd" * 32}):
+                bad = copy.deepcopy(proofs)
+                bad[0]["endpoint_type"].update(change)
+                with self.assertRaisesRegex(ValueError, "unique persisted endpoint"):
+                    P.qualify_external_fields(owner, body, typ, bad, read)
+
     def test_external_fields_reject_conflicting_qualified_targets(self):
         import copy
 

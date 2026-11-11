@@ -139,6 +139,14 @@ def qualify_external_fields(value, body, typ, proofs, endpoint_record):
             digest = hashlib.sha256(raw).hexdigest()
             full = full_type_key(endpoint_type)
             expected = proof["endpoint_type"]
+            source_target = proof["source_target"]
+            if source_target is None:
+                # Generated SDK/registry bodies have no original object body.
+                # Their caller-qualified producer evidence must survive into
+                # the field proof, alongside the actual emitted extent below.
+                provenance = endpoint.get("generated_provenance")
+                if not provenance or expected.get("generated_provenance") != provenance or expected.get("source_sha256") is not None:
+                    continue
             if (
                 tuple(endpoint["destination"]) != target
                 or endpoint.get("source") != proof["source_target"]
@@ -158,7 +166,7 @@ def qualify_external_fields(value, body, typ, proofs, endpoint_record):
             ):
                 continue
             pointers(raw, endpoint_type, {})
-            signature = target, tuple(proof["source_target"]), json.dumps(expected, sort_keys=True)
+            signature = target, tuple(source_target) if source_target is not None else None, json.dumps(expected, sort_keys=True)
             valid[signature] = target
         if len(valid) != 1:
             raise ValueError(f"External field lacks a unique persisted endpoint: {owner} {field} ({len(valid)})")
