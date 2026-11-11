@@ -87,7 +87,9 @@ Typed source joins distinguish shared field names and check Shader names;
 checks imports, compute kernels/thread groups using the host Metal device and
 builds one strict Android/Vulkan bundle. Null graphics cannot reflect compute
 kernels. The shared editor mutex serializes compilation; teardown removes the
-project and retains pinned sources, receipt and bundle. This is a host supplier
+project even when staging or editor configuration fails, and retains pinned
+sources, a failure receipt or the compiled bundle. Host lifecycle regressions
+live in `tests/test_shader_postprocessing_uber.py`. This is a host supplier
 route; phone compute production and device loadability remain open.
 
 `accepted-output/catalog_complete.py --inputs REQUEST --output NEW_DIRECTORY`
