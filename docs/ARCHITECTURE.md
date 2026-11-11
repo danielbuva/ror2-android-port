@@ -22,9 +22,13 @@ promotional graphics and their sources; they are not part of the runtime pipelin
 
 Unity editor and batch launchers set `ANDROID_ADB_SERVER_PORT=5038` only in
 their child environment, isolating the bundled ADB server from the lab's canonical
-ADB on port 5037. `open-smoke.sh` delegates to `./dev editor`; existing editors
-must restart to inherit the isolated port. Child exit retains existing log and
-mutex cleanup; device tooling and thermal cancellation keep their current owners.
+ADB on port 5037. `scripts/lab/build.py::editor` owns `./dev editor`;
+`scripts/build-smoke.sh`, `scripts/lab/unity_rebuild.py`, `phone_content.py`,
+the `phone_*_oracle.py` launchers and `source_camera_bundle.py` own their batch
+children. `open-smoke.sh` delegates to `./dev editor`; existing editors must
+restart to inherit the isolated port. Child exit retains each launcher's log,
+process and mutex cleanup; device tooling and thermal cancellation keep their
+current owners. No global ADB environment or device-server setting is changed.
 
 Launcher presentation: [`launcher/`](../launcher/README.md) owns the approved
 original background and dependency-free frontend. `controller.js` owns the
@@ -86,13 +90,21 @@ Typed source joins distinguish shared field names and check Shader names;
 `tools/phone-build/SourceCameraProgramBundle.cs`
 checks imports, compute kernels/thread groups using the host Metal device and
 builds one strict Android/Vulkan bundle. Null graphics cannot reflect compute
-kernels. The shared editor mutex serializes compilation; teardown removes the
-project and retains pinned sources, receipt and bundle. This is a host supplier
-route; phone compute production and device loadability remain open.
+kernels. Host exposure reflection admits the public 8-wide kernel shapes;
+`source_camera_bundle.py::validate_vulkan_programs` independently reads the
+emitted Vulkan variants and requires the original kernel names/thread groups,
+nonempty variant maps and compiled code. The shared editor mutex serializes
+compilation, with child ADB isolated on port 5038. Setup protects the output with
+`.prune-keep`; compilation/validation exit writes `result.json`, removes the
+isolated project and retains pinned sources, logs and any compiled bundle.
+The caller removes the protection when the supplier is shipped or superseded.
+This is a host supplier route; phone compute production and device loadability
+remain open.
 
 `accepted-output/catalog_complete.py --inputs REQUEST --output NEW_DIRECTORY`
-owns current host catalog completion. The request pins source metadata, selected
-final object profiles, every produced bundle and the current runtime script
+owns current host catalog closure with shared `scripts/lab/whole_catalog.py`
+helpers. The request pins source metadata, selected final object profiles,
+every produced bundle and the current runtime script
 registry, plus input/startup identity. Existing catalog helpers resolve ownership
 and dependency closure; final serialized containers independently check endpoint
 PPtrs, preload extents, native types and exact MonoScript/runtime bindings.
@@ -989,13 +1001,24 @@ refuse. The produced manifest feeds the existing routing/version patch, and
 the other selected SDK outputs stream unchanged. Host fixtures cover this
 18-entry composition without comparison-target files and retain input-drift
 checks; complete phone installation/controls/performance remain open.
-The same owner's current `--check-request` action inventories every selected
-final target/code file, retaining actual hashes, raw comparison differences and
-all missing/mismatched/invalid entries. Normal assembly writes `readiness.json`
-and refuses blocked inputs before compiling its launcher. Check-only teardown
-retains one new private report; it starts no compiler or device action. Complete
+The same owner's `check()` implements the current strict `--check-request` audit
+of every selected final target/code file, retaining actual hashes, raw comparison
+differences and all missing/mismatched/invalid entries. `build()` writes
+`readiness.json` and refuses blocked inputs before compiling its launcher.
+Check-only exit retains one new private report and returns 1 for blocked inputs;
+it starts no compiler or device action. Complete
 record packs do not satisfy final bundle/player-data paths, and this byte check
 does not establish source provenance or device qualification.
+The same assembler's `assembly_profile()` accepts an `owner-local-output-v1`
+profile for staged assembly of the disposable `dev.ror2lab.converted` package
+only. This local profile pins the source commit, accepted input inventory and
+complete output cohort without claiming a published release. Code/SDK
+membership, file hashes and bootstrap payload bounds retain their normal checks.
+`binary_manifest.py` owns the explicit package ID, version code and version name
+rewrite; assembly receipts retain all three. Setup supplies local pinned
+outputs; process exit releases readers and retains readiness and terminal
+`result.json` receipts on success or failure. Host fixtures cover coexistence
+identities and output verification; APK/device acceptance stays open.
 Its optional `lighting_tolerance` selection uses
 `accepted-output/scene_compare.py`, the host-only full-scene comparison owner
 built on `unity_write.py` structural reads. Setup supplies the actual produced
@@ -1093,12 +1116,23 @@ private and are excluded from declared outputs.
 Generated jobs retain producer checks and do not establish complete APK or phone
 readiness. Setup uses explicit source checkout/profile/output paths; teardown
 keeps generated descriptors and caller-owned producer results. The managed-host
-`ToolHostActivity` presents check/download/rebuild/install states, while
-`OwnerUpdateState` is Android-free presentation policy. PR #119
-`OwnerInstaller` remains the PackageInstaller owner, including streamed hashing,
-package/version/signer continuity and persistent asynchronous status. Successful
-package-manager readback alone advances the installed manifest. Native tools
-remain installer-owned, private output/cache/key state remains owner-local, and
+`tools/phone-build/managed-host/ToolHostActivity.java` binds explicit
+check/prepare/import/build/install/resume actions to durable worker/install state.
+`onResume` registers the install-state observer and 500 ms refresh; `onPause`
+removes both. `OwnerUpdateState.java` owns Android-free presentation policy;
+its `StatusRender` coalesces changing same-phase text to two seconds while
+rendering phase changes immediately. Sampling and durable work remain separate.
+`OwnerInstaller.java` owns PackageInstaller sessions, streamed hashing,
+package/version/signer continuity and persistent asynchronous status. Its
+session-matched `Result` receiver owns Android confirmation intents. Missing or
+unlaunchable confirmation retains `AWAITING_CONFIRMATION` and the existing
+session; retry never creates a duplicate session. Android 12+ same-key updates
+request `USER_ACTION_NOT_REQUIRED`, with actual Android consent authoritative.
+`reconcile` recovers persisted session state after recreation; installed identity
+and required profile readback gate success and advancement of the installed
+manifest. Session/receiver diagnostics observe these transitions without changing
+install decisions. Native tools remain installer-owned, private output/cache/key
+state remains owner-local, and
 no public release includes a game APK/data. [Provisioning and update flow](../tools/phone-build/owner-apk/README.md#publishing-and-checking-updates)
 separate publisher trust, private input setup and device acceptance.
 
@@ -1112,6 +1146,11 @@ unchanged, and the installer visibly labels the active test source.
 `scripts/lab-installer-updates.py` owns the synthetic lab acceptance setup,
 local signed fixture server, actual UI/session assertions and owned cleanup.
 Its runner-provided toolhost and generated binaries/keys never leave the lab.
+Its `Phone.dismiss_notification_permission` identifies the owned installer's
+notification dialog and denies by default; `--allow-test-notifications` admits
+explicitly authorized notification consent independently of
+`--allow-test-installs`. Prompt inspection, classification and owned cleanup
+remain with this driver.
 
 Phone installation uses the same release transaction. `owner-apk/game_import.py`
 owns bounded original-file validation, free-space estimates and resumable private
@@ -1501,9 +1540,13 @@ are checked. Texture2D, Cubemap and Mesh stream descriptors are parsed from thei
 native schemas and relocated into one resource member; the bounded disk writer
 checks each source extent and final resource hash. Source/emitted body hashes and
 resource descriptors remain in `resources.jsonl`. Optional `--codec` and
-`--codec-sha256` use the existing pinned, roundtrip-checked LZ4 writer to reduce
-container size without changing member bytes; final body/resource checks still
-read the compressed output. The receipt records compression and the codec pin.
+`--codec-sha256` use `accepted-output/unity_write.py::write_bundle` for LZ4
+UnityFS repacking without changing member bytes. `build_bundle_lz4.py` builds
+the public `bundle_lz4.c` worker; `unity_write.py::codec` owns its hash-pinned,
+bounded child, per-block deadlines and independent decoded-byte verification.
+Exit rechecks the codec pin, closes pipes/reaps the child and removes the
+writer's temporary compressed spool. Final body/resource checks still read the
+compressed output; the producer receipt records compression and the codec pin.
 Managed bindings, external
 endpoints and ordered Sprite cohorts remain excluded and reported.
 The same owner supplies per-field external qualification for strict graph
@@ -2403,13 +2446,17 @@ performance guarantee. Host admission estimates two 4 GiB snapshots plus
 records that budget and observed free bytes. The 100 GiB full-build floor does
 not apply to this capture-only queue. Host fixtures exercise admission and
 failure contracts.
-The supervised memory stage sleeps its OLED between verified completed sessions
-and resumes only when both sampled battery temperatures are at most 35 C. The
-existing observer continues sampling and enforcing safety stops during the
-pause. The memory owner records cooldown duration outside its session deadline,
-rechecks the same process before Start and marks the interrupted workload in its
-growth report; the outer three-hour deadline remains unchanged. This host-tested
-path leaves device cooldown acceptance open.
+`scripts/lab/session_memory_check.py::check_session_memory` owns the supervised
+memory stage; the batch injects its between-session hook from
+`alpha_stability_batch.py::_GameThermalOwner.between_sessions`. After verified
+completed-session cleanup, the hook verifies OLED sleep and waits until both
+sampled battery temperatures are at most 35 C before restoring the display and
+prior phase. The existing observer continues sampling and enforcing safety
+stops during the pause. The memory owner retains `cooldowns.json`, excludes
+cooldown duration from its session deadline, rechecks the same process before
+Start and marks the interrupted workload in its growth report; the outer
+three-hour deadline remains unchanged. This host-tested path leaves device
+cooldown acceptance open.
 `--gameplay-only` selects just the existing heap and sustained owners when the
 independent SDK interruption route is blocked. Its receipt explicitly records
 that scope; it supplies no settings-interruption evidence and cannot combine
@@ -6463,13 +6510,3 @@ resources also supply external preload endpoints; the release graph binds these
 from the selected player outputs. The scoped producer checks native endpoints,
 types and script bindings and retains its receipt on exit. This adds
 no runtime owner. Complete APK and device acceptance remain open.
-
-The existing `owner-apk/build_owner_apk.py` assembler also accepts an
-`owner-local-output-v1` profile for the disposable `dev.ror2lab.converted`
-package only. This local profile pins the source commit, accepted input inventory
-and complete output cohort without claiming a published release. Code/SDK
-membership, file hashes and bootstrap payload bounds retain their normal checks.
-The binary manifest owner accepts an explicit version name alongside package ID
-and version code; assembly receipts retain all three. Setup supplies local pinned
-outputs; process exit releases readers and retains receipts. Host fixtures cover
-coexistence identities and output verification; APK/device acceptance stays open.
