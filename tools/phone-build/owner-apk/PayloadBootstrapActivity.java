@@ -93,7 +93,7 @@ public final class PayloadBootstrapActivity extends Activity {
         @Override public WebResourceResponse shouldInterceptRequest(WebView view, WebResourceRequest request) {
             String url = request.getUrl().toString();
             String name = request.getUrl().getPath();
-            if (!url.startsWith(ORIGIN) || name == null || !name.matches("/(index.html|style.css|app.js|controller.js|background.png|owner-host.js)"))
+            if (!url.startsWith(ORIGIN) || name == null || !name.matches("/(index.html|style.css|app.js|controller.js|feedback.js|background.png|owner-host.js)"))
                 return new WebResourceResponse("text/plain", "UTF-8", 403, "Forbidden", Collections.emptyMap(), new ByteArrayInputStream(new byte[0]));
             try {
                 String mime = name.endsWith(".js") ? "text/javascript" : name.endsWith(".css") ? "text/css" : name.endsWith(".png") ? "image/png" : "text/html";
