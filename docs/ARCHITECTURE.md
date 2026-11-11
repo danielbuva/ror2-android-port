@@ -2195,6 +2195,8 @@ The remaining `--action` selectors are classified here:
 
 | Command | Action | Lifecycle |
 | --- | --- | --- |
+| build-hook-pins | `check` (default) | current |
+| build-hook-pins | `refresh` | current |
 | editor | `open` | current |
 | editor | `inspect` | current |
 | editor | `refresh` | current |
@@ -2222,7 +2224,7 @@ Editor `inspect` (also the unknown-name fallback) reads hierarchy/console.
 The historical actions retain their experiment contracts; `minimal-build` is
 unsupported. Editor `build` and `presentation-payload` require their existing
 coordinators. Perf's default `inspect` and explicit `collect` use the current generic
-capture path; `cpu` selects the dedicated profiler and other names are refused. Other top-level commands
+capture path; `cpu` selects the dedicated profiler and other names are refused. Unlisted top-level commands
 ignore `--action`. `tests/test_dev_help.py` checks command labels, prototype
 registry labels and the editor/perf/lane selectors without starting an editor or
 querying a device. Labels live with existing CLI owners; dispatch is unchanged.
