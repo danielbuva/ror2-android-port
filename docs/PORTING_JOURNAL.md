@@ -2964,3 +2964,20 @@ Sampled PSS peak 3.28 GiB; CPU/GPU peak 80.8 C, above 80 C 0.394 s, battery 27 C
 Process-cold, page cache uncontrolled, profiler off; stopped/asleep, scratch removed,
 lease released/prune passed. Prior art: pinned R2API content phases and J466/J1399.
 Sustained play, audibility, full-pipeline profiling and remaining alpha gates stay open.
+
+
+## J1401 — Load typed results definitions before dependent drop tables
+
+2026-11-11. Existing CategoryFamily loader selects labeled key-item and item-group
+records before native registration, avoiding premature unrelated drop-table activation.
+Correction to J1400: its log contains premature CursedBook key-item activation.
+Three extracted-production fixtures, Ruff, pin checks, preflight and code build pass.
+Source `2575892b`; APK `04df664f66d5ebc32cbc477865e9bfb6a16bfdf1120603b0f2f2f99a310a680d`.
+Evidence: `work/coordination/alpha-item-group-device-20261111T023949Z/`.
+Ordinary launcher Start reaches player/HUD for 5 s; strict current-PID error scan empty;
+native results prepared (not completed), 21 survivors, 455 unlockables, 153 banks ready.
+In-place adopted-storage update preserves profile/settings hashes; profiler off.
+CPU/GPU peak 85.2 C, above 80 C 1.54 s, battery 30 C; safety limits not tripped.
+Stopped/asleep, scratch removed, lease released, prune passed; page cache uncontrolled.
+Prior art: pinned R2API content phases, source typed labels, J1390/J469/J525.
+Full results navigation, repeated-session memory plateau and sustained play remain open.

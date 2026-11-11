@@ -827,21 +827,17 @@ public static class WholeCatalogComposed
     }
     public static RoR2.KeyItemDef[] KeyItemDefinitions()
     {
-        if (!owned)
-            throw new Exception("Shared original key-item owner unavailable");
-        return owned.LoadAllAssets<RoR2.KeyItemDef>();
+        // Loading the whole bundle activates drop tables before native key-item
+        // indices exist. Load only the original provider's labeled definitions.
+        return CategoryFamily(RoR2.ContentManagement.AddressablesLabels.keyItemDef, Array.Empty<RoR2.KeyItemDef>());
     }
     public static RoR2.ItemGroupType[] ItemGroupTypes()
     {
-        if (!owned)
-            throw new Exception("Shared original item-group owner unavailable");
-        return owned.LoadAllAssets<RoR2.ItemGroupType>();
+        return CategoryFamily(RoR2.ContentManagement.AddressablesLabels.itemGroupType, Array.Empty<RoR2.ItemGroupType>());
     }
     public static RoR2.ItemGroupProvider[] ItemGroupProviders()
     {
-        if (!owned)
-            throw new Exception("Shared original item-group provider owner unavailable");
-        return owned.LoadAllAssets<RoR2.ItemGroupProvider>();
+        return CategoryFamily(RoR2.ContentManagement.AddressablesLabels.itemGroupProvider, Array.Empty<RoR2.ItemGroupProvider>());
     }
     public static RoR2.CharacterBody[] BodyComparisons(Type holder)
     {
