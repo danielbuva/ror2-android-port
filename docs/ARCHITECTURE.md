@@ -20,6 +20,12 @@ playtest limits and reviewed feedback. It introduces no installer or runtime ste
 [Branding notes](assets/branding/README.md) record the two repository-only
 promotional graphics and their sources; they are not part of the runtime pipeline.
 
+Unity editor and batch launchers set `ANDROID_ADB_SERVER_PORT=5038` only in
+their child environment, isolating the bundled ADB server from the lab's canonical
+ADB on port 5037. `open-smoke.sh` delegates to `./dev editor`; existing editors
+must restart to inherit the isolated port. Child exit retains existing log and
+mutex cleanup; device tooling and thermal cancellation keep their current owners.
+
 Launcher presentation: [`launcher/`](../launcher/README.md) owns the approved
 original background and dependency-free frontend. `controller.js` owns the
 versioned host state/action adapter, subscription teardown and pending-action
@@ -4736,10 +4742,15 @@ observer lifecycle result. Host contracts remain in
 ordinary Commando menu start, at least 60 s of ready Lakes play and the same UI
 abandon five times by default, then stops at the next menu. Explicit `--sessions`
 selects 3 to 32 sessions for a longer series without changing runtime gameplay.
-Each completed
-`movement-completed-session-<k>.json` must pass `abandon_contract` (reused through
-an index-checked session-1 view) before the next start, and profile counts must
-stay frozen. It collects the existing `SessionResourceBoundary` samples plus host
+An earlier native loss returns through persisted results and Return to menu;
+Restart is excluded because it skips the matched menu. Each completed
+`movement-completed-session-<k>.json` must pass its actual `ending_contract`
+(reused through an index-checked session-1 view) before the next start, and
+profile counts must stay frozen. Outcomes, runtime world seconds and host time
+from ready play to the ending request are recorded per session; the latter
+includes death/results delay for losses. Mixed-loss series are labeled separately
+from uniform 60-second abandon observations.
+It collects the existing `SessionResourceBoundary` samples plus host
 `dumpsys meminfo` TOTAL PSS at every menu and reports per-session slopes from
 session 2 onward. It is an observation runner: it attributes no retaining root
 and certifies no leak fix. It binds only an explicit owned APK hash, refuses a

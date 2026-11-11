@@ -167,7 +167,7 @@ def run_editor(project, root, work):
     attempt = project.parent / ("editor-check-" + uuid.uuid4().hex)
     attempt.mkdir(exist_ok=False)
     output, log = attempt / "oracle.json", attempt / "editor.log"
-    env = dict(os.environ, ROR2_WRAPPER_ORACLE_REPORT=str(output), ROR2_PHONE_BUILD_SOURCE=receipt["source_commit"])
+    env = dict(os.environ, ANDROID_ADB_SERVER_PORT="5038", ROR2_WRAPPER_ORACLE_REPORT=str(output), ROR2_PHONE_BUILD_SOURCE=receipt["source_commit"])
     args = [
         str(editor),
         "-batchmode",

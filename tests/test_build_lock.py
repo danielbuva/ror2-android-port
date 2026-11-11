@@ -126,6 +126,29 @@ class HostBuildLockTests(unittest.TestCase):
                 build.editor("lab", "minimal-build")
             child.assert_not_called()
 
+    def test_editor_open_isolates_bundled_adb_without_changing_lab_environment(self):
+        import build
+        from types import SimpleNamespace
+
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            work = root / "work"
+            (work / "lab-project").mkdir(parents=True)
+            with (
+                patch.object(build, "ROOT", root),
+                patch.object(build, "WORK", work),
+                patch.object(build, "HOST_BUILD_LOCK", root / "unity-build.lock"),
+                patch.object(build, "assert_build_unblocked"),
+                patch.object(build, "lane_config", return_value={}),
+                patch.object(build, "run", return_value=SimpleNamespace(stdout=b"")),
+                patch.object(build.subprocess, "Popen", return_value=SimpleNamespace(pid=123)) as launch,
+                patch.dict(os.environ, {"UNITY_EDITOR": "/pinned/Unity", "ANDROID_ADB_SERVER_PORT": "5037"}),
+            ):
+                result = json.loads(build.editor("lab", "open"))
+                self.assertTrue(result["started"])
+                self.assertEqual(launch.call_args.kwargs["env"]["ANDROID_ADB_SERVER_PORT"], "5038")
+                self.assertEqual(os.environ["ANDROID_ADB_SERVER_PORT"], "5037")
+
     def test_presentation_dispatch_requires_coordinator_and_handoff(self):
         import build
         import build_lock
