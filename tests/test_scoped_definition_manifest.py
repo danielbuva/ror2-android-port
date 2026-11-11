@@ -20,6 +20,24 @@ class ScopedDefinitionManifestTests(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         self.assertEqual(result.stdout.strip(), "artifact holder drone projectile snapshot order identity PASS")
 
+    def test_game_modes_keep_native_order_snapshot_and_cleanup(self):
+        source = (ROOT / "tools/unity/runtime/stage/TeleporterWorldBoundary.cs").read_text()
+        bridges = [braced_block(source, "void " + name + "(JObject manifest = null)") for name in ("PrepareObjectiveRuleCatalog", "PrepareOriginalGameModes")]
+        methods = [
+            braced_block(source, signature)
+            for signature in (
+                "public void PrepareObjectiveRuleCatalog(JObject manifest = null)",
+                "public void PrepareOriginalGameModes(JObject manifest = null)",
+                "public void CleanupOriginalGameModes()",
+            )
+        ]
+        host = (ROOT / "tests/fixtures/game_mode_manifest_scope_host.cs").read_text()
+        host += "\npublic partial class PortSession {\n" + "\n".join(bridges)
+        host += "\nsealed partial class TeleporterWorldSession {\n" + "\n".join(methods) + "\n} }\n"
+        result = execute_host(host, "scope")
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertEqual(result.stdout.strip(), "game-mode snapshot native order identity restoration PASS")
+
     def test_related_families_share_snapshot_and_keep_identity_checks(self):
         source = (ROOT / "tools/unity/runtime/catalog/WholeCatalogComposed.cs").read_text()
         methods = [
@@ -48,7 +66,10 @@ class ScopedDefinitionManifestTests(unittest.TestCase):
             end = profile.index(";", start)
             calls.append(profile[start : end - 1] if label == "unlockableDef" else profile[start:end])
         host += "\npublic partial class ProfileScope {\n" + braced_block(profile, "void PrepareAndroidProfile(CharacterBody player, JObject manifest)")
-        host += "\nvoid Prepare(CharacterBody player, JObject manifest) { survivors = " + calls[0] + "; unlockables = " + calls[1] + "; }\n}\n"
+        rule_call = profile[profile.index("coordinator.PrepareObjectiveRuleCatalog(manifest);") :].splitlines()[0]
+        host += (
+            "\nvoid Prepare(CharacterBody player, JObject manifest) { survivors = " + calls[0] + "; unlockables = " + calls[1] + "; " + rule_call + " }\n}\n"
+        )
         result = execute_host(host, "scope")
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         self.assertEqual(result.stdout.strip(), "scope identity policy restoration buffs items PASS")

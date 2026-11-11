@@ -5632,6 +5632,14 @@ inside master-family setup. The callback runs only on a family-cache miss and
 retains no state; family-cache ownership and reset remain unchanged. These remain
 bounded owner-boundary logs, with no per-object recording.
 
+`AndroidProfileBoundary` passes the existing synchronous results manifest through
+`TeleporterWorldSession` rule preparation into the game-mode family loader. The
+snapshot stays on that call stack; callers without one retain the loader's null
+fallback. Native Karma, RuleCatalog, RuleBook and game-mode registration order,
+identity checks and owned cleanup remain unchanged. Sparse startup markers bound
+rule initialization, game-mode family loading/registration and the return to
+profile preparation, separating later redirect/default/local-profile work.
+
 `GameAudioOriginalPayloadCopy` also owns the private Android app-cache receipt
 `original-audio-verified.json`. Setup still authenticates the packaged cohort
 and checks paths, types, sizes, space and deadlines. Actual reuse can skip SHA

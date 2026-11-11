@@ -111,6 +111,7 @@ public static partial class WholeCatalogComposed
         File.Delete("payload/whole-catalog.json"); // All three operations must use the supplied snapshot.
         var profile = new ProfileScope();
         profile.Run(snapshot);
+        Check(ReferenceEquals(profile.ruleManifest, snapshot));
         Check(ReferenceEquals(profile.survivors.Single(), survivor) && ReferenceEquals(profile.unlockables.Single(), unlockable));
         Check(profile.trace.SequenceEqual(new[] {
             "profile-survivor-family-manifest-begin", "profile-survivor-family-manifest-ready-index-begin",
@@ -255,6 +256,9 @@ public static partial class WholeCatalogComposed
 
 public partial class ProfileScope
 {
+    public JObject ruleManifest;
+    ProfileScope coordinator { get { return this; } }
+    void PrepareObjectiveRuleCatalog(JObject manifest) { ruleManifest = manifest; }
     public RoR2.SurvivorDef[] survivors;
     public RoR2.UnlockableDef[] unlockables;
     public readonly List<string> trace = new List<string>();
