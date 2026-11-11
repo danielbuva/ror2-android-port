@@ -193,20 +193,44 @@ public sealed partial class PortSession
             TraceStartup("skin-save-ready-native-begin");
             var method = typeof(SkinCatalog).GetMethod("Init", BindingFlags.NonPublic | BindingFlags.Static);
             coordinator.Check(method != null, "Original skin initializer missing");
+            var invokeStarted = System.Diagnostics.Stopwatch.GetTimestamp();
             var routine = (IEnumerator)method.Invoke(null, null);
+            var invokeTicks = System.Diagnostics.Stopwatch.GetTimestamp() - invokeStarted;
+            long moveTicks = 0, maxMoveTicks = 0;
+            int moveCalls = 0, nullYields = 0, nestedYields = 0, otherYields = 0;
             var deadline = Time.realtimeSinceStartup + 180f;
             var firstYield = true;
-            while (routine.MoveNext())
+            while (true)
             {
+                var moveStarted = System.Diagnostics.Stopwatch.GetTimestamp();
+                var advanced = routine.MoveNext();
+                var elapsed = System.Diagnostics.Stopwatch.GetTimestamp() - moveStarted;
+                moveTicks += elapsed;
+                maxMoveTicks = Math.Max(maxMoveTicks, elapsed);
+                moveCalls++;
+                if (!advanced)
+                    break;
                 if (firstYield)
                 {
                     TraceStartup("skin-native-first-yield");
                     firstYield = false;
                 }
                 coordinator.Check(Time.realtimeSinceStartup < deadline, "Original skin catalog initialization timed out");
-                yield return routine.Current;
+                var yielded = routine.Current;
+                if (yielded == null) nullYields++;
+                else if (yielded is IEnumerator) nestedYields++;
+                else otherYields++;
+                yield return yielded;
             }
             TraceStartup("skin-native-ready-validation-begin");
+            // Only direct MoveNext execution is timed. A yielded IEnumerator,
+            // if present, runs under Unity outside this timer; gaps are not I/O proof.
+            Debug.Log(String.Format(System.Globalization.CultureInfo.InvariantCulture,
+                "Original skin iterator execution invokeSeconds={0:F6} moveSeconds={1:F6} maxMoveSeconds={2:F6} calls={3} nullYields={4} nestedYields={5} otherYields={6}",
+                (double)invokeTicks / System.Diagnostics.Stopwatch.Frequency,
+                (double)moveTicks / System.Diagnostics.Stopwatch.Frequency,
+                (double)maxMoveTicks / System.Diagnostics.Stopwatch.Frequency,
+                moveCalls, nullYields, nestedYields, otherYields));
             coordinator.Check(
                 SkinCatalog.availability.available && SkinCatalog.skinCount == priorSkinIndices.Count &&
                     priorSkinIndices.Keys.All(skin => skin.runtimeSkin != null && SkinCatalog.GetSkinDef(skin.skinIndex) == skin),
