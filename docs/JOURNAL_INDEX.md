@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J1406](PORTING_JOURNAL.md#j1406--bound-unacknowledged-session-start-requests) | 2026-11-11 | Bound unacknowledged session Start requests | 2026-11-11. |
 | [J1405](PORTING_JOURNAL.md#j1405--cool-supervised-memory-sessions-between-verified-endings) | 2026-11-10 | Cool supervised memory sessions between verified endings | 2026-11-11. |
 | [J1404](PORTING_JOURNAL.md#j1404--combine-runtime-thermal-and-battery-reads) | 2026-11-10 | Combine runtime thermal and battery reads | 2026-11-11. |
 | [J1403](PORTING_JOURNAL.md#j1403--preserve-session-process-transport-failures) | 2026-11-10 | Preserve session process transport failures | 2026-11-11. |

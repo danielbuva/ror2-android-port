@@ -2461,6 +2461,11 @@ cooldown duration from its session deadline, rechecks the same process before
 Start and marks the interrupted workload in its growth report; the outer
 three-hour deadline remains unchanged. This host-tested path leaves device
 cooldown acceptance open.
+The memory owner bounds an unacknowledged Start request at 60 seconds while
+the matching session still reports its menu. It retains the report and stops
+the owned process, so a missed post-wake tap cannot consume the entire outer
+deadline or be classified as a gameplay crash. The cause of a missed tap still
+requires focus/resume evidence.
 `--gameplay-only` selects just the existing heap and sustained owners when the
 independent SDK interruption route is blocked. Its receipt explicitly records
 that scope; it supplies no settings-interruption evidence and cannot combine

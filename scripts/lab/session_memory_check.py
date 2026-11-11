@@ -277,6 +277,7 @@ def check_session_memory(sessions=DEFAULT_SESSIONS, expected_apk_sha256=None, ro
     snapshot_files = {}
     menu_pss = {}
     menu_started = set()
+    menu_start_requested_at = None
     cooldowns = []
     live_at = startup_at = None
     settings_sent = end_requested = end_sent = False
@@ -335,6 +336,9 @@ def check_session_memory(sessions=DEFAULT_SESSIONS, expected_apk_sha256=None, ro
                     fail(reason, details[0] if details else None)
                     break
                 phase = current.get("phase")
+                if phase == "offline-start-menu" and session in menu_started and time.monotonic() - menu_start_requested_at >= ABANDON_STARTUP_TIMEOUT_SECONDS:
+                    fail("offline-menu-start-not-acknowledged", "session %d stayed at the menu after Start" % session)
+                    break
                 snapshot_ready = True
                 if phase == "offline-start-menu" and memory_snapshots and session in (2, sessions + 1) and session not in snapshot_files:
                     name = memory_snapshot_file(current, session)
@@ -388,6 +392,7 @@ def check_session_memory(sessions=DEFAULT_SESSIONS, expected_apk_sha256=None, ro
                         fail("offline-menu-start-control-unavailable", "session %d" % session)
                         break
                     device.sh("input", "tap", str(coords[0]), str(coords[1]))
+                    menu_start_requested_at = time.monotonic()
                     menu_started.add(session)
                     live_at = startup_at = None
                     settings_sent = end_requested = end_sent = False
