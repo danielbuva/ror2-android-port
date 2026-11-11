@@ -32,6 +32,44 @@ def samples(start, after, probes=0):
 
 
 class SessionMemoryCheckTests(unittest.TestCase):
+    def test_disconnected_process_observation_is_runner_error(self):
+        with tempfile.TemporaryDirectory() as temporary, ExitStack() as stack:
+            root = Path(temporary)
+            out = root / "evidence"
+            device = mock.Mock()
+            device.settings = {"storage_mode": "internal"}
+            device.owned.return_value = {"storage": {"mode": "internal"}, "package_path": "/data/app/fixture/base.apk"}
+            device.storage.return_value = {"mode": "internal"}
+            device.read_receipt.return_value = {"persistentDataPath": "/fixture/Android/data/dev.ror2lab.arm64/files"}
+            device.evidence_directory.return_value = out
+            device.launch.return_value = {"pid": "314"}
+
+            def shell(*args, check=True):
+                if args[:2] == ("sh", "-c"):
+                    self.assertTrue(check)
+                    raise RuntimeError("adb: device not found")
+                return ""
+
+            device.sh.side_effect = shell
+            for name, value in {
+                "WORK": root / "work",
+                "SessionCleanupDevice": mock.Mock(return_value=device),
+                "bind_installed_apk": mock.Mock(return_value=("0" * 64, "fixture")),
+                "attempt_from_installed": mock.Mock(return_value="attempt-1"),
+                "current_errors": mock.Mock(return_value=[]),
+            }.items():
+                stack.enter_context(mock.patch.object(memory, name, value))
+            stack.enter_context(mock.patch.object(memory.cleanup, "_remote_path_state", return_value="absent"))
+            stack.enter_context(mock.patch.object(memory.cleanup, "_stop_process", return_value=True))
+            with self.assertRaisesRegex(RuntimeError, "Session memory check failed.*device not found"):
+                check_session_memory(sessions=3, expected_apk_sha256="0" * 64)
+            result = json.loads((out / "result.json").read_text())
+            self.assertEqual(result["stop"], "runner-error")
+            self.assertEqual(result["first_failure"], "adb: device not found")
+            self.assertEqual(result["sessions_observed"], 0)
+            self.assertFalse(result["success"])
+            device.display.assert_called_with(False)
+
     def test_native_loss_returns_through_menu_and_keeps_actual_cleanup_contract(self):
         from test_session_cleanup_check import abandoned_report, completed_report, live_report, ordinary_start_report, session_one_defeat_report
 

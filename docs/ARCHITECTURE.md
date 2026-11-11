@@ -4759,6 +4759,9 @@ session 2 onward. It is an observation runner: it attributes no retaining root
 and certifies no leak fix. It binds only an explicit owned APK hash, refuses a
 `--target`, and keeps evidence under `work/device/<serial>/experiments/session-memory/`.
 Host contracts: `tests/test_session_memory_check.py`.
+The shared session process check reuses `baseline.process_pid`'s checked shell
+observation: a legitimate absent PID is reported as process exit, while transport failures
+propagate as runner errors and cannot verify process termination during cleanup.
 
 `session-memory-root-check` is the same runner with the launch selector's
 `diagnosticCompletedRootWalkSession` set to the final menu's session index.
