@@ -64,6 +64,9 @@ for retained producer packs. Its caller proves the current MonoScript and schema
 contract; it writes hash-bound metadata witnesses and links immutable object
 extents while preserving each original producer profile. It does not admit a
 graph or establish loadability. Final emission repeats structural and CLR checks.
+`qualify_null_script_base` checks the exact pinned original base type, 32-byte
+extent, zero script metadata and null script field. Its returned owner pointers
+still pass normal endpoint qualification; it supplies no managed identity.
 
 `tools/phone-build/profile_stage.py` owns host converter stage measurement.
 Call it with an explicit command, workspace and ignored evidence directory;

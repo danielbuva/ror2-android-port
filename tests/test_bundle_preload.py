@@ -27,6 +27,30 @@ def pointer(name):
 
 
 class BundlePreloadTests(unittest.TestCase):
+    def test_scriptless_base_requires_pinned_type_and_preserves_owner_pointer(self):
+        M = P.module("bundle_manifest")
+        nodes = [dict(type="MonoBehaviour", name="Base", size=-1, level=0, meta=0, flags=0, version=1)]
+        for name, kind in (("m_GameObject", "GameObject"), ("m_Script", "MonoScript")):
+            nodes.extend(
+                dict(type=t, name=n, size=s, level=l, meta=0, flags=0, version=1)
+                for t, n, s, l in ((f"PPtr<{kind}>", name, 12, 1), ("int", "m_FileID", 4, 2), ("SInt64", "m_PathID", 8, 2))
+            )
+        nodes.append(dict(type="SInt64", name="authoredTail", size=8, level=1, meta=0, flags=0, version=1))
+        typ = dict(class_id=114, stripped=0, script_type=-1, script_id=bytes(16), hash=bytes(16), tree=M.S._tree(nodes), dependencies=[])
+        body = struct.pack("<iqiqq", 1, 42, 0, 0, 0)
+        fields = P.qualify_null_script_base(body, typ, typ)
+        self.assertEqual(fields, {("m_GameObject",): (1, 42), ("m_Script",): (0, 0)})
+        for field, value in (("class_id", 115), ("script_type", 0), ("hash", b"x" * 16), ("script_id", b"x" * 16)):
+            with self.subTest(field=field), self.assertRaisesRegex(ValueError, "pinned original"):
+                changed = {**typ, field: value}
+                P.qualify_null_script_base(body, changed, changed)
+        with self.assertRaisesRegex(ValueError, "pinned original"):
+            P.qualify_null_script_base(body, typ, {**typ, "dependencies": [1]})
+        with self.assertRaisesRegex(ValueError, "pinned original"):
+            P.qualify_null_script_base(body[:-1], typ, typ)
+        with self.assertRaisesRegex(ValueError, "one null script"):
+            P.qualify_null_script_base(struct.pack("<iqiqq", 1, 42, 0, 7, 0), typ, typ)
+
     def test_retained_type_metadata_keeps_original_profile_and_immutable_extents(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)

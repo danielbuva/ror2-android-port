@@ -64,6 +64,29 @@ def qualified_final_type(body, typ, scripts, qualified):
     return restored
 
 
+def qualify_null_script_base(body, typ, source_type):
+    """Check the original scriptless base without inventing a CLR binding.
+
+    The caller reads source_type from a hash-pinned original, including an
+    explicit missing_script_base.type_source when the producer used one.
+    Returned pointers still require normal endpoint qualification.
+    """
+    if (
+        full_type_key(typ) != full_type_key(source_type)
+        or typ["class_id"] != 114
+        or len(body) != 32
+        or typ["script_type"] != -1
+        or typ["hash"] != bytes(16)
+        or typ["script_id"] != bytes(16)
+    ):
+        raise ValueError("Scriptless base differs from pinned original type")
+    fields = pointers(body, typ, {})
+    scripts = [pointer for field, pointer in fields.items() if field in (("m_Script",), ("#490",))]
+    if scripts != [(0, 0)]:
+        raise ValueError("Scriptless base requires one null script field")
+    return fields
+
+
 def qualify_external_fields(value, body, typ, proofs, endpoint_record):
     """Qualify each non-null external field against a persisted endpoint.
 
