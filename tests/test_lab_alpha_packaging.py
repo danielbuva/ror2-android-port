@@ -109,6 +109,54 @@ class AlphaPackagingTests(unittest.TestCase):
         self.assertIn("LAB_DEVICE_SERIAL-required", output.getvalue())
         self.assertNotIn("PASS", output.getvalue())
 
+    def test_pending_prompt_requirement_reaches_installer_owner(self):
+        receipt, ledger = bound()
+        phone = object.__new__(A.Phone)
+        phone.packaging_history = []
+        with (
+            patch.object(A.INSTALLER.Phone, "installed", return_value=receipt) as installed,
+            patch.object(phone, "read", return_value=ledger),
+            patch.object(phone, "shell", return_value=b"versionCode=1"),
+        ):
+            self.assertEqual(phone.installed(1, require_pending_prompt=True), receipt)
+        installed.assert_called_once_with(1, None, require_pending_prompt=True)
+        self.assertEqual(phone.packaging_history, [(receipt, ledger)])
+
+    def test_prompt_mode_refuses_pregrant_before_context_or_device(self):
+        with (
+            patch.object(A.INSTALLER, "read_context") as context,
+            patch.object(A, "Phone") as phone,
+            patch("sys.stdout", new_callable=io.StringIO) as output,
+        ):
+            self.assertEqual(A.main(["--qualify-install-prompts", "--allow-test-installs"]), 1)
+        context.assert_not_called()
+        phone.assert_not_called()
+        self.assertIn("FAIL install-prompt-mode-conflict", output.getvalue())
+
+    def test_prompt_mode_delegates_and_accepts_only_explicit_prompt_cases(self):
+        def accept(phone, config, temporary, passed, *, qualify_install_prompts):
+            self.assertTrue(qualify_install_prompts)
+            for case in A.INSTALLER.PROMPT_CASES:
+                passed(case)
+
+        with (
+            patch.dict("os.environ", {"LAB_DEVICE_SERIAL": "synthetic-test-device"}),
+            patch.object(A.INSTALLER, "PrivateDiagnostics"),
+            patch.object(A.INSTALLER, "read_context", return_value={}),
+            patch.object(A, "Phone") as phone,
+            patch.object(A, "compile_import_harness", return_value=b"synthetic-dex"),
+            patch.object(A.INSTALLER, "acceptance", side_effect=accept),
+            patch.object(A, "check_packaging_history"),
+            patch.object(A, "import_acceptance"),
+            patch("sys.stdout", new_callable=io.StringIO) as output,
+        ):
+            phone.return_value.cleanup.return_value = "verified-absent"
+            self.assertEqual(A.main(["--qualify-install-prompts"]), 0)
+        phone.assert_called_once_with("synthetic-test-device", 1200, allow_test_installs=False)
+        for case in A.INSTALLER.PROMPT_CASES:
+            self.assertIn("PASS " + case, output.getvalue())
+        phone.return_value.cleanup.assert_called_once_with()
+
     def test_cold_restart_checks_ledger_and_installed_hash(self):
         first = bound()
         second = bound(2, 2, prior=first[1])

@@ -89,8 +89,8 @@ class Phone(INSTALLER.Phone):
         super().__init__(*args, **kwargs)
         self.packaging_history = []
 
-    def installed(self, publisher, previous=None):
-        receipt = super().installed(publisher, previous)
+    def installed(self, publisher, previous=None, *, require_pending_prompt=False):
+        receipt = super().installed(publisher, previous, require_pending_prompt=require_pending_prompt)
         ledger = self.read("work/releases/issued-versions.json")
         output = self.shell("dumpsys", "package", INSTALLER.GAME, label="alpha-installed-version-readback").decode()
         versions = set(re.findall(r"\bversionCode=(\d+)\b", output))
@@ -140,17 +140,28 @@ def import_acceptance(phone, dex, passed):
 
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "--qualify-install-prompts",
+        action="store_true",
+        help="Require visible permission and matching pending-user-action consent in the authorized synthetic workflow; never pregrant",
+    )
     parser.add_argument("--allow-test-installs", action="store_true")
     parser.add_argument("--allow-test-notifications", action="store_true")
     parser.add_argument("--timeout", type=int, default=1200)
     args = parser.parse_args(argv)
+    if args.qualify_install_prompts and args.allow_test_installs:
+        print("FAIL install-prompt-mode-conflict", flush=True)
+        return 1
     phone = None
     completed = set()
     failed = False
     phase = "setup"
 
     def passed(case):
-        require(case in INSTALLER.CASES + PACKAGE_CASES + IMPORT_CASES and case not in completed, "unexpected-acceptance-case")
+        require(
+            case in INSTALLER.CASES + (INSTALLER.PROMPT_CASES if args.qualify_install_prompts else ()) + PACKAGE_CASES + IMPORT_CASES and case not in completed,
+            "unexpected-acceptance-case",
+        )
         completed.add(case)
         print("PASS " + case, flush=True)
 
@@ -172,7 +183,7 @@ def main(argv=None):
             INSTALLER.set_phase(phase)
             dex = compile_import_harness(config, temporary)
             phase = "installer-acceptance"
-            INSTALLER.acceptance(phone, config, temporary, passed)
+            INSTALLER.acceptance(phone, config, temporary, passed, qualify_install_prompts=args.qualify_install_prompts)
             phase = "alpha-receipt-acceptance"
             INSTALLER.set_phase(phase)
             check_packaging_history(phone, passed)
