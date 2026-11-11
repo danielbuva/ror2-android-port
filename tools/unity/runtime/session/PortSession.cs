@@ -3038,9 +3038,12 @@ public sealed partial class PortSession : MonoBehaviour
             }
             if (cfg.integratedWorld && r.liveCatalogs != null)
             {
+                TraceStartup("profile-loadout-preview-begin");
                 r.phase = "original-profile-loadout-preview";
                 Save();
+                TraceStartup("profile-loadout-report-saved");
                 ApplyAndroidProfileLoadoutBeforeSpawn(master, prefab);
+                TraceStartup("profile-loadout-applied");
                 var profileWriter = new NetworkWriter();
                 master.loadout.Serialize(profileWriter);
                 var profileReader = new NetworkReader(profileWriter.ToArray());
@@ -3048,6 +3051,7 @@ public sealed partial class PortSession : MonoBehaviour
                 copied.Deserialize(profileReader);
                 Check(profileReader.Position == profileWriter.ToArray().Length && copied.ValueEquals(master.loadout),
                       "Original applied profile loadout serialization differs");
+                TraceStartup("profile-loadout-roundtrip-validated");
             }
             r.phase = "original-master-spawn";
             Save();
