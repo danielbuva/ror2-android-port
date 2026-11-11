@@ -370,6 +370,7 @@ def read_context():
     return {
         "installer_apk": apk,
         "installer_version": receipt.get("version_code"),
+        "installer_sha256": receipt["apk_sha256"],
         **{key: Path(value.decode()).resolve(strict=True) for key, value in zip(("android_sdk", "java_home", "ndk"), values[:3])},
     }
 
@@ -1357,6 +1358,20 @@ def publisher_keys(temporary, name):
     return private, public.read_bytes()
 
 
+def require_installer_manifest(manifest, expected_version):
+    """Shared admission for synthetic installer/picker tests, without building fixtures."""
+    identity = re.search(r"^package: name='([^']+)' versionCode='(\d+)'", manifest, re.MULTILINE)
+    if (
+        not identity
+        or type(expected_version) is not int
+        or identity.group(1) != PACKAGE
+        or int(identity.group(2)) != expected_version
+        or int(identity.group(2)) < 3
+        or not re.search(r"^application-debuggable\s*$", manifest, re.MULTILINE)
+    ):
+        raise Failure("cached-installer-manifest-not-debug-test-package")
+
+
 def prepare_artifacts(config, temporary):
     tools = HostTools(config)
     apk = config["installer_apk"]
@@ -1365,15 +1380,7 @@ def prepare_artifacts(config, temporary):
     if KEY_ID in trust["keys"]:
         raise Failure("synthetic-extra-key-id-collides-with-packaged-trust")
     manifest = run([tools.build / "aapt", "dump", "badging", apk], label="inspect-cached-installer-manifest").decode()
-    identity = re.search(r"^package: name='([^']+)' versionCode='(\d+)'", manifest, re.MULTILINE)
-    if (
-        not identity
-        or identity.group(1) != PACKAGE
-        or int(identity.group(2)) != config["installer_version"]
-        or int(identity.group(2)) < 3
-        or "application-debuggable" not in manifest
-    ):
-        raise Failure("cached-installer-manifest-not-debug-test-package")
+    require_installer_manifest(manifest, config["installer_version"])
     inputs = synthetic_inputs(tools, temporary)
     public = module("synthetic_release_public", ROOT / "tools/phone-build/owner-apk/public_release.py")
     private, key = publisher_keys(temporary, "trusted")

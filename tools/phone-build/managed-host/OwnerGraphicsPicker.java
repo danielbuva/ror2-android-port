@@ -38,7 +38,7 @@ final class OwnerGraphicsPicker {
         ScrollView scroll = new ScrollView(activity); scroll.addView(layout);
         text(layout, "Preview only: preferences are stored in this tool host, not connected to the separately installed game.");
         selected = text(layout, "Selected for next launch: System"); selected.setContentDescription("graphics-selection");
-        text(layout, GraphicsDriverProviders.ActiveDriver.unavailable().summary());
+        text(layout, GraphicsDriverProviders.ActiveDriver.unavailable().summary()).setContentDescription("graphics-active");
         choices = text(layout, ""); choices.setContentDescription("graphics-choices");
         result = text(layout, ""); result.setContentDescription("graphics-result");
         state = null; device = null;
@@ -57,11 +57,13 @@ final class OwnerGraphicsPicker {
         } });
         reset.setEnabled(state != null);
         button(layout, "View driver source and licenses", new Runnable() { public void run() {
-            new AlertDialog.Builder(activity).setTitle("Driver source and licenses")
+            AlertDialog license = new AlertDialog.Builder(activity).setTitle("Driver source and licenses")
                     .setMessage("libadrenotools: " + GraphicsDriverProviders.ADRENOTOOLS_LICENSE + "\n"
                             + GraphicsDriverProviders.ADRENOTOOLS_SOURCE + "\n\n" + GraphicsDriverProviders.EMPTY_CATALOG
                             + "\nNo proprietary Qualcomm drivers are listed or bundled.")
                     .setPositiveButton("Back to graphics drivers", null).show();
+            TextView message = license.findViewById(android.R.id.message);
+            if (message != null) message.setContentDescription("graphics-license");
         } });
         text(layout, GraphicsDriverProviders.SETTINGS_EXPLANATION);
         final Intent settings = developerOptions();

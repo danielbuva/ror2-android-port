@@ -68,6 +68,13 @@ dialog lifetime. `GraphicsDriverFixture` admits only the debuggable owned test
 package and fixed non-executable ELF bytes; it cleans its temporary verification
 stage and never selects/loads a driver. The managed-host staging owner's single
 `JAVA_SOURCES` list binds both APK compilation and the Android bootclasspath test.
+`scripts/lab-graphics-picker.py` owns the serialized synthetic picker smoke. It
+reuses exact-source toolhost receipt/hash, actual debug-manifest admission and
+installer storage/cleanup ownership; it never runs the installer acceptance flow.
+Each tap/scroll requires the owned top-resumed activity, display-0 window focus
+and unique accessibility control. It injects only authored fixture bytes, reports
+fixed cases, and retains private diagnostics locally. No real driver or Settings
+action occurs; a phone result is separate from host tests.
 `scripts/inspect-graphics-driver-sdk.py` and its authored native compile fixture
 check the installed version's V1 Vulkan callback with the bundled Android NDK.
 The check emits fixed results/hashes, creates no output artifacts and performs no

@@ -103,11 +103,30 @@ It never publishes a curated row, writes a custom selection or invokes a loader.
 
 Smoke controls: **Use System driver**, **View driver source and licenses**,
 **Verify synthetic driver file**, **Show Mali fixture**, **Show Adreno fixture**,
-**Close graphics drivers**. Selection/choice/result text uses the stable accessibility
-descriptions `graphics-selection`, `graphics-choices`, `graphics-result`. The source
-dialog closes with **Back to graphics drivers**. The smoke must not open Android
-settings or grant permissions merely to exercise this UI. Actual APK/UI, SAF,
-native binding and completed frames are separate unpassed gates.
+**Close graphics drivers**. Selection/choice/result/active text uses the stable
+accessibility descriptions `graphics-selection`, `graphics-choices`, `graphics-result`,
+`graphics-active`. The `graphics-license` source dialog closes with **Back to
+graphics drivers**. The smoke must not open Android settings or grant permissions
+merely to exercise this UI. Actual APK/UI, SAF, native binding and completed frames
+are separate gates, not established by host tests.
+
+`scripts/lab-graphics-picker.py` is the bounded nine-case UI smoke, run only through
+the serialized `/lab` queue after an exact-tip `toolhost` build. It reuses the
+installer owner's source/APK receipt, actual manifest admission, storage placement,
+hash-owned package checks and finally-cleanup, without building synthetic releases
+or invoking installer acceptance. A fresh run refuses existing installer/alpha
+packages. It checks the exact ToolHostActivity top-resumed record, joins its owned
+windows to display-0 focus, requires a unique focused-window control and rechecks
+that focus before a tap or scroll. It never taps Android settings or grants a
+permission; notification prompts use the existing owner's default decline.
+
+Cases: System default, active details unavailable, Adreno unavailable, source/license
+text, valid synthetic package, wrong hash refusal, Mali unavailable, System reset
+and cold restart, and close/reopen. The fixture ZIP is generated deterministically
+on the lab host; only its bytes and pin enter the fresh owned app. Raw UI stays in
+ignored private diagnostics; only fixed case/result fields are emitted publicly.
+Any failed case or unverified cleanup makes the smoke fail. Host fixtures exercise
+the parser/admission/no-tap/cleanup boundaries but do not prove a device result.
 
 ## Prior art and integration gates
 
