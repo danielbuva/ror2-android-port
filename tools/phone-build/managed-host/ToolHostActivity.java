@@ -25,6 +25,7 @@ import java.util.concurrent.TimeUnit;
 import org.json.*;
 
 public final class ToolHostActivity extends Activity {
+    private OwnerGraphicsPicker graphicsPicker;
     private final OwnerUpdateState model = new OwnerUpdateState();
     private final android.os.Handler handler = new android.os.Handler(android.os.Looper.getMainLooper());
     private TextView statusView;
@@ -46,6 +47,8 @@ public final class ToolHostActivity extends Activity {
         LinearLayout layout = new LinearLayout(this); layout.setOrientation(LinearLayout.VERTICAL); layout.setPadding(24, 24, 24, 24);
         scroll.addView(layout);
         statusView = new TextView(this); layout.addView(statusView);
+        graphicsPicker = new OwnerGraphicsPicker(this);
+        button(layout, "Graphics drivers", new Runnable() { public void run() { graphicsPicker.show(); } });
         checkButton = button(layout, "Check for updates", new Runnable() { public void run() { startUpdate("release-check"); } });
         rollbackButton = button(layout, "Rebuild and install previous release (same key)", new Runnable() { public void run() { startUpdate("release-rollback"); } });
         recoveryButton = button(layout, "Recover and verify retained profile/settings", new Runnable() { public void run() { OwnerBuildService.launch(ToolHostActivity.this, "profile-recover"); } });
@@ -69,6 +72,10 @@ public final class ToolHostActivity extends Activity {
         Button result = new Button(this); result.setText(label); layout.addView(result);
         result.setOnClickListener(new android.view.View.OnClickListener() { public void onClick(android.view.View ignored) { action.run(); } });
         return result;
+    }
+    @Override protected void onDestroy() {
+        if (graphicsPicker != null) graphicsPicker.close();
+        super.onDestroy();
     }
     private void pickSource(boolean tree) {
         if (OwnerBuildService.isRunning() || OwnerInstaller.busy(this)) return;

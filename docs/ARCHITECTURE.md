@@ -50,7 +50,7 @@ its README; the existing owner-built delivery route remains unchanged.
 `tools/phone-build/owner-apk/graphics/` owns the optional graphics-driver
 foundation: bounded private ZIP staging, reviewed Turnip release pins, driver-hash
 cache identity, a provider boundary and durable pre-native launch/fallback state.
-It is not packaged or connected to Unity yet; System remains unchanged. Its
+The tool-host preview includes these owners, but Unity is not connected; System remains unchanged. Its
 [handoff](../tools/phone-build/owner-apk/graphics/README.md) records setup, teardown,
 prior art and the pending native/Android/Thor acceptance gates. Custom load failure
 requires process restart, never hot-swapping a live Vulkan driver.
@@ -59,6 +59,14 @@ explicit verified next-launch selection/reset and separate active-driver display
 data. System is the default; unconnected Turnip and the PanVK stub stay unavailable.
 It performs no native load or Android setting write. Real active details require
 Unity's actual Vulkan physical device; a saved preference is not runtime evidence.
+`managed-host/OwnerGraphicsPicker.java` is the explicit tool-host preview dialog.
+It owns app-private preference display/reset, source/license explanations and a
+resolved system Developer-options shortcut, never global setting writes. It is
+not connected to the separately installed game. The tool-host activity owns its
+dialog lifetime. `GraphicsDriverFixture` admits only the debuggable owned test
+package and fixed non-executable ELF bytes; it cleans its temporary verification
+stage and never selects/loads a driver. The managed-host staging owner's single
+`JAVA_SOURCES` list binds both APK compilation and the Android bootclasspath test.
 `scripts/inspect-graphics-driver-sdk.py` and its authored native compile fixture
 check the installed version's V1 Vulkan callback with the bundled Android NDK.
 The check emits fixed results/hashes, creates no output artifacts and performs no

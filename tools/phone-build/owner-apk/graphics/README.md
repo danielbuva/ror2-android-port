@@ -1,8 +1,8 @@
 # Optional graphics driver foundation (Track G)
 
-These Android-independent Java owners are **not yet packaged or wired to the
-launcher**. The existing System driver/Unity launch remains unchanged. No real
-driver or third-party native code is bundled, downloaded or run by this slice.
+These Java owners are packaged in the managed tool-host **picker preview**, not
+wired to the game launcher. The existing System driver/Unity launch remains
+unchanged. No real driver or third-party native code is bundled, downloaded or run.
 
 - `GraphicsDriverPackage` owns bounded AdrenoTools ZIP staging and SHA-256/ARM64
   verification. A caller opens a user-selected SAF stream, or a user-requested
@@ -70,6 +70,44 @@ API 28. It was **not admitted**: the archive lacked redistribution notices and
 the builder project imposed non-commercial restrictions; fully pinned build
 inputs and loader behavior also remain unqualified. No archive or driver binary
 is committed, recommended or added to the catalog by that audit.
+
+## Tool-host picker and synthetic contract
+
+The explicit **Graphics drivers** button opens `OwnerGraphicsPicker`. Its banner
+states that preferences live in this tool host, not the separately installed game.
+Opening it never imports, downloads, loads or selects a custom driver. Active
+details remain honestly unavailable; System reset persists only the next-launch
+preference. Close/Back dismisses the dialog; repeated opens do not stack it and
+activity destruction closes it. No game-profile or installer flow is started.
+
+The Android settings button resolves the public
+`Settings.ACTION_APPLICATION_DEVELOPMENT_SETTINGS` action to an enabled/exported
+system application, then opens that explicit component only on a tap. Missing
+targets disable the button; denied or disappeared targets show unavailable.
+The manifest declares only the narrow action query, retained when staging rewrites
+game-package visibility. It does not claim a portable direct Graphics Driver
+Preferences page, enable Developer options or write Android global preferences.
+
+Synthetic smoke requests `graphics_fixture=true` on the tool-host intent. Only
+debuggable `dev.ror2lab.installertest` on API 28+ displays the conspicuous fixture
+mode and controls. It simulates Adreno/Mali capability rows but keeps the native
+provider unavailable. The future lab harness may inject only `package.zip` and a
+64-byte lowercase `sha256` pin into the freshly owned app's `files/graphics-fixture`.
+The ZIP is at most 4 KiB and contains `meta.json` with schemaVersion 1, name
+`Authored graphics fixture`, driverVersion `synthetic-only`, minApi 28 and libraryName
+`libvulkan_fixture.so`; that library is exactly `GraphicsDriverFixture.library()`'s
+64-byte non-executable ARM64 ELF header. The UI parses real bounded Android JSON,
+checks the archive hash and actual package verifier, requires those exact synthetic
+labels/bytes, and removes only its newly created verification stage even on failure.
+It never publishes a curated row, writes a custom selection or invokes a loader.
+
+Smoke controls: **Use System driver**, **View driver source and licenses**,
+**Verify synthetic driver file**, **Show Mali fixture**, **Show Adreno fixture**,
+**Close graphics drivers**. Selection/choice/result text uses the stable accessibility
+descriptions `graphics-selection`, `graphics-choices`, `graphics-result`. The source
+dialog closes with **Back to graphics drivers**. The smoke must not open Android
+settings or grant permissions merely to exercise this UI. Actual APK/UI, SAF,
+native binding and completed frames are separate unpassed gates.
 
 ## Prior art and integration gates
 

@@ -1,6 +1,7 @@
 """Execute actual driver package/admission owners on authored ZIPs, never real drivers."""
 
 import hashlib
+import json
 import os
 from pathlib import Path
 import shutil
@@ -79,6 +80,17 @@ class GraphicsDriverTests(unittest.TestCase):
             archive("missing-meta.zip", good[1:])
             archive("large-meta.zip", [("meta.json", b"x" * 65537)] + good[1:])
             archive("wrong-arch.zip", [("meta.json", metadata), ("libvulkan_test.so", b"x" * 64)])
+            fixture_meta = json.dumps(
+                {
+                    "schemaVersion": 1,
+                    "name": "Authored graphics fixture",
+                    "driverVersion": "synthetic-only",
+                    "minApi": 28,
+                    "libraryName": "libvulkan_fixture.so",
+                }
+            ).encode()
+            archive("synthetic.zip", [("meta.json", fixture_meta), ("libvulkan_fixture.so", library)])
+            archive("non-synthetic.zip", [("meta.json", fixture_meta), ("libvulkan_fixture.so", library + b"not permitted")])
             with warnings.catch_warnings():
                 warnings.simplefilter("ignore", UserWarning)
                 archive("duplicate.zip", good + [good[0]])

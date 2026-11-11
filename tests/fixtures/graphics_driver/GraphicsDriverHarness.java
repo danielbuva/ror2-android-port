@@ -109,6 +109,41 @@ public final class GraphicsDriverHarness {
         rejects(() -> GraphicsDriverProviders.selectTurnip(state, ADRENO, provider, changed));
         check(state.selected().equals("system") && provider.loads == 0);
     }
+    private static void syntheticPickerContracts() throws Exception {
+        String owned = "dev.ror2lab.installertest";
+        check(GraphicsDriverFixture.allowed(owned, true));
+        check(!GraphicsDriverFixture.allowed(owned, false));
+        check(!GraphicsDriverFixture.allowed("dev.ror2lab.alpha", true));
+        check(!GraphicsDriverFixture.allowed("dev.ror2lab.phonebuildhostfixture", true));
+        Path directory = Files.createDirectory(root.resolve("graphics-fixture"));
+        Path zip = directory.resolve("package.zip"), pin = directory.resolve("sha256");
+        Files.copy(root.resolve("synthetic.zip"), zip);
+        GraphicsDriverPackage.MetadataReader reader = bytes -> new GraphicsDriverPackage.Metadata(
+                1, "Authored graphics fixture", "synthetic-only", 28, "libvulkan_fixture.so");
+        Files.write(pin, hash(zip).getBytes(StandardCharsets.US_ASCII));
+        rejects(() -> GraphicsDriverFixture.verify(owned, false, directory, reader, 30));
+        rejects(() -> GraphicsDriverFixture.verify("dev.ror2lab.alpha", true, directory, reader, 30));
+        GraphicsDriverFixture.verify(owned, true, directory, reader, 30);
+        try (java.util.stream.Stream<Path> files = Files.list(directory)) { check(files.count() == 2); }
+        check(freshProcess().selected().equals("system"));
+        Files.write(pin, new String(new char[64]).replace('\0', '0').getBytes(StandardCharsets.US_ASCII));
+        rejects(() -> GraphicsDriverFixture.verify(owned, true, directory, reader, 30));
+        Files.copy(root.resolve("non-synthetic.zip"), zip, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+        Files.write(pin, hash(zip).getBytes(StandardCharsets.US_ASCII));
+        rejects(() -> GraphicsDriverFixture.verify(owned, true, directory, reader, 30));
+        try (java.util.stream.Stream<Path> files = Files.list(directory)) { check(files.count() == 2); }
+        Files.write(zip, new byte[4097]);
+        rejects(() -> GraphicsDriverFixture.verify(owned, true, directory, reader, 30));
+        Files.delete(zip); Files.createSymbolicLink(zip, root.resolve("synthetic.zip"));
+        rejects(() -> GraphicsDriverFixture.verify(owned, true, directory, reader, 30));
+        check(freshProcess().selected().equals("system"));
+    }
+    private static String hash(Path path) throws Exception {
+        StringBuilder text = new StringBuilder();
+        for (byte value : java.security.MessageDigest.getInstance("SHA-256").digest(Files.readAllBytes(path)))
+            text.append(String.format(java.util.Locale.ROOT, "%02x", value & 255));
+        return text.toString();
+    }
     public static void main(String[] args) throws Exception {
         root = Paths.get(args[0]);
         String hash = new String(Files.readAllBytes(root.resolve("hash.txt")), StandardCharsets.US_ASCII).trim();
@@ -125,6 +160,7 @@ public final class GraphicsDriverHarness {
         GraphicsDriverPackage.Verified driver = stage("good.zip", pinned);
         check(driver.curated && driver.archiveSha256.equals(hash) && GraphicsDriverPackage.verify(driver));
         pickerContracts(driver);
+        syntheticPickerContracts();
         try (java.util.stream.Stream<Path> files = Files.list(driver.directory)) { check(files.count() == 3); }
         check(!Files.exists(driver.directory.resolve("extra.so")));
         // Real AdrenoTools recipes can use a non-lib-prefixed name and minApi 27.

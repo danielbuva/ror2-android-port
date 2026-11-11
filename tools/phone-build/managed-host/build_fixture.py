@@ -271,13 +271,7 @@ try:
         source / "android.jar",
         "-d",
         classes,
-        source / "ToolHostActivity.java",
-        source / "OwnerInstaller.java",
-        source / "OwnerAlphaInstall.java",
-        source / "OwnerUpdateState.java",
-        source / "OwnerBuildService.java",
-        source / "OwnerInputImport.java",
-        source / "OwnerInputSource.java",
+        *(source / Path(name).name for name in staging.JAVA_SOURCES),
     )
     jar = out / "classes.jar"
     with zipfile.ZipFile(jar, "w", zipfile.ZIP_DEFLATED) as z:
