@@ -95,8 +95,10 @@ kernels. Host exposure reflection admits the public 8-wide kernel shapes;
 emitted Vulkan variants and requires the original kernel names/thread groups,
 nonempty variant maps and compiled code. The shared editor mutex serializes
 compilation, with child ADB isolated on port 5038. Setup protects the output with
-`.prune-keep`; compilation/validation exit writes `result.json`, removes the
-isolated project and retains pinned sources, logs and any compiled bundle.
+`.prune-keep`; compilation/validation exit writes `result.json`, and teardown
+removes the isolated project even when staging or editor configuration fails,
+retaining pinned sources, logs, a failure receipt or any compiled bundle. Host
+lifecycle regressions live in `tests/test_shader_postprocessing_uber.py`.
 The caller removes the protection when the supplier is shipped or superseded.
 This is a host supplier route; phone compute production and device loadability
 remain open.
