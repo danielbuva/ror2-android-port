@@ -6352,7 +6352,8 @@ key-item catalog restoration remains owned by `IntegratedResultsSession`.
 Its item-group types and providers use the same labeled loader so registration
 does not activate unrelated drop tables before the native run exists.
 `test_scoped_definition_manifest.py` covers typed selection, identity reuse and
-missing-definition refusal. Android acceptance remains a separate gate.
+missing-definition refusal. J1401 verifies bounded ordinary Android startup and
+native results preparation; completed results navigation remains open.
 
 `IntegratedWorldBoundary` discovers only the requested method-attribute family
 from the original assemblies, including private methods and all attributes on
