@@ -326,6 +326,34 @@ class SessionMemoryCheckTests(unittest.TestCase):
         final_menu = [{"phase": "before-presentation", "managed": 400}]
         self.assertEqual(growth_summary(observed, final_menu)["per_session_slope_from_session_2"]["managed_before_presentation_bytes"], 150)
 
+    def test_late_observations_separate_continued_warmup_from_flat_tail(self):
+        observed = [{"session": index, "samples": samples(value, value)} for index, value in enumerate([10, 20, 40, 80, 80, 80, 80, 80], 1)]
+        summary = growth_summary(observed, [{"phase": "before-presentation", "managed": 80}])
+        self.assertGreater(summary["per_session_slope_from_session_2"]["managed_before_presentation_bytes"], 0)
+        self.assertEqual(
+            summary["last_half_observations"]["managed_before_presentation_bytes"],
+            {"first_index": 6, "last_index": 9, "samples": 4, "slope_per_session": 0},
+        )
+        self.assertEqual(summary["last_half_observations"]["managed_after_collection_bytes"]["last_index"], 8)
+
+    def test_pss_uses_the_following_menu_and_retains_menu_two(self):
+        observed = [{"session": index, "menu_pss_kib": pss} for index, pss in enumerate([100, 1000, 1000], 1)]
+        summary = growth_summary(observed)
+        self.assertEqual([row["menu_pss_session"] for row in summary["rows"]], [2, 3, 4])
+        self.assertEqual(summary["per_session_slope_from_session_2"]["menu_pss_kib"], 450)
+        self.assertEqual(
+            summary["last_half_observations"]["menu_pss_kib"],
+            {"first_index": 3, "last_index": 4, "samples": 2, "slope_per_session": 0},
+        )
+
+    def test_tail_coverage_counts_only_available_measurements(self):
+        summary = growth_summary([{"session": 1}, {"session": 2, "menu_pss_kib": 0}, {"session": 3}])
+        self.assertEqual(
+            summary["last_half_observations"]["menu_pss_kib"],
+            {"first_index": 3, "last_index": 3, "samples": 1, "slope_per_session": None},
+        )
+        self.assertEqual(summary["last_half_observations"]["managed_after_collection_bytes"]["samples"], 0)
+
     def test_refuses_bad_counts_and_unbound_apk_before_device_access(self):
         with self.assertRaises(ValueError):
             check_session_memory(sessions=2, expected_apk_sha256="0" * 64)

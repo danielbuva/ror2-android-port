@@ -4846,7 +4846,12 @@ includes death/results delay for losses. Mixed-loss series are labeled separatel
 from uniform 60-second abandon observations.
 It collects the existing `SessionResourceBoundary` samples plus host
 `dumpsys meminfo` TOTAL PSS at every menu and reports per-session slopes from
-session 2 onward. It is an observation runner: it attributes no retaining root
+session 2 onward. PSS rows explicitly name the following menu, where they were
+read; their regression includes menu 2. Reports also retain the slope, actual
+index range and sample count for the last half of available observations per
+metric, separating continued warmup from the late trend without declaring a
+plateau. Managed menu and post-collection session phases remain distinct.
+It is an observation runner: it attributes no retaining root
 and certifies no leak fix. It binds only an explicit owned APK hash, refuses a
 `--target`, and keeps evidence under `work/device/<serial>/experiments/session-memory/`.
 Host contracts: `tests/test_session_memory_check.py`.
