@@ -141,7 +141,7 @@ p.add_argument(
 )
 p.add_argument("--assembly")
 p.add_argument("--target", default="lab")
-p.add_argument("--action", help="Current build-hook-pins: check (default) or refresh reviewed source hashes; other command actions default to inspect")
+p.add_argument("--action", help="build-hook-pins: check (current, default) or refresh (current) reviewed hashes; other actions default to inspect")
 p.add_argument(
     "--profile-scope",
     choices=("pid", "app"),
