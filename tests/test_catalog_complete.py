@@ -37,6 +37,39 @@ def pin(path):
 
 
 class CatalogCompletionTests(unittest.TestCase):
+    def test_sprite_ownership_uses_resolved_texture_not_preload_or_name(self):
+        members = C.ProducedMembers()
+        typ = dict(class_id=213, tree=b"schema")
+        members.members = {"CAB": (None, dict(types=[typ, dict(class_id=28)]), {1: dict(type_id=0), 7: dict(type_id=1), 8: dict(type_id=1)})}
+        body = struct.pack("<iq", 0, 7)
+        route = ("m_RD", "texture")
+        spans = {route: (0, 12), route + ("m_FileID",): (0, 4), route + ("m_PathID",): (4, 12)}
+        records = SimpleNamespace(SCHEMA=SimpleNamespace(type_tree=lambda stream: None), fields=lambda body, root: (body, spans))
+        with (
+            patch.object(C, "module", return_value=records),
+            patch.object(members, "resolve", side_effect=lambda member, ref: ("CAB", dict(path_id=ref[1], type_id=1))),
+            patch.object(members, "record", return_value=("CAB", typ, body)),
+        ):
+            self.assertTrue(members.texture_has_sprites("CAB", (0, 7)))
+            self.assertFalse(members.texture_has_sprites("CAB", (0, 8)))
+            members.sprite_textures = None
+            members.members["CAB"][1]["types"][1]["class_id"] = 1
+            with self.assertRaisesRegex(ValueError, "ownership type differs"):
+                members.texture_has_sprites("CAB", (0, 7))
+
+    def test_sprite_texture_subasset_requires_explicit_render_data_pointer(self):
+        members = C.ProducedMembers()
+        body = struct.pack("<iq", 0, 7)
+        route = ("m_RD", "texture")
+        spans = {route: (0, 12), route + ("m_FileID",): (0, 4), route + ("m_PathID",): (4, 12)}
+        records = SimpleNamespace(SCHEMA=SimpleNamespace(type_tree=lambda stream: None), fields=lambda body, root: (body, spans))
+        with (
+            patch.object(C, "module", return_value=records),
+            patch.object(members, "resolve", return_value=("CAB", dict(path_id=7))),
+            patch.object(members, "record", return_value=("CAB", dict(class_id=28), b"texture")),
+        ):
+            self.assertEqual(members.owned_subassets("CAB", dict(tree=b"schema"), body, 213), [28])
+
     def test_tmp_subassets_require_explicit_typed_ownership_fields(self):
         members = C.ProducedMembers()
         identity = ("TMP_FontAsset", "TMPro", "Unity.TextMeshPro.dll")
