@@ -3096,3 +3096,19 @@ The retained series reports managed +120,553 B/menu overall and +25,751 B/menu
 at menus 18–33; post-collection sessions 17–32 give −5,578 B/session.
 This is host reporting, with no new APK or device run. Memory plateau, retaining
 owner attribution, ordinary long play and physical input remain open.
+
+## J1411 — Reuse the definition manifest reader for provider-root families
+
+2026-11-11. `WholeCatalogComposed.DefinitionFamily<T>` reuses the existing reader,
+omitting unused JSON line annotations; typed roots, identity checks and cache stay.
+Three extracted-production scope tests and exact-editor code-only build pass.
+Matched reinstall/process-cold pair reached ordinary Start → player/HUD/audio;
+profiles/settings retained, runtime errors empty, 21 survivors/455 unlockables.
+Evidence: `work/coordination/alpha-definition-lines-pair-20261111T175817Z/`.
+APK SHA-256 `a75ebd269db105f6fd418b16a1f5f71efc64f1cf4ffa1d1368d99da1cb08ca2f`.
+Cold-menu 23.339 → 22.354 s; Start-playable 83.885 → 75.697 s are observations:
+blackbeach2 → golemplains2, one pair, uncontrolled page cache; no speedup claim.
+Both audio checks fully verified 274 files. CPU/GPU peaks 84.0/85.2 °C,
+above 80 °C for 0.332/9.941 s; battery peaks 30/31 °C. Raw performance stays local.
+App/selectors/pending absent, OLED asleep, lease released; P1 has device priority.
+Sustained performance, memory plateau and ordinary long play remain open.
