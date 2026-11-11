@@ -247,6 +247,12 @@ Pass
         candidate = uber.rewrite_includes(files["Builtins/Uber.shader"], closure)
         self.assertIn(b'"PostProcessing/StdLib.hlsl"', candidate)
         self.assertIn(b'"PostProcessing/Builtins/Distortion.hlsl"', candidate)
+        debug = b'#include "../Builtins/ExposureHistogram.hlsl"\n#include "../StdLib.hlsl"'
+        relocated = uber.rewrite_includes(
+            debug, {"Builtins/ExposureHistogram.hlsl": b"", "StdLib.hlsl": b""}, "Assets/PostProcessing/", "Debug/LightMeter.shader"
+        )
+        self.assertIn(b'"Assets/PostProcessing/Builtins/ExposureHistogram.hlsl"', relocated)
+        self.assertIn(b'"Assets/PostProcessing/StdLib.hlsl"', relocated)
         files["Builtins/Distortion.hlsl"] = b'#include "../../../outside.hlsl"'
         with self.assertRaisesRegex(RuntimeError, "escapes"):
             uber.include_closure(files, "Builtins/Uber.shader")
