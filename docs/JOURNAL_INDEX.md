@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J1411](PORTING_JOURNAL.md#j1411--reuse-the-definition-manifest-reader-for-provider-root-families) | 2026-11-11 | Reuse the definition manifest reader for provider-root families | 2026-11-11. |
 | [J1409](PORTING_JOURNAL.md#j1409--align-memory-observations-with-their-measured-menus) | 2026-11-11 | Align memory observations with their measured menus | 2026-11-11. |
 | [J1410](PORTING_JOURNAL.md#j1410--emit-complete-graphs-with-current-structural-field-routes) | 2026-11-11 | Emit complete graphs with current structural field routes | 2026-11-11. |
 | [J1408](PORTING_JOURNAL.md#j1408--reclaim-measured-returned-pool-storage-after-completed-sessions) | 2026-11-11 | Reclaim measured returned pool storage after completed sessions | 2026-11-11. |

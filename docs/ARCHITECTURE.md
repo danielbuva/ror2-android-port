@@ -3919,6 +3919,8 @@ The synchronous preparation call releases that reference on return; family-cache
 relationship registration/restoration remain under their existing owners.
 The shared reader omits unused JSON source-line annotations while retaining the
 same token values, types, property order and parser error handling.
+Provider-root `DefinitionFamily<T>` uses the same reader; its typed selection,
+selected-identity checks and existing family-cache lifetime remain unchanged.
 `test_scoped_definition_manifest.py` exercises the production methods against
 authored source snapshots, including parser parity, replacement input and identity
 checks.
