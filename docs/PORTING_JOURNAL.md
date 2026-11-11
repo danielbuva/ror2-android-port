@@ -3202,3 +3202,19 @@ Cold process peak RSS: 9,292,054,528 bytes; per-stage timings are retained.
 Authored scalar fixture: one record miss, one unaffected hit, preload group hit.
 Focused host checks pass. Phone cache execution, typed load, converted play and
 complete import/install/update acceptance remain separate open gates.
+
+## J1418 — Attribute state catalog and profile preparation before spawn
+
+2026-11-11. Existing startup trace partitions state family/snapshot/config/types,
+report/native/adaptation/validation and profile loadout; native order/yields stay.
+Prior art: pinned R2API content-provider load/copy/finalize seams (J426).
+24 focused checks, Ruff, preflight and exact-editor code build pass.
+Evidence: `work/coordination/alpha-spawn-attribution-device-retry-20261111T232845Z/`.
+APK SHA-256 `80c4fc58b486e113b3b441300f55c89585ce0a102fdcd3b97e68cd2a80e86dad`.
+Ordinary Start reached Distant Roost/player/HUD/audio; current-PID errors empty.
+Distinct-source update kept profile/settings hashes, cached274/full0 audio proofs.
+State family 2.072 s; native initialization including yields 3.609 s; profile 0.082 s.
+All 14 markers once/monotonic; source `8d0cfcdf`. No total-load/speedup claim.
+CPU/GPU peak 76.9 °C, 0 s above 80 °C; battery 29 °C, runtime sample gap < 0.426 s.
+App/selectors/pending absent, scratch removed, OLED asleep, lease released; P1 notified.
+Sustained play/performance, physical navigation and full installer update remain open.
