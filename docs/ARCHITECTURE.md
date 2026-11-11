@@ -2439,10 +2439,10 @@ charger and USB sensors, are recorded as excluded from admission only; they
 remain sampled in raw observations and all-zone peaks. The runtime thresholds
 apply to CPU/GPU and battery. Admission discovers zone types and readable paths
 with a separate 10-second ADB timeout while no gameplay runs. Runtime reads those
-physical temperature paths in one batch, retaining the 0.7-second ADB timeout
-and measured one-second maximum sampling gap. Unreadable temperature interfaces
-are excluded with their
-type/path recorded; known electrical pseudo-zones remain excluded. Unknown
+physical temperature paths and battery service in one ADB transaction with a
+one-second timeout, reducing client startups. The measured one-second maximum
+sampling gap remains mandatory, including transaction time and sampling waits.
+Unreadable temperature interfaces are excluded with their type/path recorded; known electrical pseudo-zones remain excluded. Unknown
 numeric sentinels and missing readable CPU coverage still refuse admission. Runtime and unexpected failures retain first-failure authority; a
 bounded stop worker cannot block temperature sampling. The owner records the
 peak, prevents launches after cancellation and never suspends the native
