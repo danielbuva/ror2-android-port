@@ -11,6 +11,7 @@ import re
 import shlex
 import time
 
+from baseline import process_pid
 from common import ROOT, WORK, now, read, sha, write
 from device import Device, PACKAGE
 from installed_attempt import attempt_from_installed, bind_installed_apk, validate_expected_apk_sha256
@@ -608,7 +609,7 @@ def parse_window_rotation(text):
     return int(next(iter(values))) if len(values) == 1 else None
 
 
-def restart_mapping(report, wm_size_text, window_displays_text):
+def restart_mapping(report, wm_size_text, window_displays_text, rect=RESTART_RECT):
     """Record the Android-to-HUD grid mapping before translating the source rect."""
     hud = report.get("hud") or {}
     hud_size = (hud.get("screenWidth"), hud.get("screenHeight"))
@@ -629,7 +630,7 @@ def restart_mapping(report, wm_size_text, window_displays_text):
     if logical_size != hud_size or any(type(value) is not int for value in hud_size):
         return mapping
     screen_width, screen_height = logical_size
-    x, y, width, height = RESTART_RECT
+    x, y, width, height = rect
     if screen_width >= x + width and screen_height >= y + height:
         mapping["coordinates"] = (x + width // 2, y + height // 2)
     return mapping
@@ -638,6 +639,11 @@ def restart_mapping(report, wm_size_text, window_displays_text):
 def restart_coordinates(report, wm_size_text, window_displays_text):
     """Map the fixed source rect only when display rotation and HUD grids agree."""
     return restart_mapping(report, wm_size_text, window_displays_text)["coordinates"]
+
+
+def results_menu_coordinates(report, wm_size_text, window_displays_text):
+    """Map IntegratedResultsBoundary's Return to menu, preserving the menu sample."""
+    return restart_mapping(report, wm_size_text, window_displays_text, rect=(410, 390, 400, 60))["coordinates"]
 
 
 def menu_start_coordinates(report):
@@ -675,7 +681,7 @@ def _remote_path_state(device, path):
 
 
 def _same_process(device, pid):
-    return device.sh("pidof", PACKAGE, check=False).strip() == str(pid)
+    return process_pid(device) == str(pid)
 
 
 def _stop_process(device, pid, deadline=5):

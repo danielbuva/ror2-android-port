@@ -180,6 +180,7 @@ def editor(target="lab", action="inspect"):
             env = os.environ.copy()
             env.update(
                 {
+                    "ANDROID_ADB_SERVER_PORT": "5038",
                     "ANDROID_SDK_HOME": str(ROOT / ".local/android-user"),
                     "ANDROID_USER_HOME": str(ROOT / ".local/android-user/.android"),
                     "GRADLE_USER_HOME": str(ROOT / ".local/gradle"),

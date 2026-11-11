@@ -10,6 +10,19 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J1404](PORTING_JOURNAL.md#j1404--combine-runtime-thermal-and-battery-reads) | 2026-11-10 | Combine runtime thermal and battery reads | 2026-11-11. |
+| [J1403](PORTING_JOURNAL.md#j1403--preserve-session-process-transport-failures) | 2026-11-10 | Preserve session process transport failures | 2026-11-11. |
+| [J1402](PORTING_JOURNAL.md#j1402--continue-memory-observations-through-native-loss-and-menu) | 2026-11-10 | Continue memory observations through native loss and menu | 2026-11-11. |
+| [J1401](PORTING_JOURNAL.md#j1401--load-typed-results-definitions-before-dependent-drop-tables) | 2026-11-10 | Load typed results definitions before dependent drop tables | 2026-11-11. |
+| [J1400](PORTING_JOURNAL.md#j1400--reuse-profile-manifest-for-native-game-mode-preparation) | 2026-11-10 | Reuse profile manifest for native game-mode preparation | 2026-11-11. |
+| [J1399](PORTING_JOURNAL.md#j1399--reuse-results-manifest-for-native-profile-families) | 2026-11-05 | Reuse results manifest for native profile families | 2026-11-05. |
+| [J1398](PORTING_JOURNAL.md#j1398--attribute-native-profile-startup-phases) | 2026-11-04 | Attribute native profile startup phases | 2026-11-05. |
+| [J1397](PORTING_JOURNAL.md#j1397--share-the-synchronous-manifest-with-drone-and-projectile-registration) | 2026-11-04 | Share the synchronous manifest with drone and projectile registration | 2026-11-05. |
+| [J1396](PORTING_JOURNAL.md#j1396--share-one-manifest-across-artifact-registration-and-native-holders) | 2026-11-04 | Share one manifest across artifact registration and native holders | 2026-11-05. |
+| [J1395](PORTING_JOURNAL.md#j1395--verify-final-script-table-allocation-during-required-emission) | 2026-11-04 | Verify final script-table allocation during required emission | 2026-11-05. |
+| [J1393](PORTING_JOURNAL.md#j1393--omit-unused-manifest-source-line-annotations) | 2026-11-04 | Omit unused manifest source-line annotations | 2026-11-05. |
+| [J1394](PORTING_JOURNAL.md#j1394--exact-required-set-bundle-emission) | 2026-11-04 | Exact required-set bundle emission | 2026-11-05. |
+| [J1392](PORTING_JOURNAL.md#j1392--attribute-master-family-preparation-during-ordinary-startup) | 2026-11-04 | Attribute master-family preparation during ordinary startup | 2026-11-05. |
 | [J1391](PORTING_JOURNAL.md#j1391--attribute-native-scheduled-spawn-waiting-during-ordinary-startup) | 2026-11-04 | Attribute native scheduled-spawn waiting during ordinary startup | 2026-11-05. |
 | [J1390](PORTING_JOURNAL.md#j1390--reuse-typed-item-provider-discovery-during-ordinary-startup) | 2026-11-04 | Reuse typed item-provider discovery during ordinary startup | 2026-11-05. |
 | [J1388](PORTING_JOURNAL.md#j1388--emit-and-typed-load-a-closed-source-native-bundle-subset) | 2026-11-04 | Emit and typed-load a closed source-native bundle subset | 2026-11-05. |

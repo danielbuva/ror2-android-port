@@ -1,6 +1,7 @@
 // Subsystem: session (game path). Owner map: docs/ARCHITECTURE.md#ownership.
 // Session phases: setup PrepareResultsKeyItems, PrepareIntegratedResults (IntegratedResultsSession.Prepare); teardown CleanupIntegratedResults (Dispose).
 using System;
+using Newtonsoft.Json.Linq;
 using System.Collections.Generic;
 using System.IO;
 using Path = System.IO.Path;
@@ -187,10 +188,10 @@ public sealed partial class PortSession
             StaticCall(typeof(ItemCatalog), "SetItemGroups", new object[] { Array.Empty<ItemGroupProvider>() });
             ownsResultsItemGroups = false;
         }
-        void PrepareResultsItemRelationships()
+        JObject PrepareResultsItemRelationships()
         {
             if (!Resources.Load<TextAsset>("WholeCatalogBootstrap"))
-                return;
+                return null;
             var map = (System.Collections.IDictionary)RewardField(typeof(ItemCatalog), "itemRelationships").GetValue(null);
             var typeField = typeof(ContentManager).GetField("_itemRelationshipTypes", BindingFlags.NonPublic | BindingFlags.Static);
             var providerField = typeof(ContentManager).GetField("_itemRelationshipProviders", BindingFlags.NonPublic | BindingFlags.Static);
@@ -223,6 +224,7 @@ public sealed partial class PortSession
             coordinator.r.results.itemRelationshipTypes = types.Length;
             coordinator.r.results.itemRelationshipProviders = providers.Length;
             coordinator.r.results.itemRelationshipPairs = pairs.Length;
+            return manifest;
         }
         void CleanupResultsItemRelationships()
         {
@@ -455,7 +457,7 @@ public sealed partial class PortSession
             ResultsStep("item-groups");
             PrepareResultsItemGroups();
             ResultsStep("item-relationships");
-            PrepareResultsItemRelationships();
+            var profileManifest = PrepareResultsItemRelationships();
             ResultsStep("report-xml");
             var folder = RewardField(typeof(RunReport), "runReportsFolder");
             coordinator.Check(folder != null, "Original report-folder field absent");
@@ -471,7 +473,7 @@ public sealed partial class PortSession
             LoadAndroidRunLedger();
             coordinator.r.results.priorRuns = coordinator.resultsLedger.runs.Count;
             ResultsStep("android-profile");
-            coordinator.PrepareAndroidProfile(player);
+            coordinator.PrepareAndroidProfile(player, profileManifest);
             // GameOverController.Awake creates RunReport, whose RuleBook requires the
             // native default-value metadata. This applies no Run rules or availability.
             ResultsStep("rule-metadata");

@@ -20,6 +20,12 @@ playtest limits and reviewed feedback. It introduces no installer or runtime ste
 [Branding notes](assets/branding/README.md) record the two repository-only
 promotional graphics and their sources; they are not part of the runtime pipeline.
 
+Unity editor and batch launchers set `ANDROID_ADB_SERVER_PORT=5038` only in
+their child environment, isolating the bundled ADB server from the lab's canonical
+ADB on port 5037. `open-smoke.sh` delegates to `./dev editor`; existing editors
+must restart to inherit the isolated port. Child exit retains existing log and
+mutex cleanup; device tooling and thermal cancellation keep their current owners.
+
 Launcher presentation: [`launcher/`](../launcher/README.md) owns the approved
 original background and dependency-free frontend. `controller.js` owns the
 versioned host state/action adapter, subscription teardown and pending-action
@@ -69,6 +75,20 @@ producers retain exact comparison by default. Receipts retain historical match
 results; output indices pin actual produced extents. Source, supplier, native-type,
 schema, script and reference checks remain strict; device loadability remains open.
 Barrier shader jobs bind their separately pinned legacy SDK metadata explicitly.
+
+`./dev prototype --action source-camera-program-bundle --target REQUEST.json`
+compiles the existing input-qualified source-camera candidate in a disposable SDK
+project. The request names a fresh ignored `output` directory and may select
+`source_guids` to compile only missing suppliers from the qualified cohort.
+`scripts/lab/source_camera_bundle.py` revalidates original joins, public package
+inputs and generated sources for all 24 graphics and 12 compute resource slots.
+Typed source joins distinguish shared field names and check Shader names;
+`tools/phone-build/SourceCameraProgramBundle.cs`
+checks imports, compute kernels/thread groups using the host Metal device and
+builds one strict Android/Vulkan bundle. Null graphics cannot reflect compute
+kernels. The shared editor mutex serializes compilation; teardown removes the
+project and retains pinned sources, receipt and bundle. This is a host supplier
+route; phone compute production and device loadability remain open.
 
 `accepted-output/catalog_complete.py --inputs REQUEST --output NEW_DIRECTORY`
 owns current host catalog completion. The request pins source metadata, selected
@@ -335,7 +355,13 @@ of physical script-first body placement. The existing checked reference
 relationships and pinned record-pack dependency relocations generate sorted
 external PreloadData. Original preload built-in resource pointers retain their
 path IDs after checking preload membership and the original resource external;
-no source object body is required for these SDK-owned identities. Generated
+no source object body is required for these SDK-owned identities.
+`bundle_preload.relocate_pointer_fields` applies qualified routes per parent
+field, including local pointers whose old destination IDs collided across
+original members. It preserves every other field and nonpointer byte; external
+relocation additionally requires complete external-field coverage. Source and
+endpoint qualification remains the caller's responsibility before relocation.
+Generated
 DefaultMaterial records reuse the existing `player_data.shared_default_material`
 projection of a pinned SDK Material and original Shader, followed by checked
 PPtr relocation; their destination native type remains original. Native scene
@@ -1480,6 +1506,43 @@ container size without changing member bytes; final body/resource checks still
 read the compressed output. The receipt records compression and the codec pin.
 Managed bindings, external
 endpoints and ordered Sprite cohorts remain excluded and reported.
+The same owner supplies per-field external qualification for strict graph
+assembly. It binds each proof to the effective provider, actual owner body,
+schema and field path; checks the selected endpoint's persisted bytes and full
+native/script type against its source identity and producer witness; and refuses
+missing or conflicting field routes. Checked relocation then allocates members
+from those targets and reparses every PPtr, preserving unrelated bytes. Shared
+old file IDs or pointers never substitute for complete field coverage. Callers
+own receipt/index validation and final-container metadata readback before
+supplying endpoint bodies. These pure helpers retain no state; current CLR,
+complete emission, typed load and device admission remain separate gates.
+The final-type helper verifies a persisted MonoBehaviour's schema-declared
+`m_Script` against its actual final script-table slot before restoring only the
+qualified preallocation index. Every other type field remains exact. Required
+emission applies this check during final readback and endpoint callbacks; external
+adapters supply body, type and script table from the same final member. The helper
+retains no state and adds no runtime owner.
+The same emitter's Python `required` mode selects an exact object set and
+declared GUID/path/root groups without pruning. Complete types are keyed by
+their full identity, preserving types that share a schema. Every external field
+uses those qualifications; the caller supplies a receipt/index/final-container
+endpoint reader and, for managed objects, a current-CLR checker. The checker
+runs on relocated bodies before writing and again on actual final bodies and
+script types after script-table allocation. It can resolve local or external
+MonoScripts through the supplied reader. Grouped roots retain their shared
+preload ranges. Final metadata, bodies, fields, endpoints and resource extents
+are read back; the receipt pins the request and qualified endpoint identities.
+All request, qualification and spool state is per invocation and temporary
+spools are removed on exit. This integration API has host fixtures; it does not
+establish complete whole-game emission, Unity loadability or device acceptance.
+Its per-invocation `ProducerRecords` reader also accepts retained relocation
+packs whose receipt pins their index, body store and field witnesses. Each
+selected record follows the preceding body/index lineage to its own original
+producer profile; a mixed pack has no invented common profile. Every retained
+and original body extent is read and hash-checked. Repeated source identities
+are accepted only with identical metadata apart from offsets, and every copy
+is read and verified. The emitter still validates
+the selected body's complete type, PPtrs and final endpoints separately.
 The shared `object_produce.make_layout` writer accepts explicitly qualified
 external MonoScript pointers separately from scene membership. It checks each
 managed body's script against the local records or supplied external allowlist,
@@ -2376,10 +2439,10 @@ charger and USB sensors, are recorded as excluded from admission only; they
 remain sampled in raw observations and all-zone peaks. The runtime thresholds
 apply to CPU/GPU and battery. Admission discovers zone types and readable paths
 with a separate 10-second ADB timeout while no gameplay runs. Runtime reads those
-physical temperature paths in one batch, retaining the 0.7-second ADB timeout
-and measured one-second maximum sampling gap. Unreadable temperature interfaces
-are excluded with their
-type/path recorded; known electrical pseudo-zones remain excluded. Unknown
+physical temperature paths and battery service in one ADB transaction with a
+one-second timeout, reducing client startups. The measured one-second maximum
+sampling gap remains mandatory, including transaction time and sampling waits.
+Unreadable temperature interfaces are excluded with their type/path recorded; known electrical pseudo-zones remain excluded. Unknown
 numeric sentinels and missing readable CPU coverage still refuse admission. Runtime and unexpected failures retain first-failure authority; a
 bounded stop worker cannot block temperature sampling. The owner records the
 peak, prevents launches after cancellation and never suspends the native
@@ -3745,15 +3808,27 @@ order and each `finally`) is in
 ## Ownership
 
 `IntegratedResultsSession` reads one local definition manifest for relationship
-types, providers and holder binding through `WholeCatalogComposed`. The synchronous
-preparation call releases that reference on return; family-cache lifetime and
+types, providers and holder binding through `WholeCatalogComposed`, then passes
+that snapshot to `AndroidProfileSession.Prepare` for survivor/unlockable families.
+The synchronous preparation call releases that reference on return; family-cache lifetime and
 relationship registration/restoration remain under their existing owners.
+The shared reader omits unused JSON source-line annotations while retaining the
+same token values, types, property order and parser error handling.
 `test_scoped_definition_manifest.py` exercises the production methods against
-authored source snapshots, including replacement input and identity checks.
-`PortSession` likewise shares a local manifest across synchronous artifact,
-item, equipment and body holder binding. `WholeCatalogComposed` keeps native
-population, identity checks and the existing field-restoration owner; the local
-snapshot ends before drone preparation and adds no retained cache.
+authored source snapshots, including parser parity, replacement input and identity
+checks.
+`PortSession` likewise shares a local manifest across synchronous artifact-family
+loading, artifact, item, equipment and body holder binding, and drone/projectile
+registration through `WholePopulationSession` and `WholeCatalogComposed`.
+`WholeCatalogComposed` keeps native population, identity checks and the existing
+field-restoration owner; the local
+snapshot ends before the skins coroutine and adds no retained cache.
+`AndroidProfileSession.Prepare` emits sparse survivor/unlockable family and
+progression-metadata startup timing through the existing `TraceStartup` owner.
+The existing family loader emits child phases only on a cache miss; registration,
+profile restoration and cache teardown retain their existing owners.
+The metadata-ready marker precedes objective rules, redirects and local profile
+setup; it does not describe completion of the entire profile boundary.
 Buff discovery uses the existing `DefinitionFamily<BuffDef>` provider-root loader
 and family cache instead of broad bundle loading. Typed root selection, unique
 name/selected-identity checks and `Release` cache teardown keep their existing
@@ -4670,15 +4745,23 @@ observer lifecycle result. Host contracts remain in
 ordinary Commando menu start, at least 60 s of ready Lakes play and the same UI
 abandon five times by default, then stops at the next menu. Explicit `--sessions`
 selects 3 to 32 sessions for a longer series without changing runtime gameplay.
-Each completed
-`movement-completed-session-<k>.json` must pass `abandon_contract` (reused through
-an index-checked session-1 view) before the next start, and profile counts must
-stay frozen. It collects the existing `SessionResourceBoundary` samples plus host
+An earlier native loss returns through persisted results and Return to menu;
+Restart is excluded because it skips the matched menu. Each completed
+`movement-completed-session-<k>.json` must pass its actual `ending_contract`
+(reused through an index-checked session-1 view) before the next start, and
+profile counts must stay frozen. Outcomes, runtime world seconds and host time
+from ready play to the ending request are recorded per session; the latter
+includes death/results delay for losses. Mixed-loss series are labeled separately
+from uniform 60-second abandon observations.
+It collects the existing `SessionResourceBoundary` samples plus host
 `dumpsys meminfo` TOTAL PSS at every menu and reports per-session slopes from
 session 2 onward. It is an observation runner: it attributes no retaining root
 and certifies no leak fix. It binds only an explicit owned APK hash, refuses a
 `--target`, and keeps evidence under `work/device/<serial>/experiments/session-memory/`.
 Host contracts: `tests/test_session_memory_check.py`.
+The shared session process check reuses `baseline.process_pid`'s checked shell
+observation: a legitimate absent PID is reported as process exit, while transport failures
+propagate as runner errors and cannot verify process termination during cleanup.
 
 `session-memory-root-check` is the same runner with the launch selector's
 `diagnosticCompletedRootWalkSession` set to the final menu's session index.
@@ -5576,8 +5659,20 @@ and display/run/enemy preparation, and objective templates/master catalog/player
 setup. `EnemySpineBoundary` marks completed context preparation;
 `AutomaticDirectorBoundary` bounds the existing scheduled-spawn wait after
 director activation. That interval includes native scheduling and callbacks,
-so it is not exclusive load time. These remain bounded owner-boundary logs,
-with no per-object recording.
+so it is not exclusive load time. The same director owner passes an optional
+sparse callback into `WholeCatalogComposed.CategoryFamily` to separate manifest
+parsing, location indexing/provider grouping and native asset collection loading
+inside master-family setup. The callback runs only on a family-cache miss and
+retains no state; family-cache ownership and reset remain unchanged. These remain
+bounded owner-boundary logs, with no per-object recording.
+
+`AndroidProfileBoundary` passes the existing synchronous results manifest through
+`TeleporterWorldSession` rule preparation into the game-mode family loader. The
+snapshot stays on that call stack; callers without one retain the loader's null
+fallback. Native Karma, RuleCatalog, RuleBook and game-mode registration order,
+identity checks and owned cleanup remain unchanged. Sparse startup markers bound
+rule initialization, game-mode family loading/registration and the return to
+profile preparation, separating later redirect/default/local-profile work.
 
 `GameAudioOriginalPayloadCopy` also owns the private Android app-cache receipt
 `original-audio-verified.json`. Setup still authenticates the packaged cohort
@@ -6275,6 +6370,18 @@ on process exit and receipts persist. This adds no runtime owner. Complete APK
 and device gates remain open.
 
 ### Typed gameplay startup discovery
+
+`WholeCatalogComposed.KeyItemDefinitions` uses the existing original-provider
+category loader to materialize only labeled key-item definitions before
+`IntegratedResultsSession` registers their native indices. It avoids activating
+unrelated drop tables during registration. The existing definition-family cache
+retains identities until `WholeCatalogComposed.Release` clears it; native
+key-item catalog restoration remains owned by `IntegratedResultsSession`.
+Its item-group types and providers use the same labeled loader so registration
+does not activate unrelated drop tables before the native run exists.
+`test_scoped_definition_manifest.py` covers typed selection, identity reuse and
+missing-definition refusal. J1401 verifies bounded ordinary Android startup and
+native results preparation; completed results navigation remains open.
 
 `IntegratedWorldBoundary` discovers only the requested method-attribute family
 from the original assemblies, including private methods and all attributes on
