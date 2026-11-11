@@ -425,6 +425,74 @@ class ProducerRecords:
             directory = Path(row["provider_before"]).resolve()
 
 
+def retain_type_metadata(records, output, qualify):
+    """Persist checked managed hash corrections without copying object bytes.
+
+    records contains (selected, before_type, current_type). The caller obtains
+    complete layouts from pinned sources and qualify(selected, body, type)
+    must prove the current MonoScript/schema contract, returning its witness.
+    Only the native hash may change; original producer profiles remain pinned
+    through the existing retained-provider lineage. This does not admit a graph.
+    """
+    import json
+    from collections import defaultdict
+
+    output = Path(output)
+    output.mkdir(parents=True, exist_ok=False)
+    providers = ProducerRecords()
+    groups = defaultdict(list)
+    for value, before, current in records:
+        groups[str(Path(value["provider"]).resolve())].append((value, before, current))
+    revised = []
+    for ordinal, (provider, values) in enumerate(sorted(groups.items())):
+        directory = output / str(ordinal)
+        directory.mkdir()
+        (directory / "objects.bin").symlink_to(Path(provider) / "objects.bin")
+        if (Path(provider) / "resources.bin").is_file():
+            (directory / "resources.bin").symlink_to(Path(provider) / "resources.bin")
+        index, witnesses = [], []
+        for value, before, current in values:
+            row, body = providers.record(value)
+            if (
+                before["class_id"] != 114
+                or full_type_key({**current, "hash": before["hash"]}) != full_type_key(before)
+                or before["hash"] == current["hash"]
+                or value.get("native_type_hash") != before["hash"].hex()
+                or row.get("native_type_hash", before["hash"].hex()) != before["hash"].hex()
+                or value["schema"] != hashlib.sha256(current["tree"]).hexdigest()
+                or (value["bytes"], value["sha256"]) != (len(body), hashlib.sha256(body).hexdigest())
+            ):
+                raise ValueError("Retained type correction changes more than native hash or differs from provider")
+            evidence = qualify(value, body, current)
+            if not evidence:
+                raise ValueError("Retained type correction lacks current managed witness")
+            full = full_type_key(current)
+            index.append(
+                {**row, "native_type_hash": current["hash"].hex(), "full_type": full, "provider_before": provider, "body_before_sha256": value["sha256"]}
+            )
+            witnesses.append(
+                dict(
+                    destination=value["destination"],
+                    source=value.get("source"),
+                    body_sha256=value["sha256"],
+                    before_type=O.json_layout(before),
+                    current_type=O.json_layout(current),
+                    current_managed=evidence,
+                )
+            )
+            revised.append({**value, "provider": str(directory.resolve()), "native_type_hash": current["hash"].hex(), "full_type": full})
+        for name, rows in (("index.jsonl", index), ("witnesses.jsonl", witnesses)):
+            (directory / name).write_text("".join(json.dumps(row, sort_keys=True) + "\n" for row in rows))
+        receipt = dict(
+            success=True,
+            index_sha256=O.B.sha(directory / "index.jsonl"),
+            objects_sha256=O.B.sha(directory / "objects.bin"),
+            witnesses_sha256=O.B.sha(directory / "witnesses.jsonl"),
+        )
+        (directory / "result.json").write_text(json.dumps(receipt, indent=2) + "\n")
+    return revised
+
+
 def emit_closed_native(
     graph_directory,
     schema_paths,

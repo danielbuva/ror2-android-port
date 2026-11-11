@@ -27,6 +27,38 @@ def pointer(name):
 
 
 class BundlePreloadTests(unittest.TestCase):
+    def test_retained_type_metadata_keeps_original_profile_and_immutable_extents(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            _, types, values, _ = self.required_graph(root)
+            source = next(iter(json.loads(types.read_text()).values()))
+            before = {**source, "class_id": 114, "tree": bytes.fromhex(source["tree"]), "hash": bytes.fromhex(source["hash"])}
+            current = {**before, "hash": b"n" * 16}
+            value = {**values[0], "class_id": 114, "full_type": P.full_type_key(before)}
+            original = Path(value["provider"])
+            original_index = (original / "index.jsonl").read_bytes()
+            original_body = (original / "objects.bin").read_bytes()
+            seen = []
+
+            def qualify(selected, body, typ):
+                seen.append((selected, body, typ))
+                return {"identity": ["assembly", "namespace", "script"], "properties": typ["hash"].hex()}
+
+            revised = P.retain_type_metadata([(value, before, current)], root / "corrected", qualify)[0]
+            index, body = P.ProducerRecords().record(revised)
+            self.assertEqual(index["native_type_hash"], current["hash"].hex())
+            self.assertEqual(revised["record"], value["record"])
+            self.assertEqual(revised["sha256"], value["sha256"])
+            self.assertEqual(revised["full_type"], P.full_type_key(current))
+            self.assertEqual(seen, [(value, body, current)])
+            self.assertTrue((Path(revised["provider"]) / "objects.bin").is_symlink())
+            self.assertEqual((original / "index.jsonl").read_bytes(), original_index)
+            self.assertEqual((original / "objects.bin").read_bytes(), original_body)
+            with self.assertRaisesRegex(ValueError, "more than native hash"):
+                P.retain_type_metadata([(value, before, {**current, "dependencies": [3]})], root / "bad-layout", qualify)
+            with self.assertRaisesRegex(ValueError, "lacks current managed witness"):
+                P.retain_type_metadata([(value, before, current)], root / "no-proof", lambda *args: None)
+
     def test_contextual_local_routes_do_not_alias_shared_path_ids(self):
         with tempfile.TemporaryDirectory() as directory:
             owner, body, typ, *_ = self.external_contract(Path(directory))

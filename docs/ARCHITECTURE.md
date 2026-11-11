@@ -59,6 +59,12 @@ inputs without generating independent Android target information. `assemble.py`
 owns hash-bound unsigned APK assembly and required uncompressed/aligned resource
 storage; canonical alignment and owner signing follow separately.
 
+`bundle_preload.retain_type_metadata` owns explicit managed native-hash repairs
+for retained producer packs. Its caller proves the current MonoScript and schema
+contract; it writes hash-bound metadata witnesses and links immutable object
+extents while preserving each original producer profile. It does not admit a
+graph or establish loadability. Final emission repeats structural and CLR checks.
+
 `tools/phone-build/profile_stage.py` owns host converter stage measurement.
 Call it with an explicit command, workspace and ignored evidence directory;
 optional `--table` extends the existing per-stage table. Each child process
