@@ -2932,3 +2932,19 @@ unlockables 1.825 s (manifest 1.516 s, index 0.273 s, assets 0.035 s), metadata
 CPU/GPU peak 61.8 C, above 80 C 0 s, battery 28 C; stopped/asleep, scratch removed,
 lease released/prune passed. Prior art: community startup/profile graph and pinned
 R2API content phases. Sustained play, audibility and full-pipeline gates stay open.
+
+## J1399 — Reuse results manifest for native profile families
+
+2026-11-05. Existing results preparation passes its synchronous manifest snapshot to
+native survivor/unlockable loading; no new cache; null/bootstrap fallback retained.
+Two focused production fixtures, Ruff, host preflight and build validation pass.
+APK `16119b8739531010b6da6c38592a75b6255059c78f704f2a494eda7e32cf5bd2`.
+Evidence: `work/coordination/alpha-profile-manifest-device-20261105T075223Z/`.
+Ordinary Start reaches Verdant Falls/player/HUD; no first failure, 21 survivors,
+455 unlockables, native catalogs and source banks 153/153; profiles/settings retained.
+Unlockables 0.244 s versus J1398 1.825 s; manifest 0.000115 s versus 1.516 s.
+Survivor 0.000221 s, registration 0.008072 s, metadata 0.025734 s; ordered sparse traces.
+Process-cold/APK pages warmed; different stage, no controlled total-loading claim.
+Sampled PSS peak 4.14 GiB; adopted free 326.96 GiB; CPU/GPU 67.4 C, above 80 C 0 s,
+battery 28 C. Stopped/asleep, scratch removed, lease released; prune passed.
+Prior art: pinned R2API content phases; J1376/J1398. Sustained play/audibility remain open.
