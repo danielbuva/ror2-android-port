@@ -197,13 +197,15 @@ public static class PayloadCopyReceiptHarness
         package.fields["lastUpdateTime"] = 123L;
         var packages = new UnityEngine.AndroidJavaObject("packages");
         packages.onCall = (method, args) => package;
+        string codePath = "/installed.apk";
         activity.onCall = (method, args) => method == "getCacheDir" ? (object)cacheDirectory :
-            method == "getPackageManager" ? (object)packages : method == "getPackageName" ? "dev.fixture" : "/installed.apk";
+            method == "getPackageManager" ? (object)packages : method == "getPackageName" ? "dev.fixture" : codePath;
         UnityEngine.AndroidJavaClass.currentActivity = activity;
         var cohortType = typeof(GameAudioOriginalPayloadCopy).GetNestedType("VerifiedCohort", BindingFlags.NonPublic);
         var fileType = typeof(GameAudioOriginalPayloadCopy).GetNestedType("VerifiedFile", BindingFlags.NonPublic);
         var cohort = Activator.CreateInstance(cohortType, true);
-        Set(cohort, "install", "/installed.apk|123"); Set(cohort, "receipt", new string('d', 64));
+        int revision = (int)typeof(GameAudioOriginalPayloadCopy).GetField("VerificationRevision", BindingFlags.Static | BindingFlags.NonPublic).GetRawConstantValue();
+        Set(cohort, "verifierRevision", revision); Set(cohort, "receipt", new string('d', 64));
         var file = Activator.CreateInstance(fileType, true); Set(file, "path", "/payload/bank");
         var files = Array.CreateInstance(fileType, 1); files.SetValue(file, 0); Set(cohort, "files", files);
         UnityEngine.JsonUtility.decoded = cohort;
@@ -217,9 +219,20 @@ public static class PayloadCopyReceiptHarness
         try
         {
             reload(); Check(cache.Count == 0, "missing private cache requires full verification");
-            File.WriteAllText(path, "fixture"); reload(); Check(cache.Count == 1, "same install and cohort load private receipt");
-            package.fields["lastUpdateTime"] = 124L; reload(); Check(cache.Count == 0, "package update invalidates receipt");
-            package.fields["lastUpdateTime"] = 123L; Set(cohort, "receipt", new string('e', 64));
+            var observed = (IList)typeof(GameAudioOriginalPayloadCopy).GetField("observed", flags).GetValue(owner);
+            for (int i = 0; i < 274; i++) observed.Add(file);
+            typeof(GameAudioOriginalPayloadCopy).GetMethod("SaveVerifiedCohort", flags).Invoke(owner, null);
+            cohort = UnityEngine.JsonUtility.encoded;
+            Check(cohort != null && File.Exists(path), "complete cohort saves a private verification receipt");
+            UnityEngine.JsonUtility.decoded = cohort;
+            owner = new GameAudioOriginalPayloadCopy("file:///unused", "/tmp/app", names, new string('d', 64));
+            cache = (IDictionary)typeof(GameAudioOriginalPayloadCopy).GetField("verified", flags).GetValue(owner);
+            reload(); Check(cache.Count == 1, "fresh owner loads saved compatible verifier and cohort");
+            package.fields["lastUpdateTime"] = 124L; codePath = "/updated.apk";
+            reload(); Check(cache.Count == 1, "in-place code update retains compatible cohort proofs");
+            Set(cohort, "verifierRevision", 0); reload(); Check(cache.Count == 0, "legacy unversioned cache requires full verification");
+            Set(cohort, "verifierRevision", revision + 1); reload(); Check(cache.Count == 0, "incompatible verifier requires full verification");
+            Set(cohort, "verifierRevision", revision); Set(cohort, "receipt", new string('e', 64));
             reload(); Check(cache.Count == 0, "changed packaged cohort invalidates receipt");
             Set(cohort, "receipt", new string('d', 64)); reload(); Check(cache.Count == 1, "valid receipt can reload");
             File.Delete(path); reload(); Check(cache.Count == 0, "clear-cache repair invalidates prior in-memory receipt");
@@ -228,6 +241,7 @@ public static class PayloadCopyReceiptHarness
         {
             Directory.Delete(directory, true); UnityEngine.AndroidJavaClass.currentActivity = null;
             UnityEngine.JsonUtility.decoded = null;
+            UnityEngine.JsonUtility.encoded = null;
         }
     }
 

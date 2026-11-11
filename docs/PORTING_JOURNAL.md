@@ -3159,6 +3159,21 @@ CPU/GPU peak 79.6 °C, 0 s above 80 °C; battery peak 30 °C. App/selectors/pend
 absent, scratch removed, OLED asleep, lease released; P1 notified.
 Sustained performance, physical navigation and ordinary long play remain open.
 
+## J1416 — Retain compatible audio verification across in-place installs
+
+2026-11-11. `GameAudioOriginalPayloadCopy` binds cached proofs to verifier revision
+and authenticated cohort; exact file identities/full-SHA fallback remain (J1386).
+Legacy/incompatible caches reverify. Pinned R2API.Sound lifecycle remains native.
+Copier/producer tests (1/9), Ruff, preflight and exact-editor code build pass.
+Evidence: `work/coordination/alpha-audio-reinstall-application-proof-20261111T204311Z/`.
+APK SHA-256 `bb5d06edf1f71c17bb3939138befbc1998ee93bc40c74da5e4ce21daac6edcd7`.
+Migration observed full274; actual same-APK reinstall changed code path, cached274/
+full0, kept profile/settings hashes; Verdant Falls player/HUD/audio153/results ready.
+Current-process errors empty. Banks/media 6.691/6.289 → 0.031/0.022 s (owner spans;
+page cache uncontrolled, no total-load claim). Private receipt readback unavailable.
+CPU/GPU peak 81.6 °C, 0.694 s above 80 °C; battery 30 °C. App/selectors/pending
+absent, OLED asleep, lease released; P1 notified. Distinct-release update, long play
+and sustained performance remain open; migration wrapper's private-readback gate failed.
 ## J1415 — Validate explicit catalog subassets and inspect verified APK archives
 
 2026-11-11. Catalog completion follows typed controller behaviour, TMP, Timeline

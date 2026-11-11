@@ -5811,12 +5811,15 @@ profile preparation, separating later redirect/default/local-profile work.
 `GameAudioOriginalPayloadCopy` also owns the private Android app-cache receipt
 `original-audio-verified.json`. Setup still authenticates the packaged cohort
 and checks paths, types, sizes, space and deadlines. Actual reuse can skip SHA
-only for the same installed package path/update time, request receipt and file
+only for the same explicit verifier revision, request receipt and file
 path/hash/size/device/inode/nanosecond modification and kernel change times.
 A miss or unavailable metadata uses full-file SHA; matching stamps before and
 after hashing populate a receipt only after the complete cohort succeeds.
-The first startup after install/update verifies fully before native audio init;
-Android Clear cache forces the same repair verification. Process exit releases
+The first startup, a changed cohort or incompatible verifier requires full
+verification before native audio init. Compatible in-place code updates retain
+proofs only while all file identities still match; legacy unversioned caches
+require full verification. Android Clear cache forces the same repair verification.
+Process exit releases
 streams/Java handles; only the private cache persists. File writes, including
 same-size edits with restored mtime, invalidate kernel ctime under normal
 filesystem semantics. This is metadata reuse, not protection against storage
