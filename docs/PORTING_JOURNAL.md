@@ -3030,3 +3030,14 @@ Evidence: this commit; 56 thermal/batch and 16 memory host tests plus Ruff pass.
 Doctor/preflight retain known worktree-local configuration gaps. No APK change,
 new device run or cooldown qualification; active32 uses the previous loaded code.
 Repeated-session completion/plateau and ordinary physical/unassisted gates stay open.
+
+## J1406 — Bound unacknowledged session Start requests
+
+2026-11-11. The existing supervised memory runner stops after 60 seconds when
+a tapped session still reports its start menu, retaining the current report and
+performing owned process/display cleanup. A missed transition no longer waits
+for the outer three-hour deadline or implies a gameplay crash.
+Evidence: 16 focused host tests, including a stalled post-cooldown menu that
+preserves one completion, sends no repeated taps and confirms OLED cleanup; Ruff
+and shared host preflight pass. APK unchanged; no new device acceptance.
+Wake/focus/tap delivery, long-series memory and physical navigation remain open.

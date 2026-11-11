@@ -73,7 +73,7 @@ class SessionMemoryCheckTests(unittest.TestCase):
     def test_native_loss_returns_through_menu_and_keeps_actual_cleanup_contract(self):
         from test_session_cleanup_check import abandoned_report, completed_report, live_report, ordinary_start_report, session_one_defeat_report
 
-        for fault in (None, "profile", "cleanup", "session"):
+        for fault in (None, "profile", "cleanup", "session", "stalled-menu"):
             with self.subTest(fault=fault), tempfile.TemporaryDirectory() as temporary, ExitStack() as stack:
                 root = Path(temporary)
                 out = root / "evidence"
@@ -104,6 +104,8 @@ class SessionMemoryCheckTests(unittest.TestCase):
 
                 defeat = dict(session_one_defeat_report(), session=2)
                 current = iter([menu(1), live(1), live(1, True), menu(2), live(2), defeat, defeat, menu(3), live(3), live(3, True), menu(4)])
+                if fault == "stalled-menu":
+                    current = itertools.chain([menu(1), live(1), live(1, True)], itertools.repeat(menu(2)))
                 completions = {i: dict(abandoned_report("Commando"), session=i) for i in (1, 3)}
                 completions[2] = completed_report(session=2)
                 if fault == "profile":
@@ -146,7 +148,7 @@ class SessionMemoryCheckTests(unittest.TestCase):
                 result = json.loads((out / "result.json").read_text())
                 self.assertEqual(result["success"], fault is None)
                 # One Return to menu tap despite two identical defeat reports; never Restart.
-                self.assertEqual(device.sh.call_args_list.count(mock.call("input", "tap", "610", "420")), 1)
+                self.assertEqual(device.sh.call_args_list.count(mock.call("input", "tap", "610", "420")), 0 if fault == "stalled-menu" else 1)
                 self.assertNotIn(mock.call("input", "tap", "207", "420"), device.sh.call_args_list)
                 if fault is None:
                     self.assertEqual([row["ending"] for row in result["session_outcomes"]], ["abandon", "loss", "abandon"])
@@ -162,6 +164,11 @@ class SessionMemoryCheckTests(unittest.TestCase):
                     cooldown.assert_called_once()  # Session 1 passed; the second ending failed before another cooldown.
                     self.assertEqual(result["sessions_observed"], 1)
                     self.assertEqual(device.sh.call_args_list.count(mock.call("input", "tap", "100", "200")), 2)
+                    if fault == "stalled-menu":
+                        self.assertEqual(result["stop"], "offline-menu-start-not-acknowledged")
+                        self.assertEqual(result["first_failure"], "session 2 stayed at the menu after Start")
+                        self.assertFalse(result["runtime_errors"])
+                        device.display.assert_called_with(False)
 
     def test_results_menu_coordinates_require_matching_grid(self):
         report = {"hud": {"screenWidth": 1280, "screenHeight": 800}}
