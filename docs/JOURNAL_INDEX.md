@@ -10,7 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
-| [J1416](PORTING_JOURNAL.md#j1416--reuse-checked-native-bundle-emissions-for-port-updates) | 2026-11-11 | Reuse checked native bundle emissions for port updates | 2026-11-11. |
+| [J1417](PORTING_JOURNAL.md#j1417--reuse-checked-native-bundle-emissions-for-port-updates) | 2026-11-11 | Reuse checked native bundle emissions for port updates | 2026-11-11. |
 | [J1415](PORTING_JOURNAL.md#j1415--validate-explicit-catalog-subassets-and-inspect-verified-apk-archives) | 2026-11-11 | Validate explicit catalog subassets and inspect verified APK archives | 2026-11-11. |
 | [J1416](PORTING_JOURNAL.md#j1416--retain-compatible-audio-verification-across-in-place-installs) | 2026-11-11 | Retain compatible audio verification across in-place installs | 2026-11-11. |
 | [J1414](PORTING_JOURNAL.md#j1414--reuse-live-definition-manifests-without-retaining-their-graphs) | 2026-11-11 | Reuse live definition manifests without retaining their graphs | 2026-11-11. |
