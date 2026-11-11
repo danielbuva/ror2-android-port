@@ -44,6 +44,10 @@ It is not packaged or connected to Unity yet; System remains unchanged. Its
 [handoff](../tools/phone-build/owner-apk/graphics/README.md) records setup, teardown,
 prior art and the pending native/Android/Thor acceptance gates. Custom load failure
 requires process restart, never hot-swapping a live Vulkan driver.
+`scripts/inspect-graphics-driver-sdk.py` and its authored native compile fixture
+check the installed version's V1 Vulkan callback with the bundled Android NDK.
+The check emits fixed results/hashes, creates no output artifacts and performs no
+Editor/device action; runtime preload order and exact revision remain unverified.
 
 Public alpha delivery: [ADR-002](ADR-002-public-alpha-distribution.md) accepts
 owner-built APKs and locally reconstructed content; [public-alpha.md](public-alpha.md)
