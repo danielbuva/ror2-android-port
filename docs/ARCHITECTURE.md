@@ -75,8 +75,9 @@ compiles the existing input-qualified source-camera candidate in a disposable SD
 project. The request names a fresh ignored `output` directory.
 `scripts/lab/source_camera_bundle.py` revalidates original joins, public package
 inputs and generated sources; `tools/phone-build/SourceCameraProgramBundle.cs`
-checks imports, compute kernels/thread groups and builds one strict Android/Vulkan
-bundle. The shared editor mutex serializes compilation; teardown removes the
+checks imports, compute kernels/thread groups using the host Metal device and
+builds one strict Android/Vulkan bundle. Null graphics cannot reflect compute
+kernels. The shared editor mutex serializes compilation; teardown removes the
 project and retains pinned sources, receipt and bundle. This is a host supplier
 route; phone compute production and device loadability remain open.
 

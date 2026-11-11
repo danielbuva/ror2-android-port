@@ -57,7 +57,9 @@ def build(target):
     args = [
         os.environ["UNITY_EDITOR"],
         "-batchmode",
-        "-nographics",
+        # Kernel reflection needs a real host graphics device, even though the
+        # supplier bundle targets Android/Vulkan. Null graphics has no kernels.
+        "-force-metal",
         "-quit",
         "-projectPath",
         str(project),
