@@ -1182,6 +1182,10 @@ unchanged, and the installer visibly labels the active test source.
 `scripts/lab-installer-updates.py` owns the synthetic lab acceptance setup,
 local signed fixture server, actual UI/session assertions and owned cleanup.
 Its runner-provided toolhost and generated binaries/keys never leave the lab.
+After verifying the focused consent identity, fixed label/title/button/layout
+classifications are emitted before fixture refusal. No raw UI text or resource
+identifiers are exported. These observations never relax the existing fixture,
+button, identity or focus gates that authorize a synthetic consent tap.
 Its `Phone.dismiss_notification_permission` identifies the owned installer's
 notification dialog and denies by default; `--allow-test-notifications` admits
 explicitly authorized notification consent independently of
@@ -1203,6 +1207,20 @@ publishes private telemetry. Teardown reaps owned children and retains verified
 checkpoints; PackageInstaller alone establishes installation success.
 [User flow and storage behavior](../tools/phone-build/owner-apk/README.md#phone-only-import-and-installation)
 remain separate from complete game/device qualification.
+
+`owner-apk/atomic_io.py` owns shared private checkpoint writes under each
+caller's existing operation lock: sibling staging, file fsync, rename and parent
+directory fsync. Failure cleanup removes only the owned partial and preserves
+the original error; a post-rename sync failure leaves durability unconfirmed.
+The existing import/release/update owners retain verified-entry retry state.
+`scripts/lab-installer-quota.py` owns the synthetic logical-quota fixture and
+bounded retained-log inspection; setup uses fresh owned scratch and teardown
+keeps local evidence while removing disposable device scratch. Its host/phone
+controls do not qualify real filesystem exhaustion or physical power loss.
+`OwnerInputImport.syncDirectory` uses Android's public read-only open flag,
+then fsync and finally close; it does not reflect a hidden `O_DIRECTORY` field.
+A host Android-API fixture exercises the quota harness through that path,
+including propagation of fsync failure with descriptor cleanup.
 
 Alpha packaging extends these owners rather than adding an installer/signing
 pipeline. `owner-apk/alpha_policy.py` owns fixed alpha identity, durable issued
@@ -1614,6 +1632,13 @@ are read back; the receipt pins the request and qualified endpoint identities.
 All request, qualification and spool state is per invocation and temporary
 spools are removed on exit. This integration API has host fixtures; it does not
 establish complete whole-game emission, Unity loadability or device acceptance.
+The Python `structural_routes` alternative binds every nonnull field to the
+current measured pointer and an actual complete endpoint body/type. Local
+routes retain their member and path ID; external routes allocate the declared
+member table. Historical per-field source provenance is diagnostic in this
+mode. Complete body hashes, native layouts, pointer coverage, current CLR
+qualification and final readback remain required. The receipt names the field
+qualification mode; typed loading and device play remain separate gates.
 Its per-invocation `ProducerRecords` reader also accepts retained relocation
 packs whose receipt pins their index, body store and field witnesses. Each
 selected record follows the preceding body/index lineage to its own original
@@ -3919,6 +3944,8 @@ The synchronous preparation call releases that reference on return; family-cache
 relationship registration/restoration remain under their existing owners.
 The shared reader omits unused JSON source-line annotations while retaining the
 same token values, types, property order and parser error handling.
+Provider-root `DefinitionFamily<T>` uses the same reader; its typed selection,
+selected-identity checks and existing family-cache lifetime remain unchanged.
 `test_scoped_definition_manifest.py` exercises the production methods against
 authored source snapshots, including parser parity, replacement input and identity
 checks.
@@ -4860,7 +4887,12 @@ includes death/results delay for losses. Mixed-loss series are labeled separatel
 from uniform 60-second abandon observations.
 It collects the existing `SessionResourceBoundary` samples plus host
 `dumpsys meminfo` TOTAL PSS at every menu and reports per-session slopes from
-session 2 onward. It is an observation runner: it attributes no retaining root
+session 2 onward. PSS rows explicitly name the following menu, where they were
+read; their regression includes menu 2. Reports also retain the slope, actual
+index range and sample count for the last half of available observations per
+metric, separating continued warmup from the late trend without declaring a
+plateau. Managed menu and post-collection session phases remain distinct.
+It is an observation runner: it attributes no retaining root
 and certifies no leak fix. It binds only an explicit owned APK hash, refuses a
 `--target`, and keeps evidence under `work/device/<serial>/experiments/session-memory/`.
 Host contracts: `tests/test_session_memory_check.py`.

@@ -74,6 +74,15 @@ unsupported GPU/generation, unavailable loader, load/self-check failures, proces
 crash recovery, successful first-frame state and one-tap reset policy. The metadata
 reader is a test adapter; Android JSON parsing is deliberately not qualified yet.
 
+With `JAVA_HOME` and `ANDROID_SDK_ROOT` (or `ANDROID_HOME`) configured, the suite
+also compiles both production Java owners using the API 33 `android.jar` as the
+Java 8 bootclasspath. It does not compile the desktop harness against Android.
+This catches the Android/JDK bootstrap mismatch observed in #274 rather than
+assuming a desktop `javac` pass proves Android compatibility. The check skips
+explicitly when that SDK jar is absent; it does not download a toolchain or launch
+a device. A successful compile is not API 28 runtime, filesystem durability,
+APK integration, native-driver or first-frame qualification.
+
 ## Installed SDK inspection
 
 `scripts/inspect-graphics-driver-sdk.py` performs a bounded, compile-only check

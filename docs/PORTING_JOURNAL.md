@@ -3072,3 +3072,43 @@ Adopted in-place install retains profile/settings hashes; later sessions continu
 1,426 runtime thermal samples, maximum gap 0.494 s. App/selectors absent, OLED asleep,
 lease released and prune complete. Final-two menu/collected managed deltas remain
 +2.76/+0.97 MiB; memory plateau, ordinary long play and physical input remain open.
+
+## J1410 — Emit complete graphs with current structural field routes
+
+2026-11-11. The existing native subset emitter accepts every current nonnull
+field route without requiring historical per-field source provenance. Complete
+body/type hashes, local member identity, endpoint checks, relocation and final
+readback remain strict; managed emission still requires its current CLR checker.
+All 28 focused host tests pass, including emission without source proofs and
+rejection of missing routes or endpoint drift. Host preflight passes. Evidence:
+`work/coordination/p1-wholegame-1031/current-structural-route-emission-v1/checks.json`.
+No APK produced; complete current CLR field assignability, Unity typed loading
+and converted-device play remain open.
+## J1409 — Align memory observations with their measured menus
+
+2026-11-11. The existing session-memory report names the following menu for PSS,
+retains menu 2 in its slope and reports late-half slopes with actual sample ranges.
+Managed menu and completed-session collection phases remain separate; no plateau
+threshold or runtime change is introduced. Nineteen focused tests and Ruff pass.
+Host replay: `work/coordination/alpha-post-pool-address-candidates-20261111T173007Z/reporting-replay.json`.
+Output SHA-256 `4588421887660e894fe9c7ade9dceabd10844b3ebb0b7f10da84e5e4cb9fd87b`.
+The retained series reports managed +120,553 B/menu overall and +25,751 B/menu
+at menus 18–33; post-collection sessions 17–32 give −5,578 B/session.
+This is host reporting, with no new APK or device run. Memory plateau, retaining
+owner attribution, ordinary long play and physical input remain open.
+
+## J1411 — Reuse the definition manifest reader for provider-root families
+
+2026-11-11. `WholeCatalogComposed.DefinitionFamily<T>` reuses the existing reader,
+omitting unused JSON line annotations; typed roots, identity checks and cache stay.
+Three extracted-production scope tests and exact-editor code-only build pass.
+Matched reinstall/process-cold pair reached ordinary Start → player/HUD/audio;
+profiles/settings retained, runtime errors empty, 21 survivors/455 unlockables.
+Evidence: `work/coordination/alpha-definition-lines-pair-20261111T175817Z/`.
+APK SHA-256 `a75ebd269db105f6fd418b16a1f5f71efc64f1cf4ffa1d1368d99da1cb08ca2f`.
+Cold-menu 23.339 → 22.354 s; Start-playable 83.885 → 75.697 s are observations:
+blackbeach2 → golemplains2, one pair, uncontrolled page cache; no speedup claim.
+Both audio checks fully verified 274 files. CPU/GPU peaks 84.0/85.2 °C,
+above 80 °C for 0.332/9.941 s; battery peaks 30/31 °C. Raw performance stays local.
+App/selectors/pending absent, OLED asleep, lease released; P1 has device priority.
+Sustained performance, memory plateau and ordinary long play remain open.

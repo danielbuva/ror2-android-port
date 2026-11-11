@@ -14,6 +14,41 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 class GraphicsDriverTests(unittest.TestCase):
+    def test_production_owners_compile_with_android_bootclasspath(self):
+        compiler = Path(os.environ.get("JAVA_HOME", "/absent")) / "bin/javac"
+        if not compiler.is_file():
+            found = shutil.which("javac")
+            if not found:
+                self.skipTest("Java compiler absent")
+            compiler = Path(found)
+        sdk = Path(os.environ.get("ANDROID_SDK_ROOT") or os.environ.get("ANDROID_HOME") or "/absent")
+        android = sdk / "platforms/android-33/android.jar"
+        if not android.is_file():
+            self.skipTest("Android API 33 compile jar absent")
+        # The ordinary JDK classpath hid the observed #274 Android bootstrap
+        # failure. Compile production owners only, not the desktop Java harness.
+        source = ROOT / "tools/phone-build/owner-apk/graphics"
+        with tempfile.TemporaryDirectory() as temporary:
+            result = subprocess.run(
+                [
+                    str(compiler),
+                    "-source",
+                    "8",
+                    "-target",
+                    "8",
+                    "-bootclasspath",
+                    str(android),
+                    "-d",
+                    temporary,
+                    str(source / "GraphicsDriverPackage.java"),
+                    str(source / "GraphicsDriverPolicy.java"),
+                ],
+                capture_output=True,
+                text=True,
+                timeout=60,
+            )
+            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+
     def test_package_and_launch_recovery_contracts(self):
         home = Path(os.environ.get("JAVA_HOME", "/absent"))
         compiler = home / "bin/javac"

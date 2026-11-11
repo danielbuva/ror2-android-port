@@ -625,7 +625,7 @@ public static class WholeCatalogComposed
         UnityEngine.Object[] values;
         if (!definitionFamilies.TryGetValue(typeof(T).FullName, out values))
         {
-            var manifest = JObject.Parse(File.ReadAllText(Path.Combine(Application.persistentDataPath, "payload", "whole-catalog.json")));
+            var manifest = ReadDefinitionManifest();
             var roots = new HashSet<int>(manifest["provider_roots"].Select(value => (int)value));
             values =
                 manifest["locations"]

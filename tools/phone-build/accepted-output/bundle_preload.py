@@ -174,6 +174,49 @@ def qualify_external_fields(value, body, typ, proofs, endpoint_record):
     return targets
 
 
+def qualify_structural_fields(value, body, typ, routes, endpoint_record):
+    """Check complete current routes without historical field provenance.
+
+    The caller binds routes and selected descriptors to its current census and
+    reads actual complete endpoint bodies/types from pinned inputs. Source
+    provenance is diagnostic; current CLR compatibility remains a separate
+    required emission check. No absent body or inferred type is admitted.
+    """
+
+    def checked(record, raw, native):
+        if (
+            (len(raw), hashlib.sha256(raw).hexdigest()) != (record["bytes"], record["sha256"])
+            or full_type_key(native) != record["full_type"]
+            or hashlib.sha256(native["tree"]).hexdigest() != record["schema"]
+            or native["class_id"] != record["class_id"]
+            or native["hash"].hex() != record["native_type_hash"]
+        ):
+            raise ValueError("Structural route body or full type differs")
+        fields = pointers(raw, native, {})
+        if set(fields.values()) != set(map(tuple, record["edges"])):
+            raise ValueError("Structural route measured pointers differ")
+        return fields
+
+    owner = tuple(value["destination"])
+    fields = checked(value, body, typ)
+    nonnull = {field: pointer for field, pointer in fields.items() if pointer[1]}
+    targets = {}
+    for route in routes:
+        field, pointer, target = tuple(route["field"]), tuple(route["pointer"]), tuple(route["target"])
+        if field in targets or nonnull.get(field) != pointer or len(target) != 3 or target[2] != pointer[1]:
+            raise ValueError("Structural route field or pointer differs")
+        if not pointer[0] and target != (*owner[:2], pointer[1]):
+            raise ValueError("Structural local route changes its member")
+        endpoint, raw, native = endpoint_record(target)
+        if tuple(endpoint["destination"]) != target:
+            raise ValueError("Structural route endpoint identity differs")
+        checked(endpoint, raw, native)
+        targets[field] = target
+    if set(targets) != set(nonnull):
+        raise ValueError("Structural routes require every nonnull field")
+    return {field: target for field, target in targets.items() if nonnull[field][0]}
+
+
 def relocate_external_fields(value, body, typ, targets, externals):
     """Allocate qualified fields by destination member, never by an old slot."""
     fields = pointers(body, typ, {})
@@ -535,6 +578,7 @@ def emit_closed_native(
     codec_sha256=None,
     required=None,
     field_proofs=(),
+    structural_routes=None,
     endpoint_record=None,
     managed_check=None,
 ):
@@ -550,6 +594,9 @@ def emit_closed_native(
     qualify_external_fields, and a current-CLR managed_check(value, body, type,
     read_record). The checker must reject incompatible schemas/scripts; it runs
     again against persisted output. Without these qualifications emission fails.
+    Alternatively structural_routes maps each selected destination tuple to all
+    current nonnull field/pointer/target edges, with original field provenance
+    diagnostic. Complete actual endpoint checks and managed checks still apply.
     This Python integration boundary does not admit a whole catalog or player.
     """
     from collections import Counter, defaultdict
@@ -681,7 +728,10 @@ def emit_closed_native(
                     if edges != set(map(tuple, value["edges"])):
                         raise ValueError("Measured native pointers differ from selected graph")
                     if required is not None:
-                        targets = qualify_external_fields(value, body, typ, proofs.get(tuple(value["destination"]), ()), read_external)
+                        if structural_routes is None:
+                            targets = qualify_external_fields(value, body, typ, proofs.get(tuple(value["destination"]), ()), read_external)
+                        else:
+                            targets = qualify_structural_fields(value, body, typ, structural_routes[tuple(value["destination"])], read_external)
                         qualified_targets[identity] = targets
                         body = relocate_external_fields(value, body, typ, targets, externals)
                         if typ["class_id"] == 114:
@@ -897,6 +947,7 @@ def emit_closed_native(
     )
     if required is not None:
         result["required_set_accepted"] = True
+        result["field_qualification"] = "structural-current-routes" if structural_routes is not None else "source-provenance"
         result["required_request_sha256"] = hashlib.sha256(json.dumps(required, sort_keys=True).encode()).hexdigest()
         result["qualified_endpoint_pins"] = [
             dict(destination=list(target), selected_row_sha256=hashlib.sha256(pin[0].encode()).hexdigest(), body_sha256=pin[1], full_type=pin[2])
