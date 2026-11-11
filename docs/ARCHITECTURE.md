@@ -1593,6 +1593,13 @@ are read back; the receipt pins the request and qualified endpoint identities.
 All request, qualification and spool state is per invocation and temporary
 spools are removed on exit. This integration API has host fixtures; it does not
 establish complete whole-game emission, Unity loadability or device acceptance.
+The Python `structural_routes` alternative binds every nonnull field to the
+current measured pointer and an actual complete endpoint body/type. Local
+routes retain their member and path ID; external routes allocate the declared
+member table. Historical per-field source provenance is diagnostic in this
+mode. Complete body hashes, native layouts, pointer coverage, current CLR
+qualification and final readback remain required. The receipt names the field
+qualification mode; typed loading and device play remain separate gates.
 Its per-invocation `ProducerRecords` reader also accepts retained relocation
 packs whose receipt pins their index, body store and field witnesses. Each
 selected record follows the preceding body/index lineage to its own original
