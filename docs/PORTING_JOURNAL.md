@@ -2948,3 +2948,19 @@ Process-cold/APK pages warmed; different stage, no controlled total-loading clai
 Sampled PSS peak 4.14 GiB; adopted free 326.96 GiB; CPU/GPU 67.4 C, above 80 C 0 s,
 battery 28 C. Stopped/asleep, scratch removed, lease released; prune passed.
 Prior art: pinned R2API content phases; J1376/J1398. Sustained play/audibility remain open.
+
+## J1400 — Reuse profile manifest for native game-mode preparation
+
+2026-11-11. Existing profile snapshot feeds game-mode loading on the synchronous
+rule-preparation stack; native order, identities, null fallback and cleanup remain.
+Three focused production fixtures, Ruff, host preflight and code build pass.
+Source `aa66a2a4`; APK `2d7140f2806f9aa3493f39d4dfb6fa1a567ae91a552417951305b49f34e497ba`.
+Evidence: `work/coordination/alpha-rule-metadata-device-20261111T015021Z/`.
+Ordinary Start reaches Titanic Plains/player/HUD; rules 372, native catalogs and
+source banks 153/153 ready; no first failure, profile/settings hashes retained on update.
+Ordered rule span 0.516632 s: catalog 0.024460 s, book 0.000359 s,
+game-mode family 0.483803 s, registration 0.001480 s; no controlled speedup claim.
+Sampled PSS peak 3.28 GiB; CPU/GPU peak 80.8 C, above 80 C 0.394 s, battery 27 C.
+Process-cold, page cache uncontrolled, profiler off; stopped/asleep, scratch removed,
+lease released/prune passed. Prior art: pinned R2API content phases and J466/J1399.
+Sustained play, audibility, full-pipeline profiling and remaining alpha gates stay open.
