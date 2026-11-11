@@ -12,6 +12,10 @@ import re
 import tempfile
 import importlib.util
 
+_atomic_spec = importlib.util.spec_from_file_location("owner_atomic_io", Path(__file__).with_name("atomic_io.py"))
+ATOMIC = importlib.util.module_from_spec(_atomic_spec)
+_atomic_spec.loader.exec_module(ATOMIC)
+
 
 _spec = importlib.util.spec_from_file_location("owner_alpha_policy", Path(__file__).with_name("alpha_policy.py"))
 ALPHA = importlib.util.module_from_spec(_spec)
@@ -82,7 +86,7 @@ def rebuild(release, *, installer_version, application_id, installed_version, in
     """
     validate(release, installer_version, application_id, installed_version)
     root = Path(root).resolve()
-    root.mkdir(parents=True, exist_ok=True)
+    ATOMIC.mkdirs(root)
     state = root / "release-cache.json"
     previous = json.loads(state.read_text()) if state.exists() else {}
     old = previous.get("entries", {}) if previous.get("input_sha256") == input_sha256 else {}
@@ -93,19 +97,21 @@ def rebuild(release, *, installer_version, application_id, installed_version, in
             raise ValueError("output escapes owner cache")
         cached = old.get(name, {})
         if cached.get("dependencies") != dependencies or not output.is_file() or digest(output) != cached.get("sha256"):
-            output.parent.mkdir(parents=True, exist_ok=True)
+            ATOMIC.mkdirs(output.parent)
             stage = output.with_name(output.name + ".building")
             stage.unlink(missing_ok=True)
-            produce(name, dependencies, stage)
-            if stage.is_symlink() or not stage.is_file():
-                raise ValueError("producer did not produce entry: " + name)
-            stage.replace(output)
+            try:
+                produce(name, dependencies, stage)
+                if stage.is_symlink() or not stage.is_file():
+                    raise ValueError("producer did not produce entry: " + name)
+                ATOMIC.publish(stage, output)
+            finally:
+                ATOMIC.discard(stage)
             changed.append(name)
         rows[name] = {"dependencies": dict(dependencies), "sha256": digest(output)}
-    result = {"input_sha256": input_sha256, "entries": rows}
-    stage = state.with_suffix(".building")
-    stage.write_text(json.dumps(result, sort_keys=True) + "\n")
-    stage.replace(state)
+        # Each verified output is independently resumable after the next producer
+        # fails or is killed; stale/unvisited entries are never granted reuse.
+        ATOMIC.write_json(state, {"input_sha256": input_sha256, "entries": rows})
     return {"rebuilt": changed, "reused": sorted(set(rows) - set(changed)), "outputs": {name: str(root / name) for name in rows}}
 
 

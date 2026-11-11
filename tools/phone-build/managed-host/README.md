@@ -36,10 +36,18 @@ python3 tools/phone-build/managed-host/stage.py \
 ```
 
 This copies the base fixture's C/Hello/target-33 manifest, the new bridge sources,
-the public producer, and API-30 `android.jar` plus build-tools-34.0.0 `d8.jar` and
+the public producer, and API-33 `android.jar` plus build-tools-34.0.0 `d8.jar` and
 `apksigner.jar`. Source drift, links, existing or unowned destinations refuse.
 The source stage contains no game input. SDK jars are compile tools and are not
 packaged into the app. Staging does not approve tool redistribution.
+
+The seven managed-host Java sources compile with `-source 8 -target 8
+-parameters -bootclasspath android.jar`. The API-33 bootclasspath does not
+provide the lambda bootstrap method; callbacks use anonymous interface
+implementations rather than lambdas. `test_owner_phone_flow.py` repeats this
+compile contract when `ANDROID_SDK_ROOT` (or `ANDROID_HOME`) provides API 33.
+It explicitly skips that compile when the SDK jar is absent; it never downloads
+SDK tools or builds an APK.
 
 Invoke the staged builder **on Android** with the previously verified tool
 workspace, public compiler/reference materials and three phone-acquired archives:

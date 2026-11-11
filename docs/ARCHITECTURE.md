@@ -1183,6 +1183,20 @@ checkpoints; PackageInstaller alone establishes installation success.
 [User flow and storage behavior](../tools/phone-build/owner-apk/README.md#phone-only-import-and-installation)
 remain separate from complete game/device qualification.
 
+`owner-apk/atomic_io.py` owns shared private checkpoint writes under each
+caller's existing operation lock: sibling staging, file fsync, rename and parent
+directory fsync. Failure cleanup removes only the owned partial and preserves
+the original error; a post-rename sync failure leaves durability unconfirmed.
+The existing import/release/update owners retain verified-entry retry state.
+`scripts/lab-installer-quota.py` owns the synthetic logical-quota fixture and
+bounded retained-log inspection; setup uses fresh owned scratch and teardown
+keeps local evidence while removing disposable device scratch. Its host/phone
+controls do not qualify real filesystem exhaustion or physical power loss.
+`OwnerInputImport.syncDirectory` uses Android's public read-only open flag,
+then fsync and finally close; it does not reflect a hidden `O_DIRECTORY` field.
+A host Android-API fixture exercises the quota harness through that path,
+including propagation of fsync failure with descriptor cleanup.
+
 Alpha packaging extends these owners rather than adding an installer/signing
 pipeline. `owner-apk/alpha_policy.py` owns fixed alpha identity, durable issued
 codes and retained-release admission; publisher source order is separate from

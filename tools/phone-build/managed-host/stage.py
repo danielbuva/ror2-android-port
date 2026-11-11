@@ -139,6 +139,7 @@ def stage(profile_source, sdk, destination, *, root=ROOT, owner_backend=False, r
         "owner-apk/release_jobs.py",
         "owner-apk/game_import.py",
         "owner-apk/install_flow.py",
+        "owner-apk/atomic_io.py",
         "owner-apk/alpha_policy.py",
         "owner-apk/ProfileStore.java",
         "owner-apk/ProfileRetentionProvider.java",
