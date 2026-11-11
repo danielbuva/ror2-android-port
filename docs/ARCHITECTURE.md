@@ -3926,6 +3926,10 @@ The synchronous preparation call releases that reference on return; family-cache
 relationship registration/restoration remain under their existing owners.
 The shared reader omits unused JSON source-line annotations while retaining the
 same token values, types, property order and parser error handling.
+It reuses a still-live parsed snapshot through a separate weak reference; it
+does not prevent collection. Fresh location setup and session release clear
+that reference, so later sessions read their own generation. Failed parses are
+never cached.
 Provider-root `DefinitionFamily<T>` uses the same reader; its typed selection,
 selected-identity checks and existing family-cache lifetime remain unchanged.
 `test_scoped_definition_manifest.py` exercises the production methods against
@@ -3935,8 +3939,8 @@ checks.
 loading, artifact, item, equipment and body holder binding, and drone/projectile
 registration through `WholePopulationSession` and `WholeCatalogComposed`.
 `WholeCatalogComposed` keeps native population, identity checks and the existing
-field-restoration owner; the local
-snapshot ends before the skins coroutine and adds no retained cache.
+field-restoration owner; the local strong snapshot reference ends before the
+skins coroutine.
 `BodyCatalogSession.RegisterOriginalSkins` uses the existing `TraceStartup` owner
 to bound snapshot, save, native setup to first yield, remaining native coroutine
 and validation. It retains the original coroutine yields, deadline, availability

@@ -181,6 +181,7 @@ public static partial class WholeCatalogComposed
     static IResourceLocator ownedLocator;
     static IResourceLocator[] priorLocators;
     static WeakReference currentManifest;
+    static WeakReference definitionManifest;
     static string activeInputId, activeAttempt, activeManifestSha256;
     static int lastDetachedAssetOperations;
     static HashSet<string> borrowedNames;

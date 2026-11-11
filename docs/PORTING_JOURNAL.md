@@ -3142,3 +3142,19 @@ J1412 native elapsed was 7.875 s/379 frames; uncontrolled page cache, no speedup
 or I/O claim. CPU/GPU peak 83.6 °C, 2.405 s above 80 °C; battery peak 30 °C.
 App/selectors/pending absent, scratch removed, OLED asleep, lease released.
 P1 notified; sustained performance, physical navigation and long play remain open.
+
+## J1414 — Reuse live definition manifests without retaining their graphs
+
+2026-11-11. `WholeCatalogComposed` weakly reuses successful no-line-info parses;
+fresh location setup and release clear the snapshot. Typed roots/identities stay.
+Seven extracted-production tests, Ruff, exact-editor code build and preflight pass.
+Evidence: `work/coordination/alpha-manifest-weak-device-20261111T194622Z/`.
+APK SHA-256 `3e3924b0182198866ad86c1a0068f47a75ff35b85887e41d4b51dee6406f2f92`.
+Ordinary Start reached player/HUD/audio; no runtime errors, profiles/settings kept,
+274 audio files verified, 21 survivors/455 unlockables; native yields unchanged.
+Director manifest 1.090960 → 0.000096 s; results preparation 5.357630 → 1.740466 s.
+These are owner spans: Distant Roost → Titanic Plains and uncontrolled page cache
+prevent a total-loading speedup claim. Prior art: pinned R2API provider/J426.
+CPU/GPU peak 79.6 °C, 0 s above 80 °C; battery peak 30 °C. App/selectors/pending
+absent, scratch removed, OLED asleep, lease released; P1 notified.
+Sustained performance, physical navigation and ordinary long play remain open.
