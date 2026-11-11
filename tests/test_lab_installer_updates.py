@@ -560,7 +560,7 @@ class LabInstallerUpdatesTests(unittest.TestCase):
             .replace(b"launchedFromPackage=" + LAB.PACKAGE.encode(), b"launchedFromPackage=com.android.packageinstaller")
             .replace(
                 b"act=android.settings.MANAGE_UNKNOWN_APP_SOURCES dat=package:" + LAB.PACKAGE.encode(),
-                b"act=android.content.pm.action.CONFIRM_INSTALL flg=0x2000001",
+                b"act=android.content.pm.action.CONFIRM_INSTALL flg=0x2000001 pkg=com.android.packageinstaller",
             )
             .replace(b".PackageInstallerActivity }", b".PackageInstallerActivity (has extras) }")
         )
@@ -596,6 +596,22 @@ class LabInstallerUpdatesTests(unittest.TestCase):
         for data in (self.settings_activity(), self.install_activity() * 2):
             self.assertFalse(all(LAB.install_activity_summary(data, b"7", self.install_displays()).values()))
         self.assertFalse(all(LAB.install_activity_summary(self.install_activity(), b"7", self.settings_displays()).values()))
+
+    def test_install_snapshot_binds_explicit_system_package_to_component(self):
+        activity = self.install_activity()
+        self.assertTrue(all(self.install_verified().values()))
+        without_package = activity.replace(b"pkg=com.android.packageinstaller ", b"")
+        self.assertTrue(all(LAB.install_activity_summary(without_package, b"7", self.install_displays()).values()))
+        for replacement in (
+            b"pkg=another.app",
+            b"pkg=com.android.packageinstaller.other",
+            b"pkg=com.android.packageinstaller pkg=com.android.packageinstaller",
+        ):
+            with self.subTest(replacement=replacement):
+                changed = activity.replace(b"pkg=com.android.packageinstaller", replacement)
+                summary = LAB.install_activity_summary(changed, b"7", self.install_displays())
+                self.assertIs(summary["target_verified"], False)
+                self.assertIs(summary["component_verified"], True)
 
     def test_install_identity_query_keeps_raw_records_private(self):
         phone = self.owned_phone()
@@ -640,6 +656,20 @@ class LabInstallerUpdatesTests(unittest.TestCase):
             redirect_stdout(io.StringIO()),
         ):
             self.assertFalse(phone.confirm_synthetic_install())
+        ui.assert_not_called()
+        self.assertFalse(any(call.args[:2] == ("input", "tap") for call in shell.call_args_list))
+
+    def test_install_consent_stops_on_focused_confirmation_with_wrong_target(self):
+        phone = self.owned_phone()
+        with (
+            patch.object(phone, "require_owned_installer"),
+            patch.object(phone, "install_identity", return_value=self.install_verified() | {"target_verified": False}),
+            patch.object(phone, "ui_windows") as ui,
+            patch.object(phone, "shell") as shell,
+            redirect_stdout(io.StringIO()),
+        ):
+            with self.assertRaisesRegex(LAB.Failure, "^install-consent-target-not-verified$"):
+                phone.confirm_synthetic_install()
         ui.assert_not_called()
         self.assertFalse(any(call.args[:2] == ("input", "tap") for call in shell.call_args_list))
 

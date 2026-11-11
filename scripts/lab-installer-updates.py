@@ -191,6 +191,8 @@ def prompt_activity_summary(data, current_user, displays=None, *, install=False)
         # AOSP android-13.0.0_r1 InstallStart forwards CONFIRM_INSTALL to
         # PackageInstallerActivity with the sealed session in extras. That
         # forward makes the system installer, not the test app, the caller.
+        # PackageInstallerSession sets the package; InstallStart retains it
+        # while adding the component. Both identities must name the same owner.
         component = records["mActivityComponent="][0].removeprefix("mActivityComponent=")
         components = {
             package + "/" + activity: package
@@ -200,7 +202,14 @@ def prompt_activity_summary(data, current_user, displays=None, *, install=False)
         package = components.get(component)
         result["component_verified"] = package is not None and records["packageName="][0] == f"packageName={package} processName={package}"
         caller_package = re.escape(package or "invalid")
-        intent = r"Intent \{ act=android\.content\.pm\.action\.CONFIRM_INSTALL (?:flg=0x[0-9a-fA-F]+ )?cmp=" + re.escape(component) + r" \(has extras\) \}"
+        intent = (
+            r"Intent \{ act=android\.content\.pm\.action\.CONFIRM_INSTALL (?:flg=0x[0-9a-fA-F]+ )?"
+            + r"(?:pkg="
+            + re.escape(package or "invalid")
+            + r" )?cmp="
+            + re.escape(component)
+            + r" \(has extras\) \}"
+        )
     else:
         component = "com.android.settings/.Settings$ManageAppExternalSourcesActivity"
         result["component_verified"] = (
@@ -1206,6 +1215,10 @@ class Phone:
         identity = self.install_identity()
         if not all(identity.values()):
             print(encoded({"mode": "install-prompt-identity", "observed": identity}).decode(), end="", flush=True)
+            if identity.get("target_verified") is False and all(value for key, value in identity.items() if key != "target_verified"):
+                # A verified, focused confirmation with the wrong Intent is a
+                # fixed harness gate, not a launch transition to poll for 20 min.
+                raise Failure("install-consent-target-not-verified")
             return False
         focus_key = self.install_focus_key
         installers = ("com.android.packageinstaller", "com.google.android.packageinstaller")
