@@ -76,6 +76,7 @@ public class ExcludedProvider
 public static partial class WholeCatalogComposed
 {
     static AssetBundle owned = AssetBundle.owner;
+    static WeakReference definitionManifest;
     static readonly Dictionary<string, Object[]> definitionFamilies = new Dictionary<string, Object[]>();
     static readonly Dictionary<FieldInfo, object> priorDefinitionFields = new Dictionary<FieldInfo, object>();
     static void Check(bool value) { if (!value) throw new Exception("Scoped manifest contract differs"); }
@@ -83,6 +84,7 @@ public static partial class WholeCatalogComposed
     {
         Directory.CreateDirectory("payload");
         ManifestParseContract();
+        ManifestWeakCacheContract();
         var type = new Definition { name = "Related" };
         var provider = new Definition { name = "Provider" };
         var player = new GameObject { name = "Player" };
@@ -96,7 +98,7 @@ public static partial class WholeCatalogComposed
             ["keys"] = new JArray(new JObject { ["key"] = "ContentPack:source", ["locations"] = new JArray(1, 2) },
                                   new JObject { ["key"] = "types", ["locations"] = new JArray(1) },
                                   new JObject { ["key"] = "providers", ["locations"] = new JArray(2) }) };
-        File.WriteAllText("payload/whole-catalog.json", data.ToString());
+        WriteManifest(data.ToString());
         var survivor = new RoR2.SurvivorDef { name = "Commando" };
         var unlockable = new RoR2.UnlockableDef { name = "Earned" };
         AssetBundle.assets.Add("survivor", survivor);
@@ -107,7 +109,7 @@ public static partial class WholeCatalogComposed
         ((JArray)data["keys"]).Add(new JObject { ["key"] = "unlockables", ["locations"] = new JArray(4) });
         ((JArray)data["keys"][0]["locations"]).Add(3);
         ((JArray)data["keys"][0]["locations"]).Add(4);
-        File.WriteAllText("payload/whole-catalog.json", data.ToString());
+        WriteManifest(data.ToString());
         var snapshot = ReadDefinitionManifest();
         File.Delete("payload/whole-catalog.json"); // All three operations must use the supplied snapshot.
         var profile = new ProfileScope();
@@ -123,7 +125,7 @@ public static partial class WholeCatalogComposed
         profile.Run(null); // Warm families use no file and emit no trace.
         Check(profile.trace.Count == 0);
         definitionFamilies.Clear();
-        File.WriteAllText("payload/whole-catalog.json", data.ToString());
+        WriteManifest(data.ToString());
         profile.Run(null); // Cold fallback remains supported.
         Check(ReferenceEquals(profile.survivors.Single(), survivor) && ReferenceEquals(profile.unlockables.Single(), unlockable));
         File.Delete("payload/whole-catalog.json");
@@ -159,7 +161,7 @@ public static partial class WholeCatalogComposed
         Check(SourceProvider.ItemRelationshipTypes.Related == null);
         Check(SourceProvider.BodyPrefabs.Player == null);
         data["locations"][0]["path"] = "provider";
-        File.WriteAllText("payload/whole-catalog.json", data.ToString());
+        WriteManifest(data.ToString());
         Check(ReferenceEquals(CategoryFamily("types", new[] { provider }).Single(), provider));
         DefinitionFamilyContract<RoR2.BuffDef>(BuffDefinitions);
         DefinitionFamilyContract<RoR2.ItemDef>(ItemDefinitions);
@@ -184,7 +186,7 @@ public static partial class WholeCatalogComposed
             ["keys"] = new JArray(
                 new JObject { ["key"] = "ContentPack:source", ["locations"] = new JArray(1, 2, 3) },
                 new JObject { ["key"] = label, ["locations"] = new JArray(1, 2) }) };
-        File.WriteAllText("payload/whole-catalog.json", data.ToString());
+        WriteManifest(data.ToString());
         int before = AssetBundle.typedLoads;
         Check(definitions().SequenceEqual(new[] { first, second }));
         Check(AssetBundle.typedLoads == before + 2);
@@ -192,7 +194,7 @@ public static partial class WholeCatalogComposed
         Check(definitions().SequenceEqual(new[] { first, second }));
         Check(AssetBundle.typedLoads == before + 2);
         definitionFamilies.Clear(); // A later catalog generation must reload its own definitions.
-        File.WriteAllText("payload/whole-catalog.json", data.ToString());
+        WriteManifest(data.ToString());
         AssetBundle.assets["second-key"] = null;
         Refuses(() => definitions());
         AssetBundle.assets["second-key"] = second;
@@ -206,7 +208,7 @@ public static partial class WholeCatalogComposed
                             ""a"": ""\u03bb\uD83D\uDE80"" },
             ""duplicate"": 1, ""after"": {}, ""duplicate"": 2
         } // trailing comment";
-        File.WriteAllText("payload/whole-catalog.json", source);
+        WriteManifest(source);
         var expected = JObject.Parse(source);
         var actual = ReadDefinitionManifest();
         Check(JToken.DeepEquals(expected, actual));
@@ -220,7 +222,7 @@ public static partial class WholeCatalogComposed
         Check(actualTokens.All(token => !((Newtonsoft.Json.IJsonLineInfo)token).HasLineInfo()));
         foreach (string invalid in new[] { "{\"unfinished\":", "{\"items\":[1,}", "{} {}", "{} trailing" })
         {
-            File.WriteAllText("payload/whole-catalog.json", invalid);
+            WriteManifest(invalid);
             foreach (Func<JObject> parse in new Func<JObject>[] { () => JObject.Parse(invalid), ReadDefinitionManifest })
             {
                 bool refused = false;
@@ -228,6 +230,37 @@ public static partial class WholeCatalogComposed
                 Check(refused);
             }
         }
+    }
+    static void WriteManifest(string content)
+    {
+        ResetDefinitionManifest();
+        File.WriteAllText("payload/whole-catalog.json", content);
+    }
+    [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.NoInlining)]
+    static WeakReference ReadLiveSnapshot()
+    {
+        var first = ReadDefinitionManifest();
+        Check(ReferenceEquals(first, ReadDefinitionManifest()));
+        return new WeakReference(first);
+    }
+    static void ManifestWeakCacheContract()
+    {
+        WriteManifest("{\"generation\":1}");
+        var snapshot = ReadLiveSnapshot();
+        GC.Collect();
+        GC.WaitForPendingFinalizers();
+        GC.Collect();
+        Check(!snapshot.IsAlive);
+        var first = ReadDefinitionManifest();
+        Check((int)first["generation"] == 1);
+        WriteManifest("{\"generation\":2}");
+        var second = ReadDefinitionManifest();
+        Check(!ReferenceEquals(first, second) && (int)second["generation"] == 2);
+        WriteManifest("{\"unfinished\":");
+        Refuses(() => ReadDefinitionManifest());
+        WriteManifest("{}");
+        Check(ReadDefinitionManifest().Count == 0);
+        ResetDefinitionManifest();
     }
     static void Refuses(Action action)
     {
@@ -251,7 +284,7 @@ public static partial class WholeCatalogComposed
                 new JObject { ["id"] = 12, ["type"] = typeof(T).FullName, ["bundle"] = "source", ["path"] = "first" },
                 new JObject { ["id"] = 13, ["type"] = typeof(T).FullName, ["bundle"] = "source", ["path"] = "excluded" }) };
         definitionFamilies.Clear();
-        File.WriteAllText("payload/whole-catalog.json", data.ToString());
+        WriteManifest(data.ToString());
         int before = AssetBundle.typedLoads;
         var buffs = definitions();
         Check(buffs.Length == 2 && ReferenceEquals(buffs[0], first) && ReferenceEquals(buffs[1], second));
@@ -268,7 +301,7 @@ public static partial class WholeCatalogComposed
         definitionFamilies.Clear();
         data["locations"][0]["path"] = "second";
         data["locations"][1]["path"] = "first";
-        File.WriteAllText("payload/whole-catalog.json", data.ToString());
+        WriteManifest(data.ToString());
         Check(ReferenceEquals(definitions()[0], second));
         definitionFamilies.Clear();
         second.name = first.name;
@@ -281,7 +314,7 @@ public static partial class WholeCatalogComposed
         Refuses(() => definitions());
         AssetBundle.owner.name = "source";
         data["provider_roots"] = new JArray();
-        File.WriteAllText("payload/whole-catalog.json", data.ToString());
+        WriteManifest(data.ToString());
         Refuses(() => definitions());
         definitionFamilies.Clear();
     }

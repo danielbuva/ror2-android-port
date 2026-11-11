@@ -26,6 +26,7 @@ public static class WholeCatalogComposed
     static readonly List<WeakReference> releasedLocators = new List<WeakReference>();
     static readonly List<WeakReference> releasedManifests = new List<WeakReference>();
     static WeakReference currentManifest;
+    static WeakReference definitionManifest;
     static string activeInputId;
     static string activeAttempt;
     static string activeManifestSha256;
@@ -385,6 +386,7 @@ public static class WholeCatalogComposed
     {
         if (!owned || ownedLocator != null)
             throw new Exception("Shared content location ownership invalid");
+        ResetDefinitionManifest();
         string payload = Path.Combine(Application.persistentDataPath, "payload");
         var manifest = JObject.Parse(File.ReadAllText(Path.Combine(payload, "whole-catalog.json")));
         currentManifest = new WeakReference(manifest);
@@ -410,6 +412,7 @@ public static class WholeCatalogComposed
     }
     public static void Release()
     {
+        ResetDefinitionManifest();
         lastDetachedAssetOperations = DetachBorrowedAssetCache();
         if (ownedLocator != null)
         {
@@ -548,13 +551,21 @@ public static class WholeCatalogComposed
     {
         return CategoryFamily(null, category, selected);
     }
-    // Callers preparing related families can share one local parse without
-    // retaining the catalog beyond that synchronous preparation boundary.
+    // Reuse a live read-only snapshot without extending its managed lifetime.
+    internal static void ResetDefinitionManifest()
+    {
+        definitionManifest = null;
+    }
     internal static JObject ReadDefinitionManifest()
     {
+        var manifest = definitionManifest == null ? null : definitionManifest.Target as JObject;
+        if (manifest != null)
+            return manifest;
         // Native family preparation consumes values and order, never source line annotations.
-        return JObject.Parse(File.ReadAllText(Path.Combine(Application.persistentDataPath, "payload", "whole-catalog.json")),
+        manifest = JObject.Parse(File.ReadAllText(Path.Combine(Application.persistentDataPath, "payload", "whole-catalog.json")),
             new JsonLoadSettings { LineInfoHandling = LineInfoHandling.Ignore });
+        definitionManifest = new WeakReference(manifest);
+        return manifest;
     }
     internal static T[] CategoryFamily<T>(JObject manifest, string category, IEnumerable<T> selected)
         where T : UnityEngine.Object
