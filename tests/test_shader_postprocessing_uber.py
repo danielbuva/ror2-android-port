@@ -356,7 +356,11 @@ Pass
             }
             bodies = {
                 "source_camera_prefab": b"m_Resources: {fileID: 1, guid: " + b"a" * 32 + b", type: 2}\nstopNaNPropagation: 1\n",
-                "resource": b"uber: {fileID: 2, guid: " + b"b" * 32 + b", type: 3}\n  lut3DBaker: {fileID: 3, guid: " + b"f" * 32 + b", type: 2}\n",
+                "resource": b"lut3DBaker: {fileID: 4800000, guid: 0123456789abcdef0123456789abcdef, type: 3}\nuber: {fileID: 2, guid: "
+                + b"b" * 32
+                + b", type: 3}\n  lut3DBaker: {fileID: 7200000, guid: "
+                + b"f" * 32
+                + b", type: 2}\n",
                 "shader": b'Shader "Hidden/Dummy" { Pass {} }\n',
                 "profile": b"--- !u!114\n  m_Name: Bloom\n  active: 1\n  enabled:\n    overrideState: 1\n    value: 1\n--- !u!114\n  m_Name: ColorGrading\n  active: 1\n  enabled:\n    overrideState: 1\n    value: 0\n--- !u!114\n  m_Name: AutoExposure\n  active: 1\n  enabled:\n    overrideState: 1\n    value: 0\n",
             }

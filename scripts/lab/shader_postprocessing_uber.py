@@ -168,10 +168,22 @@ def validate_programs(export: Path, files: dict[str, bytes], recipe: dict) -> No
             or parse_guid(meta) != row["source_guid"]
             or digest_bytes(package) != row["package_sha256"]
             or digest_bytes(package_meta) != row["package_meta_sha256"]
-            or re.findall(r"(?m)^\s*" + re.escape(row["field"]) + r": \{fileID: [0-9-]+, guid: ([0-9a-f]{32}), type: [0-9]+\}$", resource)
+            or re.findall(
+                r"(?m)^\s*"
+                + re.escape(row["field"])
+                + r": \{fileID: "
+                + ("7200000" if row["kernels"] else "4800000")
+                + r", guid: ([0-9a-f]{32}), type: [0-9]+\}$",
+                resource,
+            )
             != [row["source_guid"]]
         ):
             raise RuntimeError("Source camera program/resource identity changed: " + row["field"])
+        if not row["kernels"]:
+            source_names = re.findall(r'Shader\s+"([^\"]+)"', source.read_text(encoding="utf-8"))
+            package_names = re.findall(r'Shader\s+"([^\"]+)"', package.decode("utf-8"))
+            if len(source_names) != 1 or source_names != package_names:
+                raise RuntimeError("Original and public shader names differ: " + row["field"])
         if row["kernels"]:
             native = re.findall(r"(?m)^ +name: (\S+)$", source.read_text(encoding="utf-8"))
             kernels = re.findall(r"(?m)^\s*#pragma kernel (\w+)", package.decode("utf-8"))

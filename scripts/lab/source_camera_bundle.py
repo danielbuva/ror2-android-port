@@ -15,6 +15,12 @@ def build(target):
     request = json.loads(Path(target).read_text())
     config = json.loads((WORK / "config/reconstruction.json").read_text())
     candidate, manifest = generate_candidate(WORK, ROOT / config["projects"][0], config["input_id"], allow_create=False)
+    if "source_guids" in request:
+        wanted = set(request["source_guids"])
+        programs = [row for row in manifest["programs"] if row["source_guid"] in wanted]
+        if not wanted or {row["source_guid"] for row in programs} != wanted:
+            raise ValueError("Requested source camera program GUIDs are absent")
+        manifest = {**manifest, "programs": programs}
     output = Path(request["output"]).resolve()
     if not output.is_relative_to(WORK):
         raise ValueError("Program bundle output must stay under ignored work")
