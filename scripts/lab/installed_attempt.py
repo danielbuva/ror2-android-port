@@ -79,7 +79,15 @@ def attempt_from_installed(installed: dict, *, loader=None) -> str:
             import UnityPy
         except ImportError as exc:
             raise RuntimeError("UnityPy is unavailable to inspect the installed APK") from exc
-        loader = UnityPy.load
+
+        def loader(snapshot):
+            # APK ZIP headers include a version field before the first NUL.
+            # UnityPy's generic byte signature detection misses those archives;
+            # its explicit archive reader still parses their serialized assets.
+            env = UnityPy.Environment()
+            env.load_zip_file(snapshot)
+            return env
+
     try:
         # Parse the exact byte snapshot whose digest was verified above.
         env = loader(apk_bytes)
