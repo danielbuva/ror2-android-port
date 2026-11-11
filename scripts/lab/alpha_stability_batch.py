@@ -171,16 +171,21 @@ class _GameThermalOwner:
             else:
                 if not self.runtime_zones:
                     raise RuntimeError("Runtime thermal sampling requires admission discovery")
-                # One cat reads every admitted readable physical sensor. Reading
-                # each unsupported sysfs interface again can itself take seconds.
+                # One ADB transaction reads admitted sensors and battery state.
+                # A second client startup consumed part of the one-second budget.
                 command = "cat " + " ".join(shlex.quote(path) for _, path in self.runtime_zones)
-                raw = self.device.cmd("shell", command, timeout=0.7)
+                raw = self.device.cmd("shell", command + " && printf '\\n__LAB_BATTERY__\\n' && dumpsys battery", timeout=1)
                 observation["runtime_raw"] = raw
-                values = raw.splitlines()
+                sensors, separator, battery = raw.partition("\n__LAB_BATTERY__\n")
+                if not separator:
+                    raise RuntimeError("Missing runtime battery boundary")
+                values = sensors.rstrip("\n").splitlines()
+                self.battery = battery_observation(battery)
                 if len(values) != len(self.runtime_zones) or any(len(value.split()) != 1 for value in values):
                     raise RuntimeError("Malformed runtime thermal observation")
                 text = "\n".join(name + "\t" + value + "\t" + path for (name, path), value in zip(self.runtime_zones, values))
-            self.battery = battery_observation(self.device.sh("dumpsys", "battery", timeout=0.7))
+            if all_zones:
+                self.battery = battery_observation(self.device.sh("dumpsys", "battery", timeout=0.7))
             observation["battery"] = self.battery
             if all_zones:
                 self.battery_current_now = self.battery_current()

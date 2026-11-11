@@ -3006,3 +3006,14 @@ Evidence: this commit; 146 focused host tests and Ruff pass. Host preflight reta
 the known worktree-local configuration gap; no build, install or gameplay rerun.
 No APK change or new gameplay evidence. Repeated-session completion, memory plateau,
 physical navigation and unassisted qualification remain open.
+
+## J1404 — Combine runtime thermal and battery reads
+
+2026-11-11. Existing thermal owner reads all admitted sensors and battery service
+in one bounded ADB transaction, reducing two client startups to one per sample.
+Its one-second timeout leaves measured gaps above one second invalid; sensor
+cardinality, battery completeness and existing safety thresholds remain required.
+Evidence: this commit; 54 focused host tests and Ruff pass, including real shell
+framing, sensor read failure and a 0.8-second read followed by a rejected gap.
+Doctor/preflight retain known worktree-local configuration gaps. No device rerun,
+APK change or gameplay qualification; isolated ADB-stall root cause remains open.
