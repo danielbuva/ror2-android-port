@@ -2996,3 +2996,13 @@ APK `04df664f66d5ebc32cbc477865e9bfb6a16bfdf1120603b0f2f2f99a310a680d`, source `
 Focused 291 host tests/Ruff/preflight passed; prior art J391/J609 and pinned R2API release lifetimes.
 No new runtime gameplay code. Assisted evidence; physical navigation and sustained qualification open.
 Terminal readback verified stopped/asleep, selectors absent and lease released; prune applied.
+
+## J1403 — Preserve session process transport failures
+
+2026-11-11. Shared session process checks reuse the baseline's checked PID observer;
+legitimate no-process remains distinct from command/transport failure. The memory runner
+records transport loss as runner-error and cleanup cannot claim unobserved termination.
+Evidence: this commit; 146 focused host tests and Ruff pass. Host preflight retains
+the known worktree-local configuration gap; no build, install or gameplay rerun.
+No APK change or new gameplay evidence. Repeated-session completion, memory plateau,
+physical navigation and unassisted qualification remain open.

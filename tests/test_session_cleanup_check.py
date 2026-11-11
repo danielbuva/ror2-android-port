@@ -224,6 +224,8 @@ class FakeDevice:
         return True
 
     def sh(self, *args, **_kwargs):
+        if args[:2] == ("sh", "-c") and args[2].startswith("value=$(pidof "):
+            return "pid:" + self.pid if self.alive else "absent"
         if args[:2] == ("sh", "-c"):
             path = args[2].split("[ -L ", 1)[1].split(" ];", 1)[0]
             return "file" if path in self.remote else "absent"
@@ -360,6 +362,18 @@ def session_one_defeat_report():
 
 
 class SessionCleanupCheckTests(unittest.TestCase):
+    def test_same_process_requires_checked_pid_observation(self):
+        for output, expected in (("pid:314", True), ("pid:315", False), ("absent", False)):
+            with self.subTest(output=output):
+                device = mock.Mock()
+                device.sh.return_value = output
+                self.assertIs(runner._same_process(device, "314"), expected)
+                self.assertEqual(device.sh.call_args.args[:2], ("sh", "-c"))
+                self.assertNotEqual(device.sh.call_args.kwargs.get("check"), False)
+        device.sh.side_effect = RuntimeError("adb: device not found")
+        with self.assertRaisesRegex(RuntimeError, "device not found"):
+            runner._same_process(device, "314")
+
     def test_cli_accepts_skill_variants_for_existing_three_actions(self):
         main_path = Path(__file__).resolve().parents[1] / "scripts/lab/main.py"
         for action in ("survivor-kit-check", "session-cleanup-check", "session-abandon-check"):
