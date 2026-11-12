@@ -277,7 +277,7 @@ public sealed partial class PortSession
                 component.enabled = false;
             }
             if (automaticModel)
-                PrepareAutomaticModel(body);
+                PrepareAutomaticModel(body, cfg);
             machine.enabled = true;
             if (movingMotor)
                 motor.enabled = true;

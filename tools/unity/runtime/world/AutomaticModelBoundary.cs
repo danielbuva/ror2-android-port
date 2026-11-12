@@ -13,7 +13,7 @@ public sealed partial class PortSession
     {
         return IsNovaInput() || IsAutomaticSkill() || r.id.StartsWith("body-state-spawn-state-auto-model-");
     }
-    void PrepareAutomaticModel(CharacterBody body)
+    void PrepareAutomaticModel(CharacterBody body, SessionConfig cfg)
     {
         var locator = body.modelLocator;
         var model = locator.modelTransform;
@@ -26,6 +26,21 @@ public sealed partial class PortSession
               "Recovered model lifecycle settings changed");
         ownedDetachedModel = model.gameObject;
         model.gameObject.SetActive(false); // Detachment must not activate the unproven child callbacks.
+        if (IsPlayableSpine() && !SelectedSourceSurvivor())
+        {
+            // BaseCharacterMain snapshots available Animator parameters on entry.
+            // Bind the artifact-backed Commando assets before enabling the body state
+            // machine; waiting for the display leaves locomotion disabled until a roll.
+            var animator = model.GetComponent<Animator>();
+            var controller = artifactBundle.LoadAsset<RuntimeAnimatorController>(cfg.displayAssets[0]);
+            var avatar = artifactBundle.LoadAsset<Avatar>(cfg.displayAssets[1]);
+            Check(animator && controller && avatar, "Original Commando animation assets unavailable before spawn");
+            animator.runtimeAnimatorController = controller;
+            animator.avatar = avatar;
+            var parameters = CharacterAnimParamAvailability.FromAnimator(animator);
+            Check(parameters.isMoving && parameters.forwardSpeed && parameters.rightSpeed,
+                  "Original Commando locomotion parameters unavailable before main-state entry");
+        }
         r.modelTarget = model.name;
         r.modelParent = locator.modelBaseTransform.name;
         Save();

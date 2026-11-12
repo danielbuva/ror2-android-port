@@ -100,6 +100,14 @@ async def _main():
                 evidence["result"] = await call("execute_menu_item", {"menu_path": "Porting Lab/Inspect Catalog Addresses"})
             elif action == "reference-identities":
                 evidence["result"] = await call("execute_menu_item", {"menu_path": "Porting Lab/Inspect Reference Identities"})
+            elif action == "commando-animation-host":
+                evidence["result"] = await call(
+                    "execute_code",
+                    {
+                        "action": "execute",
+                        "code": 'if(EditorApplication.isUpdating||EditorUtility.scriptCompilationFailed)throw new System.Exception("Current editor source is not compiled and idle");return SurvivorSkillInputHost.VerifyInactiveAnimatorParameterSnapshot();',
+                    },
+                )
             elif action == "siren-input-host":
                 evidence["result"] = await call(
                     "execute_code",

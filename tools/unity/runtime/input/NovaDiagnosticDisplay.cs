@@ -22,6 +22,9 @@ public sealed class NovaDiagnosticDisplay : IDisposable
     public AndroidPresentationCamera.Report presentationCameraReport = new AndroidPresentationCamera.Report();
     RoR2.AimAnimator nativeAim;
     Animator nativeAnimator;
+    static readonly System.Reflection.FieldInfo movementParameters =
+        typeof(EntityStates.BaseCharacterMain).GetField("characterAnimParamAvailability",
+            System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
     AndroidNativeSourceSkinLifecycle nativeSourceSkinLifecycle;
     AndroidNativeSourceCameraRigOwner nativeCameraRigOwner;
     bool sourceSkinLifecycleDiagnostic;
@@ -52,8 +55,24 @@ public sealed class NovaDiagnosticDisplay : IDisposable
         if (nativeAim)
             nativeAim.enabled = true;
     }
-    public void ObserveNativeAim(PortSession.NovaReport report)
+    public void ObserveNativeAim(PortSession.NovaReport report, RoR2.EntityStateMachine machine)
     {
+        var main = machine.state as EntityStates.BaseCharacterMain;
+        report.nativeMovementState = machine.state.GetType().FullName;
+        report.nativeMovementCacheAvailable = main != null && nativeAnimator;
+        if (report.nativeMovementCacheAvailable)
+        {
+            var cached = (RoR2.CharacterAnimParamAvailability)movementParameters.GetValue(main);
+            report.nativeMovementCachedIsMoving = cached.isMoving;
+            report.nativeMovementCachedForwardSpeed = cached.forwardSpeed;
+            report.nativeMovementCachedRightSpeed = cached.rightSpeed;
+            report.animatorIsMoving = nativeAnimator.GetBool("isMoving");
+            report.animatorForwardSpeed = nativeAnimator.GetFloat("forwardSpeed");
+            report.animatorRightSpeed = nativeAnimator.GetFloat("rightSpeed");
+            var state = nativeAnimator.GetCurrentAnimatorStateInfo(0);
+            report.animatorBaseStateHash = state.fullPathHash;
+            report.animatorBaseStateTime = state.normalizedTime;
+        }
         if (!nativeAim)
             return;
         report.originalAimAnimator = nativeAim.isActiveAndEnabled;
@@ -218,8 +237,11 @@ public sealed class NovaDiagnosticDisplay : IDisposable
             }
             else if (!sourceSelected)
             {
-                animator.runtimeAnimatorController = bundle.LoadAsset<RuntimeAnimatorController>(assets[0]);
-                animator.avatar = bundle.LoadAsset<Avatar>(assets[1]);
+                // AutomaticModelBoundary binds these before native main-state entry.
+                // Reassigning here is too late for its cached locomotion parameters.
+                if (animator.runtimeAnimatorController != bundle.LoadAsset<RuntimeAnimatorController>(assets[0]) ||
+                    animator.avatar != bundle.LoadAsset<Avatar>(assets[1]))
+                    throw new Exception("Original Commando animation binding changed after spawn");
             }
             // Opt-in source models leave both controller/avatar fields native-owned.
             // ModelSkinController's typed async provider supplies them through the selected SkinDef.

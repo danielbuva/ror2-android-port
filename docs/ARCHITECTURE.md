@@ -6983,3 +6983,13 @@ IDs and bodies while allowing Unity's context-package string lookup to resolve
 when installing the disposable converted package. Setup uses the verified SDK
 resource table; output hashes record the transformed entry. No runtime state or
 new lifecycle owner is added.
+
+Commando animation preparation stays in `AutomaticModelBoundary`: the artifact
+controller/avatar bind while the model is inactive, before the body state machine
+is enabled. The native `BaseCharacterMain` then snapshots locomotion parameters
+on its first entry. `NovaDiagnosticDisplay` preserves that binding and reports the
+native movement cache and Animator state; its existing disposal owns teardown.
+`./dev editor --target lab --action commando-animation-host` is a current exact-editor
+contract check for native parameter discovery on an inactive, bound Animator
+(`SurvivorSkillInputHost.VerifyInactiveAnimatorParameterSnapshot`); gameplay remains
+a device gate.

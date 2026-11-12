@@ -55,6 +55,37 @@ public static class SurvivorSkillInputHost
         bridge.diagnosticPrimary = bridge.diagnosticSecondary = bridge.diagnosticUtility = bridge.diagnosticSpecial = true;
     }
 
+    // Exact-editor check for the pre-spawn contract used by AutomaticModelBoundary.
+    // The native state queries this metadata while the detached model is inactive.
+    public static object VerifyInactiveAnimatorParameterSnapshot()
+    {
+        Require(!EditorApplication.isPlaying && !EditorApplication.isCompiling,
+                "Require idle exact editor for inactive Animator metadata");
+        var model = new GameObject("inactive-animation-contract");
+        model.SetActive(false);
+        var controller = ScriptableObject.CreateInstance<UnityEditor.Animations.AnimatorController>();
+        try
+        {
+            controller.AddParameter("isMoving", AnimatorControllerParameterType.Bool);
+            controller.AddParameter("forwardSpeed", AnimatorControllerParameterType.Float);
+            controller.AddParameter("rightSpeed", AnimatorControllerParameterType.Float);
+            var animator = model.AddComponent<Animator>();
+            var before = CharacterAnimParamAvailability.FromAnimator(animator);
+            Require(!before.isMoving && !before.forwardSpeed && !before.rightSpeed,
+                    "Unbound fixture unexpectedly exposes locomotion parameters");
+            animator.runtimeAnimatorController = controller;
+            var after = CharacterAnimParamAvailability.FromAnimator(animator);
+            Require(!model.activeInHierarchy && after.isMoving && after.forwardSpeed && after.rightSpeed,
+                    "Native locomotion snapshot requires active model or lost bound controller metadata");
+            return new { inactiveModel = true, nativeParameterSnapshot = true, nativeGameplayTested = false };
+        }
+        finally
+        {
+            UnityEngine.Object.DestroyImmediate(model);
+            UnityEngine.Object.DestroyImmediate(controller);
+        }
+    }
+
     public static object Run()
     {
         Require(!EditorApplication.isPlaying && !EditorApplication.isCompiling && !NetworkServer.active && !NetworkClient.active,
