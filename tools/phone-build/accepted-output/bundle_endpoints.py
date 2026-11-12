@@ -7,38 +7,19 @@ This reader cannot turn discovery rows into endpoint admission.
 """
 
 import hashlib
+import importlib.util
 import json
 from pathlib import Path
 
 
+SPEC = importlib.util.spec_from_file_location("endpoint_script_identity", Path(__file__).resolve().parents[3] / "scripts/lab/script_identity.py")
+SCRIPT = importlib.util.module_from_spec(SPEC)
+SPEC.loader.exec_module(SCRIPT)
+
+
 def managed_production(pins, provider_pin, receipt_pin):
-    """Retain a produced cohort or a pinned single-gameplay-assembly refresh."""
-    providers = pins.read(provider_pin)
-    receipt = pins.read(receipt_pin)
-    if receipt.get("success") is not True or receipt.get("phase") not in ("managed-produced", "gameplay-refreshed"):
-        raise ValueError("fresh successful managed production required")
-    if "providers_sha256" in receipt and receipt["providers_sha256"] != provider_pin["sha256"]:
-        raise ValueError("managed production provider manifest differs")
-    if receipt["phase"] == "gameplay-refreshed":
-        if receipt.get("providers_sha256") != provider_pin["sha256"] or (receipt.get("provider_count"), receipt.get("reused_provider_count")) != (
-            len(providers),
-            len(providers) - 1,
-        ):
-            raise ValueError("gameplay refresh provider manifest/count differs")
-        base_pin = receipt["base_providers"]
-        base_path = pins.path(base_pin["path"], pins.pin(receipt_pin).parent)
-        base = json.loads(pins.add(base_path, dict(bytes=base_path.stat().st_size, sha256=base_pin["sha256"])).read_bytes())
-        if set(base) != set(providers) or "Assembly-CSharp.dll" not in providers:
-            raise ValueError("gameplay refresh provider membership differs")
-        if any(value["sha256"] != base[name]["sha256"] for name, value in providers.items() if name != "Assembly-CSharp.dll"):
-            raise ValueError("gameplay refresh changed a reused provider")
-        gameplay = receipt["gameplay"]
-        produced = providers["Assembly-CSharp.dll"]
-        if gameplay["sha256"] != produced["sha256"] or pins.path(gameplay["path"], pins.pin(receipt_pin).parent) != pins.path(
-            produced["path"], pins.pin(provider_pin).parent
-        ):
-            raise ValueError("gameplay refresh output differs")
-    return providers
+    """Use the registry owner's common produced/refresh admission contract."""
+    return SCRIPT.managed_providers(pins, provider_pin, receipt_pin)
 
 
 def generate_managed(request_path, output):

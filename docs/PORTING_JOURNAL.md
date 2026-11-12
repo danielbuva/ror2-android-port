@@ -6,6 +6,19 @@ under ignored `work/coordination/`, not here. Entries J01–J1177 (2026-09-12 to
 [history/journal-J1-J1177/PORTING_JOURNAL.md](history/journal-J1-J1177/PORTING_JOURNAL.md) with its
 [index](history/journal-J1-J1177/JOURNAL_INDEX.md); numbering continues here.
 
+## J1465 — Bind managed dependency refreshes to their produced cohort
+
+2026-11-12. The existing CLR witness reader accepts explicitly listed rebuilt
+dependencies alongside gameplay, checking their paths/hashes and honest reuse
+counts while preserving every unlisted provider hash. Legacy gameplay-only
+receipts remain valid. This permits current gameplay to consume its matching
+audio-owner API instead of a retained assembly missing startup members.
+Final registry generation shares this validation, retaining source-commit,
+compiled-source and actual CLR provider checks without relabelling receipts.
+Evidence: `tests/test_sdk_metadata_inventory_host.py` receipt fixtures.
+Remaining: fresh production, final registry/graph admission, typed load and
+converted-device play; this host contract establishes none of those gates.
+
 ## J1178 — Journal archived and documentation slimmed
 
 2026-10-26. The 3.8 MB, 1,132-entry journal and its index moved unchanged to `docs/history/journal-J1-J1177/`;
