@@ -120,6 +120,56 @@ package is a public-alpha integration boundary, not an Android shell, new
 build pipeline or runtime owner. Setup, lifecycle and acceptance gates are in
 its README; the existing owner-built delivery route remains unchanged.
 
+`tools/phone-build/owner-apk/graphics/` owns the optional graphics-driver
+foundation: bounded private ZIP staging, reviewed Turnip release pins, driver-hash
+cache identity, a provider boundary and durable pre-native launch/fallback state.
+The tool-host preview includes these owners, but Unity is not connected; System
+remains unchanged. Its
+[handoff](../tools/phone-build/owner-apk/graphics/README.md) records setup, teardown,
+prior art and the pending native/Android/Thor acceptance gates. Custom load failure
+requires process restart, never hot-swapping a live Vulkan driver.
+`GraphicsDriverProviders` owns picker choices, the empty reviewed-release catalog,
+explicit verified next-launch selection/reset and separate active-driver display
+data. System is the default; unconnected Turnip and the PanVK stub stay unavailable.
+It performs no native load or Android setting write. Real active details require
+Unity's actual Vulkan physical device; a saved preference is not runtime evidence.
+`managed-host/OwnerGraphicsPicker.java` is the explicit tool-host preview dialog.
+It owns app-private preference display/reset, source/license explanations and a
+resolved system Developer-options shortcut, never global setting writes. It is
+not connected to the separately installed game. The tool-host activity owns its
+dialog lifetime. `GraphicsDriverFixture` admits only the debuggable owned test
+package and fixed non-executable ELF bytes; it cleans its temporary verification
+stage and never selects/loads a driver. The managed-host staging owner's single
+`JAVA_SOURCES` list binds both APK compilation and the Android bootclasspath test.
+`scripts/lab-graphics-picker.py` owns the serialized synthetic picker smoke. It
+reuses exact-source toolhost receipt/hash, actual debug-manifest admission and
+installer storage/cleanup ownership; it never runs the installer acceptance flow.
+Each tap/scroll requires the owned top-resumed activity, display-0 window focus
+and unique accessibility control. It injects only authored fixture bytes, reports
+fixed cases, and retains private diagnostics locally. No real driver or Settings
+action occurs; a phone result is separate from host tests.
+Its host-only notification inspector reads retained G evidence and emits fixed
+button classifications without device actions or tap-policy changes. Future
+diagnostics retain the runner ID; the first run's unique source/time candidate
+is explicitly weaker than that binding and refuses ambiguous selection.
+Only the picker cold restart opts into the exact repeated-notification denial
+control, after a prior ordinary denial in the same owned run. The installer
+owner checks hash ownership/focused UI and records its distinct user-fixed effect;
+default notification handling and permission-grant opt-ins remain unchanged.
+`scripts/inspect-graphics-driver-sdk.py` and its authored native compile fixture
+check the installed version's V1 Vulkan callback with the bundled Android NDK.
+The check emits fixed results/hashes, creates no output artifacts and performs no
+Editor/device action; runtime preload order and exact revision remain unverified.
+`graphics/native/GraphicsDriverPreload.cpp` is an isolated qualification observer
+that retains Unity's original resolver and exposes fixed initialization-order
+flags. It is not packaged by the launcher, opens no custom driver and does not
+attest a completed frame. Executed host interface doubles test ordering only.
+`scripts/build-graphics-preload-fixture.py` owns the subsequent isolated SDK-only
+Android build with explicit preload import settings, source/native/APK binding,
+the shared Unity mutex and private outputs. Its authored `GraphicsPreloadFixture`
+managed reader records ordering flags only. It never installs or runs the package;
+actual Android preload and custom-driver/frame acceptance remain separate gates.
+
 Public alpha delivery: [ADR-002](ADR-002-public-alpha-distribution.md) accepts
 owner-built APKs and locally reconstructed content; [public-alpha.md](public-alpha.md)
 holds open release work. ADR-001's architecture C and the runtime pipeline below

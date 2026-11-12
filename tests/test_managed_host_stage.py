@@ -43,6 +43,8 @@ class ManagedHostStageTests(unittest.TestCase):
         self.assertEqual((self.destination / "repo/source.py").read_bytes(), (self.profile / "source.py").read_bytes())
         for name, expected in result["files"].items():
             self.assertEqual(hashlib.sha256((self.destination / name).read_bytes()).hexdigest(), expected)
+        for name in stage.JAVA_SOURCES:
+            self.assertEqual((self.destination / Path(name).name).read_bytes(), (stage.SOURCE / name).read_bytes())
         self.assertEqual(json.loads((self.destination / "stage-receipt.json").read_text()), result)
         for name in (
             "OwnerInstaller.java",
@@ -143,6 +145,10 @@ class ManagedHostStageTests(unittest.TestCase):
         value = ET.parse(output).getroot()
         android = "{http://schemas.android.com/apk/res/android}"
         self.assertEqual([node.attrib[android + "name"] for node in value.findall("queries/package")], ["example.authored.game"])
+        self.assertEqual(
+            [node.attrib[android + "name"] for node in value.findall("queries/intent/action")],
+            ["android.settings.APPLICATION_DEVELOPMENT_SETTINGS"],
+        )
         with self.assertRaisesRegex(ValueError, "separate lab tool"):
             stage.tool_manifest(stage.SOURCE / "AndroidManifest.xml", output, "dev.ror2lab.authoredtool", game_package="dev.ror2lab.authoredtool")
 
