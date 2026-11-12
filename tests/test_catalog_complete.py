@@ -65,6 +65,16 @@ class CatalogCompletionTests(unittest.TestCase):
         self.assertEqual(edges[0]["subobject_type"], "UnityEngine.Mesh, UnityEngine.CoreModule")
         self.assertEqual(edges[1]["field"], ["preloadGUIDReferences", 0])
 
+    def test_deferred_subobject_type_filters_siblings_without_dropping_assembly(self):
+        mesh = dict(id=1, type="UnityEngine.Mesh, UnityEngine.CoreModule, Version=0.0.0.0")
+        other_assembly = dict(id=2, type="UnityEngine.Mesh, OtherAssembly")
+        avatar = dict(id=3, type="UnityEngine.Avatar, UnityEngine.AnimationModule")
+        candidates = [avatar, other_assembly, mesh]
+        edge = dict(subobject_type="UnityEngine.Mesh, UnityEngine.CoreModule")
+        self.assertEqual(C.deferred_reference_locations(edge, candidates), [mesh])
+        self.assertEqual(C.deferred_reference_locations({}, candidates), candidates)
+        self.assertEqual(C.deferred_reference_locations(dict(subobject_type="Absent, Assembly"), candidates), [])
+
     def test_sprite_ownership_uses_resolved_texture_not_preload_or_name(self):
         members = C.ProducedMembers()
         typ = dict(class_id=213, tree=b"schema")

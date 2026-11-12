@@ -86,6 +86,25 @@ def deferred_references(tree):
     yield from visit(tree, ())
 
 
+def deferred_reference_locations(edge, locations):
+    """Keep the requested AssetReference subobject type, including its assembly.
+
+    A GUID can advertise a model, meshes, avatar and controller behaviours at
+    once. Version qualifiers do not select a different CLR type, but assembly
+    identity does. Missing type metadata retains all candidates for subsequent
+    native identity/ownership resolution; it never selects the first sibling.
+    """
+    requested = edge.get("subobject_type")
+    if not requested:
+        return list(locations)
+
+    def identity(value):
+        return tuple(part.strip() for part in value.split(",")[:2])
+
+    expected = identity(requested)
+    return [location for location in locations if identity(location["type"]) == expected]
+
+
 def text(stream):
     (size,) = W.B.unpack(stream, "<I")
     value = W.B.exact(stream, size).decode("utf-8")
