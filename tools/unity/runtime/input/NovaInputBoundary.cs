@@ -497,7 +497,7 @@ public sealed partial class PortSession
                 if (cfg.integratedWorld)
                 {
                     UnityEngine.Rendering.OnDemandRendering.renderFrameInterval = priorRenderFrameInterval;
-                    Application.targetFrameRate = 300;
+                    coordinator.GetOfflineApplicationSession().ReapplyDisplayPreference();
                     Debug.Log("Integrated playing presentation interval=" + UnityEngine.Rendering.OnDemandRendering.renderFrameInterval +
                               " targetFrameRate=" + Application.targetFrameRate + " at=" + Time.realtimeSinceStartup);
                     coordinator.r.performance =
@@ -1120,7 +1120,7 @@ public sealed partial class PortSession
                         solver.SetGroundSolvingActivation(false);
                     }
                     coordinator.worldView = null;
-                    Application.targetFrameRate = priorTargetFrameRate;
+                    coordinator.GetOfflineApplicationSession().RestoreGameplayFrameRate(priorTargetFrameRate);
                     if (ownsScreenSleepTimeout)
                         Screen.sleepTimeout = sleepTimeout;
                 }

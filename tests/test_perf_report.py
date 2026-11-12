@@ -33,6 +33,72 @@ def fixture():
 
 
 class PerfReportTests(unittest.TestCase):
+    def test_camera_disabled_trace_accepts_unity_empty_name_and_retains_identity_checks(self):
+        session, _ = fixture()
+        session.update(attempt="authored", raw_frame_trace=None)
+        completed = dict(attempt="authored", framePacing=dict(rawFrameTrace="", samples=[]))
+        self.assertEqual(perf.analyze(session, [], completed=completed)["camera_profile"]["windows"], 0)
+        completed["framePacing"]["rawFrameTrace"] = "other.bin"
+        with self.assertRaises(ValueError):
+            perf.analyze(session, [], completed=completed)
+        completed.update(attempt="other", framePacing=dict(rawFrameTrace="", samples=[]))
+        with self.assertRaises(ValueError):
+            perf.analyze(session, [], completed=completed)
+
+    def test_camera_windows_exclude_boundaries_and_weight_actual_recorder_counts(self):
+        session, _ = fixture()
+        session["attempt"] = "authored"
+        session["raw_frame_trace"] = dict(file="authored.bin")
+        rows = []
+        for frames, seconds, count, value, collections in (
+            (990, 0, 1, 999, 0),
+            (1005, 1, 1, 999, 1),
+            (1100, 2, 1, 10, 2),
+            (1200, 3, 3, 20, 4),
+            (1310, 4, 1, 999, 5),
+        ):
+            rows.append(
+                dict(
+                    frames=frames,
+                    seconds=seconds,
+                    gcCollections=collections,
+                    frameTimingSamples=count,
+                    gpuTimingSamples=count,
+                    mainTimingSamples=count,
+                    renderTimingSamples=count,
+                    gcAllocSamples=count,
+                    renderCounterSamples=count,
+                    **{
+                        name: value
+                        for name in (
+                            "sampledCpuMs",
+                            "sampledGpuMs",
+                            "sampledMainActiveMs",
+                            "sampledGcAllocBytes",
+                            "sampledDrawCalls",
+                            "sampledSetPassCalls",
+                            "sampledVertices",
+                        )
+                    },
+                    sampledRenderActiveMs=0,
+                )
+            )
+        completed = dict(attempt="authored", framePacing=dict(rawFrameTrace="authored.bin", samples=rows))
+        report = perf.analyze(session, [], completed=completed)
+        profile = report["camera_profile"]
+        self.assertEqual((profile["first_frame"], profile["last_frame"], profile["observed_seconds"]), (1006, 1200, 2))
+        self.assertEqual(profile["gc_collections"], 3)
+        self.assertEqual(profile["metrics"]["main_thread_ms"], dict(samples=4, windows=2, positive_windows=2, weighted_mean=17.5))
+        self.assertEqual(profile["metrics"]["render_thread_ms"]["positive_windows"], 0)
+        text = perf.markdown(report)
+        self.assertIn("17.50 | 4 | 2 / 2", text)
+        self.assertIn("do not establish zero rendering cost", text)
+        self.assertIn("not GC duration", text)
+        completed["attempt"] = "other"
+        with self.assertRaises(ValueError):
+            perf.analyze(session, [], completed=completed)
+        self.assertIsNone(perf.analyze(session, [])["camera_profile"])
+
     def test_proposed_targets_compare_unrounded_values_and_preserve_unknown_quantiles(self):
         window = dict(average_fps=59.9999, frames=10000, over50ms=101)
         comparison = perf.proposed_pacing_comparison(window, dict(p50=16.67, p95=33.334, p99=50), 1800, 1800)

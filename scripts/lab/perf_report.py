@@ -181,7 +181,53 @@ def proposed_pacing_comparison(window, quantiles, observed_seconds, required_sec
     )
 
 
-def analyze(session, thermal, raw_trace=None):
+def camera_profile(session, completed):
+    """Summarize retained recorder windows, without inventing per-frame attribution."""
+    camera = completed["framePacing"]
+    if completed["attempt"] != session["attempt"] or (camera.get("rawFrameTrace") or None) != (session.get("raw_frame_trace") or {}).get("file"):
+        raise ValueError("Completed camera report belongs to a different sustained session")
+    first, last = session["samples"][0], session["samples"][-1]
+    # Each camera row contains means since the preceding row. Do not admit a
+    # partial boundary window, weight every row equally, or count repeated copies.
+    windows = [(a, b) for a, b in zip(camera["samples"], camera["samples"][1:]) if first["pacing_frames"] <= a["frames"] < b["frames"] <= last["pacing_frames"]]
+    metrics = {}
+    for name, value, count in (
+        ("cpu_frame_ms", "sampledCpuMs", "frameTimingSamples"),
+        ("gpu_frame_ms", "sampledGpuMs", "gpuTimingSamples"),
+        ("main_thread_ms", "sampledMainActiveMs", "mainTimingSamples"),
+        ("render_thread_ms", "sampledRenderActiveMs", "renderTimingSamples"),
+        ("gc_allocated_bytes", "sampledGcAllocBytes", "gcAllocSamples"),
+        ("draw_calls", "sampledDrawCalls", "renderCounterSamples"),
+        ("setpass_calls", "sampledSetPassCalls", "renderCounterSamples"),
+        ("vertices", "sampledVertices", "renderCounterSamples"),
+    ):
+        rows = [b for _, b in windows if b.get(count, 0) > 0]
+        total = sum(row[count] for row in rows)
+        metrics[name] = dict(
+            samples=total,
+            windows=len(rows),
+            positive_windows=sum(row[value] > 0 for row in rows),
+            weighted_mean=sum(row[value] * row[count] for row in rows) / total if total else None,
+        )
+    start, end = (windows[0][0], windows[-1][1]) if windows else (None, None)
+    return dict(
+        windows=len(windows),
+        first_frame=start["frames"] + 1 if start else None,
+        last_frame=end["frames"] if end else None,
+        observed_seconds=end["seconds"] - start["seconds"] if start else 0,
+        gc_collections=sum(b["gcCollections"] - a["gcCollections"] for a, b in windows),
+        metrics=metrics,
+        limitations=[
+            "Only complete retained camera windows inside the sustained frame endpoints are included; boundary windows are excluded.",
+            "Means are weighted by recorder sample counts, not frames; CPU/GPU, thread and allocation recorders sample at different cadences.",
+            "Main/Render Thread recorder durations do not separate work from waits or name simulation/render-submission costs.",
+            "All-zero render timings cannot distinguish an idle thread from an unavailable duration; they do not establish zero rendering cost.",
+            "Allocation bytes and collection counts are not GC duration; no per-hitch or causal GC attribution is available.",
+        ],
+    )
+
+
+def analyze(session, thermal, raw_trace=None, completed=None):
     samples = session["samples"]
     if len(samples) < 2:
         raise ValueError("At least two periodic observations are required")
@@ -246,6 +292,7 @@ def analyze(session, thermal, raw_trace=None):
         periodic_fps=distribution([r.get("fps") for r in samples]),
         cpu_frame_ms=distribution([r.get("cpu_frame_ms") for r in samples]),
         gpu_frame_ms=distribution([r.get("gpu_frame_ms") for r in samples]),
+        camera_profile=camera_profile(session, completed) if completed is not None else None,
         thermal=dict(
             samples=len(heat),
             max_gap_seconds=max(gaps) if gaps else None,
@@ -324,6 +371,19 @@ def markdown(report):
         "A partial covered tail retains measured FPS/hitches; full-tail quantile comparisons remain unavailable.",
         "This report does not establish: " + " ".join(budget["evidence_not_established"]),
     ]
+    camera = report["camera_profile"]
+    camera_lines = ["Camera recorder attribution: unavailable (completed native report not supplied)."]
+    if camera is not None:
+        camera_lines = [
+            f"Camera recorder coverage: {camera['windows']} complete windows, {camera['observed_seconds']:.3f} s; "
+            f"frames {camera['first_frame']}–{camera['last_frame']}; {camera['gc_collections']} GC collections.",
+            "",
+            "| Recorder | Sample-weighted mean | Samples | Positive windows / measured windows |",
+            "| --- | --- | --- | --- |",
+        ]
+        for name, metric in camera["metrics"].items():
+            camera_lines.append(f"| {name} | {fmt(metric['weighted_mean'])} | {metric['samples']} | {metric['positive_windows']} / {metric['windows']} |")
+        camera_lines += ["", *camera["limitations"]]
     lines = [
         "# Sustained game performance report",
         "",
@@ -343,6 +403,8 @@ def markdown(report):
         "Throttling onset: unestablished; no clocks/scheduler trace retained.",
         "",
         *budget_lines,
+        "",
+        *camera_lines,
         "",
         "| Start (min) | Samples | Median FPS | CPU ms | GPU ms | CPU C | GPU C | Battery C | Enemies |",
         "| --- | --- | --- | --- | --- | --- | --- | --- | --- |",
@@ -366,6 +428,7 @@ def main():
     parser.add_argument("thermal", type=Path, help="session-sustained-thermal.jsonl")
     parser.add_argument("--output", type=Path, required=True, help="Local JSON output; adjacent Markdown is also written")
     parser.add_argument("--raw-frames", type=Path, help="Optional session-bound frame-times sidecar")
+    parser.add_argument("--completed-session", type=Path, help="Optional completed native report containing retained camera recorder windows")
     args = parser.parse_args()
     session = json.loads(args.session.read_text())
     raw_trace = None
@@ -376,10 +439,13 @@ def main():
         if raw_hash != (session.get("raw_frame_trace") or {}).get("sha256"):
             raise ValueError("Raw frame sidecar hash differs from retained session")
         raw_trace = read_raw_frames(data)
-    report = analyze(session, [json.loads(line) for line in args.thermal.read_text().splitlines() if line.strip()], raw_trace)
+    completed = json.loads(args.completed_session.read_text()) if args.completed_session else None
+    report = analyze(session, [json.loads(line) for line in args.thermal.read_text().splitlines() if line.strip()], raw_trace, completed)
     report["input_sha256"] = {key: hashlib.sha256(path.read_bytes()).hexdigest() for key, path in (("session", args.session), ("thermal", args.thermal))}
     if raw_hash:
         report["input_sha256"]["raw_frames"] = raw_hash
+    if args.completed_session:
+        report["input_sha256"]["completed_session"] = hashlib.sha256(args.completed_session.read_bytes()).hexdigest()
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(json.dumps(report, indent=2, allow_nan=False) + "\n")
     args.output.with_suffix(".md").write_text(markdown(report))
