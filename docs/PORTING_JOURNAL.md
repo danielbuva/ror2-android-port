@@ -3737,3 +3737,19 @@ Manifest 0.993 s remains open; native RNG/page cache uncontrolled, no total-load
 CPU/GPU peak 77.7 C, battery peak 31 C; >80 C zero, active sample max gap 0.437 s.
 Adopted placement/data, stopped process/OLED, scratch/lease cleanup and prune pass.
 Sustained play, audibility, visual parity and full-pipeline alpha acceptance remain open.
+
+## J1456 — Stream definition manifest snapshots
+
+2026-11-12. Existing definition reader streams JSON without a whole-file UTF-16 copy.
+Values/order/types, trailing-content refusal and weak snapshot/reset lifetime remain intact.
+Three focused C# checks/shared-input preflight pass; buffer-boundary Unicode included.
+Evidence: `work/coordination/alpha-manifest-stream-device-20261112T113032Z/`.
+APK SHA-256 `caa958cd69fd0309639c0246c9156a2658cb0c38715973b7748e7d3e7d9a384b`.
+Source `b1e4f69a`; ordinary Start reaches Commando/Distant Roost/player/HUD4, no PID errors.
+153 banks/65 network sounds and native results ready; profile/settings hashes retained.
+30,329 rows/65 loads/1 bundle; network manifest 0.101 ms, results-type manifest 1.100 s.
+Snapshot reuse/page cache uncontrolled; no load-speed claim. Host diagnostic RSS fell 50.4 MB.
+Pinned R2API typed-load/handle ownership remains prior art; no content or scheduling change.
+CPU/GPU peak 74.9 C, battery peak 28 C; >80 C zero, active sample max gap 0.427 s.
+Adopted placement/data, stopped process/OLED, scratch/lease cleanup and prune pass.
+Sustained play, audibility, visual parity and all broad alpha gates remain open.
