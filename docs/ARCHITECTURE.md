@@ -33,6 +33,10 @@ body, profile, index and witness hashes. Setup opens only declared staged member
 teardown closes them on success or failure. Full-output cache hits still check
 actual final local and external managed bodies, and inputs are rehashed before
 the receipt is written. The final artifact is the canonical repack when selected.
+The same checked invocation writes `catalog-profile.json` from the emitted
+bundle identity and required asset groups, and pins that declaration and the
+actual final bundle in its receipt. The alias donor remains a separate catalog
+owner; no bundle copy or second production supplies these artifacts.
 Signed release-graph integration, source/provider regeneration and the phone
 SQLite/LZ4 runtime remain separate work; this interface adds no device claim.
 

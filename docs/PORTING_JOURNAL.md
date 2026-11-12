@@ -3400,3 +3400,15 @@ zero-call/zero-time and remaining native target/credit/placement contracts.
 Profile/settings hashes preserved; 153 banks ready. Executable observer fixture passed.
 Peak CPU/GPU 76.5 °C, 0 s above 80 °C; battery 27 °C. Cleanup/OLED/lease/prune passed.
 Sustained performance, physical navigation and complete phone installation stay open.
+
+## J1432 — Retain registry witnesses from final player production
+
+2026-11-12. PR #468 merged at `910cbbde`: final player production retains its
+registry transfer schemas and endpoint-compatible provider receipt from the same
+registry invocation and final body used by the catalog. Shared registry artifact
+handling avoids second production and duplicate body copies.
+Evidence: `tests/test_phone_player_data.py`,
+`tests/test_release_graph.py`; 70 focused checks, Ruff, host preflight and
+full CI-local (3,205 tests) passed before merge.
+Source output: `910cbbde`; no APK or device output was produced.
+Signed bundle preparation, phone dependencies and full conversion remain open.
