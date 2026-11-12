@@ -53,6 +53,35 @@ class EmissionCache:
         self.connection.close()
 
 
+def materialize_cached_bundle(result, output, artifacts):
+    """Give each dispatcher attempt regular, independently retained artifacts."""
+    import json
+    import shutil
+    import subprocess
+    import sys
+
+    output.mkdir(parents=True, exist_ok=False)
+    for source, digest in artifacts.items():
+        source = Path(source)
+        if source.name == "result.json":
+            continue
+        target = output / source.name
+        if sys.platform == "darwin":
+            subprocess.run(["cp", "-c", str(source), str(target)], check=True)
+        else:
+            shutil.copyfile(source, target)
+        if O.B.sha(target) != digest:
+            raise ValueError("Materialized cache artifact differs")
+    result["bundle"] = str((output / Path(result["bundle"]).name).resolve())
+    request = output / "request.json"
+    if request.is_file():
+        value = json.loads(request.read_bytes())
+        value["path"] = result["bundle"]
+        request.write_text(json.dumps(value, indent=2) + "\n")
+    (output / "result.json").write_text(json.dumps(result, indent=2) + "\n")
+    return result
+
+
 def emission_input_pins(selected, graph_directory, schema_paths, codec, cache_inputs, provider_paths=None):
     """Hash complete provider lineages and explicit callback/code dependencies."""
     import json
@@ -815,11 +844,7 @@ def _emit_closed_native(
                     cache_reused=True,
                     peak_rss_bytes=resource.getrusage(resource.RUSAGE_SELF).ru_maxrss * (1 if sys.platform == "darwin" else 1024),
                 )
-                output.mkdir(parents=True, exist_ok=False)
-                for filename in ("gaps.json", "roots.json", "request.json"):
-                    (output / filename).write_bytes((Path(result["bundle"]).parent / filename).read_bytes())
-                (output / "result.json").write_text(json.dumps(result, indent=2) + "\n")
-                return result
+                return materialize_cached_bundle(result, output, saved["outputs"])
     stage("input_identity")
     schemas, schema_pins = {}, {}
     needed = {row["full_type"] if required is not None else row["schema"] for row in selected.values()}
@@ -1270,7 +1295,8 @@ def repack_canonical_aliases(
     started, input_pins = time.monotonic(), pins()
     request_key = EmissionCache.key(
         dict(
-            inputs=input_pins,
+            inputs={path: digest for path, digest in input_pins.items() if path != str(source.resolve())},
+            source_sha256=input_pins[str(source.resolve())],
             required=required,
             aliases=aliases,
             selected=selected_records,
@@ -1286,7 +1312,8 @@ def repack_canonical_aliases(
             if Path(result["bundle"]).is_file() and O.B.sha(Path(result["bundle"])) == result["sha256"]:
                 if pins() != input_pins:
                     raise ValueError("Canonical repack input drift")
-                return dict(result, cache_reused=True, seconds=time.monotonic() - started)
+                result.update(cache_reused=True, inputs=input_pins, seconds=time.monotonic() - started)
+                return materialize_cached_bundle(result, output, {result["bundle"]: result["sha256"]})
         mapping = {tuple(row["duplicate"]): row for row in aliases}
         selected = {tuple(row["destination"]): row for row in selected_records if tuple(row["destination"]) in mapping}
         if not mapping or len(mapping) != len(aliases) or selected.keys() != mapping.keys():
@@ -1520,8 +1547,8 @@ def produce_request(inputs, output, *, cache_directory=None):
             raise ValueError("native provider paths require nonempty source/directory strings")
         for source, value in aliases.items():
             directory = pins.path(value, path.parent)
-            if not directory.is_dir():
-                raise ValueError("native provider path must name a directory")
+            if not directory.is_dir() and not directory.is_file():
+                raise ValueError("provider path must name a directory or serialized file")
             provider_paths[source] = directory
     graph_files = {name: pins.pin(value) for name, value in request["graph"].items()}
     if not {"done.json", "selected-records.jsonl"} <= graph_files.keys() or set(graph_files) - {"done.json", "selected-records.jsonl", "selected-roots.jsonl"}:
