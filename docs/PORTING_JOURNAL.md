@@ -3280,3 +3280,16 @@ Launch/menu 22.754 s; Start/player 53.485 s; uncontrolled page cache, no speedup
 Peak CPU/GPU 76.1 °C, 0 s above 80 °C; battery 27 °C. App stopped, scratch removed,
 OLED asleep, lease released; pruning passed. Full build required changed audio core.
 Sustained play/performance, audible-output and complete phone installation remain open.
+
+## J1423 — Keep disjoint preload groups cached after pointer changes
+
+2026-11-12. Existing native emitter keys each preload group by its reachable
+edges and external owners, retaining member lists as invalidation witnesses.
+A changed pointer rebuilds its dependent groups; unrelated groups retain bytes.
+An authored three-group regression first reproduced global invalidation, then
+passed additions/removals, shared dependencies and external-owner changes with
+cached output equal to uncached output. All 36 focused host tests, Ruff and
+preflight pass. Evidence: `tests/test_bundle_preload.py` and private notes at
+`work/coordination/p1-wholegame-1031/group-cache-pointer-delta-1112/`.
+J1417's unchanged-run benchmark remains separate; no production benchmark replay,
+Unity typed load, phone execution or converted-game acceptance is claimed.

@@ -827,6 +827,44 @@ class BundlePreloadTests(unittest.TestCase):
             regrouped = emit("regrouped")
             self.assertEqual((regrouped["cache"]["records_hits"], regrouped["cache"]["groups_misses"]), (2, 1))
 
+    def test_pointer_changes_reuse_disjoint_preload_groups(self):
+        selected = dict(
+            name="authored",
+            member="CAB-authored",
+            externals=["CAB-external"],
+            dependencies=[],
+            asset_groups=[dict(guid=f"{identity:032x}", path=f"Assets/{identity}.asset", roots=[identity]) for identity in (10, 30, 60)],
+        )
+        graph = {10: {(0, 20)}, 20: set(), 30: {(0, 20)}, 40: set(), 60: {(1, 200)}, 70: set()}
+        owners = {(1, 200): (1, 300)}
+        with tempfile.TemporaryDirectory() as tmp:
+            cache = P.EmissionCache(tmp)
+            try:
+
+                def emit(misses, hits):
+                    before = cache.counts.copy()
+                    with patch.object(P, "external_owners", return_value=owners), patch.object(P, "closure", wraps=P.closure) as walk:
+                        actual = P.produce_graph(selected, graph, {}, emission_cache=cache)
+                        self.assertEqual(walk.call_count, misses)
+                    self.assertEqual(cache.counts["groups_misses"] - before["groups_misses"], misses)
+                    self.assertEqual(cache.counts["groups_hits"] - before["groups_hits"], hits)
+                    with patch.object(P, "external_owners", return_value=owners):
+                        self.assertEqual(actual, P.produce_graph(selected, graph, {}))
+
+                emit(3, 0)
+                graph[20] = {(0, 40)}
+                emit(2, 1)
+                graph[20] = set()
+                emit(2, 1)
+                graph[40] = {(0, 70)}
+                emit(0, 3)
+                owners[(1, 200)] = (1, 400)
+                emit(1, 2)
+                del graph[40]
+                emit(0, 3)
+            finally:
+                cache.close()
+
     def test_cached_output_corruption_rebuilds_and_provider_drift_still_fails(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)

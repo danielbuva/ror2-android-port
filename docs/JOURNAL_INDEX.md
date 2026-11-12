@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J1423](PORTING_JOURNAL.md#j1423--keep-disjoint-preload-groups-cached-after-pointer-changes) | 2026-11-11 | Keep disjoint preload groups cached after pointer changes | 2026-11-12. |
 | [J1422](PORTING_JOURNAL.md#j1422--attribute-original-audio-readiness-callback-waits) | 2026-11-11 | Attribute original audio readiness callback waits | 2026-11-12. |
 | [J1421](PORTING_JOURNAL.md#j1421--canonical-catalog-consumers-retain-prefab-ownership) | 2026-11-11 | Canonical catalog consumers retain prefab ownership | 2026-11-12. |
 | [J1420](PORTING_JOURNAL.md#j1420--reuse-indexes-within-canonical-content-snapshots) | 2026-11-11 | Reuse indexes within canonical content snapshots | 2026-11-12. |
