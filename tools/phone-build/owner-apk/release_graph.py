@@ -298,6 +298,11 @@ class Graph:
                     targets.extend(row["outputs"])
                 if "registry" in profile:
                     targets.append(profile["registry"]["file"])
+                    artifacts.update(
+                        registry_body="apk/assets/bin/Data/" + profile["registry"]["file"],
+                        registry_receipt="registry-source/result.json",
+                        registry_schemas="registry-source/schemas.json",
+                    )
                 if "shared_defaults" in profile:
                     targets.append(profile["shared_defaults"]["file"])
             outputs = {"apk/assets/bin/Data/" + target: "apk/assets/bin/Data/" + target for target in targets}

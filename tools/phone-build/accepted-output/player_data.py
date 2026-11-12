@@ -1220,6 +1220,22 @@ def registry_records(profile_root, selected, pc, editor_resources, code_request,
     return value
 
 
+def registry_artifacts(registry, body, output):
+    """Retain managed validation evidence for the actual serialized registry."""
+    for source, pin in registry["provider_pins"].items():
+        checked(Path(source), (pin["bytes"], pin["sha256"]))
+    schemas = output / "schemas.json"
+    schemas.write_text(json.dumps(registry["transfer_schemas"], indent=2) + "\n")
+    return {
+        "success": True,
+        "files": {body.name: {"bytes": body.stat().st_size, "sha256": sha(body)}},
+        "scripts": len(registry["script_ids"]),
+        "objects": len(registry["layout"]["objects"]),
+        "schemas": {"bytes": schemas.stat().st_size, "sha256": sha(schemas)},
+        "provider_pins": registry["provider_pins"],
+    }
+
+
 def produce(
     profile_path,
     profile_sha256,
@@ -1472,6 +1488,12 @@ def produce(
             checked(Path(editor_resources).absolute(), (pin["bytes"], pin["sha256"]))
         for path, pin in registry_pins:
             checked(path, pin)
+        if registry is not None:
+            evidence = output / "registry-source"
+            evidence.mkdir()
+            registry_receipt = registry_artifacts(registry, output / (TARGET + profile["registry"]["file"]), evidence)
+            (evidence / "result.json").write_text(json.dumps(registry_receipt, indent=2) + "\n")
+            result["registry"] = {"receipt": "registry-source/result.json", "schemas": "registry-source/schemas.json"}
         result["success"] = True
         return result
     except Exception as error:

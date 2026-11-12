@@ -3374,3 +3374,15 @@ Evidence: `tests/test_bundle_preload.py`; 42 focused host tests, relocated
 resource readback, Ruff, host preflight and full CI-local (3,201 tests) passed.
 Source output: `49a26a77`; no APK or device output was produced.
 SDK witness relocation, signed graph/source closure and phone conversion stay open.
+
+## J1430 — Materialize bundle cache artifacts and relocate SDK witnesses
+
+2026-11-12. Merged #466 (`ade73fcd`): warm emission/repack cache hits now
+materialize regular bundle files in the current attempt and update local receipts.
+Canonical cache reuse binds source bytes independently of the attempt path.
+The pinned provider map also relocates complete SDK serialized-file witnesses;
+logical identities and body/schema/PPtr/native/full-layout checks remain strict.
+Evidence: `tests/test_bundle_preload.py`; 43 focused host tests, Ruff,
+host preflight and full CI-local (3,203 tests) passed before merge.
+Source output: `1428b58c`; no APK or device output was produced.
+Signed graph/source closure, phone dependencies and complete conversion stay open.
