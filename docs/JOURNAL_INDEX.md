@@ -11,6 +11,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
 | [J1452](PORTING_JOURNAL.md#j1452--report-covered-tail-quantiles-from-sustained-raw-capture) | 2026-11-12 | Report covered-tail quantiles from sustained raw capture | 2026-11-12. |
+| [J1453](PORTING_JOURNAL.md#j1453--preserve-original-paths-during-phone-source-upload) | 2026-11-12 | Preserve original paths during phone source upload | 2026-11-12. |
 | [J1451](PORTING_JOURNAL.md#j1451--complete-signed-phone-bundle-production-with-launcher-feedback) | 2026-11-12 | Complete signed phone bundle production with launcher feedback | 2026-11-12. |
 | [J1450](PORTING_JOURNAL.md#j1450--attribute-post-readiness-network-and-music-startup) | 2026-11-12 | Attribute post-readiness network and music startup | 2026-11-12. |
 | [J1448](PORTING_JOURNAL.md#j1448--omit-unused-process-audio-lease-manifest-annotations) | 2026-11-12 | Omit unused process audio-lease manifest annotations | 2026-11-12. |
