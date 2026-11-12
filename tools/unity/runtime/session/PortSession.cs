@@ -2643,7 +2643,8 @@ public sealed partial class PortSession : MonoBehaviour
                     TraceStartup("drone-catalog-begin");
                     PrepareWholeDroneCatalog(holderManifest);
                     TraceStartup("projectile-catalog-begin");
-                    r.liveCatalogs.projectiles = WholeCatalogComposed.PrepareProjectiles(holderManifest);
+                    r.liveCatalogs.projectiles = WholeCatalogComposed.PrepareProjectiles(holderManifest,
+                                                                                     step => TraceStartup("projectile-" + step));
                     TraceStartup("projectile-catalog-ready");
                 }
                 TraceStartup("skins-begin");

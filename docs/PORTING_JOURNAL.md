@@ -3338,6 +3338,20 @@ Peak CPU/GPU 73.7 °C, 0 s above 80 °C; battery 26 °C, runtime gap < 0.433 s.
 App stopped, scratch removed, OLED asleep, lease released; pruning passed.
 Sustained play/performance, physical navigation and complete phone install stay open.
 
+## J1428 — Attribute original projectile catalog startup phases
+
+2026-11-12. Existing catalog owner traces family, snapshots, native registration,
+availability and validation; native order, identity checks and restoration stay.
+Pinned R2API provider/typed-load seams inform observation; four focused tests pass.
+Evidence: `work/coordination/alpha-projectile-attribution-device-20261112T022550Z/`.
+APK SHA-256 `c4f0a04ca64182b0d16addc8b607f65ddfdb9f3fab6e44c2e360acb76874fafa`.
+Ordinary Start reached golemplains2/Commando/player/HUD; current-PID errors empty.
+In-place update kept profile/settings hashes; 153 banks ready, cached 274/full 0.
+All 13 boundaries once/monotonic: total 1.140467 s; family assets 1.132830 s;
+native SetProjectilePrefabs 3.900 ms. Inclusive wall spans; uncontrolled cache, no speedup claim.
+Peak CPU/GPU 73.7 °C, 0 s above 80 °C; battery 26 °C. Source `0819d0dd`.
+App stopped, scratch removed, OLED asleep, lease released; pruning passed.
+Sustained play/performance, physical navigation and complete phone install stay open.
 ## J1427 — Expose checked bundle emission and canonical repack requests
 
 2026-11-12. Merged #463 (`a6cb0c04`): the existing emitter/repacker accepts
