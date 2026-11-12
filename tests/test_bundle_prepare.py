@@ -4,6 +4,7 @@ import importlib
 import io
 import json
 from pathlib import Path
+import shutil
 import struct
 import sys
 import tempfile
@@ -15,6 +16,180 @@ P = importlib.import_module("bundle_preload")
 
 
 class BundlePreparationTests(unittest.TestCase):
+    def test_signed_dispatch_prepares_fresh_suppliers_catalog_and_runtime_donor(self):
+        root_repo = Path(__file__).resolve().parents[1]
+        G = P.O.module("_prepare_release_graph", root_repo / "tools/phone-build/owner-apk/release_graph.py")
+        J = P.O.module("_prepare_release_jobs", root_repo / "tools/phone-build/owner-apk/release_jobs.py")
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp).resolve()
+            _, request, policy, pin = self.fixture(root)
+            repo, inputs = root / "repo", root / "inputs"
+            (repo / "recipe").mkdir(parents=True)
+            inputs.mkdir()
+            (root / "original").rename(inputs / "pc")
+            (inputs / "sdk").mkdir()
+            (root / "codec").rename(inputs / "codec")
+            for cohort in ("tools/phone-build", "scripts/lab"):
+                for source in (root_repo / cohort).rglob("*.py"):
+                    destination = repo / source.relative_to(root_repo)
+                    destination.parent.mkdir(parents=True, exist_ok=True)
+                    shutil.copyfile(source, destination)
+            profiles = []
+            for supplier in request["suppliers"]:
+                name = supplier["name"]
+                source = repo / ("recipe/owner-" + name + ".json")
+                shutil.copyfile(root / (name + ".json"), source)
+                profiles.append(source.relative_to(repo).as_posix())
+                job = "recipe/jobs/owner-" + name + ".json"
+                supplier["profile"] = dict(pin(source), path="${repo}/" + profiles[-1])
+                for artifact in ("receipt", "objects", "index", "types"):
+                    supplier[artifact] = G.Graph.artifact_pin(job, artifact)
+                # No retained pack is available to the dispatcher.
+                shutil.rmtree(root / ("pack-" + name))
+            request.update(game_root="${input:pc}", codec=dict(path="${input:codec}", bytes=(inputs / "codec").stat().st_size, sha256="${input_sha256:codec}"))
+            donor_identity = repo / "recipe/donor-identity.json"
+            shutil.copyfile(root / "donor.json", donor_identity)
+            donor_policy = dict(
+                bundle="canonical",
+                member="CAB-donor",
+                bindings=[dict(policy["bindings"][-2], record_source=["pack-a", "packed-a", 40], destination=["canonical", "CAB-donor", 900])],
+                asset_groups=[dict(guid="34" * 16, path="Assets/Canonical.asset", roots=[900])],
+                assets=[dict(name="assets/canonical.asset", type="PhysicMaterial")],
+            )
+            donor_request = dict(request, policy=donor_policy, suppliers=[request["suppliers"][0]], staged=[])
+            donor_profile = repo / "recipe/owner-donor.json"
+            donor_profile.write_text(json.dumps(dict(schema="owner-bundle-preload-release-v1", profiles=profiles[:1], request=donor_request)))
+            donor_job = "recipe/jobs/owner-donor.json"
+            donor_pin = G.Graph.artifact_pin(donor_job, "catalog_bundle")
+            policy["canonical"].update(profile=dict(pin(donor_identity), path="${repo}/recipe/donor-identity.json"), bundle=donor_pin)
+            policy["field_routes"][0]["target"] = ["content", "CAB-content", 300]
+            policy["asset_groups"][0]["preload_roots"] = [["content", "CAB-content", 300]]
+            request.update(policy=policy, staged=[dict(bundle="canonical", file=donor_pin)])
+            wrapper = repo / "recipe/owner-content.json"
+            wrapper.write_text(json.dumps(dict(schema="owner-bundle-preload-release-v1", profiles=[*profiles, "recipe/owner-donor.json"], request=request)))
+            identity = dict(input_id="authored", attempt="fresh")
+            bootstrap = repo / "recipe/bootstrap.json"
+            bootstrap.write_text(json.dumps(identity))
+            (repo / "recipe/registry-policy.json").write_text("{}")
+            player = repo / "recipe/owner-fixture-player.json"
+            player.write_text(
+                json.dumps(
+                    dict(
+                        project_assemblies=[],
+                        outputs={},
+                        registry=dict(file="registry.assets", path="registry-policy.json"),
+                        text_assets=dict(
+                            files=[
+                                dict(
+                                    name="WholeCatalogBootstrap", recipe=dict(path="bootstrap.json", bytes=bootstrap.stat().st_size, sha256=G.digest(bootstrap))
+                                )
+                            ]
+                        ),
+                    )
+                )
+            )
+            # Only the empty runtime registry is synthetic. All content producers,
+            # preparation, emission, canonical repack, catalog and manifest run.
+            fixture_script = repo / "tools/phone-build/accepted-output/startup_metadata.py"
+            fixture_script.write_text(
+                "import pathlib,sys\nout=pathlib.Path(sys.argv[1]);out.mkdir()\n"
+                + "(out/'registry.assets').write_bytes(bytes.fromhex("
+                + repr(self.serialized([]).hex())
+                + "))\n"
+                + "(out/'result.json').write_text('{\"success\":true}')\n"
+            )
+            metadata = inputs / "metadata.json"
+            metadata.write_text(
+                json.dumps(
+                    dict(**identity, keys=[], locations=[dict(id=1, path="assets/root.asset", type="UnityEngine.PhysicMaterial, UnityEngine.PhysicsModule")])
+                )
+            )
+            catalog_request = repo / "recipe/catalog-request.json"
+            catalog_request.write_text(
+                json.dumps(
+                    dict(
+                        schema="owner-catalog-inputs-v1", **identity, metadata=dict(pin(metadata), path="${input:metadata}", sha256="${input_sha256:metadata}")
+                    )
+                )
+            )
+            runtime, native = root / "runtime", root / "native"
+            runtime.mkdir()
+            native.mkdir()
+            config = dict(bindings={key: key for key in ("pc", "sdk", "codec", "metadata")})
+            config["bindings"]["metadata"] = "metadata.json"
+
+            def compile_graph():
+                graph = G.Graph(repo, {})
+                player_job = "recipe/jobs/owner-fixture-player.json"
+                graph.jobs[player_job] = dict(
+                    schema=1,
+                    script=G.PREFIX + "startup_metadata.py",
+                    arguments=["${output}"],
+                    needs=[],
+                    outputs={"apk/assets/bin/Data/registry.assets": "registry.assets"},
+                    artifacts={"receipt": "result.json"},
+                )
+                graph.profile_files[player_job] = player.relative_to(repo).as_posix()
+                graph.job_profiles[player_job] = json.loads(player.read_text())
+                index = graph.compile(
+                    [wrapper.relative_to(repo).as_posix(), player.relative_to(repo).as_posix()],
+                    bundle_manifest=True,
+                    catalog_request=catalog_request.relative_to(repo).as_posix(),
+                )
+                for name, descriptor in graph.jobs.items():
+                    path = repo / name
+                    path.parent.mkdir(parents=True, exist_ok=True)
+                    path.write_text(json.dumps(descriptor))
+                    index["files"][name] = G.digest(path)
+                release = {"entries": {name: J.UPDATES.public().entry_dependencies(index, name) for name in index["entries"]}}
+                return graph, index, release
+
+            def dispatch(index, release):
+                progress = []
+                dispatcher = J.Dispatcher(
+                    repo,
+                    index,
+                    release,
+                    inputs,
+                    runtime,
+                    native,
+                    config,
+                    "a" * 64,
+                    python=[sys.executable],
+                    progress=lambda name, reused: progress.append((name, reused)),
+                )
+                for name, dependencies in release["entries"].items():
+                    dispatcher.produce(name, dependencies, root / Path(name).name)
+                return dispatcher, [(name, reused) for name, reused in progress if reused is not None]
+
+            graph, index, release = compile_graph()
+            content_job = "recipe/jobs/owner-content.json"
+            self.assertIn("recipe/donor-identity.json", index["entries"]["payload/content"]["recipe_files"])
+            self.assertIn("payload/canonical", release["entries"])
+            self.assertEqual(graph.jobs[content_job]["outputs"]["payload/content"], "canonical/content.bundle")
+            cold, progress = dispatch(index, release)
+            self.assertTrue(all(reused is False for _, reused in progress))
+            emitted = json.loads((cold.completed[content_job] / "result.json").read_bytes())
+            self.assertEqual(emitted["canonical"]["canonical_roots"], 1)
+            self.assertEqual(emitted["preparation"]["records"], 4)
+            actual = json.loads((root / "whole-catalog.json").read_bytes())
+            self.assertEqual(actual["bundles"]["content"]["sha256"], emitted["sha256"])
+            self.assertNotEqual(actual["bundles"]["content"]["sha256"], actual["bundles"]["canonical"]["sha256"])
+            manifest = graph.jobs["recipe/jobs/owner-bundle-manifest.json"]["request"]
+            self.assertEqual({row["name"] for row in manifest["bundles"]}, {"content", "canonical"})
+            _, progress = dispatch(index, release)
+            self.assertTrue(all(reused is True for _, reused in progress))
+            changed = json.loads(wrapper.read_text())
+            changed["request"]["policy"]["asset_groups"][0]["preload_roots"] = []
+            wrapper.write_text(json.dumps(changed))
+            _, index, release = compile_graph()
+            _, progress = dispatch(index, release)
+            states = dict(progress)
+            for job in ("recipe/jobs/owner-a.json", "recipe/jobs/owner-b.json", donor_job):
+                self.assertTrue(states[job])
+            for job in (content_job, "recipe/jobs/owner-catalog-complete.json", "recipe/jobs/owner-bundle-manifest.json"):
+                self.assertFalse(states[job])
+
     def serialized(self, records, *, externals=(), platform=13, trees=True):
         layout, packed = P.O.make_layout(dict(externals=externals), records)
         layout.update(platform=platform, trees=trees)
