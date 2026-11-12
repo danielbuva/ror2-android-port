@@ -16,15 +16,42 @@ using System;
 using System.IO;
 using System.Reflection;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 namespace UnityEngine {
  public class Object { public bool destroyed; public static implicit operator bool(Object x){return !ReferenceEquals(x,null)&&!x.destroyed;} }
- public class Renderer : Object {}
+ public class Component : Object {public int value=7;}
+ public class Transform : Component {public string name;public Transform parent;public T[] GetComponents<T>(){return new[]{(T)(object)new Component()};}}
+ public class Shader {public string name="shader";}
+ public class Material {public Shader shader=new Shader();}
+ public class Renderer : Object {public string name="renderer";public Material[] sharedMaterials=new[]{new Material()};}
  public static class Debug { public static List<string> logs=new List<string>(); public static void Log(string value){logs.Add(value);} }
  public static class JsonUtility { public static string ToJson(object value,bool pretty=false){return new System.Web.Script.Serialization.JavaScriptSerializer().Serialize(value);} }
 }
 class LabDiagnostics {
- public class Snapshot { public string checkpoint,payload; }
+ public class Config {public bool sceneDetails,fields;public string subtree="";}
+ public class ObjectInfo {public string name,parent;public string[] components,fields;}
+ public class Snapshot { public string checkpoint,payload;public bool sceneDetails;public string[] assemblies,renderers;public ObjectInfo[] hierarchy; }
+ Config config=new Config();bool permitCensus;int censusCalls;
+ T[] FindObjectsOfType<T>(bool inactive){
+  if(!permitCensus||!inactive)throw new Exception("Unrequested/incomplete census");censusCalls++;
+  if(typeof(T)==typeof(Transform))return (T[])(object)new[]{new Transform{name="parent"},new Transform{name="child",parent=new Transform{name="parent"}}};
+  return (T[])(object)new[]{new Renderer()};
+ }
+ SCENE_DETAILS
+ SAFE_FIELD
+ ANCESTORS
+ public static void VerifySceneDetails(){
+  var owner=new LabDiagnostics();var scalar=new Snapshot();owner.PopulateSceneDetails("periodic",scalar);
+  if(scalar.sceneDetails||owner.censusCalls!=0||scalar.hierarchy.Length!=0||scalar.renderers.Length!=0||scalar.assemblies.Length!=0)throw new Exception("Default periodic scan");
+  owner.permitCensus=true;
+  foreach(var mode in new[]{"startup","scene","fields","subtree"}){
+   owner.config=new Config{sceneDetails=mode=="scene",fields=mode=="fields",subtree=mode=="subtree"?"parent":""};
+   var detail=new Snapshot();int before=owner.censusCalls;owner.PopulateSceneDetails(mode=="startup"?"LAB_READY":"periodic",detail);
+   if(!detail.sceneDetails||owner.censusCalls-before!=2||detail.hierarchy.Length!=2||detail.renderers.Single()!="renderer:shader"||detail.assemblies.Length==0)throw new Exception("Requested census lost");
+   if((detail.hierarchy[0].fields.Length>0)!=(mode=="fields"))throw new Exception("Field inspection changed");
+  }
+ }
  string root;
  PUBLICATION
  public static void Verify(string root){
@@ -144,7 +171,7 @@ class ResourceOwner {
   if(owner.ReleaseDestroyedPooledHitTargets()!=0)throw new Exception("Cleanup not idempotent");
  }
 }
-class Program {static void Main(string[] args){if(args[0]=="publication")LabDiagnostics.Verify(args[1]);else if(args[0]=="returned-pools")ResourceOwner.VerifyReturnedPools();else if(args[0]=="overlap")ResourceOwner.VerifyOverlap();else if(args[0]=="spawn")ResourceOwner.VerifySpawn();else ResourceOwner.Verify();Console.WriteLine(args[0]+": PASS");}}
+class Program {static void Main(string[] args){if(args[0]=="scene-details")LabDiagnostics.VerifySceneDetails();else if(args[0]=="publication")LabDiagnostics.Verify(args[1]);else if(args[0]=="returned-pools")ResourceOwner.VerifyReturnedPools();else if(args[0]=="overlap")ResourceOwner.VerifyOverlap();else if(args[0]=="spawn")ResourceOwner.VerifySpawn();else ResourceOwner.Verify();Console.WriteLine(args[0]+": PASS");}}
 """
 
 
@@ -159,6 +186,10 @@ class DiagnosticRetentionTests(unittest.TestCase):
         cls.addClassCleanup(cls.temp.cleanup)
         directory = Path(cls.temp.name)
         code = HOST.replace("PUBLICATION", extract_method((ROOT / "android/Assets/LabDiagnostics.cs").read_text(), " void PublishSnapshot("))
+        diagnostic = (ROOT / "android/Assets/LabDiagnostics.cs").read_text()
+        code = code.replace("SCENE_DETAILS", extract_method(diagnostic, " void PopulateSceneDetails("))
+        code = code.replace("SAFE_FIELD", extract_method(diagnostic, " static string SafeField("))
+        code = code.replace("ANCESTORS", extract_method(diagnostic, " static string Ancestors("))
         code = code.replace(
             "CLEANUP",
             extract_method((ROOT / "tools/unity/runtime/session/SessionResourceBoundary.cs").read_text(), "    int ReleaseDestroyedPooledHitTargets()"),
@@ -202,6 +233,9 @@ class DiagnosticRetentionTests(unittest.TestCase):
 
     def test_periodic_large_snapshots_replace_one_file_without_console_retention(self):
         self.case("publication")
+
+    def test_periodic_scene_census_requires_explicit_inspection_and_startup_keeps_details(self):
+        self.case("scene-details")
 
     def test_teardown_releases_only_destroyed_targets_of_returned_hits(self):
         self.case("cleanup")

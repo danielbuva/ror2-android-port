@@ -2665,6 +2665,10 @@ before its first frame yield and the lab menu, for the player process lifetime.
 `NovaInputBoundary` captures that prior value, requests 300 FPS during gameplay
 and restores the captured value on teardown. This is a request; actual FPS depends on device load.
 It replaces `snapshot.json` on its existing periodic schedule.
+Periodic snapshots retain live scalar, timing and controller facts; full scene
+hierarchy/material discovery and assembly enumeration run only for startup or
+explicit `./dev diagnostics --scene-details`, `--subtree` or `--fields` inspection.
+The `sceneDetails` fact distinguishes an omitted census from an empty scene.
 Only its startup/lifecycle snapshots use the full `LAB_SNAPSHOT` console record;
 periodic JSON is not retained by the original console. Original and error logging
 stay unchanged. During completed-session reclamation, `SessionResourceBoundary`
