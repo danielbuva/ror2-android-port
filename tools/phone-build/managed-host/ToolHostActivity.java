@@ -447,9 +447,20 @@ public final class ToolHostActivity extends Activity {
         return (app.getApplicationInfo().flags & android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE) != 0;
     }
     public static class Runner extends Instrumentation {
-        public void onCreate(Bundle arguments) { super.onCreate(arguments); start(); }
+        private String action;
+        public void onCreate(Bundle arguments) {
+            super.onCreate(arguments);
+            action = arguments == null ? null : arguments.getString("action");
+            if (action != null && !"release-build".equals(action)) throw new IllegalArgumentException("Unsupported fixture action");
+            start();
+        }
         public void onStart() {
-            new Worker(getTargetContext()).executeFixture();
+            Worker worker = new Worker(getTargetContext());
+            if (action == null) worker.executeFixture();
+            else {
+                if (!debuggable(getTargetContext())) throw new SecurityException("Headless release build requires a debuggable fixture");
+                worker.executeUpdate(action);
+            }
             finish(Activity.RESULT_OK, new Bundle());
         }
     }

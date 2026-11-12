@@ -66,6 +66,20 @@ their data-tree links resolve to that directory. Unselected Python extensions
 are unsupported. Private durable signing material and all build outputs
 stay ignored. No generated APK is approved for public distribution.
 
+The native plan includes CPython's `_sqlite3` and its pinned SQLite dependency
+for the existing bundle producer's disk indexes. Supply the versioned regular
+SQLite file under the Python home; the installed native link supplies its
+`libsqlite3.so` dependency name. Android execution of the complete signed bundle
+chain remains a separate qualification gate.
+
+For the debuggable fixture, instrumentation accepts `-e action release-build`
+to run the existing signed update worker using the provisioned
+`owner-input/update-request.json`. Without an action it retains the original
+fixture path; other actions refuse. Release trust, source/configuration inputs,
+signature checks and thermal supervision retain their existing owners. Resolve
+the instrumentation component from the exact installed APK. This headless build
+entry neither installs nor launches the converted game.
+
 `ToolHostActivity` owns each fresh data directory, data/native hash checks,
 installed native links and bounded children. The original authored compiler/run
 control remains, followed by `run_profile.py`. That entry checks actual isolated
