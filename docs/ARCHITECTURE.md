@@ -13,6 +13,9 @@ The wrapper delegates keys and results unchanged; the original dynamic locator
 still handles GUID subobjects afterwards. A map miss is not a global load failure.
 `WholeCatalogComposed.Release` removes the same owned wrapper and restores prior
 locators. These lab diagnostics do not change content admission or gameplay.
+Its retention report discards weak-reference wrappers whose targets have been
+collected, while retaining live targets and an independent cumulative count of
+released catalog generations. Repeated reports do not reset that count.
 
 `bundle_preload.py::repack_canonical_aliases` applies explicit source-body catalog
 aliases after strict native emission; it leaves structural routes unchanged.

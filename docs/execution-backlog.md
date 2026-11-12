@@ -67,8 +67,11 @@ Completed records remain in the [journal](PORTING_JOURNAL.md) and
       stopped at ten completions; the later
       [32-session supervised diagnostic](PORTING_JOURNAL.md#j1407--preserve-cooldown-admission-readings-across-display-wake)
       completes, but final-16 matched-menu managed growth remains positive.
-      Attribute the current APK with the existing paired native-heap capture;
-      no speculative pool trimming or ordinary-play qualification follows.
+      The [32-session catalog-wrapper qualification](PORTING_JOURNAL.md#j1463--bound-collected-catalog-diagnostics-across-32-sessions)
+      still grows 634,880 managed
+      bytes over menus 18–33 (fitted +35,990.588 bytes/menu), with released catalog
+      targets collected and two active locators. Attribute remaining owners using
+      the existing paired native-heap capture; ordinary-play qualification stays open.
 - [ ] Close the [performance release gate](public-alpha.md#performance-release-gate):
       profile converter time/memory/heat/storage per stage and sustained gameplay
       FPS, frame pacing, battery and visual fidelity; optimize measured costs
