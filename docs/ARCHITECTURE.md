@@ -4033,6 +4033,9 @@ still constructs providers and applies native type policy and collection order
 on every call; indexes retain no loaded assets or providers.
 Provider-root `DefinitionFamily<T>` uses the same reader; its typed selection,
 selected-identity checks and existing family-cache lifetime remain unchanged.
+During a family cache miss it resolves each loaded bundle owner once in a
+method-local map, preserving missing/ambiguous-owner refusal and typed loading.
+The map ends on return; loaded definitions retain the existing release lifetime.
 `test_scoped_definition_manifest.py` exercises the production methods against
 authored source snapshots, including parser parity, replacement input and identity
 checks.

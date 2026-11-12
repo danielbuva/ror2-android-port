@@ -3448,3 +3448,18 @@ repairs passed 38 affected checks. Evidence: `work/coordination/p1-wholegame-103
 (`supplier-final-types-checks-v3`, `supplier-final-types-ci-fixtures-v4`,
 `supplier-final-types-push2.log`). No APK or device claim; fresh preparation,
 signed dispatch and full phone qualification remain open.
+## J1435 — Reuse bundle ownership lookups within definition families
+
+2026-11-12. Existing `DefinitionFamily<T>` resolves each bundle once per family
+miss; typed identity/order, missing/ambiguous owner refusal and release stay.
+Pinned R2API lifecycle prior art; three focused executable fixture tests passed.
+Evidence: `work/coordination/alpha-definition-owner-pair-retry-20261112T041618Z/`.
+APK SHA-256 `d07298cd2efaf40c30e158faef2c1ee0fb48b9afd8d78731e220410748cc30bd`.
+Source `4382a54c`; before `44c5d621`, same input and 266 payload pins.
+Both ordinary Starts reached Commando/player/HUD; current-PID errors empty.
+153 banks/65 network sounds ready; in-place update kept profile/settings hashes.
+Stages differed (lakes/golemplains); uncontrolled cache/RNG, no loading-speed claim.
+Generic family cost is unisolated; category spans do not show a reduction.
+Peak CPU/GPU 81.6/86.0 °C, >80 °C 0.311/0.932 s; battery 28 °C both.
+Cleanup/OLED/lease/prune passed; no second snapshot today.
+Sustained performance, physical navigation and full phone installation stay open.
