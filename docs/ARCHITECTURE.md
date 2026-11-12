@@ -88,6 +88,14 @@ schemas supplied by one final player job. Setup and teardown remain the scoped
 preparation/emission owners; the dispatcher retains only declared final artifacts
 for reuse. Host synthetic-registry dispatch does not qualify current CLR/SDK
 production, exact-editor load or phone acceptance.
+The metadata witness reader also accepts a successful `gameplay-refreshed`
+receipt without changing its phase. It binds the provider manifest, base cohort,
+counts and actual `Assembly-CSharp.dll` output; every reused module retains its
+hash. All current provider bodies still pass metadata validation. The final
+player registry remains a separate pinned input with its existing CLR checks;
+accepting a refresh receipt does not establish registry or graph admission.
+An optional pinned provider-alias map relocates retained registry inputs; each
+resolved file must still match the unchanged receipt's size and hash.
 The same release owner's host `Graph.bundle_bindings` API maps one member's
 selected metadata to public supplier jobs, preserving original, pack and final
 identities. It returns unresolved rows without reading pack bodies; callers must
