@@ -91,6 +91,11 @@ Completed records remain in the [journal](PORTING_JOURNAL.md) and
 
 ## Gameplay integration
 
+- [ ] Verify Commando real-hit flinch/recovery with assists off after a sampled
+      living-world baseline; audit other survivors for additive aim/gesture defects.
+- [ ] Audit shipped enemy bodies and projectile/effect material slots together,
+      group source shaders/keywords and adaptation outcomes, then verify fixes on-device.
+
 - [ ] Resolve source-view color/lighting differences against a matched PC reference.
 - [ ] Complete original audio mix, spatial/event attribution and audibility acceptance;
       preserve the qualified source clients and bounded release/restart (J1080).
