@@ -2512,6 +2512,11 @@ lane leftovers require the lane owner's matching `removed.json`; managed stale
 lanes still use owned teardown. Keep markers and receipt paths protect both.
 Cold-storage run/lane symlinks are unlinked only, preserving their targets.
 Linked worktrees resolve the canonical ignored work and lane roots.
+Build-cache entries use narrower protection: state/baseline APK pins, the single
+entry referenced by each current-build/iteration-base receipt, the latest installed
+APK per device, explicit keeps and the age guard. Nested content hashes and sync
+inventories do not pin cache entries. `--json` includes `kept_items` with protection
+reasons and cache-specific protection counts. Retired entries retain JSON receipts.
 
 `scripts/journal-renumber.py` (support) owns branch-only journal numbering after
 merging fetched `origin/main`. It compares complete entries, preserves main,

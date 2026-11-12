@@ -77,6 +77,56 @@ class PruneGeneratedTests(unittest.TestCase):
         (self.work / "config/current-build.json").write_text(json.dumps({"apk_sha256": "f" * 64}))
         self.assertEqual(self.plan().items, [])
 
+    def test_cache_protection_uses_live_references_not_nested_hashes_or_sync_history(self):
+        current = self.cache_entry("current", "c" * 64)
+        base = self.cache_entry("base", "e" * 64)
+        latest = self.cache_entry("installed", "f" * 64)
+        stale = self.cache_entry("stale", "b" * 64)
+        history = self.cache_entry("history", "d" * 64)
+        marked = self.cache_entry("marked", "1" * 64)
+        (marked / ".prune-keep").touch()
+        age(marked)
+        (self.work / "config").mkdir()
+        (self.work / "config/current-build.json").write_text(
+            json.dumps({"apk": str(current / "lab-vulkan.apk"), "members": ["b" * 64, str(stale / "payload")]})
+        )
+        (self.work / "config/iteration-base.json").write_text(json.dumps({"apk": str(base / "lab-vulkan.apk"), "members": ["b" * 64]}))
+        device = self.work / "device/fixture"
+        device.mkdir(parents=True)
+        (device / "installed.json").write_text(json.dumps({"apk_sha256": "f" * 64}))
+        (device / "sync.json").write_text(json.dumps({"files": ["b" * 64, str(stale / "payload")]}))
+        (device / "install-attempt.json").write_text(json.dumps({"apk_sha256": "b" * 64, "success": False}))
+        (self.root / "docs").mkdir()
+        (self.root / "docs/history-retention.md").write_text("d" * 64)
+        planner = self.plan()
+        self.assertEqual({item["path"] for item in planner.items}, {stale, history})
+        reasons = {Path(item["path"]).name: item["reason"] for item in planner.kept}
+        self.assertEqual(reasons[current.name], "current-build cache entry")
+        self.assertEqual(reasons[base.name], "iteration-base cache entry")
+        self.assertIn("latest installed APK", reasons[latest.name])
+        self.assertEqual(reasons[marked.name], ".prune-keep")
+
+    def test_cache_uses_authoritative_install_receipt_per_device_and_explicit_keep(self):
+        stale = self.cache_entry("stale", "b" * 64)
+        live = self.cache_entry("live", "c" * 64)
+        explicit = self.cache_entry("explicit", "d" * 64)
+        device = self.work / "device/fixture"
+        device.mkdir(parents=True)
+        old = self.work / "device/installed.json"
+        old.write_text(json.dumps({"serial": "AUTHORIZED_SERIAL", "apk_sha256": "b" * 64}))
+        os.utime(old, (OLD, OLD))
+        (device / "installed.json").write_text(json.dumps({"serial": "AUTHORIZED_SERIAL", "apk_sha256": "c" * 64}))
+        (device / ".device-context-active.json").write_text("{}")
+        hashes, paths = prune.protected_state(self.work, ["d" * 64])
+        planner = prune.Planner(self.work, hashes, paths, 24, prune.cache_protected_state(self.work, ["d" * 64]))
+        planner.build_cache()
+        self.assertEqual([item["path"] for item in planner.items], [stale])
+        self.assertEqual({Path(item["path"]).name for item in planner.kept}, {live.name, explicit.name})
+        (device / ".device-context-active.json").unlink()
+        planner = prune.Planner(self.work, hashes, paths, 24, prune.cache_protected_state(self.work, ["d" * 64]))
+        planner.build_cache()
+        self.assertEqual([item["path"] for item in planner.items], [live])
+
     def test_experiment_binary_is_replaced_by_marker_but_logs_stay(self):
         run = self.work / "experiments/audio/run1"
         run.mkdir(parents=True)
