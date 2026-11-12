@@ -6993,3 +6993,7 @@ native movement cache and Animator state; its existing disposal owns teardown.
 contract check for native parameter discovery on an inactive, bound Animator
 (`SurvivorSkillInputHost.VerifyInactiveAnimatorParameterSnapshot`); gameplay remains
 a device gate.
+`NovaInputBridge` neutralizes unavailable physical input without suspending idle
+touch capture; focus, pause and teardown still cancel all input. The same
+exact-editor action also checks first touch delivery without a physical mapping
+and full cancellation through `Neutral`.

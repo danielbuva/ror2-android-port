@@ -63,7 +63,7 @@ public static class SurvivorSkillInputHost
                 "Require idle exact editor for inactive Animator metadata");
         var model = new GameObject("inactive-animation-contract");
         model.SetActive(false);
-        var controller = ScriptableObject.CreateInstance<UnityEditor.Animations.AnimatorController>();
+        var controller = new UnityEditor.Animations.AnimatorController();
         try
         {
             controller.AddParameter("isMoving", AnimatorControllerParameterType.Bool);
@@ -84,6 +84,39 @@ public static class SurvivorSkillInputHost
             UnityEngine.Object.DestroyImmediate(model);
             UnityEngine.Object.DestroyImmediate(controller);
         }
+    }
+
+    public static object VerifyTouchWithoutPhysicalController()
+    {
+        Require(!EditorApplication.isPlaying && !EditorApplication.isCompiling, "Require idle editor");
+        var root = new GameObject("touch-without-controller-contract");
+        root.SetActive(false);
+        try
+        {
+            var bridge = root.AddComponent<NovaInputBridge>();
+            bridge.bank = root.AddComponent<InputBankTest>();
+            bridge.mapping = new NovaInputBridge.Mapping();
+            bridge.touchControls = new AndroidTouchInput();
+            var touch = bridge.touchControls;
+            touch.Layout(new Rect(0, 0, 1920, 1080), new Vector2(1920, 1080));
+            touch.BeginFrame(0);
+            touch.EndFrame();
+            FixedInput(bridge); // Missing controller: neutral bank, preserve touch admission.
+            Require(!touch.report.waitingForLift && bridge.bank.moveVector == Vector3.zero,
+                    "Physical input unavailability locked out idle touch capture");
+            touch.BeginFrame(1);
+            touch.Pointer(7, touch.MoveCenter + new Vector2(125, 0), true, false, false);
+            touch.EndFrame();
+            typeof(NovaInputBridge).GetField("movement", Instance).SetValue(bridge, touch.Movement);
+            FixedInput(bridge);
+            Require(touch.HasInput && bridge.bank.moveVector.x > .9f,
+                    "First touch movement was blocked by physical controller absence");
+            bridge.Neutral();
+            Require(touch.report.waitingForLift && !touch.HasInput && bridge.bank.moveVector == Vector3.zero,
+                    "Focus/pause/teardown neutralization no longer cancels touch");
+            return new { physicalControllerAbsent = true, touchMovement = true, suspensionPreserved = true };
+        }
+        finally { UnityEngine.Object.DestroyImmediate(root); }
     }
 
     public static object Run()
