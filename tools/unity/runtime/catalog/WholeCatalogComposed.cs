@@ -620,6 +620,10 @@ public static class WholeCatalogComposed
             var groups = FamilyLocationGroups(manifest, category);
             var familyBundles = new Dictionary<string, AssetBundle>(StringComparer.Ordinal);
             trace?.Invoke("index-ready-assets-begin");
+            // Aggregate successful row work without logging from inside LoadAsset callbacks.
+            long typeTicks = 0, ownerTicks = 0, loadTicks = 0;
+            int rows = 0;
+            long assetsStarted = trace == null ? 0 : System.Diagnostics.Stopwatch.GetTimestamp();
             values = groups
                          .SelectMany(group =>
                                      {
@@ -630,8 +634,15 @@ public static class WholeCatalogComposed
                                                  .Select(id =>
                                                          {
                                                              var row = locations[id];
+                                                             long started = trace == null ? 0 : System.Diagnostics.Stopwatch.GetTimestamp();
                                                              if (!typeof(T).IsAssignableFrom(Type.GetType((string)row["type"], true)))
                                                                  throw new Exception("Original category type differs: " + category);
+                                                             if (trace != null)
+                                                             {
+                                                                 long now = System.Diagnostics.Stopwatch.GetTimestamp();
+                                                                 typeTicks += now - started;
+                                                                 started = now;
+                                                             }
                                                              var bundleName = (string)row["bundle"];
                                                              AssetBundle bundle;
                                                              if (!familyBundles.TryGetValue(bundleName, out bundle))
@@ -643,7 +654,18 @@ public static class WholeCatalogComposed
                                                              if (!bundle)
                                                                  throw new Exception("Original category owner not loaded: " + category +
                                                                                      "/" + row["bundle"]);
+                                                             if (trace != null)
+                                                             {
+                                                                 long now = System.Diagnostics.Stopwatch.GetTimestamp();
+                                                                 ownerTicks += now - started;
+                                                                 started = now;
+                                                             }
                                                              var asset = bundle.LoadAsset<T>((string)row["path"]);
+                                                             if (trace != null)
+                                                             {
+                                                                 loadTicks += System.Diagnostics.Stopwatch.GetTimestamp() - started;
+                                                                 rows++;
+                                                             }
                                                              if (!asset)
                                                                  throw new Exception("Original category asset missing: " + category + "/" +
                                                                                      row["path"]);
@@ -655,6 +677,15 @@ public static class WholeCatalogComposed
                          .Distinct()
                          .Cast<UnityEngine.Object>()
                          .ToArray();
+            if (trace != null)
+            {
+                long totalTicks = System.Diagnostics.Stopwatch.GetTimestamp() - assetsStarted;
+                // Residual includes collection/deduplication/enumeration and instrumentation overhead.
+                trace("assets-costs rows=" + rows + " bundles=" + familyBundles.Count +
+                      " typeTicks=" + typeTicks + " ownerTicks=" + ownerTicks + " loadTicks=" + loadTicks +
+                      " collectionTicks=" + (totalTicks - typeTicks - ownerTicks - loadTicks) +
+                      " totalTicks=" + totalTicks + " frequency=" + System.Diagnostics.Stopwatch.Frequency);
+            }
             trace?.Invoke("assets-ready");
             // Native collections enforce names within each provider, not across packs.
             if (values.Length == 0)

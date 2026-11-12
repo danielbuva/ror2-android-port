@@ -5937,6 +5937,11 @@ parsing, location indexing/provider grouping and native asset collection loading
 inside master-family setup. The callback runs only on a family-cache miss and
 retains no state; family-cache ownership and reset remain unchanged. These remain
 bounded owner-boundary logs, with no per-object recording.
+The same optional callback aggregates successful-row type resolution, bundle-owner
+lookup and typed asset-load ticks once per cold family. It records the timer
+frequency and remaining collection/enumeration ticks, including instrumentation
+overhead. Unobserved calls perform no clock reads; warm families emit no costs.
+It adds no retained state and leaves native collection order and ownership intact.
 
 `AndroidProfileBoundary` passes the existing synchronous results manifest through
 `TeleporterWorldSession` rule preparation into the game-mode family loader. The
