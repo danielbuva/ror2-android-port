@@ -47,6 +47,45 @@ Evidence: `work/coordination/alpha-raw-frames-device-20261112T070204Z/`
 (`performance.json`, `terminal.done.json`). APK SHA-256:
 `b9217c23f81cea18cf570bfa309bffda235db6276a9cca898b92a0fbd731a3eb`.
 
+### Bounded capture on/off comparison
+
+The sustained owner's `raw_frame_times` boolean defaults to true; false retains
+aggregate frame/duration/hitch counters and refuses unexpected trace metadata
+without transferring a sidecar. The mode is recorded in the selector and result.
+
+Four 75-second assisted windows used the same APK above, seed 2, Commando,
+Lakes, neutral movement and small camera drags, in off/on/on/off order. Actual
+host endpoint spans were 79.686–80.315 s. Native End Run and cleanup passed each
+time; both on-windows reconciled raw intervals without drops, and both off-windows
+retained aggregates with no trace. The device scratch inventory was unchanged.
+
+| Window | Capture | Active-frame FPS | Mean ms | Frames >33.334 ms |
+| --- | --- | --- | --- | --- |
+| 1 | Off | 58.189 | 17.185 | 55 / 4,692 |
+| 2 | On | 58.077 | 17.218 | 53 / 4,392 |
+| 3 | On | 58.207 | 17.180 | 58 / 4,693 |
+| 4 | Off | 58.133 | 17.202 | 56 / 4,689 |
+
+Equal-weight per-window means are 58.161 FPS off and 58.142 FPS on. On minus off
+is −0.019 FPS, +0.0056 ms mean duration and +0.038 percentage points above
+33.334 ms. Within-mode FPS ranges are 0.057 off and 0.129 on. Two windows per
+mode, changing workload timing/population and thermal conditions do not establish
+causal capture overhead. Sustained performance, ordinary play and energy remain
+open.
+
+Observed-window thermal traces have no gaps above one second (maximum 0.467 s),
+with 0.189–0.624 s uncovered at their boundaries. Their peaks are CPU 84.4 C,
+GPU 64.6 C and battery 31 C; covered time above 80 C is 0.401 s. Across the wider
+startup/teardown phases, CPU/GPU peaks reach 90.7 C and time above 80 C ranges
+2.480–15.816 s per run. Battery admission was 27–30 C at the charge limit;
+unchanged charge level does not measure energy use. Shared adopted storage grew
+2,011,136 bytes across the wider diagnostic, including its evidence.
+
+Evidence: `work/coordination/alpha-capture-overhead-20261112T073826Z/`
+(`terminal.done.json`, four `*-performance.json` reports and thermal traces).
+The terminal receipt binds result/report hashes, idle process/selector/pending
+readback, OLED sleep and lease release. No install or package change occurred.
+
 ### Historical aggregate inputs
 
 Local source: `work/coordination/alpha-sustained-current-device-20261031T214907Z/`;

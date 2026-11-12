@@ -3593,3 +3593,18 @@ Native End Run/trace removal passed; update retained profiles/settings.
 Wider-run peak CPU/GPU 83.6 °C, 1.893 s above 80 °C; battery peak 27 °C.
 Thermal max gap 0.431 s; cleanup/OLED/lease passed. No second daily snapshot.
 Ordinary sustained play, capture overhead, battery efficiency and phone install stay open.
+
+## J1446 — Select sustained capture mode and compare bounded windows
+
+2026-11-12. Existing sustained owner records explicit raw capture mode, default true.
+Off keeps aggregate counters and refuses unexpected trace metadata without transfer.
+Ruff, 9 sustained/13 performance checks and canonical host preflight passed once.
+Evidence: `work/coordination/alpha-capture-overhead-20261112T073826Z/`.
+APK SHA-256 `b9217c23f81cea18cf570bfa309bffda235db6276a9cca898b92a0fbd731a3eb`.
+Same APK/seed/Commando/Lakes, four assisted 75-second off/on/on/off windows passed.
+Mean FPS off/on 58.161/58.142; within-mode ranges 0.057/0.129 FPS.
+On minus off +0.0056 ms mean, +0.038 percentage points >33.334 ms; diagnostic only.
+Both on-traces reconcile without drops; off has no trace; scratch remains unchanged.
+Observed thermal max gap 0.467 s; wider CPU/GPU peak 90.7 C, battery peak 31 C.
+Native End Run, idle/OLED/lease cleanup passed; no install or daily snapshot refresh.
+Ordinary sustained play, causal capture overhead and energy acceptance remain open.
