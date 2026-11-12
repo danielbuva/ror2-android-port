@@ -15,6 +15,7 @@ using UnityEngine.AddressableAssets;
 using UnityEngine.AddressableAssets.ResourceLocators;
 using UnityEngine.AddressableAssets.ResourceProviders;
 using UnityEngine.ResourceManagement.AsyncOperations;
+using UnityEngine.ResourceManagement;
 using UnityEngine.ResourceManagement.ResourceLocations;
 using UnityEngine.ResourceManagement.ResourceProviders;
 
@@ -27,6 +28,56 @@ public static class WholeCatalogLoader
     public static IResourceLocator locator;
     public static readonly List<string> failures = new List<string>();
     public static readonly List<string> initializedCatalogs = new List<string>();
+    static OperationLoggingObserver operationObserver;
+    public static void StopRequestLogging()
+    {
+        operationObserver?.Dispose();
+        operationObserver = null;
+    }
+    sealed class OperationLoggingObserver : IDisposable
+    {
+        readonly ResourceManager manager;
+        readonly FieldInfo profilerField;
+        readonly bool priorProfilerEvents;
+        public OperationLoggingObserver(ResourceManager manager)
+        {
+            this.manager = manager;
+            profilerField = typeof(ResourceManager).GetField("postProfilerEvents", BindingFlags.Instance | BindingFlags.NonPublic);
+            if (profilerField == null)
+                throw new Exception("Original resource diagnostic event contract changed");
+            priorProfilerEvents = (bool)profilerField.GetValue(manager);
+            manager.RegisterDiagnosticCallback(Observe);
+            profilerField.SetValue(manager, true);
+        }
+        void Observe(ResourceManager.DiagnosticEventContext context)
+        {
+            var handle = context.OperationHandle;
+            if (context.Type != ResourceManager.DiagnosticEventType.AsyncOperationComplete &&
+                context.Type != ResourceManager.DiagnosticEventType.AsyncOperationFail)
+                return;
+            Log(handle, context.Location, context.Type.ToString(), context.Error);
+        }
+        static void Log(AsyncOperationHandle handle, IResourceLocation location, string eventType, string error)
+        {
+            Debug.Log("whole-catalog-operation " + new JObject {
+                ["phase"] = phase,
+                ["event"] = eventType,
+                ["operation"] = handle.IsValid() ? handle.DebugName : null,
+                ["status"] = handle.IsValid() ? handle.Status.ToString() : "Invalid",
+                ["exception"] = error ?? (handle.IsValid() ? handle.OperationException?.ToString() : null),
+                ["member"] = location?.InternalId,
+                ["primaryKey"] = location?.PrimaryKey,
+                ["provider"] = location?.ProviderId,
+                ["bundle"] = location?.Dependencies != null && location.Dependencies.Count != 0 ? location.Dependencies[0].InternalId : null,
+                ["resultType"] = handle.IsValid() && handle.IsDone && handle.Result != null ? handle.Result.GetType().FullName : null
+            }.ToString(Newtonsoft.Json.Formatting.None));
+        }
+        public void Dispose()
+        {
+            manager.UnregisterDiagnosticCallback(Observe);
+            profilerField.SetValue(manager, priorProfilerEvents);
+        }
+    }
     // Observe misses before the dynamic locator attempts GUID[subobject] lookup.
     // Delegate through the interface: ResourceLocationMap.Locate is non-virtual.
     sealed class RequestLoggingLocator : IResourceLocator
@@ -38,13 +89,23 @@ public static class WholeCatalogLoader
         public bool Locate(object key, Type type, out IList<IResourceLocation> locations)
         {
             bool found = inner.Locate(key, type, out locations);
+            var resolved = new JArray();
+            if (locations != null)
+                foreach (var location in locations)
+                    resolved.Add(new JObject {
+                        ["member"] = location.InternalId,
+                        ["primaryKey"] = location.PrimaryKey,
+                        ["provider"] = location.ProviderId,
+                        ["bundle"] = location.Dependencies != null && location.Dependencies.Count != 0 ? location.Dependencies[0].InternalId : null
+                    });
             Debug.Log("whole-catalog-request " + new JObject {
                 ["key"] = key == null ? null : key.ToString(),
                 ["keyType"] = key == null ? null : key.GetType().FullName,
                 ["type"] = type == null ? null : type.AssemblyQualifiedName,
                 ["phase"] = phase,
                 ["locatorFound"] = found,
-                ["locations"] = locations == null ? 0 : locations.Count
+                ["locations"] = locations == null ? 0 : locations.Count,
+                ["resolved"] = resolved
             }.ToString(Newtonsoft.Json.Formatting.None));
             return found;
         }
@@ -155,6 +216,9 @@ public static class WholeCatalogLoader
             if (found.Count != 0)
                 map.Add((string)key["key"], found);
         }
+        StopRequestLogging();
+        operationObserver = new OperationLoggingObserver(Addressables.ResourceManager);
+        phase = "catalog-locations-registered";
         locator = new RequestLoggingLocator(map);
         Addressables.AddResourceLocator(locator);
         // The original locator resolves GUID[subobject] through the typed main location.

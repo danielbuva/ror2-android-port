@@ -428,6 +428,7 @@ public static class WholeCatalogComposed
             activeAttempt = null;
             activeManifestSha256 = null;
             Addressables.RemoveResourceLocator(ownedLocator);
+            WholeCatalogLoader.StopRequestLogging();
             foreach (var locator in priorLocators)
             {
                 Addressables.RemoveResourceLocator(locator);

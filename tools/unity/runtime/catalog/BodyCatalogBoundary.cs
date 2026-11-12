@@ -162,6 +162,7 @@ public sealed partial class PortSession
         public IEnumerator RegisterOriginalSkins()
         {
             TraceStartup("skin-snapshot-begin");
+            WholeCatalogLoader.phase = "original-skin-catalog-register";
             coordinator.Check(coordinator.r.liveCatalogs != null && BodyCatalog.availability.available &&
                                   ProjectileCatalog.catalogAvailability.available && SkinCatalog.skinCount == 0 && !ownsSkinCatalog,
                               "Original skin catalog dependencies or ownership missing");
@@ -172,21 +173,29 @@ public sealed partial class PortSession
             coordinator.Check(priorSkinDefs.Length == 0 && priorSkinsByBody.Length == 0 && names.Count == 0 &&
                                   !priorSkinAvailability.available,
                               "Unowned original skin catalog state");
+            var bodyIndex = 0;
             foreach (var prefab in BodyCatalog.allBodyPrefabs)
             {
+                var context = " bodyIndex=" + bodyIndex++ + " body=" + (prefab ? prefab.name : "<null>");
+                coordinator.Check(prefab, "Original skin field null: bodyPrefab" + context);
                 var locator = prefab.GetComponent<ModelLocator>();
                 if (!locator || !locator.modelTransform)
                     continue;
                 var controller = locator.modelTransform.GetComponent<ModelSkinController>();
                 if (!controller)
                     continue;
+                coordinator.Check(controller.skins != null, "Original skin field null: ModelSkinController.skins" + context);
                 for (var skinIndex = 0; skinIndex < controller.skins.Length; skinIndex++)
                 {
                     var skin = controller.skins[skinIndex];
-                    var context = " body=" + prefab.name + " skinIndex=" + skinIndex;
-                    coordinator.Check(skin, "Original skin reference missing" + context);
-                    coordinator.Check(skin.skinDefParamsAddress != null,
-                        "Original skin parameter address missing" + context + " skin=" + skin.name);
+                    var skinContext = context + " skinIndex=" + skinIndex;
+                    coordinator.Check(skin, "Original skin field null: ModelSkinController.skins[skinIndex]" + skinContext);
+                    var parameters = skin.GetSkinParams();
+                    coordinator.Check(parameters.assetRef != null,
+                        "Original skin field null: SkinDef.GetSkinParams().assetRef / skinDefParamsAddress" + skinContext + " skin=" + skin.name);
+                    Debug.Log("original-skin-input" + skinContext + " skin=" + skin.name +
+                        " paramsGuid=" + parameters.assetRef.AssetGUID + " directParams=" + (bool)parameters.directRef +
+                        " nullField=" + (skin.name == null ? "SkinDef.name" : "none"));
                     if (!priorSkinIndices.ContainsKey(skin))
                         priorSkinIndices.Add(skin, skin.skinIndex);
                 }
@@ -210,7 +219,16 @@ public sealed partial class PortSession
             while (true)
             {
                 var moveStarted = System.Diagnostics.Stopwatch.GetTimestamp();
-                var advanced = routine.MoveNext();
+                bool advanced;
+                try
+                {
+                    advanced = routine.MoveNext();
+                }
+                catch (Exception error)
+                {
+                    Debug.LogError("Original SkinCatalog.Init failed beforeYield=" + firstYield + " moveCall=" + moveCalls + " " + error);
+                    throw;
+                }
                 var elapsed = System.Diagnostics.Stopwatch.GetTimestamp() - moveStarted;
                 moveTicks += elapsed;
                 maxMoveTicks = Math.Max(maxMoveTicks, elapsed);

@@ -9,6 +9,12 @@ file, owner or pipeline step is added, moved or retired. Results and evidence li
 `WholeCatalogLoader.RegisterLocations` wraps its completed map with an
 `IResourceLocator` request observer. Each lookup logs its original key, key type,
 requested asset type, phase and map result, including unresolved soft references.
+Resolved rows include their provider, member and bundle. The same owner registers
+the ResourceManager diagnostic callback and enables its diagnostic events while
+the composed locator is owned. It observes original operation completions and
+failures without requesting assets or changing reference counts. Release removes
+its callback and restores the prior diagnostic-event setting. Failed operations
+emit their exception at the failure event, after the original completion event.
 The wrapper delegates keys and results unchanged; the original dynamic locator
 still handles GUID subobjects afterwards. A map miss is not a global load failure.
 `WholeCatalogComposed.Release` removes the same owned wrapper and restores prior
