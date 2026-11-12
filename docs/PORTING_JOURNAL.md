@@ -3634,3 +3634,18 @@ Evidence: `work/coordination/p1-wholegame-1031/phone-chain-audit-1112/`
 (`current-complete-player-v4/cohort-handoff.json`, SHA-256
 `76299789b9ca8b4aaf57e771fce545a078beea302bc3373d14c0db7f9e5ea204`).
 Android signed-chain execution, typed load, APK assembly and play remain open.
+## J1448 — Omit unused process audio-lease manifest annotations
+
+2026-11-12. Existing audio lease parses fresh SHA-validated bytes without line info;
+retained dependencies, verification, readiness and teardown stay unchanged.
+R2API phase/ownership prior art and J1393 reader policy inform the same owner.
+Seven focused dependency/manifest checks and host preflight passed once.
+Evidence: `work/coordination/alpha-audio-lease-parse-candidate-20261112T091432Z/`.
+APK SHA-256 `b8c87610fae11539df07f8a5538d66c77007d8290ad7e2f3ce3cb32d0cb24900`.
+Source `ac1b38cc`; ordinary Start, Commando/Verdant Falls/player/HUD4 >5 s pass.
+Native 153 banks/65 network sounds; cached274/full0; current-PID errors empty.
+In-place update retains profiles/settings. Owner span 1.230 to 1.097 s;
+baseline Distant Roost, native RNG/cache uncontrolled: no causal speedup claim.
+Candidate CPU/GPU peak 78.5 C, battery 28 C, active thermal max gap 0.414 s.
+Scratch removed, process stopped, OLED asleep, lease released and prune passed.
+Sustained play, audibility and full-pipeline performance/alpha acceptance stay open.
