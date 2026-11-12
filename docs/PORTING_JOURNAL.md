@@ -3564,3 +3564,14 @@ Peak CPU/GPU 77.7 °C, 0 s above 80 °C; battery 27 °C; cleanup/OLED/lease pass
 Single candidate, uncontrolled page cache/RNG; no total-load or exclusive I/O claim.
 Natural-loss reload was not forced; prior J1375/J1376 evidence remains unchanged.
 No second daily snapshot; sustained play/performance and phone install remain open.
+
+## J1444 — Accept receipt-bound record supplier type tables
+
+2026-11-12. Existing object pack reader accepts `types.json` from current Shader
+and other typed suppliers, with the existing hash and size checks for every output.
+Legacy body-only packs remain supported; unknown output names remain rejected.
+85 object and 49 player host checks, Ruff and host-only preflight pass, including
+metadata tampering and unsupported-output refusal. No supplier replay was needed.
+Evidence: `work/coordination/p1-wholegame-1031/phone-chain-audit-1112/`
+(`current-cohort-player-v3/player.log`, `current-cohort-player-v4/host-validation.json`).
+Current player, CLR witnesses, complete APK, Unity typed load and device gates remain open.
