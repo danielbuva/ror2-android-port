@@ -3321,3 +3321,19 @@ Evidence: `tests/test_phone_updates.py`, `tests/test_release_graph.py`
 and `tests/test_public_release.py`; 57 focused host tests, Ruff, preflight and
 full CI-local (3,194 tests) passed before merge. No APK/device change; complete
 phone conversion, installation and update/save retention remain open.
+## J1425 — Measure direct native state catalog iterator execution
+
+2026-11-12. Existing state driver summarizes invocation/nested MoveNext; native
+order, yields and disposal stay. Pinned R2API readiness seams inform observation.
+Executable nested-iterator fixture, Ruff, preflight and exact-editor build pass.
+Evidence: `work/coordination/alpha-state-execution-device-20261112T015831Z/`.
+APK SHA-256 `48834e2acff79ea723781256dffc5b009d34e66f0716bff8e87fe0a59c09ea75`.
+Ordinary Start reached golemplains/Commando/player/HUD; current-PID errors empty.
+In-place update kept profile/settings hashes; 153 banks ready, cached 274/full 0.
+Invocation 0.044 ms; 217 MoveNext calls total 0.478067 s, maximum 7.074 ms;
+214 null/1 nested/0 other yields. Native wall 3.573816 s/214 frames; remaining
+3.095705 s includes scheduling/callbacks, not I/O proof. Source `608a0b36`.
+Launch/menu 20.078 s; Start/player 44.636 s; uncontrolled cache, no speedup claim.
+Peak CPU/GPU 73.7 °C, 0 s above 80 °C; battery 26 °C, runtime gap < 0.433 s.
+App stopped, scratch removed, OLED asleep, lease released; pruning passed.
+Sustained play/performance, physical navigation and complete phone install stay open.
