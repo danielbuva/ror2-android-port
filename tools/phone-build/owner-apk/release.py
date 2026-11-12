@@ -90,7 +90,8 @@ def rebuild(release, *, installer_version, application_id, installed_version, in
     state = root / "release-cache.json"
     previous = json.loads(state.read_text()) if state.exists() else {}
     old = previous.get("entries", {}) if previous.get("input_sha256") == input_sha256 else {}
-    rows, changed = {}, []
+    rows = {name: old[name] for name in release["entries"] if name in old}
+    changed = []
     for name, dependencies in sorted(release["entries"].items()):
         output = root / name
         if not output.resolve().is_relative_to(root):
@@ -109,8 +110,8 @@ def rebuild(release, *, installer_version, application_id, installed_version, in
                 ATOMIC.discard(stage)
             changed.append(name)
         rows[name] = {"dependencies": dict(dependencies), "sha256": digest(output)}
-        # Each verified output is independently resumable after the next producer
-        # fails or is killed; stale/unvisited entries are never granted reuse.
+        # Keep prior candidates if a later producer fails or is killed. Every
+        # entry still passes the dependency and output checks before reuse.
         ATOMIC.write_json(state, {"input_sha256": input_sha256, "entries": rows})
     return {"rebuilt": changed, "reused": sorted(set(rows) - set(changed)), "outputs": {name: str(root / name) for name in rows}}
 
