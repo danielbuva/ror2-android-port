@@ -110,6 +110,60 @@ public static class SurvivorSkillInputHost
         }
     }
 
+    // Frozen native base state isolates the additive reference from idle timing.
+    public static object SampleCommandoAim()
+    {
+        const string path = "Assets/WholeGame/RoR2/Base/Characters/Commando/";
+        var parent = new GameObject("source-aim-sampling");
+        parent.SetActive(false);
+        try
+        {
+            var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(path + "CommandoBody.prefab");
+            Require(prefab, "Current source Commando prefab missing");
+            var body = UnityEngine.Object.Instantiate(prefab, parent.transform);
+            foreach (var component in body.GetComponentsInChildren<MonoBehaviour>(true))
+                component.enabled = false;
+            foreach (var component in body.GetComponentsInChildren<Collider>(true))
+                component.enabled = false;
+            var animator = body.GetComponentInChildren<Animator>(true);
+            animator.runtimeAnimatorController = AssetDatabase.LoadAssetAtPath<RuntimeAnimatorController>(path + "animCommando.controller");
+            animator.avatar = AssetDatabase.LoadAssetAtPath<Avatar>(path + "mdlCommandoDualiesAvatar.asset");
+            animator.enabled = true;
+            animator.applyRootMotion = false;
+            animator.cullingMode = AnimatorCullingMode.AlwaysAnimate;
+            animator.gameObject.SetActive(true);
+            body.SetActive(true);
+            parent.SetActive(true);
+            animator.Update(0);
+            int pitch = animator.GetLayerIndex("AimPitch"), yaw = animator.GetLayerIndex("AimYaw");
+            Require(pitch >= 0 && yaw >= 0, "Current native aim layers missing");
+            var rows = new System.Collections.Generic.List<object>();
+            foreach (float weight in new[] { 0f, 1f })
+                foreach (float cycle in new[] { 0f, .5f, .999f })
+                {
+                    animator.Rebind();
+                    animator.Update(0);
+                    animator.Play(animator.GetCurrentAnimatorStateInfo(0).fullPathHash, 0, 0);
+                    animator.SetLayerWeight(pitch, weight);
+                    animator.SetLayerWeight(yaw, weight);
+                    animator.SetFloat("aimPitchCycle", cycle);
+                    animator.SetFloat("aimYawCycle", cycle);
+                    animator.Play("PitchControl", pitch, 0);
+                    animator.Play("YawControl", yaw, 0);
+                    animator.Update(0);
+                    var bones = animator.GetComponentsInChildren<Transform>(true)
+                                    .Where(t => t.name.ToLowerInvariant().Contains("muzzle"))
+                                    .Select(t => new { name = t.name, position = new[] { t.position.x, t.position.y, t.position.z },
+                                                      forward = new[] { t.forward.x, t.forward.y, t.forward.z },
+                                                      rotation = new[] { t.eulerAngles.x, t.eulerAngles.y, t.eulerAngles.z } }).ToArray();
+                    Require(bones.Length > 0, "Current source muzzle transforms missing");
+                    rows.Add(new { weight, cycle, bones });
+                }
+            return new { rows };
+        }
+        finally { UnityEngine.Object.DestroyImmediate(parent); }
+    }
+
     public static object VerifyTouchWithoutPhysicalController()
     {
         Require(!EditorApplication.isPlaying && !EditorApplication.isCompiling, "Require idle editor");

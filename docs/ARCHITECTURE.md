@@ -7039,3 +7039,17 @@ device gate.
 touch capture; focus, pause and teardown still cancel all input. The same
 exact-editor action also checks first touch delivery without a physical controller
 and full cancellation through `Neutral`.
+
+Aim reference-pose recovery stays in `animation_bindings.stage_aim_reference_poses`
+and `WholeCatalogBuild.RestoreSourceAimReferencePoses`. The former follows native
+additive AimPitch/AimYaw states and blend trees, resolves current catalog
+containers against accepted input hashes, and emits private source identities
+and Transform reference values through StageIO. The latter creates owned
+constant reference clips before bundle production and applies the original
+additive reference settings. Unsupported muscle streams remain unchanged and
+are reported explicitly; unknown Transform bindings refuse restoration.
+Generated clips persist with the composed project and are replaced on rebuild;
+there is no runtime owner. Code-only builds require unchanged source-pose inputs.
+The existing current `commando-animation-host` action also verifies persisted
+reference curves and samples frozen-base muzzle transforms for source comparison.
+Device aim correctness remains a separate gate.
