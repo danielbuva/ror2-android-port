@@ -1100,6 +1100,13 @@ publishes these on authorized version tags using an externally provisioned key.
 `owner-apk/updates.py` owns bounded GitHub acquisition, signature/archive
 verification and the private update transaction; `release_jobs.py` dispatches
 signed job recipes to existing source-only producers. Optional
+job `source_files` pin their own recipe/producer inputs and transitive suppliers
+for cache identity, so a consumer recipe change can retain its shared suppliers.
+The compiler emits these signed pins for every job and keeps its conservative
+Python import cohort. Jobs without explicit pins retain the consumer-union
+cache policy. Both paths still verify every signed consumer source before reuse
+or production and after execution; narrower cache identity does not narrow
+source integrity checks. Optional
 `recipe/owner-player-phases.json` selects the five existing source player phases,
 including all Sprite/texture outputs, their profile argv and signed policy
 closure. Manager shaders use the existing shader job. A shared startup job

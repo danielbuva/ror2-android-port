@@ -179,6 +179,10 @@ class ReleaseGraphTests(unittest.TestCase):
             graph = G.Graph(repo, {})
             index = graph.compile(["recipe/owner-selected.json"], bundle_manifest=True)
 
+            for name, job in graph.jobs.items():
+                closure = graph.entry(name)
+                self.assertEqual(job.pop("source_files"), sorted(set(closure["recipe_files"]) | set(closure["producer_files"])))
+
             def wire(value):
                 return (json.dumps(value, sort_keys=True, indent=2) + "\n").encode()
 
