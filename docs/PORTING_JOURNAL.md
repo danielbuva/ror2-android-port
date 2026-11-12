@@ -3682,6 +3682,21 @@ Registry/SDK owners remain synthetic; existing game APK preserved. Installer rem
 displays asleep, lease/prune pass; game content and Unity typed load remain open.
 Game installation, play and save-preserving port updates remain open.
 
+## J1453 — Preserve original paths during phone source upload
+
+2026-11-12. Existing lab uploader accepts restricted paths with spaces and quotes both shell layers.
+113 installer tests, binary/path regression, Ruff and host preflight pass.
+Current-source 40-byte native body/full tree completes signed bundle/catalog/manifest jobs on Android.
+Evidence: `work/coordination/p1-wholegame-1031/phone-chain-audit-1112/phone-actual-physmat-chain-v2/`.
+Bundle SHA-256 `e48154e128cdc32b30704c9ce411edf58492b24524653016a5872f3632823ec8`.
+Cold/warm/policy: 83.821/58.082/71.703 s, cache 6/6/9; three changed jobs rebuild, same signer.
+Cold fixture APK SHA-256 `ae12d7de713acdd5181357664797d59e57962ceb13f2deb1595b842bfb03be59`.
+Sampled app-UID RSS peaks 363,864/323,420/321,168 KiB (lower bounds).
+Staged storage 10,402/17,557/24,996 KiB; production CPU/GPU peaks 51.3/52.1/52.5 C.
+No time above 80 C; battery readback 28 C. Registry/SDK remain synthetic; cohort unconsumed.
+Receipts persist; phone outputs were removed with owned-installer cleanup, so no typed-load handoff.
+Existing game unchanged; displays asleep, lease/prune pass. No continuous battery-maximum claim.
+Game installation, Unity typed load, play and save-preserving port updates remain open.
 ## J1452 — Report covered-tail quantiles from sustained raw capture
 
 2026-11-12. Existing host report exposes reconciled partial-tail raw quantiles in Markdown.
