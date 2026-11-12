@@ -3835,3 +3835,18 @@ Evidence: `work/coordination/p1-wholegame-1031/phone-chain-audit-1112/managed-in
 Prior art: J1461 retained-input checks and the existing metadata-only Cecil reader.
 No APK produced or device/editor used. Current CLR/graph admission, Unity typed load,
 converted play and complete phone install/update qualification remain open.
+
+## J1463 — Bound collected catalog diagnostics across 32 sessions
+
+2026-11-12. WholeCatalogComposed drops collected/null weak-reference wrappers
+while preserving live targets and cumulative generations; release ownership is unchanged.
+Five focused extracted-method tests, Ruff and host preflight pass; code-only build passes.
+APK SHA-256: `8bde26e6a44af7b29e805f453f2bfb4d7085ab013cfad271668d5057309b88c4`.
+Evidence: `work/coordination/alpha-retention-wrapper-device32-20261112T123603Z/terminal.done.json`.
+All 32 assisted sessions complete; menus 2–33 show zero released locator/manifest
+live targets, two active locators and exact cumulative generations 1–32.
+Wrapper-list pruning is host-fixture verified; device telemetry counts live targets only.
+Menus 18–33 still grow 634,880 managed bytes, fitted 35,990.588 bytes/menu: no plateau.
+Series wall time 4,313.724 s; peak CPU/GPU 95.9 C, 752.715 s above 80 C.
+In-place install preserves profile/settings hashes; stopped process, OLED sleep and lease release pass.
+Remaining: retained-owner attribution, a plateau, physical navigation and ordinary-play qualification.

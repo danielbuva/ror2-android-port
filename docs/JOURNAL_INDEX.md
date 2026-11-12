@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J1463](PORTING_JOURNAL.md#j1463--bound-collected-catalog-diagnostics-across-32-sessions) | 2026-11-12 | Bound collected catalog diagnostics across 32 sessions | 2026-11-12. |
 | [J1462](PORTING_JOURNAL.md#j1462--relocate-managed-witness-inputs-without-rewriting-receipts) | 2026-11-12 | Relocate managed witness inputs without rewriting receipts | 2026-11-12. |
 | [J1461](PORTING_JOURNAL.md#j1461--accept-refreshed-managed-metadata-with-exact-retained-inputs) | 2026-11-12 | Accept refreshed managed metadata with exact retained inputs | 2026-11-12. |
 | [J1460](PORTING_JOURNAL.md#j1460--supply-the-source-grandparent-default-material) | 2026-11-12 | Supply the source Grandparent default Material | 2026-11-12. |

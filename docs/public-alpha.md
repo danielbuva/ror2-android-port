@@ -194,6 +194,12 @@ thermal sampling policy; proposed performance budgets do not change those limits
       [J1402](PORTING_JOURNAL.md#j1402--continue-memory-observations-through-native-loss-and-menu)
       extends assisted observations through native loss; the interrupted series
       does not establish completion or a plateau.
+      The [catalog-wrapper qualification](PORTING_JOURNAL.md#j1463--bound-collected-catalog-diagnostics-across-32-sessions)
+      completes 32 assisted sessions:
+      released locator/manifest targets collect and active locators remain at two.
+      Menus 18–33 retain +634,880 managed bytes and a +35,990.588 bytes/menu
+      fitted slope. Diagnostic wrapper pruning does not establish a plateau;
+      retained-owner attribution and ordinary-play qualification remain open.
 - [ ] Complete real interrupted-write/ENOSPC and sustained performance/thermal
       cases on supported hardware.
       [J1311](PORTING_JOURNAL.md#j1311--recover-native-settings-after-writer-termination-and-activity-restart)
