@@ -102,11 +102,23 @@ def mesh_objects(member):
         raise ValueError("excessive serialized type count")
     types = []
     for _ in range(count):
-        class_id, _, _ = unpack(stream, "<iBh")
-        exact(stream, 32 if class_id == 114 else 16)
+        class_id, stripped, script_type = unpack(stream, "<iBh")
+        script_id = exact(stream, 16) if class_id == 114 else b""
+        digest = exact(stream, 16)
+        tree_start = stream.tell()
         tree = type_tree(stream)
+        raw_tree = stream.getvalue()[tree_start : stream.tell()]
         (dependencies,) = unpack(stream, "<I")
-        exact(stream, dependencies * 4)
+        tree.definition = dict(
+            class_id=class_id,
+            stripped=stripped,
+            script_type=script_type,
+            hash=digest,
+            tree=raw_tree,
+            dependencies=list(unpack(stream, "<" + "i" * dependencies)),
+        )
+        if class_id == 114:
+            tree.definition["script_id"] = script_id
         types.append((class_id, tree))
     (count,) = unpack(stream, "<I")
     if count > 2000000:

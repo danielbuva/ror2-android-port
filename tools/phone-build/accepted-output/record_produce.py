@@ -1776,6 +1776,7 @@ def produce(profile_path, profile_sha256, pc, output, sdk=None, comparison="exac
                 scripts[key] = selected, body, metadata["types"][obj["type_id"]]
             return scripts[key]
 
+        types, type_ids = [], {}
         with (output / "objects.bin").open("xb") as data, (output / "index.jsonl").open("x") as index:
             for source in profile_bundles(profile_path):
                 path = M.safe_input(pc, source["path"])
@@ -1936,6 +1937,12 @@ def produce(profile_path, profile_sha256, pc, output, sdk=None, comparison="exac
                                 value = identity_owner.properties_hash(*O.script_fields(script_body)[1], tree, sdk_tree)
                                 receipt.setdefault("pruned_script_fields", {})[str(obj["path_id"])] = removed
                             typ = {**typ, "hash": value}
+                        definition = O.json_layout(typ)
+                        type_key = json.dumps(definition, sort_keys=True)
+                        if type_key not in type_ids:
+                            type_ids[type_key] = len(types)
+                            types.append(definition)
+                        type_id = type_ids[type_key]
                         root = None
                         if typ["class_id"] in (74, 91, 320) or any(
                             any(key in target.get("transform", {}) for key in ("control_exposed_name_default", "expanding_wave_scale"))
@@ -1961,7 +1968,7 @@ def produce(profile_path, profile_sha256, pc, output, sdk=None, comparison="exac
                                     raise ValueError("produced object record differs from accepted hash")
                                 receipt["historical_mismatches"] += 1
                             row = {key: target[key] for key in ("bundle", "member", "path_id")}
-                            row.update(bytes=len(result), sha256=digest)
+                            row.update(bytes=len(result), sha256=digest, type_id=type_id)
                             row["offset"] = data.tell()
                             if "native_type_hash" in target:
                                 row["native_type_hash"] = typ["hash"].hex()
@@ -1972,6 +1979,7 @@ def produce(profile_path, profile_sha256, pc, output, sdk=None, comparison="exac
                 after = path.stat()
                 if (before.st_size, before.st_mtime_ns) != (after.st_size, after.st_mtime_ns) or B.sha(path) != source["sha256"]:
                     raise ValueError("original object-record input changed during production")
+        (output / "types.json").write_text(json.dumps(types, sort_keys=True, indent=2) + "\n")
         with (output / "objects.bin").open("rb") as data, (output / "index.jsonl").open() as index:
             for line in index:
                 row = json.loads(line)
@@ -1991,7 +1999,9 @@ def produce(profile_path, profile_sha256, pc, output, sdk=None, comparison="exac
         if runtime_fields is not None:
             runtime_fields.verify()
             receipt["managed_field_inputs"] = dict(runtime_fields.pins)
-        receipt["outputs"] = {name: {"bytes": (output / name).stat().st_size, "sha256": B.sha(output / name)} for name in ("objects.bin", "index.jsonl")}
+        receipt["outputs"] = {
+            name: {"bytes": (output / name).stat().st_size, "sha256": B.sha(output / name)} for name in ("objects.bin", "index.jsonl", "types.json")
+        }
         receipt["success"] = True
         return receipt
     except Exception as error:

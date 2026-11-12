@@ -175,6 +175,10 @@ class SpriteProduceTests(unittest.TestCase):
             self.assertTrue(result["success"])
             self.assertEqual((output / "objects.bin").read_bytes(), expected)
             self.assertEqual(json.loads((output / "index.jsonl").read_text())["offset"], 0)
+            row = json.loads((output / "index.jsonl").read_text())
+            types = json.loads((output / "types.json").read_text())
+            self.assertEqual(types[row["type_id"]], P.A.O.json_layout(P.A.O.source_record_type(bundle, "CAB-authored", 77, 213)))
+            self.assertEqual(result["outputs"]["types.json"]["sha256"], P.B.sha(output / "types.json"))
             self.assertEqual(P.B.sha(bundle), original_hash)
 
     def test_functional_output_records_actual_identity_and_keeps_pointer_checks(self):

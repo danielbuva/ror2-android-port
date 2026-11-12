@@ -21,6 +21,73 @@ two retained endpoints leaves tail frame statistics unavailable.
 python3 scripts/lab/perf_report.py RESULT_JSON THERMAL_JSONL --output work/perf/report.json
 ```
 
+New sustained captures opt in to `rawFrameTimesRequested` on the existing camera
+observer. A bounded 1 MiB buffer retains up to 262,144 active-frame durations,
+excluding suspension and the first resumed interval as before. Native teardown
+writes a private sidecar once; the sustained owner retains it with a SHA-256,
+checks interval counters and removes the device scratch. Supply this sidecar with
+`--raw-frames FILE` to compute true interval p50/p95/p99. Every frame, duration
+total and strict hitch count must reconcile; overflow or absent coverage leaves
+quantiles unavailable. Final-ten-minute quantiles also require a full 600-second
+endpoint window. These measure Unity active-frame intervals, not compositor
+presentation timing. Capture overhead and sustained device qualification remain
+open; historical aggregate evidence below cannot acquire raw quantiles.
+
+### Bounded raw-capture qualification
+
+The 2026-11-12 Main Nova assisted capture retained 8,354 active intervals without
+overflow. All ten observed counter intervals reconciled; the 80.049 host-second
+window contains 4,693 frames and 80,709.293 ms of active-frame duration. True
+p50/p95/p99 are 16.667/16.917/49.939 ms, with 59 frames above 33.334 ms and 41
+above 50 ms. The incomplete ten-minute window correctly has no tail quantiles.
+Native End Run closed the sidecar; retention, scratch removal and cleanup passed.
+This qualifies capture and reconciliation only: invincibility, neutral movement
+and small camera drags do not establish representative ordinary play or overhead.
+Evidence: `work/coordination/alpha-raw-frames-device-20261112T070204Z/`
+(`performance.json`, `terminal.done.json`). APK SHA-256:
+`b9217c23f81cea18cf570bfa309bffda235db6276a9cca898b92a0fbd731a3eb`.
+
+### Bounded capture on/off comparison
+
+The sustained owner's `raw_frame_times` boolean defaults to true; false retains
+aggregate frame/duration/hitch counters and refuses unexpected trace metadata
+without transferring a sidecar. The mode is recorded in the selector and result.
+
+Four 75-second assisted windows used the same APK above, seed 2, Commando,
+Lakes, neutral movement and small camera drags, in off/on/on/off order. Actual
+host endpoint spans were 79.686–80.315 s. Native End Run and cleanup passed each
+time; both on-windows reconciled raw intervals without drops, and both off-windows
+retained aggregates with no trace. The device scratch inventory was unchanged.
+
+| Window | Capture | Active-frame FPS | Mean ms | Frames >33.334 ms |
+| --- | --- | --- | --- | --- |
+| 1 | Off | 58.189 | 17.185 | 55 / 4,692 |
+| 2 | On | 58.077 | 17.218 | 53 / 4,392 |
+| 3 | On | 58.207 | 17.180 | 58 / 4,693 |
+| 4 | Off | 58.133 | 17.202 | 56 / 4,689 |
+
+Equal-weight per-window means are 58.161 FPS off and 58.142 FPS on. On minus off
+is −0.019 FPS, +0.0056 ms mean duration and +0.038 percentage points above
+33.334 ms. Within-mode FPS ranges are 0.057 off and 0.129 on. Two windows per
+mode, changing workload timing/population and thermal conditions do not establish
+causal capture overhead. Sustained performance, ordinary play and energy remain
+open.
+
+Observed-window thermal traces have no gaps above one second (maximum 0.467 s),
+with 0.189–0.624 s uncovered at their boundaries. Their peaks are CPU 84.4 C,
+GPU 64.6 C and battery 31 C; covered time above 80 C is 0.401 s. Across the wider
+startup/teardown phases, CPU/GPU peaks reach 90.7 C and time above 80 C ranges
+2.480–15.816 s per run. Battery admission was 27–30 C at the charge limit;
+unchanged charge level does not measure energy use. Shared adopted storage grew
+2,011,136 bytes across the wider diagnostic, including its evidence.
+
+Evidence: `work/coordination/alpha-capture-overhead-20261112T073826Z/`
+(`terminal.done.json`, four `*-performance.json` reports and thermal traces).
+The terminal receipt binds result/report hashes, idle process/selector/pending
+readback, OLED sleep and lease release. No install or package change occurred.
+
+### Historical aggregate inputs
+
 Local source: `work/coordination/alpha-sustained-current-device-20261031T214907Z/`;
 `terminal.done.json` names the sustained result. `metrics.private.json` corroborates
 the counter deltas. Analysis: `work/coordination/perf-game-1104/report.json`.

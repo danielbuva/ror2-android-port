@@ -65,7 +65,7 @@ def serialized_records(directory, receipt, selected, comparison="exact"):
     if "script_identity" in selected:
         row["source_produced"]["script_identity"] = selected["script_identity"]
         row["source_produced"]["historical_raw_exact"] = body_hash == selected["sha256"] and len(body) == selected["bytes"]
-    return row, body
+    return row, body, definition
 
 
 def produce(profile_path, profile_sha256, packs, output, serialized=(), comparison="exact"):
@@ -95,13 +95,19 @@ def produce(profile_path, profile_sha256, packs, output, serialized=(), comparis
         for key, (directory, _, _) in providers.items()
         if key not in serialized_keys
     }
+    supplier_types = {
+        key: json.loads((directory / "types.json").read_text())
+        for key, (directory, _, receipt) in providers.items()
+        if "types.json" in receipt.get("outputs", {})
+    }
+    types, type_ids = [], {}
     rows, bodies, used, identities = [], [], set(), set()
     offset = 0
     for selected in profile["records"]:
         key = selected["source_profile_sha256"]
         source = selected["source"]
         if key in serialized_keys:
-            row, body = serialized_records(providers[key][0], providers[key][2], selected, comparison)
+            row, body, definition = serialized_records(providers[key][0], providers[key][2], selected, comparison)
         else:
             matches = [r for r in indices[key] if [r["bundle"], r["member"], r["path_id"]] == source]
             if len(matches) != 1:
@@ -110,6 +116,14 @@ def produce(profile_path, profile_sha256, packs, output, serialized=(), comparis
             if comparison == "exact" and (row["sha256"] != selected["sha256"] or row["bytes"] != selected["bytes"]):
                 raise ValueError("record remap source body differs")
             body = O.record_extent(providers[key][0] / "objects.bin", row)
+            definition = supplier_types[key][row["type_id"]] if "type_id" in row else None
+        if definition is not None:
+            definition = O.json_layout(definition)
+            type_key = json.dumps(definition, sort_keys=True)
+            if type_key not in type_ids:
+                type_ids[type_key] = len(types)
+                types.append(definition)
+            row = dict(row, type_id=type_ids[type_key])
         if comparison == "diagnostic":
             row = dict(row, historical_raw_exact=row["sha256"] == selected["sha256"] and row["bytes"] == selected["bytes"])
         destination = selected["destination"]
@@ -131,13 +145,14 @@ def produce(profile_path, profile_sha256, packs, output, serialized=(), comparis
         for body in bodies:
             stream.write(body)
     (output / "index.jsonl").write_text("".join(json.dumps(row) + "\n" for row in rows))
+    (output / "types.json").write_text(json.dumps(types, sort_keys=True, indent=2) + "\n")
     receipt = {
         "success": True,
         "input_id": profile["input_id"],
         "profile_sha256": profile_sha256,
         "scope": "Index remap only; source bodies and dependency provenance retained",
         "supplier_receipts": {key: pin for key, (_, pin, _) in providers.items()},
-        "outputs": {name: {"bytes": (output / name).stat().st_size, "sha256": O.B.sha(output / name)} for name in ("objects.bin", "index.jsonl")},
+        "outputs": {name: {"bytes": (output / name).stat().st_size, "sha256": O.B.sha(output / name)} for name in ("objects.bin", "index.jsonl", "types.json")},
     }
     (output / "result.json").write_text(json.dumps(receipt, indent=2) + "\n")
     return receipt

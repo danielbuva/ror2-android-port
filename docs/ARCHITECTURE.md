@@ -27,6 +27,77 @@ Scoped streams close on return, scratch serialization is removed, and receipts
 remain. This host producer API does not add release-job dispatch or establish
 Unity typed load, phone execution or converted-game acceptance.
 
+`bundle_preload.py --inputs REQUEST --output NEW_DIRECTORY [--cache CACHE]`
+constructs this emitter/repacker chain from explicitly pinned inputs.
+`bundle_endpoints.py` owns the shared staged-member readers, SDK witnesses,
+current provider/registry/CLR checks and final MonoScript allocation readback.
+Request paths resolve relative to the request; corresponding metadata/provider
+paths must agree before relocation. Optional pinned `provider_paths` maps original
+native-pack names to directories and full SDK witness provider names to serialized
+files, relative to that map. The reader, resource
+copier, endpoint checks and cache traverse relocated files while retaining the
+original descriptor/proof identities and checking every preceding provider's
+body, profile, index and witness hashes. Setup opens only declared staged members;
+teardown closes them on success or failure. Full-output cache hits still check
+actual final local and external managed bodies, and inputs are rehashed before
+the receipt is written. The final artifact is the canonical repack when selected.
+The same checked invocation writes `catalog-profile.json` from the emitted
+bundle identity and required asset groups, and pins that declaration and the
+actual final bundle in its receipt. The alias donor remains a separate catalog
+owner; no bundle copy or second production supplies these artifacts.
+Signed release-graph integration uses the combined preparation entry point below.
+Current source/provider qualification and the phone SQLite/LZ4 runtime remain
+separate work; this interface adds no device claim.
+
+The existing managed-host native plan supplies Android CPython `_sqlite3` and
+its SQLite dependency for these disk indexes. The fixture builder verifies the
+two source hashes and packages them through its existing native/link owner;
+installation creates the Python extension and `libsqlite3.so` links in the
+app-owned data tree. No new process or runtime lifecycle owner is added, and
+signed-chain Android execution remains unqualified.
+The debuggable toolhost's existing instrumentation runner accepts only the
+optional `release-build` action and delegates to the existing signed update
+worker, using its provisioned request, trust and thermal supervision. Its default
+fixture entry remains available; no installation action or new worker is added.
+
+`bundle_preload.py --prepare REQUEST --output NEW_DIRECTORY` delegates fresh
+request derivation to `bundle_prepare.py`. Pinned supplier profiles, receipts,
+extents, indexes and final type tables supply original source, pack output and
+destination identities. Public policy declares candidate bindings, address groups,
+exceptional field routes and canonical pairs. The owner derives reached records,
+staged endpoints, complete types, routes and independent preloads. It writes
+retained PPtr-only relocation packs before invoking the unchanged structural
+emission boundary. Retained suppliers bind their own receipt-pinned type tables;
+an explicit `pointer_namespace` declares their already-relocated member table.
+Setup opens declared original and staged members; teardown closes streams on
+success or failure. Preparation retains pins and emits the existing request,
+including original script properties and canonical body-identity witnesses.
+MonoScripts retain their own source selectors, separate from behaviour hash
+schemas. Null-script witnesses pin the original body, and SDK resource members
+remain external references without becoming AssetBundle dependencies.
+`bundle_preload.py --release REQUEST --output NEW_DIRECTORY` materializes the
+signed policy, prepares fresh suppliers and runs the same checked emitter and
+optional canonical repack in one workspace. `release_graph.py` accepts
+`owner-bundle-preload-release-v1` profiles declaring prerequisite source profiles
+and that request. Public file pins join the signed source closure; supplier
+artifacts name declared jobs. Referenced donor/staged containers remain payload
+and native-manifest dependencies. Catalog production consumes each actual final
+bundle and its emitted profile, independently of canonical body-identity proof.
+Managed witnesses must name generated artifacts, with registry body, receipt and
+schemas supplied by one final player job. Setup and teardown remain the scoped
+preparation/emission owners; the dispatcher retains only declared final artifacts
+for reuse. Host synthetic-registry dispatch does not qualify current CLR/SDK
+production, exact-editor load or phone acceptance.
+
+`bundle_preload.produce_graph` also accepts per-group `preload_roots` as explicit
+destination triples, separate from advertised container roots/subassets. Local
+seeds contribute their complete closure and cache invalidation witnesses;
+external seeds retain their serialized-member slot. Emission and canonical
+repack require their actual staged bodies and full native types, including on
+cache hits. The request qualification owner supplies the same current managed
+checks and closes staged streams on exit. This preserves declared independent
+preloads without adding catalog entries or a runtime owner.
+
 [Alpha policy](ALPHA_POLICY.md) owns packaging/acquisition decisions;
 [screen inventory](SCREEN_COVERAGE.md) maps the current Android surfaces and their
 remaining interaction gates.
@@ -67,6 +138,56 @@ The notes are user-authored and require manual privacy review. The launcher
 package is a public-alpha integration boundary, not an Android shell, new
 build pipeline or runtime owner. Setup, lifecycle and acceptance gates are in
 its README; the existing owner-built delivery route remains unchanged.
+
+`tools/phone-build/owner-apk/graphics/` owns the optional graphics-driver
+foundation: bounded private ZIP staging, reviewed Turnip release pins, driver-hash
+cache identity, a provider boundary and durable pre-native launch/fallback state.
+The tool-host preview includes these owners, but Unity is not connected; System
+remains unchanged. Its
+[handoff](../tools/phone-build/owner-apk/graphics/README.md) records setup, teardown,
+prior art and the pending native/Android/Thor acceptance gates. Custom load failure
+requires process restart, never hot-swapping a live Vulkan driver.
+`GraphicsDriverProviders` owns picker choices, the empty reviewed-release catalog,
+explicit verified next-launch selection/reset and separate active-driver display
+data. System is the default; unconnected Turnip and the PanVK stub stay unavailable.
+It performs no native load or Android setting write. Real active details require
+Unity's actual Vulkan physical device; a saved preference is not runtime evidence.
+`managed-host/OwnerGraphicsPicker.java` is the explicit tool-host preview dialog.
+It owns app-private preference display/reset, source/license explanations and a
+resolved system Developer-options shortcut, never global setting writes. It is
+not connected to the separately installed game. The tool-host activity owns its
+dialog lifetime. `GraphicsDriverFixture` admits only the debuggable owned test
+package and fixed non-executable ELF bytes; it cleans its temporary verification
+stage and never selects/loads a driver. The managed-host staging owner's single
+`JAVA_SOURCES` list binds both APK compilation and the Android bootclasspath test.
+`scripts/lab-graphics-picker.py` owns the serialized synthetic picker smoke. It
+reuses exact-source toolhost receipt/hash, actual debug-manifest admission and
+installer storage/cleanup ownership; it never runs the installer acceptance flow.
+Each tap/scroll requires the owned top-resumed activity, display-0 window focus
+and unique accessibility control. It injects only authored fixture bytes, reports
+fixed cases, and retains private diagnostics locally. No real driver or Settings
+action occurs; a phone result is separate from host tests.
+Its host-only notification inspector reads retained G evidence and emits fixed
+button classifications without device actions or tap-policy changes. Future
+diagnostics retain the runner ID; the first run's unique source/time candidate
+is explicitly weaker than that binding and refuses ambiguous selection.
+Only the picker cold restart opts into the exact repeated-notification denial
+control, after a prior ordinary denial in the same owned run. The installer
+owner checks hash ownership/focused UI and records its distinct user-fixed effect;
+default notification handling and permission-grant opt-ins remain unchanged.
+`scripts/inspect-graphics-driver-sdk.py` and its authored native compile fixture
+check the installed version's V1 Vulkan callback with the bundled Android NDK.
+The check emits fixed results/hashes, creates no output artifacts and performs no
+Editor/device action; runtime preload order and exact revision remain unverified.
+`graphics/native/GraphicsDriverPreload.cpp` is an isolated qualification observer
+that retains Unity's original resolver and exposes fixed initialization-order
+flags. It is not packaged by the launcher, opens no custom driver and does not
+attest a completed frame. Executed host interface doubles test ordering only.
+`scripts/build-graphics-preload-fixture.py` owns the subsequent isolated SDK-only
+Android build with explicit preload import settings, source/native/APK binding,
+the shared Unity mutex and private outputs. Its authored `GraphicsPreloadFixture`
+managed reader records ordering flags only. It never installs or runs the package;
+actual Android preload and custom-driver/frame acceptance remain separate gates.
 
 Public alpha delivery: [ADR-002](ADR-002-public-alpha-distribution.md) accepts
 owner-built APKs and locally reconstructed content; [public-alpha.md](public-alpha.md)
@@ -113,6 +234,16 @@ producers retain exact comparison by default. Receipts retain historical match
 results; output indices pin actual produced extents. Source, supplier, native-type,
 schema, script and reference checks remain strict; device loadability remains open.
 Barrier shader jobs bind their separately pinned legacy SDK metadata explicitly.
+
+Fresh mesh, Avatar, texture, Sprite and shader record suppliers export their
+complete final serialized descriptors in receipt-bound `types.json` tables.
+`object_produce.record_type` interns all identity and layout fields; index rows
+carry pack-local `type_id` values. Shared SDK shader records export the same
+metadata, and `release_graph.py` exposes these tables as supplier artifacts.
+Texture production persists the table before committing each index row; resume
+reloads it, verifies completed rows against original native types and skips
+completed encodes. Existing body-only packs retain their explicit metadata
+witness path. These host contracts do not establish phone or Unity loadability.
 
 `./dev prototype --action source-camera-program-bundle --target REQUEST.json`
 compiles the existing input-qualified source-camera candidate in a disposable SDK
@@ -508,6 +639,10 @@ The code owner's existing request supplies the immutable authored source root
 and packages root, with the existing flat input-hash manifest. The identity owner
 returns source-sorted script IDs, native layout and bodies; `player_data.py`
 writes them through the existing serialized writer and rechecks all providers.
+It retains `registry-source/schemas.json` and `registry-source/result.json` after
+final player/provider verification, using the shared `registry_artifacts` helper.
+The release graph exposes those sidecars and the actual player registry body as
+artifacts for managed endpoint qualification; the catalog uses that same body.
 `script_registry.py` exposes that same phase independently, using the existing
 registry recipe, game/SDK inputs, code request and managed production. It writes
 one serialized registry, receipt-pinned `schemas.json` with the actual current
@@ -594,6 +729,15 @@ source-only EffectManagerHelper case; complete content and phone qualification
 remain separate. Original script-file-ID derivation remains unchanged.
 `record_produce.py` owns source-only AnimationClip and generic object-record
 production through the same object-pack interface.
+It retains the final complete serialized definitions in receipt-pinned `types.json`;
+each index row's `type_id` selects that pack-local table after managed schema/hash
+changes. `record_remap.py` reindexes available supplier definitions into its own
+table and retains definitions extracted from serialized player files. Legacy raw
+suppliers without complete type metadata still require a separate checked schema
+before graph preparation. The release graph exposes these type tables and the
+object producer's existing final `layout.json` as cached artifacts. Readers close
+on exit; receipts and metadata persist with their packs. Current whole-content
+preparation and phone qualification remain open.
 `recipe/owner-whole-game-source-records.json` selects original managed/native
 records through this owner; all 198 are host raw-exact. Setup takes pinned
 original/SDK inputs and a fresh pack; persisted receipts remain after exit.
@@ -1108,6 +1252,13 @@ publishes these on authorized version tags using an externally provisioned key.
 `owner-apk/updates.py` owns bounded GitHub acquisition, signature/archive
 verification and the private update transaction; `release_jobs.py` dispatches
 signed job recipes to existing source-only producers. Optional
+job `source_files` pin their own recipe/producer inputs and transitive suppliers
+for cache identity, so a consumer recipe change can retain its shared suppliers.
+The compiler emits these signed pins for every job and keeps its conservative
+Python import cohort. Jobs without explicit pins retain the consumer-union
+cache policy. Both paths still verify every signed consumer source before reuse
+or production and after execution; narrower cache identity does not narrow
+source integrity checks. Optional
 `recipe/owner-player-phases.json` selects the five existing source player phases,
 including all Sprite/texture outputs, their profile argv and signed policy
 closure. Manager shaders use the existing shader job. A shared startup job
@@ -1602,8 +1753,11 @@ validated before any group lookup. Complete output reuse hashes provider
 lineages, schemas, requests, routes, codec and code, plus the callback owner's
 explicit `cache_inputs` files (endpoint containers/descriptors and current
 CLR/SDK/checker inputs). It checks actual output hashes and hashes inputs again
-before returning the prior bundle by reference. The caller retains that output
-and cache until superseded; the scoped connection closes on success or failure.
+before cloning or copying the checked bundle and its companion artifacts into the
+new attempt directory. These are regular files; bundle/request receipts name the
+new path. Canonical repack reuse binds the emitted source hash independently of
+its attempt path. The caller retains the cached source output and cache until
+superseded; the scoped connection closes on success or failure.
 Receipts report cache counts and per-stage time/peak RSS. Authored host fixtures
 cover unchanged reuse, scalar changes, checker changes, grouping, corrupt outputs
 and provider drift; this does not qualify phone execution or gameplay.
@@ -2540,6 +2694,12 @@ performance guarantee. Host admission estimates two 4 GiB snapshots plus
 records that budget and observed free bytes. The 100 GiB full-build floor does
 not apply to this capture-only queue. Host fixtures exercise admission and
 failure contracts.
+The sustained owner's `raw_frame_times` boolean defaults to true and records
+the selected mode in its receipt and runtime selector. False retains the same
+aggregate duration/frame/hitch counters, requires no raw trace in periodic or
+completed diagnostics, and performs no sidecar transfer. True retains the
+existing closed-trace reconciliation and device scratch removal. The runtime
+camera owner and native End Run lifecycle are unchanged.
 `scripts/lab/session_memory_check.py::check_session_memory` owns the supervised
 memory stage; the batch injects its between-session hook from
 `alpha_stability_batch.py::_GameThermalOwner.between_sessions`. After verified
@@ -2616,8 +2776,27 @@ no runtime/device state is changed, and reports persist at the requested output.
 Final-ten-minute active counter totals use retained endpoints inside the last
 600 host seconds, reporting actual coverage and uncovered boundary time without
 interpolating missing counters; fewer than two endpoints leaves totals unavailable.
-It cannot recover individual-frame quantiles or causal throttling onset from
-aggregate traces. [Game performance](performance-game.md) owns the baseline and
+It cannot recover individual-frame quantiles from aggregate traces or establish
+causal throttling onset. Optional `--raw-frames` reads the sustained session's
+hash-bound sidecar, reconciles every retained interval against exact duration,
+frame and strict hitch counters, then computes individual-frame p50/p95/p99 only
+with complete frame coverage. Final-ten-minute quantiles additionally require
+all 600 host seconds; partial endpoint windows retain their explicit coverage.
+`AndroidPresentationCamera` owns default-off `rawFrameTimesRequested` capture:
+`NovaInputBoundary` starts it on the existing presentation camera; the camera
+keeps at most 262,144 float durations (1 MiB), using identical pause/resume
+admission, with no per-frame allocation or disk write. `NovaDiagnosticDisplay.Dispose`
+flushes it before destroying the camera; `OnDestroy` is the fallback. The private
+sidecar has `ROR2FRAM`, four little-endian int32 values (first frame ordinal,
+retained count, final admitted ordinal, dropped count), then retained float32
+milliseconds. Unique trace names bind periodic and completed reports; failures
+and overflow are explicit. The sustained owner requests capture, pulls a closed
+matching sidecar, verifies coverage and removes device scratch after host
+retention. Abrupt process termination can lose the in-memory trace; absent or
+partial evidence supplies no quantiles. Exact-editor host fixtures exercise
+actual admission, counters, binary interoperability and overflow. Capture overhead
+and sustained device qualification remain open.
+[Game performance](performance-game.md) owns the baseline and
 attribution limits; [public alpha](public-alpha.md#performance-release-gate) owns
 proposed device budgets. Synthetic host fixtures check window and coverage math.
 
@@ -3960,6 +4139,11 @@ order and each `finally`) is in
 
 ## Ownership
 
+`IntegratedResultsSession` keeps synchronous setup markers in the log and current
+report without rewriting the full report at each marker. Existing setup entry,
+collection and completion checkpoints, failed checks and result callbacks still
+persist it. Profile, ledger and native report writes retain their own boundaries.
+
 `IntegratedResultsSession` reads one local definition manifest for relationship
 types, providers and holder binding through `WholeCatalogComposed`, then passes
 that snapshot to `AndroidProfileSession.Prepare` for survivor/unlockable families.
@@ -3967,7 +4151,10 @@ The synchronous preparation call releases that reference on return; family-cache
 relationship registration/restoration remain under their existing owners.
 The shared reader omits unused JSON source-line annotations while retaining the
 same token values, types, property order and parser error handling.
-It reuses a still-live parsed snapshot through a separate weak reference; it
+The process audio lease applies that same parsing policy to its freshly read,
+SHA-validated manifest bytes when deriving retained bundle dependencies. It
+keeps the byte check and does not borrow a cached definition snapshot.
+The shared definition reader reuses a still-live parsed snapshot through a weak reference; it
 does not prevent collection. Fresh location setup and session release clear
 that reference, so later sessions read their own generation. Failed parses are
 never cached.
@@ -3978,6 +4165,14 @@ still constructs providers and applies native type policy and collection order
 on every call; indexes retain no loaded assets or providers.
 Provider-root `DefinitionFamily<T>` uses the same reader; its typed selection,
 selected-identity checks and existing family-cache lifetime remain unchanged.
+During a family cache miss it resolves each loaded bundle owner once in a
+method-local map, preserving missing/ambiguous-owner refusal and typed loading.
+The map ends on return; loaded definitions retain the existing release lifetime.
+The original network-sound startup caller can request sparse generic-family
+manifest/validation markers and aggregate root-filter, owner and typed-load costs.
+Outer audio markers separate network registration from music startup. Observation
+preserves enumeration, native calls and ownership, writes no reports and adds no
+coroutine yields; the optional callback and counters end on return.
 `test_scoped_definition_manifest.py` exercises the production methods against
 authored source snapshots, including parser parity, replacement input and identity
 checks.
@@ -4004,14 +4199,21 @@ The metadata-ready marker precedes objective rules, redirects and local profile
 setup; it does not describe completion of the entire profile boundary.
 `WholeCatalogComposed.CategoryFamily` resolves each requested bundle name once
 per synchronous family call, on first use, with the original unique-owner lookup.
-The local dictionary ends on return; provider order, typed loads, identity checks,
-missing/duplicate-owner failures and existing family-cache teardown remain owned
-by the same loader. `SpawnStateBoundary` forwards the sparse family callback;
+It likewise resolves each distinct serialized type name once within that call;
+every row retains its assignability check and typed asset load. Both local maps
+end on return and add no retained state.
+Provider order, typed loads, identity checks, missing/duplicate-owner failures
+and existing family-cache teardown remain owned by the same loader. `SpawnStateBoundary` forwards the sparse family callback;
 its child markers retain no state.
 Buff discovery uses the existing `DefinitionFamily<BuffDef>` provider-root loader
 and family cache instead of broad bundle loading. Typed root selection, unique
 name/selected-identity checks and `Release` cache teardown keep their existing
 owners; native buff registration and holder restoration remain unchanged.
+`WholePopulationSession.PrepareWholeDroneCatalog` uses the existing `TraceStartup`
+owner to separate owner/definition snapshots, family loading, native registration,
+availability callbacks, holder binding and validation. Family child phases appear
+only on a cache miss. Intervals include logging and elapsed work or suspension;
+they do not measure CPU time. Scalar markers add no retained state or teardown.
 
 Each staged runtime file starts with a two-line header naming its subsystem, whether it is
 on the game path, and its setup and teardown methods (J516).
@@ -4028,7 +4230,7 @@ report, read against the journal entry that defines what it must show.
 | Touch game input | `runtime/input/AndroidTouchInput.cs`, `NovaInputBridge`, `NovaThirdPersonView` | Bridge-owned pointer captures, held/pending action states, viewport geometry and primitive report; no game objects or native gameplay ownership | Playable body input setup → `Poll`/fixed-tick consumption and world GUI → `Neutral`/pause/focus/disable release; require lift before reacquiring | `test_android_touch_input.py` runs production pointer/camera code against exact managed Unity API; Android consumer case is separate |
 | Original equipment highlights | `runtime/catalog/OriginalEquipmentHighlightAssetsBoundary.cs`, existing `PortSession.OriginalStats` and `BodyCatalogBoundary` | nested `OriginalEquipmentHighlightAssetsSession` owns three typed source-location handles, exact static assignments, cancellation state and a primitive session report; prepopulated or competing slots refuse | After `SetEquipmentDefs`, prepare before body activation; retain through world/stage lifetime. At `CleanupBodyCatalog`, require body/model/world-player destruction, restore only owned assignments, refuse remaining foreign slots, release handles and clear retained locator/operation references before bundle unload. Cleanup failures remain visible and retain catalog ownership. | `test_equipment_highlight_assets_owner.py`, authored `EquipmentHighlightOwnerProgram.cs` and stubs; Android materialization and original highlighting remain device gates |
 | Session and entry | `PortSession`, `OfflineApplicationBoundary`, `SessionResourceBoundary`, `ActiveClientBoundary`, `OfflineRunSeedBoundary`, `SurvivorSelectionBoundary` | nested `OfflineRunSeedSession` (`IDisposable`) **own type** holds the cached seed, session id and source; nested `ActiveClientSession` (`IDisposable`) **own type** holds the owned body/master authority identities and client-scene ownership flag; `activeBodyClient`, `activeBodyOwner`, remaining state and `SessionReport r` (including `r.activeClient` and `r.rewards.seedSource`) stay on the coordinator; nested `OfflineApplicationSession` (`IDisposable`) owns application/menu state and the captured screen timeout | `Start` (acquire the playable awake policy before catalog preparation; `OnDestroy` releases it) → `AwaitOfflineRunStart` → `RunSelectedProbe`; `ConnectActiveBodyClient` → `CleanupActiveBodyClient` (calls `Dispose`: remove master then body authority, disconnect then shut down client) → coordinator server shutdown → `FinishActiveClientSceneCleanup`; active-client owner created on first use and retained after cleanup; `CollectPriorSessionGarbage` → `ReclaimCompletedSessionResources`; `SelectOwnedRunSeed` calls session `SelectOwnedRunSeed` (owner created on first use and retained; session id controls refresh; `Dispose` is a no-op with no teardown call) | `AndroidLifecycleHost.cs` |
-| Catalog and resources | `BodyCatalogBoundary`, `WholeCatalogComposed`, `WholeCatalogLoader`, `SpawnStateBoundary`, `OriginalBodyVisualBoundary`, `OriginalGlobalCommonAssetsBoundary`, `TeleportMaterialBoundary`, `BarrierEffectBoundary` | `WholeCatalogComposed` **own type** (static); nested `TeleportMaterialSession` and `BarrierEffectSession` (`IDisposable`) **own types** hold the teleport material (locator, async handle, material, overlays) and the barrier effect (constants, locator, async handle, prefab, effect-slot snapshots, owned material copies); nested `OriginalBodyVisualSession` and `OriginalGlobalCommonAssetsSession` (`IDisposable`) **own types** each hold their native slot snapshots and async handle lists; nested `SpawnStateSession` (`IDisposable`) **own type** holds native state/preload snapshots and spawn delay/sound restoration; `ownsStateCatalog` stays shared on the coordinator; teleport, `r.barrier*` and `r.world` report fields remain coordinator observations; the rest coordinator fields; nested `BodyCatalogSession` (`IDisposable`) **own types** hold their files' private state | `RegisterBodyCatalog` (calls `WholeCatalogComposed.Prepare`) → `CleanupBodyCatalog` (calls `Release`); `PrepareBarrierEffect` → `ObserveBarrierEffect` / `ProbeBarrierEffectLifecycle` → `CleanupBarrierEffect` (awaited coroutine, preserving Start's setup and release order; `Dispose` is a no-op because release requires the coroutine's frame yields); `PrepareOriginalBodyVisualReferences` → `PrepareOriginalGlobalCommonAssets` → `CleanupOriginalGlobalCommonAssets` → `CleanupOriginalBodyVisualReferences` (each cleanup calls its owner's `Dispose`: restore slots, clear snapshots, release handles, clear handles, mark the coordinator report); `PrepareSpawnStateCatalog` forwards to `SpawnStateSession` without changing catalog/config/preload construction order; later `CleanupSpawnConfig` calls `Dispose` (objective, enemy and spine config cleanup, then spawn delay/sound restoration, then `RestoreWholeStateOwnership`); owners created on first use and retained after cleanup | `test_whole_catalog.py`, `test_composed_support.py`, `test_body_visual_map.py`, `test_common_assets_map.py`, `test_stage_variant_graph_roots.py`; `WholeCatalogHost.cs` |
+| Catalog and resources | `BodyCatalogBoundary`, `WholeCatalogComposed`, `WholeCatalogLoader`, `SpawnStateBoundary`, `OriginalBodyVisualBoundary`, `OriginalGlobalCommonAssetsBoundary`, `TeleportMaterialBoundary`, `BarrierEffectBoundary` | `WholeCatalogComposed` **own type** (static); nested `TeleportMaterialSession` and `BarrierEffectSession` (`IDisposable`) **own types** hold the teleport material (locator, async handle, material, overlays) and the barrier effect (constants, locator, async handle, prefab, effect-slot snapshots, owned material copies); nested `OriginalBodyVisualSession` and `OriginalGlobalCommonAssetsSession` (`IDisposable`) **own types** each hold their native slot snapshots and async handle lists; nested `SpawnStateSession` (`IDisposable`) **own type** holds native state/preload snapshots and spawn delay/sound restoration; `ownsStateCatalog` stays shared on the coordinator; teleport, `r.barrier*` and `r.world` report fields remain coordinator observations; the rest coordinator fields; nested `BodyCatalogSession` (`IDisposable`) **own types** hold their files' private state | `RegisterBodyCatalog` (calls `WholeCatalogComposed.Prepare`) → `CleanupBodyCatalog` (calls `Release`); `PrepareBarrierEffect` → `ObserveBarrierEffect` / `ProbeBarrierEffectLifecycle` → `CleanupBarrierEffect` (awaited coroutine, preserving Start's setup and release order; `Dispose` is a no-op because release requires the coroutine's frame yields); `PrepareOriginalBodyVisualReferences` → `PrepareOriginalGlobalCommonAssets` → `CleanupOriginalGlobalCommonAssets` → `CleanupOriginalBodyVisualReferences` (each cleanup calls its owner's `Dispose`: restore slots, clear snapshots, release handles, clear handles, mark the coordinator report); `PrepareSpawnStateCatalog` forwards to `SpawnStateSession` without changing catalog/config/preload construction order; later `CleanupSpawnConfig` calls `Dispose` (objective, enemy and spine config cleanup, then spawn delay/sound restoration, then `RestoreWholeStateOwnership`); owners created on first use and retained after cleanup | `test_whole_catalog.py`, `test_composed_support.py`, `test_body_visual_map.py`, `test_common_assets_map.py`, `test_stage_variant_graph_roots.py`; `WholeCatalogHost.cs`; `test_state_catalog_iterator_execution.py` |
 | Manual Moon boundary (existing config) | `NovaInputBoundary`, `NovaInputBridge`, `IntegratedStageBoundary` | `ManualMoonBoundary` is a pure four-completed-transition gate shared by the automatic input loop and transport entry guard; `NovaInputBridge` applies its diagnostic-only hold at every fixed tick, preserving touch-equipment requests and the physical-controller route when diagnostic input is off. It refuses any subsequent or explicit `moon2` transport while `pauseBeforeMoon` is enabled. The ordinary path and default `false` remain unchanged; the report records stage/count and a fixed-tick witness only after the sink actually runs. | Input-loop gate before transport/producers; transport guard before destination resolution or stage mutation | `SurvivorSkillInputHost.cs` (exact-editor bridge sink contract; no Moon/runtime acceptance) |
 | Input and camera | `NovaInputBoundary`, `NovaInputBridge`, `NovaThirdPersonView`, `AndroidPresentationCamera`, `NovaDiagnosticDisplay`, `AndroidNativeSourceCameraRigOwner` | nested `NovaInputSession` (`IDisposable`) **own type** holds trace cursors and the input iterators with local mapping, landing, camera and loop state; `NovaThirdPersonView` keeps its own camera/orbit state; `worldView` and `worldEquipmentBridge` stay shared on the coordinator; `NovaInputBridge`, `AndroidPresentationCamera`, `NovaDiagnosticDisplay` and opt-in `AndroidNativeSourceSkinLifecycle` (with pure `AndroidNativeSkinActivationPolicy`) remain **own types**; the native-skin owner is attached to the selected source model, retains only its native skin subscription and Android material clones through body lifetime, and writes scalar evidence into `NovaReport`; the per-run `SessionReport` selector defaults false; reports remain coordinator observations | `NovaRawBoundary` / `NovaInputBoundary` forward to the session; input teardown stays in its iterator `finally` in the same order; `NovaInputBridge.OnDisable` neutralises input; owner created on first use and retained after its no-op `Dispose` so final `Save` can flush traces | `test_nova_input_presence.py`, `test_nova_bridge_evidence.py`, `test_input_migration.py` |
 | Settings | `AndroidOfflineSettings`, `OfflineSettingsBoundary`, `AndroidFeedbackDraft`, `AndroidFeedbackScreen` | `AndroidOfflineSettings` **own type**, kept across sessions; nested `OfflineSettingsSession` (`IDisposable`) **own type** holds the saved pause time scale, feedback screen and isolated button capture; feedback draft owns only in-memory text, preview and consent; settings owns the two-step end-run confirmation and clears it on cancel/exit/cleanup; the recovered-menu owner disables its native Canvas while settings is visible; store reference, visibility and pause flags stay on the coordinator for menu/Nova input | `PrepareOfflineSettings` (calls `OfflineSettingsSession.Prepare`) → explicit settings feedback Open/Draw/Close → `CleanupOfflineSettingsPause` (calls `Dispose`, clears feedback and releases an owned pause only) | `test_android_feedback.py` executes the production model, screen and settings/input callers with controlled host peers; device acceptance is separate |
@@ -5848,18 +6050,48 @@ configuration, type membership, report writing, native initialization, adaptatio
 and identity validation. `PortSession` separates the following profile report,
 loadout application and serialization check before the existing body-spawn seam.
 The native nested preload routine and all coroutine yields remain unchanged.
+`PortSession.BuildStateCatalogRoutine` optionally summarizes reflection invocation
+and each directly driven nested `MoveNext` with monotonic durations and yield
+counts. `SpawnStateBoundary` requests one completion log; counters live only in
+the existing iterator and its existing `finally` disposes the stack. Scheduling,
+`Current`, disposal and asynchronous callbacks outside `MoveNext` are excluded;
+subtracting direct execution from the native wall interval does not identify I/O.
+The executable host fixture checks yield identity/order, nested accounting and
+completion/early-disposal behavior with observation enabled and disabled.
+`WholeCatalogComposed.PrepareProjectiles` accepts the same optional sparse
+callback from `PortSession`: owner check, typed family discovery, index snapshot,
+native registration, availability and identity validation retain their order.
+Family child markers occur only on a cache miss; the existing family cache and
+projectile snapshots remain owned until `Release`/`RestoreProjectiles`. No new
+state or yield is added. The executable host fixture compares observed,
+unobserved and public entry paths, including source identity and restoration.
+Adjacent intervals include callbacks and native work; asset collection time is
+not an exclusive I/O measurement.
 The same seams in `StageGeometryBoundary`, `NovaInputBoundary` and
 `AutomaticDirectorBoundary` separate collider validation/physics/entry, landing
 and display/run/enemy preparation, and objective templates/master catalog/player
 setup. `EnemySpineBoundary` marks completed context preparation;
 `AutomaticDirectorBoundary` bounds the existing scheduled-spawn wait after
-director activation. That interval includes native scheduling and callbacks,
-so it is not exclusive load time. The same director owner passes an optional
+director activation. Its local `DirectorStartupWork` counters aggregate calls,
+total time and maximum time for existing report saves, the spawn callback and
+the final summon scan. One summary follows a successful wait; callback timing
+is disabled in the wait's finally block, including failure. Counters remain
+local to that startup and add no report writes or scheduling changes. A save
+count of zero is valid when no observed frame meets the existing save condition.
+The interval includes native scheduling and callbacks, so it is not exclusive load
+time. The same director owner passes an optional
 sparse callback into `WholeCatalogComposed.CategoryFamily` to separate manifest
 parsing, location indexing/provider grouping and native asset collection loading
 inside master-family setup. The callback runs only on a family-cache miss and
 retains no state; family-cache ownership and reset remain unchanged. These remain
 bounded owner-boundary logs, with no per-object recording.
+The same optional callback aggregates successful-row type resolution, bundle-owner
+lookup and typed asset-load ticks once per cold family. It records the timer
+frequency and remaining collection/enumeration ticks, including instrumentation
+overhead. Calls with a null category callback perform no clock reads; warm
+families emit no costs. A caller's non-null forwarding callback enables timing
+even when its downstream observer is absent.
+It adds no retained state and leaves native collection order and ownership intact.
 
 `AndroidProfileBoundary` passes the existing synchronous results manifest through
 `TeleporterWorldSession` rule preparation into the game-mode family loader. The
@@ -6577,6 +6809,10 @@ retains identities until `WholeCatalogComposed.Release` clears it; native
 key-item catalog restoration remains owned by `IntegratedResultsSession`.
 Its item-group types and providers use the same labeled loader so registration
 does not activate unrelated drop tables before the native run exists.
+The results owner emits sparse startup boundaries around item-group family
+loads, including the existing manifest/index and aggregate typed-load counters,
+metadata checks, holder binding, native registration and validation;
+observation adds no report writes or resource lifetime.
 `test_scoped_definition_manifest.py` covers typed selection, identity reuse and
 missing-definition refusal. J1401 verifies bounded ordinary Android startup and
 native results preparation; completed results navigation remains open.
@@ -6602,6 +6838,16 @@ path, and records actual output sizes/hashes; historical byte differences are
 diagnostic. Setup requires current original bundles and a pinned exact-SDK
 constructor witness; scoped readers close on exit and receipts persist. Complete
 APK and device acceptance remain open.
+
+The existing `bundle_endpoints.py` owner generates current CLR witness artifacts
+from successful managed production and the final player's registry receipt.
+It compiles the public metadata-only Cecil reader with explicitly pinned compiler,
+references and runtime tools, checks actual provider files before and after
+inspection, and records exact registry provider aliases. The release graph signs
+the reader source and declares the final player dependency. Setup supplies live
+provider/tool pins and a fresh output directory; subprocesses exit after inspection
+and receipts persist. The generated runtime request describes providers only;
+native runtime qualification, Android execution and device loadability remain open.
 
 Release-graph Shader jobs with pinned template inputs receive the explicit public
 AssetRipper Git provider. Existing Shader owners validate its revision and resource

@@ -11,7 +11,7 @@ import tempfile
 import unittest
 from unittest.mock import patch
 
-from test_phone_texture_producer import FIXTURE, ROOT, T, authored_body, digest, load
+from test_phone_texture_producer import FIXTURE, ROOT, T, authored_body, digest, load, serialized_textures
 
 ANDROID = load("texture_android_dispatch", ROOT / "tools/phone-build/owner-code/run_android.py")
 
@@ -66,7 +66,10 @@ class TextureResumeTests(unittest.TestCase):
             )
             bodies.append(body)
         source = self.pc / "authored.bundle"
-        source.write_bytes(FIXTURE.bundle([("CAB-authored", b"".join(bodies), 4)]))
+        serialized, offsets = serialized_textures(bodies, [77, 88], [28, 89])
+        for selected, offset in zip(textures, offsets, strict=True):
+            selected["offset"] = offset
+        source.write_bytes(FIXTURE.bundle([("CAB-authored", serialized, 4)]))
         profile = {
             "input_id": T.MESH.INPUT_ID,
             "bundles": [{"path": source.name, "sha256": digest(source.read_bytes()), "members": [{"name": "CAB-authored", "textures": textures}]}],
@@ -120,8 +123,17 @@ t.produce(p, t.BUNDLE.sha(p), Path(sys.argv[3]), Path(sys.argv[4]))
         return T.produce(self.profile, T.BUNDLE.sha(self.profile), self.pc, output or self.interrupted, resume=True, **kwargs)
 
     def assert_fresh(self):
-        for name in ("objects.bin", "resources.bin", "index.jsonl"):
+        for name in ("objects.bin", "resources.bin", "index.jsonl", "types.json"):
             self.assertEqual((self.interrupted / name).read_bytes(), (self.fresh / name).read_bytes(), name)
+        types = json.loads((self.fresh / "types.json").read_text())
+        rows = [json.loads(line) for line in (self.fresh / "index.jsonl").read_text().splitlines()]
+        self.assertEqual([row["type_id"] for row in rows], [0, 0, 1])
+        self.assertEqual([typ["class_id"] for typ in types], [28, 89])
+        for row, path_id in zip((rows[0], rows[2]), (77, 88), strict=True):
+            expected = T.O.source_record_type(self.pc / "authored.bundle", "CAB-authored", path_id, types[row["type_id"]]["class_id"])
+            self.assertEqual(types[row["type_id"]], T.O.json_layout(expected))
+        receipt = json.loads((self.interrupted / "result.json").read_text())
+        self.assertEqual(receipt["outputs"]["types.json"]["sha256"], T.BUNDLE.sha(self.fresh / "types.json"))
 
     def android_request(self):
         runtime, installed = self.root / "runtime", self.root / "installed"

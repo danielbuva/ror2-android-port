@@ -10,6 +10,33 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J1450](PORTING_JOURNAL.md#j1450--attribute-post-readiness-network-and-music-startup) | 2026-11-12 | Attribute post-readiness network and music startup | 2026-11-12. |
+| [J1448](PORTING_JOURNAL.md#j1448--omit-unused-process-audio-lease-manifest-annotations) | 2026-11-12 | Omit unused process audio-lease manifest annotations | 2026-11-12. |
+| [J1449](PORTING_JOURNAL.md#j1449--supply-sqlite-and-expose-signed-toolhost-build-execution) | 2026-11-12 | Supply SQLite and expose signed toolhost build execution | 2026-11-12. |
+| [J1446](PORTING_JOURNAL.md#j1446--refresh-complete-player-shader-helper-pins) | 2026-11-12 | Refresh complete player Shader helper pins | 2026-11-12. |
+| [J1447](PORTING_JOURNAL.md#j1447--select-sustained-capture-mode-and-compare-bounded-windows) | 2026-11-12 | Select sustained capture mode and compare bounded windows | 2026-11-12. |
+| [J1444](PORTING_JOURNAL.md#j1444--retain-bounded-active-frame-durations-for-checked-quantiles) | 2026-11-11 | Retain bounded active-frame durations for checked quantiles | 2026-11-12. |
+| [J1445](PORTING_JOURNAL.md#j1445--accept-receipt-bound-record-supplier-type-tables) | 2026-11-11 | Accept receipt-bound record supplier type tables | 2026-11-12. |
+| [J1442](PORTING_JOURNAL.md#j1442--coalesce-synchronous-results-diagnostic-report-writes) | 2026-11-11 | Coalesce synchronous results diagnostic report writes | 2026-11-12. |
+| [J1443](PORTING_JOURNAL.md#j1443--generate-current-managed-witnesses-from-produced-providers) | 2026-11-11 | Generate current managed witnesses from produced providers | 2026-11-12. |
+| [J1441](PORTING_JOURNAL.md#j1441--attribute-item-group-manifest-index-and-typed-load-costs) | 2026-11-11 | Attribute item-group manifest, index and typed-load costs | 2026-11-12. |
+| [J1440](PORTING_JOURNAL.md#j1440--dispatch-fresh-bundle-preparation-through-signed-releases) | 2026-11-11 | Dispatch fresh bundle preparation through signed releases | 2026-11-12. |
+| [J1439](PORTING_JOURNAL.md#j1439--reuse-serialized-type-resolution-within-category-families) | 2026-11-11 | Reuse serialized type resolution within category families | 2026-11-12. |
+| [J1438](PORTING_JOURNAL.md#j1438--derive-closed-bundle-requests-from-pinned-source-suppliers) | 2026-11-11 | Derive closed bundle requests from pinned source suppliers | 2026-11-12. |
+| [J1437](PORTING_JOURNAL.md#j1437--attribute-synchronous-category-asset-loading-costs) | 2026-11-11 | Attribute synchronous category asset loading costs | 2026-11-12. |
+| [J1435](PORTING_JOURNAL.md#j1435--reuse-bundle-ownership-lookups-within-definition-families) | 2026-11-11 | Reuse bundle ownership lookups within definition families | 2026-11-12. |
+| [J1436](PORTING_JOURNAL.md#j1436--export-receipt-bound-final-supplier-type-descriptors) | 2026-11-11 | Export receipt-bound final supplier type descriptors | 2026-11-12. |
+| [J1434](PORTING_JOURNAL.md#j1434--retain-final-emitted-catalog-declaration-artifacts) | 2026-11-11 | Retain final emitted catalog declaration artifacts | 2026-11-12. |
+| [J1432](PORTING_JOURNAL.md#j1432--retain-registry-witnesses-from-final-player-production) | 2026-11-11 | Retain registry witnesses from final player production | 2026-11-12. |
+| [J1433](PORTING_JOURNAL.md#j1433--attribute-native-results-item-group-startup-phases) | 2026-11-11 | Attribute native results item-group startup phases | 2026-11-12. |
+| [J1430](PORTING_JOURNAL.md#j1430--attribute-native-director-startup-observer-work) | 2026-11-11 | Attribute native director startup observer work | 2026-11-12. |
+| [J1431](PORTING_JOURNAL.md#j1431--materialize-bundle-cache-artifacts-and-relocate-sdk-witnesses) | 2026-11-11 | Materialize bundle cache artifacts and relocate SDK witnesses | 2026-11-12. |
+| [J1429](PORTING_JOURNAL.md#j1429--relocate-pinned-native-producer-packs-without-rewriting-provenance) | 2026-11-11 | Relocate pinned native producer packs without rewriting provenance | 2026-11-12. |
+| [J1427](PORTING_JOURNAL.md#j1427--expose-checked-bundle-emission-and-canonical-repack-requests) | 2026-11-11 | Expose checked bundle emission and canonical repack requests | 2026-11-12. |
+| [J1428](PORTING_JOURNAL.md#j1428--attribute-original-projectile-catalog-startup-phases) | 2026-11-11 | Attribute original projectile catalog startup phases | 2026-11-12. |
+| [J1425](PORTING_JOURNAL.md#j1425--measure-direct-native-state-catalog-iterator-execution) | 2026-11-11 | Measure direct native state catalog iterator execution | 2026-11-12. |
+| [J1426](PORTING_JOURNAL.md#j1426--scope-incremental-job-pins-to-their-source-dependencies) | 2026-11-11 | Scope incremental job pins to their source dependencies | 2026-11-12. |
+| [J1424](PORTING_JOURNAL.md#j1424--attribute-original-drone-catalog-startup-phases) | 2026-11-11 | Attribute original drone catalog startup phases | 2026-11-12. |
 | [J1423](PORTING_JOURNAL.md#j1423--keep-disjoint-preload-groups-cached-after-pointer-changes) | 2026-11-11 | Keep disjoint preload groups cached after pointer changes | 2026-11-12. |
 | [J1422](PORTING_JOURNAL.md#j1422--attribute-original-audio-readiness-callback-waits) | 2026-11-11 | Attribute original audio readiness callback waits | 2026-11-12. |
 | [J1421](PORTING_JOURNAL.md#j1421--canonical-catalog-consumers-retain-prefab-ownership) | 2026-11-11 | Canonical catalog consumers retain prefab ownership | 2026-11-12. |

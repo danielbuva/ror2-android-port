@@ -123,7 +123,7 @@ public static partial class WholeCatalogComposed
         profile.Run(snapshot);
         Check(ReferenceEquals(profile.ruleManifest, snapshot));
         Check(ReferenceEquals(profile.survivors.Single(), survivor) && ReferenceEquals(profile.unlockables.Single(), unlockable));
-        Check(profile.trace.SequenceEqual(new[] {
+        Check(profile.trace.Where(value => !value.Contains("assets-costs ")).SequenceEqual(new[] {
             "profile-survivor-family-manifest-begin", "profile-survivor-family-manifest-ready-index-begin",
             "profile-survivor-family-index-ready-assets-begin", "profile-survivor-family-assets-ready",
             "profile-unlockable-family-manifest-begin", "profile-unlockable-family-manifest-ready-index-begin",
@@ -138,7 +138,8 @@ public static partial class WholeCatalogComposed
         File.Delete("payload/whole-catalog.json");
         var trace = new List<string>();
         var types = CategoryFamily(snapshot, "types", new[] { type }, trace.Add);
-        Check(trace.SequenceEqual(new[] { "manifest-begin", "manifest-ready-index-begin", "index-ready-assets-begin", "assets-ready" }));
+        Check(trace.Where(value => !value.StartsWith("assets-costs ")).SequenceEqual(new[] { "manifest-begin", "manifest-ready-index-begin", "index-ready-assets-begin", "assets-ready" }));
+        CheckCosts(trace, 1, 1);
         var providers = CategoryFamily(snapshot, "providers", new[] { provider });
         PopulateDefinitionFields(snapshot, "ItemRelationshipTypes", types);
         PopulateBodyFields(snapshot, new[] { player });
@@ -173,10 +174,19 @@ public static partial class WholeCatalogComposed
         DefinitionFamilyContract<RoR2.BuffDef>(BuffDefinitions);
         DefinitionFamilyContract<RoR2.ItemDef>(ItemDefinitions);
         LabeledFamilyContract<RoR2.KeyItemDef>(KeyItemDefinitions, "KeyItemDef");
-        LabeledFamilyContract<RoR2.ItemGroupType>(ItemGroupTypes, "ItemGroupType");
-        LabeledFamilyContract<RoR2.ItemGroupProvider>(ItemGroupProviders, "ItemGroupProvider");
+        LabeledFamilyContract<RoR2.ItemGroupType>(ItemGroupTypes, "ItemGroupType", ItemGroupTypes);
+        LabeledFamilyContract<RoR2.ItemGroupProvider>(ItemGroupProviders, "ItemGroupProvider", ItemGroupProviders);
         CategoryBundleContract();
         Console.WriteLine("scope identity policy restoration buffs items PASS");
+    }
+    static void CheckCosts(List<string> trace, int rows, int bundles)
+    {
+        var values = trace.Single(value => value.StartsWith("assets-costs ")).Split(' ').Skip(1)
+                          .Select(value => value.Split('='))
+                          .ToDictionary(value => value[0], value => long.Parse(value[1]));
+        Check(values["rows"] == rows && values["bundles"] == bundles && values["frequency"] > 0);
+        Check(values["typeTicks"] >= 0 && values["ownerTicks"] >= 0 && values["loadTicks"] >= 0 && values["collectionTicks"] >= 0);
+        Check(values["totalTicks"] == values["typeTicks"] + values["ownerTicks"] + values["loadTicks"] + values["collectionTicks"]);
     }
     static void CategoryBundleContract()
     {
@@ -195,10 +205,18 @@ public static partial class WholeCatalogComposed
         AssetBundle.loadedOwners = new[] { AssetBundle.owner, unrelated, unrelated };
         definitionFamilies.Clear();
         int before = AssetBundle.enumerations;
-        Check(CategoryFamily(data, "category", new[] { second }).SequenceEqual(new[] { first, second }));
-        Check(AssetBundle.enumerations == before + 1);
-        Check(CategoryFamily(data, "category", new[] { first }).SequenceEqual(new[] { first, second }));
-        Check(AssetBundle.enumerations == before + 1);
+        int loads = AssetBundle.typedLoads;
+        var unobserved = CategoryFamily(data, "category", new[] { second });
+        Check(unobserved.SequenceEqual(new[] { first, second }));
+        Check(AssetBundle.enumerations == before + 1 && AssetBundle.typedLoads == loads + 2);
+        definitionFamilies.Clear();
+        var trace = new List<string>();
+        Check(CategoryFamily(data, "category", new[] { second }, trace.Add).SequenceEqual(unobserved));
+        CheckCosts(trace, 2, 1);
+        Check(AssetBundle.enumerations == before + 2 && AssetBundle.typedLoads == loads + 4);
+        trace.Clear();
+        Check(CategoryFamily(data, "category", new[] { first }, trace.Add).SequenceEqual(unobserved));
+        Check(trace.Count == 0 && AssetBundle.enumerations == before + 2 && AssetBundle.typedLoads == loads + 4);
         definitionFamilies.Clear();
         AssetBundle.loadedOwners = new[] { AssetBundle.owner, AssetBundle.owner };
         Refuses(() => CategoryFamily(data, "category", new Definition[0]));
@@ -216,7 +234,7 @@ public static partial class WholeCatalogComposed
         AssetBundle.loadedOwners = null;
         definitionFamilies.Clear();
     }
-    static void LabeledFamilyContract<T>(Func<T[]> definitions, string label) where T : Object, new()
+    static void LabeledFamilyContract<T>(Func<T[]> definitions, string label, Func<Action<string>, T[]> observed = null) where T : Object, new()
     {
         definitionFamilies.Clear();
         var first = new T { name = "First" };
@@ -236,6 +254,17 @@ public static partial class WholeCatalogComposed
         int before = AssetBundle.typedLoads;
         Check(definitions().SequenceEqual(new[] { first, second }));
         Check(AssetBundle.typedLoads == before + 2);
+        if (observed != null)
+        {
+            var trace = new List<string>();
+            Check(observed(trace.Add).SequenceEqual(new[] { first, second }) && trace.Count == 0);
+            definitionFamilies.Clear();
+            Check(observed(trace.Add).SequenceEqual(new[] { first, second }));
+            Check(trace.Where(value => !value.StartsWith("assets-costs ")).SequenceEqual(new[] {
+                "manifest-begin", "manifest-ready-index-begin", "index-ready-assets-begin", "assets-ready" }));
+            CheckCosts(trace, 2, 1);
+            before += 2;
+        }
         File.Delete("payload/whole-catalog.json");
         Check(definitions().SequenceEqual(new[] { first, second }));
         Check(AssetBundle.typedLoads == before + 2);
@@ -373,13 +402,25 @@ public static partial class WholeCatalogComposed
         definitionFamilies.Clear();
         WriteManifest(data.ToString());
         int before = AssetBundle.typedLoads;
+        int ownerLookups = AssetBundle.enumerations;
         var buffs = definitions();
         Check(buffs.Length == 2 && ReferenceEquals(buffs[0], first) && ReferenceEquals(buffs[1], second));
         Check(AssetBundle.typedLoads == before + 3); // Alias roots retain one native identity.
+        Check(AssetBundle.enumerations == ownerLookups + 1);
         File.Delete("payload/whole-catalog.json");
         Check(definitions().SequenceEqual(buffs) && AssetBundle.typedLoads == before + 3);
         Check(DefinitionFamily(new[] { second }).SequenceEqual(buffs));
-        Refuses(() => DefinitionFamily(new[] { excluded }));
+        var trace = new System.Collections.Generic.List<string>();
+        Check(DefinitionFamily(new[] { second }, trace.Add).SequenceEqual(buffs) && trace.Count == 0);
+        definitionFamilies.Clear();
+        WriteManifest(data.ToString());
+        Check(DefinitionFamily(new[] { second }, trace.Add).SequenceEqual(buffs));
+        Check(trace.Count == 5 && trace[0] == "manifest-begin" && trace[1] == "manifest-ready-assets-begin" &&
+              trace[2].StartsWith("assets-costs scannedRows=4 loadedRows=3 bundles=1 ") &&
+              trace[3] == "assets-ready-validation-begin" && trace[4] == "validation-ready");
+
+        Check(AssetBundle.enumerations == ownerLookups + 2);
+        Refuses(() => DefinitionFamily(new[] { excluded }, trace.Add));
         var previousOwner = owned;
         owned = null;
         Refuses(() => definitions());
@@ -400,6 +441,9 @@ public static partial class WholeCatalogComposed
         AssetBundle.owner.name = "other";
         Refuses(() => definitions());
         AssetBundle.owner.name = "source";
+        AssetBundle.loadedOwners = new[] { AssetBundle.owner, new AssetBundle { name = "source" } };
+        Refuses(() => definitions());
+        AssetBundle.loadedOwners = null;
         data["provider_roots"] = new JArray();
         WriteManifest(data.ToString());
         Refuses(() => definitions());

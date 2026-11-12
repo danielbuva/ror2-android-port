@@ -139,8 +139,8 @@ class AlphaInstallerTests(unittest.TestCase):
         self.assertIn('"profile-recover"', activity)
         self.assertIn("USER_ACTION_NOT_REQUIRED", installer)
         self.assertIn("awaitInstallation()", service)
-        for name in ("stage.py", "build_fixture.py"):
-            self.assertIn('"OwnerAlphaInstall.java"', (SOURCE / name).read_text())
+        self.assertIn('"OwnerAlphaInstall.java"', (SOURCE / "stage.py").read_text())
+        self.assertIn("staging.JAVA_SOURCES", (SOURCE / "build_fixture.py").read_text())
         for name in ("ProfileStore.java", "ProfileRetentionProvider.java", "alpha_policy.py"):
             self.assertIn(name, (SOURCE / "stage.py").read_text())
         self.assertNotIn("getExternalFilesDir", (SOURCE / "OwnerAlphaInstall.java").read_text())

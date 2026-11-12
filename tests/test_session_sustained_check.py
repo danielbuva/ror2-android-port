@@ -3,6 +3,7 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 import sys
 import unittest
+import tempfile
 from unittest import mock
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts/lab"))
@@ -24,6 +25,72 @@ def fixtures():
 
 
 class SustainedCheckTests(unittest.TestCase):
+    def test_capture_off_preserves_aggregates_and_never_transfers_a_sidecar(self):
+        report, snapshot, utc = fixtures()
+        row = sustained.observation_sample(report, snapshot, 0, utc=utc)
+        device = mock.Mock()
+        self.assertIsNone(sustained.collect_raw_frames(device, "/owned", Path("unused"), report, [row], enabled=False))
+        self.assertEqual(row["pacing_frames"], 100)
+        self.assertEqual(row["pacing_total_ms"], 2000)
+        self.assertEqual(row["pacing_over33"], 4)
+        device.assert_not_called()
+        device.cmd.assert_not_called()
+        device.sh.assert_not_called()
+        for field, value in (("rawFrameTrace", "unexpected.bin"), ("rawFrameTraceClosed", True), ("rawFrameTraceFrames", 2)):
+            invalid = copy.deepcopy(report)
+            invalid["framePacing"][field] = value
+            with self.subTest(field=field), self.assertRaisesRegex(RuntimeError, "despite disabled"):
+                sustained.collect_raw_frames(device, "/owned", Path("unused"), invalid, [row], enabled=False)
+        with self.assertRaisesRegex(RuntimeError, "despite disabled"):
+            sustained.collect_raw_frames(device, "/owned", Path("unused"), report, [dict(row, pacing_trace="unexpected.bin")], enabled=False)
+
+    def test_capture_mode_rejects_non_boolean_before_device_access(self):
+        with mock.patch.object(sustained, "Device") as device:
+            with self.assertRaisesRegex(ValueError, "explicit boolean"):
+                sustained.check_session_sustained("a" * 64, raw_frame_times="off")
+            device.assert_not_called()
+
+    def test_exact_total_avoids_rounded_mean_and_binds_trace(self):
+        report, snapshot, utc = fixtures()
+        report["framePacing"].update(totalMs=2000.125, rawFrameTrace="authored.bin")
+        row = sustained.observation_sample(report, snapshot, 0, utc=utc)
+        self.assertEqual(row["pacing_total_ms"], 2000.125)
+        self.assertTrue(row["pacing_total_ms_exact"])
+        self.assertEqual(row["pacing_trace"], "authored.bin")
+        report["framePacing"]["totalMs"] = float("nan")
+        with self.assertRaisesRegex(RuntimeError, "cumulative"):
+            sustained.observation_sample(report, snapshot, 0, utc=utc)
+
+    def test_only_closed_matching_trace_is_collected_and_removed_after_retention(self):
+        import perf_report as perf
+        import struct
+
+        name = "frame-times-" + "a" * 32 + ".bin"
+        completed = dict(
+            framePacing=dict(rawFrameTrace=name, rawFrameTraceClosed=True, rawFrameTraceFirstFrame=1, rawFrameTraceFrames=2, rawFrameTraceDropped=0)
+        )
+        samples = [
+            dict(pacing_frames=0, pacing_total_ms=0, pacing_total_ms_exact=True, pacing_over33=0, pacing_over50=0, pacing_trace=name),
+            dict(pacing_frames=2, pacing_total_ms=70, pacing_total_ms_exact=True, pacing_over33=1, pacing_over50=1, pacing_trace=name),
+        ]
+        data = perf.RAW_HEADER.pack(b"ROR2FRAM", 1, 2, 2, 0) + struct.pack("<2f", 10, 60)
+        device = mock.Mock()
+        with tempfile.TemporaryDirectory() as folder:
+            out = Path(folder)
+            device.cmd.side_effect = lambda *args: (out / name).write_bytes(data)
+            device.sh.side_effect = lambda *args: self.assertEqual((out / name).read_bytes(), data)
+            trace = sustained.collect_raw_frames(device, "/owned", out, completed, samples)
+            self.assertEqual(trace["retained_frames"], 2)
+            device.sh.assert_called_once_with("rm", "--", "/owned/" + name)
+            device.reset_mock()
+            for field, value in (("rawFrameTrace", "../foreign"), ("rawFrameTraceClosed", False), ("rawFrameTraceError", "write failed")):
+                invalid = copy.deepcopy(completed)
+                invalid["framePacing"][field] = value
+                with self.subTest(field=field), self.assertRaisesRegex(RuntimeError, "closed session-bound"):
+                    sustained.collect_raw_frames(device, "/owned", out, invalid, samples)
+                device.cmd.assert_not_called()
+                device.sh.assert_not_called()
+
     def test_foreign_selector_pending_and_live_process_are_preserved_before_launch(self):
         for selector, pending, process in (("file", "absent", ""), ("absent", "file", ""), ("absent", "absent", "73")):
             device = mock.Mock()

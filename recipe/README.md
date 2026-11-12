@@ -2427,6 +2427,15 @@ remain required. No generated assembly or protected implementation is included.
 
 ## App-host build-tool metadata audit (2026-10-23)
 
+2026-11-12: the existing native plan also selects the supplied Android CPython
+`_sqlite3` extension and SQLite 3.54.1 for the bundle producer's disk indexes.
+Actual AArch64 ELF dependencies resolve through the existing Python, Android
+support and zlib selections plus Android system libraries. The dependency's
+versioned regular file is pinned; its installed `libsqlite3.so` link retains the
+actual ELF lookup name. Only relative selectors, hashes and link metadata are
+tracked. Native bytes and tool notices remain with the separately supplied
+tools; this metadata audit grants no redistribution approval or phone acceptance.
+
 `owner-app-host-tools.json` contains relative paths, names, hashes and native
 link selections for the scoped Python 3.14.8 build-tool profile, plus 21 public
 producer source digests. Its source commit is a retrieval hint; readers compare
@@ -3155,6 +3164,11 @@ input, private path, account/device identifier, credential or generated shader
 output is added. This audit authorizes tooling/selection metadata only, with no
 new redistribution or ownership claim. Full evidence and remaining gates are
 recorded once in J1144/J1146/J1147/J1151/J1157.
+
+The current helper pins retain J1204's measured resource binding kind 2,
+J1369's SDK TMP package sources and the existing deferred-pass compiler/reflection
+support. The manager recipe pins this reviewed Shader recipe as one cohort.
+This refresh changes public tooling hashes only; generated Shader data stays private.
 
 The original UI Alpha extension selects one original Shader and two original
 Materials, derives their feature sets and regenerates every selected original
@@ -7002,3 +7016,8 @@ Manual provenance/privacy review (2026-11-11): no original body, shader math,
 pixels, upstream implementation or private configuration is tracked. Generated
 implementations stay ignored under the pinned package license; compilation and
 device acceptance remain separate gates.
+
+The complete player Shader helper refresh also updates dependent recipe hashes
+through the existing release graph. Manual provenance/privacy review
+(2026-11-12): changed consumer values are public recipe SHA-256 selectors only;
+no original bodies, SDK files or private paths are added.

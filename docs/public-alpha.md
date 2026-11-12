@@ -147,6 +147,13 @@ unmeasured. Periodic interval-mean percentiles cannot close the pacing gate.
 adds retained final-ten-minute aggregate counters: 50.032 FPS and 1.274% of
 frames above 50 ms. This is host analysis of assisted play, not a new run or
 raw frame-percentile qualification.
+
+The bounded 2026-11-12 assisted capture reconciles 4,693 individual frames and
+reports true p50/p95/p99 of 16.67/16.92/49.94 ms; see the
+[capture qualification](performance-game.md#bounded-raw-capture-qualification).
+Its 80-second observation leaves sustained ordinary-play pacing, capture overhead,
+battery drain and throttling onset open.
+
 Startup [audio-verification reuse](PORTING_JOURNAL.md#j1386--reuse-install-bound-audio-verification-and-partition-loading-costs)
 and [catalog discovery](PORTING_JOURNAL.md#j1390--reuse-typed-item-provider-discovery-during-ordinary-startup)
 provide bounded device evidence; complete converter and sustained-game profiles

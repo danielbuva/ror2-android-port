@@ -146,6 +146,7 @@ public sealed partial class PortSession
         }
         public void PrepareWholeDroneCatalog(JObject manifest)
         {
+            TraceStartup("drone-owner-snapshot-begin");
             coordinator.Check(DroneCatalog.droneCount == 0 && priorWholeDroneFields.Count == 0, "Foreign drone catalog owner");
             var fields = typeof(DroneCatalog).GetFields(BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic);
             coordinator.Check(
@@ -154,15 +155,23 @@ public sealed partial class PortSession
             foreach (var field in fields)
                 if (!field.IsLiteral && (field.FieldType.IsArray || field.FieldType == typeof(global::ResourceAvailability)))
                     priorWholeDroneFields.Add(field, field.GetValue(null));
-            var definitions = WholeCatalogComposed.CategoryFamily(manifest, RoR2.ContentManagement.AddressablesLabels.droneDef, new DroneDef[0]);
+            TraceStartup("drone-owner-snapshot-ready-family-begin");
+            var definitions = WholeCatalogComposed.CategoryFamily(manifest, RoR2.ContentManagement.AddressablesLabels.droneDef, new DroneDef[0],
+                                                                 step => TraceStartup("drone-family-" + step));
+            TraceStartup("drone-family-ready-definition-snapshot-begin");
             foreach (var def in definitions)
                 priorWholeDroneDefinitions.Add(def, new object[] { def.droneIndex, def.requiredExpansion });
+            TraceStartup("drone-definition-snapshot-ready-native-set-begin");
             PortSession.StaticCall(typeof(DroneCatalog), "SetDroneDefs", new object[] { definitions });
+            TraceStartup("drone-native-set-ready-availability-begin");
             DroneCatalog.availability.MakeAvailable();
+            TraceStartup("drone-availability-ready-holders-begin");
             WholeCatalogComposed.PopulateDefinitionFields(manifest, "DroneDefs", definitions);
+            TraceStartup("drone-holders-ready-validation-begin");
             coordinator.Check(definitions.All(def => DroneCatalog.GetDroneDef(def.droneIndex) == def &&
                                                      DroneCatalog.GetBodyIndexFromDroneIndex(def.droneIndex) != BodyIndex.None),
                               "Original drone catalog identity differs");
+            TraceStartup("drone-validation-ready");
         }
         public void PrepareWholeRunAvailability()
         {

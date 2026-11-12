@@ -2308,6 +2308,124 @@ public class Review {
                     phone.dismiss_notification_permission()
             self.assertEqual(shell.call_count, 1)
 
+    @classmethod
+    def focused_notification_dialog(cls, **kwargs):
+        tree = ET.Element("hierarchy")
+        root = ET.SubElement(tree, "node", {"package": "com.android.permissioncontroller"})
+        for node in cls.notification_dialog(**kwargs):
+            root.append(node)
+        root[-1].set("clickable", "true")
+        return tree
+
+    def test_repeat_notification_denial_is_explicit_user_fixed_after_observed_first_denial(self):
+        phone = LAB.Phone("synthetic-private-selector", 1)
+        phone.owned_installer, phone.installer_hash = True, "a" * 64
+        dialog = self.focused_notification_dialog(button="permission_deny_and_dont_ask_again_button")
+        app = ET.Element("hierarchy")
+        ET.SubElement(app, "node", {"package": LAB.PACKAGE})
+        output = io.StringIO()
+        with (
+            patch.object(phone, "package_hash", return_value=phone.installer_hash) as owned,
+            patch.object(phone, "ui_for", side_effect=[self.notification_dialog(), ET.Element("hierarchy")]) as ordinary,
+            patch.object(phone, "ui_windows", side_effect=[dialog, dialog, app]) as focused,
+            patch.object(phone, "shell") as shell,
+            redirect_stdout(output),
+        ):
+            self.assertTrue(phone.dismiss_notification_permission())
+            self.assertTrue(phone.notification_denied)
+            self.assertTrue(phone.dismiss_notification_permission(repeat_denial=True))
+        self.assertEqual([c.kwargs["label"] for c in shell.call_args_list], ["device-notification-deny", "device-notification-deny-and-dont-ask-again"])
+        self.assertEqual(ordinary.call_count, 2)
+        self.assertEqual(owned.call_count, 2)
+        self.assertEqual(
+            [c.args for c in focused.call_args_list],
+            [
+                ((LAB.PACKAGE, "com.android.permissioncontroller"),),
+                (("com.android.permissioncontroller",),),
+                ((LAB.PACKAGE, "com.android.permissioncontroller"),),
+            ],
+        )
+        self.assertTrue(all(c.kwargs == {"recovery": False} for c in focused.call_args_list))
+        self.assertIn("effect=user-fixed scope=owned-disposable-installer", output.getvalue())
+
+    def test_repeat_notification_control_is_not_an_ordinary_denial_or_grant_alias(self):
+        phone = LAB.Phone("synthetic-private-selector", 1)
+        phone.owned_installer, phone.notification_denied = True, True
+        dialog = self.notification_dialog(button="permission_deny_and_dont_ask_again_button")
+        with patch.object(phone, "ui_for", return_value=dialog), patch.object(phone, "shell") as shell:
+            with self.assertRaisesRegex(LAB.Failure, "notification-denial-unavailable"):
+                phone.dismiss_notification_permission()
+            shell.assert_not_called()
+        phone.allow_test_notifications = True
+        with patch.object(phone, "ui_windows") as ui, patch.object(phone, "shell") as shell:
+            with self.assertRaisesRegex(LAB.Failure, "notification-repeat-denial-conflicting-policy"):
+                phone.dismiss_notification_permission(repeat_denial=True)
+            ui.assert_not_called()
+            shell.assert_not_called()
+
+    def test_repeat_notification_denial_rejects_changed_ambiguous_or_unowned_prompt_without_tap(self):
+        for mode in (
+            "no-prior-denial",
+            "disabled",
+            "not-clickable",
+            "duplicate",
+            "both-negative",
+            "misspelled",
+            "wrong-purpose",
+            "foreign",
+            "zero-bounds",
+            "changed-focus",
+            "changed-apk",
+        ):
+            phone = LAB.Phone("synthetic-private-selector", 1)
+            phone.owned_installer, phone.installer_hash, phone.notification_denied = True, "a" * 64, mode != "no-prior-denial"
+            dialog = self.focused_notification_dialog(button="permission_deny_and_dont_ask_again_button")
+            button = dialog.find("node")[-1]
+            if mode == "disabled":
+                button.set("enabled", "false")
+            if mode == "not-clickable":
+                button.set("clickable", "false")
+            if mode in ("duplicate", "both-negative"):
+                other = ET.fromstring(ET.tostring(button))
+                if mode == "both-negative":
+                    other.set("resource-id", "com.android.permissioncontroller:id/permission_deny_button")
+                dialog.find("node").append(other)
+            if mode == "misspelled":
+                button.set("resource-id", "com.android.permissioncontroller:id/permission_deny_dont_ask_again_button")
+            if mode == "wrong-purpose":
+                dialog.find("node")[0].set("text", "Allow Owner game installer to access camera?")
+            if mode == "foreign":
+                button.set("package", "foreign")
+            if mode == "zero-bounds":
+                button.set("bounds", "[10,10][10,10]")
+            confirm = ET.fromstring(ET.tostring(dialog))
+            if mode == "changed-focus":
+                confirm.find("node")[-1].set("bounds", "[50,60][100,120]")
+            with (
+                self.subTest(mode=mode),
+                patch.object(phone, "package_hash", return_value="b" * 64 if mode == "changed-apk" else phone.installer_hash),
+                patch.object(phone, "ui_windows", side_effect=[dialog, confirm]),
+                patch.object(phone, "shell") as shell,
+                self.assertRaises(LAB.Failure),
+            ):
+                try:
+                    phone.dismiss_notification_permission(repeat_denial=True)
+                finally:
+                    shell.assert_not_called()
+
+    def test_repeat_notification_denial_requires_observed_dismissal(self):
+        phone = LAB.Phone("synthetic-private-selector", 1)
+        phone.owned_installer, phone.installer_hash, phone.notification_denied = True, "a" * 64, True
+        dialog = self.focused_notification_dialog(button="permission_deny_and_dont_ask_again_button")
+        with (
+            patch.object(phone, "package_hash", return_value=phone.installer_hash),
+            patch.object(phone, "ui_windows", return_value=dialog),
+            patch.object(phone, "shell") as shell,
+        ):
+            with self.assertRaisesRegex(LAB.Failure, "notification-dialog-not-dismissed"):
+                phone.dismiss_notification_permission(repeat_denial=True)
+            self.assertEqual(shell.call_count, 1)
+
     def test_occupied_alpha_refuses_before_build_and_key_creation(self):
         phone = LAB.Phone("synthetic-private-selector", 1)
         with (

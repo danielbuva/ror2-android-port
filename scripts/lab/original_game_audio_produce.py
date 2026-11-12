@@ -69,7 +69,7 @@ META_GUIDS = {
 NATIVE_META_GUID = "a2a09e81876b46f2a202e62f96644331"
 NATIVE_TARGET = "Assets/Plugins/Android/arm64-v8a/libAkSoundEngine.so"
 NATIVE_META = "Assets/Plugins/Android/arm64-v8a/libAkSoundEngine.so.meta"
-OWNER_ANCESTOR_MANIFEST_SHA256 = "d095bda9a982cb931239fd1b46e59180dd5d9fcd7143eb2203cb4040101ef625"
+OWNER_ANCESTOR_MANIFEST_SHA256 = "ab9ebeb045fa55b810258e7791f2277b19aead21bf3c1228ef281b78cedaa606"
 STAGE_PIN_TOOL_SHA256 = "1aae94e738c3c1471244c37f621128c155a3336f9f9ba751ea112e629f3cc92e"
 REQUEST_PIN_TOOL_SHA256 = "945533162905e763869a00480be064e6b3c31ff5b62f6de81ef1393219c1459b"
 MANAGED_PRODUCER_SHA256 = "b3f1806afa9e7f82159052a7524f0ae389df6ab255e735e3344b714ad5dfb34d"
@@ -84,9 +84,9 @@ OWNER_SOURCE_HASHES = {
     "../../runtime/session/AkMusicPcmJoinQueryAdapter.cs": "ae116b7912efda498d6c1a1ecb0ddc4be1ec2dd6df223e0fff53426a37204ef8",
     "../../runtime/session/MusicPcmJoinObserver.cs": "3c8ceaf8a8ce9ce07c76282adb70f63f8f9487f0682d33056ea6aeaa2139cef9",
     "../../runtime/session/OriginalMusicControllerContract.cs": "bd8f78977722a276409623cea4909b0e41065fda6c195a6b0dee94ef8bb8b485",
-    "../../runtime/session/OriginalNetworkSoundEventCatalogOwner.cs": "ca692357d4d6e635136c59529aaf89745f219e5227d4ea7b48be56cdd7fd455f",
-    "../../runtime/session/PortSession.cs": "2f4e5b57102311ae7b4361bd11f0cf19200210ab4321f1b6f01c397d06c85071",
-    "../../runtime/session/PortSessionOriginalAudioOwner.cs": "032706b05186d577594f7929a5038efdbcd7a5dd57912e78cd8a71900bbb80b2",
+    "../../runtime/session/OriginalNetworkSoundEventCatalogOwner.cs": "ef0ca25f48aa39cdbdf33fceb960472bfd6a3e85b86a80db71cf9ec89781154a",
+    "../../runtime/session/PortSession.cs": "1c0447700ffd53ebba872a7675e5317a1975109f989e0464a48be8e14fb5a0ae",
+    "../../runtime/session/PortSessionOriginalAudioOwner.cs": "0c08a4e06977e68ec5bc1acc20014f6cdabb7d3f71dd2874caaa6455f3f9b059",
     "../../runtime/session/PortSessionOriginalMusicControllerOwner.cs": "15272167e3c416edb863797bf35dcbe8ef6704ecac805fdbe38186f4d73d41b0",
     "../../runtime/world/IntegratedWorldBoundary.cs": "5741a611812dc82bd398c88586eabe35f2057b7e88429d323d5d2f96064ea57e",
     "../../runtime/world/LightningStakeSourceCallObserver.cs": "d1d197dc12526614f37b9c3c3699be3bf16a96315abd3ac698c15b4270bfe8b6",

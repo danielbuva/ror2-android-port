@@ -2,6 +2,7 @@
 
 import hashlib
 import importlib.util
+import io
 import json
 import os
 from pathlib import Path
@@ -57,6 +58,46 @@ def authored_body(name, image_size, texture_format, pixels, stream, usage=0):
         data.extend(value)
     data.extend(b"TAIL")
     return bytes(data), spans
+
+
+def serialized_textures(bodies, path_ids, class_ids=None):
+    """Wrap authored texture fields in genuine native metadata and object tables."""
+    f = FIXTURE
+    text = lambda name: f.node(name, children=[f.array("Array", f.node("data", 1))], kind="string", meta=0x4000)
+    schema = f.node(
+        "Base",
+        children=[
+            f.node("prefix", 8),
+            text("m_Name"),
+            f.node("m_CompleteImageSize", 4),
+            f.node("m_TextureFormat", 4),
+            f.node("m_IsAlphaChannelOptional", 1),
+            f.node("padding", 3),
+            f.node("m_LightmapFormat", 4),
+            f.node("sentinel", 4),
+            f.array("image data", f.node("data", 1)),
+            f.node("m_StreamData", children=[f.node("offset", 8), f.node("size", 4), text("path")]),
+            f.node("tail", 4),
+        ],
+    )
+    types, objects, cursor = [], [], 0
+    for body, path_id, class_id in zip(bodies, path_ids, class_ids or [28] * len(bodies), strict=True):
+        raw = f.serialized(body, schema, path_id=path_id, class_id=class_id)
+        stream = io.BytesIO(raw)
+        stream.size = len(raw)
+        metadata = T.O.W.read_serialized(stream)
+        types.append(metadata["types"][0])
+        cursor = (cursor + 7) // 8 * 8
+        objects.append(dict(path_id=path_id, offset=cursor, bytes=len(body), type_id=len(types) - 1))
+        cursor += len(body)
+    layout = {**metadata, "types": types, "objects": objects}
+    layout.pop("data_offset")
+    layout.pop("bytes")
+    output = io.BytesIO()
+    T.O.W.write_serialized(output, layout, lambda row: io.BytesIO(bodies[path_ids.index(row["path_id"])]))
+    raw = output.getvalue()
+    start = struct.unpack_from(">q", raw, 32)[0]
+    return raw, [start + row["offset"] for row in objects]
 
 
 class TextureProducerTests(unittest.TestCase):
@@ -269,11 +310,12 @@ class TextureProducerTests(unittest.TestCase):
             pc = root / "pc"
             pc.mkdir()
             source = pc / "authored.bundle"
-            source.write_bytes(FIXTURE.bundle([("CAB-authored", b"HEAD" + body, 4), ("CAB-authored.resS", b"LEAD" + encoded, 0)], True))
+            serialized, offsets = serialized_textures([body], [99])
+            source.write_bytes(FIXTURE.bundle([("CAB-authored", serialized, 4), ("CAB-authored.resS", b"LEAD" + encoded, 0)], True))
             source_hash = T.BUNDLE.sha(source)
             selected = {
                 "path_id": 99,
-                "offset": 4,
+                "offset": offsets[0],
                 "bytes": len(body),
                 "sha256": digest(body),
                 "fields": fields,

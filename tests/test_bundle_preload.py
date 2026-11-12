@@ -177,8 +177,20 @@ class BundlePreloadTests(unittest.TestCase):
             with patch.object(P, "relocate_pointer_fields", side_effect=AssertionError("checked unchanged bundle is reusable")):
                 second = P.repack_canonical_aliases(output=root / "second", **inputs)
             self.assertTrue(second["cache_reused"])
-            self.assertEqual(second["bundle"], first["bundle"])
-            self.assertFalse((root / "second").exists())
+            self.assertEqual(Path(second["bundle"]), (root / "second/authored.bundle").resolve())
+            self.assertFalse(Path(second["bundle"]).is_symlink())
+            self.assertEqual(second["sha256"], P.O.B.sha(Path(second["bundle"])))
+            self.assertEqual(json.loads((root / "second/result.json").read_bytes()), second)
+            # The emission stage now supplies a different path on every warm
+            # attempt. Its identical content must still reuse the repack.
+            relocated = root / "relocated.bundle"
+            relocated.write_bytes(Path(inputs["source"]).read_bytes())
+            inputs["source"] = relocated
+            with patch.object(P, "relocate_pointer_fields", side_effect=AssertionError("same source bytes must reuse repack")):
+                moved = P.repack_canonical_aliases(output=root / "moved", **inputs)
+            self.assertTrue(moved["cache_reused"])
+            self.assertEqual(moved["sha256"], first["sha256"])
+            self.assertIn(str(relocated.resolve()), moved["inputs"])
             inputs["aliases"] = aliases
             changed = P.repack_canonical_aliases(output=root / "changed", **inputs)
             self.assertFalse(changed["cache_reused"])
@@ -659,6 +671,312 @@ class BundlePreloadTests(unittest.TestCase):
         )
         return graph, types, rows, required
 
+    def request_fixture(self, root):
+        graph, types, rows, required = self.required_graph(root)
+        rows = rows[:2]
+        records = graph / "selected-records.jsonl"
+        records.write_text("".join(json.dumps(row) + "\n" for row in rows))
+        (root / "required.json").write_text(json.dumps(required))
+        routes = [
+            dict(owner=row["destination"], edges=[dict(field=["link"], pointer=row["edges"][0], target=[*row["destination"][:2], row["edges"][0][1]])])
+            for row in rows
+        ]
+        (root / "routes.jsonl").write_text("".join(json.dumps(row) + "\n" for row in routes))
+        # Standard-library literal-only LZ4 worker. Exercise the real pinned
+        # codec protocol and CLI without a compiled host helper or editor.
+        codec = root / "codec"
+        codec.write_text(
+            "#!" + sys.executable + "\nimport sys, struct\n"
+            "while header := sys.stdin.buffer.read(8):\n"
+            " size, method = struct.unpack('<II', header)\n"
+            " data = sys.stdin.buffer.read(size)\n"
+            " extra = size - 15\n"
+            " suffix = bytes([255]) * (extra // 255) + bytes([extra % 255]) if size >= 15 else b''\n"
+            " encoded = bytes([min(size, 15) << 4]) + suffix + data\n"
+            " sys.stdout.buffer.write(struct.pack('<I', len(encoded)) + encoded)\n"
+            " sys.stdout.buffer.flush()\n"
+        )
+        codec.chmod(0o755)
+
+        def pin(path):
+            return dict(path=str(path.relative_to(root)), bytes=path.stat().st_size, sha256=P.O.B.sha(path))
+
+        request = dict(
+            schema="owner-bundle-preload-inputs-v1",
+            graph={path.name: pin(path) for path in graph.iterdir()},
+            schemas=[pin(types)],
+            required=pin(root / "required.json"),
+            routes=pin(root / "routes.jsonl"),
+            endpoints=pin(records),
+            staged=[],
+            managed_inputs={},
+            game_root=".",
+            codec=pin(codec),
+            bundle="authored",
+            member="CAB-authored",
+        )
+        inputs = root / "inputs.json"
+        inputs.write_text(json.dumps(request))
+        return inputs, request
+
+    def test_declarative_request_cli_emits_and_reuses_actual_native_bundle(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            inputs, _ = self.request_fixture(root)
+            command = [sys.executable, "-I", "-S", P.__file__, "--inputs", str(inputs), "--cache", str(root / "cache")]
+            first = json.loads(subprocess.check_output([*command, "--output", str(root / "first")], cwd=root.parent, text=True))
+            second = json.loads(subprocess.check_output([*command, "--output", str(root / "second")], cwd=root.parent, text=True))
+            self.assertFalse(first["emission"]["cache_reused"])
+            self.assertTrue(second["emission"]["cache_reused"])
+            self.assertEqual(Path(second["bundle"]), (root / "second/emitted/authored.bundle").resolve())
+            self.assertFalse(Path(second["bundle"]).is_symlink())
+            self.assertEqual(first["sha256"], P.O.B.sha(Path(second["bundle"])))
+            for result, attempt in ((first, "first"), (second, "second")):
+                profile = result["catalog_profile"]
+                path = Path(profile["path"])
+                self.assertEqual(path, (root / attempt / "catalog-profile.json").resolve())
+                self.assertEqual((profile["bytes"], profile["sha256"]), (path.stat().st_size, P.O.B.sha(path)))
+                required = json.loads((root / "required.json").read_bytes())
+                self.assertEqual(
+                    json.loads(path.read_bytes()),
+                    dict(bundle=dict(name="authored", member="CAB-authored", asset_groups=required["asset_groups"])),
+                )
+                self.assertEqual(
+                    result["catalog_bundle"],
+                    dict(path=result["bundle"], bytes=Path(result["bundle"]).stat().st_size, sha256=result["sha256"]),
+                )
+            self.assertFalse(second["typed_load_accepted"])
+            self.assertFalse(second["device_accepted"])
+
+    def test_catalog_declaration_uses_canonical_output_and_emitted_groups(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            inputs, _ = self.canonical_fixture(root)
+            # A donor's imported roots are a separate explicit catalog owner.
+            donor = inputs["canonical_profile"]["bundle"]
+            donor["asset_groups"] = [dict(guid="34" * 16, path="Assets/Donor.prefab", roots=[100])]
+            final = P.repack_canonical_aliases(output=root / "repacked", **inputs)
+            artifacts = P.catalog_artifacts(inputs["required"], final, root)
+            profile = json.loads(Path(artifacts["catalog_profile"]["path"]).read_bytes())
+            self.assertEqual(profile["bundle"]["name"], "authored")
+            self.assertEqual(profile["bundle"]["member"], "CAB-authored")
+            self.assertEqual(profile["bundle"]["asset_groups"], inputs["required"]["asset_groups"])
+            self.assertNotEqual(profile["bundle"], donor)
+            self.assertEqual(Path(artifacts["catalog_bundle"]["path"]), Path(final["bundle"]).resolve())
+            self.assertEqual(artifacts["catalog_bundle"]["sha256"], final["sha256"])
+            W = P.module("unity_write")
+            with W.B.Bundle(Path(artifacts["catalog_bundle"]["path"])).member(profile["bundle"]["member"]) as stream:
+                layout = W.read_serialized(stream)
+                row = next(row for row in layout["objects"] if layout["types"][row["type_id"]]["class_id"] == 142)
+                stream.seek(layout["data_offset"] + row["offset"])
+                containers, _ = P.module("catalog_complete").containers(W.B.exact(stream, row["bytes"]))
+            self.assertEqual(
+                [(path, pointer) for path, pointer, _ in containers],
+                [(group["path"].lower(), (0, pid)) for group in profile["bundle"]["asset_groups"] for pid in group["roots"]],
+            )
+
+    def test_declarative_request_checks_pins_and_structural_fields(self):
+        for failure in ("pin", "route"):
+            with self.subTest(failure=failure), tempfile.TemporaryDirectory() as tmp:
+                root = Path(tmp)
+                inputs, request = self.request_fixture(root)
+                if failure == "pin":
+                    (root / "required.json").write_text("{}")
+                else:
+                    path = root / "routes.jsonl"
+                    routes = [json.loads(line) for line in path.read_text().splitlines()]
+                    routes[0]["edges"] = []
+                    path.write_text("".join(json.dumps(row) + "\n" for row in routes))
+                    request["routes"].update(bytes=path.stat().st_size, sha256=P.O.B.sha(path))
+                    inputs.write_text(json.dumps(request))
+                with self.assertRaisesRegex(ValueError, "input differs|[Ss]tructural"):
+                    P.produce_request(inputs, root / "output")
+
+    def test_declarative_request_relocates_native_lineages_without_rewriting_proofs(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            inputs, request = self.request_fixture(root)
+            baseline = P.produce_request(inputs, root / "baseline")
+            records = root / "graph/selected-records.jsonl"
+            selected = list(P.json_rows(records))
+            retained = root / "retained"
+            retained.mkdir()
+            blob, index = bytearray(), []
+            for value in selected:
+                source = Path(value["provider"])
+                row = next(P.json_rows(source / "index.jsonl"))
+                body = P.O.record_extent(source / "objects.bin", row)
+                index.append({**row, "offset": len(blob), "provider_before": value["provider"], "body_before_sha256": value["sha256"]})
+                blob.extend(body)
+                value["provider"] = str(retained)
+            (retained / "objects.bin").write_bytes(blob)
+            (retained / "index.jsonl").write_text("".join(json.dumps(row) + "\n" for row in index))
+            (retained / "witnesses.jsonl").write_text("")
+            (retained / "result.json").write_text(
+                json.dumps(
+                    dict(
+                        success=True,
+                        index_sha256=P.O.B.sha(retained / "index.jsonl"),
+                        objects_sha256=P.O.B.sha(retained / "objects.bin"),
+                        witnesses_sha256=P.O.B.sha(retained / "witnesses.jsonl"),
+                    )
+                )
+            )
+            records.write_text("".join(json.dumps(row) + "\n" for row in selected))
+            request["graph"][records.name].update(bytes=records.stat().st_size, sha256=P.O.B.sha(records))
+            request["endpoints"] = request["graph"][records.name]
+            # Move every lineage pack; the selected rows, index and field proofs
+            # keep their original logical provider names byte for byte.
+            moved = root / "phone"
+            moved.mkdir()
+            aliases = {}
+            for source in [retained, *[Path(row["provider_before"]) for row in index]]:
+                destination = moved / source.name
+                source.rename(destination)
+                aliases[str(source)] = str(destination.relative_to(root))
+            paths = root / "provider-paths.json"
+            paths.write_text(json.dumps(aliases))
+            request["provider_paths"] = dict(path=paths.name, bytes=paths.stat().st_size, sha256=P.O.B.sha(paths))
+            inputs.write_text(json.dumps(request))
+            cold = P.produce_request(inputs, root / "cold", cache_directory=root / "cache")
+            warm = P.produce_request(inputs, root / "warm", cache_directory=root / "cache")
+            self.assertEqual(cold["sha256"], baseline["sha256"])
+            self.assertEqual(warm["sha256"], baseline["sha256"])
+            self.assertTrue(warm["emission"]["cache_reused"])
+            resolver = {name: root / path for name, path in aliases.items()}
+            endpoints = P.module("bundle_endpoints")
+            required = json.loads((root / "required.json").read_bytes())
+            qualification = endpoints.Qualification(
+                Node(**vars(P)),
+                endpoints.InputPins(root, P),
+                request,
+                {tuple(row["destination"]): row for row in selected},
+                json.loads((root / "types.json").read_bytes()),
+                required,
+                provider_paths=resolver,
+            )
+            self.assertEqual(qualification.retained(selected[0]["destination"])[1], bytes(blob[:12]))
+            wrong = {**selected[0], "record": "wrong-profile"}
+            with self.assertRaisesRegex(ValueError, "profile differs"):
+                P.ProducerRecords(resolver).record(wrong)
+            with self.assertRaises(FileNotFoundError):
+                P.ProducerRecords().record(selected[0])
+            # Even a whole-output hit must revisit the relocated upstream bytes.
+            (moved / "10/objects.bin").write_bytes(b"x" * 12)
+            with self.assertRaisesRegex(ValueError, "extent drift"):
+                P.produce_request(inputs, root / "changed", cache_directory=root / "cache")
+
+    def test_sdk_full_witness_relocates_file_without_changing_identity_or_type(self):
+        E, W = P.module("bundle_endpoints"), P.module("unity_write")
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            _, types_path, rows, _ = self.required_graph(root)
+            types = json.loads(types_path.read_bytes())
+            full = types[rows[0]["full_type"]]
+            typ = {key: bytes.fromhex(value) if key in ("tree", "hash", "script_id") else value for key, value in full.items()}
+            body = struct.pack("<iq", 0, 0)
+            metadata, packed = P.O.make_layout(dict(externals=[]), [dict(path_id=10, type=typ, body=body)])
+            metadata["trees"] = False
+            original = root / "original-sdk"
+            with original.open("xb") as stream:
+                W.write_serialized(stream, metadata, lambda obj: io.BytesIO(packed[obj["path_id"]]))
+            moved = root / "phone-sdk"
+            original.rename(moved)
+            pin = dict(path=str(moved), bytes=moved.stat().st_size, sha256=P.O.B.sha(moved))
+            witness = dict(
+                rows[0],
+                destination=["sdk", "Library/test resources", 10],
+                provider=str(original),
+                provider_kind="serialized_file",
+                provider_file_sha256=pin["sha256"],
+                type_layout=full,
+                bytes=len(body),
+                sha256=hashlib.sha256(body).hexdigest(),
+                edges=[[0, 0]],
+            )
+            members = E.FinalMembers(Node(**vars(P)), {tuple(witness["destination"]): witness}, types)
+            try:
+                members.add_sdk(pin, witness["destination"][1])
+                with self.assertRaisesRegex(ValueError, "SDK full witness differs"):
+                    members.qualify_sdk_full(witness["destination"][1], [witness])
+                resolver = {str(original): moved}
+                members.qualify_sdk_full(witness["destination"][1], [witness], provider_paths=resolver)
+                actual, raw, native = members.record(tuple(witness["destination"]))
+                self.assertEqual((actual, raw, P.full_type_key(native)), (witness, body, witness["full_type"]))
+                for changed in (dict(witness, provider_file_sha256="0" * 64), dict(witness, type_layout={**full, "hash": "cd" * 16})):
+                    with self.assertRaisesRegex(ValueError, "SDK full witness differs"):
+                        members.qualify_sdk_full(witness["destination"][1], [changed], provider_paths=resolver)
+            finally:
+                members.close()
+
+    def test_final_readback_respects_required_subset_of_local_descriptors(self):
+        E = P.module("bundle_endpoints")
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            inputs, request = self.request_fixture(root)
+            result = P.produce_request(inputs, root / "output")
+            selected = {tuple(row["destination"]): row for row in P.json_rows(root / "graph/selected-records.jsonl")}
+            selected["authored", "CAB-authored", 999] = dict(class_id=114)
+            required = json.loads((root / "required.json").read_text())
+            types = json.loads((root / "types.json").read_text())
+            qualification = E.Qualification(Node(**vars(P)), E.InputPins(root, P), request, selected, types, required)
+            qualification.endpoints = E.EndpointRecords(qualification.member, qualification.retained, qualification.staged, qualification.check)
+            try:
+                qualification.check_final(result["bundle"])
+            finally:
+                qualification.close()
+
+    def test_current_provider_relative_paths_retain_metadata_agreement(self):
+        E = P.module("bundle_endpoints")
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            provider = root / "Fixture.dll"
+            provider.write_bytes(b"authored provider")
+            providers = {provider.name: dict(path=provider.name, sha256=P.O.B.sha(provider))}
+            row = dict(
+                group="current",
+                assembly="Fixture",
+                assembly_identity="FixtureIdentity",
+                module_name=provider.name,
+                path=provider.name,
+                sha256=P.O.B.sha(provider),
+                types=[],
+                exported_types=[],
+                references=[],
+            )
+            values = dict(
+                runtime_request=dict(managed=providers), managed_providers=providers, metadata=dict(schema=2, executes_inputs=False, assemblies=[row])
+            )
+            inputs = {}
+            for name, value in values.items():
+                path = root / (name + ".json")
+                path.write_text(json.dumps(value))
+                inputs[name] = dict(path=path.name, bytes=path.stat().st_size, sha256=P.O.B.sha(path))
+            pins = E.InputPins(root, P)
+            universe = E.current_providers(P, pins, inputs)
+            self.assertEqual(universe.modules[provider.name]["path"], str(provider.resolve()))
+            values["metadata"]["assemblies"][0]["path"] = "other.dll"
+            path = root / "metadata.json"
+            path.write_text(json.dumps(values["metadata"]))
+            inputs["metadata"].update(bytes=path.stat().st_size, sha256=P.O.B.sha(path))
+            with self.assertRaisesRegex(ValueError, "Metadata provider path/hash differs"):
+                E.current_providers(P, E.InputPins(root, P), inputs)
+
+    def test_external_managed_endpoint_rechecks_final_local_script(self):
+        E = P.module("bundle_endpoints")
+        local, external = ("authored", "CAB-authored", 10), ("staged", "CAB-staged", 20)
+        current = [b"retained"]
+        staged = Node(record=lambda target: ({}, b"staged", dict(class_id=114)), check_pins=lambda: None)
+
+        def check(value, raw, typ, endpoint):
+            self.assertEqual(endpoint(local)[1], current[0])
+
+        endpoints = E.EndpointRecords(local[:2], lambda target: ({}, b"retained", {}), staged, check)
+        endpoints(external)
+        current[0] = b"final"
+        endpoints.check_final(lambda target: ({}, b"final", {}))
+        self.assertEqual(endpoints.checked_external_managed, {external})
+
     def test_required_emission_follows_mixed_retained_profiles_and_actual_extents(self):
         import UnityPy
 
@@ -809,8 +1127,11 @@ class BundlePreloadTests(unittest.TestCase):
                 second = emit("second")
             self.assertTrue(second["cache_reused"])
             self.assertEqual(second["sha256"], first["sha256"])
-            self.assertEqual(second["bundle"], first["bundle"])
-            self.assertFalse((root / "second/authored.bundle").exists())
+            self.assertEqual(Path(second["bundle"]), (root / "second/authored.bundle").resolve())
+            self.assertFalse(Path(second["bundle"]).is_symlink())
+            request = json.loads((root / "second/request.json").read_bytes())
+            self.assertEqual(request["path"], second["bundle"])
+            self.assertEqual(json.loads((root / "second/result.json").read_bytes()), second)
             self.assertIn("reuse_validation", second["stages"])
             body = (Path(rows[0]["provider"]) / "objects.bin").read_bytes()
             self.replace_cached_record(rows[0], body[:-4] + struct.pack("<i", 8))
@@ -865,6 +1186,138 @@ class BundlePreloadTests(unittest.TestCase):
             finally:
                 cache.close()
 
+    def test_independent_preloads_keep_subassets_and_invalidate_reachable_groups(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            _, _, _, _, endpoints, read = self.external_contract(root)
+            target = next(iter(endpoints))
+            selected = dict(
+                name="authored",
+                member="CAB-authored",
+                externals=[target[1]],
+                dependencies=[target[0]],
+                asset_groups=[
+                    dict(
+                        guid="12" * 16,
+                        path="Assets/Subassets.asset",
+                        roots=[10, 20],
+                        preload_roots=[["authored", "CAB-authored", 40], list(target)],
+                    ),
+                    dict(guid="34" * 16, path="Assets/Separate.asset", roots=[60]),
+                ],
+            )
+            graph = {10: {(0, 20)}, 20: {(0, 10)}, 40: {(0, 50)}, 50: {(0, 40)}, 60: set(), 70: set()}
+            C = P.module("catalog_complete")
+            cache = P.EmissionCache(root / "cache")
+            try:
+
+                def emit(misses, hits):
+                    before = cache.counts.copy()
+                    body = P.produce_graph(selected, graph, {}, emission_cache=cache, endpoint_record=read)
+                    self.assertEqual(cache.counts["groups_misses"] - before["groups_misses"], misses)
+                    self.assertEqual(cache.counts["groups_hits"] - before["groups_hits"], hits)
+                    return C.containers(body)[0]
+
+                entries = emit(2, 0)
+                subassets = [entry for entry in entries if entry[0] == "assets/subassets.asset"]
+                self.assertEqual([entry[1] for entry in subassets], [(0, 10), (0, 20)])
+                expected = {(0, pid) for pid in (10, 20, 40, 50)} | {(1, target[2])}
+                self.assertEqual([set(entry[2]) for entry in subassets], [expected, expected])
+                self.assertEqual(emit(0, 2), entries)
+                graph[50] = {(0, 70)}
+                changed = emit(1, 1)
+                self.assertIn((0, 70), next(entry[2] for entry in changed if entry[1] == (0, 10)))
+                selected["asset_groups"][0]["preload_roots"] = [list(target)]
+                changed = emit(1, 1)
+                self.assertEqual(set(next(entry[2] for entry in changed if entry[1] == (0, 10))), {(0, 10), (0, 20), (1, target[2])})
+                # Cache reuse still reads the actual seed extent and full type.
+                endpoints[target][1].write_bytes(b"changed")
+                with self.assertRaisesRegex(ValueError, "body or full type"):
+                    emit(0, 2)
+            finally:
+                cache.close()
+
+    def test_required_emission_retains_independent_preload_without_new_container_entry(self):
+        import UnityPy
+
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            graph, types, rows, required = self.required_graph(root)
+            rows = rows[:3]
+            self.replace_cached_record(rows[2], struct.pack("<iq", 0, 0))
+            rows[2]["edges"] = [[0, 0]]
+            (graph / "selected-records.jsonl").write_text("".join(json.dumps(row) + "\n" for row in rows))
+            required["path_ids"].append(30)
+            required["asset_groups"][0]["preload_roots"] = [["authored", "CAB-authored", 30]]
+
+            def emit(attempt):
+                result = P.emit_closed_native(
+                    graph, [types], root / attempt, "authored", "CAB-authored", required=required, cache_directory=root / "cache", cache_inputs=[]
+                )
+                objects = {obj.path_id: obj.read_typetree() for obj in UnityPy.load(result["bundle"]).objects}
+                return result, objects[1]
+
+            first, container = emit("first")
+            self.assertEqual((first["records"], first["roots"], first["preloads"]), (3, 2, 3))
+            self.assertEqual([entry[1]["asset"]["m_PathID"] for entry in container["m_Container"]], [10, 20])
+            self.assertEqual(container["m_PreloadTable"], [dict(m_FileID=0, m_PathID=pid) for pid in (10, 20, 30)])
+            warm, warm_container = emit("warm")
+            self.assertTrue(warm["cache_reused"])
+            self.assertEqual(container, warm_container)
+            required["asset_groups"][0]["preload_roots"] = []
+            changed, container = emit("changed")
+            self.assertFalse(changed["cache_reused"])
+            self.assertEqual(changed["preloads"], 2)
+            self.assertEqual(changed["cache"]["records_hits"], 3)
+            required["asset_groups"][0]["preload_roots"] = [["authored", "CAB-authored", 999]]
+            with self.assertRaisesRegex(ValueError, "preload root absent"):
+                emit("missing")
+
+    def test_canonical_repack_retains_and_rechecks_independent_external_preload(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            inputs, _ = self.canonical_fixture(root)
+            group = inputs["required"]["asset_groups"][0]
+            target = ("canonical", "CAB-canonical", 101)
+            group["preload_roots"] = [["authored", "CAB-authored", 40], list(target)]
+            W, C = P.module("unity_write"), P.module("catalog_complete")
+
+            def endpoint(actual):
+                self.assertEqual(actual, target)
+                with W.B.Bundle(inputs["canonical_bundle"]).member(target[1]) as stream:
+                    layout = W.read_serialized(stream)
+                    obj = next(row for row in layout["objects"] if row["path_id"] == target[2])
+                    typ = layout["types"][obj["type_id"]]
+                    stream.seek(layout["data_offset"] + obj["offset"])
+                    body = W.B.exact(stream, obj["bytes"])
+                value = dict(
+                    destination=list(target),
+                    bytes=len(body),
+                    sha256=hashlib.sha256(body).hexdigest(),
+                    class_id=typ["class_id"],
+                    native_type_hash=typ["hash"].hex(),
+                    full_type=P.full_type_key(typ),
+                    schema=hashlib.sha256(typ["tree"]).hexdigest(),
+                    edges=list(P.pointers(body, typ, {}).values()),
+                )
+                return value, body, typ
+
+            inputs.update(cache_directory=root / "cache", endpoint_record=endpoint)
+            first = P.repack_canonical_aliases(output=root / "first", **inputs)
+            with W.B.Bundle(Path(first["bundle"])).member("CAB-authored") as stream:
+                layout = W.read_serialized(stream)
+                obj = next(row for row in layout["objects"] if layout["types"][row["type_id"]]["class_id"] == 142)
+                stream.seek(layout["data_offset"] + obj["offset"])
+                entries = C.containers(W.B.exact(stream, obj["bytes"]))[0]
+            self.assertEqual([entry[1] for entry in entries], [(0, 30)])
+            self.assertEqual(set(entries[0][2]), {(0, 30), (0, 40), (0, 50), (1, 100), (1, 101)})
+            warm = P.repack_canonical_aliases(output=root / "warm", **inputs)
+            self.assertTrue(warm["cache_reused"])
+            self.assertEqual(warm["sha256"], first["sha256"])
+            inputs["endpoint_record"] = None
+            with self.assertRaisesRegex(ValueError, "actual endpoint reader"):
+                P.repack_canonical_aliases(output=root / "missing", **inputs)
+
     def test_cached_output_corruption_rebuilds_and_provider_drift_still_fails(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
@@ -891,6 +1344,7 @@ class BundlePreloadTests(unittest.TestCase):
                 root = Path(tmp)
                 graph, types, _, required = self.required_graph(root)
                 required["path_ids"] = identities
+                required["asset_groups"][0]["roots"] = [10]
                 with self.assertRaisesRegex(ValueError, message):
                     P.emit_closed_native(graph, [types], root / "emitted", "authored", "CAB-authored", required=required)
 
@@ -1103,7 +1557,13 @@ class BundlePreloadTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             graph, types = self.streamed_graph(root)
-            result = P.emit_closed_native(graph, [types], root / "emitted", "authored", "CAB-authored")
+            (root / "phone").mkdir()
+            provider_paths = {}
+            for source in sorted({Path(row["provider"]) for row in P.json_rows(graph / "selected-records.jsonl")}):
+                destination = root / "phone" / source.name
+                source.rename(destination)
+                provider_paths[str(source)] = destination
+            result = P.emit_closed_native(graph, [types], root / "emitted", "authored", "CAB-authored", provider_paths=provider_paths)
             self.assertEqual((result["records"], result["resource_records"], result["resource_bytes"]), (5, 3, 83))
             objects = {obj.path_id: obj.read_typetree() for obj in UnityPy.load(result["bundle"]).objects}
             resource = P.O.B.Bundle(Path(result["bundle"])).member("CAB-authored.resS")

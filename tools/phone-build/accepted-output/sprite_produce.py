@@ -89,16 +89,16 @@ def original_records(value, pc):
                 body = B.exact(stream, obj["bytes"])
                 if hashlib.sha256(body).hexdigest() != selected["sha256"]:
                     raise ValueError("Original Sprite/Texture2D body drift")
-                return body, A.SCHEMA.type_tree(io.BytesIO(typ["tree"]))
+                return body, A.SCHEMA.type_tree(io.BytesIO(typ["tree"])), typ
 
             for selected in selected_member["objects"]:
-                body, root = read(selected, 213)
+                body, root, typ = read(selected, 213)
                 _, spans = A.fields(body, root)
                 start, end = spans[("m_RD", "texture")]
                 if end - start != 12 or struct.unpack_from("<iq", body, start) != (0, selected["texture"]["path_id"]):
                     raise ValueError("Original Sprite texture relationship drift")
-                texture, texture_root = read(selected["texture"], 28)
-                yield selected, body, root, texture, texture_root, bundle
+                texture, texture_root, _ = read(selected["texture"], 28)
+                yield selected, body, root, texture, texture_root, bundle, typ
         after = path.stat()
         if (before.st_size, before.st_mtime_ns) != (after.st_size, after.st_mtime_ns) or B.sha(path) != selected_bundle["sha256"]:
             raise ValueError("Original Sprite input changed during production")
@@ -180,7 +180,7 @@ def prepare(profile_path, profile_pin, pc, decoder, decoder_pin, output):
     receipt = {"success": False, "input_id": M.INPUT_ID, "profile_sha256": profile_pin, "decoder_sha256": decoder_pin}
     try:
         items, pixels = [], []
-        for selected, body, root, texture, texture_root, bundle in original_records(value, pc):
+        for selected, body, root, texture, texture_root, bundle, _ in original_records(value, pc):
             rgba, width, height = source_pixels(texture, texture_root, bundle, decoder)
             path = output / (str(len(items)) + ".png")
             path.write_bytes(png_rgba(rgba, width, height))
@@ -231,9 +231,10 @@ def produce(profile_path, profile_pin, pc, native_path, native_pin, output, *, f
         "functional": functional,
         "byte_differences": 0,
     }
+    types, type_ids = [], {}
     try:
         with (output / "objects.bin").open("xb") as data, (output / "index.jsonl").open("x") as index:
-            for selected, body, root, texture, texture_root, _ in original_records(value, pc):
+            for selected, body, root, texture, texture_root, _, typ in original_records(value, pc):
                 item = results[selected["id"]]
                 parameters = constructor_parameters(selected, body, root, texture, texture_root, item.get("width"), item.get("height"))
                 made = N.assemble(body, root, item, selected["importer_guid"], parameters=parameters)
@@ -262,7 +263,7 @@ def produce(profile_path, profile_pin, pc, native_path, native_pin, output, *, f
                             raise ValueError("Produced Sprite record differs from accepted hash")
                         receipt["byte_differences"] += 1
                     row = {key: target[key] for key in ("bundle", "member", "path_id")}
-                    row.update(bytes=len(result), sha256=actual_hash)
+                    row.update(bytes=len(result), sha256=actual_hash, type_id=A.O.record_type(typ, types, type_ids))
                     row["offset"] = data.tell()
                     data.write(result)
                     index.write(json.dumps(row, sort_keys=True) + "\n")
@@ -276,8 +277,10 @@ def produce(profile_path, profile_pin, pc, native_path, native_pin, output, *, f
                     raise ValueError("Persisted Sprite record extent drift")
         if B.sha(profile_path) != profile_pin or B.sha(native_path) != native_pin:
             raise ValueError("Sprite production provider changed")
+        (output / "types.json").write_text(json.dumps(types, sort_keys=True, indent=2) + "\n")
         receipt.update(
-            success=True, outputs={name: {"bytes": (output / name).stat().st_size, "sha256": B.sha(output / name)} for name in ("objects.bin", "index.jsonl")}
+            success=True,
+            outputs={name: {"bytes": (output / name).stat().st_size, "sha256": B.sha(output / name)} for name in ("objects.bin", "index.jsonl", "types.json")},
         )
         return receipt
     except Exception as error:

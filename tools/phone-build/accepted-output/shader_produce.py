@@ -1244,6 +1244,9 @@ def produce_sdk_records(root, pc, sdk, profile, profile_sha256, output, connecti
     checked(shared_path, shared["source"])
     shared_obj = next(obj for obj in UnityPy.load(str(shared_path)).objects if obj.path_id == shared["source"]["path_id"])
     shared_node = shared_obj._get_typetree_node()
+    O = module("_shared_shader_objects", Path(__file__).with_name("object_produce.py"))
+    shared_type = O.source_record_type(shared_path, shared_obj.assets_file.name, shared_obj.path_id, 48)
+    types, type_ids = [], {}
     pack = output / "shared-shaders"
     pack.mkdir()
     local = {row["sdk_id"]: row["path_id"] for row in shared["records"]}
@@ -1279,17 +1282,19 @@ def produce_sdk_records(root, pc, sdk, profile, profile_sha256, output, connecti
                         "offset": objects.tell(),
                         "bytes": len(body),
                         "sha256": hashlib.sha256(body).hexdigest(),
+                        "type_id": O.record_type(shared_type, types, type_ids),
                     },
                     sort_keys=True,
                 )
                 + "\n"
             )
             objects.write(body)
+    (pack / "types.json").write_text(json.dumps(types, sort_keys=True, indent=2) + "\n")
     receipt = {
         "success": True,
         "input_id": profile["input_id"],
         "profile_sha256": profile_sha256,
-        "outputs": {name: {"bytes": (pack / name).stat().st_size, "sha256": sha(pack / name)} for name in ("objects.bin", "index.jsonl")},
+        "outputs": {name: {"bytes": (pack / name).stat().st_size, "sha256": sha(pack / name)} for name in ("objects.bin", "index.jsonl", "types.json")},
     }
     (pack / "result.json").write_text(json.dumps(receipt, indent=2) + "\n")
     return name, {"bytes": destination.stat().st_size, "sha256": sha(destination)}
