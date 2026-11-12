@@ -113,11 +113,14 @@ class SdkMetadataInventoryHostTests(unittest.TestCase):
                 path.write_text(json.dumps(value))
                 return pin(path)
 
+            # managed.run exposes an instrumented API with a physical filename
+            # different from its actual CLR module name. Metadata owns identity.
+            provider = (root / "fixture-out/instrumented-provider.dll").resolve()
+            (root / "fixture-out/Fixture.dll").rename(provider)
             providers = {
-                name: dict(path=str((root / folder / name).resolve()), sha256=pin(root / folder / name)["sha256"])
-                for folder, name in (("fixture-out", "Fixture.dll"), ("facade-out", "Facade.dll"))
+                name: dict(path=str(path.resolve()), sha256=pin(path)["sha256"])
+                for name, path in (("Fixture.dll", provider), ("Facade.dll", root / "facade-out/Facade.dll"))
             }
-            provider = (root / "fixture-out/Fixture.dll").resolve()
             registry_pin = pin(provider)
             request = dict(
                 managed_providers=document("providers.json", providers),

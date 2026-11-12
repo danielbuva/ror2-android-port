@@ -58,7 +58,9 @@ player's registry receipt. The request supplies `managed_providers`,
 `managed_receipt`, `registry_receipt` and `tools` file pins. Tools contain
 `dotnet`, `compiler`, `cecil`, `runtimeconfig` and a `references` pin array.
 The existing metadata-only reader is compiled from public source with that
-compiler; inspected assemblies are never executed. Outputs are `providers.json`,
+compiler; inspected assemblies are never executed. Provider keys are checked
+against CLR module metadata, including instrumented providers whose physical
+filename differs from their module name. Outputs are `providers.json`,
 `runtime-request.json` (the provider witness, not native runtime qualification),
 `metadata.json`, `provider-aliases.json` and `result.json`. Fresh registry provider
 paths must still resolve exactly; no basename-based relocation is attempted.

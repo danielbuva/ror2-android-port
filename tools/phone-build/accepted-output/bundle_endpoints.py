@@ -28,10 +28,8 @@ def generate_managed(request_path, output):
         raise ValueError("fresh successful managed production required")
     provider_base = pins.pin(request["managed_providers"]).parent
     providers = {name: dict(value, path=str(pins.path(value["path"], provider_base))) for name, value in providers.items()}
-    for name, value in providers.items():
+    for value in providers.values():
         path = Path(value["path"])
-        if path.name != name:
-            raise ValueError("managed provider module/path differs")
         pins.add(path, dict(bytes=path.stat().st_size, sha256=value["sha256"]))
     registry = pins.read(request["registry_receipt"])
     if registry.get("success") is not True:
