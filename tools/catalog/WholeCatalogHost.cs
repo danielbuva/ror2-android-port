@@ -97,10 +97,43 @@ public static class WholeCatalogHost
         var result = new JObject {
             ["scope"] =
                 "Native-provider body/projectile candidates before per-provider name deduplication, plus current lab registered effects; resource coverage only; Android rendering and reference comparison remain open",
-            ["roots"] = roots, ["slots"] = rows, ["errors"] = errors
+            ["roots"] = roots, ["slots"] = rows, ["errors"] = errors,
+            ["surfaceObservationContract"] = VerifySurfaceMaterialObservation()
         };
         File.WriteAllText(outputPath, result.ToString());
         return new { roots = roots.Count, slots = rows.Count, errors = errors.Count, output = outputPath };
+    }
+    static JObject VerifySurfaceMaterialObservation()
+    {
+        // Exercise the actual runtime observer against live Unity material state.
+        // No session, catalog, scene or presentation adapter is initialized.
+        var type = typeof(PortSession).GetNestedType("TeleporterWorldSession", System.Reflection.BindingFlags.NonPublic);
+        var observer = Activator.CreateInstance(type, new object[] { null });
+        var method = type.GetMethod("ObserveSurfaceMaterial");
+        var material = new Material(Shader.Find("Standard"));
+        var texture = new Texture2D(2, 2) { name = "Authored census fixture texture" };
+        try
+        {
+            material.name = "Authored census fixture material";
+            material.renderQueue = 3123;
+            material.SetTexture("_MainTex", texture);
+            material.SetTextureScale("_MainTex", new Vector2(2, 3));
+            material.EnableKeyword("_EMISSION");
+            var row = (PortSession.SurfaceMaterialObservation)method.Invoke(observer, new object[] { material });
+            var main = row.properties.Single(property => property.name == "_MainTex");
+            if (row.material != material.name || row.shader != material.shader.name || row.queue != 3123 ||
+                row.supported != material.shader.isSupported || !row.keywords.Contains("_EMISSION") ||
+                main.textureId != texture.GetInstanceID() || main.width != 2 || main.height != 2 ||
+                main.scale != new Vector2(2, 3) || material.GetTexture("_MainTex") != texture || material.renderQueue != 3123 ||
+                method.Invoke(observer, new object[] { null }) != null)
+                throw new Exception("Live surface material observation contract failed");
+            return new JObject { ["liveMaterialState"] = true, ["nullSlot"] = true, ["sourceUnchanged"] = true };
+        }
+        finally
+        {
+            UnityEngine.Object.DestroyImmediate(material);
+            UnityEngine.Object.DestroyImmediate(texture);
+        }
     }
     static JObject AddCombatMaterial(JArray rows, int id, string category, string root, Renderer renderer, List<string> hierarchy,
                                      ParticleSystemRenderer particle, List<ParticleSystemVertexStream> streams, string binding, int slot,

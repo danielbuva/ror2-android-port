@@ -124,8 +124,10 @@ public sealed partial class PortSession
     public class SurfaceMaterialObservation
     {
         public int instanceId, shaderId, passCount;
+        public string material, shader;
+        public int queue;
         public string[] keywords;
-        public bool instancing, doubleSidedGi;
+        public bool supported, instancing, doubleSidedGi;
         public SurfacePropertyObservation[] properties;
     }
     [Serializable]
@@ -141,6 +143,8 @@ public sealed partial class PortSession
         public Vector3 center, size;
         public string particleRenderMode, particleAlignment;
         public string[] vertexStreams;
+        public string[] particleMeshes;
+        public SurfaceMaterialObservation trailMaterial, billboardMaterial;
         public SurfaceMaterialObservation[] materialState;
     }
     [Serializable]
@@ -1640,7 +1644,10 @@ public sealed partial class PortSession
                 // list. Observe presentation shaders separately; do not claim ownership.
                 coordinator.r.objective.presentedSurfaceViews =
                     visible
-                        .Where(x => x.sharedMaterials.Any(m => m && m.shader &&
+                        .Where(x => x.GetComponentInParent<CharacterBody>() ||
+                                    x.GetComponentInParent<RoR2.Projectile.ProjectileController>() ||
+                                    x.GetComponentInParent<EffectComponent>() ||
+                                    x.sharedMaterials.Any(m => m && m.shader &&
                                                                (m.shader.name.StartsWith("Porting Lab/", StringComparison.Ordinal) ||
                                                                 m.shader.name.StartsWith("Hopoo Games/", StringComparison.Ordinal))))
                         .Select(ObserveOwnedSurface)
@@ -1825,13 +1832,19 @@ public sealed partial class PortSession
             var streams = new List<ParticleSystemVertexStream>();
             if (particleRenderer)
                 particleRenderer.GetActiveVertexStreams(streams);
-            bool detailed =
-                particleRenderer || renderer.name == "Water" || renderer.name.IndexOf("AreaIndicator", StringComparison.Ordinal) >= 0;
+            var meshes = particleRenderer ? new Mesh[particleRenderer.meshCount] : new Mesh[0];
+            if (particleRenderer)
+                particleRenderer.GetMeshes(meshes);
+            var billboardRenderer = renderer as BillboardRenderer;
             return new ObjectiveRendererObservation { unityFrame = Time.frameCount,
                                                       particleRenderMode = particleRenderer ? particleRenderer.renderMode.ToString() : null,
                                                       particleAlignment = particleRenderer ? particleRenderer.alignment.ToString() : null,
                                                       vertexStreams = particleRenderer ? streams.Select(x => x.ToString()).ToArray() : null,
-                                                      materialState = detailed ? materials.Select(ObserveSurfaceMaterial).ToArray() : null,
+                                                      particleMeshes = meshes.Select(mesh => mesh ? mesh.name : null).ToArray(),
+                                                      trailMaterial = particleRenderer ? ObserveSurfaceMaterial(particleRenderer.trailMaterial) : null,
+                                                      billboardMaterial = billboardRenderer && billboardRenderer.billboard
+                                                          ? ObserveSurfaceMaterial(billboardRenderer.billboard.material) : null,
+                                                      materialState = materials.Select(ObserveSurfaceMaterial).ToArray(),
                                                       path = PortSession.StageObjectPath(renderer.transform),
                                                       kind = renderer.GetType().Name,
                                                       materials = materials.Select(m => m ? m.name : "missing").ToArray(),
@@ -1882,7 +1895,9 @@ public sealed partial class PortSession
                 }
                 properties.Add(property);
             }
-            return new SurfaceMaterialObservation { instanceId = material.GetInstanceID(),  shaderId = shader.GetInstanceID(),
+            return new SurfaceMaterialObservation { material = material.name, shader = shader.name, queue = material.renderQueue,
+                                                    supported = shader.isSupported,
+                                                    instanceId = material.GetInstanceID(),  shaderId = shader.GetInstanceID(),
                                                     passCount = material.passCount,         keywords = material.shaderKeywords,
                                                     instancing = material.enableInstancing, doubleSidedGi = material.doubleSidedGI,
                                                     properties = properties.ToArray() };

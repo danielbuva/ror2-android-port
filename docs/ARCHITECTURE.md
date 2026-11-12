@@ -7078,3 +7078,13 @@ recovered-resource coverage. It does not initialize native catalogs, mutate
 materials or establish Android shader support or visual parity. Setup requires
 the prepared lab project and generated catalog; completion retains a private
 editor receipt and adds no runtime state.
+
+`TeleporterWorldSession.ObserveOwnedSurface` supplies the existing opt-in live
+visual census. A matching lab selector may request `detailedVisualDiagnostics`;
+normal sessions retain the embedded default. Visible combat renderers enter the
+census regardless of shader name, including missing bindings. Each sampled slot,
+particle trail and Billboard material records shader support, keywords and
+texture state; particle renderers also report all meshes. The existing screen
+coverage ordering and 128-view limit remain: this is a sampled attribution tool,
+not proof that every prefab rendered. Session teardown discards the report with
+the other objective observations; it never changes materials or simulation.
