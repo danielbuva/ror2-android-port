@@ -3375,7 +3375,7 @@ resource readback, Ruff, host preflight and full CI-local (3,201 tests) passed.
 Source output: `49a26a77`; no APK or device output was produced.
 SDK witness relocation, signed graph/source closure and phone conversion stay open.
 
-## J1430 — Materialize bundle cache artifacts and relocate SDK witnesses
+## J1431 — Materialize bundle cache artifacts and relocate SDK witnesses
 
 2026-11-12. Merged #466 (`ade73fcd`): warm emission/repack cache hits now
 materialize regular bundle files in the current attempt and update local receipts.
