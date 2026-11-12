@@ -3850,3 +3850,18 @@ Menus 18–33 still grow 634,880 managed bytes, fitted 35,990.588 bytes/menu: no
 Series wall time 4,313.724 s; peak CPU/GPU 95.9 C, 752.715 s above 80 C.
 In-place install preserves profile/settings hashes; stopped process, OLED sleep and lease release pass.
 Remaining: retained-owner attribution, a plateau, physical navigation and ordinary-play qualification.
+
+## J1464 — Protect live cache references without retaining superseded builds
+
+2026-11-12. Build-cache protection now selects state/baseline APK pins, current
+build/base entries and authoritative installed APK receipts; nested content hashes
+and historical sync inventories no longer pin cache entries. Explicit keeps and
+the age guard remain; JSON plans expose protection reasons.
+After retiring completed alpha keep markers, the 3-hour dry run forecast 25.77 GB;
+one application retired 24 superseded entries (another aged into eligibility),
+77.40 GB logical / 22.81 GB physical freed; cache 99.95 → 22.55 GB.
+Latest alpha APK `8bde26e6a44af7b29e805f453f2bfb4d7085ab013cfad271668d5057309b88c4`
+and current base retained; JSON receipts remain. Evidence:
+`work/cleanup-analysis/alpha-cache-acceptance-20261112.json` and referenced ledger.
+18 host tests, Ruff, public audit and canonical host preflight passed.
+No device behaviour or alpha gameplay gate is qualified by this storage change.
