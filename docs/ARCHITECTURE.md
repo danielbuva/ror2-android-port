@@ -4135,7 +4135,7 @@ same token values, types, property order and parser error handling.
 The process audio lease applies that same parsing policy to its freshly read,
 SHA-validated manifest bytes when deriving retained bundle dependencies. It
 keeps the byte check and does not borrow a cached definition snapshot.
-It reuses a still-live parsed snapshot through a separate weak reference; it
+The shared definition reader reuses a still-live parsed snapshot through a weak reference; it
 does not prevent collection. Fresh location setup and session release clear
 that reference, so later sessions read their own generation. Failed parses are
 never cached.
