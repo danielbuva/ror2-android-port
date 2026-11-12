@@ -275,7 +275,7 @@ def qualify_external_fields(value, body, typ, proofs, endpoint_record):
     return targets
 
 
-def checked_fields(record, raw, native):
+def checked_fields(record, raw, native, schemas=None):
     """Check an actual endpoint's extent, full native type and measured fields."""
     if (
         (len(raw), hashlib.sha256(raw).hexdigest()) != (record["bytes"], record["sha256"])
@@ -285,7 +285,7 @@ def checked_fields(record, raw, native):
         or native["hash"].hex() != record["native_type_hash"]
     ):
         raise ValueError("Structural route body or full type differs")
-    fields = pointers(raw, native, {})
+    fields = pointers(raw, native, {} if schemas is None else schemas)
     if set(fields.values()) != set(map(tuple, record["edges"])):
         raise ValueError("Structural route measured pointers differ")
     return fields

@@ -110,6 +110,110 @@ public static class SurvivorSkillInputHost
         }
     }
 
+    // Compare imported aim, firing and hit-reaction poses with current native
+    // clips on the same frozen rig. This does not qualify device presentation.
+    public static object SampleCommandoAim()
+    {
+        const string path = "Assets/WholeGame/RoR2/Base/Characters/Commando/";
+        string project = System.IO.Path.GetDirectoryName(Application.dataPath);
+        var recipe = Newtonsoft.Json.Linq.JObject.Parse(System.IO.File.ReadAllText(
+            System.IO.Path.Combine(project, ".rebuild/source-animation-reference-poses.json")));
+        var row = recipe["clips"].First(x => ((string)x["clip"]).StartsWith(path, StringComparison.Ordinal));
+        var config = Newtonsoft.Json.Linq.JObject.Parse(System.IO.File.ReadAllText(
+            System.IO.Path.Combine(System.IO.Directory.GetParent(project).FullName, "config/local.json")));
+        string bundlePath = System.IO.Path.Combine((string)config["game_path"], (string)row["source"]);
+        using (var stream = System.IO.File.OpenRead(bundlePath))
+        using (var digest = System.Security.Cryptography.SHA256.Create())
+            Require(BitConverter.ToString(digest.ComputeHash(stream)).Replace("-", "").ToLowerInvariant() == (string)row["source_sha256"],
+                    "Current native animation bundle changed since composition");
+        var bundle = AssetBundle.LoadFromFile(bundlePath);
+        Require(bundle, "Current native animation bundle could not load");
+        var parent = new GameObject("source-additive-sampling");
+        parent.SetActive(false);
+        AnimatorOverrideController overrides = null;
+        try
+        {
+            var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(path + "CommandoBody.prefab");
+            Require(prefab, "Current source Commando prefab missing");
+            var body = UnityEngine.Object.Instantiate(prefab, parent.transform);
+            foreach (var component in body.GetComponentsInChildren<MonoBehaviour>(true)) component.enabled = false;
+            foreach (var component in body.GetComponentsInChildren<Collider>(true)) component.enabled = false;
+            var animator = body.GetComponentInChildren<Animator>(true);
+            var controller = AssetDatabase.LoadAssetAtPath<RuntimeAnimatorController>(path + "animCommando.controller");
+            animator.avatar = AssetDatabase.LoadAssetAtPath<Avatar>(path + "mdlCommandoDualiesAvatar.asset");
+            animator.enabled = true;
+            animator.applyRootMotion = false;
+            animator.cullingMode = AnimatorCullingMode.AlwaysAnimate;
+            animator.runtimeAnimatorController = controller;
+            animator.gameObject.SetActive(true);
+            body.SetActive(true);
+            parent.SetActive(true);
+            animator.Update(0);
+            var nativeClips = bundle.LoadAllAssets<AnimationClip>();
+            overrides = new AnimatorOverrideController(controller);
+            var pairs = new System.Collections.Generic.List<System.Collections.Generic.KeyValuePair<AnimationClip, AnimationClip>>();
+            overrides.GetOverrides(pairs);
+            for (int i = 0; i < pairs.Count; i++)
+            {
+                var original = pairs[i].Key;
+                var native = nativeClips.FirstOrDefault(x => x.name == original.name);
+                Require(native, "Current native comparison clip missing: " + original.name);
+                pairs[i] = new System.Collections.Generic.KeyValuePair<AnimationClip, AnimationClip>(original, native);
+            }
+            overrides.ApplyOverrides(pairs);
+            var samples = new System.Collections.Generic.List<float[]>();
+            float maximum = 0;
+            int components = 0, sampleIndex = 0;
+            foreach (bool native in new[] { false, true })
+            {
+                animator.runtimeAnimatorController = native ? overrides : controller;
+                foreach (string gesture in new[] { "", "FirePistol, Left", "FirePistol, Right", "Flinch1" })
+                    foreach (float cycle in new[] { 0f, .5f, .999f })
+                        foreach (float time in new[] { 0f, .07f, .15f })
+                        {
+                            animator.Rebind();
+                            animator.Update(0);
+                            animator.Play(animator.GetCurrentAnimatorStateInfo(0).fullPathHash, 0, 0);
+                            int pitch = animator.GetLayerIndex("AimPitch"), yaw = animator.GetLayerIndex("AimYaw");
+                            Require(pitch >= 0 && yaw >= 0, "Current native aim layers missing");
+                            animator.SetFloat("aimPitchCycle", cycle);
+                            animator.SetFloat("aimYawCycle", cycle);
+                            animator.Play("PitchControl", pitch, 0);
+                            animator.Play("YawControl", yaw, 0);
+                            if (gesture.Length != 0)
+                            {
+                                int hash = Animator.StringToHash(gesture);
+                                int layer = Enumerable.Range(0, animator.layerCount).Single(i => animator.HasState(i, hash));
+                                animator.PlayInFixedTime(hash, layer, time);
+                                animator.Update(0);
+                                Require(animator.GetCurrentAnimatorStateInfo(layer).shortNameHash == hash, "Native gesture did not play: " + gesture);
+                            }
+                            animator.Update(0);
+                            var values = animator.GetComponentsInChildren<Transform>(true)
+                                .Where(t => t.name == "MuzzleLeft" || t.name == "MuzzleRight")
+                                .OrderBy(t => t.name)
+                                .SelectMany(t => new[] { t.position.x, t.position.y, t.position.z, t.forward.x, t.forward.y, t.forward.z }).ToArray();
+                            Require(values.Length == 12, "Current source muzzle transforms missing");
+                            if (!native) samples.Add(values);
+                            else
+                            {
+                                var imported = samples[sampleIndex++];
+                                for (int i = 0; i < values.Length; i++) maximum = Mathf.Max(maximum, Mathf.Abs(imported[i] - values[i]));
+                                components += values.Length;
+                            }
+                        }
+            }
+            Require(maximum <= .001f, "Imported additive firing/aim/hit poses differ from native clips: " + maximum);
+            return new { samples = samples.Count, components, maximumComponentError = maximum, nativeClipOverrides = pairs.Count };
+        }
+        finally
+        {
+            UnityEngine.Object.DestroyImmediate(parent);
+            if (overrides) UnityEngine.Object.DestroyImmediate(overrides);
+            bundle.Unload(true);
+        }
+    }
+
     public static object VerifyTouchWithoutPhysicalController()
     {
         Require(!EditorApplication.isPlaying && !EditorApplication.isCompiling, "Require idle editor");

@@ -6954,6 +6954,18 @@ diagnostic. Setup requires current original bundles and a pinned exact-SDK
 constructor witness; scoped readers close on exit and receipts persist. Complete
 APK and device acceptance remain open.
 
+The existing `bundle_endpoints.py::audit_graph` owns incremental structural
+traversal. Setup admits callback input pins and actual provider bytes. SQLite
+field proofs bind each actual body and full native type; managed proofs also
+bind current CLR/SDK policy and the endpoints read by the checker. Each run
+walks current roots, resolves current routes/member tables and checks current
+reciprocal neighbors. Optional CPU workers parse immutable record batches;
+readers, discovery and cache writes stay in the parent. Exit closes workers
+and SQLite after rechecking input pins. Endpoint input epochs share external
+managed checks, then final persisted-file readback starts a fresh epoch.
+Managed schema properties are shared within one immutable checker context.
+This host/converter qualification does not admit Unity loadability or play.
+
 The existing `bundle_endpoints.py` owner generates current CLR witness artifacts
 from successful managed production and the final player's registry receipt.
 An optional pinned `input_paths` map relocates exact recorded input paths to
@@ -7045,3 +7057,20 @@ device gate.
 touch capture; focus, pause and teardown still cancel all input. The same
 exact-editor action also checks first touch delivery without a physical controller
 and full cancellation through `Neutral`.
+
+Additive reference-pose recovery stays in `animation_bindings.stage_additive_reference_poses`
+and `WholeCatalogBuild.RestoreSourceAdditiveReferencePoses`. The former follows native
+Commando additive states and blend trees, plus other native AimPitch/AimYaw
+layers, resolves current catalog containers against accepted input hashes, and
+emits private source identities and Transform reference values through StageIO. The latter creates owned
+constant reference clips before bundle production and applies the original
+additive reference settings. Unsupported muscle streams remain unchanged and
+are reported explicitly; unknown Transform bindings refuse restoration.
+Generated clips persist with the composed project and are replaced on rebuild;
+there is no runtime owner. Code-only builds require unchanged source-pose inputs.
+The existing current `commando-animation-host` action also verifies persisted
+reference curves and compares frozen-base muzzle positions and directions against
+the original clips during aim, firing and hit reactions. The comparison overrides
+all Commando controller clips so a shared gesture defect cannot pass both sides.
+Bounded Commando aim/firing device evidence is recorded in the journal; other
+survivors and unassisted hit-reaction presentation remain separate gates.

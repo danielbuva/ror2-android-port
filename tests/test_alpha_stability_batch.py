@@ -489,6 +489,13 @@ class GameThermalOwnerTests(unittest.TestCase):
         self.assertEqual(
             result.stdout, "pa\t34600\t" + str(first / "temp") + "\npa1\tUNREADABLE\t" + str(failed / "temp") + "\ncpu-0\t49000\t" + str(last / "temp") + "\n"
         )
+        final = root / "thermal_zone3"
+        final.mkdir()
+        (final / "type").write_text("pa2\n")
+        (final / "temp").write_text("")
+        result = subprocess.run(["/bin/sh", "-c", command], capture_output=True, text=True)
+        self.assertEqual(result.returncode, 0)
+        self.assertTrue(result.stdout.endswith("pa2\tUNREADABLE\t" + str(final / "temp") + "\n"))
         (failed / "type").unlink()
         result = subprocess.run(["/bin/sh", "-c", command], capture_output=True, text=True)
         self.assertNotEqual(result.returncode, 0)
