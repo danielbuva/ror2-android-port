@@ -2,6 +2,7 @@ import copy
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 import sys
+import struct
 import unittest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts/lab"))
@@ -32,6 +33,75 @@ def fixture():
 
 
 class PerfReportTests(unittest.TestCase):
+    def raw_fixture(self, times=(0, 600, 1200)):
+        durations = [0.0, 16.5, perf.HITCH33_MS, 50.0, 51.25, 200.0]
+        samples = []
+        for seconds, count in zip(times, (0, 3, 6)):
+            values = durations[:count]
+            samples.append(
+                dict(
+                    host_seconds=seconds,
+                    snapshot_utc=(datetime(2026, 1, 1, tzinfo=timezone.utc) + timedelta(seconds=seconds)).isoformat(),
+                    pacing_frames=count,
+                    pacing_total_ms=sum(values),
+                    pacing_over33=sum(ms > perf.HITCH33_MS for ms in values),
+                    pacing_over50=sum(ms > 50 for ms in values),
+                    pacing_total_ms_exact=True,
+                    pacing_trace="authored.bin",
+                )
+            )
+        data = perf.RAW_HEADER.pack(b"ROR2FRAM", 1, len(durations), len(durations), 0) + struct.pack("<6f", *durations)
+        return dict(samples=samples, raw_frame_trace=dict(file="authored.bin")), perf.read_raw_frames(data)
+
+    def test_raw_exact_duration_frame_and_hitch_reconciliation_with_full_tail(self):
+        session, trace = self.raw_fixture()
+        result = perf.analyze(session, [], trace)
+        self.assertEqual(result["true_frame_time_percentiles_ms"]["samples"], 6)
+        self.assertAlmostEqual(result["true_frame_time_percentiles_ms"]["p50"], (perf.HITCH33_MS + 50) / 2)
+        self.assertEqual(result["raw_frame_window"]["over33ms"], 3)
+        self.assertEqual(result["raw_frame_window"]["over50ms"], 2)
+        tail = result["final_ten_minutes"]
+        self.assertEqual(tail["true_frame_time_percentiles_ms"]["samples"], 3)
+        self.assertEqual(tail["true_frame_time_percentiles_ms"]["p50"], 51.25)
+        self.assertIn("Individual-frame p50/p95/p99: 41.67/162.81/192.56 ms (6 frames)", perf.markdown(result))
+
+    def test_partial_time_boundary_never_claims_full_tail_quantiles(self):
+        session, trace = self.raw_fixture((0, 601, 1200))
+        tail = perf.analyze(session, [], trace)["final_ten_minutes"]
+        self.assertTrue(tail["raw_frame_window"]["complete"])
+        self.assertEqual(tail["boundary_uncovered_seconds"], 1)
+        self.assertIsNone(tail["true_frame_time_percentiles_ms"])
+
+    def test_overflow_and_late_capture_do_not_invent_missing_frames(self):
+        session, trace = self.raw_fixture()
+        for changed in (
+            dict(trace, retained_frames=3, durations_ms=trace["durations_ms"][:3], dropped_frames=3),
+            dict(trace, first_frame=2, retained_frames=5, durations_ms=trace["durations_ms"][1:]),
+        ):
+            result = perf.analyze(session, [], changed)
+            self.assertFalse(result["raw_frame_window"]["complete"])
+            self.assertIsNone(result["true_frame_time_percentiles_ms"])
+
+    def test_raw_counter_or_identity_mismatch_is_refused(self):
+        session, trace = self.raw_fixture()
+        for key, value in (
+            ("pacing_total_ms", 100),
+            ("pacing_over33", 1),
+            ("pacing_over50", 1),
+            ("pacing_total_ms_exact", False),
+            ("pacing_trace", "other.bin"),
+        ):
+            bad = copy.deepcopy(session)
+            bad["samples"][1][key] = value
+            with self.subTest(key=key), self.assertRaises(ValueError):
+                perf.analyze(bad, [], trace)
+
+    def test_truncated_nonfinite_and_inconsistent_sidecars_are_refused(self):
+        data = perf.RAW_HEADER.pack(b"ROR2FRAM", 1, 1, 1, 0) + struct.pack("<f", 16.5)
+        for bad in (data[:5], data[:-1], data + b"x", data[:24] + struct.pack("<f", float("nan")), perf.RAW_HEADER.pack(b"ROR2FRAM", 1, 1, 3, 0) + data[24:]):
+            with self.subTest(data=bad), self.assertRaises(ValueError):
+                perf.read_raw_frames(bad)
+
     def sustained(self, times):
         start = datetime(2026, 1, 1, tzinfo=timezone.utc)
         return dict(

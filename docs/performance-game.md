@@ -21,6 +21,18 @@ two retained endpoints leaves tail frame statistics unavailable.
 python3 scripts/lab/perf_report.py RESULT_JSON THERMAL_JSONL --output work/perf/report.json
 ```
 
+New sustained captures opt in to `rawFrameTimesRequested` on the existing camera
+observer. A bounded 1 MiB buffer retains up to 262,144 active-frame durations,
+excluding suspension and the first resumed interval as before. Native teardown
+writes a private sidecar once; the sustained owner retains it with a SHA-256,
+checks interval counters and removes the device scratch. Supply this sidecar with
+`--raw-frames FILE` to compute true interval p50/p95/p99. Every frame, duration
+total and strict hitch count must reconcile; overflow or absent coverage leaves
+quantiles unavailable. Final-ten-minute quantiles also require a full 600-second
+endpoint window. These measure Unity active-frame intervals, not compositor
+presentation timing. Capture overhead and sustained device qualification remain
+open; historical aggregate evidence below cannot acquire raw quantiles.
+
 Local source: `work/coordination/alpha-sustained-current-device-20261031T214907Z/`;
 `terminal.done.json` names the sustained result. `metrics.private.json` corroborates
 the counter deltas. Analysis: `work/coordination/perf-game-1104/report.json`.

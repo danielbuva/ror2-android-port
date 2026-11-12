@@ -6,6 +6,7 @@ full-game, sustained performance acceptance or memory bound follows.
 """
 
 from datetime import datetime, timezone
+import hashlib
 import math
 import re
 import time
@@ -111,8 +112,43 @@ def observation_sample(report, snapshot, elapsed, previous=None, utc=None):
         or stamp <= datetime.fromisoformat(previous["snapshot_utc"].replace("Z", "+00:00"))
     ):
         raise RuntimeError("Native world/periodic diagnostics did not advance")
-    row["pacing_total_ms"] = row["pacing_frames"] * row["pacing_mean_ms"]
+    row["pacing_total_ms_exact"] = "totalMs" in pacing
+    row["pacing_total_ms"] = pacing.get("totalMs", row["pacing_frames"] * row["pacing_mean_ms"])
+    if type(row["pacing_total_ms"]) not in (int, float) or not math.isfinite(row["pacing_total_ms"]) or row["pacing_total_ms"] < 0:
+        raise RuntimeError("Missing/non-finite cumulative frame duration")
+    row["pacing_trace"] = pacing.get("rawFrameTrace")
     return row
+
+
+def collect_raw_frames(device, runtime, out, completed, samples):
+    """Pull only this session's closed trace; remove device scratch after retention."""
+    pacing = completed.get("framePacing") or {}
+    name = pacing.get("rawFrameTrace") or ""
+    if (
+        not re.fullmatch(r"frame-times-[0-9a-f]{32}\.bin", name)
+        or pacing.get("rawFrameTraceClosed") is not True
+        or pacing.get("rawFrameTraceError")
+        or any(row.get("pacing_trace") != name for row in samples)
+    ):
+        raise RuntimeError("Missing closed session-bound raw frame capture")
+    path = out / name
+    device.cmd("pull", runtime + "/" + name, str(path))
+    data = path.read_bytes()
+    # Evidence is now retained on the host, including malformed/partial output.
+    device.sh("rm", "--", runtime + "/" + name)
+    import perf_report
+
+    trace = perf_report.read_raw_frames(data)
+    if (
+        trace["first_frame"] != pacing.get("rawFrameTraceFirstFrame")
+        or trace["retained_frames"] != pacing.get("rawFrameTraceFrames")
+        or trace["dropped_frames"] != pacing.get("rawFrameTraceDropped")
+    ):
+        raise RuntimeError("Raw sidecar and completed report coverage differ")
+    for first, last in zip(samples, samples[1:]):
+        if not perf_report.raw_frame_window(first, last, trace)["complete"]:
+            raise RuntimeError("Raw capture overflow or uncovered observation window")
+    return dict(file=name, sha256=hashlib.sha256(data).hexdigest(), **{key: value for key, value in trace.items() if key != "durations_ms"})
 
 
 def assisted_teardown_contract(completed, pid, attempt, baseline):
@@ -212,6 +248,7 @@ def check_session_sustained(expected_apk_sha256=None, _launch=None):
         # Refuse an already hot/unknown device before beginning the workload.
         thermal()
         selected = cleanup.selection(attempt)
+        selected["rawFrameTimesRequested"] = True
         selected["debugOptions"].update(invincibility=True, purpose=SCOPE)
         write(out / "selection.json", selected)
         device.cmd("push", str(out / "selection.json"), selector)
@@ -287,6 +324,7 @@ def check_session_sustained(expected_apk_sha256=None, _launch=None):
         write(out / "completed-session.json", completed)
         write(out / "returned-menu.json", report)
         result["all_off_contract_refusals"] = assisted_teardown_contract(completed, pid, attempt, baseline)
+        result["raw_frame_trace"] = collect_raw_frames(device, runtime, out, completed, result["samples"])
         errors("complete-process")
         result.update(native_teardown_complete=True, success=True)
     except BaseException as error:
