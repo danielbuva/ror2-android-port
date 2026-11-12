@@ -604,6 +604,21 @@ player receipt to match declared membership exactly on production and reuse.
 New source media therefore reports a membership difference instead of silently
 omitting a referenced file.
 
+A selected `owner-bundle-preload-release-v1` profile declares `profiles` (the
+repo-relative prerequisite producer profiles) and `request` (the existing fresh
+preparation request, with its public `policy` object inline). Supplier file pins
+use declared job artifacts; public profile/witness pins use `${repo}/...` paths.
+The graph includes those public files in its signed closure and dispatches
+`bundle_preload.py --release` to prepare, emit and optionally repack once. Its
+actual final bundle and generated catalog profile feed catalog production.
+Referenced donor/staged bundles also ship and enter the native manifest because
+the emitted PPtrs depend on them. Pack-only suppliers remain intermediates.
+Managed witness documents must come from generated job artifacts; registry body,
+receipt and schemas must come from the same final player producer. The SDK
+properties file remains an explicitly pinned acquired leaf. Current managed
+cohort production, exact-editor load and phone execution still need qualification;
+the dispatcher host fixture uses an authored empty runtime registry.
+
 Selecting the manager phase also creates the existing `startup_metadata.py`
 job. Bind `inventory` to the admitted original-game inventory; the smoke
 PlayerSettings and toolchain descriptor travel in the signed public closure.

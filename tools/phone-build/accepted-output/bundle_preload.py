@@ -1721,6 +1721,33 @@ def produce_request(inputs, output, *, cache_directory=None):
         return result
 
 
+def produce_release_request(inputs, output):
+    """Prepare and emit one signed public policy using the existing owners."""
+    import json
+
+    inputs, output = Path(inputs).resolve(strict=True), Path(output).resolve()
+    before = O.B.sha(inputs)
+    wrapper = json.loads(inputs.read_bytes())
+    if set(wrapper) != {"schema", "profiles", "request"} or wrapper["schema"] != "owner-bundle-preload-release-v1":
+        raise ValueError("unsupported bundle release contract")
+    request = dict(wrapper["request"])
+    policy = request["policy"]
+    output.mkdir(parents=True, exist_ok=False)
+    policy_path = output / "preparation-policy.json"
+    policy_path.write_text(json.dumps(policy, sort_keys=True) + "\n")
+    request["policy"] = dict(path=str(policy_path), bytes=policy_path.stat().st_size, sha256=O.B.sha(policy_path))
+    request_path = output / "preparation-inputs.json"
+    request_path.write_text(json.dumps(request, sort_keys=True) + "\n")
+    preparation = prepare_request(request_path, output / "prepared")
+    result = produce_request(preparation["request"]["path"], output)
+    if O.B.sha(inputs) != before:
+        raise ValueError("bundle release request changed during production")
+    result["preparation"] = preparation
+    result["release_request_sha256"] = before
+    (output / "result.json").write_text(json.dumps(result, indent=2) + "\n")
+    return result
+
+
 def main():
     import argparse
     import json
@@ -1728,6 +1755,7 @@ def main():
     parser = argparse.ArgumentParser(description="Emit an explicitly partial, closed native bundle from source-produced records")
     parser.add_argument("--inputs", type=Path, help="explicit checked emission/canonical request; paths relative to this file")
     parser.add_argument("--prepare", type=Path, help="derive emission inputs from pinned source packs and declarative policy")
+    parser.add_argument("--release", type=Path, help="prepare and emit a signed release-graph policy in one private workspace")
     parser.add_argument("--cache", type=Path, help="private incremental emission/preload/repack cache")
     parser.add_argument("--graph", type=Path)
     parser.add_argument("--schema", type=Path, action="append")
@@ -1737,6 +1765,14 @@ def main():
     parser.add_argument("--codec", type=Path, help="pinned LZ4 helper; compresses UnityFS blocks without changing member bytes")
     parser.add_argument("--codec-sha256")
     args = parser.parse_args()
+    if args.release is not None:
+        if any(
+            value is not None
+            for value in (args.inputs, args.prepare, args.graph, args.schema, args.bundle, args.member, args.codec, args.codec_sha256, args.cache)
+        ):
+            parser.error("--release requires only --output")
+        print(json.dumps(produce_release_request(args.release, args.output), indent=2))
+        return
     if args.prepare is not None:
         if any(value is not None for value in (args.inputs, args.graph, args.schema, args.bundle, args.member, args.codec, args.codec_sha256, args.cache)):
             parser.error("--prepare requires only --output")

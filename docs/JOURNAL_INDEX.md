@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J1440](PORTING_JOURNAL.md#j1440--dispatch-fresh-bundle-preparation-through-signed-releases) | 2026-11-11 | Dispatch fresh bundle preparation through signed releases | 2026-11-12. |
 | [J1439](PORTING_JOURNAL.md#j1439--reuse-serialized-type-resolution-within-category-families) | 2026-11-11 | Reuse serialized type resolution within category families | 2026-11-12. |
 | [J1438](PORTING_JOURNAL.md#j1438--derive-closed-bundle-requests-from-pinned-source-suppliers) | 2026-11-11 | Derive closed bundle requests from pinned source suppliers | 2026-11-12. |
 | [J1437](PORTING_JOURNAL.md#j1437--attribute-synchronous-category-asset-loading-costs) | 2026-11-11 | Attribute synchronous category asset loading costs | 2026-11-12. |
