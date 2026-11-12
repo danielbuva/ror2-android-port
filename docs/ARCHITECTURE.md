@@ -2684,7 +2684,8 @@ roster state from the pinned IMGUI scroll stack immediately after
 release the captured references. Other controls and replacement entries survive.
 The owner can capture the next menu after disposal. Host ownership and exact SDK
 layout contracts live in `tests/test_offline_roster_scroll_state.py`; installed
-continuation and heap acceptance remain separate.
+three-session continuation and paired idle heaps verify this retaining path.
+The global memory bound and ordinary-play qualification remain open.
 `tests/test_diagnostic_retention.py` exercises teardown refusal, repeated fresh
 returns, released backing capacity and untouched item/list contents.
 It also removes already-destroyed targets from the original overlap discovery

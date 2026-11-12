@@ -200,6 +200,10 @@ thermal sampling policy; proposed performance budgets do not change those limits
       Menus 18–33 retain +634,880 managed bytes and a +35,990.588 bytes/menu
       fitted slope. Diagnostic wrapper pruning does not establish a plateau;
       retained-owner attribution and ordinary-play qualification remain open.
+      Roster scroll-state ownership releases only the retiring menu's exact GUI
+      cache entries. Three supervised sessions retain zero ScrollViewState objects
+      at menus 2/4; other managed objects still grow 68,227 bytes. This closes one
+      retaining path; the long-series memory bound remains open.
 - [ ] Complete real interrupted-write/ENOSPC and sustained performance/thermal
       cases on supported hardware.
       [J1311](PORTING_JOURNAL.md#j1311--recover-native-settings-after-writer-termination-and-activity-restart)

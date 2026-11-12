@@ -3892,3 +3892,19 @@ and current base retained; JSON receipts remain. Evidence:
 `work/cleanup-analysis/alpha-cache-acceptance-20261112.json` and referenced ledger.
 18 host tests, Ruff, public audit and canonical host preflight passed.
 No device behaviour or alpha gameplay gate is qualified by this storage change.
+
+## J1467 — Release retired roster scroll states without clearing other controls
+
+2026-11-12. SurvivorSelectionBoundary owns exact IMGUI roster states; menu cleanup
+and PortSession destruction remove only matching entries, preserving foreign/replaced states.
+Exact SDK/40-cycle/two-owner fixtures, 12 feedback/settings tests, Ruff, source-pin
+checks and host preflight pass; code-only build passes.
+APK SHA-256: `220f3c3493c15b87d19dcce0fbc8bc50c39d3cc6443c2abb8fb3e175a84ff6f3`.
+Evidence: `work/coordination/alpha-roster-scroll-device-20261112T155558Z/acceptance-assessment.json`.
+Three supervised sessions continue through Start/loss/abandon; menus 2/4 retain zero
+ScrollViewState objects. Direct counts correct the absent-group evaluator failure;
+the original failed terminal is retained, without rerunning captures.
+Other managed objects grow 68,227 bytes; no global memory plateau is established.
+Capture wall 467.970 s; peak CPU/GPU 88.4 C, 18.218 s above 80 C; no performance claim.
+In-place profile/settings hashes, adopted placement, stopped/asleep readback and lease release pass.
+Prior art: pinned UnityExplorer member inspection and MemorySnapshotDataTools; ordinary long play remains open.
