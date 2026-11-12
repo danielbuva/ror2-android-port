@@ -3793,3 +3793,45 @@ host-only preflight pass; no APK produced and no editor or device used.
 Evidence: `work/coordination/p1-wholegame-1031/phone-chain-audit-1112/public-source-selectors-v1/`.
 Prior art: pinned EditorKit typed lookup/collisions; existing release/preparation owners extended.
 Current graph admission, Unity typed load, converted play and port update remain open.
+
+## J1460 — Supply the source Grandparent default Material
+
+2026-11-12. An audited public profile selects the original Material through the
+existing native record owner, preserving its body/type except one checked Shader PPtr.
+All 10 source pointers were parsed; the nine Texture references remain null.
+Persisted pack: 1 record, 1,064 B, SHA-256
+`f57650ad0c140d260adff5220b07c155ca37540e45c0d9b81a95652508f4faf0`.
+Evidence: `work/coordination/p1-wholegame-1031/phone-chain-audit-1112/grandparent-material-v1/`.
+Production 0.043 s; wrapper 0.196 s, child peak RSS 65,585,152 B; heat unmeasured.
+Actual selected Shader bytes and receipt/index hashes checked; candidate handed to scene owner.
+33 focused host tests and host-only preflight pass; no new runtime owner.
+Prior art: pinned EditorKit typed lookup identities.
+Shader dependency closure, complete graph, Unity typed load, converted play and update remain open.
+
+## J1461 — Accept refreshed managed metadata with exact retained inputs
+
+2026-11-12. The existing metadata witness owner accepts successful gameplay-refresh
+receipts, binding base/provider manifests, counts and the one gameplay output.
+An optional pinned alias map relocates registry inputs with unchanged size/hash checks;
+receipt phases and final-player CLR/registry admission remain independent.
+Actual 332-provider metadata matches the retained current cohort semantically;
+all 1,256 registry inputs and the final player body retain their recorded pins.
+Evidence: `work/coordination/p1-wholegame-1031/phone-chain-audit-1112/current-refreshed-managed-witness-v3/`.
+Generated receipt SHA-256: `5ff68921de6fd45a17409ced82a0c597c0ea076dd0f871600c3eb1c4aed97640`.
+4 affected tests, retained 47 preload + 24 graph tests, Ruff and host preflight pass.
+Prior art: pinned ThunderKit FileIdUtil and AssetRipper MonoScript identity checks retained.
+No game code executed, editor/device used or APK produced. Current CLR/graph admission,
+Unity typed load, converted play and full port-update qualification remain open.
+
+## J1462 — Relocate managed witness inputs without rewriting receipts
+
+2026-11-12. The existing metadata owner accepts a pinned exact-path relocation map;
+unchanged provider manifests, refresh receipts and final registry inputs retain their hashes.
+Staged files use the existing size/hash checks before and after metadata inspection.
+Registry aliases remain a separate identity contract; no assembly code is executed.
+Authored fixtures remove original files, generate metadata from staged inputs and reject
+missing or changed providers. All 5 metadata and 47 preload tests, Ruff and host preflight pass.
+Evidence: `work/coordination/p1-wholegame-1031/phone-chain-audit-1112/managed-input-relocation-v2/`.
+Prior art: J1461 retained-input checks and the existing metadata-only Cecil reader.
+No APK produced or device/editor used. Current CLR/graph admission, Unity typed load,
+converted play and complete phone install/update qualification remain open.

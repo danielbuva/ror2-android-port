@@ -6,8 +6,113 @@ import subprocess
 import tempfile
 import unittest
 import importlib.util
+import hashlib
+from types import SimpleNamespace
 
 from phone_managed_types import MetadataUniverse
+
+
+class ManagedProductionReceiptTests(unittest.TestCase):
+    def fixture(self, root):
+        path = Path(__file__).resolve().parents[1] / "tools/phone-build/accepted-output/bundle_endpoints.py"
+        spec = importlib.util.spec_from_file_location("managed_receipt_endpoints", path)
+        endpoints = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(endpoints)
+
+        def sha(path):
+            return hashlib.sha256(Path(path).read_bytes()).hexdigest()
+
+        def document(name, value):
+            path = root / name
+            path.write_text(json.dumps(value))
+            return dict(path=str(path), bytes=path.stat().st_size, sha256=sha(path))
+
+        gameplay = root / "Assembly-CSharp.dll"
+        gameplay.write_bytes(b"authored updated gameplay fixture")
+        shared = root / "Shared.dll"
+        shared.write_bytes(b"authored unchanged fixture")
+        providers = {p.name: dict(path=str(p), sha256=sha(p)) for p in (gameplay, shared)}
+        base = document("base.json", {**providers, gameplay.name: dict(path="old-gameplay.dll", sha256="a" * 64)})
+        manifest = document("providers.json", providers)
+        receipt = dict(
+            success=True,
+            phase="gameplay-refreshed",
+            providers_sha256=manifest["sha256"],
+            provider_count=2,
+            reused_provider_count=1,
+            base_providers={k: base[k] for k in ("path", "sha256")},
+            gameplay=providers[gameplay.name],
+            phone_qualified=False,
+            runtime_qualified=False,
+        )
+        owner = SimpleNamespace(O=SimpleNamespace(B=SimpleNamespace(sha=sha)))
+        return endpoints, endpoints.InputPins(root, owner), document, manifest, receipt, providers
+
+    def test_accepts_pinned_refresh_without_relabelling_receipt(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            endpoints, pins, document, manifest, receipt, providers = self.fixture(Path(temporary))
+            receipt_pin = document("receipt.json", receipt)
+            self.assertEqual(endpoints.managed_production(pins, manifest, receipt_pin), providers)
+            self.assertEqual(json.loads(Path(receipt_pin["path"]).read_bytes()), receipt)
+            self.assertIn(Path(receipt["base_providers"]["path"]).resolve(), pins.files)
+            pins.check()
+
+    def test_relocates_unchanged_refresh_inputs_and_checks_staged_bytes(self):
+        for missing in (False, True):
+            with self.subTest(missing=missing), tempfile.TemporaryDirectory() as temporary:
+                root = Path(temporary)
+                endpoints, pins, document, manifest, receipt, providers = self.fixture(root)
+                receipt_pin = document("receipt.json", receipt)
+                staged = root / "phone"
+                staged.mkdir()
+                paths = {}
+                originals = {path.name: path.read_bytes() for path in root.iterdir() if path.is_file()}
+                for name in originals:
+                    source = root / name
+                    paths[str(source)] = "phone/" + name
+                    source.rename(staged / name)
+                pins.relocate(document("input-paths.json", paths))
+                self.assertEqual(endpoints.managed_production(pins, manifest, receipt_pin), providers)
+                for value in providers.values():
+                    path = pins.path(value["path"])
+                    pins.add(path, dict(bytes=path.stat().st_size, sha256=value["sha256"]))
+                self.assertEqual({name: (staged / name).read_bytes() for name in originals}, originals)
+                pins.check()
+                target = staged / "Shared.dll"
+                if missing:
+                    target.unlink()
+                else:
+                    target.write_bytes(b"changed staged provider")
+                with self.assertRaises((ValueError, FileNotFoundError)):
+                    pins.check()
+
+    def test_rejects_unbound_or_incomplete_refresh(self):
+        for changes, message in (
+            (dict(success=False), "successful managed production"),
+            (dict(phase="gameplay-assembly"), "successful managed production"),
+            (dict(providers_sha256="a" * 64), "provider manifest differs"),
+            (dict(providers_sha256=None), "provider manifest differs"),
+            (dict(provider_count=3), "manifest/count differs"),
+            (dict(reused_provider_count=0), "manifest/count differs"),
+            (dict(gameplay=dict(path="Shared.dll", sha256="b" * 64)), "output differs"),
+        ):
+            with self.subTest(changes=changes), tempfile.TemporaryDirectory() as temporary:
+                endpoints, pins, document, manifest, receipt, _ = self.fixture(Path(temporary))
+                with self.assertRaisesRegex(ValueError, message):
+                    endpoints.managed_production(pins, manifest, document("receipt.json", receipt | changes))
+
+    def test_rejects_changed_reused_provider_and_base_manifest(self):
+        for changed_base in (False, True):
+            with self.subTest(changed_base=changed_base), tempfile.TemporaryDirectory() as temporary:
+                endpoints, pins, document, manifest, receipt, providers = self.fixture(Path(temporary))
+                if changed_base:
+                    Path(receipt["base_providers"]["path"]).write_text("{}")
+                else:
+                    providers["Shared.dll"]["sha256"] = "b" * 64
+                    manifest = document("providers.json", providers)
+                    receipt["providers_sha256"] = manifest["sha256"]
+                with self.assertRaisesRegex(ValueError, "input differs|changed a reused provider"):
+                    endpoints.managed_production(pins, manifest, document("receipt.json", receipt))
 
 
 class SdkMetadataInventoryHostTests(unittest.TestCase):
@@ -122,12 +227,14 @@ class SdkMetadataInventoryHostTests(unittest.TestCase):
                 for name, path in (("Fixture.dll", provider), ("Facade.dll", root / "facade-out/Facade.dll"))
             }
             registry_pin = pin(provider)
+            registry_provider = str(root / "unavailable-provider.dll")
             request = dict(
                 managed_providers=document("providers.json", providers),
                 managed_receipt=document("managed-result.json", dict(success=True, phase="managed-produced")),
                 registry_receipt=document(
-                    "registry-result.json", dict(success=True, provider_pins={str(provider): {k: registry_pin[k] for k in ("bytes", "sha256")}})
+                    "registry-result.json", dict(success=True, provider_pins={registry_provider: {k: registry_pin[k] for k in ("bytes", "sha256")}})
                 ),
+                provider_aliases=document("aliases.json", {registry_provider: str(provider)}),
                 tools=dict(
                     dotnet=pin(dotnet),
                     compiler=pin(sorted((dotnet.parent / "sdk").glob("*/Roslyn/bincore/csc.dll"))[-1]),
@@ -138,15 +245,30 @@ class SdkMetadataInventoryHostTests(unittest.TestCase):
                     runtimeconfig=pin(root / "reader-out/MetadataInventory.runtimeconfig.json"),
                 ),
             )
+            # Consume the original declarations after their host paths disappear.
+            # The relocation map changes file lookup, preserving every input hash.
+            staged = root / "phone-inputs"
+            staged.mkdir()
+            relocated = {}
+            input_files = {Path(request[key]["path"]) for key in ("managed_providers", "managed_receipt", "registry_receipt", "provider_aliases")}
+            input_files.update(Path(value["path"]) for value in providers.values())
+            originals = {path: path.read_bytes() for path in input_files}
+            for path in input_files:
+                relocated[str(path)] = "phone-inputs/" + path.name
+                path.rename(staged / path.name)
+            request["input_paths"] = document("input-paths.json", relocated)
+            staged_providers = {name: dict(value, path=str((staged / Path(value["path"]).name).resolve())) for name, value in providers.items()}
+            provider = (staged / provider.name).resolve()
             request_path = root / "managed-request.json"
             request_path.write_text(json.dumps(request))
             generated = root / "generated"
             result = endpoints.generate_managed(request_path, generated)
             self.assertTrue(result["success"])
             self.assertEqual(result["managed_providers"], 2)
-            self.assertEqual(json.loads((generated / "runtime-request.json").read_text())["managed"], providers)
-            self.assertEqual(json.loads((generated / "provider-aliases.json").read_text()), {str(provider): str(provider)})
+            self.assertEqual(json.loads((generated / "runtime-request.json").read_text())["managed"], staged_providers)
+            self.assertEqual(json.loads((generated / "provider-aliases.json").read_text()), {registry_provider: str(provider)})
             self.assertEqual(json.loads((generated / "metadata.json").read_text())["assemblies"][0]["group"], "current")
+            self.assertEqual({path: (staged / path.name).read_bytes() for path in input_files}, originals)
             provider.write_bytes(b"changed provider")
             with self.assertRaisesRegex(ValueError, "input differs"):
                 endpoints.generate_managed(request_path, root / "refused")

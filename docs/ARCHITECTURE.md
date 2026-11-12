@@ -91,6 +91,14 @@ schemas supplied by one final player job. Setup and teardown remain the scoped
 preparation/emission owners; the dispatcher retains only declared final artifacts
 for reuse. Host synthetic-registry dispatch does not qualify current CLR/SDK
 production, exact-editor load or phone acceptance.
+The metadata witness reader also accepts a successful `gameplay-refreshed`
+receipt without changing its phase. It binds the provider manifest, base cohort,
+counts and actual `Assembly-CSharp.dll` output; every reused module retains its
+hash. All current provider bodies still pass metadata validation. The final
+player registry remains a separate pinned input with its existing CLR checks;
+accepting a refresh receipt does not establish registry or graph admission.
+An optional pinned provider-alias map relocates retained registry inputs; each
+resolved file must still match the unchanged receipt's size and hash.
 The same release owner's host `Graph.bundle_bindings` API maps one member's
 selected metadata to public supplier jobs, preserving original, pack and final
 identities. It returns unresolved rows without reading pack bodies; callers must
@@ -6784,6 +6792,16 @@ to J850. This adds no runtime owner; group, complete bundle and phone gates rema
 open.
 
 
+`recipe/owner-whole-game-grandparent-material-records.json` supplies the original
+Grandparent default Material through the same native record owner. Its complete
+source schema and body are retained, with only the checked Shader pointer
+relocated to the selected Standard endpoint. Setup requires the pinned original
+bundle and a fresh pack; scoped readers close on exit and receipts persist.
+The consumer must qualify the Shader's final native dependencies and the complete
+graph separately. This adds no runtime owner; Unity typed load and device play
+remain open.
+
+
 `recipe/owner-whole-game-bundle-canvas-records.jsonl.gz` selects 10,870 original
 CanvasRenderers through the existing `record_produce.py` native owner. Qualified
 GameObject component edges and reciprocal original ownership supply checked
@@ -6873,6 +6891,10 @@ APK and device acceptance remain open.
 
 The existing `bundle_endpoints.py` owner generates current CLR witness artifacts
 from successful managed production and the final player's registry receipt.
+An optional pinned `input_paths` map relocates exact recorded input paths to
+staged files relative to that map. Original manifests and refresh receipts stay
+unchanged; existing size/hash checks qualify the relocated files before and after
+inspection. Registry provider aliases retain their separate identity mapping.
 It compiles the public metadata-only Cecil reader with explicitly pinned compiler,
 references and runtime tools, checks actual provider files before and after
 inspection, and records exact registry provider aliases. The release graph signs

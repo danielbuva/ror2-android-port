@@ -57,13 +57,17 @@ current CLR declarations from pinned successful managed production and a final
 player's registry receipt. The request supplies `managed_providers`,
 `managed_receipt`, `registry_receipt` and `tools` file pins. Tools contain
 `dotnet`, `compiler`, `cecil`, `runtimeconfig` and a `references` pin array.
+Managed receipts may describe complete production or a checked single-gameplay
+refresh; refresh admission retains the base manifest and unchanged provider hashes.
+An optional `provider_aliases` file pin maps registry input paths to retained
+copies. Every resolved file must match the unchanged registry receipt's size and
+hash; omitted aliases retain the original path.
 The existing metadata-only reader is compiled from public source with that
 compiler; inspected assemblies are never executed. Provider keys are checked
 against CLR module metadata, including instrumented providers whose physical
 filename differs from their module name. Outputs are `providers.json`,
 `runtime-request.json` (the provider witness, not native runtime qualification),
-`metadata.json`, `provider-aliases.json` and `result.json`. Fresh registry provider
-paths must still resolve exactly; no basename-based relocation is attempted.
+`metadata.json`, `provider-aliases.json` and `result.json`.
 
 The release graph accepts `owner-bundle-managed-release-v1` with `profiles` and
 `request`, declaring its final player profile and registry artifact. Its four

@@ -7021,3 +7021,20 @@ The complete player Shader helper refresh also updates dependent recipe hashes
 through the existing release graph. Manual provenance/privacy review
 (2026-11-12): changed consumer values are public recipe SHA-256 selectors only;
 no original bodies, SDK files or private paths are added.
+
+## Grandparent source Material (2026-11-12)
+
+`owner-whole-game-grandparent-material-records.json` selects one original Material
+for the existing native record producer. The original body and native schema
+are preserved except for one checked Shader pointer relocation; the selected
+Shader and its final dependencies require independent consumer qualification.
+The profile contains only the minimum source/destination identities, input/body
+hashes, native type hash and authored pointer relationship. Manual provenance,
+privacy, licensing and sensitive-content audit: no asset body, shader program,
+game code, third-party implementation, private path or credential is included.
+Generated packs and local evidence stay ignored; this does not establish Unity
+loadability, a complete bundle or device play.
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-whole-game-grandparent-material-records.json` | `acc2ea9fa96183a4b049f3679b6a2db6583fcce4192d6487bf4cb4a67a00fc21` |
