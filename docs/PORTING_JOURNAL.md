@@ -3712,7 +3712,7 @@ Native End Run/menu 2, empty current-PID errors, scratch/OLED/process/lease/prun
 Adopted placement/data verified; storage delta +10,170,368 B includes diagnostics.
 No install; ordinary play, visual parity, energy, capture overhead and throttling stay open.
 
-## J1454 — Retain selected phone-produced artifacts before cleanup
+## J1455 — Retain selected phone-produced artifacts before cleanup
 
 2026-11-12. Existing installer lab owner streams explicitly selected cache-receipt files to ignored host storage.
 Exact installer ownership, declared membership and output hash qualify publication; partial transfers leave no file.
