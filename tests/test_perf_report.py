@@ -33,6 +33,31 @@ def fixture():
 
 
 class PerfReportTests(unittest.TestCase):
+    def test_proposed_targets_compare_unrounded_values_and_preserve_unknown_quantiles(self):
+        window = dict(average_fps=59.9999, frames=10000, over50ms=101)
+        comparison = perf.proposed_pacing_comparison(window, dict(p50=16.67, p95=33.334, p99=50), 1800, 1800)
+        self.assertTrue(comparison["complete_duration"])
+        metrics = comparison["metrics"]
+        self.assertFalse(metrics["average_fps"]["meets_target"])
+        self.assertFalse(metrics["over50ms_percent"]["meets_target"])
+        self.assertTrue(all(metrics[key]["meets_target"] for key in ("p50_ms", "p95_ms", "p99_ms")))
+        missing = perf.proposed_pacing_comparison(window, None, 594.622, 600)
+        self.assertFalse(missing["complete_duration"])
+        self.assertIsNone(missing["metrics"]["p95_ms"]["meets_target"])
+
+    def test_within_target_assisted_observation_does_not_establish_release_readiness(self):
+        session = self.sustained([0, 600, 1200])
+        session["scope"] = "Assisted stationary workload"
+        report = perf.analyze(session, [])
+        budget = report["proposed_pacing_budget"]
+        self.assertTrue(budget["whole_session"]["metrics"]["average_fps"]["meets_target"])
+        self.assertFalse(budget["whole_session"]["complete_duration"])
+        self.assertEqual(len(budget["evidence_not_established"]), 5)
+        text = perf.markdown(report)
+        self.assertIn("Scope: Assisted stationary workload", text)
+        self.assertIn("proposed targets do not establish release readiness", text)
+        self.assertIn("Unplugged battery drain", text)
+
     def raw_fixture(self, times=(0, 600, 1200)):
         durations = [0.0, 16.5, perf.HITCH33_MS, 50.0, 51.25, 200.0]
         samples = []
@@ -72,6 +97,10 @@ class PerfReportTests(unittest.TestCase):
         self.assertTrue(tail["raw_frame_window"]["complete"])
         self.assertEqual(tail["boundary_uncovered_seconds"], 1)
         self.assertIsNone(tail["true_frame_time_percentiles_ms"])
+        budget = result["proposed_pacing_budget"]["covered_tail"]
+        self.assertFalse(budget["complete_duration"])
+        self.assertIsNone(budget["metrics"]["p99_ms"]["observed"])
+        self.assertIsNone(budget["metrics"]["p99_ms"]["meets_target"])
         text = perf.markdown(result)
         self.assertIn("Covered-tail individual-frame p50/p95/p99: 51.25/185.12/197.03 ms (3 frames)", text)
         self.assertIn("599.000/600 s; 1.000 s uncovered", text)
@@ -148,6 +177,7 @@ class PerfReportTests(unittest.TestCase):
     def test_tail_without_two_observations_is_unavailable(self):
         result = perf.analyze(self.sustained([0, 1190, 1800]), [])
         self.assertIsNone(result["final_ten_minutes"]["frame_window"])
+        self.assertTrue(all(metric["meets_target"] is None for metric in result["proposed_pacing_budget"]["covered_tail"]["metrics"].values()))
         self.assertEqual(result["final_ten_minutes"]["boundary_uncovered_seconds"], 600)
         self.assertIn("fewer than two retained observations", perf.markdown(result))
 

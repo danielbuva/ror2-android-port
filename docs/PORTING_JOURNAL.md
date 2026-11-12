@@ -3768,6 +3768,18 @@ and `tests/test_bundle_prepare.py`, `tests/test_release_graph.py`.
 Prior art: pinned EditorKit typed cache identities; existing release/preparation owners extended.
 Current-game graph admission, Unity typed load, converted play and port update remain open.
 
+## J1459 — Sustained pacing compared with proposed budgets
+
+2026-11-12. The existing host report compares unrounded whole-session and covered-tail
+FPS, raw quantiles and hitch fractions against the proposed public-alpha targets.
+It preserves unavailable full-tail quantiles and states workload/energy/visual/clock
+and capture-overhead evidence that a retained observation cannot establish.
+Retained input hashes reconcile; assisted observation averages 54.927 FPS overall
+and 54.190 FPS over its 594.622-second tail, both below the proposed 60 FPS target.
+Evidence: `work/coordination/alpha-performance-gate-20261112/report.json`; SHA-256
+`a22b067084cbc02441a9d0baedc53cd316f8b41e14d2cc130474d166a7f36a21`.
+Validation: 15 focused host tests and Ruff pass; no build, new APK or device run.
+Remaining: representative ordinary-play qualification and every broad alpha gate.
 ## J1458 — Resolve private selections through public source profiles
 
 2026-11-12. Existing release owner searches explicitly chosen public body selectors
