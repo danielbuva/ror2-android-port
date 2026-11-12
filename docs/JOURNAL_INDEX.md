@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J1433](PORTING_JOURNAL.md#j1433--retain-final-emitted-catalog-declaration-artifacts) | 2026-11-11 | Retain final emitted catalog declaration artifacts | 2026-11-12. |
 | [J1432](PORTING_JOURNAL.md#j1432--retain-registry-witnesses-from-final-player-production) | 2026-11-11 | Retain registry witnesses from final player production | 2026-11-12. |
 | [J1430](PORTING_JOURNAL.md#j1430--attribute-native-director-startup-observer-work) | 2026-11-11 | Attribute native director startup observer work | 2026-11-12. |
 | [J1431](PORTING_JOURNAL.md#j1431--materialize-bundle-cache-artifacts-and-relocate-sdk-witnesses) | 2026-11-11 | Materialize bundle cache artifacts and relocate SDK witnesses | 2026-11-12. |

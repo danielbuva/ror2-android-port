@@ -233,6 +233,54 @@ def root_motion_fixture(turn=False):
 
 
 class AnimationProducerTests(unittest.TestCase):
+    def test_persisted_type_is_final_managed_projection_and_shared_across_outputs(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            pc = root / "pc"
+            pc.mkdir()
+            body = b"authored component fields"
+            base_body = b"authored"
+            source = pc / "source.bundle"
+            source.write_bytes(F.bundle([("source", serialized(body, F.node("Base", len(body), kind="UInt8"), 114), 4)]))
+            donor = pc / "base.bundle"
+            donor_bytes = serialized(base_body, F.node("Base", len(base_body), kind="UInt8"), 114, b"FINAL TYPE HASH!")
+            donor.write_bytes(F.bundle([("base", donor_bytes, 4)]))
+            stream = io.BytesIO(donor_bytes)
+            stream.size = len(donor_bytes)
+            definition = A.W.read_serialized(stream)["types"][0]
+            target = {"bundle": "target", "member": "target", "path_id": 88, "bytes": len(base_body), "sha256": hashlib.sha256(base_body).hexdigest()}
+            selected = {
+                "path_id": 77,
+                "class_id": 114,
+                "sha256": hashlib.sha256(body).hexdigest(),
+                "missing_script_base": {
+                    "bytes": len(base_body),
+                    "type_source": {
+                        "bundle": donor.name,
+                        "bundle_sha256": A.B.sha(donor),
+                        "member": "base",
+                        "path_id": 77,
+                        "sha256": hashlib.sha256(base_body).hexdigest(),
+                    },
+                },
+                "outputs": [target, dict(target, path_id=89)],
+            }
+            profile = root / "profile.json"
+            profile.write_text(
+                json.dumps(
+                    {
+                        "input_id": A.M.INPUT_ID,
+                        "bundles": [{"path": source.name, "sha256": A.B.sha(source), "members": [{"name": "source", "objects": [selected]}]}],
+                    }
+                )
+            )
+            A.produce(profile, A.B.sha(profile), pc, root / "output")
+            types = json.loads((root / "output/types.json").read_text())
+            rows = [json.loads(line) for line in (root / "output/index.jsonl").read_text().splitlines()]
+            self.assertEqual(types, [A.O.json_layout(definition)])
+            self.assertEqual([row["type_id"] for row in rows], [0, 0])
+            self.assertEqual((root / "output/objects.bin").read_bytes(), base_body * 2)
+
     def test_managed_type_hash_uses_original_script_binding_and_sdk_schema(self):
         identity = A.O.module("script_identity", ROOT / "scripts/lab/script_identity.py")
         schema = F.node("Base", children=[F.node("m_Script", 12, kind="PPtr<MonoScript>"), F.node("retained", 4, kind="float")])
@@ -1049,12 +1097,20 @@ class AnimationProducerTests(unittest.TestCase):
             self.assertTrue(receipt["success"])
             self.assertEqual(receipt["objects"], 1)
             self.assertEqual((root / "output/objects.bin").read_bytes(), expected)
+            row = json.loads((root / "output/index.jsonl").read_text())
+            types = json.loads((root / "output/types.json").read_text())
+            stream = io.BytesIO(serialized(body, schema))
+            stream.size = len(stream.getvalue())
+            metadata = A.W.read_serialized(stream)
+            self.assertEqual(types[row["type_id"]], A.O.json_layout(metadata["types"][0]))
+            self.assertEqual(receipt["outputs"]["types.json"]["sha256"], A.B.sha(root / "output/types.json"))
             compressed = root / "profile.jsonl.gz"
             payload = json.dumps({"input_id": A.M.INPUT_ID}) + "\n" + json.dumps(profile["bundles"][0]) + "\n"
             compressed.write_bytes(gzip.compress(payload.encode(), mtime=0))
             packed = A.produce(compressed, A.B.sha(compressed), pc, root / "compressed-output")
             self.assertTrue(packed["success"])
             self.assertEqual((root / "compressed-output/objects.bin").read_bytes(), expected)
+            self.assertEqual((root / "compressed-output/types.json").read_bytes(), (root / "output/types.json").read_bytes())
             compressed.write_bytes(gzip.compress((json.dumps({"input_id": A.M.INPUT_ID}) + "\n{}\n").encode(), mtime=0))
             with self.assertRaisesRegex(ValueError, "source group"):
                 A.produce(compressed, A.B.sha(compressed), pc, root / "invalid-compressed-output")
