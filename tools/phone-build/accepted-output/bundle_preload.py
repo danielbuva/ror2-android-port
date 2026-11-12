@@ -1522,6 +1522,25 @@ def repack_canonical_aliases(
         return result
 
 
+def catalog_artifacts(required, final, output):
+    """Declare the checked emitted container, independently of its alias donor.
+
+    The emitter/repacker has already checked these groups against final bytes.
+    Keep the same declaration for catalog ownership; do not rerun production or
+    copy the bundle into a second artifact directory.
+    """
+    import json
+
+    profile = Path(output) / "catalog-profile.json"
+    profile.write_text(json.dumps(dict(bundle={key: required[key] for key in ("name", "member", "asset_groups")}), indent=2) + "\n")
+
+    def pin(path):
+        path = Path(path).resolve(strict=True)
+        return dict(path=str(path), bytes=path.stat().st_size, sha256=O.B.sha(path))
+
+    return dict(catalog_profile=pin(profile), catalog_bundle=pin(final["bundle"]))
+
+
 def produce_request(inputs, output, *, cache_directory=None):
     """Run the checked emitter/repacker with explicit, request-relative inputs."""
     from contextlib import closing
@@ -1637,6 +1656,7 @@ def produce_request(inputs, output, *, cache_directory=None):
             sha256=final["sha256"],
             emission=emission,
             canonical=None if canonical is None else final,
+            **catalog_artifacts(required, final, output),
             typed_load_accepted=False,
             device_accepted=False,
         )

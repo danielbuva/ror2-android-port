@@ -731,8 +731,49 @@ class BundlePreloadTests(unittest.TestCase):
             self.assertEqual(Path(second["bundle"]), (root / "second/emitted/authored.bundle").resolve())
             self.assertFalse(Path(second["bundle"]).is_symlink())
             self.assertEqual(first["sha256"], P.O.B.sha(Path(second["bundle"])))
+            for result, attempt in ((first, "first"), (second, "second")):
+                profile = result["catalog_profile"]
+                path = Path(profile["path"])
+                self.assertEqual(path, (root / attempt / "catalog-profile.json").resolve())
+                self.assertEqual((profile["bytes"], profile["sha256"]), (path.stat().st_size, P.O.B.sha(path)))
+                required = json.loads((root / "required.json").read_bytes())
+                self.assertEqual(
+                    json.loads(path.read_bytes()),
+                    dict(bundle=dict(name="authored", member="CAB-authored", asset_groups=required["asset_groups"])),
+                )
+                self.assertEqual(
+                    result["catalog_bundle"],
+                    dict(path=result["bundle"], bytes=Path(result["bundle"]).stat().st_size, sha256=result["sha256"]),
+                )
             self.assertFalse(second["typed_load_accepted"])
             self.assertFalse(second["device_accepted"])
+
+    def test_catalog_declaration_uses_canonical_output_and_emitted_groups(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            inputs, _ = self.canonical_fixture(root)
+            # A donor's imported roots are a separate explicit catalog owner.
+            donor = inputs["canonical_profile"]["bundle"]
+            donor["asset_groups"] = [dict(guid="34" * 16, path="Assets/Donor.prefab", roots=[100])]
+            final = P.repack_canonical_aliases(output=root / "repacked", **inputs)
+            artifacts = P.catalog_artifacts(inputs["required"], final, root)
+            profile = json.loads(Path(artifacts["catalog_profile"]["path"]).read_bytes())
+            self.assertEqual(profile["bundle"]["name"], "authored")
+            self.assertEqual(profile["bundle"]["member"], "CAB-authored")
+            self.assertEqual(profile["bundle"]["asset_groups"], inputs["required"]["asset_groups"])
+            self.assertNotEqual(profile["bundle"], donor)
+            self.assertEqual(Path(artifacts["catalog_bundle"]["path"]), Path(final["bundle"]).resolve())
+            self.assertEqual(artifacts["catalog_bundle"]["sha256"], final["sha256"])
+            W = P.module("unity_write")
+            with W.B.Bundle(Path(artifacts["catalog_bundle"]["path"])).member(profile["bundle"]["member"]) as stream:
+                layout = W.read_serialized(stream)
+                row = next(row for row in layout["objects"] if layout["types"][row["type_id"]]["class_id"] == 142)
+                stream.seek(layout["data_offset"] + row["offset"])
+                containers, _ = P.module("catalog_complete").containers(W.B.exact(stream, row["bytes"]))
+            self.assertEqual(
+                [(path, pointer) for path, pointer, _ in containers],
+                [(group["path"].lower(), (0, pid)) for group in profile["bundle"]["asset_groups"] for pid in group["roots"]],
+            )
 
     def test_declarative_request_checks_pins_and_structural_fields(self):
         for failure in ("pin", "route"):
