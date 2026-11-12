@@ -90,12 +90,12 @@
       "sha256": "15a39afd3922cfa7c8279afcdff7252b895349fe8713d67f2bb6831719e22002"
     },
     "scripts/lab/shader_segments.py": {
-      "bytes": 12739,
-      "sha256": "2cba875459a7ea35f9f0279696569fd05a6429c9f4b206ad331d5b723dca4872"
+      "bytes": 12742,
+      "sha256": "914dbee65a172770325df03b269999bc6100469b91eb7e731f0957ad35383be7"
     },
     "scripts/lab/shader_source.py": {
-      "bytes": 28411,
-      "sha256": "f6b78e8ca9862e40e1443198939b3d288d90d6ed3e40270680fedbadb662e1aa"
+      "bytes": 29161,
+      "sha256": "3c768c15f29f312347f2e99b0e3ddf8612207db8023f220dcb52c5d51218212a"
     },
     "scripts/lab/shader_deferred.py": {
       "bytes": 16463,
@@ -166,8 +166,8 @@
       "sha256": "e12bf69b2f148cfaa3703d2dd21f1be1f55738f6495cf15b29d7553ba4ee9447"
     },
     "tools/phone-build/accepted-output/shader_sdk.py": {
-      "bytes": 11438,
-      "sha256": "ff7df468266cca97a4e9d8a9e3a02bf363d18b9fc40ca1ff4632834568c0ed19"
+      "bytes": 11819,
+      "sha256": "cf0b6b00152dc0026d66885b603299152ef7f865ab21a4831c21e839c5c69bdd"
     }
   },
   "shaders": [
