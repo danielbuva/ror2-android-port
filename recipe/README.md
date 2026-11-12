@@ -7035,5 +7035,6 @@ game code, third-party implementation, private path or credential is included.
 Generated packs and local evidence stay ignored; this does not establish Unity
 loadability, a complete bundle or device play.
 
-Profile SHA-256:
-`acc2ea9fa96183a4b049f3679b6a2db6583fcce4192d6487bf4cb4a67a00fc21`.
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-whole-game-grandparent-material-records.json` | `acc2ea9fa96183a4b049f3679b6a2db6583fcce4192d6487bf4cb4a67a00fc21` |
