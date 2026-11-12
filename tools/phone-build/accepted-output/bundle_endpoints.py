@@ -11,6 +11,36 @@ import json
 from pathlib import Path
 
 
+def managed_production(pins, provider_pin, receipt_pin):
+    """Retain a produced cohort or a pinned single-gameplay-assembly refresh."""
+    providers = pins.read(provider_pin)
+    receipt = pins.read(receipt_pin)
+    if receipt.get("success") is not True or receipt.get("phase") not in ("managed-produced", "gameplay-refreshed"):
+        raise ValueError("fresh successful managed production required")
+    if "providers_sha256" in receipt and receipt["providers_sha256"] != provider_pin["sha256"]:
+        raise ValueError("managed production provider manifest differs")
+    if receipt["phase"] == "gameplay-refreshed":
+        if receipt.get("providers_sha256") != provider_pin["sha256"] or (receipt.get("provider_count"), receipt.get("reused_provider_count")) != (
+            len(providers),
+            len(providers) - 1,
+        ):
+            raise ValueError("gameplay refresh provider manifest/count differs")
+        base_pin = receipt["base_providers"]
+        base_path = pins.path(base_pin["path"], pins.pin(receipt_pin).parent)
+        base = json.loads(pins.add(base_path, dict(bytes=base_path.stat().st_size, sha256=base_pin["sha256"])).read_bytes())
+        if set(base) != set(providers) or "Assembly-CSharp.dll" not in providers:
+            raise ValueError("gameplay refresh provider membership differs")
+        if any(value["sha256"] != base[name]["sha256"] for name, value in providers.items() if name != "Assembly-CSharp.dll"):
+            raise ValueError("gameplay refresh changed a reused provider")
+        gameplay = receipt["gameplay"]
+        produced = providers["Assembly-CSharp.dll"]
+        if gameplay["sha256"] != produced["sha256"] or pins.path(gameplay["path"], pins.pin(receipt_pin).parent) != pins.path(
+            produced["path"], pins.pin(provider_pin).parent
+        ):
+            raise ValueError("gameplay refresh output differs")
+    return providers
+
+
 def generate_managed(request_path, output):
     """Build current CLR witnesses with the existing metadata-only Cecil reader."""
     import shutil
@@ -22,10 +52,7 @@ def generate_managed(request_path, output):
     request_path, output = Path(request_path).resolve(), Path(output).resolve()
     request = json.loads(request_path.read_bytes())
     pins = InputPins(request_path.parent, owner)
-    providers = pins.read(request["managed_providers"])
-    receipt = pins.read(request["managed_receipt"])
-    if receipt.get("success") is not True or receipt.get("phase") != "managed-produced":
-        raise ValueError("fresh successful managed production required")
+    providers = managed_production(pins, request["managed_providers"], request["managed_receipt"])
     provider_base = pins.pin(request["managed_providers"]).parent
     providers = {name: dict(value, path=str(pins.path(value["path"], provider_base))) for name, value in providers.items()}
     for value in providers.values():
@@ -35,7 +62,9 @@ def generate_managed(request_path, output):
     if registry.get("success") is not True:
         raise ValueError("final player registry production unsuccessful")
     registry_base = pins.pin(request["registry_receipt"]).parent
-    aliases = {name: str(pins.add(pins.path(name, registry_base), pin)) for name, pin in registry["provider_pins"].items()}
+    aliases = pins.read(request["provider_aliases"]) if "provider_aliases" in request else {}
+    alias_base = pins.pin(request["provider_aliases"]).parent if "provider_aliases" in request else registry_base
+    aliases = {name: str(pins.add(pins.path(aliases.get(name, name), alias_base), pin)) for name, pin in registry["provider_pins"].items()}
     tools = request["tools"]
     launcher, compiler, cecil, runtimeconfig = (pins.pin(tools[key]) for key in ("dotnet", "compiler", "cecil", "runtimeconfig"))
     references = [pins.pin(row) for row in tools["references"]]

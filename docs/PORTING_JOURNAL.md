@@ -3807,3 +3807,18 @@ Actual selected Shader bytes and receipt/index hashes checked; candidate handed 
 33 focused host tests and host-only preflight pass; no new runtime owner.
 Prior art: pinned EditorKit typed lookup identities.
 Shader dependency closure, complete graph, Unity typed load, converted play and update remain open.
+
+## J1461 — Accept refreshed managed metadata with exact retained inputs
+
+2026-11-12. The existing metadata witness owner accepts successful gameplay-refresh
+receipts, binding base/provider manifests, counts and the one gameplay output.
+An optional pinned alias map relocates registry inputs with unchanged size/hash checks;
+receipt phases and final-player CLR/registry admission remain independent.
+Actual 332-provider metadata matches the retained current cohort semantically;
+all 1,256 registry inputs and the final player body retain their recorded pins.
+Evidence: `work/coordination/p1-wholegame-1031/phone-chain-audit-1112/current-refreshed-managed-witness-v3/`.
+Generated receipt SHA-256: `5ff68921de6fd45a17409ced82a0c597c0ea076dd0f871600c3eb1c4aed97640`.
+4 affected tests, retained 47 preload + 24 graph tests, Ruff and host preflight pass.
+Prior art: pinned ThunderKit FileIdUtil and AssetRipper MonoScript identity checks retained.
+No game code executed, editor/device used or APK produced. Current CLR/graph admission,
+Unity typed load, converted play and full port-update qualification remain open.
