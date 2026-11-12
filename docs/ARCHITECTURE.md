@@ -40,6 +40,15 @@ owner; no bundle copy or second production supplies these artifacts.
 Signed release-graph integration, source/provider regeneration and the phone
 SQLite/LZ4 runtime remain separate work; this interface adds no device claim.
 
+`bundle_preload.produce_graph` also accepts per-group `preload_roots` as explicit
+destination triples, separate from advertised container roots/subassets. Local
+seeds contribute their complete closure and cache invalidation witnesses;
+external seeds retain their serialized-member slot. Emission and canonical
+repack require their actual staged bodies and full native types, including on
+cache hits. The request qualification owner supplies the same current managed
+checks and closes staged streams on exit. This preserves declared independent
+preloads without adding catalog entries or a runtime owner.
+
 [Alpha policy](ALPHA_POLICY.md) owns packaging/acquisition decisions;
 [screen inventory](SCREEN_COVERAGE.md) maps the current Android surfaces and their
 remaining interaction gates.

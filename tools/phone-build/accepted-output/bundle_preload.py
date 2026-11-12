@@ -275,6 +275,22 @@ def qualify_external_fields(value, body, typ, proofs, endpoint_record):
     return targets
 
 
+def checked_fields(record, raw, native):
+    """Check an actual endpoint's extent, full native type and measured fields."""
+    if (
+        (len(raw), hashlib.sha256(raw).hexdigest()) != (record["bytes"], record["sha256"])
+        or full_type_key(native) != record["full_type"]
+        or hashlib.sha256(native["tree"]).hexdigest() != record["schema"]
+        or native["class_id"] != record["class_id"]
+        or native["hash"].hex() != record["native_type_hash"]
+    ):
+        raise ValueError("Structural route body or full type differs")
+    fields = pointers(raw, native, {})
+    if set(fields.values()) != set(map(tuple, record["edges"])):
+        raise ValueError("Structural route measured pointers differ")
+    return fields
+
+
 def qualify_structural_fields(value, body, typ, routes, endpoint_record):
     """Check complete current routes without historical field provenance.
 
@@ -284,22 +300,8 @@ def qualify_structural_fields(value, body, typ, routes, endpoint_record):
     required emission check. No absent body or inferred type is admitted.
     """
 
-    def checked(record, raw, native):
-        if (
-            (len(raw), hashlib.sha256(raw).hexdigest()) != (record["bytes"], record["sha256"])
-            or full_type_key(native) != record["full_type"]
-            or hashlib.sha256(native["tree"]).hexdigest() != record["schema"]
-            or native["class_id"] != record["class_id"]
-            or native["hash"].hex() != record["native_type_hash"]
-        ):
-            raise ValueError("Structural route body or full type differs")
-        fields = pointers(raw, native, {})
-        if set(fields.values()) != set(map(tuple, record["edges"])):
-            raise ValueError("Structural route measured pointers differ")
-        return fields
-
     owner = tuple(value["destination"])
-    fields = checked(value, body, typ)
+    fields = checked_fields(value, body, typ)
     nonnull = {field: pointer for field, pointer in fields.items() if pointer[1]}
     targets = {}
     for route in routes:
@@ -311,7 +313,7 @@ def qualify_structural_fields(value, body, typ, routes, endpoint_record):
         endpoint, raw, native = endpoint_record(target)
         if tuple(endpoint["destination"]) != target:
             raise ValueError("Structural route endpoint identity differs")
-        checked(endpoint, raw, native)
+        checked_fields(endpoint, raw, native)
         targets[field] = target
     if set(targets) != set(nonnull):
         raise ValueError("Structural routes require every nonnull field")
@@ -441,7 +443,41 @@ def produce(selected, records, sources):
     return produce_graph(selected, graph, sources)
 
 
-def produce_graph(selected, graph, sources, *, emission_cache=None):
+def preload_seeds(selected, group, endpoint_record):
+    """Keep explicit destination seeds separate from advertised subassets.
+
+    External seeds have no parent field to qualify their endpoint. Read and
+    check their actual staged body/type even when a complete output is cached.
+    """
+    local, external, seen = [], [], set()
+    for value in group.get("preload_roots", []):
+        target = tuple(value)
+        if len(target) != 3 or not isinstance(target[2], int) or not target[2] or target in seen:
+            raise ValueError("Preload roots require distinct nonnull destination triples")
+        seen.add(target)
+        if target[:2] == (selected["name"], selected["member"]):
+            local.append(target[2])
+        else:
+            if target[1] == selected["member"] or target[1] not in selected["externals"]:
+                raise ValueError("Preload root serialized member absent or ambiguous")
+            if endpoint_record is None:
+                raise ValueError("External preload root requires an actual endpoint reader")
+            record, raw, native = endpoint_record(target)
+            if tuple(record["destination"]) != target:
+                raise ValueError("Preload root endpoint identity differs")
+            checked_fields(record, raw, native)
+            external.append((selected["externals"].index(target[1]) + 1, target[2]))
+    return local, external
+
+
+def check_preload_seeds(required, endpoint_record):
+    for group in required["asset_groups"]:
+        local, _ = preload_seeds(required, group, endpoint_record)
+        if any(identity not in required["path_ids"] for identity in [*group["roots"], *local]):
+            raise ValueError("Required asset group root or preload root absent")
+
+
+def produce_graph(selected, graph, sources, *, emission_cache=None, endpoint_record=None):
     """Frame grouped preloads from the emitter's fully parsed body graph."""
     validate_graph(graph, len(selected["externals"]))
     owners = external_owners(selected, sources, {})
@@ -464,15 +500,21 @@ def produce_graph(selected, graph, sources, *, emission_cache=None):
         roots = group["roots"]
         if not roots or len(set(roots)) != len(roots):
             raise ValueError("Prefab asset group requires distinct imported roots")
+        local, external = preload_seeds(selected, group, endpoint_record)
+        seeds = sorted(set(roots) | set(local))
+        if any(identity not in graph for identity in seeds):
+            raise ValueError("Required asset group root or preload root absent")
+        external = set(external)
+        external.update(owners[pointer] for pointer in list(external) if pointer in owners)
         packed = None
         if emission_cache is not None:
-            group_scope = EmissionCache.key([scope, roots])
+            group_scope = EmissionCache.key([scope, roots, seeds, sorted(external)])
             previous = emission_cache.get("group_members", group_scope)
-            members = [row[0] for row in struct.iter_unpack("<q", previous)] if previous is not None else sorted(roots)
+            members = [row[0] for row in struct.iter_unpack("<q", previous)] if previous is not None else seeds
             key = EmissionCache.key([group_scope, [(identity, node_keys.get(identity)) for identity in members]])
             packed = emission_cache.get("groups", key)
         if packed is None:
-            dependencies = closure(graph, roots, owners)
+            dependencies = closure(graph, seeds, owners) | external
             if any(file_id not in ranks for file_id, _ in dependencies):
                 raise ValueError("Prefab preload references an absent serialized file")
             ordered = sorted(dependencies, key=lambda pointer: (ranks[pointer[0]], pointer[1]))
@@ -809,6 +851,7 @@ def _emit_closed_native(
             raise ValueError("Required object set must exclude the regenerated AssetBundle container")
         if any(row["class_id"] == 114 for row in selected.values()) and managed_check is None:
             raise ValueError("Required managed objects need current CLR qualification")
+        check_preload_seeds(dict(required, name=name, member=member), endpoint_record)
     while required is None:
         missing = [key for key, row in selected.items() if any(pid and (*key[:2], pid) not in selected for _, pid in row["edges"])]
         if not missing:
@@ -1054,7 +1097,11 @@ def _emit_closed_native(
                     raise ValueError("Required asset group root absent")
             # produce retains GUID order and every root/subasset of each path.
             container_body = produce_graph(
-                dict(name=name, member=member, externals=externals, dependencies=dependencies, asset_groups=groups), graph, {}, emission_cache=emission_cache
+                dict(name=name, member=member, externals=externals, dependencies=dependencies, asset_groups=groups),
+                graph,
+                {},
+                emission_cache=emission_cache,
+                endpoint_record=read_produced,
             )
             roots = [
                 dict(path=group["path"], destination=[name, member, identity], class_id=selected[name, member, identity]["class_id"])
@@ -1261,6 +1308,7 @@ def repack_canonical_aliases(
     codec=None,
     codec_sha256=None,
     cache_directory=None,
+    endpoint_record=None,
 ):
     """Route consumers to explicit catalog owners after strict native emission.
 
@@ -1283,6 +1331,7 @@ def repack_canonical_aliases(
     aliases, selected_records = list(aliases), list(selected_records)
     name, member = required["name"], required["member"]
     canonical = canonical_profile["bundle"]
+    check_preload_seeds(required, endpoint_record)
     if (codec is None) != (codec_sha256 is None):
         raise ValueError("Canonical repack compression needs codec and SHA-256")
     paths = [source, canonical_bundle, *Path(__file__).parent.glob("*.py")]
@@ -1440,7 +1489,7 @@ def repack_canonical_aliases(
             if container is None or set(graph) != set(required["path_ids"]):
                 raise ValueError("Canonical repack required object set differs")
             validate_graph(graph, len(externals))
-            replacements[container] = produce_graph(required, graph, {}, emission_cache=emission_cache)
+            replacements[container] = produce_graph(required, graph, {}, emission_cache=emission_cache, endpoint_record=endpoint_record)
             revised = copy.deepcopy(layout)
             offset = 0
             for obj in sorted(revised["objects"], key=lambda row: row["offset"]):
@@ -1647,6 +1696,7 @@ def produce_request(inputs, output, *, cache_directory=None):
                 codec=codec,
                 codec_sha256=request["codec"]["sha256"],
                 cache_directory=cache_directory,
+                endpoint_record=qualification.endpoints,
             )
             qualification.check_final(final["bundle"])
         pins.check()

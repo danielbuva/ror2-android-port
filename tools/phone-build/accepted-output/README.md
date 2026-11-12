@@ -26,6 +26,15 @@ Relative file paths resolve beside the request. Required fields are:
   and hashes must agree before both are resolved for current-CLR validation.
 - `codec`: pinned executable built for the executing platform.
 
+Each required `asset_groups` row keeps `roots` as the ordered local container
+subassets. Optional `preload_roots` holds distinct `[bundle, member, path_id]`
+destination triples that must preload without becoming container entries. Local
+seeds must belong to the required object set and include their transitive local
+dependencies. External seeds must resolve in the declared external-member table
+and pass actual staged body/type and current managed checks. Both the emitter
+and canonical repacker recheck them before accepting a complete cache hit;
+changed local seed dependencies invalidate only affected preload groups.
+
 Optional `null_script_sources` rows bind `destination` and the exact original
 `type_source` selector, bundle/body hashes and any explicit missing-script policy.
 Optional `canonical` supplies `aliases`, `profile` and `bundle` pins. Actual
