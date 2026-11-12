@@ -141,8 +141,8 @@ the priority; these gates must pass before any public release.
 Game baseline and attribution plan: [retained sustained report](performance-game.md),
 qualified as host-only in [J1359](PORTING_JOURNAL.md#j1359--retained-sustained-game-performance-report).
 The 30-minute Main Nova observation averages 49.06 FPS; 1.537% of active frames
-exceed 50 ms. Raw frame percentiles, battery drain and throttling onset remain
-unmeasured. Periodic interval-mean percentiles cannot close the pacing gate.
+exceed 50 ms. Raw frame percentiles were absent from that historical trace; battery drain and
+throttling onset remain unmeasured. Periodic interval-mean percentiles cannot close the pacing gate.
 [J1389](PORTING_JOURNAL.md#j1389--report-final-ten-minute-sustained-frame-counters)
 adds retained final-ten-minute aggregate counters: 50.032 FPS and 1.274% of
 frames above 50 ms. This is host analysis of assisted play, not a new run or
@@ -153,6 +153,12 @@ reports true p50/p95/p99 of 16.67/16.92/49.94 ms; see the
 [capture qualification](performance-game.md#bounded-raw-capture-qualification).
 Its 80-second observation leaves sustained ordinary-play pacing, capture overhead,
 battery drain and throttling onset open.
+
+The [2026-11-12 sustained assisted observation](performance-game.md#sustained-assisted-raw-frame-observation)
+reconciles 98,855 frames over 30 minutes: 54.927 FPS, raw p50/p95/p99
+16.67/33.29/49.98 ms. Its retained 594.622-second tail reports separate quantiles
+and 5.378 seconds of missing boundary coverage. Ordinary play, visual parity,
+capture overhead, battery drain and causal throttling remain unqualified.
 
 Startup [audio-verification reuse](PORTING_JOURNAL.md#j1386--reuse-install-bound-audio-verification-and-partition-loading-costs)
 and [catalog discovery](PORTING_JOURNAL.md#j1390--reuse-typed-item-provider-discovery-during-ordinary-startup)

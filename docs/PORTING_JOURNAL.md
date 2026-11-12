@@ -3681,3 +3681,18 @@ Persisted READY/cache/APK receipts supply evidence; the Java summary remains abs
 Registry/SDK owners remain synthetic; existing game APK preserved. Installer removed,
 displays asleep, lease/prune pass; game content and Unity typed load remain open.
 Game installation, play and save-preserving port updates remain open.
+
+## J1452 — Report covered-tail quantiles from sustained raw capture
+
+2026-11-12. Existing host report exposes reconciled partial-tail raw quantiles in Markdown.
+Explicit endpoint coverage remains; full-600-second quantiles stay null when incomplete.
+13 focused tests, Ruff/shared-input preflight pass. Evidence: `work/coordination/alpha-sustained-raw-20261112T101109Z/` terminal/report.
+APK SHA-256 `d32a5df34eead477f76bbc281fe3ff89a9878eb288a5ec4090764732df1e6636`.
+Runtime source `c9bc3cbf`; 1,800.810 s assisted, 98,855 reconciled frames, 54.927 FPS.
+Whole p50/p95/p99 16.667/33.290/49.978 ms; frames >50 ms 0.840%.
+Tail 594.622 s/32,236 frames: 54.190 FPS, p50/p95/p99 16.667/33.333/50.000 ms.
+Missing boundary 5.378 s; CPU/GPU/battery peaks 97.5/77.5/38 C; gap max 0.535 s.
+Longest supervised >95 C block 1.203 s; observed >80 C exposure 1,596.274 s.
+Native End Run/menu 2, empty current-PID errors, scratch/OLED/process/lease/prune pass.
+Adopted placement/data verified; storage delta +10,170,368 B includes diagnostics.
+No install; ordinary play, visual parity, energy, capture overhead and throttling stay open.

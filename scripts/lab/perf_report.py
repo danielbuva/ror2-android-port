@@ -283,6 +283,7 @@ def markdown(report):
         "",
         *tail_lines,
         "",
+        quantile_line("Covered-tail individual-frame p50/p95/p99", (tail.get("raw_frame_window") or {}).get("percentiles_ms")),
         quantile_line("Individual-frame p50/p95/p99", report["true_frame_time_percentiles_ms"]),
         quantile_line("Final ten-minute individual-frame p50/p95/p99", tail["true_frame_time_percentiles_ms"]),
         f"Periodic frame-mean p50/p95/p99: {fmt(proxy['p50'])}/{fmt(proxy['p95'])}/{fmt(proxy['p99'])} ms (equal observation weights).",

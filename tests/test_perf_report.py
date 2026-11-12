@@ -67,10 +67,15 @@ class PerfReportTests(unittest.TestCase):
 
     def test_partial_time_boundary_never_claims_full_tail_quantiles(self):
         session, trace = self.raw_fixture((0, 601, 1200))
-        tail = perf.analyze(session, [], trace)["final_ten_minutes"]
+        result = perf.analyze(session, [], trace)
+        tail = result["final_ten_minutes"]
         self.assertTrue(tail["raw_frame_window"]["complete"])
         self.assertEqual(tail["boundary_uncovered_seconds"], 1)
         self.assertIsNone(tail["true_frame_time_percentiles_ms"])
+        text = perf.markdown(result)
+        self.assertIn("Covered-tail individual-frame p50/p95/p99: 51.25/185.12/197.03 ms (3 frames)", text)
+        self.assertIn("599.000/600 s; 1.000 s uncovered", text)
+        self.assertIn("Final ten-minute individual-frame p50/p95/p99: unavailable", text)
 
     def test_overflow_and_late_capture_do_not_invent_missing_frames(self):
         session, trace = self.raw_fixture()
@@ -81,6 +86,8 @@ class PerfReportTests(unittest.TestCase):
             result = perf.analyze(session, [], changed)
             self.assertFalse(result["raw_frame_window"]["complete"])
             self.assertIsNone(result["true_frame_time_percentiles_ms"])
+            if not result["final_ten_minutes"]["raw_frame_window"]["complete"]:
+                self.assertIn("Covered-tail individual-frame p50/p95/p99: unavailable", perf.markdown(result))
 
     def test_raw_counter_or_identity_mismatch_is_refused(self):
         session, trace = self.raw_fixture()
@@ -153,6 +160,7 @@ class PerfReportTests(unittest.TestCase):
         self.assertIsNone(result["throttling_onset_seconds"])
         self.assertIsNone(result["cpu_frame_ms"]["p50"])
         self.assertIn("Individual-frame p50/p95/p99: unavailable", perf.markdown(result))
+        self.assertIn("Covered-tail individual-frame p50/p95/p99: unavailable", perf.markdown(result))
         self.assertEqual(result["final_ten_minutes"]["observed_seconds"], 3)
         self.assertEqual(result["final_ten_minutes"]["boundary_uncovered_seconds"], 597)
 

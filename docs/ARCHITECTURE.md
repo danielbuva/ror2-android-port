@@ -2782,6 +2782,8 @@ hash-bound sidecar, reconciles every retained interval against exact duration,
 frame and strict hitch counters, then computes individual-frame p50/p95/p99 only
 with complete frame coverage. Final-ten-minute quantiles additionally require
 all 600 host seconds; partial endpoint windows retain their explicit coverage.
+Markdown also reports reconciled covered-tail quantiles under a separate label,
+alongside actual endpoint coverage; missing boundary time remains unmeasured.
 `AndroidPresentationCamera` owns default-off `rawFrameTimesRequested` capture:
 `NovaInputBoundary` starts it on the existing presentation camera; the camera
 keeps at most 262,144 float durations (1 MiB), using identical pause/resume
