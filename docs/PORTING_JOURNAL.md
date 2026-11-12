@@ -3565,7 +3565,7 @@ Single candidate, uncontrolled page cache/RNG; no total-load or exclusive I/O cl
 Natural-loss reload was not forced; prior J1375/J1376 evidence remains unchanged.
 No second daily snapshot; sustained play/performance and phone install remain open.
 
-## J1444 — Accept receipt-bound record supplier type tables
+## J1445 — Accept receipt-bound record supplier type tables
 
 2026-11-12. Existing object pack reader accepts `types.json` from current Shader
 and other typed suppliers, with the existing hash and size checks for every output.
@@ -3574,7 +3574,9 @@ Legacy body-only packs remain supported; unknown output names remain rejected.
 metadata tampering and unsupported-output refusal. No supplier replay was needed.
 Evidence: `work/coordination/p1-wholegame-1031/phone-chain-audit-1112/`
 (`current-cohort-player-v3/player.log`, `current-cohort-player-v4/host-validation.json`).
-Current player, CLR witnesses, complete APK, Unity typed load and device gates remain open.
+Fresh host player emits 209 files; current CLR witnesses bind 332 managed providers.
+Player/CLR phases take 316.855/38.685 s, peaking at 416/663 MB child RSS.
+Complete managers/player, native runtime, APK, Unity typed load and device gates remain open.
 
 ## J1444 — Retain bounded active-frame durations for checked quantiles
 
