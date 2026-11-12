@@ -3564,3 +3564,20 @@ Peak CPU/GPU 77.7 °C, 0 s above 80 °C; battery 27 °C; cleanup/OLED/lease pass
 Single candidate, uncontrolled page cache/RNG; no total-load or exclusive I/O claim.
 Natural-loss reload was not forced; prior J1375/J1376 evidence remains unchanged.
 No second daily snapshot; sustained play/performance and phone install remain open.
+
+
+## J1444 — Retain bounded active-frame durations for checked quantiles
+
+2026-11-12. Existing camera owns default-off 1 MiB capture; teardown writes once.
+Exact duration/frame/strict hitch counters bind retained sidecars; pauses stay excluded.
+Pinned UnityExplorer observation cadence and DebugToolkit semantic diagnostics informed scope.
+21 focused checks (including actual camera binary/overflow fixture), Ruff/preflight passed.
+Evidence: `work/coordination/alpha-raw-frames-device-20261112T070204Z/`.
+APK SHA-256 `b9217c23f81cea18cf570bfa309bffda235db6276a9cca898b92a0fbd731a3eb`.
+Source `773ec523`; 80.049 host seconds, 4,693 frames, all ten intervals reconciled.
+Raw p50/p95/p99 16.667/16.917/49.939 ms; 59 >33.334 ms, 41 >50 ms; no drops.
+Ten-minute quantiles unavailable; assisted invincible neutral play/camera drags only.
+Native End Run/trace removal passed; update retained profiles/settings.
+Wider-run peak CPU/GPU 83.6 °C, 1.893 s above 80 °C; battery peak 27 °C.
+Thermal max gap 0.431 s; cleanup/OLED/lease passed. No second daily snapshot.
+Ordinary sustained play, capture overhead, battery efficiency and phone install stay open.

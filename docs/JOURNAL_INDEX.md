@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J1444](PORTING_JOURNAL.md#j1444--retain-bounded-active-frame-durations-for-checked-quantiles) | 2026-11-11 | Retain bounded active-frame durations for checked quantiles | 2026-11-12. |
 | [J1442](PORTING_JOURNAL.md#j1442--coalesce-synchronous-results-diagnostic-report-writes) | 2026-11-11 | Coalesce synchronous results diagnostic report writes | 2026-11-12. |
 | [J1443](PORTING_JOURNAL.md#j1443--generate-current-managed-witnesses-from-produced-providers) | 2026-11-11 | Generate current managed witnesses from produced providers | 2026-11-12. |
 | [J1441](PORTING_JOURNAL.md#j1441--attribute-item-group-manifest-index-and-typed-load-costs) | 2026-11-11 | Attribute item-group manifest, index and typed-load costs | 2026-11-12. |

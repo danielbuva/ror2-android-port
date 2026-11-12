@@ -33,6 +33,22 @@ endpoint window. These measure Unity active-frame intervals, not compositor
 presentation timing. Capture overhead and sustained device qualification remain
 open; historical aggregate evidence below cannot acquire raw quantiles.
 
+### Bounded raw-capture qualification
+
+The 2026-11-12 Main Nova assisted capture retained 8,354 active intervals without
+overflow. All ten observed counter intervals reconciled; the 80.049 host-second
+window contains 4,693 frames and 80,709.293 ms of active-frame duration. True
+p50/p95/p99 are 16.667/16.917/49.939 ms, with 59 frames above 33.334 ms and 41
+above 50 ms. The incomplete ten-minute window correctly has no tail quantiles.
+Native End Run closed the sidecar; retention, scratch removal and cleanup passed.
+This qualifies capture and reconciliation only: invincibility, neutral movement
+and small camera drags do not establish representative ordinary play or overhead.
+Evidence: `work/coordination/alpha-raw-frames-device-20261112T070204Z/`
+(`performance.json`, `terminal.done.json`). APK SHA-256:
+`b9217c23f81cea18cf570bfa309bffda235db6276a9cca898b92a0fbd731a3eb`.
+
+### Historical aggregate inputs
+
 Local source: `work/coordination/alpha-sustained-current-device-20261031T214907Z/`;
 `terminal.done.json` names the sustained result. `metrics.private.json` corroborates
 the counter deltas. Analysis: `work/coordination/perf-game-1104/report.json`.
