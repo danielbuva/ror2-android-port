@@ -595,8 +595,14 @@ public static class WholeCatalogComposed
         if (manifest != null)
             return manifest;
         // Native family preparation consumes values and order, never source line annotations.
-        manifest = JObject.Parse(File.ReadAllText(Path.Combine(Application.persistentDataPath, "payload", "whole-catalog.json")),
-            new JsonLoadSettings { LineInfoHandling = LineInfoHandling.Ignore });
+        // Stream the snapshot without retaining a second, full UTF-16 file copy.
+        using (var file = File.OpenText(Path.Combine(Application.persistentDataPath, "payload", "whole-catalog.json")))
+        using (var reader = new Newtonsoft.Json.JsonTextReader(file))
+        {
+            manifest = JObject.Load(reader, new JsonLoadSettings { LineInfoHandling = LineInfoHandling.Ignore });
+            // JObject.Parse also reads through EOF, rejecting additional content.
+            while (reader.Read()) { }
+        }
         definitionManifest = new WeakReference(manifest);
         return manifest;
     }
