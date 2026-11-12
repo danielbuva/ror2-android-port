@@ -3711,3 +3711,19 @@ Longest supervised >95 C block 1.203 s; observed >80 C exposure 1,596.274 s.
 Native End Run/menu 2, empty current-PID errors, scratch/OLED/process/lease/prune pass.
 Adopted placement/data verified; storage delta +10,170,368 B includes diagnostics.
 No install; ordinary play, visual parity, energy, capture overhead and throttling stay open.
+
+## J1454 — Reuse type resolution within provider-root families
+
+2026-11-12. Existing DefinitionFamily resolves each distinct root type once per call.
+Local reuse preserves root filtering, assignability, order, typed identities and teardown.
+Pinned R2API typed-load ownership and CategoryFamily inform reuse; four focused checks pass.
+Evidence: `work/coordination/alpha-definition-type-cache-device-20261112T110753Z/`.
+APK SHA-256 `14e26064f91aaac6d1ed9349f72f8b685d29cd8cdf2228fe915145e046956e9c`.
+Source `59e26a51`; ordinary Start reaches Commando/Verdant Falls/player/HUD4, no PID errors.
+153 banks/65 network sounds and native results ready; profile/settings hashes retained.
+Filter 14.390 ms versus J1450 167.219 ms; current assets span 23.369 ms.
+30,329 scanned/65 loaded/1 bundle; filter/owner/load/collection costs sum exactly.
+Manifest 0.993 s remains open; native RNG/page cache uncontrolled, no total-load claim.
+CPU/GPU peak 77.7 C, battery peak 31 C; >80 C zero, active sample max gap 0.437 s.
+Adopted placement/data, stopped process/OLED, scratch/lease cleanup and prune pass.
+Sustained play, audibility, visual parity and full-pipeline alpha acceptance remain open.

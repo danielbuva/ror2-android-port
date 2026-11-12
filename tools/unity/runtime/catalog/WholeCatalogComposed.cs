@@ -728,12 +728,24 @@ public static class WholeCatalogComposed
             long assetsStarted = trace == null ? 0 : System.Diagnostics.Stopwatch.GetTimestamp();
             var roots = new HashSet<int>(manifest["provider_roots"].Select(value => (int)value));
             var familyBundles = new Dictionary<string, AssetBundle>(StringComparer.Ordinal);
+            var familyTypes = new Dictionary<string, Type>(StringComparer.Ordinal);
             values =
                 manifest["locations"]
                     .Where(row =>
                            {
                                long started = trace == null ? 0 : System.Diagnostics.Stopwatch.GetTimestamp();
-                               bool matches = roots.Contains((int)row["id"]) && typeof(T).IsAssignableFrom(Type.GetType((string)row["type"], true));
+                               bool matches = false;
+                               if (roots.Contains((int)row["id"]))
+                               {
+                                   string typeName = (string)row["type"];
+                                   Type type;
+                                   if (!familyTypes.TryGetValue(typeName, out type))
+                                   {
+                                       type = Type.GetType(typeName, true);
+                                       familyTypes.Add(typeName, type);
+                                   }
+                                   matches = typeof(T).IsAssignableFrom(type);
+                               }
                                if (trace != null)
                                {
                                    filterTicks += System.Diagnostics.Stopwatch.GetTimestamp() - started;
