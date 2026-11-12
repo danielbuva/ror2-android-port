@@ -3374,3 +3374,18 @@ Evidence: `tests/test_bundle_preload.py`; 42 focused host tests, relocated
 resource readback, Ruff, host preflight and full CI-local (3,201 tests) passed.
 Source output: `49a26a77`; no APK or device output was produced.
 SDK witness relocation, signed graph/source closure and phone conversion stay open.
+
+## J1430 — Attribute native director startup observer work
+
+2026-11-12. Existing director owner times conditional saves, spawn callback and
+final summons scan; native scheduling/RNG and report-write frequency stay intact.
+Evidence: `work/coordination/alpha-director-work-device-20261112T025824Z/`.
+APK SHA-256 `fed3f722464526961e881a2f54178c5e8689786377d49f4093fa0312031e01e5`.
+Source `724c8f07`; ordinary Start reached lakes/Commando/player/HUD, PID errors empty.
+Native wait 8.338604 s/1,453 frames: spawn callback 1.5961 ms, summons 19.6645 ms,
+zero conditional saves. Outside measured work 8.317343 s; no speedup/I/O claim.
+Runner wrongly required a save; retained failure plus offline assessment validates
+zero-call/zero-time and remaining native target/credit/placement contracts.
+Profile/settings hashes preserved; 153 banks ready. Executable observer fixture passed.
+Peak CPU/GPU 76.5 °C, 0 s above 80 °C; battery 27 °C. Cleanup/OLED/lease/prune passed.
+Sustained performance, physical navigation and complete phone installation stay open.
