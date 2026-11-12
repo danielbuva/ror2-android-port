@@ -151,6 +151,10 @@ Startup [audio-verification reuse](PORTING_JOURNAL.md#j1386--reuse-install-bound
 and [catalog discovery](PORTING_JOURNAL.md#j1390--reuse-typed-item-provider-discovery-during-ordinary-startup)
 provide bounded device evidence; complete converter and sustained-game profiles
 remain required.
+Original audio callback attribution identifies bank results as the final startup
+prerequisite in one bounded run; it preserves readiness and scheduling and does
+not qualify a total-load speedup
+([J1422](PORTING_JOURNAL.md#j1422--attribute-original-audio-readiness-callback-waits)).
 
 Proposed game budgets (targets, not accepted results), at original visual fidelity:
 

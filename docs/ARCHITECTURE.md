@@ -5826,6 +5826,12 @@ skill setup and catalog preparation. Markers carry process time/frame without
 stacks, report writes, yields or retained state; existing owners retain setup
 and teardown. Adjacent markers bound work, including intervening callbacks;
 returned/ready markers require separate failure, audio and world checks.
+The audio readiness gate timestamps its existing engine/init-bank/initialize,
+first successful service, exact control and first/last bank-result callbacks
+with a monotonic clock relative to gate creation. The coordinator logs changes
+to the outstanding prerequisite and one terminal timing summary. These observations
+share the existing gate lifetime and locks; callbacks make no Unity calls and
+readiness, original service calls, requests and coroutine scheduling stay intact.
 `SpawnStateBoundary` partitions family loading, ownership snapshots, selected
 configuration, type membership, report writing, native initialization, adaptation
 and identity validation. `PortSession` separates the following profile report,
