@@ -295,6 +295,10 @@ public static partial class WholeCatalogComposed
             .SequenceEqual(actualTokens.OfType<JProperty>().Select(property => property.Name)));
         Check(expectedTokens.Any(token => ((Newtonsoft.Json.IJsonLineInfo)token).HasLineInfo()));
         Check(actualTokens.All(token => !((Newtonsoft.Json.IJsonLineInfo)token).HasLineInfo()));
+        // Values and escaped Unicode spanning the stream buffer retain their types/order.
+        string buffered = "{\"text\":\"" + new string('x', 8191) + "\\u03bb\\uD83D\\uDE80\",\"tail\":[1,true,null]}";
+        WriteManifest(buffered);
+        Check(JToken.DeepEquals(JObject.Parse(buffered), ReadDefinitionManifest()));
         foreach (string invalid in new[] { "{\"unfinished\":", "{\"items\":[1,}", "{} {}", "{} trailing" })
         {
             WriteManifest(invalid);
@@ -393,12 +397,14 @@ public static partial class WholeCatalogComposed
         AssetBundle.assets["second"] = second;
         AssetBundle.assets["excluded"] = excluded;
         var data = new JObject {
-            ["provider_roots"] = new JArray(10, 11, 12),
+            ["provider_roots"] = new JArray(10, 11, 12, 14, 15),
             ["locations"] = new JArray(
                 new JObject { ["id"] = 10, ["type"] = typeof(T).FullName, ["bundle"] = "source", ["path"] = "first" },
                 new JObject { ["id"] = 11, ["type"] = typeof(T).FullName, ["bundle"] = "source", ["path"] = "second" },
                 new JObject { ["id"] = 12, ["type"] = typeof(T).FullName, ["bundle"] = "source", ["path"] = "first" },
-                new JObject { ["id"] = 13, ["type"] = typeof(T).FullName, ["bundle"] = "source", ["path"] = "excluded" }) };
+                new JObject { ["id"] = 13, ["type"] = "Unavailable.NonRoot", ["bundle"] = "source", ["path"] = "excluded" },
+                new JObject { ["id"] = 14, ["type"] = typeof(Definition).FullName, ["bundle"] = "unloaded", ["path"] = "excluded" },
+                new JObject { ["id"] = 15, ["type"] = typeof(Definition).FullName, ["bundle"] = "unloaded", ["path"] = "excluded" }) };
         definitionFamilies.Clear();
         WriteManifest(data.ToString());
         int before = AssetBundle.typedLoads;
@@ -410,8 +416,17 @@ public static partial class WholeCatalogComposed
         File.Delete("payload/whole-catalog.json");
         Check(definitions().SequenceEqual(buffs) && AssetBundle.typedLoads == before + 3);
         Check(DefinitionFamily(new[] { second }).SequenceEqual(buffs));
-        Check(AssetBundle.enumerations == ownerLookups + 1);
-        Refuses(() => DefinitionFamily(new[] { excluded }));
+        var trace = new System.Collections.Generic.List<string>();
+        Check(DefinitionFamily(new[] { second }, trace.Add).SequenceEqual(buffs) && trace.Count == 0);
+        definitionFamilies.Clear();
+        WriteManifest(data.ToString());
+        Check(DefinitionFamily(new[] { second }, trace.Add).SequenceEqual(buffs));
+        Check(trace.Count == 5 && trace[0] == "manifest-begin" && trace[1] == "manifest-ready-assets-begin" &&
+              trace[2].StartsWith("assets-costs scannedRows=6 loadedRows=3 bundles=1 ") &&
+              trace[3] == "assets-ready-validation-begin" && trace[4] == "validation-ready");
+
+        Check(AssetBundle.enumerations == ownerLookups + 2);
+        Refuses(() => DefinitionFamily(new[] { excluded }, trace.Add));
         var previousOwner = owned;
         owned = null;
         Refuses(() => definitions());

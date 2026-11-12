@@ -10,6 +10,24 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J1467](PORTING_JOURNAL.md#j1467--release-retired-roster-scroll-states-without-clearing-other-controls) | 2026-11-12 | Release retired roster scroll states without clearing other controls | 2026-11-12. |
+| [J1464](PORTING_JOURNAL.md#j1464--protect-live-cache-references-without-retaining-superseded-builds) | 2026-11-12 | Protect live cache references without retaining superseded builds | 2026-11-12. |
+| [J1463](PORTING_JOURNAL.md#j1463--bound-collected-catalog-diagnostics-across-32-sessions) | 2026-11-12 | Bound collected catalog diagnostics across 32 sessions | 2026-11-12. |
+| [J1462](PORTING_JOURNAL.md#j1462--relocate-managed-witness-inputs-without-rewriting-receipts) | 2026-11-12 | Relocate managed witness inputs without rewriting receipts | 2026-11-12. |
+| [J1461](PORTING_JOURNAL.md#j1461--accept-refreshed-managed-metadata-with-exact-retained-inputs) | 2026-11-12 | Accept refreshed managed metadata with exact retained inputs | 2026-11-12. |
+| [J1460](PORTING_JOURNAL.md#j1460--supply-the-source-grandparent-default-material) | 2026-11-12 | Supply the source Grandparent default Material | 2026-11-12. |
+| [J1458](PORTING_JOURNAL.md#j1458--resolve-private-selections-through-public-source-profiles) | 2026-11-12 | Resolve private selections through public source profiles | 2026-11-12. |
+| [J1459](PORTING_JOURNAL.md#j1459--sustained-pacing-compared-with-proposed-budgets) | 2026-11-12 | Sustained pacing compared with proposed budgets | 2026-11-12. |
+| [J1457](PORTING_JOURNAL.md#j1457--derive-source-policy-supplier-bindings-from-selected-metadata) | 2026-11-12 | Derive source-policy supplier bindings from selected metadata | 2026-11-12. |
+| [J1456](PORTING_JOURNAL.md#j1456--stream-definition-manifest-snapshots) | 2026-11-12 | Stream definition manifest snapshots | 2026-11-12. |
+| [J1454](PORTING_JOURNAL.md#j1454--reuse-type-resolution-within-provider-root-families) | 2026-11-12 | Reuse type resolution within provider-root families | 2026-11-12. |
+| [J1455](PORTING_JOURNAL.md#j1455--retain-selected-phone-produced-artifacts-before-cleanup) | 2026-11-12 | Retain selected phone-produced artifacts before cleanup | 2026-11-12. |
+| [J1452](PORTING_JOURNAL.md#j1452--report-covered-tail-quantiles-from-sustained-raw-capture) | 2026-11-12 | Report covered-tail quantiles from sustained raw capture | 2026-11-12. |
+| [J1453](PORTING_JOURNAL.md#j1453--preserve-original-paths-during-phone-source-upload) | 2026-11-12 | Preserve original paths during phone source upload | 2026-11-12. |
+| [J1451](PORTING_JOURNAL.md#j1451--complete-signed-phone-bundle-production-with-launcher-feedback) | 2026-11-12 | Complete signed phone bundle production with launcher feedback | 2026-11-12. |
+| [J1450](PORTING_JOURNAL.md#j1450--attribute-post-readiness-network-and-music-startup) | 2026-11-12 | Attribute post-readiness network and music startup | 2026-11-12. |
+| [J1448](PORTING_JOURNAL.md#j1448--omit-unused-process-audio-lease-manifest-annotations) | 2026-11-12 | Omit unused process audio-lease manifest annotations | 2026-11-12. |
+| [J1449](PORTING_JOURNAL.md#j1449--supply-sqlite-and-expose-signed-toolhost-build-execution) | 2026-11-12 | Supply SQLite and expose signed toolhost build execution | 2026-11-12. |
 | [J1446](PORTING_JOURNAL.md#j1446--refresh-complete-player-shader-helper-pins) | 2026-11-12 | Refresh complete player Shader helper pins | 2026-11-12. |
 | [J1447](PORTING_JOURNAL.md#j1447--select-sustained-capture-mode-and-compare-bounded-windows) | 2026-11-12 | Select sustained capture mode and compare bounded windows | 2026-11-12. |
 | [J1444](PORTING_JOURNAL.md#j1444--retain-bounded-active-frame-durations-for-checked-quantiles) | 2026-11-11 | Retain bounded active-frame durations for checked quantiles | 2026-11-12. |
@@ -282,3 +300,5 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 | [J1181](PORTING_JOURNAL.md#j1181--loading-presentation-pacing) | 2026-10-25 | Loading presentation pacing | 2026-10-26. |
 | [J1179](PORTING_JOURNAL.md#j1179--recursive-standard-shaders-and-five-complete-scene-bundles) | 2026-10-25 | Recursive Standard Shaders and five complete scene bundles | 2026-10-26. |
 | [J1178](PORTING_JOURNAL.md#j1178--journal-archived-and-documentation-slimmed) | 2026-10-25 | Journal archived and documentation slimmed | 2026-10-26. |
+| [J1465](PORTING_JOURNAL.md#j1465--bind-managed-dependency-refreshes-to-their-produced-cohort) | 2026-11-12 | Bind managed dependency refreshes to their produced cohort | 2026-11-12. |
+| [J1466](PORTING_JOURNAL.md#j1466--validate-refreshed-ui-providers-and-relocated-startup-producers) | 2026-11-12 | Validate refreshed UI providers and relocated startup producers | 2026-11-12. |

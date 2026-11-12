@@ -1,6 +1,6 @@
 # Sustained game performance baseline
 
-Host analysis, 2026-11-04 UTC, of retained 2026-10-31 Main Nova evidence.
+Current raw-frame observation: 2026-11-12; historical aggregate baseline: 2026-10-31.
 This is an assisted first-stage observation: invincibility, neutral movement and
 small camera drags; composed renderer, 120 Hz display. It does not qualify normal
 play, visual parity, battery efficiency or the performance release gate.
@@ -21,6 +21,17 @@ two retained endpoints leaves tail frame statistics unavailable.
 python3 scripts/lab/perf_report.py RESULT_JSON THERMAL_JSONL --output work/perf/report.json
 ```
 
+The report compares whole-session and covered-tail observations with the proposed
+[pacing targets](public-alpha.md#performance-release-gate), using unrounded values.
+Missing raw quantiles remain unavailable; a partial tail never supplies full-tail
+quantile comparisons. These are proposed-target observations, not release admission.
+The retained sustained trace is below the 60 FPS target both overall (54.927 FPS)
+and in its covered tail (54.190 FPS). Whole-session raw quantiles and the 0.840%
+fraction above 50 ms meet their respective proposed targets. The remaining evidence
+is representative ordinary play on every supported stage, visual parity, unplugged
+energy, clock/limit attribution and causal capture overhead; the existing stationary,
+invincibility-only runner cannot establish these by repetition.
+
 New sustained captures opt in to `rawFrameTimesRequested` on the existing camera
 observer. A bounded 1 MiB buffer retains up to 262,144 active-frame durations,
 excluding suspension and the first resumed interval as before. Native teardown
@@ -30,8 +41,41 @@ checks interval counters and removes the device scratch. Supply this sidecar wit
 total and strict hitch count must reconcile; overflow or absent coverage leaves
 quantiles unavailable. Final-ten-minute quantiles also require a full 600-second
 endpoint window. These measure Unity active-frame intervals, not compositor
-presentation timing. Capture overhead and sustained device qualification remain
-open; historical aggregate evidence below cannot acquire raw quantiles.
+presentation timing. Capture overhead and ordinary sustained-play qualification
+remain open; historical aggregate evidence below cannot acquire raw quantiles.
+
+### Sustained assisted raw-frame observation
+
+The existing sustained owner completed 1,800.810 host seconds on 2026-11-12.
+Every observed counter interval reconciles against the hash-bound, closed raw
+sidecar: 98,855 active frames average 18.206 ms (54.927 FPS), with individual-frame
+p50/p95/p99 of 16.667/33.290/49.978 ms. There are 2,190 frames above 33.334 ms
+(2.215%) and 830 above 50 ms (0.840%). No capture overflow occurred.
+
+The retained final window spans host seconds 1,206.188–1,800.810: 594.622 of
+600 seconds, leaving 5.378 seconds unmeasured. Its 32,236 frames average
+18.453 ms (54.190 FPS), with covered-tail p50/p95/p99 of 16.667/33.333/50.000 ms;
+800 frames exceed 33.334 ms (2.482%) and 305 exceed 50 ms (0.946%). Markdown
+now exposes these already-reconciled partial-window quantiles separately;
+full-600-second quantiles remain unavailable, without interpolating missing data.
+
+Observation-window peaks: CPU 97.5 C, GPU 77.5 C, battery 38 C; CPU/GPU exposure
+above 80 C totals 1,596.274 covered seconds. The maximum thermal gap is 0.535 s,
+with no gaps above one second. Across the wider supervised run, the longest
+above-95 C block through the next low sample is 1.203 s, below the three-second
+safety limit. Heat remains an improvement metric. Shared/adopted storage grew
+10,170,368 bytes across the wider run, including diagnostic evidence.
+
+Native End Run returns to menu session 2; current-PID errors are empty, raw scratch
+is removed, the process is stopped, OLED is asleep and the device lease is released.
+No install or package change occurred. Invincibility-only, neutral movement and
+small camera drags remain assisted; no screenshot was retained for visual parity.
+Ordinary play, capture overhead, unplugged energy and causal throttling stay open.
+Evidence: `work/coordination/alpha-sustained-raw-20261112T101109Z/`
+(`terminal.done.json`, `covered-tail-report.json` and adjacent Markdown).
+Report SHA-256: `ef9fd423331a93c341a7a21de8f245d2968637df7bf478abb92beba8a34c7b65`.
+APK SHA-256: `d32a5df34eead477f76bbc281fe3ff89a9878eb288a5ec4090764732df1e6636`;
+runtime source `c9bc3cbf`.
 
 ### Bounded raw-capture qualification
 

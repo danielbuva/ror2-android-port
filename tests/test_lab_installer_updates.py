@@ -5,6 +5,7 @@ import importlib.util
 import io
 import json
 import os
+import shlex
 import shutil
 from pathlib import Path
 import subprocess
@@ -21,6 +22,225 @@ SPEC.loader.exec_module(LAB)
 
 
 class LabInstallerUpdatesTests(unittest.TestCase):
+    def test_retain_declared_phone_artifact_streams_exact_bytes_before_cleanup(self):
+        phone = LAB.Phone("synthetic-private-selector", 1)
+        phone.owned_installer = True
+        phone.installer_hash = "a" * 64
+        directory = "b" * 16 + "-test/output"
+        name = "emitted/Test Game.bundle"
+        data = b"authored synthetic bundle witness\x00\xff\n" * 1000
+        receipt = {"directory": directory, "files": {name: LAB.sha(data)}}
+        real_run = subprocess.run
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            source = root / "phone/files/owner-input/work/releases/jobs" / directory / name
+            source.parent.mkdir(parents=True)
+            source.write_bytes(data)
+            target = root / "work/retained/content.bundle"
+
+            def transfer(argv, **kwargs):
+                self.assertEqual(argv[:4], [str(phone.adb), "-s", phone.serial, "exec-out"])
+                remote = shlex.split(argv[4])
+                self.assertEqual(remote[:4], ["run-as", LAB.PACKAGE, "sh", "-c"])
+                self.assertTrue(hasattr(kwargs["stdout"], "fileno"))
+                return real_run(["sh", "-c", remote[4]], cwd=root / "phone", **kwargs)
+
+            with patch.object(LAB, "ROOT", root), patch.object(phone, "package_hash", return_value=phone.installer_hash):
+                with patch.object(LAB.subprocess, "run", side_effect=transfer), patch.object(LAB, "DIAGNOSTICS", Mock()) as diagnostics:
+                    self.assertEqual(phone.retain_build_artifact(receipt, name, target), {"bytes": len(data), "sha256": LAB.sha(data)})
+                    diagnostics.record.assert_not_called()
+                self.assertEqual(target.read_bytes(), data)
+                shutil.rmtree(root / "phone")  # Owned device cleanup cannot remove retained output.
+                self.assertEqual(target.read_bytes(), data)
+                with self.assertRaisesRegex(LAB.Failure, "artifact-host-output-exists"):
+                    phone.retain_build_artifact(receipt, name, target)
+            self.assertEqual(list(target.parent.iterdir()), [target])
+
+    def test_retain_artifact_refuses_unowned_undeclared_or_incomplete_results(self):
+        phone = LAB.Phone("synthetic-private-selector", 1)
+        phone.owned_installer = True
+        phone.installer_hash = "a" * 64
+        receipt = {"directory": "b" * 16 + "-test/output", "files": {"content.bundle": LAB.sha(b"complete")}}
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            target = root / "work/retained/content.bundle"
+            with patch.object(LAB, "ROOT", root), patch.object(phone, "package_hash", return_value=phone.installer_hash):
+                for selected, name, output, reason in (
+                    (receipt, "missing.bundle", target, "artifact-receipt-hash"),
+                    ({**receipt, "directory": "../other/output"}, "content.bundle", target, "artifact-receipt-directory"),
+                    ({**receipt, "files": {"../secret": "c" * 64}}, "../secret", target, "artifact-receipt-path"),
+                    (receipt, "content.bundle", root / "tracked.bundle", "artifact-host-output-not-private"),
+                ):
+                    with self.subTest(reason=reason), patch.object(LAB.subprocess, "run") as transfer:
+                        with self.assertRaisesRegex(LAB.Failure, reason):
+                            phone.retain_build_artifact(selected, name, output)
+                        transfer.assert_not_called()
+
+                def partial(argv, **kwargs):
+                    kwargs["stdout"].write(b"partial")
+                    return subprocess.CompletedProcess(argv, 0, b"", b"")
+
+                with patch.object(LAB.subprocess, "run", side_effect=partial):
+                    with self.assertRaisesRegex(LAB.Failure, "artifact-transfer-hash-mismatch"):
+                        phone.retain_build_artifact(receipt, "content.bundle", target)
+                with patch.object(LAB.subprocess, "run", side_effect=subprocess.TimeoutExpired("synthetic", 1)):
+                    with self.assertRaisesRegex(LAB.Failure, "artifact-transfer-unavailable"):
+                        phone.retain_build_artifact(receipt, "content.bundle", target)
+                self.assertFalse(target.exists())
+                self.assertEqual(list(target.parent.iterdir()), [])
+            with patch.object(phone, "package_hash", return_value="d" * 64), patch.object(LAB.subprocess, "run") as transfer:
+                with self.assertRaisesRegex(LAB.Failure, "artifact-installer-not-owned"):
+                    phone.retain_build_artifact(receipt, "content.bundle", target)
+                transfer.assert_not_called()
+
+    def test_import_upload_preserves_space_containing_game_path_and_bytes(self):
+        phone = LAB.Phone("synthetic-private-selector", 1)
+        phone.owned_installer = True
+        name = "import/files/pc/Test Game_Data/StreamingAssets/sample.bundle"
+        data = b"authored synthetic bytes\x00\xff\n"
+        with tempfile.TemporaryDirectory() as temporary:
+
+            def shell(*args, stdin=None, **kwargs):
+                self.assertEqual(args[0], "shell")
+                command = " ".join(args[1:])
+                prefix = "run-as " + LAB.PACKAGE + " "
+                self.assertTrue(command.startswith(prefix))
+                return subprocess.run(["sh", "-c", command.removeprefix(prefix)], input=stdin, cwd=temporary, check=True, capture_output=True).stdout
+
+            with patch.object(phone, "command", side_effect=shell):
+                phone.put(name, data)
+            target = Path(temporary) / "files/owner-input" / name
+            self.assertEqual(target.read_bytes(), data)
+            self.assertEqual([path for path in Path(temporary).rglob("*") if path.is_file()], [target])
+
+    @staticmethod
+    def timeout_records(root, states=("TEST_WAIT", "CHECKING"), name="run-first000", source="a" * 40):
+        directory = root / "work/coordination/installer-update-acceptance" / name
+        directory.mkdir(parents=True)
+
+        def record(number, category, output, phase="baseline-N-check", code=0):
+            path = directory / f"{number:05d}-{category}.json"
+            path.write_bytes(LAB.encoded({"phase": phase, "category": category, "returncode": code, "outcome": "returned"}))
+            path.with_suffix(".stdout.log").write_bytes(output)
+            return path
+
+        record(1, "resolve-source-commit", source.encode() + b"\n", "setup")
+        for number, state in enumerate(states, 10):
+            record(number, "device-state-read", LAB.encoded({"state": state, "message": "synthetic-private"}))
+        ui = f'<hierarchy><node package="{LAB.PACKAGE}"><node package="{LAB.PACKAGE}" text="Check for updates" enabled="true" clickable="true" bounds="[1,2][3,4]"/><node package="{LAB.PACKAGE}" text="synthetic-private"/></node></hierarchy>'.encode()
+        record(5, "device-ui-read", ui)
+        return directory
+
+    def timeout_inspection(self, root, *args):
+        output = io.StringIO()
+        phone_type = LAB.Phone
+        with ExitStack() as stack:
+            stack.enter_context(patch.object(LAB, "ROOT", root))
+            stack.enter_context(patch.dict(os.environ, {}, clear=True))
+            for name in ("read_context", "PrivateDiagnostics", "prepare_artifacts", "publisher_keys", "acceptance", "server"):
+                stack.enter_context(patch.object(LAB, name, side_effect=AssertionError("inspection must not call " + name)))
+            stack.enter_context(patch.object(LAB, "Phone", wraps=phone_type, side_effect=AssertionError("no device construction")))
+            stack.enter_context(patch.object(LAB.subprocess, "run", side_effect=AssertionError("no commands")))
+            stack.enter_context(redirect_stdout(output))
+            code = LAB.main(["--inspect-check-timeout", *args])
+        self.assertEqual(len(output.getvalue().splitlines()), 1)
+        self.assertNotIn(str(root), output.getvalue())
+        self.assertNotIn("synthetic-private", output.getvalue())
+        return code, json.loads(output.getvalue())
+
+    def test_timeout_inspector_preserves_states_and_redacts_private_material(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            self.timeout_records(root, ("TEST_WAIT", "TEST_WAIT", "CHECKING", "UP_TO_DATE", "synthetic-private", {}, None))
+            self.timeout_records(root, name="run-other000", source="b" * 40)
+            before = {str(p): p.read_bytes() for p in root.rglob("*") if p.is_file()}
+            code, result = self.timeout_inspection(root, "a" * 40)
+            self.assertEqual(code, 0)
+            self.assertEqual(result["binding"], "unique-retained-source-not-run-id")
+            self.assertEqual(result["state_counts"], {"TEST_WAIT": 2, "CHECKING": 1, "UP_TO_DATE": 1, "unknown": 3})
+            self.assertEqual(result["first_transitions"], ["TEST_WAIT", "CHECKING", "UP_TO_DATE", "unknown"])
+            self.assertEqual(
+                result["last_retained_check_control"],
+                {"status": "owned-root", "kind": "hierarchy", "count": 1, "enabled_count": 1, "clickable_count": 1, "bounds_valid_count": 1},
+            )
+            self.assertEqual(before, {str(p): p.read_bytes() for p in root.rglob("*") if p.is_file()})
+
+    def test_timeout_inspector_refuses_ambiguous_or_missing_source(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            self.timeout_records(root)
+            for source in ("../synthetic-private", "b" * 40):
+                self.assertEqual(self.timeout_inspection(root, source)[0], 1)
+            self.timeout_records(root, name="run-second00")
+            code, result = self.timeout_inspection(root, "a" * 40)
+            self.assertEqual(code, 1)
+            self.assertEqual(result["source_candidates"], 2)
+            self.assertNotIn("state_counts", result)
+
+    def test_timeout_inspector_rejects_other_modes_before_reading(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            for flag in (
+                "--host-only",
+                "--inspect-state",
+                "--inspect-ui-failure",
+                "--inspect-update-failure",
+                "--allow-test-installs",
+                "--allow-test-notifications",
+                "--qualify-phone-flow",
+                "--qualify-install-prompts",
+            ):
+                with patch.object(LAB, "inspect_check_timeout", wraps=LAB.inspect_check_timeout):
+                    # Prompt conflicts use the existing fixed FAIL output contract.
+                    if flag.startswith("--qualify"):
+                        with redirect_stdout(io.StringIO()):
+                            self.assertEqual(LAB.main(["--inspect-check-timeout", "a" * 40, flag]), 1)
+                    else:
+                        self.assertEqual(self.timeout_inspection(Path(temporary), "a" * 40, flag)[0], 1)
+            self.assertEqual(self.timeout_inspection(Path(temporary), "a" * 40, "--diagnostic-run", "newest")[0], 1)
+
+    def test_timeout_inspector_does_not_follow_log_symlinks(self):
+        for name in ("00010-device-state-read.stdout.log", "00005-device-ui-read.stdout.log", "00001-resolve-source-commit.stdout.log"):
+            with self.subTest(name=name), tempfile.TemporaryDirectory() as temporary:
+                root = Path(temporary)
+                directory = self.timeout_records(root)
+                path = directory / name
+                path.unlink()
+                path.symlink_to(root / "private-missing")
+                code, result = self.timeout_inspection(root, "a" * 40)
+                self.assertEqual(code, 1)
+                self.assertEqual(result["errors"], ["log-inspection-record-unavailable"])
+
+    def test_timeout_inspector_classifies_control_without_tap_or_coordinates(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            directory = self.timeout_records(root)
+            path = directory / "00005-device-ui-read.stdout.log"
+            original = path.read_text()
+            path.write_text(original.replace("[1,2][3,4]", "[0,0][0,0]"))
+            code, result = self.timeout_inspection(root, "a" * 40)
+            self.assertEqual(code, 0)
+            self.assertEqual(result["last_retained_check_control"]["bounds_valid_count"], 0)
+            path.write_text(original.replace(LAB.PACKAGE, "synthetic-private"))
+            code, result = self.timeout_inspection(root, "a" * 40)
+            self.assertEqual(code, 0)
+            self.assertEqual(result["last_retained_check_control"], {"status": "unclassified"})
+
+    def test_timeout_inspector_bounds_transitions_and_distinguishes_absent_reads(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            directory = self.timeout_records(root, ("TEST_WAIT", "CHECKING") * 20)
+            path = directory / "00049-device-state-read.stdout.log"
+            path.write_text("null")
+            code, result = self.timeout_inspection(root, "a" * 40)
+            self.assertEqual(code, 0)
+            self.assertEqual(len(result["first_transitions"]), 16)
+            self.assertEqual(result["last_state"], "null")
+            metadata_path = directory / "00049-device-state-read.json"
+            metadata = json.loads(metadata_path.read_text())
+            metadata["returncode"] = 1
+            metadata_path.write_bytes(LAB.encoded(metadata))
+            self.assertEqual(self.timeout_inspection(root, "a" * 40)[1]["last_state"], "read-unavailable")
+
     def test_transport_reads_retry_signals_but_taps_do_not(self):
         phone = LAB.Phone("synthetic-private-selector", 1)
         killed = subprocess.CompletedProcess([], -9, b"", b"")

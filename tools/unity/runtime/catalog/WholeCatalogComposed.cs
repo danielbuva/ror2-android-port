@@ -25,6 +25,7 @@ public static class WholeCatalogComposed
     static HashSet<string> borrowedNames;
     static readonly List<WeakReference> releasedLocators = new List<WeakReference>();
     static readonly List<WeakReference> releasedManifests = new List<WeakReference>();
+    static int releasedCatalogGenerations;
     static WeakReference currentManifest;
     static WeakReference definitionManifest;
     static string activeInputId;
@@ -222,7 +223,10 @@ public static class WholeCatalogComposed
             throw new Exception("A different whole-catalog identity already has the process audio lease");
         if (originalAudioDependencies == null)
         {
-            var manifest = JObject.Parse(System.Text.Encoding.UTF8.GetString(manifestBytes));
+            // Dependency ownership consumes values and order, never source line annotations.
+            // Parse the freshly hash-validated bytes; a cached snapshot is not byte-bound.
+            var manifest = JObject.Parse(System.Text.Encoding.UTF8.GetString(manifestBytes),
+                new JsonLoadSettings { LineInfoHandling = LineInfoHandling.Ignore });
             var bundles = (JObject)manifest["bundles"];
             var dependencies = bundles.Properties().ToDictionary(property => property.Name,
                 property => property.Value["dependencies"].Select(value => (string)value).ToArray(), StringComparer.Ordinal);
@@ -418,6 +422,7 @@ public static class WholeCatalogComposed
         {
             releasedLocators.Add(new WeakReference(ownedLocator));
             releasedManifests.Add(currentManifest);
+            releasedCatalogGenerations++;
             currentManifest = null;
             activeInputId = null;
             activeAttempt = null;
@@ -493,7 +498,11 @@ public static class WholeCatalogComposed
     }
     public static int[] ReleasedCatalogRetention()
     {
-        return new[] { releasedLocators.Count, releasedLocators.Count(value => value.IsAlive),
+        // Collected targets no longer need diagnostic wrappers. Keep the
+        // generation total independently so pruning does not reset history.
+        releasedLocators.RemoveAll(value => value == null || !value.IsAlive);
+        releasedManifests.RemoveAll(value => value == null || !value.IsAlive);
+        return new[] { releasedCatalogGenerations, releasedLocators.Count(value => value.IsAlive),
                        releasedManifests.Count(value => value != null && value.IsAlive), Addressables.ResourceLocators.Count(),
                        lastDetachedAssetOperations };
     }
@@ -592,8 +601,14 @@ public static class WholeCatalogComposed
         if (manifest != null)
             return manifest;
         // Native family preparation consumes values and order, never source line annotations.
-        manifest = JObject.Parse(File.ReadAllText(Path.Combine(Application.persistentDataPath, "payload", "whole-catalog.json")),
-            new JsonLoadSettings { LineInfoHandling = LineInfoHandling.Ignore });
+        // Stream the snapshot without retaining a second, full UTF-16 file copy.
+        using (var file = File.OpenText(Path.Combine(Application.persistentDataPath, "payload", "whole-catalog.json")))
+        using (var reader = new Newtonsoft.Json.JsonTextReader(file))
+        {
+            manifest = JObject.Load(reader, new JsonLoadSettings { LineInfoHandling = LineInfoHandling.Ignore });
+            // JObject.Parse also reads through EOF, rejecting additional content.
+            while (reader.Read()) { }
+        }
         definitionManifest = new WeakReference(manifest);
         return manifest;
     }
@@ -707,19 +722,52 @@ public static class WholeCatalogComposed
     public static T[] DefinitionFamily<T>(System.Collections.Generic.IEnumerable<T> selected)
         where T : UnityEngine.Object
     {
+        return DefinitionFamily(selected, null);
+    }
+    internal static T[] DefinitionFamily<T>(System.Collections.Generic.IEnumerable<T> selected, Action<string> trace)
+        where T : UnityEngine.Object
+    {
         if (!owned)
             throw new Exception("Complete definition owner unavailable: " + typeof(T).FullName);
         UnityEngine.Object[] values;
         if (!definitionFamilies.TryGetValue(typeof(T).FullName, out values))
         {
+            trace?.Invoke("manifest-begin");
             var manifest = ReadDefinitionManifest();
+            trace?.Invoke("manifest-ready-assets-begin");
+            long filterTicks = 0, ownerTicks = 0, loadTicks = 0;
+            int scannedRows = 0, loadedRows = 0;
+            long assetsStarted = trace == null ? 0 : System.Diagnostics.Stopwatch.GetTimestamp();
             var roots = new HashSet<int>(manifest["provider_roots"].Select(value => (int)value));
             var familyBundles = new Dictionary<string, AssetBundle>(StringComparer.Ordinal);
+            var familyTypes = new Dictionary<string, Type>(StringComparer.Ordinal);
             values =
                 manifest["locations"]
-                    .Where(row => roots.Contains((int)row["id"]) && typeof(T).IsAssignableFrom(Type.GetType((string)row["type"], true)))
+                    .Where(row =>
+                           {
+                               long started = trace == null ? 0 : System.Diagnostics.Stopwatch.GetTimestamp();
+                               bool matches = false;
+                               if (roots.Contains((int)row["id"]))
+                               {
+                                   string typeName = (string)row["type"];
+                                   Type type;
+                                   if (!familyTypes.TryGetValue(typeName, out type))
+                                   {
+                                       type = Type.GetType(typeName, true);
+                                       familyTypes.Add(typeName, type);
+                                   }
+                                   matches = typeof(T).IsAssignableFrom(type);
+                               }
+                               if (trace != null)
+                               {
+                                   filterTicks += System.Diagnostics.Stopwatch.GetTimestamp() - started;
+                                   scannedRows++;
+                               }
+                               return matches;
+                           })
                     .Select(row =>
                             {
+                                long started = trace == null ? 0 : System.Diagnostics.Stopwatch.GetTimestamp();
                                 string owner = (string)row["bundle"];
                                 AssetBundle bundle;
                                 if (!familyBundles.TryGetValue(owner, out bundle))
@@ -729,14 +777,37 @@ public static class WholeCatalogComposed
                                 }
                                 if (!bundle)
                                     throw new Exception("Original definition owner not loaded: " + typeof(T).FullName + "/" + owner);
-                                return bundle.LoadAsset<T>((string)row["path"]);
+                                if (trace != null)
+                                {
+                                    long now = System.Diagnostics.Stopwatch.GetTimestamp();
+                                    ownerTicks += now - started;
+                                    started = now;
+                                }
+                                var asset = bundle.LoadAsset<T>((string)row["path"]);
+                                if (trace != null)
+                                {
+                                    loadTicks += System.Diagnostics.Stopwatch.GetTimestamp() - started;
+                                    loadedRows++;
+                                }
+                                return asset;
                             })
                     .Distinct()
                     .Cast<UnityEngine.Object>()
                     .ToArray();
+            if (trace != null)
+            {
+                long totalTicks = System.Diagnostics.Stopwatch.GetTimestamp() - assetsStarted;
+                trace("assets-costs scannedRows=" + scannedRows + " loadedRows=" + loadedRows +
+                      " bundles=" + familyBundles.Count + " filterTicks=" + filterTicks +
+                      " ownerTicks=" + ownerTicks + " loadTicks=" + loadTicks +
+                      " collectionTicks=" + (totalTicks - filterTicks - ownerTicks - loadTicks) +
+                      " totalTicks=" + totalTicks + " frequency=" + System.Diagnostics.Stopwatch.Frequency);
+            }
+            trace?.Invoke("assets-ready-validation-begin");
             if (values.Length == 0 || values.Any(value => !value) || values.Select(value => value.name).Distinct().Count() != values.Length)
                 throw new Exception("Complete definition identity missing or ambiguous: " + typeof(T).FullName);
             definitionFamilies.Add(typeof(T).FullName, values);
+            trace?.Invoke("validation-ready");
         }
         if (selected.Any(value => !values.Contains(value)))
             throw new Exception("Selected definition is outside original provider family: " + typeof(T).FullName);

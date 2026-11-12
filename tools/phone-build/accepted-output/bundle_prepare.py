@@ -41,9 +41,10 @@ def original_identities(owner, path, source_files=None):
         if source_files is not None and source_files.setdefault(bundle["path"], bundle["sha256"]) != bundle["sha256"]:
             raise ValueError("original source file pins disagree")
         for member in bundle["members"]:
-            for row in member.get("objects", member.get("meshes", [])):
-                for target in row["outputs"]:
-                    add((target["bundle"], target["member"], target["path_id"]), (bundle["path"], member["name"], row["path_id"]))
+            for kind in ("objects", "meshes", "textures", "avatars"):
+                for row in member.get(kind, []):
+                    for target in row["outputs"]:
+                        add((target["bundle"], target["member"], target["path_id"]), (bundle["path"], member["name"], row["path_id"]))
     return result
 
 

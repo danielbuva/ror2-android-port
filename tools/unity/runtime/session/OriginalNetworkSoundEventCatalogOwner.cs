@@ -74,7 +74,7 @@ public static class OriginalNetworkSoundEventCatalogOwner
     // Do not call in no-audio mode: J474's explicit decoder remains the owner.
     public static Snapshot InitializeBeforeWorld(bool explicitlyRequested, bool noAudio,
         bool originalAudioReady, bool originalTermsReturned, bool nativeEngineInitialized,
-        bool originalCatalogLeaseHeld)
+        bool originalCatalogLeaseHeld, Action<string> trace = null)
     {
         if (attempted)
             return Refuse("process-scoped-admission-already-attempted");
@@ -86,7 +86,7 @@ public static class OriginalNetworkSoundEventCatalogOwner
             return Refuse("native-audio-readiness-or-lease-not-proven");
 
         ObservePreCount();
-        var source = WholeCatalogComposed.DefinitionFamily(Array.Empty<NetworkSoundEventDef>());
+        var source = WholeCatalogComposed.DefinitionFamily(Array.Empty<NetworkSoundEventDef>(), trace);
         snapshot.sourceDefinitionCountObserved = source != null;
         snapshot.sourceDefinitionCount = source == null ? 0 : source.Length;
         if (source == null || source.Length == 0)

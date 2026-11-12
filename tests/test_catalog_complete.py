@@ -37,6 +37,44 @@ def pin(path):
 
 
 class CatalogCompletionTests(unittest.TestCase):
+    def test_deferred_references_preserve_subobjects_and_plain_preloads(self):
+        guid = "1234567890abcdef1234567890abcdef"
+        tree = {
+            "skins": [
+                {
+                    "skinDefParamsAddress": {
+                        "m_AssetGUID": guid,
+                        "m_SubObjectName": "mesh",
+                        "m_SubObjectType": "UnityEngine.Mesh, UnityEngine.CoreModule",
+                        "m_SubObjectGUID": guid,
+                    }
+                }
+            ],
+            "preloadGUIDReferences": [guid],
+            "effect": {"assetGUID": guid},
+            "state": {"stringValue": guid + "[avatar]"},
+            "m_Script": {"m_FileID": 0, "m_PathID": 123},
+            "description": "text containing " + guid,
+            "empty": {"m_AssetGUID": ""},
+        }
+        edges = list(C.deferred_references(tree))
+        self.assertEqual([row["key"] for row in edges], [guid + "[mesh]", guid, guid, guid + "[avatar]"])
+        self.assertEqual(edges[0]["field"], ["skins", 0, "skinDefParamsAddress"])
+        self.assertEqual(edges[0]["kind"], "AssetReference")
+        self.assertEqual(edges[0]["subobject_name"], "mesh")
+        self.assertEqual(edges[0]["subobject_type"], "UnityEngine.Mesh, UnityEngine.CoreModule")
+        self.assertEqual(edges[1]["field"], ["preloadGUIDReferences", 0])
+
+    def test_deferred_subobject_type_filters_siblings_without_dropping_assembly(self):
+        mesh = dict(id=1, type="UnityEngine.Mesh, UnityEngine.CoreModule, Version=0.0.0.0")
+        other_assembly = dict(id=2, type="UnityEngine.Mesh, OtherAssembly")
+        avatar = dict(id=3, type="UnityEngine.Avatar, UnityEngine.AnimationModule")
+        candidates = [avatar, other_assembly, mesh]
+        edge = dict(subobject_type="UnityEngine.Mesh, UnityEngine.CoreModule")
+        self.assertEqual(C.deferred_reference_locations(edge, candidates), [mesh])
+        self.assertEqual(C.deferred_reference_locations({}, candidates), candidates)
+        self.assertEqual(C.deferred_reference_locations(dict(subobject_type="Absent, Assembly"), candidates), [])
+
     def test_sprite_ownership_uses_resolved_texture_not_preload_or_name(self):
         members = C.ProducedMembers()
         typ = dict(class_id=213, tree=b"schema")

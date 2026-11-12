@@ -13,6 +13,7 @@ import io
 import json
 from pathlib import Path
 import re
+from types import SimpleNamespace
 
 PREFIX = "tools/phone-build/accepted-output/"
 
@@ -376,6 +377,121 @@ class Graph:
         )
         self.profile_files[name], self.job_profiles[name], self.public_files[name] = path, profile, sources
         return name
+
+    def source_suppliers(self, pins, sources):
+        """Find explicit public pack selectors without opening generated packs."""
+        modules = {}
+
+        def module(name):
+            if name not in modules:
+                path = Path(__file__).resolve().parent.parent / "accepted-output" / (name + ".py")
+                spec = importlib.util.spec_from_file_location("graph_source_" + name, path)
+                modules[name] = importlib.util.module_from_spec(spec)
+                spec.loader.exec_module(modules[name])
+            return modules[name]
+
+        result = {}
+        for pin in sorted(set(pins)):
+            if pin not in self.profiles:
+                raise ValueError("missing source supplier profile: " + pin)
+            path = self.repo / self.profiles[pin]
+            if digest(path) != pin:
+                raise ValueError("source supplier profile drift: " + self.profiles[pin])
+            if not str(path).endswith(".jsonl.gz") and owner(json.loads(path.read_bytes())) not in {
+                "record_produce",
+                "mesh_produce",
+                "avatar_produce",
+                "texture_produce",
+                "sprite_produce",
+            }:
+                raise ValueError("source lookup requires direct typed record selectors: " + pin)
+            # Reuse preparation's body selectors; type_source is never evidence
+            # that a profile produces that original object's serialized body.
+            reader = module("record_produce") if str(path).endswith(".jsonl.gz") else None
+            identities = module("bundle_prepare").original_identities(SimpleNamespace(A=reader), path)
+            for record, originals in identities.items():
+                for source in originals & sources:
+                    result.setdefault(source, set()).add((pin, record))
+        return result
+
+    def bundle_bindings(self, rows, bundle, member, source_profiles=()):
+        """Map selected metadata to fresh pack jobs without reading pack bodies.
+
+        The caller supplies only this member's selected records. Unresolved rows
+        remain explicit; the result is not a runnable policy or graph admission.
+        Routes, staged endpoints and managed witnesses retain their own owners.
+        source_profiles opts into public selector discovery for private record
+        pins. A unique producer output replaces the private pack identity while
+        selection retains that prior identity; source and destination stay fixed.
+        """
+        if source_profiles:
+            rows = list(rows)
+            sources = {tuple(row["source"]) for row in rows if isinstance(row.get("source"), list) and len(row["source"]) == 3}
+            candidates = self.source_suppliers(source_profiles, sources)
+        else:
+            candidates = {}
+        bindings, suppliers, profiles, unresolved, destinations, failures = [], {}, set(), [], set(), {}
+        for row in rows:
+            destination = row.get("destination", [])
+            pin = row.get("record")
+            record_source = row.get("record_source")
+            selection = None
+            problem = None
+            if len(destination) != 3 or tuple(destination[:2]) != (bundle, member):
+                problem = "foreign or missing destination"
+            elif tuple(destination) in destinations:
+                problem = "duplicate destination"
+            elif any(not isinstance(row.get(key), list) or len(row[key]) != 3 for key in ("source", "record_source")):
+                problem = "explicit source and record_source identities required"
+            elif pin not in self.profiles:
+                available = candidates.get(tuple(row["source"]), set())
+                matches = {candidate for candidate in available if candidate[1] == tuple(record_source)}
+                if not matches:
+                    matches = available
+                if len(matches) == 1:
+                    selection = dict(record=pin, record_source=record_source)
+                    pin, supplier_record = next(iter(matches))
+                    record_source = list(supplier_record)
+                else:
+                    problem = "ambiguous source supplier profiles" if matches else "missing source supplier profile"
+            if problem is None and pin in failures:
+                problem = failures[pin]
+            elif problem is None and pin not in suppliers:
+                try:
+                    job = self.build(pin)
+                    required = ("receipt", "objects", "index", "types")
+                    if not set(required) <= self.jobs[job]["artifacts"].keys():
+                        problem = "supplier requires a final container instead of a typed record pack"
+                    else:
+                        path = self.profiles[pin]
+                        source = self.repo / path
+                        suppliers[pin] = dict(
+                            name=pin,
+                            profile=dict(path="${repo}/" + path, sha256=pin, bytes=source.stat().st_size),
+                            **{key: self.artifact_pin(job, key) for key in required},
+                        )
+                        profiles.add(path)
+                except ValueError as error:
+                    problem = str(error)
+                if problem is not None:
+                    failures[pin] = problem
+            if len(destination) == 3:
+                destinations.add(tuple(destination))
+            if problem is not None:
+                failure = dict(destination=destination, record=pin, reason=problem)
+                if selection is not None:
+                    failure["selection"] = selection
+                if source_profiles and isinstance(row.get("source"), list) and len(row["source"]) == 3:
+                    failure["candidates"] = [
+                        dict(supplier=candidate, record_source=list(record)) for candidate, record in sorted(candidates.get(tuple(row["source"]), ()))
+                    ]
+                unresolved.append(failure)
+            else:
+                binding = {key: row[key] for key in ("destination", "source")} | dict(supplier=pin, record_source=record_source)
+                if selection is not None:
+                    binding["selection"] = selection
+                bindings.append(binding)
+        return dict(bindings=bindings, suppliers=[suppliers[key] for key in sorted(suppliers)], profiles=sorted(profiles), unresolved=unresolved)
 
     def bundle_preload(self, path, profile, active):
         """Bind fresh suppliers and actual final containers to a signed policy."""

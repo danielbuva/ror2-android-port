@@ -6,6 +6,33 @@ under ignored `work/coordination/`, not here. Entries J01–J1177 (2026-09-12 to
 [history/journal-J1-J1177/PORTING_JOURNAL.md](history/journal-J1-J1177/PORTING_JOURNAL.md) with its
 [index](history/journal-J1-J1177/JOURNAL_INDEX.md); numbering continues here.
 
+## J1466 — Validate refreshed UI providers and relocated startup producers
+
+2026-11-12. Both authored UI schema consumers use the final registry's existing
+managed-provider validator, accepting truthful dependency/gameplay refreshes while
+retaining manifest, base-cohort, count and reused-provider hash checks. The parent
+player owner still validates current compiled sources before deriving the registry.
+Synthetic tests exercise both consumers, preserve the receipt and retained input
+pins, and refuse changed manifests, reuse counts and reused-provider hashes.
+Startup verification accepts identical producer bytes at another path, preserving
+all input/output pins and rejecting changed producer bytes. Evidence:
+`tests/test_sdk_metadata_inventory_host.py`, `tests/test_phone_startup_metadata.py`.
+Focused tests and host preflight pass. No APK changed. Fresh player/CLR/native, graph
+admission, typed load and converted-device play remain open.
+
+## J1465 — Bind managed dependency refreshes to their produced cohort
+
+2026-11-12. The existing CLR witness reader accepts explicitly listed rebuilt
+dependencies alongside gameplay, checking their paths/hashes and honest reuse
+counts while preserving every unlisted provider hash. Legacy gameplay-only
+receipts remain valid. This permits current gameplay to consume its matching
+audio-owner API instead of a retained assembly missing startup members.
+Final registry generation shares this validation, retaining source-commit,
+compiled-source and actual CLR provider checks without relabelling receipts.
+Evidence: `tests/test_sdk_metadata_inventory_host.py` receipt fixtures.
+Remaining: fresh production, final registry/graph admission, typed load and
+converted-device play; this host contract establishes none of those gates.
+
 ## J1178 — Journal archived and documentation slimmed
 
 2026-10-26. The 3.8 MB, 1,132-entry journal and its index moved unchanged to `docs/history/journal-J1-J1177/`;
@@ -3621,3 +3648,263 @@ Evidence: `work/coordination/p1-wholegame-1031/phone-chain-audit-1112/`
 (`current-manager-shaders-v1/production/result.json`, `manager-cohort-repair-1112.md`).
 Complete player/current-CLR/native production, Unity typed load, APK and device
 gates remain open. No new runtime owner or device claim.
+
+## J1449 — Supply SQLite and expose signed toolhost build execution
+
+2026-11-12. Existing app-host native plan pins the Android CPython SQLite module
+and SQLite dependency, preserving their actual lookup names and tool notices.
+Debuggable instrumentation can invoke the existing signed release-build worker;
+request/trust validation and thermal supervision retain their existing owners.
+Complete current player/CLR/native production also passed: 210 player files,
+332 managed providers and 826 native compile tasks; all 15 cohort pins verified.
+Evidence: `work/coordination/p1-wholegame-1031/phone-chain-audit-1112/`
+(`current-complete-player-v4/cohort-handoff.json`, SHA-256
+`76299789b9ca8b4aaf57e771fce545a078beea302bc3373d14c0db7f9e5ea204`).
+Android signed-chain execution, typed load, APK assembly and play remain open.
+## J1448 — Omit unused process audio-lease manifest annotations
+
+2026-11-12. Existing audio lease parses fresh SHA-validated bytes without line info;
+retained dependencies, verification, readiness and teardown stay unchanged.
+R2API phase/ownership prior art and J1393 reader policy inform the same owner.
+Seven focused dependency/manifest checks and host preflight passed once.
+Evidence: `work/coordination/alpha-audio-lease-parse-candidate-20261112T091432Z/`.
+APK SHA-256 `b8c87610fae11539df07f8a5538d66c77007d8290ad7e2f3ce3cb32d0cb24900`.
+Source `ac1b38cc`; ordinary Start, Commando/Verdant Falls/player/HUD4 >5 s pass.
+Native 153 banks/65 network sounds; cached274/full0; current-PID errors empty.
+In-place update retains profiles/settings. Owner span 1.230 to 1.097 s;
+baseline Distant Roost, native RNG/cache uncontrolled: no causal speedup claim.
+Candidate CPU/GPU peak 78.5 C, battery 28 C, active thermal max gap 0.414 s.
+Scratch removed, process stopped, OLED asleep, lease released and prune passed.
+Sustained play, audibility and full-pipeline performance/alpha acceptance stay open.
+
+## J1450 — Attribute post-readiness network and music startup
+
+2026-11-12. Existing audio/family owners expose sparse spans and aggregate tick costs.
+R2API phase/ownership prior art informs observation; native calls/yields stay unchanged.
+Four focused host checks, Ruff and preflight passed once; accepted build source `c9bc3cbf`.
+Evidence: `work/coordination/alpha-audio-network-cost-device-20261112T094422Z/`.
+APK SHA-256 `d32a5df34eead477f76bbc281fe3ff89a9878eb288a5ec4090764732df1e6636`.
+Ordinary Start reaches Commando/Distant Roost/player/HUD4; current-PID errors empty.
+Native 153 banks/65 network sounds ready; in-place update retains profiles/settings.
+Readiness-to-return 1.132 s: family manifest 0.942 s, assets 0.177 s, music 0.0066 s.
+30,329 rows yield 65 loaded rows; filter/owner/load/collection ticks sum exactly.
+Native RNG/page cache uncontrolled; attribution only, no causal speedup claim.
+CPU/GPU peak 75.3 C, battery peak 27 C; active thermal max gap 0.434 s.
+Adopted placement, scratch removal, stopped process/OLED/lease cleanup and prune pass.
+Sustained play, audibility and full-pipeline performance/alpha acceptance remain open.
+
+## J1451 — Complete signed phone bundle production with launcher feedback
+
+2026-11-12. Public release includes required `launcher/feedback.js`; import checks reject missing modules.
+17 focused host tests, Ruff/preflight pass; Android synthetic source/bundle, canonical
+repack, catalog and manifest jobs complete through the signed release worker.
+Evidence: `work/coordination/p1-wholegame-1031/phone-chain-audit-1112/phone-signed-bundle-chain-v5/`.
+Cold/warm/policy update: 99.714/58.797/78.210 s, cache receipts 8/8/11; exactly three
+policy-dependent jobs rebuild, and all APKs use the same on-device signing key.
+Cold signed fixture APK SHA-256 `1682b249f241ac6269134638ca7b4a527a14fe774d7ccc6cfa4396b7aec871aa`.
+Sampled summed app-UID RSS peaks at 329,388 KiB (lower bound); staged storage 10,068/17,279/24,872 KiB.
+CPU/GPU peak 55.7 C in production, no time above 80 C; battery readback 28 C.
+Persisted READY/cache/APK receipts supply evidence; the Java summary remains absent.
+Registry/SDK owners remain synthetic; existing game APK preserved. Installer removed,
+displays asleep, lease/prune pass; game content and Unity typed load remain open.
+Game installation, play and save-preserving port updates remain open.
+
+## J1453 — Preserve original paths during phone source upload
+
+2026-11-12. Existing lab uploader accepts restricted paths with spaces and quotes both shell layers.
+113 installer tests, binary/path regression, Ruff and host preflight pass.
+Current-source 40-byte native body/full tree completes signed bundle/catalog/manifest jobs on Android.
+Evidence: `work/coordination/p1-wholegame-1031/phone-chain-audit-1112/phone-actual-physmat-chain-v2/`.
+Bundle SHA-256 `e48154e128cdc32b30704c9ce411edf58492b24524653016a5872f3632823ec8`.
+Cold/warm/policy: 83.821/58.082/71.703 s, cache 6/6/9; three changed jobs rebuild, same signer.
+Cold fixture APK SHA-256 `ae12d7de713acdd5181357664797d59e57962ceb13f2deb1595b842bfb03be59`.
+Sampled app-UID RSS peaks 363,864/323,420/321,168 KiB (lower bounds).
+Staged storage 10,402/17,557/24,996 KiB; production CPU/GPU peaks 51.3/52.1/52.5 C.
+No time above 80 C; battery readback 28 C. Registry/SDK remain synthetic; cohort unconsumed.
+Receipts persist; phone outputs were removed with owned-installer cleanup, so no typed-load handoff.
+Existing game unchanged; displays asleep, lease/prune pass. No continuous battery-maximum claim.
+Game installation, Unity typed load, play and save-preserving port updates remain open.
+## J1452 — Report covered-tail quantiles from sustained raw capture
+
+2026-11-12. Existing host report exposes reconciled partial-tail raw quantiles in Markdown.
+Explicit endpoint coverage remains; full-600-second quantiles stay null when incomplete.
+13 focused tests, Ruff/shared-input preflight pass. Evidence: `work/coordination/alpha-sustained-raw-20261112T101109Z/` terminal/report.
+APK SHA-256 `d32a5df34eead477f76bbc281fe3ff89a9878eb288a5ec4090764732df1e6636`.
+Runtime source `c9bc3cbf`; 1,800.810 s assisted, 98,855 reconciled frames, 54.927 FPS.
+Whole p50/p95/p99 16.667/33.290/49.978 ms; frames >50 ms 0.840%.
+Tail 594.622 s/32,236 frames: 54.190 FPS, p50/p95/p99 16.667/33.333/50.000 ms.
+Missing boundary 5.378 s; CPU/GPU/battery peaks 97.5/77.5/38 C; gap max 0.535 s.
+Longest supervised >95 C block 1.203 s; observed >80 C exposure 1,596.274 s.
+Native End Run/menu 2, empty current-PID errors, scratch/OLED/process/lease/prune pass.
+Adopted placement/data verified; storage delta +10,170,368 B includes diagnostics.
+No install; ordinary play, visual parity, energy, capture overhead and throttling stay open.
+
+## J1455 — Retain selected phone-produced artifacts before cleanup
+
+2026-11-12. Existing installer lab owner streams explicitly selected cache-receipt files to ignored host storage.
+Exact installer ownership, declared membership and output hash qualify publication; partial transfers leave no file.
+Binary bytes bypass buffered diagnostics; package cleanup remains with its existing owner.
+115 focused host tests, Ruff and host-only preflight pass; binary/spaced-path and interruption fixtures included.
+Evidence: `tests/test_lab_installer_updates.py` and
+`work/coordination/p1-wholegame-1031/phone-chain-audit-1112/retained-output-host-v1/acceptance.md`.
+Prior art: pinned R2API address/handle lifetime; J1453 exposed receipt-only retention after installer removal.
+Host contract only; no phone replay or reusable device artifact yet. Unity typed load, play and update remain open.
+## J1454 — Reuse type resolution within provider-root families
+
+2026-11-12. Existing DefinitionFamily resolves each distinct root type once per call.
+Local reuse preserves root filtering, assignability, order, typed identities and teardown.
+Pinned R2API typed-load ownership and CategoryFamily inform reuse; four focused checks pass.
+Evidence: `work/coordination/alpha-definition-type-cache-device-20261112T110753Z/`.
+APK SHA-256 `14e26064f91aaac6d1ed9349f72f8b685d29cd8cdf2228fe915145e046956e9c`.
+Source `59e26a51`; ordinary Start reaches Commando/Verdant Falls/player/HUD4, no PID errors.
+153 banks/65 network sounds and native results ready; profile/settings hashes retained.
+Filter 14.390 ms versus J1450 167.219 ms; current assets span 23.369 ms.
+30,329 scanned/65 loaded/1 bundle; filter/owner/load/collection costs sum exactly.
+Manifest 0.993 s remains open; native RNG/page cache uncontrolled, no total-load claim.
+CPU/GPU peak 77.7 C, battery peak 31 C; >80 C zero, active sample max gap 0.437 s.
+Adopted placement/data, stopped process/OLED, scratch/lease cleanup and prune pass.
+Sustained play, audibility, visual parity and full-pipeline alpha acceptance remain open.
+
+## J1456 — Stream definition manifest snapshots
+
+2026-11-12. Existing definition reader streams JSON without a whole-file UTF-16 copy.
+Values/order/types, trailing-content refusal and weak snapshot/reset lifetime remain intact.
+Three focused C# checks/shared-input preflight pass; buffer-boundary Unicode included.
+Evidence: `work/coordination/alpha-manifest-stream-device-20261112T113032Z/`.
+APK SHA-256 `caa958cd69fd0309639c0246c9156a2658cb0c38715973b7748e7d3e7d9a384b`.
+Source `b1e4f69a`; ordinary Start reaches Commando/Distant Roost/player/HUD4, no PID errors.
+153 banks/65 network sounds and native results ready; profile/settings hashes retained.
+30,329 rows/65 loads/1 bundle; network manifest 0.101 ms, results-type manifest 1.100 s.
+Snapshot reuse/page cache uncontrolled; no load-speed claim. Host diagnostic RSS fell 50.4 MB.
+Pinned R2API typed-load/handle ownership remains prior art; no content or scheduling change.
+CPU/GPU peak 74.9 C, battery peak 28 C; >80 C zero, active sample max gap 0.427 s.
+Adopted placement/data, stopped process/OLED, scratch/lease cleanup and prune pass.
+Sustained play, audibility, visual parity and all broad alpha gates remain open.
+
+## J1457 — Derive source-policy supplier bindings from selected metadata
+
+2026-11-12. Existing release owner maps explicit original, pack and destination
+identities to public profile pins and fresh typed-record artifacts, without body reads.
+Every unresolved row remains explicit; final containers retain staged ownership.
+Preparation reverses texture/avatar outputs alongside objects/meshes, preserving ambiguity.
+Authored signed dispatch covers preparation, emission, canonical repack, catalog,
+native manifest and selective update reuse through the derived bindings.
+79 focused host tests, Ruff and host-only preflight pass; no device or editor used.
+Evidence: `work/coordination/p1-wholegame-1031/phone-chain-audit-1112/source-policy-bindings-v2/`
+and `tests/test_bundle_prepare.py`, `tests/test_release_graph.py`.
+Prior art: pinned EditorKit typed cache identities; existing release/preparation owners extended.
+Current-game graph admission, Unity typed load, converted play and port update remain open.
+
+## J1459 — Sustained pacing compared with proposed budgets
+
+2026-11-12. The existing host report compares unrounded whole-session and covered-tail
+FPS, raw quantiles and hitch fractions against the proposed public-alpha targets.
+It preserves unavailable full-tail quantiles and states workload/energy/visual/clock
+and capture-overhead evidence that a retained observation cannot establish.
+Retained input hashes reconcile; assisted observation averages 54.927 FPS overall
+and 54.190 FPS over its 594.622-second tail, both below the proposed 60 FPS target.
+Evidence: `work/coordination/alpha-performance-gate-20261112/report.json`; SHA-256
+`a22b067084cbc02441a9d0baedc53cd316f8b41e14d2cc130474d166a7f36a21`.
+Validation: 15 focused host tests and Ruff pass; no build, new APK or device run.
+Remaining: representative ordinary-play qualification and every broad alpha gate.
+## J1458 — Resolve private selections through public source profiles
+
+2026-11-12. Existing release owner searches explicitly chosen public body selectors
+when retained selections name a private pack index. A unique original-source/output
+candidate supplies the fresh record identity; prior selection lineage is retained.
+Missing/ambiguous candidates remain explicit, and only chosen suppliers become jobs.
+Original source/destination and preparation, type/PPtr and current-CLR gates stay intact.
+Authored signed preparation/emission/repack/catalog/manifest/update chain passes with
+private and fresh output identities differing. 33 focused host tests, Ruff and
+host-only preflight pass; no APK produced and no editor or device used.
+Evidence: `work/coordination/p1-wholegame-1031/phone-chain-audit-1112/public-source-selectors-v1/`.
+Prior art: pinned EditorKit typed lookup/collisions; existing release/preparation owners extended.
+Current graph admission, Unity typed load, converted play and port update remain open.
+
+## J1460 — Supply the source Grandparent default Material
+
+2026-11-12. An audited public profile selects the original Material through the
+existing native record owner, preserving its body/type except one checked Shader PPtr.
+All 10 source pointers were parsed; the nine Texture references remain null.
+Persisted pack: 1 record, 1,064 B, SHA-256
+`f57650ad0c140d260adff5220b07c155ca37540e45c0d9b81a95652508f4faf0`.
+Evidence: `work/coordination/p1-wholegame-1031/phone-chain-audit-1112/grandparent-material-v1/`.
+Production 0.043 s; wrapper 0.196 s, child peak RSS 65,585,152 B; heat unmeasured.
+Actual selected Shader bytes and receipt/index hashes checked; candidate handed to scene owner.
+33 focused host tests and host-only preflight pass; no new runtime owner.
+Prior art: pinned EditorKit typed lookup identities.
+Shader dependency closure, complete graph, Unity typed load, converted play and update remain open.
+
+## J1461 — Accept refreshed managed metadata with exact retained inputs
+
+2026-11-12. The existing metadata witness owner accepts successful gameplay-refresh
+receipts, binding base/provider manifests, counts and the one gameplay output.
+An optional pinned alias map relocates registry inputs with unchanged size/hash checks;
+receipt phases and final-player CLR/registry admission remain independent.
+Actual 332-provider metadata matches the retained current cohort semantically;
+all 1,256 registry inputs and the final player body retain their recorded pins.
+Evidence: `work/coordination/p1-wholegame-1031/phone-chain-audit-1112/current-refreshed-managed-witness-v3/`.
+Generated receipt SHA-256: `5ff68921de6fd45a17409ced82a0c597c0ea076dd0f871600c3eb1c4aed97640`.
+4 affected tests, retained 47 preload + 24 graph tests, Ruff and host preflight pass.
+Prior art: pinned ThunderKit FileIdUtil and AssetRipper MonoScript identity checks retained.
+No game code executed, editor/device used or APK produced. Current CLR/graph admission,
+Unity typed load, converted play and full port-update qualification remain open.
+
+## J1462 — Relocate managed witness inputs without rewriting receipts
+
+2026-11-12. The existing metadata owner accepts a pinned exact-path relocation map;
+unchanged provider manifests, refresh receipts and final registry inputs retain their hashes.
+Staged files use the existing size/hash checks before and after metadata inspection.
+Registry aliases remain a separate identity contract; no assembly code is executed.
+Authored fixtures remove original files, generate metadata from staged inputs and reject
+missing or changed providers. All 5 metadata and 47 preload tests, Ruff and host preflight pass.
+Evidence: `work/coordination/p1-wholegame-1031/phone-chain-audit-1112/managed-input-relocation-v2/`.
+Prior art: J1461 retained-input checks and the existing metadata-only Cecil reader.
+No APK produced or device/editor used. Current CLR/graph admission, Unity typed load,
+converted play and complete phone install/update qualification remain open.
+
+## J1463 — Bound collected catalog diagnostics across 32 sessions
+
+2026-11-12. WholeCatalogComposed drops collected/null weak-reference wrappers
+while preserving live targets and cumulative generations; release ownership is unchanged.
+Five focused extracted-method tests, Ruff and host preflight pass; code-only build passes.
+APK SHA-256: `8bde26e6a44af7b29e805f453f2bfb4d7085ab013cfad271668d5057309b88c4`.
+Evidence: `work/coordination/alpha-retention-wrapper-device32-20261112T123603Z/terminal.done.json`.
+All 32 assisted sessions complete; menus 2–33 show zero released locator/manifest
+live targets, two active locators and exact cumulative generations 1–32.
+Wrapper-list pruning is host-fixture verified; device telemetry counts live targets only.
+Menus 18–33 still grow 634,880 managed bytes, fitted 35,990.588 bytes/menu: no plateau.
+Series wall time 4,313.724 s; peak CPU/GPU 95.9 C, 752.715 s above 80 C.
+In-place install preserves profile/settings hashes; stopped process, OLED sleep and lease release pass.
+Remaining: retained-owner attribution, a plateau, physical navigation and ordinary-play qualification.
+
+## J1464 — Protect live cache references without retaining superseded builds
+
+2026-11-12. Build-cache protection now selects state/baseline APK pins, current
+build/base entries and authoritative installed APK receipts; nested content hashes
+and historical sync inventories no longer pin cache entries. Explicit keeps and
+the age guard remain; JSON plans expose protection reasons.
+After retiring completed alpha keep markers, the 3-hour dry run forecast 25.77 GB;
+one application retired 24 superseded entries (another aged into eligibility),
+77.40 GB logical / 22.81 GB physical freed; cache 99.95 → 22.55 GB.
+Latest alpha APK `8bde26e6a44af7b29e805f453f2bfb4d7085ab013cfad271668d5057309b88c4`
+and current base retained; JSON receipts remain. Evidence:
+`work/cleanup-analysis/alpha-cache-acceptance-20261112.json` and referenced ledger.
+18 host tests, Ruff, public audit and canonical host preflight passed.
+No device behaviour or alpha gameplay gate is qualified by this storage change.
+
+## J1467 — Release retired roster scroll states without clearing other controls
+
+2026-11-12. SurvivorSelectionBoundary owns exact IMGUI roster states; menu cleanup
+and PortSession destruction remove only matching entries, preserving foreign/replaced states.
+Exact SDK/40-cycle/two-owner fixtures, 12 feedback/settings tests, Ruff, source-pin
+checks and host preflight pass; code-only build passes.
+APK SHA-256: `220f3c3493c15b87d19dcce0fbc8bc50c39d3cc6443c2abb8fb3e175a84ff6f3`.
+Evidence: `work/coordination/alpha-roster-scroll-device-20261112T155558Z/acceptance-assessment.json`.
+Three supervised sessions continue through Start/loss/abandon; menus 2/4 retain zero
+ScrollViewState objects. Direct counts correct the absent-group evaluator failure;
+the original failed terminal is retained, without rerunning captures.
+Other managed objects grow 68,227 bytes; no global memory plateau is established.
+Capture wall 467.970 s; peak CPU/GPU 88.4 C, 18.218 s above 80 C; no performance claim.
+In-place profile/settings hashes, adopted placement, stopped/asleep readback and lease release pass.
+Prior art: pinned UnityExplorer member inspection and MemorySnapshotDataTools; ordinary long play remains open.

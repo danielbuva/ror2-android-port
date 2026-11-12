@@ -244,9 +244,19 @@ class MetadataUniverse:
 
     def assignable(self, declared, endpoint_registry):
         expected, _, expected_arguments = self.definition(declared)
+        native = self.modules.get("UnityEngine.CoreModule.dll")
+        native_root = (native["assembly_identity"], "UnityEngine.Object") if native else None
         for _, key, _, arguments in self.hierarchy(self.registry(endpoint_registry)):
             if key == expected and arguments == expected_arguments:
                 return True
+            if key == native_root:
+                # Two native-object branches cannot meet above UnityEngine.Object.
+                # Prove the requested branch reaches that exact bound root before
+                # rejecting a catalog sibling. Framework contracts still require
+                # their complete, exact assembly dependencies.
+                for _, declared_key, _, _ in self.hierarchy(declared):
+                    if declared_key == native_root:
+                        return False
         return False
 
     def prove_field_endpoint(self, owner_registry, path, endpoint_registry):

@@ -20,6 +20,7 @@ import os
 from pathlib import Path
 import re
 import secrets
+import shlex
 import subprocess
 import sys
 import tempfile
@@ -928,10 +929,10 @@ class Phone:
         if not self.owned_installer:
             raise Failure("test-installer-not-owned")
         path = "files/owner-input/" + name
-        if not re.fullmatch(r"[A-Za-z0-9_./+-]+", path) or ".." in path.split("/"):
+        if not re.fullmatch(r"[A-Za-z0-9_./+ -]+", path) or ".." in path.split("/"):
             raise Failure("test-input-path")
-        self.shell("run-as", PACKAGE, "mkdir", "-p", str(Path(path).parent), label="device-input-directory")
-        self.command("shell", "run-as", PACKAGE, "sh", "-c", "'cat > " + path + "'", stdin=data, label="device-input-write")
+        self.shell("run-as", PACKAGE, "mkdir", "-p", shlex.quote(str(Path(path).parent)), label="device-input-directory")
+        self.command("shell", shlex.join(["run-as", PACKAGE, "sh", "-c", "cat > " + shlex.quote(path)]), stdin=data, label="device-input-write")
 
     def read(self, name):
         path = "files/owner-input/" + name
@@ -939,6 +940,57 @@ class Phone:
             "shell", "run-as", PACKAGE, "sh", "-c", "'if [ -f " + path + " ]; then cat " + path + "; else printf null; fi'", label="device-state-read"
         )
         return json.loads(result)
+
+    def retain_build_artifact(self, receipt, name, destination, *, timeout=300):
+        """Retain one receipt-pinned result before owned-installer cleanup.
+
+        Stream directly to ignored host storage; never copy a device checkpoint,
+        traverse undeclared results, or buffer a bundle in the diagnostics log.
+        """
+        if not self.owned_installer or not self.installer_hash or self.package_hash(PACKAGE) != self.installer_hash:
+            raise Failure("artifact-installer-not-owned")
+        directory = receipt.get("directory", "")
+        digest = receipt.get("files", {}).get(name, "")
+        if not isinstance(directory, str) or not re.fullmatch(r"[0-9a-f]{16}-[A-Za-z0-9_-]+/output", directory):
+            raise Failure("artifact-receipt-directory")
+        if not isinstance(name, str) or not re.fullmatch(r"[A-Za-z0-9_./+ -]+", name) or any(part in ("", ".", "..") for part in name.split("/")):
+            raise Failure("artifact-receipt-path")
+        if not isinstance(digest, str) or not re.fullmatch(r"[0-9a-f]{64}", digest):
+            raise Failure("artifact-receipt-hash")
+        destination = Path(destination)
+        if not destination.resolve().is_relative_to((ROOT / "work").resolve()):
+            raise Failure("artifact-host-output-not-private")
+        if destination.exists() or destination.is_symlink():
+            raise Failure("artifact-host-output-exists")
+        path = "files/owner-input/work/releases/jobs/" + directory + "/" + name
+        parents = [str(parent) for parent in reversed(Path(path).parents) if str(parent) != "."]
+        checks = "; ".join("[ ! -L " + shlex.quote(part) + " ] || exit 1" for part in [*parents, path])
+        command = checks + "; [ -f " + shlex.quote(path) + " ] && cat " + shlex.quote(path)
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        descriptor, temporary = tempfile.mkstemp(prefix=".retained-", dir=destination.parent)
+        temporary = Path(temporary)
+        try:
+            with os.fdopen(descriptor, "wb") as stream:
+                try:
+                    result = subprocess.run(
+                        [str(self.adb), "-s", self.serial, "exec-out", shlex.join(["run-as", PACKAGE, "sh", "-c", command])],
+                        stdout=stream,
+                        stderr=subprocess.PIPE,
+                        timeout=timeout,
+                        check=False,
+                    )
+                except (OSError, subprocess.TimeoutExpired):
+                    raise Failure("artifact-transfer-unavailable") from None
+            with temporary.open("rb") as stream:
+                actual = hashlib.file_digest(stream, "sha256").hexdigest()
+            if result.returncode or actual != digest:
+                raise Failure("artifact-transfer-hash-mismatch")
+            # An exclusive link publishes only the verified file, never a partial
+            # result or a replacement for an existing retained witness.
+            os.link(temporary, destination)
+            return {"bytes": destination.stat().st_size, "sha256": actual}
+        finally:
+            temporary.unlink(missing_ok=True)
 
     def ui(self):
         return self.ui_for((PACKAGE,))
@@ -1865,6 +1917,106 @@ def backend_error_summary(message):
     return result
 
 
+def inspect_check_timeout(source, *, conflicting_mode=False):
+    """Read only one source-matching retained run, not a live device or app."""
+    result = {"mode": "inspect-check-timeout", "status": "observed", "binding": "unique-retained-source-not-run-id", "errors": []}
+    try:
+        if conflicting_mode:
+            raise Failure("log-inspection-cannot-run-other-modes")
+        if not isinstance(source, str) or not re.fullmatch(r"[0-9a-f]{40}", source):
+            raise Failure("log-inspection-source-required")
+        parent = ROOT / "work/coordination/installer-update-acceptance"
+
+        def read(path, limit=4 * 1024**2):
+            if path.is_symlink() or not path.is_file() or path.stat().st_size > limit:
+                raise Failure("log-inspection-record-unavailable")
+            return path.read_bytes()
+
+        candidates = []
+        for directory in sorted(parent.iterdir()):
+            if not re.fullmatch(r"run-[a-z0-9_]{8}", directory.name) or directory.is_symlink() or not directory.is_dir():
+                continue
+            records = list(directory.glob("[0-9][0-9][0-9][0-9][0-9]-resolve-source-commit.json"))
+            if len(records) != 1:
+                continue
+            metadata = json.loads(read(records[0], 16384))
+            if metadata != {"phase": "setup", "category": "resolve-source-commit", "returncode": 0, "outcome": "returned"}:
+                continue
+            if read(records[0].with_suffix(".stdout.log"), 128).strip() == source.encode():
+                candidates.append(directory)
+        result["source_candidates"] = len(candidates)
+        if len(candidates) != 1:
+            raise Failure("log-inspection-source-candidate-not-unique")
+        directory = candidates[0]
+        states = {name: 0 for name in ("TEST_WAIT", "CHECKING", "UPDATE_AVAILABLE", "UP_TO_DATE", "ERROR", "CANCELLED", "null", "unknown", "read-unavailable")}
+        transitions, previous, reads = [], None, 0
+        for path in sorted(directory.glob("[0-9][0-9][0-9][0-9][0-9]-device-state-read.json")):
+            metadata = json.loads(read(path, 16384))
+            if metadata.get("phase") != "baseline-N-check":
+                continue
+            if metadata.get("category") != "device-state-read":
+                raise Failure("log-inspection-record-mismatch")
+            reads += 1
+            if metadata.get("returncode") != 0 or metadata.get("outcome") != "returned":
+                state = "read-unavailable"
+            else:
+                value = json.loads(read(path.with_suffix(".stdout.log")))
+                state = "null" if value is None else value.get("state") if isinstance(value, dict) else None
+                if not isinstance(state, str) or state not in states or state in ("unknown", "read-unavailable"):
+                    state = "unknown"
+            states[state] += 1
+            if state != previous and len(transitions) < 16:
+                transitions.append(state)
+            previous = state
+        if not reads:
+            raise Failure("log-inspection-check-state-not-found")
+        result.update(
+            state_reads=reads, state_counts={name: count for name, count in states.items() if count}, first_transitions=transitions, last_state=previous
+        )
+        # The last retained successful UI read is not a new screenshot, proof of
+        # tap delivery, or proof that the Activity entered its check handler.
+        control = {"status": "unavailable"}
+        for path in sorted(directory.glob("[0-9][0-9][0-9][0-9][0-9]-device-ui-read.json"), reverse=True):
+            metadata = json.loads(read(path, 16384))
+            if metadata.get("phase") != "baseline-N-check":
+                continue
+            if metadata.get("category") != "device-ui-read":
+                raise Failure("log-inspection-record-mismatch")
+            if metadata.get("returncode") != 0 or metadata.get("outcome") != "returned":
+                continue
+            raw = read(path.with_suffix(".stdout.log"))
+            try:
+                tree = ET.fromstring(raw)
+                kind = "focused-window" if tree.tag == "displays" else "hierarchy"
+                tree = focused_ui_hierarchy(tree, (PACKAGE,)) if tree.tag == "displays" else tree
+                if tree.tag != "hierarchy":
+                    raise Failure("ui-window-schema")
+                Phone.prompt_nodes(tree, (PACKAGE,))
+                nodes = [node for node in tree.iter("node") if node.get("text", "").casefold() == "check for updates"]
+
+                def valid_bounds(node):
+                    match = re.fullmatch(r"\[(\d+),(\d+)\]\[(\d+),(\d+)\]", node.get("bounds", ""))
+                    return bool(match and int(match[3]) > int(match[1]) and int(match[4]) > int(match[2]))
+
+                control = {
+                    "status": "owned-root",
+                    "kind": kind,
+                    "count": len(nodes),
+                    "enabled_count": sum(node.get("enabled") == "true" for node in nodes),
+                    "clickable_count": sum(node.get("clickable") == "true" for node in nodes),
+                    "bounds_valid_count": sum(valid_bounds(node) for node in nodes),
+                }
+            except (Failure, ET.ParseError):
+                control = {"status": "unclassified"}
+            break
+        result["last_retained_check_control"] = control
+    except Exception as error:
+        result["status"] = "error"
+        result["errors"].append(str(error) if isinstance(error, Failure) else "log-inspection-local-read-error")
+    print(encoded(result).decode(), end="", flush=True)
+    return 1 if result["errors"] else 0
+
+
 def inspect_ui_failure(selection, *, conflicting_mode=False, update_failure=False):
     result = {
         "mode": "inspect-update-failure" if update_failure else "inspect-ui-failure",
@@ -2204,6 +2356,11 @@ def main(argv=None):
     parser.add_argument(
         "--expected-installer-sha256", help="Required for --inspect-state: last known installer hash, used only for comparison, never ownership"
     )
+    parser.add_argument(
+        "--inspect-check-timeout",
+        metavar="SOURCE_COMMIT",
+        help="Read-only retained baseline-check state counts and fixed Check control flags; no device actions",
+    )
     parser.add_argument("--inspect-ui-failure", action="store_true", help="Read-only fixed classification of this driver's retained UI dump/read failure logs")
     parser.add_argument(
         "--inspect-update-failure", action="store_true", help="Read-only public-source error matches from the retained first baseline check/install ERROR"
@@ -2223,11 +2380,26 @@ def main(argv=None):
         or args.inspect_ui_failure
         or args.inspect_update_failure
         or args.inspect_toolhost_failure is not None
+        or args.inspect_check_timeout is not None
         or args.qualify_phone_flow
         and args.allow_test_notifications
     ):
         print("FAIL install-prompt-mode-conflict", flush=True)
         return 1
+    if args.inspect_check_timeout is not None:
+        DIAGNOSTICS = None
+        return inspect_check_timeout(
+            args.inspect_check_timeout,
+            conflicting_mode=args.inspect_ui_failure
+            or args.inspect_update_failure
+            or args.inspect_toolhost_failure is not None
+            or args.inspect_state
+            or args.host_only
+            or args.allow_test_installs
+            or args.allow_test_notifications
+            or args.diagnostic_run is not None
+            or args.expected_installer_sha256 is not None,
+        )
     if args.inspect_toolhost_failure is not None:
         DIAGNOSTICS = None
         return inspect_toolhost_failure(

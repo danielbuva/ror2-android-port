@@ -2427,6 +2427,15 @@ remain required. No generated assembly or protected implementation is included.
 
 ## App-host build-tool metadata audit (2026-10-23)
 
+2026-11-12: the existing native plan also selects the supplied Android CPython
+`_sqlite3` extension and SQLite 3.54.1 for the bundle producer's disk indexes.
+Actual AArch64 ELF dependencies resolve through the existing Python, Android
+support and zlib selections plus Android system libraries. The dependency's
+versioned regular file is pinned; its installed `libsqlite3.so` link retains the
+actual ELF lookup name. Only relative selectors, hashes and link metadata are
+tracked. Native bytes and tool notices remain with the separately supplied
+tools; this metadata audit grants no redistribution approval or phone acceptance.
+
 `owner-app-host-tools.json` contains relative paths, names, hashes and native
 link selections for the scoped Python 3.14.8 build-tool profile, plus 21 public
 producer source digests. Its source commit is a retrieval hint; readers compare
@@ -7012,3 +7021,20 @@ The complete player Shader helper refresh also updates dependent recipe hashes
 through the existing release graph. Manual provenance/privacy review
 (2026-11-12): changed consumer values are public recipe SHA-256 selectors only;
 no original bodies, SDK files or private paths are added.
+
+## Grandparent source Material (2026-11-12)
+
+`owner-whole-game-grandparent-material-records.json` selects one original Material
+for the existing native record producer. The original body and native schema
+are preserved except for one checked Shader pointer relocation; the selected
+Shader and its final dependencies require independent consumer qualification.
+The profile contains only the minimum source/destination identities, input/body
+hashes, native type hash and authored pointer relationship. Manual provenance,
+privacy, licensing and sensitive-content audit: no asset body, shader program,
+game code, third-party implementation, private path or credential is included.
+Generated packs and local evidence stay ignored; this does not establish Unity
+loadability, a complete bundle or device play.
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-whole-game-grandparent-material-records.json` | `acc2ea9fa96183a4b049f3679b6a2db6583fcce4192d6487bf4cb4a67a00fc21` |

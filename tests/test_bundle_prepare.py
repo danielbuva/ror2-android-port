@@ -16,6 +16,21 @@ P = importlib.import_module("bundle_preload")
 
 
 class BundlePreparationTests(unittest.TestCase):
+    def test_original_identities_cover_texture_avatar_and_shared_outputs(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "profile.json"
+            target = dict(bundle="pack", member="CAB-pack", path_id=7)
+            profile = dict(bundles=[dict(path="original.bundle", sha256="a" * 64, members=[dict(name="CAB-source")])])
+            member = profile["bundles"][0]["members"][0]
+            member["textures"] = [dict(path_id=11, outputs=[target, dict(target, path_id=8)])]
+            member["avatars"] = [dict(path_id=12, outputs=[target])]
+            path.write_text(json.dumps(profile))
+            source_files = {}
+            actual = P.module("bundle_prepare").original_identities(P, path, source_files)
+            self.assertEqual(actual[("pack", "CAB-pack", 7)], {("original.bundle", "CAB-source", 11), ("original.bundle", "CAB-source", 12)})
+            self.assertEqual(actual[("pack", "CAB-pack", 8)], {("original.bundle", "CAB-source", 11)})
+            self.assertEqual(source_files, {"original.bundle": "a" * 64})
+
     def test_signed_dispatch_prepares_fresh_suppliers_catalog_and_runtime_donor(self):
         root_repo = Path(__file__).resolve().parents[1]
         G = P.O.module("_prepare_release_graph", root_repo / "tools/phone-build/owner-apk/release_graph.py")
@@ -46,6 +61,24 @@ class BundlePreparationTests(unittest.TestCase):
                     supplier[artifact] = G.Graph.artifact_pin(job, artifact)
                 # No retained pack is available to the dispatcher.
                 shutil.rmtree(root / ("pack-" + name))
+            selected = [
+                dict(
+                    binding,
+                    record=G.digest(repo / ("recipe/owner-" + binding["supplier"] + ".json")),
+                    source=[binding["supplier"] + ".bundle", "CAB-" + binding["supplier"], binding["record_source"][2]],
+                )
+                for binding in policy["bindings"]
+            ]
+            source_profiles = [row["record"] for row in selected]
+            for row in selected:
+                row["record"] = "f" * 64  # Retained private selection, not a public producer.
+                row["record_source"] = row["destination"]
+            mapped = G.Graph(repo, {}).bundle_bindings(iter(selected), policy["bundle"], policy["member"], source_profiles=source_profiles)
+            self.assertEqual(mapped["unresolved"], [])
+            self.assertEqual([row["selection"]["record_source"] for row in mapped["bindings"]], [row["destination"] for row in selected])
+            self.assertEqual(mapped["profiles"], sorted(profiles))
+            policy["bindings"] = mapped["bindings"]
+            request["suppliers"] = mapped["suppliers"]
             request.update(game_root="${input:pc}", codec=dict(path="${input:codec}", bytes=(inputs / "codec").stat().st_size, sha256="${input_sha256:codec}"))
             donor_identity = repo / "recipe/donor-identity.json"
             shutil.copyfile(root / "donor.json", donor_identity)
@@ -56,7 +89,8 @@ class BundlePreparationTests(unittest.TestCase):
                 asset_groups=[dict(guid="34" * 16, path="Assets/Canonical.asset", roots=[900])],
                 assets=[dict(name="assets/canonical.asset", type="PhysicMaterial")],
             )
-            donor_request = dict(request, policy=donor_policy, suppliers=[request["suppliers"][0]], staged=[])
+            donor_supplier = next(row for row in request["suppliers"] if row["name"] == donor_policy["bindings"][0]["supplier"])
+            donor_request = dict(request, policy=donor_policy, suppliers=[donor_supplier], staged=[])
             donor_profile = repo / "recipe/owner-donor.json"
             donor_profile.write_text(json.dumps(dict(schema="owner-bundle-preload-release-v1", profiles=profiles[:1], request=donor_request)))
             donor_job = "recipe/jobs/owner-donor.json"

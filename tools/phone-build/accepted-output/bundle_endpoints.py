@@ -7,8 +7,19 @@ This reader cannot turn discovery rows into endpoint admission.
 """
 
 import hashlib
+import importlib.util
 import json
 from pathlib import Path
+
+
+SPEC = importlib.util.spec_from_file_location("endpoint_script_identity", Path(__file__).resolve().parents[3] / "scripts/lab/script_identity.py")
+SCRIPT = importlib.util.module_from_spec(SPEC)
+SPEC.loader.exec_module(SCRIPT)
+
+
+def managed_production(pins, provider_pin, receipt_pin):
+    """Use the registry owner's common produced/refresh admission contract."""
+    return SCRIPT.managed_providers(pins, provider_pin, receipt_pin)
 
 
 def generate_managed(request_path, output):
@@ -22,10 +33,9 @@ def generate_managed(request_path, output):
     request_path, output = Path(request_path).resolve(), Path(output).resolve()
     request = json.loads(request_path.read_bytes())
     pins = InputPins(request_path.parent, owner)
-    providers = pins.read(request["managed_providers"])
-    receipt = pins.read(request["managed_receipt"])
-    if receipt.get("success") is not True or receipt.get("phase") != "managed-produced":
-        raise ValueError("fresh successful managed production required")
+    if "input_paths" in request:
+        pins.relocate(request["input_paths"])
+    providers = managed_production(pins, request["managed_providers"], request["managed_receipt"])
     provider_base = pins.pin(request["managed_providers"]).parent
     providers = {name: dict(value, path=str(pins.path(value["path"], provider_base))) for name, value in providers.items()}
     for value in providers.values():
@@ -35,7 +45,9 @@ def generate_managed(request_path, output):
     if registry.get("success") is not True:
         raise ValueError("final player registry production unsuccessful")
     registry_base = pins.pin(request["registry_receipt"]).parent
-    aliases = {name: str(pins.add(pins.path(name, registry_base), pin)) for name, pin in registry["provider_pins"].items()}
+    aliases = pins.read(request["provider_aliases"]) if "provider_aliases" in request else {}
+    alias_base = pins.pin(request["provider_aliases"]).parent if "provider_aliases" in request else registry_base
+    aliases = {name: str(pins.add(pins.path(aliases.get(name, name), alias_base), pin)) for name, pin in registry["provider_pins"].items()}
     tools = request["tools"]
     launcher, compiler, cecil, runtimeconfig = (pins.pin(tools[key]) for key in ("dotnet", "compiler", "cecil", "runtimeconfig"))
     references = [pins.pin(row) for row in tools["references"]]
@@ -384,10 +396,17 @@ class InputPins:
 
     def __init__(self, base, owner):
         self.base, self.owner, self.files = Path(base), owner, {}
+        self.paths = {}
+
+    def relocate(self, value):
+        mapping = self.read(value)
+        base = self.pin(value).parent
+        self.paths = {str(Path(name)): (Path(target) if Path(target).is_absolute() else base / target) for name, target in mapping.items()}
 
     def path(self, name, base=None):
         path = Path(name)
-        return (path if path.is_absolute() else (base or self.base) / path).resolve(strict=True)
+        path = path if path.is_absolute() else (base or self.base) / path
+        return self.paths.get(str(path), path).resolve(strict=True)
 
     def add(self, path, expected=None):
         path = self.path(path)

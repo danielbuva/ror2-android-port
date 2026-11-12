@@ -6,6 +6,17 @@ file, owner or pipeline step is added, moved or retired. Results and evidence li
 [journal](PORTING_JOURNAL.md); the files the build expects under `work/` are listed in
 [LOCAL_STATE.md](LOCAL_STATE.md).
 
+`WholeCatalogLoader.RegisterLocations` wraps its completed map with an
+`IResourceLocator` request observer. Each lookup logs its original key, key type,
+requested asset type, phase and map result, including unresolved soft references.
+The wrapper delegates keys and results unchanged; the original dynamic locator
+still handles GUID subobjects afterwards. A map miss is not a global load failure.
+`WholeCatalogComposed.Release` removes the same owned wrapper and restores prior
+locators. These lab diagnostics do not change content admission or gameplay.
+Its retention report discards weak-reference wrappers whose targets have been
+collected, while retaining live targets and an independent cumulative count of
+released catalog generations. Repeated reports do not reset that count.
+
 `bundle_preload.py::repack_canonical_aliases` applies explicit source-body catalog
 aliases after strict native emission; it leaves structural routes unchanged.
 The caller supplies qualified selection/types, the preload request and the
@@ -41,6 +52,17 @@ Signed release-graph integration uses the combined preparation entry point below
 Current source/provider qualification and the phone SQLite/LZ4 runtime remain
 separate work; this interface adds no device claim.
 
+The existing managed-host native plan supplies Android CPython `_sqlite3` and
+its SQLite dependency for these disk indexes. The fixture builder verifies the
+two source hashes and packages them through its existing native/link owner;
+installation creates the Python extension and `libsqlite3.so` links in the
+app-owned data tree. No new process or runtime lifecycle owner is added, and
+signed-chain Android execution remains unqualified.
+The debuggable toolhost's existing instrumentation runner accepts only the
+optional `release-build` action and delegates to the existing signed update
+worker, using its provisioned request, trust and thermal supervision. Its default
+fixture entry remains available; no installation action or new worker is added.
+
 `bundle_preload.py --prepare REQUEST --output NEW_DIRECTORY` delegates fresh
 request derivation to `bundle_prepare.py`. Pinned supplier profiles, receipts,
 extents, indexes and final type tables supply original source, pack output and
@@ -69,6 +91,33 @@ schemas supplied by one final player job. Setup and teardown remain the scoped
 preparation/emission owners; the dispatcher retains only declared final artifacts
 for reuse. Host synthetic-registry dispatch does not qualify current CLR/SDK
 production, exact-editor load or phone acceptance.
+The metadata witness reader and final player registry share
+`script_identity.managed_providers`, accepting a successful `gameplay-refreshed`
+receipt without changing its phase. It binds the provider manifest, base cohort,
+counts and actual `Assembly-CSharp.dll` output. An explicit `refreshed_providers`
+map also binds rebuilt dependencies, such as the matching audio owner, by path
+and hash; the reuse count excludes every listed rebuild and every reused module
+retains its hash. All current provider bodies still pass metadata validation. The final
+player registry retains its current compiled-source and CLR checks;
+accepting a refresh receipt does not establish registry or graph admission.
+Menu and HUD authored-schema production uses that same receipt validator after
+the parent player owner checks current compiled sources and derives its registry;
+neither consumer requires a refresh to be relabelled as a full managed build.
+An optional pinned provider-alias map relocates retained registry inputs; each
+resolved file must still match the unchanged receipt's size and hash.
+The same release owner's host `Graph.bundle_bindings` API maps one member's
+selected metadata to public supplier jobs, preserving original, pack and final
+identities. It returns unresolved rows without reading pack bodies; callers must
+resolve them before composing a policy. Address groups, exceptional routes,
+staged containers and managed qualification retain their existing owners.
+Preparation reverses object, mesh, texture and avatar source selectors through
+their declared outputs, retaining ambiguous source candidates for strict checking.
+The mapper can search an explicit set of public source profiles when retained
+selection metadata names a private index. It binds only a unique source/output
+candidate, retaining the previous record identity in the policy's `selection`
+lineage. Original source and destination stay fixed; unresolved candidates remain
+explicit. Selector discovery compiles only the suppliers actually chosen and
+does not admit their bodies, routes or graph.
 
 `bundle_preload.produce_graph` also accepts per-group `preload_roots` as explicit
 destination triples, separate from advertised container roots/subassets. Local
@@ -390,6 +439,8 @@ files. Complete phone generation and runtime acceptance remain open.
 `startup_metadata.py` owns public `boot.config` and `unity_app_guid` generation.
 Setup pins the owner's inventory, public PlayerSettings and exact toolchain;
 their hashes and producer version generate relocatable build identifiers.
+Verification permits an identical producer at another path while retaining its
+size/hash and every recorded input/output check.
 It retains fullscreen, safe-area and HDR settings, uses a 3 ms incremental GC
 slice and omits development connections. New output/receipt directories own all
 state; there are no retained processes. APK admission regenerates these two
@@ -1319,6 +1370,11 @@ unchanged, and the installer visibly labels the active test source.
 `scripts/lab-installer-updates.py` owns the synthetic lab acceptance setup,
 local signed fixture server, actual UI/session assertions and owned cleanup.
 Its runner-provided toolhost and generated binaries/keys never leave the lab.
+`Phone.retain_build_artifact` streams one explicitly selected, cache-receipt-pinned
+result from the currently owned installer to ignored host `work/` before cleanup.
+It checks the received hash before publishing the file, keeps binary bytes out of
+diagnostic logs, and leaves package cleanup unchanged. Retention enables a later
+typed-load handoff; it does not establish Unity loadability or gameplay readiness.
 After verifying the focused consent identity, fixed label/title/button/layout
 classifications are emitted before fixture refusal. No raw UI text or resource
 identifiers are exported. These observations never relax the existing fixture,
@@ -2476,6 +2532,11 @@ lane leftovers require the lane owner's matching `removed.json`; managed stale
 lanes still use owned teardown. Keep markers and receipt paths protect both.
 Cold-storage run/lane symlinks are unlinked only, preserving their targets.
 Linked worktrees resolve the canonical ignored work and lane roots.
+Build-cache entries use narrower protection: state/baseline APK pins, the single
+entry referenced by each current-build/iteration-base receipt, the latest installed
+APK per device, explicit keeps and the age guard. Nested content hashes and sync
+inventories do not pin cache entries. `--json` includes `kept_items` with protection
+reasons and cache-specific protection counts. Retired entries retain JSON receipts.
 
 `scripts/journal-renumber.py` (support) owns branch-only journal numbering after
 merging fetched `origin/main`. It compares complete entries, preserves main,
@@ -2628,6 +2689,15 @@ captures identify growing unique returned objects in both; original sphere-cast
 allocations and serialized Highlight lists can enter without an earlier rental.
 This releases their idle storage without mutating any hit or list, including
 checked-out items. Other pools and live-session pooling remain unchanged.
+`SurvivorSelectionBoundary.OfflineRosterScrollStateOwner` captures the exact
+roster state from the pinned IMGUI scroll stack immediately after
+`BeginScrollView`. It records cache keys and object identities; menu cleanup and
+`PortSession.OnDestroy` remove only entries still pointing to those objects and
+release the captured references. Other controls and replacement entries survive.
+The owner can capture the next menu after disposal. Host ownership and exact SDK
+layout contracts live in `tests/test_offline_roster_scroll_state.py`; installed
+three-session continuation and paired idle heaps verify this retaining path.
+The global memory bound and ordinary-play qualification remain open.
 `tests/test_diagnostic_retention.py` exercises teardown refusal, repeated fresh
 returns, released backing capacity and untouched item/list contents.
 It also removes already-destroyed targets from the original overlap discovery
@@ -2766,6 +2836,9 @@ session-result and thermal JSONL inputs produce local JSON/Markdown with input
 hashes, active counter deltas, periodic interval-mean percentiles and UTC-aligned
 FPS/temperature bins. Setup reads retained evidence; files close on process exit,
 no runtime/device state is changed, and reports persist at the requested output.
+Its JSON/Markdown comparison uses the proposed public-alpha pacing targets with
+unrounded observations, keeps missing raw quantiles unavailable and names evidence
+the report cannot establish; a target comparison never qualifies the release gate.
 Final-ten-minute active counter totals use retained endpoints inside the last
 600 host seconds, reporting actual coverage and uncovered boundary time without
 interpolating missing counters; fewer than two endpoints leaves totals unavailable.
@@ -2775,6 +2848,8 @@ hash-bound sidecar, reconciles every retained interval against exact duration,
 frame and strict hitch counters, then computes individual-frame p50/p95/p99 only
 with complete frame coverage. Final-ten-minute quantiles additionally require
 all 600 host seconds; partial endpoint windows retain their explicit coverage.
+Markdown also reports reconciled covered-tail quantiles under a separate label,
+alongside actual endpoint coverage; missing boundary time remains unmeasured.
 `AndroidPresentationCamera` owns default-off `rawFrameTimesRequested` capture:
 `NovaInputBoundary` starts it on the existing presentation camera; the camera
 keeps at most 262,144 float durations (1 MiB), using identical pause/resume
@@ -4144,7 +4219,13 @@ The synchronous preparation call releases that reference on return; family-cache
 relationship registration/restoration remain under their existing owners.
 The shared reader omits unused JSON source-line annotations while retaining the
 same token values, types, property order and parser error handling.
-It reuses a still-live parsed snapshot through a separate weak reference; it
+It streams the file through a scoped JSON reader, avoiding a whole-file UTF-16
+copy; the reader closes on success or failure and consumes EOF to reject trailing
+content. Failed reads never publish a snapshot.
+The process audio lease applies that same parsing policy to its freshly read,
+SHA-validated manifest bytes when deriving retained bundle dependencies. It
+keeps the byte check and does not borrow a cached definition snapshot.
+The shared definition reader reuses a still-live parsed snapshot through a weak reference; it
 does not prevent collection. Fresh location setup and session release clear
 that reference, so later sessions read their own generation. Failed parses are
 never cached.
@@ -4157,7 +4238,15 @@ Provider-root `DefinitionFamily<T>` uses the same reader; its typed selection,
 selected-identity checks and existing family-cache lifetime remain unchanged.
 During a family cache miss it resolves each loaded bundle owner once in a
 method-local map, preserving missing/ambiguous-owner refusal and typed loading.
-The map ends on return; loaded definitions retain the existing release lifetime.
+It also resolves each distinct root type name once in a method-local map;
+non-root rows still bypass type resolution, and each root retains its
+assignability check. Both maps end on return; loaded definitions retain the
+existing release lifetime.
+The original network-sound startup caller can request sparse generic-family
+manifest/validation markers and aggregate root-filter, owner and typed-load costs.
+Outer audio markers separate network registration from music startup. Observation
+preserves enumeration, native calls and ownership, writes no reports and adds no
+coroutine yields; the optional callback and counters end on return.
 `test_scoped_definition_manifest.py` exercises the production methods against
 authored source snapshots, including parser parity, replacement input and identity
 checks.
@@ -6737,6 +6826,16 @@ to J850. This adds no runtime owner; group, complete bundle and phone gates rema
 open.
 
 
+`recipe/owner-whole-game-grandparent-material-records.json` supplies the original
+Grandparent default Material through the same native record owner. Its complete
+source schema and body are retained, with only the checked Shader pointer
+relocated to the selected Standard endpoint. Setup requires the pinned original
+bundle and a fresh pack; scoped readers close on exit and receipts persist.
+The consumer must qualify the Shader's final native dependencies and the complete
+graph separately. This adds no runtime owner; Unity typed load and device play
+remain open.
+
+
 `recipe/owner-whole-game-bundle-canvas-records.jsonl.gz` selects 10,870 original
 CanvasRenderers through the existing `record_produce.py` native owner. Qualified
 GameObject component edges and reciprocal original ownership supply checked
@@ -6826,6 +6925,10 @@ APK and device acceptance remain open.
 
 The existing `bundle_endpoints.py` owner generates current CLR witness artifacts
 from successful managed production and the final player's registry receipt.
+An optional pinned `input_paths` map relocates exact recorded input paths to
+staged files relative to that map. Original manifests and refresh receipts stay
+unchanged; existing size/hash checks qualify the relocated files before and after
+inspection. Registry provider aliases retain their separate identity mapping.
 It compiles the public metadata-only Cecil reader with explicitly pinned compiler,
 references and runtime tools, checks actual provider files before and after
 inspection, and records exact registry provider aliases. The release graph signs

@@ -155,6 +155,32 @@ def final_ten_minutes(samples):
     )
 
 
+def proposed_pacing_comparison(window, quantiles, observed_seconds, required_seconds):
+    """Compare retained observations with public-alpha's proposed targets only."""
+    values = dict(
+        average_fps=window["average_fps"] if window else None,
+        **{f"p{p}_ms": quantiles[f"p{p}"] if quantiles else None for p in (50, 95, 99)},
+        over50ms_percent=100 * window["over50ms"] / window["frames"] if window else None,
+    )
+    targets = dict(average_fps=60, p50_ms=16.67, p95_ms=33.334, p99_ms=50, over50ms_percent=1)
+    metrics = {}
+    for name, target in targets.items():
+        value = values[name]
+        minimum = name == "average_fps"
+        metrics[name] = dict(
+            observed=value,
+            target=target,
+            comparison=">=" if minimum else "<=",
+            meets_target=None if value is None else value >= target if minimum else value <= target,
+        )
+    return dict(
+        observed_seconds=observed_seconds,
+        required_seconds=required_seconds,
+        complete_duration=observed_seconds >= required_seconds,
+        metrics=metrics,
+    )
+
+
 def analyze(session, thermal, raw_trace=None):
     samples = session["samples"]
     if len(samples) < 2:
@@ -206,7 +232,7 @@ def analyze(session, thermal, raw_trace=None):
                 )
             )
     statuses = [r for r in samples if type(r.get("thermal_status")) is int and r["thermal_status"] > 0]
-    return dict(
+    report = dict(
         scope=session.get("scope"),
         apk_sha256=session.get("apk_sha256"),
         observations=len(samples),
@@ -244,6 +270,19 @@ def analyze(session, thermal, raw_trace=None):
             "No clocks or scheduler trace: HAL status alone cannot establish or exclude throttling. Battery drain is unmeasured while plugged in.",
         ],
     )
+    report["proposed_pacing_budget"] = dict(
+        qualification="Observation comparison only; proposed targets do not establish release readiness.",
+        whole_session=proposed_pacing_comparison(window, report["true_frame_time_percentiles_ms"], report["observed_seconds"], 1800),
+        covered_tail=proposed_pacing_comparison(tail["frame_window"], tail["true_frame_time_percentiles_ms"], tail["observed_seconds"], 600),
+        evidence_not_established=[
+            "Representative ordinary play on every supported stage, with assistance state recorded.",
+            "Visual fidelity against the original.",
+            "Unplugged battery drain and an accepted energy budget.",
+            "Clock/limit evidence for causal throttling attribution.",
+            "Causal raw-capture overhead qualification.",
+        ],
+    )
+    return report
 
 
 def markdown(report):
@@ -273,8 +312,22 @@ def markdown(report):
         )
     else:
         tail_lines.append("Final ten-minute frame statistics: unavailable (fewer than two retained observations inside the window).")
+    budget = report["proposed_pacing_budget"]
+    budget_lines = [budget["qualification"], "", "| Observation | Metric | Measured | Proposed target | Comparison |", "| --- | --- | --- | --- | --- |"]
+    for label, key in (("Whole session", "whole_session"), ("Covered tail", "covered_tail")):
+        comparison = budget[key]
+        for name, metric in comparison["metrics"].items():
+            status = "unavailable" if metric["meets_target"] is None else "within target" if metric["meets_target"] else "outside target"
+            budget_lines.append(f"| {label} | {name} | {fmt(metric['observed'])} | {metric['comparison']} {metric['target']} | {status} |")
+    budget_lines += [
+        "",
+        "A partial covered tail retains measured FPS/hitches; full-tail quantile comparisons remain unavailable.",
+        "This report does not establish: " + " ".join(budget["evidence_not_established"]),
+    ]
     lines = [
         "# Sustained game performance report",
+        "",
+        f"Scope: {report['scope'] or 'unspecified; workload qualification unavailable'}",
         "",
         f"{report['observations']} observations over {report['observed_seconds']:.1f} s; {window['frames']} counter-window frames.",
         f"Mean {window['mean_ms']:.3f} ms ({window['average_fps']:.3f} FPS).",
@@ -283,10 +336,13 @@ def markdown(report):
         "",
         *tail_lines,
         "",
+        quantile_line("Covered-tail individual-frame p50/p95/p99", (tail.get("raw_frame_window") or {}).get("percentiles_ms")),
         quantile_line("Individual-frame p50/p95/p99", report["true_frame_time_percentiles_ms"]),
         quantile_line("Final ten-minute individual-frame p50/p95/p99", tail["true_frame_time_percentiles_ms"]),
         f"Periodic frame-mean p50/p95/p99: {fmt(proxy['p50'])}/{fmt(proxy['p95'])}/{fmt(proxy['p99'])} ms (equal observation weights).",
         "Throttling onset: unestablished; no clocks/scheduler trace retained.",
+        "",
+        *budget_lines,
         "",
         "| Start (min) | Samples | Median FPS | CPU ms | GPU ms | CPU C | GPU C | Battery C | Enemies |",
         "| --- | --- | --- | --- | --- | --- | --- | --- | --- |",

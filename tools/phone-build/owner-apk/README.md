@@ -48,7 +48,7 @@ shader mechanism or replacement content loader is introduced.
   access. Polling/subscription teardown does not cancel preparation. Only bundled
   allowlisted HTTPS-origin resources are served; navigation/network are blocked.
 - `index.html` provides accurate owner-APK preparation copy while reusing the
-  unchanged approved `launcher/{app.js,controller.js,style.css,background.png}`.
+  unchanged approved `launcher/{app.js,controller.js,feedback.js,style.css,background.png}`.
   The simulated demo is never included. There is no new tracked PNG exception.
 - `binary_manifest.py` edits binary XML using the existing public `phone_apk.py`
   chunk/string reader. `build_owner_apk.py` compiles only the authored Java to a
@@ -479,6 +479,14 @@ app. Cleanup stops/uninstalls only this run's exact owned packages, sleeps the
 display, and retains diagnostics privately. Measurements do not establish the
 complete performance release gate.
 
+For a baseline-check timeout, the host-only retained-log mode
+`--inspect-check-timeout SOURCE_COMMIT` requires exactly one private run with
+that recorded source. It reports allowlisted state counts/transitions and the
+last retained Check control's flags, never UI text, state messages or paths.
+The binding is source-unique, **not an exact lab-run-ID binding**. Ambiguous
+runs are refused. It performs no device action and proves neither tap delivery
+nor handler entry. Existing raw diagnostics remain untouched.
+
 Installer version 3 extends the version-2 foreground-service flow: prepare the signed public
 release, choose the owner's PC game directory with Android's folder picker (or
 choose a ZIP), import, then reconstruct and install. Only required files are
@@ -642,6 +650,27 @@ receipt and schemas must come from the same final player producer. The SDK
 properties file remains an explicitly pinned acquired leaf. Current managed
 cohort production, exact-editor load and phone execution still need qualification;
 the dispatcher host fixture uses an authored empty runtime registry.
+
+For host policy authoring, `Graph.bundle_bindings(rows, bundle, member)` maps
+one member's selected metadata to `bindings`, `suppliers` and prerequisite
+`profiles` using the public profile hash and declared pack artifacts. It returns
+every unmapped row in `unresolved`; resolve all of these before composing a
+release policy. Original source, producer output and destination identities stay
+separate, including when their path IDs coincide. The mapper reads no supplier
+bodies and does not qualify the graph. The caller still supplies address groups,
+exceptional routes, staged endpoints and generated managed witnesses. Final
+container suppliers require explicit staged bindings instead of record-pack pins.
+
+Pass explicit public profile hashes in `source_profiles` when a retained selection
+names a private index instead of a reproducible supplier. The mapper reverses
+the existing body selectors without reading generated packs. It prefers an exact
+source/output pair; otherwise it requires one public producer output for that
+original source. Bindings keep the original source and destination, name the fresh
+public `record_source`, and retain the private record pin and output identity in
+`selection`. Multiple candidates remain unresolved with their profile/output
+pairs. Only chosen suppliers become jobs; unrelated and unselected recipes are
+not compiled. Preparation still checks the original body selector, final type
+table and actual produced bytes; field routes and graph admission remain separate.
 
 Selecting the manager phase also creates the existing `startup_metadata.py`
 job. Bind `inventory` to the admitted original-game inventory; the smoke

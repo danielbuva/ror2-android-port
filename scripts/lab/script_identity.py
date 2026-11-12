@@ -1031,6 +1031,64 @@ def _original_membership(managed, scripts, imported_assemblies, pin):
         gc.collect()
 
 
+def managed_providers(pins, provider_pin, receipt_pin):
+    """Retain a produced cohort or explicitly pinned gameplay/dependency refresh."""
+    providers = pins.read(provider_pin)
+    receipt = pins.read(receipt_pin)
+    if receipt.get("success") is not True or receipt.get("phase") not in ("managed-produced", "gameplay-refreshed"):
+        raise ValueError("fresh successful managed production required")
+    if "providers_sha256" in receipt and receipt["providers_sha256"] != provider_pin["sha256"]:
+        raise ValueError("managed production provider manifest differs")
+    if receipt["phase"] == "gameplay-refreshed":
+        refreshed = receipt.get("refreshed_providers", {"Assembly-CSharp.dll": receipt["gameplay"]})
+        if receipt.get("providers_sha256") != provider_pin["sha256"] or (receipt.get("provider_count"), receipt.get("reused_provider_count")) != (
+            len(providers),
+            len(providers) - len(refreshed),
+        ):
+            raise ValueError("gameplay refresh provider manifest/count differs")
+        base_pin = receipt["base_providers"]
+        base_path = pins.path(base_pin["path"], pins.pin(receipt_pin).parent)
+        base = json.loads(pins.add(base_path, dict(bytes=base_path.stat().st_size, sha256=base_pin["sha256"])).read_bytes())
+        if set(base) != set(providers) or "Assembly-CSharp.dll" not in refreshed or not set(refreshed) <= set(providers):
+            raise ValueError("gameplay refresh provider membership differs")
+        if any(value["sha256"] != base[name]["sha256"] for name, value in providers.items() if name not in refreshed):
+            raise ValueError("gameplay refresh changed a reused provider")
+        for name, value in [*refreshed.items(), ("Assembly-CSharp.dll", receipt["gameplay"])]:
+            produced = providers[name]
+            if value["sha256"] != produced["sha256"] or pins.path(value["path"], pins.pin(receipt_pin).parent) != pins.path(
+                produced["path"], pins.pin(provider_pin).parent
+            ):
+                raise ValueError("gameplay refresh output differs: " + name)
+    return providers
+
+
+def registry_managed_providers(directory, source_commit, pin):
+    """Admit the same produced/refresh receipt used by current CLR witnesses."""
+    directory = Path(directory)
+
+    def add(path, expected):
+        path = Path(path).resolve(strict=True)
+        pin(path, expected)
+        return path
+
+    def path(value, base):
+        return (base / value).resolve(strict=True)
+
+    pins = N(
+        read=lambda value: json.loads(add(value["path"], value).read_bytes()),
+        pin=lambda value: Path(value["path"]).resolve(strict=True),
+        path=path,
+        add=add,
+    )
+    receipt = dict(path=str(directory / "result.json"))
+    providers = dict(path=str(directory / "providers.json"))
+    receipt.update(pin(receipt["path"]))
+    providers.update(pin(providers["path"]))
+    if pins.read(receipt).get("source_commit") != source_commit:
+        raise ValueError("fresh public-source managed production required")
+    return managed_providers(pins, providers, receipt)
+
+
 def registry(pc, editor_resources, managed_production, authored_root, packages_root, input_hashes, registry_profile, W):
     """Produce a complete registry from admitted original/public/SDK sources.
 
@@ -1119,12 +1177,7 @@ def registry(pc, editor_resources, managed_production, authored_root, packages_r
     sdk = native_type = curves = typ = row = None
     gc.collect()
 
-    result_path, providers_path = managed_production / "result.json", managed_production / "providers.json"
-    pin(result_path)
-    pin(providers_path)
-    result, providers = json.loads(result_path.read_text()), json.loads(providers_path.read_text())
-    if result.get("success") is not True or result.get("phase") != "managed-produced" or result.get("source_commit") != authored["source_commit"]:
-        raise ValueError("fresh public-source managed production required")
+    providers = registry_managed_providers(managed_production, authored["source_commit"], pin)
     compiler_inputs = managed_production / "gameplay/inputs.json"
     pin(compiler_inputs)
     for name, digest in json.loads(compiler_inputs.read_text())["sources"].items():
