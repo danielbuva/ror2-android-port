@@ -3310,7 +3310,7 @@ Peak CPU/GPU 76.5 °C, 0 s above 80 °C; battery 26 → 27 °C. Source `f11f5cd4
 App stopped, scratch removed, OLED asleep, lease released; pruning passed.
 Sustained play/performance, physical navigation and complete phone install remain open.
 
-## J1425 — Scope incremental job pins to their source dependencies
+## J1426 — Scope incremental job pins to their source dependencies
 
 2026-11-12. Merged #461 (`cd1db7ee`): signed jobs may declare their own
 source files; cache identity includes their transitive supplier closure while
