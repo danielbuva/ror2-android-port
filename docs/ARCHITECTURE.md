@@ -4132,6 +4132,9 @@ The synchronous preparation call releases that reference on return; family-cache
 relationship registration/restoration remain under their existing owners.
 The shared reader omits unused JSON source-line annotations while retaining the
 same token values, types, property order and parser error handling.
+The process audio lease applies that same parsing policy to its freshly read,
+SHA-validated manifest bytes when deriving retained bundle dependencies. It
+keeps the byte check and does not borrow a cached definition snapshot.
 It reuses a still-live parsed snapshot through a separate weak reference; it
 does not prevent collection. Fresh location setup and session release clear
 that reference, so later sessions read their own generation. Failed parses are
