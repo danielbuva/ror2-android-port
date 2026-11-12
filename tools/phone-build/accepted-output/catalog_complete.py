@@ -64,7 +64,11 @@ def deferred_references(tree):
             guid = value.get("m_AssetGUID")
             if isinstance(guid, str) and re.fullmatch(r"[a-fA-F0-9]{32}", guid):
                 subobject = value.get("m_SubObjectName") or ""
-                yield dict(field=list(field), guid=guid, key=guid + ("[" + subobject + "]" if subobject else ""), kind="AssetReference")
+                edge = dict(field=list(field), guid=guid, key=guid + ("[" + subobject + "]" if subobject else ""), kind="AssetReference")
+                if subobject:
+                    edge["subobject_name"] = subobject
+                    edge["subobject_type"] = value.get("m_SubObjectType") or ""
+                yield edge
                 omitted = {"m_AssetGUID", "m_SubObjectName", "m_SubObjectType", "m_SubObjectGUID"}
             else:
                 omitted = set()

@@ -40,7 +40,16 @@ class CatalogCompletionTests(unittest.TestCase):
     def test_deferred_references_preserve_subobjects_and_plain_preloads(self):
         guid = "1234567890abcdef1234567890abcdef"
         tree = {
-            "skins": [{"skinDefParamsAddress": {"m_AssetGUID": guid, "m_SubObjectName": "mesh", "m_SubObjectGUID": guid}}],
+            "skins": [
+                {
+                    "skinDefParamsAddress": {
+                        "m_AssetGUID": guid,
+                        "m_SubObjectName": "mesh",
+                        "m_SubObjectType": "UnityEngine.Mesh, UnityEngine.CoreModule",
+                        "m_SubObjectGUID": guid,
+                    }
+                }
+            ],
             "preloadGUIDReferences": [guid],
             "effect": {"assetGUID": guid},
             "state": {"stringValue": guid + "[avatar]"},
@@ -52,6 +61,8 @@ class CatalogCompletionTests(unittest.TestCase):
         self.assertEqual([row["key"] for row in edges], [guid + "[mesh]", guid, guid, guid + "[avatar]"])
         self.assertEqual(edges[0]["field"], ["skins", 0, "skinDefParamsAddress"])
         self.assertEqual(edges[0]["kind"], "AssetReference")
+        self.assertEqual(edges[0]["subobject_name"], "mesh")
+        self.assertEqual(edges[0]["subobject_type"], "UnityEngine.Mesh, UnityEngine.CoreModule")
         self.assertEqual(edges[1]["field"], ["preloadGUIDReferences", 0])
 
     def test_sprite_ownership_uses_resolved_texture_not_preload_or_name(self):
