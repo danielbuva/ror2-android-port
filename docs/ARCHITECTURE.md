@@ -611,6 +611,15 @@ source-only EffectManagerHelper case; complete content and phone qualification
 remain separate. Original script-file-ID derivation remains unchanged.
 `record_produce.py` owns source-only AnimationClip and generic object-record
 production through the same object-pack interface.
+It retains the final complete serialized definitions in receipt-pinned `types.json`;
+each index row's `type_id` selects that pack-local table after managed schema/hash
+changes. `record_remap.py` reindexes available supplier definitions into its own
+table and retains definitions extracted from serialized player files. Legacy raw
+suppliers without complete type metadata still require a separate checked schema
+before graph preparation. The release graph exposes these type tables and the
+object producer's existing final `layout.json` as cached artifacts. Readers close
+on exit; receipts and metadata persist with their packs. Complete fresh preparation
+and phone qualification remain open.
 `recipe/owner-whole-game-source-records.json` selects original managed/native
 records through this owner; all 198 are host raw-exact. Setup takes pinned
 original/SDK inputs and a fresh pack; persisted receipts remain after exit.

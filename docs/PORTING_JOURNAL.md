@@ -3426,3 +3426,13 @@ Evidence: `tests/test_phone_player_data.py`,
 full CI-local (3,205 tests) passed before merge.
 Source output: `910cbbde`; no APK or device output was produced.
 Signed bundle preparation, phone dependencies and full conversion remain open.
+
+## J1434 — Retain final emitted catalog declaration artifacts
+
+2026-11-12. PR #469 merged at `c723ec04`: checked bundle preparation retains
+`catalog-profile.json` from the actual emitted name, member and asset groups,
+plus the final emitted/canonical bundle pin. The alias donor remains separate.
+Evidence: `tests/test_bundle_preload.py`; 44 focused checks, Ruff, host
+preflight and full CI-local (3,206 tests) passed before merge.
+Source output: `c723ec04`; no APK or device output was produced.
+Fresh signed preparation, phone dependencies and complete conversion remain open.

@@ -271,6 +271,10 @@ class Graph:
         artifacts = {"receipt": "result.json", "objects": "objects.bin", "index": "index.jsonl"}
         if "original_bundle" in profile:
             artifacts = {"receipt": "result.json"}
+        elif producer == "object_produce":
+            artifacts["layout"] = "layout.json"
+        if producer in {"record_produce", "record_remap"}:
+            artifacts["types"] = "types.json"
         if producer in {"mesh_produce", "texture_produce"}:
             artifacts["resources"] = "resources.bin"
         if producer == "object_produce":
