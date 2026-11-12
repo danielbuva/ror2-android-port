@@ -123,7 +123,7 @@ public static partial class WholeCatalogComposed
         profile.Run(snapshot);
         Check(ReferenceEquals(profile.ruleManifest, snapshot));
         Check(ReferenceEquals(profile.survivors.Single(), survivor) && ReferenceEquals(profile.unlockables.Single(), unlockable));
-        Check(profile.trace.SequenceEqual(new[] {
+        Check(profile.trace.Where(value => !value.Contains("assets-costs ")).SequenceEqual(new[] {
             "profile-survivor-family-manifest-begin", "profile-survivor-family-manifest-ready-index-begin",
             "profile-survivor-family-index-ready-assets-begin", "profile-survivor-family-assets-ready",
             "profile-unlockable-family-manifest-begin", "profile-unlockable-family-manifest-ready-index-begin",
@@ -138,7 +138,8 @@ public static partial class WholeCatalogComposed
         File.Delete("payload/whole-catalog.json");
         var trace = new List<string>();
         var types = CategoryFamily(snapshot, "types", new[] { type }, trace.Add);
-        Check(trace.SequenceEqual(new[] { "manifest-begin", "manifest-ready-index-begin", "index-ready-assets-begin", "assets-ready" }));
+        Check(trace.Where(value => !value.StartsWith("assets-costs ")).SequenceEqual(new[] { "manifest-begin", "manifest-ready-index-begin", "index-ready-assets-begin", "assets-ready" }));
+        CheckCosts(trace, 1, 1);
         var providers = CategoryFamily(snapshot, "providers", new[] { provider });
         PopulateDefinitionFields(snapshot, "ItemRelationshipTypes", types);
         PopulateBodyFields(snapshot, new[] { player });
@@ -178,6 +179,15 @@ public static partial class WholeCatalogComposed
         CategoryBundleContract();
         Console.WriteLine("scope identity policy restoration buffs items PASS");
     }
+    static void CheckCosts(List<string> trace, int rows, int bundles)
+    {
+        var values = trace.Single(value => value.StartsWith("assets-costs ")).Split(' ').Skip(1)
+                          .Select(value => value.Split('='))
+                          .ToDictionary(value => value[0], value => long.Parse(value[1]));
+        Check(values["rows"] == rows && values["bundles"] == bundles && values["frequency"] > 0);
+        Check(values["typeTicks"] >= 0 && values["ownerTicks"] >= 0 && values["loadTicks"] >= 0 && values["collectionTicks"] >= 0);
+        Check(values["totalTicks"] == values["typeTicks"] + values["ownerTicks"] + values["loadTicks"] + values["collectionTicks"]);
+    }
     static void CategoryBundleContract()
     {
         var first = new Definition { name = "First" };
@@ -195,10 +205,18 @@ public static partial class WholeCatalogComposed
         AssetBundle.loadedOwners = new[] { AssetBundle.owner, unrelated, unrelated };
         definitionFamilies.Clear();
         int before = AssetBundle.enumerations;
-        Check(CategoryFamily(data, "category", new[] { second }).SequenceEqual(new[] { first, second }));
-        Check(AssetBundle.enumerations == before + 1);
-        Check(CategoryFamily(data, "category", new[] { first }).SequenceEqual(new[] { first, second }));
-        Check(AssetBundle.enumerations == before + 1);
+        int loads = AssetBundle.typedLoads;
+        var unobserved = CategoryFamily(data, "category", new[] { second });
+        Check(unobserved.SequenceEqual(new[] { first, second }));
+        Check(AssetBundle.enumerations == before + 1 && AssetBundle.typedLoads == loads + 2);
+        definitionFamilies.Clear();
+        var trace = new List<string>();
+        Check(CategoryFamily(data, "category", new[] { second }, trace.Add).SequenceEqual(unobserved));
+        CheckCosts(trace, 2, 1);
+        Check(AssetBundle.enumerations == before + 2 && AssetBundle.typedLoads == loads + 4);
+        trace.Clear();
+        Check(CategoryFamily(data, "category", new[] { first }, trace.Add).SequenceEqual(unobserved));
+        Check(trace.Count == 0 && AssetBundle.enumerations == before + 2 && AssetBundle.typedLoads == loads + 4);
         definitionFamilies.Clear();
         AssetBundle.loadedOwners = new[] { AssetBundle.owner, AssetBundle.owner };
         Refuses(() => CategoryFamily(data, "category", new Definition[0]));

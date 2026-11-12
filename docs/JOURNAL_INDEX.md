@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J1437](PORTING_JOURNAL.md#j1437--attribute-synchronous-category-asset-loading-costs) | 2026-11-11 | Attribute synchronous category asset loading costs | 2026-11-12. |
 | [J1435](PORTING_JOURNAL.md#j1435--reuse-bundle-ownership-lookups-within-definition-families) | 2026-11-11 | Reuse bundle ownership lookups within definition families | 2026-11-12. |
 | [J1436](PORTING_JOURNAL.md#j1436--export-receipt-bound-final-supplier-type-descriptors) | 2026-11-11 | Export receipt-bound final supplier type descriptors | 2026-11-12. |
 | [J1434](PORTING_JOURNAL.md#j1434--retain-final-emitted-catalog-declaration-artifacts) | 2026-11-11 | Retain final emitted catalog declaration artifacts | 2026-11-12. |
