@@ -271,6 +271,19 @@ class ManagedFieldContractTests(unittest.TestCase):
         self.resolver.assemblies[native_identity] = native
         self.resolver.modules["UnityEngine.CoreModule.dll"] = native
         self.resolver.types[native_identity, "UnityEngine.Object"] = native["types"][0]
+        native_root = self.named("UnityEngine.Object", "UnityEngine.CoreModule", False)
+        self.rows[0]["references"].append(native_identity)
+        for name in ("Fixture.NativeTarget", "Fixture.NativeSibling"):
+            self.resolver.types[identity("Game"), name] = self.typ(name, native_root)
+        declared = self.resolver.registry(["Game.dll", "Fixture", "NativeTarget"])
+        self.assertTrue(self.resolver.assignable(declared, ["Game.dll", "Fixture", "NativeTarget"]))
+        self.assertFalse(self.resolver.assignable(declared, ["Game.dll", "Fixture", "NativeSibling"]))
+        self.assertTrue(
+            self.resolver.assignable(self.resolver.registry(["UnityEngine.CoreModule.dll", "UnityEngine", "Object"]), ["Game.dll", "Fixture", "NativeSibling"])
+        )
+        # A non-native contract cannot use the native root to hide a missing base.
+        with self.assertRaisesRegex(ValueError, "Missing exact assembly"):
+            self.resolver.assignable(self.resolver.registry(self.child), ["Game.dll", "Fixture", "NativeSibling"])
         parent = self.rows[0]["types"][3]
         parent["base_signature"] = self.named("UnityEngine.Object", "UnityEngine.CoreModule", False)
         self.rows[0]["references"].append(native_identity)

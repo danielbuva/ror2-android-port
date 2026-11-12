@@ -6,6 +6,14 @@ file, owner or pipeline step is added, moved or retired. Results and evidence li
 [journal](PORTING_JOURNAL.md); the files the build expects under `work/` are listed in
 [LOCAL_STATE.md](LOCAL_STATE.md).
 
+`WholeCatalogLoader.RegisterLocations` wraps its completed map with an
+`IResourceLocator` request observer. Each lookup logs its original key, key type,
+requested asset type, phase and map result, including unresolved soft references.
+The wrapper delegates keys and results unchanged; the original dynamic locator
+still handles GUID subobjects afterwards. A map miss is not a global load failure.
+`WholeCatalogComposed.Release` removes the same owned wrapper and restores prior
+locators. These lab diagnostics do not change content admission or gameplay.
+
 `bundle_preload.py::repack_canonical_aliases` applies explicit source-body catalog
 aliases after strict native emission; it leaves structural routes unchanged.
 The caller supplies qualified selection/types, the preload request and the
