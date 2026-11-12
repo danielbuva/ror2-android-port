@@ -8,13 +8,14 @@ using UnityEngine.SceneManagement;
 using UnityEngine.Profiling;
 public sealed class LabDiagnostics : MonoBehaviour
 {
- [Serializable] public class Config { public bool enabled=true; public string subtree=""; public bool fields=false,sceneDetails=false; }
+ [Serializable] public class Config { public bool enabled=true; public string subtree=""; public bool fields=false,sceneDetails=false,workloadCounts=false; }
  [Serializable] public class ObjectInfo { public string name; public string parent; public string[] components; public string[] fields; }
  [Serializable] public class Snapshot {
   public string checkpoint,utc,scene,graphicsApi,gpu,persistentDataPath,streamingAssetsPath,privateDataPath,camera,unityVersion;
   public string audio="not initialized: isolated lab",network="not initialized: isolated lab",gameState="no RoR2 gameplay loaded";
   public bool playerExists,sceneDetails; public string[] controllers,renderers,assemblies; public ObjectInfo[] hierarchy;
   public float fps,frameMs; public long managedBytes,totalAllocatedBytes;public double cpuFrameMs,gpuFrameMs;
+  public bool workloadCounts;public int activeProjectiles=-1,activeEffects=-1;public double workloadCountMs;public string workloadCountError;
  }
  string root; float elapsed; int frames; float fps; bool ready; Config config=new Config();
  Renderer referenceGeometry;bool referenceRendering=true;Renderer referenceCube;bool cubeVisibility;
@@ -67,6 +68,7 @@ public sealed class LabDiagnostics : MonoBehaviour
  void Dump(string checkpoint) {
   var snapshot=new Snapshot{checkpoint=checkpoint,utc=DateTime.UtcNow.ToString("o"),scene=SceneManager.GetActiveScene().name,graphicsApi=SystemInfo.graphicsDeviceType.ToString(),gpu=SystemInfo.graphicsDeviceName,persistentDataPath=root,streamingAssetsPath=Application.streamingAssetsPath,camera=Camera.main?Camera.main.name:null,controllers=Input.GetJoystickNames(),fps=fps,frameMs=fps>0?1000/fps:0,managedBytes=Profiler.GetMonoUsedSizeLong(),totalAllocatedBytes=Profiler.GetTotalAllocatedMemoryLong(),playerExists=GameObject.Find("Player")!=null};
   PopulateSceneDetails(checkpoint,snapshot);
+  PopulateWorkloadCounts(snapshot);
  #if UNITY_ANDROID && !UNITY_EDITOR
   using(var unity=new AndroidJavaClass("com.unity3d.player.UnityPlayer"))using(var activity=unity.GetStatic<AndroidJavaObject>("currentActivity"))using(var dir=activity.Call<AndroidJavaObject>("getFilesDir"))snapshot.privateDataPath=dir.Call<string>("getAbsolutePath");
  #endif
@@ -85,6 +87,23 @@ public sealed class LabDiagnostics : MonoBehaviour
   snapshot.assemblies=AppDomain.CurrentDomain.GetAssemblies().Select(a=>a.GetName().Name).ToArray();
   snapshot.renderers=FindObjectsOfType<Renderer>(true).SelectMany(r=>r.sharedMaterials.Where(m=>m!=null).Select(m=>r.name+":"+m.shader.name)).ToArray();
   snapshot.hierarchy=objects.Select(t=>new ObjectInfo{name=t.name,parent=t.parent?t.parent.name:null,components=t.GetComponents<Component>().Select(c=>c?c.GetType().FullName:"MISSING SCRIPT").ToArray(),fields=config.fields?t.GetComponents<Component>().Where(c=>c).SelectMany(c=>c.GetType().GetFields(System.Reflection.BindingFlags.Public|System.Reflection.BindingFlags.Instance).Select(f=>c.GetType().Name+"."+f.Name+"="+SafeField(c,f))).Take(100).ToArray():new string[0]}).ToArray();
+ }
+ // Opt-in live component counts for workload attribution, independent of the
+ // truncated hierarchy inspector. Never count catalog prefabs or inactive pools.
+ void PopulateWorkloadCounts(Snapshot snapshot) {
+  snapshot.workloadCounts=config.workloadCounts;
+  if(!snapshot.workloadCounts)return;
+  long started=System.Diagnostics.Stopwatch.GetTimestamp();
+  try {
+   snapshot.activeProjectiles=CountActiveComponents("RoR2.Projectile.ProjectileController");
+   snapshot.activeEffects=CountActiveComponents("RoR2.EffectComponent");
+  } catch(Exception e){snapshot.workloadCountError=e.GetType().Name+": "+e.Message;}
+  finally{snapshot.workloadCountMs=(System.Diagnostics.Stopwatch.GetTimestamp()-started)*1000.0/System.Diagnostics.Stopwatch.Frequency;}
+ }
+ int CountActiveComponents(string name) {
+  var type=AppDomain.CurrentDomain.GetAssemblies().Select(a=>a.GetType(name,false)).FirstOrDefault(t=>t!=null);
+  if(type==null)throw new InvalidOperationException("Workload component type unavailable: "+name);
+  return UnityEngine.Object.FindObjectsOfType(type).Length;
  }
  // Periodic full JSON belongs in the replaceable file, not the original console's
  // retained log list (J1091). Keep the startup record used by Device.launch.

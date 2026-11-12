@@ -2672,6 +2672,12 @@ Periodic snapshots retain live scalar, timing and controller facts; full scene
 hierarchy/material discovery and assembly enumeration run only for startup or
 explicit `./dev diagnostics --scene-details`, `--subtree` or `--fields` inspection.
 The `sceneDetails` fact distinguishes an omitted census from an empty scene.
+An explicit `diagnostics.json` `workloadCounts` request adds active
+`ProjectileController` and `EffectComponent` counts independently of the truncated
+hierarchy inspector. The existing periodic snapshot records census time and any
+missing-type error; omitted counts remain -1. Unity's active-object query excludes
+inactive pools and catalog prefabs. The request defaults off and ends when the
+previous diagnostics configuration is restored or the player exits.
 Only its startup/lifecycle snapshots use the full `LAB_SNAPSHOT` console record;
 periodic JSON is not retained by the original console. Original and error logging
 stay unchanged. During completed-session reclamation, `SessionResourceBoundary`
