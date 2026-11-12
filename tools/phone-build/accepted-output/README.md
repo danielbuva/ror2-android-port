@@ -49,7 +49,28 @@ remain separate requirements for the phone chain.
 The result identifies the final repacked bundle when present. Every call checks
 final managed script allocation, including cached emission, and closes readers.
 No Unity typed load, phone runtime, APK installation or gameplay is established
-by this command. Signed release dispatch and phone runtime dependencies remain open.
+by this command. Signed release dispatch uses the generated supplier closure;
+phone runtime dependencies remain open.
+
+`bundle_endpoints.py --managed REQUEST --output NEW_DIRECTORY` generates the
+current CLR declarations from pinned successful managed production and a final
+player's registry receipt. The request supplies `managed_providers`,
+`managed_receipt`, `registry_receipt` and `tools` file pins. Tools contain
+`dotnet`, `compiler`, `cecil`, `runtimeconfig` and a `references` pin array.
+The existing metadata-only reader is compiled from public source with that
+compiler; inspected assemblies are never executed. Provider keys are checked
+against CLR module metadata, including instrumented providers whose physical
+filename differs from their module name. Outputs are `providers.json`,
+`runtime-request.json` (the provider witness, not native runtime qualification),
+`metadata.json`, `provider-aliases.json` and `result.json`. Fresh registry provider
+paths must still resolve exactly; no basename-based relocation is attempted.
+
+The release graph accepts `owner-bundle-managed-release-v1` with `profiles` and
+`request`, declaring its final player profile and registry artifact. Its four
+generated witness artifacts feed `owner-bundle-preload-release-v1`; the registry
+body, receipt and schemas still come from the final player itself. Preparation
+derives original script properties directly from original bodies and MonoScripts.
+Compiler/provider pins and metadata-reader source enter dispatcher invalidation.
 
 ## Source stage contexts
 

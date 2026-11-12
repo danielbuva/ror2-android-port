@@ -11,6 +11,96 @@ import json
 from pathlib import Path
 
 
+def generate_managed(request_path, output):
+    """Build current CLR witnesses with the existing metadata-only Cecil reader."""
+    import shutil
+    import subprocess
+    import time
+
+    import bundle_preload as owner
+
+    request_path, output = Path(request_path).resolve(), Path(output).resolve()
+    request = json.loads(request_path.read_bytes())
+    pins = InputPins(request_path.parent, owner)
+    providers = pins.read(request["managed_providers"])
+    receipt = pins.read(request["managed_receipt"])
+    if receipt.get("success") is not True or receipt.get("phase") != "managed-produced":
+        raise ValueError("fresh successful managed production required")
+    provider_base = pins.pin(request["managed_providers"]).parent
+    providers = {name: dict(value, path=str(pins.path(value["path"], provider_base))) for name, value in providers.items()}
+    for value in providers.values():
+        path = Path(value["path"])
+        pins.add(path, dict(bytes=path.stat().st_size, sha256=value["sha256"]))
+    registry = pins.read(request["registry_receipt"])
+    if registry.get("success") is not True:
+        raise ValueError("final player registry production unsuccessful")
+    registry_base = pins.pin(request["registry_receipt"]).parent
+    aliases = {name: str(pins.add(pins.path(name, registry_base), pin)) for name, pin in registry["provider_pins"].items()}
+    tools = request["tools"]
+    launcher, compiler, cecil, runtimeconfig = (pins.pin(tools[key]) for key in ("dotnet", "compiler", "cecil", "runtimeconfig"))
+    references = [pins.pin(row) for row in tools["references"]]
+    source = pins.add(Path(__file__).resolve().parents[3] / "tools/phone-build/metadata/Program.cs")
+    if any(path.is_relative_to(output) for path in pins.files):
+        raise ValueError("managed witness output overlaps inputs")
+    output.mkdir(parents=True, exist_ok=False)
+    result = dict(success=False, executes_inputs=False)
+    started = time.monotonic()
+
+    def write(name, value):
+        (output / name).write_text(json.dumps(value, indent=2) + "\n")
+
+    def execute(command, label):
+        with (output / (label + ".log")).open("xb") as log:
+            subprocess.run(list(map(str, command)), cwd=output, stdout=log, stderr=subprocess.STDOUT, check=True, timeout=180)
+
+    try:
+        tool = output / "MetadataInventory.dll"
+        imports = output / "GlobalUsings.cs"
+        imports.write_text("".join("global using global::" + name + ";\n" for name in ("System", "System.Collections.Generic", "System.IO", "System.Linq")))
+        execute(
+            [
+                launcher,
+                "exec",
+                compiler,
+                "-noconfig",
+                "-nostdlib+",
+                "-langversion:latest",
+                "-deterministic+",
+                "-nullable:enable",
+                "-target:exe",
+                "-out:" + str(tool),
+                "-r:" + str(cecil),
+                *("-r:" + str(path) for path in references),
+                source,
+                imports,
+            ],
+            "metadata-compile",
+        )
+        shutil.copyfile(cecil, output / "Mono.Cecil.dll")
+        shutil.copyfile(runtimeconfig, output / "MetadataInventory.runtimeconfig.json")
+        write("metadata-inputs.json", dict(assemblies=[dict(group="current", path=value["path"]) for value in providers.values()]))
+        execute([launcher, "exec", tool, output / "metadata-inputs.json", output / "metadata.json"], "metadata-inspect")
+        write("providers.json", providers)
+        write("runtime-request.json", dict(managed=providers))
+        write("provider-aliases.json", aliases)
+        current_providers(
+            owner,
+            pins,
+            {
+                key: dict(path=str(output / name), bytes=(output / name).stat().st_size, sha256=owner.O.B.sha(output / name))
+                for key, name in (("runtime_request", "runtime-request.json"), ("managed_providers", "providers.json"), ("metadata", "metadata.json"))
+            },
+        )
+        pins.check()
+        result.update(success=True, managed_providers=len(providers), provider_aliases=len(aliases))
+    finally:
+        result.update(
+            elapsed_seconds=time.monotonic() - started, input_pins={str(path): pin for path, pin in pins.files.items() if not path.is_relative_to(output)}
+        )
+        write("result.json", result)
+    return result
+
+
 def digest(raw):
     return hashlib.sha256(raw).hexdigest()
 
@@ -512,3 +602,13 @@ class Qualification:
         self.staged.close()
         if self.final is not None:
             self.final.close()
+
+
+if __name__ == "__main__":
+    import argparse
+
+    parser = argparse.ArgumentParser(description="Generate current provider/CLR witnesses without executing input assemblies")
+    parser.add_argument("--managed", type=Path, required=True)
+    parser.add_argument("--output", type=Path, required=True)
+    args = parser.parse_args()
+    generate_managed(args.managed, args.output)

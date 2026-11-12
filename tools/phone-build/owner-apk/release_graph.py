@@ -23,6 +23,8 @@ def digest(path):
 
 
 def owner(profile):
+    if profile.get("schema") == "owner-bundle-managed-release-v1":
+        return "bundle_endpoints"
     if profile.get("schema") == "owner-bundle-preload-release-v1":
         return "bundle_preload"
     if "project_assemblies" in profile and "outputs" in profile:
@@ -176,6 +178,8 @@ class Graph:
         if name in self.jobs:
             return name
         producer = "record_produce" if path.endswith(".jsonl.gz") else owner(profile)
+        if producer == "bundle_endpoints":
+            return self.bundle_managed(path, profile, (*active, pin))
         if producer == "bundle_preload":
             return self.bundle_preload(path, profile, (*active, pin))
         if producer is None:
@@ -331,6 +335,46 @@ class Graph:
         self.jobs[name] = {"schema": 1, "script": PREFIX + producer + ".py", "arguments": arguments, "needs": needs, "outputs": outputs, "artifacts": artifacts}
         self.profile_files[name] = path
         self.job_profiles[name] = profile
+        return name
+
+    def bundle_managed(self, path, profile, active):
+        """Generate current witnesses alongside the actual final player registry."""
+        if set(profile) != {"schema", "profiles", "request"}:
+            raise ValueError("unsupported managed witness release contract")
+        name = "recipe/jobs/" + Path(path).stem + ".json"
+        needs = [self.build(digest(self.repo / dependency), active) for dependency in profile["profiles"]]
+        request = profile["request"]
+        token = request["registry_receipt"]["path"]
+        match = re.fullmatch(r"\$\{job:([^:}]+):registry_receipt\}", token)
+        if match is None or match.group(1) not in needs or owner(self.job_profiles[match.group(1)]) != "player_data":
+            raise ValueError("managed witnesses require final player registry artifacts")
+        sources = {"tools/phone-build/metadata/Program.cs"}
+        for value in re.findall(r'"([^"\n]*)"', json.dumps(request)):
+            if value.startswith("${repo}/"):
+                relative = value.removeprefix("${repo}/")
+                source = self.repo / relative
+                if not source.resolve().is_relative_to(self.repo) or not source.is_file():
+                    raise ValueError("managed public input must be a repository file")
+                sources.add(relative)
+            for dependency, artifact in re.findall(r"\$\{(?:job|job_directory|job_relative|sha256|bytes):([^:}]+):([^}]+)\}", value):
+                if dependency not in needs or artifact not in self.jobs[dependency]["artifacts"]:
+                    raise ValueError("managed artifact requires a declared source producer")
+        self.jobs[name] = dict(
+            schema=1,
+            script=PREFIX + "bundle_endpoints.py",
+            arguments=["--managed", "${request}", "--output", "${output}"],
+            request=request,
+            needs=sorted(set(needs)),
+            outputs={},
+            artifacts=dict(
+                receipt="result.json",
+                runtime_request="runtime-request.json",
+                managed_providers="providers.json",
+                metadata="metadata.json",
+                provider_aliases="provider-aliases.json",
+            ),
+        )
+        self.profile_files[name], self.job_profiles[name], self.public_files[name] = path, profile, sources
         return name
 
     def bundle_preload(self, path, profile, active):
