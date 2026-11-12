@@ -3250,3 +3250,17 @@ page cache, one pair: no total-load speedup claim. Native RNG/yields unchanged.
 Peak CPU/GPU 79.6 → 80.4 °C, 0 → 0.610 s above 80 °C during loadout/Start;
 battery 27 → 28 °C, runtime gaps < 0.345 s. App stopped, scratch removed,
 OLED asleep, lease released. Sustained play/performance and installer remain open.
+
+## J1421 — Canonical catalog consumers retain prefab ownership
+
+2026-11-12. The existing bundle-preload owner adds an explicit source-body alias
+repack after strict emission. Consumer PPtrs use canonical catalog providers;
+duplicate GameObjects retain their component arrays and reciprocal owner links.
+Full native schemas, actual MonoScript bindings, source selectors and persisted
+metadata, bodies, graph and resource members are checked. Reuse binds the alias
+plan, profiles, qualified types, containers, codec and producer code.
+Evidence: 35 authored tests in `tests/test_bundle_preload.py`; host preflight passes.
+Private integration notes: `work/coordination/p1-wholegame-1031/`
+`current-stage12-canonical-catalog-repack-v3/tracked-owner-integration.md`.
+Prior art: pinned R2API content-provider/catalog readiness contracts; J1410/J1417.
+Remaining: release dispatch, Unity typed load, current AOT and device acceptance.

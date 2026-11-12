@@ -27,6 +27,266 @@ def pointer(name):
 
 
 class BundlePreloadTests(unittest.TestCase):
+    def canonical_fixture(self, root, broken=None):
+        M, W = P.module("bundle_manifest"), P.module("unity_write")
+
+        def typ(cid, field):
+            tree = M.S._tree(
+                [
+                    dict(type="Authored", name="Base", size=-1, level=0, meta=0, flags=0, version=1),
+                    dict(type="PPtr<Object>", name=field, size=12, level=1, meta=0, flags=0, version=1),
+                    dict(type="int", name="m_FileID", size=4, level=2, meta=0, flags=0, version=1),
+                    dict(type="SInt64", name="m_PathID", size=8, level=2, meta=0, flags=0, version=1),
+                    dict(type="int", name="tail", size=4, level=1, meta=0, flags=0, version=1),
+                ]
+            )
+            return dict(class_id=cid, stripped=0, script_type=-1, hash=b"a" * 16, tree=tree, dependencies=[])
+
+        go, component, consumer = typ(1, "m_Component"), typ(108, "#374"), typ(134, "link")
+        required = dict(
+            name="authored",
+            member="CAB-authored",
+            path_ids=[10, 20, 30, 40, 50],
+            externals=["CAB-canonical", "Resources/unity_builtin_extra", "Library/unity default resources"],
+            dependencies=["canonical"],
+            asset_groups=[dict(guid="12" * 16, path="Assets/Consumer.asset", roots=[30])],
+        )
+        bodies, native_types = {}, {}
+        for pid, target, native in [(10, 20, go), (20, 10, component), (30, 10, consumer), (40, 50, go), (50, 40, component)]:
+            bodies[pid] = struct.pack("<iqi", 0, 40 if broken == "duplicate" and pid == 20 else target, 73)
+            native_types[pid] = native
+        cbodies = {
+            pid: struct.pack("<iqi", 0, 101 if broken == "canonical" and pid == 200 else target, 73)
+            for pid, target in [(100, 200), (200, 100), (101, 201), (201, 101)]
+        }
+        ctypes = {100: go, 101: go, 200: component, 201: component}
+
+        def write(path, member, data, types, externals, request=None):
+            data = dict(data)
+            types = dict(types)
+            if request:
+                graph = {pid: set(P.pointers(body, types[pid], {}).values()) for pid, body in data.items()}
+                data[1] = P.produce_graph(request, graph, {})
+                types[1] = {**M.schemas()[0], "dependencies": []}
+            rows = [dict(path_id=pid, type=types[pid], body=body) for pid, body in data.items()]
+            layout, packed = P.O.make_layout(dict(externals=externals), rows)
+            serialized = io.BytesIO()
+            W.write_serialized(serialized, layout, lambda obj: io.BytesIO(packed[obj["path_id"]]))
+            content = serialized.getvalue()
+            with path.open("wb") as handle:
+                W.write_bundle(
+                    handle,
+                    [(member, 4, len(content), lambda: io.BytesIO(content)), (member + ".resS", 0, 19, lambda: io.BytesIO(b"authored resources!"))],
+                    lambda block, method: block,
+                    flags=0x40,
+                )
+
+        source, canonical = root / "source.bundle", root / "canonical.bundle"
+        write(source, required["member"], bodies, native_types, required["externals"], required)
+        write(canonical, "CAB-canonical", cbodies, ctypes, [])
+        key = P.full_type_key(go)
+        selected, aliases = [], []
+        for pid, target, original in [(10, 100, 1), (40, 101, 2)]:
+            row = dict(
+                destination=["authored", "CAB-authored", pid],
+                source=["original.bundle", "CAB-original", original],
+                sha256=hashlib.sha256(bodies[pid]).hexdigest(),
+                full_type=key,
+            )
+            selected.append(row)
+            aliases.append(
+                dict(
+                    duplicate=row["destination"],
+                    canonical=["canonical", "CAB-canonical", target],
+                    source=row["source"],
+                    duplicate_body_sha256=row["sha256"],
+                    duplicate_class_id=1,
+                    duplicate_full_type=key,
+                )
+            )
+        profile = dict(
+            bundle=dict(name="canonical", member="CAB-canonical"),
+            sources=[dict(path="original.bundle", member="CAB-original")],
+            objects=[dict(path_id=100, source=[0, 1]), dict(path_id=101, properties_hash=dict(behaviour=[0, 2]))],
+        )
+        return dict(
+            source=source,
+            required=required,
+            aliases=aliases[:1],
+            selected_records=selected,
+            qualified_types={key: P.O.json_layout(go)},
+            canonical_profile=profile,
+            canonical_bundle=canonical,
+        ), aliases
+
+    def test_canonical_repack_preserves_reciprocal_owners_and_rebuilds_preloads(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            inputs, _ = self.canonical_fixture(root)
+            result = P.repack_canonical_aliases(output=root / "repacked", **inputs)
+            self.assertEqual((result["canonical_roots"], result["changed_fields"], result["preserved_reciprocal_owner_fields"]), (1, 1, 1))
+            self.assertFalse(result["typed_load_accepted"])
+            self.assertFalse(result["device_accepted"])
+            W = P.module("unity_write")
+            with W.B.Bundle(Path(result["bundle"])).member("CAB-authored") as stream:
+                layout = W.read_serialized(stream)
+                actual = {}
+                for row in layout["objects"]:
+                    stream.seek(layout["data_offset"] + row["offset"])
+                    body = W.B.exact(stream, row["bytes"])
+                    if row["path_id"] == 1:
+                        entries, _ = P.module("catalog_complete").containers(body)
+                        self.assertEqual(entries, [("assets/consumer.asset", (0, 30), [(0, 30), (1, 100)])])
+                    else:
+                        actual[row["path_id"]] = P.pointers(body, layout["types"][row["type_id"]], {})
+                        self.assertEqual(body[-4:], struct.pack("<i", 73))
+                self.assertEqual(actual[30]["link",], (1, 100))
+                self.assertEqual(actual[20]["#374",], (0, 10))
+                self.assertEqual(actual[10]["m_Component",], (0, 20))
+
+    def test_canonical_repack_rejects_broken_ownership_on_either_side(self):
+        for side in ("duplicate", "canonical"):
+            with self.subTest(side=side), tempfile.TemporaryDirectory() as tmp:
+                root = Path(tmp)
+                inputs, _ = self.canonical_fixture(root, broken=side)
+                with self.assertRaisesRegex(ValueError, "reciprocal ownership"):
+                    P.repack_canonical_aliases(output=root / "repacked", **inputs)
+
+    def test_canonical_repack_requires_body_provenance_and_complete_native_type(self):
+        import copy
+
+        for failure in ("body", "type"):
+            with self.subTest(failure=failure), tempfile.TemporaryDirectory() as tmp:
+                root = Path(tmp)
+                inputs, _ = self.canonical_fixture(root)
+                inputs = copy.deepcopy(inputs)
+                if failure == "body":
+                    inputs["canonical_profile"]["objects"][0] = dict(path_id=100, type_source=[0, 1])
+                else:
+                    key = inputs["selected_records"][0]["full_type"]
+                    inputs["qualified_types"][key]["hash"] = "cd" * 16
+                with self.assertRaisesRegex(ValueError, "body provenance|full type identity"):
+                    P.repack_canonical_aliases(output=root / "repacked", **inputs)
+
+    def test_canonical_repack_cache_binds_alias_plan_and_checks_retained_bundle(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            inputs, aliases = self.canonical_fixture(root)
+            inputs["cache_directory"] = root / "cache"
+            first = P.repack_canonical_aliases(output=root / "first", **inputs)
+            with patch.object(P, "relocate_pointer_fields", side_effect=AssertionError("checked unchanged bundle is reusable")):
+                second = P.repack_canonical_aliases(output=root / "second", **inputs)
+            self.assertTrue(second["cache_reused"])
+            self.assertEqual(second["bundle"], first["bundle"])
+            self.assertFalse((root / "second").exists())
+            inputs["aliases"] = aliases
+            changed = P.repack_canonical_aliases(output=root / "changed", **inputs)
+            self.assertFalse(changed["cache_reused"])
+            self.assertEqual(changed["canonical_roots"], 2)
+            Path(changed["bundle"]).write_bytes(b"corrupted")
+            restored = P.repack_canonical_aliases(output=root / "restored", **inputs)
+            self.assertFalse(restored["cache_reused"])
+            self.assertEqual(restored["sha256"], changed["sha256"])
+
+    def test_canonical_managed_alias_checks_actual_monoscript_binding(self):
+        M, W, C = P.module("bundle_manifest"), P.module("unity_write"), P.module("catalog_complete")
+
+        def tree(fields):
+            return M.S._tree([dict(type=t, name=n, size=s, level=level, meta=0, flags=0, version=1) for t, n, s, level in fields])
+
+        def text(value):
+            raw = struct.pack("<I", len(value)) + value.encode()
+            return raw + bytes(-len(raw) % 4)
+
+        identity = ("AuthoredDef", "Authored", "Authored.dll")
+        native = dict(
+            class_id=114,
+            stripped=0,
+            script_type=-1,
+            hash=b"m" * 16,
+            dependencies=[],
+            script_id=C.S.md4("".join(identity).encode()),
+            tree=tree(
+                [
+                    ("MonoBehaviour", "Base", -1, 0),
+                    ("PPtr<GameObject>", "m_GameObject", 12, 1),
+                    ("int", "m_FileID", 4, 2),
+                    ("SInt64", "m_PathID", 8, 2),
+                    ("int", "m_Enabled", 4, 1),
+                    ("PPtr<MonoScript>", "m_Script", 12, 1),
+                    ("int", "m_FileID", 4, 2),
+                    ("SInt64", "m_PathID", 8, 2),
+                ]
+            ),
+        )
+        key = P.full_type_key(native)
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            original = ["original.bundle", "CAB-original", 1]
+            required = dict(
+                name="authored",
+                member="CAB-authored",
+                path_ids=[60, 70],
+                externals=["CAB-canonical"],
+                dependencies=["canonical"],
+                asset_groups=[dict(guid="12" * 16, path="Assets/Def.asset", roots=[60])],
+            )
+
+            def write(path, member, pid, script_pid, binding, request=None):
+                script = text("AuthoredDef") + bytes(20) + b"".join(text(value) for value in binding)
+                body = bytes(16) + struct.pack("<iq", 0, script_pid)
+                script_type = dict(
+                    class_id=115,
+                    stripped=0,
+                    script_type=-1,
+                    hash=b"s" * 16,
+                    dependencies=[],
+                    tree=tree([("MonoScript", "Base", -1, 0), ("char", "opaque", len(script), 1)]),
+                )
+                data = {pid: body, script_pid: script}
+                rows = [dict(path_id=pid, type=native, body=body), dict(path_id=script_pid, type=script_type, body=script)]
+                if request:
+                    data[1] = P.produce_graph(request, {pid: {(0, 0), (0, script_pid)}, script_pid: set()}, {})
+                    rows.append(dict(path_id=1, type={**M.schemas()[0], "dependencies": []}, body=data[1]))
+                metadata, _ = P.O.make_layout(dict(externals=request["externals"] if request else []), rows)
+                stream = io.BytesIO()
+                W.write_serialized(stream, metadata, lambda row: io.BytesIO(data[row["path_id"]]))
+                raw = stream.getvalue()
+                with path.open("wb") as handle:
+                    W.write_bundle(handle, [(member, 4, len(raw), lambda: io.BytesIO(raw))], lambda block, method: block, flags=0x40)
+                return body
+
+            source, canonical = root / "source.bundle", root / "canonical.bundle"
+            body = write(source, "CAB-authored", 60, 70, identity, required)
+            write(canonical, "CAB-canonical", 600, 700, identity)
+            selected = dict(destination=["authored", "CAB-authored", 60], source=original, sha256=hashlib.sha256(body).hexdigest(), full_type=key)
+            alias = dict(
+                duplicate=selected["destination"],
+                canonical=["canonical", "CAB-canonical", 600],
+                source=original,
+                duplicate_body_sha256=selected["sha256"],
+                duplicate_class_id=114,
+                duplicate_full_type=key,
+            )
+            inputs = dict(
+                source=source,
+                required=required,
+                aliases=[alias],
+                selected_records=[selected],
+                qualified_types={key: P.O.json_layout(native)},
+                canonical_bundle=canonical,
+                canonical_profile=dict(
+                    bundle=dict(name="canonical", member="CAB-canonical"),
+                    sources=[dict(path=original[0], member=original[1])],
+                    objects=[dict(path_id=600, source=[0, 1])],
+                ),
+            )
+            result = P.repack_canonical_aliases(output=root / "matched", **inputs)
+            self.assertEqual(tuple(result["source_identity_proof"][0]["canonical_script_identity"]), identity)
+            write(canonical, "CAB-canonical", 600, 700, ("OtherDef", *identity[1:]))
+            with self.assertRaisesRegex(ValueError, "MonoScript binding"):
+                P.repack_canonical_aliases(output=root / "mismatch", **inputs)
+
     def test_scriptless_base_requires_pinned_type_and_preserves_owner_pointer(self):
         M = P.module("bundle_manifest")
         nodes = [dict(type="MonoBehaviour", name="Base", size=-1, level=0, meta=0, flags=0, version=1)]
