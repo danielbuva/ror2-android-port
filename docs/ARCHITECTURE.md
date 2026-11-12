@@ -439,6 +439,8 @@ files. Complete phone generation and runtime acceptance remain open.
 `startup_metadata.py` owns public `boot.config` and `unity_app_guid` generation.
 Setup pins the owner's inventory, public PlayerSettings and exact toolchain;
 their hashes and producer version generate relocatable build identifiers.
+Verification permits an identical producer at another path while retaining its
+size/hash and every recorded input/output check.
 It retains fullscreen, safe-area and HDR settings, uses a 3 ms incremental GC
 slice and omits development connections. New output/receipt directories own all
 state; there are no retained processes. APK admission regenerates these two

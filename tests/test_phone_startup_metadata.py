@@ -68,6 +68,18 @@ class StartupTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "public inputs"):
                 P.verify(path, P.digest(path))
 
+    def test_identical_relocated_producer_verifies_but_changed_producer_refuses(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            receipt, path = self.produce(root)
+            producer = root / "relocated_startup.py"
+            producer.write_bytes(Path(P.__file__).read_bytes())
+            relocated = load("relocated_startup_under_test", producer)
+            self.assertEqual(relocated.verify(path, P.digest(path)), receipt["outputs"])
+            producer.write_bytes(producer.read_bytes() + b"\n# changed producer\n")
+            with self.assertRaisesRegex(ValueError, "startup producer changed"):
+                relocated.verify(path, P.digest(path))
+
     def test_admission_is_separate_from_exact_and_does_not_cover_game_data(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
