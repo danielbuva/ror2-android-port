@@ -2857,6 +2857,16 @@ retention. Abrupt process termination can lose the in-memory trace; absent or
 partial evidence supplies no quantiles. Exact-editor host fixtures exercise
 actual admission, counters, binary interoperability and overflow. Capture overhead
 and sustained device qualification remain open.
+The same opt-in capture owns main-thread engine marker recorders. Setup discovers
+available named nanosecond markers and retains their actual categories. Every
+admitted frame reads preceding end-of-frame values into bounded scalar totals,
+with invocation, observed-frame, missing-frame and availability counts. The first
+partial frame is excluded. Camera teardown disposes every recorder. Inclusive
+marker scopes overlap and are never additive; absent markers and no-call frames
+remain distinct. Native freshness on consecutive no-event frames, instrumentation
+overhead, render-thread costs and device marker coverage still need qualification.
+Flat wait totals cannot distinguish GPU, VSync and target-rate causes.
+
 [Game performance](performance-game.md) owns the baseline and
 attribution limits; [public alpha](public-alpha.md#performance-release-gate) owns
 proposed device budgets. Synthetic host fixtures check window and coverage math.

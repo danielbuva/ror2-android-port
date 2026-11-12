@@ -172,6 +172,9 @@ not qualify a total-load speedup
 
 Proposed game budgets (targets, not accepted results), at original visual fidelity:
 
+60 FPS is the minimum acceptance floor. Continue lossless improvements toward
+the Main Nova's 120 Hz capacity, including frame pacing, after clearing that floor.
+
 | Device | Sustained workload | Proposed pacing budget | Energy/thermal budget |
 | --- | --- | --- | --- |
 | Main Nova, 120 Hz panel | 30 minutes of representative ordinary play, each supported stage | Mean >=60 FPS; raw frame p50 <=16.67 ms, p95 <=33.334 ms, p99 <=50 ms; >50 ms frames <=1% | Establish unplugged energy baseline; propose <=10 battery percentage points per 30 minutes, pending measurement. Record temperature/exposure and clock limits; heat alone is not failure. |

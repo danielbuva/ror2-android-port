@@ -2,8 +2,18 @@
 
 Current raw-frame observation: 2026-11-12; historical aggregate baseline: 2026-10-31.
 This is an assisted first-stage observation: invincibility, neutral movement and
-small camera drags; composed renderer, 120 Hz display. It does not qualify normal
+small camera drags; composed renderer on a 120 Hz capable panel. All 29 retained
+world snapshots report Unity refresh 60 Hz, requested frame rate 300 and vSync 1;
+actual compositor refresh was not captured. It does not qualify normal
 play, visual parity, battery efficiency or the performance release gate.
+
+The matched sustained endpoints also retain 98,855 lab-loop iterations. Stopwatch
+deltas average 1.143 ms per iteration for the inclusive loop: world 0.528 ms,
+observers 0.442 ms, save 0.116 ms and presentation 0.048 ms. Named children include
+enemy 0.208 ms, commerce/HUD 0.178 ms and combat 0.169 ms. Nested counters overlap;
+do not add them together. The loop timer begins after `WaitForEndOfFrame`, so it
+does not measure that wait or engine work elsewhere. These observations cannot
+assign the roughly 18 ms main-thread recorder value to gameplay, GC or waits.
 
 ## Reproduction and measurement limits
 
