@@ -1,4 +1,4 @@
-"""Current: thirty-minute invincibility-only automated combat observation.
+"""Current: thirty-minute bounded assisted combat observation.
 
 Existing visible-enemy primary-fire automation keeps this an assisted workload. Native
 End Run/menu 2 teardown is checked separately; no ordinary play, digitizer,
@@ -19,10 +19,12 @@ import session_cleanup_check as cleanup
 import touch_gesture
 
 PLANNED_SECONDS = 1800
+MONSTER_LIMIT = 12
 ALL_OFF_REFUSAL = "diagnostic assistance evidence or all-off debug options differ"
 ASSISTS = ("invincibility", "highDamage", "fastCharge", "movementBoost", "jumpBoost")
 SCOPE = (
-    "Assisted single original first-stage world, stationary visible-enemy native primary-fire automation; invincibility ON only. "
+    "Assisted single original first-stage world, stationary visible-enemy native primary-fire automation; invincibility ON only, "
+    "native monster soft limit 12 (original 40 restored at teardown). "
     "Composed renderer; no ordinary play, digitizer, full-game/performance acceptance or repeated-session memory-bound claim."
 )
 
@@ -41,6 +43,8 @@ def sustained_world_ready(report):
     if ((report.get("debugAcceleration") or {}).get("active") or {}).get("invincibility") is not True:
         return False
     require_invincibility_only(report)
+    if (report.get("director") or {}).get("monsterLimit") != MONSTER_LIMIT:
+        raise RuntimeError("Sustained workload requires the bounded native monster limit")
     return True
 
 
@@ -123,6 +127,8 @@ def observation_sample(report, snapshot, elapsed, previous=None, utc=None):
     )
     if any(type(row[key]) not in (int, float) or not math.isfinite(row[key]) or row[key] < 0 for key in required) or row["health"] <= 0:
         raise RuntimeError("Missing/non-finite live diagnostic measurement or native body died")
+    if row["live_enemies"] > MONSTER_LIMIT:
+        raise RuntimeError("Native monster population exceeded the bounded sustained workload")
     if previous and (
         row["native_frames"] <= previous["native_frames"]
         or row["native_seconds"] <= previous["native_seconds"]
@@ -179,6 +185,9 @@ def assisted_teardown_contract(completed, pid, attempt, baseline):
     # Preserve the exact all-off refusal. No other teardown failure is waived.
     if failures != [ALL_OFF_REFUSAL]:
         raise RuntimeError("Unexpected native teardown failure: " + repr(failures))
+    director = completed.get("director") or {}
+    if director.get("monsterLimit") != MONSTER_LIMIT or director.get("restoredMonsterLimit") != 40:
+        raise RuntimeError("Bounded native monster limit was not restored")
     acceleration = completed.get("debugAcceleration") or {}
     active = acceleration.get("active") or {}
     if (

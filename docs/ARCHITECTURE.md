@@ -4552,6 +4552,10 @@ It does not identify the exact residual from J746 or qualify native loss.
 `AutomaticDirectorSession`
 separates native elite/catalog/
 player initialization from the existing one-card director activation.
+The assisted `combatPerformanceFocus` workload temporarily uses the native monster
+team's soft limit of 12, preserving selection, credits and combat. Its prior limit
+is session-owned and restored first in `Dispose`; director reports retain the
+applied and restored limits. This bounded diagnostic does not qualify ordinary play.
 Its native first-stage path registers only the exact existing inactive player
 controller before results prepare their statistics component. The later catalog
 setup adopts that same registration without another Awake/OnEnable; the existing

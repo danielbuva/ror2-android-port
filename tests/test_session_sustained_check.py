@@ -18,6 +18,7 @@ def fixtures():
         world=dict(ready=True, authority=True, manualTakeover=False, diagnosticInput=True, health=100, frames=100, liveEnemies=4, kills=3),
         primary=dict(shots=12),
         combatPerformanceFocus=True,
+        director=dict(monsterLimit=12),
         runClock=dict(stopwatch=20),
         debugAcceleration=dict(active={key: key == "invincibility" for key in sustained.ASSISTS}),
         framePacing=dict(frames=100, meanMs=20, over33ms=4, over50ms=2, maxMs=110),
@@ -85,7 +86,7 @@ class SustainedCheckTests(unittest.TestCase):
 
         name = "frame-times-" + "a" * 32 + ".bin"
         completed = dict(
-            framePacing=dict(rawFrameTrace=name, rawFrameTraceClosed=True, rawFrameTraceFirstFrame=1, rawFrameTraceFrames=2, rawFrameTraceDropped=0)
+            framePacing=dict(rawFrameTrace=name, rawFrameTraceClosed=True, rawFrameTraceFirstFrame=1, rawFrameTraceFrames=2, rawFrameTraceDropped=0),
         )
         samples = [
             dict(pacing_frames=0, pacing_total_ms=0, pacing_total_ms_exact=True, pacing_over33=0, pacing_over50=0, pacing_trace=name),
@@ -152,6 +153,14 @@ class SustainedCheckTests(unittest.TestCase):
         self.assertEqual(row["live_enemies"], 4)
         self.assertEqual(row["kills"], 3)
         self.assertEqual(row["primary_shots"], 12)
+        invalid = copy.deepcopy(report)
+        invalid["world"]["liveEnemies"] = 40
+        with self.assertRaisesRegex(RuntimeError, "exceeded"):
+            sustained.observation_sample(invalid, snapshot, 0, utc=utc)
+        invalid = copy.deepcopy(report)
+        invalid["director"]["monsterLimit"] = 40
+        with self.assertRaisesRegex(RuntimeError, "bounded native monster limit"):
+            sustained.sustained_world_ready(invalid)
         invalid = dict(report, combatPerformanceFocus=False)
         with self.assertRaisesRegex(RuntimeError, "automated-combat"):
             sustained.observation_sample(invalid, snapshot, 0, utc=utc)
@@ -176,16 +185,21 @@ class SustainedCheckTests(unittest.TestCase):
 
     def test_only_explicit_all_off_refusal_is_retained_no_other_teardown_waiver(self):
         completed = dict(
+            director=dict(monsterLimit=12, restoredMonsterLimit=40),
             debugAcceleration=dict(
                 restored=True,
                 active={key: False for key in sustained.ASSISTS},
                 everAssisted=True,
                 normalGameAcceptanceEligible=False,
                 events=[dict(toggle="invincibility", enabled=True)],
-            )
+            ),
         )
         with mock.patch.object(sustained.cleanup, "abandon_contract", return_value=[sustained.ALL_OFF_REFUSAL]):
             self.assertEqual(sustained.assisted_teardown_contract(completed, "73", "attempt", {}), [sustained.ALL_OFF_REFUSAL])
+            invalid = copy.deepcopy(completed)
+            invalid["director"]["restoredMonsterLimit"] = 12
+            with self.assertRaisesRegex(RuntimeError, "was not restored"):
+                sustained.assisted_teardown_contract(invalid, "73", "attempt", {})
             for field, value in (("restored", False), ("everAssisted", False), ("normalGameAcceptanceEligible", True), ("events", [])):
                 invalid = copy.deepcopy(completed)
                 invalid["debugAcceleration"][field] = value
