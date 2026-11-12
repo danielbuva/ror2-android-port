@@ -107,7 +107,7 @@ PUBLISHING_SOURCE_FILES = {
     },
     *{"tools/phone-build/accepted-output/" + name + ".py" for name in ("package", "assemble", "sdk_package", "sdk_inputs")},
     "tools/phone-build/owner-code/native.py",
-    *{"launcher/" + name for name in ("app.js", "controller.js", "style.css", "background.png", "PROVENANCE.md")},
+    *{"launcher/" + name for name in ("app.js", "controller.js", "feedback.js", "style.css", "background.png", "PROVENANCE.md")},
     *{
         "tools/phone-build/managed-host/" + name
         for name in (

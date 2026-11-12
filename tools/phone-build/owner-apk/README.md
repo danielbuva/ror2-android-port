@@ -48,7 +48,7 @@ shader mechanism or replacement content loader is introduced.
   access. Polling/subscription teardown does not cancel preparation. Only bundled
   allowlisted HTTPS-origin resources are served; navigation/network are blocked.
 - `index.html` provides accurate owner-APK preparation copy while reusing the
-  unchanged approved `launcher/{app.js,controller.js,style.css,background.png}`.
+  unchanged approved `launcher/{app.js,controller.js,feedback.js,style.css,background.png}`.
   The simulated demo is never included. There is no new tracked PNG exception.
 - `binary_manifest.py` edits binary XML using the existing public `phone_apk.py`
   chunk/string reader. `build_owner_apk.py` compiles only the authored Java to a

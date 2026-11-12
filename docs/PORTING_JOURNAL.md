@@ -3665,3 +3665,13 @@ Native RNG/page cache uncontrolled; attribution only, no causal speedup claim.
 CPU/GPU peak 75.3 C, battery peak 27 C; active thermal max gap 0.434 s.
 Adopted placement, scratch removal, stopped process/OLED/lease cleanup and prune pass.
 Sustained play, audibility and full-pipeline performance/alpha acceptance remain open.
+
+## J1451 — Include launcher feedback in signed phone releases
+
+2026-11-12. The public release source manifest now includes `launcher/feedback.js`,
+required by APK assembly and imported by the launcher. Publication rejects its absence.
+Regression checks derive relative module imports from the published launcher sources.
+Evidence: 17 public-release host tests, Ruff and host preflight pass; completed private
+`work/coordination/p1-wholegame-1031/phone-chain-audit-1112/phone-signed-bundle-chain-v4/`
+records all eight phone producer jobs passing before APK assembly exposed the omission.
+Host correction only; signed phone completion, install/update and gameplay remain open.
