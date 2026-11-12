@@ -3364,7 +3364,7 @@ host preflight and full CI-local (3,200 tests) passed before merge.
 Source output: `7f70aeae`; no APK or device output was produced.
 Signed graph/source closure, phone dependencies and complete conversion stay open.
 
-## J1428 — Relocate pinned native producer packs without rewriting provenance
+## J1429 — Relocate pinned native producer packs without rewriting provenance
 
 2026-11-12. Merged #464 (`c8610148`): the checked bundle request accepts a
 pinned provider map for native packs and recursively retained upstream packs.
