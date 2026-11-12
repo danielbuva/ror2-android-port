@@ -12,7 +12,7 @@ from pathlib import Path
 
 
 def managed_production(pins, provider_pin, receipt_pin):
-    """Retain a produced cohort or a pinned single-gameplay-assembly refresh."""
+    """Retain a produced cohort or explicitly pinned gameplay/dependency refresh."""
     providers = pins.read(provider_pin)
     receipt = pins.read(receipt_pin)
     if receipt.get("success") is not True or receipt.get("phase") not in ("managed-produced", "gameplay-refreshed"):
@@ -20,24 +20,25 @@ def managed_production(pins, provider_pin, receipt_pin):
     if "providers_sha256" in receipt and receipt["providers_sha256"] != provider_pin["sha256"]:
         raise ValueError("managed production provider manifest differs")
     if receipt["phase"] == "gameplay-refreshed":
+        refreshed = receipt.get("refreshed_providers", {"Assembly-CSharp.dll": receipt["gameplay"]})
         if receipt.get("providers_sha256") != provider_pin["sha256"] or (receipt.get("provider_count"), receipt.get("reused_provider_count")) != (
             len(providers),
-            len(providers) - 1,
+            len(providers) - len(refreshed),
         ):
             raise ValueError("gameplay refresh provider manifest/count differs")
         base_pin = receipt["base_providers"]
         base_path = pins.path(base_pin["path"], pins.pin(receipt_pin).parent)
         base = json.loads(pins.add(base_path, dict(bytes=base_path.stat().st_size, sha256=base_pin["sha256"])).read_bytes())
-        if set(base) != set(providers) or "Assembly-CSharp.dll" not in providers:
+        if set(base) != set(providers) or "Assembly-CSharp.dll" not in refreshed or not set(refreshed) <= set(providers):
             raise ValueError("gameplay refresh provider membership differs")
-        if any(value["sha256"] != base[name]["sha256"] for name, value in providers.items() if name != "Assembly-CSharp.dll"):
+        if any(value["sha256"] != base[name]["sha256"] for name, value in providers.items() if name not in refreshed):
             raise ValueError("gameplay refresh changed a reused provider")
-        gameplay = receipt["gameplay"]
-        produced = providers["Assembly-CSharp.dll"]
-        if gameplay["sha256"] != produced["sha256"] or pins.path(gameplay["path"], pins.pin(receipt_pin).parent) != pins.path(
-            produced["path"], pins.pin(provider_pin).parent
-        ):
-            raise ValueError("gameplay refresh output differs")
+        for name, value in [*refreshed.items(), ("Assembly-CSharp.dll", receipt["gameplay"])]:
+            produced = providers[name]
+            if value["sha256"] != produced["sha256"] or pins.path(value["path"], pins.pin(receipt_pin).parent) != pins.path(
+                produced["path"], pins.pin(provider_pin).parent
+            ):
+                raise ValueError("gameplay refresh output differs: " + name)
     return providers
 
 

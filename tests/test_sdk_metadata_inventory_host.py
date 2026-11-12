@@ -101,6 +101,27 @@ class ManagedProductionReceiptTests(unittest.TestCase):
                 with self.assertRaisesRegex(ValueError, message):
                     endpoints.managed_production(pins, manifest, document("receipt.json", receipt | changes))
 
+    def test_accepts_explicit_dependency_refresh_and_checks_its_binding(self):
+        for mismatch in (None, "hash", "path"):
+            with self.subTest(mismatch=mismatch), tempfile.TemporaryDirectory() as temporary:
+                root = Path(temporary)
+                endpoints, pins, document, manifest, receipt, providers = self.fixture(root)
+                base = document("base.json", {name: dict(path="old-" + name, sha256="a" * 64) for name in providers})
+                receipt.update(
+                    base_providers={k: base[k] for k in ("path", "sha256")},
+                    reused_provider_count=0,
+                    refreshed_providers={name: dict(value) for name, value in providers.items()},
+                )
+                if mismatch:
+                    receipt["refreshed_providers"]["Shared.dll"]["sha256" if mismatch == "hash" else "path"] = (
+                        "b" * 64 if mismatch == "hash" else "Assembly-CSharp.dll"
+                    )
+                    with self.assertRaisesRegex(ValueError, "output differs: Shared.dll"):
+                        endpoints.managed_production(pins, manifest, document("receipt.json", receipt))
+                else:
+                    self.assertEqual(endpoints.managed_production(pins, manifest, document("receipt.json", receipt)), providers)
+                    pins.check()
+
     def test_rejects_changed_reused_provider_and_base_manifest(self):
         for changed_base in (False, True):
             with self.subTest(changed_base=changed_base), tempfile.TemporaryDirectory() as temporary:
