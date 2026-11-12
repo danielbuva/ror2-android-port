@@ -3493,3 +3493,17 @@ Evidence: `work/coordination/p1-wholegame-1031/phone-chain-audit-1112/`
 (`fresh-preparation-checks-v1/final-focused.log`, `final-preflight.log`).
 No APK/device claim. Signed dispatch, exact-editor load, complete current managed
 SDK qualification and phone-only conversion remain open.
+
+## J1439 — Reuse serialized type resolution within category families
+
+2026-11-12. CategoryFamily resolves each distinct type once per synchronous call;
+each row retains assignability, typed load, order and owner/identity refusal.
+Pinned R2API typed-load/lifecycle prior art; three executable fixtures passed.
+Evidence: `work/coordination/alpha-category-type-device-retry-20261112T051742Z/`.
+APK SHA-256 `c2268ec700c71bf64a5ccb3847022890363bf11a42d68c49e04b951117b8c555`.
+Source `4873767d`; ordinary Start reached Distant Roost/Commando/player/HUD.
+States/unlockables type spans 7.416/1.572 ms, versus J1437 61.230/13.509 ms;
+single candidate, uncontrolled page cache/RNG; no total-load speedup claim.
+Current-PID errors empty; 153 banks/65 network sounds; update retained profiles.
+Peak CPU/GPU 78.1 °C, 0 s above 80 °C; battery 28 °C; cleanup/OLED/lease passed.
+No second daily snapshot; sustained play/performance and phone install remain open.
