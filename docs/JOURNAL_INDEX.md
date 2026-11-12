@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J1460](PORTING_JOURNAL.md#j1460--supply-the-source-grandparent-default-material) | 2026-11-12 | Supply the source Grandparent default Material | 2026-11-12. |
 | [J1458](PORTING_JOURNAL.md#j1458--resolve-private-selections-through-public-source-profiles) | 2026-11-12 | Resolve private selections through public source profiles | 2026-11-12. |
 | [J1459](PORTING_JOURNAL.md#j1459--sustained-pacing-compared-with-proposed-budgets) | 2026-11-12 | Sustained pacing compared with proposed budgets | 2026-11-12. |
 | [J1457](PORTING_JOURNAL.md#j1457--derive-source-policy-supplier-bindings-from-selected-metadata) | 2026-11-12 | Derive source-policy supplier bindings from selected metadata | 2026-11-12. |

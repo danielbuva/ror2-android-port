@@ -3793,3 +3793,17 @@ host-only preflight pass; no APK produced and no editor or device used.
 Evidence: `work/coordination/p1-wholegame-1031/phone-chain-audit-1112/public-source-selectors-v1/`.
 Prior art: pinned EditorKit typed lookup/collisions; existing release/preparation owners extended.
 Current graph admission, Unity typed load, converted play and port update remain open.
+
+## J1460 — Supply the source Grandparent default Material
+
+2026-11-12. An audited public profile selects the original Material through the
+existing native record owner, preserving its body/type except one checked Shader PPtr.
+All 10 source pointers were parsed; the nine Texture references remain null.
+Persisted pack: 1 record, 1,064 B, SHA-256
+`f57650ad0c140d260adff5220b07c155ca37540e45c0d9b81a95652508f4faf0`.
+Evidence: `work/coordination/p1-wholegame-1031/phone-chain-audit-1112/grandparent-material-v1/`.
+Production 0.043 s; wrapper 0.196 s, child peak RSS 65,585,152 B; heat unmeasured.
+Actual selected Shader bytes and receipt/index hashes checked; candidate handed to scene owner.
+33 focused host tests and host-only preflight pass; no new runtime owner.
+Prior art: pinned EditorKit typed lookup identities.
+Shader dependency closure, complete graph, Unity typed load, converted play and update remain open.

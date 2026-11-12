@@ -6781,6 +6781,16 @@ to J850. This adds no runtime owner; group, complete bundle and phone gates rema
 open.
 
 
+`recipe/owner-whole-game-grandparent-material-records.json` supplies the original
+Grandparent default Material through the same native record owner. Its complete
+source schema and body are retained, with only the checked Shader pointer
+relocated to the selected Standard endpoint. Setup requires the pinned original
+bundle and a fresh pack; scoped readers close on exit and receipts persist.
+The consumer must qualify the Shader's final native dependencies and the complete
+graph separately. This adds no runtime owner; Unity typed load and device play
+remain open.
+
+
 `recipe/owner-whole-game-bundle-canvas-records.jsonl.gz` selects 10,870 original
 CanvasRenderers through the existing `record_produce.py` native owner. Qualified
 GameObject component edges and reciprocal original ownership supply checked
