@@ -1,5 +1,6 @@
 """Synthetic stream import and Android phone-flow wiring; never builds an APK."""
 
+import importlib.util
 import os
 from pathlib import Path
 import shutil
@@ -93,6 +94,22 @@ public class Harness {
 
 
 class OwnerPhoneFlowTests(unittest.TestCase):
+    def test_graphics_picker_is_explicit_and_does_not_load_a_driver_or_write_settings(self):
+        activity = (SOURCE / "ToolHostActivity.java").read_text()
+        picker = (SOURCE / "OwnerGraphicsPicker.java").read_text()
+        self.assertIn('button(layout, "Graphics drivers", new Runnable()', activity)
+        self.assertIn("graphicsPicker.close()", activity)
+        self.assertIn("GraphicsDriverProviders.choices(device, null)", picker)
+        self.assertIn("ActiveDriver.unavailable()", picker)
+        self.assertIn("GraphicsDriverFixture.allowed(activity.getPackageName(), debuggable())", picker)
+        self.assertIn("ACTION_APPLICATION_DEVELOPMENT_SETTINGS", picker)
+        self.assertIn("FLAG_SYSTEM | ApplicationInfo.FLAG_UPDATED_SYSTEM_APP", picker)
+        self.assertIn("intent.setComponent", picker)
+        self.assertIn("ActivityNotFoundException | SecurityException", picker)
+        self.assertNotIn("Settings.Global", picker)
+        self.assertNotIn("System.load", picker)
+        self.assertNotIn("GraphicsDriverPolicy.begin", picker)
+
     def test_managed_host_compiles_with_fixture_android_bootclasspath(self):
         compiler = Path(os.environ.get("JAVA_HOME", "/absent")) / "bin/javac"
         if not compiler.is_file():
@@ -106,7 +123,9 @@ class OwnerPhoneFlowTests(unittest.TestCase):
             self.skipTest("Android API 33 compile jar absent")
         # Match managed-host/build_fixture.py; the ordinary JDK classpath hides
         # missing Android bootstrap APIs such as LambdaMetafactory.
-        sources = ("ToolHostActivity", "OwnerInstaller", "OwnerAlphaInstall", "OwnerUpdateState", "OwnerBuildService", "OwnerInputImport", "OwnerInputSource")
+        spec = importlib.util.spec_from_file_location("phone_flow_stage", SOURCE / "stage.py")
+        staging = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(staging)
         with tempfile.TemporaryDirectory() as temporary:
             result = subprocess.run(
                 [
@@ -120,7 +139,7 @@ class OwnerPhoneFlowTests(unittest.TestCase):
                     str(android),
                     "-d",
                     temporary,
-                    *(str(SOURCE / (name + ".java")) for name in sources),
+                    *(str(SOURCE / name) for name in staging.JAVA_SOURCES),
                 ],
                 capture_output=True,
                 text=True,
