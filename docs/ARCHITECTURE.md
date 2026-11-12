@@ -5894,8 +5894,14 @@ The same seams in `StageGeometryBoundary`, `NovaInputBoundary` and
 and display/run/enemy preparation, and objective templates/master catalog/player
 setup. `EnemySpineBoundary` marks completed context preparation;
 `AutomaticDirectorBoundary` bounds the existing scheduled-spawn wait after
-director activation. That interval includes native scheduling and callbacks,
-so it is not exclusive load time. The same director owner passes an optional
+director activation. Its local `DirectorStartupWork` counters aggregate calls,
+total time and maximum time for existing report saves, the spawn callback and
+the final summon scan. One summary follows a successful wait; callback timing
+is disabled in the wait's finally block, including failure. Counters remain
+local to that startup and add no report writes or scheduling changes. A save
+count of zero is valid when no observed frame meets the existing save condition.
+The interval includes native scheduling and callbacks, so it is not exclusive load
+time. The same director owner passes an optional
 sparse callback into `WholeCatalogComposed.CategoryFamily` to separate manifest
 parsing, location indexing/provider grouping and native asset collection loading
 inside master-family setup. The callback runs only on a family-cache miss and
