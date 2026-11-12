@@ -2748,10 +2748,16 @@ explicit device, installed APK digest and new absolute done-file select one
 canonical device lease before any device access. The actual driver PID owns that
 lease while existing SDK interruption and three-session native-heap owners run,
 followed by `session_sustained_check.py`. The latter observes one original
-Commando first-stage world for 30 minutes with invincibility only, manual neutral
-input and small software camera drags. Fresh advancing diagnostics, native clock
-and frame counters, battery/HAL stops and original End Run/menu teardown are
-required. It retains the exact assisted/all-off refusal separately and requires
+Commando first-stage world for 30 minutes with invincibility only and the
+existing `combatPerformanceFocus` visible-hostile native primary-fire automation.
+It leaves diagnostic input active, avoiding manual takeover and shopping routes.
+Fresh advancing diagnostics record live enemies, kills, primary shots and CPU/GPU
+frame times; minute snapshots retain the workload alongside performance data.
+Native clock/frame counters, battery/HAL stops and original End Run/menu teardown
+are required. This replaces the historical neutral-input capture, whose enemies
+accumulated without return fire. A positive kill/shot delta is required; retained
+enemy counts still determine whether the measured workload is representative.
+It retains the exact assisted/all-off refusal separately and requires
 all assists restored off. This is an assisted workload, not ordinary play or a
 performance guarantee. Host admission estimates two 4 GiB snapshots plus
 1 GiB of diagnostic output and requires a further 20 GiB margin; the receipt

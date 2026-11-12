@@ -15,7 +15,9 @@ def fixtures():
     report = dict(
         session=1,
         phase="integrated-world-playing",
-        world=dict(ready=True, authority=True, manualTakeover=True, diagnosticInput=False, health=100, frames=100, liveEnemies=4),
+        world=dict(ready=True, authority=True, manualTakeover=False, diagnosticInput=True, health=100, frames=100, liveEnemies=4, kills=3),
+        primary=dict(shots=12),
+        combatPerformanceFocus=True,
         runClock=dict(stopwatch=20),
         debugAcceleration=dict(active={key: key == "invincibility" for key in sustained.ASSISTS}),
         framePacing=dict(frames=100, meanMs=20, over33ms=4, over50ms=2, maxMs=110),
@@ -143,12 +145,18 @@ class SustainedCheckTests(unittest.TestCase):
             with self.subTest(battery=battery, thermal=thermal), self.assertRaises(RuntimeError):
                 sustained.thermal_sample(battery, thermal)
 
-    def test_manual_neutral_invincibility_only_and_fresh_measurements_are_required(self):
+    def test_automated_combat_invincibility_only_and_fresh_measurements_are_required(self):
         report, snapshot, utc = fixtures()
         row = sustained.observation_sample(report, snapshot, 0, utc=utc)
         self.assertIsNone(row["gpu_frame_ms"])
+        self.assertEqual(row["live_enemies"], 4)
+        self.assertEqual(row["kills"], 3)
+        self.assertEqual(row["primary_shots"], 12)
+        invalid = dict(report, combatPerformanceFocus=False)
+        with self.assertRaisesRegex(RuntimeError, "automated-combat"):
+            sustained.observation_sample(invalid, snapshot, 0, utc=utc)
         self.assertEqual(row["pacing_total_ms"], 2000)
-        for key, value in (("manualTakeover", False), ("diagnosticInput", True), ("authority", False), ("health", 0), ("frames", float("nan"))):
+        for key, value in (("manualTakeover", True), ("diagnosticInput", False), ("authority", False), ("health", 0), ("frames", float("nan"))):
             invalid = copy.deepcopy(report)
             invalid["world"][key] = value
             with self.subTest(key=key), self.assertRaises(RuntimeError):
