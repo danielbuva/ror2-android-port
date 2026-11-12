@@ -650,7 +650,11 @@ class BundlePreloadTests(unittest.TestCase):
             request = json.loads((output / "request.json").read_text())
             self.assertEqual(request["sha256"], P.O.B.sha(Path(result["bundle"])))
             self.assertEqual(request["assets"], [dict(name="assets/root.asset", type="PhysicMaterial")])
-            self.assertEqual(sorted(path.name for path in output.iterdir()), ["authored.bundle", "gaps.json", "request.json", "result.json", "roots.json"])
+            self.assertEqual(
+                sorted(path.name for path in output.iterdir()), ["authored.bundle", "gaps.json", "progress.json", "request.json", "result.json", "roots.json"]
+            )
+            progress = json.loads((output / "progress.json").read_text())
+            self.assertEqual((progress["phase"], progress["records_done"], progress["records_total"]), ("complete", 2, 2))
 
     def required_graph(self, root):
         graph, types, rows = self.native_graph(root)
@@ -1147,6 +1151,62 @@ class BundlePreloadTests(unittest.TestCase):
             required["asset_groups"][0]["roots"] = [10]
             regrouped = emit("regrouped")
             self.assertEqual((regrouped["cache"]["records_hits"], regrouped["cache"]["groups_misses"]), (2, 1))
+
+    def test_killed_emission_resumes_completed_records_and_preload_groups(self):
+        import signal
+
+        child = """
+import json, os, signal, sys
+from pathlib import Path
+sys.path.insert(0, sys.argv[1])
+import bundle_preload as P
+root, phase = Path(sys.argv[2]), sys.argv[3]
+original = P.ProducerRecords.record
+reads = 0
+def record(self, value):
+    global reads
+    reads += 1
+    if phase == 'provider' and reads == 2:
+        os.kill(os.getpid(), signal.SIGKILL)
+    return original(self, value)
+P.ProducerRecords.record = record
+if phase == 'serialization':
+    def killed(*args, **kwargs):
+        os.kill(os.getpid(), signal.SIGKILL)
+    P.O.make_layout = killed
+P.emit_closed_native(root/'graph', [root/'types.json'], root/'killed', 'authored', 'CAB-authored',
+    required=json.loads((root/'required.json').read_text()),
+    cache_directory=root/'cache', cache_inputs=[root/'checker.json'])
+"""
+        for phase, reused in (("provider", 1), ("serialization", 2)):
+            with self.subTest(phase=phase), tempfile.TemporaryDirectory() as tmp:
+                root = Path(tmp)
+                graph, types, _, required = self.cached_graph(root)
+                # Fixture paths are explicit in the child; no inherited Python state.
+                self.assertEqual(types, root / "types.json")
+                self.assertEqual(graph, root / "graph")
+                (root / "required.json").write_text(json.dumps(required))
+                checker = root / "checker.json"
+                checker.write_text("{}")
+                killed = subprocess.run([sys.executable, "-c", child, str(Path(P.__file__).parent), str(root), phase], capture_output=True, timeout=30)
+                self.assertEqual(killed.returncode, -signal.SIGKILL, killed.stderr.decode())
+                self.assertEqual(json.loads((root / "killed/progress.json").read_text())["records_done"], reused)
+                resumed = P.emit_closed_native(
+                    graph,
+                    [root / "types.json"],
+                    root / "resumed",
+                    "authored",
+                    "CAB-authored",
+                    required=required,
+                    cache_directory=root / "cache",
+                    cache_inputs=[checker],
+                )
+                fresh = P.emit_closed_native(graph, [root / "types.json"], root / "fresh", "authored", "CAB-authored", required=required)
+                self.assertEqual(resumed["sha256"], fresh["sha256"])
+                self.assertEqual(resumed["cache"]["records_hits"], reused)
+                self.assertEqual(resumed["cache"].get("groups_hits", 0), int(phase == "serialization"))
+                self.assertFalse(resumed["cache_reused"])
+                self.assertFalse(any(path.name.startswith(".native-index-") for path in (root / "resumed").iterdir()))
 
     def test_pointer_changes_reuse_disjoint_preload_groups(self):
         selected = dict(

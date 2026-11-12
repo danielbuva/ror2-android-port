@@ -52,6 +52,16 @@ Signed release-graph integration uses the combined preparation entry point below
 Current source/provider qualification and the phone SQLite/LZ4 runtime remain
 separate work; this interface adds no device claim.
 
+Request qualification and emission share attempt-owned SQLite descriptor and
+provider indexes. Only the current rows are decoded; parsed type trees use a
+bounded cache and object bodies retain the existing streamed storage. Teardown
+closes and removes the temporary indexes. The optional emission cache commits
+completed record batches and preload groups so an interrupted attempt can reuse
+their transformations; source, endpoint and CLR qualification still runs again.
+The emitter atomically writes `progress.json` with phase and completed/total
+record counts after durable cache checkpoints. A partial cache or progress file
+does not establish structural, Unity typed-load or device acceptance.
+
 The existing managed-host native plan supplies Android CPython `_sqlite3` and
 its SQLite dependency for these disk indexes. The fixture builder verifies the
 two source hashes and packages them through its existing native/link owner;
