@@ -6,6 +6,19 @@ file, owner or pipeline step is added, moved or retired. Results and evidence li
 [journal](PORTING_JOURNAL.md); the files the build expects under `work/` are listed in
 [LOCAL_STATE.md](LOCAL_STATE.md).
 
+`bundle_preload.py::repack_canonical_aliases` applies explicit source-body catalog
+aliases after strict native emission; it leaves structural routes unchanged.
+The caller supplies qualified selection/types, the preload request and the
+canonical profile/container. Actual native types and MonoScript identities must
+agree, and both prefab component arrays must have reciprocal owner links.
+Only consumer PPtrs change; duplicate objects and component ownership remain.
+The existing graph writer rebuilds preloads, then every persisted body, metadata
+table and unrelated resource member is checked. Optional private output reuse
+binds the alias plan, profiles, schemas, containers, codec and producer code.
+Scoped streams close on return, scratch serialization is removed, and receipts
+remain. This host producer API does not add release-job dispatch or establish
+Unity typed load, phone execution or converted-game acceptance.
+
 [Alpha policy](ALPHA_POLICY.md) owns packaging/acquisition decisions;
 [screen inventory](SCREEN_COVERAGE.md) maps the current Android surfaces and their
 remaining interaction gates.

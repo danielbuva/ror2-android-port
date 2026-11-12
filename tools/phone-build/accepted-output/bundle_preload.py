@@ -1212,6 +1212,278 @@ def _emit_closed_native(
     return result
 
 
+def repack_canonical_aliases(
+    source,
+    output,
+    required,
+    aliases,
+    selected_records,
+    qualified_types,
+    canonical_profile,
+    canonical_bundle,
+    *,
+    codec=None,
+    codec_sha256=None,
+    cache_directory=None,
+):
+    """Route consumers to explicit catalog owners after strict native emission.
+
+    The caller supplies the qualified emitted bundle and its selection/types,
+    plus source-body aliases and the canonical producer profile/container.
+    Structural routes remain immutable. This bounded pass preserves duplicate
+    objects and their reciprocal native ownership; it never establishes Unity
+    typed load, current-CLR qualification or device acceptance itself.
+    """
+    from contextlib import closing, nullcontext
+    import copy
+    import json
+    import resource
+    import sys
+    import tempfile
+    import time
+
+    W = module("unity_write")
+    source, output, canonical_bundle = Path(source), Path(output), Path(canonical_bundle)
+    aliases, selected_records = list(aliases), list(selected_records)
+    name, member = required["name"], required["member"]
+    canonical = canonical_profile["bundle"]
+    if (codec is None) != (codec_sha256 is None):
+        raise ValueError("Canonical repack compression needs codec and SHA-256")
+    paths = [source, canonical_bundle, *Path(__file__).parent.glob("*.py")]
+    if codec is not None:
+        paths.append(Path(codec))
+
+    def pins():
+        return {str(path.resolve()): O.B.sha(path) for path in paths}
+
+    started, input_pins = time.monotonic(), pins()
+    request_key = EmissionCache.key(
+        dict(
+            inputs=input_pins,
+            required=required,
+            aliases=aliases,
+            selected=selected_records,
+            qualified_types=qualified_types,
+            canonical_profile=canonical_profile,
+            codec_sha256=codec_sha256,
+        )
+    )
+    with closing(EmissionCache(cache_directory)) if cache_directory is not None else nullcontext(None) as emission_cache:
+        saved = emission_cache.get("canonical", request_key) if emission_cache is not None else None
+        if saved is not None:
+            result = json.loads(saved)
+            if Path(result["bundle"]).is_file() and O.B.sha(Path(result["bundle"])) == result["sha256"]:
+                if pins() != input_pins:
+                    raise ValueError("Canonical repack input drift")
+                return dict(result, cache_reused=True, seconds=time.monotonic() - started)
+        mapping = {tuple(row["duplicate"]): row for row in aliases}
+        selected = {tuple(row["destination"]): row for row in selected_records if tuple(row["destination"]) in mapping}
+        if not mapping or len(mapping) != len(aliases) or selected.keys() != mapping.keys():
+            raise ValueError("Canonical aliases require distinct selected duplicate endpoints")
+        bundle, target_bundle = W.B.Bundle(source), W.B.Bundle(canonical_bundle)
+        with bundle.member(member) as stream, target_bundle.member(canonical["member"]) as target_stream:
+            layout, target_layout = W.read_serialized(stream), W.read_serialized(target_stream)
+            objects = {row["path_id"]: row for row in layout["objects"]}
+            target_objects = {row["path_id"]: row for row in target_layout["objects"]}
+            externals = [row["path"].rsplit("/", 1)[-1] if row["path"].startswith("archive:/") else row["path"] for row in layout["externals"]]
+            if externals != required["externals"] or canonical["member"] not in externals:
+                raise ValueError("Canonical repack must preserve the external member table")
+            native = module("catalog_complete").ProducedMembers()
+            native.add(member, stream, name)
+            native.add(canonical["member"], target_stream, canonical["name"])
+            specifications = {row["path_id"]: row for row in canonical_profile["objects"]}
+            schemas, ownership, component_arrays, proof = {}, {}, {}, []
+
+            def record(handle, metadata, obj):
+                handle.seek(metadata["data_offset"] + obj["offset"])
+                return W.B.exact(handle, obj["bytes"])
+
+            for key, alias in mapping.items():
+                value, destination = selected[key], tuple(alias["canonical"])
+                if (
+                    key[:2] != (name, member)
+                    or destination[:2] != (canonical["name"], canonical["member"])
+                    or tuple(value.get("source", ())) != tuple(alias["source"])
+                    or value["sha256"] != alias["duplicate_body_sha256"]
+                    or value["full_type"] != alias["duplicate_full_type"]
+                ):
+                    raise ValueError("Canonical source or selected identity differs")
+                specification = specifications[destination[2]]
+                selector = specification.get("properties_hash", {}).get("behaviour", specification.get("source"))
+                if selector is None:
+                    raise ValueError("Canonical alias needs original body provenance, not type_source")
+                original = canonical_profile["sources"][selector[0]]
+                if [original["path"], original["member"], selector[1]] != alias["source"]:
+                    raise ValueError("Canonical profile selects a different original body")
+                old, new = objects[key[2]], target_objects[destination[2]]
+                old_body, new_body = record(stream, layout, old), record(target_stream, target_layout, new)
+                old_type, new_type = layout["types"][old["type_id"]], target_layout["types"][new["type_id"]]
+                qualified = {k: bytes.fromhex(v) if k in ("tree", "hash", "script_id") else v for k, v in qualified_types[value["full_type"]].items()}
+                qualified_final_type(old_body, old_type, layout["scripts"], qualified)
+                qualified_final_type(new_body, new_type, target_layout["scripts"], new_type)
+                if old_type["class_id"] != alias["duplicate_class_id"] or {k: v for k, v in old_type.items() if k != "script_type"} != {
+                    k: v for k, v in new_type.items() if k != "script_type"
+                }:
+                    raise ValueError("Canonical full native/script/schema type differs")
+                pointers(old_body, old_type, schemas)
+                pointers(new_body, new_type, schemas)
+                if old_type["class_id"] == 1:
+                    for duplicate, pid, body, typ, handle, metadata, members in (
+                        (True, key[2], old_body, old_type, stream, layout, objects),
+                        (False, destination[2], new_body, new_type, target_stream, target_layout, target_objects),
+                    ):
+                        for component_field, (fid, component_pid) in pointers(body, typ, schemas).items():
+                            if fid or component_pid not in members:
+                                raise ValueError("Catalog GameObject component must be present and local")
+                            component = members[component_pid]
+                            component_body = record(handle, metadata, component)
+                            fields = pointers(component_body, metadata["types"][component["type_id"]], schemas)
+                            owner_field = ("m_GameObject",) if ("m_GameObject",) in fields else ("#374",)
+                            if fields.get(owner_field) != (0, pid):
+                                raise ValueError("Catalog GameObject/component reciprocal ownership differs")
+                            if duplicate:
+                                component_arrays[pid, component_field] = (fid, component_pid)
+                                owner_key = component_pid, owner_field
+                                if owner_key in ownership:
+                                    raise ValueError("Component has repeated duplicate GameObject owners")
+                                ownership[owner_key] = pid
+                identity = None
+                if old_type["class_id"] == 114:
+                    identity = native.managed_identity(canonical["member"], new_type, new_body)
+                    if native.managed_identity(member, old_type, old_body) != identity:
+                        raise ValueError("Canonical and duplicate managed identities differ")
+                proof.append(
+                    dict(
+                        **alias,
+                        emitted_duplicate_sha256=hashlib.sha256(old_body).hexdigest(),
+                        canonical_sha256=hashlib.sha256(new_body).hexdigest(),
+                        canonical_script_identity=identity,
+                    )
+                )
+            replacements, graph, hashes, changes = {}, {}, {}, []
+            container = None
+            for pid, obj in objects.items():
+                body, typ = record(stream, layout, obj), layout["types"][obj["type_id"]]
+                hashes[pid] = hashlib.sha256(body).hexdigest()
+                if typ["class_id"] == 142:
+                    if container is not None:
+                        raise ValueError("Multiple AssetBundle containers")
+                    container = pid
+                    continue
+                fields = pointers(body, typ, schemas)
+                targets = {
+                    field: tuple(mapping[name, member, pointer[1]]["canonical"])
+                    for field, pointer in fields.items()
+                    if pointer[0] == 0 and (name, member, pointer[1]) in mapping and (pid, field) not in ownership
+                }
+                if targets:
+                    revised_body = relocate_pointer_fields({"destination": [name, member, pid]}, body, typ, targets, externals)
+                    expected = bytearray(body)
+                    spans = A.fields(body, schemas[typ["tree"]])[1]
+                    for field, target in targets.items():
+                        begin, end = spans[field]
+                        if end - begin != 12:
+                            raise ValueError("Canonical field must be a complete PPtr")
+                        struct.pack_into("<iq", expected, begin, externals.index(target[1]) + 1, target[2])
+                        changes.append(dict(owner=pid, field=list(field), target=target))
+                    if revised_body != bytes(expected):
+                        raise ValueError("Canonical relocation changed unrelated bytes")
+                    body = replacements[pid] = revised_body
+                for field, pointer in pointers(body, typ, schemas).items():
+                    if (pid, field) in component_arrays and pointer != component_arrays[pid, field]:
+                        raise ValueError("Canonical repack changed GameObject component membership")
+                graph[pid] = set(pointers(body, typ, schemas).values())
+                for field, pointer in pointers(body, typ, schemas).items():
+                    if (pid, field) in ownership:
+                        if pointer != (0, ownership[pid, field]):
+                            raise ValueError("Canonical repack changed reciprocal component ownership")
+                    elif pointer[0] == 0 and (name, member, pointer[1]) in mapping:
+                        raise ValueError("Canonical repack retained a consumer alias")
+            if container is None or set(graph) != set(required["path_ids"]):
+                raise ValueError("Canonical repack required object set differs")
+            validate_graph(graph, len(externals))
+            replacements[container] = produce_graph(required, graph, {}, emission_cache=emission_cache)
+            revised = copy.deepcopy(layout)
+            offset = 0
+            for obj in sorted(revised["objects"], key=lambda row: row["offset"]):
+                offset = (offset + 7) // 8 * 8
+                obj["offset"] = offset
+                obj["bytes"] = len(replacements[obj["path_id"]]) if obj["path_id"] in replacements else objects[obj["path_id"]]["bytes"]
+                offset += obj["bytes"]
+            revised["bytes"] = revised["data_offset"] + offset
+            output.mkdir(parents=True, exist_ok=False)
+            with tempfile.TemporaryDirectory(prefix=".canonical-", dir=output) as scratch:
+                temporary = Path(scratch) / "serialized"
+
+                def body_for(obj):
+                    if obj["path_id"] in replacements:
+                        return io.BytesIO(replacements[obj["path_id"]])
+                    stream.seek(layout["data_offset"] + objects[obj["path_id"]]["offset"])
+                    return stream
+
+                with temporary.open("xb") as handle:
+                    W.write_serialized(handle, revised, body_for)
+                target = output / (name + ".bundle")
+                members = [
+                    (m, flags, temporary.stat().st_size if m == member else size, lambda m=m: temporary.open("rb") if m == member else bundle.member(m))
+                    for m, (_, size, flags) in bundle.members.items()
+                ]
+                compression = W.codec(codec, codec_sha256) if codec is not None else nullcontext(lambda block, method: block)
+                with compression as compress, target.open("xb") as handle:
+                    W.write_bundle(handle, members, compress, engine=layout["engine"], flags=0x243 if codec is not None else 0x40)
+            actual = W.B.Bundle(target)
+            with actual.member(member) as persisted:
+                metadata = W.read_serialized(persisted)
+                if metadata != revised:
+                    raise ValueError("Persisted canonical metadata differs")
+                for obj in metadata["objects"]:
+                    pid = obj["path_id"]
+                    raw = record(persisted, metadata, obj)
+                    expected = hashlib.sha256(replacements[pid]).hexdigest() if pid in replacements else hashes[pid]
+                    if hashlib.sha256(raw).hexdigest() != expected:
+                        raise ValueError("Persisted canonical body differs")
+                    if pid != container and set(pointers(raw, metadata["types"][obj["type_id"]], schemas).values()) != graph[pid]:
+                        raise ValueError("Persisted canonical pointer graph differs")
+            for other in bundle.members:
+                if other != member:
+                    with bundle.member(other) as before, actual.member(other) as after:
+
+                        def digest(handle):
+                            value = hashlib.sha256()
+                            while block := handle.read(1024 * 1024):
+                                value.update(block)
+                            return value.digest()
+
+                        if digest(before) != digest(after):
+                            raise ValueError("Canonical repack changed unrelated member")
+        if pins() != input_pins:
+            raise ValueError("Canonical repack input drift")
+        result = dict(
+            success=True,
+            non_final=True,
+            typed_load_accepted=False,
+            device_accepted=False,
+            bundle=str(target),
+            sha256=O.B.sha(target),
+            bytes=target.stat().st_size,
+            canonical_roots=len(mapping),
+            preserved_reciprocal_owner_fields=len(ownership),
+            changed_fields=len(changes),
+            changed_objects=len(replacements) - 1,
+            source_identity_proof=proof,
+            ownership=[dict(component=pid, field=field, owner=owner) for (pid, field), owner in ownership.items()],
+            inputs=input_pins,
+            request_sha256=request_key,
+            cache_reused=False,
+            seconds=time.monotonic() - started,
+            peak_rss_bytes=resource.getrusage(resource.RUSAGE_SELF).ru_maxrss * (1 if sys.platform == "darwin" else 1024),
+        )
+        (output / "result.json").write_text(json.dumps(result, indent=2) + "\n")
+        if emission_cache is not None:
+            emission_cache.put("canonical", request_key, json.dumps(result).encode())
+        return result
+
+
 def main():
     import argparse
     import json
