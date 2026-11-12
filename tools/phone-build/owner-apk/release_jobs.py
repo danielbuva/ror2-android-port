@@ -43,6 +43,7 @@ PRODUCERS = {
             "sprite_produce",
             "bundle_manifest",
             "catalog_complete",
+            "bundle_preload",
             "stage_contexts",
             "startup_metadata",
         )

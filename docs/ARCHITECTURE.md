@@ -37,8 +37,9 @@ The same checked invocation writes `catalog-profile.json` from the emitted
 bundle identity and required asset groups, and pins that declaration and the
 actual final bundle in its receipt. The alias donor remains a separate catalog
 owner; no bundle copy or second production supplies these artifacts.
-Signed release-graph integration, source/provider regeneration and the phone
-SQLite/LZ4 runtime remain separate work; this interface adds no device claim.
+Signed release-graph integration uses the combined preparation entry point below.
+Current source/provider qualification and the phone SQLite/LZ4 runtime remain
+separate work; this interface adds no device claim.
 
 `bundle_preload.py --prepare REQUEST --output NEW_DIRECTORY` delegates fresh
 request derivation to `bundle_prepare.py`. Pinned supplier profiles, receipts,
@@ -55,7 +56,19 @@ including original script properties and canonical body-identity witnesses.
 MonoScripts retain their own source selectors, separate from behaviour hash
 schemas. Null-script witnesses pin the original body, and SDK resource members
 remain external references without becoming AssetBundle dependencies.
-Signed dispatch, exact-editor load and phone acceptance remain separate gates.
+`bundle_preload.py --release REQUEST --output NEW_DIRECTORY` materializes the
+signed policy, prepares fresh suppliers and runs the same checked emitter and
+optional canonical repack in one workspace. `release_graph.py` accepts
+`owner-bundle-preload-release-v1` profiles declaring prerequisite source profiles
+and that request. Public file pins join the signed source closure; supplier
+artifacts name declared jobs. Referenced donor/staged containers remain payload
+and native-manifest dependencies. Catalog production consumes each actual final
+bundle and its emitted profile, independently of canonical body-identity proof.
+Managed witnesses must name generated artifacts, with registry body, receipt and
+schemas supplied by one final player job. Setup and teardown remain the scoped
+preparation/emission owners; the dispatcher retains only declared final artifacts
+for reuse. Host synthetic-registry dispatch does not qualify current CLR/SDK
+production, exact-editor load or phone acceptance.
 
 `bundle_preload.produce_graph` also accepts per-group `preload_roots` as explicit
 destination triples, separate from advertised container roots/subassets. Local
@@ -654,8 +667,8 @@ table and retains definitions extracted from serialized player files. Legacy raw
 suppliers without complete type metadata still require a separate checked schema
 before graph preparation. The release graph exposes these type tables and the
 object producer's existing final `layout.json` as cached artifacts. Readers close
-on exit; receipts and metadata persist with their packs. Complete fresh preparation
-and phone qualification remain open.
+on exit; receipts and metadata persist with their packs. Current whole-content
+preparation and phone qualification remain open.
 `recipe/owner-whole-game-source-records.json` selects original managed/native
 records through this owner; all 198 are host raw-exact. Setup takes pinned
 original/SDK inputs and a fresh pack; persisted receipts remain after exit.
