@@ -3682,7 +3682,7 @@ Registry/SDK owners remain synthetic; existing game APK preserved. Installer rem
 displays asleep, lease/prune pass; game content and Unity typed load remain open.
 Game installation, play and save-preserving port updates remain open.
 
-## J1452 — Preserve original paths during phone source upload
+## J1453 — Preserve original paths during phone source upload
 
 2026-11-12. Existing lab uploader accepts restricted paths with spaces and quotes both shell layers.
 113 installer tests, binary/path regression, Ruff and host preflight pass.
