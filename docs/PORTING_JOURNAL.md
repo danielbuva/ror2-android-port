@@ -3310,6 +3310,17 @@ Peak CPU/GPU 76.5 °C, 0 s above 80 °C; battery 26 → 27 °C. Source `f11f5cd4
 App stopped, scratch removed, OLED asleep, lease released; pruning passed.
 Sustained play/performance, physical navigation and complete phone install remain open.
 
+## J1426 — Scope incremental job pins to their source dependencies
+
+2026-11-12. Merged #461 (`cd1db7ee`): signed jobs may declare their own
+source files; cache identity includes their transitive supplier closure while
+verification retains the full consumer union. Changing one consumer keeps its
+sibling and shared supplier; changing the supplier or producer rebuilds both.
+Legacy jobs keep conservative invalidation; consumer tampering still refuses.
+Evidence: `tests/test_phone_updates.py`, `tests/test_release_graph.py`
+and `tests/test_public_release.py`; 57 focused host tests, Ruff, preflight and
+full CI-local (3,194 tests) passed before merge. No APK/device change; complete
+phone conversion, installation and update/save retention remain open.
 ## J1425 — Measure direct native state catalog iterator execution
 
 2026-11-12. Existing state driver summarizes invocation/nested MoveNext; native

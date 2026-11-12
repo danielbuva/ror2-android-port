@@ -659,6 +659,153 @@ class BundlePreloadTests(unittest.TestCase):
         )
         return graph, types, rows, required
 
+    def request_fixture(self, root):
+        graph, types, rows, required = self.required_graph(root)
+        rows = rows[:2]
+        records = graph / "selected-records.jsonl"
+        records.write_text("".join(json.dumps(row) + "\n" for row in rows))
+        (root / "required.json").write_text(json.dumps(required))
+        routes = [
+            dict(owner=row["destination"], edges=[dict(field=["link"], pointer=row["edges"][0], target=[*row["destination"][:2], row["edges"][0][1]])])
+            for row in rows
+        ]
+        (root / "routes.jsonl").write_text("".join(json.dumps(row) + "\n" for row in routes))
+        # Standard-library literal-only LZ4 worker. Exercise the real pinned
+        # codec protocol and CLI without a compiled host helper or editor.
+        codec = root / "codec"
+        codec.write_text(
+            "#!" + sys.executable + "\nimport sys, struct\n"
+            "while header := sys.stdin.buffer.read(8):\n"
+            " size, method = struct.unpack('<II', header)\n"
+            " data = sys.stdin.buffer.read(size)\n"
+            " extra = size - 15\n"
+            " suffix = bytes([255]) * (extra // 255) + bytes([extra % 255]) if size >= 15 else b''\n"
+            " encoded = bytes([min(size, 15) << 4]) + suffix + data\n"
+            " sys.stdout.buffer.write(struct.pack('<I', len(encoded)) + encoded)\n"
+            " sys.stdout.buffer.flush()\n"
+        )
+        codec.chmod(0o755)
+
+        def pin(path):
+            return dict(path=str(path.relative_to(root)), bytes=path.stat().st_size, sha256=P.O.B.sha(path))
+
+        request = dict(
+            schema="owner-bundle-preload-inputs-v1",
+            graph={path.name: pin(path) for path in graph.iterdir()},
+            schemas=[pin(types)],
+            required=pin(root / "required.json"),
+            routes=pin(root / "routes.jsonl"),
+            endpoints=pin(records),
+            staged=[],
+            managed_inputs={},
+            game_root=".",
+            codec=pin(codec),
+            bundle="authored",
+            member="CAB-authored",
+        )
+        inputs = root / "inputs.json"
+        inputs.write_text(json.dumps(request))
+        return inputs, request
+
+    def test_declarative_request_cli_emits_and_reuses_actual_native_bundle(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            inputs, _ = self.request_fixture(root)
+            command = [sys.executable, "-I", "-S", P.__file__, "--inputs", str(inputs), "--cache", str(root / "cache")]
+            first = json.loads(subprocess.check_output([*command, "--output", str(root / "first")], cwd=root.parent, text=True))
+            second = json.loads(subprocess.check_output([*command, "--output", str(root / "second")], cwd=root.parent, text=True))
+            self.assertFalse(first["emission"]["cache_reused"])
+            self.assertTrue(second["emission"]["cache_reused"])
+            self.assertEqual(first["bundle"], second["bundle"])
+            self.assertEqual(first["sha256"], P.O.B.sha(Path(second["bundle"])))
+            self.assertFalse(second["typed_load_accepted"])
+            self.assertFalse(second["device_accepted"])
+
+    def test_declarative_request_checks_pins_and_structural_fields(self):
+        for failure in ("pin", "route"):
+            with self.subTest(failure=failure), tempfile.TemporaryDirectory() as tmp:
+                root = Path(tmp)
+                inputs, request = self.request_fixture(root)
+                if failure == "pin":
+                    (root / "required.json").write_text("{}")
+                else:
+                    path = root / "routes.jsonl"
+                    routes = [json.loads(line) for line in path.read_text().splitlines()]
+                    routes[0]["edges"] = []
+                    path.write_text("".join(json.dumps(row) + "\n" for row in routes))
+                    request["routes"].update(bytes=path.stat().st_size, sha256=P.O.B.sha(path))
+                    inputs.write_text(json.dumps(request))
+                with self.assertRaisesRegex(ValueError, "input differs|[Ss]tructural"):
+                    P.produce_request(inputs, root / "output")
+
+    def test_final_readback_respects_required_subset_of_local_descriptors(self):
+        E = P.module("bundle_endpoints")
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            inputs, request = self.request_fixture(root)
+            result = P.produce_request(inputs, root / "output")
+            selected = {tuple(row["destination"]): row for row in P.json_rows(root / "graph/selected-records.jsonl")}
+            selected["authored", "CAB-authored", 999] = dict(class_id=114)
+            required = json.loads((root / "required.json").read_text())
+            types = json.loads((root / "types.json").read_text())
+            qualification = E.Qualification(Node(**vars(P)), E.InputPins(root, P), request, selected, types, required)
+            qualification.endpoints = E.EndpointRecords(qualification.member, qualification.retained, qualification.staged, qualification.check)
+            try:
+                qualification.check_final(result["bundle"])
+            finally:
+                qualification.close()
+
+    def test_current_provider_relative_paths_retain_metadata_agreement(self):
+        E = P.module("bundle_endpoints")
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            provider = root / "Fixture.dll"
+            provider.write_bytes(b"authored provider")
+            providers = {provider.name: dict(path=provider.name, sha256=P.O.B.sha(provider))}
+            row = dict(
+                group="current",
+                assembly="Fixture",
+                assembly_identity="FixtureIdentity",
+                module_name=provider.name,
+                path=provider.name,
+                sha256=P.O.B.sha(provider),
+                types=[],
+                exported_types=[],
+                references=[],
+            )
+            values = dict(
+                runtime_request=dict(managed=providers), managed_providers=providers, metadata=dict(schema=2, executes_inputs=False, assemblies=[row])
+            )
+            inputs = {}
+            for name, value in values.items():
+                path = root / (name + ".json")
+                path.write_text(json.dumps(value))
+                inputs[name] = dict(path=path.name, bytes=path.stat().st_size, sha256=P.O.B.sha(path))
+            pins = E.InputPins(root, P)
+            universe = E.current_providers(P, pins, inputs)
+            self.assertEqual(universe.modules[provider.name]["path"], str(provider.resolve()))
+            values["metadata"]["assemblies"][0]["path"] = "other.dll"
+            path = root / "metadata.json"
+            path.write_text(json.dumps(values["metadata"]))
+            inputs["metadata"].update(bytes=path.stat().st_size, sha256=P.O.B.sha(path))
+            with self.assertRaisesRegex(ValueError, "Metadata provider path/hash differs"):
+                E.current_providers(P, E.InputPins(root, P), inputs)
+
+    def test_external_managed_endpoint_rechecks_final_local_script(self):
+        E = P.module("bundle_endpoints")
+        local, external = ("authored", "CAB-authored", 10), ("staged", "CAB-staged", 20)
+        current = [b"retained"]
+        staged = Node(record=lambda target: ({}, b"staged", dict(class_id=114)), check_pins=lambda: None)
+
+        def check(value, raw, typ, endpoint):
+            self.assertEqual(endpoint(local)[1], current[0])
+
+        endpoints = E.EndpointRecords(local[:2], lambda target: ({}, b"retained", {}), staged, check)
+        endpoints(external)
+        current[0] = b"final"
+        endpoints.check_final(lambda target: ({}, b"final", {}))
+        self.assertEqual(endpoints.checked_external_managed, {external})
+
     def test_required_emission_follows_mixed_retained_profiles_and_actual_extents(self):
         import UnityPy
 
