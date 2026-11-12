@@ -40,7 +40,7 @@ class NovaInputPresenceTests(unittest.TestCase):
         prepare = source.index("coordinator.PrepareIntegratedWorld(body, cfg)", begin)
         restore = "OnDemandRendering.renderFrameInterval = priorRenderFrameInterval;"
         ready = source.index(restore, prepare)
-        playing = source.index("Application.targetFrameRate = 300;", prepare)
+        playing = source.index("coordinator.GetOfflineApplicationSession().ReapplyDisplayPreference();", prepare)
         first_input_frame = source.index("yield return new WaitForEndOfFrame();", playing)
         cleanup = source.index("finally", first_input_frame)
         recovery = source.index("if (coordinator.r.sourceStageLifecycleRecoveryRequired)", cleanup)

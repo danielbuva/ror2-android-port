@@ -253,6 +253,11 @@ WHOLE_GENERATED_RUNTIME_SOURCES = {"OriginalBodyVisualMap.cs", "OriginalHealthVi
 # Authored runtime code compiled by original_game_audio_produce, not bundle data.
 # Keep importer metadata and the game/middleware assemblies frozen.
 WHOLE_APK_ASSEMBLIES = {"Assets/LabLoadingScene/Plugins/GameAudioOriginalBootstrap.dll"}
+# Authored Android player source; never consumed by external bundle builds.
+WHOLE_APK_ANDROID_CODE = {
+    "Assets/Plugins/Android/SettingsWriteObserver.androidlib/src/main/java/dev/ror2lab/diagnostics/LabDisplayPreference.java" + suffix
+    for suffix in ("", ".meta")
+}
 WHOLE_APK_RECEIPTS = {
     "Assets/StreamingAssets/Lab/" + name + suffix
     for name in ("NativeViewCameraStageReceipt", "OriginalGameAudioStageReceipt", "OriginalMusicOutputObserverStageReceipt")
@@ -296,6 +301,7 @@ def whole_player_inputs():
     # never consumed by the external asset-bundle builds.
     inputs.update(WHOLE_APK_RECEIPTS)
     inputs.update(WHOLE_APK_ASSEMBLIES)
+    inputs.update(WHOLE_APK_ANDROID_CODE)
     # APK-only consumers of unchanged converted assets; retain Unity-owned metadata.
     inputs.update(
         "Assets/LabLoadingScene/" + name + suffix
@@ -390,7 +396,8 @@ def validate_whole_payload_reuse(project, receipt_path=None):
     previous_allowed = set(receipt["allowed"])
     added = WHOLE_PLAYER_INPUTS - previous_allowed
     if previous_allowed - WHOLE_PLAYER_INPUTS or any(
-        p not in WHOLE_APK_RECEIPTS | WHOLE_APK_ASSEMBLIES and (not p.startswith("Assets/LabLoadingScene/") or not p.endswith((".cs", ".cs.meta")))
+        p not in WHOLE_APK_RECEIPTS | WHOLE_APK_ASSEMBLIES | WHOLE_APK_ANDROID_CODE
+        and (not p.startswith("Assets/LabLoadingScene/") or not p.endswith((".cs", ".cs.meta")))
         for p in added
     ):
         raise RuntimeError("Unexpected code-only content exception")

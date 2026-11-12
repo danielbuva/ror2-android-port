@@ -8,12 +8,12 @@ using UnityEngine.SceneManagement;
 using UnityEngine.Profiling;
 public sealed class LabDiagnostics : MonoBehaviour
 {
- [Serializable] public class Config { public bool enabled=true; public string subtree=""; public bool fields=false; }
+ [Serializable] public class Config { public bool enabled=true; public string subtree=""; public bool fields=false,sceneDetails=false; }
  [Serializable] public class ObjectInfo { public string name; public string parent; public string[] components; public string[] fields; }
  [Serializable] public class Snapshot {
   public string checkpoint,utc,scene,graphicsApi,gpu,persistentDataPath,streamingAssetsPath,privateDataPath,camera,unityVersion;
   public string audio="not initialized: isolated lab",network="not initialized: isolated lab",gameState="no RoR2 gameplay loaded";
-  public bool playerExists; public string[] controllers,renderers,assemblies; public ObjectInfo[] hierarchy;
+  public bool playerExists,sceneDetails; public string[] controllers,renderers,assemblies; public ObjectInfo[] hierarchy;
   public float fps,frameMs; public long managedBytes,totalAllocatedBytes;public double cpuFrameMs,gpuFrameMs;
  }
  string root; float elapsed; int frames; float fps; bool ready; Config config=new Config();
@@ -65,14 +65,26 @@ public sealed class LabDiagnostics : MonoBehaviour
  }
  [Serializable] class ErrorRow {public string message,stack,type,utc;}
  void Dump(string checkpoint) {
-  var objects=FindObjectsOfType<Transform>(true).Where(x=>string.IsNullOrEmpty(config.subtree)||x.name.Contains(config.subtree)||Ancestors(x).Contains(config.subtree)).Take(1000);
-  var snapshot=new Snapshot{checkpoint=checkpoint,utc=DateTime.UtcNow.ToString("o"),scene=SceneManager.GetActiveScene().name,graphicsApi=SystemInfo.graphicsDeviceType.ToString(),gpu=SystemInfo.graphicsDeviceName,persistentDataPath=root,streamingAssetsPath=Application.streamingAssetsPath,camera=Camera.main?Camera.main.name:null,controllers=Input.GetJoystickNames(),fps=fps,frameMs=fps>0?1000/fps:0,managedBytes=Profiler.GetMonoUsedSizeLong(),totalAllocatedBytes=Profiler.GetTotalAllocatedMemoryLong(),playerExists=GameObject.Find("Player")!=null,assemblies=AppDomain.CurrentDomain.GetAssemblies().Select(a=>a.GetName().Name).ToArray(),renderers=FindObjectsOfType<Renderer>(true).SelectMany(r=>r.sharedMaterials.Where(m=>m!=null).Select(m=>r.name+":"+m.shader.name)).ToArray(),hierarchy=objects.Select(t=>new ObjectInfo{name=t.name,parent=t.parent?t.parent.name:null,components=t.GetComponents<Component>().Select(c=>c?c.GetType().FullName:"MISSING SCRIPT").ToArray(),fields=config.fields?t.GetComponents<Component>().Where(c=>c).SelectMany(c=>c.GetType().GetFields(System.Reflection.BindingFlags.Public|System.Reflection.BindingFlags.Instance).Select(f=>c.GetType().Name+"."+f.Name+"="+SafeField(c,f))).Take(100).ToArray():new string[0]}).ToArray()};
+  var snapshot=new Snapshot{checkpoint=checkpoint,utc=DateTime.UtcNow.ToString("o"),scene=SceneManager.GetActiveScene().name,graphicsApi=SystemInfo.graphicsDeviceType.ToString(),gpu=SystemInfo.graphicsDeviceName,persistentDataPath=root,streamingAssetsPath=Application.streamingAssetsPath,camera=Camera.main?Camera.main.name:null,controllers=Input.GetJoystickNames(),fps=fps,frameMs=fps>0?1000/fps:0,managedBytes=Profiler.GetMonoUsedSizeLong(),totalAllocatedBytes=Profiler.GetTotalAllocatedMemoryLong(),playerExists=GameObject.Find("Player")!=null};
+  PopulateSceneDetails(checkpoint,snapshot);
  #if UNITY_ANDROID && !UNITY_EDITOR
   using(var unity=new AndroidJavaClass("com.unity3d.player.UnityPlayer"))using(var activity=unity.GetStatic<AndroidJavaObject>("currentActivity"))using(var dir=activity.Call<AndroidJavaObject>("getFilesDir"))snapshot.privateDataPath=dir.Call<string>("getAbsolutePath");
  #endif
   var timings=new FrameTiming[1];if(FrameTimingManager.GetLatestTimings(1,timings)>0){snapshot.cpuFrameMs=timings[0].cpuFrameTime;snapshot.gpuFrameMs=timings[0].gpuFrameTime;}
   snapshot.unityVersion=Application.unityVersion;
   PublishSnapshot(checkpoint,snapshot);
+ }
+ // Keep live scalar diagnostics cheap. Whole-scene discovery and reflection are
+ // inspection work, explicitly requested through ./dev diagnostics. Startup
+ // retains its original full snapshot for launch/bootstrap consumers.
+ void PopulateSceneDetails(string checkpoint,Snapshot snapshot) {
+  snapshot.sceneDetails=checkpoint!="periodic"||config.sceneDetails||config.fields||!string.IsNullOrEmpty(config.subtree);
+  snapshot.assemblies=new string[0];snapshot.renderers=new string[0];snapshot.hierarchy=new ObjectInfo[0];
+  if(!snapshot.sceneDetails)return;
+  var objects=FindObjectsOfType<Transform>(true).Where(x=>string.IsNullOrEmpty(config.subtree)||x.name.Contains(config.subtree)||Ancestors(x).Contains(config.subtree)).Take(1000);
+  snapshot.assemblies=AppDomain.CurrentDomain.GetAssemblies().Select(a=>a.GetName().Name).ToArray();
+  snapshot.renderers=FindObjectsOfType<Renderer>(true).SelectMany(r=>r.sharedMaterials.Where(m=>m!=null).Select(m=>r.name+":"+m.shader.name)).ToArray();
+  snapshot.hierarchy=objects.Select(t=>new ObjectInfo{name=t.name,parent=t.parent?t.parent.name:null,components=t.GetComponents<Component>().Select(c=>c?c.GetType().FullName:"MISSING SCRIPT").ToArray(),fields=config.fields?t.GetComponents<Component>().Where(c=>c).SelectMany(c=>c.GetType().GetFields(System.Reflection.BindingFlags.Public|System.Reflection.BindingFlags.Instance).Select(f=>c.GetType().Name+"."+f.Name+"="+SafeField(c,f))).Take(100).ToArray():new string[0]}).ToArray();
  }
  // Periodic full JSON belongs in the replaceable file, not the original console's
  // retained log list (J1091). Keep the startup record used by Device.launch.

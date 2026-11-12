@@ -32,6 +32,16 @@ public static class RawFrameCaptureHarness
     }
     public static int Main(string[] args)
     {
+        var marker = new AndroidPresentationCamera.CpuMarkerSample { name = "authored", available = true };
+        marker.Observe(2000000, 2);
+        marker.Observe(2000000, 0);
+        marker.Observe(1000000, 1);
+        Check(marker.observedFrames == 3 && marker.framesWithCalls == 2 && marker.calls == 3,
+              "marker frames and invocation counts are distinct; zero-call frames stay in denominator");
+        Check(marker.totalMs == 3 && marker.maxFrameMs == 2, "nanoseconds converted once; no stale no-call time");
+        var unavailable = new AndroidPresentationCamera.CpuMarkerSample();
+        unavailable.Observe(1000000, 1);
+        Check(unavailable.observedFrames == 0 && unavailable.totalMs == 0, "unavailable marker is never measured zero");
         var camera = (AndroidPresentationCamera)FormatterServices.GetUninitializedObject(typeof(AndroidPresentationCamera));
         var report = new AndroidPresentationCamera.Report();
         var capture = new AndroidPresentationCamera.RawFrameCapture(1);

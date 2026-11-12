@@ -91,6 +91,7 @@ namespace UnityEngine
         public static string url;
         public static bool openFails;
         public static bool isFocused = true;
+        public static int targetFrameRate = -1;
         public static void OpenURL(string value) { if (openFails) throw new InvalidOperationException(); url = value; }
         public static void Quit() { }
     }
@@ -159,7 +160,7 @@ public static class AndroidTouchInput
 }
 public class AndroidOfflineSettings
 {
-    public class Values { public float deadzone = .1f, lookSensitivity = 1; public bool invertY; public int offlineDifficulty; }
+    public class Values { public float deadzone = .1f, lookSensitivity = 1; public bool invertY; public bool highRefreshRate = true; public int offlineDifficulty; }
     public static Values current;
     public Values values = new Values();
     public string recovery = "none";
@@ -226,6 +227,14 @@ public sealed partial class PortSession
     public void StartMenu() { offlineStartVisible = true; worldPause = null; worldPlayer = null; }
     void CycleOrdinarySurvivor(int direction) { survivorCycles++; }
     OfflineApplicationSession applicationInput;
+    void ApplyOfflineDisplayPreference()
+    {
+        if (applicationInput == null) applicationInput = new OfflineApplicationSession(this);
+        applicationInput.ApplyDisplayPreference();
+    }
+    public void DraftHighRefresh(bool high) { offlineSettings.values.highRefreshRate = high; }
+    public void ReapplyDisplay() { applicationInput.ReapplyDisplayPreference(); }
+    public void FinishGameplayFrameRate(int prior) { applicationInput.RestoreGameplayFrameRate(prior); }
     public void ApplicationController()
     {
         if (applicationInput == null) applicationInput = new OfflineApplicationSession(this);
@@ -479,6 +488,27 @@ public static class AndroidFeedbackHost
         session.KeepAwake(); Screen.sleepTimeout = 30; session.ReleaseScreen();
         Check(Screen.sleepTimeout == 30, "cleanup overwrote a foreign policy");
     }
+    static void DisplayPreference()
+    {
+        Application.targetFrameRate = -1;
+        var session = new PortSession(); session.Prepare();
+        Check(Application.targetFrameRate == 300, "default lost gameplay headroom");
+        session.DraftHighRefresh(false); session.ReapplyDisplay();
+        Check(Application.targetFrameRate == 300, "resume applied an unsaved draft");
+        session.Show(true); session.RefuseSettingsSave(true);
+        GUI.click = "Save and close"; session.Render();
+        Check(Application.targetFrameRate == 300, "failed save applied a new presentation policy");
+        session.RefuseSettingsSave(false); GUI.click = "Save and close"; session.Render();
+        Check(Application.targetFrameRate == 60, "saved standard mode not applied");
+        session.FinishGameplayFrameRate(300);
+        Check(Application.targetFrameRate == 60, "world teardown restored an obsolete saved preference");
+        Application.targetFrameRate = 30; session.ReapplyDisplay();
+        Check(Application.targetFrameRate == 60, "resume lost saved policy");
+        session.ReleaseScreen();
+        Check(Application.targetFrameRate == -1, "application teardown did not restore prior target");
+        session.ReleaseScreen();
+        Check(Application.targetFrameRate == -1, "duplicate teardown changed target");
+    }
     public static void Main(string[] args)
     {
         switch (args[0])
@@ -493,6 +523,7 @@ public static class AndroidFeedbackHost
             case "start-menu-input": StartMenuInput(); break;
             case "end-run-confirmation": EndRunConfirmation(); break;
             case "screen-policy": ScreenPolicy(); break;
+            case "display-preference": DisplayPreference(); break;
             case "settings-save-failure": SettingsSaveFailure(); break;
             case "touch-gui-ownership": TouchGuiOwnership(); break;
             default: throw new Exception("unknown case");
