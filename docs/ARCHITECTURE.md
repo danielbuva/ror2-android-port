@@ -100,6 +100,9 @@ and hash; the reuse count excludes every listed rebuild and every reused module
 retains its hash. All current provider bodies still pass metadata validation. The final
 player registry retains its current compiled-source and CLR checks;
 accepting a refresh receipt does not establish registry or graph admission.
+Menu and HUD authored-schema production uses that same receipt validator after
+the parent player owner checks current compiled sources and derives its registry;
+neither consumer requires a refresh to be relabelled as a full managed build.
 An optional pinned provider-alias map relocates retained registry inputs; each
 resolved file must still match the unchanged receipt's size and hash.
 The same release owner's host `Graph.bundle_bindings` API maps one member's

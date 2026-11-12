@@ -531,9 +531,7 @@ def _ui():
 
 
 def authored_schemas(U, store, ui, graph, native, managed):
-    receipt = store.json(Path(managed) / "result.json")
-    U.require(receipt.get("success") is True and receipt.get("phase") == "managed-produced", "source-produced HUD managed assemblies required")
-    providers = store.json(Path(managed) / "providers.json")
+    providers = U.managed_providers(store, managed)
     templates = {}
     for typ in ui.layout["types"]:
         for kind in ("Vector2f", "Vector3f", "Vector4f", "ColorRGBA", "Rectf", "RectOffset"):

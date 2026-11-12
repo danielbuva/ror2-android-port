@@ -7,7 +7,9 @@ import tempfile
 import unittest
 import importlib.util
 import hashlib
+from contextlib import closing
 from types import SimpleNamespace
+from unittest.mock import patch
 
 from phone_managed_types import MetadataUniverse
 
@@ -56,6 +58,56 @@ class ManagedProductionReceiptTests(unittest.TestCase):
             self.assertEqual(json.loads(Path(receipt_pin["path"]).read_bytes()), receipt)
             self.assertIn(Path(receipt["base_providers"]["path"]).resolve(), pins.files)
             pins.check()
+
+    def test_menu_and_hud_schema_consumers_share_refresh_validation(self):
+        directory = Path(__file__).resolve().parents[1] / "tools/phone-build/accepted-output"
+
+        def load(name):
+            spec = importlib.util.spec_from_file_location("receipt_test_" + name, directory / (name + ".py"))
+            module = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(module)
+            return module
+
+        ui, hud = load("player_ui"), load("player_hud")
+        base = [dict(level=1, name=name) for name in ("m_GameObject", "m_Enabled", "m_Script", "m_Name")]
+        asset = SimpleNamespace(layout=dict(types=[]), objects={1: SimpleNamespace(type=SimpleNamespace(value=114), typ=dict(tree=b""))})
+        for mutation in (None, "count", "manifest", "reused"):
+            with self.subTest(mutation=mutation), tempfile.TemporaryDirectory() as temporary:
+                root = Path(temporary)
+                _, _, document, _, receipt, providers = self.fixture(root)
+                if mutation == "count":
+                    receipt["reused_provider_count"] = 0
+                elif mutation == "manifest":
+                    receipt["providers_sha256"] = "0" * 64
+                elif mutation == "reused":
+                    providers["Shared.dll"]["sha256"] = "0" * 64
+                    receipt["providers_sha256"] = document("providers.json", providers)["sha256"]
+                document("result.json", receipt)
+                for consumer in ("menu", "hud"):
+                    with (
+                        self.subTest(consumer=consumer),
+                        closing(ui.Sources(root)) as store,
+                        patch.object(ui, "explicit_tree", return_value=b""),
+                        patch.object(ui.S, "tree_nodes", return_value=base),
+                        patch.object(ui.S, "_RegistryTypes", return_value=SimpleNamespace(close=lambda: None)) as clr,
+                    ):
+
+                        def run():
+                            if consumer == "menu":
+                                ui.component_records(store, asset, {}, [], [], [], None, root, {})
+                            else:
+                                hud.authored_schemas(ui, store, asset, SimpleNamespace(rows=[]), None, root)
+
+                        if mutation:
+                            with self.assertRaisesRegex(ValueError, "manifest|count|reused provider"):
+                                run()
+                            clr.assert_not_called()
+                        else:
+                            run()
+                            self.assertEqual(clr.call_args.args[1], providers)
+                            self.assertIn(str(Path(receipt["base_providers"]["path"]).resolve()), store.pins)
+                            store.recheck()
+                        self.assertEqual(json.loads((root / "result.json").read_bytes()), receipt)
 
     def test_final_registry_uses_same_refresh_contract_and_retains_input_pins(self):
         with tempfile.TemporaryDirectory() as temporary:

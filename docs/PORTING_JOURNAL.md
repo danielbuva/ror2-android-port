@@ -6,6 +6,18 @@ under ignored `work/coordination/`, not here. Entries J01–J1177 (2026-09-12 to
 [history/journal-J1-J1177/PORTING_JOURNAL.md](history/journal-J1-J1177/PORTING_JOURNAL.md) with its
 [index](history/journal-J1-J1177/JOURNAL_INDEX.md); numbering continues here.
 
+## J1466 — Validate refreshed managed providers for Menu and HUD schemas
+
+2026-11-12. Both authored UI schema consumers use the final registry's existing
+managed-provider validator, accepting truthful dependency/gameplay refreshes while
+retaining manifest, base-cohort, count and reused-provider hash checks. The parent
+player owner still validates current compiled sources before deriving the registry.
+Synthetic tests exercise both consumers, preserve the receipt and retained input
+pins, and refuse changed manifests, reuse counts and reused-provider hashes.
+Evidence: `tests/test_sdk_metadata_inventory_host.py`; 24 focused tests and host
+preflight pass. No APK changed. Fresh player/CLR/native production, strict graph
+admission, typed load and converted-device play remain open.
+
 ## J1465 — Bind managed dependency refreshes to their produced cohort
 
 2026-11-12. The existing CLR witness reader accepts explicitly listed rebuilt
