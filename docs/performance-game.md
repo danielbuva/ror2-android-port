@@ -21,6 +21,17 @@ two retained endpoints leaves tail frame statistics unavailable.
 python3 scripts/lab/perf_report.py RESULT_JSON THERMAL_JSONL --output work/perf/report.json
 ```
 
+The report compares whole-session and covered-tail observations with the proposed
+[pacing targets](public-alpha.md#performance-release-gate), using unrounded values.
+Missing raw quantiles remain unavailable; a partial tail never supplies full-tail
+quantile comparisons. These are proposed-target observations, not release admission.
+The retained sustained trace is below the 60 FPS target both overall (54.927 FPS)
+and in its covered tail (54.190 FPS). Whole-session raw quantiles and the 0.840%
+fraction above 50 ms meet their respective proposed targets. The remaining evidence
+is representative ordinary play on every supported stage, visual parity, unplugged
+energy, clock/limit attribution and causal capture overhead; the existing stationary,
+invincibility-only runner cannot establish these by repetition.
+
 New sustained captures opt in to `rawFrameTimesRequested` on the existing camera
 observer. A bounded 1 MiB buffer retains up to 262,144 active-frame durations,
 excluding suspension and the first resumed interval as before. Native teardown

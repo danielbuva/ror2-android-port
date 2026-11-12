@@ -2785,6 +2785,9 @@ session-result and thermal JSONL inputs produce local JSON/Markdown with input
 hashes, active counter deltas, periodic interval-mean percentiles and UTC-aligned
 FPS/temperature bins. Setup reads retained evidence; files close on process exit,
 no runtime/device state is changed, and reports persist at the requested output.
+Its JSON/Markdown comparison uses the proposed public-alpha pacing targets with
+unrounded observations, keeps missing raw quantiles unavailable and names evidence
+the report cannot establish; a target comparison never qualifies the release gate.
 Final-ten-minute active counter totals use retained endpoints inside the last
 600 host seconds, reporting actual coverage and uncovered boundary time without
 interpolating missing counters; fewer than two endpoints leaves totals unavailable.
