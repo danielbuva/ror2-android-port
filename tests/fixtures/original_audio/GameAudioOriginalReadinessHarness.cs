@@ -49,6 +49,16 @@ internal static class GameAudioOriginalReadinessHarness
             if (bank != names[152]) partial.RecordBankResult(bank, 1, 1, 14, 4, false);
         }
         if (!partial.NoAudio) throw new Exception("missing one bank result opened readiness");
+        if (partial.StartupBlocker != "bank-results") throw new Exception("missing-result attribution lost");
+        partial.RecordBankResult(names[152], 1, 1, 14, 4, false);
+        if (partial.StartupBlocker != "ready" || !partial.IsReady)
+            throw new Exception("timing observation changed readiness");
+        string timing = partial.CaptureStartupTiming();
+        foreach (string marker in new[] { "engine=", "init-bank=", "initialize-return=", "first-service=",
+                                         "exact-control=", "first-bank=", "last-bank=", "requested=153 completed=153", "blocker=ready",
+                                         "observed=", "last-prerequisite=bank-results" })
+            if (!timing.Contains(marker)) throw new Exception("missing callback timing: " + marker);
+        if (timing.Contains("=-1")) throw new Exception("successful callback timestamp missing");
 
         var failed = Ready();
         if (!failed.IsReady || failed.NoAudio) throw new Exception("complete source evidence did not open readiness");

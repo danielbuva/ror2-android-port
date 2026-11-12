@@ -390,6 +390,10 @@ public static class GameAudioOriginalOwner
     { get { lock (Sync) return readiness == null ? 0 : readiness.RequestedBankCount; } }
     public static int CompletedBankCount
     { get { lock (Sync) return readiness == null ? 0 : readiness.CompletedBankCount; } }
+    public static string StartupBlocker
+    { get { lock (Sync) return readiness == null ? "unconfigured" : readiness.StartupBlocker; } }
+    public static string CaptureStartupTiming()
+    { lock (Sync) return readiness == null ? "blocker=unconfigured" : readiness.CaptureStartupTiming(); }
 
     public static string Failure
     {
