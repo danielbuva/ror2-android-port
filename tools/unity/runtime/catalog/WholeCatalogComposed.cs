@@ -675,13 +675,19 @@ public static class WholeCatalogComposed
         {
             var manifest = ReadDefinitionManifest();
             var roots = new HashSet<int>(manifest["provider_roots"].Select(value => (int)value));
+            var familyBundles = new Dictionary<string, AssetBundle>(StringComparer.Ordinal);
             values =
                 manifest["locations"]
                     .Where(row => roots.Contains((int)row["id"]) && typeof(T).IsAssignableFrom(Type.GetType((string)row["type"], true)))
                     .Select(row =>
                             {
                                 string owner = (string)row["bundle"];
-                                var bundle = AssetBundle.GetAllLoadedAssetBundles().SingleOrDefault(value => value.name == owner);
+                                AssetBundle bundle;
+                                if (!familyBundles.TryGetValue(owner, out bundle))
+                                {
+                                    bundle = AssetBundle.GetAllLoadedAssetBundles().SingleOrDefault(value => value.name == owner);
+                                    familyBundles.Add(owner, bundle);
+                                }
                                 if (!bundle)
                                     throw new Exception("Original definition owner not loaded: " + typeof(T).FullName + "/" + owner);
                                 return bundle.LoadAsset<T>((string)row["path"]);

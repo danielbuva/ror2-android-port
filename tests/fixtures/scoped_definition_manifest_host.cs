@@ -373,12 +373,15 @@ public static partial class WholeCatalogComposed
         definitionFamilies.Clear();
         WriteManifest(data.ToString());
         int before = AssetBundle.typedLoads;
+        int ownerLookups = AssetBundle.enumerations;
         var buffs = definitions();
         Check(buffs.Length == 2 && ReferenceEquals(buffs[0], first) && ReferenceEquals(buffs[1], second));
         Check(AssetBundle.typedLoads == before + 3); // Alias roots retain one native identity.
+        Check(AssetBundle.enumerations == ownerLookups + 1);
         File.Delete("payload/whole-catalog.json");
         Check(definitions().SequenceEqual(buffs) && AssetBundle.typedLoads == before + 3);
         Check(DefinitionFamily(new[] { second }).SequenceEqual(buffs));
+        Check(AssetBundle.enumerations == ownerLookups + 1);
         Refuses(() => DefinitionFamily(new[] { excluded }));
         var previousOwner = owned;
         owned = null;
@@ -400,6 +403,9 @@ public static partial class WholeCatalogComposed
         AssetBundle.owner.name = "other";
         Refuses(() => definitions());
         AssetBundle.owner.name = "source";
+        AssetBundle.loadedOwners = new[] { AssetBundle.owner, new AssetBundle { name = "source" } };
+        Refuses(() => definitions());
+        AssetBundle.loadedOwners = null;
         data["provider_roots"] = new JArray();
         WriteManifest(data.ToString());
         Refuses(() => definitions());
