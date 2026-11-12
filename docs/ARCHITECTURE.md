@@ -2677,6 +2677,14 @@ captures identify growing unique returned objects in both; original sphere-cast
 allocations and serialized Highlight lists can enter without an earlier rental.
 This releases their idle storage without mutating any hit or list, including
 checked-out items. Other pools and live-session pooling remain unchanged.
+`SurvivorSelectionBoundary.OfflineRosterScrollStateOwner` captures the exact
+roster state from the pinned IMGUI scroll stack immediately after
+`BeginScrollView`. It records cache keys and object identities; menu cleanup and
+`PortSession.OnDestroy` remove only entries still pointing to those objects and
+release the captured references. Other controls and replacement entries survive.
+The owner can capture the next menu after disposal. Host ownership and exact SDK
+layout contracts live in `tests/test_offline_roster_scroll_state.py`; installed
+continuation and heap acceptance remain separate.
 `tests/test_diagnostic_retention.py` exercises teardown refusal, repeated fresh
 returns, released backing capacity and untouched item/list contents.
 It also removes already-destroyed targets from the original overlap discovery
