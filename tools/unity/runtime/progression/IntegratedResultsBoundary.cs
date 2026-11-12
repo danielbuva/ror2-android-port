@@ -276,14 +276,14 @@ public sealed partial class PortSession
         }
         void ResultsStep(string value)
         {
-            // Bound observation to existing setup seams; keep report writes and
-            // scheduling intact while partitioning measured results startup cost.
+            // These synchronous steps retain their log and in-memory checkpoint.
+            // Setup completion and failed checks persist the report; serializing
+            // it at every marker adds repeated loading work within the same frame.
             Debug.LogFormat(LogType.Log, LogOption.NoStacktrace, null, "{0}",
                       "Integrated results step=" + value + " at=" +
                       Time.realtimeSinceStartup.ToString("R", System.Globalization.CultureInfo.InvariantCulture) +
                       " frame=" + Time.frameCount);
             coordinator.r.results.initializationStep = value;
-            coordinator.Save();
         }
         void RecordOfflineStageBegin(Stage stage)
         {
