@@ -7068,3 +7068,13 @@ the original clips during aim, firing and hit reactions. The comparison override
 all Commando controller clips so a shared gesture defect cannot pass both sides.
 Bounded Commando aim/firing device evidence is recorded in the journal; other
 survivors and unassisted hit-reaction presentation remain separate gates.
+
+`WholeCatalogHost.AuditCombatMaterials` owns the current exact-editor
+`./dev editor --target lab --action enemy-material-audit` inventory. It reads
+native-provider body/projectile candidates and the prepared session's registered
+effect prefabs, including inactive renderer slots, Billboard materials, particle
+meshes and trails. Private receipts retain source keywords, texture bindings and
+recovered-resource coverage. It does not initialize native catalogs, mutate
+materials or establish Android shader support or visual parity. Setup requires
+the prepared lab project and generated catalog; completion retains a private
+editor receipt and adds no runtime state.

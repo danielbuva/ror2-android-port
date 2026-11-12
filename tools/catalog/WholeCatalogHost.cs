@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using Newtonsoft.Json.Linq;
 using UnityEditor;
 using UnityEngine;
@@ -15,6 +16,160 @@ using UnityEngine.ResourceManagement.ResourceProviders;
 // Only the editor substitutes AssetDatabase for the Android bundle provider.
 public static class WholeCatalogHost
 {
+    // Current exact-editor inventory; published membership is the native provider policy.
+    // This inspects imported assets and resource coverage, never claims Android rendering.
+    public static object AuditCombatMaterials(string manifestPath, string outputPath)
+    {
+        if (EditorApplication.isCompiling || EditorApplication.isUpdating || EditorUtility.scriptCompilationFailed ||
+            EditorApplication.isPlayingOrWillChangePlaymode || BuildPipeline.isBuildingPlayer || stack.Count != 0)
+            throw new Exception("Editor busy or source not compiled");
+        var manifest = JObject.Parse(File.ReadAllText(manifestPath));
+        var locations = manifest["locations"].ToDictionary(row => (int)row["id"]);
+        var roots = new JArray();
+        var rows = new JArray();
+        var errors = new JArray();
+        var candidates = new JArray();
+        foreach (var category in new[] { "CharacterBody", "Projectile" })
+        {
+            var groups = WholeCatalogComposed.FamilyLocationGroups(manifest, category);
+            for (int provider = 0; provider < groups.Length; provider++)
+                foreach (int id in groups[provider])
+                {
+                    var candidate = (JObject)locations[id].DeepClone();
+                    candidate["category"] = category;
+                    candidate["provider"] = provider;
+                    candidates.Add(candidate);
+                }
+        }
+        // The lab publishes effects from its session config, independently of the
+        // catalog's Effect label. Inspect precisely those registered source prefabs.
+        var config = Resources.Load<TextAsset>("MovementBatchProbe");
+        if (!config)
+            throw new Exception("Current lab session config missing");
+        foreach (var path in JObject.Parse(config.text)["objectiveEffectAssets"].Values<string>().Distinct())
+            candidates.Add(new JObject { ["id"] = -1, ["path"] = path, ["category"] = "RegisteredEffect", ["provider"] = -1 });
+        foreach (JObject location in candidates)
+        {
+            string category = (string)location["category"];
+            int provider = (int)location["provider"], id = (int)location["id"];
+            string path = (string)location["path"];
+            var root = AssetDatabase.LoadAssetAtPath<GameObject>(path);
+            roots.Add(new JObject { ["category"] = category, ["provider"] = provider, ["location"] = id, ["path"] = path,
+                                    ["loaded"] = (bool)root });
+            if (!root)
+            {
+                errors.Add("Typed prefab missing: " + category + "/" + path);
+                continue;
+            }
+            foreach (var renderer in root.GetComponentsInChildren<Renderer>(true))
+            {
+                var hierarchy = new List<string>();
+                for (var node = renderer.transform; node; node = node.parent)
+                    hierarchy.Add(node.name + "[" + node.GetSiblingIndex() + "]");
+                hierarchy.Reverse();
+                var particle = renderer as ParticleSystemRenderer;
+                var streams = new List<ParticleSystemVertexStream>();
+                if (particle)
+                    particle.GetActiveVertexStreams(streams);
+                var materials = renderer.sharedMaterials;
+                for (int slot = 0; slot < materials.Length; slot++)
+                    AddCombatMaterial(rows, id, category, path, renderer, hierarchy, particle, streams, "sharedMaterials", slot,
+                                      materials[slot]);
+                foreach (var model in root.GetComponentsInChildren<RoR2.CharacterModel>(true))
+                    foreach (var info in model.baseRendererInfos.Where(info => info.renderer == renderer))
+                    {
+                        var row = AddCombatMaterial(rows, id, category, path, renderer, hierarchy, particle, streams,
+                                                    "CharacterModel.defaultMaterial", 0, info.defaultMaterial);
+                        row["materialAddress"] =
+                            info.defaultMaterialAddress == null ? null : Convert.ToString(info.defaultMaterialAddress.RuntimeKey);
+                    }
+                var billboard = renderer as BillboardRenderer;
+                if (billboard && billboard.billboard)
+                    AddCombatMaterial(rows, id, category, path, renderer, hierarchy, particle, streams, "billboard.material", 0,
+                                      billboard.billboard.material);
+                if (particle && particle.trailMaterial)
+                    AddCombatMaterial(rows, id, category, path, renderer, hierarchy, particle, streams, "trailMaterial", 0,
+                                      particle.trailMaterial);
+                if (materials.Length == 0 && !(billboard && billboard.billboard))
+                    AddCombatMaterial(rows, id, category, path, renderer, hierarchy, particle, streams, "sharedMaterials", -1, null);
+            }
+        }
+        var result = new JObject {
+            ["scope"] =
+                "Native-provider body/projectile candidates before per-provider name deduplication, plus current lab registered effects; resource coverage only; Android rendering and reference comparison remain open",
+            ["roots"] = roots, ["slots"] = rows, ["errors"] = errors
+        };
+        File.WriteAllText(outputPath, result.ToString());
+        return new { roots = roots.Count, slots = rows.Count, errors = errors.Count, output = outputPath };
+    }
+    static JObject AddCombatMaterial(JArray rows, int id, string category, string root, Renderer renderer, List<string> hierarchy,
+                                     ParticleSystemRenderer particle, List<ParticleSystemVertexStream> streams, string binding, int slot,
+                                     Material material)
+    {
+        var textures = new JArray();
+        var meshes = particle ? new Mesh[particle.meshCount] : new Mesh[0];
+        if (particle)
+            particle.GetMeshes(meshes);
+        if (material && material.shader)
+            foreach (var name in material.GetTexturePropertyNames())
+            {
+                var texture = material.GetTexture(name);
+                textures.Add(new JObject { ["property"] = name, ["name"] = texture ? texture.name : null,
+                                           ["path"] = texture ? AssetDatabase.GetAssetPath(texture) : null });
+            }
+        var row =
+            new JObject { ["location"] = id,
+                          ["category"] = category,
+                          ["root"] = root,
+                          ["renderer"] = string.Join("/", hierarchy),
+                          ["kind"] = renderer.GetType().Name,
+                          ["component"] = Array.IndexOf(renderer.GetComponents<Renderer>(), renderer),
+                          ["binding"] = binding,
+                          ["slot"] = slot,
+                          ["active"] = renderer.gameObject.activeSelf,
+                          ["enabled"] = renderer.enabled,
+                          ["material"] = material ? AssetDatabase.GetAssetPath(material) : null,
+                          ["shader"] = material && material.shader ? material.shader.name : null,
+                          ["keywords"] = new JArray(material ? material.shaderKeywords.OrderBy(key => key, StringComparer.Ordinal).ToArray()
+                                                             : new string[0]),
+                          ["queue"] = material ? material.renderQueue : -1,
+                          ["textures"] = textures,
+                          ["particleMode"] = particle ? particle.renderMode.ToString() : null,
+                          ["particleMesh"] = particle && particle.mesh ? AssetDatabase.GetAssetPath(particle.mesh) : null,
+                          ["particleMeshes"] = new JArray(meshes.Select(mesh => mesh ? AssetDatabase.GetAssetPath(mesh) : null)),
+                          ["vertexStreams"] = new JArray(streams.Select(stream => stream.ToString())),
+                          ["mapping"] = CombatMaterialMapping(material) };
+        rows.Add(row);
+        return row;
+    }
+    static JObject CombatMaterialMapping(Material material)
+    {
+        if (!material || !material.shader)
+            return new JObject { ["outcome"] = "missing-material-or-shader" };
+        string shader = material.shader.name;
+        var standard = Resources.Load<TextAsset>("AndroidNativeStandardVariants");
+        var families = Resources.Load<TextAsset>("AndroidNativeMaterialFamilies");
+        JObject family = null;
+        if (shader == "Hopoo Games/Deferred/Standard" && standard)
+            family = JObject.Parse(standard.text);
+        else if (families)
+            family = JObject.Parse(families.text)["families"].OfType<JObject>().SingleOrDefault(row => (string)row["shader"] == shader);
+        if (family != null)
+        {
+            var keys = family["features"].Values<string>().Where(key => material.IsKeywordEnabled(key)).OrderBy(key => key).ToArray();
+            var variant =
+                family["variants"].SingleOrDefault(row => row["keywords"].Values<string>().OrderBy(key => key).SequenceEqual(keys));
+            string resource = variant == null ? null : (string)variant["resource"];
+            var recovered = resource == null ? null : Resources.Load<Shader>(resource);
+            return new JObject { ["outcome"] = recovered ? "recovered-resource-present" : "known-family-missing-resource-or-variant",
+                                 ["features"] = new JArray(keys), ["resource"] = resource,
+                                 ["editorSupported"] = recovered && recovered.isSupported };
+        }
+        bool nativeParticle = shader == "Mobile/Particles/Alpha Blended" || shader == "Particles/Standard Unlit" ||
+                              shader == "Legacy Shaders/Particles/Additive" || shader == "Legacy Shaders/Particles/Additive (Soft)";
+        return new JObject { ["outcome"] = nativeParticle ? "native-unity-particle" : "separate-or-approximate-path",
+                             ["editorSupported"] = material.shader.isSupported };
+    }
     sealed class ImportedAssetProvider : ResourceProviderBase
     {
         public override void Provide(ProvideHandle handle)
