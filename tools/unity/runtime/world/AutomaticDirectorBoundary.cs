@@ -113,6 +113,60 @@ public sealed partial class PortSession
         GetAutomaticDirectorSession().ReleaseDirectorAssets();
     }
 
+    sealed class DirectorStartupWork
+    {
+        public bool enabled = true;
+        int calls;
+        long totalTicks, maxTicks;
+        public void Run(Action work)
+        {
+            if (!enabled)
+            {
+                work();
+                return;
+            }
+            long began = System.Diagnostics.Stopwatch.GetTimestamp();
+            try
+            {
+                work();
+            }
+            finally
+            {
+                Record(began);
+            }
+        }
+        public void Run<T>(Action<T> work, T value)
+        {
+            if (!enabled)
+            {
+                work(value);
+                return;
+            }
+            long began = System.Diagnostics.Stopwatch.GetTimestamp();
+            try
+            {
+                work(value);
+            }
+            finally
+            {
+                Record(began);
+            }
+        }
+        void Record(long began)
+        {
+            long ticks = System.Diagnostics.Stopwatch.GetTimestamp() - began;
+            calls++;
+            totalTicks += ticks;
+            maxTicks = Math.Max(maxTicks, ticks);
+        }
+        public string Summary(string name)
+        {
+            return string.Format(System.Globalization.CultureInfo.InvariantCulture,
+                                 "{0}Calls={1} {0}Seconds={2:R} {0}MaxSeconds={3:R}", name, calls,
+                                 (double)totalTicks / System.Diagnostics.Stopwatch.Frequency,
+                                 (double)maxTicks / System.Diagnostics.Stopwatch.Frequency);
+        }
+    }
     // Create on first use, including Unity ticks before setup, and retain after
     // Dispose: director cleanup precedes the separate asset release at its call site.
     sealed class AutomaticDirectorSession : IDisposable
@@ -549,7 +603,8 @@ public sealed partial class PortSession
             coordinator.Check(coordinator.r.director.sourceSettings, "Original fast director settings changed");
             coordinator.rewardDirector.monsterCards = coordinator.automaticDeck;
             var spawningDirector = coordinator.rewardDirector;
-            spawningDirector.onSpawnedServer.AddListener(
+            var spawnWork = new DirectorStartupWork { enabled = false };
+            Action<GameObject> recordSpawn =
                 obj =>
                 {
                     coordinator.RecordRewardSpawn(obj);
@@ -570,7 +625,8 @@ public sealed partial class PortSession
                         coordinator.r.director.stopped = true;
                         coordinator.r.director.stoppedAt = Time.realtimeSinceStartup - coordinator.automaticDirectorBegan;
                     }
-                });
+                };
+            spawningDirector.onSpawnedServer.AddListener(obj => spawnWork.Run(recordSpawn, obj));
             if (cfg.teleporterLoop)
             {
                 // Original charging disables CombatDirectors attached to DirectorCore, not descendants.
@@ -592,8 +648,11 @@ public sealed partial class PortSession
             coordinator.Check(CombatDirector.instancesList.Contains(coordinator.rewardDirector),
                               "Original natural director registration missing");
             float previous = 0;
+            var saveWork = new DirectorStartupWork();
+            var summonsWork = new DirectorStartupWork();
             try
             {
+                spawnWork.enabled = true;
                 TraceStartup("director-scheduled-spawn-wait-begin");
                 while (!coordinator.enemyBody && Time.realtimeSinceStartup - coordinator.automaticDirectorBegan < 55)
                 {
@@ -606,15 +665,24 @@ public sealed partial class PortSession
                     coordinator.r.director.creditPeak = Mathf.Max(coordinator.r.director.creditPeak, credit);
                     coordinator.r.director.originalTarget |= coordinator.rewardDirector.currentSpawnTarget == player.gameObject;
                     if (Time.frameCount % 30 == 0)
-                        coordinator.Save();
+                        saveWork.Run(coordinator.Save);
                 }
             }
             finally
             {
-                coordinator.CaptureRewardSummons(template.GetComponent<CharacterMaster>().bodyPrefab, template);
+                try
+                {
+                    summonsWork.Run(() => coordinator.CaptureRewardSummons(template.GetComponent<CharacterMaster>().bodyPrefab, template));
+                }
+                finally
+                {
+                    spawnWork.enabled = false;
+                }
             }
             coordinator.Check(coordinator.enemyBody && coordinator.r.rewards.spawnEvents == 1 && coordinator.r.rewards.summonEvents == 1,
                               "Original scheduled spawn timed out");
+            TraceStartup("director-scheduled-spawn-work " + saveWork.Summary("save") + " " + spawnWork.Summary("spawn") + " " +
+                         summonsWork.Summary("summons"));
             TraceStartup("director-scheduled-spawn-ready");
             yield return null;
             coordinator.r.director.creditAfter = coordinator.rewardDirector.monsterCredit;
