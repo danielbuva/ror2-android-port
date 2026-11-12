@@ -222,7 +222,10 @@ public static class WholeCatalogComposed
             throw new Exception("A different whole-catalog identity already has the process audio lease");
         if (originalAudioDependencies == null)
         {
-            var manifest = JObject.Parse(System.Text.Encoding.UTF8.GetString(manifestBytes));
+            // Dependency ownership consumes values and order, never source line annotations.
+            // Parse the freshly hash-validated bytes; a cached snapshot is not byte-bound.
+            var manifest = JObject.Parse(System.Text.Encoding.UTF8.GetString(manifestBytes),
+                new JsonLoadSettings { LineInfoHandling = LineInfoHandling.Ignore });
             var bundles = (JObject)manifest["bundles"];
             var dependencies = bundles.Properties().ToDictionary(property => property.Name,
                 property => property.Value["dependencies"].Select(value => (string)value).ToArray(), StringComparer.Ordinal);
