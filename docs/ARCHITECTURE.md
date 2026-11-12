@@ -4062,6 +4062,9 @@ The metadata-ready marker precedes objective rules, redirects and local profile
 setup; it does not describe completion of the entire profile boundary.
 `WholeCatalogComposed.CategoryFamily` resolves each requested bundle name once
 per synchronous family call, on first use, with the original unique-owner lookup.
+It likewise resolves each distinct serialized type name once within that call;
+every row retains its assignability check and typed asset load. Both local maps
+end on return and add no retained state.
 The local dictionary ends on return; provider order, typed loads, identity checks,
 missing/duplicate-owner failures and existing family-cache teardown remain owned
 by the same loader. `SpawnStateBoundary` forwards the sparse family callback;

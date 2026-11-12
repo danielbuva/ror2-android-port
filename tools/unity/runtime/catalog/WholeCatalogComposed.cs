@@ -619,6 +619,7 @@ public static class WholeCatalogComposed
             var locations = IndexDefinitionManifest(manifest).Locations(manifest);
             var groups = FamilyLocationGroups(manifest, category);
             var familyBundles = new Dictionary<string, AssetBundle>(StringComparer.Ordinal);
+            var familyTypes = new Dictionary<string, Type>(StringComparer.Ordinal);
             trace?.Invoke("index-ready-assets-begin");
             // Aggregate successful row work without logging from inside LoadAsset callbacks.
             long typeTicks = 0, ownerTicks = 0, loadTicks = 0;
@@ -635,7 +636,14 @@ public static class WholeCatalogComposed
                                                          {
                                                              var row = locations[id];
                                                              long started = trace == null ? 0 : System.Diagnostics.Stopwatch.GetTimestamp();
-                                                             if (!typeof(T).IsAssignableFrom(Type.GetType((string)row["type"], true)))
+                                                             string typeName = (string)row["type"];
+                                                             Type type;
+                                                             if (!familyTypes.TryGetValue(typeName, out type))
+                                                             {
+                                                                 type = Type.GetType(typeName, true);
+                                                                 familyTypes.Add(typeName, type);
+                                                             }
+                                                             if (!typeof(T).IsAssignableFrom(type))
                                                                  throw new Exception("Original category type differs: " + category);
                                                              if (trace != null)
                                                              {
