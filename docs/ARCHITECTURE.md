@@ -1277,8 +1277,10 @@ keeps signing identity outside disposable build output.
 `owner-apk/release.py` owns the public release body/canonical signing bytes and
 owner-private incremental output cache. Setup takes a signature-verified release,
 accepted original inventory and existing producer callback; teardown retains
-completed outputs/cache and durable signing state. The release owner reuses unchanged dependency/output hashes and refuses key loss
-on updates. `owner-apk/public_release.py` owns canonical public manifests, detached
+completed outputs/cache and durable signing state. Update checkpoints retain
+unvisited prior cache candidates after a producer failure; every candidate still
+passes input, dependency and output hash checks before reuse. The release owner
+refuses key loss on updates. `owner-apk/public_release.py` owns canonical public manifests, detached
 signatures and tracked-only bundles; `.github/workflows/public-release.yml`
 publishes these on authorized version tags using an externally provisioned key.
 `owner-apk/updates.py` owns bounded GitHub acquisition, signature/archive
