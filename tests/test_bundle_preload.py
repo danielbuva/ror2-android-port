@@ -962,20 +962,188 @@ class BundlePreloadTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "Metadata provider path/hash differs"):
                 E.current_providers(P, E.InputPins(root, P), inputs)
 
+    def test_incremental_graph_parallel_fields_and_current_dependencies(self):
+        E = P.module("bundle_endpoints")
+        M = P.module("bundle_manifest")
+        records, tables = {}, []
+        member = ("authored", "CAB-authored")
+
+        def put(pid, cid, fields, tail=1):
+            nodes = [dict(type="Authored", name="Base", size=-1, level=0, meta=0, flags=0, version=1)]
+            for field in fields:
+                nodes.extend(
+                    dict(type=kind, name=name, size=size, level=level, meta=0, flags=0, version=1)
+                    for kind, name, size, level in (("PPtr<Object>", field, 12, 1), ("int", "m_FileID", 4, 2), ("SInt64", "m_PathID", 8, 2))
+                )
+            nodes.append(dict(type="int", name="tail", size=4, level=1, meta=0, flags=0, version=1))
+            typ = dict(class_id=cid, stripped=0, script_type=-1, hash=b"a" * 16, tree=M.S._tree(nodes), dependencies=[])
+            raw = b"".join(struct.pack("<iq", *pointer) for pointer in fields.values()) + struct.pack("<i", tail)
+            value = dict(
+                destination=[*member, pid],
+                bytes=len(raw),
+                sha256=hashlib.sha256(raw).hexdigest(),
+                full_type=P.full_type_key(typ),
+                schema=hashlib.sha256(typ["tree"]).hexdigest(),
+                native_type_hash=typ["hash"].hex(),
+                class_id=cid,
+                edges=list(fields.values()),
+            )
+            records[(*member, pid)] = value, raw, typ
+
+        put(1, 1, {"component": (0, 2)})
+        put(2, 4, {"m_GameObject": (0, 1), "m_Father": (0, 0), "m_Children": (0, 4)})
+        put(3, 1, {"component": (0, 4)})
+        put(4, 4, {"m_GameObject": (0, 3), "m_Father": (0, 2)})
+        put(5, 114, {"m_Script": (0, 6)})
+        put(6, 115, {})
+        put(7, 134, {})
+        managed_calls = []
+        record_reads = []
+        context = {"clr": "current", "null_policy": "original"}
+
+        def read_record(key):
+            record_reads.append(key)
+            return records[key]
+
+        def managed(value, raw, typ, read):
+            managed_calls.append(value["destination"])
+            self.assertEqual(read((*member, 6))[2]["class_id"], 115)
+
+        with tempfile.TemporaryDirectory() as directory:
+            input_file = Path(directory) / "input"
+            input_file.write_text("current")
+
+            def audit(workers=1, routes=None):
+                return E.audit_graph(
+                    P,
+                    records,
+                    read_record,
+                    lambda value: tables,
+                    structural_routes=routes or {},
+                    managed_check=managed,
+                    cache_directory=directory,
+                    cache_inputs=[input_file],
+                    managed_context=context,
+                    workers=workers,
+                )
+
+            cold = audit(2)
+            self.assertEqual((cold["visited"], cold["blocked"], cold["reciprocal_components"]), (7, [], 2))
+            self.assertEqual(cold["cache"]["graph_fields_misses"], 7)
+            record_reads.clear()
+            warm = audit()
+            self.assertEqual(
+                (warm["classes"], warm["visited"], warm["reciprocal_components"]), (cold["classes"], cold["visited"], cold["reciprocal_components"])
+            )
+            self.assertEqual(warm["cache"].get("graph_fields_misses", 0), 0)
+            self.assertEqual(record_reads.count((*member, 5)), 1)
+            self.assertEqual(len(managed_calls), 1)
+            put(7, 134, {}, tail=2)
+            changed = audit()
+            self.assertEqual((changed["cache"]["graph_fields_misses"], changed["cache"]["graph_fields_hits"]), (1, 6))
+            self.assertEqual(len(managed_calls), 1)
+            put(6, 115, {}, tail=3)
+            audit()
+            self.assertEqual(len(managed_calls), 2)
+            context["clr"] = "new-provider"
+            audit()
+            self.assertEqual(len(managed_calls), 3)
+            put(4, 4, {"m_GameObject": (0, 3), "m_Father": (0, 0)})
+            broken = audit()
+            self.assertTrue(any("different parent" in row["error"] for row in broken["blocked"]))
+            routes = {(*member, 5): []}
+            self.assertTrue(any("routes incomplete" in row["error"] for row in audit(routes=routes)["blocked"]))
+            value, raw, typ = records[(*member, 7)]
+            records[(*member, 7)] = value, raw + b"x", typ
+            self.assertTrue(any("body or full type differs" in row["error"] for row in audit()["blocked"]))
+
+    def test_graph_rechecks_member_tables_missing_endpoints_and_input_drift(self):
+        E = P.module("bundle_endpoints")
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            value, body, typ, _, endpoints, read = self.external_contract(root)
+            target = tuple(value["destination"])
+            records = {target: (value, body, typ), **{key: read(key) for key in endpoints}}
+            tables = [("dependency", "CAB-dependency")]
+            source = root / "source"
+            source.write_text("before")
+
+            def audit(reader=records.__getitem__):
+                return E.audit_graph(
+                    P,
+                    [target],
+                    reader,
+                    lambda value: tables,
+                    structural_routes={},
+                    managed_check=None,
+                    cache_directory=root / "cache",
+                    cache_inputs=[source],
+                    managed_context={},
+                )
+
+            # Both fields target dependency:100 through the actual table.
+            self.assertEqual(audit()["blocked"], [])
+            self.assertEqual(audit()["cache"].get("graph_fields_misses", 0), 0)
+            tables[:] = [("absent", "CAB-absent")]
+            self.assertTrue(audit()["blocked"])
+            tables[:] = [("dependency", "CAB-dependency")]
+
+            def changed(target):
+                source.write_text("after")
+                return records[target]
+
+            with self.assertRaisesRegex(ValueError, "input changed"):
+                audit(changed)
+
+    def test_managed_schema_hash_is_shared_but_each_instance_stays_checked(self):
+        E = P.module("bundle_endpoints")
+        identity = ("A", "N", "T")
+        expected = b"p" * 16
+        calculations = []
+        owner = Node(pointers=lambda *args: {("m_Script",): (0, 10)}, O=Node(script_fields=lambda raw: (0, ("T", "N", "A"))))
+        script_identity = Node(
+            md4=lambda raw: b"id", tree_nodes=lambda raw: raw, _tree=lambda raw: raw, properties_hash=lambda *args: calculations.append(args) or expected
+        )
+        check = E.managed_checker(
+            owner,
+            script_identity,
+            {identity: {"properties": expected.hex()}},
+            Node(editor_curves=lambda raw: raw),
+            b"sdk",
+            lambda value: [],
+            {identity: (expected, {})},
+            {},
+        )
+        value = {"destination": ["bundle", "member", 20], "current_registry_identity": identity}
+        typ = dict(tree=b"tree", hash=expected, script_id=b"id")
+        script = ({"current_registry_identity": identity}, expected, {"class_id": 115})
+        for _ in range(2):
+            self.assertEqual(check(value, b"body", typ, lambda target: script), identity)
+        self.assertEqual(len(calculations), 1)
+        with self.assertRaisesRegex(ValueError, "native hash differs"):
+            check(value, b"body", {**typ, "hash": b"x" * 16}, lambda target: script)
+        with self.assertRaisesRegex(ValueError, "differs from pinned"):
+            check(value, b"body", typ, lambda target: (script[0], b"x" * 16, script[2]))
+
     def test_external_managed_endpoint_rechecks_final_local_script(self):
         E = P.module("bundle_endpoints")
         local, external = ("authored", "CAB-authored", 10), ("staged", "CAB-staged", 20)
         current = [b"retained"]
+        calls = []
         staged = Node(record=lambda target: ({}, b"staged", dict(class_id=114)), check_pins=lambda: None)
 
         def check(value, raw, typ, endpoint):
+            calls.append(raw)
             self.assertEqual(endpoint(local)[1], current[0])
 
         endpoints = E.EndpointRecords(local[:2], lambda target: ({}, b"retained", {}), staged, check)
         endpoints(external)
+        endpoints(external)
+        self.assertEqual(calls, [b"staged"])
         current[0] = b"final"
         endpoints.check_final(lambda target: ({}, b"final", {}))
         self.assertEqual(endpoints.checked_external_managed, {external})
+        self.assertEqual(calls, [b"staged", b"staged"])
 
     def test_required_emission_follows_mixed_retained_profiles_and_actual_extents(self):
         import UnityPy

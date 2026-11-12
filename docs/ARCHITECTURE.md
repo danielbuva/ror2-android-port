@@ -1277,8 +1277,10 @@ keeps signing identity outside disposable build output.
 `owner-apk/release.py` owns the public release body/canonical signing bytes and
 owner-private incremental output cache. Setup takes a signature-verified release,
 accepted original inventory and existing producer callback; teardown retains
-completed outputs/cache and durable signing state. The release owner reuses unchanged dependency/output hashes and refuses key loss
-on updates. `owner-apk/public_release.py` owns canonical public manifests, detached
+completed outputs/cache and durable signing state. Update checkpoints retain
+unvisited prior cache candidates after a producer failure; every candidate still
+passes input, dependency and output hash checks before reuse. The release owner
+refuses key loss on updates. `owner-apk/public_release.py` owns canonical public manifests, detached
 signatures and tracked-only bundles; `.github/workflows/public-release.yml`
 publishes these on authorized version tags using an externally provisioned key.
 `owner-apk/updates.py` owns bounded GitHub acquisition, signature/archive
@@ -1384,6 +1386,14 @@ notification dialog and denies by default; `--allow-test-notifications` admits
 explicitly authorized notification consent independently of
 `--allow-test-installs`. Prompt inspection, classification and owned cleanup
 remain with this driver.
+
+The existing `ToolHostActivity` Check handler records a test-only, fixed-class
+observation in Android preferences for the debuggable disposable installer. It
+is independent of the owner atomic writer, whose failure can otherwise suppress
+both CHECKING and its ERROR fallback. `lab-installer-updates.py` captures and
+allowlists that last observation before owned-package cleanup on a failed Check;
+no raw preference content or request metadata is published. Dispatch and
+permission policy are unchanged, and no new worker or lifecycle is introduced.
 
 Its `--qualify-phone-flow` mode uses the same visible permission/session and
 synthetic profile/settings witnesses, stopping after the verified forward update.
@@ -2493,6 +2503,7 @@ The remaining `--action` selectors are classified here:
 | editor | `lightning-stake-host` | current |
 | editor | `siren-encounter-host` | current |
 | editor | `source-camera-graphics-host` | current |
+| editor | `commando-animation-host` | current |
 | editor | `character-motor-order` | historical |
 | editor | `catalog-addresses` | historical |
 | editor | `reference-identities` | historical |
@@ -2677,6 +2688,10 @@ before its first frame yield and the lab menu, for the player process lifetime.
 `NovaInputBoundary` captures that prior value, requests 300 FPS during gameplay
 and restores the captured value on teardown. This is a request; actual FPS depends on device load.
 It replaces `snapshot.json` on its existing periodic schedule.
+Periodic snapshots retain live scalar, timing and controller facts; full scene
+hierarchy/material discovery and assembly enumeration run only for startup or
+explicit `./dev diagnostics --scene-details`, `--subtree` or `--fields` inspection.
+The `sceneDetails` fact distinguishes an omitted census from an empty scene.
 Only its startup/lifecycle snapshots use the full `LAB_SNAPSHOT` console record;
 periodic JSON is not retained by the original console. Original and error logging
 stay unchanged. During completed-session reclamation, `SessionResourceBoundary`
@@ -2836,6 +2851,11 @@ session-result and thermal JSONL inputs produce local JSON/Markdown with input
 hashes, active counter deltas, periodic interval-mean percentiles and UTC-aligned
 FPS/temperature bins. Setup reads retained evidence; files close on process exit,
 no runtime/device state is changed, and reports persist at the requested output.
+Optional `--completed-session` binds the completed camera report by attempt and
+raw-trace identity. Only complete retained recorder windows inside the sustained
+frame endpoints contribute sample-count-weighted timing/allocation/render means
+and collection deltas. Zero render durations and sampled allocation bytes do not
+establish render cost or GC pause time; no critical-path attribution is inferred.
 Its JSON/Markdown comparison uses the proposed public-alpha pacing targets with
 unrounded observations, keeps missing raw quantiles unavailable and names evidence
 the report cannot establish; a target comparison never qualifies the release gate.
@@ -2864,6 +2884,16 @@ retention. Abrupt process termination can lose the in-memory trace; absent or
 partial evidence supplies no quantiles. Exact-editor host fixtures exercise
 actual admission, counters, binary interoperability and overflow. Capture overhead
 and sustained device qualification remain open.
+The same opt-in capture owns main-thread engine marker recorders. Setup discovers
+available named nanosecond markers and retains their actual categories. Every
+admitted frame reads preceding end-of-frame values into bounded scalar totals,
+with invocation, observed-frame, missing-frame and availability counts. The first
+partial frame is excluded. Camera teardown disposes every recorder. Inclusive
+marker scopes overlap and are never additive; absent markers and no-call frames
+remain distinct. Native freshness on consecutive no-event frames, instrumentation
+overhead, render-thread costs and device marker coverage still need qualification.
+Flat wait totals cannot distinguish GPU, VSync and target-rate causes.
+
 [Game performance](performance-game.md) owns the baseline and
 attribution limits; [public alpha](public-alpha.md#performance-release-gate) owns
 proposed device budgets. Synthetic host fixtures check window and coverage math.
@@ -2944,6 +2974,21 @@ The body-input iterator keeps its historical screen lease only for non-playable
 experiments, so playable input cleanup cannot overwrite application teardown.
 Explicit Android sleep/background actions remain available. The production
 lifetime methods execute in the native-feedback host fixture.
+
+The same application owner holds the saved high-refresh preference from settings
+load through application teardown. Saving applies it immediately; focus/resume and
+gameplay setup reapply the saved policy, without applying an unsaved settings draft.
+High refresh retains Unity's 300 FPS request; standard mode requests 60 FPS.
+`LabDisplayPreference.java`, packaged in the existing authored Android library,
+selects the highest supported mode at the current physical resolution (or the
+closest mode to 60 Hz), requests window mode/rate and API 30 surface frame rate,
+and reapplies the surface hint after recreation. Only app window/surface state is
+changed. The UI-thread bridge removes callbacks, clears owned surface hints and
+restores captured window preferences at teardown; Unity's prior target is restored
+if still owned. Android may decline a request; requested and observed display
+rates are distinct facts. `test_android_feedback.py` covers saved/draft/failed-save
+policy and teardown; the existing packaging check compiles the Java bridge against
+the pinned Android SDK. Actual compositor selection requires device evidence.
 
 At playable startup this owner also applies the original Console retention convar
 metadata default once when the original Console is absent and its limit is still
@@ -6923,6 +6968,18 @@ diagnostic. Setup requires current original bundles and a pinned exact-SDK
 constructor witness; scoped readers close on exit and receipts persist. Complete
 APK and device acceptance remain open.
 
+The existing `bundle_endpoints.py::audit_graph` owns incremental structural
+traversal. Setup admits callback input pins and actual provider bytes. SQLite
+field proofs bind each actual body and full native type; managed proofs also
+bind current CLR/SDK policy and the endpoints read by the checker. Each run
+walks current roots, resolves current routes/member tables and checks current
+reciprocal neighbors. Optional CPU workers parse immutable record batches;
+readers, discovery and cache writes stay in the parent. Exit closes workers
+and SQLite after rechecking input pins. Endpoint input epochs share external
+managed checks, then final persisted-file readback starts a fresh epoch.
+Managed schema properties are shared within one immutable checker context.
+This host/converter qualification does not admit Unity loadability or play.
+
 The existing `bundle_endpoints.py` owner generates current CLR witness artifacts
 from successful managed production and the final player's registry receipt.
 An optional pinned `input_paths` map relocates exact recorded input paths to
@@ -6995,3 +7052,22 @@ IDs and bodies while allowing Unity's context-package string lookup to resolve
 when installing the disposable converted package. Setup uses the verified SDK
 resource table; output hashes record the transformed entry. No runtime state or
 new lifecycle owner is added.
+
+Commando animation preparation stays in `AutomaticModelBoundary`: the artifact
+controller/avatar bind while the body is inactive. `NovaDiagnosticDisplay`
+isolates the existing model callbacks and enables the Animator/model before body
+activation. Native `ModelLocator.Start` detaches the model from its inactive
+model base, initializing the Animator. The boundary then verifies its locomotion
+parameters during `SpawnTeleporterState`, before native
+`BaseCharacterMain` snapshots them on its first entry. The display preserves the
+binding and reports the native movement cache and Animator state; its existing
+disposal owns teardown.
+`./dev editor --target lab --action commando-animation-host` is a current exact-editor
+contract check reproducing unavailable parameters under an inactive model base
+and parameter discovery after native detachment, before the main state
+(`SurvivorSkillInputHost.VerifyAnimatorBeforeMainState`); gameplay remains a
+device gate.
+`NovaInputBridge` neutralizes unavailable physical input without suspending idle
+touch capture; focus, pause and teardown still cancel all input. The same
+exact-editor action also checks first touch delivery without a physical controller
+and full cancellation through `Neutral`.

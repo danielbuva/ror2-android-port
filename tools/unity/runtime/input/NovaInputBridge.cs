@@ -500,7 +500,7 @@ public sealed class NovaInputBridge : MonoBehaviour
             {
                 presence?.Suspend();
                 SetManualMoonAutomaticHold(false);
-                Neutral();
+                NeutralPhysicalInput();
                 return;
             }
             if (presence == null)
@@ -520,13 +520,13 @@ public sealed class NovaInputBridge : MonoBehaviour
             if (!presence.Matches(names))
             {
                 presence.Suspend();
-                Neutral();
+                NeutralPhysicalInput();
                 return;
             }
             var raw = ReadRaw();
             if (!presence.Observe(names, NeutralSample(raw, mapping), Time.realtimeSinceStartup))
             {
-                Neutral();
+                NeutralPhysicalInput();
                 return;
             }
             movement = Stick(raw, mapping.moveX, mapping.moveY, mapping.moveYSign);
@@ -549,21 +549,25 @@ public sealed class NovaInputBridge : MonoBehaviour
     {
         bool noPhysicalDiagnostic = IsAutomaticDiagnosticWithoutPhysicalInput(diagnosticInput, automaticDiagnosticOnly);
         bool touchManual = !diagnosticInput && touchControls != null && (touchControls.HasInput || !physicalInputAvailable);
-        if (!bank || !focused || Time.timeScale == 0 || touchPauseRequested ||
-            (!touchManual && MissingMappingRequiresNeutral(mapping == null, diagnosticInput, automaticDiagnosticOnly)))
+        if (!bank || !focused || Time.timeScale == 0 || touchPauseRequested)
         {
             Neutral();
             return;
         }
+        if (!touchManual && MissingMappingRequiresNeutral(mapping == null, diagnosticInput, automaticDiagnosticOnly))
+        {
+            NeutralPhysicalInput();
+            return;
+        }
         if (!touchManual && !noPhysicalDiagnostic && !diagnosticInput && (presence == null || !presence.connected))
         {
-            Neutral();
+            NeutralPhysicalInput();
             return;
         }
         if (!touchManual && !noPhysicalDiagnostic && !diagnosticInput && !presence.Matches(UnityEngine.Input.GetJoystickNames()))
         {
             presence.Suspend();
-            Neutral();
+            NeutralPhysicalInput();
             return;
         }
         bool holdAutomatic = ShouldHoldAutomaticDiagnosticInput(diagnosticInput, manualMoonAutomaticHold);
@@ -667,7 +671,17 @@ public sealed class NovaInputBridge : MonoBehaviour
     }
     public void Neutral()
     {
-        touchControls?.Suspend();
+        NeutralState(true);
+    }
+    void NeutralPhysicalInput()
+    {
+        // Missing/unready physical controllers must not keep touch waiting for
+        // lift forever. Focus, pause and teardown still suspend all capture.
+        NeutralState(false);
+    }
+    void NeutralState(bool suspendTouch)
+    {
+        if (suspendTouch) touchControls?.Suspend();
         diagnosticJumpRevision++;
         inputNeutralRevision++;
         movement = aim = Vector2.zero;

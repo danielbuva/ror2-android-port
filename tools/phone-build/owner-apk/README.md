@@ -496,6 +496,15 @@ states stop. A second missing acknowledgment fails explicitly, rather than
 waiting the full reconstruction timeout. This is bounded recovery, not proof
 that the earlier missing action was caused by stale coordinates.
 
+The synthetic full-flow harness also retains a fixed `release-check-diagnostic`
+classification before failed Check cleanup. The debuggable disposable installer
+records handler entry, busy refusal, request-write failure or service-launch
+return in an independent Android preference, rather than through the atomic
+writer being investigated. Only fixed stage/error/root-alias classes are public;
+no preference XML, paths, exception text or release request is exported. An
+unavailable observation is not proof that the button listener did not execute.
+This diagnostic does not change Check dispatch, permissions or install consent.
+
 Installer version 3 extends the version-2 foreground-service flow: prepare the signed public
 release, choose the owner's PC game directory with Android's folder picker (or
 choose a ZIP), import, then reconstruct and install. Only required files are

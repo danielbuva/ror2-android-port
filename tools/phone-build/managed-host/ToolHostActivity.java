@@ -184,17 +184,47 @@ public final class ToolHostActivity extends Activity {
             .put("installer_package", app.getPackageName()).put("installer_signer_sha256", OwnerInstaller.signer(installer));
     }
 
+    /** Test-only last Check observation, independent of the owner atomic writer.
+     * Fixed classes only: never paths, exception messages or release metadata.
+     */
+    static void checkDiagnostic(Context app, String action, String stage, Exception error) {
+        if (!"release-check".equals(action)) return;
+        try {
+            if (!"dev.ror2lab.installertest".equals(app.getPackageName()) || !debuggable(app)) return;
+            String kind = error == null ? "none" : error instanceof SecurityException ? "security" :
+                error instanceof IOException ? "io" : error instanceof org.json.JSONException ? "json" :
+                error instanceof java.lang.reflect.InvocationTargetException ? "reflected" : "other";
+            String root;
+            try { root = app.getFilesDir().getAbsoluteFile().equals(app.getFilesDir().getCanonicalFile()) ? "canonical" : "alias"; }
+            catch (Exception unavailable) { root = "unavailable"; }
+            app.getSharedPreferences("owner-check-diagnostic", 0).edit().clear()
+                .putString("stage", stage).putString("error", kind).putString("files_root", root).commit();
+        } catch (Exception ignored) { /* Observation must not change Check dispatch or its failure. */ }
+    }
     private void startUpdate(final String action) {
         final Context app = getApplicationContext();
-        if (OwnerBuildService.isRunning() || OwnerInstaller.busy(app) || OwnerAlphaInstall.pending(app)) return;
+        checkDiagnostic(app, action, "entered", null);
+        if (OwnerBuildService.isRunning() || OwnerInstaller.busy(app) || OwnerAlphaInstall.pending(app)) {
+            checkDiagnostic(app, action, "blocked-busy", null); return;
+        }
+        String checkStage = "clear-status";
         try {
             OwnerInstaller.clearTerminalStatus(app);
             if ("release-build".equals(action) || "release-rollback".equals(action))
                 if (!getSharedPreferences(OwnerBuildService.PREFERENCES, 0).edit().putString("last_build_action", action).commit()) throw new IOException("Could not retain explicit build action");
-            writeJson(new File(getFilesDir(), "owner-input/update-request.json"), installedRequest(app, action));
+            checkStage = "request-build";
+            JSONObject request = installedRequest(app, action);
+            checkStage = "request-write";
+            writeJson(new File(getFilesDir(), "owner-input/update-request.json"), request);
+            checkDiagnostic(app, action, "request-written", null);
             updateStatus(app, "release-check".equals(action) ? "CHECKING" : "BUILDING", "install-prepare".equals(action) ? "Verifying the signed installation plan…" : "Starting local release work…");
+            checkStage = "service-launch";
             OwnerBuildService.launch(app, action);
-        } catch (Exception error) { updateStatus(app, "ERROR", error.getMessage()); }
+            checkDiagnostic(app, action, "launch-returned", null);
+        } catch (Exception error) {
+            checkDiagnostic(app, action, "failed-" + checkStage, error);
+            updateStatus(app, "ERROR", error.getMessage());
+        }
         refreshStatus();
     }
     private void installReady() {

@@ -31,6 +31,7 @@ class SettingsObserverPackagingTests(unittest.TestCase):
             # Only Gradle's default src/main/java participates in compilation.
             java = library / "src/main/java"
             self.assertTrue((java / "dev/ror2lab/diagnostics/LabSettingsWriteObserver.java").is_file())
+            self.assertTrue((java / "dev/ror2lab/diagnostics/LabDisplayPreference.java").is_file())
             shared = java / "dev/ror2lab/diagnostics/LabPendingWriteStop.java"
             self.assertEqual(shared.read_bytes(), (ROOT / "tools/android-write-interruption/LabPendingWriteStop.java").read_bytes())
             javac = Path(os.environ.get("JAVA_HOME", ANDROID / "OpenJDK")) / "bin/javac"

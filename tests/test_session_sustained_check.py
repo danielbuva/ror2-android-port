@@ -25,6 +25,22 @@ def fixtures():
 
 
 class SustainedCheckTests(unittest.TestCase):
+    def test_world_preparation_does_not_admit_before_selected_assist_is_applied(self):
+        report, _, _ = fixtures()
+        self.assertTrue(sustained.sustained_world_ready(report))
+        report["debugAcceleration"]["active"]["invincibility"] = False
+        self.assertFalse(sustained.sustained_world_ready(report))
+        report["debugAcceleration"]["active"]["invincibility"] = True
+        report["debugAcceleration"]["active"]["highDamage"] = True
+        with self.assertRaisesRegex(RuntimeError, "exactly invincibility"):
+            sustained.sustained_world_ready(report)
+        report["debugAcceleration"]["active"]["highDamage"] = False
+        report["phase"] = "offline-start-menu"
+        self.assertFalse(sustained.sustained_world_ready(report))
+        report["phase"] = "integrated-world-playing"
+        report["world"]["ready"] = False
+        self.assertFalse(sustained.sustained_world_ready(report))
+
     def test_capture_off_preserves_aggregates_and_never_transfers_a_sidecar(self):
         report, snapshot, utc = fixtures()
         row = sustained.observation_sample(report, snapshot, 0, utc=utc)

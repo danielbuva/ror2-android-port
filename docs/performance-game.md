@@ -1,9 +1,21 @@
 # Sustained game performance baseline
 
-Current raw-frame observation: 2026-11-12; historical aggregate baseline: 2026-10-31.
+Latest sustained raw-frame observation: 2026-11-12; historical aggregate baseline: 2026-10-31.
 This is an assisted first-stage observation: invincibility, neutral movement and
-small camera drags; composed renderer, 120 Hz display. It does not qualify normal
+small camera drags; composed renderer on a 120 Hz capable panel. The sustained trace
+below predates the saved refresh preference and scalar-only periodic inspection.
+All 29 retained
+world snapshots report Unity refresh 60 Hz, requested frame rate 300 and vSync 1;
+actual compositor refresh was not captured. It does not qualify normal
 play, visual parity, battery efficiency or the performance release gate.
+
+The matched sustained endpoints also retain 98,855 lab-loop iterations. Stopwatch
+deltas average 1.143 ms per iteration for the inclusive loop: world 0.528 ms,
+observers 0.442 ms, save 0.116 ms and presentation 0.048 ms. Named children include
+enemy 0.208 ms, commerce/HUD 0.178 ms and combat 0.169 ms. Nested counters overlap;
+do not add them together. The loop timer begins after `WaitForEndOfFrame`, so it
+does not measure that wait or engine work elsewhere. These observations cannot
+assign the roughly 18 ms main-thread recorder value to gameplay, GC or waits.
 
 ## Reproduction and measurement limits
 
@@ -76,6 +88,111 @@ Evidence: `work/coordination/alpha-sustained-raw-20261112T101109Z/`
 Report SHA-256: `ef9fd423331a93c341a7a21de8f245d2968637df7bf478abb92beba8a34c7b65`.
 APK SHA-256: `d32a5df34eead477f76bbc281fe3ff89a9878eb288a5ec4090764732df1e6636`;
 runtime source `c9bc3cbf`.
+
+The retained `completed-session.json` also supplies 59 complete camera-recorder
+windows inside the observation endpoints: frames 3,217–100,510, spanning
+1,770.669 camera seconds. `perf_report.py --completed-session FILE` weights each
+window mean by its actual recorder count. Across 3,243 timing samples, observed
+CPU/main-thread/GPU means are 18.230/17.984/12.143 ms. All render-thread durations
+are zero; this does not establish zero render cost. The 9,730 sampled allocation
+observations average 87,037.696 bytes, and collection counters advance by 254.
+Allocation is sampled every tenth frame; it is neither a mean over all frames
+nor a GC pause measurement. J450 already rejected that allocation inference.
+These observations favor investigating CPU work, but separate recorder cadences,
+thread waits and absent named-marker/GC durations prevent selecting a causal
+runtime fix. Local report: the evidence directory above, `camera-attribution.json`.
+No additional device run or performance improvement is claimed.
+
+### Named engine costs and periodic inspection
+
+A subsequent 61.153-second assisted window on source `cb44e5d6` retained all
+15 requested engine markers and reconciled 3,514 steady-world frame observations.
+Inclusive mean durations were: camera rendering 4.532 ms, present wait 2.888 ms,
+Update 1.200 ms, coroutines 1.112 ms, fixed update 0.927 ms and late update
+0.715 ms. Explicit and incremental GC together averaged 0.026 ms per frame.
+These scopes overlap; they cannot be added or used to infer the cause of a wait.
+GC had four nonzero observations, fixed update 2,933, and render-thread wait zero;
+these are observed no-event cases, not a universal native-recorder freshness proof.
+The raw-on window averaged 58.114 FPS versus 58.195 FPS in the preceding raw-off
+window. This sequential pair does not establish causal capture overhead.
+
+The idle display-policy readback has both Android refresh settings at 60 Hz,
+panel mode 60 Hz and an app-request range capped at 60 Hz, with 120 Hz supported.
+The display stayed asleep. This establishes a policy ceiling at that readback;
+it does not measure compositor presentation during the retained gameplay window.
+The existing 300 FPS request remains unchanged; J449 explains why replacing it
+with Unity's startup refresh value would preserve a stale 60 FPS cap.
+
+The active lab snapshot contained 1,000 hierarchy entries and 6,074 renderer/
+material pairs. Roughly 66 ms hitches recur every 2.014 seconds in the raw trace,
+matching the two-second full scene-census cadence in `LabDiagnostics`.
+Evidence: `work/coordination/alpha-engine-cost-on-20261112T182325Z/`
+(`marker-endpoint-deltas.json`, `2-on-performance.json`, `display-idle-policy.json`).
+APK SHA-256: `74cc76e779d16e8fefdd7e0354ddbc1d076b08f7a960da6d1f567317700b6a37`.
+
+### Saved app refresh and scalar-only periodic inspection
+
+The saved **High refresh rate (applies on Save)** option requests the highest
+same-resolution display mode, window refresh and Android 11+ surface frame rate.
+Standard mode requests the closest mode to 60 Hz. The application owner reapplies
+the saved policy on resume and restores its prior app state on teardown. It does
+not change Android's global display settings. A legacy preferences file defaults
+to high refresh; unsaved drafts and failed saves do not apply the preference.
+
+On the Main Nova, saving standard then high refresh changed the active Android
+display mode from 60 to 120 Hz. Both requests reached Unity's surface; the saved
+high preference and 120 Hz request survived a cold launch. This verifies a display
+request and policy response, not 120 FPS or compositor presentation timing.
+
+With high refresh selected, the 60.510-second assisted scalar-inspection window
+reconciles 3,633 frames: 60.057 FPS, raw p50/p95/p99 of
+16.654/16.715/25.000 ms, 14 frames above 33.334 ms (0.385%) and one above
+50 ms (0.028%). Periodic snapshots retain zero hierarchy and renderer rows and
+explicitly report `sceneDetails=false`. Startup retains full inspection;
+`./dev diagnostics --scene-details`, `--subtree` or `--fields` restores it on demand.
+The single window cannot establish a sustained improvement or isolate the census
+change from the display setting. Representative ordinary play remains required.
+
+All 15 engine markers were available. Inclusive per-frame means include
+PlayerLoop 16.646 ms, camera render 4.727 ms, coroutines 1.195 ms, fixed update
+0.891 ms, Update 0.683 ms and explicit GC 0.0045 ms (two calls). Present,
+semaphore and job waits average 4.580/5.650/1.868 ms. Scopes overlap; these flat
+waits cannot establish a GPU, vsync or scheduling cause. One complete 30.013-second
+camera window has 60 timing samples: CPU/main/GPU 16.626/16.586/11.753 ms.
+The 179 sampled allocation values average 22,667.782 bytes; they are not per-frame
+allocations. One collection is not its duration. No uncapped main-thread capacity
+or universal no-event recorder freshness claim follows.
+
+Observation-window peaks are CPU 79.6 C, GPU 63.5 C and battery 33 C; the maximum
+thermal sample gap is 0.445 seconds, with no gap over one second. The wider capture
+peaks at 92.3 C with 11.082 seconds above 80 C. Native End Run, profile/settings
+retention, adopted placement, trace-scratch removal and stopped/asleep cleanup pass.
+Evidence: `work/coordination/alpha-high-refresh-device-20261112T185314Z/`
+(`1-scalars-performance.json`, saved display readbacks and terminal cleanup).
+APK SHA-256: `747e59cea17a671e2459c1c809249678a5a816f49143908b8265bf186fa25bd9`;
+runtime source `18a0d3a1`.
+
+After a cold launch with the saved high preference, the same APK's explicit
+scene-detail window reconciles 6,068 frames over 61.515 host seconds: 100.516 FPS,
+raw p50/p95/p99 8.333/16.667/16.693 ms, 34 frames above 33.334 ms and 20 above
+50 ms. Its snapshots retain 1,000 hierarchy entries and 6,074–6,084 renderer rows,
+confirming the opt-in still works. PlayerLoop averages 9.943 ms, camera render
+3.802 ms and explicit GC 0.0031 ms; waits remain inclusive and noncausal.
+One complete 30.007-second camera window has 103 timing samples:
+CPU/main/GPU 9.938/10.368/8.099 ms. Its 309 allocation observations average
+82,937.492 bytes; neither this sample mean nor one collection measures a GC pause.
+The cold-launch/display-pacing difference confounds a scalar/detail speed comparison;
+neither a census speedup nor restart causality is established by this pair.
+
+This window records CPU/GPU/battery peaks of 96.3/85.3/35 C, 60.685 covered seconds
+above 80 C and a maximum thermal sample gap of 0.419 seconds. The thermal owner
+reports no sustained safety-limit violation. End Run, raw reconciliation, restored
+diagnostics, scratch removal, stopped/asleep readback and lease release pass.
+Evidence: `work/coordination/alpha-details-comparison-20261112T190813Z/`
+(`2-details-performance.json`, SHA-256
+`08ffd5ed42bc8aabd1d11eaa42227bedcca5f91e3e4380d7895f2412aaaa191d`).
+This qualifies above-60-FPS capability in one assisted window, not sustained
+120 FPS, ordinary-play performance or productive main-thread headroom.
 
 ### Bounded raw-capture qualification
 

@@ -125,6 +125,30 @@ class PhoneFlowTests(unittest.TestCase):
             phone.start()
             dismiss.assert_called_with(repeat_denial=True)
 
+    def test_check_diagnostic_failure_preserves_cleanup_and_original_failure(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            phone = Mock()
+            phone.cleanup.return_value = "verified-absent"
+            phone.flow_metrics = None
+            phone.capture_check_diagnostic.side_effect = RuntimeError("PRIVATE XML")
+            output = io.StringIO()
+
+            def fail(*args, **kwargs):
+                LAB.set_phase("baseline-N-check")
+                raise LAB.Failure("check-action-not-acknowledged")
+
+            with patch.object(LAB, "ROOT", Path(temporary)), patch.dict(os.environ, {"LAB_DEVICE_SERIAL": "synthetic"}):
+                with patch.object(LAB, "read_context", return_value={}), patch.object(LAB, "Phone", return_value=phone):
+                    with patch.object(LAB, "acceptance", side_effect=fail), redirect_stdout(output):
+                        self.assertEqual(LAB.main(["--qualify-phone-flow"]), 1)
+            phone.capture_check_diagnostic.assert_called_once()
+            phone.cleanup.assert_called_once()
+            self.assertLess([call[0] for call in phone.mock_calls].index("capture_check_diagnostic"), [call[0] for call in phone.mock_calls].index("cleanup"))
+            self.assertIn('"reason":"capture-failed"', output.getvalue())
+            self.assertIn("reason=check-action-not-acknowledged", output.getvalue())
+            self.assertIn("PASS cleanup", output.getvalue())
+            self.assertNotIn("PRIVATE", output.getvalue())
+
     def test_reporting_failure_cannot_skip_cleanup_or_replace_first_failure(self):
         with tempfile.TemporaryDirectory() as temporary:
             phone = Mock()

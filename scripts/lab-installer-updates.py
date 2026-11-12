@@ -389,6 +389,43 @@ def sha(value):
     return hashlib.sha256(value).hexdigest()
 
 
+def check_diagnostic_summary(raw):
+    """Allowlist one fixed test-only preference row; never echo arbitrary XML."""
+    if not raw:
+        return {"status": "unavailable", "reason": "not-recorded"}
+    allowed = {
+        "stage": {
+            "entered",
+            "blocked-busy",
+            "request-written",
+            "launch-returned",
+            "failed-clear-status",
+            "failed-request-build",
+            "failed-request-write",
+            "failed-service-launch",
+        },
+        "error": {"none", "security", "io", "json", "reflected", "other"},
+        "files_root": {"canonical", "alias", "unavailable"},
+    }
+    try:
+        if len(raw) > 4096 or b"<!" in raw:
+            raise ValueError("bounded XML only")
+        tree = ET.fromstring(raw)
+        if tree.tag != "map" or tree.attrib or len(tree) != len(allowed):
+            raise ValueError("fixed map required")
+        result = {}
+        for node in tree:
+            name = node.get("name")
+            if node.tag != "string" or set(node.attrib) != {"name"} or len(node) or name in result or name not in allowed or node.text not in allowed[name]:
+                raise ValueError("fixed class required")
+            result[name] = node.text
+        if set(result) != set(allowed):
+            raise ValueError("complete row required")
+        return {"status": "observed", **result}
+    except (ValueError, ET.ParseError):
+        return {"status": "unavailable", "reason": "invalid-record"}
+
+
 class PrivateDiagnostics:
     """Persist raw child output locally, never command arguments or stdin."""
 
@@ -1562,6 +1599,18 @@ class Phone:
         # authorization for this fresh disposable test package on the leased phone.
         self.shell("appops", "set", PACKAGE, "REQUEST_INSTALL_PACKAGES", "allow", label="device-install-permission-enable")
 
+    def capture_check_diagnostic(self):
+        # The fresh hash-owned test app stores only its last Check stage. Read
+        # this independent Android preference before uninstall, not arbitrary
+        # app files, raw logs or the release request (which contains metadata).
+        self.require_owned_installer()
+        command = (
+            'for p in shared_prefs shared_prefs/owner-check-diagnostic.xml; do [ ! -L "$p" ] || exit 1; done; '
+            "if [ -f shared_prefs/owner-check-diagnostic.xml ]; then head -c 4097 shared_prefs/owner-check-diagnostic.xml; fi"
+        )
+        raw = self.shell("run-as", PACKAGE, "sh", "-c", "'" + command + "'", label="device-check-diagnostic-read", timeout=15)
+        return check_diagnostic_summary(raw)
+
     def capture_install_diagnostic(self):
         # Fresh-run ownership and exact installed test APK identity are mandatory.
         # No alpha/game namespace, broad traversal, or mutation is involved.
@@ -2535,6 +2584,12 @@ def main(argv=None):
         failure_phase = CURRENT_PHASE
     finally:
         try:
+            if phone is not None and reason and failure_phase in ("baseline-N-check", "check-for-updates"):
+                try:
+                    observed = phone.capture_check_diagnostic()
+                except Exception:
+                    observed = {"status": "unavailable", "reason": "capture-failed"}
+                print(encoded({"mode": "release-check-diagnostic", "observed": observed}).decode(), end="", flush=True)
             if phone is not None and reason and failure_phase in ("baseline-N-install", "update-N-to-N+1", "same-key-rollback"):
                 try:
                     observed = phone.capture_install_diagnostic()

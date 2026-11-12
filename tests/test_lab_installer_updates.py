@@ -119,6 +119,37 @@ class LabInstallerUpdatesTests(unittest.TestCase):
             f'<hierarchy><node package="{LAB.PACKAGE}"><node package="{LAB.PACKAGE}" class="android.widget.Button" text="Check for updates" clickable="true" enabled="{enabled}" bounds="{bounds}"/></node></hierarchy>'
         )
 
+    def test_check_diagnostic_only_reports_fixed_classes(self):
+        valid = b'<map><string name="stage">failed-request-write</string><string name="error">io</string><string name="files_root">alias</string></map>'
+        self.assertEqual(LAB.check_diagnostic_summary(valid), {"status": "observed", "stage": "failed-request-write", "error": "io", "files_root": "alias"})
+        self.assertEqual(LAB.check_diagnostic_summary(b""), {"status": "unavailable", "reason": "not-recorded"})
+        for raw in (
+            valid.replace(b"io</", b"PRIVATE MESSAGE</"),
+            valid.replace(b"alias", b"PRIVATE PATH"),
+            valid.replace(b"stage", b"secret"),
+            valid + b"x",
+            b"x" * 4097,
+            valid.replace(b"</map>", b'<string name="error">io</string></map>'),
+            b"<!DOCTYPE map>" + valid,
+            valid.replace(b"<map>", b'<map secret="PRIVATE">'),
+        ):
+            self.assertEqual(LAB.check_diagnostic_summary(raw), {"status": "unavailable", "reason": "invalid-record"})
+
+    def test_check_diagnostic_reads_only_fresh_owned_fixed_preference(self):
+        phone = LAB.Phone("synthetic-private", 1)
+        with patch.object(phone, "require_owned_installer", side_effect=LAB.Failure("unowned")), patch.object(phone, "shell") as shell:
+            with self.assertRaisesRegex(LAB.Failure, "unowned"):
+                phone.capture_check_diagnostic()
+            shell.assert_not_called()
+        with patch.object(phone, "require_owned_installer"), patch.object(phone, "shell", return_value=b"") as shell:
+            self.assertEqual(phone.capture_check_diagnostic()["reason"], "not-recorded")
+        args = shell.call_args.args
+        self.assertEqual(args[:4], ("run-as", LAB.PACKAGE, "sh", "-c"))
+        self.assertIn("head -c 4097 shared_prefs/owner-check-diagnostic.xml", args[4])
+        self.assertIn('[ ! -L "$p" ] || exit 1', args[4])
+        self.assertNotIn("update-request", args[4])
+        self.assertEqual(shell.call_args.kwargs["timeout"], 15)
+
     def test_check_acknowledgement_wait_is_short_read_only_and_bounded(self):
         phone, clock = LAB.Phone("synthetic-private", 1800), [0.0]
         phone.flow_metrics = Mock()
