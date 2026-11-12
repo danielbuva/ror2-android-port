@@ -180,9 +180,16 @@ public sealed partial class PortSession
                 var controller = locator.modelTransform.GetComponent<ModelSkinController>();
                 if (!controller)
                     continue;
-                foreach (var skin in controller.skins)
-                    if (skin && !priorSkinIndices.ContainsKey(skin))
+                for (var skinIndex = 0; skinIndex < controller.skins.Length; skinIndex++)
+                {
+                    var skin = controller.skins[skinIndex];
+                    var context = " body=" + prefab.name + " skinIndex=" + skinIndex;
+                    coordinator.Check(skin, "Original skin reference missing" + context);
+                    coordinator.Check(skin.skinDefParamsAddress != null,
+                        "Original skin parameter address missing" + context + " skin=" + skin.name);
+                    if (!priorSkinIndices.ContainsKey(skin))
                         priorSkinIndices.Add(skin, skin.skinIndex);
+                }
             }
             foreach (var pair in names)
                 priorSkinNames.Add(pair.Key, pair.Value);
