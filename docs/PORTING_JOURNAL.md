@@ -3293,3 +3293,19 @@ preflight pass. Evidence: `tests/test_bundle_preload.py` and private notes at
 `work/coordination/p1-wholegame-1031/group-cache-pointer-delta-1112/`.
 J1417's unchanged-run benchmark remains separate; no production benchmark replay,
 Unity typed load, phone execution or converted-game acceptance is claimed.
+
+## J1424 — Attribute original drone catalog startup phases
+
+2026-11-12. Existing population owner traces snapshots, family, native registration,
+availability, holders and validation; original order, checks and lifecycle stay.
+Pinned R2API provider/typed-load seams inform observation; three focused tests pass.
+Evidence: `work/coordination/alpha-drone-attribution-device-20261112T012620Z/`.
+APK SHA-256 `e67b6454cb9d22f91b7945b2459ac4c9624bcd0334913c1ec0794cae9e0f7ddb`.
+Ordinary Start reached lakes/Commando/player/HUD; current-PID errors empty.
+In-place update kept profile/settings hashes; 153 banks ready, cached 274/full 0 proofs.
+All 14 boundaries once/monotonic: drone total 154.1 ms, typed family assets 147.1 ms;
+native SetDroneDefs 0.412 ms. Inclusive wall intervals; children only on cache miss.
+Launch/menu 34.961 s; Start/player 50.184 s; uncontrolled page cache, no speedup claim.
+Peak CPU/GPU 76.5 °C, 0 s above 80 °C; battery 26 → 27 °C. Source `f11f5cd4`.
+App stopped, scratch removed, OLED asleep, lease released; pruning passed.
+Sustained play/performance, physical navigation and complete phone install remain open.
