@@ -56,6 +56,15 @@ AnimatorState:
         with self.assertRaisesRegex(RuntimeError, "cardinality"):
             reference_curves(tree, "    path: Rig/Arm\n")
 
+    def test_reference_pose_resolves_unity_folded_transform_path(self):
+        path = "Rig/Long Bone/Long Bone Chip"
+        tree = dict(
+            m_MuscleClip=dict(m_ValueArrayReferencePose=[1, 2, 3]),
+            m_ClipBindingConstant=dict(genericBindings=[dict(path=zlib.crc32(path.encode()), attribute=1, typeID=4)]),
+        )
+        plain = reference_curves(tree, "    path: " + path + "\n    classID: 4\n")
+        self.assertEqual(reference_curves(tree, "    path: Rig/Long Bone/Long Bone\n      Chip\n    classID: 4\n"), plain)
+
     def test_repairs_only_original_animator_parameter_hashes(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary) / "Assets/WholeGame"

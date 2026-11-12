@@ -45,7 +45,10 @@ def aim_clip_guids(controller):
 def reference_curves(tree, exported):
     """Map the source reference-pose stream onto the exported Transform paths."""
     paths = defaultdict(set)
-    for path in re.findall(r"^    path: ?(.*)$", exported, re.M):
+    # Unity folds long YAML scalars after saving imported clips. Continuation
+    # indentation is six spaces, while the next curve/field starts at two/four.
+    for path in re.findall(r"^    path: ?([^\n]*(?:\n      [^\n]+)*)", exported, re.M):
+        path = path.replace("\n      ", " ")
         if path.startswith('"'):
             path = json.loads(path)
         paths[zlib.crc32(path.encode())].add(path)
