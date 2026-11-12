@@ -11,6 +11,7 @@ import importlib.util
 import io
 import json
 from pathlib import Path
+import re
 import struct
 import sys
 
@@ -46,6 +47,62 @@ NATIVE_TYPES = {
     "AvatarMask": {319},
     "LightingSettings": {850595691},
 }
+
+
+def deferred_references(tree):
+    """Find serialized GUID keys, retaining AssetReference subobject identity.
+
+    PPtrs do not represent these edges. Scan all string fields as well as the
+    Addressables structure: state preloads and game wrappers use plain strings.
+    Candidates still require resolution against the legitimate input catalog;
+    an arbitrary GUID string alone does not establish an asset dependency.
+    """
+    guid_key = re.compile(r"([a-fA-F0-9]{32})(?:\[([^\]]+)\])?")
+
+    def visit(value, field):
+        if isinstance(value, dict):
+            guid = value.get("m_AssetGUID")
+            if isinstance(guid, str) and re.fullmatch(r"[a-fA-F0-9]{32}", guid):
+                subobject = value.get("m_SubObjectName") or ""
+                edge = dict(field=list(field), guid=guid, key=guid + ("[" + subobject + "]" if subobject else ""), kind="AssetReference")
+                if subobject:
+                    edge["subobject_name"] = subobject
+                    edge["subobject_type"] = value.get("m_SubObjectType") or ""
+                yield edge
+                omitted = {"m_AssetGUID", "m_SubObjectName", "m_SubObjectType", "m_SubObjectGUID"}
+            else:
+                omitted = set()
+            for name, child in value.items():
+                if name not in omitted:
+                    yield from visit(child, (*field, name))
+        elif isinstance(value, (list, tuple)):
+            for index, child in enumerate(value):
+                yield from visit(child, (*field, index))
+        elif isinstance(value, str):
+            match = guid_key.fullmatch(value)
+            if match:
+                yield dict(field=list(field), guid=match[1], key=value, kind="guid-string")
+
+    yield from visit(tree, ())
+
+
+def deferred_reference_locations(edge, locations):
+    """Keep the requested AssetReference subobject type, including its assembly.
+
+    A GUID can advertise a model, meshes, avatar and controller behaviours at
+    once. Version qualifiers do not select a different CLR type, but assembly
+    identity does. Missing type metadata retains all candidates for subsequent
+    native identity/ownership resolution; it never selects the first sibling.
+    """
+    requested = edge.get("subobject_type")
+    if not requested:
+        return list(locations)
+
+    def identity(value):
+        return tuple(part.strip() for part in value.split(",")[:2])
+
+    expected = identity(requested)
+    return [location for location in locations if identity(location["type"]) == expected]
 
 
 def text(stream):
