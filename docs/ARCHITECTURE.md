@@ -2952,6 +2952,21 @@ experiments, so playable input cleanup cannot overwrite application teardown.
 Explicit Android sleep/background actions remain available. The production
 lifetime methods execute in the native-feedback host fixture.
 
+The same application owner holds the saved high-refresh preference from settings
+load through application teardown. Saving applies it immediately; focus/resume and
+gameplay setup reapply the saved policy, without applying an unsaved settings draft.
+High refresh retains Unity's 300 FPS request; standard mode requests 60 FPS.
+`LabDisplayPreference.java`, packaged in the existing authored Android library,
+selects the highest supported mode at the current physical resolution (or the
+closest mode to 60 Hz), requests window mode/rate and API 30 surface frame rate,
+and reapplies the surface hint after recreation. Only app window/surface state is
+changed. The UI-thread bridge removes callbacks, clears owned surface hints and
+restores captured window preferences at teardown; Unity's prior target is restored
+if still owned. Android may decline a request; requested and observed display
+rates are distinct facts. `test_android_feedback.py` covers saved/draft/failed-save
+policy and teardown; the existing packaging check compiles the Java bridge against
+the pinned Android SDK. Actual compositor selection requires device evidence.
+
 At playable startup this owner also applies the original Console retention convar
 metadata default once when the original Console is absent and its limit is still
 uninitialized. The process-wide default survives coordinator replacement; a live

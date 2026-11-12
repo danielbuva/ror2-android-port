@@ -101,6 +101,33 @@ thread waits and absent named-marker/GC durations prevent selecting a causal
 runtime fix. Local report: the evidence directory above, `camera-attribution.json`.
 No additional device run or performance improvement is claimed.
 
+### Named engine costs and periodic inspection
+
+A subsequent 61.153-second assisted window on source `cb44e5d6` retained all
+15 requested engine markers and reconciled 3,514 steady-world frame observations.
+Inclusive mean durations were: camera rendering 4.532 ms, present wait 2.888 ms,
+Update 1.200 ms, coroutines 1.112 ms, fixed update 0.927 ms and late update
+0.715 ms. Explicit and incremental GC together averaged 0.026 ms per frame.
+These scopes overlap; they cannot be added or used to infer the cause of a wait.
+GC had four nonzero observations, fixed update 2,933, and render-thread wait zero;
+these are observed no-event cases, not a universal native-recorder freshness proof.
+The raw-on window averaged 58.114 FPS versus 58.195 FPS in the preceding raw-off
+window. This sequential pair does not establish causal capture overhead.
+
+The idle display-policy readback has both Android refresh settings at 60 Hz,
+panel mode 60 Hz and an app-request range capped at 60 Hz, with 120 Hz supported.
+The display stayed asleep. This establishes a policy ceiling at that readback;
+it does not measure compositor presentation during the retained gameplay window.
+The existing 300 FPS request remains unchanged; J449 explains why replacing it
+with Unity's startup refresh value would preserve a stale 60 FPS cap.
+
+The active lab snapshot contained 1,000 hierarchy entries and 6,074 renderer/
+material pairs. Roughly 66 ms hitches recur every 2.014 seconds in the raw trace,
+matching the two-second full scene-census cadence in `LabDiagnostics`.
+Evidence: `work/coordination/alpha-engine-cost-on-20261112T182325Z/`
+(`marker-endpoint-deltas.json`, `2-on-performance.json`, `display-idle-policy.json`).
+APK SHA-256: `74cc76e779d16e8fefdd7e0354ddbc1d076b08f7a960da6d1f567317700b6a37`.
+
 ### Bounded raw-capture qualification
 
 The 2026-11-12 Main Nova assisted capture retained 8,354 active intervals without

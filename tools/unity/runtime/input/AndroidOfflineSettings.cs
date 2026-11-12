@@ -13,6 +13,7 @@ public sealed class AndroidOfflineSettings
         public int version = 1, offlineDifficulty;
         public float deadzone = .18f, lookSensitivity = 1;
         public bool invertY;
+        public bool highRefreshRate = true;
     }
     public static Values current = new Values();
     public readonly string directory;
