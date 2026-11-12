@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J1435](PORTING_JOURNAL.md#j1435--reuse-bundle-ownership-lookups-within-definition-families) | 2026-11-11 | Reuse bundle ownership lookups within definition families | 2026-11-12. |
 | [J1434](PORTING_JOURNAL.md#j1434--retain-final-emitted-catalog-declaration-artifacts) | 2026-11-11 | Retain final emitted catalog declaration artifacts | 2026-11-12. |
 | [J1432](PORTING_JOURNAL.md#j1432--retain-registry-witnesses-from-final-player-production) | 2026-11-11 | Retain registry witnesses from final player production | 2026-11-12. |
 | [J1433](PORTING_JOURNAL.md#j1433--attribute-native-results-item-group-startup-phases) | 2026-11-11 | Attribute native results item-group startup phases | 2026-11-12. |
