@@ -4,7 +4,7 @@ Re-audited 2026-11-11 against merged evidence since
 [audit #338](https://github.com/danielbuva/ror2-android-port/pull/338), including
 journal J1380–J1405 and changes through
 [PR #431](https://github.com/danielbuva/ror2-android-port/pull/431).
-All 18 acceptance gates remain open; linked results establish partial progress.
+Complete acceptance gates remain open; checked diagnostic subitems establish partial progress.
 Remaining actions are listed in the [execution backlog](execution-backlog.md).
 
 The user accepts [owner-built Route A](ADR-002-public-alpha-distribution.md);
@@ -110,8 +110,9 @@ retain J595/J755 ownership guards; final alpha installation remains separate.
       and [cooldown](PORTING_JOURNAL.md#j1405--cool-supervised-memory-sessions-between-verified-endings)
       fixes support a completed 32-session supervised UI-abandon diagnostic
       ([J1407](PORTING_JOURNAL.md#j1407--preserve-cooldown-admission-readings-across-display-wake)).
-      Final-16 matched-menu managed growth remains positive; physical navigation,
-      a memory plateau and ordinary long-run dependency retention remain open.
+      Final-16 matched-menu managed growth remains positive; physical navigation
+      and ordinary long-run dependency retention remain open. Saved-owner
+      attribution is recorded under Stability below; no plateau is established.
       [J1408](PORTING_JOURNAL.md#j1408--reclaim-measured-returned-pool-storage-after-completed-sessions)
       clears measured returned BulletHit/Renderer-list storage after each of three
       supervised sessions, with continuation; positive matched-menu managed growth
@@ -160,6 +161,16 @@ reconciles 98,855 frames over 30 minutes: 54.927 FPS, raw p50/p95/p99
 and 5.378 seconds of missing boundary coverage. Ordinary play, visual parity,
 capture overhead, battery drain and causal throttling remain unqualified.
 
+The [saved high-refresh preference](performance-game.md#saved-app-refresh-and-scalar-only-periodic-inspection)
+changes the Main Nova's active display mode from 60 to 120 Hz and survives a cold
+launch without global setting changes. Its bounded scalar-only inspection window
+averages 60.057 FPS with raw p50/p95/p99 of 16.654/16.715/25.000 ms.
+A subsequent cold-launch detail window reaches 100.516 FPS with an 8.333 ms median;
+this establishes above-60-FPS capability, while the changed pacing confounds the
+inspection comparison. Neither window qualifies sustained 60 FPS, 120 FPS,
+ordinary play or a causal speedup.
+Full scene inspection remains explicitly available; periodic snapshots omit it by default.
+
 Startup [audio-verification reuse](PORTING_JOURNAL.md#j1386--reuse-install-bound-audio-verification-and-partition-loading-costs)
 and [catalog discovery](PORTING_JOURNAL.md#j1390--reuse-typed-item-provider-discovery-during-ordinary-startup)
 provide bounded device evidence; complete converter and sustained-game profiles
@@ -170,6 +181,9 @@ not qualify a total-load speedup
 ([J1422](PORTING_JOURNAL.md#j1422--attribute-original-audio-readiness-callback-waits)).
 
 Proposed game budgets (targets, not accepted results), at original visual fidelity:
+
+60 FPS is the minimum acceptance floor. Continue lossless improvements toward
+the Main Nova's 120 Hz capacity, including frame pacing, after clearing that floor.
 
 | Device | Sustained workload | Proposed pacing budget | Energy/thermal budget |
 | --- | --- | --- | --- |
@@ -183,23 +197,27 @@ thermal sampling policy; proposed performance budgets do not change those limits
 
 ## Stability and playtests
 
-- [ ] Attribute and bound repeated-session managed growth, then qualify a long
-      device series ([open evidence](execution-backlog.md#stability-and-performance)).
-      [J1327](PORTING_JOURNAL.md#j1327--release-destroyed-overlap-discovery-targets-after-session-teardown)
-      removes destroyed overlap targets;
-      [J1350](PORTING_JOURNAL.md#j1350--restore-original-console-retention-default-at-composed-startup)
-      still shows positive twelve-session growth.
-      [J1353](PORTING_JOURNAL.md#j1353--capture-the-requested-final-menu-heap)
-      supplies endpoint heaps for attribution, without establishing a plateau.
-      [J1402](PORTING_JOURNAL.md#j1402--continue-memory-observations-through-native-loss-and-menu)
-      extends assisted observations through native loss; the interrupted series
-      does not establish completion or a plateau.
-      The [catalog-wrapper qualification](PORTING_JOURNAL.md#j1463--bound-collected-catalog-diagnostics-across-32-sessions)
-      completes 32 assisted sessions:
-      released locator/manifest targets collect and active locators remain at two.
-      Menus 18–33 retain +634,880 managed bytes and a +35,990.588 bytes/menu
-      fitted slope. Diagnostic wrapper pruning does not establish a plateau;
-      retained-owner attribution and ordinary-play qualification remain open.
+- [x] Attribute observed repeated-session growth and record its measured extent.
+      [J1467](PORTING_JOURNAL.md#j1467--release-retired-roster-scroll-states-without-clearing-other-controls)
+      menus 2/4 add 68,227 discovered managed-object bytes, with zero
+      ScrollViewState objects. Saved-owner analysis identifies lazy HUD-font and
+      encoding initialization, pooled capacity, diagnostic summaries and newly
+      observed asset operations; no concrete cleanup defect was established.
+      Pool logical counts, live location keys and report/sample counts stay
+      unchanged across that pair. This closes the inspected retaining-owner
+      investigation, not a total lifetime bound or plateau.
+      A subsequent 32-session supervised capture retains zero ScrollViewState
+      objects in menus 2/33; discovered managed-object bytes rise from 26,895,878
+      to 30,242,305. This extends the measured interval without establishing a
+      lifetime ceiling or closing ordinary long play.
+- [ ] Qualify a long unassisted physical session, including ordinary results
+      navigation, continued dependency retention and memory observations
+      ([owner checklist](PLAYTESTING.md#stability-persistence-and-updates)).
+      [J1463](PORTING_JOURNAL.md#j1463--bound-collected-catalog-diagnostics-across-32-sessions)
+      completes 32 assisted sessions with released locator/manifest targets
+      collected and two active locators. Its final 16 menus still add 634,880
+      managed bytes, fitted +35,990.588 bytes/menu. The finite observed extent
+      does not establish an aggregate cache ceiling or ordinary-play stability.
 - [ ] Complete real interrupted-write/ENOSPC and sustained performance/thermal
       cases on supported hardware.
       [J1311](PORTING_JOURNAL.md#j1311--recover-native-settings-after-writer-termination-and-activity-restart)

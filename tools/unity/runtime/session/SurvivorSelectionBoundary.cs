@@ -1,5 +1,5 @@
 // Subsystem: session (game path). Owner map: docs/ARCHITECTURE.md#ownership.
-// Session phases: setup SelectedPlayerPrefab, OrdinarySurvivorChoices; teardown —.
+// Session phases: setup SelectedPlayerPrefab, OrdinarySurvivorChoices; roster state released by CleanupRecoveredMenu and OnDestroy.
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -11,6 +11,7 @@ using UnityEngine;
 // Android profile. Developer-only selections remain assisted.
 public sealed partial class PortSession
 {
+    readonly OfflineRosterScrollStateOwner offlineRosterScrollStates = new OfflineRosterScrollStateOwner();
     [Serializable]
     public class SourceAnimationEventReport
     {
@@ -101,6 +102,7 @@ public sealed partial class PortSession
         int rows = (roster.Length + columns - 1) / columns;
         var content = new Rect(0, 0, contentWidth, rows * 65 + 4);
         offlineRosterScroll = GUI.BeginScrollView(view, offlineRosterScroll, content);
+        offlineRosterScrollStates.Capture();
         var style = new GUIStyle(GUI.skin.button) { alignment = TextAnchor.MiddleLeft, fontSize = 16, wordWrap = true };
         for (int i = 0; i < roster.Length; i++)
         {
@@ -200,5 +202,48 @@ public sealed partial class PortSession
                                                                           .Select(name => locator && locator.FindChild(name))
                                                                           .ToArray()
                                                                     : null };
+    }
+}
+
+// The pinned IMGUI implementation caches each BeginScrollView state by control
+// ID for the process. Capture the exact roster state while it is on GUI's stack;
+// retiring a menu must not clear states belonging to another control or owner.
+internal sealed class OfflineRosterScrollStateOwner : IDisposable
+{
+    static readonly MethodInfo topScrollView = typeof(GUI).GetMethod("GetTopScrollView", BindingFlags.Static | BindingFlags.NonPublic);
+    static readonly FieldInfo stateCache = typeof(GUI).Assembly.GetType("UnityEngine.GUIStateObjects")
+        .GetField("s_StateCache", BindingFlags.Static | BindingFlags.NonPublic);
+    readonly Dictionary<int, object> owned = new Dictionary<int, object>();
+
+    public void Capture()
+    {
+        var state = topScrollView.Invoke(null, null);
+        if (state == null)
+            throw new InvalidOperationException("Roster scroll state capture requires an active scroll view");
+        if (owned.ContainsValue(state))
+            return;
+        var cache = (Dictionary<int, object>)stateCache.GetValue(null);
+        foreach (var entry in cache)
+        {
+            if (!ReferenceEquals(entry.Value, state))
+                continue;
+            owned[entry.Key] = state;
+            return;
+        }
+        throw new InvalidOperationException("Active roster scroll state is absent from the pinned GUI cache");
+    }
+
+    public void Dispose()
+    {
+        if (owned.Count == 0)
+            return;
+        var cache = (Dictionary<int, object>)stateCache.GetValue(null);
+        foreach (var entry in owned)
+        {
+            object current;
+            if (cache.TryGetValue(entry.Key, out current) && ReferenceEquals(current, entry.Value))
+                cache.Remove(entry.Key);
+        }
+        owned.Clear();
     }
 }

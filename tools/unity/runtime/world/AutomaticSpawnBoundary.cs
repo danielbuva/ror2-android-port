@@ -277,7 +277,7 @@ public sealed partial class PortSession
                 component.enabled = false;
             }
             if (automaticModel)
-                PrepareAutomaticModel(body);
+                PrepareAutomaticModel(body, cfg);
             machine.enabled = true;
             if (movingMotor)
                 motor.enabled = true;
@@ -328,6 +328,11 @@ public sealed partial class PortSession
             TraceStartup("automatic-native-spawn-start-begin");
             body.gameObject.SetActive(true);
             yield return null;
+            // ModelLocator.Start detaches the model from its isolated inactive
+            // parent. Its Animator is then initialized before SpawnTeleporter
+            // can transition to GenericCharacterMain's parameter snapshot.
+            if (automaticModel)
+                VerifyAutomaticAnimatorBeforeMainState(body);
             Check(machine.state is SpawnTeleporterState && body.GetBuffCount(RoR2Content.Buffs.HiddenInvincibility) == 1 &&
                       model.invisibilityCount == invisible + 1,
                   "Automatic original spawn Start/buff/model effects");

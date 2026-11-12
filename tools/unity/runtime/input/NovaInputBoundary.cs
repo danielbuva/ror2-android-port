@@ -71,6 +71,11 @@ public sealed partial class PortSession
     {
         public bool originalAimAnimator, characterMatteApproximation;
         public float aimPitchCycle, aimYawCycle;
+        public string nativeMovementState;
+        public bool nativeMovementCacheAvailable, nativeMovementCachedIsMoving, nativeMovementCachedForwardSpeed,
+                    nativeMovementCachedRightSpeed, animatorIsMoving;
+        public float animatorForwardSpeed, animatorRightSpeed, animatorBaseStateTime;
+        public int animatorBaseStateHash;
         public Vector3 modelForward;
         public bool novaOnly, originalInputConsumer, stopped, aimConsumed, rendersOriginalModel, diagnosticInput;
         public bool commandoPrimaryDiagnostic;
@@ -492,7 +497,7 @@ public sealed partial class PortSession
                 if (cfg.integratedWorld)
                 {
                     UnityEngine.Rendering.OnDemandRendering.renderFrameInterval = priorRenderFrameInterval;
-                    Application.targetFrameRate = 300;
+                    coordinator.GetOfflineApplicationSession().ReapplyDisplayPreference();
                     Debug.Log("Integrated playing presentation interval=" + UnityEngine.Rendering.OnDemandRendering.renderFrameInterval +
                               " targetFrameRate=" + Application.targetFrameRate + " at=" + Time.realtimeSinceStartup);
                     coordinator.r.performance =
@@ -645,7 +650,7 @@ public sealed partial class PortSession
                         continue;
                     }
                     coordinator.ObserveAutomaticModelFollow(body);
-                    display.ObserveNativeAim(coordinator.r.nova);
+                    display.ObserveNativeAim(coordinator.r.nova, machine);
                     TemporaryOverlayManager.OverlayUpdate();
                     coordinator.Check(string.IsNullOrEmpty(bridge.error), "Nova bridge input failure: " + bridge.error);
                     coordinator.Check((cfg.combatSpine || machine.state == state) && body.gameObject.activeInHierarchy &&
@@ -1115,7 +1120,7 @@ public sealed partial class PortSession
                         solver.SetGroundSolvingActivation(false);
                     }
                     coordinator.worldView = null;
-                    Application.targetFrameRate = priorTargetFrameRate;
+                    coordinator.GetOfflineApplicationSession().RestoreGameplayFrameRate(priorTargetFrameRate);
                     if (ownsScreenSleepTimeout)
                         Screen.sleepTimeout = sleepTimeout;
                 }

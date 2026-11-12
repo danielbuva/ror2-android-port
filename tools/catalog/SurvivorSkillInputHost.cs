@@ -55,6 +55,94 @@ public static class SurvivorSkillInputHost
         bridge.diagnosticPrimary = bridge.diagnosticSecondary = bridge.diagnosticUtility = bridge.diagnosticSpecial = true;
     }
 
+    // Exact-editor check for the pre-spawn contract used by AutomaticModelBoundary.
+    // Native ModelLocator.Start detaches the model from an inactive model base;
+    // its Animator must initialize before BaseCharacterMain snapshots parameters.
+    public static object VerifyAnimatorBeforeMainState()
+    {
+        Require(!EditorApplication.isPlaying && !EditorApplication.isCompiling,
+                "Require idle exact editor for inactive Animator metadata");
+        var body = new GameObject("pre-state-animation-contract");
+        body.SetActive(false);
+        var modelBase = new GameObject("modelBase");
+        modelBase.transform.SetParent(body.transform, false);
+        modelBase.SetActive(false);
+        var model = new GameObject("model");
+        model.transform.SetParent(modelBase.transform, false);
+        var locator = body.AddComponent<ModelLocator>();
+        locator.enabled = false;
+        locator.modelBaseTransform = modelBase.transform;
+        locator.modelTransform = model.transform;
+        var controller = new UnityEditor.Animations.AnimatorController();
+        try
+        {
+            controller.AddLayer("Body");
+            controller.layers[0].stateMachine.AddState("Idle");
+            controller.AddParameter("isMoving", AnimatorControllerParameterType.Bool);
+            controller.AddParameter("forwardSpeed", AnimatorControllerParameterType.Float);
+            controller.AddParameter("rightSpeed", AnimatorControllerParameterType.Float);
+            var animator = model.AddComponent<Animator>();
+            var before = CharacterAnimParamAvailability.FromAnimator(animator);
+            Require(!before.isMoving && !before.forwardSpeed && !before.rightSpeed,
+                    "Unbound fixture unexpectedly exposes locomotion parameters");
+            animator.runtimeAnimatorController = controller;
+            var inactive = CharacterAnimParamAvailability.FromAnimator(animator);
+            Require(!inactive.isMoving && !inactive.forwardSpeed && !inactive.rightSpeed,
+                    "Fixture no longer reproduces uninitialized Animator parameter discovery");
+            body.SetActive(true);
+            var parentInactive = CharacterAnimParamAvailability.FromAnimator(animator);
+            Require(!model.activeInHierarchy && !parentInactive.isMoving && !parentInactive.forwardSpeed &&
+                        !parentInactive.rightSpeed,
+                    "Body activation no longer reproduces inactive model-base isolation");
+            locator.Start();
+            animator.Update(0);
+            var after = CharacterAnimParamAvailability.FromAnimator(animator);
+            Require(after.isMoving && after.forwardSpeed && after.rightSpeed,
+                    "Native locomotion snapshot unavailable after native model detachment before main state");
+            return new { initializedBeforeMainState = true, nativeModelDetachment = true,
+                         nativeParameterSnapshot = true, nativeGameplayTested = false };
+        }
+        finally
+        {
+            UnityEngine.Object.DestroyImmediate(model);
+            UnityEngine.Object.DestroyImmediate(body);
+            UnityEngine.Object.DestroyImmediate(controller);
+        }
+    }
+
+    public static object VerifyTouchWithoutPhysicalController()
+    {
+        Require(!EditorApplication.isPlaying && !EditorApplication.isCompiling, "Require idle editor");
+        var root = new GameObject("touch-without-controller-contract");
+        root.SetActive(false);
+        try
+        {
+            var bridge = root.AddComponent<NovaInputBridge>();
+            bridge.bank = root.AddComponent<InputBankTest>();
+            bridge.mapping = new NovaInputBridge.Mapping();
+            bridge.touchControls = new AndroidTouchInput();
+            var touch = bridge.touchControls;
+            touch.Layout(new Rect(0, 0, 1920, 1080), new Vector2(1920, 1080));
+            touch.BeginFrame(0);
+            touch.EndFrame();
+            FixedInput(bridge); // Missing controller: neutral bank, preserve touch admission.
+            Require(!touch.report.waitingForLift && bridge.bank.moveVector == Vector3.zero,
+                    "Physical input unavailability locked out idle touch capture");
+            touch.BeginFrame(1);
+            touch.Pointer(7, touch.MoveCenter + new Vector2(125, 0), true, false, false);
+            touch.EndFrame();
+            typeof(NovaInputBridge).GetField("movement", Instance).SetValue(bridge, touch.Movement);
+            FixedInput(bridge);
+            Require(touch.HasInput && bridge.bank.moveVector.x > .9f,
+                    "First touch movement was blocked by physical controller absence");
+            bridge.Neutral();
+            Require(touch.report.waitingForLift && !touch.HasInput && bridge.bank.moveVector == Vector3.zero,
+                    "Focus/pause/teardown neutralization no longer cancels touch");
+            return new { physicalControllerAbsent = true, touchMovement = true, suspensionPreserved = true };
+        }
+        finally { UnityEngine.Object.DestroyImmediate(root); }
+    }
+
     public static object Run()
     {
         Require(!EditorApplication.isPlaying && !EditorApplication.isCompiling && !NetworkServer.active && !NetworkClient.active,

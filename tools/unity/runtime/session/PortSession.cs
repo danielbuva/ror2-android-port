@@ -655,6 +655,7 @@ public sealed partial class PortSession : MonoBehaviour
 
     private void OnDestroy()
     {
+        offlineRosterScrollStates.Dispose();
         offlineApplicationSession?.Dispose();
         // Close scheduling before teardown so a late callback cannot arm.
         passivePcmActivityArmPolicy?.Close();
