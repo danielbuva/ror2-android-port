@@ -256,6 +256,7 @@ public sealed partial class PortSession : MonoBehaviour
         public bool enhancedPresentation, pauseBeforeMoon;
         public AndroidMaterialPresentation.Report presentation;
         public AndroidPresentationCamera.Report framePacing;
+        public bool rawFrameTimesRequested;
         public string[] developerItemGrants, developerEquipmentSequence;
         public DebugAccelerationOptions debugOptions;
         public DebugAccelerationReport debugAcceleration;

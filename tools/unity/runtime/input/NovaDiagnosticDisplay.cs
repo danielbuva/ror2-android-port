@@ -348,6 +348,8 @@ public sealed class NovaDiagnosticDisplay : IDisposable
     }
     public void Dispose()
     {
+        if (presentationCamera)
+            presentationCamera.FinishRawFrameCapture();
         if (nativeAim)
             nativeAim.enabled = false;
         if (actualModel && source)

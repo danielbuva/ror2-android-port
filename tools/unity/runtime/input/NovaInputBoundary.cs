@@ -391,6 +391,8 @@ public sealed partial class PortSession
                     display.EnableNativeAimAfterAnimatorReady();
                 }
                 coordinator.r.framePacing = display.presentationCameraReport;
+                if (coordinator.r.rawFrameTimesRequested && display.presentationCamera)
+                    display.presentationCamera.BeginRawFrameCapture();
                 TraceStartup("nova-display-ready-combat-begin");
                 if (cfg.stageGeometry)
                     display.camera.cullingMask |= LayerIndex.world.mask;
