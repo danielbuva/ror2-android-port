@@ -57,6 +57,35 @@ class ManagedProductionReceiptTests(unittest.TestCase):
             self.assertIn(Path(receipt["base_providers"]["path"]).resolve(), pins.files)
             pins.check()
 
+    def test_relocates_unchanged_refresh_inputs_and_checks_staged_bytes(self):
+        for missing in (False, True):
+            with self.subTest(missing=missing), tempfile.TemporaryDirectory() as temporary:
+                root = Path(temporary)
+                endpoints, pins, document, manifest, receipt, providers = self.fixture(root)
+                receipt_pin = document("receipt.json", receipt)
+                staged = root / "phone"
+                staged.mkdir()
+                paths = {}
+                originals = {path.name: path.read_bytes() for path in root.iterdir() if path.is_file()}
+                for name in originals:
+                    source = root / name
+                    paths[str(source)] = "phone/" + name
+                    source.rename(staged / name)
+                pins.relocate(document("input-paths.json", paths))
+                self.assertEqual(endpoints.managed_production(pins, manifest, receipt_pin), providers)
+                for value in providers.values():
+                    path = pins.path(value["path"])
+                    pins.add(path, dict(bytes=path.stat().st_size, sha256=value["sha256"]))
+                self.assertEqual({name: (staged / name).read_bytes() for name in originals}, originals)
+                pins.check()
+                target = staged / "Shared.dll"
+                if missing:
+                    target.unlink()
+                else:
+                    target.write_bytes(b"changed staged provider")
+                with self.assertRaises((ValueError, FileNotFoundError)):
+                    pins.check()
+
     def test_rejects_unbound_or_incomplete_refresh(self):
         for changes, message in (
             (dict(success=False), "successful managed production"),
@@ -216,15 +245,30 @@ class SdkMetadataInventoryHostTests(unittest.TestCase):
                     runtimeconfig=pin(root / "reader-out/MetadataInventory.runtimeconfig.json"),
                 ),
             )
+            # Consume the original declarations after their host paths disappear.
+            # The relocation map changes file lookup, preserving every input hash.
+            staged = root / "phone-inputs"
+            staged.mkdir()
+            relocated = {}
+            input_files = {Path(request[key]["path"]) for key in ("managed_providers", "managed_receipt", "registry_receipt", "provider_aliases")}
+            input_files.update(Path(value["path"]) for value in providers.values())
+            originals = {path: path.read_bytes() for path in input_files}
+            for path in input_files:
+                relocated[str(path)] = "phone-inputs/" + path.name
+                path.rename(staged / path.name)
+            request["input_paths"] = document("input-paths.json", relocated)
+            staged_providers = {name: dict(value, path=str((staged / Path(value["path"]).name).resolve())) for name, value in providers.items()}
+            provider = (staged / provider.name).resolve()
             request_path = root / "managed-request.json"
             request_path.write_text(json.dumps(request))
             generated = root / "generated"
             result = endpoints.generate_managed(request_path, generated)
             self.assertTrue(result["success"])
             self.assertEqual(result["managed_providers"], 2)
-            self.assertEqual(json.loads((generated / "runtime-request.json").read_text())["managed"], providers)
+            self.assertEqual(json.loads((generated / "runtime-request.json").read_text())["managed"], staged_providers)
             self.assertEqual(json.loads((generated / "provider-aliases.json").read_text()), {registry_provider: str(provider)})
             self.assertEqual(json.loads((generated / "metadata.json").read_text())["assemblies"][0]["group"], "current")
+            self.assertEqual({path: (staged / path.name).read_bytes() for path in input_files}, originals)
             provider.write_bytes(b"changed provider")
             with self.assertRaisesRegex(ValueError, "input differs"):
                 endpoints.generate_managed(request_path, root / "refused")

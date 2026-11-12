@@ -3822,3 +3822,16 @@ Generated receipt SHA-256: `5ff68921de6fd45a17409ced82a0c597c0ea076dd0f871600c3e
 Prior art: pinned ThunderKit FileIdUtil and AssetRipper MonoScript identity checks retained.
 No game code executed, editor/device used or APK produced. Current CLR/graph admission,
 Unity typed load, converted play and full port-update qualification remain open.
+
+## J1462 — Relocate managed witness inputs without rewriting receipts
+
+2026-11-12. The existing metadata owner accepts a pinned exact-path relocation map;
+unchanged provider manifests, refresh receipts and final registry inputs retain their hashes.
+Staged files use the existing size/hash checks before and after metadata inspection.
+Registry aliases remain a separate identity contract; no assembly code is executed.
+Authored fixtures remove original files, generate metadata from staged inputs and reject
+missing or changed providers. All 5 metadata and 47 preload tests, Ruff and host preflight pass.
+Evidence: `work/coordination/p1-wholegame-1031/phone-chain-audit-1112/managed-input-relocation-v2/`.
+Prior art: J1461 retained-input checks and the existing metadata-only Cecil reader.
+No APK produced or device/editor used. Current CLR/graph admission, Unity typed load,
+converted play and complete phone install/update qualification remain open.
