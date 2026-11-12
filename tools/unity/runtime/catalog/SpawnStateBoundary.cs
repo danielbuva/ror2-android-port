@@ -176,8 +176,9 @@ public sealed partial class PortSession
                             .Count == 0,
                 "Existing state catalog; refuse replacement");
             var originals = coordinator.r.liveCatalogs != null
-                                ? WholeCatalogComposed.CategoryFamily(RoR2.ContentManagement.AddressablesLabels.entityStateConfiguration,
-                                                                      new EntityStateConfiguration[0])
+                                ? WholeCatalogComposed.CategoryFamily(null, RoR2.ContentManagement.AddressablesLabels.entityStateConfiguration,
+                                                                      new EntityStateConfiguration[0],
+                                                                      step => TraceStartup("spawn-state-family-" + step))
                                 : null;
             TraceStartup("spawn-state-family-ready");
             if (originals != null)

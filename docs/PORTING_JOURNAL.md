@@ -3218,3 +3218,19 @@ All 14 markers once/monotonic; source `8d0cfcdf`. No total-load/speedup claim.
 CPU/GPU peak 76.9 °C, 0 s above 80 °C; battery 29 °C, runtime sample gap < 0.426 s.
 App/selectors/pending absent, scratch removed, OLED asleep, lease released; P1 notified.
 Sustained play/performance, physical navigation and full installer update remain open.
+
+## J1419 — Reuse bundle owner lookups within catalog families
+
+2026-11-11. Existing CategoryFamily resolves each requested bundle once on first use;
+provider order, typed loads, identities, failure policy and cache teardown stay.
+State family forwards existing sparse child tracing. Pinned R2API provider seams
+inform the observation; focused fixture and build checks passed before this pair.
+Evidence: `work/coordination/alpha-state-family-pair-20261111T235506Z/`.
+APK SHA-256 `0d19ea9f8d0ed57ade69cce7286fa6660e8c1e74611c1b2290ed025c698d9062`.
+Both Starts reached Distant Roost/player/HUD and 153 banks; current-PID errors empty.
+Distinct-source update retained profile/settings hashes; both cached 274/full 0 proofs.
+State family 1.414 → 1.388 s; native including yields 3.612 → 3.627 s.
+Launch/menu 23.261 → 19.589 s; Start/player 54.111 → 44.530 s, uncontrolled
+page cache: diagnostic pair only, no total-load speedup claim. Peak CPU/GPU
+77.7 → 80.0 °C, 0 s above 80 °C; battery 28 → 29 °C. App stopped, scratch
+removed, OLED asleep, lease released. Sustained play/performance remain open.

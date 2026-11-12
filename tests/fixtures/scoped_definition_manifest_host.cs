@@ -21,9 +21,12 @@ namespace UnityEngine
     {
         public static AssetBundle owner = new AssetBundle { name = "source" };
         public static Dictionary<string, Object> assets = new Dictionary<string, Object>();
-        public static AssetBundle[] GetAllLoadedAssetBundles() { return new[] { owner }; }
+        public static AssetBundle[] loadedOwners;
+        public static int enumerations;
+        public static Action<string> onLoad;
+        public static AssetBundle[] GetAllLoadedAssetBundles() { enumerations++; return loadedOwners ?? new[] { owner }; }
         public static int typedLoads;
-        public T LoadAsset<T>(string path) where T : Object { typedLoads++; return (T)assets[path]; }
+        public T LoadAsset<T>(string path) where T : Object { typedLoads++; onLoad?.Invoke(path); return (T)assets[path]; }
         public T[] LoadAllAssets<T>() where T : Object { throw new Exception("Unrelated drop table activated before native Run setup"); }
     }
 }
@@ -168,7 +171,46 @@ public static partial class WholeCatalogComposed
         LabeledFamilyContract<RoR2.KeyItemDef>(KeyItemDefinitions, "KeyItemDef");
         LabeledFamilyContract<RoR2.ItemGroupType>(ItemGroupTypes, "ItemGroupType");
         LabeledFamilyContract<RoR2.ItemGroupProvider>(ItemGroupProviders, "ItemGroupProvider");
+        CategoryBundleContract();
         Console.WriteLine("scope identity policy restoration buffs items PASS");
+    }
+    static void CategoryBundleContract()
+    {
+        var first = new Definition { name = "First" };
+        var second = new Definition { name = "Second" };
+        AssetBundle.assets["first"] = first;
+        AssetBundle.assets["second"] = second;
+        var data = new JObject {
+            ["providers"] = new JArray(new JObject { ["type"] = "SourceProvider", ["identifier"] = "source" }),
+            ["locations"] = new JArray(
+                new JObject { ["id"] = 1, ["type"] = "Definition", ["bundle"] = "source", ["path"] = "first" },
+                new JObject { ["id"] = 2, ["type"] = "Definition", ["bundle"] = "source", ["path"] = "second" }),
+            ["keys"] = new JArray(new JObject { ["key"] = "ContentPack:source", ["locations"] = new JArray(1, 2) },
+                                  new JObject { ["key"] = "category", ["locations"] = new JArray(1, 2) }) };
+        var unrelated = new AssetBundle { name = "unrelated" };
+        AssetBundle.loadedOwners = new[] { AssetBundle.owner, unrelated, unrelated };
+        definitionFamilies.Clear();
+        int before = AssetBundle.enumerations;
+        Check(CategoryFamily(data, "category", new[] { second }).SequenceEqual(new[] { first, second }));
+        Check(AssetBundle.enumerations == before + 1);
+        Check(CategoryFamily(data, "category", new[] { first }).SequenceEqual(new[] { first, second }));
+        Check(AssetBundle.enumerations == before + 1);
+        definitionFamilies.Clear();
+        AssetBundle.loadedOwners = new[] { AssetBundle.owner, AssetBundle.owner };
+        Refuses(() => CategoryFamily(data, "category", new Definition[0]));
+        AssetBundle.loadedOwners = new[] { unrelated };
+        Refuses(() => CategoryFamily(data, "category", new Definition[0]));
+        // First-use resolution preserves a later owner loaded by an asset callback.
+        AssetBundle.loadedOwners = new[] { AssetBundle.owner };
+        var later = new AssetBundle { name = "later" };
+        data["locations"][1]["bundle"] = "later";
+        AssetBundle.onLoad = path => { if (path == "first") AssetBundle.loadedOwners = new[] { AssetBundle.owner, later }; };
+        before = AssetBundle.enumerations;
+        Check(CategoryFamily(data, "category", new Definition[0]).SequenceEqual(new[] { first, second }));
+        Check(AssetBundle.enumerations == before + 2);
+        AssetBundle.onLoad = null;
+        AssetBundle.loadedOwners = null;
+        definitionFamilies.Clear();
     }
     static void LabeledFamilyContract<T>(Func<T[]> definitions, string label) where T : Object, new()
     {

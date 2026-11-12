@@ -3973,6 +3973,12 @@ The existing family loader emits child phases only on a cache miss; registration
 profile restoration and cache teardown retain their existing owners.
 The metadata-ready marker precedes objective rules, redirects and local profile
 setup; it does not describe completion of the entire profile boundary.
+`WholeCatalogComposed.CategoryFamily` resolves each requested bundle name once
+per synchronous family call, on first use, with the original unique-owner lookup.
+The local dictionary ends on return; provider order, typed loads, identity checks,
+missing/duplicate-owner failures and existing family-cache teardown remain owned
+by the same loader. `SpawnStateBoundary` forwards the sparse family callback;
+its child markers retain no state.
 Buff discovery uses the existing `DefinitionFamily<BuffDef>` provider-root loader
 and family cache instead of broad bundle loading. Typed root selection, unique
 name/selected-identity checks and `Release` cache teardown keep their existing
