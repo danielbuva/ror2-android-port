@@ -4174,7 +4174,10 @@ Provider-root `DefinitionFamily<T>` uses the same reader; its typed selection,
 selected-identity checks and existing family-cache lifetime remain unchanged.
 During a family cache miss it resolves each loaded bundle owner once in a
 method-local map, preserving missing/ambiguous-owner refusal and typed loading.
-The map ends on return; loaded definitions retain the existing release lifetime.
+It also resolves each distinct root type name once in a method-local map;
+non-root rows still bypass type resolution, and each root retains its
+assignability check. Both maps end on return; loaded definitions retain the
+existing release lifetime.
 The original network-sound startup caller can request sparse generic-family
 manifest/validation markers and aggregate root-filter, owner and typed-load costs.
 Outer audio markers separate network registration from music startup. Observation
