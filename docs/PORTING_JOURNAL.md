@@ -3767,3 +3767,17 @@ Evidence: `work/coordination/p1-wholegame-1031/phone-chain-audit-1112/source-pol
 and `tests/test_bundle_prepare.py`, `tests/test_release_graph.py`.
 Prior art: pinned EditorKit typed cache identities; existing release/preparation owners extended.
 Current-game graph admission, Unity typed load, converted play and port update remain open.
+
+## J1458 — Resolve private selections through public source profiles
+
+2026-11-12. Existing release owner searches explicitly chosen public body selectors
+when retained selections name a private pack index. A unique original-source/output
+candidate supplies the fresh record identity; prior selection lineage is retained.
+Missing/ambiguous candidates remain explicit, and only chosen suppliers become jobs.
+Original source/destination and preparation, type/PPtr and current-CLR gates stay intact.
+Authored signed preparation/emission/repack/catalog/manifest/update chain passes with
+private and fresh output identities differing. 33 focused host tests, Ruff and
+host-only preflight pass; no APK produced and no editor or device used.
+Evidence: `work/coordination/p1-wholegame-1031/phone-chain-audit-1112/public-source-selectors-v1/`.
+Prior art: pinned EditorKit typed lookup/collisions; existing release/preparation owners extended.
+Current graph admission, Unity typed load, converted play and port update remain open.
