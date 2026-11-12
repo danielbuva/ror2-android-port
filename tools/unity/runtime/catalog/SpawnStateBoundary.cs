@@ -247,7 +247,8 @@ public sealed partial class PortSession
             coordinator.r.phase = "original-spawn-state-catalog";
             coordinator.Save();
             TraceStartup("spawn-state-report-saved");
-            var initialize = PortSession.BuildStateCatalogRoutine(types, originals ?? configs);
+            var initialize = PortSession.BuildStateCatalogRoutine(types, originals ?? configs,
+                message => Debug.Log("Original state iterator execution " + message));
             while (initialize.MoveNext())
                 yield return initialize.Current;
             TraceStartup("spawn-state-native-ready");
