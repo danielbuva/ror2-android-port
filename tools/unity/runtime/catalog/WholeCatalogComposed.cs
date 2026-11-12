@@ -788,18 +788,30 @@ public static class WholeCatalogComposed
     }
     internal static int PrepareProjectiles(JObject manifest)
     {
+        return PrepareProjectiles(manifest, null);
+    }
+    internal static int PrepareProjectiles(JObject manifest, Action<string> trace)
+    {
+        trace?.Invoke("owner-check-begin");
         if (priorProjectileIndices != null || RoR2.ProjectileCatalog.projectilePrefabCount != 0)
             throw new Exception("Projectile catalog has a foreign owner");
-        var values = CategoryFamily(manifest, RoR2.ContentManagement.AddressablesLabels.projectile, new GameObject[0]);
+        trace?.Invoke("owner-check-ready-family-begin");
+        var values = CategoryFamily(manifest, RoR2.ContentManagement.AddressablesLabels.projectile, new GameObject[0],
+                                    step => trace?.Invoke("family-" + step));
+        trace?.Invoke("family-ready-index-snapshot-begin");
         priorProjectileIndices = values.Select(value => value.GetComponent<RoR2.Projectile.ProjectileController>())
                                      .ToDictionary(value => value, value => value.catalogIndex);
         priorProjectileAvailability = RoR2.ProjectileCatalog.catalogAvailability;
+        trace?.Invoke("index-snapshot-ready-native-set-begin");
         typeof(RoR2.ProjectileCatalog)
             .GetMethod("SetProjectilePrefabs", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static)
             .Invoke(null, new object[] { values });
+        trace?.Invoke("native-set-ready-availability-begin");
         RoR2.ProjectileCatalog.catalogAvailability.MakeAvailable();
+        trace?.Invoke("availability-ready-validation-begin");
         if (values.Any(value => RoR2.ProjectileCatalog.GetProjectilePrefab(RoR2.ProjectileCatalog.GetProjectileIndex(value)) != value))
             throw new Exception("Original projectile catalog identity differs");
+        trace?.Invoke("validation-ready");
         return values.Length;
     }
     public static void RestoreProjectiles()
