@@ -10,7 +10,8 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
-| [J1446](PORTING_JOURNAL.md#j1446--refresh-complete-player-shader-helper-pins) | 2026-11-11 | Refresh complete player Shader helper pins | 2026-11-12. |
+| [J1446](PORTING_JOURNAL.md#j1446--refresh-complete-player-shader-helper-pins) | 2026-11-12 | Refresh complete player Shader helper pins | 2026-11-12. |
+| [J1447](PORTING_JOURNAL.md#j1447--select-sustained-capture-mode-and-compare-bounded-windows) | 2026-11-12 | Select sustained capture mode and compare bounded windows | 2026-11-12. |
 | [J1444](PORTING_JOURNAL.md#j1444--retain-bounded-active-frame-durations-for-checked-quantiles) | 2026-11-11 | Retain bounded active-frame durations for checked quantiles | 2026-11-12. |
 | [J1445](PORTING_JOURNAL.md#j1445--accept-receipt-bound-record-supplier-type-tables) | 2026-11-11 | Accept receipt-bound record supplier type tables | 2026-11-12. |
 | [J1442](PORTING_JOURNAL.md#j1442--coalesce-synchronous-results-diagnostic-report-writes) | 2026-11-11 | Coalesce synchronous results diagnostic report writes | 2026-11-12. |
