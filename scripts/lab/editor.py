@@ -105,7 +105,7 @@ async def _main():
                     "execute_code",
                     {
                         "action": "execute",
-                        "code": 'if(EditorApplication.isUpdating||EditorUtility.scriptCompilationFailed)throw new System.Exception("Current editor source is not compiled and idle");return new { animation=SurvivorSkillInputHost.VerifyAnimatorBeforeStateStart(), touch=SurvivorSkillInputHost.VerifyTouchWithoutPhysicalController() };',
+                        "code": 'if(EditorApplication.isUpdating||EditorUtility.scriptCompilationFailed)throw new System.Exception("Current editor source is not compiled and idle");return new { animation=SurvivorSkillInputHost.VerifyAnimatorBeforeMainState(), touch=SurvivorSkillInputHost.VerifyTouchWithoutPhysicalController() };',
                     },
                 )
             elif action == "siren-input-host":

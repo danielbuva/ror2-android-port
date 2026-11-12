@@ -56,15 +56,23 @@ public static class SurvivorSkillInputHost
     }
 
     // Exact-editor check for the pre-spawn contract used by AutomaticModelBoundary.
-    // Native state Start must run only after body activation initializes the Animator.
-    public static object VerifyAnimatorBeforeStateStart()
+    // Native ModelLocator.Start detaches the model from an inactive model base;
+    // its Animator must initialize before BaseCharacterMain snapshots parameters.
+    public static object VerifyAnimatorBeforeMainState()
     {
         Require(!EditorApplication.isPlaying && !EditorApplication.isCompiling,
                 "Require idle exact editor for inactive Animator metadata");
         var body = new GameObject("pre-state-animation-contract");
         body.SetActive(false);
+        var modelBase = new GameObject("modelBase");
+        modelBase.transform.SetParent(body.transform, false);
+        modelBase.SetActive(false);
         var model = new GameObject("model");
-        model.transform.SetParent(body.transform, false);
+        model.transform.SetParent(modelBase.transform, false);
+        var locator = body.AddComponent<ModelLocator>();
+        locator.enabled = false;
+        locator.modelBaseTransform = modelBase.transform;
+        locator.modelTransform = model.transform;
         var controller = new UnityEditor.Animations.AnimatorController();
         try
         {
@@ -82,14 +90,21 @@ public static class SurvivorSkillInputHost
             Require(!inactive.isMoving && !inactive.forwardSpeed && !inactive.rightSpeed,
                     "Fixture no longer reproduces uninitialized Animator parameter discovery");
             body.SetActive(true);
+            var parentInactive = CharacterAnimParamAvailability.FromAnimator(animator);
+            Require(!model.activeInHierarchy && !parentInactive.isMoving && !parentInactive.forwardSpeed &&
+                        !parentInactive.rightSpeed,
+                    "Body activation no longer reproduces inactive model-base isolation");
+            locator.Start();
             animator.Update(0);
             var after = CharacterAnimParamAvailability.FromAnimator(animator);
             Require(after.isMoving && after.forwardSpeed && after.rightSpeed,
-                    "Native locomotion snapshot unavailable after body activation before state Start");
-            return new { initializedBeforeStateStart = true, nativeParameterSnapshot = true, nativeGameplayTested = false };
+                    "Native locomotion snapshot unavailable after native model detachment before main state");
+            return new { initializedBeforeMainState = true, nativeModelDetachment = true,
+                         nativeParameterSnapshot = true, nativeGameplayTested = false };
         }
         finally
         {
+            UnityEngine.Object.DestroyImmediate(model);
             UnityEngine.Object.DestroyImmediate(body);
             UnityEngine.Object.DestroyImmediate(controller);
         }

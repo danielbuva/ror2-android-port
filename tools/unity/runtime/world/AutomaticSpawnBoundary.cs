@@ -327,9 +327,12 @@ public sealed partial class PortSession
             Save();
             TraceStartup("automatic-native-spawn-start-begin");
             body.gameObject.SetActive(true);
-            if (automaticModel)
-                VerifyAutomaticAnimatorBeforeStateStart(body);
             yield return null;
+            // ModelLocator.Start detaches the model from its isolated inactive
+            // parent. Its Animator is then initialized before SpawnTeleporter
+            // can transition to GenericCharacterMain's parameter snapshot.
+            if (automaticModel)
+                VerifyAutomaticAnimatorBeforeMainState(body);
             Check(machine.state is SpawnTeleporterState && body.GetBuffCount(RoR2Content.Buffs.HiddenInvincibility) == 1 &&
                       model.invisibilityCount == invisible + 1,
                   "Automatic original spawn Start/buff/model effects");

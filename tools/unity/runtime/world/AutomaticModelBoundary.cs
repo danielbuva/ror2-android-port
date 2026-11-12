@@ -41,14 +41,14 @@ public sealed partial class PortSession
         r.modelParent = locator.modelBaseTransform.name;
         Save();
     }
-    void VerifyAutomaticAnimatorBeforeStateStart(CharacterBody body)
+    void VerifyAutomaticAnimatorBeforeMainState(CharacterBody body)
     {
         if (!IsPlayableSpine() || SelectedSourceSurvivor()) return;
         var animator = body.modelLocator.modelTransform.GetComponent<Animator>();
         animator.Update(0);
         var parameters = CharacterAnimParamAvailability.FromAnimator(animator);
         Check(parameters.isMoving && parameters.forwardSpeed && parameters.rightSpeed,
-              "Original Commando locomotion parameters unavailable before native state Start");
+              "Original Commando locomotion parameters unavailable after native model Start before main state");
     }
     void ObserveAutomaticModelFollow(CharacterBody body)
     {
