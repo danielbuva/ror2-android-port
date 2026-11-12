@@ -117,6 +117,255 @@ def digest(raw):
     return hashlib.sha256(raw).hexdigest()
 
 
+_graph_schemas = {}
+
+
+def _graph_fields(task):
+    """CPU worker: inspect immutable bytes only, never inherited seek handles."""
+    import bundle_preload
+
+    value, raw, typ = task
+    return [[list(field), list(pointer)] for field, pointer in bundle_preload.checked_fields(value, raw, typ, _graph_schemas).items()]
+
+
+def audit_graph(
+    owner,
+    roots,
+    read_record,
+    member_tables,
+    *,
+    structural_routes,
+    managed_check,
+    cache_directory,
+    cache_inputs,
+    managed_context,
+    workers=1,
+):
+    """Walk current roots, reusing body/schema proofs and current managed checks.
+
+    Actual record readers still admit current provider lineage and return actual
+    bytes on each run. Cached fields bind those bytes and the complete native
+    type. Adjacency is rebuilt from current routes/member tables; reciprocal
+    checks always inspect current neighbors. Managed proofs separately bind
+    the caller's complete CLR/SDK policy and every endpoint the checker read.
+    The caller must enumerate every input/code file consumed by its callbacks.
+    This pre-emission audit never replaces final persisted-file qualification.
+    """
+    from collections import Counter, deque
+    from concurrent.futures import ProcessPoolExecutor
+    from contextlib import ExitStack
+    import importlib
+    from itertools import islice
+    import multiprocessing
+    import resource
+    import sys
+    import time
+    import traceback
+
+    started = time.monotonic()
+    paths = {Path(path).resolve() for path in cache_inputs}
+    paths.update(Path(__file__).parent.glob("*.py"))
+
+    def pins():
+        return {str(path): owner.O.B.sha(path) for path in sorted(paths)}
+
+    before = pins()
+    code = owner.EmissionCache.key({path: sha for path, sha in before.items() if Path(path).parent == Path(__file__).parent})
+    context = owner.EmissionCache.key(managed_context)
+    roots = list(dict.fromkeys(map(tuple, roots)))
+    summaries, pending, scheduled, seen = {}, deque(roots), set(roots), set()
+    classes, blocked, reciprocal = Counter(), [], 0
+    type_keys = {}
+    table_cache = {}
+    with ExitStack() as stack:
+        cache = owner.EmissionCache(cache_directory)
+        stack.callback(cache.close)
+        pool = None
+        if workers > 1:
+            # CLI only. Workers receive bytes and never touch readers or SQLite.
+            # Fork avoids executing a caller's top-level pipeline as __main__.
+            sys.path.insert(0, str(Path(__file__).parent))
+            worker = importlib.import_module("bundle_endpoints")._graph_fields
+            pool = stack.enter_context(ProcessPoolExecutor(max_workers=workers, mp_context=multiprocessing.get_context("fork")))
+
+        def prepare(key):
+            value, raw, typ = read_record(key)
+            if tuple(value["destination"]) != key:
+                raise ValueError("Graph endpoint identity differs")
+            # Hash actual bytes even on a hit. Neither a descriptor nor a
+            # provider's changed aggregate pin can stand in for this read.
+            native = tuple(sorted((name, tuple(item) if isinstance(item, list) else item) for name, item in typ.items()))
+            if native not in type_keys:
+                type_keys[native] = owner.full_type_key(typ)
+            proof = cache.key(
+                dict(
+                    body=digest(raw),
+                    size=len(raw),
+                    native=type_keys[native],
+                    code=code,
+                    expected={name: value[name] for name in ("bytes", "sha256", "full_type", "schema", "class_id", "native_type_hash", "edges")},
+                )
+            )
+            saved = cache.get("graph_fields", proof)
+            return value, raw, typ, proof, json.loads(saved) if saved is not None else None
+
+        def install(key, task, fields):
+            value, raw, typ, proof, saved = task
+            if saved is None:
+                cache.put("graph_fields", proof, json.dumps(fields, separators=(",", ":")).encode())
+            fields = {tuple(field): tuple(pointer) for field, pointer in fields}
+            routes = structural_routes.get(key)
+            adjacency = {}
+            if routes is not None:
+                nonnull = {field: pointer for field, pointer in fields.items() if pointer[1]}
+                for row in routes:
+                    field, pointer, target = tuple(row["field"]), tuple(row["pointer"]), tuple(row["target"])
+                    if field in adjacency or nonnull.get(field) != pointer or len(target) != 3 or target[2] != pointer[1]:
+                        raise ValueError("Graph structural route differs")
+                    if not pointer[0] and target != (*key[:2], pointer[1]):
+                        raise ValueError("Graph local route changes member")
+                    adjacency[field] = target
+                if set(adjacency) != set(nonnull):
+                    raise ValueError("Graph structural routes incomplete")
+            else:
+                if key[:2] not in table_cache:
+                    table_cache[key[:2]] = member_tables(value)
+                tables = table_cache[key[:2]]
+                for field, (fid, pid) in fields.items():
+                    if not pid:
+                        continue
+                    if not 0 <= fid <= len(tables):
+                        raise ValueError("Graph file ID outside actual member table")
+                    adjacency[field] = (*(tables[fid - 1] if fid else key[:2]), pid)
+            signature = cache.key(
+                dict(
+                    proof=proof,
+                    adjacency=sorted((list(f), t) for f, t in adjacency.items()),
+                    destination=key,
+                    script_identity=value.get("current_registry_identity") if typ["class_id"] == 115 else None,
+                )
+            )
+            summaries[key] = dict(signature=signature, fields=fields, adjacency=adjacency, class_id=typ["class_id"])
+
+        def summary(key):
+            key = tuple(key)
+            if key not in summaries:
+                task = prepare(key)
+                install(key, task, task[4] if task[4] is not None else _graph_fields(task[:3]))
+            return summaries[key]
+
+        def managed(key, item):
+            value, raw, typ = read_record(key)
+
+            def managed_key():
+                return cache.key(
+                    dict(
+                        record=item["signature"],
+                        context=context,
+                        code=code,
+                        identity=value.get("current_registry_identity"),
+                        source=value.get("source"),
+                        policies=value.get("policies"),
+                    )
+                )
+
+            proof = managed_key()
+            saved = cache.get("graph_managed", proof)
+            if saved is not None:
+                deps = json.loads(saved)
+                if all(summary(tuple(target))["signature"] == signature for target, signature in deps):
+                    return
+            dependencies = {}
+
+            def endpoint(target):
+                target = tuple(target)
+                dependencies[target] = summary(target)["signature"]
+                return read_record(target)
+
+            managed_check(value, raw, typ, endpoint)
+            saved = json.dumps(sorted((list(k), v) for k, v in dependencies.items())).encode()
+            cache.put("graph_managed", proof, saved)
+            cache.put("graph_managed", managed_key(), saved)
+
+        while pending:
+            batch = []
+            for key in islice(pending, 256):
+                if key in summaries:
+                    continue
+                try:
+                    batch.append((key, prepare(key)))
+                except Exception:
+                    # Preserve the ordinary ordered per-node failure below.
+                    continue
+            misses = [(key, task) for key, task in batch if task[4] is None]
+            if pool is not None and misses:
+                futures = [(key, task, pool.submit(worker, task[:3])) for key, task in misses]
+                for key, task, future in futures:
+                    try:
+                        install(key, task, future.result())
+                    except Exception:
+                        pass  # The serial path records the exact first failure.
+            else:
+                for key, task in misses:
+                    try:
+                        install(key, task, _graph_fields(task[:3]))
+                    except Exception:
+                        pass
+            for key, task in batch:
+                if task[4] is not None:
+                    try:
+                        install(key, task, task[4])
+                    except Exception:
+                        pass
+            count = min(256, len(pending))
+            for _ in range(count):
+                key = pending.popleft()
+                if key in seen:
+                    continue
+                seen.add(key)
+                try:
+                    item = summary(key)
+                    classes[item["class_id"]] += 1
+                    if item["class_id"] == 114:
+                        managed(key, item)
+                    for target in item["adjacency"].values():
+                        if target not in scheduled:
+                            scheduled.add(target)
+                            pending.append(target)
+                    if item["class_id"] == 1:
+                        for field in item["fields"]:
+                            target = item["adjacency"].get(field)
+                            if target is None:
+                                raise ValueError("null GameObject component")
+                            child = summary(target)
+                            if child["adjacency"].get(("m_GameObject",), child["adjacency"].get(("#374",))) != key:
+                                raise ValueError("nonreciprocal component " + str(target))
+                            reciprocal += 1
+                    elif item["class_id"] in (4, 224):
+                        parent = item["adjacency"].get(("m_Father",))
+                        if parent is not None and key not in {
+                            target for field, target in summary(parent)["adjacency"].items() if field and field[0] in ("m_Children", "#83")
+                        }:
+                            raise ValueError("Transform parent omits child")
+                        for field, target in item["adjacency"].items():
+                            if field and field[0] in ("m_Children", "#83") and summary(target)["adjacency"].get(("m_Father",)) != key:
+                                raise ValueError("Transform child has different parent")
+                except Exception:
+                    blocked.append(dict(destination=list(key), error=traceback.format_exc()))
+        if pins() != before:
+            raise ValueError("Graph audit input changed during validation")
+        return dict(
+            visited=len(seen),
+            classes=dict(classes),
+            reciprocal_components=reciprocal,
+            blocked=blocked,
+            cache=dict(cache.counts),
+            seconds=time.monotonic() - started,
+            peak_rss_bytes=resource.getrusage(resource.RUSAGE_SELF).ru_maxrss * (1 if sys.platform == "darwin" else 1024),
+            workers=workers,
+        )
+
+
 class FinalMembers:
     def __init__(self, owner, selected, qualified_types):
         self.P = owner
@@ -310,6 +559,8 @@ def managed_checker(
     use their own persisted metadata, never a synthetic scene table.
     """
 
+    properties_cache = {}
+
     def check(value, raw, typ, read_record):
         fields = owner.pointers(raw, typ, {})
         scripts = [p for field, p in fields.items() if field in (("m_Script",), ("#490",))]
@@ -347,8 +598,11 @@ def managed_checker(
             if properties != original_script_properties[identity]:
                 raise ValueError("unsupported current CLR original script properties differ")
         else:
-            nodes = identity_owner._tree(normalizer.editor_curves(identity_owner.tree_nodes(typ["tree"])))
-            computed = identity_owner.properties_hash(name, namespace, assembly, nodes, sdk_tree).hex()
+            schema_key = identity, typ["tree"]
+            if schema_key not in properties_cache:
+                nodes = identity_owner._tree(normalizer.editor_curves(identity_owner.tree_nodes(typ["tree"])))
+                properties_cache[schema_key] = identity_owner.properties_hash(name, namespace, assembly, nodes, sdk_tree).hex()
+            computed = properties_cache[schema_key]
             if computed != clr["properties"] or properties != computed:
                 raise ValueError("actual managed schema differs from current CLR")
         if typ["hash"].hex() != properties:
@@ -366,18 +620,33 @@ class EndpointRecords:
     """
 
     def __init__(self, member, retained_record, staged, check_managed):
+        from collections import OrderedDict
+
         self.member = tuple(member)
         self.local_record = retained_record
         self.staged = staged
         self.check_managed = check_managed
         self.checked_external_managed = set()
+        self.records = OrderedDict()
+
+    def record(self, target):
+        """Read one immutable input epoch; final readback starts a fresh epoch."""
+        target = tuple(target)
+        if target[:2] == self.member:
+            return self.local_record(target)
+        if target not in self.records:
+            self.records[target] = self.staged.record(target)
+            if len(self.records) > 256:
+                self.records.popitem(last=False)
+        self.records.move_to_end(target)
+        return self.records[target]
 
     def __call__(self, target):
         target = tuple(target)
         if target[:2] == self.member:
             return self.local_record(target)
-        value, body, typ = self.staged.record(target)
-        if typ["class_id"] == 114:
+        value, body, typ = self.record(target)
+        if typ["class_id"] == 114 and target not in self.checked_external_managed:
             self.check_managed(value, body, typ, self)
             self.checked_external_managed.add(target)
         return value, body, typ
@@ -386,7 +655,10 @@ class EndpointRecords:
         # External MonoBehaviours may refer to a script in whole-game. Recheck
         # against its final persisted bytes after the emitter installs the file.
         self.local_record = final_local_record
-        for target in sorted(self.checked_external_managed):
+        targets = sorted(self.checked_external_managed)
+        self.checked_external_managed.clear()
+        self.records.clear()
+        for target in targets:
             self(target)
         self.staged.check_pins()
 
