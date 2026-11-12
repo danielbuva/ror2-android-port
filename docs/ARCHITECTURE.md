@@ -4045,6 +4045,11 @@ order and each `finally`) is in
 
 ## Ownership
 
+`IntegratedResultsSession` keeps synchronous setup markers in the log and current
+report without rewriting the full report at each marker. Existing setup entry,
+collection and completion checkpoints, failed checks and result callbacks still
+persist it. Profile, ledger and native report writes retain their own boundaries.
+
 `IntegratedResultsSession` reads one local definition manifest for relationship
 types, providers and holder binding through `WholeCatalogComposed`, then passes
 that snapshot to `AndroidProfileSession.Prepare` for survivor/unlockable families.
