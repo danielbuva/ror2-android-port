@@ -2033,3 +2033,17 @@ back to check IDs, types and every body hash. `result.json` always declares
 Temporary serialization/body staging is removed on success or failure.
 `request.json` feeds the exact-editor native-content fixture documented above;
 structural emission alone does not imply native loadability or device play.
+
+The checked `--inputs` request also accepts a hash-pinned `provider_paths` JSON
+map. Keys retain original logical provider names; values resolve beside the map
+and name native record-pack directories or full SDK witness serialized files.
+Relocation preserves descriptor/proof strings and all body, profile, index,
+witness, native type and PPtr checks. A full SDK witness must still identify the
+staged file by hash and complete layout.
+
+Warm `--cache` reuse materializes regular bundle and companion files in the new
+output attempt, using APFS clones on macOS and file copies elsewhere. Bundle and
+request receipts name that attempt's file. Canonical repack keys bind source
+content independently of the emitted attempt path. Retain the source output
+referenced by the private cache until superseded. Phone SQLite/LZ4 qualification,
+signed graph dispatch and converted-device acceptance remain open.

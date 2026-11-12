@@ -177,8 +177,20 @@ class BundlePreloadTests(unittest.TestCase):
             with patch.object(P, "relocate_pointer_fields", side_effect=AssertionError("checked unchanged bundle is reusable")):
                 second = P.repack_canonical_aliases(output=root / "second", **inputs)
             self.assertTrue(second["cache_reused"])
-            self.assertEqual(second["bundle"], first["bundle"])
-            self.assertFalse((root / "second").exists())
+            self.assertEqual(Path(second["bundle"]), (root / "second/authored.bundle").resolve())
+            self.assertFalse(Path(second["bundle"]).is_symlink())
+            self.assertEqual(second["sha256"], P.O.B.sha(Path(second["bundle"])))
+            self.assertEqual(json.loads((root / "second/result.json").read_bytes()), second)
+            # The emission stage now supplies a different path on every warm
+            # attempt. Its identical content must still reuse the repack.
+            relocated = root / "relocated.bundle"
+            relocated.write_bytes(Path(inputs["source"]).read_bytes())
+            inputs["source"] = relocated
+            with patch.object(P, "relocate_pointer_fields", side_effect=AssertionError("same source bytes must reuse repack")):
+                moved = P.repack_canonical_aliases(output=root / "moved", **inputs)
+            self.assertTrue(moved["cache_reused"])
+            self.assertEqual(moved["sha256"], first["sha256"])
+            self.assertIn(str(relocated.resolve()), moved["inputs"])
             inputs["aliases"] = aliases
             changed = P.repack_canonical_aliases(output=root / "changed", **inputs)
             self.assertFalse(changed["cache_reused"])
@@ -716,7 +728,8 @@ class BundlePreloadTests(unittest.TestCase):
             second = json.loads(subprocess.check_output([*command, "--output", str(root / "second")], cwd=root.parent, text=True))
             self.assertFalse(first["emission"]["cache_reused"])
             self.assertTrue(second["emission"]["cache_reused"])
-            self.assertEqual(first["bundle"], second["bundle"])
+            self.assertEqual(Path(second["bundle"]), (root / "second/emitted/authored.bundle").resolve())
+            self.assertFalse(Path(second["bundle"]).is_symlink())
             self.assertEqual(first["sha256"], P.O.B.sha(Path(second["bundle"])))
             self.assertFalse(second["typed_load_accepted"])
             self.assertFalse(second["device_accepted"])
@@ -811,6 +824,49 @@ class BundlePreloadTests(unittest.TestCase):
             (moved / "10/objects.bin").write_bytes(b"x" * 12)
             with self.assertRaisesRegex(ValueError, "extent drift"):
                 P.produce_request(inputs, root / "changed", cache_directory=root / "cache")
+
+    def test_sdk_full_witness_relocates_file_without_changing_identity_or_type(self):
+        E, W = P.module("bundle_endpoints"), P.module("unity_write")
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            _, types_path, rows, _ = self.required_graph(root)
+            types = json.loads(types_path.read_bytes())
+            full = types[rows[0]["full_type"]]
+            typ = {key: bytes.fromhex(value) if key in ("tree", "hash", "script_id") else value for key, value in full.items()}
+            body = struct.pack("<iq", 0, 0)
+            metadata, packed = P.O.make_layout(dict(externals=[]), [dict(path_id=10, type=typ, body=body)])
+            metadata["trees"] = False
+            original = root / "original-sdk"
+            with original.open("xb") as stream:
+                W.write_serialized(stream, metadata, lambda obj: io.BytesIO(packed[obj["path_id"]]))
+            moved = root / "phone-sdk"
+            original.rename(moved)
+            pin = dict(path=str(moved), bytes=moved.stat().st_size, sha256=P.O.B.sha(moved))
+            witness = dict(
+                rows[0],
+                destination=["sdk", "Library/test resources", 10],
+                provider=str(original),
+                provider_kind="serialized_file",
+                provider_file_sha256=pin["sha256"],
+                type_layout=full,
+                bytes=len(body),
+                sha256=hashlib.sha256(body).hexdigest(),
+                edges=[[0, 0]],
+            )
+            members = E.FinalMembers(Node(**vars(P)), {tuple(witness["destination"]): witness}, types)
+            try:
+                members.add_sdk(pin, witness["destination"][1])
+                with self.assertRaisesRegex(ValueError, "SDK full witness differs"):
+                    members.qualify_sdk_full(witness["destination"][1], [witness])
+                resolver = {str(original): moved}
+                members.qualify_sdk_full(witness["destination"][1], [witness], provider_paths=resolver)
+                actual, raw, native = members.record(tuple(witness["destination"]))
+                self.assertEqual((actual, raw, P.full_type_key(native)), (witness, body, witness["full_type"]))
+                for changed in (dict(witness, provider_file_sha256="0" * 64), dict(witness, type_layout={**full, "hash": "cd" * 16})):
+                    with self.assertRaisesRegex(ValueError, "SDK full witness differs"):
+                        members.qualify_sdk_full(witness["destination"][1], [changed], provider_paths=resolver)
+            finally:
+                members.close()
 
     def test_final_readback_respects_required_subset_of_local_descriptors(self):
         E = P.module("bundle_endpoints")
@@ -1030,8 +1086,11 @@ class BundlePreloadTests(unittest.TestCase):
                 second = emit("second")
             self.assertTrue(second["cache_reused"])
             self.assertEqual(second["sha256"], first["sha256"])
-            self.assertEqual(second["bundle"], first["bundle"])
-            self.assertFalse((root / "second/authored.bundle").exists())
+            self.assertEqual(Path(second["bundle"]), (root / "second/authored.bundle").resolve())
+            self.assertFalse(Path(second["bundle"]).is_symlink())
+            request = json.loads((root / "second/request.json").read_bytes())
+            self.assertEqual(request["path"], second["bundle"])
+            self.assertEqual(json.loads((root / "second/result.json").read_bytes()), second)
             self.assertIn("reuse_validation", second["stages"])
             body = (Path(rows[0]["provider"]) / "objects.bin").read_bytes()
             self.replace_cached_record(rows[0], body[:-4] + struct.pack("<i", 8))
