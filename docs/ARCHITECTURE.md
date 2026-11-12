@@ -91,13 +91,14 @@ schemas supplied by one final player job. Setup and teardown remain the scoped
 preparation/emission owners; the dispatcher retains only declared final artifacts
 for reuse. Host synthetic-registry dispatch does not qualify current CLR/SDK
 production, exact-editor load or phone acceptance.
-The metadata witness reader also accepts a successful `gameplay-refreshed`
+The metadata witness reader and final player registry share
+`script_identity.managed_providers`, accepting a successful `gameplay-refreshed`
 receipt without changing its phase. It binds the provider manifest, base cohort,
 counts and actual `Assembly-CSharp.dll` output. An explicit `refreshed_providers`
 map also binds rebuilt dependencies, such as the matching audio owner, by path
 and hash; the reuse count excludes every listed rebuild and every reused module
 retains its hash. All current provider bodies still pass metadata validation. The final
-player registry remains a separate pinned input with its existing CLR checks;
+player registry retains its current compiled-source and CLR checks;
 accepting a refresh receipt does not establish registry or graph admission.
 An optional pinned provider-alias map relocates retained registry inputs; each
 resolved file must still match the unchanged receipt's size and hash.

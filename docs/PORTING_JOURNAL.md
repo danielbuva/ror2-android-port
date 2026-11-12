@@ -13,6 +13,8 @@ dependencies alongside gameplay, checking their paths/hashes and honest reuse
 counts while preserving every unlisted provider hash. Legacy gameplay-only
 receipts remain valid. This permits current gameplay to consume its matching
 audio-owner API instead of a retained assembly missing startup members.
+Final registry generation shares this validation, retaining source-commit,
+compiled-source and actual CLR provider checks without relabelling receipts.
 Evidence: `tests/test_sdk_metadata_inventory_host.py` receipt fixtures.
 Remaining: fresh production, final registry/graph admission, typed load and
 converted-device play; this host contract establishes none of those gates.

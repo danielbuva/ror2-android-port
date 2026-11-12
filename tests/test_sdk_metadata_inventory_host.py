@@ -57,6 +57,30 @@ class ManagedProductionReceiptTests(unittest.TestCase):
             self.assertIn(Path(receipt["base_providers"]["path"]).resolve(), pins.files)
             pins.check()
 
+    def test_final_registry_uses_same_refresh_contract_and_retains_input_pins(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            endpoints, pins, document, manifest, receipt, providers = self.fixture(root)
+            receipt.update(source_commit="authored-current-source", reused_provider_count=0, refreshed_providers=providers)
+            document("result.json", receipt)
+
+            def pin(path, expected=None):
+                path = Path(path)
+                expected = expected or dict(bytes=path.stat().st_size, sha256=hashlib.sha256(path.read_bytes()).hexdigest())
+                pins.add(path, expected)
+                return pins.files[path.resolve()]
+
+            self.assertEqual(endpoints.SCRIPT.registry_managed_providers(root, receipt["source_commit"], pin), providers)
+            self.assertIn(Path(receipt["base_providers"]["path"]).resolve(), pins.files)
+            self.assertEqual(json.loads((root / "result.json").read_bytes()), receipt)
+            with self.assertRaisesRegex(ValueError, "fresh public-source"):
+                endpoints.SCRIPT.registry_managed_providers(root, "another-source", pin)
+            document("result.json", receipt | dict(reused_provider_count=1))
+            # A new invocation owns fresh pins; a changed existing receipt also
+            # refuses through the prior invocation's immutable input contract.
+            with self.assertRaises(ValueError):
+                endpoints.SCRIPT.registry_managed_providers(root, receipt["source_commit"], pin)
+
     def test_relocates_unchanged_refresh_inputs_and_checks_staged_bytes(self):
         for missing in (False, True):
             with self.subTest(missing=missing), tempfile.TemporaryDirectory() as temporary:
