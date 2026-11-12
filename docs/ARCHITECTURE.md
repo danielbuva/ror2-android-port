@@ -517,6 +517,10 @@ The code owner's existing request supplies the immutable authored source root
 and packages root, with the existing flat input-hash manifest. The identity owner
 returns source-sorted script IDs, native layout and bodies; `player_data.py`
 writes them through the existing serialized writer and rechecks all providers.
+It retains `registry-source/schemas.json` and `registry-source/result.json` after
+final player/provider verification, using the shared `registry_artifacts` helper.
+The release graph exposes those sidecars and the actual player registry body as
+artifacts for managed endpoint qualification; the catalog uses that same body.
 `script_registry.py` exposes that same phase independently, using the existing
 registry recipe, game/SDK inputs, code request and managed production. It writes
 one serialized registry, receipt-pinned `schemas.json` with the actual current

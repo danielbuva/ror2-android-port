@@ -317,6 +317,10 @@ class ReleaseGraphTests(unittest.TestCase):
         player = "recipe/jobs/owner-player-data.json"
         job = graph.jobs[player]
         self.assertEqual(len(job["outputs"]), 210)
+        registry = "apk/assets/bin/Data/" + graph.job_profiles[player]["registry"]["file"]
+        self.assertEqual(job["artifacts"]["registry_body"], job["outputs"][registry])
+        self.assertEqual(job["artifacts"]["registry_receipt"], "registry-source/result.json")
+        self.assertEqual(job["artifacts"]["registry_schemas"], "registry-source/schemas.json")
         self.assertEqual(len(index["entries"]), 581)
         startup = "recipe/jobs/owner-startup-metadata.json"
         self.assertIn(startup, job["needs"])
