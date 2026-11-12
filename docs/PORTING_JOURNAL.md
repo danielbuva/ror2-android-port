@@ -3437,7 +3437,7 @@ preflight and full CI-local (3,206 tests) passed before merge.
 Source output: `c723ec04`; no APK or device output was produced.
 Fresh signed preparation, phone dependencies and complete conversion remain open.
 
-## J1435 — Export receipt-bound final supplier type descriptors
+## J1436 — Export receipt-bound final supplier type descriptors
 
 2026-11-12. Merged #472 (`407bdbaf`): fresh mesh, Avatar, texture, Sprite and
 shader packs retain complete final native descriptors and pack-local type IDs.
