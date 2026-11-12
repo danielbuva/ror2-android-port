@@ -127,6 +127,16 @@ results; output indices pin actual produced extents. Source, supplier, native-ty
 schema, script and reference checks remain strict; device loadability remains open.
 Barrier shader jobs bind their separately pinned legacy SDK metadata explicitly.
 
+Fresh mesh, Avatar, texture, Sprite and shader record suppliers export their
+complete final serialized descriptors in receipt-bound `types.json` tables.
+`object_produce.record_type` interns all identity and layout fields; index rows
+carry pack-local `type_id` values. Shared SDK shader records export the same
+metadata, and `release_graph.py` exposes these tables as supplier artifacts.
+Texture production persists the table before committing each index row; resume
+reloads it, verifies completed rows against original native types and skips
+completed encodes. Existing body-only packs retain their explicit metadata
+witness path. These host contracts do not establish phone or Unity loadability.
+
 `./dev prototype --action source-camera-program-bundle --target REQUEST.json`
 compiles the existing input-qualified source-camera candidate in a disposable SDK
 project. The request names a fresh ignored `output` directory and may select

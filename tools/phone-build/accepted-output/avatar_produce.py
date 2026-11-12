@@ -19,6 +19,7 @@ def module(name):
 
 BUNDLE = module("unity_bundle")
 MESH = module("mesh_produce")
+O = module("object_produce")
 
 
 def reorder(body, field, order):
@@ -69,6 +70,7 @@ def produce(profile_path, profile_sha256, pc, output, comparison="exact"):
     started = time.monotonic()
     receipt = {"success": False, "input_id": MESH.INPUT_ID, "profile_sha256": profile_sha256, "objects": 0, "object_bytes": 0}
     receipt.update(comparison=comparison, historical_mismatches=0)
+    types, type_ids = [], {}
     try:
         with (output / "objects.bin").open("xb") as data, (output / "index.jsonl").open("x") as index:
             for selected in profile["bundles"]:
@@ -79,7 +81,13 @@ def produce(profile_path, profile_sha256, pc, output, comparison="exact"):
                 bundle = BUNDLE.Bundle(path)
                 for selected_member in selected["members"]:
                     member = bundle.member(selected_member["name"])
+                    metadata = O.W.read_serialized(member)
+                    objects = {row["path_id"]: row for row in metadata["objects"]}
                     for avatar in selected_member["avatars"]:
+                        obj = objects[avatar["path_id"]]
+                        typ = metadata["types"][obj["type_id"]]
+                        if typ["class_id"] != 90 or (metadata["data_offset"] + obj["offset"], obj["bytes"]) != (avatar["offset"], avatar["bytes"]):
+                            raise ValueError("original Avatar metadata drift")
                         member.seek(avatar["offset"])
                         body = BUNDLE.exact(member, avatar["bytes"])
                         if hashlib.sha256(body).hexdigest() != avatar["sha256"]:
@@ -98,6 +106,7 @@ def produce(profile_path, profile_sha256, pc, output, comparison="exact"):
                                 "offset": data.tell(),
                                 "bytes": len(result),
                                 "sha256": digest,
+                                "type_id": O.record_type(typ, types, type_ids),
                             }
                             data.write(result)
                             index.write(json.dumps(row, sort_keys=True) + "\n")
@@ -112,7 +121,10 @@ def produce(profile_path, profile_sha256, pc, output, comparison="exact"):
                 data.seek(row["offset"])
                 if hashlib.sha256(BUNDLE.exact(data, row["bytes"])).hexdigest() != row["sha256"]:
                     raise ValueError("persisted Avatar extent drift")
-        receipt["outputs"] = {name: {"bytes": (output / name).stat().st_size, "sha256": BUNDLE.sha(output / name)} for name in ("objects.bin", "index.jsonl")}
+        (output / "types.json").write_text(json.dumps(types, sort_keys=True, indent=2) + "\n")
+        receipt["outputs"] = {
+            name: {"bytes": (output / name).stat().st_size, "sha256": BUNDLE.sha(output / name)} for name in ("objects.bin", "index.jsonl", "types.json")
+        }
         receipt["success"] = True
         return receipt
     except Exception as error:

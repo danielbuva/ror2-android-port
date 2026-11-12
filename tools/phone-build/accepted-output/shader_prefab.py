@@ -262,6 +262,7 @@ def produce(profile_path, profile_pin, pc, sdk, asset_ripper, codec, codec_pin, 
         "object_bytes": 0,
     }
     receipt.update(comparison=comparison, historical_mismatches=0)
+    types, type_ids = [], {}
     try:
         if templates:
             (output / "AssetRipper-LICENSE.md").write_bytes(
@@ -276,6 +277,8 @@ def produce(profile_path, profile_pin, pc, sdk, asset_ripper, codec, codec_pin, 
             for ordinal, selected in enumerate(profile["records"]):
                 obj = original(selected["original"])
                 source, node = obj.read_typetree(), obj.serialized_type.node
+                origin = selected["original"]
+                typ = O.source_record_type(P.relative(pc, origin["path"]), origin["member"], origin["path_id"], 48)
                 if selected["kind"] == "sdk":
                     identity = selected["sdk_shader"]
                     runtime = sdk_source(identity)
@@ -370,7 +373,7 @@ def produce(profile_path, profile_pin, pc, sdk, asset_ripper, codec, codec_pin, 
                             raise ValueError("Prefab Shader record differs from accepted hash: " + str(ordinal))
                         receipt["historical_mismatches"] += 1
                     row = {key: target[key] for key in ("bundle", "member", "path_id")}
-                    row.update(bytes=len(made), sha256=hashlib.sha256(made).hexdigest())
+                    row.update(bytes=len(made), sha256=hashlib.sha256(made).hexdigest(), type_id=O.record_type(typ, types, type_ids))
                     row["offset"] = data.tell()
                     data.write(made)
                     index.write(json.dumps(row, sort_keys=True) + "\n")
@@ -386,8 +389,10 @@ def produce(profile_path, profile_pin, pc, sdk, asset_ripper, codec, codec_pin, 
                 original(selected["terrain"]["original"], "TerrainData")
         if P.includes(sdk / "CGIncludes")[0] != inventory:
             raise ValueError("Prefab Shader include inputs changed")
+        (output / "types.json").write_text(json.dumps(types, sort_keys=True, indent=2) + "\n")
         receipt.update(
-            success=True, outputs={name: {"bytes": (output / name).stat().st_size, "sha256": P.sha(output / name)} for name in ("objects.bin", "index.jsonl")}
+            success=True,
+            outputs={name: {"bytes": (output / name).stat().st_size, "sha256": P.sha(output / name)} for name in ("objects.bin", "index.jsonl", "types.json")},
         )
         return receipt
     except Exception as error:

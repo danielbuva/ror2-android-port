@@ -273,7 +273,17 @@ class Graph:
             artifacts = {"receipt": "result.json"}
         elif producer == "object_produce":
             artifacts["layout"] = "layout.json"
-        if producer in {"record_produce", "record_remap"}:
+        if producer in {
+            "record_produce",
+            "record_remap",
+            "mesh_produce",
+            "avatar_produce",
+            "texture_produce",
+            "sprite_produce",
+            "shader_context",
+            "shader_prefab",
+            "payload_shader_records",
+        }:
             artifacts["types"] = "types.json"
         if producer in {"mesh_produce", "texture_produce"}:
             artifacts["resources"] = "resources.bin"
@@ -291,6 +301,7 @@ class Graph:
                             "shared_receipt": "shared-shaders/result.json",
                             "shared_objects": "shared-shaders/objects.bin",
                             "shared_index": "shared-shaders/index.jsonl",
+                            "shared_types": "shared-shaders/types.json",
                         }
                     )
             else:

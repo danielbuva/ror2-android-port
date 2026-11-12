@@ -606,7 +606,10 @@ u.run({str(self.inputs / "update-request.json")!r},{str(self.runtime)!r},{str(se
             ],
             "outputs": {"payload/authored-record-fixture": "objects.bin"},
         }
-        producers = ["tools/phone-build/accepted-output/" + name for name in ("mesh_produce.py", "unity_mesh.py", "unity_bundle.py")]
+        producers = [
+            "tools/phone-build/accepted-output/" + name
+            for name in ("mesh_produce.py", "unity_mesh.py", "unity_bundle.py", "object_produce.py", "unity_write.py")
+        ]
         contents = {name: (ROOT / name).read_bytes() for name in producers}
         contents.update({JOB: encoded(job), profile_path: encoded(profile)})
         entries = {"payload/authored-record-fixture": {"recipe_files": [JOB, profile_path], "producer_files": producers, "job": JOB}}

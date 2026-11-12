@@ -99,6 +99,18 @@ this working replay path from independent PC-input-only production and public
 distribution. No package, SDK binary, original input, output or signing key is
 included here. File verification makes no ownership/authentication claim.
 
+## Record supplier metadata
+
+Fresh mesh, Avatar, texture, Sprite, context/prefab/payload Shader and shared SDK
+Shader packs include receipt-bound `types.json` tables. Every index row's
+`type_id` selects its final serialized descriptor in that pack. Pooling retains
+the complete native identity, raw type tree and dependency metadata, including
+actual Texture2D versus Cubemap classes. The release graph exports the tables
+alongside object and index artifacts. Existing body-only packs remain readable
+through their explicit metadata witnesses; fresh production needs the original
+serialized member, not an isolated body. Full Unity and phone loadability are
+separate gates.
+
 ## Inputs and lifecycle
 
 The four explicit arguments are an already created **new** run directory,
@@ -989,12 +1001,14 @@ same command, profile, PC input, codec/toolchain pins and output directory as
 the interrupted run. Normal invocation still requires a new output directory.
 The initial `result.json` persists those pins before encoding. Every completed
 object/resource extent is flushed and fsynced before its index row commits.
+`types.json` is atomically persisted first, and resume reloads its pack-local
+IDs and checks committed rows against the original serialized native types.
 Resume verifies the ordered index and all persisted extents against the
 profile, removes only uncommitted tails, and skips completed texture outputs.
 Unknown files, mismatched pins and corrupt committed data refuse recovery.
-The `objects.bin`, `resources.bin` and `index.jsonl` formats stay unchanged.
+Object and resource bytes stay unchanged; index rows also carry `type_id`.
 
-Five authored host tests include real SIGKILL recovery and byte-exact fresh-run
+Authored host tests include real SIGKILL recovery and byte-exact fresh-run
 comparison. Android crash recovery remains open after
 [J1123](../../../docs/history/journal-J1-J1177/PORTING_JOURNAL.md#j1123--guarded-rgba-phone-batch-loses-transport-admission-stays-open).
 Recover the interrupted device's evidence and boot reason before cleanup or
