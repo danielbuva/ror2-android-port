@@ -3594,7 +3594,7 @@ Wider-run peak CPU/GPU 83.6 °C, 1.893 s above 80 °C; battery peak 27 °C.
 Thermal max gap 0.431 s; cleanup/OLED/lease passed. No second daily snapshot.
 Ordinary sustained play, capture overhead, battery efficiency and phone install stay open.
 
-## J1446 — Select sustained capture mode and compare bounded windows
+## J1447 — Select sustained capture mode and compare bounded windows
 
 2026-11-12. Existing sustained owner records explicit raw capture mode, default true.
 Off keeps aggregate counters and refuses unexpected trace metadata without transfer.
