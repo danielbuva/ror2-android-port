@@ -33,6 +33,18 @@ def fixture():
 
 
 class PerfReportTests(unittest.TestCase):
+    def test_camera_disabled_trace_accepts_unity_empty_name_and_retains_identity_checks(self):
+        session, _ = fixture()
+        session.update(attempt="authored", raw_frame_trace=None)
+        completed = dict(attempt="authored", framePacing=dict(rawFrameTrace="", samples=[]))
+        self.assertEqual(perf.analyze(session, [], completed=completed)["camera_profile"]["windows"], 0)
+        completed["framePacing"]["rawFrameTrace"] = "other.bin"
+        with self.assertRaises(ValueError):
+            perf.analyze(session, [], completed=completed)
+        completed.update(attempt="other", framePacing=dict(rawFrameTrace="", samples=[]))
+        with self.assertRaises(ValueError):
+            perf.analyze(session, [], completed=completed)
+
     def test_camera_windows_exclude_boundaries_and_weight_actual_recorder_counts(self):
         session, _ = fixture()
         session["attempt"] = "authored"

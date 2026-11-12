@@ -184,7 +184,7 @@ def proposed_pacing_comparison(window, quantiles, observed_seconds, required_sec
 def camera_profile(session, completed):
     """Summarize retained recorder windows, without inventing per-frame attribution."""
     camera = completed["framePacing"]
-    if completed["attempt"] != session["attempt"] or camera.get("rawFrameTrace") != (session.get("raw_frame_trace") or {}).get("file"):
+    if completed["attempt"] != session["attempt"] or (camera.get("rawFrameTrace") or None) != (session.get("raw_frame_trace") or {}).get("file"):
         raise ValueError("Completed camera report belongs to a different sustained session")
     first, last = session["samples"][0], session["samples"][-1]
     # Each camera row contains means since the preceding row. Do not admit a
