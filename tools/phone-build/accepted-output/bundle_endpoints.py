@@ -80,7 +80,7 @@ class FinalMembers:
                 raise ValueError("SDK leaf descriptor differs from qualified witness")
             self.sdk_leaves[key] = witness
 
-    def qualify_sdk_full(self, canonical_member, witnesses):
+    def qualify_sdk_full(self, canonical_member, witnesses, *, provider_paths=None):
         """Admit exact full-resource descriptors, independently of leaf proofs.
 
         The caller supplies source-qualified descriptors and full layouts.
@@ -95,7 +95,7 @@ class FinalMembers:
                 key[:2] != ("sdk", canonical_member)
                 or witness["provider_file_sha256"] != pin["sha256"]
                 or witness["provider_kind"] != "serialized_file"
-                or Path(witness["provider"]).resolve() != Path(pin["path"]).resolve()
+                or Path((provider_paths or {}).get(witness["provider"], witness["provider"])).resolve() != Path(pin["path"]).resolve()
                 or self.selected[key] != witness
                 or witness["type_layout"] != self.types[witness["full_type"]]
             ):
@@ -418,7 +418,7 @@ class Qualification:
             if row["bundle"] == "sdk":
                 self.staged.add_sdk(pin, row["member"], pins.read(row["leaves"]) if "leaves" in row else ())
                 if "full" in row:
-                    self.staged.qualify_sdk_full(row["member"], pins.read(row["full"]))
+                    self.staged.qualify_sdk_full(row["member"], pins.read(row["full"]), provider_paths=self.producer.provider_paths)
             else:
                 self.staged.add(row["bundle"], pin)
         self.external_members = [

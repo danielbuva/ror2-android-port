@@ -25,7 +25,8 @@ constructs this emitter/repacker chain from explicitly pinned inputs.
 current provider/registry/CLR checks and final MonoScript allocation readback.
 Request paths resolve relative to the request; corresponding metadata/provider
 paths must agree before relocation. Optional pinned `provider_paths` maps original
-native-pack names to directories relative to that map. The reader, resource
+native-pack names to directories and full SDK witness provider names to serialized
+files, relative to that map. The reader, resource
 copier, endpoint checks and cache traverse relocated files while retaining the
 original descriptor/proof identities and checking every preceding provider's
 body, profile, index and witness hashes. Setup opens only declared staged members;
@@ -1617,8 +1618,11 @@ validated before any group lookup. Complete output reuse hashes provider
 lineages, schemas, requests, routes, codec and code, plus the callback owner's
 explicit `cache_inputs` files (endpoint containers/descriptors and current
 CLR/SDK/checker inputs). It checks actual output hashes and hashes inputs again
-before returning the prior bundle by reference. The caller retains that output
-and cache until superseded; the scoped connection closes on success or failure.
+before cloning or copying the checked bundle and its companion artifacts into the
+new attempt directory. These are regular files; bundle/request receipts name the
+new path. Canonical repack reuse binds the emitted source hash independently of
+its attempt path. The caller retains the cached source output and cache until
+superseded; the scoped connection closes on success or failure.
 Receipts report cache counts and per-stage time/peak RSS. Authored host fixtures
 cover unchanged reuse, scalar changes, checker changes, grouping, corrupt outputs
 and provider drift; this does not qualify phone execution or gameplay.
