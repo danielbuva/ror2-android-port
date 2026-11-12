@@ -300,3 +300,4 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 | [J1179](PORTING_JOURNAL.md#j1179--recursive-standard-shaders-and-five-complete-scene-bundles) | 2026-10-25 | Recursive Standard Shaders and five complete scene bundles | 2026-10-26. |
 | [J1178](PORTING_JOURNAL.md#j1178--journal-archived-and-documentation-slimmed) | 2026-10-25 | Journal archived and documentation slimmed | 2026-10-26. |
 | [J1465](PORTING_JOURNAL.md#j1465--bind-managed-dependency-refreshes-to-their-produced-cohort) | 2026-11-12 | Bind managed dependency refreshes to their produced cohort | 2026-11-12. |
+| [J1466](PORTING_JOURNAL.md#j1466--validate-refreshed-ui-providers-and-relocated-startup-producers) | 2026-11-12 | Validate refreshed UI providers and relocated startup producers | 2026-11-12. |

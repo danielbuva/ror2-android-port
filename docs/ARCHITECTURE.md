@@ -100,6 +100,9 @@ and hash; the reuse count excludes every listed rebuild and every reused module
 retains its hash. All current provider bodies still pass metadata validation. The final
 player registry retains its current compiled-source and CLR checks;
 accepting a refresh receipt does not establish registry or graph admission.
+Menu and HUD authored-schema production uses that same receipt validator after
+the parent player owner checks current compiled sources and derives its registry;
+neither consumer requires a refresh to be relabelled as a full managed build.
 An optional pinned provider-alias map relocates retained registry inputs; each
 resolved file must still match the unchanged receipt's size and hash.
 The same release owner's host `Graph.bundle_bindings` API maps one member's
@@ -436,6 +439,8 @@ files. Complete phone generation and runtime acceptance remain open.
 `startup_metadata.py` owns public `boot.config` and `unity_app_guid` generation.
 Setup pins the owner's inventory, public PlayerSettings and exact toolchain;
 their hashes and producer version generate relocatable build identifiers.
+Verification permits an identical producer at another path while retaining its
+size/hash and every recorded input/output check.
 It retains fullscreen, safe-area and HDR settings, uses a 3 ms incremental GC
 slice and omits development connections. New output/receipt directories own all
 state; there are no retained processes. APK admission regenerates these two

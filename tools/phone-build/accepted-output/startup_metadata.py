@@ -34,7 +34,8 @@ def render(inputs):
     for item in inputs.values():
         if pin(item["path"]) != item:
             raise ValueError("startup input changed")
-    if inputs["producer"] != pin(__file__):
+    current_producer = pin(__file__)
+    if any(inputs["producer"][key] != current_producer[key] for key in ("bytes", "sha256")):
         raise ValueError("startup producer changed")
     toolchain = json.loads(Path(inputs["toolchain"]["path"]).read_text())
     if (toolchain.get("unity_version"), toolchain.get("unity_revision"), toolchain.get("architecture")) != ("2021.3.45f2", "88f88f591b2e", "arm64"):

@@ -40,6 +40,12 @@ def require(condition, message):
         raise ValueError(message)
 
 
+def managed_providers(store, managed):
+    """Use the parent registry's receipt-bound cohort for authored UI schemas."""
+    receipt = store.json(Path(managed) / "result.json")
+    return S.registry_managed_providers(managed, receipt.get("source_commit"), store.pin)
+
+
 def node_from_tree(tree):
     from UnityPy.helpers.TypeTreeNode import TypeTreeNode
     from UnityPy.streams import EndianBinaryReader
@@ -355,9 +361,7 @@ def component_records(store, ui, scripts, graph, records, extras, native, manage
             break
         base.append(node)
     require([n["name"] for n in base if n["level"] == 1] == ["m_GameObject", "m_Enabled", "m_Script", "m_Name"], "runtime MonoBehaviour base differs")
-    receipt = store.json(Path(managed) / "result.json")
-    require(receipt.get("success") is True and receipt.get("phase") == "managed-produced", "source-produced managed assemblies required")
-    providers = store.json(Path(managed) / "providers.json")
+    providers = managed_providers(store, managed)
     result = []
     with closing(S._RegistryTypes(store.pc / "Risk of Rain 2_Data/Managed", providers, store.pin, native, templates)) as clr:
         for extra in extras:
