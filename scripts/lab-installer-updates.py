@@ -812,6 +812,57 @@ class Phone:
         )
         return json.loads(result)
 
+    def retain_build_artifact(self, receipt, name, destination, *, timeout=300):
+        """Retain one receipt-pinned result before owned-installer cleanup.
+
+        Stream directly to ignored host storage; never copy a device checkpoint,
+        traverse undeclared results, or buffer a bundle in the diagnostics log.
+        """
+        if not self.owned_installer or not self.installer_hash or self.package_hash(PACKAGE) != self.installer_hash:
+            raise Failure("artifact-installer-not-owned")
+        directory = receipt.get("directory", "")
+        digest = receipt.get("files", {}).get(name, "")
+        if not isinstance(directory, str) or not re.fullmatch(r"[0-9a-f]{16}-[A-Za-z0-9_-]+/output", directory):
+            raise Failure("artifact-receipt-directory")
+        if not isinstance(name, str) or not re.fullmatch(r"[A-Za-z0-9_./+ -]+", name) or any(part in ("", ".", "..") for part in name.split("/")):
+            raise Failure("artifact-receipt-path")
+        if not isinstance(digest, str) or not re.fullmatch(r"[0-9a-f]{64}", digest):
+            raise Failure("artifact-receipt-hash")
+        destination = Path(destination)
+        if not destination.resolve().is_relative_to((ROOT / "work").resolve()):
+            raise Failure("artifact-host-output-not-private")
+        if destination.exists() or destination.is_symlink():
+            raise Failure("artifact-host-output-exists")
+        path = "files/owner-input/work/releases/jobs/" + directory + "/" + name
+        parents = [str(parent) for parent in reversed(Path(path).parents) if str(parent) != "."]
+        checks = "; ".join("[ ! -L " + shlex.quote(part) + " ] || exit 1" for part in [*parents, path])
+        command = checks + "; [ -f " + shlex.quote(path) + " ] && cat " + shlex.quote(path)
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        descriptor, temporary = tempfile.mkstemp(prefix=".retained-", dir=destination.parent)
+        temporary = Path(temporary)
+        try:
+            with os.fdopen(descriptor, "wb") as stream:
+                try:
+                    result = subprocess.run(
+                        [str(self.adb), "-s", self.serial, "exec-out", shlex.join(["run-as", PACKAGE, "sh", "-c", command])],
+                        stdout=stream,
+                        stderr=subprocess.PIPE,
+                        timeout=timeout,
+                        check=False,
+                    )
+                except (OSError, subprocess.TimeoutExpired):
+                    raise Failure("artifact-transfer-unavailable") from None
+            with temporary.open("rb") as stream:
+                actual = hashlib.file_digest(stream, "sha256").hexdigest()
+            if result.returncode or actual != digest:
+                raise Failure("artifact-transfer-hash-mismatch")
+            # An exclusive link publishes only the verified file, never a partial
+            # result or a replacement for an existing retained witness.
+            os.link(temporary, destination)
+            return {"bytes": destination.stat().st_size, "sha256": actual}
+        finally:
+            temporary.unlink(missing_ok=True)
+
     def ui(self):
         return self.ui_for((PACKAGE,))
 

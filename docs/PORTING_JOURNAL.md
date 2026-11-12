@@ -3711,3 +3711,14 @@ Longest supervised >95 C block 1.203 s; observed >80 C exposure 1,596.274 s.
 Native End Run/menu 2, empty current-PID errors, scratch/OLED/process/lease/prune pass.
 Adopted placement/data verified; storage delta +10,170,368 B includes diagnostics.
 No install; ordinary play, visual parity, energy, capture overhead and throttling stay open.
+
+## J1454 — Retain selected phone-produced artifacts before cleanup
+
+2026-11-12. Existing installer lab owner streams explicitly selected cache-receipt files to ignored host storage.
+Exact installer ownership, declared membership and output hash qualify publication; partial transfers leave no file.
+Binary bytes bypass buffered diagnostics; package cleanup remains with its existing owner.
+115 focused host tests, Ruff and host-only preflight pass; binary/spaced-path and interruption fixtures included.
+Evidence: `tests/test_lab_installer_updates.py` and
+`work/coordination/p1-wholegame-1031/phone-chain-audit-1112/retained-output-host-v1/acceptance.md`.
+Prior art: pinned R2API address/handle lifetime; J1453 exposed receipt-only retention after installer removal.
+Host contract only; no phone replay or reusable device artifact yet. Unity typed load, play and update remain open.
