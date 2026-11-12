@@ -6888,6 +6888,10 @@ APK and device acceptance remain open.
 
 The existing `bundle_endpoints.py` owner generates current CLR witness artifacts
 from successful managed production and the final player's registry receipt.
+An optional pinned `input_paths` map relocates exact recorded input paths to
+staged files relative to that map. Original manifests and refresh receipts stay
+unchanged; existing size/hash checks qualify the relocated files before and after
+inspection. Registry provider aliases retain their separate identity mapping.
 It compiles the public metadata-only Cecil reader with explicitly pinned compiler,
 references and runtime tools, checks actual provider files before and after
 inspection, and records exact registry provider aliases. The release graph signs

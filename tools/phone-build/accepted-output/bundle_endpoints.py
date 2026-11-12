@@ -52,6 +52,8 @@ def generate_managed(request_path, output):
     request_path, output = Path(request_path).resolve(), Path(output).resolve()
     request = json.loads(request_path.read_bytes())
     pins = InputPins(request_path.parent, owner)
+    if "input_paths" in request:
+        pins.relocate(request["input_paths"])
     providers = managed_production(pins, request["managed_providers"], request["managed_receipt"])
     provider_base = pins.pin(request["managed_providers"]).parent
     providers = {name: dict(value, path=str(pins.path(value["path"], provider_base))) for name, value in providers.items()}
@@ -413,10 +415,17 @@ class InputPins:
 
     def __init__(self, base, owner):
         self.base, self.owner, self.files = Path(base), owner, {}
+        self.paths = {}
+
+    def relocate(self, value):
+        mapping = self.read(value)
+        base = self.pin(value).parent
+        self.paths = {str(Path(name)): (Path(target) if Path(target).is_absolute() else base / target) for name, target in mapping.items()}
 
     def path(self, name, base=None):
         path = Path(name)
-        return (path if path.is_absolute() else (base or self.base) / path).resolve(strict=True)
+        path = path if path.is_absolute() else (base or self.base) / path
+        return self.paths.get(str(path), path).resolve(strict=True)
 
     def add(self, path, expected=None):
         path = self.path(path)
