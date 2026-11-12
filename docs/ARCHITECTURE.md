@@ -6632,6 +6632,9 @@ retains identities until `WholeCatalogComposed.Release` clears it; native
 key-item catalog restoration remains owned by `IntegratedResultsSession`.
 Its item-group types and providers use the same labeled loader so registration
 does not activate unrelated drop tables before the native run exists.
+The results owner emits sparse startup boundaries around item-group family
+loads, metadata checks, holder binding, native registration and validation;
+observation adds no report writes or resource lifetime.
 `test_scoped_definition_manifest.py` covers typed selection, identity reuse and
 missing-definition refusal. J1401 verifies bounded ordinary Android startup and
 native results preparation; completed results navigation remains open.

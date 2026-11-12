@@ -157,22 +157,29 @@ public sealed partial class PortSession
         {
             if (!Resources.Load<TextAsset>("WholeCatalogBootstrap"))
                 return;
+            TraceStartup("results-item-groups-owner-check-begin");
             var map = (System.Collections.IDictionary)RewardField(typeof(ItemCatalog), "itemGroups").GetValue(null);
             coordinator.Check(!ownsResultsItemGroups && map.Count == 0, "Unowned item-group catalog");
+            TraceStartup("results-item-groups-owner-check-ready-types-begin");
             var types = WholeCatalogComposed.ItemGroupTypes();
+            TraceStartup("results-item-groups-types-ready-providers-begin");
             var providers = WholeCatalogComposed.ItemGroupProviders();
+            TraceStartup("results-item-groups-providers-ready-metadata-begin");
             var fields = typeof(DLC4Content.ItemGroupTypes).GetFields(BindingFlags.Public | BindingFlags.Static);
             coordinator.Check(types.Length > 0 && providers.Length > 0 && types.Length == fields.Length && types.All(type => type) &&
                                   types.Select(type => type.name).Distinct().Count() == types.Length &&
                                   providers.All(provider => provider && types.Contains(provider.groupType) && provider.groups != null &&
                                                             provider.groups.All(group => group.items != null)),
                               "Original item-group metadata missing or ambiguous");
+            TraceStartup("results-item-groups-metadata-ready-bindings-begin");
             foreach (var field in fields)
                 coordinator.BindEnemyDefinition(typeof(DLC4Content.ItemGroupTypes), field.Name,
                                                 types.Single(type => type.name == field.Name));
+            TraceStartup("results-item-groups-bindings-ready-native-set-begin");
             // Preserve shipped group slots, including source-null item references; never invent membership.
             ownsResultsItemGroups = true;
             StaticCall(typeof(ItemCatalog), "SetItemGroups", new object[] { providers });
+            TraceStartup("results-item-groups-native-set-ready-validation-begin");
             coordinator.Check(types.All(type => ItemCatalog.GetItemGroupsForGroupType(type).Length ==
                                                 providers.Where(provider => provider.groupType == type)
                                                     .Sum(provider => provider.groups.Count(group => group.items.Length > 0))),
@@ -180,6 +187,7 @@ public sealed partial class PortSession
             coordinator.r.results.itemGroupTypes = types.Length;
             coordinator.r.results.itemGroupProviders = providers.Length;
             coordinator.r.results.itemGroups = providers.Sum(provider => provider.groups.Length);
+            TraceStartup("results-item-groups-validation-ready");
         }
         void CleanupResultsItemGroups()
         {
