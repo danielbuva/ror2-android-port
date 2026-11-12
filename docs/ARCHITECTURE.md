@@ -1338,6 +1338,11 @@ unchanged, and the installer visibly labels the active test source.
 `scripts/lab-installer-updates.py` owns the synthetic lab acceptance setup,
 local signed fixture server, actual UI/session assertions and owned cleanup.
 Its runner-provided toolhost and generated binaries/keys never leave the lab.
+`Phone.retain_build_artifact` streams one explicitly selected, cache-receipt-pinned
+result from the currently owned installer to ignored host `work/` before cleanup.
+It checks the received hash before publishing the file, keeps binary bytes out of
+diagnostic logs, and leaves package cleanup unchanged. Retention enables a later
+typed-load handoff; it does not establish Unity loadability or gameplay readiness.
 After verifying the focused consent identity, fixed label/title/button/layout
 classifications are emitted before fixture refusal. No raw UI text or resource
 identifiers are exported. These observations never relax the existing fixture,

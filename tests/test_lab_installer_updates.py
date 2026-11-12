@@ -5,6 +5,7 @@ import importlib.util
 import io
 import json
 import os
+import shlex
 import shutil
 from pathlib import Path
 import subprocess
@@ -21,6 +22,77 @@ SPEC.loader.exec_module(LAB)
 
 
 class LabInstallerUpdatesTests(unittest.TestCase):
+    def test_retain_declared_phone_artifact_streams_exact_bytes_before_cleanup(self):
+        phone = LAB.Phone("synthetic-private-selector", 1)
+        phone.owned_installer = True
+        phone.installer_hash = "a" * 64
+        directory = "b" * 16 + "-test/output"
+        name = "emitted/Test Game.bundle"
+        data = b"authored synthetic bundle witness\x00\xff\n" * 1000
+        receipt = {"directory": directory, "files": {name: LAB.sha(data)}}
+        real_run = subprocess.run
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            source = root / "phone/files/owner-input/work/releases/jobs" / directory / name
+            source.parent.mkdir(parents=True)
+            source.write_bytes(data)
+            target = root / "work/retained/content.bundle"
+
+            def transfer(argv, **kwargs):
+                self.assertEqual(argv[:4], [str(phone.adb), "-s", phone.serial, "exec-out"])
+                remote = shlex.split(argv[4])
+                self.assertEqual(remote[:4], ["run-as", LAB.PACKAGE, "sh", "-c"])
+                self.assertTrue(hasattr(kwargs["stdout"], "fileno"))
+                return real_run(["sh", "-c", remote[4]], cwd=root / "phone", **kwargs)
+
+            with patch.object(LAB, "ROOT", root), patch.object(phone, "package_hash", return_value=phone.installer_hash):
+                with patch.object(LAB.subprocess, "run", side_effect=transfer), patch.object(LAB, "DIAGNOSTICS", Mock()) as diagnostics:
+                    self.assertEqual(phone.retain_build_artifact(receipt, name, target), {"bytes": len(data), "sha256": LAB.sha(data)})
+                    diagnostics.record.assert_not_called()
+                self.assertEqual(target.read_bytes(), data)
+                shutil.rmtree(root / "phone")  # Owned device cleanup cannot remove retained output.
+                self.assertEqual(target.read_bytes(), data)
+                with self.assertRaisesRegex(LAB.Failure, "artifact-host-output-exists"):
+                    phone.retain_build_artifact(receipt, name, target)
+            self.assertEqual(list(target.parent.iterdir()), [target])
+
+    def test_retain_artifact_refuses_unowned_undeclared_or_incomplete_results(self):
+        phone = LAB.Phone("synthetic-private-selector", 1)
+        phone.owned_installer = True
+        phone.installer_hash = "a" * 64
+        receipt = {"directory": "b" * 16 + "-test/output", "files": {"content.bundle": LAB.sha(b"complete")}}
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            target = root / "work/retained/content.bundle"
+            with patch.object(LAB, "ROOT", root), patch.object(phone, "package_hash", return_value=phone.installer_hash):
+                for selected, name, output, reason in (
+                    (receipt, "missing.bundle", target, "artifact-receipt-hash"),
+                    ({**receipt, "directory": "../other/output"}, "content.bundle", target, "artifact-receipt-directory"),
+                    ({**receipt, "files": {"../secret": "c" * 64}}, "../secret", target, "artifact-receipt-path"),
+                    (receipt, "content.bundle", root / "tracked.bundle", "artifact-host-output-not-private"),
+                ):
+                    with self.subTest(reason=reason), patch.object(LAB.subprocess, "run") as transfer:
+                        with self.assertRaisesRegex(LAB.Failure, reason):
+                            phone.retain_build_artifact(selected, name, output)
+                        transfer.assert_not_called()
+
+                def partial(argv, **kwargs):
+                    kwargs["stdout"].write(b"partial")
+                    return subprocess.CompletedProcess(argv, 0, b"", b"")
+
+                with patch.object(LAB.subprocess, "run", side_effect=partial):
+                    with self.assertRaisesRegex(LAB.Failure, "artifact-transfer-hash-mismatch"):
+                        phone.retain_build_artifact(receipt, "content.bundle", target)
+                with patch.object(LAB.subprocess, "run", side_effect=subprocess.TimeoutExpired("synthetic", 1)):
+                    with self.assertRaisesRegex(LAB.Failure, "artifact-transfer-unavailable"):
+                        phone.retain_build_artifact(receipt, "content.bundle", target)
+                self.assertFalse(target.exists())
+                self.assertEqual(list(target.parent.iterdir()), [])
+            with patch.object(phone, "package_hash", return_value="d" * 64), patch.object(LAB.subprocess, "run") as transfer:
+                with self.assertRaisesRegex(LAB.Failure, "artifact-installer-not-owned"):
+                    phone.retain_build_artifact(receipt, "content.bundle", target)
+                transfer.assert_not_called()
+
     def test_import_upload_preserves_space_containing_game_path_and_bytes(self):
         phone = LAB.Phone("synthetic-private-selector", 1)
         phone.owned_installer = True
