@@ -3947,6 +3947,11 @@ It reuses a still-live parsed snapshot through a separate weak reference; it
 does not prevent collection. Fresh location setup and session release clear
 that reference, so later sessions read their own generation. Failed parses are
 never cached.
+The canonical snapshot owns lazy location-ID and string-key indexes as a JSON
+annotation. They share the snapshot's collectable lifetime; reset removes the
+annotation. Mutable caller-supplied manifests build fresh indexes. Each family
+still constructs providers and applies native type policy and collection order
+on every call; indexes retain no loaded assets or providers.
 Provider-root `DefinitionFamily<T>` uses the same reader; its typed selection,
 selected-identity checks and existing family-cache lifetime remain unchanged.
 `test_scoped_definition_manifest.py` exercises the production methods against

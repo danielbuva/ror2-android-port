@@ -524,13 +524,40 @@ public static class WholeCatalogComposed
     }
     // Complete definition families share the existing converted owner; no tested-content whitelist.
     static readonly Dictionary<string, UnityEngine.Object[]> definitionFamilies = new Dictionary<string, UnityEngine.Object[]>();
+    // Only the canonical read-only snapshot owns indexes. Its annotation has no
+    // static root, so both tables disappear with the weakly held manifest.
+    sealed class DefinitionManifestIndex
+    {
+        Dictionary<int, JToken> locations;
+        Dictionary<string, HashSet<int>> keys;
+        public Dictionary<int, JToken> Locations(JObject manifest)
+        {
+            return locations ?? (locations = manifest["locations"].ToDictionary(row => (int)row["id"]));
+        }
+        public Dictionary<string, HashSet<int>> Keys(JObject manifest)
+        {
+            return keys ?? (keys = manifest["keys"]
+                .Where(row => row["keyType"] == null || (string)row["keyType"] == "System.String")
+                .ToDictionary(row => (string)row["key"], row => new HashSet<int>(row["locations"].Select(value => (int)value))));
+        }
+    }
+    static DefinitionManifestIndex IndexDefinitionManifest(JObject manifest)
+    {
+        if (definitionManifest == null || !ReferenceEquals(definitionManifest.Target, manifest))
+            return new DefinitionManifestIndex();
+        var index = manifest.Annotation<DefinitionManifestIndex>();
+        if (index == null)
+        {
+            index = new DefinitionManifestIndex();
+            manifest.AddAnnotation(index);
+        }
+        return index;
+    }
     // Labels alone include Junk content which the original provider does not publish.
     // Resolve each provider using its native category policy and collection ordering.
     public static int[][] FamilyLocationGroups(JObject manifest, string category)
     {
-        var keys = manifest["keys"]
-                       .Where(row => row["keyType"] == null || (string)row["keyType"] == "System.String")
-                       .ToDictionary(row => (string)row["key"], row => new HashSet<int>(row["locations"].Select(value => (int)value)));
+        var keys = IndexDefinitionManifest(manifest).Keys(manifest);
         var helper = new RoR2.ContentManagement.AddressablesLoadHelper(new IResourceLocator[0]);
         return manifest["providers"]
             .Select(provider =>
@@ -554,6 +581,9 @@ public static class WholeCatalogComposed
     // Reuse a live read-only snapshot without extending its managed lifetime.
     internal static void ResetDefinitionManifest()
     {
+        var manifest = definitionManifest == null ? null : definitionManifest.Target as JObject;
+        if (manifest != null)
+            manifest.RemoveAnnotations<DefinitionManifestIndex>();
         definitionManifest = null;
     }
     internal static JObject ReadDefinitionManifest()
@@ -586,7 +616,7 @@ public static class WholeCatalogComposed
             if (manifest == null)
                 manifest = ReadDefinitionManifest();
             trace?.Invoke("manifest-ready-index-begin");
-            var locations = manifest["locations"].ToDictionary(row => (int)row["id"]);
+            var locations = IndexDefinitionManifest(manifest).Locations(manifest);
             var groups = FamilyLocationGroups(manifest, category);
             var familyBundles = new Dictionary<string, AssetBundle>(StringComparer.Ordinal);
             trace?.Invoke("index-ready-assets-begin");

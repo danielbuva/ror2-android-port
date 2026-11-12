@@ -3234,3 +3234,19 @@ Launch/menu 23.261 → 19.589 s; Start/player 54.111 → 44.530 s, uncontrolled
 page cache: diagnostic pair only, no total-load speedup claim. Peak CPU/GPU
 77.7 → 80.0 °C, 0 s above 80 °C; battery 28 → 29 °C. App stopped, scratch
 removed, OLED asleep, lease released. Sustained play/performance remain open.
+
+## J1420 — Reuse indexes within canonical content snapshots
+
+2026-11-12. Existing WholeCatalogComposed snapshot owns lazy ID/string-key indexes;
+collection/reset drops them. Providers, typed loads, policy, order and yields stay.
+Mutable external snapshots index freshly; focused fixtures, pins and build passed.
+Evidence: `work/coordination/alpha-manifest-index-pair-20261112T002343Z/`.
+APK SHA-256 `1cce8b6518ab8242b26e156f07b6c73d80f86f2876aa9d4a5f03379ad22ff9ba`.
+Both Starts reached Verdant Falls/player/HUD and 153 banks; current-PID errors empty.
+In-place update kept profile/settings hashes; both cached 274/full 0 audio proofs.
+Four traced index spans total 0.536 → 0.008 s; state family 1.573 → 1.260 s.
+Launch/menu 37.005 → 22.001 s; Start/player 58.000 → 58.038 s; uncontrolled
+page cache, one pair: no total-load speedup claim. Native RNG/yields unchanged.
+Peak CPU/GPU 79.6 → 80.4 °C, 0 → 0.610 s above 80 °C during loadout/Start;
+battery 27 → 28 °C, runtime gaps < 0.345 s. App stopped, scratch removed,
+OLED asleep, lease released. Sustained play/performance and installer remain open.

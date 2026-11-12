@@ -31,6 +31,7 @@ def production_host(*, unload_mutant=False):
     methods = [
         braced_block(whole, signature)
         for signature in (
+            "sealed class DefinitionManifestIndex",
             "public static string RetainForOriginalAudioOwner(string expectedInputId)",
             "public static bool ReleaseOriginalAudioOwnerLease(string expectedIdentity)",
             "public static IEnumerator Prepare()",
