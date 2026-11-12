@@ -1586,8 +1586,11 @@ This is desktop loadability evidence; device appearance/playability remains open
 ordered preload groups in a private SQLite file. Record keys bind source bodies,
 complete types, qualified routes, external allocation, resource placement and
 producer code. Every changed emission still runs endpoint, managed and persisted
-body checks. Group keys bind the graph, roots, owners and file ordering; scalar
-body changes reuse their pointer bytes. Complete output reuse hashes provider
+body checks. Group keys bind roots, reachable edge/owner identities and file
+ordering. Cached reachable-member lists witness invalidation: changed pointers rebuild
+only groups that reach them; disjoint groups and scalar body changes reuse
+their pointer bytes. The current graph and original external ownership are
+validated before any group lookup. Complete output reuse hashes provider
 lineages, schemas, requests, routes, codec and code, plus the callback owner's
 explicit `cache_inputs` files (endpoint containers/descriptors and current
 CLR/SDK/checker inputs). It checks actual output hashes and hashes inputs again

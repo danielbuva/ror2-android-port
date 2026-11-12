@@ -424,24 +424,23 @@ def produce_graph(selected, graph, sources, *, emission_cache=None):
     count_offset = stream.tell()
     stream.write(bytes(4))
     preload_count, containers = 0, []
-    graph_key = (
-        EmissionCache.key(
-            dict(
-                code=O.B.sha(Path(__file__)),
-                graph=sorted((key, sorted(edges)) for key, edges in graph.items()),
-                owners=sorted(owners.items()),
-                ranks=sorted(ranks.items()),
-            )
-        )
-        if emission_cache is not None
-        else None
-    )
+    if emission_cache is not None:
+        scope = EmissionCache.key(dict(code=O.B.sha(Path(__file__)), ranks=sorted(ranks.items())))
+        node_keys = {
+            identity: EmissionCache.key([sorted(edges), [(pointer, owners.get(pointer)) for pointer in sorted(edges) if pointer[0] and pointer[1]]])
+            for identity, edges in graph.items()
+        }
     for group in groups:
         roots = group["roots"]
         if not roots or len(set(roots)) != len(roots):
             raise ValueError("Prefab asset group requires distinct imported roots")
-        key = EmissionCache.key([graph_key, roots])
-        packed = emission_cache.get("groups", key) if emission_cache is not None else None
+        packed = None
+        if emission_cache is not None:
+            group_scope = EmissionCache.key([scope, roots])
+            previous = emission_cache.get("group_members", group_scope)
+            members = [row[0] for row in struct.iter_unpack("<q", previous)] if previous is not None else sorted(roots)
+            key = EmissionCache.key([group_scope, [(identity, node_keys.get(identity)) for identity in members]])
+            packed = emission_cache.get("groups", key)
         if packed is None:
             dependencies = closure(graph, roots, owners)
             if any(file_id not in ranks for file_id, _ in dependencies):
@@ -449,7 +448,12 @@ def produce_graph(selected, graph, sources, *, emission_cache=None):
             ordered = sorted(dependencies, key=lambda pointer: (ranks[pointer[0]], pointer[1]))
             packed = b"".join(struct.pack("<iq", *pointer) for pointer in ordered)
             if emission_cache is not None:
+                # Old reachable members are an invalidation witness, not closure
+                # input. Any changed edge/owner triggers a fresh traversal.
+                members = sorted(path_id for file_id, path_id in dependencies if not file_id)
+                key = EmissionCache.key([group_scope, [(identity, node_keys[identity]) for identity in members]])
                 emission_cache.put("groups", key, packed)
+                emission_cache.put("group_members", group_scope, b"".join(struct.pack("<q", identity) for identity in members))
         count = len(packed) // 12
         containers.extend((group["path"].lower(), preload_count, count, root) for root in roots)
         stream.write(packed)
