@@ -59,11 +59,14 @@ class AvatarProducerTests(unittest.TestCase):
             pc = root / "pc"
             pc.mkdir()
             source = pc / "authored.bundle"
-            source.write_bytes(FIXTURE.bundle([("CAB-authored", b"LEAD" + body + b"END!", 4)], True))
+            schema = FIXTURE.node("Base", children=[FIXTURE.node("body", len(body))])
+            serialized = FIXTURE.serialized(body, schema, path_id=99, class_id=90)
+            source_offset = struct.unpack_from(">q", serialized, 32)[0]
+            source.write_bytes(FIXTURE.bundle([("CAB-authored", serialized, 4)], True))
             pin = A.BUNDLE.sha(source)
             avatar = {
                 "path_id": 99,
-                "offset": 4,
+                "offset": source_offset,
                 "bytes": len(body),
                 "sha256": hashlib.sha256(body).hexdigest(),
                 "tos_field": field,
@@ -87,6 +90,11 @@ class AvatarProducerTests(unittest.TestCase):
             result = A.produce(profile_path, A.BUNDLE.sha(profile_path), pc, root / "output")
             self.assertTrue(result["success"])
             self.assertEqual((root / "output/objects.bin").read_bytes(), expected)
+            types = json.loads((root / "output/types.json").read_text())
+            row = json.loads((root / "output/index.jsonl").read_text())
+            typ = A.O.source_record_type(source, "CAB-authored", 99, 90)
+            self.assertEqual(types[row["type_id"]], A.O.json_layout(typ))
+            self.assertEqual(result["outputs"]["types.json"]["sha256"], A.BUNDLE.sha(root / "output/types.json"))
             self.assertEqual(A.BUNDLE.sha(source), pin)
             with self.assertRaises(ValueError):
                 A.produce(profile_path, A.BUNDLE.sha(profile_path), pc, root / "output")

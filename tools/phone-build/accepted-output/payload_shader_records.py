@@ -19,6 +19,7 @@ import sys
 import time
 
 import shader_produce as P
+import object_produce as O
 import shader_sdk as SDK
 import unity_write as W
 from mesh_produce import INPUT_ID
@@ -189,6 +190,7 @@ def produce_postprocessing(
         )
         (output / "AssetRipper-LICENSE.md").write_bytes(license_data)
         rows = []
+        types, type_ids = [], {}
         with (
             compiler.compiler(
                 [sdk / "Tools/UnityShaderCompiler"],
@@ -201,6 +203,7 @@ def produce_postprocessing(
         ):
             for selected in profile["shaders"]:
                 original, node = original_shader(asset, selected)
+                typ = O.source_record_type(source_path, source["member"], selected["path_id"], 48)
                 filename = selected["source_filename"]
                 P.relative(repo, filename)
                 text, template = sources.dummy_shader_source(original["m_ParsedForm"], templates)
@@ -228,9 +231,11 @@ def produce_postprocessing(
                             "offset": offset,
                             "bytes": len(body),
                             "sha256": hashlib.sha256(body).hexdigest(),
+                            "type_id": O.record_type(typ, types, type_ids),
                         }
                     )
         (output / "index.jsonl").write_text("".join(json.dumps(row) + "\n" for row in rows))
+        (output / "types.json").write_text(json.dumps(types, sort_keys=True, indent=2) + "\n")
         for path, pin in pins:
             P.checked(path, pin)
         if P.includes(sdk / "CGIncludes")[0] != profile["includes_sha256"]:
@@ -240,7 +245,7 @@ def produce_postprocessing(
                 "bytes": (output / name).stat().st_size,
                 "sha256": P.sha(output / name),
             }
-            for name in ("objects.bin", "index.jsonl")
+            for name in ("objects.bin", "index.jsonl", "types.json")
         }
         result["success"] = True
         return result
@@ -636,6 +641,8 @@ def produce_standard(profile_path, profile_sha256, pc, sdk, output, codec, codec
         return obj
 
     obj = original_object(source, "Shader")
+    typ = O.source_record_type(P.relative(pc, source["path"]), source["member"], source["path_id"], 48)
+    types, type_ids = [], {}
     original = obj.read_typetree()
     sdk_id = profile.get("sdk_shader", 46)
     expected_name = {
@@ -776,10 +783,11 @@ def produce_standard(profile_path, profile_sha256, pc, sdk, output, codec, codec
                 raise ValueError("duplicate Standard output identity")
             identities.add(identity)
             rows.append({key: selected[key] for key in ("bundle", "member", "path_id")})
-            rows[-1].update(offset=0, bytes=len(body), sha256=hashlib.sha256(body).hexdigest())
+            rows[-1].update(offset=0, bytes=len(body), sha256=hashlib.sha256(body).hexdigest(), type_id=O.record_type(typ, types, type_ids))
             if dependency_relocations:
                 rows[-1]["dependencies"] = dependency_relocations
         (output / "index.jsonl").write_text("".join(json.dumps(row) + "\n" for row in rows))
+        (output / "types.json").write_text(json.dumps(types, sort_keys=True, indent=2) + "\n")
         for path, pin in pins:
             P.checked(path, pin)
         if P.includes(sdk / "CGIncludes")[0] != inventory:
@@ -789,7 +797,7 @@ def produce_standard(profile_path, profile_sha256, pc, sdk, output, codec, codec
                 "bytes": (output / name).stat().st_size,
                 "sha256": P.sha(output / name),
             }
-            for name in ("objects.bin", "index.jsonl")
+            for name in ("objects.bin", "index.jsonl", "types.json")
         }
         result["success"] = True
         return result
@@ -868,6 +876,8 @@ def produce(
         if (obj.assets_file.name, obj.path_id) == (source["member"], source["path_id"]) and obj.type.name == "Shader"
     )
     original, node = obj.read_typetree(), obj.serialized_type.node
+    typ = O.source_record_type(P.relative(pc, source["path"]), source["member"], source["path_id"], 48)
+    types, type_ids = [], {}
     source_sdk = SDK.sdk_source(legacy_sdk, 34, profile["legacy_sdk"]["Resources/unity_builtin_extra"]["sha256"])
     repo = Path(P.__file__).resolve().parents[3]
     sys.path.insert(0, str(repo / "scripts/lab"))
@@ -1019,9 +1029,11 @@ def produce(
                         offset=stream.tell(),
                         bytes=len(body),
                         sha256=hashlib.sha256(body).hexdigest(),
+                        type_id=O.record_type(typ, types, type_ids),
                     )
                     stream.write(body)
             (output / "index.jsonl").write_text("".join(json.dumps(row) + "\n" for row in rows))
+            (output / "types.json").write_text(json.dumps(types, sort_keys=True, indent=2) + "\n")
         for path, pin in pins:
             P.checked(path, pin)
         for root, field in (
@@ -1035,7 +1047,7 @@ def produce(
                 "bytes": (output / name).stat().st_size,
                 "sha256": P.sha(output / name),
             }
-            for name in ("objects.bin", "index.jsonl")
+            for name in ("objects.bin", "index.jsonl", "types.json")
         }
         result["success"] = True
         return result
