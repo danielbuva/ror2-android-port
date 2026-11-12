@@ -4011,6 +4011,11 @@ Buff discovery uses the existing `DefinitionFamily<BuffDef>` provider-root loade
 and family cache instead of broad bundle loading. Typed root selection, unique
 name/selected-identity checks and `Release` cache teardown keep their existing
 owners; native buff registration and holder restoration remain unchanged.
+`WholePopulationSession.PrepareWholeDroneCatalog` uses the existing `TraceStartup`
+owner to separate owner/definition snapshots, family loading, native registration,
+availability callbacks, holder binding and validation. Family child phases appear
+only on a cache miss. Intervals include logging and elapsed work or suspension;
+they do not measure CPU time. Scalar markers add no retained state or teardown.
 
 Each staged runtime file starts with a two-line header naming its subsystem, whether it is
 on the game path, and its setup and teardown methods (J516).
