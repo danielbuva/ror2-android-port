@@ -1186,6 +1186,138 @@ class BundlePreloadTests(unittest.TestCase):
             finally:
                 cache.close()
 
+    def test_independent_preloads_keep_subassets_and_invalidate_reachable_groups(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            _, _, _, _, endpoints, read = self.external_contract(root)
+            target = next(iter(endpoints))
+            selected = dict(
+                name="authored",
+                member="CAB-authored",
+                externals=[target[1]],
+                dependencies=[target[0]],
+                asset_groups=[
+                    dict(
+                        guid="12" * 16,
+                        path="Assets/Subassets.asset",
+                        roots=[10, 20],
+                        preload_roots=[["authored", "CAB-authored", 40], list(target)],
+                    ),
+                    dict(guid="34" * 16, path="Assets/Separate.asset", roots=[60]),
+                ],
+            )
+            graph = {10: {(0, 20)}, 20: {(0, 10)}, 40: {(0, 50)}, 50: {(0, 40)}, 60: set(), 70: set()}
+            C = P.module("catalog_complete")
+            cache = P.EmissionCache(root / "cache")
+            try:
+
+                def emit(misses, hits):
+                    before = cache.counts.copy()
+                    body = P.produce_graph(selected, graph, {}, emission_cache=cache, endpoint_record=read)
+                    self.assertEqual(cache.counts["groups_misses"] - before["groups_misses"], misses)
+                    self.assertEqual(cache.counts["groups_hits"] - before["groups_hits"], hits)
+                    return C.containers(body)[0]
+
+                entries = emit(2, 0)
+                subassets = [entry for entry in entries if entry[0] == "assets/subassets.asset"]
+                self.assertEqual([entry[1] for entry in subassets], [(0, 10), (0, 20)])
+                expected = {(0, pid) for pid in (10, 20, 40, 50)} | {(1, target[2])}
+                self.assertEqual([set(entry[2]) for entry in subassets], [expected, expected])
+                self.assertEqual(emit(0, 2), entries)
+                graph[50] = {(0, 70)}
+                changed = emit(1, 1)
+                self.assertIn((0, 70), next(entry[2] for entry in changed if entry[1] == (0, 10)))
+                selected["asset_groups"][0]["preload_roots"] = [list(target)]
+                changed = emit(1, 1)
+                self.assertEqual(set(next(entry[2] for entry in changed if entry[1] == (0, 10))), {(0, 10), (0, 20), (1, target[2])})
+                # Cache reuse still reads the actual seed extent and full type.
+                endpoints[target][1].write_bytes(b"changed")
+                with self.assertRaisesRegex(ValueError, "body or full type"):
+                    emit(0, 2)
+            finally:
+                cache.close()
+
+    def test_required_emission_retains_independent_preload_without_new_container_entry(self):
+        import UnityPy
+
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            graph, types, rows, required = self.required_graph(root)
+            rows = rows[:3]
+            self.replace_cached_record(rows[2], struct.pack("<iq", 0, 0))
+            rows[2]["edges"] = [[0, 0]]
+            (graph / "selected-records.jsonl").write_text("".join(json.dumps(row) + "\n" for row in rows))
+            required["path_ids"].append(30)
+            required["asset_groups"][0]["preload_roots"] = [["authored", "CAB-authored", 30]]
+
+            def emit(attempt):
+                result = P.emit_closed_native(
+                    graph, [types], root / attempt, "authored", "CAB-authored", required=required, cache_directory=root / "cache", cache_inputs=[]
+                )
+                objects = {obj.path_id: obj.read_typetree() for obj in UnityPy.load(result["bundle"]).objects}
+                return result, objects[1]
+
+            first, container = emit("first")
+            self.assertEqual((first["records"], first["roots"], first["preloads"]), (3, 2, 3))
+            self.assertEqual([entry[1]["asset"]["m_PathID"] for entry in container["m_Container"]], [10, 20])
+            self.assertEqual(container["m_PreloadTable"], [dict(m_FileID=0, m_PathID=pid) for pid in (10, 20, 30)])
+            warm, warm_container = emit("warm")
+            self.assertTrue(warm["cache_reused"])
+            self.assertEqual(container, warm_container)
+            required["asset_groups"][0]["preload_roots"] = []
+            changed, container = emit("changed")
+            self.assertFalse(changed["cache_reused"])
+            self.assertEqual(changed["preloads"], 2)
+            self.assertEqual(changed["cache"]["records_hits"], 3)
+            required["asset_groups"][0]["preload_roots"] = [["authored", "CAB-authored", 999]]
+            with self.assertRaisesRegex(ValueError, "preload root absent"):
+                emit("missing")
+
+    def test_canonical_repack_retains_and_rechecks_independent_external_preload(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            inputs, _ = self.canonical_fixture(root)
+            group = inputs["required"]["asset_groups"][0]
+            target = ("canonical", "CAB-canonical", 101)
+            group["preload_roots"] = [["authored", "CAB-authored", 40], list(target)]
+            W, C = P.module("unity_write"), P.module("catalog_complete")
+
+            def endpoint(actual):
+                self.assertEqual(actual, target)
+                with W.B.Bundle(inputs["canonical_bundle"]).member(target[1]) as stream:
+                    layout = W.read_serialized(stream)
+                    obj = next(row for row in layout["objects"] if row["path_id"] == target[2])
+                    typ = layout["types"][obj["type_id"]]
+                    stream.seek(layout["data_offset"] + obj["offset"])
+                    body = W.B.exact(stream, obj["bytes"])
+                value = dict(
+                    destination=list(target),
+                    bytes=len(body),
+                    sha256=hashlib.sha256(body).hexdigest(),
+                    class_id=typ["class_id"],
+                    native_type_hash=typ["hash"].hex(),
+                    full_type=P.full_type_key(typ),
+                    schema=hashlib.sha256(typ["tree"]).hexdigest(),
+                    edges=list(P.pointers(body, typ, {}).values()),
+                )
+                return value, body, typ
+
+            inputs.update(cache_directory=root / "cache", endpoint_record=endpoint)
+            first = P.repack_canonical_aliases(output=root / "first", **inputs)
+            with W.B.Bundle(Path(first["bundle"])).member("CAB-authored") as stream:
+                layout = W.read_serialized(stream)
+                obj = next(row for row in layout["objects"] if layout["types"][row["type_id"]]["class_id"] == 142)
+                stream.seek(layout["data_offset"] + obj["offset"])
+                entries = C.containers(W.B.exact(stream, obj["bytes"]))[0]
+            self.assertEqual([entry[1] for entry in entries], [(0, 30)])
+            self.assertEqual(set(entries[0][2]), {(0, 30), (0, 40), (0, 50), (1, 100), (1, 101)})
+            warm = P.repack_canonical_aliases(output=root / "warm", **inputs)
+            self.assertTrue(warm["cache_reused"])
+            self.assertEqual(warm["sha256"], first["sha256"])
+            inputs["endpoint_record"] = None
+            with self.assertRaisesRegex(ValueError, "actual endpoint reader"):
+                P.repack_canonical_aliases(output=root / "missing", **inputs)
+
     def test_cached_output_corruption_rebuilds_and_provider_drift_still_fails(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
@@ -1212,6 +1344,7 @@ class BundlePreloadTests(unittest.TestCase):
                 root = Path(tmp)
                 graph, types, _, required = self.required_graph(root)
                 required["path_ids"] = identities
+                required["asset_groups"][0]["roots"] = [10]
                 with self.assertRaisesRegex(ValueError, message):
                     P.emit_closed_native(graph, [types], root / "emitted", "authored", "CAB-authored", required=required)
 
