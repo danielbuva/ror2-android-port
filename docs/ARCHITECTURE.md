@@ -5872,6 +5872,15 @@ the existing iterator and its existing `finally` disposes the stack. Scheduling,
 subtracting direct execution from the native wall interval does not identify I/O.
 The executable host fixture checks yield identity/order, nested accounting and
 completion/early-disposal behavior with observation enabled and disabled.
+`WholeCatalogComposed.PrepareProjectiles` accepts the same optional sparse
+callback from `PortSession`: owner check, typed family discovery, index snapshot,
+native registration, availability and identity validation retain their order.
+Family child markers occur only on a cache miss; the existing family cache and
+projectile snapshots remain owned until `Release`/`RestoreProjectiles`. No new
+state or yield is added. The executable host fixture compares observed,
+unobserved and public entry paths, including source identity and restoration.
+Adjacent intervals include callbacks and native work; asset collection time is
+not an exclusive I/O measurement.
 The same seams in `StageGeometryBoundary`, `NovaInputBoundary` and
 `AutomaticDirectorBoundary` separate collider validation/physics/entry, landing
 and display/run/enemy preparation, and objective templates/master catalog/player
