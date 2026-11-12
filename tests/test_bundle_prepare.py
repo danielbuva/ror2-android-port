@@ -69,8 +69,13 @@ class BundlePreparationTests(unittest.TestCase):
                 )
                 for binding in policy["bindings"]
             ]
-            mapped = G.Graph(repo, {}).bundle_bindings(iter(selected), policy["bundle"], policy["member"])
+            source_profiles = [row["record"] for row in selected]
+            for row in selected:
+                row["record"] = "f" * 64  # Retained private selection, not a public producer.
+                row["record_source"] = row["destination"]
+            mapped = G.Graph(repo, {}).bundle_bindings(iter(selected), policy["bundle"], policy["member"], source_profiles=source_profiles)
             self.assertEqual(mapped["unresolved"], [])
+            self.assertEqual([row["selection"]["record_source"] for row in mapped["bindings"]], [row["destination"] for row in selected])
             self.assertEqual(mapped["profiles"], sorted(profiles))
             policy["bindings"] = mapped["bindings"]
             request["suppliers"] = mapped["suppliers"]

@@ -629,6 +629,17 @@ bodies and does not qualify the graph. The caller still supplies address groups,
 exceptional routes, staged endpoints and generated managed witnesses. Final
 container suppliers require explicit staged bindings instead of record-pack pins.
 
+Pass explicit public profile hashes in `source_profiles` when a retained selection
+names a private index instead of a reproducible supplier. The mapper reverses
+the existing body selectors without reading generated packs. It prefers an exact
+source/output pair; otherwise it requires one public producer output for that
+original source. Bindings keep the original source and destination, name the fresh
+public `record_source`, and retain the private record pin and output identity in
+`selection`. Multiple candidates remain unresolved with their profile/output
+pairs. Only chosen suppliers become jobs; unrelated and unselected recipes are
+not compiled. Preparation still checks the original body selector, final type
+table and actual produced bytes; field routes and graph admission remain separate.
+
 Selecting the manager phase also creates the existing `startup_metadata.py`
 job. Bind `inventory` to the admitted original-game inventory; the smoke
 PlayerSettings and toolchain descriptor travel in the signed public closure.

@@ -25,6 +25,58 @@ G, J = load("release_graph"), load("release_jobs")
 
 
 class ReleaseGraphTests(unittest.TestCase):
+    def test_private_record_pins_resolve_only_unique_source_and_output_pairs(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            repo = Path(temporary)
+            (repo / "recipe").mkdir()
+            source = ["original.bundle", "CAB-source", 10]
+            target = dict(bundle="pack", member="CAB-pack", path_id=20)
+
+            def profile(name, outputs):
+                path = repo / ("recipe/owner-" + name + ".json")
+                path.write_text(
+                    json.dumps(
+                        dict(
+                            bundles=[dict(path=source[0], sha256="a" * 64, members=[dict(name=source[1], objects=[dict(path_id=source[2], outputs=outputs)])])]
+                        )
+                    )
+                )
+                return G.digest(path)
+
+            first = profile("first", [target, dict(target, path_id=21)])
+            alias = profile("alias", [dict(target, path_id=22)])
+            duplicate = profile("duplicate", [target])
+            # An unrelated malformed recipe must remain unparsed.
+            (repo / "recipe/owner-unused.json").write_text("unread")
+            graph = G.Graph(repo, {})
+            selected = dict(record="f" * 64, source=source, record_source=["pack", "CAB-pack", 20], destination=["content", "CAB-content", 7])
+            resolved = graph.bundle_bindings([selected], "content", "CAB-content", source_profiles=[first, alias])
+            self.assertEqual(resolved["unresolved"], [])
+            self.assertEqual(
+                resolved["bindings"],
+                [
+                    {key: selected[key] for key in ("source", "record_source", "destination")}
+                    | dict(supplier=first, selection=dict(record=selected["record"], record_source=selected["record_source"]))
+                ],
+            )
+            self.assertEqual([row["name"] for row in resolved["suppliers"]], [first])
+            self.assertEqual(set(graph.jobs), {"recipe/jobs/owner-first.json"})
+            ambiguous = graph.bundle_bindings([selected], "content", "CAB-content", source_profiles=[first, duplicate])
+            self.assertEqual(ambiguous["bindings"], [])
+            self.assertEqual(ambiguous["unresolved"][0]["reason"], "ambiguous source supplier profiles")
+            self.assertEqual(len(ambiguous["unresolved"][0]["candidates"]), 3)
+            moved = graph.bundle_bindings([dict(selected, record_source=["pack", "CAB-pack", 99])], "content", "CAB-content", source_profiles=[alias])
+            self.assertEqual(moved["unresolved"], [])
+            self.assertEqual(moved["bindings"][0]["record_source"], ["pack", "CAB-pack", 22])
+            self.assertEqual(moved["bindings"][0]["selection"], dict(record="f" * 64, record_source=["pack", "CAB-pack", 99]))
+            self.assertEqual(selected["record_source"], ["pack", "CAB-pack", 20])
+            missing = graph.bundle_bindings([dict(selected, record_source=["pack", "CAB-pack", 99])], "content", "CAB-content", source_profiles=[first, alias])
+            self.assertEqual(missing["bindings"], [])
+            self.assertEqual(missing["unresolved"][0]["reason"], "ambiguous source supplier profiles")
+            self.assertEqual(len(missing["unresolved"][0]["candidates"]), 3)
+            foreign = graph.bundle_bindings([dict(selected, source=["other.bundle", *source[1:]])], "content", "CAB-content", source_profiles=[first])
+            self.assertEqual(foreign["unresolved"][0]["candidates"], [])
+
     def test_bundle_binding_audit_keeps_missing_and_foreign_identities_explicit(self):
         with tempfile.TemporaryDirectory() as temporary:
             repo = Path(temporary)

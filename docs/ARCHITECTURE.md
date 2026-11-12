@@ -95,6 +95,12 @@ resolve them before composing a policy. Address groups, exceptional routes,
 staged containers and managed qualification retain their existing owners.
 Preparation reverses object, mesh, texture and avatar source selectors through
 their declared outputs, retaining ambiguous source candidates for strict checking.
+The mapper can search an explicit set of public source profiles when retained
+selection metadata names a private index. It binds only a unique source/output
+candidate, retaining the previous record identity in the policy's `selection`
+lineage. Original source and destination stay fixed; unresolved candidates remain
+explicit. Selector discovery compiles only the suppliers actually chosen and
+does not admit their bodies, routes or graph.
 
 `bundle_preload.produce_graph` also accepts per-group `preload_roots` as explicit
 destination triples, separate from advertised container roots/subassets. Local
