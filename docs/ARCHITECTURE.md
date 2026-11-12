@@ -6737,6 +6737,16 @@ diagnostic. Setup requires current original bundles and a pinned exact-SDK
 constructor witness; scoped readers close on exit and receipts persist. Complete
 APK and device acceptance remain open.
 
+The existing `bundle_endpoints.py` owner generates current CLR witness artifacts
+from successful managed production and the final player's registry receipt.
+It compiles the public metadata-only Cecil reader with explicitly pinned compiler,
+references and runtime tools, checks actual provider files before and after
+inspection, and records exact registry provider aliases. The release graph signs
+the reader source and declares the final player dependency. Setup supplies live
+provider/tool pins and a fresh output directory; subprocesses exit after inspection
+and receipts persist. The generated runtime request describes providers only;
+native runtime qualification, Android execution and device loadability remain open.
+
 Release-graph Shader jobs with pinned template inputs receive the explicit public
 AssetRipper Git provider. Existing Shader owners validate its revision and resource
 hashes before compiling; the dispatcher retains the resulting pack and receipt.

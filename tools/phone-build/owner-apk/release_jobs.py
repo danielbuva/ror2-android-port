@@ -44,6 +44,7 @@ PRODUCERS = {
             "bundle_manifest",
             "catalog_complete",
             "bundle_preload",
+            "bundle_endpoints",
             "stage_contexts",
             "startup_metadata",
         )
