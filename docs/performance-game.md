@@ -77,6 +77,20 @@ Report SHA-256: `ef9fd423331a93c341a7a21de8f245d2968637df7bf478abb92beba8a34c7b6
 APK SHA-256: `d32a5df34eead477f76bbc281fe3ff89a9878eb288a5ec4090764732df1e6636`;
 runtime source `c9bc3cbf`.
 
+The retained `completed-session.json` also supplies 59 complete camera-recorder
+windows inside the observation endpoints: frames 3,217–100,510, spanning
+1,770.669 camera seconds. `perf_report.py --completed-session FILE` weights each
+window mean by its actual recorder count. Across 3,243 timing samples, observed
+CPU/main-thread/GPU means are 18.230/17.984/12.143 ms. All render-thread durations
+are zero; this does not establish zero render cost. The 9,730 sampled allocation
+observations average 87,037.696 bytes, and collection counters advance by 254.
+Allocation is sampled every tenth frame; it is neither a mean over all frames
+nor a GC pause measurement. J450 already rejected that allocation inference.
+These observations favor investigating CPU work, but separate recorder cadences,
+thread waits and absent named-marker/GC durations prevent selecting a causal
+runtime fix. Local report: the evidence directory above, `camera-attribution.json`.
+No additional device run or performance improvement is claimed.
+
 ### Bounded raw-capture qualification
 
 The 2026-11-12 Main Nova assisted capture retained 8,354 active intervals without

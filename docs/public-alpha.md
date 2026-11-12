@@ -4,7 +4,7 @@ Re-audited 2026-11-11 against merged evidence since
 [audit #338](https://github.com/danielbuva/ror2-android-port/pull/338), including
 journal J1380–J1405 and changes through
 [PR #431](https://github.com/danielbuva/ror2-android-port/pull/431).
-All 18 acceptance gates remain open; linked results establish partial progress.
+Complete acceptance gates remain open; checked diagnostic subitems establish partial progress.
 Remaining actions are listed in the [execution backlog](execution-backlog.md).
 
 The user accepts [owner-built Route A](ADR-002-public-alpha-distribution.md);
@@ -110,8 +110,9 @@ retain J595/J755 ownership guards; final alpha installation remains separate.
       and [cooldown](PORTING_JOURNAL.md#j1405--cool-supervised-memory-sessions-between-verified-endings)
       fixes support a completed 32-session supervised UI-abandon diagnostic
       ([J1407](PORTING_JOURNAL.md#j1407--preserve-cooldown-admission-readings-across-display-wake)).
-      Final-16 matched-menu managed growth remains positive; physical navigation,
-      a memory plateau and ordinary long-run dependency retention remain open.
+      Final-16 matched-menu managed growth remains positive; physical navigation
+      and ordinary long-run dependency retention remain open. Saved-owner
+      attribution is recorded under Stability below; no plateau is established.
       [J1408](PORTING_JOURNAL.md#j1408--reclaim-measured-returned-pool-storage-after-completed-sessions)
       clears measured returned BulletHit/Renderer-list storage after each of three
       supervised sessions, with continuation; positive matched-menu managed growth
@@ -183,27 +184,23 @@ thermal sampling policy; proposed performance budgets do not change those limits
 
 ## Stability and playtests
 
-- [ ] Attribute and bound repeated-session managed growth, then qualify a long
-      device series ([open evidence](execution-backlog.md#stability-and-performance)).
-      [J1327](PORTING_JOURNAL.md#j1327--release-destroyed-overlap-discovery-targets-after-session-teardown)
-      removes destroyed overlap targets;
-      [J1350](PORTING_JOURNAL.md#j1350--restore-original-console-retention-default-at-composed-startup)
-      still shows positive twelve-session growth.
-      [J1353](PORTING_JOURNAL.md#j1353--capture-the-requested-final-menu-heap)
-      supplies endpoint heaps for attribution, without establishing a plateau.
-      [J1402](PORTING_JOURNAL.md#j1402--continue-memory-observations-through-native-loss-and-menu)
-      extends assisted observations through native loss; the interrupted series
-      does not establish completion or a plateau.
-      The [catalog-wrapper qualification](PORTING_JOURNAL.md#j1463--bound-collected-catalog-diagnostics-across-32-sessions)
-      completes 32 assisted sessions:
-      released locator/manifest targets collect and active locators remain at two.
-      Menus 18–33 retain +634,880 managed bytes and a +35,990.588 bytes/menu
-      fitted slope. Diagnostic wrapper pruning does not establish a plateau;
-      retained-owner attribution and ordinary-play qualification remain open.
-      Roster scroll-state ownership releases only the retiring menu's exact GUI
-      cache entries. Three supervised sessions retain zero ScrollViewState objects
-      at menus 2/4; other managed objects still grow 68,227 bytes. This closes one
-      retaining path; the long-series memory bound remains open.
+- [x] Attribute observed repeated-session growth and record its measured extent.
+      [J1467](PORTING_JOURNAL.md#j1467--release-retired-roster-scroll-states-without-clearing-other-controls)
+      menus 2/4 add 68,227 discovered managed-object bytes, with zero
+      ScrollViewState objects. Saved-owner analysis identifies lazy HUD-font and
+      encoding initialization, pooled capacity, diagnostic summaries and newly
+      observed asset operations; no concrete cleanup defect was established.
+      Pool logical counts, live location keys and report/sample counts stay
+      unchanged across that pair. This closes the inspected retaining-owner
+      investigation, not a total lifetime bound or plateau.
+- [ ] Qualify a long unassisted physical session, including ordinary results
+      navigation, continued dependency retention and memory observations
+      ([owner checklist](PLAYTESTING.md#stability-persistence-and-updates)).
+      [J1463](PORTING_JOURNAL.md#j1463--bound-collected-catalog-diagnostics-across-32-sessions)
+      completes 32 assisted sessions with released locator/manifest targets
+      collected and two active locators. Its final 16 menus still add 634,880
+      managed bytes, fitted +35,990.588 bytes/menu. The finite observed extent
+      does not establish an aggregate cache ceiling or ordinary-play stability.
 - [ ] Complete real interrupted-write/ENOSPC and sustained performance/thermal
       cases on supported hardware.
       [J1311](PORTING_JOURNAL.md#j1311--recover-native-settings-after-writer-termination-and-activity-restart)

@@ -2824,6 +2824,11 @@ session-result and thermal JSONL inputs produce local JSON/Markdown with input
 hashes, active counter deltas, periodic interval-mean percentiles and UTC-aligned
 FPS/temperature bins. Setup reads retained evidence; files close on process exit,
 no runtime/device state is changed, and reports persist at the requested output.
+Optional `--completed-session` binds the completed camera report by attempt and
+raw-trace identity. Only complete retained recorder windows inside the sustained
+frame endpoints contribute sample-count-weighted timing/allocation/render means
+and collection deltas. Zero render durations and sampled allocation bytes do not
+establish render cost or GC pause time; no critical-path attribution is inferred.
 Its JSON/Markdown comparison uses the proposed public-alpha pacing targets with
 unrounded observations, keeps missing raw quantiles unavailable and names evidence
 the report cannot establish; a target comparison never qualifies the release gate.
