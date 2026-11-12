@@ -2280,7 +2280,7 @@ def preservation_descriptor(roots):
 
 def generate_build_maps(io, manifest, contract, source, code_only=False):
     from animation_bindings import repair as repair_animation_bindings
-    from animation_bindings import stage_aim_reference_poses
+    from animation_bindings import stage_additive_reference_poses
     from body_visual_map import generate as generate_body_visual_map
     from common_assets_map import generate as generate_common_asset_map
 
@@ -2310,7 +2310,7 @@ def generate_build_maps(io, manifest, contract, source, code_only=False):
         raise RuntimeError("Original animation curves changed; a content build is required")
     if animation_bindings["repaired"] or animation_bindings["unresolved"]:
         io.write(io.work / "animation-bindings-latest.json", animation_bindings)
-    stage_aim_reference_poses(io, code_only=code_only)
+    stage_additive_reference_poses(io, code_only=code_only)
     if io.is_file(io.work / "scene-probe-build.json") and not io.is_file(project / "Assets/LabLoadingScene/Resources/MovementBatchProbe.json"):
         raise RuntimeError("Composed session is not staged for this generation; migrate it before building against an old scene recipe")
     stage_config = project / "Assets/LabLoadingScene/Resources/MovementBatchProbe.json"

@@ -5,11 +5,11 @@ import zlib
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts/lab"))
-from animation_bindings import aim_clip_guids, reference_curves, repair
+from animation_bindings import additive_clip_guids, reference_curves, repair
 
 
 class AnimationBindingTests(unittest.TestCase):
-    def test_aim_discovery_follows_native_layers_and_blend_trees_without_transitions(self):
+    def test_additive_discovery_follows_native_layers_and_blend_trees_without_transitions(self):
         controller = """--- !u!91 &1
 AnimatorController:
   m_AnimatorLayers:
@@ -35,10 +35,13 @@ BlendTree:
 AnimatorState:
   m_Motion: {fileID: 7400000, guid: bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb, type: 2}
 """
-        self.assertEqual(aim_clip_guids(controller), {"a" * 32})
-        self.assertEqual(aim_clip_guids(controller.replace("m_BlendingMode: 1", "m_BlendingMode: 0")), set())
-        with self.assertRaisesRegex(RuntimeError, "Unresolved native aim state"):
-            aim_clip_guids(controller.replace("m_Motion: {fileID: 5}", "m_Motion: {fileID: 6}"))
+        self.assertEqual(additive_clip_guids(controller), {"a" * 32})
+        self.assertEqual(additive_clip_guids(controller, aim_only=True), {"a" * 32})
+        self.assertEqual(additive_clip_guids(controller.replace("m_Name: AimPitch", "m_Name: Gesture Left, Additive"), aim_only=True), set())
+        self.assertEqual(additive_clip_guids(controller.replace("m_Name: AimPitch", "m_Name: Gesture Left, Additive")), {"a" * 32})
+        self.assertEqual(additive_clip_guids(controller.replace("m_BlendingMode: 1", "m_BlendingMode: 0")), set())
+        with self.assertRaisesRegex(RuntimeError, "Unresolved native additive state"):
+            additive_clip_guids(controller.replace("m_Motion: {fileID: 5}", "m_Motion: {fileID: 6}"))
 
     def test_reference_pose_preserves_native_value_order_and_checked_paths(self):
         path = "Rig/Arm"
@@ -50,7 +53,7 @@ AnimatorState:
             [curve["property"] for curve in curves],
             [prefix + "." + axis for prefix in ("m_LocalPosition", "m_LocalScale", "localEulerAnglesRaw") for axis in "xyz"],
         )
-        with self.assertRaisesRegex(RuntimeError, "ambiguous native aim"):
+        with self.assertRaisesRegex(RuntimeError, "ambiguous native additive"):
             reference_curves(tree, "    path: OtherRig/Arm\n")
         tree["m_MuscleClip"]["m_ValueArrayReferencePose"].append(9)
         with self.assertRaisesRegex(RuntimeError, "cardinality"):

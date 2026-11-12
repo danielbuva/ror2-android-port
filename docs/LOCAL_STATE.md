@@ -2210,8 +2210,8 @@ bundle from the selected source-produced bodies; no timestamped experiment path
 is embedded in code. Complete release graph integration remains open.
 
 `work/lab-project/.rebuild/source-animation-reference-poses.json` is generated
-by `animation_bindings.stage_aim_reference_poses` from accepted original bundles.
-`WholeCatalogBuild.RestoreSourceAimReferencePoses` consumes it before building
+by `animation_bindings.stage_additive_reference_poses` from accepted original bundles.
+`WholeCatalogBuild.RestoreSourceAdditiveReferencePoses` consumes it before building
 and generates `Assets/LabLoadingScene/AnimationReferencePoses/*.anim`. Both
 contain game-derived data and remain ignored. Destination rebuilds use the same
 relative paths through StageIO; no timestamped experiment is a build input.

@@ -17,16 +17,16 @@ PARAMETER = re.compile(r"^  - m_Name: (.+)$", re.M)
 PLACEHOLDER = re.compile(r"^(    attribute: )typetree_0x([0-9A-Fa-f]+)_[^\r\n]+$", re.M)
 
 
-def aim_clip_guids(controller):
-    """Follow native aim-layer states and blend trees, without following transitions."""
+def additive_clip_guids(controller, *, aim_only=False):
+    """Follow native additive-layer states and blend trees, without following transitions."""
     parts = re.split(r"^--- !u!\d+ &(-?\d+)\n", controller, flags=re.M)
     objects = dict(zip(parts[1::2], parts[2::2]))
     pending = []
     for body in objects.values():
         for layer in re.split(r"^  - serializedVersion:", body, flags=re.M)[1:]:
-            if re.search(r"^    m_Name: Aim(?:Pitch|Yaw)$", layer, re.M):
-                if not re.search(r"^    m_BlendingMode: 1$", layer, re.M):
-                    continue
+            if aim_only and not re.search(r"^    m_Name: Aim(?:Pitch|Yaw)$", layer, re.M):
+                continue
+            if re.search(r"^    m_BlendingMode: 1$", layer, re.M):
                 pending.extend(re.findall(r"m_StateMachine: \{fileID: (-?\d+)\}", layer))
     seen, guids = set(), set()
     while pending:
@@ -35,7 +35,7 @@ def aim_clip_guids(controller):
             continue
         seen.add(identity)
         if identity not in objects:
-            raise RuntimeError("Unresolved native aim state or blend tree")
+            raise RuntimeError("Unresolved native additive state or blend tree")
         body = objects[identity]
         guids.update(re.findall(r"m_Motion: \{fileID: -?\d+, guid: ([a-f0-9]{32}), type: \d+\}", body))
         pending.extend(re.findall(r"m_(?:State|StateMachine|Motion): \{fileID: (-?\d+)\}", body))
@@ -60,21 +60,21 @@ def reference_curves(tree, exported):
         attribute = binding["attribute"]
         candidates = paths[binding["path"]]
         if binding["typeID"] != 4 or binding.get("isPPtrCurve") or attribute not in (1, 2, 3, 4) or len(candidates) != 1:
-            raise RuntimeError("Unsupported or ambiguous native aim reference binding: " + str(binding))
+            raise RuntimeError("Unsupported or ambiguous native additive reference binding: " + str(binding))
         property_name = {1: "m_LocalPosition", 2: "m_LocalRotation", 3: "m_LocalScale", 4: "localEulerAnglesRaw"}[attribute]
         axes = "xyzw" if attribute == 2 else "xyz"
         for axis in axes:
             if offset >= len(values) or not math.isfinite(values[offset]):
-                raise RuntimeError("Invalid native aim reference-pose values")
+                raise RuntimeError("Invalid native additive reference-pose values")
             curves.append(dict(path=next(iter(candidates)), property=property_name + "." + axis, value=values[offset]))
             offset += 1
     if offset != len(values):
-        raise RuntimeError("Native aim reference-pose binding cardinality changed")
+        raise RuntimeError("Native additive reference-pose binding cardinality changed")
     return curves
 
 
-def stage_aim_reference_poses(io, *, code_only=False):
-    """Discover current native aim clips, retaining source identity and pose values locally."""
+def stage_additive_reference_poses(io, *, code_only=False):
+    """Discover current native additive clips, retaining source identity and pose values locally."""
     import UnityPy
     from common import game, sha
     from whole_catalog import catalog_path, read_catalog
@@ -82,7 +82,9 @@ def stage_aim_reference_poses(io, *, code_only=False):
     root = io.project / "Assets/WholeGame"
     requested = set()
     for controller in io.glob(root, "**/*.controller"):
-        requested.update(aim_clip_guids(io.read_text(controller)))
+        # Commando's observed firing/hit-reaction defect also involves gesture
+        # layers. Other survivor gestures remain outside this qualification.
+        requested.update(additive_clip_guids(io.read_text(controller), aim_only=controller.stem != "animCommando"))
     clips = {}
     for meta in io.glob(root, "**/*.anim.meta"):
         guid = re.search(r"^guid: ([a-f0-9]{32})$", io.read_text(meta), re.M)
@@ -93,11 +95,11 @@ def stage_aim_reference_poses(io, *, code_only=False):
             name = json.loads(name) if name.startswith('"') else name
             key = (str(Path("Assets") / clip.relative_to(root).parent).lower(), name)
             if key in clips:
-                raise RuntimeError("Ambiguous exported native aim clip")
+                raise RuntimeError("Ambiguous exported native additive clip: " + str(key) + ": " + str(clips[key][0]) + ": " + str(clip))
             clips[key] = (clip, text)
             requested.remove(guid[1])
     if requested:
-        raise RuntimeError("Native aim layer references an absent exported clip")
+        raise RuntimeError("Native additive layer references an absent exported clip")
     if not clips:
         return dict(clips=[])
     metadata = read_catalog(catalog_path(io.catalog()))
@@ -110,7 +112,7 @@ def stage_aim_reference_poses(io, *, code_only=False):
     }
     inventory = io.read(io.work / "inventory/files.json")
     if inventory["input_id"] != io.read(io.work / "config/accepted-input.json")["input_id"]:
-        raise RuntimeError("Native aim inspection requires the accepted input inventory")
+        raise RuntimeError("Native additive inspection requires the accepted input inventory")
     file_index = defaultdict(list)
     for row in inventory["files"]:
         file_index[Path(row["path"]).name].append(row)
@@ -119,10 +121,10 @@ def stage_aim_reference_poses(io, *, code_only=False):
         basename = locations[identity]["internalId"].replace("\\", "/").rsplit("/", 1)[-1]
         matches = file_index[basename]
         if len(matches) != 1:
-            raise RuntimeError("Ambiguous or absent native aim bundle")
+            raise RuntimeError("Ambiguous or absent native additive bundle")
         source = game(io.work) / matches[0]["path"]
         if sha(source) != matches[0]["sha256"]:
-            raise RuntimeError("Original aim bundle drift; explicitly review and accept")
+            raise RuntimeError("Original additive bundle drift; explicitly review and accept")
         environment = UnityPy.load(str(source))
         for obj in environment.objects:
             if obj.type.name != "AssetBundle":
@@ -157,12 +159,12 @@ def stage_aim_reference_poses(io, *, code_only=False):
                     found[key] = row
         del environment
     if found.keys() != clips.keys():
-        raise RuntimeError("Native aim clip missing from current source containers")
+        raise RuntimeError("Native additive clip missing from current source containers")
     result = dict(input_id=inventory["input_id"], clips=sorted(found.values(), key=lambda row: row["clip"]))
     path = io.project / ".rebuild/source-animation-reference-poses.json"
     if code_only:
         if not io.is_file(path) or io.read(path) != result:
-            raise RuntimeError("Original aim reference poses changed; a content build is required")
+            raise RuntimeError("Original additive reference poses changed; a content build is required")
     else:
         io.write(path, result)
     return result

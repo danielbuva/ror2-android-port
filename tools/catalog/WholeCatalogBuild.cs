@@ -100,7 +100,7 @@ public static class WholeCatalogBuild
         if (!manifest.StartsWith(Path.Combine(work, "experiments/whole-catalog") + Path.DirectorySeparatorChar, StringComparison.Ordinal))
             throw new Exception("Whole catalog recipe outside owned input");
         catalog = JObject.Parse(File.ReadAllText(manifest));
-        RestoreSourceAimReferencePoses();
+        RestoreSourceAdditiveReferencePoses();
         ValidateSourceCameraPrograms();
         ValidateSourceCollisionPolicy();
         var owners = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
@@ -136,7 +136,7 @@ public static class WholeCatalogBuild
         ValidateCameraShaderRows(new HashSet<string>(owners.Keys, StringComparer.OrdinalIgnoreCase));
     }
 
-    public static object RestoreSourceAimReferencePoses()
+    public static object RestoreSourceAdditiveReferencePoses()
     {
         string recipe = Path.Combine(Path.GetDirectoryName(Application.dataPath), ".rebuild/source-animation-reference-poses.json");
         var source = JObject.Parse(File.ReadAllText(recipe));
@@ -148,9 +148,9 @@ public static class WholeCatalogBuild
             string path = (string)row["clip"];
             var clip = AssetDatabase.LoadAssetAtPath<AnimationClip>(path);
             if (!clip)
-                throw new Exception("Source aim clip did not import: " + path);
+                throw new Exception("Source additive clip did not import: " + path);
             if ((string)row["status"] == "unsupported-muscle-bindings")
-                Debug.LogWarning("Source aim reference repair unavailable for muscle bindings: " + path);
+                Debug.LogWarning("Source additive reference repair unavailable for muscle bindings: " + path);
             if (!row["curves"].Any())
                 continue;
             var bindings = AnimationUtility.GetCurveBindings(clip);
@@ -159,7 +159,7 @@ public static class WholeCatalogBuild
             {
                 string transform = (string)curve["path"], property = (string)curve["property"];
                 if (!bindings.Any(binding => binding.type == typeof(Transform) && binding.path == transform && binding.propertyName == property))
-                    throw new Exception("Source aim reference binding absent from imported clip: " + path + ":" + transform + ":" + property);
+                    throw new Exception("Source additive reference binding absent from imported clip: " + path + ":" + transform + ":" + property);
                 AnimationUtility.SetEditorCurve(reference, EditorCurveBinding.FloatCurve(transform, typeof(Transform), property),
                                                 new AnimationCurve(new Keyframe(0, (float)curve["value"])));
                 curves++;
@@ -184,7 +184,7 @@ public static class WholeCatalogBuild
                 var binding = EditorCurveBinding.FloatCurve((string)curve["path"], typeof(Transform), (string)curve["property"]);
                 var restored = AnimationUtility.GetEditorCurve(reference, binding);
                 if (restored == null || restored.Evaluate(0) != (float)curve["value"])
-                    throw new Exception("Source aim reference curve did not persist: " + path);
+                    throw new Exception("Source additive reference curve did not persist: " + path);
             }
             EditorUtility.SetDirty(clip);
             clips++;
