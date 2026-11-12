@@ -43,6 +43,8 @@ class ScopedDefinitionManifestTests(unittest.TestCase):
         methods = [
             braced_block(source, signature)
             for signature in (
+                "sealed class DefinitionManifestIndex",
+                "static DefinitionManifestIndex IndexDefinitionManifest(JObject manifest)",
                 "public static RoR2.BuffDef[] BuffDefinitions()",
                 "public static RoR2.ItemDef[] ItemDefinitions()",
                 "public static RoR2.KeyItemDef[] KeyItemDefinitions()",

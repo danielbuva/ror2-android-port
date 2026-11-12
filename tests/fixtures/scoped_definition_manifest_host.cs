@@ -68,7 +68,10 @@ namespace RoR2.ContentManagement
 public class Definition : Object {}
 public class SourceProvider
 {
-    readonly RoR2.ContentManagement.ContentPack contentPack = new RoR2.ContentManagement.ContentPack { allowed = true };
+    public static bool allowed = true;
+    public static int constructions;
+    public SourceProvider() { constructions++; }
+    readonly RoR2.ContentManagement.ContentPack contentPack = new RoR2.ContentManagement.ContentPack { allowed = allowed };
     public class ItemRelationshipTypes { public static Definition Related; }
     public class BodyPrefabs { public static RoR2.CharacterBody Player; }
 }
@@ -88,6 +91,7 @@ public static partial class WholeCatalogComposed
         Directory.CreateDirectory("payload");
         ManifestParseContract();
         ManifestWeakCacheContract();
+        ManifestIndexContract();
         var type = new Definition { name = "Related" };
         var provider = new Definition { name = "Provider" };
         var player = new GameObject { name = "Player" };
@@ -278,16 +282,57 @@ public static partial class WholeCatalogComposed
         ResetDefinitionManifest();
         File.WriteAllText("payload/whole-catalog.json", content);
     }
+    static void ManifestIndexContract()
+    {
+        var data = new JObject {
+            ["providers"] = new JArray(new JObject { ["type"] = "SourceProvider", ["identifier"] = "source" },
+                                       new JObject { ["type"] = "ExcludedProvider", ["identifier"] = "excluded" }),
+            ["locations"] = new JArray(new JObject { ["id"] = 1 }, new JObject { ["id"] = 2 }),
+            ["keys"] = new JArray(new JObject { ["key"] = "ContentPack:source", ["locations"] = new JArray(2, 1, 2) },
+                                  new JObject { ["key"] = "category", ["locations"] = new JArray(1, 2) },
+                                  new JObject { ["key"] = "category", ["keyType"] = "System.Int32", ["locations"] = new JArray(99) }) };
+        WriteManifest(data.ToString());
+        var snapshot = ReadDefinitionManifest();
+        var index = IndexDefinitionManifest(snapshot);
+        Check(ReferenceEquals(index, IndexDefinitionManifest(snapshot)));
+        Check(ReferenceEquals(index.Keys(snapshot), IndexDefinitionManifest(snapshot).Keys(snapshot)));
+        Check(ReferenceEquals(index.Locations(snapshot), IndexDefinitionManifest(snapshot).Locations(snapshot)));
+        int before = SourceProvider.constructions;
+        var groups = FamilyLocationGroups(snapshot, "category");
+        Check(groups.Length == 2 && groups[0].SequenceEqual(new[] { 2, 1 }) && groups[1].Length == 0);
+        SourceProvider.allowed = false;
+        Check(FamilyLocationGroups(snapshot, "category").All(group => group.Length == 0));
+        Check(SourceProvider.constructions == before + 2);
+        SourceProvider.allowed = true;
+        ResetDefinitionManifest();
+        Check(snapshot.Annotation<DefinitionManifestIndex>() == null);
+        Check(!ReferenceEquals(index, IndexDefinitionManifest(snapshot)));
+        // Mutable callers keep fresh key/ID validation and original failure order.
+        Check(!ReferenceEquals(IndexDefinitionManifest(data), IndexDefinitionManifest(data)));
+        data["keys"][0]["locations"] = new JArray(1);
+        Check(FamilyLocationGroups(data, "category")[0].SequenceEqual(new[] { 1 }));
+        ((JArray)data["locations"]).Add(new JObject { ["id"] = 1 });
+        Check(FamilyLocationGroups(data, "category")[0].SequenceEqual(new[] { 1 }));
+        Refuses(() => IndexDefinitionManifest(data).Locations(data));
+        ((JArray)data["keys"]).Add(new JObject { ["key"] = "category", ["locations"] = new JArray(1) });
+        Refuses(() => FamilyLocationGroups(data, "category"));
+        ((JArray)data["keys"]).RemoveAt(3);
+        ((JArray)data["keys"]).RemoveAt(1);
+        Refuses(() => FamilyLocationGroups(data, "category"));
+    }
     [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.NoInlining)]
     static WeakReference ReadLiveSnapshot()
     {
         var first = ReadDefinitionManifest();
         Check(ReferenceEquals(first, ReadDefinitionManifest()));
+        var index = IndexDefinitionManifest(first);
+        index.Keys(first);
+        index.Locations(first);
         return new WeakReference(first);
     }
     static void ManifestWeakCacheContract()
     {
-        WriteManifest("{\"generation\":1}");
+        WriteManifest("{\"generation\":1,\"keys\":[],\"locations\":[{\"id\":1}]}");
         var snapshot = ReadLiveSnapshot();
         GC.Collect();
         GC.WaitForPendingFinalizers();
