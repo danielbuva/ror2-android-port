@@ -56,16 +56,20 @@ public static class SurvivorSkillInputHost
     }
 
     // Exact-editor check for the pre-spawn contract used by AutomaticModelBoundary.
-    // The native state queries this metadata while the detached model is inactive.
-    public static object VerifyInactiveAnimatorParameterSnapshot()
+    // Native state Start must run only after body activation initializes the Animator.
+    public static object VerifyAnimatorBeforeStateStart()
     {
         Require(!EditorApplication.isPlaying && !EditorApplication.isCompiling,
                 "Require idle exact editor for inactive Animator metadata");
-        var model = new GameObject("inactive-animation-contract");
-        model.SetActive(false);
+        var body = new GameObject("pre-state-animation-contract");
+        body.SetActive(false);
+        var model = new GameObject("model");
+        model.transform.SetParent(body.transform, false);
         var controller = new UnityEditor.Animations.AnimatorController();
         try
         {
+            controller.AddLayer("Body");
+            controller.layers[0].stateMachine.AddState("Idle");
             controller.AddParameter("isMoving", AnimatorControllerParameterType.Bool);
             controller.AddParameter("forwardSpeed", AnimatorControllerParameterType.Float);
             controller.AddParameter("rightSpeed", AnimatorControllerParameterType.Float);
@@ -74,14 +78,19 @@ public static class SurvivorSkillInputHost
             Require(!before.isMoving && !before.forwardSpeed && !before.rightSpeed,
                     "Unbound fixture unexpectedly exposes locomotion parameters");
             animator.runtimeAnimatorController = controller;
+            var inactive = CharacterAnimParamAvailability.FromAnimator(animator);
+            Require(!inactive.isMoving && !inactive.forwardSpeed && !inactive.rightSpeed,
+                    "Fixture no longer reproduces uninitialized Animator parameter discovery");
+            body.SetActive(true);
+            animator.Update(0);
             var after = CharacterAnimParamAvailability.FromAnimator(animator);
-            Require(!model.activeInHierarchy && after.isMoving && after.forwardSpeed && after.rightSpeed,
-                    "Native locomotion snapshot requires active model or lost bound controller metadata");
-            return new { inactiveModel = true, nativeParameterSnapshot = true, nativeGameplayTested = false };
+            Require(after.isMoving && after.forwardSpeed && after.rightSpeed,
+                    "Native locomotion snapshot unavailable after body activation before state Start");
+            return new { initializedBeforeStateStart = true, nativeParameterSnapshot = true, nativeGameplayTested = false };
         }
         finally
         {
-            UnityEngine.Object.DestroyImmediate(model);
+            UnityEngine.Object.DestroyImmediate(body);
             UnityEngine.Object.DestroyImmediate(controller);
         }
     }

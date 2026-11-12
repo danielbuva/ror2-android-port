@@ -35,15 +35,20 @@ public sealed partial class PortSession
             var controller = artifactBundle.LoadAsset<RuntimeAnimatorController>(cfg.displayAssets[0]);
             var avatar = artifactBundle.LoadAsset<Avatar>(cfg.displayAssets[1]);
             Check(animator && controller && avatar, "Original Commando animation assets unavailable before spawn");
-            animator.runtimeAnimatorController = controller;
-            animator.avatar = avatar;
-            var parameters = CharacterAnimParamAvailability.FromAnimator(animator);
-            Check(parameters.isMoving && parameters.forwardSpeed && parameters.rightSpeed,
-                  "Original Commando locomotion parameters unavailable before main-state entry");
+            NovaDiagnosticDisplay.PrepareCommandoAnimationBeforeSpawn(model, controller, avatar);
         }
         r.modelTarget = model.name;
         r.modelParent = locator.modelBaseTransform.name;
         Save();
+    }
+    void VerifyAutomaticAnimatorBeforeStateStart(CharacterBody body)
+    {
+        if (!IsPlayableSpine() || SelectedSourceSurvivor()) return;
+        var animator = body.modelLocator.modelTransform.GetComponent<Animator>();
+        animator.Update(0);
+        var parameters = CharacterAnimParamAvailability.FromAnimator(animator);
+        Check(parameters.isMoving && parameters.forwardSpeed && parameters.rightSpeed,
+              "Original Commando locomotion parameters unavailable before native state Start");
     }
     void ObserveAutomaticModelFollow(CharacterBody body)
     {

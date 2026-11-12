@@ -34,6 +34,40 @@ public sealed class NovaDiagnosticDisplay : IDisposable
     public bool NativeSourceSkinAnimatorReady => sourceSkinLifecycleDiagnostic && nativeSourceSkinLifecycle &&
                                                  nativeSourceSkinLifecycle.NativeAnimatorInitialized;
     public bool UsesOriginalLocalCamera => nativeCameraRigOwner;
+    static void IsolateModelCallbacks(Transform model, bool sourceSelected, bool nativeSkinLifecycle,
+                                     AndroidNativeSourceSkinLifecycle skinOwner)
+    {
+        foreach (var component in model.GetComponentsInChildren<MonoBehaviour>(true))
+        {
+            bool authoredEnabled = component.enabled;
+            bool nativeSkinOwner = nativeSkinLifecycle && authoredEnabled && skinOwner &&
+                                   component.gameObject == skinOwner.gameObject &&
+                                   (component is RoR2.ModelSkinController || component is RoR2.CharacterModel);
+            bool nativeSkinAdapter = nativeSkinLifecycle && component == skinOwner;
+            bool nativeAudio = authoredEnabled && GameAudioOriginalOwner.Ready &&
+                               component.GetType().Name.StartsWith("Ak", StringComparison.Ordinal);
+            bool nativeGameplay = component is RoR2.AnimationEvents || component is RoR2.HitBox || component is RoR2.HitBoxGroup ||
+                                  component is RoR2.HurtBox || component is RoR2.HurtBoxGroup;
+            component.enabled = nativeAudio || sourceSelected && (nativeSkinOwner || nativeSkinAdapter || nativeGameplay && authoredEnabled);
+            if (!GameAudioOriginalOwner.Ready && component.GetType().Name.StartsWith("Ak", StringComparison.Ordinal))
+                UnityEngine.Object.DestroyImmediate(component);
+        }
+    }
+    public static void PrepareCommandoAnimationBeforeSpawn(Transform model, RuntimeAnimatorController controller, Avatar avatar)
+    {
+        // The body is still inactive. Isolate the same callbacks as the display
+        // before allowing Unity to initialize the model on body activation.
+        IsolateModelCallbacks(model, false, false, null);
+        foreach (var collider in model.GetComponentsInChildren<Collider>(true))
+            collider.enabled = false;
+        var animator = model.GetComponent<Animator>();
+        animator.runtimeAnimatorController = controller;
+        animator.avatar = avatar;
+        animator.applyRootMotion = false;
+        animator.cullingMode = AnimatorCullingMode.AlwaysAnimate;
+        animator.enabled = true;
+        model.gameObject.SetActive(true);
+    }
     public void CaptureNativeSourceSkinReport()
     {
         if (nativeSourceSkinLifecycle)
@@ -116,25 +150,7 @@ public sealed class NovaDiagnosticDisplay : IDisposable
         {
             if (sourceSkinLifecycleDiagnostic)
                 nativeSourceSkinLifecycle = AndroidNativeSourceSkinLifecycle.PrepareInactive(model.gameObject, selectedBody, sourceSkinReport);
-            foreach (var component in model.GetComponentsInChildren<MonoBehaviour>(true))
-            {
-                // The source model owns original melee hitboxes and incoming hurtboxes.
-                // Preserve those gameplay components and animation-event receivers; the
-                // unrelated model callbacks remain isolated from unavailable middleware.
-                bool authoredEnabled = component.enabled;
-                bool nativeSkinOwner = sourceSkinLifecycleDiagnostic && authoredEnabled &&
-                                       nativeSourceSkinLifecycle && component.gameObject == nativeSourceSkinLifecycle.gameObject &&
-                                       (component is RoR2.ModelSkinController || component is RoR2.CharacterModel);
-                bool nativeSkinAdapter = sourceSkinLifecycleDiagnostic && component == nativeSourceSkinLifecycle;
-                bool nativeAudio = authoredEnabled && GameAudioOriginalOwner.Ready &&
-                                   component.GetType().Name.StartsWith("Ak", StringComparison.Ordinal);
-                bool nativeGameplay = component is RoR2.AnimationEvents || component is RoR2.HitBox || component is RoR2.HitBoxGroup ||
-                                      component is RoR2.HurtBox || component is RoR2.HurtBoxGroup;
-                component.enabled = nativeAudio || sourceSelected && (nativeSkinOwner || nativeSkinAdapter || nativeGameplay && authoredEnabled);
-                // Preserve authored audio state only after original native ownership is ready.
-                if (!GameAudioOriginalOwner.Ready && component.GetType().Name.StartsWith("Ak", StringComparison.Ordinal))
-                    UnityEngine.Object.DestroyImmediate(component);
-            }
+            IsolateModelCallbacks(model, sourceSelected, sourceSkinLifecycleDiagnostic, nativeSourceSkinLifecycle);
         }
         var shader = Resources.Load<Shader>("CommandoMaterialPreview");
         var simple = Resources.Load<Shader>("CommandoPreview");

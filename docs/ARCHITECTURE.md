@@ -6985,15 +6985,19 @@ resource table; output hashes record the transformed entry. No runtime state or
 new lifecycle owner is added.
 
 Commando animation preparation stays in `AutomaticModelBoundary`: the artifact
-controller/avatar bind while the model is inactive, before the body state machine
-is enabled. The native `BaseCharacterMain` then snapshots locomotion parameters
-on its first entry. `NovaDiagnosticDisplay` preserves that binding and reports the
-native movement cache and Animator state; its existing disposal owns teardown.
+controller/avatar bind while the body is inactive. `NovaDiagnosticDisplay`
+isolates the existing model callbacks and enables the Animator/model before body
+activation. The body activation initializes the Animator; the boundary verifies
+its locomotion parameters before yielding to native state `Start`. Native
+`BaseCharacterMain` snapshots them on its first entry. The display preserves the
+binding and reports the native movement cache and Animator state; its existing
+disposal owns teardown.
 `./dev editor --target lab --action commando-animation-host` is a current exact-editor
-contract check for native parameter discovery on an inactive, bound Animator
-(`SurvivorSkillInputHost.VerifyInactiveAnimatorParameterSnapshot`); gameplay remains
-a device gate.
+contract check reproducing unavailable parameters before activation and native
+parameter discovery before state Start
+(`SurvivorSkillInputHost.VerifyAnimatorBeforeStateStart`); gameplay remains a
+device gate.
 `NovaInputBridge` neutralizes unavailable physical input without suspending idle
 touch capture; focus, pause and teardown still cancel all input. The same
-exact-editor action also checks first touch delivery without a physical mapping
+exact-editor action also checks first touch delivery without a physical controller
 and full cancellation through `Neutral`.

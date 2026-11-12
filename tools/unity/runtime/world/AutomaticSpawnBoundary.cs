@@ -327,6 +327,8 @@ public sealed partial class PortSession
             Save();
             TraceStartup("automatic-native-spawn-start-begin");
             body.gameObject.SetActive(true);
+            if (automaticModel)
+                VerifyAutomaticAnimatorBeforeStateStart(body);
             yield return null;
             Check(machine.state is SpawnTeleporterState && body.GetBuffCount(RoR2Content.Buffs.HiddenInvincibility) == 1 &&
                       model.invisibilityCount == invisible + 1,
