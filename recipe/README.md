@@ -2427,6 +2427,15 @@ remain required. No generated assembly or protected implementation is included.
 
 ## App-host build-tool metadata audit (2026-10-23)
 
+2026-11-12: the existing native plan also selects the supplied Android CPython
+`_sqlite3` extension and SQLite 3.54.1 for the bundle producer's disk indexes.
+Actual AArch64 ELF dependencies resolve through the existing Python, Android
+support and zlib selections plus Android system libraries. The dependency's
+versioned regular file is pinned; its installed `libsqlite3.so` link retains the
+actual ELF lookup name. Only relative selectors, hashes and link metadata are
+tracked. Native bytes and tool notices remain with the separately supplied
+tools; this metadata audit grants no redistribution approval or phone acceptance.
+
 `owner-app-host-tools.json` contains relative paths, names, hashes and native
 link selections for the scoped Python 3.14.8 build-tool profile, plus 21 public
 producer source digests. Its source commit is a retrieval hint; readers compare
