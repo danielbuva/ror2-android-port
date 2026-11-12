@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J1427](PORTING_JOURNAL.md#j1427--expose-checked-bundle-emission-and-canonical-repack-requests) | 2026-11-11 | Expose checked bundle emission and canonical repack requests | 2026-11-12. |
 | [J1425](PORTING_JOURNAL.md#j1425--measure-direct-native-state-catalog-iterator-execution) | 2026-11-11 | Measure direct native state catalog iterator execution | 2026-11-12. |
 | [J1426](PORTING_JOURNAL.md#j1426--scope-incremental-job-pins-to-their-source-dependencies) | 2026-11-11 | Scope incremental job pins to their source dependencies | 2026-11-12. |
 | [J1424](PORTING_JOURNAL.md#j1424--attribute-original-drone-catalog-startup-phases) | 2026-11-11 | Attribute original drone catalog startup phases | 2026-11-12. |

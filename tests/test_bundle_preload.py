@@ -738,6 +738,80 @@ class BundlePreloadTests(unittest.TestCase):
                 with self.assertRaisesRegex(ValueError, "input differs|[Ss]tructural"):
                     P.produce_request(inputs, root / "output")
 
+    def test_declarative_request_relocates_native_lineages_without_rewriting_proofs(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            inputs, request = self.request_fixture(root)
+            baseline = P.produce_request(inputs, root / "baseline")
+            records = root / "graph/selected-records.jsonl"
+            selected = list(P.json_rows(records))
+            retained = root / "retained"
+            retained.mkdir()
+            blob, index = bytearray(), []
+            for value in selected:
+                source = Path(value["provider"])
+                row = next(P.json_rows(source / "index.jsonl"))
+                body = P.O.record_extent(source / "objects.bin", row)
+                index.append({**row, "offset": len(blob), "provider_before": value["provider"], "body_before_sha256": value["sha256"]})
+                blob.extend(body)
+                value["provider"] = str(retained)
+            (retained / "objects.bin").write_bytes(blob)
+            (retained / "index.jsonl").write_text("".join(json.dumps(row) + "\n" for row in index))
+            (retained / "witnesses.jsonl").write_text("")
+            (retained / "result.json").write_text(
+                json.dumps(
+                    dict(
+                        success=True,
+                        index_sha256=P.O.B.sha(retained / "index.jsonl"),
+                        objects_sha256=P.O.B.sha(retained / "objects.bin"),
+                        witnesses_sha256=P.O.B.sha(retained / "witnesses.jsonl"),
+                    )
+                )
+            )
+            records.write_text("".join(json.dumps(row) + "\n" for row in selected))
+            request["graph"][records.name].update(bytes=records.stat().st_size, sha256=P.O.B.sha(records))
+            request["endpoints"] = request["graph"][records.name]
+            # Move every lineage pack; the selected rows, index and field proofs
+            # keep their original logical provider names byte for byte.
+            moved = root / "phone"
+            moved.mkdir()
+            aliases = {}
+            for source in [retained, *[Path(row["provider_before"]) for row in index]]:
+                destination = moved / source.name
+                source.rename(destination)
+                aliases[str(source)] = str(destination.relative_to(root))
+            paths = root / "provider-paths.json"
+            paths.write_text(json.dumps(aliases))
+            request["provider_paths"] = dict(path=paths.name, bytes=paths.stat().st_size, sha256=P.O.B.sha(paths))
+            inputs.write_text(json.dumps(request))
+            cold = P.produce_request(inputs, root / "cold", cache_directory=root / "cache")
+            warm = P.produce_request(inputs, root / "warm", cache_directory=root / "cache")
+            self.assertEqual(cold["sha256"], baseline["sha256"])
+            self.assertEqual(warm["sha256"], baseline["sha256"])
+            self.assertTrue(warm["emission"]["cache_reused"])
+            resolver = {name: root / path for name, path in aliases.items()}
+            endpoints = P.module("bundle_endpoints")
+            required = json.loads((root / "required.json").read_bytes())
+            qualification = endpoints.Qualification(
+                Node(**vars(P)),
+                endpoints.InputPins(root, P),
+                request,
+                {tuple(row["destination"]): row for row in selected},
+                json.loads((root / "types.json").read_bytes()),
+                required,
+                provider_paths=resolver,
+            )
+            self.assertEqual(qualification.retained(selected[0]["destination"])[1], bytes(blob[:12]))
+            wrong = {**selected[0], "record": "wrong-profile"}
+            with self.assertRaisesRegex(ValueError, "profile differs"):
+                P.ProducerRecords(resolver).record(wrong)
+            with self.assertRaises(FileNotFoundError):
+                P.ProducerRecords().record(selected[0])
+            # Even a whole-output hit must revisit the relocated upstream bytes.
+            (moved / "10/objects.bin").write_bytes(b"x" * 12)
+            with self.assertRaisesRegex(ValueError, "extent drift"):
+                P.produce_request(inputs, root / "changed", cache_directory=root / "cache")
+
     def test_final_readback_respects_required_subset_of_local_descriptors(self):
         E = P.module("bundle_endpoints")
         with tempfile.TemporaryDirectory() as tmp:
@@ -1250,7 +1324,13 @@ class BundlePreloadTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             graph, types = self.streamed_graph(root)
-            result = P.emit_closed_native(graph, [types], root / "emitted", "authored", "CAB-authored")
+            (root / "phone").mkdir()
+            provider_paths = {}
+            for source in sorted({Path(row["provider"]) for row in P.json_rows(graph / "selected-records.jsonl")}):
+                destination = root / "phone" / source.name
+                source.rename(destination)
+                provider_paths[str(source)] = destination
+            result = P.emit_closed_native(graph, [types], root / "emitted", "authored", "CAB-authored", provider_paths=provider_paths)
             self.assertEqual((result["records"], result["resource_records"], result["resource_bytes"]), (5, 3, 83))
             objects = {obj.path_id: obj.read_typetree() for obj in UnityPy.load(result["bundle"]).objects}
             resource = P.O.B.Bundle(Path(result["bundle"])).member("CAB-authored.resS")

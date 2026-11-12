@@ -30,6 +30,13 @@ Optional `null_script_sources` rows bind `destination` and the exact original
 `type_source` selector, bundle/body hashes and any explicit missing-script policy.
 Optional `canonical` supplies `aliases`, `profile` and `bundle` pins. Actual
 native types, script identities and reciprocal ownership remain strict.
+Optional `provider_paths` pins a JSON object mapping original native-pack names
+to directories on the executing host. Values resolve beside that JSON file.
+Descriptors and lineage proofs keep their original provider identities; file
+access, resource copying, endpoint checks and cache validation use the mapped
+directories and still check every preceding pack's body, profile and receipt.
+This relocates existing packs; source generation and SDK witness relocation
+remain separate requirements for the phone chain.
 The result identifies the final repacked bundle when present. Every call checks
 final managed script allocation, including cached emission, and closes readers.
 No Unity typed load, phone runtime, APK installation or gameplay is established

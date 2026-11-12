@@ -53,7 +53,7 @@ class EmissionCache:
         self.connection.close()
 
 
-def emission_input_pins(selected, graph_directory, schema_paths, codec, cache_inputs):
+def emission_input_pins(selected, graph_directory, schema_paths, codec, cache_inputs, provider_paths=None):
     """Hash complete provider lineages and explicit callback/code dependencies."""
     import json
 
@@ -65,7 +65,8 @@ def emission_input_pins(selected, graph_directory, schema_paths, codec, cache_in
         paths.add(graph_directory / "selected-roots.jsonl")
     if codec is not None:
         paths.add(Path(codec).resolve())
-    pending = {Path(row["provider"]).resolve() for row in selected.values()}
+    providers = ProducerRecords(provider_paths)
+    pending = {providers.directory(row["provider"]) for row in selected.values()}
     seen = set()
     while pending:
         directory = pending.pop()
@@ -80,7 +81,7 @@ def emission_input_pins(selected, graph_directory, schema_paths, codec, cache_in
             if (directory / name).is_file():
                 paths.add(directory / name)
         if "profile_sha256" not in json.loads(receipt.read_text()):
-            pending.update(Path(row["provider_before"]).resolve() for row in json_rows(directory / "index.jsonl"))
+            pending.update(providers.directory(row["provider_before"]) for row in json_rows(directory / "index.jsonl"))
     return {str(path): O.B.sha(path) for path in sorted(paths)}
 
 
@@ -529,9 +530,14 @@ class ProducerRecords:
     PPtr and final endpoint qualification still belong to the emitter.
     """
 
-    def __init__(self):
+    def __init__(self, provider_paths=None):
         self.cache = {}
         self.pins = {}
+        self.provider_paths = provider_paths or {}
+
+    def directory(self, name):
+        """Relocate file access while preserving the provider's proof identity."""
+        return Path(self.provider_paths.get(str(name), name)).resolve()
 
     def provider(self, directory):
         import json
@@ -566,7 +572,7 @@ class ProducerRecords:
         return self.cache[directory]
 
     def record(self, value):
-        directory = Path(value["provider"]).resolve()
+        directory = self.directory(value["provider"])
         key, expected = tuple(value["record_source"]), value["sha256"]
         seen, first = set(), None
         while True:
@@ -589,7 +595,7 @@ class ProducerRecords:
                     raise ValueError("Original native provider profile differs")
                 return first
             expected = row["body_before_sha256"]
-            directory = Path(row["provider_before"]).resolve()
+            directory = self.directory(row["provider_before"])
 
 
 def retain_type_metadata(records, output, qualify):
@@ -693,6 +699,7 @@ def _emit_closed_native(
     managed_check=None,
     emission_cache=None,
     cache_inputs=(),
+    provider_paths=None,
 ):
     """Emit the declared local/native subset of a qualified producer graph.
 
@@ -754,7 +761,7 @@ def _emit_closed_native(
             key: row
             for key, row in all_records.items()
             if key[:2] == (name, member)
-            and (Path(row["provider"]) / "result.json").is_file()
+            and (ProducerRecords(provider_paths).directory(row["provider"]) / "result.json").is_file()
             and row.get("schema")
             and row["class_id"] not in (114, 115, 142)
             and (not row.get("resource") or row["class_id"] in (28, 89, 43))
@@ -780,7 +787,7 @@ def _emit_closed_native(
         for key in missing:
             del selected[key]
     if emission_cache is not None:
-        input_pins = emission_input_pins(selected, graph_directory, schema_paths, codec, cache_inputs)
+        input_pins = emission_input_pins(selected, graph_directory, schema_paths, codec, cache_inputs, provider_paths)
         # Routes are field-qualified and can include endpoints outside selected.
         request_key = EmissionCache.key(
             dict(
@@ -797,7 +804,7 @@ def _emit_closed_native(
         if saved is not None:
             saved = json.loads(saved)
             if all(Path(path).is_file() and O.B.sha(Path(path)) == digest for path, digest in saved["outputs"].items()):
-                if emission_input_pins(selected, graph_directory, schema_paths, codec, cache_inputs) != input_pins:
+                if emission_input_pins(selected, graph_directory, schema_paths, codec, cache_inputs, provider_paths) != input_pins:
                     raise ValueError("Emission cache input drift")
                 stage("reuse_validation")
                 result = saved["result"]
@@ -875,7 +882,7 @@ def _emit_closed_native(
     with tempfile.TemporaryDirectory(prefix=".emission-", dir=output) as scratch:
         store = Path(scratch) / "bodies.bin"
         objects, graph, bodymap, cache = [], {}, {}, {}
-        providers = ProducerRecords()
+        providers = ProducerRecords(provider_paths)
         resource_extents, resource_rows, emitted_hashes = [], [], {}
         qualified_targets, managed_rows = {}, {}
         resource_size = 0
@@ -888,7 +895,7 @@ def _emit_closed_native(
         )
         with store.open("wb") as destination:
             for provider, values in by_provider.items():
-                directory = Path(provider)
+                directory = providers.directory(provider)
                 for value in values:
                     identity = value["destination"][2]
                     row, body = providers.record(value)
@@ -1198,7 +1205,7 @@ def _emit_closed_native(
     if resource_rows:
         (output / "resources.jsonl").write_text("".join(json.dumps(row) + "\n" for row in resource_rows))
     if emission_cache is not None:
-        if emission_input_pins(selected, graph_directory, schema_paths, codec, cache_inputs) != input_pins:
+        if emission_input_pins(selected, graph_directory, schema_paths, codec, cache_inputs, provider_paths) != input_pins:
             raise ValueError("Emission cache input drift")
         stage("input_revalidation")
         result.update(cache=dict(emission_cache.counts), cache_reused=False, seconds=time.monotonic() - started)
@@ -1497,12 +1504,25 @@ def produce_request(inputs, output, *, cache_directory=None):
     inputs = Path(inputs).resolve(strict=True)
     request = json.loads(inputs.read_bytes())
     required_keys = {"schema", "graph", "schemas", "required", "routes", "endpoints", "staged", "managed_inputs", "game_root", "codec", "bundle", "member"}
-    if set(request) - {"canonical", "null_script_sources"} != required_keys or request["schema"] != "owner-bundle-preload-inputs-v1":
+    if set(request) - {"canonical", "null_script_sources", "provider_paths"} != required_keys or request["schema"] != "owner-bundle-preload-inputs-v1":
         raise ValueError("unsupported bundle preload input contract")
     E = module("bundle_endpoints")
     owner = SimpleNamespace(**globals())
     pins = E.InputPins(inputs.parent, owner)
     pins.add(inputs)
+    provider_paths = {}
+    if "provider_paths" in request:
+        path = pins.pin(request["provider_paths"])
+        aliases = json.loads(path.read_bytes())
+        if not isinstance(aliases, dict) or any(
+            not isinstance(key, str) or not key or not isinstance(value, str) or not value for key, value in aliases.items()
+        ):
+            raise ValueError("native provider paths require nonempty source/directory strings")
+        for source, value in aliases.items():
+            directory = pins.path(value, path.parent)
+            if not directory.is_dir():
+                raise ValueError("native provider path must name a directory")
+            provider_paths[source] = directory
     graph_files = {name: pins.pin(value) for name, value in request["graph"].items()}
     if not {"done.json", "selected-records.jsonl"} <= graph_files.keys() or set(graph_files) - {"done.json", "selected-records.jsonl", "selected-roots.jsonl"}:
         raise ValueError("explicit graph receipt/records and optional roots required")
@@ -1545,7 +1565,7 @@ def produce_request(inputs, output, *, cache_directory=None):
     root = Path(__file__).resolve().parents[3]
     for path in (root / "scripts/lab").glob("*.py"):
         pins.add(path)
-    with closing(E.Qualification(owner, pins, request, selected, types, required)) as qualification:
+    with closing(E.Qualification(owner, pins, request, selected, types, required, provider_paths=provider_paths)) as qualification:
         qualification.setup()
         # Populate external managed readback even when emission reuses an output.
         for target in sorted({tuple(edge["target"]) for edges in routes.values() for edge in edges if tuple(edge["target"][:2]) != qualification.member}):
@@ -1564,6 +1584,7 @@ def produce_request(inputs, output, *, cache_directory=None):
             managed_check=qualification.check,
             cache_directory=cache_directory,
             cache_inputs=pins.files,
+            provider_paths=provider_paths,
         )
         qualification.check_final(emission["bundle"])
         final = emission
