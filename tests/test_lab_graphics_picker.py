@@ -372,6 +372,8 @@ class GraphicsPickerTests(unittest.TestCase):
             G.acceptance(phone, {"installer_apk": apk, "installer_version": 3, "installer_sha256": digest, "android_sdk": Path("/authored")}, cases.append, 30)
         self.assertEqual(cases, list(G.CASES))
         self.assertEqual(start.call_count, 2)
+        self.assertEqual(start.call_args_list[0].kwargs, {})
+        self.assertEqual(start.call_args_list[1].kwargs, {"repeat_notification_denial": True})
         self.assertEqual(phone.storage.call_count, 2)
         artifacts.assert_not_called()
         installer.assert_not_called()
@@ -387,6 +389,13 @@ class GraphicsPickerTests(unittest.TestCase):
             self.assertEqual(G.main([]), 1)
         context.assert_not_called()
         phone.assert_not_called()
+
+    def test_start_opts_into_repeated_denial_only_for_explicit_cold_restart(self):
+        phone = Mock()
+        with patch.object(G.time, "sleep"):
+            G.start(phone)
+            G.start(phone, repeat_notification_denial=True)
+        self.assertEqual([c.kwargs for c in phone.dismiss_notification_permission.call_args_list], [{"repeat_denial": False}, {"repeat_denial": True}])
 
     def test_smoke_records_only_a_valid_runner_id_without_changing_diagnostic_sequence(self):
         for run_id in ("43117215117", "PRIVATE SENTINEL"):

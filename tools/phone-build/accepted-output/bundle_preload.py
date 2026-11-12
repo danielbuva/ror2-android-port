@@ -53,7 +53,36 @@ class EmissionCache:
         self.connection.close()
 
 
-def emission_input_pins(selected, graph_directory, schema_paths, codec, cache_inputs):
+def materialize_cached_bundle(result, output, artifacts):
+    """Give each dispatcher attempt regular, independently retained artifacts."""
+    import json
+    import shutil
+    import subprocess
+    import sys
+
+    output.mkdir(parents=True, exist_ok=False)
+    for source, digest in artifacts.items():
+        source = Path(source)
+        if source.name == "result.json":
+            continue
+        target = output / source.name
+        if sys.platform == "darwin":
+            subprocess.run(["cp", "-c", str(source), str(target)], check=True)
+        else:
+            shutil.copyfile(source, target)
+        if O.B.sha(target) != digest:
+            raise ValueError("Materialized cache artifact differs")
+    result["bundle"] = str((output / Path(result["bundle"]).name).resolve())
+    request = output / "request.json"
+    if request.is_file():
+        value = json.loads(request.read_bytes())
+        value["path"] = result["bundle"]
+        request.write_text(json.dumps(value, indent=2) + "\n")
+    (output / "result.json").write_text(json.dumps(result, indent=2) + "\n")
+    return result
+
+
+def emission_input_pins(selected, graph_directory, schema_paths, codec, cache_inputs, provider_paths=None):
     """Hash complete provider lineages and explicit callback/code dependencies."""
     import json
 
@@ -65,7 +94,8 @@ def emission_input_pins(selected, graph_directory, schema_paths, codec, cache_in
         paths.add(graph_directory / "selected-roots.jsonl")
     if codec is not None:
         paths.add(Path(codec).resolve())
-    pending = {Path(row["provider"]).resolve() for row in selected.values()}
+    providers = ProducerRecords(provider_paths)
+    pending = {providers.directory(row["provider"]) for row in selected.values()}
     seen = set()
     while pending:
         directory = pending.pop()
@@ -80,7 +110,7 @@ def emission_input_pins(selected, graph_directory, schema_paths, codec, cache_in
             if (directory / name).is_file():
                 paths.add(directory / name)
         if "profile_sha256" not in json.loads(receipt.read_text()):
-            pending.update(Path(row["provider_before"]).resolve() for row in json_rows(directory / "index.jsonl"))
+            pending.update(providers.directory(row["provider_before"]) for row in json_rows(directory / "index.jsonl"))
     return {str(path): O.B.sha(path) for path in sorted(paths)}
 
 
@@ -245,6 +275,22 @@ def qualify_external_fields(value, body, typ, proofs, endpoint_record):
     return targets
 
 
+def checked_fields(record, raw, native):
+    """Check an actual endpoint's extent, full native type and measured fields."""
+    if (
+        (len(raw), hashlib.sha256(raw).hexdigest()) != (record["bytes"], record["sha256"])
+        or full_type_key(native) != record["full_type"]
+        or hashlib.sha256(native["tree"]).hexdigest() != record["schema"]
+        or native["class_id"] != record["class_id"]
+        or native["hash"].hex() != record["native_type_hash"]
+    ):
+        raise ValueError("Structural route body or full type differs")
+    fields = pointers(raw, native, {})
+    if set(fields.values()) != set(map(tuple, record["edges"])):
+        raise ValueError("Structural route measured pointers differ")
+    return fields
+
+
 def qualify_structural_fields(value, body, typ, routes, endpoint_record):
     """Check complete current routes without historical field provenance.
 
@@ -254,22 +300,8 @@ def qualify_structural_fields(value, body, typ, routes, endpoint_record):
     required emission check. No absent body or inferred type is admitted.
     """
 
-    def checked(record, raw, native):
-        if (
-            (len(raw), hashlib.sha256(raw).hexdigest()) != (record["bytes"], record["sha256"])
-            or full_type_key(native) != record["full_type"]
-            or hashlib.sha256(native["tree"]).hexdigest() != record["schema"]
-            or native["class_id"] != record["class_id"]
-            or native["hash"].hex() != record["native_type_hash"]
-        ):
-            raise ValueError("Structural route body or full type differs")
-        fields = pointers(raw, native, {})
-        if set(fields.values()) != set(map(tuple, record["edges"])):
-            raise ValueError("Structural route measured pointers differ")
-        return fields
-
     owner = tuple(value["destination"])
-    fields = checked(value, body, typ)
+    fields = checked_fields(value, body, typ)
     nonnull = {field: pointer for field, pointer in fields.items() if pointer[1]}
     targets = {}
     for route in routes:
@@ -281,7 +313,7 @@ def qualify_structural_fields(value, body, typ, routes, endpoint_record):
         endpoint, raw, native = endpoint_record(target)
         if tuple(endpoint["destination"]) != target:
             raise ValueError("Structural route endpoint identity differs")
-        checked(endpoint, raw, native)
+        checked_fields(endpoint, raw, native)
         targets[field] = target
     if set(targets) != set(nonnull):
         raise ValueError("Structural routes require every nonnull field")
@@ -411,7 +443,41 @@ def produce(selected, records, sources):
     return produce_graph(selected, graph, sources)
 
 
-def produce_graph(selected, graph, sources, *, emission_cache=None):
+def preload_seeds(selected, group, endpoint_record):
+    """Keep explicit destination seeds separate from advertised subassets.
+
+    External seeds have no parent field to qualify their endpoint. Read and
+    check their actual staged body/type even when a complete output is cached.
+    """
+    local, external, seen = [], [], set()
+    for value in group.get("preload_roots", []):
+        target = tuple(value)
+        if len(target) != 3 or not isinstance(target[2], int) or not target[2] or target in seen:
+            raise ValueError("Preload roots require distinct nonnull destination triples")
+        seen.add(target)
+        if target[:2] == (selected["name"], selected["member"]):
+            local.append(target[2])
+        else:
+            if target[1] == selected["member"] or target[1] not in selected["externals"]:
+                raise ValueError("Preload root serialized member absent or ambiguous")
+            if endpoint_record is None:
+                raise ValueError("External preload root requires an actual endpoint reader")
+            record, raw, native = endpoint_record(target)
+            if tuple(record["destination"]) != target:
+                raise ValueError("Preload root endpoint identity differs")
+            checked_fields(record, raw, native)
+            external.append((selected["externals"].index(target[1]) + 1, target[2]))
+    return local, external
+
+
+def check_preload_seeds(required, endpoint_record):
+    for group in required["asset_groups"]:
+        local, _ = preload_seeds(required, group, endpoint_record)
+        if any(identity not in required["path_ids"] for identity in [*group["roots"], *local]):
+            raise ValueError("Required asset group root or preload root absent")
+
+
+def produce_graph(selected, graph, sources, *, emission_cache=None, endpoint_record=None):
     """Frame grouped preloads from the emitter's fully parsed body graph."""
     validate_graph(graph, len(selected["externals"]))
     owners = external_owners(selected, sources, {})
@@ -424,32 +490,42 @@ def produce_graph(selected, graph, sources, *, emission_cache=None):
     count_offset = stream.tell()
     stream.write(bytes(4))
     preload_count, containers = 0, []
-    graph_key = (
-        EmissionCache.key(
-            dict(
-                code=O.B.sha(Path(__file__)),
-                graph=sorted((key, sorted(edges)) for key, edges in graph.items()),
-                owners=sorted(owners.items()),
-                ranks=sorted(ranks.items()),
-            )
-        )
-        if emission_cache is not None
-        else None
-    )
+    if emission_cache is not None:
+        scope = EmissionCache.key(dict(code=O.B.sha(Path(__file__)), ranks=sorted(ranks.items())))
+        node_keys = {
+            identity: EmissionCache.key([sorted(edges), [(pointer, owners.get(pointer)) for pointer in sorted(edges) if pointer[0] and pointer[1]]])
+            for identity, edges in graph.items()
+        }
     for group in groups:
         roots = group["roots"]
         if not roots or len(set(roots)) != len(roots):
             raise ValueError("Prefab asset group requires distinct imported roots")
-        key = EmissionCache.key([graph_key, roots])
-        packed = emission_cache.get("groups", key) if emission_cache is not None else None
+        local, external = preload_seeds(selected, group, endpoint_record)
+        seeds = sorted(set(roots) | set(local))
+        if any(identity not in graph for identity in seeds):
+            raise ValueError("Required asset group root or preload root absent")
+        external = set(external)
+        external.update(owners[pointer] for pointer in list(external) if pointer in owners)
+        packed = None
+        if emission_cache is not None:
+            group_scope = EmissionCache.key([scope, roots, seeds, sorted(external)])
+            previous = emission_cache.get("group_members", group_scope)
+            members = [row[0] for row in struct.iter_unpack("<q", previous)] if previous is not None else seeds
+            key = EmissionCache.key([group_scope, [(identity, node_keys.get(identity)) for identity in members]])
+            packed = emission_cache.get("groups", key)
         if packed is None:
-            dependencies = closure(graph, roots, owners)
+            dependencies = closure(graph, seeds, owners) | external
             if any(file_id not in ranks for file_id, _ in dependencies):
                 raise ValueError("Prefab preload references an absent serialized file")
             ordered = sorted(dependencies, key=lambda pointer: (ranks[pointer[0]], pointer[1]))
             packed = b"".join(struct.pack("<iq", *pointer) for pointer in ordered)
             if emission_cache is not None:
+                # Old reachable members are an invalidation witness, not closure
+                # input. Any changed edge/owner triggers a fresh traversal.
+                members = sorted(path_id for file_id, path_id in dependencies if not file_id)
+                key = EmissionCache.key([group_scope, [(identity, node_keys[identity]) for identity in members]])
                 emission_cache.put("groups", key, packed)
+                emission_cache.put("group_members", group_scope, b"".join(struct.pack("<q", identity) for identity in members))
         count = len(packed) // 12
         containers.extend((group["path"].lower(), preload_count, count, root) for root in roots)
         stream.write(packed)
@@ -525,9 +601,14 @@ class ProducerRecords:
     PPtr and final endpoint qualification still belong to the emitter.
     """
 
-    def __init__(self):
+    def __init__(self, provider_paths=None):
         self.cache = {}
         self.pins = {}
+        self.provider_paths = provider_paths or {}
+
+    def directory(self, name):
+        """Relocate file access while preserving the provider's proof identity."""
+        return Path(self.provider_paths.get(str(name), name)).resolve()
 
     def provider(self, directory):
         import json
@@ -562,7 +643,7 @@ class ProducerRecords:
         return self.cache[directory]
 
     def record(self, value):
-        directory = Path(value["provider"]).resolve()
+        directory = self.directory(value["provider"])
         key, expected = tuple(value["record_source"]), value["sha256"]
         seen, first = set(), None
         while True:
@@ -585,7 +666,7 @@ class ProducerRecords:
                     raise ValueError("Original native provider profile differs")
                 return first
             expected = row["body_before_sha256"]
-            directory = Path(row["provider_before"]).resolve()
+            directory = self.directory(row["provider_before"])
 
 
 def retain_type_metadata(records, output, qualify):
@@ -689,6 +770,7 @@ def _emit_closed_native(
     managed_check=None,
     emission_cache=None,
     cache_inputs=(),
+    provider_paths=None,
 ):
     """Emit the declared local/native subset of a qualified producer graph.
 
@@ -750,7 +832,7 @@ def _emit_closed_native(
             key: row
             for key, row in all_records.items()
             if key[:2] == (name, member)
-            and (Path(row["provider"]) / "result.json").is_file()
+            and (ProducerRecords(provider_paths).directory(row["provider"]) / "result.json").is_file()
             and row.get("schema")
             and row["class_id"] not in (114, 115, 142)
             and (not row.get("resource") or row["class_id"] in (28, 89, 43))
@@ -769,6 +851,7 @@ def _emit_closed_native(
             raise ValueError("Required object set must exclude the regenerated AssetBundle container")
         if any(row["class_id"] == 114 for row in selected.values()) and managed_check is None:
             raise ValueError("Required managed objects need current CLR qualification")
+        check_preload_seeds(dict(required, name=name, member=member), endpoint_record)
     while required is None:
         missing = [key for key, row in selected.items() if any(pid and (*key[:2], pid) not in selected for _, pid in row["edges"])]
         if not missing:
@@ -776,7 +859,7 @@ def _emit_closed_native(
         for key in missing:
             del selected[key]
     if emission_cache is not None:
-        input_pins = emission_input_pins(selected, graph_directory, schema_paths, codec, cache_inputs)
+        input_pins = emission_input_pins(selected, graph_directory, schema_paths, codec, cache_inputs, provider_paths)
         # Routes are field-qualified and can include endpoints outside selected.
         request_key = EmissionCache.key(
             dict(
@@ -793,7 +876,7 @@ def _emit_closed_native(
         if saved is not None:
             saved = json.loads(saved)
             if all(Path(path).is_file() and O.B.sha(Path(path)) == digest for path, digest in saved["outputs"].items()):
-                if emission_input_pins(selected, graph_directory, schema_paths, codec, cache_inputs) != input_pins:
+                if emission_input_pins(selected, graph_directory, schema_paths, codec, cache_inputs, provider_paths) != input_pins:
                     raise ValueError("Emission cache input drift")
                 stage("reuse_validation")
                 result = saved["result"]
@@ -804,11 +887,7 @@ def _emit_closed_native(
                     cache_reused=True,
                     peak_rss_bytes=resource.getrusage(resource.RUSAGE_SELF).ru_maxrss * (1 if sys.platform == "darwin" else 1024),
                 )
-                output.mkdir(parents=True, exist_ok=False)
-                for filename in ("gaps.json", "roots.json", "request.json"):
-                    (output / filename).write_bytes((Path(result["bundle"]).parent / filename).read_bytes())
-                (output / "result.json").write_text(json.dumps(result, indent=2) + "\n")
-                return result
+                return materialize_cached_bundle(result, output, saved["outputs"])
     stage("input_identity")
     schemas, schema_pins = {}, {}
     needed = {row["full_type"] if required is not None else row["schema"] for row in selected.values()}
@@ -871,7 +950,7 @@ def _emit_closed_native(
     with tempfile.TemporaryDirectory(prefix=".emission-", dir=output) as scratch:
         store = Path(scratch) / "bodies.bin"
         objects, graph, bodymap, cache = [], {}, {}, {}
-        providers = ProducerRecords()
+        providers = ProducerRecords(provider_paths)
         resource_extents, resource_rows, emitted_hashes = [], [], {}
         qualified_targets, managed_rows = {}, {}
         resource_size = 0
@@ -884,7 +963,7 @@ def _emit_closed_native(
         )
         with store.open("wb") as destination:
             for provider, values in by_provider.items():
-                directory = Path(provider)
+                directory = providers.directory(provider)
                 for value in values:
                     identity = value["destination"][2]
                     row, body = providers.record(value)
@@ -1018,7 +1097,11 @@ def _emit_closed_native(
                     raise ValueError("Required asset group root absent")
             # produce retains GUID order and every root/subasset of each path.
             container_body = produce_graph(
-                dict(name=name, member=member, externals=externals, dependencies=dependencies, asset_groups=groups), graph, {}, emission_cache=emission_cache
+                dict(name=name, member=member, externals=externals, dependencies=dependencies, asset_groups=groups),
+                graph,
+                {},
+                emission_cache=emission_cache,
+                endpoint_record=read_produced,
             )
             roots = [
                 dict(path=group["path"], destination=[name, member, identity], class_id=selected[name, member, identity]["class_id"])
@@ -1194,7 +1277,7 @@ def _emit_closed_native(
     if resource_rows:
         (output / "resources.jsonl").write_text("".join(json.dumps(row) + "\n" for row in resource_rows))
     if emission_cache is not None:
-        if emission_input_pins(selected, graph_directory, schema_paths, codec, cache_inputs) != input_pins:
+        if emission_input_pins(selected, graph_directory, schema_paths, codec, cache_inputs, provider_paths) != input_pins:
             raise ValueError("Emission cache input drift")
         stage("input_revalidation")
         result.update(cache=dict(emission_cache.counts), cache_reused=False, seconds=time.monotonic() - started)
@@ -1212,19 +1295,447 @@ def _emit_closed_native(
     return result
 
 
+def repack_canonical_aliases(
+    source,
+    output,
+    required,
+    aliases,
+    selected_records,
+    qualified_types,
+    canonical_profile,
+    canonical_bundle,
+    *,
+    codec=None,
+    codec_sha256=None,
+    cache_directory=None,
+    endpoint_record=None,
+):
+    """Route consumers to explicit catalog owners after strict native emission.
+
+    The caller supplies the qualified emitted bundle and its selection/types,
+    plus source-body aliases and the canonical producer profile/container.
+    Structural routes remain immutable. This bounded pass preserves duplicate
+    objects and their reciprocal native ownership; it never establishes Unity
+    typed load, current-CLR qualification or device acceptance itself.
+    """
+    from contextlib import closing, nullcontext
+    import copy
+    import json
+    import resource
+    import sys
+    import tempfile
+    import time
+
+    W = module("unity_write")
+    source, output, canonical_bundle = Path(source), Path(output), Path(canonical_bundle)
+    aliases, selected_records = list(aliases), list(selected_records)
+    name, member = required["name"], required["member"]
+    canonical = canonical_profile["bundle"]
+    check_preload_seeds(required, endpoint_record)
+    if (codec is None) != (codec_sha256 is None):
+        raise ValueError("Canonical repack compression needs codec and SHA-256")
+    paths = [source, canonical_bundle, *Path(__file__).parent.glob("*.py")]
+    if codec is not None:
+        paths.append(Path(codec))
+
+    def pins():
+        return {str(path.resolve()): O.B.sha(path) for path in paths}
+
+    started, input_pins = time.monotonic(), pins()
+    request_key = EmissionCache.key(
+        dict(
+            inputs={path: digest for path, digest in input_pins.items() if path != str(source.resolve())},
+            source_sha256=input_pins[str(source.resolve())],
+            required=required,
+            aliases=aliases,
+            selected=selected_records,
+            qualified_types=qualified_types,
+            canonical_profile=canonical_profile,
+            codec_sha256=codec_sha256,
+        )
+    )
+    with closing(EmissionCache(cache_directory)) if cache_directory is not None else nullcontext(None) as emission_cache:
+        saved = emission_cache.get("canonical", request_key) if emission_cache is not None else None
+        if saved is not None:
+            result = json.loads(saved)
+            if Path(result["bundle"]).is_file() and O.B.sha(Path(result["bundle"])) == result["sha256"]:
+                if pins() != input_pins:
+                    raise ValueError("Canonical repack input drift")
+                result.update(cache_reused=True, inputs=input_pins, seconds=time.monotonic() - started)
+                return materialize_cached_bundle(result, output, {result["bundle"]: result["sha256"]})
+        mapping = {tuple(row["duplicate"]): row for row in aliases}
+        selected = {tuple(row["destination"]): row for row in selected_records if tuple(row["destination"]) in mapping}
+        if not mapping or len(mapping) != len(aliases) or selected.keys() != mapping.keys():
+            raise ValueError("Canonical aliases require distinct selected duplicate endpoints")
+        bundle, target_bundle = W.B.Bundle(source), W.B.Bundle(canonical_bundle)
+        with bundle.member(member) as stream, target_bundle.member(canonical["member"]) as target_stream:
+            layout, target_layout = W.read_serialized(stream), W.read_serialized(target_stream)
+            objects = {row["path_id"]: row for row in layout["objects"]}
+            target_objects = {row["path_id"]: row for row in target_layout["objects"]}
+            externals = [row["path"].rsplit("/", 1)[-1] if row["path"].startswith("archive:/") else row["path"] for row in layout["externals"]]
+            if externals != required["externals"] or canonical["member"] not in externals:
+                raise ValueError("Canonical repack must preserve the external member table")
+            native = module("catalog_complete").ProducedMembers()
+            native.add(member, stream, name)
+            native.add(canonical["member"], target_stream, canonical["name"])
+            specifications = {row["path_id"]: row for row in canonical_profile["objects"]}
+            schemas, ownership, component_arrays, proof = {}, {}, {}, []
+
+            def record(handle, metadata, obj):
+                handle.seek(metadata["data_offset"] + obj["offset"])
+                return W.B.exact(handle, obj["bytes"])
+
+            for key, alias in mapping.items():
+                value, destination = selected[key], tuple(alias["canonical"])
+                if (
+                    key[:2] != (name, member)
+                    or destination[:2] != (canonical["name"], canonical["member"])
+                    or tuple(value.get("source", ())) != tuple(alias["source"])
+                    or value["sha256"] != alias["duplicate_body_sha256"]
+                    or value["full_type"] != alias["duplicate_full_type"]
+                ):
+                    raise ValueError("Canonical source or selected identity differs")
+                specification = specifications[destination[2]]
+                selector = specification.get("properties_hash", {}).get("behaviour", specification.get("source"))
+                if selector is None:
+                    raise ValueError("Canonical alias needs original body provenance, not type_source")
+                original = canonical_profile["sources"][selector[0]]
+                if [original["path"], original["member"], selector[1]] != alias["source"]:
+                    raise ValueError("Canonical profile selects a different original body")
+                old, new = objects[key[2]], target_objects[destination[2]]
+                old_body, new_body = record(stream, layout, old), record(target_stream, target_layout, new)
+                old_type, new_type = layout["types"][old["type_id"]], target_layout["types"][new["type_id"]]
+                qualified = {k: bytes.fromhex(v) if k in ("tree", "hash", "script_id") else v for k, v in qualified_types[value["full_type"]].items()}
+                qualified_final_type(old_body, old_type, layout["scripts"], qualified)
+                qualified_final_type(new_body, new_type, target_layout["scripts"], new_type)
+                if old_type["class_id"] != alias["duplicate_class_id"] or {k: v for k, v in old_type.items() if k != "script_type"} != {
+                    k: v for k, v in new_type.items() if k != "script_type"
+                }:
+                    raise ValueError("Canonical full native/script/schema type differs")
+                pointers(old_body, old_type, schemas)
+                pointers(new_body, new_type, schemas)
+                if old_type["class_id"] == 1:
+                    for duplicate, pid, body, typ, handle, metadata, members in (
+                        (True, key[2], old_body, old_type, stream, layout, objects),
+                        (False, destination[2], new_body, new_type, target_stream, target_layout, target_objects),
+                    ):
+                        for component_field, (fid, component_pid) in pointers(body, typ, schemas).items():
+                            if fid or component_pid not in members:
+                                raise ValueError("Catalog GameObject component must be present and local")
+                            component = members[component_pid]
+                            component_body = record(handle, metadata, component)
+                            fields = pointers(component_body, metadata["types"][component["type_id"]], schemas)
+                            owner_field = ("m_GameObject",) if ("m_GameObject",) in fields else ("#374",)
+                            if fields.get(owner_field) != (0, pid):
+                                raise ValueError("Catalog GameObject/component reciprocal ownership differs")
+                            if duplicate:
+                                component_arrays[pid, component_field] = (fid, component_pid)
+                                owner_key = component_pid, owner_field
+                                if owner_key in ownership:
+                                    raise ValueError("Component has repeated duplicate GameObject owners")
+                                ownership[owner_key] = pid
+                identity = None
+                if old_type["class_id"] == 114:
+                    identity = native.managed_identity(canonical["member"], new_type, new_body)
+                    if native.managed_identity(member, old_type, old_body) != identity:
+                        raise ValueError("Canonical and duplicate managed identities differ")
+                proof.append(
+                    dict(
+                        **alias,
+                        emitted_duplicate_sha256=hashlib.sha256(old_body).hexdigest(),
+                        canonical_sha256=hashlib.sha256(new_body).hexdigest(),
+                        canonical_script_identity=identity,
+                    )
+                )
+            replacements, graph, hashes, changes = {}, {}, {}, []
+            container = None
+            for pid, obj in objects.items():
+                body, typ = record(stream, layout, obj), layout["types"][obj["type_id"]]
+                hashes[pid] = hashlib.sha256(body).hexdigest()
+                if typ["class_id"] == 142:
+                    if container is not None:
+                        raise ValueError("Multiple AssetBundle containers")
+                    container = pid
+                    continue
+                fields = pointers(body, typ, schemas)
+                targets = {
+                    field: tuple(mapping[name, member, pointer[1]]["canonical"])
+                    for field, pointer in fields.items()
+                    if pointer[0] == 0 and (name, member, pointer[1]) in mapping and (pid, field) not in ownership
+                }
+                if targets:
+                    revised_body = relocate_pointer_fields({"destination": [name, member, pid]}, body, typ, targets, externals)
+                    expected = bytearray(body)
+                    spans = A.fields(body, schemas[typ["tree"]])[1]
+                    for field, target in targets.items():
+                        begin, end = spans[field]
+                        if end - begin != 12:
+                            raise ValueError("Canonical field must be a complete PPtr")
+                        struct.pack_into("<iq", expected, begin, externals.index(target[1]) + 1, target[2])
+                        changes.append(dict(owner=pid, field=list(field), target=target))
+                    if revised_body != bytes(expected):
+                        raise ValueError("Canonical relocation changed unrelated bytes")
+                    body = replacements[pid] = revised_body
+                for field, pointer in pointers(body, typ, schemas).items():
+                    if (pid, field) in component_arrays and pointer != component_arrays[pid, field]:
+                        raise ValueError("Canonical repack changed GameObject component membership")
+                graph[pid] = set(pointers(body, typ, schemas).values())
+                for field, pointer in pointers(body, typ, schemas).items():
+                    if (pid, field) in ownership:
+                        if pointer != (0, ownership[pid, field]):
+                            raise ValueError("Canonical repack changed reciprocal component ownership")
+                    elif pointer[0] == 0 and (name, member, pointer[1]) in mapping:
+                        raise ValueError("Canonical repack retained a consumer alias")
+            if container is None or set(graph) != set(required["path_ids"]):
+                raise ValueError("Canonical repack required object set differs")
+            validate_graph(graph, len(externals))
+            replacements[container] = produce_graph(required, graph, {}, emission_cache=emission_cache, endpoint_record=endpoint_record)
+            revised = copy.deepcopy(layout)
+            offset = 0
+            for obj in sorted(revised["objects"], key=lambda row: row["offset"]):
+                offset = (offset + 7) // 8 * 8
+                obj["offset"] = offset
+                obj["bytes"] = len(replacements[obj["path_id"]]) if obj["path_id"] in replacements else objects[obj["path_id"]]["bytes"]
+                offset += obj["bytes"]
+            revised["bytes"] = revised["data_offset"] + offset
+            output.mkdir(parents=True, exist_ok=False)
+            with tempfile.TemporaryDirectory(prefix=".canonical-", dir=output) as scratch:
+                temporary = Path(scratch) / "serialized"
+
+                def body_for(obj):
+                    if obj["path_id"] in replacements:
+                        return io.BytesIO(replacements[obj["path_id"]])
+                    stream.seek(layout["data_offset"] + objects[obj["path_id"]]["offset"])
+                    return stream
+
+                with temporary.open("xb") as handle:
+                    W.write_serialized(handle, revised, body_for)
+                target = output / (name + ".bundle")
+                members = [
+                    (m, flags, temporary.stat().st_size if m == member else size, lambda m=m: temporary.open("rb") if m == member else bundle.member(m))
+                    for m, (_, size, flags) in bundle.members.items()
+                ]
+                compression = W.codec(codec, codec_sha256) if codec is not None else nullcontext(lambda block, method: block)
+                with compression as compress, target.open("xb") as handle:
+                    W.write_bundle(handle, members, compress, engine=layout["engine"], flags=0x243 if codec is not None else 0x40)
+            actual = W.B.Bundle(target)
+            with actual.member(member) as persisted:
+                metadata = W.read_serialized(persisted)
+                if metadata != revised:
+                    raise ValueError("Persisted canonical metadata differs")
+                for obj in metadata["objects"]:
+                    pid = obj["path_id"]
+                    raw = record(persisted, metadata, obj)
+                    expected = hashlib.sha256(replacements[pid]).hexdigest() if pid in replacements else hashes[pid]
+                    if hashlib.sha256(raw).hexdigest() != expected:
+                        raise ValueError("Persisted canonical body differs")
+                    if pid != container and set(pointers(raw, metadata["types"][obj["type_id"]], schemas).values()) != graph[pid]:
+                        raise ValueError("Persisted canonical pointer graph differs")
+            for other in bundle.members:
+                if other != member:
+                    with bundle.member(other) as before, actual.member(other) as after:
+
+                        def digest(handle):
+                            value = hashlib.sha256()
+                            while block := handle.read(1024 * 1024):
+                                value.update(block)
+                            return value.digest()
+
+                        if digest(before) != digest(after):
+                            raise ValueError("Canonical repack changed unrelated member")
+        if pins() != input_pins:
+            raise ValueError("Canonical repack input drift")
+        result = dict(
+            success=True,
+            non_final=True,
+            typed_load_accepted=False,
+            device_accepted=False,
+            bundle=str(target),
+            sha256=O.B.sha(target),
+            bytes=target.stat().st_size,
+            canonical_roots=len(mapping),
+            preserved_reciprocal_owner_fields=len(ownership),
+            changed_fields=len(changes),
+            changed_objects=len(replacements) - 1,
+            source_identity_proof=proof,
+            ownership=[dict(component=pid, field=field, owner=owner) for (pid, field), owner in ownership.items()],
+            inputs=input_pins,
+            request_sha256=request_key,
+            cache_reused=False,
+            seconds=time.monotonic() - started,
+            peak_rss_bytes=resource.getrusage(resource.RUSAGE_SELF).ru_maxrss * (1 if sys.platform == "darwin" else 1024),
+        )
+        (output / "result.json").write_text(json.dumps(result, indent=2) + "\n")
+        if emission_cache is not None:
+            emission_cache.put("canonical", request_key, json.dumps(result).encode())
+        return result
+
+
+def catalog_artifacts(required, final, output):
+    """Declare the checked emitted container, independently of its alias donor.
+
+    The emitter/repacker has already checked these groups against final bytes.
+    Keep the same declaration for catalog ownership; do not rerun production or
+    copy the bundle into a second artifact directory.
+    """
+    import json
+
+    profile = Path(output) / "catalog-profile.json"
+    profile.write_text(json.dumps(dict(bundle={key: required[key] for key in ("name", "member", "asset_groups")}), indent=2) + "\n")
+
+    def pin(path):
+        path = Path(path).resolve(strict=True)
+        return dict(path=str(path), bytes=path.stat().st_size, sha256=O.B.sha(path))
+
+    return dict(catalog_profile=pin(profile), catalog_bundle=pin(final["bundle"]))
+
+
+def produce_request(inputs, output, *, cache_directory=None):
+    """Run the checked emitter/repacker with explicit, request-relative inputs."""
+    from contextlib import closing
+    import json
+    from types import SimpleNamespace
+
+    inputs = Path(inputs).resolve(strict=True)
+    request = json.loads(inputs.read_bytes())
+    required_keys = {"schema", "graph", "schemas", "required", "routes", "endpoints", "staged", "managed_inputs", "game_root", "codec", "bundle", "member"}
+    if set(request) - {"canonical", "null_script_sources", "provider_paths"} != required_keys or request["schema"] != "owner-bundle-preload-inputs-v1":
+        raise ValueError("unsupported bundle preload input contract")
+    E = module("bundle_endpoints")
+    owner = SimpleNamespace(**globals())
+    pins = E.InputPins(inputs.parent, owner)
+    pins.add(inputs)
+    provider_paths = {}
+    if "provider_paths" in request:
+        path = pins.pin(request["provider_paths"])
+        aliases = json.loads(path.read_bytes())
+        if not isinstance(aliases, dict) or any(
+            not isinstance(key, str) or not key or not isinstance(value, str) or not value for key, value in aliases.items()
+        ):
+            raise ValueError("native provider paths require nonempty source/directory strings")
+        for source, value in aliases.items():
+            directory = pins.path(value, path.parent)
+            if not directory.is_dir() and not directory.is_file():
+                raise ValueError("provider path must name a directory or serialized file")
+            provider_paths[source] = directory
+    graph_files = {name: pins.pin(value) for name, value in request["graph"].items()}
+    if not {"done.json", "selected-records.jsonl"} <= graph_files.keys() or set(graph_files) - {"done.json", "selected-records.jsonl", "selected-roots.jsonl"}:
+        raise ValueError("explicit graph receipt/records and optional roots required")
+    graph = graph_files["done.json"].parent
+    if any(path != graph / name for name, path in graph_files.items()):
+        raise ValueError("graph files must retain their declared directory and names")
+    if (graph / "selected-roots.jsonl").is_file() and "selected-roots.jsonl" not in graph_files:
+        raise ValueError("graph roots require an explicit input pin")
+    schema_paths = [pins.pin(value) for value in request["schemas"]]
+    types = {}
+    for path in schema_paths:
+        for key, value in json.loads(path.read_bytes()).items():
+            if key in types and types[key] != value:
+                raise ValueError("Conflicting complete native schema")
+            types[key] = value
+    selected = {}
+    for path in (pins.pin(request["endpoints"]), graph_files["selected-records.jsonl"]):
+        for value in json_rows(path):
+            key = tuple(value["destination"])
+            if key in selected and selected[key] != value:
+                raise ValueError("Conflicting endpoint descriptor")
+            selected[key] = value
+    required = pins.read(request["required"])
+    for key in ("name", "member"):
+        expected = request["bundle" if key == "name" else key]
+        if key in required and required[key] != expected:
+            raise ValueError("Required bundle/member identity differs")
+        required[key] = expected
+    routes = {}
+    for value in json_rows(pins.pin(request["routes"])):
+        key = tuple(value["owner"])
+        if key in routes:
+            raise ValueError("Duplicate structural route owner")
+        routes[key] = value["edges"]
+    codec = pins.pin(request["codec"])
+    canonical = request.get("canonical")
+    if canonical is not None:
+        aliases, profile = pins.read(canonical["aliases"]), pins.read(canonical["profile"])
+        canonical_bundle = pins.pin(canonical["bundle"])
+    root = Path(__file__).resolve().parents[3]
+    for path in (root / "scripts/lab").glob("*.py"):
+        pins.add(path)
+    with closing(E.Qualification(owner, pins, request, selected, types, required, provider_paths=provider_paths)) as qualification:
+        qualification.setup()
+        # Populate external managed readback even when emission reuses an output.
+        for target in sorted({tuple(edge["target"]) for edges in routes.values() for edge in edges if tuple(edge["target"][:2]) != qualification.member}):
+            qualification.endpoints(target)
+        emission = emit_closed_native(
+            graph,
+            schema_paths,
+            Path(output) / "emitted",
+            request["bundle"],
+            request["member"],
+            codec=codec,
+            codec_sha256=request["codec"]["sha256"],
+            required=required,
+            structural_routes=routes,
+            endpoint_record=qualification.endpoints,
+            managed_check=qualification.check,
+            cache_directory=cache_directory,
+            cache_inputs=pins.files,
+            provider_paths=provider_paths,
+        )
+        qualification.check_final(emission["bundle"])
+        final = emission
+        if canonical is not None:
+            final = repack_canonical_aliases(
+                emission["bundle"],
+                Path(output) / "canonical",
+                required=required,
+                aliases=aliases,
+                selected_records=list(selected.values()),
+                qualified_types=types,
+                canonical_profile=profile,
+                canonical_bundle=canonical_bundle,
+                codec=codec,
+                codec_sha256=request["codec"]["sha256"],
+                cache_directory=cache_directory,
+                endpoint_record=qualification.endpoints,
+            )
+            qualification.check_final(final["bundle"])
+        pins.check()
+        result = dict(
+            success=True,
+            bundle=final["bundle"],
+            sha256=final["sha256"],
+            emission=emission,
+            canonical=None if canonical is None else final,
+            **catalog_artifacts(required, final, output),
+            typed_load_accepted=False,
+            device_accepted=False,
+        )
+        (Path(output) / "result.json").write_text(json.dumps(result, indent=2) + "\n")
+        return result
+
+
 def main():
     import argparse
     import json
 
     parser = argparse.ArgumentParser(description="Emit an explicitly partial, closed native bundle from source-produced records")
-    parser.add_argument("--graph", type=Path, required=True)
-    parser.add_argument("--schema", type=Path, action="append", required=True)
+    parser.add_argument("--inputs", type=Path, help="explicit checked emission/canonical request; paths relative to this file")
+    parser.add_argument("--cache", type=Path, help="private incremental emission/preload/repack cache")
+    parser.add_argument("--graph", type=Path)
+    parser.add_argument("--schema", type=Path, action="append")
     parser.add_argument("--output", type=Path, required=True)
-    parser.add_argument("--bundle", required=True)
-    parser.add_argument("--member", required=True)
+    parser.add_argument("--bundle")
+    parser.add_argument("--member")
     parser.add_argument("--codec", type=Path, help="pinned LZ4 helper; compresses UnityFS blocks without changing member bytes")
     parser.add_argument("--codec-sha256")
     args = parser.parse_args()
+    if args.inputs is not None:
+        if any(value is not None for value in (args.graph, args.schema, args.bundle, args.member, args.codec, args.codec_sha256)):
+            parser.error("--inputs cannot be combined with legacy emission inputs")
+        print(json.dumps(produce_request(args.inputs, args.output, cache_directory=args.cache), indent=2))
+        return
+    if args.cache is not None or any(value is None for value in (args.graph, args.schema, args.bundle, args.member)):
+        parser.error("legacy emission requires --graph, --schema, --bundle and --member; --cache requires --inputs")
     print(
         json.dumps(
             emit_closed_native(args.graph, args.schema, args.output, args.bundle, args.member, codec=args.codec, codec_sha256=args.codec_sha256), indent=2

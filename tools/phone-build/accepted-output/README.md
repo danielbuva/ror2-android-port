@@ -1,5 +1,56 @@
 # Accepted-output reconstruction support
 
+## Checked bundle requests
+
+`bundle_preload.py --inputs REQUEST.json --output NEW_DIRECTORY --cache CACHE`
+exposes the current emitter and optional canonical repacker without private
+Python callbacks. Cache is optional and private. The request uses schema
+`owner-bundle-preload-inputs-v1`; file pins contain `path`, `bytes` and `sha256`.
+Relative file paths resolve beside the request. Required fields are:
+
+- `bundle`, `member`, `game_root`: explicit output identities and original input root.
+- `graph`: pins keyed by `done.json`, `selected-records.jsonl`, and optional
+  `selected-roots.jsonl`, together in their generated graph directory.
+- `schemas`, `required`, `routes`, `endpoints`: schema pins and pinned JSON/JSONL
+  files containing the exact object/root set, complete structural routes and
+  staged endpoint descriptors. Providers remain generated on the executing host;
+  their existing receipts and lineage must resolve there.
+- `staged`: rows with `bundle` and a `file` pin. SDK rows also supply `member`
+  and optional `leaves`/`full` witness pins; absent type trees require the same
+  qualified SDK evidence as the callable emitter.
+- `managed_inputs`: pins for `runtime_request`, `managed_providers`, `metadata`,
+  `registry_receipt`, `provider_aliases`, `registry_schemas`, `registry_body`,
+  `properties_sdk`, and `original_script_properties`. Native-only requests may
+  use an empty object. Provider paths resolve beside the provider document;
+  registry aliases resolve beside their document. Raw metadata/provider paths
+  and hashes must agree before both are resolved for current-CLR validation.
+- `codec`: pinned executable built for the executing platform.
+
+Each required `asset_groups` row keeps `roots` as the ordered local container
+subassets. Optional `preload_roots` holds distinct `[bundle, member, path_id]`
+destination triples that must preload without becoming container entries. Local
+seeds must belong to the required object set and include their transitive local
+dependencies. External seeds must resolve in the declared external-member table
+and pass actual staged body/type and current managed checks. Both the emitter
+and canonical repacker recheck them before accepting a complete cache hit;
+changed local seed dependencies invalidate only affected preload groups.
+
+Optional `null_script_sources` rows bind `destination` and the exact original
+`type_source` selector, bundle/body hashes and any explicit missing-script policy.
+Optional `canonical` supplies `aliases`, `profile` and `bundle` pins. Actual
+native types, script identities and reciprocal ownership remain strict.
+Optional `provider_paths` pins a JSON object mapping original native-pack names
+to directories on the executing host. Values resolve beside that JSON file.
+Descriptors and lineage proofs keep their original provider identities; file
+access, resource copying, endpoint checks and cache validation use the mapped
+directories and still check every preceding pack's body, profile and receipt.
+This relocates existing packs; source generation and SDK witness relocation
+remain separate requirements for the phone chain.
+The result identifies the final repacked bundle when present. Every call checks
+final managed script allocation, including cached emission, and closes readers.
+No Unity typed load, phone runtime, APK installation or gameplay is established
+by this command. Signed release dispatch and phone runtime dependencies remain open.
+
 ## Source stage contexts
 
 `stage_contexts.py --profile recipe/owner-stage-contexts.json --profile-sha256 SHA
@@ -56,6 +107,18 @@ The [assessment](../../../docs/accepted-build-reconstruction.md) distinguishes
 this working replay path from independent PC-input-only production and public
 distribution. No package, SDK binary, original input, output or signing key is
 included here. File verification makes no ownership/authentication claim.
+
+## Record supplier metadata
+
+Fresh mesh, Avatar, texture, Sprite, context/prefab/payload Shader and shared SDK
+Shader packs include receipt-bound `types.json` tables. Every index row's
+`type_id` selects its final serialized descriptor in that pack. Pooling retains
+the complete native identity, raw type tree and dependency metadata, including
+actual Texture2D versus Cubemap classes. The release graph exports the tables
+alongside object and index artifacts. Existing body-only packs remain readable
+through their explicit metadata witnesses; fresh production needs the original
+serialized member, not an isolated body. Full Unity and phone loadability are
+separate gates.
 
 ## Inputs and lifecycle
 
@@ -947,12 +1010,14 @@ same command, profile, PC input, codec/toolchain pins and output directory as
 the interrupted run. Normal invocation still requires a new output directory.
 The initial `result.json` persists those pins before encoding. Every completed
 object/resource extent is flushed and fsynced before its index row commits.
+`types.json` is atomically persisted first, and resume reloads its pack-local
+IDs and checks committed rows against the original serialized native types.
 Resume verifies the ordered index and all persisted extents against the
 profile, removes only uncommitted tails, and skips completed texture outputs.
 Unknown files, mismatched pins and corrupt committed data refuse recovery.
-The `objects.bin`, `resources.bin` and `index.jsonl` formats stay unchanged.
+Object and resource bytes stay unchanged; index rows also carry `type_id`.
 
-Five authored host tests include real SIGKILL recovery and byte-exact fresh-run
+Authored host tests include real SIGKILL recovery and byte-exact fresh-run
 comparison. Android crash recovery remains open after
 [J1123](../../../docs/history/journal-J1-J1177/PORTING_JOURNAL.md#j1123--guarded-rgba-phone-batch-loses-transport-admission-stays-open).
 Recover the interrupted device's evidence and boot reason before cleanup or
@@ -1991,3 +2056,17 @@ back to check IDs, types and every body hash. `result.json` always declares
 Temporary serialization/body staging is removed on success or failure.
 `request.json` feeds the exact-editor native-content fixture documented above;
 structural emission alone does not imply native loadability or device play.
+
+The checked `--inputs` request also accepts a hash-pinned `provider_paths` JSON
+map. Keys retain original logical provider names; values resolve beside the map
+and name native record-pack directories or full SDK witness serialized files.
+Relocation preserves descriptor/proof strings and all body, profile, index,
+witness, native type and PPtr checks. A full SDK witness must still identify the
+staged file by hash and complete layout.
+
+Warm `--cache` reuse materializes regular bundle and companion files in the new
+output attempt, using APFS clones on macOS and file copies elsewhere. Bundle and
+request receipts name that attempt's file. Canonical repack keys bind source
+content independently of the emitted attempt path. Retain the source output
+referenced by the private cache until superseded. Phone SQLite/LZ4 qualification,
+signed graph dispatch and converted-device acceptance remain open.

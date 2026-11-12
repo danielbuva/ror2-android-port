@@ -315,13 +315,13 @@ class Picker:
             raise LAB.Failure("picker-ui-text-mismatch")
 
 
-def start(phone):
+def start(phone, *, repeat_notification_denial=False):
     phone.require_owned_installer()
     phone.shell("input", "keyevent", "KEYCODE_WAKEUP", label="picker-display-wake")
     phone.shell("wm", "dismiss-keyguard", label="picker-keyguard-dismiss")
     phone.shell("am", "start", "-W", "-n", LAB.ACTIVITY, "--ez", "graphics_fixture", "true", label="picker-launch")
     time.sleep(1)
-    phone.dismiss_notification_permission()  # Existing owner declines by default, never grants.
+    phone.dismiss_notification_permission(repeat_denial=repeat_notification_denial)  # Never grants.
 
 
 def put(phone, name, data):
@@ -385,7 +385,7 @@ def acceptance(phone, config, passed, timeout):
     if state != b"system\nsystem\n":
         raise LAB.Failure("picker-system-receipt-mismatch")
     phone.shell("am", "force-stop", LAB.PACKAGE, label="picker-cold-stop")
-    start(phone)
+    start(phone, repeat_notification_denial=True)
     picker.tap("Graphics drivers")
     picker.text("graphics-selection", "Selected for next launch: System")
     passed("system-reset-cold-start")

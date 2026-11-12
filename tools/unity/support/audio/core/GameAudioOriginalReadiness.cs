@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.Globalization;
 
 // A readiness gate only. It never calls Init, LoadBank, PostCallbacks, RenderAudio,
 // pause/focus APIs, or Term. Those remain owned by the original Wwise components.
@@ -13,6 +15,51 @@ internal sealed class GameAudioOriginalReadiness
     private bool selected, prepared, initSeen, initSuccess, initBankSeen, initBankSuccess;
     private bool initializeReturnSeen, initializeReturnSuccess, controlObserved, terminated, failed;
     private int initCount, initBankCount, initializeReturnCount, postServiceCount, renderServiceCount, controlPollFrames;
+    private readonly long timingOrigin = Stopwatch.GetTimestamp();
+    private double engineSeconds = -1, initBankSeconds = -1, initializeSeconds = -1;
+    private double firstServiceSeconds = -1, controlSeconds = -1, firstBankSeconds = -1, lastBankSeconds = -1;
+
+    private double StartupSeconds { get { return (Stopwatch.GetTimestamp() - timingOrigin) / (double)Stopwatch.Frequency; } }
+
+    // Observation only; callback threads use the monotonic clock, never Unity APIs.
+    internal string StartupBlocker
+    {
+        get
+        {
+            lock (sync)
+            {
+                if (failed) return "failed";
+                if (terminated) return "terminated";
+                if (!selected || !prepared) return "preparation";
+                if (!initSeen) return "engine-init";
+                if (!initBankSeen) return "init-bank";
+                if (!initializeReturnSeen) return "initialize-return";
+                if (requested.Count != expected.Count) return "bank-requests";
+                if (completed.Count != expected.Count) return "bank-results";
+                if (!controlObserved) return "exact-control";
+                return "ready";
+            }
+        }
+    }
+
+    internal string CaptureStartupTiming()
+    {
+        lock (sync)
+        {
+            double last = engineSeconds;
+            string lastPrerequisite = "engine-init";
+            if (initBankSeconds > last) { last = initBankSeconds; lastPrerequisite = "init-bank"; }
+            if (initializeSeconds > last) { last = initializeSeconds; lastPrerequisite = "initialize-return"; }
+            if (lastBankSeconds > last) { last = lastBankSeconds; lastPrerequisite = "bank-results"; }
+            if (controlSeconds > last) { last = controlSeconds; lastPrerequisite = "exact-control"; }
+            if (last < 0) lastPrerequisite = "unobserved";
+            return String.Format(CultureInfo.InvariantCulture,
+                "clock=readiness-created engine={0:R} init-bank={1:R} initialize-return={2:R} first-service={3:R} exact-control={4:R} first-bank={5:R} last-bank={6:R} requested={7} completed={8} control-polls={9} blocker={10} observed={11:R} last-prerequisite={12}",
+                engineSeconds, initBankSeconds, initializeSeconds, firstServiceSeconds, controlSeconds,
+                firstBankSeconds, lastBankSeconds, requested.Count, completed.Count, controlPollFrames, StartupBlocker,
+                StartupSeconds, lastPrerequisite);
+        }
+    }
 
     private struct BankOutcome
     {
@@ -69,6 +116,7 @@ internal sealed class GameAudioOriginalReadiness
         {
             if (!StartupSelected || initSeen) { failed = true; return; }
             initSeen = true; initCount++;
+            engineSeconds = StartupSeconds;
             initSuccess = result == successValue;
             if (!initSuccess) failed = true;
         }
@@ -80,6 +128,7 @@ internal sealed class GameAudioOriginalReadiness
         {
             if (!StartupSelected || initBankSeen) { failed = true; return; }
             initBankSeen = true; initBankCount++;
+            initBankSeconds = StartupSeconds;
             initBankSuccess = result == successValue && bankId != 0;
             if (!initBankSuccess) failed = true;
         }
@@ -92,6 +141,7 @@ internal sealed class GameAudioOriginalReadiness
             initializeReturnCount++;
             if (!StartupSelected || initializeReturnSeen || !success) { failed = true; return; }
             initializeReturnSeen = true; initializeReturnSuccess = true;
+            initializeSeconds = StartupSeconds;
         }
     }
 
@@ -102,6 +152,7 @@ internal sealed class GameAudioOriginalReadiness
             if (!StartupSelected || terminated) return;
             if (postCallbacksReturned) postServiceCount++;
             if (renderAudioSucceeded) renderServiceCount++;
+            if (postCallbacksReturned && renderAudioSucceeded && firstServiceSeconds < 0) firstServiceSeconds = StartupSeconds;
             if (postCallbacksReturned && !renderAudioSucceeded) failed = true;
         }
     }
@@ -118,6 +169,7 @@ internal sealed class GameAudioOriginalReadiness
             if (nativeCounterAdvanced)
             {
                 controlObserved = true;
+                controlSeconds = StartupSeconds;
                 return;
             }
             controlPollFrames++;
@@ -153,6 +205,8 @@ internal sealed class GameAudioOriginalReadiness
             }
             if (!success) { failed = true; return; }
             completed.Add(name, new BankOutcome(result, bankId, existingManagedHandle));
+            if (firstBankSeconds < 0) firstBankSeconds = StartupSeconds;
+            lastBankSeconds = StartupSeconds;
         }
     }
 

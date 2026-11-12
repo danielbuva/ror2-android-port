@@ -3202,3 +3202,279 @@ Cold process peak RSS: 9,292,054,528 bytes; per-stage timings are retained.
 Authored scalar fixture: one record miss, one unaffected hit, preload group hit.
 Focused host checks pass. Phone cache execution, typed load, converted play and
 complete import/install/update acceptance remain separate open gates.
+
+## J1418 — Attribute state catalog and profile preparation before spawn
+
+2026-11-11. Existing startup trace partitions state family/snapshot/config/types,
+report/native/adaptation/validation and profile loadout; native order/yields stay.
+Prior art: pinned R2API content-provider load/copy/finalize seams (J426).
+24 focused checks, Ruff, preflight and exact-editor code build pass.
+Evidence: `work/coordination/alpha-spawn-attribution-device-retry-20261111T232845Z/`.
+APK SHA-256 `80c4fc58b486e113b3b441300f55c89585ce0a102fdcd3b97e68cd2a80e86dad`.
+Ordinary Start reached Distant Roost/player/HUD/audio; current-PID errors empty.
+Distinct-source update kept profile/settings hashes, cached274/full0 audio proofs.
+State family 2.072 s; native initialization including yields 3.609 s; profile 0.082 s.
+All 14 markers once/monotonic; source `8d0cfcdf`. No total-load/speedup claim.
+CPU/GPU peak 76.9 °C, 0 s above 80 °C; battery 29 °C, runtime sample gap < 0.426 s.
+App/selectors/pending absent, scratch removed, OLED asleep, lease released; P1 notified.
+Sustained play/performance, physical navigation and full installer update remain open.
+
+## J1419 — Reuse bundle owner lookups within catalog families
+
+2026-11-11. Existing CategoryFamily resolves each requested bundle once on first use;
+provider order, typed loads, identities, failure policy and cache teardown stay.
+State family forwards existing sparse child tracing. Pinned R2API provider seams
+inform the observation; focused fixture and build checks passed before this pair.
+Evidence: `work/coordination/alpha-state-family-pair-20261111T235506Z/`.
+APK SHA-256 `0d19ea9f8d0ed57ade69cce7286fa6660e8c1e74611c1b2290ed025c698d9062`.
+Both Starts reached Distant Roost/player/HUD and 153 banks; current-PID errors empty.
+Distinct-source update retained profile/settings hashes; both cached 274/full 0 proofs.
+State family 1.414 → 1.388 s; native including yields 3.612 → 3.627 s.
+Launch/menu 23.261 → 19.589 s; Start/player 54.111 → 44.530 s, uncontrolled
+page cache: diagnostic pair only, no total-load speedup claim. Peak CPU/GPU
+77.7 → 80.0 °C, 0 s above 80 °C; battery 28 → 29 °C. App stopped, scratch
+removed, OLED asleep, lease released. Sustained play/performance remain open.
+
+## J1420 — Reuse indexes within canonical content snapshots
+
+2026-11-12. Existing WholeCatalogComposed snapshot owns lazy ID/string-key indexes;
+collection/reset drops them. Providers, typed loads, policy, order and yields stay.
+Mutable external snapshots index freshly; focused fixtures, pins and build passed.
+Evidence: `work/coordination/alpha-manifest-index-pair-20261112T002343Z/`.
+APK SHA-256 `1cce8b6518ab8242b26e156f07b6c73d80f86f2876aa9d4a5f03379ad22ff9ba`.
+Both Starts reached Verdant Falls/player/HUD and 153 banks; current-PID errors empty.
+In-place update kept profile/settings hashes; both cached 274/full 0 audio proofs.
+Four traced index spans total 0.536 → 0.008 s; state family 1.573 → 1.260 s.
+Launch/menu 37.005 → 22.001 s; Start/player 58.000 → 58.038 s; uncontrolled
+page cache, one pair: no total-load speedup claim. Native RNG/yields unchanged.
+Peak CPU/GPU 79.6 → 80.4 °C, 0 → 0.610 s above 80 °C during loadout/Start;
+battery 27 → 28 °C, runtime gaps < 0.345 s. App stopped, scratch removed,
+OLED asleep, lease released. Sustained play/performance and installer remain open.
+
+## J1421 — Canonical catalog consumers retain prefab ownership
+
+2026-11-12. The existing bundle-preload owner adds an explicit source-body alias
+repack after strict emission. Consumer PPtrs use canonical catalog providers;
+duplicate GameObjects retain their component arrays and reciprocal owner links.
+Full native schemas, actual MonoScript bindings, source selectors and persisted
+metadata, bodies, graph and resource members are checked. Reuse binds the alias
+plan, profiles, qualified types, containers, codec and producer code.
+Evidence: 35 authored tests in `tests/test_bundle_preload.py`; host preflight passes.
+Private integration notes: `work/coordination/p1-wholegame-1031/`
+`current-stage12-canonical-catalog-repack-v3/tracked-owner-integration.md`.
+Prior art: pinned R2API content-provider/catalog readiness contracts; J1410/J1417.
+Remaining: release dispatch, Unity typed load, current AOT and device acceptance.
+
+## J1422 — Attribute original audio readiness callback waits
+
+2026-11-12. Existing readiness gate records monotonic callback times and its final
+blocker; original requests, service calls, readiness, yields and lifecycle stay.
+Pinned R2API provider/readiness seams inform observation; focused 4/hook 13 checks passed.
+Evidence: `work/coordination/alpha-audio-readiness-device-20261112T010139Z/`.
+APK SHA-256 `1cee9b5ab9e7453f9ba76977e49f3b1208308be52c3d8ebe07dc7824e913b5a1`.
+Ordinary Start reached Distant Roost/Commando/player/HUD; current-PID errors empty.
+In-place update retained profile/settings; 153 banks ready, cached 274/full 0 proofs.
+Bank results were last: engine 1.629183, last bank 1.844401, observed 1.860470 s
+from gate creation, distinct from Unity startup time; last bank → observation 16.1 ms.
+Launch/menu 22.754 s; Start/player 53.485 s; uncontrolled page cache, no speedup claim.
+Peak CPU/GPU 76.1 °C, 0 s above 80 °C; battery 27 °C. App stopped, scratch removed,
+OLED asleep, lease released; pruning passed. Full build required changed audio core.
+Sustained play/performance, audible-output and complete phone installation remain open.
+
+## J1423 — Keep disjoint preload groups cached after pointer changes
+
+2026-11-12. Existing native emitter keys each preload group by its reachable
+edges and external owners, retaining member lists as invalidation witnesses.
+A changed pointer rebuilds its dependent groups; unrelated groups retain bytes.
+An authored three-group regression first reproduced global invalidation, then
+passed additions/removals, shared dependencies and external-owner changes with
+cached output equal to uncached output. All 36 focused host tests, Ruff and
+preflight pass. Evidence: `tests/test_bundle_preload.py` and private notes at
+`work/coordination/p1-wholegame-1031/group-cache-pointer-delta-1112/`.
+J1417's unchanged-run benchmark remains separate; no production benchmark replay,
+Unity typed load, phone execution or converted-game acceptance is claimed.
+
+## J1424 — Attribute original drone catalog startup phases
+
+2026-11-12. Existing population owner traces snapshots, family, native registration,
+availability, holders and validation; original order, checks and lifecycle stay.
+Pinned R2API provider/typed-load seams inform observation; three focused tests pass.
+Evidence: `work/coordination/alpha-drone-attribution-device-20261112T012620Z/`.
+APK SHA-256 `e67b6454cb9d22f91b7945b2459ac4c9624bcd0334913c1ec0794cae9e0f7ddb`.
+Ordinary Start reached lakes/Commando/player/HUD; current-PID errors empty.
+In-place update kept profile/settings hashes; 153 banks ready, cached 274/full 0 proofs.
+All 14 boundaries once/monotonic: drone total 154.1 ms, typed family assets 147.1 ms;
+native SetDroneDefs 0.412 ms. Inclusive wall intervals; children only on cache miss.
+Launch/menu 34.961 s; Start/player 50.184 s; uncontrolled page cache, no speedup claim.
+Peak CPU/GPU 76.5 °C, 0 s above 80 °C; battery 26 → 27 °C. Source `f11f5cd4`.
+App stopped, scratch removed, OLED asleep, lease released; pruning passed.
+Sustained play/performance, physical navigation and complete phone install remain open.
+
+## J1426 — Scope incremental job pins to their source dependencies
+
+2026-11-12. Merged #461 (`cd1db7ee`): signed jobs may declare their own
+source files; cache identity includes their transitive supplier closure while
+verification retains the full consumer union. Changing one consumer keeps its
+sibling and shared supplier; changing the supplier or producer rebuilds both.
+Legacy jobs keep conservative invalidation; consumer tampering still refuses.
+Evidence: `tests/test_phone_updates.py`, `tests/test_release_graph.py`
+and `tests/test_public_release.py`; 57 focused host tests, Ruff, preflight and
+full CI-local (3,194 tests) passed before merge. No APK/device change; complete
+phone conversion, installation and update/save retention remain open.
+## J1425 — Measure direct native state catalog iterator execution
+
+2026-11-12. Existing state driver summarizes invocation/nested MoveNext; native
+order, yields and disposal stay. Pinned R2API readiness seams inform observation.
+Executable nested-iterator fixture, Ruff, preflight and exact-editor build pass.
+Evidence: `work/coordination/alpha-state-execution-device-20261112T015831Z/`.
+APK SHA-256 `48834e2acff79ea723781256dffc5b009d34e66f0716bff8e87fe0a59c09ea75`.
+Ordinary Start reached golemplains/Commando/player/HUD; current-PID errors empty.
+In-place update kept profile/settings hashes; 153 banks ready, cached 274/full 0.
+Invocation 0.044 ms; 217 MoveNext calls total 0.478067 s, maximum 7.074 ms;
+214 null/1 nested/0 other yields. Native wall 3.573816 s/214 frames; remaining
+3.095705 s includes scheduling/callbacks, not I/O proof. Source `608a0b36`.
+Launch/menu 20.078 s; Start/player 44.636 s; uncontrolled cache, no speedup claim.
+Peak CPU/GPU 73.7 °C, 0 s above 80 °C; battery 26 °C, runtime gap < 0.433 s.
+App stopped, scratch removed, OLED asleep, lease released; pruning passed.
+Sustained play/performance, physical navigation and complete phone install stay open.
+
+## J1428 — Attribute original projectile catalog startup phases
+
+2026-11-12. Existing catalog owner traces family, snapshots, native registration,
+availability and validation; native order, identity checks and restoration stay.
+Pinned R2API provider/typed-load seams inform observation; four focused tests pass.
+Evidence: `work/coordination/alpha-projectile-attribution-device-20261112T022550Z/`.
+APK SHA-256 `c4f0a04ca64182b0d16addc8b607f65ddfdb9f3fab6e44c2e360acb76874fafa`.
+Ordinary Start reached golemplains2/Commando/player/HUD; current-PID errors empty.
+In-place update kept profile/settings hashes; 153 banks ready, cached 274/full 0.
+All 13 boundaries once/monotonic: total 1.140467 s; family assets 1.132830 s;
+native SetProjectilePrefabs 3.900 ms. Inclusive wall spans; uncontrolled cache, no speedup claim.
+Peak CPU/GPU 73.7 °C, 0 s above 80 °C; battery 26 °C. Source `0819d0dd`.
+App stopped, scratch removed, OLED asleep, lease released; pruning passed.
+Sustained play/performance, physical navigation and complete phone install stay open.
+## J1427 — Expose checked bundle emission and canonical repack requests
+
+2026-11-12. Merged #463 (`a6cb0c04`): the existing emitter/repacker accepts
+explicit pinned requests, using one endpoint owner for native bodies, PPtrs,
+SDK witnesses, current managed providers, registry scripts and final readback.
+Cache reuse and canonical repack recheck actual managed script allocation;
+readers close on success or failure. Native-only requests need no managed pins.
+Evidence: `tests/test_bundle_preload.py`; 41 focused host tests, Ruff,
+host preflight and full CI-local (3,200 tests) passed before merge.
+Source output: `7f70aeae`; no APK or device output was produced.
+Signed graph/source closure, phone dependencies and complete conversion stay open.
+
+## J1429 — Relocate pinned native producer packs without rewriting provenance
+
+2026-11-12. Merged #464 (`c8610148`): the checked bundle request accepts a
+pinned provider map for native packs and recursively retained upstream packs.
+Record, streamed-resource, endpoint and cache readers follow relocated files;
+descriptor/proof identities and profile/body/index/witness checks remain strict.
+Evidence: `tests/test_bundle_preload.py`; 42 focused host tests, relocated
+resource readback, Ruff, host preflight and full CI-local (3,201 tests) passed.
+Source output: `49a26a77`; no APK or device output was produced.
+SDK witness relocation, signed graph/source closure and phone conversion stay open.
+
+## J1431 — Materialize bundle cache artifacts and relocate SDK witnesses
+
+2026-11-12. Merged #466 (`ade73fcd`): warm emission/repack cache hits now
+materialize regular bundle files in the current attempt and update local receipts.
+Canonical cache reuse binds source bytes independently of the attempt path.
+The pinned provider map also relocates complete SDK serialized-file witnesses;
+logical identities and body/schema/PPtr/native/full-layout checks remain strict.
+Evidence: `tests/test_bundle_preload.py`; 43 focused host tests, Ruff,
+host preflight and full CI-local (3,203 tests) passed before merge.
+Source output: `1428b58c`; no APK or device output was produced.
+Signed graph/source closure, phone dependencies and complete conversion stay open.
+## J1430 — Attribute native director startup observer work
+
+2026-11-12. Existing director owner times conditional saves, spawn callback and
+final summons scan; native scheduling/RNG and report-write frequency stay intact.
+Evidence: `work/coordination/alpha-director-work-device-20261112T025824Z/`.
+APK SHA-256 `fed3f722464526961e881a2f54178c5e8689786377d49f4093fa0312031e01e5`.
+Source `724c8f07`; ordinary Start reached lakes/Commando/player/HUD, PID errors empty.
+Native wait 8.338604 s/1,453 frames: spawn callback 1.5961 ms, summons 19.6645 ms,
+zero conditional saves. Outside measured work 8.317343 s; no speedup/I/O claim.
+Runner wrongly required a save; retained failure plus offline assessment validates
+zero-call/zero-time and remaining native target/credit/placement contracts.
+Profile/settings hashes preserved; 153 banks ready. Executable observer fixture passed.
+Peak CPU/GPU 76.5 °C, 0 s above 80 °C; battery 27 °C. Cleanup/OLED/lease/prune passed.
+Sustained performance, physical navigation and complete phone installation stay open.
+
+## J1433 — Attribute native results item-group startup phases
+
+2026-11-12. Existing results owner traces family loads, metadata, holder binding,
+native registration and validation; source membership/order and cleanup stay.
+Pinned R2API lifecycle seams inform observation; executable owner fixture passes.
+Evidence: `work/coordination/alpha-results-groups-device-20261112T032319Z/`.
+APK SHA-256 `44c5d621cfd1f5aafcb542dd253e8ffdeef09bc6b7252bfb5c61c02be4338005`.
+Source `c3597299`; ordinary Start reached Commando/player/HUD; PID errors empty.
+Eight seams ordered once, 1 type/1 provider/3 groups; owner span 13.020 ms,
+enclosing item-group span 34.946 ms; uncontrolled cache, no speedup/I/O claim.
+Native registration 1.637 ms; types/providers 5.340/4.826 ms; validation 0.628 ms.
+In-place update kept profile/settings hashes; 153 banks ready, cached 274/full 0.
+Peak CPU/GPU 78.1 °C, 0 s above 80 °C; battery 27 °C. Cleanup/OLED/lease/prune pass.
+Sustained play/performance, physical navigation and complete phone install stay open.
+## J1432 — Retain registry witnesses from final player production
+
+2026-11-12. PR #468 merged at `910cbbde`: final player production retains its
+registry transfer schemas and endpoint-compatible provider receipt from the same
+registry invocation and final body used by the catalog. Shared registry artifact
+handling avoids second production and duplicate body copies.
+Evidence: `tests/test_phone_player_data.py`,
+`tests/test_release_graph.py`; 70 focused checks, Ruff, host preflight and
+full CI-local (3,205 tests) passed before merge.
+Source output: `910cbbde`; no APK or device output was produced.
+Signed bundle preparation, phone dependencies and full conversion remain open.
+
+## J1434 — Retain final emitted catalog declaration artifacts
+
+2026-11-12. PR #469 merged at `c723ec04`: checked bundle preparation retains
+`catalog-profile.json` from the actual emitted name, member and asset groups,
+plus the final emitted/canonical bundle pin. The alias donor remains separate.
+Evidence: `tests/test_bundle_preload.py`; 44 focused checks, Ruff, host
+preflight and full CI-local (3,206 tests) passed before merge.
+Source output: `c723ec04`; no APK or device output was produced.
+Fresh signed preparation, phone dependencies and complete conversion remain open.
+
+## J1436 — Export receipt-bound final supplier type descriptors
+
+2026-11-12. Merged #472 (`407bdbaf`): fresh mesh, Avatar, texture, Sprite and
+shader packs retain complete final native descriptors and pack-local type IDs.
+The release graph exports these type tables; texture resume reloads and checks
+retained identities. Bodies and legacy production stay unchanged.
+Focused supplier checks and fresh-clone CI-local passed; authored fixture
+repairs passed 38 affected checks. Evidence: `work/coordination/p1-wholegame-1031/phone-chain-audit-1112/`
+(`supplier-final-types-checks-v3`, `supplier-final-types-ci-fixtures-v4`,
+`supplier-final-types-push2.log`). No APK or device claim; fresh preparation,
+signed dispatch and full phone qualification remain open.
+## J1435 — Reuse bundle ownership lookups within definition families
+
+2026-11-12. Existing `DefinitionFamily<T>` resolves each bundle once per family
+miss; typed identity/order, missing/ambiguous owner refusal and release stay.
+Pinned R2API lifecycle prior art; three focused executable fixture tests passed.
+Evidence: `work/coordination/alpha-definition-owner-pair-retry-20261112T041618Z/`.
+APK SHA-256 `d07298cd2efaf40c30e158faef2c1ee0fb48b9afd8d78731e220410748cc30bd`.
+Source `4382a54c`; before `44c5d621`, same input and 266 payload pins.
+Both ordinary Starts reached Commando/player/HUD; current-PID errors empty.
+153 banks/65 network sounds ready; in-place update kept profile/settings hashes.
+Stages differed (lakes/golemplains); uncontrolled cache/RNG, no loading-speed claim.
+Generic family cost is unisolated; category spans do not show a reduction.
+Peak CPU/GPU 81.6/86.0 °C, >80 °C 0.311/0.932 s; battery 28 °C both.
+Cleanup/OLED/lease/prune passed; no second snapshot today.
+Sustained performance, physical navigation and full phone installation stay open.
+
+## J1437 — Attribute synchronous category asset loading costs
+
+2026-11-12. Existing CategoryFamily callbacks aggregate type, owner, typed-load
+and residual ticks per cache miss; native collection order/identity remain intact.
+Pinned R2API typed-load/lifecycle prior art; three executable fixture tests passed.
+Evidence: `work/coordination/alpha-category-phase-device-20261112T045023Z/`.
+APK SHA-256 `11a213d279e64de2355f43e5afa1990f870391c83161b7dce74a6f6ce5debeb5`.
+Source `75acfb8e`; ordinary Start reached Distant Roost/Commando/player/HUD.
+Original terminal failed a local allowlist missing the existing game-mode callback;
+saved-trace continuation passed six additive summaries without device replay.
+State/projectile/master typed loads: 1.160/1.119/1.023 s, including transitive work.
+Current-PID errors empty; 153 banks/65 network sounds; update retained profiles.
+Peak CPU/GPU 78.9 °C, 0 s above 80 °C; battery 28 °C; cleanup/OLED/lease passed.
+No speedup claim or second daily snapshot; sustained play/performance remain open.

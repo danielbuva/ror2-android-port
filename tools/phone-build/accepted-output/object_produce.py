@@ -45,6 +45,17 @@ def source_member(path, member):
     return B.Bundle(path).member(member)
 
 
+def source_record_type(path, member, path_id, class_id):
+    """Read a selected original record's complete serialized descriptor."""
+    with source_member(path, member) as stream:
+        metadata = W.read_serialized(stream)
+    obj = next(row for row in metadata["objects"] if row["path_id"] == path_id)
+    typ = metadata["types"][obj["type_id"]]
+    if typ["class_id"] != class_id:
+        raise ValueError("original record class differs")
+    return typ
+
+
 def remap(body, references):
     """Replace checked 12-byte PPtrs; preserve every other source byte."""
     result = bytearray(body)
@@ -609,6 +620,16 @@ def json_layout(value):
     if isinstance(value, (list, tuple)):
         return [json_layout(item) for item in value]
     return value
+
+
+def record_type(typ, types, type_ids):
+    """Intern the complete final descriptor in a record pack's local table."""
+    definition = json_layout(typ)
+    key = json.dumps(definition, sort_keys=True)
+    if key not in type_ids:
+        type_ids[key] = len(types)
+        types.append(definition)
+    return type_ids[key]
 
 
 def make_layout(selected, records, scene_members=(), engine="2021.3.45f2", *, include_bodies=True, external_scripts=()):

@@ -1,6 +1,6 @@
 # Porting state
 
-Updated 2026-11-11 UTC. This laboratory is not a finished port. Evidence lives in
+Updated 2026-11-12 UTC. This laboratory is not a finished port. Evidence lives in
 [the journal](docs/PORTING_JOURNAL.md) and [index](docs/JOURNAL_INDEX.md);
 [J1–J1177 are frozen](docs/history/journal-J1-J1177/JOURNAL_INDEX.md).
 Named APK hashes are protected by the pruner.
@@ -11,9 +11,9 @@ Named APK hashes are protected by the pruner.
 | --- | --- |
 | Input and toolchain | Accepted Steam 25475991; Unity 2021.3.45f2 (88f88f591b2e), IL2CPP ARM64, Vulkan. Pins: `environment/toolchain.json`. |
 | Compatibility reference (P1) | Lab APK `9f904392d02abc3854f9efc4b51cd03daec7afb6b7192a4c074f30fabc12fa22`, source `6c12b506`. Match behaviour, content, visuals and performance as closely as possible; structural/gameplay checks stay strict, byte equality is diagnostic. |
-| Latest device-verified APK | Typed-results APK `04df664f66d5ebc32cbc477865e9bfb6a16bfdf1120603b0f2f2f99a310a680d`, source `2575892b` ([J1401](docs/PORTING_JOURNAL.md#j1401--load-typed-results-definitions-before-dependent-drop-tables)). Ordinary Start reached player/HUD; strict current-PID error scan empty; 21 survivors, 455 unlockables and 153 banks ready. Corrects J1400's premature CursedBook activation. Sustained play remains open. |
-| Installed now (last recorded) | Main Nova: the J1401 APK above, on adopted storage; in-place update preserved profile/settings hashes. J1402 reused it for assisted sessions. Evidence: `work/coordination/alpha-item-group-device-20261111T023949Z/`. No fresh device query in this host-only refresh. |
-| Runtime source since that APK | Installed runtime remains `2575892b`. Merged converter suppliers and host runner changes through J1405 do not establish a newer runtime APK or device qualification. |
+| Latest device-verified APK | Audio-readiness attribution APK `1cee9b5ab9e7453f9ba76977e49f3b1208308be52c3d8ebe07dc7824e913b5a1`, source `41c03a7a`. Ordinary Start reached Distant Roost/Commando/player/HUD; strict current-PID error scan empty; 21 survivors, 455 unlockables and 153 banks ready. Bounded acceptance only; sustained play remains open. |
+| Installed now (last recorded) | Main Nova: the audio-readiness APK above, on adopted storage; in-place update preserved profile/settings hashes. Evidence: `work/coordination/alpha-audio-readiness-device-20261112T010139Z/`. Terminal package/hash and stopped-process/display readback passed; no later device query in this refresh. |
+| Runtime source since that APK | Installed lab runtime remains `41c03a7a`. The subsequent merge of converter catalog-prefab ownership (`cef351bd`, J1421) changes host tooling and does not qualify a converted-device run. |
 | Converter | 79 source scenes staged (681-file inventory); whole-game closure inventory reports **0 catalog-missing**, 390,937 selected / 386,879 reachable records. These are staging/coverage facts: complete strict graph, current-CLR/script/reference checks, final typed load, APK assembly and converted-device play remain pending. |
 | Installer | [#241 merged](https://github.com/danielbuva/ror2-android-port/pull/241): authorized synthetic prompts and readable live status. [#417 open](https://github.com/danielbuva/ror2-android-port/pull/417): visible unknown-app permission/consent qualification; exact-source build and seven-case device acceptance remain open. Check for updates, same-key update/rollback and real profile retention still need complete phone qualification. |
 
@@ -26,18 +26,20 @@ tolerance-accepted and device acceptance remain separate results.
 
 ## Alpha loading and stability since November 4
 
-J1381–J1405 ship scoped pointer/script checks, typed buff/item/results discovery,
-install-bound audio verification and shared startup manifests. Cached audio checks
-changed from 274 full verifications to 274 cache hits: banks 3.765 → 0.044 s,
-media 8.959 → 0.032 s (J1386). Artifacts/holders, drones/projectiles, profiles and
-game modes reuse existing snapshots (J1393/J1396/J1397/J1399/J1400). Device starts
-reached player/HUD and retained profiles/settings. Per-span timings are diagnostic;
-controlled total-load improvement remains unqualified.
+J1381–J1420 ship scoped structural checks, typed content discovery, install-bound
+audio verification, shared provider manifests, native skin iterator execution and
+snapshot indexes. Bounded Starts retain player/HUD, audio and profile/settings
+contracts. Four traced index spans total 0.536 → 0.008 s (J1420); controlled
+total-load improvement remains unqualified. Current audio callback attribution
+([J1422](docs/PORTING_JOURNAL.md#j1422--attribute-original-audio-readiness-callback-waits))
+identifies bank results as the final prerequisite, observed 16.1 ms after the last
+bank callback; it preserves readiness and scheduling and makes no speedup claim.
 
-J1402 continued assisted loss → results → menu → Start in one process, reaching
-ten completions before telemetry loss. J1403–J1405 improve transport reporting,
-combined thermal/battery reads and between-session cooldown, with host tests only.
-Repeated-session completion, memory plateau and physical navigation remain open.
+J1407 completes a supervised 32-session UI-abandon diagnostic; J1408 reclaims
+measured returned-pool storage. J1409 aligns matched-menu observations and retains
+positive post-pool growth without a confirmed accumulating owner. Memory work is
+parked at that checkpoint. Physical navigation, ordinary long-run dependency
+retention, a memory plateau and sustained performance remain open.
 
 ## Remaining gates and retained rollbacks
 

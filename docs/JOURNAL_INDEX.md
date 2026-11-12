@@ -10,6 +10,26 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J1437](PORTING_JOURNAL.md#j1437--attribute-synchronous-category-asset-loading-costs) | 2026-11-11 | Attribute synchronous category asset loading costs | 2026-11-12. |
+| [J1435](PORTING_JOURNAL.md#j1435--reuse-bundle-ownership-lookups-within-definition-families) | 2026-11-11 | Reuse bundle ownership lookups within definition families | 2026-11-12. |
+| [J1436](PORTING_JOURNAL.md#j1436--export-receipt-bound-final-supplier-type-descriptors) | 2026-11-11 | Export receipt-bound final supplier type descriptors | 2026-11-12. |
+| [J1434](PORTING_JOURNAL.md#j1434--retain-final-emitted-catalog-declaration-artifacts) | 2026-11-11 | Retain final emitted catalog declaration artifacts | 2026-11-12. |
+| [J1432](PORTING_JOURNAL.md#j1432--retain-registry-witnesses-from-final-player-production) | 2026-11-11 | Retain registry witnesses from final player production | 2026-11-12. |
+| [J1433](PORTING_JOURNAL.md#j1433--attribute-native-results-item-group-startup-phases) | 2026-11-11 | Attribute native results item-group startup phases | 2026-11-12. |
+| [J1430](PORTING_JOURNAL.md#j1430--attribute-native-director-startup-observer-work) | 2026-11-11 | Attribute native director startup observer work | 2026-11-12. |
+| [J1431](PORTING_JOURNAL.md#j1431--materialize-bundle-cache-artifacts-and-relocate-sdk-witnesses) | 2026-11-11 | Materialize bundle cache artifacts and relocate SDK witnesses | 2026-11-12. |
+| [J1429](PORTING_JOURNAL.md#j1429--relocate-pinned-native-producer-packs-without-rewriting-provenance) | 2026-11-11 | Relocate pinned native producer packs without rewriting provenance | 2026-11-12. |
+| [J1427](PORTING_JOURNAL.md#j1427--expose-checked-bundle-emission-and-canonical-repack-requests) | 2026-11-11 | Expose checked bundle emission and canonical repack requests | 2026-11-12. |
+| [J1428](PORTING_JOURNAL.md#j1428--attribute-original-projectile-catalog-startup-phases) | 2026-11-11 | Attribute original projectile catalog startup phases | 2026-11-12. |
+| [J1425](PORTING_JOURNAL.md#j1425--measure-direct-native-state-catalog-iterator-execution) | 2026-11-11 | Measure direct native state catalog iterator execution | 2026-11-12. |
+| [J1426](PORTING_JOURNAL.md#j1426--scope-incremental-job-pins-to-their-source-dependencies) | 2026-11-11 | Scope incremental job pins to their source dependencies | 2026-11-12. |
+| [J1424](PORTING_JOURNAL.md#j1424--attribute-original-drone-catalog-startup-phases) | 2026-11-11 | Attribute original drone catalog startup phases | 2026-11-12. |
+| [J1423](PORTING_JOURNAL.md#j1423--keep-disjoint-preload-groups-cached-after-pointer-changes) | 2026-11-11 | Keep disjoint preload groups cached after pointer changes | 2026-11-12. |
+| [J1422](PORTING_JOURNAL.md#j1422--attribute-original-audio-readiness-callback-waits) | 2026-11-11 | Attribute original audio readiness callback waits | 2026-11-12. |
+| [J1421](PORTING_JOURNAL.md#j1421--canonical-catalog-consumers-retain-prefab-ownership) | 2026-11-11 | Canonical catalog consumers retain prefab ownership | 2026-11-12. |
+| [J1420](PORTING_JOURNAL.md#j1420--reuse-indexes-within-canonical-content-snapshots) | 2026-11-11 | Reuse indexes within canonical content snapshots | 2026-11-12. |
+| [J1419](PORTING_JOURNAL.md#j1419--reuse-bundle-owner-lookups-within-catalog-families) | 2026-11-11 | Reuse bundle owner lookups within catalog families | 2026-11-11. |
+| [J1418](PORTING_JOURNAL.md#j1418--attribute-state-catalog-and-profile-preparation-before-spawn) | 2026-11-11 | Attribute state catalog and profile preparation before spawn | 2026-11-11. |
 | [J1417](PORTING_JOURNAL.md#j1417--reuse-checked-native-bundle-emissions-for-port-updates) | 2026-11-11 | Reuse checked native bundle emissions for port updates | 2026-11-11. |
 | [J1415](PORTING_JOURNAL.md#j1415--validate-explicit-catalog-subassets-and-inspect-verified-apk-archives) | 2026-11-11 | Validate explicit catalog subassets and inspect verified APK archives | 2026-11-11. |
 | [J1416](PORTING_JOURNAL.md#j1416--retain-compatible-audio-verification-across-in-place-installs) | 2026-11-11 | Retain compatible audio verification across in-place installs | 2026-11-11. |

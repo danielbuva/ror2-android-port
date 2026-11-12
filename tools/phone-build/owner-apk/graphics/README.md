@@ -139,6 +139,19 @@ match is explicitly a **legacy candidate**, not an exact filesystem/run binding.
 New smoke runs retain `runner-binding.json` alongside private diagnostics. No raw
 UI text, resource IDs outside the fixed classes, or private paths are published.
 
+The retained legacy candidate from the first smoke showed the exact
+`permission_deny_and_dont_ask_again_button`, not ordinary `permission_deny_button`
+([classification](https://github.com/danielbuva/ror2-android-port/issues/177#issuecomment-6815187922)).
+The cold-restart step explicitly opts into this **user-fixed notification denial**
+only after this run observed an ordinary denial for the fresh disposable installer.
+It rechecks APK ownership, focused UI and the unique exact negative control; it
+never matches a broad label or substitutes a grant. The fixed denial is logged
+as such and must dismiss the prompt. Other installer flows retain their previous
+notification policy. This follows the pinned Android 13
+[handler](https://android.googlesource.com/platform/packages/modules/Permission/+/9b03c01d78cb8642b3ae8f4e9da9c5af7386242b/PermissionController/src/com/android/permissioncontroller/permission/ui/handheld/GrantPermissionsViewHandlerImpl.kt#510)
+and [permission-state model](https://android.googlesource.com/platform/packages/modules/Permission/+/9b03c01d78cb8642b3ae8f4e9da9c5af7386242b/PermissionController/src/com/android/permissioncontroller/permission/ui/model/GrantPermissionsViewModel.kt#908),
+not an assertion that a legacy time-window candidate proves exact runner binding.
+
 ## Prior art and integration gates
 
 Inspected libadrenotools at commit

@@ -524,13 +524,40 @@ public static class WholeCatalogComposed
     }
     // Complete definition families share the existing converted owner; no tested-content whitelist.
     static readonly Dictionary<string, UnityEngine.Object[]> definitionFamilies = new Dictionary<string, UnityEngine.Object[]>();
+    // Only the canonical read-only snapshot owns indexes. Its annotation has no
+    // static root, so both tables disappear with the weakly held manifest.
+    sealed class DefinitionManifestIndex
+    {
+        Dictionary<int, JToken> locations;
+        Dictionary<string, HashSet<int>> keys;
+        public Dictionary<int, JToken> Locations(JObject manifest)
+        {
+            return locations ?? (locations = manifest["locations"].ToDictionary(row => (int)row["id"]));
+        }
+        public Dictionary<string, HashSet<int>> Keys(JObject manifest)
+        {
+            return keys ?? (keys = manifest["keys"]
+                .Where(row => row["keyType"] == null || (string)row["keyType"] == "System.String")
+                .ToDictionary(row => (string)row["key"], row => new HashSet<int>(row["locations"].Select(value => (int)value))));
+        }
+    }
+    static DefinitionManifestIndex IndexDefinitionManifest(JObject manifest)
+    {
+        if (definitionManifest == null || !ReferenceEquals(definitionManifest.Target, manifest))
+            return new DefinitionManifestIndex();
+        var index = manifest.Annotation<DefinitionManifestIndex>();
+        if (index == null)
+        {
+            index = new DefinitionManifestIndex();
+            manifest.AddAnnotation(index);
+        }
+        return index;
+    }
     // Labels alone include Junk content which the original provider does not publish.
     // Resolve each provider using its native category policy and collection ordering.
     public static int[][] FamilyLocationGroups(JObject manifest, string category)
     {
-        var keys = manifest["keys"]
-                       .Where(row => row["keyType"] == null || (string)row["keyType"] == "System.String")
-                       .ToDictionary(row => (string)row["key"], row => new HashSet<int>(row["locations"].Select(value => (int)value)));
+        var keys = IndexDefinitionManifest(manifest).Keys(manifest);
         var helper = new RoR2.ContentManagement.AddressablesLoadHelper(new IResourceLocator[0]);
         return manifest["providers"]
             .Select(provider =>
@@ -554,6 +581,9 @@ public static class WholeCatalogComposed
     // Reuse a live read-only snapshot without extending its managed lifetime.
     internal static void ResetDefinitionManifest()
     {
+        var manifest = definitionManifest == null ? null : definitionManifest.Target as JObject;
+        if (manifest != null)
+            manifest.RemoveAnnotations<DefinitionManifestIndex>();
         definitionManifest = null;
     }
     internal static JObject ReadDefinitionManifest()
@@ -586,9 +616,14 @@ public static class WholeCatalogComposed
             if (manifest == null)
                 manifest = ReadDefinitionManifest();
             trace?.Invoke("manifest-ready-index-begin");
-            var locations = manifest["locations"].ToDictionary(row => (int)row["id"]);
+            var locations = IndexDefinitionManifest(manifest).Locations(manifest);
             var groups = FamilyLocationGroups(manifest, category);
+            var familyBundles = new Dictionary<string, AssetBundle>(StringComparer.Ordinal);
             trace?.Invoke("index-ready-assets-begin");
+            // Aggregate successful row work without logging from inside LoadAsset callbacks.
+            long typeTicks = 0, ownerTicks = 0, loadTicks = 0;
+            int rows = 0;
+            long assetsStarted = trace == null ? 0 : System.Diagnostics.Stopwatch.GetTimestamp();
             values = groups
                          .SelectMany(group =>
                                      {
@@ -599,14 +634,38 @@ public static class WholeCatalogComposed
                                                  .Select(id =>
                                                          {
                                                              var row = locations[id];
+                                                             long started = trace == null ? 0 : System.Diagnostics.Stopwatch.GetTimestamp();
                                                              if (!typeof(T).IsAssignableFrom(Type.GetType((string)row["type"], true)))
                                                                  throw new Exception("Original category type differs: " + category);
-                                                             var bundle = AssetBundle.GetAllLoadedAssetBundles().SingleOrDefault(
-                                                                 value => value.name == (string)row["bundle"]);
+                                                             if (trace != null)
+                                                             {
+                                                                 long now = System.Diagnostics.Stopwatch.GetTimestamp();
+                                                                 typeTicks += now - started;
+                                                                 started = now;
+                                                             }
+                                                             var bundleName = (string)row["bundle"];
+                                                             AssetBundle bundle;
+                                                             if (!familyBundles.TryGetValue(bundleName, out bundle))
+                                                             {
+                                                                 bundle = AssetBundle.GetAllLoadedAssetBundles().SingleOrDefault(
+                                                                     value => value.name == bundleName);
+                                                                 familyBundles.Add(bundleName, bundle);
+                                                             }
                                                              if (!bundle)
                                                                  throw new Exception("Original category owner not loaded: " + category +
                                                                                      "/" + row["bundle"]);
+                                                             if (trace != null)
+                                                             {
+                                                                 long now = System.Diagnostics.Stopwatch.GetTimestamp();
+                                                                 ownerTicks += now - started;
+                                                                 started = now;
+                                                             }
                                                              var asset = bundle.LoadAsset<T>((string)row["path"]);
+                                                             if (trace != null)
+                                                             {
+                                                                 loadTicks += System.Diagnostics.Stopwatch.GetTimestamp() - started;
+                                                                 rows++;
+                                                             }
                                                              if (!asset)
                                                                  throw new Exception("Original category asset missing: " + category + "/" +
                                                                                      row["path"]);
@@ -618,6 +677,15 @@ public static class WholeCatalogComposed
                          .Distinct()
                          .Cast<UnityEngine.Object>()
                          .ToArray();
+            if (trace != null)
+            {
+                long totalTicks = System.Diagnostics.Stopwatch.GetTimestamp() - assetsStarted;
+                // Residual includes collection/deduplication/enumeration and instrumentation overhead.
+                trace("assets-costs rows=" + rows + " bundles=" + familyBundles.Count +
+                      " typeTicks=" + typeTicks + " ownerTicks=" + ownerTicks + " loadTicks=" + loadTicks +
+                      " collectionTicks=" + (totalTicks - typeTicks - ownerTicks - loadTicks) +
+                      " totalTicks=" + totalTicks + " frequency=" + System.Diagnostics.Stopwatch.Frequency);
+            }
             trace?.Invoke("assets-ready");
             // Native collections enforce names within each provider, not across packs.
             if (values.Length == 0)
@@ -638,13 +706,19 @@ public static class WholeCatalogComposed
         {
             var manifest = ReadDefinitionManifest();
             var roots = new HashSet<int>(manifest["provider_roots"].Select(value => (int)value));
+            var familyBundles = new Dictionary<string, AssetBundle>(StringComparer.Ordinal);
             values =
                 manifest["locations"]
                     .Where(row => roots.Contains((int)row["id"]) && typeof(T).IsAssignableFrom(Type.GetType((string)row["type"], true)))
                     .Select(row =>
                             {
                                 string owner = (string)row["bundle"];
-                                var bundle = AssetBundle.GetAllLoadedAssetBundles().SingleOrDefault(value => value.name == owner);
+                                AssetBundle bundle;
+                                if (!familyBundles.TryGetValue(owner, out bundle))
+                                {
+                                    bundle = AssetBundle.GetAllLoadedAssetBundles().SingleOrDefault(value => value.name == owner);
+                                    familyBundles.Add(owner, bundle);
+                                }
                                 if (!bundle)
                                     throw new Exception("Original definition owner not loaded: " + typeof(T).FullName + "/" + owner);
                                 return bundle.LoadAsset<T>((string)row["path"]);
@@ -751,18 +825,30 @@ public static class WholeCatalogComposed
     }
     internal static int PrepareProjectiles(JObject manifest)
     {
+        return PrepareProjectiles(manifest, null);
+    }
+    internal static int PrepareProjectiles(JObject manifest, Action<string> trace)
+    {
+        trace?.Invoke("owner-check-begin");
         if (priorProjectileIndices != null || RoR2.ProjectileCatalog.projectilePrefabCount != 0)
             throw new Exception("Projectile catalog has a foreign owner");
-        var values = CategoryFamily(manifest, RoR2.ContentManagement.AddressablesLabels.projectile, new GameObject[0]);
+        trace?.Invoke("owner-check-ready-family-begin");
+        var values = CategoryFamily(manifest, RoR2.ContentManagement.AddressablesLabels.projectile, new GameObject[0],
+                                    step => trace?.Invoke("family-" + step));
+        trace?.Invoke("family-ready-index-snapshot-begin");
         priorProjectileIndices = values.Select(value => value.GetComponent<RoR2.Projectile.ProjectileController>())
                                      .ToDictionary(value => value, value => value.catalogIndex);
         priorProjectileAvailability = RoR2.ProjectileCatalog.catalogAvailability;
+        trace?.Invoke("index-snapshot-ready-native-set-begin");
         typeof(RoR2.ProjectileCatalog)
             .GetMethod("SetProjectilePrefabs", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static)
             .Invoke(null, new object[] { values });
+        trace?.Invoke("native-set-ready-availability-begin");
         RoR2.ProjectileCatalog.catalogAvailability.MakeAvailable();
+        trace?.Invoke("availability-ready-validation-begin");
         if (values.Any(value => RoR2.ProjectileCatalog.GetProjectilePrefab(RoR2.ProjectileCatalog.GetProjectileIndex(value)) != value))
             throw new Exception("Original projectile catalog identity differs");
+        trace?.Invoke("validation-ready");
         return values.Length;
     }
     public static void RestoreProjectiles()

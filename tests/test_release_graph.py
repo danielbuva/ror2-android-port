@@ -179,16 +179,19 @@ class ReleaseGraphTests(unittest.TestCase):
             graph = G.Graph(repo, {})
             index = graph.compile(["recipe/owner-selected.json"], bundle_manifest=True)
 
+            for name, job in graph.jobs.items():
+                closure = graph.entry(name)
+                self.assertEqual(job.pop("source_files"), sorted(set(closure["recipe_files"]) | set(closure["producer_files"])))
+
             def wire(value):
                 return (json.dumps(value, sort_keys=True, indent=2) + "\n").encode()
 
             for name, job in graph.jobs.items():
                 index["files"][name] = hashlib.sha256(wire(job)).hexdigest()
-            # Regenerated from the eager compiler at main 2dfd7651 after merging
-            # its argument changes; lazy bytes match exact descriptors, closure
-            # ordering and index bytes from that independently loaded compiler.
+            # Descriptor fixture includes final object layouts and record type tables,
+            # retaining exact closure ordering and source-index serialization.
             self.assertEqual(
-                hashlib.sha256(wire({"index": index, "jobs": graph.jobs})).hexdigest(), "5b4428b1c73659bb268100de6857593ba4ce09e978c712f0c2ba541a3a65b393"
+                hashlib.sha256(wire({"index": index, "jobs": graph.jobs})).hexdigest(), "9073f8bf0e83bbab85307c0dcb5d625471949ac878e9b2dc8131a5160e84f062"
             )
 
     def test_scene_record_suppliers_close_published_consumers(self):
@@ -238,6 +241,33 @@ class ReleaseGraphTests(unittest.TestCase):
         profile = graph.job_profiles[name]
         self.assertTrue(profile["sdk"]["path"].startswith("Contents/Resources/"))
 
+    def test_final_object_layout_and_record_types_are_declared_artifacts(self):
+        graph = G.Graph(ROOT, {})
+        graph.build(G.digest(ROOT / "recipe/owner-commando-objects.json"))
+        graph.build(G.digest(ROOT / "recipe/owner-whole-game-source-records.json"))
+        shader_job = graph.build(G.digest(ROOT / "recipe/owner-player-shaders.json"))
+        self.assertEqual(graph.jobs[shader_job]["artifacts"]["shared_types"], "shared-shaders/types.json")
+        seen = set()
+        for job in graph.jobs.values():
+            producer = Path(job["script"]).stem
+            if producer == "object_produce" and "objects" in job["artifacts"]:
+                self.assertEqual(job["artifacts"]["layout"], "layout.json")
+                seen.add(producer)
+            if producer in {
+                "record_produce",
+                "record_remap",
+                "mesh_produce",
+                "avatar_produce",
+                "texture_produce",
+                "shader_context",
+                "shader_prefab",
+                "payload_shader_records",
+            }:
+                self.assertEqual(job["artifacts"]["types"], "types.json")
+                seen.add(producer)
+        self.assertIn("object_produce", seen)
+        self.assertIn("record_produce", seen)
+
     def test_sprite_cohorts_bind_native_witness_and_standard_pack_artifacts(self):
         graph = G.Graph(ROOT, {})
         for cohort in (1, 2, 3):
@@ -249,7 +279,7 @@ class ReleaseGraphTests(unittest.TestCase):
             self.assertEqual(job["arguments"][0], "produce")
             for argument in ("--pc-root", "--functional", "${input:sprite_native_" + pin + "}", "${input_sha256:sprite_native_" + pin + "}"):
                 self.assertIn(argument, job["arguments"])
-            self.assertEqual(job["artifacts"], {"receipt": "result.json", "objects": "objects.bin", "index": "index.jsonl"})
+            self.assertEqual(job["artifacts"], {"receipt": "result.json", "objects": "objects.bin", "index": "index.jsonl", "types": "types.json"})
 
     def test_fallback_shader_job_binds_pinned_public_templates(self):
         graph = G.Graph(ROOT, {})
@@ -313,6 +343,10 @@ class ReleaseGraphTests(unittest.TestCase):
         player = "recipe/jobs/owner-player-data.json"
         job = graph.jobs[player]
         self.assertEqual(len(job["outputs"]), 210)
+        registry = "apk/assets/bin/Data/" + graph.job_profiles[player]["registry"]["file"]
+        self.assertEqual(job["artifacts"]["registry_body"], job["outputs"][registry])
+        self.assertEqual(job["artifacts"]["registry_receipt"], "registry-source/result.json")
+        self.assertEqual(job["artifacts"]["registry_schemas"], "registry-source/schemas.json")
         self.assertEqual(len(index["entries"]), 581)
         startup = "recipe/jobs/owner-startup-metadata.json"
         self.assertIn(startup, job["needs"])
@@ -655,7 +689,7 @@ if a.profile.endswith('.jsonl.gz'):
 for path,pin in a.record_pack:
  assert hashlib.sha256((pathlib.Path(path)/'result.json').read_bytes()).hexdigest()==pin
 out=pathlib.Path(a.output);out.mkdir()
-for name in ('objects.bin','index.jsonl','result.json'):(out/name).write_text('authored')
+for name in ('objects.bin','index.jsonl','types.json','layout.json','result.json'):(out/name).write_text('authored')
 (out/'payload').mkdir();(out/'payload/authored').write_text('source output')
 """
             for producer in ("record_produce", "object_produce"):

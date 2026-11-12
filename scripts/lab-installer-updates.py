@@ -637,6 +637,7 @@ class Phone:
         self.serial, self.timeout = serial, timeout
         self.allow_test_installs = allow_test_installs
         self.allow_test_notifications = allow_test_notifications
+        self.notification_denied = False
         self.adb = Path("/opt/homebrew/bin/adb")
         self.transport = TRANSPORT.AdbTransport(self.adb, serial, observer=adb_diagnostic)
         self.owned_installer = False
@@ -938,7 +939,7 @@ class Phone:
         time.sleep(1)
         self.dismiss_notification_permission()
 
-    def dismiss_notification_permission(self):
+    def dismiss_notification_permission(self, *, repeat_denial=False):
         # ToolHostActivity.onCreate requests only POST_NOTIFICATIONS. This is
         # not the separately authorized unknown-source install permission.
         # Decline by default; allow only with explicit owner authorization for
@@ -946,8 +947,16 @@ class Phone:
         # on localized button text.
         if not self.owned_installer:
             raise Failure("notification-dialog-installer-not-owned")
+        if repeat_denial and self.allow_test_notifications:
+            raise Failure("notification-repeat-denial-conflicting-policy")
         controller = "com.android.permissioncontroller"
-        nodes = [node for node in self.ui_for((PACKAGE, controller)).iter("node") if node.get("package") == controller]
+        if repeat_denial:
+            self.require_owned_installer()
+            tree = self.ui_windows((PACKAGE, controller), recovery=False)
+            self.prompt_nodes(tree, (PACKAGE, controller))
+        else:
+            tree = self.ui_for((PACKAGE, controller))
+        nodes = [node for node in tree.iter("node") if node.get("package") == controller]
         if not nodes:
             return False
         messages = [node.get("text", "").casefold() for node in nodes if node.get("resource-id") == controller + ":id/permission_message"]
@@ -955,15 +964,34 @@ class Phone:
             raise Failure("notification-dialog-not-identified")
         action = "allow" if self.allow_test_notifications else "deny"
         buttons = [node for node in nodes if node.get("resource-id") == controller + ":id/permission_" + action + "_button" and node.get("enabled") == "true"]
+        if repeat_denial:
+            # AOSP's second denial is user-fixed, not an ordinary denial alias.
+            # Only the picker cold-restart flow opts in, after this run denied
+            # the fresh hash-owned disposable app's first notification prompt.
+            ordinary = controller + ":id/permission_deny_button"
+            fixed = controller + ":id/permission_deny_and_dont_ask_again_button"
+            buttons = [node for node in nodes if node.get("resource-id") in (ordinary, fixed)]
+            if len(buttons) != 1 or buttons[0].get("enabled") != "true" or buttons[0].get("clickable") != "true":
+                raise Failure("notification-denial-unavailable")
+            if buttons[0].get("resource-id") == fixed:
+                if not self.notification_denied:
+                    raise Failure("notification-repeat-denial-without-prior-denial")
+                action = "deny-and-dont-ask-again"
+            self.require_owned_installer()
+            confirmed = self.ui_windows((controller,), recovery=False)
+            self.prompt_nodes(confirmed, (controller,))
+            if ET.tostring(tree) != ET.tostring(confirmed):
+                raise Failure("notification-dialog-focus-changed")
         if len(buttons) != 1:
             raise Failure("notification-allow-unavailable" if self.allow_test_notifications else "notification-denial-unavailable")
-        bounds = re.fullmatch(r"\[(\d+),(\d+)\]\[(\d+),(\d+)\]", buttons[0].get("bounds", ""))
-        if not bounds:
-            raise Failure("ui-button-bounds")
-        x1, y1, x2, y2 = map(int, bounds.groups())
-        self.shell("input", "tap", str((x1 + x2) // 2), str((y1 + y2) // 2), label="device-notification-" + action)
-        if any(node.get("package") == controller for node in self.ui_for((PACKAGE, controller)).iter("node")):
+        self.tap_prompt_node(buttons[0], "device-notification-" + action)
+        observed = self.ui_windows((PACKAGE, controller), recovery=False) if repeat_denial else self.ui_for((PACKAGE, controller))
+        if any(node.get("package") == controller for node in observed.iter("node")):
             raise Failure("notification-dialog-not-dismissed")
+        if not self.allow_test_notifications:
+            self.notification_denied = True
+        if action == "deny-and-dont-ask-again":
+            print("INFO android-notification-denial effect=user-fixed scope=owned-disposable-installer", flush=True)
         return True
 
     def wait_state(self, expected):

@@ -271,6 +271,20 @@ class Graph:
         artifacts = {"receipt": "result.json", "objects": "objects.bin", "index": "index.jsonl"}
         if "original_bundle" in profile:
             artifacts = {"receipt": "result.json"}
+        elif producer == "object_produce":
+            artifacts["layout"] = "layout.json"
+        if producer in {
+            "record_produce",
+            "record_remap",
+            "mesh_produce",
+            "avatar_produce",
+            "texture_produce",
+            "sprite_produce",
+            "shader_context",
+            "shader_prefab",
+            "payload_shader_records",
+        }:
+            artifacts["types"] = "types.json"
         if producer in {"mesh_produce", "texture_produce"}:
             artifacts["resources"] = "resources.bin"
         if producer == "object_produce":
@@ -287,6 +301,7 @@ class Graph:
                             "shared_receipt": "shared-shaders/result.json",
                             "shared_objects": "shared-shaders/objects.bin",
                             "shared_index": "shared-shaders/index.jsonl",
+                            "shared_types": "shared-shaders/types.json",
                         }
                     )
             else:
@@ -298,6 +313,11 @@ class Graph:
                     targets.extend(row["outputs"])
                 if "registry" in profile:
                     targets.append(profile["registry"]["file"])
+                    artifacts.update(
+                        registry_body="apk/assets/bin/Data/" + profile["registry"]["file"],
+                        registry_receipt="registry-source/result.json",
+                        registry_schemas="registry-source/schemas.json",
+                    )
                 if "shared_defaults" in profile:
                     targets.append(profile["shared_defaults"]["file"])
             outputs = {"apk/assets/bin/Data/" + target: "apk/assets/bin/Data/" + target for target in targets}
@@ -546,6 +566,9 @@ class Graph:
                 entries[output] = entry
         if not entries:
             raise ValueError("select at least one complete output profile")
+        for name, job in self.jobs.items():
+            closure = self.entry(name)
+            job["source_files"] = sorted(set(closure["recipe_files"]) | set(closure["producer_files"]))
         files = {path for row in entries.values() for key in ("recipe_files", "producer_files") for path in row[key] if path not in self.jobs}
         return {
             "schema": 1,
