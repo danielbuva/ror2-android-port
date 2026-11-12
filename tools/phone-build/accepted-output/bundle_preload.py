@@ -1590,6 +1590,13 @@ def catalog_artifacts(required, final, output):
     return dict(catalog_profile=pin(profile), catalog_bundle=pin(final["bundle"]))
 
 
+def prepare_request(inputs, output):
+    """Derive the checked emitter contract from pinned source packs and policy."""
+    from types import SimpleNamespace
+
+    return module("bundle_prepare").prepare(SimpleNamespace(**globals()), inputs, output)
+
+
 def produce_request(inputs, output, *, cache_directory=None):
     """Run the checked emitter/repacker with explicit, request-relative inputs."""
     from contextlib import closing
@@ -1720,6 +1727,7 @@ def main():
 
     parser = argparse.ArgumentParser(description="Emit an explicitly partial, closed native bundle from source-produced records")
     parser.add_argument("--inputs", type=Path, help="explicit checked emission/canonical request; paths relative to this file")
+    parser.add_argument("--prepare", type=Path, help="derive emission inputs from pinned source packs and declarative policy")
     parser.add_argument("--cache", type=Path, help="private incremental emission/preload/repack cache")
     parser.add_argument("--graph", type=Path)
     parser.add_argument("--schema", type=Path, action="append")
@@ -1729,6 +1737,11 @@ def main():
     parser.add_argument("--codec", type=Path, help="pinned LZ4 helper; compresses UnityFS blocks without changing member bytes")
     parser.add_argument("--codec-sha256")
     args = parser.parse_args()
+    if args.prepare is not None:
+        if any(value is not None for value in (args.inputs, args.graph, args.schema, args.bundle, args.member, args.codec, args.codec_sha256, args.cache)):
+            parser.error("--prepare requires only --output")
+        print(json.dumps(prepare_request(args.prepare, args.output), indent=2))
+        return
     if args.inputs is not None:
         if any(value is not None for value in (args.graph, args.schema, args.bundle, args.member, args.codec, args.codec_sha256)):
             parser.error("--inputs cannot be combined with legacy emission inputs")

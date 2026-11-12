@@ -40,6 +40,23 @@ owner; no bundle copy or second production supplies these artifacts.
 Signed release-graph integration, source/provider regeneration and the phone
 SQLite/LZ4 runtime remain separate work; this interface adds no device claim.
 
+`bundle_preload.py --prepare REQUEST --output NEW_DIRECTORY` delegates fresh
+request derivation to `bundle_prepare.py`. Pinned supplier profiles, receipts,
+extents, indexes and final type tables supply original source, pack output and
+destination identities. Public policy declares candidate bindings, address groups,
+exceptional field routes and canonical pairs. The owner derives reached records,
+staged endpoints, complete types, routes and independent preloads. It writes
+retained PPtr-only relocation packs before invoking the unchanged structural
+emission boundary. Retained suppliers bind their own receipt-pinned type tables;
+an explicit `pointer_namespace` declares their already-relocated member table.
+Setup opens declared original and staged members; teardown closes streams on
+success or failure. Preparation retains pins and emits the existing request,
+including original script properties and canonical body-identity witnesses.
+MonoScripts retain their own source selectors, separate from behaviour hash
+schemas. Null-script witnesses pin the original body, and SDK resource members
+remain external references without becoming AssetBundle dependencies.
+Signed dispatch, exact-editor load and phone acceptance remain separate gates.
+
 `bundle_preload.produce_graph` also accepts per-group `preload_roots` as explicit
 destination triples, separate from advertised container roots/subassets. Local
 seeds contribute their complete closure and cache invalidation witnesses;
