@@ -3400,3 +3400,18 @@ zero-call/zero-time and remaining native target/credit/placement contracts.
 Profile/settings hashes preserved; 153 banks ready. Executable observer fixture passed.
 Peak CPU/GPU 76.5 °C, 0 s above 80 °C; battery 27 °C. Cleanup/OLED/lease/prune passed.
 Sustained performance, physical navigation and complete phone installation stay open.
+
+## J1432 — Attribute native results item-group startup phases
+
+2026-11-12. Existing results owner traces family loads, metadata, holder binding,
+native registration and validation; source membership/order and cleanup stay.
+Pinned R2API lifecycle seams inform observation; executable owner fixture passes.
+Evidence: `work/coordination/alpha-results-groups-device-20261112T032319Z/`.
+APK SHA-256 `44c5d621cfd1f5aafcb542dd253e8ffdeef09bc6b7252bfb5c61c02be4338005`.
+Source `c3597299`; ordinary Start reached Commando/player/HUD; PID errors empty.
+Eight seams ordered once, 1 type/1 provider/3 groups; owner span 13.020 ms,
+enclosing item-group span 34.946 ms; uncontrolled cache, no speedup/I/O claim.
+Native registration 1.637 ms; types/providers 5.340/4.826 ms; validation 0.628 ms.
+In-place update kept profile/settings hashes; 153 banks ready, cached 274/full 0.
+Peak CPU/GPU 78.1 °C, 0 s above 80 °C; battery 27 °C. Cleanup/OLED/lease/prune pass.
+Sustained play/performance, physical navigation and complete phone install stay open.
