@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J1419](PORTING_JOURNAL.md#j1419--reuse-bundle-owner-lookups-within-catalog-families) | 2026-11-11 | Reuse bundle owner lookups within catalog families | 2026-11-11. |
 | [J1418](PORTING_JOURNAL.md#j1418--attribute-state-catalog-and-profile-preparation-before-spawn) | 2026-11-11 | Attribute state catalog and profile preparation before spawn | 2026-11-11. |
 | [J1417](PORTING_JOURNAL.md#j1417--reuse-checked-native-bundle-emissions-for-port-updates) | 2026-11-11 | Reuse checked native bundle emissions for port updates | 2026-11-11. |
 | [J1415](PORTING_JOURNAL.md#j1415--validate-explicit-catalog-subassets-and-inspect-verified-apk-archives) | 2026-11-11 | Validate explicit catalog subassets and inspect verified APK archives | 2026-11-11. |
