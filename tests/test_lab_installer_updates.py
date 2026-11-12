@@ -21,6 +21,26 @@ SPEC.loader.exec_module(LAB)
 
 
 class LabInstallerUpdatesTests(unittest.TestCase):
+    def test_import_upload_preserves_space_containing_game_path_and_bytes(self):
+        phone = LAB.Phone("synthetic-private-selector", 1)
+        phone.owned_installer = True
+        name = "import/files/pc/Test Game_Data/StreamingAssets/sample.bundle"
+        data = b"authored synthetic bytes\x00\xff\n"
+        with tempfile.TemporaryDirectory() as temporary:
+
+            def shell(*args, stdin=None, **kwargs):
+                self.assertEqual(args[0], "shell")
+                command = " ".join(args[1:])
+                prefix = "run-as " + LAB.PACKAGE + " "
+                self.assertTrue(command.startswith(prefix))
+                return subprocess.run(["sh", "-c", command.removeprefix(prefix)], input=stdin, cwd=temporary, check=True, capture_output=True).stdout
+
+            with patch.object(phone, "command", side_effect=shell):
+                phone.put(name, data)
+            target = Path(temporary) / "files/owner-input" / name
+            self.assertEqual(target.read_bytes(), data)
+            self.assertEqual([path for path in Path(temporary).rglob("*") if path.is_file()], [target])
+
     def test_transport_reads_retry_signals_but_taps_do_not(self):
         phone = LAB.Phone("synthetic-private-selector", 1)
         killed = subprocess.CompletedProcess([], -9, b"", b"")

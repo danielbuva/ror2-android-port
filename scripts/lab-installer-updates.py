@@ -20,6 +20,7 @@ import os
 from pathlib import Path
 import re
 import secrets
+import shlex
 import subprocess
 import sys
 import tempfile
@@ -799,10 +800,10 @@ class Phone:
         if not self.owned_installer:
             raise Failure("test-installer-not-owned")
         path = "files/owner-input/" + name
-        if not re.fullmatch(r"[A-Za-z0-9_./+-]+", path) or ".." in path.split("/"):
+        if not re.fullmatch(r"[A-Za-z0-9_./+ -]+", path) or ".." in path.split("/"):
             raise Failure("test-input-path")
-        self.shell("run-as", PACKAGE, "mkdir", "-p", str(Path(path).parent), label="device-input-directory")
-        self.command("shell", "run-as", PACKAGE, "sh", "-c", "'cat > " + path + "'", stdin=data, label="device-input-write")
+        self.shell("run-as", PACKAGE, "mkdir", "-p", shlex.quote(str(Path(path).parent)), label="device-input-directory")
+        self.command("shell", shlex.join(["run-as", PACKAGE, "sh", "-c", "cat > " + shlex.quote(path)]), stdin=data, label="device-input-write")
 
     def read(self, name):
         path = "files/owner-input/" + name
