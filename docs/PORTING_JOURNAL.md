@@ -3637,3 +3637,19 @@ baseline Distant Roost, native RNG/cache uncontrolled: no causal speedup claim.
 Candidate CPU/GPU peak 78.5 C, battery 28 C, active thermal max gap 0.414 s.
 Scratch removed, process stopped, OLED asleep, lease released and prune passed.
 Sustained play, audibility and full-pipeline performance/alpha acceptance stay open.
+
+## J1449 — Attribute post-readiness network and music startup
+
+2026-11-12. Existing audio/family owners expose sparse spans and aggregate tick costs.
+R2API phase/ownership prior art informs observation; native calls/yields stay unchanged.
+Four focused host checks, Ruff and preflight passed once; accepted build source `c9bc3cbf`.
+Evidence: `work/coordination/alpha-audio-network-cost-device-20261112T094422Z/`.
+APK SHA-256 `d32a5df34eead477f76bbc281fe3ff89a9878eb288a5ec4090764732df1e6636`.
+Ordinary Start reaches Commando/Distant Roost/player/HUD4; current-PID errors empty.
+Native 153 banks/65 network sounds ready; in-place update retains profiles/settings.
+Readiness-to-return 1.132 s: family manifest 0.942 s, assets 0.177 s, music 0.0066 s.
+30,329 rows yield 65 loaded rows; filter/owner/load/collection ticks sum exactly.
+Native RNG/page cache uncontrolled; attribution only, no causal speedup claim.
+CPU/GPU peak 75.3 C, battery peak 27 C; active thermal max gap 0.434 s.
+Adopted placement, scratch removal, stopped process/OLED/lease cleanup and prune pass.
+Sustained play, audibility and full-pipeline performance/alpha acceptance remain open.
