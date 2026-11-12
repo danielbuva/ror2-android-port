@@ -165,7 +165,10 @@ The [saved high-refresh preference](performance-game.md#saved-app-refresh-and-sc
 changes the Main Nova's active display mode from 60 to 120 Hz and survives a cold
 launch without global setting changes. Its bounded scalar-only inspection window
 averages 60.057 FPS with raw p50/p95/p99 of 16.654/16.715/25.000 ms.
-This does not qualify sustained 60 FPS, 120 FPS, ordinary play or a causal speedup.
+A subsequent cold-launch detail window reaches 100.516 FPS with an 8.333 ms median;
+this establishes above-60-FPS capability, while the changed pacing confounds the
+inspection comparison. Neither window qualifies sustained 60 FPS, 120 FPS,
+ordinary play or a causal speedup.
 Full scene inspection remains explicitly available; periodic snapshots omit it by default.
 
 Startup [audio-verification reuse](PORTING_JOURNAL.md#j1386--reuse-install-bound-audio-verification-and-partition-loading-costs)

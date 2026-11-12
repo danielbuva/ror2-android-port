@@ -3909,17 +3909,17 @@ Capture wall 467.970 s; peak CPU/GPU 88.4 C, 18.218 s above 80 C; no performance
 In-place profile/settings hashes, adopted placement, stopped/asleep readback and lease release pass.
 Prior art: pinned UnityExplorer member inspection and MemorySnapshotDataTools; ordinary long play remains open.
 
-## J0 — Save app refresh policy and make periodic scene inspection explicit
+## J1468 — Save app refresh policy and make periodic scene inspection explicit
 Saved high-refresh preference requests app-window/surface modes; GUI Save selects 60/120 Hz,
 and high mode survives cold launch. Global display settings are unchanged; no 120 FPS claim.
 Periodic diagnostics retain scalars by default; explicit scene/subtree/field inspection stays available.
 The 60.510 s assisted scalar window reconciles 3,633 frames at 60.057 FPS;
 raw p50/p95/p99 are 16.654/16.715/25.000 ms, with 14 >33.334 ms and one >50 ms.
-Fifteen named engine markers are available; inclusive scopes/waits do not establish causal headroom.
+Cold-launch detail window: 100.516 FPS/6,068 frames; p50/p95/p99 8.333/16.667/16.693 ms.
 APK SHA-256: `747e59cea17a671e2459c1c809249678a5a816f49143908b8265bf186fa25bd9` (source `18a0d3a1`).
 Evidence: `work/coordination/alpha-high-refresh-device-20261112T185314Z/1-scalars-performance.json`.
 Native teardown, profile/settings retention, adopted backing, trace cleanup and stopped/asleep readback pass.
 Prior 32-session roster capture retains zero ScrollViewState objects; menus 2/33 add 3,346,427 discovered bytes.
 Evidence: `work/coordination/alpha-roster-longheap32-20261112T165412Z/decision.md`; no lifetime bound follows.
-Focused host/exact-editor fixtures, Java packaging and code-only build pass; prior art: UnityExplorer inspection.
+Detail evidence: `work/coordination/alpha-details-comparison-20261112T190813Z/`; no causal census speedup.
 Sustained ordinary/all-stage play, visual parity, unplugged energy and capture overhead remain open.

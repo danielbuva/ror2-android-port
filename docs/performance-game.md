@@ -3,7 +3,8 @@
 Latest sustained raw-frame observation: 2026-11-12; historical aggregate baseline: 2026-10-31.
 This is an assisted first-stage observation: invincibility, neutral movement and
 small camera drags; composed renderer on a 120 Hz capable panel. The sustained trace
-below predates the saved refresh preference and scalar-only periodic inspection. All 29 retained
+below predates the saved refresh preference and scalar-only periodic inspection.
+All 29 retained
 world snapshots report Unity refresh 60 Hz, requested frame rate 300 and vSync 1;
 actual compositor refresh was not captured. It does not qualify normal
 play, visual parity, battery efficiency or the performance release gate.
@@ -170,6 +171,28 @@ Evidence: `work/coordination/alpha-high-refresh-device-20261112T185314Z/`
 (`1-scalars-performance.json`, saved display readbacks and terminal cleanup).
 APK SHA-256: `747e59cea17a671e2459c1c809249678a5a816f49143908b8265bf186fa25bd9`;
 runtime source `18a0d3a1`.
+
+After a cold launch with the saved high preference, the same APK's explicit
+scene-detail window reconciles 6,068 frames over 61.515 host seconds: 100.516 FPS,
+raw p50/p95/p99 8.333/16.667/16.693 ms, 34 frames above 33.334 ms and 20 above
+50 ms. Its snapshots retain 1,000 hierarchy entries and 6,074–6,084 renderer rows,
+confirming the opt-in still works. PlayerLoop averages 9.943 ms, camera render
+3.802 ms and explicit GC 0.0031 ms; waits remain inclusive and noncausal.
+One complete 30.007-second camera window has 103 timing samples:
+CPU/main/GPU 9.938/10.368/8.099 ms. Its 309 allocation observations average
+82,937.492 bytes; neither this sample mean nor one collection measures a GC pause.
+The cold-launch/display-pacing difference confounds a scalar/detail speed comparison;
+neither a census speedup nor restart causality is established by this pair.
+
+This window records CPU/GPU/battery peaks of 96.3/85.3/35 C, 60.685 covered seconds
+above 80 C and a maximum thermal sample gap of 0.419 seconds. The thermal owner
+reports no sustained safety-limit violation. End Run, raw reconciliation, restored
+diagnostics, scratch removal, stopped/asleep readback and lease release pass.
+Evidence: `work/coordination/alpha-details-comparison-20261112T190813Z/`
+(`2-details-performance.json`, SHA-256
+`08ffd5ed42bc8aabd1d11eaa42227bedcca5f91e3e4380d7895f2412aaaa191d`).
+This qualifies above-60-FPS capability in one assisted window, not sustained
+120 FPS, ordinary-play performance or productive main-thread headroom.
 
 ### Bounded raw-capture qualification
 
