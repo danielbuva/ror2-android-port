@@ -17,7 +17,7 @@ import time
 
 class ThermalDutyCycle:
     def __init__(self, profile="nova"):
-        self.high, self.low = {"nova": (70, 55), "thor": (75, 60)}[profile]
+        self.high, self.low = {"nova": (70, 55), "thor": (70, 55)}[profile]
         self.paused = False
         self.since = None
         self.pause_seconds = 0.0

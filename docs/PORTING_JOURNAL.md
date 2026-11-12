@@ -3536,3 +3536,16 @@ Single candidate, uncontrolled page cache/RNG; no total-load speedup or I/O clai
 PID errors empty; 153 banks/65 network sounds; update kept profiles/settings.
 Peak CPU/GPU 77.7 °C, 0 s above 80 °C; battery 28 °C; cleanup/OLED/lease passed.
 No second daily snapshot; sustained play/performance and phone install stay open.
+## J1442 — Generate current managed witnesses from produced providers
+
+2026-11-12. Existing bundle endpoint owner compiles the public metadata-only Cecil
+reader from pinned tools and derives provider/runtime/CLR witnesses from actual
+managed production; final registry provider aliases require the final player job.
+Signed release graphs include reader source and generated-artifact dependencies.
+Existing Thor converter duty cycling follows the shared 70/55 °C policy.
+107 focused checks passed after resolving macOS fixture paths; host-only preflight,
+Ruff and public audit pass. Input assemblies are inspected without executing them.
+Evidence: `work/coordination/p1-wholegame-1031/phone-chain-audit-1112/`
+(`current-managed-witness-checks-v1/focused.log`, `fixture-repair-result.json`).
+No APK/device change. Complete current managed production, Android toolhost,
+SQLite/LZ4, exact-editor typed load and phone-only gameplay remain open.

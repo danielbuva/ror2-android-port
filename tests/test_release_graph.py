@@ -25,6 +25,42 @@ G, J = load("release_graph"), load("release_jobs")
 
 
 class ReleaseGraphTests(unittest.TestCase):
+    def test_current_witness_job_requires_and_signs_final_player_and_reader(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            repo = Path(temporary)
+            (repo / "recipe").mkdir()
+            source = repo / "tools/phone-build/metadata/Program.cs"
+            source.parent.mkdir(parents=True)
+            source.write_text("// authored metadata reader fixture\n")
+            player = repo / "recipe/owner-player.json"
+            player.write_text(json.dumps(dict(project_assemblies=[], outputs={}, registry=dict(file="registry.assets", path="registry.json"))))
+            player_job = "recipe/jobs/owner-player.json"
+            profile = repo / "recipe/owner-witness.json"
+            profile.write_text(
+                json.dumps(
+                    dict(
+                        schema="owner-bundle-managed-release-v1",
+                        profiles=[player.relative_to(repo).as_posix()],
+                        request=dict(
+                            registry_receipt=G.Graph.artifact_pin(player_job, "registry_receipt"),
+                            managed_providers=dict(path="${input:managed}/providers.json"),
+                        ),
+                    )
+                )
+            )
+            graph = G.Graph(repo, {})
+            job = graph.build(G.digest(profile))
+            descriptor = graph.jobs[job]
+            self.assertEqual(descriptor["needs"], [player_job])
+            self.assertEqual(descriptor["artifacts"]["metadata"], "metadata.json")
+            self.assertIn(source.relative_to(repo).as_posix(), graph.entry(job)["producer_files"])
+            self.assertIn(player_job, graph.entry(job)["recipe_files"])
+            value = json.loads(profile.read_text())
+            value["request"]["registry_receipt"]["path"] = "${input:retained_registry}"
+            profile.write_text(json.dumps(value))
+            with self.assertRaisesRegex(ValueError, "final player registry"):
+                G.Graph(repo, {}).build(G.digest(profile))
+
     def test_catalog_fanin_binds_actual_outputs_and_embedded_bootstrap(self):
         with tempfile.TemporaryDirectory() as directory:
             repo = Path(directory)

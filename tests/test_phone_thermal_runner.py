@@ -20,7 +20,7 @@ def zones(cpu=45, gpu=45, battery=35):
 
 class DutyCycleTests(unittest.TestCase):
     def test_nova_and_thor_hysteresis_and_pause_accounting(self):
-        for profile, high, low in (("nova", 70, 55), ("thor", 75, 60)):
+        for profile, high, low in (("nova", 70, 55), ("thor", 70, 55)):
             policy = runner.ThermalDutyCycle(profile)
             policy.observe(zones(), 0, admission=True)
             self.assertEqual(policy.observe(zones(gpu=high), 0.25), signal.SIGSTOP)
