@@ -938,11 +938,19 @@ public static class WholeCatalogComposed
     }
     public static RoR2.ItemGroupType[] ItemGroupTypes()
     {
-        return CategoryFamily(RoR2.ContentManagement.AddressablesLabels.itemGroupType, Array.Empty<RoR2.ItemGroupType>());
+        return ItemGroupTypes(null);
+    }
+    internal static RoR2.ItemGroupType[] ItemGroupTypes(Action<string> trace)
+    {
+        return CategoryFamily(null, RoR2.ContentManagement.AddressablesLabels.itemGroupType, Array.Empty<RoR2.ItemGroupType>(), trace);
     }
     public static RoR2.ItemGroupProvider[] ItemGroupProviders()
     {
-        return CategoryFamily(RoR2.ContentManagement.AddressablesLabels.itemGroupProvider, Array.Empty<RoR2.ItemGroupProvider>());
+        return ItemGroupProviders(null);
+    }
+    internal static RoR2.ItemGroupProvider[] ItemGroupProviders(Action<string> trace)
+    {
+        return CategoryFamily(null, RoR2.ContentManagement.AddressablesLabels.itemGroupProvider, Array.Empty<RoR2.ItemGroupProvider>(), trace);
     }
     public static RoR2.CharacterBody[] BodyComparisons(Type holder)
     {

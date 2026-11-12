@@ -3521,3 +3521,18 @@ Evidence: `work/coordination/p1-wholegame-1031/phone-chain-audit-1112/`
 (`signed-bundle-chain-checks-v1/focused.log`, `preflight-host-only.log`).
 No APK/device claim. Current CLR/SDK witnesses, exact-editor typed load and
 phone SQLite/LZ4 execution remain open.
+
+## J1441 — Attribute item-group manifest, index and typed-load costs
+
+2026-11-12. Existing results owner forwards CategoryFamily phase/cost callbacks;
+parameterless loaders, typed identity, registration order and lifetime stay intact.
+Pinned R2API typed completion/provider seams informed observation; four checks pass.
+Evidence: `work/coordination/alpha-item-group-phase-device-20261112T054138Z/`.
+APK SHA-256 `a1f5acb8534031b9d05f09fe97f5d253910afdf0b259c42dc5dc9f7872c13a92`.
+Source `ecc55e98`; ordinary Start reached Distant Roost/Commando/player/HUD.
+Types/providers index spans 2.593/2.365 ms; typed loads 0.425/0.459 ms.
+Owner span 12.383 ms, enclosing span 33.974 ms; 1 type/1 provider/3 groups.
+Single candidate, uncontrolled page cache/RNG; no total-load speedup or I/O claim.
+PID errors empty; 153 banks/65 network sounds; update kept profiles/settings.
+Peak CPU/GPU 77.7 °C, 0 s above 80 °C; battery 28 °C; cleanup/OLED/lease passed.
+No second daily snapshot; sustained play/performance and phone install stay open.
