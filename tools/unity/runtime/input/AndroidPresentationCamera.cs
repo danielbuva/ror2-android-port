@@ -2,6 +2,7 @@
 // Session phases: setup Awake, OnEnable; teardown OnDestroy.
 using System;
 using System.Collections.Generic;
+using System.IO;
 using UnityEngine;
 using UnityEngine.Profiling;
 using UnityEngine.SceneManagement;
@@ -29,6 +30,10 @@ public sealed class AndroidPresentationCamera : MonoBehaviour
     public class Report
     {
         public int frames, colorPasses, over33ms, over50ms, pauses, resumeFramesSkipped;
+        public double totalMs;
+        public string rawFrameTrace, rawFrameTraceError;
+        public int rawFrameTraceFirstFrame, rawFrameTraceFrames, rawFrameTraceDropped;
+        public bool rawFrameTraceClosed;
         public float meanMs, maxMs, backgroundSeconds;
         public bool sourceCubemap, sourceSun, cameraHdrAllowed, halfFloatSupported;
         public string colorTargetFormat, colorGraphicsFormat, gBuffer3Format, skybox, sun, skyboxStatus, error;
@@ -36,6 +41,70 @@ public sealed class AndroidPresentationCamera : MonoBehaviour
     }
     public Light fallbackLight;
     public readonly Report report = new Report();
+    // Primitive, bounded storage only. No per-frame allocation or file I/O.
+    public sealed class RawFrameCapture
+    {
+        public const int Capacity = 262144;
+        public readonly int firstFrame;
+        public int count, dropped;
+        readonly float[] durations;
+        public RawFrameCapture(int firstFrame, int capacity = Capacity)
+        {
+            this.firstFrame = firstFrame;
+            durations = new float[capacity];
+        }
+        public void Observe(float ms)
+        {
+            if (count < durations.Length)
+                durations[count++] = ms;
+            else
+                dropped++;
+        }
+        public void Write(string path)
+        {
+            using (var writer = new BinaryWriter(File.Open(path, FileMode.CreateNew, FileAccess.Write)))
+            {
+                // Little-endian header: magic, first ordinal, retained count,
+                // final admitted ordinal, dropped count; then IEEE float32 ms.
+                writer.Write(System.Text.Encoding.ASCII.GetBytes("ROR2FRAM"));
+                writer.Write(firstFrame);
+                writer.Write(count);
+                writer.Write(firstFrame + count + dropped - 1);
+                writer.Write(dropped);
+                for (int i = 0; i < count; i++)
+                    writer.Write(durations[i]);
+            }
+        }
+    }
+    RawFrameCapture rawFrames;
+    public void BeginRawFrameCapture()
+    {
+        if (report.rawFrameTrace != null)
+            return;
+        rawFrames = new RawFrameCapture(report.frames + 1);
+        report.rawFrameTraceFirstFrame = rawFrames.firstFrame;
+        report.rawFrameTrace = "frame-times-" + Guid.NewGuid().ToString("N") + ".bin";
+    }
+    public void FinishRawFrameCapture()
+    {
+        if (rawFrames == null)
+            return;
+        report.rawFrameTraceFrames = rawFrames.count;
+        report.rawFrameTraceDropped = rawFrames.dropped;
+        try
+        {
+            rawFrames.Write(Path.Combine(Application.persistentDataPath, report.rawFrameTrace));
+            report.rawFrameTraceClosed = true;
+        }
+        catch (Exception error)
+        {
+            report.rawFrameTraceError = error.GetType().Name + ": " + error.Message;
+        }
+        finally
+        {
+            rawFrames = null;
+        }
+    }
     Material grade;
     Camera view;
     double sum, timingCpu, timingGpu, timingMain, timingRender, drawCalls, setPassCalls, vertices, gcAllocBytes;
@@ -97,6 +166,8 @@ public sealed class AndroidPresentationCamera : MonoBehaviour
         }
         report.frames++;
         sum += ms;
+        report.totalMs = sum;
+        rawFrames?.Observe(ms);
         report.meanMs = (float)(sum / report.frames);
         report.maxMs = Mathf.Max(report.maxMs, ms);
         if (ms > 33.334f)
@@ -246,6 +317,7 @@ public sealed class AndroidPresentationCamera : MonoBehaviour
     }
     void OnDestroy()
     {
+        FinishRawFrameCapture();
         mainThreadRecorder.Dispose();
         renderThreadRecorder.Dispose();
         drawCallsRecorder.Dispose();

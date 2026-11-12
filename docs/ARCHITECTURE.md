@@ -2701,8 +2701,27 @@ no runtime/device state is changed, and reports persist at the requested output.
 Final-ten-minute active counter totals use retained endpoints inside the last
 600 host seconds, reporting actual coverage and uncovered boundary time without
 interpolating missing counters; fewer than two endpoints leaves totals unavailable.
-It cannot recover individual-frame quantiles or causal throttling onset from
-aggregate traces. [Game performance](performance-game.md) owns the baseline and
+It cannot recover individual-frame quantiles from aggregate traces or establish
+causal throttling onset. Optional `--raw-frames` reads the sustained session's
+hash-bound sidecar, reconciles every retained interval against exact duration,
+frame and strict hitch counters, then computes individual-frame p50/p95/p99 only
+with complete frame coverage. Final-ten-minute quantiles additionally require
+all 600 host seconds; partial endpoint windows retain their explicit coverage.
+`AndroidPresentationCamera` owns default-off `rawFrameTimesRequested` capture:
+`NovaInputBoundary` starts it on the existing presentation camera; the camera
+keeps at most 262,144 float durations (1 MiB), using identical pause/resume
+admission, with no per-frame allocation or disk write. `NovaDiagnosticDisplay.Dispose`
+flushes it before destroying the camera; `OnDestroy` is the fallback. The private
+sidecar has `ROR2FRAM`, four little-endian int32 values (first frame ordinal,
+retained count, final admitted ordinal, dropped count), then retained float32
+milliseconds. Unique trace names bind periodic and completed reports; failures
+and overflow are explicit. The sustained owner requests capture, pulls a closed
+matching sidecar, verifies coverage and removes device scratch after host
+retention. Abrupt process termination can lose the in-memory trace; absent or
+partial evidence supplies no quantiles. Exact-editor host fixtures exercise
+actual admission, counters, binary interoperability and overflow. Capture overhead
+and sustained device qualification remain open.
+[Game performance](performance-game.md) owns the baseline and
 attribution limits; [public alpha](public-alpha.md#performance-release-gate) owns
 proposed device budgets. Synthetic host fixtures check window and coverage math.
 
