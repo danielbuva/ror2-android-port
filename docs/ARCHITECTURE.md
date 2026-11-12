@@ -5949,7 +5949,9 @@ bounded owner-boundary logs, with no per-object recording.
 The same optional callback aggregates successful-row type resolution, bundle-owner
 lookup and typed asset-load ticks once per cold family. It records the timer
 frequency and remaining collection/enumeration ticks, including instrumentation
-overhead. Unobserved calls perform no clock reads; warm families emit no costs.
+overhead. Calls with a null category callback perform no clock reads; warm
+families emit no costs. A caller's non-null forwarding callback enables timing
+even when its downstream observer is absent.
 It adds no retained state and leaves native collection order and ownership intact.
 
 `AndroidProfileBoundary` passes the existing synchronous results manifest through

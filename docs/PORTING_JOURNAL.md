@@ -3463,3 +3463,18 @@ Generic family cost is unisolated; category spans do not show a reduction.
 Peak CPU/GPU 81.6/86.0 °C, >80 °C 0.311/0.932 s; battery 28 °C both.
 Cleanup/OLED/lease/prune passed; no second snapshot today.
 Sustained performance, physical navigation and full phone installation stay open.
+
+## J1437 — Attribute synchronous category asset loading costs
+
+2026-11-12. Existing CategoryFamily callbacks aggregate type, owner, typed-load
+and residual ticks per cache miss; native collection order/identity remain intact.
+Pinned R2API typed-load/lifecycle prior art; three executable fixture tests passed.
+Evidence: `work/coordination/alpha-category-phase-device-20261112T045023Z/`.
+APK SHA-256 `11a213d279e64de2355f43e5afa1990f870391c83161b7dce74a6f6ce5debeb5`.
+Source `75acfb8e`; ordinary Start reached Distant Roost/Commando/player/HUD.
+Original terminal failed a local allowlist missing the existing game-mode callback;
+saved-trace continuation passed six additive summaries without device replay.
+State/projectile/master typed loads: 1.160/1.119/1.023 s, including transitive work.
+Current-PID errors empty; 153 banks/65 network sounds; update retained profiles.
+Peak CPU/GPU 78.9 °C, 0 s above 80 °C; battery 28 °C; cleanup/OLED/lease passed.
+No speedup claim or second daily snapshot; sustained play/performance remain open.
