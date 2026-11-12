@@ -9,7 +9,7 @@
   "public_inputs": {
     "shaders": {
       "path": "recipe/owner-player-shaders.json",
-      "sha256": "9ff4e5d552d71bc0f8e68653e2ac5680810bad07a1b18b84290f72b8188aa008"
+      "sha256": "4969a94828076f31588cfa205e5322ac92220110e33fdd955b8f3dacad83ba5d"
     },
     "contexts": {
       "path": "recipe/owner-stage-contexts.json",
