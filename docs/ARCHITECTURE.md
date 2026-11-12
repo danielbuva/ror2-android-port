@@ -24,7 +24,11 @@ constructs this emitter/repacker chain from explicitly pinned inputs.
 `bundle_endpoints.py` owns the shared staged-member readers, SDK witnesses,
 current provider/registry/CLR checks and final MonoScript allocation readback.
 Request paths resolve relative to the request; corresponding metadata/provider
-paths must agree before relocation. Setup opens only declared staged members;
+paths must agree before relocation. Optional pinned `provider_paths` maps original
+native-pack names to directories relative to that map. The reader, resource
+copier, endpoint checks and cache traverse relocated files while retaining the
+original descriptor/proof identities and checking every preceding provider's
+body, profile, index and witness hashes. Setup opens only declared staged members;
 teardown closes them on success or failure. Full-output cache hits still check
 actual final local and external managed bodies, and inputs are rehashed before
 the receipt is written. The final artifact is the canonical repack when selected.
