@@ -3337,3 +3337,15 @@ Launch/menu 20.078 s; Start/player 44.636 s; uncontrolled cache, no speedup clai
 Peak CPU/GPU 73.7 °C, 0 s above 80 °C; battery 26 °C, runtime gap < 0.433 s.
 App stopped, scratch removed, OLED asleep, lease released; pruning passed.
 Sustained play/performance, physical navigation and complete phone install stay open.
+
+## J1427 — Expose checked bundle emission and canonical repack requests
+
+2026-11-12. Merged #463 (`a6cb0c04`): the existing emitter/repacker accepts
+explicit pinned requests, using one endpoint owner for native bodies, PPtrs,
+SDK witnesses, current managed providers, registry scripts and final readback.
+Cache reuse and canonical repack recheck actual managed script allocation;
+readers close on success or failure. Native-only requests need no managed pins.
+Evidence: `tests/test_bundle_preload.py`; 41 focused host tests, Ruff,
+host preflight and full CI-local (3,200 tests) passed before merge.
+Source output: `7f70aeae`; no APK or device output was produced.
+Signed graph/source closure, phone dependencies and complete conversion stay open.
