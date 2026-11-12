@@ -161,6 +161,13 @@ reconciles 98,855 frames over 30 minutes: 54.927 FPS, raw p50/p95/p99
 and 5.378 seconds of missing boundary coverage. Ordinary play, visual parity,
 capture overhead, battery drain and causal throttling remain unqualified.
 
+The [saved high-refresh preference](performance-game.md#saved-app-refresh-and-scalar-only-periodic-inspection)
+changes the Main Nova's active display mode from 60 to 120 Hz and survives a cold
+launch without global setting changes. Its bounded scalar-only inspection window
+averages 60.057 FPS with raw p50/p95/p99 of 16.654/16.715/25.000 ms.
+This does not qualify sustained 60 FPS, 120 FPS, ordinary play or a causal speedup.
+Full scene inspection remains explicitly available; periodic snapshots omit it by default.
+
 Startup [audio-verification reuse](PORTING_JOURNAL.md#j1386--reuse-install-bound-audio-verification-and-partition-loading-costs)
 and [catalog discovery](PORTING_JOURNAL.md#j1390--reuse-typed-item-provider-discovery-during-ordinary-startup)
 provide bounded device evidence; complete converter and sustained-game profiles
@@ -196,6 +203,10 @@ thermal sampling policy; proposed performance budgets do not change those limits
       Pool logical counts, live location keys and report/sample counts stay
       unchanged across that pair. This closes the inspected retaining-owner
       investigation, not a total lifetime bound or plateau.
+      A subsequent 32-session supervised capture retains zero ScrollViewState
+      objects in menus 2/33; discovered managed-object bytes rise from 26,895,878
+      to 30,242,305. This extends the measured interval without establishing a
+      lifetime ceiling or closing ordinary long play.
 - [ ] Qualify a long unassisted physical session, including ordinary results
       navigation, continued dependency retention and memory observations
       ([owner checklist](PLAYTESTING.md#stability-persistence-and-updates)).

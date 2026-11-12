@@ -33,6 +33,17 @@ def require_invincibility_only(report):
         raise RuntimeError("Sustained workload requires exactly invincibility ON")
 
 
+def sustained_world_ready(report):
+    # World preparation publishes this phase before NovaInputBoundary installs
+    # the selected debug options. Admit the workload only after both owners are ready.
+    if report.get("phase") != "integrated-world-playing" or (report.get("world") or {}).get("ready") is not True:
+        return False
+    if ((report.get("debugAcceleration") or {}).get("active") or {}).get("invincibility") is not True:
+        return False
+    require_invincibility_only(report)
+    return True
+
+
 def thermal_sample(battery, thermal):
     temperature = re.search(r"^\s*temperature:\s*(\d+)", battery, re.M)
     status = re.search(r"Thermal Status:\s*(\d+)", thermal)
@@ -279,7 +290,7 @@ def check_session_sustained(expected_apk_sha256=None, _launch=None, *, raw_frame
         if coords is None:
             raise RuntimeError("Current native menu Start geometry unavailable")
         tap("start", *coords)
-        report = wait(lambda r: r.get("phase") == "integrated-world-playing" and r.get("world", {}).get("ready") is True, 240)
+        report = wait(sustained_world_ready, 240)
         require_invincibility_only(report)
         tap("manual-neutral", width * 0.5, 34)
         report = wait(lambda r: r.get("world", {}).get("manualTakeover") is True and (r.get("nova", {}).get("touch") or {}).get("moveRadius", 0) > 0, 20)

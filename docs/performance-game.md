@@ -1,8 +1,9 @@
 # Sustained game performance baseline
 
-Current raw-frame observation: 2026-11-12; historical aggregate baseline: 2026-10-31.
+Latest sustained raw-frame observation: 2026-11-12; historical aggregate baseline: 2026-10-31.
 This is an assisted first-stage observation: invincibility, neutral movement and
-small camera drags; composed renderer on a 120 Hz capable panel. All 29 retained
+small camera drags; composed renderer on a 120 Hz capable panel. The sustained trace
+below predates the saved refresh preference and scalar-only periodic inspection. All 29 retained
 world snapshots report Unity refresh 60 Hz, requested frame rate 300 and vSync 1;
 actual compositor refresh was not captured. It does not qualify normal
 play, visual parity, battery efficiency or the performance release gate.
@@ -127,6 +128,48 @@ matching the two-second full scene-census cadence in `LabDiagnostics`.
 Evidence: `work/coordination/alpha-engine-cost-on-20261112T182325Z/`
 (`marker-endpoint-deltas.json`, `2-on-performance.json`, `display-idle-policy.json`).
 APK SHA-256: `74cc76e779d16e8fefdd7e0354ddbc1d076b08f7a960da6d1f567317700b6a37`.
+
+### Saved app refresh and scalar-only periodic inspection
+
+The saved **High refresh rate (applies on Save)** option requests the highest
+same-resolution display mode, window refresh and Android 11+ surface frame rate.
+Standard mode requests the closest mode to 60 Hz. The application owner reapplies
+the saved policy on resume and restores its prior app state on teardown. It does
+not change Android's global display settings. A legacy preferences file defaults
+to high refresh; unsaved drafts and failed saves do not apply the preference.
+
+On the Main Nova, saving standard then high refresh changed the active Android
+display mode from 60 to 120 Hz. Both requests reached Unity's surface; the saved
+high preference and 120 Hz request survived a cold launch. This verifies a display
+request and policy response, not 120 FPS or compositor presentation timing.
+
+With high refresh selected, the 60.510-second assisted scalar-inspection window
+reconciles 3,633 frames: 60.057 FPS, raw p50/p95/p99 of
+16.654/16.715/25.000 ms, 14 frames above 33.334 ms (0.385%) and one above
+50 ms (0.028%). Periodic snapshots retain zero hierarchy and renderer rows and
+explicitly report `sceneDetails=false`. Startup retains full inspection;
+`./dev diagnostics --scene-details`, `--subtree` or `--fields` restores it on demand.
+The single window cannot establish a sustained improvement or isolate the census
+change from the display setting. Representative ordinary play remains required.
+
+All 15 engine markers were available. Inclusive per-frame means include
+PlayerLoop 16.646 ms, camera render 4.727 ms, coroutines 1.195 ms, fixed update
+0.891 ms, Update 0.683 ms and explicit GC 0.0045 ms (two calls). Present,
+semaphore and job waits average 4.580/5.650/1.868 ms. Scopes overlap; these flat
+waits cannot establish a GPU, vsync or scheduling cause. One complete 30.013-second
+camera window has 60 timing samples: CPU/main/GPU 16.626/16.586/11.753 ms.
+The 179 sampled allocation values average 22,667.782 bytes; they are not per-frame
+allocations. One collection is not its duration. No uncapped main-thread capacity
+or universal no-event recorder freshness claim follows.
+
+Observation-window peaks are CPU 79.6 C, GPU 63.5 C and battery 33 C; the maximum
+thermal sample gap is 0.445 seconds, with no gap over one second. The wider capture
+peaks at 92.3 C with 11.082 seconds above 80 C. Native End Run, profile/settings
+retention, adopted placement, trace-scratch removal and stopped/asleep cleanup pass.
+Evidence: `work/coordination/alpha-high-refresh-device-20261112T185314Z/`
+(`1-scalars-performance.json`, saved display readbacks and terminal cleanup).
+APK SHA-256: `747e59cea17a671e2459c1c809249678a5a816f49143908b8265bf186fa25bd9`;
+runtime source `18a0d3a1`.
 
 ### Bounded raw-capture qualification
 
