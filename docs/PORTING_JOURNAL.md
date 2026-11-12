@@ -3427,7 +3427,7 @@ full CI-local (3,205 tests) passed before merge.
 Source output: `910cbbde`; no APK or device output was produced.
 Signed bundle preparation, phone dependencies and full conversion remain open.
 
-## J1433 — Retain final emitted catalog declaration artifacts
+## J1434 — Retain final emitted catalog declaration artifacts
 
 2026-11-12. PR #469 merged at `c723ec04`: checked bundle preparation retains
 `catalog-profile.json` from the actual emitted name, member and asset groups,
