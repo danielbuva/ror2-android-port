@@ -25,6 +25,7 @@ public static class WholeCatalogComposed
     static HashSet<string> borrowedNames;
     static readonly List<WeakReference> releasedLocators = new List<WeakReference>();
     static readonly List<WeakReference> releasedManifests = new List<WeakReference>();
+    static int releasedCatalogGenerations;
     static WeakReference currentManifest;
     static WeakReference definitionManifest;
     static string activeInputId;
@@ -421,6 +422,7 @@ public static class WholeCatalogComposed
         {
             releasedLocators.Add(new WeakReference(ownedLocator));
             releasedManifests.Add(currentManifest);
+            releasedCatalogGenerations++;
             currentManifest = null;
             activeInputId = null;
             activeAttempt = null;
@@ -496,7 +498,11 @@ public static class WholeCatalogComposed
     }
     public static int[] ReleasedCatalogRetention()
     {
-        return new[] { releasedLocators.Count, releasedLocators.Count(value => value.IsAlive),
+        // Collected targets no longer need diagnostic wrappers. Keep the
+        // generation total independently so pruning does not reset history.
+        releasedLocators.RemoveAll(value => value == null || !value.IsAlive);
+        releasedManifests.RemoveAll(value => value == null || !value.IsAlive);
+        return new[] { releasedCatalogGenerations, releasedLocators.Count(value => value.IsAlive),
                        releasedManifests.Count(value => value != null && value.IsAlive), Addressables.ResourceLocators.Count(),
                        lastDetachedAssetOperations };
     }
