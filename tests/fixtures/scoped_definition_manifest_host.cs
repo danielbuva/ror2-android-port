@@ -295,6 +295,10 @@ public static partial class WholeCatalogComposed
             .SequenceEqual(actualTokens.OfType<JProperty>().Select(property => property.Name)));
         Check(expectedTokens.Any(token => ((Newtonsoft.Json.IJsonLineInfo)token).HasLineInfo()));
         Check(actualTokens.All(token => !((Newtonsoft.Json.IJsonLineInfo)token).HasLineInfo()));
+        // Values and escaped Unicode spanning the stream buffer retain their types/order.
+        string buffered = "{\"text\":\"" + new string('x', 8191) + "\\u03bb\\uD83D\\uDE80\",\"tail\":[1,true,null]}";
+        WriteManifest(buffered);
+        Check(JToken.DeepEquals(JObject.Parse(buffered), ReadDefinitionManifest()));
         foreach (string invalid in new[] { "{\"unfinished\":", "{\"items\":[1,}", "{} {}", "{} trailing" })
         {
             WriteManifest(invalid);

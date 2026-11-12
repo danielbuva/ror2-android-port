@@ -4158,6 +4158,9 @@ The synchronous preparation call releases that reference on return; family-cache
 relationship registration/restoration remain under their existing owners.
 The shared reader omits unused JSON source-line annotations while retaining the
 same token values, types, property order and parser error handling.
+It streams the file through a scoped JSON reader, avoiding a whole-file UTF-16
+copy; the reader closes on success or failure and consumes EOF to reject trailing
+content. Failed reads never publish a snapshot.
 The process audio lease applies that same parsing policy to its freshly read,
 SHA-validated manifest bytes when deriving retained bundle dependencies. It
 keeps the byte check and does not borrow a cached definition snapshot.
