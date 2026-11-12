@@ -546,6 +546,9 @@ class Graph:
                 entries[output] = entry
         if not entries:
             raise ValueError("select at least one complete output profile")
+        for name, job in self.jobs.items():
+            closure = self.entry(name)
+            job["source_files"] = sorted(set(closure["recipe_files"]) | set(closure["producer_files"]))
         files = {path for row in entries.values() for key in ("recipe_files", "producer_files") for path in row[key] if path not in self.jobs}
         return {
             "schema": 1,
