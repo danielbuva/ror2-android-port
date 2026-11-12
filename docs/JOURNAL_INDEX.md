@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J1457](PORTING_JOURNAL.md#j1457--derive-source-policy-supplier-bindings-from-selected-metadata) | 2026-11-12 | Derive source-policy supplier bindings from selected metadata | 2026-11-12. |
 | [J1456](PORTING_JOURNAL.md#j1456--stream-definition-manifest-snapshots) | 2026-11-12 | Stream definition manifest snapshots | 2026-11-12. |
 | [J1454](PORTING_JOURNAL.md#j1454--reuse-type-resolution-within-provider-root-families) | 2026-11-12 | Reuse type resolution within provider-root families | 2026-11-12. |
 | [J1455](PORTING_JOURNAL.md#j1455--retain-selected-phone-produced-artifacts-before-cleanup) | 2026-11-12 | Retain selected phone-produced artifacts before cleanup | 2026-11-12. |
