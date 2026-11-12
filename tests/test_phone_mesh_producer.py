@@ -62,7 +62,7 @@ def authored_mesh(streamed=False):
     return body, schema, vertex
 
 
-def serialized(body, schema, path_id=-123):
+def serialized(body, schema, path_id=-123, class_id=43):
     strings = bytearray()
     offsets = {}
 
@@ -80,11 +80,12 @@ def serialized(body, schema, path_id=-123):
             flatten(child, level + 1)
 
     flatten(schema, 0)
-    metadata = b"2021.3.45f2\0" + struct.pack("<iBIiBh", 19, 1, 1, 43, 0, -1) + bytes(16)
+    metadata = b"2021.3.45f2\0" + struct.pack("<iBIiBh", 19, 1, 1, class_id, 0, -1) + bytes(16)
     metadata += struct.pack("<II", len(nodes), len(strings)) + b"".join(nodes) + strings + bytes(4)
     metadata += struct.pack("<I", 1)
     metadata += bytes(-len(metadata) % 4)
     metadata += struct.pack("<qqIi", path_id, 0, len(body), 0)
+    metadata += bytes(13)  # Empty scripts, externals, reference types and user string.
     data_offset = (48 + len(metadata) + 15) // 16 * 16
     header = struct.pack(">IIII", 0, 0, 22, 0) + bytes(4) + struct.pack(">Iqqq", len(metadata), data_offset + len(body), data_offset, 0)
     return header + metadata + bytes(data_offset - 48 - len(metadata)) + body
@@ -224,6 +225,11 @@ class MeshProducerTests(unittest.TestCase):
                 receipt = P.produce(profile_path, B.sha(profile_path), pc, root / "output")
                 self.assertTrue(receipt["success"])
                 self.assertEqual((root / "output/objects.bin").read_bytes(), body)
+                O = P.module("object_produce")
+                packed = json.loads((root / "output/index.jsonl").read_text())
+                types = json.loads((root / "output/types.json").read_text())
+                self.assertEqual(types[packed["type_id"]], O.json_layout(O.source_record_type(source, "CAB-authored", -123, 43)))
+                self.assertEqual(receipt["outputs"]["types.json"]["sha256"], B.sha(root / "output/types.json"))
                 self.assertEqual(B.sha(source), original_hash)
                 with self.assertRaises(ValueError):
                     P.produce(profile_path, B.sha(profile_path), pc, root / "output")

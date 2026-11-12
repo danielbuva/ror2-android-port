@@ -245,13 +245,24 @@ class ReleaseGraphTests(unittest.TestCase):
         graph = G.Graph(ROOT, {})
         graph.build(G.digest(ROOT / "recipe/owner-commando-objects.json"))
         graph.build(G.digest(ROOT / "recipe/owner-whole-game-source-records.json"))
+        shader_job = graph.build(G.digest(ROOT / "recipe/owner-player-shaders.json"))
+        self.assertEqual(graph.jobs[shader_job]["artifacts"]["shared_types"], "shared-shaders/types.json")
         seen = set()
         for job in graph.jobs.values():
             producer = Path(job["script"]).stem
             if producer == "object_produce" and "objects" in job["artifacts"]:
                 self.assertEqual(job["artifacts"]["layout"], "layout.json")
                 seen.add(producer)
-            if producer in {"record_produce", "record_remap"}:
+            if producer in {
+                "record_produce",
+                "record_remap",
+                "mesh_produce",
+                "avatar_produce",
+                "texture_produce",
+                "shader_context",
+                "shader_prefab",
+                "payload_shader_records",
+            }:
                 self.assertEqual(job["artifacts"]["types"], "types.json")
                 seen.add(producer)
         self.assertIn("object_produce", seen)
@@ -268,7 +279,7 @@ class ReleaseGraphTests(unittest.TestCase):
             self.assertEqual(job["arguments"][0], "produce")
             for argument in ("--pc-root", "--functional", "${input:sprite_native_" + pin + "}", "${input_sha256:sprite_native_" + pin + "}"):
                 self.assertIn(argument, job["arguments"])
-            self.assertEqual(job["artifacts"], {"receipt": "result.json", "objects": "objects.bin", "index": "index.jsonl"})
+            self.assertEqual(job["artifacts"], {"receipt": "result.json", "objects": "objects.bin", "index": "index.jsonl", "types": "types.json"})
 
     def test_fallback_shader_job_binds_pinned_public_templates(self):
         graph = G.Graph(ROOT, {})

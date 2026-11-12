@@ -66,7 +66,7 @@ def checked_original(pc, selected):
         body = O.B.exact(stream, obj["bytes"])
     if hashlib.sha256(body).hexdigest() != selected["body_sha256"]:
         raise ValueError("Original Shader context body drift")
-    return body, A.SCHEMA.type_tree(io.BytesIO(typ["tree"]))
+    return body, A.SCHEMA.type_tree(io.BytesIO(typ["tree"])), typ
 
 
 def produce(profile_path, profile_pin, pc, sdk, asset_ripper, provider, provider_pin, output, comparison="exact"):
@@ -97,7 +97,7 @@ def produce(profile_path, profile_pin, pc, sdk, asset_ripper, provider, provider
     inventory, common = P.includes(sdk / "CGIncludes")
     if inventory != profile["includes_sha256"]:
         raise ValueError("Shader context common includes drift")
-    _, root = checked_original(pc, profile["source_type"])
+    _, root, typ = checked_original(pc, profile["source_type"])
     selections = {}
     for row in profile["records"]:
         selections.setdefault(row["source_record"]["member"], []).append(
@@ -136,6 +136,7 @@ def produce(profile_path, profile_pin, pc, sdk, asset_ripper, provider, provider
         "object_bytes": 0,
     }
     receipt.update(comparison=comparison, historical_mismatches=0)
+    types, type_ids = [], {}
     try:
         with (
             compiler.compiler([sdk / "Tools/UnityShaderCompiler"], sdk, output / "compiler-metadata", includes=[sdk / "CGIncludes"]) as connection,
@@ -188,7 +189,7 @@ def produce(profile_path, profile_pin, pc, sdk, asset_ripper, provider, provider
                             raise ValueError("Shader context record differs from accepted hash")
                         receipt["historical_mismatches"] += 1
                     row = {key: target[key] for key in ("bundle", "member", "path_id")}
-                    row.update(bytes=len(result), sha256=hashlib.sha256(result).hexdigest())
+                    row.update(bytes=len(result), sha256=hashlib.sha256(result).hexdigest(), type_id=O.record_type(typ, types, type_ids))
                     row["offset"] = data.tell()
                     data.write(result)
                     index.write(json.dumps(row, sort_keys=True) + "\n")
@@ -206,8 +207,10 @@ def produce(profile_path, profile_pin, pc, sdk, asset_ripper, provider, provider
         O.check_record_packs(providers)
         if P.includes(sdk / "CGIncludes")[0] != inventory:
             raise ValueError("Shader context common includes changed")
+        (output / "types.json").write_text(json.dumps(types, sort_keys=True, indent=2) + "\n")
         receipt.update(
-            success=True, outputs={name: {"bytes": (output / name).stat().st_size, "sha256": P.sha(output / name)} for name in ("objects.bin", "index.jsonl")}
+            success=True,
+            outputs={name: {"bytes": (output / name).stat().st_size, "sha256": P.sha(output / name)} for name in ("objects.bin", "index.jsonl", "types.json")},
         )
         return receipt
     except Exception as error:

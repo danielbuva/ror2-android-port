@@ -25,6 +25,7 @@ def module(name):
 
 BUNDLE = module("unity_bundle")
 MESH = module("mesh_produce")
+O = module("object_produce")
 
 
 def dxt1_rgb(data, width, height, force_four_colours=False):
@@ -562,14 +563,14 @@ def texture_row(target, object_offset, resource_offset):
     return row
 
 
-def texture_receipt(output, receipt):
+def texture_receipt(output, receipt, name="result.json"):
     # Replacement keeps the initial pins readable even if the process is killed
     # while replacing the final status. The index alone commits each extent.
-    with (output / "result.json.tmp").open("w") as stream:
+    with (output / (name + ".tmp")).open("w") as stream:
         stream.write(json.dumps(receipt, indent=2) + "\n")
         stream.flush()
         os.fsync(stream.fileno())
-    os.replace(output / "result.json.tmp", output / "result.json")
+    os.replace(output / (name + ".tmp"), output / name)
     directory = os.open(output, os.O_RDONLY)
     try:
         os.fsync(directory)
@@ -578,15 +579,19 @@ def texture_receipt(output, receipt):
 
 
 def texture_resume(output, profile, pins):
-    names = {"objects.bin", "resources.bin", "index.jsonl", "result.json"}
-    if not names <= {p.name for p in output.iterdir()} <= names | {"result.json.tmp"} or any(not p.is_file() or p.is_symlink() for p in output.iterdir()):
+    names = {"objects.bin", "resources.bin", "index.jsonl", "result.json", "types.json"}
+    if not names <= {p.name for p in output.iterdir()} <= names | {"result.json.tmp", "types.json.tmp"} or any(
+        not p.is_file() or p.is_symlink() for p in output.iterdir()
+    ):
         raise ValueError("unknown texture checkpoint output")
     previous = json.loads((output / "result.json").read_text())
     pin_names = {"input_id", "profile_sha256", "jpeg_codec_sha256", "etc_codec_sha256", "sdk_toolchain_sha256", "comparison"}
     if {k: previous[k] for k in pin_names if k in previous} != {k: pins[k] for k in pin_names if k in pins}:
         raise ValueError("texture checkpoint input/profile/tool drift")
     targets = iter(target for bundle in profile["bundles"] for member in bundle["members"] for texture in member["textures"] for target in texture["outputs"])
+    types = json.loads((output / "types.json").read_text())
     counts = {"objects": 0, "object_bytes": 0, "resource_bytes": 0}
+    completed_types = []
     index_end = 0
     with (output / "objects.bin").open("rb") as objects, (output / "resources.bin").open("rb") as resources, (output / "index.jsonl").open("rb") as index:
         for line in index:
@@ -595,6 +600,11 @@ def texture_resume(output, profile, pins):
             target = next(targets, None)
             row = json.loads(line)
             expected = texture_row(target, counts["object_bytes"], counts["resource_bytes"]) if target is not None else None
+            type_id = row.get("type_id")
+            if type(type_id) is not int or not 0 <= type_id < len(types):
+                raise ValueError("texture checkpoint type drift")
+            if expected is not None:
+                expected["type_id"] = type_id
             if expected is not None and pins.get("comparison") == "diagnostic":
                 expected.update(bytes=row["bytes"], sha256=row["sha256"], historical_raw_exact=row["historical_raw_exact"])
                 if "resource" in expected:
@@ -606,6 +616,7 @@ def texture_resume(output, profile, pins):
                     if hashlib.sha256(BUNDLE.exact(stream, extent["bytes"])).hexdigest() != extent["sha256"]:
                         raise ValueError("persisted texture checkpoint extent drift")
             counts["objects"] += 1
+            completed_types.append(type_id)
             counts["object_bytes"] += row["bytes"]
             counts["resource_bytes"] += row.get("resource", {}).get("bytes", 0)
             index_end = index.tell()
@@ -615,7 +626,7 @@ def texture_resume(output, profile, pins):
             stream.truncate(size)
             stream.flush()
             os.fsync(stream.fileno())
-    return counts
+    return counts, types, completed_types
 
 
 def produce(
@@ -701,14 +712,18 @@ def produce(
         receipt["etc_codec_sha256"] = etc_codec_sha256
     if sdk is not None:
         receipt["sdk_toolchain_sha256"] = sdk_toolchain_sha256
+    types, completed_types = [], []
     if resume:
-        receipt.update(texture_resume(output, profile, receipt))
+        counts, types, completed_types = texture_resume(output, profile, receipt)
+        receipt.update(counts)
+    type_ids = {json.dumps(typ, sort_keys=True): i for i, typ in enumerate(types)}
     if shutil.disk_usage(parent).free < expected - receipt["object_bytes"] - receipt["resource_bytes"] + 2 * 1024**3:
         raise ValueError("insufficient texture output capacity")
     if not resume:
         output.mkdir()
         for name in ("objects.bin", "resources.bin", "index.jsonl"):
             (output / name).touch(exist_ok=False)
+    texture_receipt(output, types, "types.json")
     texture_receipt(output, receipt)
     committed, visited = receipt["objects"], 0
     try:
@@ -723,8 +738,24 @@ def produce(
                 bundle = BUNDLE.Bundle(path)
                 for selected_member in selected_bundle["members"]:
                     member = bundle.member(selected_member["name"])
+                    metadata = O.W.read_serialized(member)
+                    source_objects = metadata["objects"]
+                    by_id = {row["path_id"]: row for row in source_objects}
+                    by_extent = {(metadata["data_offset"] + row["offset"], row["bytes"]): row for row in source_objects}
                     for selected in selected_member["textures"]:
+                        extent = (selected["offset"], selected["bytes"])
+                        obj = by_id[selected["path_id"]] if "path_id" in selected else by_extent[extent]
+                        typ = metadata["types"][obj["type_id"]]
+                        if typ["class_id"] not in (28, 89) or (metadata["data_offset"] + obj["offset"], obj["bytes"]) != extent:
+                            raise ValueError("original texture metadata drift")
+                        type_count = len(types)
+                        type_id = O.record_type(typ, types, type_ids)
+                        if len(types) != type_count:
+                            # The descriptor must survive before any row can commit its ID.
+                            texture_receipt(output, types, "types.json")
                         completed = min(max(committed - visited, 0), len(selected["outputs"]))
+                        if any(value != type_id for value in completed_types[visited : visited + completed]):
+                            raise ValueError("texture checkpoint source type drift")
                         visited += len(selected["outputs"])
                         if completed == len(selected["outputs"]):
                             continue
@@ -743,6 +774,7 @@ def produce(
                                 raise ValueError("produced texture body differs from accepted hash")
                             actual = dict(target, bytes=len(result), sha256=digest, pixel_bytes=len(pixels), pixel_sha256=pixel_sha)
                             row = texture_row(actual, objects.tell(), resources.tell())
+                            row["type_id"] = type_id
                             if comparison == "diagnostic":
                                 row["historical_raw_exact"] = all(actual[key] == target[key] for key in ("bytes", "sha256", "pixel_bytes", "pixel_sha256"))
                             objects.write(result)
@@ -775,7 +807,8 @@ def produce(
         if sdk is not None and sdk_inputs(sdk_toolchain, sdk_toolchain_sha256, pc) != sdk:
             raise ValueError("SDK texture toolchain changed during production")
         receipt["outputs"] = {
-            name: {"bytes": (output / name).stat().st_size, "sha256": BUNDLE.sha(output / name)} for name in ("objects.bin", "resources.bin", "index.jsonl")
+            name: {"bytes": (output / name).stat().st_size, "sha256": BUNDLE.sha(output / name)}
+            for name in ("objects.bin", "resources.bin", "index.jsonl", "types.json")
         }
         receipt["success"] = True
         return receipt
