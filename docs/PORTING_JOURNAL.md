@@ -3597,11 +3597,12 @@ Ordinary sustained play, capture overhead, battery efficiency and phone install 
 ## J1446 — Refresh complete player Shader helper pins
 
 2026-11-12. Reviewed public helper changes refresh the existing complete Shader
-recipe and its manager dependency; original-input and SDK pins stay unchanged.
+recipe, manager dependency and nine consumer recipes; original and SDK pins stay.
 Existing source producer completes 368 standalone Shaders and one builtin file
 in 260.865 s; receipt SHA-256
 `056c67fa0fcc1537cad5b80f09b0150b44074dd01d4822630b69b2a19e377acc`.
-74 focused checks, host-only preflight and staged public audit pass.
+74 Shader/manager and 27 release-graph/recipe checks, host-only preflight
+and staged public audit pass.
 Evidence: `work/coordination/p1-wholegame-1031/phone-chain-audit-1112/`
 (`current-manager-shaders-v1/production/result.json`, `manager-cohort-repair-1112.md`).
 Complete player/current-CLR/native production, Unity typed load, APK and device

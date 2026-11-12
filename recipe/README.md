@@ -7007,3 +7007,8 @@ Manual provenance/privacy review (2026-11-11): no original body, shader math,
 pixels, upstream implementation or private configuration is tracked. Generated
 implementations stay ignored under the pinned package license; compilation and
 device acceptance remain separate gates.
+
+The complete player Shader helper refresh also updates dependent recipe hashes
+through the existing release graph. Manual provenance/privacy review
+(2026-11-12): changed consumer values are public recipe SHA-256 selectors only;
+no original bodies, SDK files or private paths are added.
