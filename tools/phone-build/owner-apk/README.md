@@ -455,6 +455,30 @@ interruption recovery and save survival remain the local orchestrator's checks.
 
 ### Phone-only import and installation
 
+For the bounded synthetic lab flow, use the serialized runner with an exact
+published source tip and its matching `toolhost` APK:
+`scripts/lab-installer-updates.py --qualify-phone-flow --timeout 1800`.
+It freshly installs the disposable tool, reconstructs on the phone, verifies
+visible unknown-app permission and install consent, checks for updates, then
+verifies an in-place update with authored profile/settings witnesses. The actual
+UI reconstructs to READY **before** opening the permission page. Synthetic inputs
+and signed publisher fixtures are host-authored; this does not qualify SAF import
+or a real game profile. It stops after forward update, without repeating the
+already separate rollback/signature-refusal suite. Notifications are denied,
+including the device-qualified explicit second denial after this run's first
+denial, never pregranted.
+
+Each reported stage includes elapsed time (UI waits/polling/measurement overhead
+included), sampled app-process PSS, battery temperature and available bytes on
+the actual code/data backing. Samples occur at boundaries and at most every ten
+seconds in existing wait loops; sample count and largest gap are reported. These
+are **not true memory peaks**, and native child-tool memory may be omitted.
+Null means unavailable or not running/owned, never zero. Code/data may share a
+volume: do not sum their space or attribute the free-space delta solely to this
+app. Cleanup stops/uninstalls only this run's exact owned packages, sleeps the
+display, and retains diagnostics privately. Measurements do not establish the
+complete performance release gate.
+
 Installer version 3 extends the version-2 foreground-service flow: prepare the signed public
 release, choose the owner's PC game directory with Android's folder picker (or
 choose a ZIP), import, then reconstruct and install. Only required files are

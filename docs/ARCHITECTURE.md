@@ -1329,6 +1329,18 @@ explicitly authorized notification consent independently of
 `--allow-test-installs`. Prompt inspection, classification and owned cleanup
 remain with this driver.
 
+Its `--qualify-phone-flow` mode uses the same visible permission/session and
+synthetic profile/settings witnesses, stopping after the verified forward update.
+`FlowMetrics` samples only the freshly owned fixed apps at stage boundaries and
+at most once per ten seconds in existing polling loops, without a background ADB
+worker. It emits numeric elapsed time, sampled app-process PSS, battery heat and
+actual code/data backing free bytes. Missing readings remain null; shared-volume
+free-space changes are not exclusive app consumption, and sampled PSS excludes
+unobserved peaks/native child tools. Optional observation/report failure never
+replaces acceptance failure or bypasses owned cleanup. Raw observations stay in
+the existing ignored diagnostics. This mode is not production import/gameplay
+or the complete converter performance gate.
+
 Phone installation uses the same release transaction. `owner-apk/game_import.py`
 owns bounded original-file validation, free-space estimates and resumable private
 copies; `install_inputs.py` binds the signed input/stage plan to admitted local
