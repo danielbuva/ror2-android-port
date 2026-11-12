@@ -3768,7 +3768,7 @@ and `tests/test_bundle_prepare.py`, `tests/test_release_graph.py`.
 Prior art: pinned EditorKit typed cache identities; existing release/preparation owners extended.
 Current-game graph admission, Unity typed load, converted play and port update remain open.
 
-## J1458 — Sustained pacing compared with proposed budgets
+## J1459 — Sustained pacing compared with proposed budgets
 
 2026-11-12. The existing host report compares unrounded whole-session and covered-tail
 FPS, raw quantiles and hitch fractions against the proposed public-alpha targets.
