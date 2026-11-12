@@ -19,6 +19,18 @@ Scoped streams close on return, scratch serialization is removed, and receipts
 remain. This host producer API does not add release-job dispatch or establish
 Unity typed load, phone execution or converted-game acceptance.
 
+`bundle_preload.py --inputs REQUEST --output NEW_DIRECTORY [--cache CACHE]`
+constructs this emitter/repacker chain from explicitly pinned inputs.
+`bundle_endpoints.py` owns the shared staged-member readers, SDK witnesses,
+current provider/registry/CLR checks and final MonoScript allocation readback.
+Request paths resolve relative to the request; corresponding metadata/provider
+paths must agree before relocation. Setup opens only declared staged members;
+teardown closes them on success or failure. Full-output cache hits still check
+actual final local and external managed bodies, and inputs are rehashed before
+the receipt is written. The final artifact is the canonical repack when selected.
+Signed release-graph integration, source/provider regeneration and the phone
+SQLite/LZ4 runtime remain separate work; this interface adds no device claim.
+
 [Alpha policy](ALPHA_POLICY.md) owns packaging/acquisition decisions;
 [screen inventory](SCREEN_COVERAGE.md) maps the current Android surfaces and their
 remaining interaction gates.
