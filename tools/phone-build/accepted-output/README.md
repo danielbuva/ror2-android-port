@@ -2070,3 +2070,40 @@ request receipts name that attempt's file. Canonical repack keys bind source
 content independently of the emitted attempt path. Retain the source output
 referenced by the private cache until superseded. Phone SQLite/LZ4 qualification,
 signed graph dispatch and converted-device acceptance remain open.
+
+Fresh preparation uses the same owner:
+
+```sh
+python3 -I -S tools/phone-build/accepted-output/bundle_preload.py \
+  --prepare "$PREPARATION_REQUEST" --output "$PREPARED_OUTPUT"
+python3 -I -S tools/phone-build/accepted-output/bundle_preload.py \
+  --inputs "$PREPARED_OUTPUT/inputs.json" --output "$FRESH_OUTPUT" --cache "$CACHE"
+```
+
+The `owner-bundle-preload-prepare-v1` request pins a policy and named suppliers
+(`profile`, `receipt`, `objects`, `index`, `types`), plus `staged`,
+`managed_inputs`, `game_root` and `codec`. Each file pin has `path`, `bytes` and
+`sha256`. Policy supplies `bundle`, `member`, candidate `bindings`
+(`supplier`, `record_source`, `destination`), ordered `asset_groups` and typed
+`assets`. Bodies, complete native types and source member tables derive closure;
+the request contains no prepared graph or edge list. Optional `field_routes`
+bind owner, field, actual pointer and target for exceptional relationships.
+Optional `staged_bindings` associate original source triples with staged targets.
+Optional `canonical` pins a donor profile/bundle and explicit duplicate/canonical
+pairs. Source identity and body/type witnesses are derived from those pins.
+
+For a retained supplier with already-relocated PPtrs, a binding's explicit
+`pointer_namespace` lists `[bundle, member]` pairs, starting with the local
+member and then each external slot. Ordinary suppliers resolve through their
+original member tables. Preparation preserves supplier record identities through
+retained lineage while relocating only qualified PPtr fields. It refuses missing
+bodies, conflicting source destinations, stale type tables and mismatching or
+unused overrides. Preparation is host qualification support; signed dispatch and
+the phone conversion experience remain unqualified.
+
+SDK staged rows declare `bundle: "sdk"`, the canonical `member`, the serialized
+`file` pin and optional `leaves`/`full` witness pins. Preparation retains moved
+file aliases and checks actual bodies/native metadata. SDK members enter the
+serialized external table, not AssetBundle dependencies. Managed preparation
+derives original script properties and null-script body witnesses; emission
+still requires the existing pinned current registry, CLR providers and SDK.
