@@ -3622,6 +3622,18 @@ Evidence: `work/coordination/p1-wholegame-1031/phone-chain-audit-1112/`
 Complete player/current-CLR/native production, Unity typed load, APK and device
 gates remain open. No new runtime owner or device claim.
 
+## J1449 — Supply SQLite and expose signed toolhost build execution
+
+2026-11-12. Existing app-host native plan pins the Android CPython SQLite module
+and SQLite dependency, preserving their actual lookup names and tool notices.
+Debuggable instrumentation can invoke the existing signed release-build worker;
+request/trust validation and thermal supervision retain their existing owners.
+Complete current player/CLR/native production also passed: 210 player files,
+332 managed providers and 826 native compile tasks; all 15 cohort pins verified.
+Evidence: `work/coordination/p1-wholegame-1031/phone-chain-audit-1112/`
+(`current-complete-player-v4/cohort-handoff.json`, SHA-256
+`76299789b9ca8b4aaf57e771fce545a078beea302bc3373d14c0db7f9e5ea204`).
+Android signed-chain execution, typed load, APK assembly and play remain open.
 ## J1448 — Omit unused process audio-lease manifest annotations
 
 2026-11-12. Existing audio lease parses fresh SHA-validated bytes without line info;

@@ -41,6 +41,17 @@ Signed release-graph integration uses the combined preparation entry point below
 Current source/provider qualification and the phone SQLite/LZ4 runtime remain
 separate work; this interface adds no device claim.
 
+The existing managed-host native plan supplies Android CPython `_sqlite3` and
+its SQLite dependency for these disk indexes. The fixture builder verifies the
+two source hashes and packages them through its existing native/link owner;
+installation creates the Python extension and `libsqlite3.so` links in the
+app-owned data tree. No new process or runtime lifecycle owner is added, and
+signed-chain Android execution remains unqualified.
+The debuggable toolhost's existing instrumentation runner accepts only the
+optional `release-build` action and delegates to the existing signed update
+worker, using its provisioned request, trust and thermal supervision. Its default
+fixture entry remains available; no installation action or new worker is added.
+
 `bundle_preload.py --prepare REQUEST --output NEW_DIRECTORY` delegates fresh
 request derivation to `bundle_prepare.py`. Pinned supplier profiles, receipts,
 extents, indexes and final type tables supply original source, pack output and
