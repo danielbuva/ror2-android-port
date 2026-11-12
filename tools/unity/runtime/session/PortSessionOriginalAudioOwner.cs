@@ -394,13 +394,16 @@ public sealed class PortSessionOriginalAudioOwner : MonoBehaviour
                 {
                     try
                     {
+                        TraceStartup("audio-network-catalog-begin");
                         OriginalNetworkSoundEventCatalogOwner.InitializeBeforeWorld(
                             explicitlyRequested: true,
                             noAudio: RoR2.WwiseIntegrationManager.noAudio,
                             originalAudioReady: GameAudioOriginalOwner.Ready,
                             originalTermsReturned: GameAudioOriginalOwner.OriginalTermsReturned,
                             nativeEngineInitialized: AkSoundEngine.IsInitialized(),
-                            originalCatalogLeaseHeld: WholeCatalogComposed.OriginalAudioLeaseHeld);
+                            originalCatalogLeaseHeld: WholeCatalogComposed.OriginalAudioLeaseHeld,
+                            trace: step => TraceStartup("audio-network-family-" + step));
+                        TraceStartup("audio-network-catalog-returned");
                     }
                     catch
                     {
@@ -410,8 +413,10 @@ public sealed class PortSessionOriginalAudioOwner : MonoBehaviour
                         throw; // Preserve the exception; PortSession records the explicit startup refusal.
                     }
                 }
+                TraceStartup("audio-music-owner-begin");
                 AttachOriginalBankReleaseWakeup();
                 PortSessionOriginalMusicControllerOwner.StartForReadyAudio(this, explicitlyRequested: true);
+                TraceStartup("audio-music-owner-returned");
             }
         }
         finally

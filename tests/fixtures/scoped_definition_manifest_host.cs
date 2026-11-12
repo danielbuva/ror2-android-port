@@ -410,8 +410,17 @@ public static partial class WholeCatalogComposed
         File.Delete("payload/whole-catalog.json");
         Check(definitions().SequenceEqual(buffs) && AssetBundle.typedLoads == before + 3);
         Check(DefinitionFamily(new[] { second }).SequenceEqual(buffs));
-        Check(AssetBundle.enumerations == ownerLookups + 1);
-        Refuses(() => DefinitionFamily(new[] { excluded }));
+        var trace = new System.Collections.Generic.List<string>();
+        Check(DefinitionFamily(new[] { second }, trace.Add).SequenceEqual(buffs) && trace.Count == 0);
+        definitionFamilies.Clear();
+        WriteManifest(data.ToString());
+        Check(DefinitionFamily(new[] { second }, trace.Add).SequenceEqual(buffs));
+        Check(trace.Count == 5 && trace[0] == "manifest-begin" && trace[1] == "manifest-ready-assets-begin" &&
+              trace[2].StartsWith("assets-costs scannedRows=4 loadedRows=3 bundles=1 ") &&
+              trace[3] == "assets-ready-validation-begin" && trace[4] == "validation-ready");
+
+        Check(AssetBundle.enumerations == ownerLookups + 2);
+        Refuses(() => DefinitionFamily(new[] { excluded }, trace.Add));
         var previousOwner = owned;
         owned = null;
         Refuses(() => definitions());

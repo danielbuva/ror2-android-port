@@ -4149,6 +4149,11 @@ selected-identity checks and existing family-cache lifetime remain unchanged.
 During a family cache miss it resolves each loaded bundle owner once in a
 method-local map, preserving missing/ambiguous-owner refusal and typed loading.
 The map ends on return; loaded definitions retain the existing release lifetime.
+The original network-sound startup caller can request sparse generic-family
+manifest/validation markers and aggregate root-filter, owner and typed-load costs.
+Outer audio markers separate network registration from music startup. Observation
+preserves enumeration, native calls and ownership, writes no reports and adds no
+coroutine yields; the optional callback and counters end on return.
 `test_scoped_definition_manifest.py` exercises the production methods against
 authored source snapshots, including parser parity, replacement input and identity
 checks.

@@ -53,6 +53,7 @@ class ScopedDefinitionManifestTests(unittest.TestCase):
                 "public static RoR2.ItemGroupProvider[] ItemGroupProviders()",
                 "internal static RoR2.ItemGroupProvider[] ItemGroupProviders(Action<string> trace)",
                 "public static T[] DefinitionFamily<T>(System.Collections.Generic.IEnumerable<T> selected)",
+                "internal static T[] DefinitionFamily<T>(System.Collections.Generic.IEnumerable<T> selected, Action<string> trace)",
                 "public static int[][] FamilyLocationGroups(JObject manifest, string category)",
                 "public static T[] CategoryFamily<T>(string category, IEnumerable<T> selected)",
                 "internal static JObject ReadDefinitionManifest()",
