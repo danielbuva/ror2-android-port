@@ -3923,3 +3923,19 @@ Prior 32-session roster capture retains zero ScrollViewState objects; menus 2/33
 Evidence: `work/coordination/alpha-roster-longheap32-20261112T165412Z/decision.md`; no lifetime bound follows.
 Detail evidence: `work/coordination/alpha-details-comparison-20261112T190813Z/`; no causal census speedup.
 Sustained ordinary/all-stage play, visual parity, unplugged energy and capture overhead remain open.
+
+## J1469 — Initialize Commando locomotion before the first roll
+
+2026-11-12. Bind the artifact Animator before activation; verify after native model
+detachment, before BaseCharacterMain caches movement parameters. Missing physical
+controllers now preserve touch admission; focus/pause/teardown still cancel input.
+Ordinary first spawn walks 6.30 m before any roll, with all three native movement
+flags valid and changing leg poses; one roll and nine primary shots pass.
+APK SHA-256: `851eb416b7ca7cffca5e5b7ca922975247164353231434ce7e25a0e00ebe6ef0` (source `5e2ea5ca`).
+Evidence: `work/coordination/gameplay-fidelity-nova-detachment-20261112/acceptance-assessment.json`.
+Video/logcat retained; corrected the capture's absent primaryEntries assertion
+against retained primary.shots, without rerunning. Exact-editor lifecycle/touch fixtures pass.
+Peak CPU/GPU 95.9 C (0.388 s above 95 C), 16.624 s above 80 C; battery peak 35 C.
+Trace gaps <=0.407 s; no thermal abort. Bounded overlay samples 112.7–117.7 FPS
+are not sustained-performance qualification. Adopted placement and stopped/asleep cleanup pass.
+Prior art: pinned R2API/SS2 plus original state lifecycle. Gun aim and broader fidelity remain open.

@@ -71,6 +71,11 @@ public sealed partial class PortSession
     {
         public bool originalAimAnimator, characterMatteApproximation;
         public float aimPitchCycle, aimYawCycle;
+        public string nativeMovementState;
+        public bool nativeMovementCacheAvailable, nativeMovementCachedIsMoving, nativeMovementCachedForwardSpeed,
+                    nativeMovementCachedRightSpeed, animatorIsMoving;
+        public float animatorForwardSpeed, animatorRightSpeed, animatorBaseStateTime;
+        public int animatorBaseStateHash;
         public Vector3 modelForward;
         public bool novaOnly, originalInputConsumer, stopped, aimConsumed, rendersOriginalModel, diagnosticInput;
         public bool commandoPrimaryDiagnostic;
@@ -645,7 +650,7 @@ public sealed partial class PortSession
                         continue;
                     }
                     coordinator.ObserveAutomaticModelFollow(body);
-                    display.ObserveNativeAim(coordinator.r.nova);
+                    display.ObserveNativeAim(coordinator.r.nova, machine);
                     TemporaryOverlayManager.OverlayUpdate();
                     coordinator.Check(string.IsNullOrEmpty(bridge.error), "Nova bridge input failure: " + bridge.error);
                     coordinator.Check((cfg.combatSpine || machine.state == state) && body.gameObject.activeInHierarchy &&

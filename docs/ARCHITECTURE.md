@@ -2483,6 +2483,7 @@ The remaining `--action` selectors are classified here:
 | editor | `lightning-stake-host` | current |
 | editor | `siren-encounter-host` | current |
 | editor | `source-camera-graphics-host` | current |
+| editor | `commando-animation-host` | current |
 | editor | `character-motor-order` | historical |
 | editor | `catalog-addresses` | historical |
 | editor | `reference-identities` | historical |
@@ -7019,3 +7020,22 @@ IDs and bodies while allowing Unity's context-package string lookup to resolve
 when installing the disposable converted package. Setup uses the verified SDK
 resource table; output hashes record the transformed entry. No runtime state or
 new lifecycle owner is added.
+
+Commando animation preparation stays in `AutomaticModelBoundary`: the artifact
+controller/avatar bind while the body is inactive. `NovaDiagnosticDisplay`
+isolates the existing model callbacks and enables the Animator/model before body
+activation. Native `ModelLocator.Start` detaches the model from its inactive
+model base, initializing the Animator. The boundary then verifies its locomotion
+parameters during `SpawnTeleporterState`, before native
+`BaseCharacterMain` snapshots them on its first entry. The display preserves the
+binding and reports the native movement cache and Animator state; its existing
+disposal owns teardown.
+`./dev editor --target lab --action commando-animation-host` is a current exact-editor
+contract check reproducing unavailable parameters under an inactive model base
+and parameter discovery after native detachment, before the main state
+(`SurvivorSkillInputHost.VerifyAnimatorBeforeMainState`); gameplay remains a
+device gate.
+`NovaInputBridge` neutralizes unavailable physical input without suspending idle
+touch capture; focus, pause and teardown still cancel all input. The same
+exact-editor action also checks first touch delivery without a physical controller
+and full cancellation through `Neutral`.
