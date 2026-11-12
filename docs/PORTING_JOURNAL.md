@@ -3753,3 +3753,17 @@ Pinned R2API typed-load/handle ownership remains prior art; no content or schedu
 CPU/GPU peak 74.9 C, battery peak 28 C; >80 C zero, active sample max gap 0.427 s.
 Adopted placement/data, stopped process/OLED, scratch/lease cleanup and prune pass.
 Sustained play, audibility, visual parity and all broad alpha gates remain open.
+
+## J1457 — Derive source-policy supplier bindings from selected metadata
+
+2026-11-12. Existing release owner maps explicit original, pack and destination
+identities to public profile pins and fresh typed-record artifacts, without body reads.
+Every unresolved row remains explicit; final containers retain staged ownership.
+Preparation reverses texture/avatar outputs alongside objects/meshes, preserving ambiguity.
+Authored signed dispatch covers preparation, emission, canonical repack, catalog,
+native manifest and selective update reuse through the derived bindings.
+79 focused host tests, Ruff and host-only preflight pass; no device or editor used.
+Evidence: `work/coordination/p1-wholegame-1031/phone-chain-audit-1112/source-policy-bindings-v2/`
+and `tests/test_bundle_prepare.py`, `tests/test_release_graph.py`.
+Prior art: pinned EditorKit typed cache identities; existing release/preparation owners extended.
+Current-game graph admission, Unity typed load, converted play and port update remain open.

@@ -88,6 +88,13 @@ schemas supplied by one final player job. Setup and teardown remain the scoped
 preparation/emission owners; the dispatcher retains only declared final artifacts
 for reuse. Host synthetic-registry dispatch does not qualify current CLR/SDK
 production, exact-editor load or phone acceptance.
+The same release owner's host `Graph.bundle_bindings` API maps one member's
+selected metadata to public supplier jobs, preserving original, pack and final
+identities. It returns unresolved rows without reading pack bodies; callers must
+resolve them before composing a policy. Address groups, exceptional routes,
+staged containers and managed qualification retain their existing owners.
+Preparation reverses object, mesh, texture and avatar source selectors through
+their declared outputs, retaining ambiguous source candidates for strict checking.
 
 `bundle_preload.produce_graph` also accepts per-group `preload_roots` as explicit
 destination triples, separate from advertised container roots/subassets. Local

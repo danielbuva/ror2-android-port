@@ -25,6 +25,44 @@ G, J = load("release_graph"), load("release_jobs")
 
 
 class ReleaseGraphTests(unittest.TestCase):
+    def test_bundle_binding_audit_keeps_missing_and_foreign_identities_explicit(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            repo = Path(temporary)
+            (repo / "recipe").mkdir()
+            profile = repo / "recipe/owner-records.jsonl.gz"
+            profile.write_bytes(gzip.compress(b'{"input_id":"authored"}\n'))
+            graph = G.Graph(repo, {})
+            pin = G.digest(profile)
+            good = dict(record=pin, destination=["content", "CAB-content", 7], source=["a.bundle", "CAB-a", 10], record_source=["pack", "CAB-pack", 20])
+            rows = [
+                good,
+                dict(good, destination=["content", "CAB-content", 8], source=["b.bundle", "CAB-b", 10]),
+                dict(good),
+                dict(good, destination=["content", "CAB-content", 9], record="f" * 64),
+                {key: value for key, value in dict(good, destination=["content", "CAB-content", 11]).items() if key != "source"},
+                dict(good, destination=["external", "CAB-content", 7]),
+            ]
+            result = graph.bundle_bindings(iter(rows), "content", "CAB-content")
+            self.assertEqual(len(result["bindings"]), 2)
+            self.assertNotEqual(result["bindings"][0]["source"], result["bindings"][1]["source"])
+            self.assertEqual(len(result["suppliers"]), 1)
+            supplier = result["suppliers"][0]
+            self.assertEqual(supplier["profile"], dict(path="${repo}/recipe/owner-records.jsonl.gz", bytes=profile.stat().st_size, sha256=pin))
+            self.assertEqual(supplier["types"], G.Graph.artifact_pin("recipe/jobs/owner-records.json", "types"))
+            self.assertEqual(
+                [row["reason"] for row in result["unresolved"]],
+                [
+                    "duplicate destination",
+                    "missing source supplier profile",
+                    "explicit source and record_source identities required",
+                    "foreign or missing destination",
+                ],
+            )
+            graph.jobs["recipe/jobs/owner-records.json"]["artifacts"].pop("types")
+            incomplete = graph.bundle_bindings([good], "content", "CAB-content")
+            self.assertEqual(incomplete["bindings"], [])
+            self.assertEqual(incomplete["unresolved"][0]["reason"], "supplier requires a final container instead of a typed record pack")
+
     def test_current_witness_job_requires_and_signs_final_player_and_reader(self):
         with tempfile.TemporaryDirectory() as temporary:
             repo = Path(temporary)

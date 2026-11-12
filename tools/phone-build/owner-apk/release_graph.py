@@ -377,6 +377,55 @@ class Graph:
         self.profile_files[name], self.job_profiles[name], self.public_files[name] = path, profile, sources
         return name
 
+    def bundle_bindings(self, rows, bundle, member):
+        """Map selected metadata to fresh pack jobs without reading pack bodies.
+
+        The caller supplies only this member's selected records. Unresolved rows
+        remain explicit; the result is not a runnable policy or graph admission.
+        Routes, staged endpoints and managed witnesses retain their own owners.
+        """
+        bindings, suppliers, profiles, unresolved, destinations, failures = [], {}, set(), [], set(), {}
+        for row in rows:
+            destination = row.get("destination", [])
+            pin = row.get("record")
+            problem = None
+            if len(destination) != 3 or tuple(destination[:2]) != (bundle, member):
+                problem = "foreign or missing destination"
+            elif tuple(destination) in destinations:
+                problem = "duplicate destination"
+            elif any(not isinstance(row.get(key), list) or len(row[key]) != 3 for key in ("source", "record_source")):
+                problem = "explicit source and record_source identities required"
+            elif pin not in self.profiles:
+                problem = "missing source supplier profile"
+            elif pin in failures:
+                problem = failures[pin]
+            elif pin not in suppliers:
+                try:
+                    job = self.build(pin)
+                    required = ("receipt", "objects", "index", "types")
+                    if not set(required) <= self.jobs[job]["artifacts"].keys():
+                        problem = "supplier requires a final container instead of a typed record pack"
+                    else:
+                        path = self.profiles[pin]
+                        source = self.repo / path
+                        suppliers[pin] = dict(
+                            name=pin,
+                            profile=dict(path="${repo}/" + path, sha256=pin, bytes=source.stat().st_size),
+                            **{key: self.artifact_pin(job, key) for key in required},
+                        )
+                        profiles.add(path)
+                except ValueError as error:
+                    problem = str(error)
+                if problem is not None:
+                    failures[pin] = problem
+            if len(destination) == 3:
+                destinations.add(tuple(destination))
+            if problem is not None:
+                unresolved.append(dict(destination=destination, record=pin, reason=problem))
+            else:
+                bindings.append({key: row[key] for key in ("destination", "source", "record_source")} | dict(supplier=pin))
+        return dict(bindings=bindings, suppliers=[suppliers[key] for key in sorted(suppliers)], profiles=sorted(profiles), unresolved=unresolved)
+
     def bundle_preload(self, path, profile, active):
         """Bind fresh suppliers and actual final containers to a signed policy."""
         if set(profile) != {"schema", "profiles", "request"}:

@@ -619,6 +619,16 @@ properties file remains an explicitly pinned acquired leaf. Current managed
 cohort production, exact-editor load and phone execution still need qualification;
 the dispatcher host fixture uses an authored empty runtime registry.
 
+For host policy authoring, `Graph.bundle_bindings(rows, bundle, member)` maps
+one member's selected metadata to `bindings`, `suppliers` and prerequisite
+`profiles` using the public profile hash and declared pack artifacts. It returns
+every unmapped row in `unresolved`; resolve all of these before composing a
+release policy. Original source, producer output and destination identities stay
+separate, including when their path IDs coincide. The mapper reads no supplier
+bodies and does not qualify the graph. The caller still supplies address groups,
+exceptional routes, staged endpoints and generated managed witnesses. Final
+container suppliers require explicit staged bindings instead of record-pack pins.
+
 Selecting the manager phase also creates the existing `startup_metadata.py`
 job. Bind `inventory` to the admitted original-game inventory; the smoke
 PlayerSettings and toolchain descriptor travel in the signed public closure.
