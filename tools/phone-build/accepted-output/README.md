@@ -1,5 +1,40 @@
 # Accepted-output reconstruction support
 
+## Checked bundle requests
+
+`bundle_preload.py --inputs REQUEST.json --output NEW_DIRECTORY --cache CACHE`
+exposes the current emitter and optional canonical repacker without private
+Python callbacks. Cache is optional and private. The request uses schema
+`owner-bundle-preload-inputs-v1`; file pins contain `path`, `bytes` and `sha256`.
+Relative file paths resolve beside the request. Required fields are:
+
+- `bundle`, `member`, `game_root`: explicit output identities and original input root.
+- `graph`: pins keyed by `done.json`, `selected-records.jsonl`, and optional
+  `selected-roots.jsonl`, together in their generated graph directory.
+- `schemas`, `required`, `routes`, `endpoints`: schema pins and pinned JSON/JSONL
+  files containing the exact object/root set, complete structural routes and
+  staged endpoint descriptors. Providers remain generated on the executing host;
+  their existing receipts and lineage must resolve there.
+- `staged`: rows with `bundle` and a `file` pin. SDK rows also supply `member`
+  and optional `leaves`/`full` witness pins; absent type trees require the same
+  qualified SDK evidence as the callable emitter.
+- `managed_inputs`: pins for `runtime_request`, `managed_providers`, `metadata`,
+  `registry_receipt`, `provider_aliases`, `registry_schemas`, `registry_body`,
+  `properties_sdk`, and `original_script_properties`. Native-only requests may
+  use an empty object. Provider paths resolve beside the provider document;
+  registry aliases resolve beside their document. Raw metadata/provider paths
+  and hashes must agree before both are resolved for current-CLR validation.
+- `codec`: pinned executable built for the executing platform.
+
+Optional `null_script_sources` rows bind `destination` and the exact original
+`type_source` selector, bundle/body hashes and any explicit missing-script policy.
+Optional `canonical` supplies `aliases`, `profile` and `bundle` pins. Actual
+native types, script identities and reciprocal ownership remain strict.
+The result identifies the final repacked bundle when present. Every call checks
+final managed script allocation, including cached emission, and closes readers.
+No Unity typed load, phone runtime, APK installation or gameplay is established
+by this command. Signed release dispatch and phone runtime dependencies remain open.
+
 ## Source stage contexts
 
 `stage_contexts.py --profile recipe/owner-stage-contexts.json --profile-sha256 SHA

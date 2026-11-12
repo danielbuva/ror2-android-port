@@ -1488,19 +1488,136 @@ def repack_canonical_aliases(
         return result
 
 
+def produce_request(inputs, output, *, cache_directory=None):
+    """Run the checked emitter/repacker with explicit, request-relative inputs."""
+    from contextlib import closing
+    import json
+    from types import SimpleNamespace
+
+    inputs = Path(inputs).resolve(strict=True)
+    request = json.loads(inputs.read_bytes())
+    required_keys = {"schema", "graph", "schemas", "required", "routes", "endpoints", "staged", "managed_inputs", "game_root", "codec", "bundle", "member"}
+    if set(request) - {"canonical", "null_script_sources"} != required_keys or request["schema"] != "owner-bundle-preload-inputs-v1":
+        raise ValueError("unsupported bundle preload input contract")
+    E = module("bundle_endpoints")
+    owner = SimpleNamespace(**globals())
+    pins = E.InputPins(inputs.parent, owner)
+    pins.add(inputs)
+    graph_files = {name: pins.pin(value) for name, value in request["graph"].items()}
+    if not {"done.json", "selected-records.jsonl"} <= graph_files.keys() or set(graph_files) - {"done.json", "selected-records.jsonl", "selected-roots.jsonl"}:
+        raise ValueError("explicit graph receipt/records and optional roots required")
+    graph = graph_files["done.json"].parent
+    if any(path != graph / name for name, path in graph_files.items()):
+        raise ValueError("graph files must retain their declared directory and names")
+    if (graph / "selected-roots.jsonl").is_file() and "selected-roots.jsonl" not in graph_files:
+        raise ValueError("graph roots require an explicit input pin")
+    schema_paths = [pins.pin(value) for value in request["schemas"]]
+    types = {}
+    for path in schema_paths:
+        for key, value in json.loads(path.read_bytes()).items():
+            if key in types and types[key] != value:
+                raise ValueError("Conflicting complete native schema")
+            types[key] = value
+    selected = {}
+    for path in (pins.pin(request["endpoints"]), graph_files["selected-records.jsonl"]):
+        for value in json_rows(path):
+            key = tuple(value["destination"])
+            if key in selected and selected[key] != value:
+                raise ValueError("Conflicting endpoint descriptor")
+            selected[key] = value
+    required = pins.read(request["required"])
+    for key in ("name", "member"):
+        expected = request["bundle" if key == "name" else key]
+        if key in required and required[key] != expected:
+            raise ValueError("Required bundle/member identity differs")
+        required[key] = expected
+    routes = {}
+    for value in json_rows(pins.pin(request["routes"])):
+        key = tuple(value["owner"])
+        if key in routes:
+            raise ValueError("Duplicate structural route owner")
+        routes[key] = value["edges"]
+    codec = pins.pin(request["codec"])
+    canonical = request.get("canonical")
+    if canonical is not None:
+        aliases, profile = pins.read(canonical["aliases"]), pins.read(canonical["profile"])
+        canonical_bundle = pins.pin(canonical["bundle"])
+    root = Path(__file__).resolve().parents[3]
+    for path in (root / "scripts/lab").glob("*.py"):
+        pins.add(path)
+    with closing(E.Qualification(owner, pins, request, selected, types, required)) as qualification:
+        qualification.setup()
+        # Populate external managed readback even when emission reuses an output.
+        for target in sorted({tuple(edge["target"]) for edges in routes.values() for edge in edges if tuple(edge["target"][:2]) != qualification.member}):
+            qualification.endpoints(target)
+        emission = emit_closed_native(
+            graph,
+            schema_paths,
+            Path(output) / "emitted",
+            request["bundle"],
+            request["member"],
+            codec=codec,
+            codec_sha256=request["codec"]["sha256"],
+            required=required,
+            structural_routes=routes,
+            endpoint_record=qualification.endpoints,
+            managed_check=qualification.check,
+            cache_directory=cache_directory,
+            cache_inputs=pins.files,
+        )
+        qualification.check_final(emission["bundle"])
+        final = emission
+        if canonical is not None:
+            final = repack_canonical_aliases(
+                emission["bundle"],
+                Path(output) / "canonical",
+                required=required,
+                aliases=aliases,
+                selected_records=list(selected.values()),
+                qualified_types=types,
+                canonical_profile=profile,
+                canonical_bundle=canonical_bundle,
+                codec=codec,
+                codec_sha256=request["codec"]["sha256"],
+                cache_directory=cache_directory,
+            )
+            qualification.check_final(final["bundle"])
+        pins.check()
+        result = dict(
+            success=True,
+            bundle=final["bundle"],
+            sha256=final["sha256"],
+            emission=emission,
+            canonical=None if canonical is None else final,
+            typed_load_accepted=False,
+            device_accepted=False,
+        )
+        (Path(output) / "result.json").write_text(json.dumps(result, indent=2) + "\n")
+        return result
+
+
 def main():
     import argparse
     import json
 
     parser = argparse.ArgumentParser(description="Emit an explicitly partial, closed native bundle from source-produced records")
-    parser.add_argument("--graph", type=Path, required=True)
-    parser.add_argument("--schema", type=Path, action="append", required=True)
+    parser.add_argument("--inputs", type=Path, help="explicit checked emission/canonical request; paths relative to this file")
+    parser.add_argument("--cache", type=Path, help="private incremental emission/preload/repack cache")
+    parser.add_argument("--graph", type=Path)
+    parser.add_argument("--schema", type=Path, action="append")
     parser.add_argument("--output", type=Path, required=True)
-    parser.add_argument("--bundle", required=True)
-    parser.add_argument("--member", required=True)
+    parser.add_argument("--bundle")
+    parser.add_argument("--member")
     parser.add_argument("--codec", type=Path, help="pinned LZ4 helper; compresses UnityFS blocks without changing member bytes")
     parser.add_argument("--codec-sha256")
     args = parser.parse_args()
+    if args.inputs is not None:
+        if any(value is not None for value in (args.graph, args.schema, args.bundle, args.member, args.codec, args.codec_sha256)):
+            parser.error("--inputs cannot be combined with legacy emission inputs")
+        print(json.dumps(produce_request(args.inputs, args.output, cache_directory=args.cache), indent=2))
+        return
+    if args.cache is not None or any(value is None for value in (args.graph, args.schema, args.bundle, args.member)):
+        parser.error("legacy emission requires --graph, --schema, --bundle and --member; --cache requires --inputs")
     print(
         json.dumps(
             emit_closed_native(args.graph, args.schema, args.output, args.bundle, args.member, codec=args.codec, codec_sha256=args.codec_sha256), indent=2
