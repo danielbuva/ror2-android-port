@@ -3565,6 +3565,18 @@ Single candidate, uncontrolled page cache/RNG; no total-load or exclusive I/O cl
 Natural-loss reload was not forced; prior J1375/J1376 evidence remains unchanged.
 No second daily snapshot; sustained play/performance and phone install remain open.
 
+## J1445 — Accept receipt-bound record supplier type tables
+
+2026-11-12. Existing object pack reader accepts `types.json` from current Shader
+and other typed suppliers, with the existing hash and size checks for every output.
+Legacy body-only packs remain supported; unknown output names remain rejected.
+85 object and 49 player host checks, Ruff and host-only preflight pass, including
+metadata tampering and unsupported-output refusal. No supplier replay was needed.
+Evidence: `work/coordination/p1-wholegame-1031/phone-chain-audit-1112/`
+(`current-cohort-player-v3/player.log`, `current-cohort-player-v4/host-validation.json`).
+Fresh host player emits 209 files; current CLR witnesses bind 332 managed providers.
+Player/CLR phases take 316.855/38.685 s, peaking at 416/663 MB child RSS.
+Complete managers/player, native runtime, APK, Unity typed load and device gates remain open.
 
 ## J1444 — Retain bounded active-frame durations for checked quantiles
 
@@ -3581,3 +3593,31 @@ Native End Run/trace removal passed; update retained profiles/settings.
 Wider-run peak CPU/GPU 83.6 °C, 1.893 s above 80 °C; battery peak 27 °C.
 Thermal max gap 0.431 s; cleanup/OLED/lease passed. No second daily snapshot.
 Ordinary sustained play, capture overhead, battery efficiency and phone install stay open.
+
+## J1447 — Select sustained capture mode and compare bounded windows
+
+2026-11-12. Existing sustained owner records explicit raw capture mode, default true.
+Off keeps aggregate counters and refuses unexpected trace metadata without transfer.
+Ruff, 9 sustained/13 performance checks and canonical host preflight passed once.
+Evidence: `work/coordination/alpha-capture-overhead-20261112T073826Z/`.
+APK SHA-256 `b9217c23f81cea18cf570bfa309bffda235db6276a9cca898b92a0fbd731a3eb`.
+Same APK/seed/Commando/Lakes, four assisted 75-second off/on/on/off windows passed.
+Mean FPS off/on 58.161/58.142; within-mode ranges 0.057/0.129 FPS.
+On minus off +0.0056 ms mean, +0.038 percentage points >33.334 ms; diagnostic only.
+Both on-traces reconcile without drops; off has no trace; scratch remains unchanged.
+Observed thermal max gap 0.467 s; wider CPU/GPU peak 90.7 C, battery peak 31 C.
+Native End Run, idle/OLED/lease cleanup passed; no install or daily snapshot refresh.
+Ordinary sustained play, causal capture overhead and energy acceptance remain open.
+## J1446 — Refresh complete player Shader helper pins
+
+2026-11-12. Reviewed public helper changes refresh the existing complete Shader
+recipe, manager dependency and nine consumer recipes; original and SDK pins stay.
+Existing source producer completes 368 standalone Shaders and one builtin file
+in 260.865 s; receipt SHA-256
+`056c67fa0fcc1537cad5b80f09b0150b44074dd01d4822630b69b2a19e377acc`.
+74 Shader/manager and 27 release-graph/recipe checks, host-only preflight
+and staged public audit pass.
+Evidence: `work/coordination/p1-wholegame-1031/phone-chain-audit-1112/`
+(`current-manager-shaders-v1/production/result.json`, `manager-cohort-repair-1112.md`).
+Complete player/current-CLR/native production, Unity typed load, APK and device
+gates remain open. No new runtime owner or device claim.

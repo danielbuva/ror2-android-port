@@ -3156,6 +3156,11 @@ output is added. This audit authorizes tooling/selection metadata only, with no
 new redistribution or ownership claim. Full evidence and remaining gates are
 recorded once in J1144/J1146/J1147/J1151/J1157.
 
+The current helper pins retain J1204's measured resource binding kind 2,
+J1369's SDK TMP package sources and the existing deferred-pass compiler/reflection
+support. The manager recipe pins this reviewed Shader recipe as one cohort.
+This refresh changes public tooling hashes only; generated Shader data stays private.
+
 The original UI Alpha extension selects one original Shader and two original
 Materials, derives their feature sets and regenerates every selected original
 program through the existing pinned public d3dasm/NativePrograms owner. Original
@@ -7002,3 +7007,8 @@ Manual provenance/privacy review (2026-11-11): no original body, shader math,
 pixels, upstream implementation or private configuration is tracked. Generated
 implementations stay ignored under the pinned package license; compilation and
 device acceptance remain separate gates.
+
+The complete player Shader helper refresh also updates dependent recipe hashes
+through the existing release graph. Manual provenance/privacy review
+(2026-11-12): changed consumer values are public recipe SHA-256 selectors only;
+no original bodies, SDK files or private paths are added.

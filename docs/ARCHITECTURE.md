@@ -2687,6 +2687,12 @@ performance guarantee. Host admission estimates two 4 GiB snapshots plus
 records that budget and observed free bytes. The 100 GiB full-build floor does
 not apply to this capture-only queue. Host fixtures exercise admission and
 failure contracts.
+The sustained owner's `raw_frame_times` boolean defaults to true and records
+the selected mode in its receipt and runtime selector. False retains the same
+aggregate duration/frame/hitch counters, requires no raw trace in periodic or
+completed diagnostics, and performs no sidecar transfer. True retains the
+existing closed-trace reconciliation and device scratch removal. The runtime
+camera owner and native End Run lifecycle are unchanged.
 `scripts/lab/session_memory_check.py::check_session_memory` owns the supervised
 memory stage; the batch injects its between-session hook from
 `alpha_stability_batch.py::_GameThermalOwner.between_sessions`. After verified

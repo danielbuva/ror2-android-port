@@ -29,6 +29,32 @@ RECORD_FIXTURE = load("record_bundle_fixture", ROOT / "tests/test_phone_record_p
 
 
 class ProducedRecordRelocationTests(unittest.TestCase):
+    def test_typed_record_pack_accepts_and_pins_supplier_metadata(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            pack = Path(temporary)
+            body = b"AUTHORED SHADER"
+            (pack / "objects.bin").write_bytes(body)
+            record = dict(bundle="apk", member="shared.assets", path_id=4, offset=0, bytes=len(body), sha256=hashlib.sha256(body).hexdigest(), type_id=0)
+            (pack / "index.jsonl").write_text(json.dumps(record) + "\n")
+            (pack / "types.json").write_text(json.dumps([dict(class_id=48)]))
+            outputs = {name: dict(bytes=(pack / name).stat().st_size, sha256=P.B.sha(pack / name)) for name in ("objects.bin", "index.jsonl", "types.json")}
+            receipt = dict(success=True, input_id=P.M.INPUT_ID, profile_sha256="a" * 64, outputs=outputs)
+            (pack / "result.json").write_text(json.dumps(receipt))
+            supplied = [(pack, P.B.sha(pack / "result.json"))]
+            selected = [dict(name="shared.assets", objects=[dict(path_id=4, record="a" * 64)])]
+            records, providers = P.record_packs(selected, supplied, dict(name="apk"))
+            self.assertEqual(P.record_extent(pack / "objects.bin", records["shared.assets", 4][1]), body)
+            self.assertEqual(providers["a" * 64][2]["outputs"]["types.json"], outputs["types.json"])
+            original = (pack / "types.json").read_text()
+            (pack / "types.json").write_text(original.replace("48", "49"))
+            with self.assertRaisesRegex(ValueError, "record producer output drift"):
+                P.record_packs(selected, supplied, dict(name="apk"))
+            (pack / "types.json").write_text(original)
+            receipt["outputs"]["unknown.json"] = outputs["types.json"]
+            (pack / "result.json").write_text(json.dumps(receipt))
+            with self.assertRaisesRegex(ValueError, "incomplete record producer outputs"):
+                P.record_packs(selected, [(pack, P.B.sha(pack / "result.json"))], dict(name="apk"))
+
     def test_absent_field_projection_preserves_live_values_and_serialized_aliases(self):
         identity = P.module("script_identity", ROOT / "scripts/lab/script_identity.py")
         nodes = [identity._node("MonoBehaviour", "Base", -1, level=0)] + [identity._node("int", name, 4) for name in ("m_Base", "live", "stale", "tail")]

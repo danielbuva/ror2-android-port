@@ -25,6 +25,31 @@ def fixtures():
 
 
 class SustainedCheckTests(unittest.TestCase):
+    def test_capture_off_preserves_aggregates_and_never_transfers_a_sidecar(self):
+        report, snapshot, utc = fixtures()
+        row = sustained.observation_sample(report, snapshot, 0, utc=utc)
+        device = mock.Mock()
+        self.assertIsNone(sustained.collect_raw_frames(device, "/owned", Path("unused"), report, [row], enabled=False))
+        self.assertEqual(row["pacing_frames"], 100)
+        self.assertEqual(row["pacing_total_ms"], 2000)
+        self.assertEqual(row["pacing_over33"], 4)
+        device.assert_not_called()
+        device.cmd.assert_not_called()
+        device.sh.assert_not_called()
+        for field, value in (("rawFrameTrace", "unexpected.bin"), ("rawFrameTraceClosed", True), ("rawFrameTraceFrames", 2)):
+            invalid = copy.deepcopy(report)
+            invalid["framePacing"][field] = value
+            with self.subTest(field=field), self.assertRaisesRegex(RuntimeError, "despite disabled"):
+                sustained.collect_raw_frames(device, "/owned", Path("unused"), invalid, [row], enabled=False)
+        with self.assertRaisesRegex(RuntimeError, "despite disabled"):
+            sustained.collect_raw_frames(device, "/owned", Path("unused"), report, [dict(row, pacing_trace="unexpected.bin")], enabled=False)
+
+    def test_capture_mode_rejects_non_boolean_before_device_access(self):
+        with mock.patch.object(sustained, "Device") as device:
+            with self.assertRaisesRegex(ValueError, "explicit boolean"):
+                sustained.check_session_sustained("a" * 64, raw_frame_times="off")
+            device.assert_not_called()
+
     def test_exact_total_avoids_rounded_mean_and_binds_trace(self):
         report, snapshot, utc = fixtures()
         report["framePacing"].update(totalMs=2000.125, rawFrameTrace="authored.bin")

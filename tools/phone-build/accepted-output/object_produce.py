@@ -732,7 +732,12 @@ def record_packs(members, supplied, bundle):
         profile = value.get("profile_sha256")
         if value.get("success") is not True or value.get("input_id") != M.INPUT_ID or profile not in required or profile in providers:
             raise ValueError("unexpected or unsuccessful record producer")
-        if not {"objects.bin", "index.jsonl"} <= value["outputs"].keys() or value["outputs"].keys() - {"objects.bin", "resources.bin", "index.jsonl"}:
+        if not {"objects.bin", "index.jsonl"} <= value["outputs"].keys() or value["outputs"].keys() - {
+            "objects.bin",
+            "resources.bin",
+            "index.jsonl",
+            "types.json",
+        }:
             raise ValueError("incomplete record producer outputs")
         providers[profile] = directory, receipt_sha256, value
     if providers.keys() != required:
