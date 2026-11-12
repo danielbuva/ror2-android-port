@@ -3264,3 +3264,19 @@ Private integration notes: `work/coordination/p1-wholegame-1031/`
 `current-stage12-canonical-catalog-repack-v3/tracked-owner-integration.md`.
 Prior art: pinned R2API content-provider/catalog readiness contracts; J1410/J1417.
 Remaining: release dispatch, Unity typed load, current AOT and device acceptance.
+
+## J1422 — Attribute original audio readiness callback waits
+
+2026-11-12. Existing readiness gate records monotonic callback times and its final
+blocker; original requests, service calls, readiness, yields and lifecycle stay.
+Pinned R2API provider/readiness seams inform observation; focused 4/hook 13 checks passed.
+Evidence: `work/coordination/alpha-audio-readiness-device-20261112T010139Z/`.
+APK SHA-256 `1cee9b5ab9e7453f9ba76977e49f3b1208308be52c3d8ebe07dc7824e913b5a1`.
+Ordinary Start reached Distant Roost/Commando/player/HUD; current-PID errors empty.
+In-place update retained profile/settings; 153 banks ready, cached 274/full 0 proofs.
+Bank results were last: engine 1.629183, last bank 1.844401, observed 1.860470 s
+from gate creation, distinct from Unity startup time; last bank → observation 16.1 ms.
+Launch/menu 22.754 s; Start/player 53.485 s; uncontrolled page cache, no speedup claim.
+Peak CPU/GPU 76.1 °C, 0 s above 80 °C; battery 27 °C. App stopped, scratch removed,
+OLED asleep, lease released; pruning passed. Full build required changed audio core.
+Sustained play/performance, audible-output and complete phone installation remain open.
