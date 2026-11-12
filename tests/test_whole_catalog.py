@@ -320,6 +320,25 @@ class WholePayloadReuseTests(unittest.TestCase):
         with self.assertRaisesRegex(RuntimeError, "payload identity changed"):
             build.validate_whole_payload_reuse(self.project)
 
+    def test_display_player_source_migrates_receipt_but_unknown_android_content_refuses(self):
+        receipt = self.work / "whole-catalog-code-base.json"
+        frozen = read(receipt)
+        for source in build.WHOLE_APK_ANDROID_CODE:
+            frozen["allowed"].remove(source)
+            frozen["files"][source] = "previous authored Java source or importer"
+            (self.project / source).write_text("current authored Java source or importer")
+        write(receipt, frozen)
+        build.validate_whole_payload_reuse(self.project)
+        updated = read(receipt)
+        self.assertEqual(updated["payload"], frozen["payload"])
+        self.assertTrue(build.WHOLE_APK_ANDROID_CODE <= set(updated["allowed"]))
+        self.assertTrue(build.WHOLE_APK_ANDROID_CODE.isdisjoint(updated["files"]))
+        unknown = self.project / "Assets/Plugins/Android/unknown.dat"
+        unknown.parent.mkdir(parents=True, exist_ok=True)
+        unknown.write_text("changed unknown Android input")
+        with self.assertRaisesRegex(RuntimeError, "Content inputs changed"):
+            build.validate_whole_payload_reuse(self.project)
+
     def test_bootstrap_importer_and_game_assemblies_remain_frozen(self):
         for relative in (
             "Assets/LabLoadingScene/Plugins/GameAudioOriginalBootstrap.dll.meta",
