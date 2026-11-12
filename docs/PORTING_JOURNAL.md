@@ -3437,6 +3437,17 @@ preflight and full CI-local (3,206 tests) passed before merge.
 Source output: `c723ec04`; no APK or device output was produced.
 Fresh signed preparation, phone dependencies and complete conversion remain open.
 
+## J1436 — Export receipt-bound final supplier type descriptors
+
+2026-11-12. Merged #472 (`407bdbaf`): fresh mesh, Avatar, texture, Sprite and
+shader packs retain complete final native descriptors and pack-local type IDs.
+The release graph exports these type tables; texture resume reloads and checks
+retained identities. Bodies and legacy production stay unchanged.
+Focused supplier checks and fresh-clone CI-local passed; authored fixture
+repairs passed 38 affected checks. Evidence: `work/coordination/p1-wholegame-1031/phone-chain-audit-1112/`
+(`supplier-final-types-checks-v3`, `supplier-final-types-ci-fixtures-v4`,
+`supplier-final-types-push2.log`). No APK or device claim; fresh preparation,
+signed dispatch and full phone qualification remain open.
 ## J1435 — Reuse bundle ownership lookups within definition families
 
 2026-11-12. Existing `DefinitionFamily<T>` resolves each bundle once per family
