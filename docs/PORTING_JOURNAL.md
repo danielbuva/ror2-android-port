@@ -3665,3 +3665,19 @@ Native RNG/page cache uncontrolled; attribution only, no causal speedup claim.
 CPU/GPU peak 75.3 C, battery peak 27 C; active thermal max gap 0.434 s.
 Adopted placement, scratch removal, stopped process/OLED/lease cleanup and prune pass.
 Sustained play, audibility and full-pipeline performance/alpha acceptance remain open.
+
+## J1451 — Complete signed phone bundle production with launcher feedback
+
+2026-11-12. Public release includes required `launcher/feedback.js`; import checks reject missing modules.
+17 focused host tests, Ruff/preflight pass; Android synthetic source/bundle, canonical
+repack, catalog and manifest jobs complete through the signed release worker.
+Evidence: `work/coordination/p1-wholegame-1031/phone-chain-audit-1112/phone-signed-bundle-chain-v5/`.
+Cold/warm/policy update: 99.714/58.797/78.210 s, cache receipts 8/8/11; exactly three
+policy-dependent jobs rebuild, and all APKs use the same on-device signing key.
+Cold signed fixture APK SHA-256 `1682b249f241ac6269134638ca7b4a527a14fe774d7ccc6cfa4396b7aec871aa`.
+Sampled summed app-UID RSS peaks at 329,388 KiB (lower bound); staged storage 10,068/17,279/24,872 KiB.
+CPU/GPU peak 55.7 C in production, no time above 80 C; battery readback 28 C.
+Persisted READY/cache/APK receipts supply evidence; the Java summary remains absent.
+Registry/SDK owners remain synthetic; existing game APK preserved. Installer removed,
+displays asleep, lease/prune pass; game content and Unity typed load remain open.
+Game installation, play and save-preserving port updates remain open.

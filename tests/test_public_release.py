@@ -6,6 +6,7 @@ import hashlib
 import importlib.util
 import json
 from pathlib import Path
+import re
 import shutil
 import subprocess
 import tempfile
@@ -251,6 +252,14 @@ class PublicBundleTests(unittest.TestCase):
         body.update(bundle_sha256=result["bundle_sha256"], entries=result["entries"])
         with self.assertRaisesRegex(ValueError, "lacks installer/assembly/toolchain"):
             PUBLIC.validate_publication(Path(self.temporary.name) / "public.zip", body)
+
+    def test_launcher_module_imports_are_in_signed_source_closure(self):
+        for name in sorted(PUBLIC.PUBLISHING_SOURCE_FILES):
+            if not name.startswith("launcher/") or not name.endswith(".js"):
+                continue
+            for dependency in re.findall(r"from\s+['\"]\./([^'\"]+)['\"]", (ROOT / name).read_text()):
+                with self.subTest(module=name, dependency=dependency):
+                    self.assertIn("launcher/" + dependency, PUBLIC.PUBLISHING_SOURCE_FILES)
 
     def test_production_identity_installer_and_native_schema_refuse_before_key_access(self):
         body = release_body()
