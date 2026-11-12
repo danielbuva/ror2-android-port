@@ -174,8 +174,8 @@ public static partial class WholeCatalogComposed
         DefinitionFamilyContract<RoR2.BuffDef>(BuffDefinitions);
         DefinitionFamilyContract<RoR2.ItemDef>(ItemDefinitions);
         LabeledFamilyContract<RoR2.KeyItemDef>(KeyItemDefinitions, "KeyItemDef");
-        LabeledFamilyContract<RoR2.ItemGroupType>(ItemGroupTypes, "ItemGroupType");
-        LabeledFamilyContract<RoR2.ItemGroupProvider>(ItemGroupProviders, "ItemGroupProvider");
+        LabeledFamilyContract<RoR2.ItemGroupType>(ItemGroupTypes, "ItemGroupType", ItemGroupTypes);
+        LabeledFamilyContract<RoR2.ItemGroupProvider>(ItemGroupProviders, "ItemGroupProvider", ItemGroupProviders);
         CategoryBundleContract();
         Console.WriteLine("scope identity policy restoration buffs items PASS");
     }
@@ -234,7 +234,7 @@ public static partial class WholeCatalogComposed
         AssetBundle.loadedOwners = null;
         definitionFamilies.Clear();
     }
-    static void LabeledFamilyContract<T>(Func<T[]> definitions, string label) where T : Object, new()
+    static void LabeledFamilyContract<T>(Func<T[]> definitions, string label, Func<Action<string>, T[]> observed = null) where T : Object, new()
     {
         definitionFamilies.Clear();
         var first = new T { name = "First" };
@@ -254,6 +254,17 @@ public static partial class WholeCatalogComposed
         int before = AssetBundle.typedLoads;
         Check(definitions().SequenceEqual(new[] { first, second }));
         Check(AssetBundle.typedLoads == before + 2);
+        if (observed != null)
+        {
+            var trace = new List<string>();
+            Check(observed(trace.Add).SequenceEqual(new[] { first, second }) && trace.Count == 0);
+            definitionFamilies.Clear();
+            Check(observed(trace.Add).SequenceEqual(new[] { first, second }));
+            Check(trace.Where(value => !value.StartsWith("assets-costs ")).SequenceEqual(new[] {
+                "manifest-begin", "manifest-ready-index-begin", "index-ready-assets-begin", "assets-ready" }));
+            CheckCosts(trace, 2, 1);
+            before += 2;
+        }
         File.Delete("payload/whole-catalog.json");
         Check(definitions().SequenceEqual(new[] { first, second }));
         Check(AssetBundle.typedLoads == before + 2);

@@ -26,8 +26,8 @@ static class WholeCatalogComposed {
         new ItemGroupProvider { groupType = types[0], groups = new[] { new Group { items = new object[] { null } }, new Group { items = new object[0] } } },
         new ItemGroupProvider { groupType = types[1], groups = new[] { new Group { items = new[] { new object() } } } }
     };
-    public static ItemGroupType[] ItemGroupTypes() { Host.calls.Add("types"); return types; }
-    public static ItemGroupProvider[] ItemGroupProviders() { Host.calls.Add("providers"); return providers; }
+    public static ItemGroupType[] ItemGroupTypes(Action<string> trace) { Host.calls.Add("types"); trace("assets-ready"); return types; }
+    public static ItemGroupProvider[] ItemGroupProviders(Action<string> trace) { Host.calls.Add("providers"); trace("assets-ready"); return providers; }
 }
 class Counts { public int itemGroupTypes, itemGroupProviders, itemGroups; }
 class Report { public Counts results = new Counts(); }
@@ -62,7 +62,7 @@ public class Host {
         Need(host.coordinator.r.results.itemGroupTypes == 2 && host.coordinator.r.results.itemGroupProviders == 2 && host.coordinator.r.results.itemGroups == 3, "native counts incl empty slot");
         Need(WholeCatalogComposed.providers[0].groups[0].items[0] == null, "source null membership");
         Need(String.Join(",", traces.Select(s => s.Replace("results-item-groups-", ""))) ==
-            "owner-check-begin,owner-check-ready-types-begin,types-ready-providers-begin,providers-ready-metadata-begin,metadata-ready-bindings-begin,bindings-ready-native-set-begin,native-set-ready-validation-begin,validation-ready", "ordered seams");
+            "owner-check-begin,owner-check-ready-types-begin,types-assets-ready,types-ready-providers-begin,providers-assets-ready,providers-ready-metadata-begin,metadata-ready-bindings-begin,bindings-ready-native-set-begin,native-set-ready-validation-begin,validation-ready", "ordered seams");
         int before = calls.Count;
         try { host.PrepareResultsItemGroups(); throw new Exception("foreign owner admitted"); }
         catch (Exception e) { Need(e.Message == "Unowned item-group catalog", "ownership failure"); }

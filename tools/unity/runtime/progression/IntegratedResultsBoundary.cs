@@ -161,9 +161,9 @@ public sealed partial class PortSession
             var map = (System.Collections.IDictionary)RewardField(typeof(ItemCatalog), "itemGroups").GetValue(null);
             coordinator.Check(!ownsResultsItemGroups && map.Count == 0, "Unowned item-group catalog");
             TraceStartup("results-item-groups-owner-check-ready-types-begin");
-            var types = WholeCatalogComposed.ItemGroupTypes();
+            var types = WholeCatalogComposed.ItemGroupTypes(step => TraceStartup("results-item-groups-types-" + step));
             TraceStartup("results-item-groups-types-ready-providers-begin");
-            var providers = WholeCatalogComposed.ItemGroupProviders();
+            var providers = WholeCatalogComposed.ItemGroupProviders(step => TraceStartup("results-item-groups-providers-" + step));
             TraceStartup("results-item-groups-providers-ready-metadata-begin");
             var fields = typeof(DLC4Content.ItemGroupTypes).GetFields(BindingFlags.Public | BindingFlags.Static);
             coordinator.Check(types.Length > 0 && providers.Length > 0 && types.Length == fields.Length && types.All(type => type) &&
