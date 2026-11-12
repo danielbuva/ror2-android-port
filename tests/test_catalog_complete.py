@@ -37,6 +37,23 @@ def pin(path):
 
 
 class CatalogCompletionTests(unittest.TestCase):
+    def test_deferred_references_preserve_subobjects_and_plain_preloads(self):
+        guid = "1234567890abcdef1234567890abcdef"
+        tree = {
+            "skins": [{"skinDefParamsAddress": {"m_AssetGUID": guid, "m_SubObjectName": "mesh", "m_SubObjectGUID": guid}}],
+            "preloadGUIDReferences": [guid],
+            "effect": {"assetGUID": guid},
+            "state": {"stringValue": guid + "[avatar]"},
+            "m_Script": {"m_FileID": 0, "m_PathID": 123},
+            "description": "text containing " + guid,
+            "empty": {"m_AssetGUID": ""},
+        }
+        edges = list(C.deferred_references(tree))
+        self.assertEqual([row["key"] for row in edges], [guid + "[mesh]", guid, guid, guid + "[avatar]"])
+        self.assertEqual(edges[0]["field"], ["skins", 0, "skinDefParamsAddress"])
+        self.assertEqual(edges[0]["kind"], "AssetReference")
+        self.assertEqual(edges[1]["field"], ["preloadGUIDReferences", 0])
+
     def test_sprite_ownership_uses_resolved_texture_not_preload_or_name(self):
         members = C.ProducedMembers()
         typ = dict(class_id=213, tree=b"schema")
