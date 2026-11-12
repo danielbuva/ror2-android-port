@@ -7066,4 +7066,5 @@ The existing current `commando-animation-host` action also verifies persisted
 reference curves and compares frozen-base muzzle positions and directions against
 the original clips during aim, firing and hit reactions. The comparison overrides
 all Commando controller clips so a shared gesture defect cannot pass both sides.
-Device aim correctness remains a separate gate.
+Bounded Commando aim/firing device evidence is recorded in the journal; other
+survivors and unassisted hit-reaction presentation remain separate gates.
