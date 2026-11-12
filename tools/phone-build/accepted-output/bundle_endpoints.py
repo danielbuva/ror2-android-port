@@ -245,7 +245,7 @@ def audit_graph(
                     script_identity=value.get("current_registry_identity") if typ["class_id"] == 115 else None,
                 )
             )
-            summaries[key] = dict(signature=signature, fields=fields, adjacency=adjacency, class_id=typ["class_id"])
+            summaries[key] = dict(signature=signature, fields=fields, adjacency=adjacency, class_id=typ["class_id"], value=value)
 
         def summary(key):
             key = tuple(key)
@@ -255,7 +255,10 @@ def audit_graph(
             return summaries[key]
 
         def managed(key, item):
-            value, raw, typ = read_record(key)
+            # prepare already read and hashed this record in the current run.
+            # A valid managed proof needs its descriptor and current dependency
+            # signatures, not a second body read and schema conversion.
+            value = item["value"]
 
             def managed_key():
                 return cache.key(
@@ -282,6 +285,7 @@ def audit_graph(
                 dependencies[target] = summary(target)["signature"]
                 return read_record(target)
 
+            value, raw, typ = read_record(key)
             managed_check(value, raw, typ, endpoint)
             saved = json.dumps(sorted((list(k), v) for k, v in dependencies.items())).encode()
             cache.put("graph_managed", proof, saved)

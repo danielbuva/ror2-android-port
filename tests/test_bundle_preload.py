@@ -998,7 +998,12 @@ class BundlePreloadTests(unittest.TestCase):
         put(6, 115, {})
         put(7, 134, {})
         managed_calls = []
+        record_reads = []
         context = {"clr": "current", "null_policy": "original"}
+
+        def read_record(key):
+            record_reads.append(key)
+            return records[key]
 
         def managed(value, raw, typ, read):
             managed_calls.append(value["destination"])
@@ -1012,7 +1017,7 @@ class BundlePreloadTests(unittest.TestCase):
                 return E.audit_graph(
                     P,
                     records,
-                    records.__getitem__,
+                    read_record,
                     lambda value: tables,
                     structural_routes=routes or {},
                     managed_check=managed,
@@ -1025,11 +1030,13 @@ class BundlePreloadTests(unittest.TestCase):
             cold = audit(2)
             self.assertEqual((cold["visited"], cold["blocked"], cold["reciprocal_components"]), (7, [], 2))
             self.assertEqual(cold["cache"]["graph_fields_misses"], 7)
+            record_reads.clear()
             warm = audit()
             self.assertEqual(
                 (warm["classes"], warm["visited"], warm["reciprocal_components"]), (cold["classes"], cold["visited"], cold["reciprocal_components"])
             )
             self.assertEqual(warm["cache"].get("graph_fields_misses", 0), 0)
+            self.assertEqual(record_reads.count((*member, 5)), 1)
             self.assertEqual(len(managed_calls), 1)
             put(7, 134, {}, tail=2)
             changed = audit()
