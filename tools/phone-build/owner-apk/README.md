@@ -487,6 +487,15 @@ The binding is source-unique, **not an exact lab-run-ID binding**. Ambiguous
 runs are refused. It performs no device action and proves neither tap delivery
 nor handler entry. Existing raw diagnostics remain untouched.
 
+The qualified check observes persisted acknowledgment before waiting for backend
+completion. After an unacknowledged visible Check action, it permits only one
+additional tap: fresh APK ownership, two matching focused-app observations of
+one enabled/clickable Check control, and a final unchanged TEST_WAIT read are
+required. A late CHECKING/UPDATE_AVAILABLE prevents the retry; errors or unknown
+states stop. A second missing acknowledgment fails explicitly, rather than
+waiting the full reconstruction timeout. This is bounded recovery, not proof
+that the earlier missing action was caused by stale coordinates.
+
 Installer version 3 extends the version-2 foreground-service flow: prepare the signed public
 release, choose the owner's PC game directory with Android's folder picker (or
 choose a ZIP), import, then reconstruct and install. Only required files are

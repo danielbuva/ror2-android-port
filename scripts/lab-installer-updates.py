@@ -934,10 +934,17 @@ class Phone:
         self.shell("run-as", PACKAGE, "mkdir", "-p", shlex.quote(str(Path(path).parent)), label="device-input-directory")
         self.command("shell", shlex.join(["run-as", PACKAGE, "sh", "-c", "cat > " + shlex.quote(path)]), stdin=data, label="device-input-write")
 
-    def read(self, name):
+    def read(self, name, *, timeout=60):
         path = "files/owner-input/" + name
         result = self.command(
-            "shell", "run-as", PACKAGE, "sh", "-c", "'if [ -f " + path + " ]; then cat " + path + "; else printf null; fi'", label="device-state-read"
+            "shell",
+            "run-as",
+            PACKAGE,
+            "sh",
+            "-c",
+            "'if [ -f " + path + " ]; then cat " + path + "; else printf null; fi'",
+            label="device-state-read",
+            timeout=timeout,
         )
         return json.loads(result)
 
@@ -1193,10 +1200,63 @@ class Phone:
             time.sleep(1)
         raise Failure("installer-update-timeout")
 
+    def read_check_progress(self, timeout):
+        row = self.read("update-state.json", timeout=timeout)
+        state = row.get("state") if isinstance(row, dict) else None
+        if state == "ERROR":
+            raise Failure("installer-update-error")
+        if state not in ("TEST_WAIT", "CHECKING", "UPDATE_AVAILABLE"):
+            raise Failure("release-check-state-unavailable")
+        return row
+
+    def check_acknowledgement(self):
+        # A returned input command is not proof that the Activity handled it.
+        # Observe only: no expensive APK rehash/telemetry inside this short wait.
+        deadline = time.monotonic() + min(15, self.timeout)
+        while (remaining := deadline - time.monotonic()) > 0:
+            row = self.read_check_progress(min(5, remaining))
+            if row["state"] != "TEST_WAIT":
+                return row
+            time.sleep(0.25)
+        return None
+
+    def retry_unacknowledged_check(self):
+        self.require_owned_installer()
+        row = self.read_check_progress(5)
+        if row["state"] != "TEST_WAIT":
+            return row
+        self.shell("input", "keyevent", "KEYCODE_WAKEUP", label="device-display-wake")
+
+        def control():
+            tree = self.ui_windows((PACKAGE,), recovery=False)
+            self.prompt_nodes(tree, (PACKAGE,))
+            nodes = [node for node in tree.iter("node") if node.get("text", "").casefold() == "check for updates"]
+            if len(nodes) != 1 or nodes[0].get("class") != "android.widget.Button" or nodes[0].get("enabled") != "true" or nodes[0].get("clickable") != "true":
+                raise Failure("release-check-control-unavailable")
+            return nodes[0]
+
+        first, second = control(), control()
+        if first.attrib != second.attrib:
+            raise Failure("release-check-control-changed")
+        # A late acknowledgment prohibits another tap. Never reset TEST_WAIT:
+        # the handler persists CHECKING before launching any release worker.
+        row = self.read_check_progress(5)
+        if row["state"] != "TEST_WAIT":
+            return row
+        self.tap_prompt_node(second, "device-release-check-retry")
+        print("INFO release-check-retry actor=harness reason=unacknowledged-visible-action", flush=True)
+        return self.check_acknowledgement()
+
     def check(self, version):
         self.put("update-state.json", encoded({"state": "TEST_WAIT"}))
         self.tap("Check for updates")
-        row = self.wait_state({"UPDATE_AVAILABLE"})
+        row = self.check_acknowledgement()
+        if row is None:
+            row = self.retry_unacknowledged_check()
+        if row is None:
+            raise Failure("check-action-not-acknowledged")
+        if row["state"] == "CHECKING":
+            row = self.wait_state({"UPDATE_AVAILABLE"})
         if row.get("release", {}).get("version_code") != version:
             raise Failure("release-version-not-observed")
 

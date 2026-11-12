@@ -114,6 +114,139 @@ class LabInstallerUpdatesTests(unittest.TestCase):
             self.assertEqual([path for path in Path(temporary).rglob("*") if path.is_file()], [target])
 
     @staticmethod
+    def check_control(bounds="[1,2][30,40]", enabled="true"):
+        return ET.fromstring(
+            f'<hierarchy><node package="{LAB.PACKAGE}"><node package="{LAB.PACKAGE}" class="android.widget.Button" text="Check for updates" clickable="true" enabled="{enabled}" bounds="{bounds}"/></node></hierarchy>'
+        )
+
+    def test_check_acknowledgement_wait_is_short_read_only_and_bounded(self):
+        phone, clock = LAB.Phone("synthetic-private", 1800), [0.0]
+        phone.flow_metrics = Mock()
+        with (
+            patch.object(LAB.time, "monotonic", side_effect=lambda: clock[0]),
+            patch.object(LAB.time, "sleep", side_effect=lambda seconds: clock.__setitem__(0, clock[0] + seconds)),
+        ):
+            with patch.object(phone, "read", return_value={"state": "TEST_WAIT"}) as read:
+                self.assertIsNone(phone.check_acknowledgement())
+                self.assertEqual(clock[0], 15)
+                self.assertTrue(all(0 < call.kwargs["timeout"] <= 5 for call in read.call_args_list))
+        phone.flow_metrics.sample.assert_not_called()
+        for state, reason in (
+            ("ERROR", "installer-update-error"),
+            ("UP_TO_DATE", "release-check-state-unavailable"),
+            (None, "release-check-state-unavailable"),
+        ):
+            with patch.object(phone, "read", return_value={"state": state}):
+                with self.assertRaisesRegex(LAB.Failure, "^" + reason + "$"):
+                    phone.check_acknowledgement()
+
+    def test_check_acknowledged_action_never_retries_or_resets_state(self):
+        phone = LAB.Phone("synthetic-private", 1)
+        available = {"state": "UPDATE_AVAILABLE", "release": {"version_code": 2}}
+        for state in (available, {"state": "CHECKING"}):
+            with (
+                patch.object(phone, "put") as put,
+                patch.object(phone, "tap") as tap,
+                patch.object(phone, "check_acknowledgement", return_value=state),
+                patch.object(phone, "wait_state", return_value=available) as wait,
+                patch.object(phone, "retry_unacknowledged_check", side_effect=AssertionError("no retry")),
+            ):
+                phone.check(2)
+                put.assert_called_once_with("update-state.json", LAB.encoded({"state": "TEST_WAIT"}))
+                tap.assert_called_once_with("Check for updates")
+                self.assertEqual(wait.call_count, int(state["state"] == "CHECKING"))
+
+    def test_check_retries_once_after_fresh_owned_control_and_unchanged_state(self):
+        phone = LAB.Phone("synthetic-private", 1)
+        available = {"state": "UPDATE_AVAILABLE", "release": {"version_code": 2}}
+        with (
+            patch.object(phone, "put") as put,
+            patch.object(phone, "tap"),
+            patch.object(phone, "check_acknowledgement", side_effect=[None, available]),
+            patch.object(phone, "require_owned_installer") as owner,
+            patch.object(phone, "shell"),
+            patch.object(phone, "ui_windows", side_effect=[self.check_control(), self.check_control()]) as ui,
+            patch.object(phone, "read", return_value={"state": "TEST_WAIT"}) as read,
+            patch.object(phone, "tap_prompt_node") as retry,
+        ):
+            phone.check(2)
+            self.assertEqual(put.call_count, 1)
+            owner.assert_called_once()
+            self.assertEqual(ui.call_count, 2)
+            self.assertEqual(read.call_count, 2)
+            self.assertTrue(all(call.kwargs == {"timeout": 5} for call in read.call_args_list))
+            retry.assert_called_once()
+        with (
+            patch.object(phone, "put"),
+            patch.object(phone, "tap"),
+            patch.object(phone, "check_acknowledgement", return_value=None),
+            patch.object(phone, "retry_unacknowledged_check", return_value=None) as retry,
+        ):
+            with self.assertRaisesRegex(LAB.Failure, "^check-action-not-acknowledged$"):
+                phone.check(2)
+            retry.assert_called_once()
+
+    def test_check_late_acknowledgement_prohibits_the_second_tap(self):
+        phone = LAB.Phone("synthetic-private", 1)
+        for state in ("CHECKING", "UPDATE_AVAILABLE"):
+            row = {"state": state, "release": {"version_code": 2}}
+            for reads, ui_count in (([row], 0), ([{"state": "TEST_WAIT"}, row], 2)):
+                with (
+                    patch.object(phone, "require_owned_installer"),
+                    patch.object(phone, "shell"),
+                    patch.object(phone, "ui_windows", side_effect=[self.check_control(), self.check_control()]) as ui,
+                    patch.object(phone, "read", side_effect=reads),
+                    patch.object(phone, "tap_prompt_node", side_effect=AssertionError("late ack must not tap")),
+                    patch.object(phone, "put", side_effect=AssertionError("must not reset")),
+                ):
+                    self.assertEqual(phone.retry_unacknowledged_check(), row)
+                    self.assertEqual(ui.call_count, ui_count)
+
+    def test_check_retry_refuses_changed_ambiguous_or_unowned_controls(self):
+        phone = LAB.Phone("synthetic-private", 1)
+        wrong = self.check_control()
+        wrong.find("node").set("package", "synthetic-private")
+        duplicate = self.check_control()
+        duplicate.find("node").append(self.check_control().find("node/node"))
+        for second in (
+            wrong,
+            duplicate,
+            self.check_control(enabled="false"),
+            self.check_control(bounds="[5,6][30,40]"),
+            self.check_control(bounds="[0,0][0,0]"),
+        ):
+            with (
+                patch.object(phone, "require_owned_installer"),
+                patch.object(phone, "shell"),
+                patch.object(phone, "ui_windows", side_effect=[self.check_control(), second]),
+                patch.object(phone, "read", return_value={"state": "TEST_WAIT"}),
+                patch.object(phone, "tap_prompt_node", side_effect=AssertionError("unqualified control must not tap")),
+            ):
+                with self.assertRaises(LAB.Failure):
+                    phone.retry_unacknowledged_check()
+        with (
+            patch.object(phone, "require_owned_installer", side_effect=LAB.Failure("owned-hash-changed")),
+            patch.object(phone, "ui_windows", side_effect=AssertionError("changed owner")),
+        ):
+            with self.assertRaisesRegex(LAB.Failure, "owned-hash-changed"):
+                phone.retry_unacknowledged_check()
+
+    def test_check_retry_refuses_unknown_state_and_never_changes_permissions(self):
+        phone = LAB.Phone("synthetic-private", 1)
+        for state in (None, {"state": "ERROR"}, {"state": "UP_TO_DATE"}):
+            with (
+                patch.object(phone, "require_owned_installer"),
+                patch.object(phone, "shell"),
+                patch.object(phone, "ui_windows", side_effect=[self.check_control(), self.check_control()]),
+                patch.object(phone, "read", return_value=state),
+                patch.object(phone, "tap_prompt_node", side_effect=AssertionError("unknown state")),
+                patch.object(phone, "install", side_effect=AssertionError("no install")),
+                patch.object(phone, "allow_visible_install_permission", side_effect=AssertionError("no permission")),
+            ):
+                with self.assertRaises(LAB.Failure):
+                    phone.retry_unacknowledged_check()
+
+    @staticmethod
     def timeout_records(root, states=("TEST_WAIT", "CHECKING"), name="run-first000", source="a" * 40):
         directory = root / "work/coordination/installer-update-acceptance" / name
         directory.mkdir(parents=True)
