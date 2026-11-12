@@ -3338,7 +3338,7 @@ Peak CPU/GPU 73.7 °C, 0 s above 80 °C; battery 26 °C, runtime gap < 0.433 s.
 App stopped, scratch removed, OLED asleep, lease released; pruning passed.
 Sustained play/performance, physical navigation and complete phone install stay open.
 
-## J1427 — Attribute original projectile catalog startup phases
+## J1428 — Attribute original projectile catalog startup phases
 
 2026-11-12. Existing catalog owner traces family, snapshots, native registration,
 availability and validation; native order, identity checks and restoration stay.
