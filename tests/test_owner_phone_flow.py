@@ -166,7 +166,7 @@ public class CheckDiagnosticHarness {
             )
             self.assertEqual(result.returncode, 0, result.stderr)
         start = source.split("private void startUpdate", 1)[1].split("private void installReady", 1)[0]
-        self.assertLess(start.index('checkStage = "request-write"'), start.index('writeJson(new File(getFilesDir(), "owner-input/update-request.json")'))
+        self.assertLess(start.index('checkStage = "request-write"'), start.index('writeJson(app, new File(getFilesDir(), "owner-input/update-request.json")'))
         self.assertIn('checkDiagnostic(app, action, "failed-" + checkStage, error)', start)
 
     def test_managed_host_compiles_with_fixture_android_bootclasspath(self):

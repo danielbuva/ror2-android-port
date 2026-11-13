@@ -106,7 +106,7 @@ final class OwnerInputSource implements OwnerInputImport.Source {
             if (!previousFiles.getCanonicalFile().equals(previousFiles.getAbsoluteFile())) throw new IOException("Private input files contain links");
             if (previousFiles.exists() && !previousFiles.renameTo(new File(root, "previous-import-" + previous + "-" + System.nanoTime())))
                 throw new IOException("Could not retain previous imported files before switching versions");
-            ToolHostActivity.writeJson(marker, new JSONObject().put("schema", 1).put("manifest_sha256", identity));
+            ToolHostActivity.writeJson(app, marker, new JSONObject().put("schema", 1).put("manifest_sha256", identity));
         }
         OwnerInputImport importer = new OwnerInputImport(root, selectedVersion.files, plan.getLong("workspace_bytes"), observer);
         OwnerInputImport.Result result;
@@ -119,6 +119,6 @@ final class OwnerInputSource implements OwnerInputImport.Source {
         JSONObject receipt = new JSONObject().put("schema", 1).put("state", "IMPORTED").put("manifest_sha256", selectedVersion.manifestSha256)
             .put("game_version", selectedVersion.name).put("completed", result.bytes).put("total", result.bytes)
             .put("extra", new JSONArray(result.extra)).put("message", "Imported verified game files locally. Extra files ignored: " + result.extra.size());
-        ToolHostActivity.writeJson(new File(app.getFilesDir(), "owner-input/import-state.json"), receipt);
+        ToolHostActivity.writeJson(app, new File(app.getFilesDir(), "owner-input/import-state.json"), receipt);
     }
 }

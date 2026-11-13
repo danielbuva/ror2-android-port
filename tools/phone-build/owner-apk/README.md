@@ -505,6 +505,12 @@ no preference XML, paths, exception text or release request is exported. An
 unavailable observation is not proof that the button listener did not execute.
 This diagnostic does not change Check dispatch, permissions or install consent.
 
+Managed JSON writes normalize only the platform-provided app-files root alias,
+not arbitrary target paths. The Context-aware writer retains child-link and
+atomic-write guards. Host tests reproduce the aliased-root failure and verify
+receipt preservation plus traversal/link refusal; a complete phone run is still
+required before claiming the installer/update flow works.
+
 Installer version 3 extends the version-2 foreground-service flow: prepare the signed public
 release, choose the owner's PC game directory with Android's folder picker (or
 choose a ZIP), import, then reconstruct and install. Only required files are

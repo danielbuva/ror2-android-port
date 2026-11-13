@@ -3939,3 +3939,34 @@ Peak CPU/GPU 95.9 C (0.388 s above 95 C), 16.624 s above 80 C; battery peak 35 C
 Trace gaps <=0.407 s; no thermal abort. Bounded overlay samples 112.7–117.7 FPS
 are not sustained-performance qualification. Adopted placement and stopped/asleep cleanup pass.
 Prior art: pinned R2API/SS2 plus original state lifecycle. Gun aim and broader fidelity remain open.
+
+## J1470 — Restore Commando source additive aim and gesture poses
+
+2026-11-12. Recover original additive reference values before bundle production;
+native AimAnimator, controller layers and gameplay logic remain authoritative.
+Device capture reviews clear center/right aim and firing without the fixed
+upper-right pose; five directional samples fire, locomotion before/after roll passes.
+Invincibility-only diagnostic; enemies partly occlude later directional views.
+APK SHA-256: `659c6e811008a826254436d4e97da3c013b6965a8e71a2872717620a41da27fd` (source `c3368dbd`).
+Evidence: `work/coordination/gameplay-fidelity-aim-20261112/gesture/acceptance-assessment.json`; video/logcat retained.
+Exact-editor original-clip control: 36 poses, 432 muzzle components, maximum error 0.
+Peak CPU/GPU 95.1 C, 33.709 s above 80 C; battery 33 C, trace gaps <=0.438 s.
+Adopted placement and stopped/asleep selector/lease cleanup pass; shader warnings remain.
+Prior art: pinned R2API/SS2 and original AimAnimator; source reference streams supply poses.
+Remaining: real-hit/flinch (capture stopped on an unsampled health report), other survivors, enemy shaders.
+
+## J1471 — Attribute live enemy and attack material bindings
+
+2026-11-13. Exact-editor inventory reads 876 body/projectile/effect roots and
+8,473 bindings with zero typed-load failures; live material/null/read-only fixture passes.
+Opt-in runtime census retains every sampled slot, keywords, textures, trails and particle meshes.
+Assisted device capture observes Beetle, Golem, Lemurian and Wisp using diagnostic preview shaders;
+Golem debris and Wisp laser retain original shader paths. Zero missing-variant counters miss these bypasses.
+Frames show a dark Golem and black/white attack suspect; reports are not frame-synchronized.
+APK SHA-256: `54c022f462670fb977e85643d6ef58777ea7197c307b17d0373e46a55d6082df` (source `2a1a4e1c`).
+Evidence: `work/coordination/gameplay-fidelity-material-20261112/nova/acceptance-assessment.json`; video/logcat retained.
+Native damage 744 and seven kills are diagnostic; unassisted flinch and full aim sweep remain open.
+Install/sync/playable/capture: 31.515/57.703/69.024/90.989 s; peak CPU/GPU 89.2 C, 9.422 s above 80 C.
+Adopted placement, thermal sampling and stopped/asleep selector/lease cleanup pass.
+Prior art: pinned R2API content categories, EditorKit shader discovery and ImportExtensions deferred setup.
+No rendering fix/parity claim; uncaptured enemy/effect groups and shader repairs remain open.

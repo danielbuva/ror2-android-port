@@ -108,7 +108,7 @@ public final class ToolHostActivity extends Activity {
         if (OwnerBuildService.isRunning() || OwnerInstaller.busy(this)) return;
         try {
             if (!new File(getFilesDir(), "owner-input/install-inputs.json").isFile()) throw new IOException("Prepare a signed installation plan first");
-            writeJson(new File(getFilesDir(), "owner-input/import-state.json"), new JSONObject().put("state", "IMPORTING").put("message", "Checking required inputs and private free space…"));
+            writeJson(this, new File(getFilesDir(), "owner-input/import-state.json"), new JSONObject().put("state", "IMPORTING").put("message", "Checking required inputs and private free space…"));
             OwnerBuildService.launch(this, "import");
         } catch (Exception error) { updateStatus(this, "ERROR", error.getMessage()); }
         refreshStatus();
@@ -152,15 +152,15 @@ public final class ToolHostActivity extends Activity {
         }
         return new JSONObject(new String(bytes.toByteArray(), StandardCharsets.UTF_8));
     }
-    static synchronized void writeJson(File file, JSONObject value) throws Exception {
-        OwnerInputImport.writeAtomic(file, new OwnerInputImport.AtomicWriter() {
+    static synchronized void writeJson(Context app, File file, JSONObject value) throws Exception {
+        OwnerInputImport.writeAtomic(OwnerInputImport.privateFile(app.getFilesDir(), file), new OwnerInputImport.AtomicWriter() {
             @Override public void write(FileOutputStream output) throws Exception {
                 output.write(value.toString().getBytes(StandardCharsets.UTF_8));
             }
         });
     }
     static void updateStatus(Context app, String phase, String message) {
-        try { File file = new File(app.getFilesDir(), "owner-input/update-state.json"); JSONObject value = file.isFile() ? readJson(file) : new JSONObject(); writeJson(file, value.put("state", phase).put("message", message)); }
+        try { File file = new File(app.getFilesDir(), "owner-input/update-state.json"); JSONObject value = file.isFile() ? readJson(file) : new JSONObject(); writeJson(app, file, value.put("state", phase).put("message", message)); }
         catch (Exception ignored) { /* Worker report retains the underlying failure if storage is unavailable. */ }
     }
     private static JSONObject installedRequest(Context app, String action) throws Exception {
@@ -215,7 +215,7 @@ public final class ToolHostActivity extends Activity {
             checkStage = "request-build";
             JSONObject request = installedRequest(app, action);
             checkStage = "request-write";
-            writeJson(new File(getFilesDir(), "owner-input/update-request.json"), request);
+            writeJson(app, new File(getFilesDir(), "owner-input/update-request.json"), request);
             checkDiagnostic(app, action, "request-written", null);
             updateStatus(app, "release-check".equals(action) ? "CHECKING" : "BUILDING", "install-prepare".equals(action) ? "Verifying the signed installation plan…" : "Starting local release work…");
             checkStage = "service-launch";
@@ -262,10 +262,10 @@ public final class ToolHostActivity extends Activity {
                 JSONObject stage = stages.getJSONObject(i);
                 if (current.equals(stage.optString("id")) && !"complete".equals(stage.optString("status"))) stage.put("status", "CANCELLED".equals(phase) ? "interrupted" : "failed");
             }
-            writeJson(file, checkpoint);
+            writeJson(app, file, checkpoint);
             File update = new File(app.getFilesDir(), "owner-input/update-state.json");
             JSONObject progress = update.isFile() ? readJson(update) : new JSONObject();
-            writeJson(update, progress.put("pipeline", checkpoint).put("state", phase).put("message", existingFailure == null ? message : existingFailure.optString("reason", message)));
+            writeJson(app, update, progress.put("pipeline", checkpoint).put("state", phase).put("message", existingFailure == null ? message : existingFailure.optString("reason", message)));
         } catch (Exception ignored) { updateStatus(app, phase, message); }
     }
     /** Fixed-vocabulary observations only; failure never changes installation state. */
@@ -296,7 +296,7 @@ public final class ToolHostActivity extends Activity {
             JSONObject safe = new JSONObject().put("schema", 2).put("stage", observedStage).put("callback", observedCallback)
                     .put("session_match", callback == null ? priorMatch : match)
                     .put("receiver_registration", observedRegistration).put("callback_entry", observedEntry);
-            writeJson(file, safe);
+            writeJson(app, file, safe);
         } catch (Exception ignored) { /* Missing diagnostics are not successful installation evidence. */ }
     }
 
@@ -313,10 +313,10 @@ public final class ToolHostActivity extends Activity {
                 JSONObject stage = stages.getJSONObject(i);
                 if ("install".equals(stage.getString("id"))) stage.put("status", phase).put("completed", "INSTALLED".equals(state) ? 1 : 0).put("total", 1);
             }
-            writeJson(file, checkpoint);
+            writeJson(app, file, checkpoint);
             File update = new File(app.getFilesDir(), "owner-input/update-state.json");
             JSONObject progress = update.isFile() ? readJson(update) : new JSONObject();
-            writeJson(update, progress.put("pipeline", checkpoint).put("state", state).put("message", message));
+            writeJson(app, update, progress.put("pipeline", checkpoint).put("state", state).put("message", message));
         } catch (Exception ignored) { /* PackageInstaller's durable identity/status remains authoritative. */ }
     }
     private void refreshStatus() {
@@ -689,9 +689,9 @@ public final class ToolHostActivity extends Activity {
             }
         }
         try {
-            writeJson(new File(getFilesDir(), updateAction == null ? "tool-host-report.json" : "update-tool-report.json"), report);
+            writeJson(app, new File(getFilesDir(), updateAction == null ? "tool-host-report.json" : "update-tool-report.json"), report);
             if (("release-build".equals(updateAction) || "release-rollback".equals(updateAction)) && report.getBoolean("success") && report.has("ownerApk"))
-                writeJson(new File(getFilesDir(), "tool-host-report.json"), report);
+                writeJson(app, new File(getFilesDir(), "tool-host-report.json"), report);
         } catch(Exception error) { if (updateAction != null) updateStatus(app, "ERROR", "Could not retain build result: " + error.getMessage()); }
     }
     }

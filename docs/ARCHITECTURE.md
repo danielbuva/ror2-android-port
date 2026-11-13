@@ -1432,6 +1432,16 @@ The existing import/release/update owners retain verified-entry retry state.
 bounded retained-log inspection; setup uses fresh owned scratch and teardown
 keeps local evidence while removing disposable device scratch. Its host/phone
 controls do not qualify real filesystem exhaustion or physical power loss.
+Managed JSON writes receive their owning Android `Context` explicitly. The
+existing `OwnerInputImport.privateFile` boundary rebases only that trusted
+`getFilesDir()` root spelling onto its canonical root, so Android's platform
+alias is not mistaken for an untrusted descendant link. Canonical-root callers
+are also accepted; root-equal, outside and traversal targets are refused, and
+existing child-link, staging-link and atomic durability checks remain in force.
+Activity, service, worker and alpha/input-source receipts share this boundary.
+The observed Check request-write failure is the motivating device evidence;
+complete phone-flow qualification remains a separate gate.
+
 `OwnerInputImport.syncDirectory` uses Android's public read-only open flag,
 then fsync and finally close; it does not reflect a hidden `O_DIRECTORY` field.
 A host Android-API fixture exercises the quota harness through that path,
@@ -2504,6 +2514,7 @@ The remaining `--action` selectors are classified here:
 | editor | `siren-encounter-host` | current |
 | editor | `source-camera-graphics-host` | current |
 | editor | `commando-animation-host` | current |
+| editor | `enemy-material-audit` | current |
 | editor | `character-motor-order` | historical |
 | editor | `catalog-addresses` | historical |
 | editor | `reference-identities` | historical |
@@ -7071,3 +7082,40 @@ device gate.
 touch capture; focus, pause and teardown still cancel all input. The same
 exact-editor action also checks first touch delivery without a physical controller
 and full cancellation through `Neutral`.
+
+Additive reference-pose recovery stays in `animation_bindings.stage_additive_reference_poses`
+and `WholeCatalogBuild.RestoreSourceAdditiveReferencePoses`. The former follows native
+Commando additive states and blend trees, plus other native AimPitch/AimYaw
+layers, resolves current catalog containers against accepted input hashes, and
+emits private source identities and Transform reference values through StageIO. The latter creates owned
+constant reference clips before bundle production and applies the original
+additive reference settings. Unsupported muscle streams remain unchanged and
+are reported explicitly; unknown Transform bindings refuse restoration.
+Generated clips persist with the composed project and are replaced on rebuild;
+there is no runtime owner. Code-only builds require unchanged source-pose inputs.
+The existing current `commando-animation-host` action also verifies persisted
+reference curves and compares frozen-base muzzle positions and directions against
+the original clips during aim, firing and hit reactions. The comparison overrides
+all Commando controller clips so a shared gesture defect cannot pass both sides.
+Bounded Commando aim/firing device evidence is recorded in the journal; other
+survivors and unassisted hit-reaction presentation remain separate gates.
+
+`WholeCatalogHost.AuditCombatMaterials` owns the current exact-editor
+`./dev editor --target lab --action enemy-material-audit` inventory. It reads
+native-provider body/projectile candidates and the prepared session's registered
+effect prefabs, including inactive renderer slots, Billboard materials, particle
+meshes and trails. Private receipts retain source keywords, texture bindings and
+recovered-resource coverage. It does not initialize native catalogs, mutate
+materials or establish Android shader support or visual parity. Setup requires
+the prepared lab project and generated catalog; completion retains a private
+editor receipt and adds no runtime state.
+
+`TeleporterWorldSession.ObserveOwnedSurface` supplies the existing opt-in live
+visual census. A matching lab selector may request `detailedVisualDiagnostics`;
+normal sessions retain the embedded default. Visible combat renderers enter the
+census regardless of shader name, including missing bindings. Each sampled slot,
+particle trail and Billboard material records shader support, keywords and
+texture state; particle renderers also report all meshes. The existing screen
+coverage ordering and 128-view limit remain: this is a sampled attribution tool,
+not proof that every prefab rendered. Session teardown discards the report with
+the other objective observations; it never changes materials or simulation.

@@ -71,7 +71,7 @@ public final class OwnerBuildService extends Service {
                 if (OwnerInstaller.busy(this)) return START_NOT_STICKY;
                 importControl = action.substring(8);
                 if ("cancel".equals(importControl)) { if (inputAccess != null) inputAccess.cancel(); if (worker != null) worker.cancel(); }
-                try { ToolHostActivity.writeJson(new File(getFilesDir(), "owner-input/update-control.json"), new JSONObject().put("id", java.util.UUID.randomUUID().toString()).put("action", importControl)); }
+                try { ToolHostActivity.writeJson(OwnerBuildService.this, new File(getFilesDir(), "owner-input/update-control.json"), new JSONObject().put("id", java.util.UUID.randomUUID().toString()).put("action", importControl)); }
                 catch (Exception error) { ToolHostActivity.updateStatus(this, "ERROR", "Could not retain control: " + error.getMessage()); }
             } else stopSelf(startId);
             return START_NOT_STICKY;
@@ -116,7 +116,7 @@ public final class OwnerBuildService extends Service {
                 }
             } catch (Exception error) {
                 if ("import".equals(action)) {
-                    try { ToolHostActivity.writeJson(new File(getFilesDir(), "owner-input/import-state.json"), new JSONObject().put("state", (error instanceof InterruptedIOException || destroyed || "cancel".equals(importControl)) ? "CANCELLED" : "ERROR").put("message", error.getMessage())); }
+                    try { ToolHostActivity.writeJson(OwnerBuildService.this, new File(getFilesDir(), "owner-input/import-state.json"), new JSONObject().put("state", (error instanceof InterruptedIOException || destroyed || "cancel".equals(importControl)) ? "CANCELLED" : "ERROR").put("message", error.getMessage())); }
                     catch (Exception ignored) { }
                 } else ToolHostActivity.updateStatus(OwnerBuildService.this, "ERROR", error.getMessage());
             } finally {
@@ -157,7 +157,7 @@ public final class OwnerBuildService extends Service {
                 while ("pause".equals(importControl) && !destroyed) {
                     File state = new File(getFilesDir(), "owner-input/import-state.json");
                     JSONObject current = state.isFile() ? ToolHostActivity.readJson(state) : new JSONObject();
-                    if (!"PAUSED".equals(current.optString("state"))) ToolHostActivity.writeJson(state, current.put("state", "PAUSED").put("message", "Import paused. Verified files are retained."));
+                    if (!"PAUSED".equals(current.optString("state"))) ToolHostActivity.writeJson(OwnerBuildService.this, state, current.put("state", "PAUSED").put("message", "Import paused. Verified files are retained."));
                     Thread.sleep(250);
                 }
                 if (destroyed || "cancel".equals(importControl)) throw new InterruptedIOException("Import cancelled. Verified files retained; resume when ready.");
@@ -171,7 +171,7 @@ public final class OwnerBuildService extends Service {
                     .put("message", validating ? path : "Importing " + path).put("elapsed_seconds", (now - started) / 1000);
                 // Identification reports a phase, not copied bytes (tree counts are files).
                 if (!validating && total > 0) progress.put("completed", complete).put("total", total);
-                ToolHostActivity.writeJson(new File(getFilesDir(), "owner-input/import-state.json"), progress);
+                ToolHostActivity.writeJson(OwnerBuildService.this, new File(getFilesDir(), "owner-input/import-state.json"), progress);
             }
         }, inputAccess);
     }
