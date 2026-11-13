@@ -5807,6 +5807,18 @@ The action copies no Unity project and performs no device operation. Its
 private receipt under `work/coordination/shared-builds/` records the selected
 commit and restoration outcome.
 
+The same owner provides current `./dev shared-build --request REQUEST.json`
+supervision. Requests pin `source_commit`, boolean `full` and an absolute
+`output` under primary `work/coordination`. `--dry-run` checks clean source,
+paths and full-build headroom without editor actions. `--detach` sources
+`scripts/env.sh` and starts the same tracked owner in a new process session.
+After build/restoration and generated-output pruning, `terminal.done.json`
+records success or failure, including source drift after dispatch. The runner
+prints its absolute done-file for dispatcher wakeup; it adds no device actions.
+Optional `storage_wait_seconds` (0–3600, default 0) admits a bounded wait for
+100 GiB headroom before taking the editor mutex. Dry-run reports storage
+readiness; the full build still enforces its storage gate under the mutex.
+
 Teardown restores the original primary branch/commit after success or failure.
 Unexpected edits or moved refs refuse restoration and preserve those files for
 recovery; no stash, reset or authored-source patch is used. Workers must keep

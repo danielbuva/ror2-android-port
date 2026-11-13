@@ -22,6 +22,14 @@ before launch) and `capture_interval_seconds` (launch-mode cadence, default 60).
 The device free-space reservation includes the requested payload size.
 Requests and results stay private.
 
+Shared editor builds use current `./dev shared-build --request REQUEST.json`.
+JSON pins `source_commit`, boolean `full` and absolute `output` under primary
+`work/coordination`. Validate with `--dry-run`; `--detach` sources
+`scripts/env.sh` and retains `terminal.done.json` after build, source restoration
+and pruning on success or failure. This command performs no device actions.
+Optional `storage_wait_seconds` (0–3600) waits for full-build headroom before
+taking the editor mutex; timeout writes a failure receipt.
+
 Generated-output cleanup retains only pinned APKs, current build/base, the
 latest installed APK per device and each worker's newest handoff-referenced
 build in `work/build-cache`. Other cache entries become disposable after
