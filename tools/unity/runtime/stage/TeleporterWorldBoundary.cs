@@ -1570,36 +1570,17 @@ public sealed partial class PortSession
 
         public void ObserveTeleporterWorld()
         {
-            // Native startup can instantiate additional prong renderers after initial
-            // presentation. Route only their measured recovered family through the same
-            // owned clone path; retain source layers, controllers and unknown materials.
-            if (coordinator.objectiveHost && AndroidNativeDeferredPresentation.report.available && Time.frameCount % 30 == 0)
+            // Native startup and attack states create prongs, debris and targeting
+            // renderers after preparation. Actor models may detach from their bodies.
+            // Retain source layers, controllers and unknown material families.
+            if (AndroidNativeDeferredPresentation.report.available && Time.frameCount % 30 == 0)
             {
-                foreach (var renderer in coordinator.objectiveHost.GetComponentsInChildren<Renderer>(true))
-                {
-                    if (coordinator.worldPresented.Contains(renderer.GetInstanceID()))
-                        continue;
-                    var materials = renderer.sharedMaterials;
-                    bool changed = false;
-                    for (int i = 0; i < materials.Length; i++)
-                        if (materials[i] && (materials[i].shader.name == "Hopoo Games/Deferred/Standard" ||
-                                             materials[i].shader.name == "CalmWater/Calm Water [DX11]" ||
-                                             materials[i].shader.name == "CalmWater/Calm Water [DX11] [Double Sided]"))
-                        {
-                            var source = materials[i];
-                            var copy = new Material(source);
-                            AndroidMaterialPresentation.Apply(source, copy);
-                            materials[i] = copy;
-                            coordinator.worldMaterials.Add(copy);
-                            coordinator.r.objective.lateNativeMaterials++;
-                            changed = true;
-                        }
-                    if (changed)
-                    {
-                        renderer.sharedMaterials = materials;
-                        coordinator.worldPresented.Add(renderer.GetInstanceID());
-                    }
-                }
+                var roots = coordinator.directorActors.Where(actor => actor.model).Select(actor => actor.model);
+                if (coordinator.objectiveHost)
+                    roots = roots.Concat(new[] { coordinator.objectiveHost });
+                foreach (var renderer in roots.SelectMany(root => root.GetComponentsInChildren<Renderer>(true)).Distinct())
+                    coordinator.r.objective.lateNativeMaterials +=
+                        AndroidMaterialPresentation.ApplyRecovered(renderer, coordinator.worldMaterials);
             }
             // The full material/property census serves explicit visual attribution only;
             // normal gameplay runs retain lightweight objective evidence and adaptation.

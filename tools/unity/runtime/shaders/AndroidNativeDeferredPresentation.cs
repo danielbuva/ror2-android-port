@@ -175,6 +175,18 @@ public static class AndroidNativeDeferredPresentation
             report.unrecoveredVariants.Add(observation);
         return false; // Keep the existing explicitly approximate presentation path.
     }
+    public static bool IsSourceFamily(Material source)
+    {
+        if (!report.available || !source || !source.shader)
+            return false;
+        if (source.shader.name == "Hopoo Games/Deferred/Standard")
+            return true;
+        if (families != null)
+            foreach (var family in families.families)
+                if (family.shader == source.shader.name)
+                    return true;
+        return false;
+    }
     public static bool Apply(Material source, Material copy)
     {
         if (!report.available)
