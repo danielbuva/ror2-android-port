@@ -32,6 +32,12 @@ file, owner or pipeline step is added, moved or retired. Results and evidence li
 `WholeCatalogLoader.RegisterLocations` wraps its completed map with an
 `IResourceLocator` request observer. Each lookup logs its original key, key type,
 requested asset type, phase and map result, including unresolved soft references.
+Resolved rows include their provider, member and bundle. The same owner registers
+the ResourceManager diagnostic callback and enables its diagnostic events while
+the composed locator is owned. It observes original operation completions and
+failures without requesting assets or changing reference counts. Release removes
+its callback and restores the prior diagnostic-event setting. Failed operations
+emit their exception at the failure event, after the original completion event.
 The wrapper delegates keys and results unchanged; the original dynamic locator
 still handles GUID subobjects afterwards. A map miss is not a global load failure.
 `WholeCatalogComposed.Release` removes the same owned wrapper and restores prior
@@ -1235,6 +1241,17 @@ path. The packet's target information stays private; independent owner-input
 production, ordinary app execution, owner signing/alignment, install/update and
 public distribution of any game-bearing packet remain separate gates.
 
+The owner APK builder also compiles the authored Android plugin sources staged by
+`stage_android_assets`, including display preference and the settings observer's
+shared helper. Bundled SDK javac/d8 emit a separate DEX; classes already supplied
+by incoming DEX files are retained once. Generated plugin BuildConfig and empty
+resource namespace follow the plugin's authored package. The manifest owner
+preserves or adds its private observer service declaration. An optional pinned
+`authored_class_reference` APK qualifies the final defined class set against all
+reference `dev.ror2lab` classes, before installation; it supplies no output bytes.
+Input hashes and the class comparison persist in the assembly receipt. Compiler
+processes exit after packaging; existing runtime owners retain their lifecycle.
+
 `tools/phone-build/owner-apk/` owns a separate experimental owner-APK bootstrap
 candidate after reconstruction. `build_owner_apk.py` and `binary_manifest.py`
 compile only authored Java, preserve the selected content bytes and move the
@@ -1244,7 +1261,11 @@ original Unity entry private to enforce preparation. An optional owner-selected
 to routing; it must increase and updates retain the same private signer.
 An optional complete `code` selection supplies independently produced IL2CPP,
 metadata and Burst files; all three are required, their actual hashes are retained,
-and comparison-target code files are not read. The same dictionary can also
+and comparison-target code files are not read. Final APK assembly derives
+`unity_app_guid` from the source startup GUID and those three produced hashes,
+so a code update invalidates Unity's extracted IL2CPP metadata cache even when
+the original game inventory and PlayerSettings are unchanged. The receipt records
+the final GUID; identical relocated inputs retain it. The same dictionary can also
 include the complete 15-entry Android SDK cohort owned by
 `accepted-output/sdk_package.py::SDK_ENTRIES`; partial cohorts and unknown names
 refuse. The produced manifest feeds the existing routing/version patch, and
@@ -2826,6 +2847,11 @@ under `packages/dev.ror2lab.converted`. A prior peer receipt can be imported onl
 after matching its device, package, live path and APK hash. Converted launches
 resolve the real launcher activity; a launch observation alone does not prove
 that bootstrap or gameplay succeeded.
+Before either package launches, the runner wakes display 0, dismisses an
+unsecured keyguard (with one swipe fallback) and verifies the window-policy
+lock flags are false. The terminal receipt retains boolean prelaunch readbacks;
+a credential lock or unknown lock state aborts before launch. Cleanup still
+stops the owned packages, sleeps the display and releases the lease.
 Under its lease the runner records and removes only the owned package's stale
 selector/pending files and stops its process. It reserves estimated output plus
 20 GiB, gives each cooldown its own deadline, and reuses the batch thermal owner.
