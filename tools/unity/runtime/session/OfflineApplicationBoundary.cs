@@ -68,6 +68,10 @@ public sealed partial class PortSession
     {
         return GetOfflineApplicationSession().DrawOfflineStart();
     }
+    void RequestOfflineQuit()
+    {
+        GetOfflineApplicationSession().ShowQuitConfirmation(true);
+    }
     void RequestResultsMenu()
     {
         GetOfflineApplicationSession().RequestResultsMenu();
@@ -95,6 +99,9 @@ public sealed partial class PortSession
     {
         readonly PortSession coordinator;
         bool offlineSurvivorStickLatched, offlineDifficultyStickLatched;
+        bool quitConfirmation;
+        int loadoutCycles;
+        public bool QuitConfirmationVisible => quitConfirmation;
         string pendingOfflineSurvivor = "Commando";
         NovaInputBridge.Mapping offlineMenuMapping;
         NovaInputBridge.ControllerPresence offlineUiPresence;
@@ -286,6 +293,9 @@ public sealed partial class PortSession
                 AndroidOfflineProfile.PreviewLoadout(System.IO.Path.Combine(Application.persistentDataPath, "android-profile-v1"));
             coordinator.offlineLoadoutEdited = false;
             coordinator.offlineLoadoutVisible = false;
+            coordinator.offlineLoadoutRow = 0;
+            quitConfirmation = false;
+            ObserveMenuState();
             if (coordinator.r.hud != null)
             {
                 coordinator.r.hud.survivorRosterCount = roster.Length;
@@ -325,18 +335,105 @@ public sealed partial class PortSession
             coordinator.r.phase = "started";
             coordinator.Save();
         }
+        bool MenuKey(KeyCode key, int button, bool controller)
+        {
+            return UnityEngine.Input.GetKeyDown(key) || controller &&
+                   UnityEngine.Input.GetKeyDown((KeyCode)((int)KeyCode.Joystick1Button0 + button));
+        }
+        void ObserveMenuState()
+        {
+            coordinator.SetRecoveredMenuObscured(coordinator.offlineLoadoutVisible || quitConfirmation || coordinator.offlineSettingsVisible);
+            if (coordinator.r?.hud != null)
+            {
+                coordinator.r.hud.menuLoadoutVisible = coordinator.offlineLoadoutVisible;
+                coordinator.r.hud.menuLoadoutRow = coordinator.offlineLoadoutRow;
+                coordinator.r.hud.menuLoadoutCycles = loadoutCycles;
+                coordinator.r.hud.menuQuitConfirmation = quitConfirmation;
+            }
+            coordinator.Save();
+        }
+        void ShowLoadout(bool visible)
+        {
+            coordinator.offlineLoadoutVisible = visible;
+            coordinator.offlineLoadoutRow = 0;
+            offlineSurvivorStickLatched = offlineDifficultyStickLatched = false;
+            ObserveMenuState();
+        }
+        public void ShowQuitConfirmation(bool visible)
+        {
+            if (!coordinator.offlineStartVisible)
+                return;
+            quitConfirmation = visible;
+            ObserveMenuState();
+        }
         public void ObserveOfflineApplicationInput()
         {
-            // Settings owns this frame even if its Back action closes the screen.
-            // Hidden start-menu controls must not consume the same A/stick input.
+            // A modal owns the complete frame, including the action that closes it.
             if (coordinator.offlineSettingsVisible)
             {
                 coordinator.ObserveOfflineSettingsControllerInput();
                 return;
             }
+            if (!Application.isFocused)
+                return;
+            bool controller = OfflineUiControllerPresent();
             if (coordinator.offlineStartVisible)
             {
-                if (offlineMenuMapping != null && OfflineUiControllerPresent())
+                if (quitConfirmation)
+                {
+                    if (MenuKey(KeyCode.Escape, 1, controller))
+                        ShowQuitConfirmation(false);
+                    else if (MenuKey(KeyCode.Return, offlineMenuMapping?.jump ?? 0, controller))
+                        Application.Quit();
+                    return;
+                }
+                if (coordinator.offlineLoadoutVisible)
+                {
+                    if (MenuKey(KeyCode.Escape, 1, controller))
+                        ShowLoadout(false);
+                    else
+                    {
+                        var map = offlineMenuMapping ?? coordinator.r?.nova?.mapping;
+                        float vertical = controller && map != null ? NovaInputBridge.ReadRaw().axes[map.moveY] : 0;
+                        if (Mathf.Abs(vertical) < .3f)
+                            offlineDifficultyStickLatched = false;
+                        int row = UnityEngine.Input.GetKeyDown(KeyCode.DownArrow) ? 1 : UnityEngine.Input.GetKeyDown(KeyCode.UpArrow) ? -1 : 0;
+                        if (!offlineDifficultyStickLatched && Mathf.Abs(vertical) > .65f)
+                        {
+                            row = vertical > 0 ? 1 : -1;
+                            offlineDifficultyStickLatched = true;
+                        }
+                        bool changed = row != 0;
+                        if (changed)
+                            coordinator.MoveOfflineLoadoutRow(row);
+                        if (MenuKey(KeyCode.Return, offlineMenuMapping?.jump ?? 0, controller) || UnityEngine.Input.GetKeyDown(KeyCode.RightArrow))
+                        {
+                            coordinator.CycleOfflineLoadoutRow(1);
+                            loadoutCycles++;
+                            changed = true;
+                        }
+                        else if (MenuKey(KeyCode.LeftArrow, 2, controller))
+                        {
+                            coordinator.CycleOfflineLoadoutRow(-1);
+                            loadoutCycles++;
+                            changed = true;
+                        }
+                        if (changed)
+                            ObserveMenuState();
+                    }
+                    return;
+                }
+                if (MenuKey(KeyCode.L, 2, controller))
+                {
+                    ShowLoadout(true);
+                    return;
+                }
+                if (MenuKey(KeyCode.Q, 3, controller))
+                {
+                    ShowQuitConfirmation(true);
+                    return;
+                }
+                if (controller && offlineMenuMapping != null)
                 {
                     var raw = NovaInputBridge.ReadRaw();
                     var horizontal = raw.axes[offlineMenuMapping.moveX];
@@ -355,28 +452,46 @@ public sealed partial class PortSession
                         CycleOfflineDifficulty(difficulty > 0 ? 1 : -1);
                         offlineDifficultyStickLatched = true;
                     }
-                    if (UnityEngine.Input.GetKeyDown((KeyCode)((int)KeyCode.Joystick1Button0 + offlineMenuMapping.jump)))
-                        coordinator.offlineStartSelected = true;
                 }
                 else
-                {
-                    offlineSurvivorStickLatched = false;
-                    offlineDifficultyStickLatched = false;
-                }
+                    offlineSurvivorStickLatched = offlineDifficultyStickLatched = false;
+                if (MenuKey(KeyCode.Return, offlineMenuMapping?.jump ?? 0, controller))
+                    coordinator.offlineStartSelected = true;
                 return;
             }
             coordinator.ObserveOfflineSettingsControllerInput();
-            if (coordinator.r != null && coordinator.r.phase != "commando-defeated" && coordinator.r.freePlay &&
-                coordinator.r.results != null && coordinator.r.results.persisted && coordinator.r.nova != null &&
-                coordinator.r.nova.mapping != null && coordinator.r.nova.physicalInputAvailable &&
-                !coordinator.offlineSettingsVisible && OfflineUiControllerPresent() &&
-                UnityEngine.Input.GetKeyDown((KeyCode)((int)KeyCode.Joystick1Button0 + coordinator.r.nova.mapping.jump)))
-                RequestResultsMenu();
+            if (coordinator.r?.freePlay == true && coordinator.r.results?.persisted == true && !coordinator.offlineSettingsVisible)
+            {
+                if (coordinator.r.phase == "commando-defeated")
+                {
+                    if (MenuKey(KeyCode.Escape, 1, controller))
+                        RequestResultsMenu();
+                }
+                else if (MenuKey(KeyCode.Return, coordinator.r.nova?.mapping?.jump ?? 0, controller))
+                    RequestResultsMenu();
+            }
         }
         public bool DrawOfflineStart()
         {
             if (!coordinator.offlineStartVisible)
                 return false;
+            if (quitConfirmation)
+            {
+                GUI.Box(new Rect(20, 60, 620, 230), "Quit game?");
+                GUI.Label(new Rect(45, 105, 570, 60), "Saved profiles and settings stay on this device.");
+                if (GUI.Button(new Rect(45, 180, 260, 65), "Quit (A / Enter)"))
+                    Application.Quit();
+                if (GUI.Button(new Rect(325, 180, 260, 65), "Cancel (B / Escape)"))
+                    ShowQuitConfirmation(false);
+                return true;
+            }
+            if (coordinator.offlineLoadoutVisible)
+            {
+                coordinator.DrawOfflineLoadout();
+                if (GUI.Button(new Rect(Screen.width - 205, Screen.height - 127, 185, 48), "Close loadout (B)"))
+                    ShowLoadout(false);
+                return true;
+            }
             var selected = string.IsNullOrEmpty(coordinator.r.selectedSurvivor) ? "Commando" : coordinator.r.selectedSurvivor;
             if (coordinator.recoveredMenu)
             {
@@ -390,14 +505,14 @@ public sealed partial class PortSession
                     CycleOfflineDifficulty();
                 if (GUI.Button(new Rect(Screen.width - 205, Screen.height - 127, 185, 48),
                                coordinator.offlineLoadoutVisible ? "Close loadout" : "Loadout"))
-                    coordinator.offlineLoadoutVisible = !coordinator.offlineLoadoutVisible;
+                    ShowLoadout(!coordinator.offlineLoadoutVisible);
                 if (coordinator.offlineLoadoutVisible)
                     coordinator.DrawOfflineLoadout();
                 GUI.Label(
                     new Rect(20, Screen.height - 58, Screen.width - 40, 55),
                     coordinator.UsesTouchUi()
                         ? "Touch controls: survivor, difficulty, and start · physical input unavailable · roster/UI rendering approximation"
-                        : "Left stick: survivor · Right stick: difficulty · A: start · audio/Steam profiles unavailable · roster/UI rendering approximation");
+                        : "Left stick: survivor · Right stick: difficulty · A: start · X: loadout · Y: quit · audio/Steam profiles unavailable · roster/UI rendering approximation");
                 return true;
             }
             var style = new GUIStyle(GUI.skin.label) { fontSize = 30, wordWrap = true };
@@ -416,9 +531,9 @@ public sealed partial class PortSession
             if (GUI.Button(new Rect(45, 340, 370, 65), coordinator.UsesTouchUi() ? "Start run" : "Start run (A)"))
                 coordinator.offlineStartSelected = true;
             if (GUI.Button(new Rect(440, 340, 370, 65), "Quit"))
-                Application.Quit();
+                ShowQuitConfirmation(true);
             if (GUI.Button(new Rect(45, 415, 370, 45), coordinator.offlineLoadoutVisible ? "Close loadout" : "Loadout"))
-                coordinator.offlineLoadoutVisible = !coordinator.offlineLoadoutVisible;
+                ShowLoadout(!coordinator.offlineLoadoutVisible);
             if (coordinator.offlineLoadoutVisible)
                 coordinator.DrawOfflineLoadout();
             return true;

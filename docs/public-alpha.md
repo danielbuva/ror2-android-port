@@ -82,6 +82,23 @@ retain J595/J755 ownership guards; final alpha installation remains separate.
 
 ## Controls, UI and sessions
 
+Owner playtest gate (10 minutes, physical controller and touchscreen):
+
+- [ ] Use the controller to choose a survivor/difficulty, open loadout, select a
+      skill/skin, close it and Start. Repeat with touch; confirm no hidden Start
+      fires while a modal owns input.
+- [ ] Play until an ordinary death, inspect the saved results, then use B to
+      return to character select. Repeat the results return with touch.
+- [ ] Open Quit with Y, cancel with B, then confirm with A. Repeat with touch;
+      cold launch and confirm profile/settings retention. Record actual hardware
+      presses separately from injected software input.
+
+- [x] Verify injected player-screen routes and software-touch notices on the lab APK:
+      native loss → persisted results → menu, loadout row/cycle/close and Quit
+      cancel/confirm. Protected files stay unchanged; process exit occurs only
+      after confirmation. See the [screen-route result](PORTING_JOURNAL.md#j1474--qualify-injected-player-screen-routes-and-software-notices).
+      This diagnostic leaves the physical owner checklist above open.
+
 - [ ] Qualify ordinary physical input, original/native mappings and rebinding
       against the [measured-input contract](INPUT_QUALIFICATION.md).
       [PR #239](https://github.com/danielbuva/ror2-android-port/pull/239)
@@ -178,6 +195,15 @@ raw p50/p95/p99 are 16.654/24.889/25.000 ms overall. Both means miss the strict
 60 FPS floor, and 3.481 seconds of tail boundary coverage remain absent.
 Thermal coverage and lifecycle cleanup pass. Ordinary play, other stages,
 physical input, visual parity and energy qualification remain open.
+
+The later high-refresh ON capture clears the accepted assisted sustained gate:
+84.447 FPS whole and 83.325 FPS over the covered final 599.997 seconds, with
+raw p50/p95/p99 8.333/16.667/24.988 ms overall. Camera.Render is the leading
+named inclusive scope at 4.132 ms/frame; overlapping scopes are not additive.
+High refresh ON remains uncapped up to the panel; OFF requests 60 FPS. The
+[retained result](PORTING_JOURNAL.md#j1474--qualify-injected-player-screen-routes-and-software-notices)
+leaves ordinary play, visual parity and energy qualification open. No further
+performance recapture is required for this accepted assisted gate.
 
 Startup [audio-verification reuse](PORTING_JOURNAL.md#j1386--reuse-install-bound-audio-verification-and-partition-loading-costs)
 and [catalog discovery](PORTING_JOURNAL.md#j1390--reuse-typed-item-provider-discovery-during-ordinary-startup)

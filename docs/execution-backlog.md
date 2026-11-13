@@ -76,9 +76,10 @@ Completed records remain in the [journal](PORTING_JOURNAL.md) and
       profile converter time/memory/heat/storage per stage and sustained gameplay
       FPS, frame pacing, battery and visual fidelity; optimize measured costs
       without changing produced bytes, original behaviour or visual output.
-      Startup now requests
-      [300 FPS](https://github.com/danielbuva/ror2-android-port/pull/322);
-      sustained 60 FPS acceptance remains open.
+      The assisted sustained floor passes with high refresh ON; ordinary play,
+      visual parity and energy qualification remain open. Phase D: investigate
+      the leading measured Camera.Render cost for lossless improvement, preserving
+      the player's high-refresh ON/panel and OFF/60 FPS choices.
 - [ ] Qualify physical mappings/rebinding, touchscreen equipment/target effects,
       hardware screen/results navigation and ordinary long-run dependency retention
       against the [input contract](INPUT_QUALIFICATION.md) and

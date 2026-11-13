@@ -94,6 +94,21 @@ public sealed partial class PortSession
             return;
         }
     }
+    int offlineLoadoutRow;
+    void MoveOfflineLoadoutRow(int direction)
+    {
+        int count = OfflineLoadoutSlotIndices(OfflineLoadoutBody().GetComponents<GenericSkill>()).Length + 1;
+        offlineLoadoutRow = (offlineLoadoutRow + direction + count) % count;
+        offlineLoadoutScroll.y = Mathf.Max(0, offlineLoadoutRow * 58 - 116);
+    }
+    void CycleOfflineLoadoutRow(int direction)
+    {
+        var slots = OfflineLoadoutSlotIndices(OfflineLoadoutBody().GetComponents<GenericSkill>());
+        if (offlineLoadoutRow == 0)
+            CycleOfflineSkin(direction);
+        else
+            CycleOfflineSkill(slots[offlineLoadoutRow - 1], direction);
+    }
     void DrawOfflineLoadout()
     {
         Check(offlinePendingLoadout != null && offlineUnlockPreview != null, "Original loadout menu lacks a verified profile preview");
@@ -117,7 +132,7 @@ public sealed partial class PortSession
             GUI.BeginScrollView(view, offlineLoadoutScroll, new Rect(0, 0, rowWidth, (visibleSlots.Length + 1) * 58 + 8));
         try
         {
-            GUI.Label(new Rect(12, 6, rowWidth - 112, 42), "Skin: " + LoadoutLabel(skin.nameToken, skin.name));
+            GUI.Label(new Rect(12, 6, rowWidth - 112, 42), (offlineLoadoutRow == 0 ? "▶ " : "") + "Skin: " + LoadoutLabel(skin.nameToken, skin.name));
             if (GUI.Button(new Rect(rowWidth - 87, 6, 75, 38), "◀  ▶"))
                 CycleOfflineSkin(1);
             for (int row = 0; row < visibleSlots.Length; row++)
@@ -131,7 +146,7 @@ public sealed partial class PortSession
                 var skill = family.variants[index].skillDef;
                 float y = 6 + (row + 1) * 58;
                 var title = LoadoutLabel(slots[i].loadoutTitleToken, slots[i].skillName);
-                GUI.Label(new Rect(12, y, rowWidth - 112, 42), title + ": " + LoadoutLabel(skill.skillNameToken, skill.skillName));
+                GUI.Label(new Rect(12, y, rowWidth - 112, 42), (offlineLoadoutRow == row + 1 ? "▶ " : "") + title + ": " + LoadoutLabel(skill.skillNameToken, skill.skillName));
                 if (GUI.Button(new Rect(rowWidth - 87, y, 75, 38), "◀  ▶"))
                     CycleOfflineSkill(i, 1);
             }
@@ -141,7 +156,7 @@ public sealed partial class PortSession
             GUI.EndScrollView();
         }
         GUI.Label(new Rect(44, top + height - 54, width - 64, 48),
-                  "Changes save when you start a run. Switching survivor discards pending changes.",
+                  "Stick / arrows: row · A / Enter: next · X / Left: previous · B / Escape: close. Changes save on Start; switching survivor discards them.",
                   new GUIStyle(GUI.skin.label) { wordWrap = true });
     }
 }
