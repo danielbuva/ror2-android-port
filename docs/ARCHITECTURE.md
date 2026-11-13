@@ -63,6 +63,16 @@ Signed release-graph integration uses the combined preparation entry point below
 Current source/provider qualification and the phone SQLite/LZ4 runtime remain
 separate work; this interface adds no device claim.
 
+Request qualification and emission share attempt-owned SQLite descriptor and
+provider indexes. Only the current rows are decoded; parsed type trees use a
+bounded cache and object bodies retain the existing streamed storage. Teardown
+closes and removes the temporary indexes. The optional emission cache commits
+completed record batches and preload groups so an interrupted attempt can reuse
+their transformations; source, endpoint and CLR qualification still runs again.
+The emitter atomically writes `progress.json` with phase and completed/total
+record counts after durable cache checkpoints. A partial cache or progress file
+does not establish structural, Unity typed-load or device acceptance.
+
 The existing managed-host native plan supplies Android CPython `_sqlite3` and
 its SQLite dependency for these disk indexes. The fixture builder verifies the
 two source hashes and packages them through its existing native/link owner;
@@ -1383,6 +1393,13 @@ unchanged, and the installer visibly labels the active test source.
 `scripts/lab-installer-updates.py` owns the synthetic lab acceptance setup,
 local signed fixture server, actual UI/session assertions and owned cleanup.
 Its runner-provided toolhost and generated binaries/keys never leave the lab.
+`scripts/lab-alpha-packaging.py` extends that owner with synthetic package issuance,
+installed-version/ledger and actual importer contracts. Its optional
+`--qualify-install-prompts` mode retains the same visible permission and pending
+consent checks, refusing pregrant; setup and cleanup remain with the installer
+owner. `AlphaPackagingHarness.java` uses generated input only. These checks do
+not qualify SAF/provider UI, legitimate cohorts, power-loss or game profiles.
+
 `Phone.retain_build_artifact` streams one explicitly selected, cache-receipt-pinned
 result from the currently owned installer to ignored host `work/` before cleanup.
 It checks the received hash before publishing the file, keeps binary bytes out of
@@ -5488,6 +5505,18 @@ orchestrator device lease, applies the battery rule, posts a sanitized result an
 prunes. `scripts/lab/lab-runner-guard.sh` is its job-started hook, installed outside
 the repository. Setup and command reference: [LAB_RUNNER](LAB_RUNNER.md).
 
+The same owner's current local `--emission-request` entry point executes
+`scripts/lab/toolhost_emission.py` through the existing installer driver. This
+operation validates a pinned input manifest and toolhost, streams runtime/inputs,
+and invokes `bundle_preload.py` beneath the existing on-phone thermal supervisor.
+Its durable `device-state.json` owns setup state, the detached handle and terminal
+outcome; each confirmed retry gets a fresh output directory and reuses the cache.
+Unknown outcomes retain the lease for exact-handle reattachment after the previous
+host runner exits. Output and owned app remain for downstream consumers, which
+must dispose of them after use. Runner finalization sleeps the display and prunes
+before publishing the terminal file. Current staging refuses adopted storage;
+host fixtures establish lifecycle contracts, not phone or gameplay acceptance.
+
 `scripts/lab/adb_transport.py` owns shared explicitly targeted ADB subprocesses
 for the runner and synthetic installer acceptance driver. It retries only
 caller-declared idempotent operations after a negative local signal status, with
@@ -5508,6 +5537,9 @@ accepts only a generated job path with terminal status. The installer uses this
 lifecycle for accessibility dumps and preserves final private dump/read diagnostic
 records. Authorization, storage discovery, exact package identity and lease policy
 remain caller-owned; the transport never discovers a target or grants ownership.
+Callers may persist the generated handle before launch and select an explicit
+`run-as` package context/root. App-private logs stream to host files without
+loading their full contents into memory.
 The workflow stages the runner and transport from one pinned trusted-main commit
 in a fresh bootstrap directory, including under isolated Python. Contracts:
 `test_adb_transport.py`, `test_lab_installer_updates.py`, `test_lab_runner.py`.

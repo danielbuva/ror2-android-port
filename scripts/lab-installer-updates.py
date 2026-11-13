@@ -2441,6 +2441,8 @@ def main(argv=None):
     global DIAGNOSTICS
     set_phase("setup")
     parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--emission-request", help="Current shared-runner operation: pinned source bundle emission; no synthetic installer UI")
+    parser.add_argument("--resume-emission", action="store_true", help="Reattach a retained job, or retry its confirmed failure with the same durable cache")
     parser.add_argument(
         "--host-only", action="store_true", help="Build/sign synthetic fixtures on the lab host, without any phone operation or phone PASS claim"
     )
@@ -2481,6 +2483,11 @@ def main(argv=None):
         "--diagnostic-run", help="Inspection selection: UI newest/private run basename, or toolhost numeric lab run ID; never prints paths or raw logs"
     )
     args = parser.parse_args(argv)
+    if args.emission_request:
+        operation = module("lab_toolhost_emission", ROOT / "scripts/lab/toolhost_emission.py")
+        return 0 if operation.execute(args.emission_request, sys.modules[__name__], resume=args.resume_emission)["success"] else 1
+    if args.resume_emission:
+        parser.error("--resume-emission requires --emission-request")
     qualify_prompts = args.qualify_install_prompts or args.qualify_phone_flow
     if qualify_prompts and (
         args.allow_test_installs
