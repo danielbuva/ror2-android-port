@@ -101,6 +101,23 @@ static class AndroidSettingsStoreHost
                 Check(store.TrySave() && store.saveError == null, "repaired storage did not permit retry");
                 Check(new AndroidOfflineSettings(args[1]).values.deadzone == .3f, "retry not durable");
                 break;
+            case "enospc-write":
+            case "enospc-rename":
+                store.values.deadzone = .25f; Check(store.TrySave(), "seed backup generation");
+                var primaryBeforeFailure = File.ReadAllBytes(path);
+                var backupBeforeFailure = File.ReadAllBytes(path + ".backup");
+                store.values.deadzone = .3f;
+                var stage = args[0].Substring("enospc-".Length);
+                store.ArmSaveFailure(stage);
+                Check(!store.TrySave() && !string.IsNullOrEmpty(store.saveError), "ENOSPC claimed success");
+                Check(store.injectedSaveFailure == stage, "failure not observed at requested point");
+                Check(Same(primaryBeforeFailure, File.ReadAllBytes(path)), "ENOSPC changed primary");
+                Check(Same(backupBeforeFailure, File.ReadAllBytes(path + ".backup")), "ENOSPC changed backup");
+                Check(File.Exists(pending), "failed transaction left no pending witness");
+                Check(new AndroidOfflineSettings(args[1]).values.deadzone == .25f, "cold load accepted failed transaction");
+                Check(store.TrySave() && store.saveError == null && !File.Exists(pending), "one-shot failure prevented retry");
+                Check(new AndroidOfflineSettings(args[1]).values.deadzone == .3f, "ENOSPC retry not durable");
+                break;
             case "invalid-value":
                 store.values.deadzone = float.NaN;
                 Check(!store.TrySave() && Same(first, File.ReadAllBytes(path)), "invalid preference damaged primary");

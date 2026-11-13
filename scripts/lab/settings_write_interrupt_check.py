@@ -1,7 +1,8 @@
 """Current: observe a genuine pending-file transaction, terminate its owned writer, cold-recover.
 
-No injected store bytes, player hooks, power-cut or ENOSPC claim. Refuse a missed
-pre-commit window. The native store performs both ordinary saves and recovery.
+The interruption case refuses a missed pre-commit window. The shared runner's
+separate settings-save-failure workload uses one-shot lab ENOSPC injection;
+neither case claims physical volume exhaustion or power-loss coverage.
 """
 
 import json
@@ -15,6 +16,106 @@ from nova_bridge import current_errors
 from installed_attempt import attempt_from_installed, bind_installed_apk, validate_expected_apk_sha256
 from session_cleanup_check import SPINE_ID, _read_json, _read_raw, _remote_path_state, matches_run, selection, selector_action
 from touch_gesture import run as gesture
+
+
+def protected_hashes(device, runtime):
+    roots = [runtime + "/" + name for name in ("android-profile-v1", "offline-run-results-v1")]
+    value = device.sh("find", *roots, "-type", "f", "-exec", "sha256sum", "{}", "+", check=False)
+    return {line[66:]: line[:64] for line in value.splitlines() if re.fullmatch(r"[0-9a-f]{64}  .+", line)}
+
+
+def check_settings_save_failure(device, output, expected, launch, cancelled):
+    """Shared lifecycle only: exercise both native failure points through the UI."""
+    installed = device.owned()
+    bind_installed_apk(installed, expected_sha256=expected)
+    attempt = attempt_from_installed(installed)
+    runtime = device.read_receipt("runtime.json")["persistentDataPath"]
+    primary = runtime + "/offline-settings-v1/preferences.json"
+    selector = runtime + "/movement-batch-selection.json"
+    if _remote_path_state(device, primary) != "file":
+        raise RuntimeError("Settings failure check requires an existing primary")
+    original = _read_raw(device, primary)
+    protected = protected_hashes(device, runtime)
+    pid = None
+
+    def wait(predicate):
+        deadline = time.monotonic() + 100
+        while time.monotonic() < deadline:
+            if cancelled.is_set():
+                raise RuntimeError("Settings failure capture cancelled by thermal owner")
+            if device.sh("pidof", PACKAGE, check=False).strip() != pid:
+                raise RuntimeError("Settings failure capture lost its owned process")
+            report = _read_json(device, runtime + "/movement-batch-" + SPINE_ID + ".json")
+            if matches_run(report, pid, attempt):
+                if report.get("firstFailure"):
+                    raise RuntimeError("Native first failure: " + str(report["firstFailure"]))
+                if predicate(report):
+                    return report
+            time.sleep(0.5)
+        raise RuntimeError("Settings failure report deadline")
+
+    def tap(name, report, x, y):
+        path = output / (name + ".input.json")
+        write(
+            path,
+            dict(
+                pid=pid,
+                width=report["settings"]["screenWidth"],
+                height=report["settings"]["screenHeight"],
+                steps=[dict(action="down", id=0, x=x, y=y), dict(action="wait", ms=100), dict(action="up", id=0, x=x, y=y), dict(action="wait", ms=400)],
+            ),
+        )
+        return gesture(path, expected, device=device)
+
+    result = dict(success=False, scope="Lab-injected settings ENOSPC; no physical exhaustion or profile-writer claim", stages=[])
+    try:
+        for stage in ("write", "rename"):
+            selected = selection(attempt)
+            selected["debugOptions"].update(settingsSaveFailure=stage, purpose="One-shot settings ENOSPC survival and retry")
+            write(output / "failure-selection.json", selected)
+            device.cmd("push", str(output / "failure-selection.json"), selector)
+            pid = str(launch(device)["pid"])
+            report = wait(lambda r: r.get("phase") == "offline-start-menu" and r.get("settings", {}).get("ready") is True)
+            tap(stage + "-open", report, report["settings"]["buttonX"], report["settings"]["buttonY"])
+            report = wait(lambda r: r["settings"]["visible"] is True)
+            before = {}
+            for suffix in ("", ".backup"):
+                path = primary + suffix
+                before[suffix] = _read_raw(device, path) if _remote_path_state(device, path) == "file" else None
+            if before[""] != original:
+                raise RuntimeError("Prior settings changed before failure injection")
+            tap(stage + "-save", report, report["settings"]["screenWidth"] * 0.5 - 110, report["settings"]["screenHeight"] * 0.5 + 62.5)
+            failed = wait(lambda r: r["settings"].get("injectedSaveFailure") == stage and bool(r["settings"].get("error")))
+            if failed["settings"]["persisted"] or not failed["settings"]["visible"]:
+                raise RuntimeError("Failed settings save did not retain its visible retry screen")
+            write(output / (stage + "-failed.json"), failed)
+            for suffix, raw in before.items():
+                path = primary + suffix
+                after = _read_raw(device, path) if _remote_path_state(device, path) == "file" else None
+                if after != raw:
+                    raise RuntimeError("Injected failure changed a retained settings generation")
+            device.collect("screenshot", output / (stage + "-failure-screen"))
+            tap(stage + "-retry", failed, failed["settings"]["screenWidth"] * 0.5 - 110, failed["settings"]["screenHeight"] * 0.5 + 62.5)
+            retried = wait(lambda r: r["settings"]["persisted"] is True and not r["settings"].get("error") and not r["settings"]["visible"])
+            if _read_raw(device, primary) != original or _remote_path_state(device, primary + ".pending") != "absent":
+                raise RuntimeError("Ordinary settings retry did not preserve the saved values")
+            logs = device.sh("logcat", "-d", "--pid=" + pid, "-v", "epoch", "Unity:I", "AndroidRuntime:E", "*:S")
+            (output / (stage + ".log")).write_text(logs)
+            if current_errors(logs, pid):
+                raise RuntimeError("Actual-PID runtime error during settings failure case")
+            write(output / (stage + "-retry.json"), retried)
+            result["stages"].append(dict(stage=stage, pid=pid, prior_generations_retained=True, visible_error=True, retry=True))
+            device.sh("am", "force-stop", PACKAGE)
+        device.sh("rm", selector)
+        pid = str(launch(device)["pid"])
+        cold = wait(lambda r: r.get("phase") == "offline-start-menu" and r.get("settings", {}).get("recovery") == "validated-primary")
+        if _read_raw(device, primary) != original or protected_hashes(device, runtime) != protected:
+            raise RuntimeError("Cold settings retry changed settings, profiles or run results")
+        write(output / "failure-cold-reload.json", cold)
+        result["success"] = True
+        return result
+    finally:
+        write(output / "settings-save-failure.json", result)
 
 
 def interrupted_transaction(before, after, pending, observed):
@@ -132,17 +233,12 @@ def check_settings_write_interrupt(expected_apk_sha256=None, _launch=None):
         result.setdefault("runtime_errors", []).extend(errors)
         return errors
 
-    def protected_hashes():
-        roots = [runtime + "/" + name for name in ("android-profile-v1", "offline-run-results-v1")]
-        value = device.sh("find", *roots, "-type", "f", "-exec", "sha256sum", "{}", "+", check=False)
-        return {line[66:]: line[:64] for line in value.splitlines() if re.fullmatch(r"[0-9a-f]{64}  .+", line)}
-
     try:
         selected = selection(attempt)
         selected["debugOptions"]["purpose"] = result["scope"]
         write(out / "selection.json", selected)
         device.cmd("push", str(out / "selection.json"), selector)
-        before_profile = protected_hashes()
+        before_profile = protected_hashes(device, runtime)
         before_raw = _read_raw(device, primary)
         before = json.loads(before_raw.lstrip("\ufeff"))
         before_file = out / "before-primary.private"
@@ -233,7 +329,7 @@ def check_settings_write_interrupt(expected_apk_sha256=None, _launch=None):
         report = wait(lambda r: r["settings"]["persisted"] is True and r["settings"]["visible"] is False)
         if _remote_path_state(device, pending) != "absent" or json.loads(_read_raw(device, primary).lstrip("\ufeff")) != before:
             raise RuntimeError("Native resave failed to supersede the interrupted pending transaction")
-        after_profile = protected_hashes()
+        after_profile = protected_hashes(device, runtime)
         if not before_profile or after_profile != before_profile:
             raise RuntimeError("Existing native profile/results changed")
         if capture_owned_errors("recovered-process"):

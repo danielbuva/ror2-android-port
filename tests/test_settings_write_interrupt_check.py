@@ -15,6 +15,43 @@ import settings_write_interrupt_check as check  # noqa: E402
 class InterruptedWriteEvidenceTests(unittest.TestCase):
     witness = dict(success=True, createObserved=True, writerExited=True, pendingPresentBeforeStop=True, pendingPresentAfterStop=True)
 
+    def test_injected_failure_checks_retained_generations_visible_retry_and_cold_load(self):
+        device = Mock()
+        device.read_receipt.return_value = {"persistentDataPath": "/synthetic"}
+        device.sh.side_effect = lambda *args, **kwargs: "7" if args[0] == "pidof" else ""
+        cancelled = Mock()
+        cancelled.is_set.return_value = False
+
+        def report(**settings):
+            return dict(phase="offline-start-menu", settings=dict(ready=True, buttonX=10, buttonY=20, screenWidth=1920, screenHeight=1080, **settings))
+
+        reports = []
+        for stage in ("write", "rename"):
+            reports.extend(
+                [
+                    report(),
+                    report(visible=True),
+                    report(visible=True, persisted=False, injectedSaveFailure=stage, error="Storage retry"),
+                    report(visible=False, persisted=True),
+                ]
+            )
+        reports.append(report(recovery="validated-primary"))
+        with tempfile.TemporaryDirectory() as temporary, ExitStack() as stack:
+            stack.enter_context(patch.object(check, "bind_installed_apk"))
+            stack.enter_context(patch.object(check, "attempt_from_installed", return_value="fixture-attempt"))
+            stack.enter_context(patch.object(check, "matches_run", return_value=True))
+            stack.enter_context(patch.object(check, "_read_json", side_effect=reports))
+            stack.enter_context(patch.object(check, "_read_raw", return_value='{"version":1}'))
+            stack.enter_context(patch.object(check, "_remote_path_state", side_effect=lambda d, p: "absent" if p.endswith(".pending") else "file"))
+            stack.enter_context(patch.object(check, "protected_hashes", return_value={"profile": "retained"}))
+            stack.enter_context(patch.object(check, "current_errors", return_value=[]))
+            gestures = stack.enter_context(patch.object(check, "gesture"))
+            result = check.check_settings_save_failure(device, Path(temporary), "a" * 64, lambda d: {"pid": "7"}, cancelled)
+            self.assertTrue(result["success"])
+            self.assertEqual([s["stage"] for s in result["stages"]], ["write", "rename"])
+            self.assertEqual(gestures.call_count, 6)
+            self.assertTrue((Path(temporary) / "settings-save-failure.json").is_file())
+
     def test_android_restarted_activity_is_stopped_without_reclassifying_writer_exit(self):
         device = Mock()
         device.sh.side_effect = ["456", "", ""]

@@ -1406,7 +1406,7 @@
       "material": "",
       "mesh": "",
       "name": "Golem",
-      "recoveredMaterials": false
+      "recoveredMaterials": true
     },
     {
       "activations": [],
@@ -1425,7 +1425,7 @@
       "material": "",
       "mesh": "",
       "name": "Lemurian",
-      "recoveredMaterials": false
+      "recoveredMaterials": true
     },
     {
       "activations": [],
@@ -1449,7 +1449,7 @@
       "material": "",
       "mesh": "",
       "name": "Wisp",
-      "recoveredMaterials": false
+      "recoveredMaterials": true
     },
     {
       "activations": [

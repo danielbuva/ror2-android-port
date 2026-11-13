@@ -15,6 +15,23 @@ import java.util.ArrayList;
 
 /** Application-owned display request. All window/surface state stays on the UI thread. */
 public final class LabDisplayPreference implements SurfaceHolder.Callback {
+    private static volatile String observation = "unavailable: awaiting UI thread";
+
+    /** Read only; asynchronous UI observation never blocks the Unity thread. */
+    public static String observe(Activity current) {
+        current.runOnUiThread(() -> {
+            if (current.isDestroyed()) return;
+            Display display = current.getWindowManager().getDefaultDisplay();
+            Display.Mode mode = display.getMode();
+            WindowManager.LayoutParams attributes = current.getWindow().getAttributes();
+            observation = "uptimeMs=" + android.os.SystemClock.uptimeMillis()
+                    + " mode=" + mode.getModeId() + " modeRate=" + mode.getRefreshRate()
+                    + " observedRate=" + display.getRefreshRate()
+                    + " preferredMode=" + attributes.preferredDisplayModeId
+                    + " preferredRate=" + attributes.preferredRefreshRate;
+        });
+        return observation;
+    }
     private final WeakReference<Activity> activity;
     private final ArrayList<SurfaceHolder> holders = new ArrayList<>();
     private boolean captured, closed;

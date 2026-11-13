@@ -59,6 +59,26 @@ class DeviceSessionTests(unittest.TestCase):
         self.assertEqual(json.loads((lease.path / "owner.json").read_text()), lease.owner)
         self.assertTrue((self.output / "terminal.done.json").is_file())
 
+    def test_settings_failure_mode_uses_shared_launch_and_thermal_owner(self):
+        self.request["mode"] = "settings-save-failure"
+        runner.save(self.request_file, self.request)
+        checked = runner.load_request(self.request_file)
+        target, thermal = mock.Mock(), mock.Mock()
+        result = {}
+        with (
+            mock.patch("settings_write_interrupt_check.check_settings_save_failure", return_value={"success": True}) as check,
+            mock.patch.object(runner, "launch") as launch,
+        ):
+            runner.run_workload(target, thermal, checked, self.output, result)
+            check.call_args.args[3](target)
+        launch.assert_called_once_with(target, thermal)
+        self.assertIs(check.call_args.args[4], thermal.cancelled)
+        self.assertEqual(result["settings_save_failure"], {"success": True})
+        self.request["selection"] = {}
+        runner.save(self.request_file, self.request)
+        with self.assertRaisesRegex(ValueError, "owns its attempt-bound selector"):
+            runner.load_request(self.request_file)
+
     def test_dispatched_input_failure_writes_terminal_without_device_access(self):
         self.apk.unlink()
         with mock.patch.object(runner.subprocess, "run") as process:
@@ -103,6 +123,34 @@ class DeviceSessionTests(unittest.TestCase):
         self.assertEqual([call.args[1].name for call in capture.call_args_list], ["sample-0", "sample-5", "sample-10", "final"])
         self.assertEqual(result["observed_seconds"], 10)
 
+    def test_pacing_observation_queries_only_selected_package_surfaces(self):
+        target = mock.Mock(package="dev.ror2lab.arm64")
+        responses = {
+            ("dumpsys", "display"): "display modes",
+            ("dumpsys", "SurfaceFlinger", "--frame-rate-override"): "unsupported command",
+            ("dumpsys", "game", target.package): "game mode standard",
+            ("dumpsys", "gfxinfo", target.package, "framestats"): "IntendedVsync,FrameCompleted\n1,2",
+            ("cmd", "package", "list", "packages", "-U", target.package): "package:dev.ror2lab.arm64 uid:12345",
+            ("getprop",): "[debug.game_default_frame_rate]: [60]\n[debug.frame_rate]: [120]\n[unrelated]: [private]",
+            ("dumpsys", "SurfaceFlinger"): "unrelated layer\n Frame Rate Overrides: uid=12345 fps=60",
+            ("logcat", "-d", "--pid=7", "-v", "epoch"): "Swappy logs",
+            ("dumpsys", "SurfaceFlinger", "--list"): "SurfaceView dev.ror2lab.arm64 main\nSurfaceView other.app main\n",
+            ("dumpsys", "SurfaceFlinger", "--latency", "SurfaceView dev.ror2lab.arm64 main"): "8333333\n1 2 3\n",
+        }
+        target.sh.side_effect = lambda *args, **kwargs: responses[args]
+        snapshot = dict(targetFrameRate=300, renderFrameInterval=2)
+        runner.observe_pacing(target, self.output, "7", snapshot)
+        self.assertEqual(json.loads((self.output / "snapshot.json").read_text()), snapshot)
+        self.assertEqual((self.output / "latency-00.txt").read_text(), "8333333\n1 2 3\n")
+        target.sh.assert_any_call("dumpsys", "SurfaceFlinger", "--latency", "SurfaceView dev.ror2lab.arm64 main", check=False)
+        self.assertEqual(len(list(self.output.glob("latency-*.txt"))), 1)
+        self.assertEqual((self.output / "frame-rate-overrides.log").read_text(), "unsupported command")
+        self.assertEqual((self.output / "game.log").read_text(), "game mode standard")
+        self.assertEqual((self.output / "gfxinfo-framestats.log").read_text(), responses[("dumpsys", "gfxinfo", target.package, "framestats")])
+        self.assertIn("uid:12345", (self.output / "package.log").read_text())
+        self.assertEqual((self.output / "frame-rate-properties.log").read_text(), "[debug.game_default_frame_rate]: [60]\n[debug.frame_rate]: [120]\n")
+        self.assertEqual((self.output / "compositor-overrides.log").read_text(), " Frame Rate Overrides: uid=12345 fps=60\n")
+
     def test_payload_retention_marker_is_never_synced(self):
         payload = self.root / "payload"
         payload.mkdir()
@@ -114,6 +162,16 @@ class DeviceSessionTests(unittest.TestCase):
         device_module.Device.sync(target, payload)
         target.cmd.assert_not_called()
         self.assertFalse(any(call.args[0] == "sha256sum" for call in target.sh.call_args_list))
+
+    def test_capture_records_extracted_metadata_and_unity_extraction_decision(self):
+        target = mock.Mock()
+        target.cmd.return_value = "Unity extraction diagnostic"
+        target.sh.return_value = "metadata hash fixture"
+        target.read_receipt.return_value = dict(persistentDataPath="/owned/files")
+        runner.capture(target, self.output, "7")
+        self.assertEqual((self.output / "il2cpp-metadata-sha256.txt").read_text(), "metadata hash fixture")
+        target.sh.assert_any_call("sha256sum", "/owned/files/il2cpp/Metadata/global-metadata.dat", check=False)
+        self.assertIn("Unity:D", target.cmd.call_args_list[0].args)
 
     def run_case(self, *, workload_error=False, terminal_error=False, thermal_error=False, payload=False):
         events = []
@@ -180,6 +238,7 @@ class DeviceSessionTests(unittest.TestCase):
             mock.patch.object(device_module, "Device", return_value=target),
             mock.patch.object(runner, "placement", return_value={}) as placement,
             mock.patch.object(runner, "run_workload", side_effect=workload),
+            mock.patch.object(runner, "prepare_launch") as prepare,
             mock.patch.object(batch, "_GameThermalOwner", return_value=thermal) as owner,
             mock.patch.object(batch, "_idle_readback", side_effect=idle),
             mock.patch.object(batch, "_prune", side_effect=prune),
@@ -189,6 +248,7 @@ class DeviceSessionTests(unittest.TestCase):
         ):
             result = runner.execute(self.request)
         self.assertEqual(placement.call_args_list[0].args[1], self.apk.stat().st_size + payload_size + 20 * 1024**3)
+        prepare.assert_called_once_with(target, result["prelaunch"])
         if payload:
             target.sync.assert_called_once_with(self.root / "payload")
             self.assertLess(events.index("sync:" + str(self.root / "payload")), events.index("workload"))
@@ -243,6 +303,43 @@ class DeviceSessionTests(unittest.TestCase):
         target.sh.side_effect = [receipt["package_path"], self.digest]
         runner.adopt_receipt(target, prior)
         target.write_receipt.assert_called_once_with("installed.json", receipt)
+
+    def test_unsecured_keyguard_is_dismissed_before_launch(self):
+        target = mock.Mock()
+        target.sh.side_effect = ["", "mShowingLockscreen=true\nKeyguardServiceDelegate\nsecure=false", "", "mShowingLockscreen=false"]
+        record = {}
+        with mock.patch.object(runner.time, "sleep"):
+            runner.prepare_launch(target, record)
+        self.assertEqual(target.sh.call_args_list[0].args, ("input", "keyevent", "KEYCODE_WAKEUP"))
+        self.assertIn(mock.call("wm", "dismiss-keyguard"), target.sh.call_args_list)
+        self.assertFalse(record["after_dismiss"]["showing"])
+
+    def test_swipe_fallback_verifies_unsecured_keyguard(self):
+        target = mock.Mock()
+        locked = "mDreamingLockscreen=false mShowingLockscreen=true\nKeyguardServiceDelegate\nshowing=true\nsecure=false"
+        target.sh.side_effect = ["", locked, "", locked, "Physical size: 1080x1920\nOverride size: 720x1280", "", "isKeyguardShowing=false"]
+        record = {}
+        with mock.patch.object(runner.time, "sleep"):
+            runner.prepare_launch(target, record)
+        self.assertTrue(record["swipe"])
+        self.assertFalse(record["after_swipe"]["showing"])
+        self.assertIn(mock.call("input", "-d", "0", "swipe", "360", "1024", "360", "256", "300"), target.sh.call_args_list)
+
+    def test_secure_keyguard_aborts_without_dismiss_or_swipe(self):
+        target = mock.Mock()
+        target.sh.side_effect = ["", "KeyguardServiceDelegate\nshowing=true\nsecure=true"]
+        with self.assertRaisesRegex(RuntimeError, "Secure keyguard requires user credential"):
+            runner.prepare_launch(target, {})
+        self.assertEqual(target.sh.call_count, 2)
+
+    def test_unknown_or_persistent_keyguard_aborts_before_launch(self):
+        for policy in ("unrecognized policy", "mShowingLockscreen=true"):
+            with self.subTest(policy=policy):
+                target = mock.Mock()
+                target.sh.side_effect = ["", policy, "", policy, "Physical size: 1080x1920", "", policy]
+                with mock.patch.object(runner.time, "sleep"), self.assertRaisesRegex(RuntimeError, "Keyguard dismissal not verified"):
+                    runner.prepare_launch(target, {})
+                self.assertFalse(any(call.args[:2] == ("am", "start") for call in target.sh.call_args_list))
 
     def test_converted_launch_resolves_bootstrap_instead_of_unity_activity(self):
         target = mock.Mock(package="dev.ror2lab.converted")

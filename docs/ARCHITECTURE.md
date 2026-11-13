@@ -1,5 +1,28 @@
 # Architecture
 
+The shared device request's `settings-save-failure` workload exercises the owned
+settings screen with attempt-bound, default-off write and rename failures.
+`AndroidOfflineSettings` consumes each instance-owned ENOSPC injection once;
+recovery is uninstrumented. `OfflineSettingsBoundary` retains the visible error
+and ordinary retry. The existing settings checker verifies retained generations,
+process survival, retry and cold reload; shared runner cleanup owns selectors,
+lease and display sleep. This diagnostic does not establish physical filesystem
+exhaustion or profile-writer behavior.
+
+`LabDiagnostics` records live frame caps, vSync, render interval, capture rate
+and timestep with its existing two-second snapshot. `LabDisplayPreference`
+adds a timestamped asynchronous read of the active Android display and window
+preferences without changing them. The shared device request's opt-in
+`pacing_diagnostics` retains these snapshots and matching compositor latency,
+display and process logs every sustained observation (about five seconds).
+It also captures SurfaceFlinger override rows, the selected package UID and
+GameManager state, frame-rate properties and package gfxinfo framestats. These
+read-only OS diagnostics stay private; unsupported output is retained explicitly.
+Missing compositor access stays unavailable; it is not inferred from Unity FPS.
+There is no exported Swappy interval getter in the pinned player; logs and
+presentation timestamps supplement the configured optimized-pacing flag.
+Existing session cleanup owns teardown; these readers change no frame policy.
+
 What runs today, how it is built, and who owns what. The ADRs explain *why*
 ([ADR-001](ADR-001-port-architecture.md)); this page is the current map. Update it when a
 file, owner or pipeline step is added, moved or retired. Results and evidence live in the
@@ -9,6 +32,12 @@ file, owner or pipeline step is added, moved or retired. Results and evidence li
 `WholeCatalogLoader.RegisterLocations` wraps its completed map with an
 `IResourceLocator` request observer. Each lookup logs its original key, key type,
 requested asset type, phase and map result, including unresolved soft references.
+Resolved rows include their provider, member and bundle. The same owner registers
+the ResourceManager diagnostic callback and enables its diagnostic events while
+the composed locator is owned. It observes original operation completions and
+failures without requesting assets or changing reference counts. Release removes
+its callback and restores the prior diagnostic-event setting. Failed operations
+emit their exception at the failure event, after the original completion event.
 The wrapper delegates keys and results unchanged; the original dynamic locator
 still handles GUID subobjects afterwards. A map miss is not a global load failure.
 `WholeCatalogComposed.Release` removes the same owned wrapper and restores prior
@@ -1230,6 +1259,17 @@ path. The packet's target information stays private; independent owner-input
 production, ordinary app execution, owner signing/alignment, install/update and
 public distribution of any game-bearing packet remain separate gates.
 
+The owner APK builder also compiles the authored Android plugin sources staged by
+`stage_android_assets`, including display preference and the settings observer's
+shared helper. Bundled SDK javac/d8 emit a separate DEX; classes already supplied
+by incoming DEX files are retained once. Generated plugin BuildConfig and empty
+resource namespace follow the plugin's authored package. The manifest owner
+preserves or adds its private observer service declaration. An optional pinned
+`authored_class_reference` APK qualifies the final defined class set against all
+reference `dev.ror2lab` classes, before installation; it supplies no output bytes.
+Input hashes and the class comparison persist in the assembly receipt. Compiler
+processes exit after packaging; existing runtime owners retain their lifecycle.
+
 `tools/phone-build/owner-apk/` owns a separate experimental owner-APK bootstrap
 candidate after reconstruction. `build_owner_apk.py` and `binary_manifest.py`
 compile only authored Java, preserve the selected content bytes and move the
@@ -1239,7 +1279,11 @@ original Unity entry private to enforce preparation. An optional owner-selected
 to routing; it must increase and updates retain the same private signer.
 An optional complete `code` selection supplies independently produced IL2CPP,
 metadata and Burst files; all three are required, their actual hashes are retained,
-and comparison-target code files are not read. The same dictionary can also
+and comparison-target code files are not read. Final APK assembly derives
+`unity_app_guid` from the source startup GUID and those three produced hashes,
+so a code update invalidates Unity's extracted IL2CPP metadata cache even when
+the original game inventory and PlayerSettings are unchanged. The receipt records
+the final GUID; identical relocated inputs retain it. The same dictionary can also
 include the complete 15-entry Android SDK cohort owned by
 `accepted-output/sdk_package.py::SDK_ENTRIES`; partial cohorts and unknown names
 refuse. The produced manifest feeds the existing routing/version patch, and
@@ -2833,6 +2877,11 @@ under `packages/dev.ror2lab.converted`. A prior peer receipt can be imported onl
 after matching its device, package, live path and APK hash. Converted launches
 resolve the real launcher activity; a launch observation alone does not prove
 that bootstrap or gameplay succeeded.
+Before either package launches, the runner wakes display 0, dismisses an
+unsecured keyguard (with one swipe fallback) and verifies the window-policy
+lock flags are false. The terminal receipt retains boolean prelaunch readbacks;
+a credential lock or unknown lock state aborts before launch. Cleanup still
+stops the owned packages, sleeps the display and releases the lease.
 Under its lease the runner records and removes only the owned package's stale
 selector/pending files and stops its process. It reserves estimated output plus
 20 GiB, gives each cooldown its own deadline, and reuses the batch thermal owner.
@@ -4465,6 +4514,16 @@ report, read against the journal entry that defines what it must show.
 | Siren encounter | `runtime/stage/SirenEncounterBoundary.cs`, `SirenEncounterEggTargets.cs`, `SirenNativeListeningSnapshotPolicy.cs`, `SirenNativeListeningSnapshotReader.cs` | `SirenEncounterSession` (`IDisposable`) owns the exact source encounter, its network-spawn lease, native BossGroup listener, observation clock, and private native egg-list/object/ID baseline; it also retains exact original terminal-death bodies/IDs for naturally destroyed boss/probe masters and detaches its one server-death subscription before cleanup; `SirenEncounterReport` retains bounded scalar last-sample data, never Unity object references | `IntegratedStageSession.BeginOriginalStage` after source population and native `Stage.Start` → bounded stage tick → `CleanupSirenEncounter` before transition/unload or transport disposal; a new exact native `Listening` instance starts a fresh snapshot, listener exit releases private references but preserves timestamped last-observed scalars, and owner cleanup releases references | `SirenEncounterHost.cs` (exact-editor selection/transaction fixture; native lifecycle and snapshot integration remain unverified) |
 | Siren source entry | `runtime/stage/SirenSourceEntrySession.cs` | `IntegratedStageSession` retains the `SirenSourceEntrySession` (`IDisposable`) and its exact source scene, ID-11 toggle target snapshots, source-spawner disable witnesses, egg identities/poses and per-row retirement progress; reports remain in `r.stageProgress.sirenSourceEntries` | On every integrated Ship Graveyard entry, with the exact temporary Stage current, preflight the inactive imported Ship Graveyard identities before the existing Director owner activates ID 2; retain the entry owner first and lease only that exact root/identity activation, requiring it to stay unregistered. Activate ID 11 under the same temporary Stage, then release that Stage. Native toggle `Awake` consumes destination RNG already generated by original Run advancement; perform the existing single Run stage callback then the complete native global callback; observe natural spawners and admit the existing ID-10 owner only after the exact cohort gate. After exact source-cohort completion, observe the original server death event for captured eggs. Cleanup first releases that subscription, accounts once for exact naturally destroyed/unmapped eggs, retries pending live captured eggs, removes witnesses, restores toggle targets and retires/restores ID 11; moved, ambiguous or unknown rows retain recovery context; the first identity refusal reports its expected/actual match, name, active state and registration operands without mutation | `test_siren_source_entry_contract.py`, `test_siren_partial_retirement.py`, `test_siren_source_stage_handoff.py`, `test_siren_source_director_handoff.py` (host contract/retry/order fixtures; editor import and native device lifecycle remain gates) |
 | Shaders and presentation | `AndroidMaterialPresentation`, `AndroidNativeDeferredPresentation`, `Android*Presentation.shader` (18 files) | **own types** (static) | `Begin` → `Finish` | `test_shader_bindings.py`, `test_shader_metadata.py`, `test_pc_draw_export.py` |
+
+`AndroidMaterialPresentation.ApplyRecovered` clones recognized source-family slots
+and particle trails for owned actor templates and late actor-model descendants,
+including detached models. It preserves unknown/null slots and source material
+values, registers the existing presentation toggle, and retains copies in the
+session's `worldMaterials` list for teardown. `ObserveTeleporterWorld` performs
+the existing periodic handoff for objective and director-actor models; a renderer
+can receive new source slots after its first presentation. The authored
+`test_recovered_material_handoff.py` contract exercises slots, trails, late
+replacement, toggling and source ownership. Rendering remains a device gate.
 | Developer controls | `DebugAccelerationBoundary` ([debug-acceleration.md](debug-acceleration.md)) | nested `DebugAccelerationSession` (`IDisposable`) **own type** holds the body, saved god mode, ownership flag, charge scan/callback set and grant inventory; `debugPanel` stays shared with IntegratedWorld's graphics button; sticky "assisted" flags stay in the coordinator report | `PrepareDebugAcceleration` (calls `DebugAccelerationSession.Prepare`) → `CleanupDebugAcceleration` (calls `Dispose`; owner retained) | `test_debug_acceleration.py` |
 
 `AndroidProfileSession` reserves each original achievement event before its
@@ -5871,6 +5930,18 @@ retain the ordinary host preflight's storage check.
 The action copies no Unity project and performs no device operation. Its
 private receipt under `work/coordination/shared-builds/` records the selected
 commit and restoration outcome.
+
+The same owner provides current `./dev shared-build --request REQUEST.json`
+supervision. Requests pin `source_commit`, boolean `full` and an absolute
+`output` under primary `work/coordination`. `--dry-run` checks clean source,
+paths and full-build headroom without editor actions. `--detach` sources
+`scripts/env.sh` and starts the same tracked owner in a new process session.
+After build/restoration and generated-output pruning, `terminal.done.json`
+records success or failure, including source drift after dispatch. The runner
+prints its absolute done-file for dispatcher wakeup; it adds no device actions.
+Optional `storage_wait_seconds` (0–3600, default 0) admits a bounded wait for
+100 GiB headroom before taking the editor mutex. Dry-run reports storage
+readiness; the full build still enforces its storage gate under the mutex.
 
 Teardown restores the original primary branch/commit after success or failure.
 Unexpected edits or moved refs refuse restoration and preserve those files for

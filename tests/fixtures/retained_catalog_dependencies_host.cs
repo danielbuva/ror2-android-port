@@ -175,7 +175,7 @@ public static partial class GameAudioOriginalOwner
 {
     public static bool OriginalManagerInitClaimed, NativeInitAttemptObserved, OriginalTermsReturned;
 }
-public static class WholeCatalogLoader { public static IResourceLocator locator; }
+public static class WholeCatalogLoader { public static IResourceLocator locator; public static void StopRequestLogging() {} }
 public static partial class WholeCatalogComposed
 {
     static AssetBundle owned;
