@@ -100,6 +100,18 @@ async def _main():
                 evidence["result"] = await call("execute_menu_item", {"menu_path": "Porting Lab/Inspect Catalog Addresses"})
             elif action == "reference-identities":
                 evidence["result"] = await call("execute_menu_item", {"menu_path": "Porting Lab/Inspect Reference Identities"})
+            elif action == "enemy-material-audit":
+                evidence["result"] = await call(
+                    "execute_code",
+                    {
+                        "action": "execute",
+                        "code": "return WholeCatalogHost.AuditCombatMaterials("
+                        + json.dumps(str(WORK / "generated-android-data/whole-catalog.json"))
+                        + ","
+                        + json.dumps(str(archive / "combat-materials.json"))
+                        + ");",
+                    },
+                )
             elif action == "commando-animation-host":
                 evidence["result"] = await call(
                     "execute_code",

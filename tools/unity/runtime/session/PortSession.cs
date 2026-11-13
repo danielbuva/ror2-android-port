@@ -879,7 +879,7 @@ public sealed partial class PortSession : MonoBehaviour
 #if UNITY_ANDROID && !UNITY_EDITOR
         using (var process = new AndroidJavaClass("android.os.Process")) r.pid = process.CallStatic<int>("myPid");
 #endif
-        r.detailedVisualDiagnostics = config.detailedVisualDiagnostics;
+        r.detailedVisualDiagnostics |= config.detailedVisualDiagnostics;
         if (r.diagnosticSirenEggInput || r.sirenNativeEncounterContinuationRequested)
             r.sirenEggInput = new SirenEggInputReport();
         r.recoveredHudEnabled = config.recoveredHudEnabled;
