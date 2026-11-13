@@ -19,7 +19,7 @@ public final class OwnerAlphaInstall {
     private static final Uri RETENTION = Uri.parse("content://dev.ror2lab.alpha.retention");
     private static File file(Context app, String name) { return new File(app.getFilesDir(), "owner-input/" + name); }
     private static JSONObject read(Context app, String name) throws Exception { return ToolHostActivity.readJson(file(app, name)); }
-    private static void write(Context app, String name, JSONObject value) throws Exception { ToolHostActivity.writeJson(file(app, name), value); }
+    private static void write(Context app, String name, JSONObject value) throws Exception { ToolHostActivity.writeJson(app, file(app, name), value); }
     private static String digest(File file) throws Exception {
         MessageDigest digest = MessageDigest.getInstance("SHA-256");
         try (InputStream input = new FileInputStream(file)) {

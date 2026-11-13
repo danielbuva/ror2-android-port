@@ -22,8 +22,10 @@ commit if an old candidate is ever needed again.
 
 Defaults to a dry-run plan; --apply deletes and writes a ledger.
 Build-cache protection uses only pinned state/baseline APKs, current build/base
-entries, latest installed APKs, explicit keeps and the age guard; nested content
-hashes and historical device sync lists do not pin cache entries.
+entries, latest installed APKs, newest worker builds named in current handoffs,
+explicit keeps and the age guard. Stale `.prune-keep` markers, nested content
+hashes and historical device sync lists do not pin cache entries. The cache age
+guard defaults to three hours; other generated outputs retain the 24-hour guard.
 """
 
 import argparse
@@ -162,6 +164,21 @@ def cache_protected_state(work, extra):
         digest = receipt.get("apk_sha256")
         if digest:
             hashes.setdefault(digest, "latest installed APK (device receipt)")
+    # Current handoffs are the worker-owned candidate references, unlike stale
+    # markers left by every previous build. Retain just the newest extant build
+    # referenced by each handoff, whether it names the cache key or APK hash.
+    candidates = []
+    for path in cache_root.glob("*/result.json"):
+        if path.parent.is_symlink() or not any(path.parent.glob("*.apk")):
+            continue
+        receipt = read_receipt(path)
+        candidates.append((path.stat().st_mtime, path.parent.name, receipt.get("apk_sha256")))
+    for handoff in (ROOT / ".local/orchestrator/handoff").glob("*.md"):
+        text = handoff.read_text(errors="replace")
+        matches = [entry for entry in candidates if entry[1] in text or entry[2] and entry[2] in text]
+        if matches:
+            _, key, _ = max(matches)
+            keys.setdefault(key, "newest build for worker " + handoff.stem)
     return hashes, keys
 
 
@@ -171,9 +188,10 @@ def is_protected_path(path, paths):
 
 
 class Planner:
-    def __init__(self, work, hashes, paths, min_age_hours, cache_protection=None):
+    def __init__(self, work, hashes, paths, min_age_hours, cache_protection=None, cache_min_age_hours=None):
         self.work, self.hashes, self.paths = work, hashes, paths
         self.cutoff = time.time() - min_age_hours * 3600
+        self.cache_cutoff = time.time() - (min_age_hours if cache_min_age_hours is None else cache_min_age_hours) * 3600
         self.items, self.kept = [], []
         self.cache_hashes, self.cache_keys = cache_protection if cache_protection is not None else cache_protected_state(work, [])
 
@@ -309,10 +327,12 @@ class Planner:
                 self.keep(entry, self.cache_hashes[apk_hash] + ": " + apk_hash[:12])
             elif entry.name in self.cache_keys:
                 self.keep(entry, self.cache_keys[entry.name])
-            elif not self.old(entry):
+            elif newest_mtime(entry) >= self.cache_cutoff:
                 self.keep(entry, "recent")
             elif tree_size(entry) - (receipt.stat().st_size if receipt.is_file() else 0) > 1 << 20:
-                self.add(entry, "build-cache entry", receipt_protection=False, apk_sha256=apk_hash)
+                # Cache retention is an explicit bounded set. Oracle/payload
+                # .prune-keep markers outside build-cache keep their semantics.
+                self.items.append({"path": entry, "kind": "build-cache entry", "bytes": tree_size(entry), "apk_sha256": apk_hash})
 
     def lab_build(self):
         root = self.work / "lab-build"
@@ -416,6 +436,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--work-dir", default=str(ROOT / "work"))
     parser.add_argument("--min-age-hours", type=float, default=24.0)
+    parser.add_argument("--cache-min-age-hours", type=float, default=3.0, help="Age guard for superseded build-cache entries only")
     parser.add_argument("--keep-sha256", action="append", default=[], help="Additional APK SHA-256 to protect")
     parser.add_argument("--apply", action="store_true", help="Delete the planned items (default: print the plan only)")
     parser.add_argument("--json", action="store_true")
@@ -425,7 +446,7 @@ def main():
         sys.exit("work directory must exist inside this checkout")
     # No lock check: the --min-age-hours guard already excludes anything a running build writes.
     hashes, paths = protected_state(work, args.keep_sha256)
-    planner = Planner(work, hashes, paths, args.min_age_hours, cache_protected_state(work, args.keep_sha256))
+    planner = Planner(work, hashes, paths, args.min_age_hours, cache_protected_state(work, args.keep_sha256), args.cache_min_age_hours)
     planner.build_cache()
     planner.lab_build()
     planner.lanes()

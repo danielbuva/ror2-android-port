@@ -6,6 +6,20 @@ under ignored `work/coordination/`, not here. Entries J01–J1177 (2026-09-12 to
 [history/journal-J1-J1177/PORTING_JOURNAL.md](history/journal-J1-J1177/PORTING_JOURNAL.md) with its
 [index](history/journal-J1-J1177/JOURNAL_INDEX.md); numbering continues here.
 
+## J1472 — Qualify the shared device runner with bounded native combat
+
+2026-11-13. One request-JSON owner installs, cools, resets stale owned state,
+launches, captures and independently verifies cleanup before releasing its lease.
+Main Nova completes 1,803.165 s at a retained 120 Hz request: 54 kills, 1,757 shots,
+2–12 enemies; the diagnostic native soft limit restores from 12 to 40 at teardown.
+APK SHA-256: `0c440333e3906c483ad8280ab6287e299ca8f7e10238c696425f1e3423cde2ad` (source `4e12f51b`).
+Evidence: `work/coordination/alpha-shared-device-session-20261113T005754Z/terminal.done.json` and `performance.json`.
+All 270 raw intervals reconcile; whole/covered-tail means 59.800/59.749 FPS leave the 60 FPS gate open.
+Whole p50/p95/p99: 16.654/24.889/25.000 ms; 0.123% exceed 50 ms. Tail misses 3.481 s of coverage.
+CPU/GPU/battery peak 95.5/80.2/41 C; maximum sample gap 0.469 s; no safety violation.
+Adopted backing, profile/settings, native End Run, scratch removal, stopped/asleep readback and lease release pass.
+Assisted stationary single-stage evidence only; ordinary play, physical input, other stages and energy remain open.
+
 ## J1466 — Validate refreshed UI providers and relocated startup producers
 
 2026-11-12. Both authored UI schema consumers use the final registry's existing

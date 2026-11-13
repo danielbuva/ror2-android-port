@@ -29,7 +29,7 @@ public class DiagnosticHarness {
     }
     static JSONObject saved; static boolean fail;
     static JSONObject readJson(File file)throws Exception {if(fail)throw new IOException();return saved;}
-    static void writeJson(File file,JSONObject row)throws Exception {
+    static void writeJson(Context app,File file,JSONObject row)throws Exception {
         if(fail)throw new IOException();file.getParentFile().mkdirs();file.createNewFile();saved=row;
     }
 METHOD

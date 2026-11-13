@@ -1397,6 +1397,26 @@ explicitly authorized notification consent independently of
 `--allow-test-installs`. Prompt inspection, classification and owned cleanup
 remain with this driver.
 
+The existing `ToolHostActivity` Check handler records a test-only, fixed-class
+observation in Android preferences for the debuggable disposable installer. It
+is independent of the owner atomic writer, whose failure can otherwise suppress
+both CHECKING and its ERROR fallback. `lab-installer-updates.py` captures and
+allowlists that last observation before owned-package cleanup on a failed Check;
+no raw preference content or request metadata is published. Dispatch and
+permission policy are unchanged, and no new worker or lifecycle is introduced.
+
+Its `--qualify-phone-flow` mode uses the same visible permission/session and
+synthetic profile/settings witnesses, stopping after the verified forward update.
+`FlowMetrics` samples only the freshly owned fixed apps at stage boundaries and
+at most once per ten seconds in existing polling loops, without a background ADB
+worker. It emits numeric elapsed time, sampled app-process PSS, battery heat and
+actual code/data backing free bytes. Missing readings remain null; shared-volume
+free-space changes are not exclusive app consumption, and sampled PSS excludes
+unobserved peaks/native child tools. Optional observation/report failure never
+replaces acceptance failure or bypasses owned cleanup. Raw observations stay in
+the existing ignored diagnostics. This mode is not production import/gameplay
+or the complete converter performance gate.
+
 Phone installation uses the same release transaction. `owner-apk/game_import.py`
 owns bounded original-file validation, free-space estimates and resumable private
 copies; `install_inputs.py` binds the signed input/stage plan to admitted local
@@ -1422,6 +1442,16 @@ The existing import/release/update owners retain verified-entry retry state.
 bounded retained-log inspection; setup uses fresh owned scratch and teardown
 keeps local evidence while removing disposable device scratch. Its host/phone
 controls do not qualify real filesystem exhaustion or physical power loss.
+Managed JSON writes receive their owning Android `Context` explicitly. The
+existing `OwnerInputImport.privateFile` boundary rebases only that trusted
+`getFilesDir()` root spelling onto its canonical root, so Android's platform
+alias is not mistaken for an untrusted descendant link. Canonical-root callers
+are also accepted; root-equal, outside and traversal targets are refused, and
+existing child-link, staging-link and atomic durability checks remain in force.
+Activity, service, worker and alpha/input-source receipts share this boundary.
+The observed Check request-write failure is the motivating device evidence;
+complete phone-flow qualification remains a separate gate.
+
 `OwnerInputImport.syncDirectory` uses Android's public read-only open flag,
 then fsync and finally close; it does not reflect a hidden `O_DIRECTORY` field.
 A host Android-API fixture exercises the quota harness through that path,
@@ -2683,6 +2713,12 @@ Periodic snapshots retain live scalar, timing and controller facts; full scene
 hierarchy/material discovery and assembly enumeration run only for startup or
 explicit `./dev diagnostics --scene-details`, `--subtree` or `--fields` inspection.
 The `sceneDetails` fact distinguishes an omitted census from an empty scene.
+An explicit `diagnostics.json` `workloadCounts` request adds active
+`ProjectileController` and `EffectComponent` counts independently of the truncated
+hierarchy inspector. The existing periodic snapshot records census time and any
+missing-type error; omitted counts remain -1. Unity's active-object query excludes
+inactive pools and catalog prefabs. The request defaults off and ends when the
+previous diagnostics configuration is restored or the player exits.
 Only its startup/lifecycle snapshots use the full `LAB_SNAPSHOT` console record;
 periodic JSON is not retained by the original console. Original and error logging
 stay unchanged. During completed-session reclamation, `SessionResourceBoundary`
@@ -2748,15 +2784,50 @@ when a runtime log error interrupts a session; prior reports cannot replace it.
 The public Unity `MemorySnapshotDataTools` CLI can analyze them without an Editor
 package; no parser or third-party implementation is vendored into the lab/player.
 
-`alpha_stability_batch.py` owns the current detached diagnostic queue. The
+`scripts/lab/device_session.py` owns the current shared device lifecycle via
+`./dev device-session --request <private JSON> --dry-run` and `--detach`.
+The dispatcher grants a device first; the child takes the canonical atomic
+lease before ADB, sources the pinned environment and stops Unity's port-5038
+ADB server. Its request selects the canonical checkout, private output,
+workstream, explicit device/package, APK path/hash, adopted-only installation,
+duration and optional targeted-touch JSON. `Device` owns installation and live
+package/runtime placement verification; converted-package receipts are isolated
+under `packages/dev.ror2lab.converted`. A prior peer receipt can be imported only
+after matching its device, package, live path and APK hash. Converted launches
+resolve the real launcher activity; a launch observation alone does not prove
+that bootstrap or gameplay succeeded.
+Under its lease the runner records and removes only the owned package's stale
+selector/pending files and stops its process. It reserves estimated output plus
+20 GiB, gives each cooldown its own deadline, and reuses the batch thermal owner.
+An optional `payload_directory` uses the existing incremental `Device.sync`
+owner after installation, with its size included in the storage reservation.
+Launch mode retains screenshots (default 60 seconds, configurable with
+`capture_interval_seconds`), logs, runtime reports and performance snapshots;
+sustained mode delegates to the existing sustained-session owner.
+Optional diagnostics/selection/input-mapping settings are read back and restored.
+The mapping must match the APK attempt and accepted measured bridge checkpoint.
+Converted runs also reset and independently verify the separately owned lab
+package at admission and cleanup. New raw traces are
+hash-verified on the host before device removal. Independent idle/package-byte
+readback and OLED sleep precede lease release; failed cleanup retains the lease
+for recovery. `terminal.done.json` records success or failure, including a
+dispatched child's failed input validation. Evidence and requests stay ignored.
+
+`alpha_stability_batch.py` owns the earlier detached diagnostic queue. The
 explicit device, installed APK digest and new absolute done-file select one
 canonical device lease before any device access. The actual driver PID owns that
 lease while existing SDK interruption and three-session native-heap owners run,
 followed by `session_sustained_check.py`. The latter observes one original
-Commando first-stage world for 30 minutes with invincibility only, manual neutral
-input and small software camera drags. Fresh advancing diagnostics, native clock
-and frame counters, battery/HAL stops and original End Run/menu teardown are
-required. It retains the exact assisted/all-off refusal separately and requires
+Commando first-stage world for 30 minutes with invincibility only and the
+existing `combatPerformanceFocus` visible-hostile native primary-fire automation.
+It leaves diagnostic input active, avoiding manual takeover and shopping routes.
+Fresh advancing diagnostics record live enemies, kills, primary shots and CPU/GPU
+frame times; minute snapshots retain the workload alongside performance data.
+Native clock/frame counters, battery/HAL stops and original End Run/menu teardown
+are required. This replaces the historical neutral-input capture, whose enemies
+accumulated without return fire. A positive kill/shot delta is required; retained
+enemy counts still determine whether the measured workload is representative.
+It retains the exact assisted/all-off refusal separately and requires
 all assists restored off. This is an assisted workload, not ordinary play or a
 performance guarantee. Host admission estimates two 4 GiB snapshots plus
 1 GiB of diagnostic output and requires a further 20 GiB margin; the receipt
@@ -4551,6 +4622,10 @@ It does not identify the exact residual from J746 or qualify native loss.
 `AutomaticDirectorSession`
 separates native elite/catalog/
 player initialization from the existing one-card director activation.
+The assisted `combatPerformanceFocus` workload temporarily uses the native monster
+team's soft limit of 12, preserving selection, credits and combat. Its prior limit
+is session-owned and restored first in `Dispose`; director reports retain the
+applied and restored limits. This bounded diagnostic does not qualify ordinary play.
 Its native first-stage path registers only the exact existing inactive player
 controller before results prepare their statistics component. The later catalog
 setup adopts that same registration without another Awake/OnEnable; the existing
@@ -5720,7 +5795,9 @@ canonical mutex; later source selection/builds use only the lane lock. Creation
 and every build/editor-open restage authored inputs from the selected checkout
 through `build.restage_lane_sources`, `whole_catalog` runtime/editor staging,
 `project_input_rebuild.stage_editor_inputs` for pinned baseline templates, and
-the ordinary Android/audio owners. Extra C# is retired only after matching a
+the ordinary Android/audio owners. The editor cohort includes
+`WholeCatalogHost.cs` in canonical builds and private lanes so its runtime
+contracts follow the selected source. Extra C# is retired only after matching a
 predecessor Git blob, with source/metadata hashes and a removal receipt. Unknown
 or edited files refuse. `original_game_audio_build_hook.restage_authored_for_lane`
 uses a small APFS reference clone to unwind camera/music without changing live

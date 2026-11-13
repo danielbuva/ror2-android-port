@@ -54,6 +54,24 @@ public final class OwnerInputImport {
         syncDirectory(destination.getParentFile());
         if (!temporary.getParentFile().equals(destination.getParentFile())) syncDirectory(temporary.getParentFile());
     }
+    /** Rebase only an explicitly trusted app root alias; descendants remain link-free.
+     * Android Context owns the root. This is not canonicalization of arbitrary targets.
+     */
+    public static File privateFile(File trustedRoot, File target) throws IOException {
+        File root = trustedRoot.getAbsoluteFile(), canonical = trustedRoot.getCanonicalFile();
+        if (!root.isDirectory()) throw new IOException("Private root unavailable");
+        String value = target.getAbsolutePath(), relative = null;
+        for (File base : new File[]{root, canonical}) {
+            String prefix = base.getPath() + File.separator;
+            if (value.startsWith(prefix)) { relative = value.substring(prefix.length()); break; }
+        }
+        if (relative == null || relative.isEmpty()) throw new IOException("Target outside private root");
+        for (String part : relative.split("/", -1))
+            if (part.isEmpty() || part.equals(".") || part.equals("..")) throw new IOException("Unsafe private target");
+        File result = new File(canonical, relative);
+        if (!result.getAbsoluteFile().equals(result.getCanonicalFile())) throw new IOException("Private target contains links");
+        return result;
+    }
     public interface AtomicWriter { void write(FileOutputStream output) throws Exception; }
     /** Caller serializes this target. Interrupted .writing bytes are overwritten, never trusted. */
     public static void writeAtomic(File file, AtomicWriter writer) throws Exception {
