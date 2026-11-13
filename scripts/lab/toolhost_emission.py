@@ -174,6 +174,10 @@ def invocation(remote, native, request, attempt):
         remote + "/" + attempt + "/output",
         "--cache",
         remote + "/cache",
+        # The packaged Android interpreter has no _multiprocessing extension.
+        # Use the existing checked serial emitter; host defaults stay parallel.
+        "--workers",
+        "1",
     ]
 
 
@@ -207,7 +211,7 @@ def execute(path, installer, *, dry_run=False, resume=False, restage=False):
     destination.mkdir(parents=True, exist_ok=True)
     (destination / ".prune-keep").touch()
     state_path = destination / "device-state.json"
-    result = dict(success=False, device_accepted=False, typed_load_accepted=False)
+    result = dict(success=False, device_accepted=False, typed_load_accepted=False, record_workers=1)
     device = phone = state = None
     job = None
     terminal = False

@@ -1952,6 +1952,17 @@ P.emit_closed_native(root/'graph', [root/'types.json'], root/'killed', 'authored
                 with self.assertRaises(ValueError):
                     list(workers.transform([("broken", task)]))
 
+    def test_serial_records_emit_without_multiprocessing_extension(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            graph, types = self.streamed_graph(root)
+            expected = P.emit_closed_native(graph, [types], root / "expected", "authored", "CAB-authored")
+            with patch.dict(sys.modules, {"_multiprocessing": None}), P.RecordWorkers(1) as workers:
+                actual = P.emit_closed_native(graph, [types], root / "serial", "authored", "CAB-authored", record_workers=workers)
+            self.assertEqual(actual["sha256"], expected["sha256"])
+            self.assertEqual(actual["record_workers"], 1)
+            self.assertEqual((root / "serial/resources.jsonl").read_bytes(), (root / "expected/resources.jsonl").read_bytes())
+
     def test_streamed_native_rejects_descriptor_or_resource_extent_drift(self):
         for failure in ("descriptor", "resource"):
             with self.subTest(failure=failure), tempfile.TemporaryDirectory() as tmp:
