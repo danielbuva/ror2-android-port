@@ -25,7 +25,7 @@ public sealed partial class PortSession
         public int navigationTicks, navigationAgents, navigationAgentPeak;
         public float navigationTime, navigationPathUpdate;
         public string navigationError;
-        public int participatingPlayers, livingPlayers, creditSteps, monsterLimit, masterIndex, selectedCardWeight;
+        public int participatingPlayers, livingPlayers, creditSteps, monsterLimit, restoredMonsterLimit, masterIndex, selectedCardWeight;
         public float seconds, fixedSeconds, scheduledCreditSeconds, creditPeak, creditAfter, spent, spawnDistance, minDistance, maxDistance;
         public Vector3 position;
         public string scope;
@@ -174,6 +174,7 @@ public sealed partial class PortSession
         readonly PortSession coordinator;
         bool directorPlayerRegistered;
         GameObject[] directorTeamEffects;
+        int? priorSustainedMonsterLimit;
         object priorDirectorEliteTiers;
         readonly Dictionary<FieldInfo, object> directorMasterFields = new Dictionary<FieldInfo, object>();
         IDictionary directorMasterMap;
@@ -347,6 +348,7 @@ public sealed partial class PortSession
             coordinator.Check(directorTeamEffects.All(x => x) && directorTeamEffects[0].name == "LevelUpEffect" &&
                                   directorTeamEffects[1].name == "LevelUpEffectEnemy" && monster.softCharacterLimit == 40,
                               "Original team limit/effect contracts missing");
+            PrepareSustainedPopulationLimit();
             yield return null;
         }
         // Native global initialization is kept separate from fixture deck/host activation.
@@ -486,6 +488,27 @@ public sealed partial class PortSession
                               "Original player registration missing or duplicated");
         }
 
+        void PrepareSustainedPopulationLimit()
+        {
+            if (!coordinator.r.combatPerformanceFocus)
+                return;
+            // Bounded assisted workload, not an ordinary-play performance claim.
+            // Preserve native selection, credits, health and combat; only its
+            // existing spawn-admission limit differs for this diagnostic session.
+            var monster = TeamCatalog.GetTeamDef(TeamIndex.Monster);
+            priorSustainedMonsterLimit = monster.softCharacterLimit;
+            monster.softCharacterLimit = 12;
+        }
+        void RestoreSustainedPopulationLimit()
+        {
+            if (!priorSustainedMonsterLimit.HasValue)
+                return;
+            var monster = TeamCatalog.GetTeamDef(TeamIndex.Monster);
+            monster.softCharacterLimit = priorSustainedMonsterLimit.Value;
+            priorSustainedMonsterLimit = null;
+            if (coordinator.r.director != null)
+                coordinator.r.director.restoredMonsterLimit = monster.softCharacterLimit;
+        }
         public IEnumerator PrepareNativeFirstStageDirectorContext(CharacterBody player, SessionConfig cfg)
         {
             coordinator.Check(
@@ -505,6 +528,8 @@ public sealed partial class PortSession
                 scope =
                     "Native source-stage directors and complete accepted stage pool; no early diagnostic actor spawn or Beetle assertions."
             };
+            if (coordinator.r.combatPerformanceFocus)
+                coordinator.r.director.scope += " Assisted sustained workload: native monster soft limit 12; original limit restored at teardown.";
             var tiers = PrepareNativeDirectorEliteTiers();
             while (tiers.MoveNext())
                 yield return tiers.Current;
@@ -551,6 +576,8 @@ public sealed partial class PortSession
             if (cfg.integratedWorld)
                 coordinator.r.director.scope =
                     "Continuous original enabled fast director, one original base Beetle card and real team limit/credits/placement; no artificial spawn cutoff. Original Run clock with unavailable stock startup/user/profile/progression.";
+            if (coordinator.r.combatPerformanceFocus)
+                coordinator.r.director.scope += " Assisted sustained workload: native monster soft limit 12; original limit restored at teardown.";
             coordinator.r.phase = "automatic-director-context";
             coordinator.Save();
             coordinator.Check(RunArtifactManager.instance &&
@@ -719,6 +746,7 @@ public sealed partial class PortSession
         }
         public void Dispose()
         {
+            RestoreSustainedPopulationLimit();
             if (coordinator.r.nativeFirstStageLifecycleDiagnosticAttempt && nativeSourceDirectorRoot)
             {
                 var directors = nativeSourceDirectorRoot.GetComponents<CombatDirector>();

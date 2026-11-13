@@ -455,6 +455,62 @@ interruption recovery and save survival remain the local orchestrator's checks.
 
 ### Phone-only import and installation
 
+For the bounded synthetic lab flow, use the serialized runner with an exact
+published source tip and its matching `toolhost` APK:
+`scripts/lab-installer-updates.py --qualify-phone-flow --timeout 1800`.
+It freshly installs the disposable tool, reconstructs on the phone, verifies
+visible unknown-app permission and install consent, checks for updates, then
+verifies an in-place update with authored profile/settings witnesses. The actual
+UI reconstructs to READY **before** opening the permission page. Synthetic inputs
+and signed publisher fixtures are host-authored; this does not qualify SAF import
+or a real game profile. It stops after forward update, without repeating the
+already separate rollback/signature-refusal suite. Notifications are denied,
+including the device-qualified explicit second denial after this run's first
+denial, never pregranted.
+
+Each reported stage includes elapsed time (UI waits/polling/measurement overhead
+included), sampled app-process PSS, battery temperature and available bytes on
+the actual code/data backing. Samples occur at boundaries and at most every ten
+seconds in existing wait loops; sample count and largest gap are reported. These
+are **not true memory peaks**, and native child-tool memory may be omitted.
+Null means unavailable or not running/owned, never zero. Code/data may share a
+volume: do not sum their space or attribute the free-space delta solely to this
+app. Cleanup stops/uninstalls only this run's exact owned packages, sleeps the
+display, and retains diagnostics privately. Measurements do not establish the
+complete performance release gate.
+
+For a baseline-check timeout, the host-only retained-log mode
+`--inspect-check-timeout SOURCE_COMMIT` requires exactly one private run with
+that recorded source. It reports allowlisted state counts/transitions and the
+last retained Check control's flags, never UI text, state messages or paths.
+The binding is source-unique, **not an exact lab-run-ID binding**. Ambiguous
+runs are refused. It performs no device action and proves neither tap delivery
+nor handler entry. Existing raw diagnostics remain untouched.
+
+The qualified check observes persisted acknowledgment before waiting for backend
+completion. After an unacknowledged visible Check action, it permits only one
+additional tap: fresh APK ownership, two matching focused-app observations of
+one enabled/clickable Check control, and a final unchanged TEST_WAIT read are
+required. A late CHECKING/UPDATE_AVAILABLE prevents the retry; errors or unknown
+states stop. A second missing acknowledgment fails explicitly, rather than
+waiting the full reconstruction timeout. This is bounded recovery, not proof
+that the earlier missing action was caused by stale coordinates.
+
+The synthetic full-flow harness also retains a fixed `release-check-diagnostic`
+classification before failed Check cleanup. The debuggable disposable installer
+records handler entry, busy refusal, request-write failure or service-launch
+return in an independent Android preference, rather than through the atomic
+writer being investigated. Only fixed stage/error/root-alias classes are public;
+no preference XML, paths, exception text or release request is exported. An
+unavailable observation is not proof that the button listener did not execute.
+This diagnostic does not change Check dispatch, permissions or install consent.
+
+Managed JSON writes normalize only the platform-provided app-files root alias,
+not arbitrary target paths. The Context-aware writer retains child-link and
+atomic-write guards. Host tests reproduce the aliased-root failure and verify
+receipt preservation plus traversal/link refusal; a complete phone run is still
+required before claiming the installer/update flow works.
+
 Installer version 3 extends the version-2 foreground-service flow: prepare the signed public
 release, choose the owner's PC game directory with Android's folder picker (or
 choose a ZIP), import, then reconstruct and install. Only required files are

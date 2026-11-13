@@ -6,6 +6,20 @@ under ignored `work/coordination/`, not here. Entries J01–J1177 (2026-09-12 to
 [history/journal-J1-J1177/PORTING_JOURNAL.md](history/journal-J1-J1177/PORTING_JOURNAL.md) with its
 [index](history/journal-J1-J1177/JOURNAL_INDEX.md); numbering continues here.
 
+## J1472 — Qualify the shared device runner with bounded native combat
+
+2026-11-13. One request-JSON owner installs, cools, resets stale owned state,
+launches, captures and independently verifies cleanup before releasing its lease.
+Main Nova completes 1,803.165 s at a retained 120 Hz request: 54 kills, 1,757 shots,
+2–12 enemies; the diagnostic native soft limit restores from 12 to 40 at teardown.
+APK SHA-256: `0c440333e3906c483ad8280ab6287e299ca8f7e10238c696425f1e3423cde2ad` (source `4e12f51b`).
+Evidence: `work/coordination/alpha-shared-device-session-20261113T005754Z/terminal.done.json` and `performance.json`.
+All 270 raw intervals reconcile; whole/covered-tail means 59.800/59.749 FPS leave the 60 FPS gate open.
+Whole p50/p95/p99: 16.654/24.889/25.000 ms; 0.123% exceed 50 ms. Tail misses 3.481 s of coverage.
+CPU/GPU/battery peak 95.5/80.2/41 C; maximum sample gap 0.469 s; no safety violation.
+Adopted backing, profile/settings, native End Run, scratch removal, stopped/asleep readback and lease release pass.
+Assisted stationary single-stage evidence only; ordinary play, physical input, other stages and energy remain open.
+
 ## J1466 — Validate refreshed UI providers and relocated startup producers
 
 2026-11-12. Both authored UI schema consumers use the final registry's existing
@@ -3954,3 +3968,19 @@ Peak CPU/GPU 95.1 C, 33.709 s above 80 C; battery 33 C, trace gaps <=0.438 s.
 Adopted placement and stopped/asleep selector/lease cleanup pass; shader warnings remain.
 Prior art: pinned R2API/SS2 and original AimAnimator; source reference streams supply poses.
 Remaining: real-hit/flinch (capture stopped on an unsampled health report), other survivors, enemy shaders.
+
+## J1471 — Attribute live enemy and attack material bindings
+
+2026-11-13. Exact-editor inventory reads 876 body/projectile/effect roots and
+8,473 bindings with zero typed-load failures; live material/null/read-only fixture passes.
+Opt-in runtime census retains every sampled slot, keywords, textures, trails and particle meshes.
+Assisted device capture observes Beetle, Golem, Lemurian and Wisp using diagnostic preview shaders;
+Golem debris and Wisp laser retain original shader paths. Zero missing-variant counters miss these bypasses.
+Frames show a dark Golem and black/white attack suspect; reports are not frame-synchronized.
+APK SHA-256: `54c022f462670fb977e85643d6ef58777ea7197c307b17d0373e46a55d6082df` (source `2a1a4e1c`).
+Evidence: `work/coordination/gameplay-fidelity-material-20261112/nova/acceptance-assessment.json`; video/logcat retained.
+Native damage 744 and seven kills are diagnostic; unassisted flinch and full aim sweep remain open.
+Install/sync/playable/capture: 31.515/57.703/69.024/90.989 s; peak CPU/GPU 89.2 C, 9.422 s above 80 C.
+Adopted placement, thermal sampling and stopped/asleep selector/lease cleanup pass.
+Prior art: pinned R2API content categories, EditorKit shader discovery and ImportExtensions deferred setup.
+No rendering fix/parity claim; uncaptured enemy/effect groups and shader repairs remain open.

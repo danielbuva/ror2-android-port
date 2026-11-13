@@ -208,6 +208,53 @@ public final class AndroidDirectorySyncHarness {
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertEqual(result.stdout.count("PASS "), 3)
 
+    def test_trusted_app_root_alias_preserves_atomic_and_child_link_guards(self):
+        compiler = shutil.which("javac")
+        if not compiler:
+            self.skipTest("Java compiler absent")
+        harness = self.root / "AppRootHarness.java"
+        harness.write_text(r"""
+import dev.ror2lab.phonebuildhostfixture.OwnerInputImport;
+import java.io.*; import java.nio.file.*; import java.util.*;
+public class AppRootHarness {
+ static void refuses(File root,File file) throws Exception {
+  try { OwnerInputImport.privateFile(root,file); throw new AssertionError("unsafe target admitted"); }
+  catch(IOException expected) { }
+ }
+ public static void main(String[] args) throws Exception {
+  Path scratch=Paths.get(args[0]).toRealPath(), actual=Files.createDirectory(scratch.resolve("actual"));
+  Path alias=scratch.resolve("platform-alias"); Files.createSymbolicLink(alias,actual);
+  File root=alias.toFile(), target=new File(root,"owner-input/update-request.json");
+  // Reproduce the observed failure before the trusted-root handoff.
+  try { OwnerInputImport.writeAtomic(target,o->o.write(1)); throw new AssertionError("old alias accepted"); }
+  catch(IOException expected) { }
+  File safe=OwnerInputImport.privateFile(root,target);
+  OwnerInputImport.writeAtomic(safe,o->o.write("old".getBytes("UTF-8")));
+  if(!safe.equals(actual.resolve("owner-input/update-request.json").toFile()))throw new AssertionError("wrong root");
+  if(!OwnerInputImport.privateFile(root,safe).equals(safe))throw new AssertionError("canonical caller");
+  try { OwnerInputImport.writeAtomic(safe,o->{o.write("partial".getBytes("UTF-8"));throw new IOException("injected");});throw new AssertionError(); }
+  catch(IOException expected) { }
+  if(!new String(Files.readAllBytes(safe.toPath()),"UTF-8").equals("old"))throw new AssertionError("receipt changed");
+  refuses(root,root); refuses(root,actual.toFile()); refuses(root,new File(root,"../outside.json"));
+  refuses(root,new File(root,"owner-input/./other.json")); refuses(root,scratch.resolve("platform-alias-other/out.json").toFile());
+  Path outside=Files.createDirectory(scratch.resolve("outside")); Files.write(outside.resolve("witness"),new byte[]{7});
+  Files.createSymbolicLink(actual.resolve("linked"),outside); refuses(root,new File(root,"linked/out.json"));
+  Files.createSymbolicLink(actual.resolve("leaf"),outside.resolve("witness")); refuses(root,new File(root,"leaf"));
+  Path staged=safe.toPath().resolveSibling("update-request.json.writing"); Files.createSymbolicLink(staged,outside.resolve("witness"));
+  try { OwnerInputImport.writeAtomic(OwnerInputImport.privateFile(root,target),o->o.write(2));throw new AssertionError("staged link accepted"); }
+  catch(IOException expected) { }
+  if(!Arrays.equals(Files.readAllBytes(outside.resolve("witness")),new byte[]{7}))throw new AssertionError("outside changed");
+ }
+}
+""")
+        source = ROOT / "tools/phone-build/managed-host/OwnerInputImport.java"
+        result = subprocess.run([compiler, "-d", str(self.root), str(source), str(harness)], capture_output=True, text=True, timeout=30)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        result = subprocess.run(
+            [str(Path(compiler).with_name("java")), "-cp", str(self.root), "AppRootHarness", str(self.root)], capture_output=True, text=True, timeout=30
+        )
+        self.assertEqual(result.returncode, 0, result.stderr)
+
     def test_java_bounded_filled_quota(self):
         compiler = shutil.which("javac")
         if not compiler:

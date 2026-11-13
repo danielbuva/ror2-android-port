@@ -17,7 +17,7 @@ class InstallTransportTests(unittest.TestCase):
         self.root = Path(self.tmp.name)
         self.apk = self.root / "authored.apk"
         self.apk.write_bytes(b"authored package")
-        self.d = Mock()
+        self.d = Mock(package=device.PACKAGE)
         self.d.serial = "authored-device"
         self.d.settings = {}
         self.d.exists.return_value = True
@@ -40,7 +40,7 @@ class InstallTransportTests(unittest.TestCase):
 
     def test_default_streaming_is_explicit_and_timed(self):
         result = device.Device.install(self.d, self.apk)
-        self.validate.assert_called_once_with(self.apk)
+        self.validate.assert_called_once_with(self.apk, device.PACKAGE)
         self.d.owned.assert_called_once()
         self.d.storage.assert_called_once()
         self.d.install_capacity.assert_called_once()

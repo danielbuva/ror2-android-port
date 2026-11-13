@@ -50,8 +50,12 @@ def validate_apk_identity(apk, expected_package=PACKAGE):
 
 class Device:
     _awake_devices = {}
+    package = PACKAGE
 
-    def __init__(self, selector=None, work_root=None):
+    def __init__(self, selector=None, work_root=None, *, package=PACKAGE):
+        if package not in {PACKAGE, "dev.ror2lab.converted"}:
+            raise ValueError("Only disposable lab packages are supported")
+        self.package = package
         require_device_access()
         selected_work_root = work_root if work_root is not None else common.WORK
         self._work_root = Path(os.path.abspath(os.fspath(selected_work_root)))
@@ -71,6 +75,8 @@ class Device:
         self.settings.update(configuration.get("device_settings", {}).get(serial, {}))
         self.settings["storage_mode"] = storage_policy(configuration, serial)
         self.receipt_root = receipt_directory(self.work_root, {"serial": serial, "default_serial": configuration["device_serial"]})
+        if self.package != PACKAGE:
+            self.receipt_root = self.receipt_root / "packages" / self.package
         self.display_awakened = False
 
     @property
@@ -83,6 +89,8 @@ class Device:
                 self.work_root,
                 {"serial": self.serial, "default_serial": self.configuration["device_serial"]},
             )
+            if self.package != PACKAGE:
+                selected = selected / "packages" / self.package
             root = validate_receipt_directory(self.work_root, self.receipt_root)
         except DeviceContextError as exc:
             raise RuntimeError("Selected-device receipt directory is unsafe") from exc
@@ -140,7 +148,7 @@ class Device:
 
     def validate_runtime(self, value):
         path = value.get("persistentDataPath") if isinstance(value, dict) else None
-        pattern = r"/(?:storage/(?:emulated/[0-9]+|[A-Za-z0-9-]+)|sdcard)/Android/data/" + re.escape(PACKAGE) + r"/files"
+        pattern = r"/(?:storage/(?:emulated/[0-9]+|[A-Za-z0-9-]+)|sdcard)/Android/data/" + re.escape(self.package) + r"/files"
         if not isinstance(path, str) or not re.fullmatch(pattern, path):
             raise RuntimeError("Unexpected runtime content path")
         storage = self.storage()
@@ -263,14 +271,14 @@ class Device:
             raise
 
     def exists(self):
-        return ("package:" + PACKAGE) in self.sh("pm", "list", "packages", PACKAGE).splitlines()
+        return ("package:" + self.package) in self.sh("pm", "list", "packages", self.package).splitlines()
 
     def owned(self):
         receipt = self.receipt("installed.json")
         if not receipt.exists():
             raise RuntimeError("No lab ownership receipt; refusing to modify an existing package")
         r = self.read_receipt("installed.json")
-        if r["serial"] != self.serial or r["package"] != PACKAGE or self.sh("pm", "path", PACKAGE) != r["package_path"]:
+        if r["serial"] != self.serial or r["package"] != self.package or self.sh("pm", "path", self.package) != r["package_path"]:
             raise RuntimeError("Package placement/ownership changed; inspect before modifying")
         return r
 
@@ -308,7 +316,7 @@ class Device:
         if mode not in {"streaming", "incremental"}:
             raise RuntimeError("Unknown install transport")
         with timing.phase("apk_validation_hash"):
-            validate_apk_identity(apk)
+            validate_apk_identity(apk, self.package)
             apk_hash = sha(apk)
         if self.exists():
             self.owned()
@@ -354,11 +362,11 @@ class Device:
             )
             raise
         with timing.phase("placement_query"):
-            package_path = self.sh("pm", "path", PACKAGE)
-            details = self.sh("dumpsys", "package", PACKAGE)
+            package_path = self.sh("pm", "path", self.package)
+            details = self.sh("dumpsys", "package", self.package)
         r = {
             "serial": self.serial,
-            "package": PACKAGE,
+            "package": self.package,
             "apk": str(apk),
             "apk_sha256": apk_hash,
             "package_path": package_path,
@@ -417,14 +425,14 @@ class Device:
     def launch(self):
         self.owned()
         self.display(True)
-        self.sh("am", "force-stop", PACKAGE)
+        self.sh("am", "force-stop", self.package)
         start = self.sh("date", "+%s.%N")
-        launch = self.sh("am", "start", "-W", "-n", PACKAGE + "/com.unity3d.player.UnityPlayerActivity")
+        launch = self.sh("am", "start", "-W", "-n", self.package + "/com.unity3d.player.UnityPlayerActivity")
         deadline = time.monotonic() + 45
         logs = ""
         pid = ""
         while time.monotonic() < deadline:
-            pid = self.sh("pidof", PACKAGE, check=False).strip()
+            pid = self.sh("pidof", self.package, check=False).strip()
             if pid:
                 logs = self.cmd("logcat", "-d", "--pid=" + pid, "-v", "epoch", "Unity:I", "AndroidRuntime:E", "*:S")
                 if "LAB_READY" in logs:
@@ -441,7 +449,7 @@ class Device:
             match = re.search(r'"persistentDataPath":"([^"]+)"', logs)
             if match:
                 path = match.group(1)
-                if not path.endswith("/Android/data/" + PACKAGE + "/files"):
+                if not path.endswith("/Android/data/" + self.package + "/files"):
                     raise RuntimeError("Unexpected diagnostic path")
                 snapshots.append(json.loads(self.sh("cat", path + "/snapshot.json")))
         if snapshots:
@@ -467,7 +475,7 @@ class Device:
         path = runtime["persistentDataPath"]
         with timing.phase("storage_query"):
             storage = self.storage()
-        if not path.endswith("/Android/data/" + PACKAGE + "/files"):
+        if not path.endswith("/Android/data/" + self.package + "/files"):
             raise RuntimeError("Unexpected runtime content path; inspect storage before extending sync policy")
         if storage["mode"] == "adopted":
             # Refuse a physical-internal emulated root before creating or transferring data.
@@ -481,7 +489,7 @@ class Device:
             raise RuntimeError("Payload directory is empty or missing")
         manifest = []
         for p in sorted(files):
-            if not p.is_file() or p.suffix == ".manifest":
+            if not p.is_file() or p.suffix == ".manifest" or p.name == ".prune-keep":
                 continue
             with timing.phase("local_hash"):
                 h = sha(p)
@@ -513,12 +521,12 @@ class Device:
         out.mkdir(parents=True, exist_ok=True)
         result = {}
         if kind in ["all", "logs"]:
-            pid = self.sh("pidof", PACKAGE, check=False).strip()
+            pid = self.sh("pidof", self.package, check=False).strip()
             logs = self.cmd("logcat", "-d", *(["--pid=" + pid] if pid else []), "-v", "threadtime", "Unity:I", "AndroidRuntime:E", "*:S")
             (out / "unity.log").write_text(logs)
         if kind in ["all", "crash"]:
             (out / "crash.log").write_text(self.cmd("logcat", "-b", "crash", "-d", "-v", "threadtime"))
-            (out / "exit-info.txt").write_text(self.sh("dumpsys", "activity", "exit-info", PACKAGE, check=False))
+            (out / "exit-info.txt").write_text(self.sh("dumpsys", "activity", "exit-info", self.package, check=False))
             (out / "tombstone-access.txt").write_text(self.sh("ls", "/data/tombstones", check=False) or "Not accessible on this non-root device")
         if kind in ["all", "screenshot"]:
             require_device_access()
@@ -528,8 +536,8 @@ class Device:
             (out / "screenshot.png").write_bytes(data)
         if kind in ["all", "perf"]:
             for name, args in {
-                "memory": ["dumpsys", "meminfo", PACKAGE],
-                "gfxinfo": ["dumpsys", "gfxinfo", PACKAGE],
+                "memory": ["dumpsys", "meminfo", self.package],
+                "gfxinfo": ["dumpsys", "gfxinfo", self.package],
                 "thermal": ["dumpsys", "thermalservice"],
                 "cpu": ["dumpsys", "cpuinfo"],
             }.items():
@@ -545,9 +553,9 @@ class Device:
                     text = self.sh("cat", path + "/" + name, check=False)
                     if text:
                         (out / name).write_text(text)
-                (out / "private-path.txt").write_text(self.sh("run-as", PACKAGE, "pwd", check=False))
+                (out / "private-path.txt").write_text(self.sh("run-as", self.package, "pwd", check=False))
                 (out / "native-maps.txt").write_text(
-                    self.sh("run-as", PACKAGE, "cat", "/proc/" + self.sh("pidof", PACKAGE, check=False).strip() + "/maps", check=False)
+                    self.sh("run-as", self.package, "cat", "/proc/" + self.sh("pidof", self.package, check=False).strip() + "/maps", check=False)
                 )
         return {"artifacts": str(out.relative_to(self.work_root.parent))}
 
@@ -555,7 +563,7 @@ class Device:
         if not self.exists():
             return {"removed": False, "reason": "package absent"}
         self.owned()
-        result = self.cmd("uninstall", PACKAGE)
+        result = self.cmd("uninstall", self.package)
         self.receipt("installed.json").unlink()
         return {"uninstall": result, "removed": not self.exists()}
 

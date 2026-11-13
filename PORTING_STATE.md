@@ -1,6 +1,6 @@
 # Porting state
 
-Updated 2026-11-12 UTC. This laboratory is not a finished port. Evidence lives in
+Updated 2026-11-13 UTC. This laboratory is not a finished port. Evidence lives in
 [the journal](docs/PORTING_JOURNAL.md) and [index](docs/JOURNAL_INDEX.md);
 [J1–J1177 are frozen](docs/history/journal-J1-J1177/JOURNAL_INDEX.md).
 Named APK hashes are protected by the pruner.
@@ -11,9 +11,9 @@ Named APK hashes are protected by the pruner.
 | --- | --- |
 | Input and toolchain | Accepted Steam 25475991; Unity 2021.3.45f2 (88f88f591b2e), IL2CPP ARM64, Vulkan. Pins: `environment/toolchain.json`. |
 | Compatibility reference (P1) | Lab APK `9f904392d02abc3854f9efc4b51cd03daec7afb6b7192a4c074f30fabc12fa22`, source `6c12b506`. Match behaviour, content, visuals and performance as closely as possible; structural/gameplay checks stay strict, byte equality is diagnostic. |
-| Latest device-verified APK | Audio-readiness attribution APK `1cee9b5ab9e7453f9ba76977e49f3b1208308be52c3d8ebe07dc7824e913b5a1`, source `41c03a7a`. Ordinary Start reached Distant Roost/Commando/player/HUD; strict current-PID error scan empty; 21 survivors, 455 unlockables and 153 banks ready. Bounded acceptance only; sustained play remains open. |
-| Installed now (last recorded) | Main Nova: the audio-readiness APK above, on adopted storage; in-place update preserved profile/settings hashes. Evidence: `work/coordination/alpha-audio-readiness-device-20261112T010139Z/`. Terminal package/hash and stopped-process/display readback passed; no later device query in this refresh. |
-| Runtime source since that APK | Installed lab runtime remains `41c03a7a`. The subsequent merge of converter catalog-prefab ownership (`cef351bd`, J1421) changes host tooling and does not qualify a converted-device run. |
+| Latest device-verified APK | Bounded assisted-combat APK `0c440333e3906c483ad8280ab6287e299ca8f7e10238c696425f1e3423cde2ad`, source `4e12f51b`. Shared runner completed 30 minutes on source stage `lakes`, with 54 kills, 2–12 enemies and native teardown. Whole/tail means 59.800/59.749 FPS leave the strict 60 FPS gate open. |
+| Installed now (last recorded) | Main Nova: the bounded-combat APK above, on adopted storage. Evidence: `work/coordination/alpha-shared-device-session-20261113T005754Z/terminal.done.json`. Profile/settings retention, package/runtime backing, stopped/asleep readback and lease release pass; no later device query in this refresh. |
+| Runtime source since that APK | Installed runtime remains `4e12f51b`. Subsequent shared-runner/storage tooling and newer merged runtime changes have not been built into this APK. Ordinary-play and converted-device acceptance remain separate gates. |
 | Converter | 79 source scenes staged (681-file inventory); whole-game closure inventory reports **0 catalog-missing**, 390,937 selected / 386,879 reachable records. These are staging/coverage facts: complete strict graph, current-CLR/script/reference checks, final typed load, APK assembly and converted-device play remain pending. |
 | Installer | [#241 merged](https://github.com/danielbuva/ror2-android-port/pull/241): authorized synthetic prompts and readable live status. [#417 open](https://github.com/danielbuva/ror2-android-port/pull/417): visible unknown-app permission/consent qualification; exact-source build and seven-case device acceptance remain open. Check for updates, same-key update/rollback and real profile retention still need complete phone qualification. |
 
@@ -25,6 +25,14 @@ game-derived outputs remain private. Raw-exact, drift-explained,
 tolerance-accepted and device acceptance remain separate results.
 
 ## Alpha loading and stability since November 4
+
+The shared device runner now has a real 30-minute qualification, retaining a
+120 Hz request, reconciled raw frames and strict thermal coverage. It uses a
+diagnostic-only monster cap and invincibility; ordinary sessions retain native
+limits. See [the measured scope and open pacing gate](docs/performance-game.md#shared-runner-and-bounded-combat-qualification).
+Retained ordinary-Start audio evidence remains APK
+`1cee9b5ab9e7453f9ba76977e49f3b1208308be52c3d8ebe07dc7824e913b5a1`,
+source `41c03a7a`; assisted combat does not replace that acceptance scope.
 
 J1381–J1420 ship scoped structural checks, typed content discovery, install-bound
 audio verification, shared provider manifests, native skin iterator execution and

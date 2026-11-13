@@ -8,6 +8,26 @@ from the repository root. It is for contributors, not a player installer.
 Current independent prepared builds use [build lanes](build-lanes.md):
 `./dev lane --action create --name NAME`, then `LAB_LANE=NAME ./dev …`.
 
+Shared device runs use the current `./dev device-session --request <JSON>`
+entry point. Validate with `--dry-run`, then use `--detach` after the dispatcher
+grants the device. See [the lifecycle owner](ARCHITECTURE.md) for cleanup and
+evidence rules. Required request fields are `canonical_root`, `output` (under
+its `work/`), `workstream`, `serial`, `package`, `apk`, `apk_sha256`,
+`adopted_install: true` and `duration_seconds`. Optional fields are
+`cooldown_seconds` (default 3600), `mode` (`launch` or lab-only `sustained`),
+`input_script` (the existing targeted-touch JSON with the live PID supplied by
+the runner), `input_mapping` (the APK-attempt-bound measured bridge JSON), `selection`, `diagnostics`, `prior_receipt` and
+`require_high_refresh`, `payload_directory` (incremental adopted-storage sync
+before launch) and `capture_interval_seconds` (launch-mode cadence, default 60).
+The device free-space reservation includes the requested payload size.
+Requests and results stay private.
+
+Generated-output cleanup retains only pinned APKs, current build/base, the
+latest installed APK per device and each worker's newest handoff-referenced
+build in `work/build-cache`. Other cache entries become disposable after
+three hours, including entries with stale `.prune-keep` markers. Other generated
+output keeps the 24-hour guard and marker protections.
+
 An evidence-driven laboratory that runs the original PC game's managed code and converted
 content natively on ARM64 Android, using the user's own legitimate game installation.
 **It is not a finished or distributable port.** The current APK reaches the original offline

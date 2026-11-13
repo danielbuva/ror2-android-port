@@ -11,7 +11,7 @@ All generated binaries/keys stay on the lab host/device, never in GitHub output.
 
 import argparse
 import ast
-from contextlib import contextmanager
+from contextlib import contextmanager, nullcontext
 import hashlib
 import http.server
 import importlib.util
@@ -45,6 +45,101 @@ CURRENT_PHASE = "setup"
 
 class Failure(Exception):
     """Only fixed, authored reason codes may leave the lab host."""
+
+
+def process_pss(data):
+    """A single app-process sample, not child-tool memory or a true peak."""
+    if not isinstance(data, bytes) or len(data) > 65536:
+        return None
+    values = re.findall(rb"\bTOTAL PSS:\s*(\d+)\b", data)
+    return int(values[0]) * 1024 if len(values) == 1 else None
+
+
+class FlowMetrics:
+    """Optional, synchronous observations; never own a device or alter acceptance."""
+
+    STAGES = (
+        "fresh-installer",
+        "synthetic-provision-and-check",
+        "baseline-reconstruction",
+        "visible-install-permission",
+        "baseline-install",
+        "seed-retention-witness",
+        "check-for-updates",
+        "in-place-update",
+        "verify-profile-settings",
+    )
+
+    def __init__(self, phone):
+        self.phone, self.current, self.rows = phone, None, []
+
+    def sample(self, force=False):
+        row = self.current
+        now = time.monotonic()
+        if row is None or not force and row["times"] and now - row["times"][-1] < 10:
+            return
+        row["times"].append(now)
+        try:
+            observed = self.phone.flow_observation()
+        except Exception:
+            observed = {}
+        if not isinstance(observed, dict):
+            observed = {}
+        safe = {}
+        for package in ("installer", "alpha"):
+            value = observed.get(package, {})
+            if not isinstance(value, dict):
+                value = {}
+            safe[package] = {
+                key: value.get(key) if type(value.get(key)) is int and value[key] >= 0 else None for key in ("pss_bytes", "code_free_bytes", "data_free_bytes")
+            }
+        temperature = observed.get("battery_temp_tenths_c")
+        safe["battery_temp_tenths_c"] = temperature if type(temperature) is int and temperature >= 0 else None
+        row["samples"].append(safe)
+
+    @contextmanager
+    def stage(self, name):
+        if name not in self.STAGES or self.current is not None:
+            raise Failure("phone-flow-stage-contract")
+        row = {"stage": name, "started": time.monotonic(), "times": [], "samples": [], "completed": False}
+        self.current = row
+        self.sample(force=True)
+        try:
+            yield
+            row["completed"] = True
+        finally:
+            self.sample(force=True)
+            row["elapsed_seconds"] = round(time.monotonic() - row["started"], 3)
+            self.current = None
+            self.rows.append(row)
+
+    def report(self):
+        rows = []
+        for row in self.rows:
+            samples = row["samples"]
+            packages = {}
+            for package in ("installer", "alpha"):
+                memory = [sample[package]["pss_bytes"] for sample in samples if sample[package]["pss_bytes"] is not None]
+                packages[package] = {
+                    "memory_samples": len(memory),
+                    "sampled_max_pss_bytes": max(memory) if memory else None,
+                    "storage_start": {key: samples[0][package][key] for key in ("code_free_bytes", "data_free_bytes")},
+                    "storage_end": {key: samples[-1][package][key] for key in ("code_free_bytes", "data_free_bytes")},
+                }
+            rows.append(
+                {
+                    "stage": row["stage"],
+                    "completed": row["completed"],
+                    "elapsed_seconds": row["elapsed_seconds"],
+                    "samples": len(samples),
+                    "largest_sample_gap_seconds": round(max((b - a for a, b in zip(row["times"], row["times"][1:])), default=0), 3),
+                    "packages": packages,
+                    "sampled_max_battery_temp_c": max(
+                        (s["battery_temp_tenths_c"] / 10 for s in samples if s["battery_temp_tenths_c"] is not None), default=None
+                    ),
+                }
+            )
+        return {"mode": "synthetic-phone-flow-metrics", "memory_scope": "sampled-app-process-pss-not-true-peak", "stages": rows}
 
 
 def install_diagnostic_summary(data):
@@ -292,6 +387,43 @@ def encoded(value):
 
 def sha(value):
     return hashlib.sha256(value).hexdigest()
+
+
+def check_diagnostic_summary(raw):
+    """Allowlist one fixed test-only preference row; never echo arbitrary XML."""
+    if not raw:
+        return {"status": "unavailable", "reason": "not-recorded"}
+    allowed = {
+        "stage": {
+            "entered",
+            "blocked-busy",
+            "request-written",
+            "launch-returned",
+            "failed-clear-status",
+            "failed-request-build",
+            "failed-request-write",
+            "failed-service-launch",
+        },
+        "error": {"none", "security", "io", "json", "reflected", "other"},
+        "files_root": {"canonical", "alias", "unavailable"},
+    }
+    try:
+        if len(raw) > 4096 or b"<!" in raw:
+            raise ValueError("bounded XML only")
+        tree = ET.fromstring(raw)
+        if tree.tag != "map" or tree.attrib or len(tree) != len(allowed):
+            raise ValueError("fixed map required")
+        result = {}
+        for node in tree:
+            name = node.get("name")
+            if node.tag != "string" or set(node.attrib) != {"name"} or len(node) or name in result or name not in allowed or node.text not in allowed[name]:
+                raise ValueError("fixed class required")
+            result[name] = node.text
+        if set(result) != set(allowed):
+            raise ValueError("complete row required")
+        return {"status": "observed", **result}
+    except (ValueError, ET.ParseError):
+        return {"status": "unavailable", "reason": "invalid-record"}
 
 
 class PrivateDiagnostics:
@@ -639,6 +771,7 @@ class Phone:
         self.allow_test_installs = allow_test_installs
         self.allow_test_notifications = allow_test_notifications
         self.notification_denied = False
+        self.flow_metrics = None
         self.adb = Path("/opt/homebrew/bin/adb")
         self.transport = TRANSPORT.AdbTransport(self.adb, serial, observer=adb_diagnostic)
         self.owned_installer = False
@@ -650,6 +783,39 @@ class Phone:
         self.settings_focus_key = None
         self.install_focus_key = None
         self.ui_path = "/data/local/tmp/ror2-installer-ui-" + secrets.token_hex(8) + ".xml"
+
+    def flow_observation(self):
+        """Read only the freshly owned fixed packages; raw responses stay private."""
+        result = {}
+        for name, package, expected in (("installer", PACKAGE, self.installer_hash if self.owned_installer else None), ("alpha", GAME, self.alpha_hash)):
+            row = result[name] = {}
+            if not expected:
+                continue
+            try:
+                if self.package_hash(package) != expected:
+                    continue
+                memory = self.shell("dumpsys", "meminfo", "-s", package, label="phone-flow-memory", timeout=10)
+                row["pss_bytes"] = process_pss(memory)
+            except Exception:
+                pass
+            try:
+                # Recheck ownership if memory sampling failed. Never derive a
+                # report from a replaced package or a remembered volume path.
+                if self.package_hash(package) != expected:
+                    continue
+                paths = self.package_paths(package)
+                if len(paths) != 1 or not paths[0].startswith("package:"):
+                    continue
+                row["code_free_bytes"] = self.available(self.shell("df", "-k", paths[0][8:], label="phone-flow-code-free", timeout=10))
+                row["data_free_bytes"] = self.available(self.shell("run-as", package, "df", "-k", ".", label="phone-flow-data-free", timeout=10))
+                if name == "installer":
+                    battery = self.shell("dumpsys", "battery", label="phone-flow-temperature", timeout=10)
+                    values = re.findall(rb"^\s*temperature:\s*(\d+)\s*$", battery, re.M)
+                    if len(values) == 1:
+                        result["battery_temp_tenths_c"] = int(values[0])
+            except Exception:
+                pass
+        return result
 
     def execute(self, *args, stdin=None, label, timeout=60, idempotent=False):
         try:
@@ -805,10 +971,17 @@ class Phone:
         self.shell("run-as", PACKAGE, "mkdir", "-p", shlex.quote(str(Path(path).parent)), label="device-input-directory")
         self.command("shell", shlex.join(["run-as", PACKAGE, "sh", "-c", "cat > " + shlex.quote(path)]), stdin=data, label="device-input-write")
 
-    def read(self, name):
+    def read(self, name, *, timeout=60):
         path = "files/owner-input/" + name
         result = self.command(
-            "shell", "run-as", PACKAGE, "sh", "-c", "'if [ -f " + path + " ]; then cat " + path + "; else printf null; fi'", label="device-state-read"
+            "shell",
+            "run-as",
+            PACKAGE,
+            "sh",
+            "-c",
+            "'if [ -f " + path + " ]; then cat " + path + "; else printf null; fi'",
+            label="device-state-read",
+            timeout=timeout,
         )
         return json.loads(result)
 
@@ -989,7 +1162,12 @@ class Phone:
         self.shell("wm", "dismiss-keyguard", label="device-keyguard-dismiss")
         self.shell("am", "start", "-W", "-n", ACTIVITY, label="device-installer-launch")
         time.sleep(1)
-        self.dismiss_notification_permission()
+        # The qualified synthetic flow restarts this same freshly owned app.
+        # Reuse the device-proven explicit second-denial policy, never grant.
+        if self.flow_metrics is not None and self.notification_denied:
+            self.dismiss_notification_permission(repeat_denial=True)
+        else:
+            self.dismiss_notification_permission()
 
     def dismiss_notification_permission(self, *, repeat_denial=False):
         # ToolHostActivity.onCreate requests only POST_NOTIFICATIONS. This is
@@ -1049,6 +1227,8 @@ class Phone:
     def wait_state(self, expected):
         deadline = time.monotonic() + self.timeout
         while time.monotonic() < deadline:
+            if self.flow_metrics is not None:
+                self.flow_metrics.sample()
             row = self.read("update-state.json")
             if row and row.get("state") in expected:
                 return row
@@ -1057,10 +1237,63 @@ class Phone:
             time.sleep(1)
         raise Failure("installer-update-timeout")
 
+    def read_check_progress(self, timeout):
+        row = self.read("update-state.json", timeout=timeout)
+        state = row.get("state") if isinstance(row, dict) else None
+        if state == "ERROR":
+            raise Failure("installer-update-error")
+        if state not in ("TEST_WAIT", "CHECKING", "UPDATE_AVAILABLE"):
+            raise Failure("release-check-state-unavailable")
+        return row
+
+    def check_acknowledgement(self):
+        # A returned input command is not proof that the Activity handled it.
+        # Observe only: no expensive APK rehash/telemetry inside this short wait.
+        deadline = time.monotonic() + min(15, self.timeout)
+        while (remaining := deadline - time.monotonic()) > 0:
+            row = self.read_check_progress(min(5, remaining))
+            if row["state"] != "TEST_WAIT":
+                return row
+            time.sleep(0.25)
+        return None
+
+    def retry_unacknowledged_check(self):
+        self.require_owned_installer()
+        row = self.read_check_progress(5)
+        if row["state"] != "TEST_WAIT":
+            return row
+        self.shell("input", "keyevent", "KEYCODE_WAKEUP", label="device-display-wake")
+
+        def control():
+            tree = self.ui_windows((PACKAGE,), recovery=False)
+            self.prompt_nodes(tree, (PACKAGE,))
+            nodes = [node for node in tree.iter("node") if node.get("text", "").casefold() == "check for updates"]
+            if len(nodes) != 1 or nodes[0].get("class") != "android.widget.Button" or nodes[0].get("enabled") != "true" or nodes[0].get("clickable") != "true":
+                raise Failure("release-check-control-unavailable")
+            return nodes[0]
+
+        first, second = control(), control()
+        if first.attrib != second.attrib:
+            raise Failure("release-check-control-changed")
+        # A late acknowledgment prohibits another tap. Never reset TEST_WAIT:
+        # the handler persists CHECKING before launching any release worker.
+        row = self.read_check_progress(5)
+        if row["state"] != "TEST_WAIT":
+            return row
+        self.tap_prompt_node(second, "device-release-check-retry")
+        print("INFO release-check-retry actor=harness reason=unacknowledged-visible-action", flush=True)
+        return self.check_acknowledgement()
+
     def check(self, version):
         self.put("update-state.json", encoded({"state": "TEST_WAIT"}))
         self.tap("Check for updates")
-        row = self.wait_state({"UPDATE_AVAILABLE"})
+        row = self.check_acknowledgement()
+        if row is None:
+            row = self.retry_unacknowledged_check()
+        if row is None:
+            raise Failure("check-action-not-acknowledged")
+        if row["state"] == "CHECKING":
+            row = self.wait_state({"UPDATE_AVAILABLE"})
         if row.get("release", {}).get("version_code") != version:
             raise Failure("release-version-not-observed")
 
@@ -1071,6 +1304,8 @@ class Phone:
         pending_observed = False
         consent_observed = False
         while time.monotonic() < deadline:
+            if self.flow_metrics is not None:
+                self.flow_metrics.sample()
             receipt = self.read("installed-release.json")
             if receipt and receipt.get("release", {}).get("version_code") == publisher and receipt.get("installed_readback_verified") is True:
                 if self.package_hash(GAME) != receipt.get("sha256"):
@@ -1364,6 +1599,18 @@ class Phone:
         # authorization for this fresh disposable test package on the leased phone.
         self.shell("appops", "set", PACKAGE, "REQUEST_INSTALL_PACKAGES", "allow", label="device-install-permission-enable")
 
+    def capture_check_diagnostic(self):
+        # The fresh hash-owned test app stores only its last Check stage. Read
+        # this independent Android preference before uninstall, not arbitrary
+        # app files, raw logs or the release request (which contains metadata).
+        self.require_owned_installer()
+        command = (
+            'for p in shared_prefs shared_prefs/owner-check-diagnostic.xml; do [ ! -L "$p" ] || exit 1; done; '
+            "if [ -f shared_prefs/owner-check-diagnostic.xml ]; then head -c 4097 shared_prefs/owner-check-diagnostic.xml; fi"
+        )
+        raw = self.shell("run-as", PACKAGE, "sh", "-c", "'" + command + "'", label="device-check-diagnostic-read", timeout=15)
+        return check_diagnostic_summary(raw)
+
     def capture_install_diagnostic(self):
         # Fresh-run ownership and exact installed test APK identity are mandatory.
         # No alpha/game namespace, broad traversal, or mutation is involved.
@@ -1470,7 +1717,12 @@ def prepare_artifacts(config, temporary):
     return apk, inputs, key, releases, wrong
 
 
-def acceptance(phone, config, temporary, passed, *, qualify_install_prompts=False):
+def acceptance(phone, config, temporary, passed, *, qualify_install_prompts=False, phone_flow=False):
+    metrics = phone.flow_metrics = FlowMetrics(phone) if phone_flow else None
+
+    def stage(name):
+        return metrics.stage(name) if metrics is not None else nullcontext()
+
     set_phase("pre-install-checks")
     if phone.occupied(GAME) or phone.occupied(PACKAGE):
         raise Failure("occupied-package-no-fresh-run-ownership")
@@ -1480,9 +1732,10 @@ def acceptance(phone, config, temporary, passed, *, qualify_install_prompts=Fals
     set_phase("pre-install-storage")
     phone.storage()
     set_phase("installer-install")
-    phone.install(apk)
-    set_phase("installer-storage")
-    phone.storage()
+    with stage("fresh-installer"):
+        phone.install(apk)
+        set_phase("installer-storage")
+        phone.storage()
     set_phase("installer-permission")
     if qualify_install_prompts:
         phone.require_ungranted_install_permission()
@@ -1490,46 +1743,58 @@ def acceptance(phone, config, temporary, passed, *, qualify_install_prompts=Fals
         phone.await_install_permission()
     set_phase("fixture-provision")
     with server() as service:
-        base = publish(service, releases[1], 1)
-        phone.command("reverse", "--no-rebind", "tcp:" + str(service.server_port), "tcp:" + str(service.server_port), label="device-reverse-create")
-        phone.reverse_port = service.server_port
-        phone.put("debug-release-source.json", encoded({"enabled": True, "base_url": base, "key_id": KEY_ID, "public_key": key.decode()}))
-        for name, data in inputs.items():
-            phone.put("import/files/" + name, data)
-        # Input bytes are generated above, not copied from any owner directory.
-        # The production Python admission rehashes the signed manifest itself.
-        phone.put("import-state.json", encoded({"state": "IMPORTED", "message": "Synthetic test inputs only"}))
-        set_phase("baseline-N-check")
-        phone.start()
-        phone.check(1)
-        if not any("TEST RELEASE SOURCE" in node.get("text", "") for node in phone.ui().iter("node")):
-            raise Failure("debug-source-warning-not-visible")
+        with stage("synthetic-provision-and-check"):
+            base = publish(service, releases[1], 1)
+            phone.command("reverse", "--no-rebind", "tcp:" + str(service.server_port), "tcp:" + str(service.server_port), label="device-reverse-create")
+            phone.reverse_port = service.server_port
+            phone.put("debug-release-source.json", encoded({"enabled": True, "base_url": base, "key_id": KEY_ID, "public_key": key.decode()}))
+            for name, data in inputs.items():
+                phone.put("import/files/" + name, data)
+            # Synthetic bytes and publisher are host-authored. Actual APK
+            # reconstruction below runs on the phone, not the host.
+            phone.put("import-state.json", encoded({"state": "IMPORTED", "message": "Synthetic test inputs only"}))
+            set_phase("baseline-N-check")
+            phone.start()
+            phone.check(1)
+            if not any("TEST RELEASE SOURCE" in node.get("text", "") for node in phone.ui().iter("node")):
+                raise Failure("debug-source-warning-not-visible")
         set_phase("baseline-N-install")
         phone.storage()
-        phone.tap("Reconstruct and install verified game")
         if qualify_install_prompts:
-            phone.wait_state({"READY"})
-            phone.allow_visible_install_permission()
-            passed("install-unknown-apps-visible")
-            phone.tap("Install verified owner build")
-            first = phone.installed(1, require_pending_prompt=True)
-            passed("pending-user-action-visible")
+            with stage("baseline-reconstruction"):
+                phone.tap("Reconstruct and install verified game")
+                phone.wait_state({"READY"})
+            with stage("visible-install-permission"):
+                phone.allow_visible_install_permission()
+                passed("install-unknown-apps-visible")
+            with stage("baseline-install"):
+                phone.tap("Install verified owner build")
+                first = phone.installed(1, require_pending_prompt=True)
+                passed("pending-user-action-visible")
         else:
+            phone.tap("Reconstruct and install verified game")
             first = phone.installed(1)
-        phone.retention_witness("seed")
+        with stage("seed-retention-witness"):
+            phone.retention_witness("seed")
         set_phase("check-for-updates")
-        publish(service, releases[2], 2)
-        phone.check(2)
-        if "/public-tools.zip" in service.requests:
-            raise Failure("check-downloaded-bundle-before-consent")
-        passed("check-for-updates")
+        with stage("check-for-updates"):
+            publish(service, releases[2], 2)
+            phone.check(2)
+            if "/public-tools.zip" in service.requests:
+                raise Failure("check-downloaded-bundle-before-consent")
+            passed("check-for-updates")
         set_phase("update-N-to-N+1")
         phone.storage()
         phone.retention_witness("verify")
-        phone.tap("Reconstruct and install verified game")
-        second = phone.installed(2, first)
-        phone.retention_witness("verify", second)
+        with stage("in-place-update"):
+            phone.tap("Reconstruct and install verified game")
+            second = phone.installed(2, first)
+        with stage("verify-profile-settings"):
+            phone.retention_witness("verify", second)
         passed("update-N-to-N+1")
+        if phone_flow:
+            passed("synthetic-phone-flow")
+            return
         set_phase("same-key-rollback")
         phone.storage()
         phone.tap("Rebuild and install previous release (same key)")
@@ -1759,6 +2024,106 @@ def backend_error_summary(message):
     if child:
         result["owner_backend_exit"] = int(child.group(1))
     return result
+
+
+def inspect_check_timeout(source, *, conflicting_mode=False):
+    """Read only one source-matching retained run, not a live device or app."""
+    result = {"mode": "inspect-check-timeout", "status": "observed", "binding": "unique-retained-source-not-run-id", "errors": []}
+    try:
+        if conflicting_mode:
+            raise Failure("log-inspection-cannot-run-other-modes")
+        if not isinstance(source, str) or not re.fullmatch(r"[0-9a-f]{40}", source):
+            raise Failure("log-inspection-source-required")
+        parent = ROOT / "work/coordination/installer-update-acceptance"
+
+        def read(path, limit=4 * 1024**2):
+            if path.is_symlink() or not path.is_file() or path.stat().st_size > limit:
+                raise Failure("log-inspection-record-unavailable")
+            return path.read_bytes()
+
+        candidates = []
+        for directory in sorted(parent.iterdir()):
+            if not re.fullmatch(r"run-[a-z0-9_]{8}", directory.name) or directory.is_symlink() or not directory.is_dir():
+                continue
+            records = list(directory.glob("[0-9][0-9][0-9][0-9][0-9]-resolve-source-commit.json"))
+            if len(records) != 1:
+                continue
+            metadata = json.loads(read(records[0], 16384))
+            if metadata != {"phase": "setup", "category": "resolve-source-commit", "returncode": 0, "outcome": "returned"}:
+                continue
+            if read(records[0].with_suffix(".stdout.log"), 128).strip() == source.encode():
+                candidates.append(directory)
+        result["source_candidates"] = len(candidates)
+        if len(candidates) != 1:
+            raise Failure("log-inspection-source-candidate-not-unique")
+        directory = candidates[0]
+        states = {name: 0 for name in ("TEST_WAIT", "CHECKING", "UPDATE_AVAILABLE", "UP_TO_DATE", "ERROR", "CANCELLED", "null", "unknown", "read-unavailable")}
+        transitions, previous, reads = [], None, 0
+        for path in sorted(directory.glob("[0-9][0-9][0-9][0-9][0-9]-device-state-read.json")):
+            metadata = json.loads(read(path, 16384))
+            if metadata.get("phase") != "baseline-N-check":
+                continue
+            if metadata.get("category") != "device-state-read":
+                raise Failure("log-inspection-record-mismatch")
+            reads += 1
+            if metadata.get("returncode") != 0 or metadata.get("outcome") != "returned":
+                state = "read-unavailable"
+            else:
+                value = json.loads(read(path.with_suffix(".stdout.log")))
+                state = "null" if value is None else value.get("state") if isinstance(value, dict) else None
+                if not isinstance(state, str) or state not in states or state in ("unknown", "read-unavailable"):
+                    state = "unknown"
+            states[state] += 1
+            if state != previous and len(transitions) < 16:
+                transitions.append(state)
+            previous = state
+        if not reads:
+            raise Failure("log-inspection-check-state-not-found")
+        result.update(
+            state_reads=reads, state_counts={name: count for name, count in states.items() if count}, first_transitions=transitions, last_state=previous
+        )
+        # The last retained successful UI read is not a new screenshot, proof of
+        # tap delivery, or proof that the Activity entered its check handler.
+        control = {"status": "unavailable"}
+        for path in sorted(directory.glob("[0-9][0-9][0-9][0-9][0-9]-device-ui-read.json"), reverse=True):
+            metadata = json.loads(read(path, 16384))
+            if metadata.get("phase") != "baseline-N-check":
+                continue
+            if metadata.get("category") != "device-ui-read":
+                raise Failure("log-inspection-record-mismatch")
+            if metadata.get("returncode") != 0 or metadata.get("outcome") != "returned":
+                continue
+            raw = read(path.with_suffix(".stdout.log"))
+            try:
+                tree = ET.fromstring(raw)
+                kind = "focused-window" if tree.tag == "displays" else "hierarchy"
+                tree = focused_ui_hierarchy(tree, (PACKAGE,)) if tree.tag == "displays" else tree
+                if tree.tag != "hierarchy":
+                    raise Failure("ui-window-schema")
+                Phone.prompt_nodes(tree, (PACKAGE,))
+                nodes = [node for node in tree.iter("node") if node.get("text", "").casefold() == "check for updates"]
+
+                def valid_bounds(node):
+                    match = re.fullmatch(r"\[(\d+),(\d+)\]\[(\d+),(\d+)\]", node.get("bounds", ""))
+                    return bool(match and int(match[3]) > int(match[1]) and int(match[4]) > int(match[2]))
+
+                control = {
+                    "status": "owned-root",
+                    "kind": kind,
+                    "count": len(nodes),
+                    "enabled_count": sum(node.get("enabled") == "true" for node in nodes),
+                    "clickable_count": sum(node.get("clickable") == "true" for node in nodes),
+                    "bounds_valid_count": sum(valid_bounds(node) for node in nodes),
+                }
+            except (Failure, ET.ParseError):
+                control = {"status": "unclassified"}
+            break
+        result["last_retained_check_control"] = control
+    except Exception as error:
+        result["status"] = "error"
+        result["errors"].append(str(error) if isinstance(error, Failure) else "log-inspection-local-read-error")
+    print(encoded(result).decode(), end="", flush=True)
+    return 1 if result["errors"] else 0
 
 
 def inspect_ui_failure(selection, *, conflicting_mode=False, update_failure=False):
@@ -2081,6 +2446,11 @@ def main(argv=None):
     )
     parser.add_argument("--timeout", type=int, default=1200)
     parser.add_argument(
+        "--qualify-phone-flow",
+        action="store_true",
+        help="Synthetic visible-permission phone reconstruction/install/update with sampled stage metrics; stops after profile/settings verification",
+    )
+    parser.add_argument(
         "--qualify-install-prompts",
         action="store_true",
         help="Authorized synthetic workflow only: require ungranted Settings permission and matching pending-user-action consent; never pregrant",
@@ -2095,6 +2465,11 @@ def main(argv=None):
     parser.add_argument(
         "--expected-installer-sha256", help="Required for --inspect-state: last known installer hash, used only for comparison, never ownership"
     )
+    parser.add_argument(
+        "--inspect-check-timeout",
+        metavar="SOURCE_COMMIT",
+        help="Read-only retained baseline-check state counts and fixed Check control flags; no device actions",
+    )
     parser.add_argument("--inspect-ui-failure", action="store_true", help="Read-only fixed classification of this driver's retained UI dump/read failure logs")
     parser.add_argument(
         "--inspect-update-failure", action="store_true", help="Read-only public-source error matches from the retained first baseline check/install ERROR"
@@ -2106,16 +2481,34 @@ def main(argv=None):
         "--diagnostic-run", help="Inspection selection: UI newest/private run basename, or toolhost numeric lab run ID; never prints paths or raw logs"
     )
     args = parser.parse_args(argv)
-    if args.qualify_install_prompts and (
+    qualify_prompts = args.qualify_install_prompts or args.qualify_phone_flow
+    if qualify_prompts and (
         args.allow_test_installs
         or args.host_only
         or args.inspect_state
         or args.inspect_ui_failure
         or args.inspect_update_failure
         or args.inspect_toolhost_failure is not None
+        or args.inspect_check_timeout is not None
+        or args.qualify_phone_flow
+        and args.allow_test_notifications
     ):
         print("FAIL install-prompt-mode-conflict", flush=True)
         return 1
+    if args.inspect_check_timeout is not None:
+        DIAGNOSTICS = None
+        return inspect_check_timeout(
+            args.inspect_check_timeout,
+            conflicting_mode=args.inspect_ui_failure
+            or args.inspect_update_failure
+            or args.inspect_toolhost_failure is not None
+            or args.inspect_state
+            or args.host_only
+            or args.allow_test_installs
+            or args.allow_test_notifications
+            or args.diagnostic_run is not None
+            or args.expected_installer_sha256 is not None,
+        )
     if args.inspect_toolhost_failure is not None:
         DIAGNOSTICS = None
         return inspect_toolhost_failure(
@@ -2153,6 +2546,7 @@ def main(argv=None):
     failure_phase = "setup"
     cleanup_reason = None
     cleanup_verified = False
+    metrics = None
 
     def passed(case):
         completed.add(case)
@@ -2176,7 +2570,9 @@ def main(argv=None):
                 prepare_artifacts(config, temporary)
                 print("PASS host-fixture-build (phone acceptance NOT RUN)", flush=True)
             else:
-                if args.qualify_install_prompts:
+                if args.qualify_phone_flow:
+                    acceptance(phone, config, temporary, passed, qualify_install_prompts=True, phone_flow=True)
+                elif qualify_prompts:
                     acceptance(phone, config, temporary, passed, qualify_install_prompts=True)
                 else:
                     acceptance(phone, config, temporary, passed)
@@ -2188,6 +2584,12 @@ def main(argv=None):
         failure_phase = CURRENT_PHASE
     finally:
         try:
+            if phone is not None and reason and failure_phase in ("baseline-N-check", "check-for-updates"):
+                try:
+                    observed = phone.capture_check_diagnostic()
+                except Exception:
+                    observed = {"status": "unavailable", "reason": "capture-failed"}
+                print(encoded({"mode": "release-check-diagnostic", "observed": observed}).decode(), end="", flush=True)
             if phone is not None and reason and failure_phase in ("baseline-N-install", "update-N-to-N+1", "same-key-rollback"):
                 try:
                     observed = phone.capture_install_diagnostic()
@@ -2199,6 +2601,8 @@ def main(argv=None):
             pass
         finally:
             if phone is not None:
+                if args.qualify_phone_flow:
+                    metrics, phone.flow_metrics = phone.flow_metrics, None
                 set_phase("cleanup")
                 try:
                     cleanup_verified = phone.cleanup() == "verified-absent"
@@ -2211,7 +2615,8 @@ def main(argv=None):
         if args.host_only:
             print("FAIL host-fixture-build phase=" + failure_phase + " reason=" + reason, flush=True)
         else:
-            for case in (*PROMPT_CASES, *CASES) if args.qualify_install_prompts else CASES:
+            cases = (*PROMPT_CASES, *CASES[:2], "synthetic-phone-flow") if args.qualify_phone_flow else (*PROMPT_CASES, *CASES) if qualify_prompts else CASES
+            for case in cases:
                 if case not in completed:
                     print("FAIL " + case + " phase=" + failure_phase + " reason=" + reason, flush=True)
     if phone is not None:
@@ -2222,6 +2627,11 @@ def main(argv=None):
                 print("PASS cleanup packages=verified-absent", flush=True)
             else:
                 print("SKIP cleanup packages=not-checked reason=no-owned-package-mutation", flush=True)
+    if metrics is not None:
+        try:
+            print(encoded(metrics.report()).decode(), end="", flush=True)
+        except Exception:
+            print('{"mode":"synthetic-phone-flow-metrics","status":"unavailable"}', flush=True)
     return 1 if reason or cleanup_reason else 0
 
 

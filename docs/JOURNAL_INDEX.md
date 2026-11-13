@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J1471](PORTING_JOURNAL.md#j1471--attribute-live-enemy-and-attack-material-bindings) | 2026-11-12 | Attribute live enemy and attack material bindings | 2026-11-13. |
 | [J1470](PORTING_JOURNAL.md#j1470--restore-commando-source-additive-aim-and-gesture-poses) | 2026-11-12 | Restore Commando source additive aim and gesture poses | 2026-11-12. |
 | [J1469](PORTING_JOURNAL.md#j1469--initialize-commando-locomotion-before-the-first-roll) | 2026-11-12 | Initialize Commando locomotion before the first roll | 2026-11-12. |
 | [J1468](PORTING_JOURNAL.md#j1468--save-app-refresh-policy-and-make-periodic-scene-inspection-explicit) | 2026-11-12 | Save app refresh policy and make periodic scene inspection explicit | Saved high-refresh preference requests app-window/surface modes; GUI Save selects 60/120 Hz, and high mode survives cold launch. |
@@ -305,3 +306,4 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 | [J1178](PORTING_JOURNAL.md#j1178--journal-archived-and-documentation-slimmed) | 2026-10-25 | Journal archived and documentation slimmed | 2026-10-26. |
 | [J1465](PORTING_JOURNAL.md#j1465--bind-managed-dependency-refreshes-to-their-produced-cohort) | 2026-11-12 | Bind managed dependency refreshes to their produced cohort | 2026-11-12. |
 | [J1466](PORTING_JOURNAL.md#j1466--validate-refreshed-ui-providers-and-relocated-startup-producers) | 2026-11-12 | Validate refreshed UI providers and relocated startup producers | 2026-11-12. |
+| [J1472](PORTING_JOURNAL.md#j1472--qualify-the-shared-device-runner-with-bounded-native-combat) | 2026-11-12 | Qualify the shared device runner with bounded native combat | 2026-11-13. |

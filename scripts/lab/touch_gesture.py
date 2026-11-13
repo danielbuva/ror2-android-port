@@ -105,7 +105,7 @@ def compile_tool(source=None):
     return destination / "classes.dex"
 
 
-def owned_display_zero_focus(text):
+def owned_display_zero_focus(text, package=PACKAGE):
     """Require the owned window on display 0, never a second-screen match."""
     displays = list(re.finditer(r"^  Display: mDisplayId=([0-9]+)\b", text, re.M))
     primary = [index for index, match in enumerate(displays) if match[1] == "0"]
@@ -114,10 +114,10 @@ def owned_display_zero_focus(text):
     index = primary[0]
     block = text[displays[index].end() : displays[index + 1].start() if index + 1 < len(displays) else len(text)]
     focus = re.findall(r"^  mCurrentFocus=(.*)$", block, re.M)
-    return len(focus) == 1 and re.fullmatch(r"Window\{[^\n]*\s" + re.escape(PACKAGE) + r"/[^\n]*\}", focus[0]) is not None
+    return len(focus) == 1 and re.fullmatch(r"Window\{[^\n]*\s" + re.escape(package) + r"/[^\n]*\}", focus[0]) is not None
 
 
-def run(target, expected_apk_sha256=None):
+def run(target, expected_apk_sha256=None, *, device=None):
     expected = validate_expected_apk_sha256(expected_apk_sha256)
     if expected is None:
         raise ValueError("touch-gesture requires --expected-apk-sha256")
@@ -125,18 +125,19 @@ def run(target, expected_apk_sha256=None):
     if request.stat().st_size > 65536:
         raise ValueError("Gesture request exceeds 64 KiB")
     value = validate_request(read(request))
-    device = Device()
+    device = Device() if device is None else device
+    package = device.package
     installed = device.owned()
     bind_installed_apk(installed, expected_sha256=expected)
-    if device.sh("pidof", PACKAGE, check=False).strip() != value["pid"]:
+    if device.sh("pidof", package, check=False).strip() != value["pid"]:
         raise RuntimeError("Gesture PID differs from the currently owned game process")
     if int(device.sh("getprop", "ro.build.version.sdk")) < 33:
         raise RuntimeError("Targeted touch injection requires Android 13 or newer")
     window = device.sh("dumpsys", "window", "displays")
-    if not owned_display_zero_focus(window):
+    if not owned_display_zero_focus(window, package):
         raise RuntimeError("The owned game is not the focused window")
-    packages = device.sh("cmd", "package", "list", "packages", "-U", PACKAGE)
-    matches = [match for line in packages.splitlines() if (match := re.fullmatch(r"package:" + re.escape(PACKAGE) + r" uid:([0-9]+)", line.strip()))]
+    packages = device.sh("cmd", "package", "list", "packages", "-U", package)
+    matches = [match for line in packages.splitlines() if (match := re.fullmatch(r"package:" + re.escape(package) + r" uid:([0-9]+)", line.strip()))]
     if len(matches) != 1 or int(matches[0][1]) < 10000:
         raise RuntimeError("Cannot bind touch injection to the owned application UID")
     match = matches[0]
@@ -169,9 +170,9 @@ def run(target, expected_apk_sha256=None):
     except Exception as error:
         result = dict(success=False, error=str(error))
         try:
-            if dispatched and device.sh("pidof", PACKAGE, check=False).strip() == value["pid"]:
+            if dispatched and device.sh("pidof", package, check=False).strip() == value["pid"]:
                 bind_installed_apk(device.owned(), expected_sha256=expected)
-                device.sh("am", "force-stop", PACKAGE)
+                device.sh("am", "force-stop", package)
         except Exception as cleanup:
             result["stop_error"] = str(cleanup)
         raise

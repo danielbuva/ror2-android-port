@@ -19,7 +19,7 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 namespace UnityEngine {
- public class Object { public bool destroyed; public static implicit operator bool(Object x){return !ReferenceEquals(x,null)&&!x.destroyed;} }
+ public class Object { public bool destroyed; public static int workloadCalls; public static Object[] FindObjectsOfType(Type type){workloadCalls++;return new Object[type.FullName.Contains("Projectile")?3:7];} public static implicit operator bool(Object x){return !ReferenceEquals(x,null)&&!x.destroyed;} }
  public class Component : Object {public int value=7;}
  public class Transform : Component {public string name;public Transform parent;public T[] GetComponents<T>(){return new[]{(T)(object)new Component()};}}
  public class Shader {public string name="shader";}
@@ -28,10 +28,12 @@ namespace UnityEngine {
  public static class Debug { public static List<string> logs=new List<string>(); public static void Log(string value){logs.Add(value);} }
  public static class JsonUtility { public static string ToJson(object value,bool pretty=false){return new System.Web.Script.Serialization.JavaScriptSerializer().Serialize(value);} }
 }
+namespace RoR2 {public class EffectComponent:UnityEngine.Component {}}
+namespace RoR2.Projectile {public class ProjectileController:UnityEngine.Component {}}
 class LabDiagnostics {
- public class Config {public bool sceneDetails,fields;public string subtree="";}
+ public class Config {public bool sceneDetails,fields,workloadCounts;public string subtree="";}
  public class ObjectInfo {public string name,parent;public string[] components,fields;}
- public class Snapshot { public string checkpoint,payload;public bool sceneDetails;public string[] assemblies,renderers;public ObjectInfo[] hierarchy; }
+ public class Snapshot { public string checkpoint,payload;public bool sceneDetails,workloadCounts;public int activeProjectiles=-1,activeEffects=-1;public double workloadCountMs;public string workloadCountError;public string[] assemblies,renderers;public ObjectInfo[] hierarchy; }
  Config config=new Config();bool permitCensus;int censusCalls;
  T[] FindObjectsOfType<T>(bool inactive){
   if(!permitCensus||!inactive)throw new Exception("Unrequested/incomplete census");censusCalls++;
@@ -41,9 +43,16 @@ class LabDiagnostics {
  SCENE_DETAILS
  SAFE_FIELD
  ANCESTORS
+ WORKLOAD_COUNTS
+ COUNT_COMPONENTS
  public static void VerifySceneDetails(){
   var owner=new LabDiagnostics();var scalar=new Snapshot();owner.PopulateSceneDetails("periodic",scalar);
   if(scalar.sceneDetails||owner.censusCalls!=0||scalar.hierarchy.Length!=0||scalar.renderers.Length!=0||scalar.assemblies.Length!=0)throw new Exception("Default periodic scan");
+  owner.PopulateWorkloadCounts(scalar);
+  if(scalar.workloadCounts||UnityEngine.Object.workloadCalls!=0||scalar.activeProjectiles!=-1||scalar.activeEffects!=-1)throw new Exception("Unrequested workload census");
+  owner.config.workloadCounts=true;var workload=new Snapshot();owner.PopulateWorkloadCounts(workload);
+  if(!workload.workloadCounts||workload.activeProjectiles!=3||workload.activeEffects!=7||UnityEngine.Object.workloadCalls!=2||workload.workloadCountError!=null||workload.workloadCountMs<0)throw new Exception("Requested live component census");
+  try{owner.CountActiveComponents("Missing.Component");throw new Exception("Missing type fabricated a count");}catch(InvalidOperationException){}
   owner.permitCensus=true;
   foreach(var mode in new[]{"startup","scene","fields","subtree"}){
    owner.config=new Config{sceneDetails=mode=="scene",fields=mode=="fields",subtree=mode=="subtree"?"parent":""};
@@ -190,6 +199,8 @@ class DiagnosticRetentionTests(unittest.TestCase):
         code = code.replace("SCENE_DETAILS", extract_method(diagnostic, " void PopulateSceneDetails("))
         code = code.replace("SAFE_FIELD", extract_method(diagnostic, " static string SafeField("))
         code = code.replace("ANCESTORS", extract_method(diagnostic, " static string Ancestors("))
+        code = code.replace("WORKLOAD_COUNTS", extract_method(diagnostic, " void PopulateWorkloadCounts("))
+        code = code.replace("COUNT_COMPONENTS", extract_method(diagnostic, " int CountActiveComponents("))
         code = code.replace(
             "CLEANUP",
             extract_method((ROOT / "tools/unity/runtime/session/SessionResourceBoundary.cs").read_text(), "    int ReleaseDestroyedPooledHitTargets()"),
