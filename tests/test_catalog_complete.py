@@ -37,6 +37,65 @@ def pin(path):
 
 
 class CatalogCompletionTests(unittest.TestCase):
+    def test_model_skin_slots_follow_actual_external_scripts_and_reject_nulls(self):
+        def text(value):
+            raw = struct.pack("<I", len(value)) + value.encode()
+            return raw + bytes(-len(raw) % 4)
+
+        controller = ("ModelSkinController", "RoR2", "RoR2.dll")
+        skin = ("SkinDef", "RoR2", "RoR2.dll")
+
+        def typ(identity, slots=False):
+            fields = [
+                ("MonoBehaviour", "Base", -1, 0),
+                ("PPtr<GameObject>", "m_GameObject", 12, 1),
+                ("int", "m_FileID", 4, 2),
+                ("SInt64", "m_PathID", 8, 2),
+                ("int", "m_Enabled", 4, 1),
+                ("PPtr<MonoScript>", "m_Script", 12, 1),
+                ("int", "m_FileID", 4, 2),
+                ("SInt64", "m_PathID", 8, 2),
+            ]
+            if slots:
+                fields += [
+                    ("vector", "skins", -1, 1),
+                    ("Array", "Array", -1, 2),
+                    ("int", "size", 4, 3),
+                    ("PPtr<SkinDef>", "data", 12, 3),
+                    ("int", "m_FileID", 4, 4),
+                    ("SInt64", "m_PathID", 8, 4),
+                ]
+            return dict(
+                class_id=114,
+                script_id=C.S.md4("".join(identity).encode()),
+                tree=M.S._tree([dict(type=t, name=n, size=s, level=level, meta=0, flags=int(t == "Array"), version=1) for t, n, s, level in fields]),
+            )
+
+        def add(members, name, rows, externals=()):
+            body, types, objects = b"", [], {}
+            for path_id, native, raw in rows:
+                objects[path_id] = dict(path_id=path_id, type_id=len(types), offset=len(body), bytes=len(raw))
+                types.append(native)
+                body += raw
+            members.members[name] = (io.BytesIO(body), dict(data_offset=0, types=types, externals=[dict(path=x) for x in externals]), objects)
+
+        for failure in (None, "null", "absent", "wrong-type", "wrong-script", "unregistered"):
+            with self.subTest(failure=failure):
+                members = C.ProducedMembers()
+                pointer = (0, 0) if failure == "null" else (1, 999 if failure == "absent" else 20)
+                body = bytes(16) + struct.pack("<iqIiq", 0, 7, 1, *pointer)
+                script = lambda identity: text(identity[0]) + bytes(20) + b"".join(text(value) for value in identity)
+                add(members, "CAB-body", [(10, typ(controller, slots=True), body), (7, dict(class_id=115), script(controller))], ["CAB-skins"])
+                target_type = dict(class_id=1) if failure == "wrong-type" else typ(skin)
+                binding = controller if failure == "wrong-script" else skin
+                add(members, "CAB-skins", [(20, target_type, bytes(16) + struct.pack("<iq", 0, 8)), (8, dict(class_id=115), script(binding))])
+                runtime = {controller} if failure == "unregistered" else {controller, skin}
+                if failure:
+                    with self.assertRaisesRegex(ValueError, "unresolved model skin slot.*CAB-body:10 skins.Array.0"):
+                        C.validate_model_skins(members, runtime)
+                else:
+                    self.assertEqual(C.validate_model_skins(members, runtime), dict(model_skin_controllers=1, model_skin_slots=1))
+
     def test_deferred_references_preserve_subobjects_and_plain_preloads(self):
         guid = "1234567890abcdef1234567890abcdef"
         tree = {
@@ -195,7 +254,7 @@ class CatalogCompletionTests(unittest.TestCase):
             request, _ = self.fixture(root)
             result = C.produce(request, root / "output")
             self.assertTrue(result["success"])
-            self.assertEqual(result["checks"], dict(locations=1, container_paths=1, runtime_scripts=0))
+            self.assertEqual(result["checks"], dict(locations=1, container_paths=1, runtime_scripts=0, model_skin_controllers=0, model_skin_slots=0))
             emitted = json.loads((root / "output/whole-catalog.json").read_bytes())
             self.assertEqual(emitted["locations"][0]["bundle"], "generated-android-data")
             self.assertEqual(emitted["bundles"]["generated-android-data"]["sha256"], result["bundles"]["generated-android-data"]["sha256"])

@@ -1777,7 +1777,48 @@ def repack_canonical_aliases(
             if container is None or set(graph) != set(required["path_ids"]):
                 raise ValueError("Canonical repack required object set differs")
             validate_graph(graph, len(externals))
-            replacements[container] = produce_graph(required, graph, {}, emission_cache=emission_cache, endpoint_record=endpoint_record)
+            # An advertised managed root remains a duplicate, while its consumers
+            # now use the canonical instance. Loading that address must also load
+            # the canonical instance and its script, just like a direct PPtr.
+            # Do not walk unrelated external prefab graphs or change containers.
+            preload_required = copy.deepcopy(required)
+            for group in preload_required["asset_groups"]:
+                seeds = group.setdefault("preload_roots", [])
+                for root in group["roots"]:
+                    alias = mapping.get((name, member, root))
+                    if alias is None or alias["duplicate_class_id"] != 114:
+                        continue
+                    target = alias["canonical"]
+                    _, typ, body = native.record(target[1], (0, target[2]))
+                    native.managed_identity(target[1], typ, body)
+                    script_member, script = native.resolve(target[1], struct.unpack_from("<iq", body, 16))
+                    script_bundle = next(bundle for bundle, members in native.bundles.items() if script_member in members)
+                    for seed in (target, [script_bundle, script_member, script["path_id"]]):
+                        if seed not in seeds:
+                            seeds.append(seed)
+
+            def preload_endpoint(target):
+                if target[1] not in native.members:
+                    if endpoint_record is None:
+                        raise ValueError("External preload root requires an actual endpoint reader")
+                    return endpoint_record(target)
+                _, typ, body = native.record(target[1], (0, target[2]))
+                return (
+                    dict(
+                        destination=list(target),
+                        bytes=len(body),
+                        sha256=hashlib.sha256(body).hexdigest(),
+                        class_id=typ["class_id"],
+                        native_type_hash=typ["hash"].hex(),
+                        full_type=full_type_key(typ),
+                        schema=hashlib.sha256(typ["tree"]).hexdigest(),
+                        edges=list(pointers(body, typ, schemas).values()),
+                    ),
+                    body,
+                    typ,
+                )
+
+            replacements[container] = produce_graph(preload_required, graph, {}, emission_cache=emission_cache, endpoint_record=preload_endpoint)
             revised = copy.deepcopy(layout)
             offset = 0
             for obj in sorted(revised["objects"], key=lambda row: row["offset"]):
@@ -1876,6 +1917,33 @@ def catalog_artifacts(required, final, output):
         return dict(path=str(path), bytes=path.stat().st_size, sha256=O.B.sha(path))
 
     return dict(catalog_profile=pin(profile), catalog_bundle=pin(final["bundle"]))
+
+
+def repack_request(inputs, output, *, cache_directory=None):
+    """Reuse a qualified emission through the pinned canonical repack owner."""
+    from types import SimpleNamespace
+    import json
+
+    inputs = Path(inputs).resolve(strict=True)
+    request = json.loads(inputs.read_bytes())
+    fields = {"source", "required", "aliases", "selected_records", "qualified_types", "canonical_profile", "canonical_bundle"}
+    if request.keys() != fields | {"schema", "codec"} or request["schema"] != "owner-bundle-canonical-inputs-v1":
+        raise ValueError("unsupported canonical repack input contract")
+    pins = module("bundle_endpoints").InputPins(inputs.parent, SimpleNamespace(**globals()))
+    pins.add(inputs)
+    values = {key: pins.read(request[key]) for key in ("required", "aliases", "qualified_types", "canonical_profile")}
+    values["selected_records"] = list(json_rows(pins.pin(request["selected_records"])))
+    values.update({key: pins.pin(request[key]) for key in ("source", "canonical_bundle")})
+    codec = None if request["codec"] is None else pins.pin(request["codec"])
+    result = repack_canonical_aliases(
+        output=output,
+        **values,
+        codec=codec,
+        codec_sha256=None if codec is None else request["codec"]["sha256"],
+        cache_directory=cache_directory,
+    )
+    pins.check()
+    return result
 
 
 def prepare_request(inputs, output):
@@ -2046,6 +2114,7 @@ def main():
 
     parser = argparse.ArgumentParser(description="Emit an explicitly partial, closed native bundle from source-produced records")
     parser.add_argument("--inputs", type=Path, help="explicit checked emission/canonical request; paths relative to this file")
+    parser.add_argument("--repack", type=Path, help="current: canonical repack of an existing qualified emission with pinned inputs")
     parser.add_argument("--prepare", type=Path, help="derive emission inputs from pinned source packs and declarative policy")
     parser.add_argument("--release", type=Path, help="prepare and emit a signed release-graph policy in one private workspace")
     parser.add_argument("--cache", type=Path, help="private incremental emission/preload/repack cache")
@@ -2058,6 +2127,14 @@ def main():
     parser.add_argument("--codec", type=Path, help="pinned LZ4 helper; compresses UnityFS blocks without changing member bytes")
     parser.add_argument("--codec-sha256")
     args = parser.parse_args()
+    if args.repack is not None:
+        if any(
+            value is not None
+            for value in (args.inputs, args.prepare, args.release, args.graph, args.schema, args.bundle, args.member, args.codec, args.codec_sha256)
+        ):
+            parser.error("--repack requires only --output and optional --cache")
+        print(json.dumps(repack_request(args.repack, args.output, cache_directory=args.cache), indent=2))
+        return
     if args.release is not None:
         if any(
             value is not None

@@ -354,6 +354,7 @@ class PrototypeActionTests(unittest.TestCase):
             "shader-screen-damage",
             "shader-translucent",
             "owner-assembly-prefix",
+            "whole-catalog-skin-host",
         }
         self.assertEqual(set(actions.ACTIONS) - added, set(EXPECTED) - {"inspect"})
         self.assertEqual(len(actions._ENTRIES), len(actions.ACTIONS))
@@ -400,6 +401,7 @@ class PrototypeActionTests(unittest.TestCase):
                 "composition-update-dependencies",
                 "whole-catalog-prepare",
                 "whole-catalog-host",
+                "whole-catalog-skin-host",
                 "survivor-kit-check",
                 "session-cleanup-check",
                 "session-abandon-check",

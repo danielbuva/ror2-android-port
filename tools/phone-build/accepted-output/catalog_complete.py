@@ -281,6 +281,57 @@ class ProducedMembers:
         return identities
 
 
+def validate_model_skins(members, runtime_scripts):
+    """Check every emitted model skin slot, including body/display subassets.
+
+    Catalog roots alone do not cover these referenced ScriptableObjects. Follow
+    their actual PPtrs and MonoScripts rather than trusting names or preloads.
+    Unity typed loading remains a separate check.
+    """
+    records = module("_catalog_skin_records", HERE / "record_produce.py")
+    controller = ("ModelSkinController", "RoR2", "RoR2.dll")
+    skin = ("SkinDef", "RoR2", "RoR2.dll")
+    controller_id = S.md4("".join(controller).encode())
+    schemas, controllers, slots = {}, 0, 0
+    for member, (_, layout, objects) in members.members.items():
+        for path_id, row in objects.items():
+            typ = layout["types"][row["type_id"]]
+            if typ["class_id"] != 114 or typ.get("script_id") != controller_id:
+                continue
+            _, typ, body = members.record(member, (0, path_id))
+            if members.managed_identity(member, typ, body) != controller or controller not in runtime_scripts:
+                raise ValueError("model skin controller absent from current runtime registry")
+            if typ["tree"] not in schemas:
+                schemas[typ["tree"]] = records.SCHEMA.type_tree(io.BytesIO(typ["tree"]))
+            _, fields = records.fields(body, schemas[typ["tree"]])
+            if ("skins", "Array") not in fields:
+                raise ValueError("model skin controller has no serialized skins array: " + member + ":" + str(path_id))
+            array_start, _ = fields[("skins", "Array")]
+            expected_slots = struct.unpack_from("<I", body, array_start)[0]
+            controller_slots = 0
+            for field, (start, end) in fields.items():
+                if field[:2] != ("skins", "Array") or len(field) != 3 or not field[2].isdigit():
+                    continue
+                context = member + ":" + str(path_id) + " " + ".".join(field)
+                if end - start != 12:
+                    raise ValueError("model skin slot is not a PPtr: " + context)
+                pointer = struct.unpack_from("<iq", body, start)
+                try:
+                    owner, target_type, target = members.record(member, pointer)
+                    if target_type["class_id"] != 114 or members.managed_identity(owner, target_type, target) != skin:
+                        raise ValueError("target is not RoR2.SkinDef")
+                    if skin not in runtime_scripts:
+                        raise ValueError("SkinDef absent from current runtime registry")
+                except ValueError as error:
+                    raise ValueError("unresolved model skin slot: " + context + ": " + str(error)) from error
+                slots += 1
+                controller_slots += 1
+            if controller_slots != expected_slots:
+                raise ValueError("model skin array layout differs: " + member + ":" + str(path_id))
+            controllers += 1
+    return dict(model_skin_controllers=controllers, model_skin_slots=slots)
+
+
 def validate_locations(metadata, members, registry):
     runtime_scripts = set()
     for member in members.bundles[registry]:
@@ -345,7 +396,12 @@ def validate_locations(metadata, members, registry):
             raise ValueError(
                 "catalog endpoint absent or type differs: " + str(row["id"]) + " " + row["path"] + " expected " + qualified + " actual " + str(candidates)
             )
-    return dict(locations=len(metadata["locations"]), container_paths=len(advertised), runtime_scripts=len(runtime_scripts))
+    return dict(
+        locations=len(metadata["locations"]),
+        container_paths=len(advertised),
+        runtime_scripts=len(runtime_scripts),
+        **validate_model_skins(members, runtime_scripts),
+    )
 
 
 def produce(inputs, output):
