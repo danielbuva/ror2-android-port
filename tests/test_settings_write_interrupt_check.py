@@ -18,7 +18,24 @@ class InterruptedWriteEvidenceTests(unittest.TestCase):
     def test_injected_failure_checks_retained_generations_visible_retry_and_cold_load(self):
         device = Mock()
         device.read_receipt.return_value = {"persistentDataPath": "/synthetic"}
-        device.sh.side_effect = lambda *args, **kwargs: "7" if args[0] == "pidof" else ""
+        live_pid = None
+        launches = []
+        selectors = []
+        device.sh.side_effect = lambda *args, **kwargs: live_pid if args[0] == "pidof" else ""
+
+        def push(*args):
+            if args[0] == "push":
+                selectors.append(json.loads(Path(args[1]).read_text()))
+
+        device.cmd.side_effect = push
+
+        def launch(current):
+            nonlocal live_pid
+            self.assertIs(current, device)
+            live_pid = str(7 + len(launches))
+            launches.append(selectors[-1])
+            return {"pid": live_pid}
+
         cancelled = Mock()
         cancelled.is_set.return_value = False
 
@@ -26,7 +43,7 @@ class InterruptedWriteEvidenceTests(unittest.TestCase):
             return dict(phase="offline-start-menu", settings=dict(ready=True, buttonX=10, buttonY=20, screenWidth=1920, screenHeight=1080, **settings))
 
         reports = []
-        for stage in ("write", "rename"):
+        for pid, stage in ((7, "write"), (8, "rename")):
             reports.extend(
                 [
                     report(),
@@ -35,21 +52,26 @@ class InterruptedWriteEvidenceTests(unittest.TestCase):
                     report(visible=False, persisted=True),
                 ]
             )
-        reports.append(report(recovery="validated-primary"))
+            for value in reports[-4:]:
+                value.update(pid=pid, attempt="fixture-attempt", id=check.SPINE_ID)
+        reports.append(dict(report(recovery="validated-primary"), pid=9, attempt="fixture-attempt", id=check.SPINE_ID))
         with tempfile.TemporaryDirectory() as temporary, ExitStack() as stack:
             stack.enter_context(patch.object(check, "bind_installed_apk"))
             stack.enter_context(patch.object(check, "attempt_from_installed", return_value="fixture-attempt"))
-            stack.enter_context(patch.object(check, "matches_run", return_value=True))
             stack.enter_context(patch.object(check, "_read_json", side_effect=reports))
             stack.enter_context(patch.object(check, "_read_raw", return_value='{"version":1}'))
             stack.enter_context(patch.object(check, "_remote_path_state", side_effect=lambda d, p: "absent" if p.endswith(".pending") else "file"))
             stack.enter_context(patch.object(check, "protected_hashes", return_value={"profile": "retained"}))
             stack.enter_context(patch.object(check, "current_errors", return_value=[]))
             gestures = stack.enter_context(patch.object(check, "gesture"))
-            result = check.check_settings_save_failure(device, Path(temporary), "a" * 64, lambda d: {"pid": "7"}, cancelled)
+            result = check.check_settings_save_failure(device, Path(temporary), "a" * 64, launch, cancelled)
             self.assertTrue(result["success"])
             self.assertEqual([s["stage"] for s in result["stages"]], ["write", "rename"])
             self.assertEqual(gestures.call_count, 6)
+            self.assertEqual([s["debugOptions"].get("settingsSaveFailure") for s in launches], ["write", "rename", None])
+            self.assertEqual(launches[-1]["id"], check.SPINE_ID)
+            self.assertEqual(launches[-1]["attempt"], "fixture-attempt")
+            self.assertTrue(all(not value for key, value in launches[-1]["debugOptions"].items() if key != "purpose"))
             self.assertTrue((Path(temporary) / "settings-save-failure.json").is_file())
 
     def test_android_restarted_activity_is_stopped_without_reclassifying_writer_exit(self):

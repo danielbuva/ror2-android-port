@@ -83,7 +83,7 @@ Completed records remain in the [journal](PORTING_JOURNAL.md) and
       hardware screen/results navigation and ordinary long-run dependency retention
       against the [input contract](INPUT_QUALIFICATION.md) and
       [screen inventory](SCREEN_COVERAGE.md).
-- [ ] Complete real interrupted-write/power-cut, ENOSPC and remaining recovery cases,
+- [ ] Complete physical power-loss, profile-writer failure and remaining recovery cases,
       plus ordinary sustained performance/thermal cases on supported hardware
       ([alpha checklist](public-alpha.md#stability-and-playtests)).
 - [ ] Integrate original position indicators and compare player/NPC/boss/nameplate

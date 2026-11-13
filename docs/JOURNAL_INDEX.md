@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J1473](PORTING_JOURNAL.md#j1473--recover-settings-from-injected-write-and-rename-enospc) | 2026-11-12 | Recover settings from injected write and rename ENOSPC | 2026-11-13. |
 | [J1471](PORTING_JOURNAL.md#j1471--attribute-live-enemy-and-attack-material-bindings) | 2026-11-12 | Attribute live enemy and attack material bindings | 2026-11-13. |
 | [J1470](PORTING_JOURNAL.md#j1470--restore-commando-source-additive-aim-and-gesture-poses) | 2026-11-12 | Restore Commando source additive aim and gesture poses | 2026-11-12. |
 | [J1469](PORTING_JOURNAL.md#j1469--initialize-commando-locomotion-before-the-first-roll) | 2026-11-12 | Initialize Commando locomotion before the first roll | 2026-11-12. |

@@ -28,6 +28,37 @@ SCOPE = (
     "Composed renderer; no ordinary play, digitizer, full-game/performance acceptance or repeated-session memory-bound claim."
 )
 
+# Read-only kernel telemetry. Missing/permission-denied values remain explicit;
+# frequencies are observations, never proof of thermal throttling by themselves.
+SENSOR_READS = (
+    "for p in /sys/devices/system/cpu/cpufreq/policy*/scaling_cur_freq "
+    "/sys/class/kgsl/kgsl-3d0/devfreq/cur_freq; do "
+    'if read -r v < "$p" 2>/dev/null; then printf "%s\\t%s\\n" "$p" "$v"; fi; done; '
+    "for z in /sys/class/thermal/thermal_zone*; do "
+    'read -r t < "$z/type" || continue; case "$t" in *skin*|*Skin*) '
+    'if read -r v < "$z/temp"; then printf "%s\\t%s\\n" "$t" "$v"; fi;; esac; done; :'
+)
+
+
+def sensor_sample(text):
+    row = dict(cpu_frequency_khz={}, gpu_frequency_hz=None, skin_celsius={})
+    for line in text.splitlines():
+        fields = line.split()
+        if len(fields) != 2:
+            continue
+        name, raw = fields
+        try:
+            value = int(raw)
+        except ValueError:
+            continue
+        if name.startswith("/sys/devices/system/cpu/cpufreq/policy") and value > 0:
+            row["cpu_frequency_khz"][name.split("/")[-2]] = value
+        elif name == "/sys/class/kgsl/kgsl-3d0/devfreq/cur_freq" and value > 0:
+            row["gpu_frequency_hz"] = value
+        elif "skin" in name.lower() and -30000 < value < 200000:
+            row["skin_celsius"][name] = value / 1000
+    return row
+
 
 def require_invincibility_only(report):
     active = (report.get("debugAcceleration") or {}).get("active") or {}
@@ -87,6 +118,10 @@ def observation_sample(report, snapshot, elapsed, previous=None, utc=None):
         primary_shots=(report.get("primary") or {}).get("shots"),
         health=world.get("health"),
         snapshot_utc=snapshot["utc"],
+        active_projectiles=snapshot.get("activeProjectiles") if snapshot.get("workloadCounts") and not snapshot.get("workloadCountError") else None,
+        active_effects=snapshot.get("activeEffects") if snapshot.get("workloadCounts") and not snapshot.get("workloadCountError") else None,
+        workload_count_ms=snapshot.get("workloadCountMs"),
+        workload_count_error=snapshot.get("workloadCountError"),
     )
     for target, source in (
         ("fps", "fps"),
@@ -203,13 +238,27 @@ def assisted_teardown_contract(completed, pid, attempt, baseline):
     return failures
 
 
-def check_session_sustained(expected_apk_sha256=None, _launch=None, *, raw_frame_times=True, duration_seconds=None, _observe=None):
+def check_session_sustained(
+    expected_apk_sha256=None,
+    _launch=None,
+    *,
+    raw_frame_times=True,
+    duration_seconds=None,
+    observation_interval_seconds=5,
+    detailed_visual_diagnostics=False,
+    _reset_idle=None,
+    _observe=None,
+):
     """Observe aggregate counters in either mode; raw capture defaults to enabled."""
     if type(raw_frame_times) is not bool:
         raise ValueError("raw_frame_times must be an explicit boolean")
+    if type(detailed_visual_diagnostics) is not bool:
+        raise ValueError("detailed_visual_diagnostics must be an explicit boolean")
     planned_seconds = PLANNED_SECONDS if duration_seconds is None else duration_seconds
     if type(planned_seconds) is not int or planned_seconds <= 0:
         raise ValueError("duration_seconds must be a positive integer")
+    if type(observation_interval_seconds) is not int or observation_interval_seconds <= 0:
+        raise ValueError("observation_interval_seconds must be a positive integer")
     expected = validate_expected_apk_sha256(expected_apk_sha256)
     if expected is None:
         raise ValueError("session-sustained-check requires --expected-apk-sha256")
@@ -220,6 +269,10 @@ def check_session_sustained(expected_apk_sha256=None, _launch=None, *, raw_frame
     runtime = device.read_receipt("runtime.json")["persistentDataPath"]
     selector = runtime + "/movement-batch-selection.json"
     report_path = runtime + "/movement-batch-" + cleanup.SPINE_ID + ".json"
+    initial_reset = {}
+    if _reset_idle is not None:
+        # The shared runner retains lease/ownership authority for this reset.
+        _reset_idle(device, initial_reset)
     if cleanup._remote_path_state(device, selector) != "absent" or device.sh("pidof", PACKAGE, check=False).strip():
         raise RuntimeError("Requires idle owned package and absent selector; preserve foreign state")
     if cleanup._remote_path_state(device, runtime + "/offline-settings-v1/preferences.json.pending") != "absent":
@@ -233,7 +286,9 @@ def check_session_sustained(expected_apk_sha256=None, _launch=None, *, raw_frame
         planned_seconds=planned_seconds,
         scope=SCOPE,
         raw_frame_times_requested=raw_frame_times,
+        observation_interval_seconds=observation_interval_seconds,
         samples=[],
+        initial_reset=initial_reset,
     )
     pid = None
     width = height = None
@@ -296,6 +351,7 @@ def check_session_sustained(expected_apk_sha256=None, _launch=None, *, raw_frame
         selected = cleanup.selection(attempt)
         selected["rawFrameTimesRequested"] = raw_frame_times
         selected["combatPerformanceFocus"] = True
+        selected["detailedVisualDiagnostics"] = detailed_visual_diagnostics
         selected["debugOptions"].update(invincibility=True, purpose=SCOPE)
         write(out / "selection.json", selected)
         device.cmd("push", str(out / "selection.json"), selector)
@@ -322,7 +378,7 @@ def check_session_sustained(expected_apk_sha256=None, _launch=None, *, raw_frame
             raise RuntimeError("Native profile baseline unavailable")
         write(out / "world-start.json", report)
         began = time.monotonic()
-        last_capture = -60
+        last_capture = -observation_interval_seconds
         index = 0
         while True:
             elapsed = time.monotonic() - began
@@ -337,11 +393,13 @@ def check_session_sustained(expected_apk_sha256=None, _launch=None, *, raw_frame
             row = observation_sample(report, snapshot, elapsed, result["samples"][-1] if result["samples"] else None)
             # Check stop thresholds at every sample, not only at capture time.
             row.update(thermal())
+            sensor_raw = device.sh("sh", "-c", SENSOR_READS, timeout=5)
+            row.update(sensor_sample(sensor_raw), sensor_utc=now(), sensor_raw=sensor_raw)
             result["samples"].append(row)
             if _observe:
                 _observe(device, out / ("pacing-%04d" % len(result["samples"])), pid, snapshot)
             result["observed_seconds"] = elapsed
-            if elapsed - last_capture >= 60:
+            if elapsed - last_capture >= observation_interval_seconds:
                 folder = out / ("sample-%04d" % index)
                 write(folder / "world.json", report)
                 device.collect("perf", folder)
@@ -356,7 +414,8 @@ def check_session_sustained(expected_apk_sha256=None, _launch=None, *, raw_frame
                 result["sustained_observation_complete"] = True
                 write(out / "world-end.json", report)
                 break
-            time.sleep(5)
+            next_sample = min(planned_seconds, (int(elapsed // observation_interval_seconds) + 1) * observation_interval_seconds)
+            time.sleep(max(0, began + next_sample - time.monotonic()))
         for key, condition in (
             ("button", lambda r: r["settings"]["visible"] is True),
             ("endRunButton", lambda r: r["settings"]["endRunConfirmationVisible"] is True),
