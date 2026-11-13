@@ -331,7 +331,7 @@ def capture(device, output, pid):
     device.collect("screenshot", output)
     runtime = device.read_receipt("runtime.json")["persistentDataPath"]
     (output / "il2cpp-metadata-sha256.txt").write_text(device.sh("sha256sum", runtime + "/il2cpp/Metadata/global-metadata.dat", check=False))
-    for name in ("snapshot.json", "movement-batch-" + SPINE_ID + ".json", "exceptions.jsonl"):
+    for name in ("snapshot.json", "movement-batch-" + SPINE_ID + ".json", "movement-batch-" + SPINE_ID.removesuffix("-bringup") + ".json", "exceptions.jsonl"):
         (output / name).write_text(device.sh("cat", runtime + "/" + name, check=False))
     device.collect("perf", output)
 

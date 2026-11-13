@@ -159,6 +159,17 @@ class DeviceSessionTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "30 seconds"):
             runner.load_request(self.request_file)
 
+    def test_capture_retains_ordinary_and_bringup_reports(self):
+        target = mock.Mock()
+        target.cmd.return_value = "authored log"
+        target.sh.return_value = "{}"
+        target.read_receipt.return_value = dict(persistentDataPath="/fixture/runtime")
+        runner.capture(target, self.output, "7")
+        for suffix in ("", "-bringup"):
+            name = "movement-batch-body-state-spawn-state-auto-nova-spine" + suffix + ".json"
+            target.sh.assert_any_call("cat", "/fixture/runtime/" + name, check=False)
+            self.assertEqual((self.output / name).read_text(), "{}")
+
     def test_sustained_request_forwards_observation_cadence(self):
         import session_sustained_check as sustained
 
