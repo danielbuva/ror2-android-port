@@ -68,6 +68,12 @@ def source_ranks(snippet, selected):
     return ranks
 
 
+def compile_keywords(shader_pass, keywords):
+    """Supply SDK deferred declarations without adding a serialized variant axis."""
+    tags = {key.upper(): value.upper() for key, value in shader_pass["m_State"]["m_Tags"]["tags"]}
+    return [*keywords, "UNITY_PASS_DEFERRED"] if tags.get("LIGHTMODE") == "DEFERRED" else keywords
+
+
 def compile_body(connection, source, node, selections, tier_settings, sdk_image, common_bytes, compress, output, platform=18, *, native_order=None):
     """Compile complete SDK source form using explicit per-tier keyword choices.
 
@@ -133,7 +139,7 @@ def compile_body(connection, source, node, selections, tier_settings, sdk_image,
                             snippet["m_AssetPath"],
                             stage="vertex",
                             platform_keywords=caps,
-                            keywords=keywords,
+                            keywords=compile_keywords(shader_pass, keywords),
                             flags=flags,
                             requirements=requirements,
                         )

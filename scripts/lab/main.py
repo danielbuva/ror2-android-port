@@ -2,6 +2,11 @@ import argparse
 import sys
 from common import *
 
+if len(sys.argv) > 1 and sys.argv[1] == "device-session":
+    from device_session import main
+
+    sys.exit(main(sys.argv[2:]))
+
 if len(sys.argv) > 1 and sys.argv[1] == "lane" or os.environ.get("LAB_LANE"):
     from build_lanes import main, dispatch
 
@@ -11,11 +16,47 @@ if len(sys.argv) > 1 and sys.argv[1] == "lane" or os.environ.get("LAB_LANE"):
         print(json.dumps({"success": False, "command": "lane", "error": str(error)}), file=sys.stderr)
         sys.exit(1)
 
-p = argparse.ArgumentParser(description="Local RoR2 porting laboratory; generated evidence lives under ignored work/.")
+p = argparse.ArgumentParser(
+    description="Local RoR2 porting laboratory; generated evidence lives under ignored work/.",
+    formatter_class=argparse.RawDescriptionHelpFormatter,
+    epilog="""Command lifecycle (current tooling does not imply game readiness):
+  lane: current
+  device-session: current
+  diagnostics: current
+  migrate-device-receipts: current
+  test: current
+  doctor: current
+  inspect: current
+  decompile: current
+  export-project: current
+  preflight: current
+  build-hook-pins: current
+  check-baseline: current
+  build: current
+  install: current
+  sync-data: current
+  run: current
+  logs: current
+  crash: current
+  screenshot: current
+  reset: current
+  smoke: current
+  storage: current
+  perf: current
+  graphics: current
+  editor: current
+  prototype: current
+
+Prototype action labels: ./dev prototype --action list (current/historical).
+Editor/perf action labels and defaults: docs/ARCHITECTURE.md#dev-action-lifecycle.
+Lane action labels: ./dev lane --help.
+""",
+)
 p.add_argument(
     "command",
     choices=[
         "lane",
+        "device-session",
         "diagnostics",
         "migrate-device-receipts",
         "test",
@@ -24,6 +65,7 @@ p.add_argument(
         "decompile",
         "export-project",
         "preflight",
+        "build-hook-pins",
         "check-baseline",
         "build",
         "install",
@@ -93,6 +135,11 @@ p.add_argument(
 )
 p.add_argument("--json", action="store_true")
 p.add_argument(
+    "--gameplay-only",
+    action="store_true",
+    help="Current: alpha-stability-batch runs only heap and sustained stages; settings interruption remains unqualified",
+)
+p.add_argument(
     "--done-file", help="Current: alpha-stability-batch requires a new absolute host JSON receipt path; launch detached and inspect it after completion"
 )
 p.add_argument(
@@ -101,7 +148,7 @@ p.add_argument(
 )
 p.add_argument("--assembly")
 p.add_argument("--target", default="lab")
-p.add_argument("--action", default="inspect")
+p.add_argument("--action", help="build-hook-pins: check (current, default) or refresh (current) reviewed hashes; other actions default to inspect")
 p.add_argument(
     "--profile-scope",
     choices=("pid", "app"),
@@ -110,12 +157,13 @@ p.add_argument(
 )
 p.add_argument("--subtree", default="")
 p.add_argument("--fields", action="store_true")
+p.add_argument("--scene-details", action="store_true", help="Include full scene inspection in periodic diagnostics (current; adds scene scans)")
 p.add_argument("--disable", action="store_true")
 p.add_argument("--sessions", type=int, help="Current: session-memory-check/root-check series length, 3 to 32 (default: 5); automatic diagnostic input only")
 p.add_argument(
     "--memory-snapshots",
     action="store_true",
-    help="Current: session-memory-check only; capture private native/managed heaps at menus 2/4, allocating and pausing; separate from ordinary growth/performance",
+    help="Current: session-memory-check only; capture private native/managed heaps at menu 2 and the final menu, allocating and pausing; separate from ordinary growth/performance",
 )
 p.add_argument("--skill-variants", help="Current: ignored local JSON for one base-survivor skill or cleanup check; per-run native skill catalog indices only")
 p.add_argument(
@@ -146,6 +194,8 @@ p.add_argument(
 )
 p.add_argument("--compare", nargs=2, metavar=("A", "B"), help="Current: compare two project-manifest receipts")
 a = p.parse_args()
+if a.action is None:
+    a.action = "check" if a.command == "build-hook-pins" else "inspect"
 from device_context import set_command_selector
 
 set_command_selector(a.device, os.environ.get("LAB_DEVICE"))
@@ -239,6 +289,8 @@ if a.expected_apk_sha256 is not None and (
         "session-abandon-check, session-memory-check, session-memory-root-check, touch-gesture, settings-write-interrupt-check or alpha-stability-batch"
     )
 is_alpha_batch = a.command == "prototype" and a.action == "alpha-stability-batch"
+if a.gameplay_only and not is_alpha_batch:
+    p.error("--gameplay-only requires prototype --action alpha-stability-batch")
 if a.done_file is not None and not is_alpha_batch:
     p.error("--done-file requires prototype --action alpha-stability-batch")
 if a.prior_settings_batch is not None and not is_alpha_batch:
@@ -288,9 +340,13 @@ try:
         if not path.endswith("/Android/data/" + __import__("device").PACKAGE + "/files"):
             raise RuntimeError("Unexpected diagnostics path")
         payload = d.receipt("diagnostics.json")
-        d.write_receipt("diagnostics.json", {"enabled": not a.disable, "subtree": a.subtree, "fields": a.fields})
+        d.write_receipt("diagnostics.json", {"enabled": not a.disable, "subtree": a.subtree, "fields": a.fields, "sceneDetails": a.scene_details})
         d.cmd("push", str(payload), path + "/diagnostics.json")
         print(json.dumps({"success": True, "config": read(payload)}))
+    elif a.command == "build-hook-pins":
+        from native_view_camera_build_hook import build_hook_pins
+
+        print(json.dumps(build_hook_pins(a.action), indent=2))
     elif a.command == "preflight":
         from build import preflight, preflight_host
 

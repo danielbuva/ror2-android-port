@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Reflection;
+using System.Runtime.InteropServices;
 using System.IO;
 using System.Security.Cryptography;
 using System.Text;
@@ -10,6 +11,9 @@ public static class PayloadCopyReceiptHarness
     private const string InfoHash = "2b8430716d15c1ac9f78e1cc7625dc2206df6b5081b06b54c8048979d99b6407";
     private const string Input = "6af7ed94619fe1b4346974b4486afa03a8d1625a7820e92da0ff74d57208fe88";
     private static int failures;
+
+    [DllImport("libc", SetLastError = true)]
+    private static extern int symlink(string target, string linkpath);
 
     private static void Check(bool value, string name)
     {
@@ -90,14 +94,34 @@ public static class PayloadCopyReceiptHarness
         Directory.CreateDirectory(directory);
         try
         {
-            string path = Path.Combine(directory, "Media.wem");
             byte[] data = Encoding.UTF8.GetBytes("same-payload");
-            File.WriteAllBytes(path, data);
             string hash;
             using (SHA256 sha = SHA256.Create()) hash = BitConverter.ToString(sha.ComputeHash(data)).Replace("-", "").ToLowerInvariant();
-            Check((bool)InvokeStatic("ExistingPayloadMatches", path, hash, (long)data.Length), "matching existing WEM accepted");
-            File.WriteAllText(path, "changed");
-            Check(!(bool)InvokeStatic("ExistingPayloadMatches", path, hash, (long)data.Length), "changed existing WEM refused");
+            foreach (string leaf in new[] { "Bank.bnk", "Media.wem" })
+            {
+                string path = Path.Combine(directory, leaf);
+                File.WriteAllBytes(path, data);
+                Check((bool)InvokeStatic("ExistingPayloadHasExpectedSize", path, (long)data.Length), leaf + " matching metadata accepted");
+                Check((bool)InvokeStatic("ExistingPayloadMatches", path, hash, (long)data.Length), leaf + " matching reuse accepted");
+                File.WriteAllText(path, "evil-payload");
+                Check((bool)InvokeStatic("ExistingPayloadHasExpectedSize", path, (long)data.Length), leaf + " same-size preflight needs no content read");
+                Check(!(bool)InvokeStatic("ExistingPayloadMatches", path, hash, (long)data.Length), leaf + " same-size corruption refused at reuse");
+                File.WriteAllText(path, "changed");
+                Check(!(bool)InvokeStatic("ExistingPayloadHasExpectedSize", path, (long)data.Length), leaf + " changed size refused in preflight");
+                Check(!(bool)InvokeStatic("ExistingPayloadMatches", path, hash, (long)data.Length), leaf + " changed size refused at reuse");
+                File.Delete(path);
+                Directory.CreateDirectory(path);
+                Check(!(bool)InvokeStatic("ExistingPayloadHasExpectedSize", path, (long)data.Length), leaf + " directory refused in preflight");
+                Check(!(bool)InvokeStatic("ExistingPayloadMatches", path, hash, (long)data.Length), leaf + " directory refused at reuse");
+                Directory.Delete(path);
+                string target = path + ".target";
+                File.WriteAllBytes(target, data);
+                Check(symlink(target, path) == 0, leaf + " symlink fixture created");
+                Check(!(bool)InvokeStatic("ExistingPayloadHasExpectedSize", path, (long)data.Length), leaf + " symlink refused in preflight");
+                Check(!(bool)InvokeStatic("ExistingPayloadMatches", path, hash, (long)data.Length), leaf + " symlink refused at reuse");
+                File.Delete(path);
+                File.Delete(target);
+            }
         }
         finally { Directory.Delete(directory, true); }
     }
@@ -117,6 +141,108 @@ public static class PayloadCopyReceiptHarness
             Check(!(bool)InvokeStatic("TemporaryPathAvailable", path), "unowned temp directory refused");
         }
         finally { Directory.Delete(directory, true); }
+    }
+
+    private static void TestVerifiedReuse()
+    {
+        string path = Path.Combine(Path.GetTempPath(), "wwise-verified-" + Guid.NewGuid().ToString("N"));
+        byte[] data = Encoding.UTF8.GetBytes("same-payload");
+        string hash;
+        using (var sha = SHA256.Create()) hash = BitConverter.ToString(sha.ComputeHash(data)).Replace("-", "").ToLowerInvariant();
+        var modified = new UnityEngine.AndroidJavaObject("timespec");
+        modified.fields["tv_sec"] = 10L; modified.fields["tv_nsec"] = 1L;
+        var changed = new UnityEngine.AndroidJavaObject("timespec");
+        changed.fields["tv_sec"] = 10L; changed.fields["tv_nsec"] = 2L;
+        var stat = new UnityEngine.AndroidJavaObject("stat");
+        stat.fields["st_mtim"] = modified; stat.fields["st_ctim"] = changed;
+        stat.fields["st_size"] = (long)data.Length; stat.fields["st_dev"] = 1L; stat.fields["st_ino"] = 2L;
+        UnityEngine.AndroidJavaClass.onCallStatic = (method, args) => stat;
+        string[] names = new string[153]; for (int i = 0; i < names.Length; i++) names[i] = "Bank" + i;
+        var owner = new GameAudioOriginalPayloadCopy("file:///unused", "/tmp/app", names, new string('d', 64));
+        var methodInfo = typeof(GameAudioOriginalPayloadCopy).GetMethod("VerifiedPayloadMatches", BindingFlags.Instance | BindingFlags.NonPublic);
+        var fields = BindingFlags.Instance | BindingFlags.NonPublic;
+        Func<bool> verify = () => (bool)methodInfo.Invoke(owner, new object[] { path, hash, (long)data.Length });
+        try
+        {
+            File.WriteAllBytes(path, data);
+            Check(verify(), "cache miss fully verifies actual file");
+            Check((int)typeof(GameAudioOriginalPayloadCopy).GetField("fullVerifications", fields).GetValue(owner) == 1, "cache miss hashes once");
+            var observed = (IList)typeof(GameAudioOriginalPayloadCopy).GetField("observed", fields).GetValue(owner);
+            var cache = (IDictionary)typeof(GameAudioOriginalPayloadCopy).GetField("verified", fields).GetValue(owner);
+            cache.Add(path, observed[0]);
+            Check(verify(), "unchanged verified file reuses receipt");
+            Check((int)typeof(GameAudioOriginalPayloadCopy).GetField("cacheHits", fields).GetValue(owner) == 1, "unchanged file hits cache");
+            var savedTime = File.GetLastWriteTimeUtc(path);
+            File.WriteAllText(path, "evil-payload"); File.SetLastWriteTimeUtc(path, savedTime);
+            changed.fields["tv_nsec"] = 3L;
+            Check(!verify(), "same-size corruption with restored mtime rejected by changed nanosecond ctime");
+            File.WriteAllBytes(path, data); changed.fields["tv_nsec"] = 2L; stat.fields["st_ino"] = 3L;
+            Check(verify(), "replaced inode rehashes good bytes");
+            Check((int)typeof(GameAudioOriginalPayloadCopy).GetField("fullVerifications", fields).GetValue(owner) == 3, "ctime and inode changes both force hash");
+            UnityEngine.AndroidJavaClass.onCallStatic = (method, args) => { throw new Exception("stat unavailable"); };
+            File.WriteAllText(path, "evil-payload");
+            Check(!verify(), "unavailable Android stat falls back to full corruption check");
+        }
+        finally { File.Delete(path); UnityEngine.AndroidJavaClass.onCallStatic = null; }
+    }
+
+    private static void TestVerifiedCohortInvalidation()
+    {
+        string directory = Path.Combine(Path.GetTempPath(), "wwise-cache-" + Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(directory);
+        var activity = new UnityEngine.AndroidJavaObject("activity");
+        var cacheDirectory = new UnityEngine.AndroidJavaObject("directory");
+        cacheDirectory.onCall = (method, args) => directory;
+        var package = new UnityEngine.AndroidJavaObject("package");
+        package.fields["lastUpdateTime"] = 123L;
+        var packages = new UnityEngine.AndroidJavaObject("packages");
+        packages.onCall = (method, args) => package;
+        string codePath = "/installed.apk";
+        activity.onCall = (method, args) => method == "getCacheDir" ? (object)cacheDirectory :
+            method == "getPackageManager" ? (object)packages : method == "getPackageName" ? "dev.fixture" : codePath;
+        UnityEngine.AndroidJavaClass.currentActivity = activity;
+        var cohortType = typeof(GameAudioOriginalPayloadCopy).GetNestedType("VerifiedCohort", BindingFlags.NonPublic);
+        var fileType = typeof(GameAudioOriginalPayloadCopy).GetNestedType("VerifiedFile", BindingFlags.NonPublic);
+        var cohort = Activator.CreateInstance(cohortType, true);
+        int revision = (int)typeof(GameAudioOriginalPayloadCopy).GetField("VerificationRevision", BindingFlags.Static | BindingFlags.NonPublic).GetRawConstantValue();
+        Set(cohort, "verifierRevision", revision); Set(cohort, "receipt", new string('d', 64));
+        var file = Activator.CreateInstance(fileType, true); Set(file, "path", "/payload/bank");
+        var files = Array.CreateInstance(fileType, 1); files.SetValue(file, 0); Set(cohort, "files", files);
+        UnityEngine.JsonUtility.decoded = cohort;
+        var flags = BindingFlags.Instance | BindingFlags.NonPublic;
+        string[] names = new string[153]; for (int i = 0; i < names.Length; i++) names[i] = "Bank" + i;
+        var owner = new GameAudioOriginalPayloadCopy("file:///unused", "/tmp/app", names, new string('d', 64));
+        var load = typeof(GameAudioOriginalPayloadCopy).GetMethod("LoadVerifiedCohort", flags);
+        var cache = (IDictionary)typeof(GameAudioOriginalPayloadCopy).GetField("verified", flags).GetValue(owner);
+        Action reload = () => load.Invoke(owner, null);
+        string path = Path.Combine(directory, "original-audio-verified.json");
+        try
+        {
+            reload(); Check(cache.Count == 0, "missing private cache requires full verification");
+            var observed = (IList)typeof(GameAudioOriginalPayloadCopy).GetField("observed", flags).GetValue(owner);
+            for (int i = 0; i < 274; i++) observed.Add(file);
+            typeof(GameAudioOriginalPayloadCopy).GetMethod("SaveVerifiedCohort", flags).Invoke(owner, null);
+            cohort = UnityEngine.JsonUtility.encoded;
+            Check(cohort != null && File.Exists(path), "complete cohort saves a private verification receipt");
+            UnityEngine.JsonUtility.decoded = cohort;
+            owner = new GameAudioOriginalPayloadCopy("file:///unused", "/tmp/app", names, new string('d', 64));
+            cache = (IDictionary)typeof(GameAudioOriginalPayloadCopy).GetField("verified", flags).GetValue(owner);
+            reload(); Check(cache.Count == 1, "fresh owner loads saved compatible verifier and cohort");
+            package.fields["lastUpdateTime"] = 124L; codePath = "/updated.apk";
+            reload(); Check(cache.Count == 1, "in-place code update retains compatible cohort proofs");
+            Set(cohort, "verifierRevision", 0); reload(); Check(cache.Count == 0, "legacy unversioned cache requires full verification");
+            Set(cohort, "verifierRevision", revision + 1); reload(); Check(cache.Count == 0, "incompatible verifier requires full verification");
+            Set(cohort, "verifierRevision", revision); Set(cohort, "receipt", new string('e', 64));
+            reload(); Check(cache.Count == 0, "changed packaged cohort invalidates receipt");
+            Set(cohort, "receipt", new string('d', 64)); reload(); Check(cache.Count == 1, "valid receipt can reload");
+            File.Delete(path); reload(); Check(cache.Count == 0, "clear-cache repair invalidates prior in-memory receipt");
+        }
+        finally
+        {
+            Directory.Delete(directory, true); UnityEngine.AndroidJavaClass.currentActivity = null;
+            UnityEngine.JsonUtility.decoded = null;
+            UnityEngine.JsonUtility.encoded = null;
+        }
     }
 
     public static int Main()
@@ -140,6 +266,8 @@ public static class PayloadCopyReceiptHarness
         Set(shortReceipt, "streamed_media", Array.CreateInstance(mediaType, 119));
         Check(!Validate(shortReceipt), "incomplete streamed-media closure refused");
         TestExistingPayloadRevalidation();
+        TestVerifiedReuse();
+        TestVerifiedCohortInvalidation();
         TestTemporaryPathOwnership();
         Console.WriteLine(failures == 0 ? "PASS" : "FAILURES " + failures);
         return failures == 0 ? 0 : 1;

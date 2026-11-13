@@ -5,8 +5,9 @@ The retained J131 bundle uses Gamma/default Android tiers and the acquired
 2021.3.45f2 compiler; neither Editor nor the old compiler is executed.
 """
 
+from collections import Counter
 from copy import deepcopy
-from itertools import product
+from itertools import groupby, product
 import argparse
 import hashlib
 import itertools
@@ -18,6 +19,7 @@ import sys
 import time
 
 import shader_produce as P
+import object_produce as O
 import shader_sdk as SDK
 import unity_write as W
 from mesh_produce import INPUT_ID
@@ -188,6 +190,7 @@ def produce_postprocessing(
         )
         (output / "AssetRipper-LICENSE.md").write_bytes(license_data)
         rows = []
+        types, type_ids = [], {}
         with (
             compiler.compiler(
                 [sdk / "Tools/UnityShaderCompiler"],
@@ -200,6 +203,7 @@ def produce_postprocessing(
         ):
             for selected in profile["shaders"]:
                 original, node = original_shader(asset, selected)
+                typ = O.source_record_type(source_path, source["member"], selected["path_id"], 48)
                 filename = selected["source_filename"]
                 P.relative(repo, filename)
                 text, template = sources.dummy_shader_source(original["m_ParsedForm"], templates)
@@ -227,9 +231,11 @@ def produce_postprocessing(
                             "offset": offset,
                             "bytes": len(body),
                             "sha256": hashlib.sha256(body).hexdigest(),
+                            "type_id": O.record_type(typ, types, type_ids),
                         }
                     )
         (output / "index.jsonl").write_text("".join(json.dumps(row) + "\n" for row in rows))
+        (output / "types.json").write_text(json.dumps(types, sort_keys=True, indent=2) + "\n")
         for path, pin in pins:
             P.checked(path, pin)
         if P.includes(sdk / "CGIncludes")[0] != profile["includes_sha256"]:
@@ -239,7 +245,7 @@ def produce_postprocessing(
                 "bytes": (output / name).stat().st_size,
                 "sha256": P.sha(output / name),
             }
-            for name in ("objects.bin", "index.jsonl")
+            for name in ("objects.bin", "index.jsonl", "types.json")
         }
         result["success"] = True
         return result
@@ -291,26 +297,170 @@ def standard_material(selected, original, sdk_objects):
     return value
 
 
-def original_feature_order(carrier, subshader_index, pass_index, shader_pass, features, selected):
-    """Order retained material identities by original fragment records."""
+def original_stage_lift(original_pass, names, features, selected, *, runtime=None):
+    """Lift a source fragment cyclic order over complete vertex contexts."""
+
+    def sequence(stage):
+        result = []
+        for tier in original_pass[stage]["m_PlayerSubPrograms"]:
+            for record in tier:
+                key = frozenset(names[i] for i in record["m_KeywordIndices"]) & features
+                if key not in result:
+                    result.append(key)
+        return result
+
+    vertex = sequence("progVertex")
+    fragment = sequence("progFragment")
+    vn = frozenset().union(*vertex)
+    fn = frozenset().union(*fragment)
+    wanted = {frozenset(k) for k in selected}
+    vertex = [k for k in vertex if any(s & vn == k for s in wanted)]
+    fragment = [k for k in fragment if any(s & fn == k for s in wanted)]
+    if runtime is not None:
+        # Infer a complete material-signature template from the first full
+        # fragment context, then verify its rotation against the entire source.
+        runtime = frozenset(runtime)
+        groups = [(context, list(rows)) for context, rows in groupby(fragment, key=lambda key: key & runtime)]
+        answer = []
+        offset = 0
+        while offset < len(groups):
+            start, head = groups[offset]
+            end = next((i for i in range(offset + 1, len(groups)) if groups[i][0] == start), None)
+            if end is None:
+                raise ValueError("source material template has no wrap")
+            contexts = [context for context, _ in groups[offset:end]]
+            signatures = [key - runtime for key in groups[offset + 1][1]]
+            if len(head) != 1 or head[0] - runtime != signatures[-1]:
+                raise ValueError("source material template head differs")
+            observed = (
+                [start | signatures[-1]]
+                + [context | signature for context in contexts[1:] for signature in signatures]
+                + [start | signature for signature in signatures[:-1]]
+            )
+            if observed != [key for _, rows in groups[offset : end + 1] for key in rows]:
+                raise ValueError("source material template sequence differs")
+            expanded = list(dict.fromkeys(key & runtime for key in vertex if key & fn & runtime in contexts))
+            if not expanded:
+                raise ValueError("empty lifted material template contexts")
+            answer.extend(
+                [expanded[0] | signatures[-1]]
+                + [context | signature for context in expanded[1:] for signature in signatures]
+                + [expanded[0] | signature for signature in signatures[:-1]]
+            )
+            offset = end + 1
+    elif not vn - fn:
+        answer = fragment
+    elif not fn - vn:
+        answer = vertex
+    else:
+        common = vn & fn
+        exclusive = fn - vn
+        answer = []
+        offset = 0
+        while offset < len(fragment):
+            first = fragment[offset]
+            base = first & exclusive
+            start = first & common
+            end = next((j for j in range(offset + 1, len(fragment)) if fragment[j] & common == start and fragment[j] & exclusive != base), None)
+            if end is None:
+                raise ValueError("source fragment cycle has no wrap")
+            cycle = fragment[offset : end + 1]
+            alternatives = {k & exclusive for k in cycle}
+            if len(alternatives) != 2:
+                raise ValueError("source fragment cycle not binary")
+            other = next(k for k in alternatives if k != base)
+            contexts = []
+            for k in cycle:
+                if k & common not in contexts:
+                    contexts.append(k & common)
+            # Verify source itself is exactly the inferred cyclic zipper.
+            observed = [contexts[0] | base]
+            for c in contexts[1:]:
+                observed.extend((c | other, c | base))
+            observed.append(contexts[0] | other)
+            if observed != cycle:
+                raise ValueError("source fragment cycle not cyclic zipper")
+            expanded = [k for k in vertex if k & common in contexts]
+            if not expanded:
+                raise ValueError("empty lifted source cycle")
+            answer.append(expanded[0] | base)
+            for k in expanded[1:]:
+                answer.extend((k | other, k | base))
+            answer.append(expanded[0] | other)
+            offset = end + 1
+    if len(answer) != len(wanted) or set(answer) != wanted:
+        raise ValueError("source stage lift does not cover selected identities uniquely")
+    lookup = {frozenset(k): k for k in selected}
+    return [lookup[k] for k in answer]
+
+
+def original_sdk_axis_order(carrier, subshader_index, shader_pass, features, selected, snippet):
+    """Expand overlapping SDK stage axes over first-seen original contexts.
+
+    Shared keywords can produce the same identity more than once. Keep those
+    serialized rows; native compilation interns only their first occurrence.
+    """
+    axes = []
+    for group in ("m_VariantsUserGlobal", "m_VariantsUserLocal"):
+        for stage in range(7):
+            for axis in snippet[group + str(stage)]:
+                if axis not in axes:
+                    axes.append(axis)
+    names = [{key for key in axis if key.strip("_")} for axis in axes]
+    crossed = [i for i, axis in enumerate(names) if any(i != j and axis & other for j, other in enumerate(names))]
+    if not crossed:
+        raise ValueError("SDK declarations have no overlapping stage axes")
+    crossed = list(range(min(crossed), max(crossed) + 1))
+    excluded = set().union(*(names[i] for i in crossed))
+    axis_rows = [frozenset(key for key in keys if key.strip("_")) for keys in product(*(axes[i] for i in crossed))]
     form = carrier["m_ParsedForm"]
-    original_pass = form["m_SubShaders"][subshader_index]["m_Passes"][pass_index]
+
+    def identity(row):
+        tags = {key.upper(): value.upper() for key, value in row["m_State"]["m_Tags"]["tags"]}
+        return row["m_State"]["m_Name"], tags.get("LIGHTMODE")
+
+    original = next(row for row in form["m_SubShaders"][subshader_index]["m_Passes"] if identity(row) == identity(shader_pass))
+    wanted = {frozenset(keys) - excluded for keys in selected}
+    base = []
+    for tier in original["progVertex"]["m_PlayerSubPrograms"]:
+        for row in tier:
+            keys = (frozenset(form["m_KeywordNames"][i] for i in row["m_KeywordIndices"]) & features) - excluded
+            if keys in wanted and keys not in base:
+                base.append(keys)
+    answer = [keys | axis for axis in axis_rows for keys in base if keys | axis in {frozenset(row) for row in selected}]
+    if Counter(answer) != Counter(map(frozenset, selected)):
+        raise ValueError("SDK source axis multiplicity differs")
+    return [sorted(keys) for keys in answer]
+
+
+def original_feature_order(carrier, subshader_index, pass_index, shader_pass, features, selected, *, stage="progFragment", runtime=None):
+    """Order retained material identities by original stage records."""
+    form = carrier["m_ParsedForm"]
 
     def identity(value):
         tags = {name.upper(): text.upper() for name, text in value["m_State"]["m_Tags"]["tags"]}
-        return value["m_State"]["m_Name"], tags.get("LIGHTMODE")
+        return value["m_State"].get("m_Name", ""), tags.get("LIGHTMODE")
 
-    if identity(original_pass) != identity(shader_pass):
+    matches = [row for row in form["m_SubShaders"][subshader_index]["m_Passes"] if identity(row) == identity(shader_pass)]
+    if len(matches) != 1:
         raise ValueError("Standard original/SDK carrier pass differs")
+    original_pass = matches[0]
     wanted = {frozenset(keys) for keys in selected}
     ranks = {}
-    for tier in original_pass["progFragment"]["m_PlayerSubPrograms"]:
+    for tier in original_pass[stage]["m_PlayerSubPrograms"]:
         for row in tier:
             keys = frozenset(form["m_KeywordNames"][index] for index in row["m_KeywordIndices"]) & features
             if keys in wanted and keys not in ranks:
                 ranks[keys] = len(ranks)
     if set(ranks) != wanted:
-        raise ValueError("Standard original fragment records do not cover retained material identities")
+        if stage == "progVertex":
+            try:
+                return original_stage_lift(original_pass, form["m_KeywordNames"], features, selected)
+            except ValueError:
+                if runtime is None:
+                    raise
+                return original_stage_lift(original_pass, form["m_KeywordNames"], features, selected, runtime=runtime)
+        raise ValueError("original stage records do not cover retained material identities")
     return sorted(selected, key=lambda keys: ranks[frozenset(keys)])
 
 
@@ -392,7 +542,7 @@ def standard_selections(original_sdk, materials, fog_keyword="FOG_LINEAR", *, ca
     return source, selections
 
 
-def particles_selections(original_sdk, materials, fog_keyword="FOG_LINEAR", *, carrier):
+def particles_selections(original_sdk, materials, fog_keyword="FOG_LINEAR", *, carrier, stripped_keywords=()):
     """Project original particle fragment order onto declared SDK runtime passes."""
     source = deepcopy(original_sdk)
     form, original = source["m_ParsedForm"], carrier["m_ParsedForm"]
@@ -406,6 +556,7 @@ def particles_selections(original_sdk, materials, fog_keyword="FOG_LINEAR", *, c
         return shader_pass["m_Type"], shader_pass["m_State"]["m_Name"], tags.get("LIGHTMODE")
 
     selections = {}
+    stripped_keywords = set(stripped_keywords)
     instancing = any(material["m_EnableInstancingVariants"] for material in materials)
     for subshader, original_subshader in zip(form["m_SubShaders"], original["m_SubShaders"], strict=True):
         runtime = []
@@ -418,6 +569,8 @@ def particles_selections(original_sdk, materials, fog_keyword="FOG_LINEAR", *, c
             for tier in original_pass["progFragment"]["m_PlayerSubPrograms"]:
                 for row in tier:
                     keys = sorted(original["m_KeywordNames"][index] for index in row["m_KeywordIndices"])
+                    if stripped_keywords.intersection(keys):
+                        continue
                     if any(key.startswith("FOG_") and key != fog_keyword for key in keys):
                         continue
                     if "INSTANCING_ON" in keys and not instancing:
@@ -438,6 +591,18 @@ def terrain_basegen_selections(original, sdk_source, materials):
     return P.sdk_scene_selections(sdk_source, set())
 
 
+def legacy_particle_selections(original, sdk_source, materials):
+    """Select the standalone prefab's SDK particle source without scene fog."""
+    name = "Legacy Shaders/Particles/Alpha Blended Premultiply"
+    if materials or original["m_Dependencies"] or sdk_source["m_Dependencies"]:
+        raise ValueError("legacy prefab particle shader has no material variants or dependencies")
+    if any(source["m_ParsedForm"]["m_Name"] != name for source in (original, sdk_source)):
+        raise ValueError("legacy prefab particle shader identity differs")
+    if original["m_ParsedForm"]["m_PropInfo"] != sdk_source["m_ParsedForm"]["m_PropInfo"]:
+        raise ValueError("legacy prefab particle shader original/SDK properties differ")
+    return P.sdk_scene_selections(sdk_source, set())
+
+
 def produce_standard(profile_path, profile_sha256, pc, sdk, output, codec, codec_sha256):
     """Produce the bounded Standard source record through the shared SDK owner."""
     import UnityPy
@@ -453,7 +618,10 @@ def produce_standard(profile_path, profile_sha256, pc, sdk, output, codec, codec
     codec_pin = {"bytes": codec.stat().st_size, "sha256": codec_sha256}
     output = checked_output(output, (pc, sdk, profile_path, codec))
     source = profile["source_type"]
-    selections = [source, *profile["materials"], profile["scene"]]
+    prefab = profile.get("prefab_no_fog", False)
+    if prefab and (prefab is not True or profile.get("sdk_shader") != 207 or "scene" in profile):
+        raise ValueError("prefab no-fog policy requires the standalone legacy particle shader")
+    selections = [source, *profile["materials"], *([] if prefab else [profile["scene"]])]
     pins = [(profile_path, profile_pin), (codec, codec_pin)]
     pins.extend((P.relative(pc, selected["path"]), selected) for selected in selections)
     pins.extend((P.relative(sdk, name), pin) for name, pin in profile["compiler_sdk"].items())
@@ -473,9 +641,17 @@ def produce_standard(profile_path, profile_sha256, pc, sdk, output, codec, codec
         return obj
 
     obj = original_object(source, "Shader")
+    typ = O.source_record_type(P.relative(pc, source["path"]), source["member"], source["path_id"], 48)
+    types, type_ids = [], {}
     original = obj.read_typetree()
     sdk_id = profile.get("sdk_shader", 46)
-    expected_name = {46: "Standard", 106: "Skybox/Procedural", 211: "Particles/Standard Unlit", 10626: "Hidden/TerrainEngine/Splatmap/Standard-BaseGen"}[sdk_id]
+    expected_name = {
+        46: "Standard",
+        106: "Skybox/Procedural",
+        207: "Legacy Shaders/Particles/Alpha Blended Premultiply",
+        211: "Particles/Standard Unlit",
+        10626: "Hidden/TerrainEngine/Splatmap/Standard-BaseGen",
+    }[sdk_id]
     if original["m_ParsedForm"]["m_Name"] != expected_name:
         raise ValueError("Standard native type source differs")
     materials = []
@@ -494,19 +670,26 @@ def produce_standard(profile_path, profile_sha256, pc, sdk, output, codec, codec
         # Original body and shader/PPtr checks above still apply to mapped
         # materials. Only the explicit profile identity chooses SDK features.
         materials.append(standard_material(selected, value, sdk_materials))
-    environment = UnityPy.load(str(P.relative(pc, profile["scene"]["path"])))
-    scene_objects = [obj for obj in environment.objects if "member" not in profile["scene"] or obj.assets_file.name == profile["scene"]["member"]]
-    fog = [obj.read_typetree() for obj in scene_objects if obj.type.name == "RenderSettings"]
-    maps = [obj.read_typetree() for obj in scene_objects if obj.type.name == "LightmapSettings"]
-    fog_keyword = validate_standard_scene(
-        fog,
-        maps,
-        [renderer.read_typetree() for renderer in scene_objects if renderer.type.name.endswith("Renderer")],
-    )
+    fog_keyword = None
+    if not prefab:
+        environment = UnityPy.load(str(P.relative(pc, profile["scene"]["path"])))
+        scene_objects = [obj for obj in environment.objects if "member" not in profile["scene"] or obj.assets_file.name == profile["scene"]["member"]]
+        fog = [obj.read_typetree() for obj in scene_objects if obj.type.name == "RenderSettings"]
+        maps = [obj.read_typetree() for obj in scene_objects if obj.type.name == "LightmapSettings"]
+        fog_keyword = validate_standard_scene(
+            fog,
+            maps,
+            [renderer.read_typetree() for renderer in scene_objects if renderer.type.name.endswith("Renderer")],
+        )
     sdk_pin = profile["compiler_sdk"]["Resources/unity_builtin_extra"]["sha256"]
     sdk_source = SDK.sdk_source(sdk, sdk_id, sdk_pin)
     dependency_relocations = []
-    if sdk_id == 10626:
+    if sdk_id == 207:
+        if not prefab:
+            raise ValueError("legacy particle shader requires the standalone prefab scope")
+        source_runtime = sdk_source
+        keyword_rows = legacy_particle_selections(original, source_runtime, materials)
+    elif sdk_id == 10626:
         source_runtime = sdk_source
         keyword_rows = terrain_basegen_selections(original, source_runtime, materials)
     elif sdk_id == 106:
@@ -525,7 +708,8 @@ def produce_standard(profile_path, profile_sha256, pc, sdk, output, codec, codec
         )
     else:
         select = particles_selections if sdk_id == 211 else standard_selections
-        source_runtime, keyword_rows = select(sdk_source, materials, fog_keyword, carrier=original)
+        options = {"stripped_keywords": profile.get("stripped_keywords", [])} if sdk_id == 211 else {}
+        source_runtime, keyword_rows = select(sdk_source, materials, fog_keyword, carrier=original, **options)
         # SDK source Standard depends on its own Legacy/VertexLit6. The original
         # PC dependency independently resolves that same named shader in its CAB.
         dependencies = original["m_Dependencies"]
@@ -599,10 +783,11 @@ def produce_standard(profile_path, profile_sha256, pc, sdk, output, codec, codec
                 raise ValueError("duplicate Standard output identity")
             identities.add(identity)
             rows.append({key: selected[key] for key in ("bundle", "member", "path_id")})
-            rows[-1].update(offset=0, bytes=len(body), sha256=hashlib.sha256(body).hexdigest())
+            rows[-1].update(offset=0, bytes=len(body), sha256=hashlib.sha256(body).hexdigest(), type_id=O.record_type(typ, types, type_ids))
             if dependency_relocations:
                 rows[-1]["dependencies"] = dependency_relocations
         (output / "index.jsonl").write_text("".join(json.dumps(row) + "\n" for row in rows))
+        (output / "types.json").write_text(json.dumps(types, sort_keys=True, indent=2) + "\n")
         for path, pin in pins:
             P.checked(path, pin)
         if P.includes(sdk / "CGIncludes")[0] != inventory:
@@ -612,7 +797,7 @@ def produce_standard(profile_path, profile_sha256, pc, sdk, output, codec, codec
                 "bytes": (output / name).stat().st_size,
                 "sha256": P.sha(output / name),
             }
-            for name in ("objects.bin", "index.jsonl")
+            for name in ("objects.bin", "index.jsonl", "types.json")
         }
         result["success"] = True
         return result
@@ -691,6 +876,8 @@ def produce(
         if (obj.assets_file.name, obj.path_id) == (source["member"], source["path_id"]) and obj.type.name == "Shader"
     )
     original, node = obj.read_typetree(), obj.serialized_type.node
+    typ = O.source_record_type(P.relative(pc, source["path"]), source["member"], source["path_id"], 48)
+    types, type_ids = [], {}
     source_sdk = SDK.sdk_source(legacy_sdk, 34, profile["legacy_sdk"]["Resources/unity_builtin_extra"]["sha256"])
     repo = Path(P.__file__).resolve().parents[3]
     sys.path.insert(0, str(repo / "scripts/lab"))
@@ -842,9 +1029,11 @@ def produce(
                         offset=stream.tell(),
                         bytes=len(body),
                         sha256=hashlib.sha256(body).hexdigest(),
+                        type_id=O.record_type(typ, types, type_ids),
                     )
                     stream.write(body)
             (output / "index.jsonl").write_text("".join(json.dumps(row) + "\n" for row in rows))
+            (output / "types.json").write_text(json.dumps(types, sort_keys=True, indent=2) + "\n")
         for path, pin in pins:
             P.checked(path, pin)
         for root, field in (
@@ -858,7 +1047,7 @@ def produce(
                 "bytes": (output / name).stat().st_size,
                 "sha256": P.sha(output / name),
             }
-            for name in ("objects.bin", "index.jsonl")
+            for name in ("objects.bin", "index.jsonl", "types.json")
         }
         result["success"] = True
         return result

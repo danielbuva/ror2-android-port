@@ -115,6 +115,39 @@ class ProducedCatalogTests(unittest.TestCase):
 
 
 class IntegrationMetadataTests(unittest.TestCase):
+    def test_selected_profiles_follow_native_container_declarations(self):
+        from whole_catalog import integration_profile_builds
+
+        profiles = [
+            dict(bundle=dict(name="grouped", asset_groups=[dict(path="Assets/Body.prefab"), dict(path="assets/body.prefab")])),
+            dict(bundle=dict(name="scene", scene_path="Assets/Stage.unity")),
+            dict(bundle=dict(name="multi", assets=[dict(path="Assets/B.asset"), dict(path="Assets/A.asset"), dict(path="Assets/A.asset")])),
+            dict(bundle=dict(name="single", asset="Assets/Single.asset")),
+        ]
+        builds = integration_profile_builds(profiles)
+        self.assertEqual(
+            builds,
+            [
+                dict(assetBundleName="grouped", assetNames=["Assets/Body.prefab"]),
+                dict(assetBundleName="multi", assetNames=["Assets/A.asset", "Assets/B.asset"]),
+                dict(assetBundleName="scene", assetNames=["Assets/Stage.unity"]),
+                dict(assetBundleName="single", assetNames=["Assets/Single.asset"]),
+            ],
+        )
+        metadata = dict(locations=[dict(path="ASSETS/BODY.PREFAB"), dict(path="Assets/Stage.unity")])
+        owned = integration_bundle_metadata(metadata, builds)
+        self.assertEqual([row["bundle"] for row in owned["locations"]], ["grouped", "scene"])
+        self.assertEqual(len(profiles[0]["bundle"]["asset_groups"]), 2)
+        with self.assertRaisesRegex(RuntimeError, "Duplicate selected bundle profile"):
+            integration_profile_builds([profiles[0], profiles[0]])
+
+    def test_selected_profiles_keep_conflicting_explicit_owners_visible(self):
+        from whole_catalog import integration_profile_builds
+
+        profiles = [dict(bundle=dict(name=name, asset="Assets/Shared.asset")) for name in ("one", "two")]
+        with self.assertRaisesRegex(RuntimeError, "Duplicate explicit bundle ownership"):
+            integration_bundle_metadata(dict(locations=[]), integration_profile_builds(profiles))
+
     def test_bundle_owners_preserve_rows_and_override_scene_fallback_without_io(self):
         rows = [
             dict(id=1, path="Assets/Explicit.UNITY", root=True),
@@ -260,6 +293,16 @@ class WholePayloadReuseTests(unittest.TestCase):
         with self.assertRaisesRegex(RuntimeError, "Content inputs changed"):
             build.validate_whole_payload_reuse(self.project)
 
+    def test_retention_marker_is_not_payload_but_other_additions_still_refuse(self):
+        payload = self.work / "generated-android-data"
+        marker = payload / ".prune-keep"
+        marker.touch()
+        build.validate_whole_payload_reuse(self.project)
+        self.assertTrue(marker.is_file())
+        (payload / "unexpected").write_text("not frozen content")
+        with self.assertRaisesRegex(RuntimeError, "payload identity changed"):
+            build.validate_whole_payload_reuse(self.project)
+
     def test_authored_bootstrap_migrates_old_receipt_without_changing_payload(self):
         receipt = self.work / "whole-catalog-code-base.json"
         frozen = read(receipt)
@@ -275,6 +318,25 @@ class WholePayloadReuseTests(unittest.TestCase):
         self.assertIn(bootstrap, updated["allowed"])
         (self.work / "generated-android-data/content").write_text("changed payload")
         with self.assertRaisesRegex(RuntimeError, "payload identity changed"):
+            build.validate_whole_payload_reuse(self.project)
+
+    def test_display_player_source_migrates_receipt_but_unknown_android_content_refuses(self):
+        receipt = self.work / "whole-catalog-code-base.json"
+        frozen = read(receipt)
+        for source in build.WHOLE_APK_ANDROID_CODE:
+            frozen["allowed"].remove(source)
+            frozen["files"][source] = "previous authored Java source or importer"
+            (self.project / source).write_text("current authored Java source or importer")
+        write(receipt, frozen)
+        build.validate_whole_payload_reuse(self.project)
+        updated = read(receipt)
+        self.assertEqual(updated["payload"], frozen["payload"])
+        self.assertTrue(build.WHOLE_APK_ANDROID_CODE <= set(updated["allowed"]))
+        self.assertTrue(build.WHOLE_APK_ANDROID_CODE.isdisjoint(updated["files"]))
+        unknown = self.project / "Assets/Plugins/Android/unknown.dat"
+        unknown.parent.mkdir(parents=True, exist_ok=True)
+        unknown.write_text("changed unknown Android input")
+        with self.assertRaisesRegex(RuntimeError, "Content inputs changed"):
             build.validate_whole_payload_reuse(self.project)
 
     def test_bootstrap_importer_and_game_assemblies_remain_frozen(self):
@@ -832,7 +894,7 @@ class AuthoredIntegrationHookTests(unittest.TestCase):
     def compact(self, name):
         return "".join((self.UNITY / name).read_text().split())
 
-    def test_start_yields_to_the_catalog_scan_before_the_session_wait(self):
+    def test_start_yields_to_the_catalog_scan_without_a_fixed_player_delay(self):
         text = self.compact("runtime/session/PortSession.cs")
         start = text[text.index("IEnumeratorStart(){") :]
         self.assertTrue(
@@ -840,7 +902,8 @@ class AuthoredIntegrationHookTests(unittest.TestCase):
                 'IEnumeratorStart(){if(File.Exists(System.IO.Path.Combine(Application.persistentDataPath,"whole-catalog-selection.json")))yieldbreak;'
             )
         )
-        self.assertLess(start.index("yieldbreak;"), start.index("WaitForSeconds(8)"))
+        startup = start[: start.index("if(File.Exists(path))")]
+        self.assertNotIn("WaitForSeconds", startup)
 
     def test_body_catalog_prepares_and_releases_the_composed_catalog(self):
         text = self.compact("runtime/catalog/BodyCatalogBoundary.cs")

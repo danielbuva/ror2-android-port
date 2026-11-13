@@ -1,3 +1,5 @@
+package dev.ror2lab.diagnostics;
+
 // Authored debug-UID diagnostic: observe the real settings transaction and
 // terminate only its PID/UID-bound writer through normal same-UID signalling.
 import android.os.FileObserver;
@@ -47,6 +49,18 @@ public final class LabPendingWriteStop {
         }
     }
     private static void run(String[] args) throws Exception {
+        System.out.println(observe(args, () -> false).toString());
+    }
+    public static void atomicJson(File destination, JSONObject value) throws Exception {
+        File temporary = new File(destination.getPath() + ".tmp");
+        Files.write(temporary.toPath(), value.toString().getBytes(StandardCharsets.UTF_8), java.nio.file.StandardOpenOption.CREATE_NEW);
+        Files.move(temporary.toPath(), destination.toPath(), java.nio.file.StandardCopyOption.ATOMIC_MOVE);
+    }
+    static String observerNonce(File ready) {
+        String name = ready.getName();
+        return name.substring("ror2lab-write-".length(), name.length() - ".ready".length());
+    }
+    public static JSONObject observe(String[] args, java.util.function.BooleanSupplier cancelled) throws Exception {
         if (args.length != 4)
             throw new IllegalArgumentException("Requires owned debug UID, settings directory, ready path, observed PID and UID");
         final File directory = new File(args[0]).getCanonicalFile();
@@ -66,7 +80,7 @@ public final class LabPendingWriteStop {
         final JSONObject result = new JSONObject();
         FileObserver observer = new FileObserver(directory, FileObserver.CREATE) {
             @Override public void onEvent(int event, String name) {
-                if ((event & FileObserver.CREATE) == 0 || !"preferences.json.pending".equals(name) || !triggered.compareAndSet(false, true)) return;
+                if (cancelled.getAsBoolean() || (event & FileObserver.CREATE) == 0 || !"preferences.json.pending".equals(name) || !triggered.compareAndSet(false, true)) return;
                 try {
                     bind(pid, uid);
                     result.put("createObserved", true).put("pendingPresentBeforeStop", pending.isFile())
@@ -85,10 +99,15 @@ public final class LabPendingWriteStop {
         };
         try {
             observer.startWatching();
-            if (!ready.createNewFile()) throw new IllegalStateException("Ready target already exists");
-            if (!done.await(30, TimeUnit.SECONDS)) throw new IllegalStateException("No pending-file create observed within 30 seconds");
+            atomicJson(ready, new JSONObject().put("nonce", observerNonce(ready))
+                .put("pid", pid).put("uid", uid).put("observerPid", Process.myPid()));
+            long deadline = SystemClock.uptimeMillis() + 30000;
+            while (!done.await(100, TimeUnit.MILLISECONDS)) {
+                if (cancelled.getAsBoolean()) throw new InterruptedException("Owner cancelled observer");
+                if (SystemClock.uptimeMillis() >= deadline) throw new IllegalStateException("No pending-file create observed within 30 seconds");
+            }
             if (failure.get() != null) throw new IllegalStateException("Interruption refused", failure.get());
-            System.out.println(result.put("success", true).toString());
+            return result.put("success", true);
         } finally { observer.stopWatching(); }
     }
 }

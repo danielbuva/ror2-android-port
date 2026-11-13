@@ -24,9 +24,31 @@ public static class WholeCatalogLoader
 {
     public static string phase;
     public static float progress;
-    public static ResourceLocationMap locator;
+    public static IResourceLocator locator;
     public static readonly List<string> failures = new List<string>();
     public static readonly List<string> initializedCatalogs = new List<string>();
+    // Observe misses before the dynamic locator attempts GUID[subobject] lookup.
+    // Delegate through the interface: ResourceLocationMap.Locate is non-virtual.
+    sealed class RequestLoggingLocator : IResourceLocator
+    {
+        readonly IResourceLocator inner;
+        public RequestLoggingLocator(IResourceLocator inner) { this.inner = inner; }
+        public string LocatorId => inner.LocatorId;
+        public IEnumerable<object> Keys => inner.Keys;
+        public bool Locate(object key, Type type, out IList<IResourceLocation> locations)
+        {
+            bool found = inner.Locate(key, type, out locations);
+            Debug.Log("whole-catalog-request " + new JObject {
+                ["key"] = key == null ? null : key.ToString(),
+                ["keyType"] = key == null ? null : key.GetType().FullName,
+                ["type"] = type == null ? null : type.AssemblyQualifiedName,
+                ["phase"] = phase,
+                ["locatorFound"] = found,
+                ["locations"] = locations == null ? 0 : locations.Count
+            }.ToString(Newtonsoft.Json.Formatting.None));
+            return found;
+        }
+    }
     sealed class ProgressSink : IProgress<float>
     {
         public void Report(float value)
@@ -87,7 +109,7 @@ public static class WholeCatalogLoader
         var dynamicLocators = Addressables.ResourceLocators.Where(prior => prior.LocatorId == "DynamicResourceLocator").ToArray();
         foreach (var prior in Addressables.ResourceLocators.ToArray())
             Addressables.RemoveResourceLocator(prior);
-        locator = new ResourceLocationMap("original-whole-catalog");
+        var map = new ResourceLocationMap("original-whole-catalog");
         var locations = new Dictionary<int, IResourceLocation>();
         var bundles = new Dictionary<string, IResourceLocation>();
         if (bundlePath != null)
@@ -131,8 +153,9 @@ public static class WholeCatalogLoader
                 continue;
             var found = key["locations"].Select(x => (int)x).Where(locations.ContainsKey).Select(x => locations[x]).ToList();
             if (found.Count != 0)
-                locator.Add((string)key["key"], found);
+                map.Add((string)key["key"], found);
         }
+        locator = new RequestLoggingLocator(map);
         Addressables.AddResourceLocator(locator);
         // The original locator resolves GUID[subobject] through the typed main location.
         foreach (var dynamicLocator in dynamicLocators)

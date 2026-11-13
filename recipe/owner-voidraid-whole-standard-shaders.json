@@ -1,0 +1,342 @@
+{
+  "input_id": "6af7ed94619fe1b4346974b4486afa03a8d1625a7820e92da0ff74d57208fe88",
+  "source_type": {
+    "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/calmwater_unitybuiltinshaders_244d4ed79dda70fa38b62dcf46d4ccd7.bundle",
+    "bytes": 1802189,
+    "sha256": "949b28d89f3db1c8da8362f5dd96cc27bae5b3f0d4f2a807fc89be692c494805",
+    "member": "CAB-3795e044f5be9199dfbb711bdc9d52a8",
+    "path_id": -8014961710185377972
+  },
+  "compiler_sdk": {
+    "MacOS/Unity": {
+      "bytes": 79453472,
+      "sha256": "906123118e45d56c6bcf20f3776ed2373417553042500714023daeb9e53058e8"
+    },
+    "Tools/UnityShaderCompiler": {
+      "bytes": 12603248,
+      "sha256": "4f4e5be21d27dd7541fa9385ea480b15816e70ddaa83b516df0ab60b819142b5"
+    },
+    "Resources/unity_builtin_extra": {
+      "bytes": 133069551,
+      "sha256": "db99888b83efb4ec35e6ce219de78c951fc37bc0129712579131360312cc4f8e"
+    }
+  },
+  "compiler_includes_sha256": "163fad0ca42bd98ea1628888dedd01d91fcbb9f6bda60a8120f9b453cc565144",
+  "settings": {
+    "color_space": 1,
+    "caching_preprocessor": true,
+    "tier0": {
+      "standardShaderQuality": 0,
+      "renderingPath": 3,
+      "hdrMode": 1,
+      "realtimeGICPUUsage": 25,
+      "useReflectionProbeBoxProjection": 0,
+      "useReflectionProbeBlending": 0,
+      "useHDR": 1,
+      "useDetailNormalMap": 0,
+      "useCascadedShadowMaps": 0,
+      "prefer32BitShadowMaps": 0,
+      "enableLPPV": 0,
+      "useDitherMaskForAlphaBlendedShadows": 0
+    },
+    "virtual_texturing": 0,
+    "vulkan_pretransform": 0,
+    "shader_precision_model": 0,
+    "deferred_reflections": 1
+  },
+  "materials": [
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-dlc1-ancientloft_assets_all_95e3b0ed593aab5def2b88fccf93ed25.bundle",
+      "member": "CAB-fa1dffeaadff5d1dbc121099bcf95bc9",
+      "path_id": 6402547302839160652,
+      "bytes": 14498215,
+      "sha256": "985fe6a827537efd8b307ab18490db1155c9e965f3a0a570fa9c797059ecd59a",
+      "body_sha256": "77929599396380a5dd16eb03fa9a07994f1ca159d11653e3c63cae94a02c5e8d"
+    },
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-dlc4-wake_static_assets_all_61a271efd3f07a9b89a6806340a1cd8b.bundle",
+      "member": "CAB-032b3d33e00b29f79c3c9625c17a15ef",
+      "path_id": -4475157975700805614,
+      "bytes": 1213668,
+      "sha256": "fa2fb0cb08608203f404bf088c4187e32e74e1623c3176840f7005c86af3bf1e",
+      "body_sha256": "5767b852071d6115c33989f412f2f8e84fcc3d269cdabab739ccf64caeff874a"
+    },
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-dlc4-wake_static_assets_all_61a271efd3f07a9b89a6806340a1cd8b.bundle",
+      "member": "CAB-032b3d33e00b29f79c3c9625c17a15ef",
+      "path_id": 4825701039976892912,
+      "bytes": 1213668,
+      "sha256": "fa2fb0cb08608203f404bf088c4187e32e74e1623c3176840f7005c86af3bf1e",
+      "body_sha256": "9687c3ddf9c5fa51807e38dc1a691698138b7693926a403a51c3555cfae7d5ef"
+    },
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-dlc4-wake_static_assets_all_61a271efd3f07a9b89a6806340a1cd8b.bundle",
+      "member": "CAB-032b3d33e00b29f79c3c9625c17a15ef",
+      "path_id": 6402547302839160652,
+      "bytes": 1213668,
+      "sha256": "fa2fb0cb08608203f404bf088c4187e32e74e1623c3176840f7005c86af3bf1e",
+      "body_sha256": "810d22e15193533dbfa105494a7bebab89881e00069b46c656da36905f00592b"
+    },
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-base-core_assets_all_9511c82c5eb7adcd9903c47e0d3a0d63.bundle",
+      "member": "CAB-2092c6286510543a91b81d4de1edb736",
+      "path_id": 6402547302839160652,
+      "bytes": 77674,
+      "sha256": "4d094646a4fdcdf0cdb7fd3003dbb9f0b875759853d0a6ab6f6d0a8a777599e4",
+      "body_sha256": "810d22e15193533dbfa105494a7bebab89881e00069b46c656da36905f00592b"
+    },
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-base-vagrant_static_assets_all_03a6bdc7d67d8101337cf697d8a7bd60.bundle",
+      "member": "CAB-a4a8ead9fa2f5825794b2fb3c6165ae1",
+      "path_id": 6402547302839160652,
+      "bytes": 518835,
+      "sha256": "6e13b08a127e3f40eb38a29891929234136f7e284dde0982ff95f36198de39b4",
+      "body_sha256": "726541a21c55a0f5d806520fd12ac7db08573d80dea898a4e79bf8a7bb570fb3"
+    },
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-base-dampcave_assets_all_e40a371cb163d36f85556c91f0922ca9.bundle",
+      "member": "CAB-f7185e2d785200a4ed4acec7fb742e52",
+      "path_id": 6402547302839160652,
+      "bytes": 8240712,
+      "sha256": "25f7c8620139918b080cac3d33c106a4443c6a6d4ac06f763b90751af12d98ad",
+      "body_sha256": "4941ab602dccb2ecfd582eae2ed0d171c2a9dd07d019b378e762215dcf4a56de"
+    },
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-base-electricworm_static_assets_all_c0ae3ed401249ca10f864f3c6f6a12a2.bundle",
+      "member": "CAB-1a32ba9fdcbcd719eb54cc8dcad8f108",
+      "path_id": 6402547302839160652,
+      "bytes": 88332,
+      "sha256": "e244d791f338757474077df30922845de7536ca22d67e5da022a874ebb865125",
+      "body_sha256": "a51a9042a2fd3ab5d4bf9fbfbc41eb0a31c514bd06d0c9f31cafea3dc8a69f1e"
+    },
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-base-magmaworm_static_assets_all_947bd40f44453d89ea5acaccfc8af1e3.bundle",
+      "member": "CAB-44dadfdde2f028d033e2ef619bbe3da6",
+      "path_id": 6402547302839160652,
+      "bytes": 132928,
+      "sha256": "8f49c2635a8f59901d561f4ca5e6a5b6cf462ffedac005d405da2c30f699b8df",
+      "body_sha256": "91c147e5875e2c3e3c7761291f79d3d63a4bb072b3f5c9e988089c126f3daabb"
+    },
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-base-common-props_assets_all_3ea3b6fea6bb8b8eb05318f2b584ac4c.bundle",
+      "member": "CAB-f38cfefcd1c4a090600dbd2f3c76efd6",
+      "path_id": -6337054975966931999,
+      "bytes": 10686926,
+      "sha256": "493e505fe58ad0dd5d5a4a4bbd39eec37c957c4e3ede5544194fd8f957a637c9",
+      "body_sha256": "83a56328ddf1da1c2387ea996387200674f1f1338378cc85c9f5747c00f42836"
+    },
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-base-common-props_assets_all_3ea3b6fea6bb8b8eb05318f2b584ac4c.bundle",
+      "member": "CAB-f38cfefcd1c4a090600dbd2f3c76efd6",
+      "path_id": 6402547302839160652,
+      "bytes": 10686926,
+      "sha256": "493e505fe58ad0dd5d5a4a4bbd39eec37c957c4e3ede5544194fd8f957a637c9",
+      "body_sha256": "029843ab83698d39f9a079c37c6851e41ce36db285475c4734a3f5e0aac2426c"
+    },
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-base-arena_assets_all_f8aff84a88735fe08a1d6ca171084a8a.bundle",
+      "member": "CAB-e3244cc8b2dcc1b09a7490124102788b",
+      "path_id": 6402547302839160652,
+      "bytes": 10561608,
+      "sha256": "2b21faf21870c319079f7f3895e84451405fec1e50e7f48d534b59ba44a45536",
+      "body_sha256": "5c13090a8380b912c619d745481fdf66890960ab71f32c8b94ef7f64591759a6"
+    },
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-base-mage_assets_all_93dc624705ab5aa80ba92713ec2fb351.bundle",
+      "member": "CAB-cad3ccf0202172e84f6e997b402f5495",
+      "path_id": 6402547302839160652,
+      "bytes": 2466449,
+      "sha256": "5ad1970ce987c391a0a0ef5386b059c7290a44b2e217b3e640720ca4a0982da3",
+      "body_sha256": "604926ced6ddefdd46e32c4b2360fb5933906f1b2b9d36cbf32bc42d22b16e90"
+    },
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-dlc1-gauntlets_assets_all_2084a6df685c5898b80446804d335221.bundle",
+      "member": "CAB-bd783d2d91efb0d98521ef92521864b6",
+      "path_id": 6402547302839160652,
+      "bytes": 9657732,
+      "sha256": "340b319b540accf88dfb7d4767f375cc0193f4c440a26897b7bf3b3f77c70ee6",
+      "body_sha256": "604926ced6ddefdd46e32c4b2360fb5933906f1b2b9d36cbf32bc42d22b16e90"
+    },
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-base-golemplains_static_assets_all_f87e8fef498cbebc77b1fcb577fc8147.bundle",
+      "member": "CAB-a75f38fb249d89f4edf6baae774b91ca",
+      "path_id": 6402547302839160652,
+      "bytes": 1253788,
+      "sha256": "7d29ec48fdcaad8935329b3314ad2630e4823f99a713b73ed2000f6d67decedf",
+      "body_sha256": "1df616836d63cbb1d9cfd08d04b1c793634ffc9b9943325b324ba4c3a05714fa"
+    },
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-base-blackbeach_assets_all_8be51f888d4a9b679b288243f863a9a0.bundle",
+      "member": "CAB-a25a9907dd1fcf3a4edc31454f92cc8a",
+      "path_id": 6402547302839160652,
+      "bytes": 26377210,
+      "sha256": "78eeccaa037ae101f7e9f41d99508fe009d4374716d6660b7f17e2d9395d98fb",
+      "body_sha256": "ba418948c31f4af321747711e285bd5d1673cf46bc7fcc776fd03b9886247912"
+    },
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-base-blackbeach_static_assets_all_139483a88d556e63ae5cff500cbfd496.bundle",
+      "member": "CAB-9ebf8222caaaf9a433220c976fa9ae4e",
+      "path_id": 6402547302839160652,
+      "bytes": 257178,
+      "sha256": "57c0035378f4f263ec79141d3838249de76b9ae89c7671524b13dc089756ed07",
+      "body_sha256": "73d65c119eab68db0c83927b3e20fb2c7b502a0d0bddeddcbf095c2c6e845efd"
+    },
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-base-skymeadow_assets_all_e0e18ff75b7a02eb20b98e7fa527a416.bundle",
+      "member": "CAB-9d6c8789ec129bc2db8b0e585db9ff87",
+      "path_id": 6402547302839160652,
+      "bytes": 27646580,
+      "sha256": "beeed9f1c31c6ec758e0c3b4cdcfca4bd3184c9bea1a3d29464f8e5d7d482082",
+      "body_sha256": "91e2e1bd7d17954f37387cc576a7eb947aa97ea34d236253d623e05a08f75389"
+    },
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-base-crystalworld_assets_all_5ea5cd3211ad2b6f69275ab75b23b347.bundle",
+      "member": "CAB-98a3b44475018cd0d09c8ef5583dee17",
+      "path_id": 6402547302839160652,
+      "bytes": 127342,
+      "sha256": "38c7fec39001ab24d6712b3b8aed3af47e2b4a4beddfea9fa5964c1222a3a811",
+      "body_sha256": "cd3ec05a1b707e5c1f567db54e6b781ec2775388a0d5753f65c83574054b4c5b"
+    },
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-dlc1-voidraid_static_assets_all_d1cb4405d15bf5e0c8f0b42b1fb394eb.bundle",
+      "member": "CAB-8d497d28418fbfb4d83f7e3d1efae018",
+      "path_id": 6402547302839160652,
+      "bytes": 64702,
+      "sha256": "61303e2e2730d89bc88ca36d596840f9ba8923bee156e07a5e6006aa9d96940f",
+      "body_sha256": "91b93f098515e26b4e4509eb8104b725072c26ce90c2720b9e9aa39b3854e896"
+    },
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-dlc1-gauntlets_static_assets_all_84922962395de4fb505cf6f963019cf0.bundle",
+      "member": "CAB-8b34ea6b979fb94d0f8c05d83d85f30c",
+      "path_id": 6402547302839160652,
+      "bytes": 1085042,
+      "sha256": "437afba7c8f944c5512504bbe1114d02173dcd84bfd6bfe38fb5351594c957ae",
+      "body_sha256": "232ab72d285f7139adf49e59ea715e24506223c1cc55193de67094f0a383cde4"
+    },
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-globalcontent_assets_all_771300875213bab359b17ff3cbbb3fc1.bundle",
+      "member": "CAB-8120010f04e2e8c3b938a3cc877a8136",
+      "path_id": 6402547302839160652,
+      "bytes": 3220645,
+      "sha256": "1a2c23b104a2c599693e3b3f1ec554db684c905cdec50f2daa53419fe3d51164",
+      "body_sha256": "3010a100b3415fa70101f508c96f43c9ff183d6a87043c3ed87871f751cd9c1c"
+    },
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-base-common_static_assets_all_c5d8595dcf1ebb5f39b6e5cea0902f85.bundle",
+      "member": "CAB-7aadc3876a6282688f5d01e2e4272074",
+      "path_id": 6402547302839160652,
+      "bytes": 735944,
+      "sha256": "c8069f10e8c930d4cfba363c2f57523e1b1eb23b2032c81a48dc77f7dbfcfcd3",
+      "body_sha256": "a51a9042a2fd3ab5d4bf9fbfbc41eb0a31c514bd06d0c9f31cafea3dc8a69f1e"
+    },
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-dlc1-voidraid_assets_all_78500f40e64ec58ce447a5d3af9a7748.bundle",
+      "member": "CAB-77b5716359a5457cb32a6ccec479e25c",
+      "path_id": 6402547302839160652,
+      "bytes": 13788659,
+      "sha256": "9c87c2b974054a1a5b884a227b055462901294b80c4d2d6ef472b80ba11322c7",
+      "body_sha256": "5c4d94832756aeda601aee5a3ab0f27b0917599fac303369c0f3c2cb417373fe"
+    },
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-base-common-vfx_assets_all_937301e61e12e209869011ee4d10a368.bundle",
+      "member": "CAB-534a78d97376420a01045c911ddd2878",
+      "path_id": 6402547302839160652,
+      "bytes": 5234695,
+      "sha256": "e8e2ea563e1abd64a52b0448de51423912fb67708374f61fe35f5b030c269f83",
+      "body_sha256": "7ab141055f8dac501f28bfecf7492d30bc78c98e9e0e7442b17bcd4523004dc7"
+    },
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-dlc1-gamemodes-infinitetowerrun-itassets_assets_all_fc110545147a8b773e7a1bf6f460f649.bundle",
+      "member": "CAB-4fed147b30d170832ebc3c17a75296d9",
+      "path_id": 6402547302839160652,
+      "bytes": 5626106,
+      "sha256": "b2b7f5fc01a24e2f9aeb00be4e371f6fd99641d8b8780638745f2e8e8e007e97",
+      "body_sha256": "43e31ff97ba5383537ba508114dfd0c31afee208cc2bd85edcffe68a091ca6d2"
+    },
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-dlc1-voidstage_assets_all_e2cacf541af02bcdb5d5849af7612319.bundle",
+      "member": "CAB-47d337ee3f3c1d9054e0516f2c4caa2f",
+      "path_id": 6402547302839160652,
+      "bytes": 24374276,
+      "sha256": "22b179b1ab64664c81d09c25bec25efa4210578c117452326961cbda6ab83947",
+      "body_sha256": "eb194177368ba2454ddfddfc49ceb819f86a070a6f21dfeef6298e937bee7b49"
+    },
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-base-pearl_assets_all_1af9bd7037a79366b508138410e37710.bundle",
+      "member": "CAB-446b6030f03462cb2866ba20ba9eeea8",
+      "path_id": 6402547302839160652,
+      "bytes": 44064,
+      "sha256": "554bd897ec15a97c3b6e2961c03194d013acc670801edbafc5624d289cff8cff",
+      "body_sha256": "91b93f098515e26b4e4509eb8104b725072c26ce90c2720b9e9aa39b3854e896"
+    },
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-base-shipgraveyard_assets_all_5eb52cb808cd3dcaee3670329f5d3259.bundle",
+      "member": "CAB-418d480fc4639dc036d5ec7410e5be59",
+      "path_id": 6402547302839160652,
+      "bytes": 29707591,
+      "sha256": "080dda590445b28ab8c130973d59469785aedcb1a3d3ead5461c6bca6f4ff44e",
+      "body_sha256": "73d65c119eab68db0c83927b3e20fb2c7b502a0d0bddeddcbf095c2c6e845efd"
+    },
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-base-wispgraveyard_assets_all_2767d32232a90ee899c29f0060c48ee1.bundle",
+      "member": "CAB-3b9ff8296fdafff1701266b3ecf1ae53",
+      "path_id": 6402547302839160652,
+      "bytes": 15369248,
+      "sha256": "cf6333ba0a0e500611f2ebe964a5d158097941a5951d2f67ebea74b86e9e2803",
+      "body_sha256": "94a576e4c07ac2f1ebd9a022a1774dea0cbc2e1a1b2d63f25a814ffb324f7d4f"
+    },
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-base-moon_assets_all_18eadbbfd8d87c261af347798957ba73.bundle",
+      "member": "CAB-320763c720695cc847419dee943321af",
+      "path_id": 6402547302839160652,
+      "bytes": 53087993,
+      "sha256": "7acb90bf61196c947733504e258abb9bb902a73a32a10950f78ecdd97d50ff3d",
+      "body_sha256": "b2f785c6a4398f063c020f672560104671fb4e52c0d53e085addb3c318cc8c31"
+    },
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-base-multishopterminal_static_assets_all_cca3c6226a8ec09365181a0d404dbc08.bundle",
+      "member": "CAB-99067cfc025f3a551958a5bd45e9d27d",
+      "path_id": 6402547302839160652,
+      "bytes": 16002,
+      "sha256": "42d65c987f22436064a49f2f3ff7e929ecdd26288692bb73689788598427644e",
+      "body_sha256": "3010a100b3415fa70101f508c96f43c9ff183d6a87043c3ed87871f751cd9c1c"
+    },
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-base-golemplains_assets_all_7085efcd436035de400d60c81e73c06f.bundle",
+      "member": "CAB-2286350d325de341ae869c105f41da28",
+      "path_id": 6402547302839160652,
+      "bytes": 11494712,
+      "sha256": "7e9e5ef7783e232b8f5593c84b71777add5f42cda134805f3b867878be41e1e8",
+      "body_sha256": "d4035d611e38f314735397680c7de0bea29caabe30ba4ee76092ee8405e8acae"
+    },
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-base-frozenwall_assets_all_f32fc864ad44ac8f3c14554e50fdd0f5.bundle",
+      "member": "CAB-20c3304c9806061560c550ba9eae3395",
+      "path_id": 6402547302839160652,
+      "bytes": 11653713,
+      "sha256": "94f4dcb4e956a5b858221e414a70c91f952759f0114e80dca812a8a17850902f",
+      "body_sha256": "3010a100b3415fa70101f508c96f43c9ff183d6a87043c3ed87871f751cd9c1c"
+    },
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-base-bazaar_assets_all_60f6c1ab98ca6b105c1076393cdc95ce.bundle",
+      "member": "CAB-01c25808c5861977643e7d23189c3292",
+      "path_id": 6402547302839160652,
+      "bytes": 6825469,
+      "sha256": "b2e2329848e2efe65ff0daa736139f289fa0c9db07c4745df1d0da2c44769439",
+      "body_sha256": "1e975c7f6b859028d45407ca60dd506c49c7218a076c3238ce6f7e18a365b3f5"
+    }
+  ],
+  "scene": {
+    "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-dlc1-voidraid_scenes_all_3db0521c4ed123aa896a76e5189306b9.bundle",
+    "member": "CAB-868bef2246105e53c97b315180280670",
+    "bytes": 8362712,
+    "sha256": "36a09130e12288b3baced61b0814cab6419117caeda49d37c55e06fb5f19d0a4"
+  },
+  "outputs": [
+    {
+      "bundle": "whole-scene-voidraid",
+      "member": "BuildPlayer-voidraid.sharedAssets",
+      "path_id": 338
+    }
+  ]
+}

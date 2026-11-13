@@ -2,10 +2,12 @@
 // Session phases: setup Awake, OnEnable; teardown OnDestroy.
 using System;
 using System.Collections.Generic;
+using System.IO;
 using UnityEngine;
 using UnityEngine.Profiling;
 using UnityEngine.SceneManagement;
 using Unity.Profiling;
+using Unity.Profiling.LowLevel.Unsafe;
 
 // Camera-only presentation pass and bounded measurements; source grading remains pending.
 public sealed class AndroidPresentationCamera : MonoBehaviour
@@ -28,14 +30,168 @@ public sealed class AndroidPresentationCamera : MonoBehaviour
     [Serializable]
     public class Report
     {
+        public CpuMarkerSample[] cpuMarkers;
         public int frames, colorPasses, over33ms, over50ms, pauses, resumeFramesSkipped;
+        public double totalMs;
+        public string rawFrameTrace, rawFrameTraceError;
+        public int rawFrameTraceFirstFrame, rawFrameTraceFrames, rawFrameTraceDropped;
+        public bool rawFrameTraceClosed;
         public float meanMs, maxMs, backgroundSeconds;
         public bool sourceCubemap, sourceSun, cameraHdrAllowed, halfFloatSupported;
         public string colorTargetFormat, colorGraphicsFormat, gBuffer3Format, skybox, sun, skyboxStatus, error;
         public List<Sample> samples = new List<Sample>();
     }
     public Light fallbackLight;
+    [Serializable]
+    public sealed class CpuMarkerSample
+    {
+        public string name, category;
+        public bool available;
+        public int observedFrames, framesWithCalls, missingFrames;
+        public long calls;
+        public double totalMs, maxFrameMs;
+        public void Observe(long nanoseconds, long blocks)
+        {
+            if (!available)
+                return;
+            observedFrames++;
+            if (blocks == 0)
+                return;
+            framesWithCalls++;
+            calls += blocks;
+            double ms = nanoseconds * 1e-6;
+            totalMs += ms;
+            maxFrameMs = Math.Max(maxFrameMs, ms);
+        }
+    }
+    ProfilerRecorder[] cpuRecorders;
+    bool skipFirstCpuFrame;
+    void BeginCpuCapture()
+    {
+        // Inclusive scopes overlap: these totals must never be added together.
+        string[] names = { "PlayerLoop", "Update.ScriptRunBehaviourUpdate", "BehaviourUpdate", "CoroutinesDelayedCalls",
+                           "PreLateUpdate.ScriptRunBehaviourLateUpdate", "FixedBehaviourUpdate", "Physics.Simulate",
+                           "Camera.Render", "GC.Collect", "GarbageCollector.CollectIncremental", "WaitForTargetFPS",
+                           "Gfx.WaitForPresentOnGfxThread", "Gfx.WaitForRenderThread", "Semaphore.WaitForSignal", "WaitForJobGroupID" };
+        cpuRecorders = new ProfilerRecorder[names.Length];
+        var handles = new List<ProfilerRecorderHandle>();
+        ProfilerRecorderHandle.GetAvailable(handles);
+        report.cpuMarkers = new CpuMarkerSample[names.Length];
+        for (int i = 0; i < names.Length; i++)
+        {
+            var sample = new CpuMarkerSample { name = names[i] };
+            report.cpuMarkers[i] = sample;
+            foreach (var handle in handles)
+            {
+                var description = ProfilerRecorderHandle.GetDescription(handle);
+                if (description.Name != names[i] || description.UnitType != ProfilerMarkerDataUnit.TimeNanoseconds)
+                    continue;
+                sample.category = description.Category.Name;
+                cpuRecorders[i] = new ProfilerRecorder(handle, 1, ProfilerRecorderOptions.Default |
+                    ProfilerRecorderOptions.StartImmediately | ProfilerRecorderOptions.CollectOnlyOnCurrentThread);
+                sample.available = cpuRecorders[i].Valid;
+                break;
+            }
+        }
+        skipFirstCpuFrame = true;
+    }
+    void ObserveCpuCapture()
+    {
+        if (cpuRecorders == null)
+            return;
+        if (skipFirstCpuFrame)
+        {
+            skipFirstCpuFrame = false;
+            return;
+        }
+        // Read the preceding end-of-frame values; never reset a partly completed frame.
+        for (int i = 0; i < cpuRecorders.Length; i++)
+            if (cpuRecorders[i].Valid)
+            {
+                if (cpuRecorders[i].Count == 0)
+                    report.cpuMarkers[i].missingFrames++;
+                else
+                {
+                    var sample = cpuRecorders[i].GetSample(0);
+                    report.cpuMarkers[i].Observe(sample.Value, sample.Count);
+                }
+            }
+    }
+    void FinishCpuCapture()
+    {
+        if (cpuRecorders == null)
+            return;
+        for (int i = 0; i < cpuRecorders.Length; i++)
+            cpuRecorders[i].Dispose();
+        cpuRecorders = null;
+    }
     public readonly Report report = new Report();
+    // Primitive, bounded storage only. No per-frame allocation or file I/O.
+    public sealed class RawFrameCapture
+    {
+        public const int Capacity = 262144;
+        public readonly int firstFrame;
+        public int count, dropped;
+        readonly float[] durations;
+        public RawFrameCapture(int firstFrame, int capacity = Capacity)
+        {
+            this.firstFrame = firstFrame;
+            durations = new float[capacity];
+        }
+        public void Observe(float ms)
+        {
+            if (count < durations.Length)
+                durations[count++] = ms;
+            else
+                dropped++;
+        }
+        public void Write(string path)
+        {
+            using (var writer = new BinaryWriter(File.Open(path, FileMode.CreateNew, FileAccess.Write)))
+            {
+                // Little-endian header: magic, first ordinal, retained count,
+                // final admitted ordinal, dropped count; then IEEE float32 ms.
+                writer.Write(System.Text.Encoding.ASCII.GetBytes("ROR2FRAM"));
+                writer.Write(firstFrame);
+                writer.Write(count);
+                writer.Write(firstFrame + count + dropped - 1);
+                writer.Write(dropped);
+                for (int i = 0; i < count; i++)
+                    writer.Write(durations[i]);
+            }
+        }
+    }
+    RawFrameCapture rawFrames;
+    public void BeginRawFrameCapture()
+    {
+        if (report.rawFrameTrace != null)
+            return;
+        rawFrames = new RawFrameCapture(report.frames + 1);
+        report.rawFrameTraceFirstFrame = rawFrames.firstFrame;
+        report.rawFrameTrace = "frame-times-" + Guid.NewGuid().ToString("N") + ".bin";
+        BeginCpuCapture();
+    }
+    public void FinishRawFrameCapture()
+    {
+        FinishCpuCapture();
+        if (rawFrames == null)
+            return;
+        report.rawFrameTraceFrames = rawFrames.count;
+        report.rawFrameTraceDropped = rawFrames.dropped;
+        try
+        {
+            rawFrames.Write(Path.Combine(Application.persistentDataPath, report.rawFrameTrace));
+            report.rawFrameTraceClosed = true;
+        }
+        catch (Exception error)
+        {
+            report.rawFrameTraceError = error.GetType().Name + ": " + error.Message;
+        }
+        finally
+        {
+            rawFrames = null;
+        }
+    }
     Material grade;
     Camera view;
     double sum, timingCpu, timingGpu, timingMain, timingRender, drawCalls, setPassCalls, vertices, gcAllocBytes;
@@ -96,7 +252,10 @@ public sealed class AndroidPresentationCamera : MonoBehaviour
             return;
         }
         report.frames++;
+        ObserveCpuCapture();
         sum += ms;
+        report.totalMs = sum;
+        rawFrames?.Observe(ms);
         report.meanMs = (float)(sum / report.frames);
         report.maxMs = Mathf.Max(report.maxMs, ms);
         if (ms > 33.334f)
@@ -246,6 +405,7 @@ public sealed class AndroidPresentationCamera : MonoBehaviour
     }
     void OnDestroy()
     {
+        FinishRawFrameCapture();
         mainThreadRecorder.Dispose();
         renderThreadRecorder.Dispose();
         drawCallsRecorder.Dispose();

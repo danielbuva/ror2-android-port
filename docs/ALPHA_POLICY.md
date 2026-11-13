@@ -9,8 +9,9 @@ boundary in [ADR-002](ADR-002-public-alpha-distribution.md) remain fixed.
 
 Reserve `dev.ror2lab.alpha` for the first owner alpha. Keep the disposable
 `dev.ror2lab.arm64` laboratory package and separate tool fixtures unchanged.
-The new identity is not active in the current player or accepted-output replay.
-It requires its own package, storage, execution and update evidence before use.
+The final owner installer enforces this identity; the laboratory and private replay
+identities are not migrated. Actual alpha package, storage, execution and update
+evidence is still required before release.
 Do not adopt an existing installation without a local ownership receipt and
 matching package/signing identity. Do not remove a conflicting package to make
 an installation succeed. Migration of laboratory data is a separate reviewed
@@ -21,7 +22,8 @@ updates. The project does not hold a shared signing key or accept uploaded keys,
 passwords or owner-generated game packages. Key creation, durable custody and
 private recovery backup must be qualified before the first alpha installation.
 Losing the key blocks in-place updates; silent key replacement is not recovery.
-The final phone key-storage implementation belongs to owner-build research.
+The existing owner signer retains custody; the installer independently checks the
+installed certificate, signed output and local ownership/issued-version receipts.
 
 Every installed alpha update must use a strictly greater positive `versionCode`
 than its predecessor. Keep an owner-local issued-version receipt; rebuilding the
@@ -33,8 +35,10 @@ rather than wrapping or reusing a code. Use the conservative upper bound
 Android documents [version ordering](https://developer.android.com/studio/publish/versioning)
 and [signing continuity](https://developer.android.com/studio/publish/app-signing).
 
-Rollback means rebuilding a retained compatible source/payload set with the
-same owner key and a higher version code. Preserve the last known-good receipt,
+Rollback reconstructs the previous verified signed APK's nonsignature entries,
+changes only its binary manifest version, and signs with the same owner key and a
+new higher issued code. This retains the previous reconstructed source/payload
+set without a separate game-data backup or Android downgrade. Preserve the last known-good receipt,
 profile/settings backup and data-schema compatibility declaration. Refuse a
 schema-incompatible rollback. Never use uninstall, forced downgrade, data clear
 or storage reconfiguration as an update/rollback step. Profile/settings retention
@@ -49,7 +53,13 @@ and hash the complete accepted input before transformation. Unknown, incomplete
 or changed input is refused until explicitly reviewed and accepted; filenames,
 a Steam manifest label or a successful file picker alone do not prove identity.
 The prepared desktop path already enforces its inventory/acceptance preflight;
-phone import and the final player UI remain unqualified. Cancellation must leave
+the phone importer now checks reviewed complete fingerprints, with actual picker
+and native-player behavior still requiring phone qualification. A signed catalog
+can declare multiple supported inventories and recognition-only older versions.
+An exact unsupported match is named but refused; otherwise the result is honestly
+"unknown" (or ambiguous), with the supported list and a complete-installation/
+maintainer-review action. Filenames, labels and partial matches never authorize
+conversion. Cancellation must leave
 the source untouched and retain no partial output as an accepted build.
 
 Defer account downloads, Steam Guard flows and Steam Cloud synchronization.
@@ -69,8 +79,8 @@ No community or game implementation is copied into this policy.
 
 ## Final-flow acceptance contract
 
-These are concrete acceptance cases for the eventual alpha flow, not claims
-that it exists. Extend the existing [owner APK producer](../tools/phone-build/owner-apk/README.md),
+These distinguish host-qualified code contracts from the remaining actual-phone
+evidence. No host test establishes a released or game-qualified alpha. Extend the existing [owner APK producer](../tools/phone-build/owner-apk/README.md),
 input admission and device ownership owners; do not introduce a second signing,
 installer or input-acceptance pipeline. Keep detailed receipts private and publish
 only reviewed summaries. The prepared-lab [playtest checklist](PLAYTESTING.md)
@@ -78,11 +88,13 @@ remains the desktop fallback.
 
 | Boundary | Required case and evidence | Existing coverage and remaining gate |
 | --- | --- | --- |
-| Final package identity | Independently inspect the assembled and installed package as `dev.ror2lab.alpha`. On an occupied identity, require its local ownership receipt and matching signing certificate before updating; refuse an unowned or conflicting signer without uninstalling. Record actual installed APK hash, version, placement and runtime backing. | `binary_manifest.py` preserves the supplied package identity; its authored fixture proves that preservation. It does not select the alpha identity. The current laboratory/device ownership contract and J1065 are reusable, but neither qualifies an alpha installation. |
-| Issued versions | Allocate positive codes through 2,100,000,000 from durable owner-local state. Build two updates from the same frozen source manifest and prove the second code exceeds the first issued code. Refuse reuse, lower codes and exhaustion before dispatching installation. A failed or cancelled attempt must not allow a previously issued code to be reused. Bind every issue to the source/input/toolchain/APK/payload/certificate receipt required above. | `binary_manifest.py` checks only that an explicit code exceeds the supplied manifest version, accepts through the policy maximum of 2,100,000,000 and permits omission. Request admission refuses a larger explicit code before creating output. Durable issued-version allocation and mandatory final-flow codes are additional integration gates; passing the manifest tests does not establish monotonic owner updates. |
-| Signing and recovery | Sign separate builds with the same owner certificate, then independently verify signatures, alignment and unchanged nonsignature content. Refuse redirected, exposed or incomplete existing key state without replacing a retained key. Qualify a private recovery backup and restoration with that same certificate before the first alpha installation. | `build_owner_apk.py` owns durable key reuse and signing verification; `test_owner_signing.py` covers authored key reuse, tool failure and unsafe existing custody. J1095 qualifies authored phone signing, not final game packaging, certificate-bound install admission or backup recovery. |
-| Legitimate local input | Admit the complete reviewed inventory, then repeat with an unknown version, missing file and changed bytes under otherwise identical filenames. Each refused attempt leaves the legitimate installation unchanged and creates no accepted build/current pointer. Recheck admitted input after processing so a mid-operation change cannot become accepted output. | The desktop inventory/acceptance preflight and source producers supply admission contracts. The private replay APK builder accepts a target profile, not arbitrary original PC files. Final phone import/UI and honest unknown-version refusal remain unqualified. |
-| Cancellation and updates | Cancel local acquisition before copying and during processing, then restart. Source bytes stay unchanged; incomplete output is never Ready, launchable or selected as accepted. Separately prove a normal installer update and a compatible higher-code rollback retain real game profile/settings across cold starts. Refuse incompatible schemas. | `PayloadStore.java` and its actual Java harness cover per-file packaged-payload pause/restart, exact drift consent, retained backups and failed-stage refusal. They do not implement local PC import cancellation. J1065 qualifies retained data under the lab identity and ADB installation; final alpha identity, ordinary installer and rollback cases remain open. |
+| Final package identity | Inspect assembled/installed `dev.ror2lab.alpha`; require an occupied installation's ownership receipt, actual APK hash/version and same signer. No adoption/uninstall fallback. | Host-qualified: alpha publisher, manifest, issued-receipt and session guards. Phone gate: actual alpha package, placement and cold start. |
+| Issued versions | Durable codes 1–2,100,000,000 bind source/input/toolchain/APK/payload/certificate. Failed/cancelled attempts burn codes; reject reuse, downgrade, missing ledger and exhaustion. | Host-qualified: locked issuance and independent publisher/install ordering, including repeated source and rollback. Phone gate: durable recovery across real power/process interruption. |
+| Signing and recovery | Keep one private owner certificate; verify signatures/alignment and reject lost, redirected or exposed custody. | Existing signer plus new ledger/certificate checks pass synthetic contracts. J1095 remains authored-phone signing only. Real alpha key backup/recovery and signature continuity still need phone evidence. |
+| Legitimate local input | Hash complete supported inventories; clearly name known-unsupported/unknown/ambiguous inputs, supported versions and next action. No output admission from labels or partial copies. | Host-qualified: existing folder/ZIP import extended with shared version fingerprints, bounded reads, refusal and post-import verification. Phone gate: actual SAF providers and legitimate version cohorts. |
+| Retained rollback | Retain current/previous manifests and signed-APK references; require compatible schema, same key and a newly issued higher code. Never uninstall or force downgrade. | Host-qualified: real binary-manifest forward reversion, unchanged retained content, signing/refusal boundaries and safe reference pruning. Phone gate: actual session rollback and cold-start compatibility. |
+| Profile/settings retention | Preserve the bounded local file set below; snapshot before mutation, verify/restore before releasing the launch gate. | Host-qualified: executing Java store/installer tests, corruption/interruption/space refusal and released-token crash recovery without overwriting newer play. Phone gate: Binder caller checks, filesystem durability and real native profile/settings across update/rollback. |
+| Cancellation and updates | Cancel acquisition/build/install without modifying originals, accepting partial output or losing current/previous recovery references. | Host-qualified: importer/checkpoint/session/backup recovery contracts. Phone gate: ordinary Android consent, cancellation and retained game progress across cold starts. |
 
 Run the existing host contracts without private input or an editor:
 
@@ -97,6 +109,44 @@ available; a skipped Java test is not a passing preparation result. Signing
 tests use authored APK/tool doubles and establish orchestration/refusal contracts,
 not cryptographic, Android installer or game-runtime acceptance. Keep J1065 and
 J1095's separate device scopes when evaluating the final-flow evidence.
+
+
+## Local retention and rollback storage
+
+The retained native set is deliberately narrow: `android-profile-v1/profile.json`
+plus `.backup`, `.pending`, `.backup.pending`, `.recovering`;
+`offline-settings-v1/preferences.json` plus `.backup`, `.pending`; and
+`offline-run-results-v1/profile.json` plus `.backup`, `.pending`, `run-<32 hex>.xml`
+and its matching `.debug.json`. Suffixes extend the primary filename. Results
+history preserves profile baseline reconciliation, not resumable runs. Exclude
+payloads, diagnostics, rejected generations and arbitrary files. Native owners
+still validate their own formats; this transport does not invent a save schema.
+
+A certificate-bound, control-only provider keeps backup bytes inside the game
+UID's `getNoBackupFilesDir()/owner-profile-retention`; nothing is uploaded or
+passed to the installer. Each snapshot is bounded to 512 files, 16 MiB/file and
+64 MiB total, with a further 16 MiB free reserve. Keep the newest and one previous
+verified archive (at most 128 MiB plus bounded metadata); snapshot/restore also
+needs up to one 64 MiB staging copy. Older app-owned archives are pruned only
+after a new snapshot verifies. Current production reads/writes contract 1 only;
+any other schema is refused until a real native migration is implemented.
+
+A durable launch lease requires a fully stopped game, not merely a paused
+activity. The installer cannot force-stop another UID; Android app settings may
+be needed before retry. Verification/restore precedes release. One atomic
+active/released journal lets interrupted installer finalization recognize an
+already completed release without restoring a stale backup over newer gameplay.
+
+The release store retains only current and previous signed APKs by canonical
+reference/hash plus their manifests/receipts, and at most one active candidate.
+The UI reports their actual combined bytes. No separate payload/game tree is
+copied for rollback. Rollback requires space for three new APK-sized work files
+plus 2 GiB reserve; unsigned/aligned and older unreferenced artifacts are pruned
+at the next release operation and after Ready, never while referenced by current,
+previous or pending recovery. Missing artifacts/key/receipts refuse safely.
+Pre-v3 alpha fixtures lacking issued-version/retention state are not silently
+adopted; recovery/migration needs a separate reviewed path, never automatic data
+clear or uninstall.
 
 ## Distribution and feedback
 

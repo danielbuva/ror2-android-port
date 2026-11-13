@@ -1,0 +1,101 @@
+{
+  "input_id": "6af7ed94619fe1b4346974b4486afa03a8d1625a7820e92da0ff74d57208fe88",
+  "records": [
+    {
+      "source_profile_sha256": "d30549957de20c686c00ff8987199edeffbd9afb56158046152354f87cd95840",
+      "source": [
+        "globalgamemanagers.assets",
+        1047
+      ],
+      "class_id": 115,
+      "bytes": 64,
+      "sha256": "2b019e97d6613b2d5b65ac1061faa28bc466ccbb1f6dcd67272726a90fe09775",
+      "native_type_hash": "f46e8e30ecc293493f18ab27134210ee",
+      "destination": [
+        "whole-game-content",
+        "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+        6789030032122484694
+      ]
+    },
+    {
+      "source_profile_sha256": "d30549957de20c686c00ff8987199edeffbd9afb56158046152354f87cd95840",
+      "source": [
+        "globalgamemanagers.assets",
+        1764
+      ],
+      "class_id": 115,
+      "bytes": 80,
+      "sha256": "ccc8b21011d05435b31eeaae00eda743522cfef7bf880fde048696f1b56f1c73",
+      "native_type_hash": "f46e8e30ecc293493f18ab27134210ee",
+      "destination": [
+        "whole-game-content",
+        "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+        -5239563788323990950
+      ]
+    },
+    {
+      "source_profile_sha256": "d30549957de20c686c00ff8987199edeffbd9afb56158046152354f87cd95840",
+      "source": [
+        "globalgamemanagers.assets",
+        1729
+      ],
+      "class_id": 115,
+      "bytes": 120,
+      "sha256": "2ac29698a1f1fbef70e700a4bffa773b03cc94e28418535e59c350dd91b70a20",
+      "native_type_hash": "f46e8e30ecc293493f18ab27134210ee",
+      "destination": [
+        "whole-game-content",
+        "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+        -6381585572675592709
+      ]
+    },
+    {
+      "source_profile_sha256": "d30549957de20c686c00ff8987199edeffbd9afb56158046152354f87cd95840",
+      "source": [
+        "globalgamemanagers.assets",
+        169
+      ],
+      "class_id": 115,
+      "bytes": 72,
+      "sha256": "25828e0805f423414ee3fe10b2aa212563df8c1228503e80061e06b2d7ee3222",
+      "native_type_hash": "f46e8e30ecc293493f18ab27134210ee",
+      "destination": [
+        "whole-game-content",
+        "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+        8954650803208638441
+      ]
+    },
+    {
+      "source_profile_sha256": "d30549957de20c686c00ff8987199edeffbd9afb56158046152354f87cd95840",
+      "source": [
+        "globalgamemanagers.assets",
+        2609
+      ],
+      "class_id": 115,
+      "bytes": 96,
+      "sha256": "56cc7d4045872b5b536c4f8c6be0eab69312619e87bdb0b553ce65684420fee2",
+      "native_type_hash": "f46e8e30ecc293493f18ab27134210ee",
+      "destination": [
+        "whole-game-content",
+        "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+        8105170889831430981
+      ]
+    },
+    {
+      "source_profile_sha256": "d30549957de20c686c00ff8987199edeffbd9afb56158046152354f87cd95840",
+      "source": [
+        "globalgamemanagers.assets",
+        2284
+      ],
+      "class_id": 115,
+      "bytes": 72,
+      "sha256": "63011f306f08d4f65246aedae5a6a56fa4857843f313bad29dff6e8112f8b9d5",
+      "native_type_hash": "f46e8e30ecc293493f18ab27134210ee",
+      "destination": [
+        "whole-game-content",
+        "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+        -7432853816490564646
+      ]
+    }
+  ]
+}

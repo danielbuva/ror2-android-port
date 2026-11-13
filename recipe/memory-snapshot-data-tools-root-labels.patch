@@ -1,0 +1,21 @@
+diff --git a/Core/Parser/ManagedSnapshotCrawler.cs b/Core/Parser/ManagedSnapshotCrawler.cs
+--- a/Core/Parser/ManagedSnapshotCrawler.cs
++++ b/Core/Parser/ManagedSnapshotCrawler.cs
+@@ -39,0 +40 @@ internal sealed class ManagedSnapshotCrawler
++    private string _labStaticRoot = string.Empty;
+@@ -74 +75,2 @@ internal sealed class ManagedSnapshotCrawler
+-            TryEnsureManagedObject(address, $"gc-handle[{gcHandleIndex}]");
++            var managed = TryEnsureManagedObject(address, $"gc-handle[{gcHandleIndex}]");
++            if (managed.HasValue) Console.Error.WriteLine("LAB_GC_HANDLE_ROOT " + managed.Value + " " + gcHandleIndex);
+@@ -377,0 +382 @@ internal sealed class ManagedSnapshotCrawler
++                _labStaticRoot = _snapshot.ManagedTypeNames[typeIndex] + "." + _snapshot.FieldNames[fieldIndex];
+@@ -391 +396,4 @@ internal sealed class ManagedSnapshotCrawler
+-                TryEnsureManagedObject(target, "static field");
++            {
++                var managed = TryEnsureManagedObject(target, "static field");
++                if (managed.HasValue) Console.Error.WriteLine("LAB_STATIC_ROOT " + managed.Value + " " + _labStaticRoot);
++            }
+@@ -417 +425,2 @@ internal sealed class ManagedSnapshotCrawler
+-                TryEnsureManagedObject(target, "static value-type field");
++                var managed = TryEnsureManagedObject(target, "static value-type field");
++                if (managed.HasValue) Console.Error.WriteLine("LAB_STATIC_ROOT " + managed.Value + " " + _labStaticRoot);

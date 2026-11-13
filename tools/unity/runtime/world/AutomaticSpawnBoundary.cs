@@ -277,7 +277,7 @@ public sealed partial class PortSession
                 component.enabled = false;
             }
             if (automaticModel)
-                PrepareAutomaticModel(body);
+                PrepareAutomaticModel(body, cfg);
             machine.enabled = true;
             if (movingMotor)
                 motor.enabled = true;
@@ -325,8 +325,14 @@ public sealed partial class PortSession
             input.moveVector = Vector3.zero;
             r.phase = "automatic-spawn-state-start";
             Save();
+            TraceStartup("automatic-native-spawn-start-begin");
             body.gameObject.SetActive(true);
             yield return null;
+            // ModelLocator.Start detaches the model from its isolated inactive
+            // parent. Its Animator is then initialized before SpawnTeleporter
+            // can transition to GenericCharacterMain's parameter snapshot.
+            if (automaticModel)
+                VerifyAutomaticAnimatorBeforeMainState(body);
             Check(machine.state is SpawnTeleporterState && body.GetBuffCount(RoR2Content.Buffs.HiddenInvincibility) == 1 &&
                       model.invisibilityCount == invisible + 1,
                   "Automatic original spawn Start/buff/model effects");
@@ -356,6 +362,7 @@ public sealed partial class PortSession
             else
                 Check(!solver.enabled && !KinematicCharacterSystem.CharacterMotors_Important.Contains(solver),
                       "State-only probe unexpectedly schedules solver");
+            TraceStartup("automatic-native-spawn-delay-begin");
             var deadline = Time.realtimeSinceStartup + cfg.sourceSpawnDelay + 3;
             while (machine.state is SpawnTeleporterState && Time.realtimeSinceStartup < deadline)
             {
@@ -364,6 +371,7 @@ public sealed partial class PortSession
                 yield return null;
             }
             // The final spawn tick and transition can occur before the coroutine resumes.
+            TraceStartup("automatic-native-spawn-delay-returned");
             ObserveTeleportOverlays(body);
             r.spawnState = machine.state.GetType().FullName;
             r.hiddenBuffCount = body.GetBuffCount(RoR2Content.Buffs.HiddenInvincibility);

@@ -1,0 +1,492 @@
+{
+  "schema": "owner-source-stage-contexts-v1",
+  "input_id": "6af7ed94619fe1b4346974b4486afa03a8d1625a7820e92da0ff74d57208fe88",
+  "file": "2be99f2f55a9941d98f7de611a7b9288",
+  "catalog": {
+    "path": "Risk of Rain 2_Data/StreamingAssets/aa/catalog.json",
+    "sha256": "1cbe89b05987d14cba0809ab8455fd492c0dbfdad0c502529a59c3bb02631c78"
+  },
+  "pool_sources": [
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-base-_dccs_generic_assets_all_b8ed5a0fa7ba18af92ab3cf968b213ec.bundle",
+      "sha256": "042250b60600f20ac35ce19e137baca91720577fd38b0bdeeb8b71ce977436c9"
+    },
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-base-arena_assets_all_f8aff84a88735fe08a1d6ca171084a8a.bundle",
+      "sha256": "2b21faf21870c319079f7f3895e84451405fec1e50e7f48d534b59ba44a45536"
+    },
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-base-artifactworld_assets_all_acaa4363ca32993fecea25d233adf66a.bundle",
+      "sha256": "65ffda5c96c050ec3a533ba092e496f6876225c18ba8f9da3fdcab37679b810c"
+    },
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-base-blackbeach_assets_all_8be51f888d4a9b679b288243f863a9a0.bundle",
+      "sha256": "78eeccaa037ae101f7e9f41d99508fe009d4374716d6660b7f17e2d9395d98fb"
+    },
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-base-dampcave_assets_all_e40a371cb163d36f85556c91f0922ca9.bundle",
+      "sha256": "25f7c8620139918b080cac3d33c106a4443c6a6d4ac06f763b90751af12d98ad"
+    },
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-base-foggyswamp_assets_all_53423b42712acdc68e3f5c482a222bbc.bundle",
+      "sha256": "7373ff3e48d37f4ade86be86de8fdd09fa4c25da6baefcf1dfc8365b287a3369"
+    },
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-base-frozenwall_assets_all_f32fc864ad44ac8f3c14554e50fdd0f5.bundle",
+      "sha256": "94f4dcb4e956a5b858221e414a70c91f952759f0114e80dca812a8a17850902f"
+    },
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-base-goldshores_assets_all_069fc338e6c97df919a4bf0af4e3d04d.bundle",
+      "sha256": "5fee7bc46d66dc7c4f1a828c932685e2c9999c20969c6f31e27ae08db251b71d"
+    },
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-base-golemplains_assets_all_7085efcd436035de400d60c81e73c06f.bundle",
+      "sha256": "7e9e5ef7783e232b8f5593c84b71777add5f42cda134805f3b867878be41e1e8"
+    },
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-base-goolake_assets_all_766ccb62c1ac886758b8e7b1facb538a.bundle",
+      "sha256": "c7f281b779c9ae6926b58acd5d48e5cc29265ac9311c6829e1ded0e710f53768"
+    },
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-base-moon_assets_all_18eadbbfd8d87c261af347798957ba73.bundle",
+      "sha256": "7acb90bf61196c947733504e258abb9bb902a73a32a10950f78ecdd97d50ff3d"
+    },
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-base-rootjungle_assets_all_9c17f4bc36ecb980a6defecd40cce9c2.bundle",
+      "sha256": "6caaaa87d9c5dd3d60e7445fbf569627b4a7a21fa39b1fe824addd890455c8e0"
+    },
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-base-shipgraveyard_assets_all_5eb52cb808cd3dcaee3670329f5d3259.bundle",
+      "sha256": "080dda590445b28ab8c130973d59469785aedcb1a3d3ead5461c6bca6f4ff44e"
+    },
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-base-skymeadow_assets_all_e0e18ff75b7a02eb20b98e7fa527a416.bundle",
+      "sha256": "beeed9f1c31c6ec758e0c3b4cdcfca4bd3184c9bea1a3d29464f8e5d7d482082"
+    },
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-base-wispgraveyard_assets_all_2767d32232a90ee899c29f0060c48ee1.bundle",
+      "sha256": "cf6333ba0a0e500611f2ebe964a5d158097941a5951d2f67ebea74b86e9e2803"
+    },
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-dlc1-ancientloft_assets_all_95e3b0ed593aab5def2b88fccf93ed25.bundle",
+      "sha256": "985fe6a827537efd8b307ab18490db1155c9e965f3a0a570fa9c797059ecd59a"
+    },
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-dlc1-gamemodes-infinitetowerrun-itassets_assets_all_fc110545147a8b773e7a1bf6f460f649.bundle",
+      "sha256": "b2b7f5fc01a24e2f9aeb00be4e371f6fd99641d8b8780638745f2e8e8e007e97"
+    },
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-dlc1-itancientloft_assets_all_3c88c8d4b4b8ad515316b5f58a8ac5f3.bundle",
+      "sha256": "57fbb51ebc86543fcf776c8a805424b1624ea8ac11d64416a593d1344c9655e2"
+    },
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-dlc1-itdampcave_assets_all_cfb881887ecdb84d9d77280c759db0ea.bundle",
+      "sha256": "8d978bfa2647cc04fd6c8053aebf15a7356b5c2dd0c749da4a515127fe514733"
+    },
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-dlc1-itfrozenwall_assets_all_ac51cf1351aefc385cd9f3d6835afe49.bundle",
+      "sha256": "cee61e014008d27720990b9ae848867e97a86c8aea9ac744b7b01102cb1f4d56"
+    },
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-dlc1-itgolemplains_assets_all_3246b6e9184e508b0b5d8e0d945f96bc.bundle",
+      "sha256": "3896bb3c01696dac8b5f7af4ae74262fc09cd4e46742a88cb25afec939640089"
+    },
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-dlc1-itgoolake_assets_all_417a96734899a8d6ed3b2b0cd5ba92ac.bundle",
+      "sha256": "8441a0f134db18522d00d6f4c9a4c6dc323a6038a4a2c882dcc2f87191bfc7fb"
+    },
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-dlc1-itmoon_assets_all_d9f5bcc087c30aaffc991ab9fa109896.bundle",
+      "sha256": "35882dbb4d0d5882b934053e6710736062c50f70ea828f5cb08bdc18e85e2bfa"
+    },
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-dlc1-itskymeadow_assets_all_dcd54b64152e22062e9e2d910806e4b4.bundle",
+      "sha256": "03418b93ba822694ea748ef3c11209649eb55b5b075b971c7e8bcfc7eefc43ec"
+    },
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-dlc1-snowyforest_assets_all_2504861602fc25de87b4c9a2c8f2b48e.bundle",
+      "sha256": "1b7c2cce9bbb3ecf3e894f5ec4b38aec9f664ada6611208c24500e49c87a86ff"
+    },
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-dlc1-sulfurpools_assets_all_48070497210de8b6be4fb5de91af958d.bundle",
+      "sha256": "cf971c8bbfe405517467812924b6f41a3b4acfc1ffb1a0b11ceee388b76baf99"
+    },
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-dlc1-voidstage_assets_all_e2cacf541af02bcdb5d5849af7612319.bundle",
+      "sha256": "22b179b1ab64664c81d09c25bec25efa4210578c117452326961cbda6ab83947"
+    },
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-dlc2-artifactworld01_assets_all_a893954f9ed8a4ad925df7e14fe3e318.bundle",
+      "sha256": "8dec20b4a452836b15a02951297d139c84fb8ff88b97cc5bceb329ac2725b9e2"
+    },
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-dlc2-artifactworld02_assets_all_3f8494dc6c887ff49f3486b7be05e608.bundle",
+      "sha256": "0cd6864047517cc1398be643672fe76e37c8943d217d430e1257a315c6a52384"
+    },
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-dlc2-artifactworld03_assets_all_56c63cc654ece6bf1f8d2d00aab4cb16.bundle",
+      "sha256": "f90cd611864df6bccf34578a32614bd874a98fa2a62126e5198139db28c6ae8a"
+    },
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-dlc2-habitat_assets_all_d9e4ba9d9a63aeb898250b019d23bbcc.bundle",
+      "sha256": "69e27064e75c1d06acc702ac4e008f3bf0e090c34992b050b0299f91a31b76a3"
+    },
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-dlc2-habitatfall_assets_all_d26c73b50c0cf71cb3f97e132d29a13c.bundle",
+      "sha256": "f121531f30263f59143185f2f0d840763cad60d0c963bb4afeacf426c96fbcc6"
+    },
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-dlc2-helminthroost_assets_all_c89bc6e810efd22e659055e9505f0d72.bundle",
+      "sha256": "2bd5b62825ecdabad097ad09f536e84516517b81726b9287661c6552cacabedc"
+    },
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-dlc2-lakes_assets_all_20a05326d6032126034e8a250515dc35.bundle",
+      "sha256": "d3d543367d580514131384017a7a103d64773623033b65800cae1503e6027c7a"
+    },
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-dlc2-lakesnight_assets_all_c6631aaa3cff6267df48e98cd2faa562.bundle",
+      "sha256": "c32e49583ec8dc3dea074da16dfae32e9d39cc2a97e3da4094f68005989d286e"
+    },
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-dlc2-lemuriantemple_assets_all_00a80f81b1a227392183d32d33a77be5.bundle",
+      "sha256": "5a0755a6ed619e376f95beefc198e4d5fd947eb931d683d20b5be55df0343298"
+    },
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-dlc2-meridian_assets_all_0469bf8fa4157a6a7f7df8cb8302b516.bundle",
+      "sha256": "b487a59565ce942e2b8f3146a4b1cb94a10fbdc3179f1ffd18cc2ff1e468e83d"
+    },
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-dlc2-village_assets_all_91426700ac842ef04c83f98ae8142b67.bundle",
+      "sha256": "d84b822b8acad105c7ed4ccec58e1615622f4a4c732cc575cc090d21cc866ab9"
+    },
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-dlc2-villagenight_assets_all_13d424dbeebdf14acd519babb411e9ca.bundle",
+      "sha256": "5422d1c2bdfcb64a5d48ab25e52886a1e491e43a9f4a5340ddd029e9ebb92e99"
+    },
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-dlc2_assets_all_7c453637c95aeacc4e76353cfc7a0711.bundle",
+      "sha256": "81a4ee7d2d969d78fba4240a437b2a995f71f82d5d4a1d834ac71f00c2367170"
+    },
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-dlc3-computationalexchange_assets_all_3a8b18c2784e7cfc0a71e257a50a0494.bundle",
+      "sha256": "4b5ccba5c637e880fa8e945dc0d9b98dcfe1382b13442f1a8f6aeede8d09cfc8"
+    },
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-dlc3-conduitcanyon_assets_all_7fc05e6a70ca1e10f44996c82383cb2f.bundle",
+      "sha256": "6ad82e5e6e336b702fbcc08f184fbbec20ba73e00922f7dac9e36f0fb1d5f2ea"
+    },
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-dlc3-ironalluvium2_assets_all_a5edc29acaa6372e26dbaddb4294c317.bundle",
+      "sha256": "6211ff745479f44a7e990313796b5af65056a235a48ff56d0ceb730962175d9f"
+    },
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-dlc3-ironalluvium_assets_all_68f38f34ee5dc89dfc4d5075223d07c3.bundle",
+      "sha256": "252df6ef3114c8dd1cc8201051ac20dd3457e780b588667a4087d668c15b62f5"
+    },
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-dlc3-nest_assets_all_1489e113cac20faa110ab8896182ba7f.bundle",
+      "sha256": "38c257fcbddae34f4f6490f389cff0d8351b174cabb1a1ae5d971a55d2ff7537"
+    },
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-dlc3-repurposedcrater_assets_all_cd4b7388ba0a171f285bb6c137bf198b.bundle",
+      "sha256": "18a597e10be1829654519d97eadfd16e2a2d25412486c15120ecb70d207c8706"
+    },
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-dlc3-solusweb_assets_all_259dc4b4fb5a3446a86c366fb02413ed.bundle",
+      "sha256": "785bf12eb69d0775b3cd7a3fff6de48897dff36d0e13b8723063c8f105c66bd9"
+    },
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-dlc3-solutionalhaunt_assets_all_eadd8444825009c5037e8f7d270ca57e.bundle",
+      "sha256": "6295e3018c6446579fc8549b2afaecf05bc300651d74365d413eee854b504443"
+    },
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-dlc4-champrush_assets_all_fd4643f1facb2244e27804738a95fb52.bundle",
+      "sha256": "9cc3882bdbf6dc0697340e4bf872e21fe45de3bd41d8b4a84ee2a3f2356000c3"
+    },
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-dlc4-champrush_static_assets_all_b54a85514aacec36f9aaf5c6fd278c41.bundle",
+      "sha256": "5c6444ae1357b320c9ca25c4169594fb8f78c577f7d5ccc680b477a1385c2da0"
+    },
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-dlc4-fungal_assets_all_02ebe219595cd36e25215b25d9e114a5.bundle",
+      "sha256": "afa9c89e4c8cc6aa918e19a9d80f72209fa575e185c0ce8ffd6a7c4b2163b4d3"
+    },
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-dlc4-mire_assets_all_7b2dfc45145b93f01092fa8e4529bc1d.bundle",
+      "sha256": "fef33e1221e5ec1d20035cf9b282ca8aa4a869514657760bffc0d4da660f5677"
+    },
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-dlc4-sadism-sad1_assets_all_9fdebfa9e38d768b2f4cafe5839f6128.bundle",
+      "sha256": "5cc2be6e9b2b8be73b6bcace3d7fc25ccb2536020913754ba896a559caa633db"
+    },
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-dlc4-sanctum_assets_all_36e0498ff2ef56f9ae51f22fdb0539c1.bundle",
+      "sha256": "1c3aaa5482e81deb7eae015057b0f231f7179841824401d1b23bd9373632ac33"
+    },
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-dlc4-soul-soul1_assets_all_646616fff707faa6e83d66c11d42511f.bundle",
+      "sha256": "cb536ec1a8dd272db7c1e86a2a5fa810f99df5622eee7310fa94b4d58a075772"
+    },
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-dlc4-survival-surv2_assets_all_a48535c18276d0b408221c46b1d93a2c.bundle",
+      "sha256": "72b525e72608c6a06cd7b2319b616d279770b8d51b560c83f9d503778051352d"
+    },
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-testingscene_assets_all_20b6f568b912f0694178224e88a7d23a.bundle",
+      "sha256": "50f5729196850c7a199faa314d89da3927883b747b6eddae663f947a90c22020"
+    }
+  ],
+  "scenes": [
+    {
+      "stage": "golemplains",
+      "source": {
+        "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-base-golemplains_scenes_all_694836f5f1658cfcd3649f17cabee372.bundle",
+        "sha256": "e7e1ec2d866826404760ed1dc306b544b729b5794e05a2bc416cc44d4c627ce4"
+      },
+      "member": "CAB-7015a64a83cdebbd1697c623f2e05eec",
+      "classic_stage_info": 9882,
+      "scene_director": 10090,
+      "identity": "source_identity_lifecycle"
+    },
+    {
+      "stage": "foggyswamp",
+      "source": {
+        "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-base-foggyswamp_scenes_all_2024de594be380dff686f04e8c8ee401.bundle",
+        "sha256": "f5cacfe51bc0ca20d128d0cf751e185a7b9d5f2ea124e07212afa18e19236d82"
+      },
+      "member": "CAB-d789d2eba99757393acf7d22f81e7f84",
+      "classic_stage_info": 11654,
+      "scene_director": 11890
+    },
+    {
+      "stage": "frozenwall",
+      "source": {
+        "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-base-frozenwall_scenes_all_bca8399888b1a508dafd8a98a8b5377f.bundle",
+        "sha256": "b4ce0a208af5e9a8a6099781accf72b1e240e32b9e316d50580aeba1b704cd83"
+      },
+      "member": "CAB-0279860a0153dde023df3bfb733e4537",
+      "classic_stage_info": 9969,
+      "scene_director": 10164
+    },
+    {
+      "stage": "dampcavesimple",
+      "source": {
+        "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-base-dampcavesimple_scenes_all_11368146d1efb65ea8c53a97e324a48b.bundle",
+        "sha256": "13e30a27aede6400cd50074d931fb53f261bee6efa263fbabb51a3e360ec1949"
+      },
+      "member": "CAB-58e9c8464402ead1558744bb02a66b63",
+      "classic_stage_info": 27217,
+      "scene_director": 28417
+    },
+    {
+      "stage": "skymeadow",
+      "source": {
+        "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-base-skymeadow_scenes_all_a5cde0fbcdf37706feddd1adda9d4d89.bundle",
+        "sha256": "84ead14437822aa709b9ee5fd2c03f449af53525cffe8b30bd504f19b82cc849"
+      },
+      "member": "CAB-90e5a1c6ff5f99ee06b137845a421bc5",
+      "classic_stage_info": 35932,
+      "scene_director": 36441
+    },
+    {
+      "stage": "wispgraveyard",
+      "source": {
+        "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-base-wispgraveyard_scenes_all_aed6652e1c5ce7a88e35d4bd65a3aed0.bundle",
+        "sha256": "76ca19b1b14aa738d9c7a3c94d34a5dc676cf4281bee6240f739febbcb323dae"
+      },
+      "member": "CAB-4efe3d317b4c29113b78eb95d4f0d4b7",
+      "classic_stage_info": 68764,
+      "scene_director": 68897
+    },
+    {
+      "stage": "shipgraveyard",
+      "source": {
+        "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-base-shipgraveyard_scenes_all_e7ccff8125e5952dd0bdd1ba1b9bbef4.bundle",
+        "sha256": "e8919bb2c73822ff6023fad2ed06f670097e49d3a1306fcaebf5b3b89db75f5b"
+      },
+      "member": "CAB-962fccc5c2aa481cd884115a70dd5676",
+      "classic_stage_info": 14135,
+      "scene_director": 14591,
+      "identity": "siren_source_entry"
+    },
+    {
+      "stage": "blackbeach",
+      "source": {
+        "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-base-blackbeach_scenes_all_575ce2530f78e6aa4d81356da4dc98b1.bundle",
+        "sha256": "44c932bf4a4f4c6517ec0c8f42276e0c8437b22e89349c684a1febea73c7adb2"
+      },
+      "member": "CAB-78b71a2f0f06b8112b9f48ee65ca9660",
+      "classic_stage_info": 17763,
+      "scene_director": 18472
+    },
+    {
+      "stage": "blackbeach2",
+      "source": {
+        "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-base-blackbeach2_scenes_all_05a40145977047d42a4a2dd88536692d.bundle",
+        "sha256": "9f3997369a1ca61552fbda27990b11d336593c8df4897ed93d9219100e6a2c40"
+      },
+      "member": "CAB-2d10abe9f8dc7c51f1b012c3b3732760",
+      "classic_stage_info": 16800,
+      "scene_director": 17728
+    },
+    {
+      "stage": "golemplains2",
+      "source": {
+        "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-base-golemplains2_scenes_all_2ebda709b9e704ce3eef0334357ae5f6.bundle",
+        "sha256": "5093867d67349eda6cccd387c398c88882171092016fcfe306b9a38d5a9bf767"
+      },
+      "member": "CAB-e46f18f622783986aec1b6360c7f1106",
+      "classic_stage_info": 8060,
+      "scene_director": 8244
+    },
+    {
+      "stage": "goolake",
+      "source": {
+        "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-base-goolake_scenes_all_f269bf8ddf2dc1b939076473b600f625.bundle",
+        "sha256": "bebda8371d7577c02e139fea38166cf29345a0119bdaa10b97df18ffe0c5b7ea"
+      },
+      "member": "CAB-976e2bd5834a043fc7655cc08a7c8aea",
+      "classic_stage_info": 11891,
+      "scene_director": 12304
+    },
+    {
+      "stage": "rootjungle",
+      "source": {
+        "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-base-rootjungle_scenes_all_2ae195bae5124a39ee5d8f5494324d3a.bundle",
+        "sha256": "4f683cecd9c64794341f1b92c2cbb3c5f8214e41049b5edee074ce0df3d216c3"
+      },
+      "member": "CAB-65713bd0dc3d3b9a8cdea9c4421bd27f",
+      "classic_stage_info": 25249,
+      "scene_director": 25397
+    },
+    {
+      "stage": "lakes",
+      "source": {
+        "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-dlc2-lakes_scenes_all_75756287b35405c88eb9940aa84896f8.bundle",
+        "sha256": "0a5b56df607d172232868757641f3a23f5635164d625234ee8aa7e1f5d2a450b"
+      },
+      "member": "CAB-a0674abb7a0822d2ae8ae85d2cad6573",
+      "classic_stage_info": 20447,
+      "scene_director": 21205,
+      "identity": "source_identity_lifecycle"
+    },
+    {
+      "stage": "goldshores",
+      "source": {
+        "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-base-goldshores_scenes_all_07fa9d169cd61daf662ca1a8cd44d28f.bundle",
+        "sha256": "fbcf4a1278afecb96c9ffcaa3753051ef79a29369a5ba302384e52e3992add10"
+      },
+      "member": "CAB-e8f56f243e9d3384ab43be76378db307",
+      "classic_stage_info": 4897,
+      "scene_director": 5015
+    },
+    {
+      "stage": "ancientloft",
+      "source": {
+        "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-dlc1-ancientloft_scenes_all_dcc3fd142e8aecef8927fbf1e4bd11a8.bundle",
+        "sha256": "4f294208029923c8afa581cf1f48392b48f8ba7e6f0fb421a7bc6e957c2ee4e1"
+      },
+      "member": "CAB-69e53d00e83a791ce90ae8fd53af6e05",
+      "classic_stage_info": 18458,
+      "scene_director": 18753
+    },
+    {
+      "stage": "snowyforest",
+      "source": {
+        "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-dlc1-snowyforest_scenes_all_147df7783cb7d99029e9372cdaa78c6d.bundle",
+        "sha256": "23633cde58b24e55de4bbabcd9dbdb78a9b1797924d5b026678aaac475e24da1"
+      },
+      "member": "CAB-6c3191526dbc53a15faa1ef384fa4ce4",
+      "classic_stage_info": 14869,
+      "scene_director": 15023
+    },
+    {
+      "stage": "sulfurpools",
+      "source": {
+        "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-dlc1-sulfurpools_scenes_all_c19bf45ab1789fee6ef74dcdf18873e3.bundle",
+        "sha256": "d94b643d35be14852c00d97863b343089552fc345398351ff3bc8957fe08cac6"
+      },
+      "member": "CAB-c19172bbac5f8010abe219ddf86e71ce",
+      "classic_stage_info": 18301,
+      "scene_director": 18667
+    },
+    {
+      "stage": "habitat",
+      "source": {
+        "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-dlc2-habitat_scenes_all_487b6b3eb762d2adf49efbfdc7e7ca64.bundle",
+        "sha256": "b868a8ba4f5065b608fa9ec9acdda15c98df7b55cbd50ae3af5f9966723e1a13"
+      },
+      "member": "CAB-0ff8b85ae0b4a599dc6462a5357a3d5a",
+      "classic_stage_info": 11539,
+      "scene_director": 12015
+    },
+    {
+      "stage": "habitatfall",
+      "source": {
+        "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-dlc2-habitatfall_scenes_all_edc371fe6e69dca12c5adef8e43dadd1.bundle",
+        "sha256": "593bd032e3f83f91d42022802c9272a73c1cc40451c45a713be8495c1aa901ba"
+      },
+      "member": "CAB-8bf5c716081ea1cfb82bb9949e27e23d",
+      "classic_stage_info": 12107,
+      "scene_director": 12766
+    },
+    {
+      "stage": "helminthroost",
+      "source": {
+        "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-dlc2-helminthroost_scenes_all_efb8d41b6bcf1ff3b136b4cd3017523c.bundle",
+        "sha256": "ff70c6b10218b90bcc1c2f09609addb26b6836aad6c62508665ff56076445ba8"
+      },
+      "member": "CAB-0350098f0d9437c15d6980760c0e43ba",
+      "classic_stage_info": 6832,
+      "scene_director": 6919
+    },
+    {
+      "stage": "lakesnight",
+      "source": {
+        "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-dlc2-lakesnight_scenes_all_0a39baa9b4332c931e5eeecea4e6dbd1.bundle",
+        "sha256": "32ecccac01b246898b1540d2ed903e9c739bde3334ca265f1e18b7d0085c7ed6"
+      },
+      "member": "CAB-44db7bf85f0b0feac24ecce856d5b6a6",
+      "classic_stage_info": 19925,
+      "scene_director": 20761
+    },
+    {
+      "stage": "village",
+      "source": {
+        "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-dlc2-village_scenes_all_55d063f1f504ab6330738272bdef6585.bundle",
+        "sha256": "eb9287d440f7cf4e48ee7fe3d43f01c0c5259570055b8c16883e245c9e6a2586"
+      },
+      "member": "CAB-3e3af1b8a98e53b01c14c4c7d90cc54a",
+      "classic_stage_info": 14323,
+      "scene_director": 14381
+    },
+    {
+      "stage": "villagenight",
+      "source": {
+        "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-dlc2-villagenight_scenes_all_18ceb5c311e4020d84601456ec0deb18.bundle",
+        "sha256": "089a0641f74131b70ce88c3218f8b7dbb7b20b4d62bc775b49cf9382eca6263a"
+      },
+      "member": "CAB-44e23c0b208ce531c1bd97bfce3e6330",
+      "classic_stage_info": 13238,
+      "scene_director": 13315
+    }
+  ],
+  "global_roots": {
+    "required": [
+      "RoR2Application",
+      "SceneInfo",
+      "Director",
+      "GameManager"
+    ],
+    "optional": [
+      "Main Camera"
+    ]
+  },
+  "text_asset_source": {
+    "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/textmeshpro-formerresources_assets_all_2b4559dda7675ee5a3be2897f6eaabdd.bundle",
+    "bytes": 5466,
+    "sha256": "3fab763a0fd0db2eb3ce414807ca25f99171e3db292fdd5e35741cc5b0a4592d",
+    "member": "CAB-0d23dcb3dc4b855c47402bcf479e53a4"
+  },
+  "scope": "Original pool, scene-director policy, bonus-credit object identities and receipt-bound serialized source-stage identity/toggle bindings. Runtime activation remains limited to the explicit Golemplains/Lakes lifecycle gate."
+}

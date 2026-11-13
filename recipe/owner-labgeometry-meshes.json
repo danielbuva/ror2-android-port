@@ -1,0 +1,46 @@
+{
+  "input_id": "6af7ed94619fe1b4346974b4486afa03a8d1625a7820e92da0ff74d57208fe88",
+  "obj_import": {
+    "source_sha256": "7ec5cf1b1af8d5620701b5103b9a34a7c713b61e7f89d600330177890268dd0a",
+    "providers": {
+      "mikktspace.c": "de87e74107df766ce68108801262bd8d53899414236b59810509a8fc2a51e288",
+      "mikktspace.h": "17fc433894f24c73753d548086cc4d8c5c0379f4a6edfb98b5da243e4f0bc3d0",
+      "qsort.c": "0f4692a3a9177e1dcd35f5a73552359e644ff13489896fe2309840048b7f575e",
+      "heapsort.c": "3db2b12564c2c6e44e45487142beeafaf0d06cd0670419bb217451842ef40214"
+    }
+  },
+  "bundles": [
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-base-commando_assets_all_06ab662a2249647ee7e07e35cd2377d4.bundle",
+      "sha256": "6d0f800cebee3290bd15a295efc059c32d273741afbb2965e90bbe2741c9b95e",
+      "members": [
+        {
+          "name": "CAB-e1e64629549c92874bd40639f38bc641",
+          "meshes": [
+            {
+              "path_id": -9169722528760581773,
+              "sha256": "b5514391cf4415741a831fafbbae10782aaad6482b000d0e7dd372ecb05b0222",
+              "outputs": [
+                {
+                  "bundle": "labgeometry",
+                  "member": "CAB-e99c61ae36054fb4ec546ad435112f49",
+                  "path_id": 88028571808817216,
+                  "bytes": 14824,
+                  "sha256": "4ed83e6efb5e58b1399e33f8f607e8a336d3c8178bdc5c5f8fff28fe57c05fc0",
+                  "ops": {
+                    "obj_import": "static-triangles",
+                    "m_Name": "CommandoVultureGrenadeMesh_0",
+                    "m_IsReadable": false,
+                    "m_KeepVertices": true,
+                    "m_KeepIndices": true
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "excluded": []
+}

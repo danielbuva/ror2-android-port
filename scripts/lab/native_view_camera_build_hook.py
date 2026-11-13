@@ -8,6 +8,8 @@ caller supplies an explicit request and the original source-body contract.
 
 from __future__ import annotations
 
+import ast
+
 import hashlib
 import importlib.util
 import json
@@ -32,7 +34,7 @@ STAGE_SCHEMA = "native-view-camera-project-stage-r1"
 AUDIO_SCHEMA = "original-game-audio-project-stage-r1"
 HASHES = {
     "accepted_input_id": "6af7ed94619fe1b4346974b4486afa03a8d1625a7820e92da0ff74d57208fe88",
-    "r4_manifest_sha256": "60e7c59108f7489fd972562b698dae963650fbd05d7101b1ac64522ccd897b25",
+    "r4_manifest_sha256": "1d4c38c9d96c8c89db3cad5b46033b431d0d90973b969eb1dacdde3132dea4e5",
     "stage_receipt_sha256": "db1969babb2db2f4201ebdb6c971b084c5ab9336fff5623187555dfcc7b18978",
     "ordinary_api": "107295e478a58ef295a83228111f375c536861bc9081f482d638c59899bf495c",
     "ordinary_game": "3124a2ed9cf458acee78b1beaf969590b184be452e2b3aa5a8852df82ff95d30",
@@ -108,14 +110,106 @@ def _audio_receipt(project: Path) -> tuple[dict, str]:
     return receipt, hashlib.sha256(raw).hexdigest()
 
 
-def _verify_tracked_sources(pins: dict) -> None:
-    for role, expected in pins.get("source_sha256", {}).items():
-        relative = pins.get("source_paths", {}).get(role)
+def _tracked_source_hashes(pins: dict) -> dict[str, str]:
+    sources = pins["source_paths"]
+    if not sources or sources.keys() != pins["source_sha256"].keys():
+        raise ValueError("camera producer source paths and hashes must name the same roles")
+    hashes = {}
+    for role, relative in sources.items():
         if not isinstance(relative, str) or Path(relative).is_absolute() or ".." in Path(relative).parts:
             raise ValueError(f"camera producer pins omit a safe tracked source role: {role}")
         path = CAMERA_SOURCE_ROOT / relative
-        if not path.is_file() or path.is_symlink() or sha256(path) != expected:
-            raise ValueError(f"reviewed camera source drift: {relative}")
+        if not path.is_file() or path.is_symlink():
+            raise ValueError(f"camera producer source is missing or symlinked: {relative}")
+        hashes[role] = sha256(path)
+    return hashes
+
+
+def _verify_tracked_sources(pins: dict) -> None:
+    actual = _tracked_source_hashes(pins)
+    drift = [pins["source_paths"][role] for role, value in actual.items() if pins["source_sha256"][role] != value]
+    if drift:
+        raise ValueError("reviewed camera source drift: " + ", ".join(drift) + "; review source changes, then run ./dev build-hook-pins --action refresh")
+
+
+def _source_pin(path: Path, name: str, key: str | None = None, value: str | None = None):
+    """Read/update a reviewed hash literal without rewriting surrounding source."""
+    source = path.read_text()
+    assignment = next(
+        node
+        for node in ast.parse(source).body
+        if isinstance(node, ast.Assign) and any(isinstance(target, ast.Name) and target.id == name for target in node.targets)
+    )
+    node = assignment.value
+    if key is not None:
+        node = next(item for field, item in zip(node.keys, node.values) if ast.literal_eval(field) == key)
+    current = ast.literal_eval(node)
+    if value is not None and value != current:
+        lines = source.splitlines(keepends=True)
+        start = sum(len(line) for line in lines[: node.lineno - 1]) + node.col_offset
+        end = sum(len(line) for line in lines[: node.end_lineno - 1]) + node.end_col_offset
+        path.write_text(source[:start] + json.dumps(value) + source[end:])
+    return current
+
+
+def _audio_owner_pins(action: str) -> dict:
+    """Keep the reviewed audio cohort and its two manifest bindings together."""
+    root = CAMERA_SOURCE_ROOT
+    recipe = root / "recipe/original-audio-owner-sources.json"
+    producer = root / "scripts/lab/original_game_audio_produce.py"
+    camera = root / "scripts/lab/native_view_camera_build_hook.py"
+    manifest = json.loads(recipe.read_text())
+    expected = manifest["owner_source_hashes"]
+    actual = {}
+    for relative in expected:
+        path = root / "tools/unity/support/audio" / relative
+        if not path.is_file() or path.is_symlink():
+            raise ValueError("audio owner source is missing or symlinked: " + relative)
+        actual[relative] = sha256(path)
+    producer_hashes = _source_pin(producer, "OWNER_SOURCE_HASHES")
+    digest = sha256(recipe)
+    stale = [relative for relative, digest_value in actual.items() if expected[relative] != digest_value or producer_hashes.get(relative) != digest_value]
+    bindings_stale = (
+        producer_hashes.keys() != expected.keys()
+        or _source_pin(producer, "OWNER_ANCESTOR_MANIFEST_SHA256") != digest
+        or _source_pin(camera, "HASHES", "r4_manifest_sha256") != digest
+    )
+    if action == "check" and (stale or bindings_stale):
+        raise ValueError(
+            "reviewed audio owner source drift: "
+            + ", ".join(stale or ["manifest bindings"])
+            + "; review source changes, then run ./dev build-hook-pins --action refresh"
+        )
+    if action == "refresh":
+        if producer_hashes.keys() != expected.keys():
+            raise ValueError("audio owner recipe and producer cohort differ; review membership before refreshing")
+        if actual != expected:
+            manifest["owner_source_hashes"] = actual
+            recipe.write_text(json.dumps(manifest, indent=2, sort_keys=True) + "\n")
+        for relative, digest_value in actual.items():
+            _source_pin(producer, "OWNER_SOURCE_HASHES", relative, digest_value)
+        digest = sha256(recipe)
+        _source_pin(producer, "OWNER_ANCESTOR_MANIFEST_SHA256", value=digest)
+        _source_pin(camera, "HASHES", "r4_manifest_sha256", digest)
+    return {"source_count": len(actual), "updated_sources": stale}
+
+
+def build_hook_pins(action: str = "check") -> dict:
+    """Check reviewed source pins, or explicitly refresh only their hashes."""
+    if action not in ("check", "refresh"):
+        raise ValueError("build-hook-pins --action must be check or refresh")
+    audio = _audio_owner_pins(action)
+    pins = json.loads(CAMERA_PINS.read_text())
+    if action == "check":
+        _verify_tracked_sources(pins)
+        changed = []
+    else:
+        actual = _tracked_source_hashes(pins)
+        changed = [role for role, value in actual.items() if pins["source_sha256"][role] != value]
+        if changed:
+            pins["source_sha256"] = actual
+            CAMERA_PINS.write_text(json.dumps(pins, indent=2, sort_keys=True) + "\n")
+    return {"success": True, "action": action, "source_count": len(pins["source_paths"]), "updated_roles": changed, "audio_owner": audio}
 
 
 def _audio_resolver_sources(project: Path, generation: Path, manifest: dict, audio: dict) -> list[dict]:

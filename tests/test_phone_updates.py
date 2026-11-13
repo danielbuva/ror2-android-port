@@ -69,9 +69,10 @@ def archive_fixture(contents, entries):
     bundle = buffer.getvalue()
     release = {
         "version": "authored-2",
+        "data_schema": {"writes": 1, "reads": [1]},
         "version_code": 2,
         "application_id": "dev.ror2lab.alpha",
-        "minimum_installer_version": 1,
+        "minimum_installer_version": 3,
         "bundle_sha256": sha(bundle),
         "entries": {name: P.entry_dependencies(index, name) for name in entries},
     }
@@ -137,11 +138,17 @@ class FakeGitHub:
 class UpdateTests(unittest.TestCase):
     def setUp(self):
         self.temporary = tempfile.TemporaryDirectory()
-        self.root = Path(self.temporary.name)
+        self.root = Path(self.temporary.name).resolve()
         self.inputs, self.runtime, self.native = [self.root / name for name in ("inputs", "runtime", "native")]
         for path in (self.inputs, self.runtime, self.native):
             path.mkdir()
-        self.request = {"action": "release-check", "application_id": "dev.ror2lab.alpha", "installed_version": 1, "installer_version": 1}
+        self.request = {
+            "action": "release-check",
+            "application_id": "dev.ror2lab.alpha",
+            "installed_version": 1,
+            "installed_release_version": 1,
+            "installer_version": 3,
+        }
         U.write_json(self.inputs / "update-request.json", self.request)
         U.write_json(
             self.runtime / "release-trust.json",
@@ -171,7 +178,8 @@ class UpdateTests(unittest.TestCase):
             self.assertNotIn("/public-tools.zip", server.requests)
             self.assertEqual(set(server.requests), {"/latest", "/release.json", "/release.sig"})
             self.assertFalse((self.inputs / "installed-release.json").exists())
-            self.request["installed_version"] = 2
+            self.request["installed_version"] = 8
+            self.request["installed_release_version"] = 2
             U.write_json(self.inputs / "update-request.json", self.request)
             self.assertEqual(self.run_check(server)["state"], "UP_TO_DATE")
 
@@ -186,7 +194,7 @@ class UpdateTests(unittest.TestCase):
             self.assertFalse((self.inputs / "release-candidate.json").exists())
 
     def test_context_refuses_rollback_package_and_installer_upgrade(self):
-        for field, value in (("installed_version", 3), ("application_id", "other.package"), ("installer_version", 0)):
+        for field, value in (("installed_release_version", 3), ("application_id", "other.package"), ("installer_version", 0)):
             request = dict(self.request, **{field: value})
             with self.subTest(field=field), self.assertRaises(ValueError):
                 U.verify_context(self.release, request)
@@ -301,7 +309,7 @@ class UpdateTests(unittest.TestCase):
         with self.assertRaises(__import__("subprocess").CalledProcessError):
             U.RELEASE.rebuild(
                 release,
-                installer_version=1,
+                installer_version=3,
                 application_id=release["application_id"],
                 installed_version=1,
                 input_sha256="c" * 64,
@@ -441,6 +449,79 @@ u.run({str(self.inputs / "update-request.json")!r},{str(self.runtime)!r},{str(se
         self.assertNotEqual(recovered.completed[first], dispatcher.completed[first])
         self.assertEqual((self.root / "recovered").read_bytes(), (self.root / "first").read_bytes())
 
+    def test_shared_supplier_reuses_only_its_own_source_closure(self):
+        supplier = "recipe/supplier.json"
+        script = b"import pathlib,sys\np=pathlib.Path(sys.argv[1]);p.mkdir();data=pathlib.Path(sys.argv[2]).read_bytes() if len(sys.argv)>2 else b'supplier';(p/'complete').write_bytes(data)\n"
+        jobs = {supplier: {"schema": 1, "script": SCRIPT, "arguments": ["${output}"], "outputs": {}, "artifacts": {"body": "complete"}}}
+        entries = {}
+        for label in ("one", "two"):
+            name = "recipe/" + label + ".json"
+            jobs[name] = {
+                "schema": 1,
+                "script": SCRIPT,
+                "arguments": ["${output}", "${job:" + supplier + ":body}"],
+                "needs": [supplier],
+                "outputs": {"payload/" + label: "complete"},
+            }
+            entries["payload/" + label] = {"recipe_files": [supplier, name], "producer_files": [SCRIPT], "job": name}
+        for name, job in jobs.items():
+            job["source_files"] = [name, SCRIPT]
+        previous = None
+        for revision in range(4):
+            if revision == 1:
+                jobs["recipe/one.json"]["arguments"].append("consumer changed")
+            elif revision == 2:
+                jobs[supplier]["arguments"].append("${repo}/" + SCRIPT)
+            elif revision == 3:
+                script += b"# shared producer changed\n"
+            contents = {SCRIPT: script, **{name: encoded(job) for name, job in jobs.items()}}
+            release, index, bundle = archive_fixture(contents, entries)
+            archive = self.root / ("shared-" + str(revision) + ".zip")
+            archive.write_bytes(bundle)
+            repo = self.root / ("shared-" + str(revision))
+            U.extract_bundle(archive, repo, release)
+            progress = []
+            dispatcher = J.Dispatcher(
+                repo,
+                index,
+                release,
+                self.inputs,
+                self.runtime,
+                self.native,
+                {},
+                "c" * 64,
+                python=[sys.executable],
+                progress=lambda name, reused: progress.append((name, reused)),
+            )
+            for label in ("one", "two"):
+                dispatcher.produce("payload/" + label, release["entries"]["payload/" + label], self.root / (label + str(revision)))
+            self.assertEqual(
+                [reused for _, reused in progress], [[False, False, False], [True, False, True], [False, False, False], [False, False, False]][revision]
+            )
+            if revision == 1:
+                self.assertEqual(dispatcher.completed[supplier], previous.completed[supplier])
+                self.assertEqual(dispatcher.completed["recipe/two.json"], previous.completed["recipe/two.json"])
+                self.assertEqual((self.root / "two1").read_bytes(), (self.root / "two0").read_bytes())
+                # Cache identity is narrower; verification still covers every
+                # signed consumer source before reusing this shared supplier.
+                (repo / "recipe/one.json").write_bytes(contents["recipe/one.json"] + b"\n")
+                fresh = J.Dispatcher(repo, index, release, self.inputs, self.runtime, self.native, {}, "c" * 64, python=[sys.executable])
+                with self.assertRaisesRegex(ValueError, "verified public source changed"):
+                    fresh.execute(supplier)
+            previous = dispatcher
+
+    def test_job_source_pins_require_signed_membership_and_keep_legacy_closure(self):
+        job = P.load_json(zipfile.ZipFile(io.BytesIO(self.bundle)).read(JOB))
+        for sources in (None, [], [JOB], [JOB, SCRIPT, SCRIPT], [JOB, SCRIPT, "tools/unsigned.py"], [JOB, SCRIPT, 1]):
+            with self.subTest(sources=sources), self.assertRaisesRegex(ValueError, "job source files"):
+                J.validate_jobs(self.index, self.release, lambda name: dict(job, source_files=sources))
+        archive = self.root / "legacy.zip"
+        archive.write_bytes(self.bundle)
+        repo = self.root / "legacy"
+        U.extract_bundle(archive, repo, self.release)
+        dispatcher = J.Dispatcher(repo, self.index, self.release, self.inputs, self.runtime, self.native, {}, "c" * 64, python=[sys.executable])
+        self.assertEqual(dispatcher.cache_sources(JOB), dispatcher.closure(JOB))
+
     def test_two_entries_only_changed_recipe_rebuilds_and_removed_entry_not_selected(self):
         contents = {SCRIPT: b"import pathlib,sys\np=pathlib.Path(sys.argv[1]);p.mkdir();(p/'complete').write_text(sys.argv[2])\n"}
         entries = {}
@@ -449,7 +530,7 @@ u.run({str(self.inputs / "update-request.json")!r},{str(self.runtime)!r},{str(se
             contents[path] = encoded({"schema": 1, "script": SCRIPT, "arguments": ["${output}", name], "outputs": {"payload/" + name: "complete"}})
             entries["payload/" + name] = {"recipe_files": [path], "producer_files": [SCRIPT], "job": path}
         options = dict(
-            installer_version=1, application_id=self.release["application_id"], installed_version=1, input_sha256="c" * 64, root=self.inputs / "cache"
+            installer_version=3, application_id=self.release["application_id"], installed_version=1, input_sha256="c" * 64, root=self.inputs / "cache"
         )
         for revision in range(3):
             if revision == 1:
@@ -525,7 +606,10 @@ u.run({str(self.inputs / "update-request.json")!r},{str(self.runtime)!r},{str(se
             ],
             "outputs": {"payload/authored-record-fixture": "objects.bin"},
         }
-        producers = ["tools/phone-build/accepted-output/" + name for name in ("mesh_produce.py", "unity_mesh.py", "unity_bundle.py")]
+        producers = [
+            "tools/phone-build/accepted-output/" + name
+            for name in ("mesh_produce.py", "unity_mesh.py", "unity_bundle.py", "object_produce.py", "unity_write.py")
+        ]
         contents = {name: (ROOT / name).read_bytes() for name in producers}
         contents.update({JOB: encoded(job), profile_path: encoded(profile)})
         entries = {"payload/authored-record-fixture": {"recipe_files": [JOB, profile_path], "producer_files": producers, "job": JOB}}

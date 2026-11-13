@@ -40,6 +40,7 @@ public sealed partial class PortSession
     void CleanupRecoveredMenu()
     {
         GetRecoveredHudSession().CleanupRecoveredMenu();
+        offlineRosterScrollStates.Dispose();
     }
     void SetRecoveredMenuObscured(bool obscured)
     {

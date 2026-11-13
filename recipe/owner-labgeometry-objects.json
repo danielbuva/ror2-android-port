@@ -1,0 +1,188 @@
+{
+  "input_id": "6af7ed94619fe1b4346974b4486afa03a8d1625a7820e92da0ff74d57208fe88",
+  "sources": [
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-base-commando_assets_all_06ab662a2249647ee7e07e35cd2377d4.bundle",
+      "sha256": "6d0f800cebee3290bd15a295efc059c32d273741afbb2965e90bbe2741c9b95e",
+      "member": "CAB-e1e64629549c92874bd40639f38bc641"
+    },
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/calmwater_unitybuiltinshaders_244d4ed79dda70fa38b62dcf46d4ccd7.bundle",
+      "sha256": "949b28d89f3db1c8da8362f5dd96cc27bae5b3f0d4f2a807fc89be692c494805",
+      "member": "CAB-3795e044f5be9199dfbb711bdc9d52a8"
+    }
+  ],
+  "bundle": {
+    "name": "labgeometry",
+    "member": "CAB-e99c61ae36054fb4ec546ad435112f49",
+    "engine": "2021.3.45f2",
+    "bytes": 108365,
+    "sha256": "09ca79f4bd661a2fbdc035b37ffe699a991e21b411ede81e27ffc822e456bcac",
+    "serialized_bytes": 210860,
+    "serialized_sha256": "98f6bc9289a3239ae1f3ef3c0d3497dce89622e3a8a49ceb23c3080ad4b38ddd",
+    "externals": [
+      "Resources/unity_builtin_extra"
+    ],
+    "dependencies": [],
+    "asset_groups": [
+      {
+        "guid": "0a7a11b66c2c149a18a71990785baa9f",
+        "path": "Assets/Recovered/geometry.obj",
+        "roots": [
+          6620706184971781359,
+          -7290654913005903419,
+          88028571808817216
+        ]
+      }
+    ]
+  },
+  "objects": [
+    {
+      "path_id": -7831768084980273646,
+      "bytes": 24,
+      "sha256": "3fed6915f669d040ea57535456f0b867924df86ca6b3c214507738fcd5327262",
+      "type_source": [
+        0,
+        -8484271221600373094
+      ],
+      "record": "4f041c4fdb4b9b928c1301fb8fa207e060ad94cc4b1e40ad8e1ef43c5b54aab2"
+    },
+    {
+      "path_id": -7290654913005903419,
+      "bytes": 928,
+      "sha256": "a4a362e57928628d98fb3aff3ea9a2653f6b9abace614af84c3c9df399a21823",
+      "type_source": [
+        0,
+        -8639648577974692951
+      ],
+      "sdk_source": {
+        "path": "Resources/unity_builtin_extra",
+        "sha256": "db99888b83efb4ec35e6ce219de78c951fc37bc0129712579131360312cc4f8e",
+        "path_id": 10303
+      },
+      "model_import": "obj-standard-lambert-linear",
+      "sdk_shader_path_id": 46,
+      "model_mesh_source": [
+        0,
+        -9169722528760581773
+      ],
+      "fbx_source": {
+        "path": "MacOS/libfbxsdk.dylib",
+        "sha256": "d3e949532b4b7286656eea008fcf047c20964c8dc93e87296f877d65ed74a490"
+      },
+      "references": [
+        {
+          "offset": 36,
+          "from": [
+            0,
+            46
+          ],
+          "to": [
+            0,
+            -4850512016903265157
+          ]
+        }
+      ],
+      "generate": "DefaultMaterial"
+    },
+    {
+      "path_id": -4850512016903265157,
+      "bytes": 98712,
+      "sha256": "370ce3dcf451ce2b7767ef1738fe55798989d473c071ce16071449e0494de66d",
+      "type_source": [
+        1,
+        -8014961710185377972
+      ],
+      "record": "020afc23cb7a813b74a01d870f1f085d1d6c5c9e841f5acdfd512e03d36cd223"
+    },
+    {
+      "path_id": -3266397153708347141,
+      "bytes": 156,
+      "sha256": "e3a0c8c6c5d29cd0085065b03337d9593ad8cc596a95440a967aa73c3797b8b2",
+      "type_source": [
+        0,
+        -5689483836911656895
+      ],
+      "record": "4f041c4fdb4b9b928c1301fb8fa207e060ad94cc4b1e40ad8e1ef43c5b54aab2"
+    },
+    {
+      "path_id": 1,
+      "bytes": 372,
+      "sha256": "936e0855350f6c0a86c5b8848afa1b91e958e1db50772dae83e2ba5e29cb0a58",
+      "type_source": [
+        0,
+        1
+      ],
+      "generate": "AssetBundle"
+    },
+    {
+      "path_id": 88028571808817216,
+      "bytes": 14824,
+      "sha256": "4ed83e6efb5e58b1399e33f8f607e8a336d3c8178bdc5c5f8fff28fe57c05fc0",
+      "type_source": [
+        0,
+        -9169722528760581773
+      ],
+      "record": "6725e325f560e5ac2e75c39b8e0c06de72aaf9dbace3e7ac663180c74ad454da"
+    },
+    {
+      "path_id": 700483599607477530,
+      "bytes": 79,
+      "sha256": "a2320806975e8dca85383111590e4bef4f0786a83a7a7a08fe8d975bfa996a3f",
+      "type_source": [
+        0,
+        -9152606785020801031
+      ],
+      "generate": "ModelGameObject",
+      "model_node": "mesh",
+      "model_mesh_source": [
+        0,
+        -9169722528760581773
+      ],
+      "components": [
+        6756272529074954017,
+        -7831768084980273646,
+        -3266397153708347141
+      ]
+    },
+    {
+      "path_id": 866115177783944587,
+      "bytes": 80,
+      "sha256": "5954f9c2c0546528f15aa312a0b2fd5d139cda2c5a5e1541bcbcca762459bceb",
+      "type_source": [
+        0,
+        -9199631932322185820
+      ],
+      "record": "4f041c4fdb4b9b928c1301fb8fa207e060ad94cc4b1e40ad8e1ef43c5b54aab2"
+    },
+    {
+      "path_id": 6620706184971781359,
+      "bytes": 35,
+      "sha256": "d54501c77f7217cb2a1a4a5c97e79a83f4a360ebcc1212d25f7099e15f87eaa6",
+      "type_source": [
+        0,
+        -9152606785020801031
+      ],
+      "generate": "ModelGameObject",
+      "model_node": "root",
+      "model_mesh_source": [
+        0,
+        -9169722528760581773
+      ],
+      "components": [
+        866115177783944587
+      ],
+      "model_asset": "Assets/Recovered/geometry.obj"
+    },
+    {
+      "path_id": 6756272529074954017,
+      "bytes": 68,
+      "sha256": "cf39c7d4b77fa64b957742dca50db3523791bbb42f7b3a99ec2f1b5866a98277",
+      "type_source": [
+        0,
+        -9199631932322185820
+      ],
+      "record": "4f041c4fdb4b9b928c1301fb8fa207e060ad94cc4b1e40ad8e1ef43c5b54aab2"
+    }
+  ]
+}

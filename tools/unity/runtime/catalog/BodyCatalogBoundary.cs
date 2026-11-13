@@ -161,6 +161,7 @@ public sealed partial class PortSession
         }
         public IEnumerator RegisterOriginalSkins()
         {
+            TraceStartup("skin-snapshot-begin");
             coordinator.Check(coordinator.r.liveCatalogs != null && BodyCatalog.availability.available &&
                                   ProjectileCatalog.catalogAvailability.available && SkinCatalog.skinCount == 0 && !ownsSkinCatalog,
                               "Original skin catalog dependencies or ownership missing");
@@ -187,16 +188,49 @@ public sealed partial class PortSession
                 priorSkinNames.Add(pair.Key, pair.Value);
             ownsSkinCatalog = true;
             coordinator.r.phase = "original-skin-catalog-register";
+            TraceStartup("skin-snapshot-ready-save-begin");
             coordinator.Save();
+            TraceStartup("skin-save-ready-native-begin");
             var method = typeof(SkinCatalog).GetMethod("Init", BindingFlags.NonPublic | BindingFlags.Static);
             coordinator.Check(method != null, "Original skin initializer missing");
+            var invokeStarted = System.Diagnostics.Stopwatch.GetTimestamp();
             var routine = (IEnumerator)method.Invoke(null, null);
+            var invokeTicks = System.Diagnostics.Stopwatch.GetTimestamp() - invokeStarted;
+            long moveTicks = 0, maxMoveTicks = 0;
+            int moveCalls = 0, nullYields = 0, nestedYields = 0, otherYields = 0;
             var deadline = Time.realtimeSinceStartup + 180f;
-            while (routine.MoveNext())
+            var firstYield = true;
+            while (true)
             {
+                var moveStarted = System.Diagnostics.Stopwatch.GetTimestamp();
+                var advanced = routine.MoveNext();
+                var elapsed = System.Diagnostics.Stopwatch.GetTimestamp() - moveStarted;
+                moveTicks += elapsed;
+                maxMoveTicks = Math.Max(maxMoveTicks, elapsed);
+                moveCalls++;
+                if (!advanced)
+                    break;
+                if (firstYield)
+                {
+                    TraceStartup("skin-native-first-yield");
+                    firstYield = false;
+                }
                 coordinator.Check(Time.realtimeSinceStartup < deadline, "Original skin catalog initialization timed out");
-                yield return routine.Current;
+                var yielded = routine.Current;
+                if (yielded == null) nullYields++;
+                else if (yielded is IEnumerator) nestedYields++;
+                else otherYields++;
+                yield return yielded;
             }
+            TraceStartup("skin-native-ready-validation-begin");
+            // Only direct MoveNext execution is timed. A yielded IEnumerator,
+            // if present, runs under Unity outside this timer; gaps are not I/O proof.
+            Debug.Log(String.Format(System.Globalization.CultureInfo.InvariantCulture,
+                "Original skin iterator execution invokeSeconds={0:F6} moveSeconds={1:F6} maxMoveSeconds={2:F6} calls={3} nullYields={4} nestedYields={5} otherYields={6}",
+                (double)invokeTicks / System.Diagnostics.Stopwatch.Frequency,
+                (double)moveTicks / System.Diagnostics.Stopwatch.Frequency,
+                (double)maxMoveTicks / System.Diagnostics.Stopwatch.Frequency,
+                moveCalls, nullYields, nestedYields, otherYields));
             coordinator.Check(
                 SkinCatalog.availability.available && SkinCatalog.skinCount == priorSkinIndices.Count &&
                     priorSkinIndices.Keys.All(skin => skin.runtimeSkin != null && SkinCatalog.GetSkinDef(skin.skinIndex) == skin),
@@ -204,6 +238,7 @@ public sealed partial class PortSession
             var commando = BodyCatalog.FindBodyIndex("CommandoBody");
             coordinator.Check(SkinCatalog.GetBodySkinCount(commando) > 0 && SkinCatalog.GetBodySkinDef(commando, 0),
                               "Original Commando default skin missing");
+            TraceStartup("skin-validation-ready");
         }
         public void CleanupOriginalSkins()
         {
@@ -1109,7 +1144,9 @@ public sealed partial class PortSession
         {
             if (!cfg.integratedWorld || !Resources.Load<TextAsset>("WholeCatalogBootstrap"))
                 return new ItemDef[0];
+            TraceStartup("comparison-items-discovery-begin");
             var definitions = WholeCatalogComposed.ItemDefinitions();
+            TraceStartup("comparison-items-discovery-ready");
             var fields = typeof(DLC4Content.Items).GetFields(BindingFlags.Public | BindingFlags.Static);
             var selected = fields.Select(field => definitions.SingleOrDefault(def => def.name == field.Name)).ToArray();
             coordinator.Check(selected.All(def => def) && selected.Distinct().Count() == fields.Length,

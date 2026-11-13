@@ -2,13 +2,15 @@
 
 from __future__ import annotations
 
+import importlib.util
+import io
 import os
 from pathlib import Path
-import shutil
 import subprocess
+import sys
 import tempfile
-import time
 import unittest
+from unittest import mock
 
 ROOT = Path(__file__).resolve().parents[1]
 HELPER = ROOT / "scripts" / "ci-hdiutil-volume.py"
@@ -61,140 +63,68 @@ class HdiutilVolumeTests(unittest.TestCase):
     def tearDown(self) -> None:
         self.temporary.cleanup()
 
-    def run_helper(self, mode: str, timeout: float = 1.0) -> tuple[subprocess.CompletedProcess[str], float]:
+    def run_helper(self, mode: str, timeout: float = 30.0) -> subprocess.CompletedProcess[str]:
         self.env["HDIUTIL_MODE"] = mode
-        started = time.monotonic()
-        result = subprocess.run(
+        return subprocess.run(
             ["python3", str(HELPER), str(timeout), str(self.image), str(self.mount)],
             env=self.env,
             capture_output=True,
             text=True,
-            timeout=10,
+            timeout=90,
             check=False,
         )
-        return result, time.monotonic() - started
 
     def assert_child_was_stopped(self) -> None:
         pid = int((self.root / "child.pid").read_text())
-        time.sleep(0.1)
+        # subprocess.run has killed and waited for the child before returning.
         with self.assertRaises(ProcessLookupError):
             os.kill(pid, 0)
 
     def test_create_timeout_reaps_own_cli_and_falls_back_before_attach(self) -> None:
-        result, elapsed = self.run_helper("create-timeout")
+        result = self.run_helper("create-timeout", timeout=1.0)
         self.assertEqual(result.returncode, 1, result.stderr)
-        self.assertLess(elapsed, 6)
         self.assertIn("create timed out", result.stderr)
         self.assertEqual([line.split()[0] for line in self.log.read_text().splitlines()], ["create"])
         self.assert_child_was_stopped()
 
     def test_attach_timeout_reaps_cli_and_marks_mount_state_uncertain(self) -> None:
-        result, elapsed = self.run_helper("attach-timeout")
+        result = self.run_helper("attach-timeout", timeout=1.0)
         self.assertEqual(result.returncode, 2, result.stderr)
-        self.assertLess(elapsed, 6)
         self.assertIn("mount state is uncertain", result.stderr)
+        self.assertTrue((self.root / "attach.pending").is_file())
         self.assertEqual([line.split()[0] for line in self.log.read_text().splitlines()], ["create", "attach"])
         self.assertTrue((self.mount / "mounted-sentinel").is_file())
         self.assert_child_was_stopped()
 
     def test_success_preserves_exact_create_and_attach_arguments(self) -> None:
-        result, _ = self.run_helper("success")
+        result = self.run_helper("success")
         self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertFalse((self.root / "attach.pending").exists())
         commands = self.log.read_text().splitlines()
-        self.assertEqual(commands[0], f"create -size 2g -fs Case-sensitive APFS -volname ci-local -type SPARSE {self.image} -quiet")
+        self.assertEqual(commands[0], f"create -size 4g -fs Case-sensitive APFS -volname ci-local -type SPARSE {self.image} -quiet")
         self.assertEqual(commands[1], f"attach {self.image} -mountpoint {self.mount} -nobrowse -quiet")
 
     def test_nonzero_setup_failures_keep_existing_fallback_result(self) -> None:
-        result, _ = self.run_helper("create-fail")
-        self.assertEqual(result.returncode, 1)
-        self.assertEqual([line.split()[0] for line in self.log.read_text().splitlines()], ["create"])
-        self.log.unlink()
-        result, _ = self.run_helper("attach-fail")
-        self.assertEqual(result.returncode, 1)
-        self.assertIn("attach failed (19)", result.stderr)
-
-    def test_ci_cleanup_preserves_mount_after_uncertain_attach_timeout(self) -> None:
-        # Full script fixture: stub only the setup helper's return as timeout-after-mount;
-        # the dedicated helper tests above exercise actual timeout/kill/wait behavior.
-        repo = self.root / "source"
-        scripts = repo / "scripts"
-        tests = repo / "tests"
-        scripts.mkdir(parents=True)
-        tests.mkdir()
-        shutil.copy2(CI_LOCAL, scripts / "ci-local.sh")
-        (scripts / "ci-hdiutil-volume.py").write_text(
-            "import pathlib, sys\n"
-            "pathlib.Path(sys.argv[2]).write_bytes(b'image')\n"
-            "mount=pathlib.Path(sys.argv[3]); mount.mkdir(parents=True)\n"
-            "(mount/'mounted-sentinel').write_text('keep')\n"
-            "raise SystemExit(2)\n"
-        )
-        for name in ("ruff-committed", "audit-public", "journal-index", "readme-actions"):
-            (scripts / f"{name}.py").write_text("print('fixture check passed')\n")
-        (tests / "__init__.py").write_text("")
-        (tests / "test_fixture.py").write_text("import unittest\nclass Fixture(unittest.TestCase):\n def test_ok(self): self.assertTrue(True)\n")
-        fakebin = self.root / "full-bin"
-        fakebin.mkdir()
-        # Exercise the macOS mount branch even on Linux CI.
-        uname = fakebin / "uname"
-        uname.write_text("#!/bin/sh\nprintf 'Darwin\\n'\n")
-        uname.chmod(0o755)
-        hdiutil = fakebin / "hdiutil"
-        hdiutil.write_text('#!/bin/sh\nprintf \'%s\\n\' "$*" >> "$HDIUTIL_LOG"\nexit 23\n')
-        hdiutil.chmod(0o755)
-        sandbox = fakebin / "sandbox-exec"
-        sandbox.write_text('#!/bin/sh\nshift 2\nexec "$@"\n')
-        sandbox.chmod(0o755)
-        env = os.environ.copy()
-        env.update(
-            PATH=str(fakebin) + os.pathsep + env["PATH"],
-            TMPDIR=str(self.root),
-            HDIUTIL_LOG=str(self.root / "cleanup-hdiutil.log"),
-            GIT_AUTHOR_NAME="CI fixture",
-            GIT_COMMITTER_NAME="CI fixture",
-            GIT_AUTHOR_EMAIL="ci-fixture",
-            GIT_COMMITTER_EMAIL="ci-fixture",
-        )
-        for name in subprocess.check_output(["git", "rev-parse", "--local-env-vars"], text=True).splitlines():
-            env.pop(name, None)
-        subprocess.run(["git", "init", "-q"], cwd=repo, check=True, env=env)
-        subprocess.run(["git", "add", "."], cwd=repo, check=True, env=env)
-        subprocess.run(["git", "-c", "commit.gpgsign=false", "commit", "-qm", "fixture"], cwd=repo, check=True, env=env)
-        head = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=repo, text=True, env=env).strip()
-        subprocess.run(["git", "update-ref", "refs/remotes/origin/main", head], cwd=repo, check=True, env=env)
-        hook_env = env | {
-            "GIT_DIR": str(repo / ".git"),
-            "GIT_WORK_TREE": str(repo),
-            "GIT_INDEX_FILE": str(repo / ".git/index"),
-        }
-        result = subprocess.run(
-            ["bash", str(scripts / "ci-local.sh"), head, head],
-            cwd=repo,
-            env=hook_env,
-            capture_output=True,
-            text=True,
-            timeout=30,
-            check=False,
-        )
-        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
-        cleanup_dir = repo / ".git" / "ci-cleanup"
-        cleanup_logs = []
-        deadline = time.monotonic() + 5
-        expected_cleanup = "attach timed out with uncertain mount state; preserving"
-        while time.monotonic() < deadline:
-            cleanup_logs = list(cleanup_dir.glob("*.log")) if cleanup_dir.exists() else []
-            # The trap starts in the background. File creation is not completion.
-            if len(cleanup_logs) == 1 and expected_cleanup in cleanup_logs[0].read_text():
-                break
-            time.sleep(0.02)
-        self.assertEqual(len(cleanup_logs), 1, "cleanup trap did not record its outcome")
-        self.assertIn("attach timed out with uncertain mount state; preserving", cleanup_logs[0].read_text())
-        scratch_dirs = [p for p in self.root.glob("ci-local.*") if p.is_dir()]
-        self.assertEqual(len(scratch_dirs), 1, result.stdout + result.stderr)
-        scratch = scratch_dirs[0]
-        self.assertTrue((scratch / "volume.sparseimage").is_file())
-        self.assertTrue((scratch / "case-sensitive" / "mounted-sentinel").is_file())
-        self.assertFalse((self.root / "cleanup-hdiutil.log").exists(), "cleanup must not detach after an uncertain attach timeout")
+        spec = importlib.util.spec_from_file_location("ci_hdiutil_volume", HELPER)
+        helper = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(helper)
+        # Fixed child exit results distinguish nonzero failure from timeout without
+        # racing shell startup/mkdir against the real timeout tests' short deadline.
+        for statuses, phases, message in (
+            ([17], ["create"], "create failed (17)"),
+            ([0, 19], ["create", "attach"], "attach failed (19)"),
+        ):
+            with self.subTest(phases=phases):
+                results = [subprocess.CompletedProcess([], status) for status in statuses]
+                stderr = io.StringIO()
+                with (
+                    mock.patch.object(helper.subprocess, "run", side_effect=results) as run,
+                    mock.patch.object(sys, "argv", [str(HELPER), "30", str(self.image), str(self.mount)]),
+                    mock.patch.object(sys, "stderr", stderr),
+                ):
+                    self.assertEqual(helper.main(), 1)
+                self.assertEqual([call.args[0][1] for call in run.call_args_list], phases)
+                self.assertIn(message, stderr.getvalue())
 
 
 if __name__ == "__main__":

@@ -62,6 +62,17 @@ def checked(path, expected):
         raise ValueError("player-data bytes differ: " + path.name)
 
 
+def verify_player_outputs(output, expected, files, current_pins):
+    """Recheck persisted producer pins; keep historical hashes as diagnostics."""
+    for name, row in expected.items():
+        path = output / (TARGET + name)
+        pin = current_pins.get(name, row)
+        checked(path, (pin["bytes"], pin["sha256"]))
+        files[TARGET + name].update(pin)
+        if name in current_pins:
+            files[TARGET + name]["historical_raw_exact"] = pin == row
+
+
 def metadata(scripting, initializers, projects):
     """Keep original engine order/initializer records and authored project order."""
     if len(scripting["names"]) != len(scripting["types"]) or len(projects) != len(set(projects)):
@@ -298,7 +309,7 @@ def original_script_hash(pc, selected, original, body, typ, sdk_tree):
     return result
 
 
-def object_file(pc, selected, destination, script_sdk_tree=None):
+def object_file(pc, selected, destination, script_sdk_tree=None, registry=None):
     """Reuse original player-object bodies and source type identities.
 
     UnityPy/AssetRipper's PPtr relationship is the same checked remap performed
@@ -363,6 +374,27 @@ def object_file(pc, selected, destination, script_sdk_tree=None):
             "user": "",
         }
 
+        current_script = None
+        if registry is not None and "script" in selected:
+            # Resolve the checked original relationship, never the old destination ID.
+            target, row = next(iter(selections.values()))
+            member.seek(original["data_offset"] + row["offset"])
+            raw_body = W.B.exact(member, row["bytes"])
+            if hashlib.sha256(raw_body).hexdigest() != target["source_sha256"]:
+                raise ValueError("original player object body drift")
+            fid, pid = struct.unpack_from("<iq", raw_body, 16)
+            if not 0 <= fid <= len(original["externals"]):
+                raise ValueError("original player script external differs")
+            provider = original["externals"][fid - 1]["path"].rsplit("/", 1)[-1] if fid else source.get("member", source["path"])
+            identity = registry["original_script_identities"].get((provider, pid))
+            if identity is None or identity not in registry["script_ids"]:
+                raise ValueError("original player script has no current registry identity")
+            target_fid = selected["script"][0]
+            if not 0 < target_fid <= len(layout["externals"]) or layout["externals"][target_fid - 1]["path"] != "globalgamemanagers.assets":
+                raise ValueError("current player script provider differs")
+            current_script = [target_fid, registry["script_ids"][identity]]
+            layout["scripts"] = [current_script]
+
         def body(target):
             selection, row = selections[target["path_id"]]
             member.seek(original["data_offset"] + row["offset"])
@@ -396,6 +428,10 @@ def object_file(pc, selected, destination, script_sdk_tree=None):
                 raise ValueError("player object script relationship differs")
             if hashlib.sha256(data).hexdigest() != selection["sha256"]:
                 raise ValueError("produced player object differs")
+            if current_script is not None:
+                data = bytearray(data)
+                struct.pack_into("<iq", data, 16, *current_script)
+                data = bytes(data)
             return io.BytesIO(data)
 
         with destination.open("xb") as output:
@@ -1105,6 +1141,44 @@ def shared_defaults(pc, selected, sdk, builtin_extra, registry, packs, destinati
     return result
 
 
+def current_registry_bindings(recipe, managed_production, root):
+    """Bind current importer identities to the exact sources compiled by the code owner."""
+    root = Path(root).resolve(strict=True)
+    managed = Path(managed_production).resolve(strict=True)
+    manifest = root / "recipe/runtime-sources.json"
+    layout = root / "recipe/project-layout.json"
+    compiler = managed / "gameplay/inputs.json"
+    result = managed / "result.json"
+    paths = (manifest, layout, compiler, result)
+    pins = {str(path): {"bytes": path.stat().st_size, "sha256": sha(path)} for path in paths}
+    names = json.loads(manifest.read_text())
+    guids = json.loads(layout.read_text())["runtime_source_guids"]
+    if len(set(names)) != len(names) or set(names) != set(guids):
+        raise ValueError("current registry runtime membership differs")
+    sources = json.loads(compiler.read_text())["sources"]
+    authored = recipe["authored"]
+    runtime = ["tools/unity/" + name for name in names] + ["android/Assets/LabDiagnostics.cs"]
+    files, identities = {}, {}
+    for name in runtime:
+        path = OBJECTS.M.safe_input(root, name)
+        # Compiler receipts may come from another checkout of the same sources.
+        # Relative identity must be unique and the local bytes must still match.
+        matches = [digest for source, digest in sources.items() if source.endswith("/" + name)]
+        digest = matches[0] if len(matches) == 1 else None
+        if digest is None or sha(path) != digest:
+            raise ValueError("current registry source was not compiled: " + name)
+        files[name] = digest
+        # Existing importer identities survive port updates. First-import owners
+        # have no Unity metadata; assign stable converter-owned path identities.
+        identities[name] = (
+            authored["guids"].get(name)
+            or guids.get(name.removeprefix("tools/unity/"))
+            or hashlib.md5(("ror2lab:script:" + name).encode(), usedforsecurity=False).hexdigest()
+        )
+    current = dict(authored, source_commit=json.loads(result.read_text()).get("source_commit"), source_files=files, runtime_sources=runtime, guids=identities)
+    return dict(recipe, authored=current), pins
+
+
 def registry_records(profile_root, selected, pc, editor_resources, code_request, managed_production):
     """Bind the existing original-input code request to the script identity owner."""
     if code_request is None or managed_production is None or editor_resources is None:
@@ -1117,21 +1191,49 @@ def registry_records(profile_root, selected, pc, editor_resources, code_request,
     packages = Path(request["source_inputs"]["packages"]).resolve(strict=True)
     # The existing source-input factory keeps its flat packages/<relative>
     # manifest beside the packages directory; it is not a new receipt format.
+    registry_recipe = json.loads(recipe.read_text())
+    current_pins = {}
+    if "target" in request:
+        authored_root = request["target"]["source"]
+        package_manifest = packages.parent / "input-hashes.json"
+    else:
+        authored_root = Path(__file__).resolve().parents[3]
+        registry_recipe, current_pins = current_registry_bindings(registry_recipe, managed_production, authored_root)
+        package_manifest = Path(managed_production) / "packages/inputs.json"
     value = SCRIPT.registry(
         pc,
         editor_resources,
         managed_production,
-        request["target"]["source"],
+        authored_root,
         packages,
-        packages.parent / "input-hashes.json",
-        json.loads(recipe.read_text()),
+        package_manifest,
+        registry_recipe,
         W,
     )
+    value["provider_pins"].update(current_pins)
+    for path, pin in current_pins.items():
+        checked(Path(path), (pin["bytes"], pin["sha256"]))
     value["provider_pins"][str(recipe)] = {"bytes": recipe.stat().st_size, "sha256": selected["sha256"]}
     value["provider_pins"][str(request_path)] = {"bytes": request_pin[0], "sha256": request_pin[1]}
     checked(recipe, (recipe.stat().st_size, selected["sha256"]))
     checked(request_path, request_pin)
     return value
+
+
+def registry_artifacts(registry, body, output):
+    """Retain managed validation evidence for the actual serialized registry."""
+    for source, pin in registry["provider_pins"].items():
+        checked(Path(source), (pin["bytes"], pin["sha256"]))
+    schemas = output / "schemas.json"
+    schemas.write_text(json.dumps(registry["transfer_schemas"], indent=2) + "\n")
+    return {
+        "success": True,
+        "files": {body.name: {"bytes": body.stat().st_size, "sha256": sha(body)}},
+        "scripts": len(registry["script_ids"]),
+        "objects": len(registry["layout"]["objects"]),
+        "schemas": {"bytes": schemas.stat().st_size, "sha256": sha(schemas)},
+        "provider_pins": registry["provider_pins"],
+    }
 
 
 def produce(
@@ -1148,6 +1250,16 @@ def produce(
     code_request=None,
     managed_production=None,
     record_packs=(),
+    ui_profile=None,
+    ugui_source=None,
+    stage_context_profile=None,
+    hud_profile=None,
+    manager_profile=None,
+    manager_shaders=None,
+    manager_startup=None,
+    sdk_binary=None,
+    scene_profile=None,
+    scene_environment=None,
 ):
     """Write a new target tree; never use target bytes as a source provider."""
     profile_path = Path(profile_path)
@@ -1200,6 +1312,7 @@ def produce(
             checked(source, (row["bytes"], row["sha256"]))
             original[name] = json.loads(source.read_text())
             pc_sources[name] = source
+        current_metadata = code_request is not None and "target" not in json.loads(Path(code_request).read_text())
         generated = metadata(original["ScriptingAssemblies.json"], original["RuntimeInitializeOnLoads.json"], profile["project_assemblies"])
         sources = {}
         for name, pin in expected.items():
@@ -1217,12 +1330,21 @@ def produce(
                 "source_role": role,
                 "source": source.relative_to(source_root).as_posix(),
             }
+        current_output_pins = {}
         for name, body in generated.items():
             row = profile["outputs"][name]
-            if (len(body), hashlib.sha256(body).hexdigest()) != (row["bytes"], row["sha256"]):
+            actual = {"bytes": len(body), "sha256": hashlib.sha256(body).hexdigest()}
+            if not current_metadata and (actual["bytes"], actual["sha256"]) != (row["bytes"], row["sha256"]):
                 raise ValueError("generated player metadata differs: " + name)
             (output / (TARGET + name)).write_bytes(body)
-            result["files"][TARGET + name] = {**row, "source_role": "pc-and-authored", "source": profile["sources"][name]["path"]}
+            result["files"][TARGET + name] = {**row, **actual, "source_role": "pc-and-authored", "source": profile["sources"][name]["path"]}
+            if current_metadata:
+                current_output_pins[name] = actual
+                result.setdefault("metadata_comparison", {})[name] = actual["bytes"] == row["bytes"] and actual["sha256"] == row["sha256"]
+        registry = None
+        if "registry" in profile:
+            registry = registry_records(profile_path.parent.resolve(strict=True), profile["registry"], pc, editor_resources, code_request, managed_production)
+        current_registry = registry is not None and "target" not in json.loads(Path(code_request).read_text())
         font = profile["font"]
         name = font["file"]
         if name in ("", ".", "..") or PurePosixPath(name).name != name or "\\" in name:
@@ -1235,7 +1357,10 @@ def produce(
             name = selection["file"]
             if name in ("", ".", "..") or PurePosixPath(name).name != name or "\\" in name:
                 raise ValueError("unsafe object player filename")
-            object_file(pc, selection, output / (TARGET + name), script_sdk_tree)
+            object_file(pc, selection, output / (TARGET + name), script_sdk_tree, registry)
+            if registry is not None and "script" in selection:
+                path = output / (TARGET + name)
+                current_output_pins[name] = dict(bytes=path.stat().st_size, sha256=sha(path))
             result["files"][TARGET + name] = {**profile["outputs"][name], "source_role": "pc-objects", "source": selection["source"]["path"]}
         texture_files(pc, profile["font"]["source"], profile.get("textures", []), texture_packs, output, result)
         if "builtin_ui" in profile:
@@ -1259,13 +1384,15 @@ def produce(
                 else profile["text_assets"]["source"]["path"],
             }
         if "registry" in profile:
-            registry = registry_records(profile_path.parent.resolve(strict=True), profile["registry"], pc, editor_resources, code_request, managed_production)
             name = profile["registry"]["file"]
             if PurePosixPath(name).name != name or name in ("", ".", "..") or "\\" in name:
                 raise ValueError("unsafe registry player filename")
             with (output / (TARGET + name)).open("xb") as target:
                 W.write_serialized(target, registry["layout"], lambda row: io.BytesIO(registry["bodies"][row["path_id"]]))
             result["files"][TARGET + name] = {"source_role": "pc-sdk-and-authored", "source": profile["registry"]["path"]}
+            if current_registry:
+                path = output / (TARGET + name)
+                current_output_pins[name] = dict(bytes=path.stat().st_size, sha256=sha(path))
             registry_pins = [(Path(path), (pin["bytes"], pin["sha256"])) for path, pin in registry["provider_pins"].items()]
             if "shared_defaults" in profile:
                 selected = profile["shared_defaults"]
@@ -1274,16 +1401,83 @@ def produce(
                     raise ValueError("unsafe shared-default player filename")
                 registry_pins.extend(shared_defaults(pc, selected, sdk, builtin_extra, registry, record_packs, output / (TARGET + name)))
                 result["files"][TARGET + name] = {"source_role": "pc-sdk-and-record-packs", "source": selected["source"]["path"]}
+                if current_registry:
+                    path = output / (TARGET + name)
+                    current_output_pins[name] = dict(bytes=path.stat().st_size, sha256=sha(path))
             result["registry_inputs"] = {str(path): {"bytes": pin[0], "sha256": pin[1]} for path, pin in registry_pins}
         elif "shared_defaults" in profile:
             raise ValueError("shared defaults require the source registry")
+        if scene_profile is not None:
+            if "registry" not in profile or "shared_defaults" not in profile or scene_environment is None:
+                raise ValueError("source default scene requires registry, shared defaults and native source environment")
+            scene = OBJECTS.module("_player_scene", Path(__file__).with_name("player_scene.py"))
+            registry_file = output / (TARGET + profile["registry"]["file"])
+            shared_file = output / (TARGET + profile["shared_defaults"]["file"])
+            produced_scene = scene.produce(
+                scene_profile[0],
+                scene_profile[1],
+                pc,
+                sdk,
+                editor_resources,
+                (registry_file, sha(registry_file)),
+                (shared_file, sha(shared_file)),
+                scene_environment,
+                output / "default-scene-source",
+            )
+            for name, row in produced_scene["files"].items():
+                shutil.copyfile(output / "default-scene-source" / name, output / (TARGET + name))
+                checked(output / (TARGET + name), (row["bytes"], row["sha256"]))
+                result["files"][TARGET + name] = row
+            result["default_scene"] = produced_scene
+        if ui_profile is not None:
+            if "registry" not in profile or ugui_source is None:
+                raise ValueError("source UI requires the generated registry and exact SDK UGUI source")
+            ui = OBJECTS.module("_player_ui", Path(__file__).with_name("player_ui.py"))
+            produced_ui = ui.produce(
+                ui_profile[0], ui_profile[1], pc, profile, builtin_extra, editor_resources, ugui_source, managed_production, registry, output / TARGET
+            )
+            result["ui"] = produced_ui
+            result["files"].update({TARGET + name: row for name, row in produced_ui["files"].items()})
+        if hud_profile is not None:
+            if "registry" not in profile:
+                raise ValueError("source HUD requires the generated registry")
+            hud = OBJECTS.module("_player_hud", Path(__file__).with_name("player_hud.py"))
+            produced_hud = hud.produce(
+                hud_profile[0], hud_profile[1], pc, profile, builtin_extra, editor_resources, managed_production, registry, output / TARGET
+            )
+            result["hud"] = produced_hud
+            result["files"].update({TARGET + name: row for name, row in produced_hud["files"].items()})
+        if stage_context_profile is not None:
+            contexts = OBJECTS.module("_player_stage_contexts", Path(__file__).with_name("stage_contexts.py"))
+            produced_contexts = contexts.produce(stage_context_profile[0], stage_context_profile[1], pc, output / "stage-context-source")
+            for name, row in produced_contexts["files"].items():
+                shutil.copyfile(output / "stage-context-source" / name, output / (TARGET + name))
+                checked(output / (TARGET + name), (row["bytes"], row["sha256"]))
+                result["files"][TARGET + name] = dict(row, source_role="original-stage-contexts")
+            result["stage_contexts"] = produced_contexts
+        if manager_profile is not None:
+            if any(value is None for value in (ui_profile, hud_profile, stage_context_profile, manager_shaders, manager_startup, sdk_binary)):
+                raise ValueError("source managers require UI, HUD, stage, Shader, startup and SDK phases")
+            managers = OBJECTS.module("_player_managers", Path(__file__).with_name("player_managers.py"))
+            produced_managers = managers.produce(
+                manager_profile[0],
+                manager_profile[1],
+                pc,
+                sdk,
+                builtin_extra,
+                sdk_binary,
+                manager_shaders,
+                manager_startup,
+                profile,
+                output / TARGET,
+            )
+            result["managers"] = produced_managers
+            result["files"].update({TARGET + name: row for name, row in produced_managers["files"].items()})
         # Re-read persisted files and their providers before declaring success.
         for name, pin in expected.items():
             checked(output / (TARGET + name), pin)
             checked(sources[name], pin)
-        for name, row in profile["outputs"].items():
-            checked(output / (TARGET + name), (row["bytes"], row["sha256"]))
-            result["files"][TARGET + name].update(row)
+        verify_player_outputs(output, profile["outputs"], result["files"], current_output_pins)
         for name, source in pc_sources.items():
             row = profile["sources"][name]
             checked(source, (row["bytes"], row["sha256"]))
@@ -1294,6 +1488,12 @@ def produce(
             checked(Path(editor_resources).absolute(), (pin["bytes"], pin["sha256"]))
         for path, pin in registry_pins:
             checked(path, pin)
+        if registry is not None:
+            evidence = output / "registry-source"
+            evidence.mkdir()
+            registry_receipt = registry_artifacts(registry, output / (TARGET + profile["registry"]["file"]), evidence)
+            (evidence / "result.json").write_text(json.dumps(registry_receipt, indent=2) + "\n")
+            result["registry"] = {"receipt": "registry-source/result.json", "schemas": "registry-source/schemas.json"}
         result["success"] = True
         return result
     except Exception as error:
@@ -1315,9 +1515,30 @@ def main():
     parser.add_argument("--converter", type=Path, required=True, help="fresh converter directory containing data/ and result.json")
     parser.add_argument("--converter-receipt-sha256", required=True)
     parser.add_argument(
-        "--code-request", type=Path, help="existing original-input code request, with target.source and source_inputs.packages; required for registry"
+        "--code-request", type=Path, help="original-input code request with source_inputs.packages; optional target.source selects a historical source cohort"
     )
     parser.add_argument("--managed-production", type=Path, help="successful source-produced managed directory; required for registry")
+    parser.add_argument("--ui-profile", nargs=2, metavar=("PROFILE", "SHA256"), help="current source Menu profile; requires registry and SDK UGUI source")
+    parser.add_argument(
+        "--hud-profile", nargs=2, metavar=("PROFILE", "SHA256"), help="current source HUD profile; requires registry and managed source outputs"
+    )
+    parser.add_argument("--stage-context-profile", nargs=2, metavar=("PROFILE", "SHA256"), help="current original-record stage context profile")
+    parser.add_argument(
+        "--manager-profile",
+        nargs=2,
+        metavar=("PROFILE", "SHA256"),
+        help="current complete native manager phase; requires Menu, HUD, stage, Shader and startup phases",
+    )
+    parser.add_argument("--manager-shaders", nargs=2, metavar=("DIRECTORY", "RECEIPT_SHA256"), help="complete source-produced player Shader directory")
+    parser.add_argument("--manager-startup", nargs=2, metavar=("RECEIPT", "SHA256"), help="public startup metadata receipt supplying build identity")
+    parser.add_argument("--sdk-binary", type=Path, help="exact acquired ARM64 SDK executable; required for manager metadata selection")
+    parser.add_argument(
+        "--scene-profile", nargs=2, metavar=("PROFILE", "SHA256"), help="current source default-scene phase; native lighting compatibility remains open"
+    )
+    for name in ("scene-environment-result", "scene-environment-request", "scene-environment-bundle"):
+        parser.add_argument("--" + name, nargs=2, metavar=("PATH", "SHA256"), help="explicit native source environment phase input")
+    parser.add_argument("--scene-environment-images", type=Path, help="source capture face/mip directory")
+    parser.add_argument("--ugui-source", type=Path, help="exact SDK com.unity.ugui Runtime/UI/Core source directory; required for source Menu")
     parser.add_argument(
         "--record-pack",
         nargs=2,
@@ -1336,6 +1557,11 @@ def main():
     )
     parser.add_argument("--output", type=Path, required=True, help="new private target-tree root; parent must exist")
     args = parser.parse_args()
+    scene_inputs = (args.scene_environment_result, args.scene_environment_request, args.scene_environment_images, args.scene_environment_bundle)
+    if any(value is not None for value in scene_inputs) and not all(value is not None for value in scene_inputs):
+        parser.error("supply all four source environment inputs together")
+    if bool(args.scene_profile) != all(value is not None for value in scene_inputs):
+        parser.error("source scene profile and complete native environment must be supplied together")
     produce(
         args.profile,
         args.profile_sha256,
@@ -1350,6 +1576,16 @@ def main():
         args.code_request,
         args.managed_production,
         args.record_pack,
+        args.ui_profile,
+        args.ugui_source,
+        args.stage_context_profile,
+        args.hud_profile,
+        args.manager_profile,
+        args.manager_shaders,
+        args.manager_startup,
+        args.sdk_binary,
+        args.scene_profile,
+        scene_inputs if args.scene_profile is not None else None,
     )
 
 

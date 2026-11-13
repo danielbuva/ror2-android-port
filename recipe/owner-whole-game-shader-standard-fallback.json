@@ -1,0 +1,127 @@
+{
+  "input_id": "6af7ed94619fe1b4346974b4486afa03a8d1625a7820e92da0ff74d57208fe88",
+  "sdk": {
+    "MacOS/Unity": {
+      "bytes": 79453472,
+      "sha256": "906123118e45d56c6bcf20f3776ed2373417553042500714023daeb9e53058e8"
+    },
+    "Tools/UnityShaderCompiler": {
+      "bytes": 12603248,
+      "sha256": "4f4e5be21d27dd7541fa9385ea480b15816e70ddaa83b516df0ab60b819142b5"
+    },
+    "Resources/unity_builtin_extra": {
+      "bytes": 133069551,
+      "sha256": "db99888b83efb4ec35e6ce219de78c951fc37bc0129712579131360312cc4f8e"
+    }
+  },
+  "includes_sha256": "163fad0ca42bd98ea1628888dedd01d91fcbb9f6bda60a8120f9b453cc565144",
+  "settings": {
+    "color_space": 1,
+    "caching_preprocessor": true,
+    "tier0": {
+      "standardShaderQuality": 0,
+      "renderingPath": 3,
+      "hdrMode": 1,
+      "realtimeGICPUUsage": 25,
+      "useReflectionProbeBoxProjection": 0,
+      "useReflectionProbeBlending": 0,
+      "useHDR": 1,
+      "useDetailNormalMap": 0,
+      "useCascadedShadowMaps": 0,
+      "prefer32BitShadowMaps": 0,
+      "enableLPPV": 0,
+      "useDitherMaskForAlphaBlendedShadows": 0
+    },
+    "virtual_texturing": 0,
+    "vulkan_pretransform": 0,
+    "shader_precision_model": 0,
+    "deferred_reflections": 1
+  },
+  "exporter_revision": "1ac666f47d8e9dedf96afb0b914c70d7656151ea",
+  "template_inputs": {
+    "Templates.json": {
+      "bytes": 640,
+      "sha256": "b046b777ec15bc92caaea19558a438e041f2ce174cdbeb6bb570055e2eb557cc"
+    },
+    "Default.txt": {
+      "bytes": 655,
+      "sha256": "f719eed3344dcbee3c438803a7518fe548b8906f6e18020f3b4b26d47293f266"
+    },
+    "SingleTexture.txt": {
+      "bytes": 942,
+      "sha256": "7b7ae955e72eb9d5b0c084aed0749ae21846098236abd4f30281d162738c9371"
+    },
+    "SingleColor.txt": {
+      "bytes": 652,
+      "sha256": "63c072b5e86316be6d0c8a5ce72cdc4a3bfc3c06df6efcc1bc02495240654f63"
+    },
+    "TransparentDiffuse.txt": {
+      "bytes": 969,
+      "sha256": "ceed4bd0bd18e0e2a56a1399ff37e13b1fe9a569e45b145ef6ad851425cfdc0a"
+    }
+  },
+  "shader_links": [
+    {
+      "sdk_shader": 46,
+      "to": [
+        0,
+        -4850512016903265157
+      ]
+    },
+    {
+      "sdk_shader": 6,
+      "to": [
+        3,
+        6
+      ]
+    }
+  ],
+  "records": [
+    {
+      "kind": "dummy",
+      "original": {
+        "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-dlc3-conduitcanyon_static_assets_all_face0fc14d2116260245c9326c852262.bundle",
+        "member": "CAB-01a3dd07e0b61b0ca3dc5bc0b437ca50",
+        "path_id": 26104533844629481,
+        "bytes": 258527,
+        "sha256": "051fa0722755751b8d4e64fe307a7c657b541e7cd006b7b385eefa48d304df51",
+        "body_sha256": "522339cbecbaccf469a934a599679db12c26a0aae574e059cf215ae89029641b"
+      },
+      "source_filename": "Assets/WholeGame/Shader/ProBuilder_Standard Vertex Color.shader",
+      "template": "TransparentDiffuse",
+      "fallback_sdk_shader": 46,
+      "outputs": [
+        {
+          "bundle": "whole-game-content",
+          "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+          "path_id": -8641364103434781263,
+          "bytes": 4868,
+          "sha256": "38b0785b1168ab4dda8f3095cda90c8b744c0f9aa6dd6711a643abf0605446e5"
+        }
+      ]
+    },
+    {
+      "kind": "dummy",
+      "original": {
+        "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-dlc3_assets_all_d13fa2fd102ca6802454e115e3fbcef5.bundle",
+        "member": "CAB-35805e18e1f5dbe696d33d0726fc717c",
+        "path_id": 5649348548603650975,
+        "bytes": 12650176,
+        "sha256": "37f7c1dc15ed4c91811b9720004c4452d86f43c3d956ce5cb4460deb1a297851",
+        "body_sha256": "3621613d6c635f2e9203f4bfe19315162cb3ef7bba7ece2848cf6441434bf9df"
+      },
+      "source_filename": "Assets/WholeGame/RoR2/DLC3/Common/SolusVisuals/Shaders/OpaqueTextureScrolling.shader",
+      "template": "TransparentDiffuse",
+      "fallback_sdk_shader": 46,
+      "outputs": [
+        {
+          "bundle": "whole-game-content",
+          "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+          "path_id": 3477053386536196576,
+          "bytes": 7136,
+          "sha256": "568ca9429c25ff7bc730416ccc8b172e803b3eed0aaa9ca47ed68f2b58d4d62a"
+        }
+      ]
+    }
+  ]
+}

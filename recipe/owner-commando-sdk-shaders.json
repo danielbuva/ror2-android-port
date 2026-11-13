@@ -1,0 +1,200 @@
+{
+  "input_id": "6af7ed94619fe1b4346974b4486afa03a8d1625a7820e92da0ff74d57208fe88",
+  "sdk": {
+    "MacOS/Unity": {
+      "bytes": 79453472,
+      "sha256": "906123118e45d56c6bcf20f3776ed2373417553042500714023daeb9e53058e8"
+    },
+    "Tools/UnityShaderCompiler": {
+      "bytes": 12603248,
+      "sha256": "4f4e5be21d27dd7541fa9385ea480b15816e70ddaa83b516df0ab60b819142b5"
+    },
+    "Resources/unity_builtin_extra": {
+      "bytes": 133069551,
+      "sha256": "db99888b83efb4ec35e6ce219de78c951fc37bc0129712579131360312cc4f8e"
+    }
+  },
+  "includes_sha256": "163fad0ca42bd98ea1628888dedd01d91fcbb9f6bda60a8120f9b453cc565144",
+  "settings": {
+    "color_space": 1,
+    "caching_preprocessor": true,
+    "tier0": {
+      "standardShaderQuality": 0,
+      "renderingPath": 3,
+      "hdrMode": 1,
+      "realtimeGICPUUsage": 25,
+      "useReflectionProbeBoxProjection": 0,
+      "useReflectionProbeBlending": 0,
+      "useHDR": 1,
+      "useDetailNormalMap": 0,
+      "useCascadedShadowMaps": 0,
+      "prefer32BitShadowMaps": 0,
+      "enableLPPV": 0,
+      "useDitherMaskForAlphaBlendedShadows": 0
+    },
+    "virtual_texturing": 0,
+    "vulkan_pretransform": 0,
+    "shader_precision_model": 0,
+    "deferred_reflections": 1
+  },
+  "exporter_revision": "1ac666f47d8e9dedf96afb0b914c70d7656151ea",
+  "template_inputs": {
+    "Templates.json": {
+      "bytes": 640,
+      "sha256": "b046b777ec15bc92caaea19558a438e041f2ce174cdbeb6bb570055e2eb557cc"
+    },
+    "Default.txt": {
+      "bytes": 655,
+      "sha256": "f719eed3344dcbee3c438803a7518fe548b8906f6e18020f3b4b26d47293f266"
+    },
+    "SingleTexture.txt": {
+      "bytes": 942,
+      "sha256": "7b7ae955e72eb9d5b0c084aed0749ae21846098236abd4f30281d162738c9371"
+    },
+    "SingleColor.txt": {
+      "bytes": 652,
+      "sha256": "63c072b5e86316be6d0c8a5ce72cdc4a3bfc3c06df6efcc1bc02495240654f63"
+    },
+    "TransparentDiffuse.txt": {
+      "bytes": 969,
+      "sha256": "ceed4bd0bd18e0e2a56a1399ff37e13b1fe9a569e45b145ef6ad851425cfdc0a"
+    }
+  },
+  "shader_links": [
+    {
+      "sdk_shader": 6,
+      "to": [
+        3,
+        6
+      ]
+    },
+    {
+      "sdk_shader": 7,
+      "to": [
+        3,
+        7
+      ]
+    },
+    {
+      "sdk_shader": 50,
+      "to": [
+        0,
+        3464988009001945076
+      ]
+    },
+    {
+      "sdk_shader": 51,
+      "to": [
+        0,
+        3115971018399462371
+      ]
+    }
+  ],
+  "records": [
+    {
+      "kind": "sdk",
+      "sdk_shader": 202,
+      "original": {
+        "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/calmwater_unitybuiltinshaders_244d4ed79dda70fa38b62dcf46d4ccd7.bundle",
+        "member": "CAB-3795e044f5be9199dfbb711bdc9d52a8",
+        "path_id": 4526715955779211084,
+        "bytes": 1802189,
+        "sha256": "949b28d89f3db1c8da8362f5dd96cc27bae5b3f0d4f2a807fc89be692c494805",
+        "body_sha256": "34dd47797b901a332e8ba95e57359bd3c0aeba7009288637548cd8dca25ab2e0"
+      },
+      "outputs": [
+        {
+          "bundle": "commando-prefab-lab",
+          "member": "CAB-b0611b01bbffecd06329c6d6eecf278c",
+          "path_id": -8619688256980599430,
+          "bytes": 5700,
+          "sha256": "6430a8bd0433d0f9b5030b92d222872f8aa92c6694f0c635af6441e01bd16136"
+        }
+      ]
+    },
+    {
+      "kind": "sdk",
+      "sdk_shader": 10755,
+      "original": {
+        "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/calmwater_unitybuiltinshaders_244d4ed79dda70fa38b62dcf46d4ccd7.bundle",
+        "member": "CAB-3795e044f5be9199dfbb711bdc9d52a8",
+        "path_id": 3891392780900306764,
+        "bytes": 1802189,
+        "sha256": "949b28d89f3db1c8da8362f5dd96cc27bae5b3f0d4f2a807fc89be692c494805",
+        "body_sha256": "6f40cc7749c4c9753b1095f6a1dd61aeb2b44a5964105e49569b1d9a88ddd4cc"
+      },
+      "outputs": [
+        {
+          "bundle": "commando-prefab-lab",
+          "member": "CAB-b0611b01bbffecd06329c6d6eecf278c",
+          "path_id": 154898390702718541,
+          "bytes": 3748,
+          "sha256": "9f1b6f91207ca52e916f49c9a7f2d1927ea0a3f5160dd38a4b99785806a3c0bb"
+        }
+      ]
+    },
+    {
+      "kind": "sdk",
+      "sdk_shader": 200,
+      "original": {
+        "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/calmwater_unitybuiltinshaders_244d4ed79dda70fa38b62dcf46d4ccd7.bundle",
+        "member": "CAB-3795e044f5be9199dfbb711bdc9d52a8",
+        "path_id": -6196057315786485940,
+        "bytes": 1802189,
+        "sha256": "949b28d89f3db1c8da8362f5dd96cc27bae5b3f0d4f2a807fc89be692c494805",
+        "body_sha256": "5ad01bc154bb484804af66c54975590b11e44e121b7c777e0b44ed97d52b88dc"
+      },
+      "outputs": [
+        {
+          "bundle": "commando-prefab-lab",
+          "member": "CAB-b0611b01bbffecd06329c6d6eecf278c",
+          "path_id": 640023996609787442,
+          "bytes": 5912,
+          "sha256": "c347d873c9e7a310beedad7ebe98575ef188b4e340654dcca18eeea05105e9b0"
+        }
+      ]
+    },
+    {
+      "kind": "sdk",
+      "sdk_shader": 51,
+      "original": {
+        "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/calmwater_unitybuiltinshaders_244d4ed79dda70fa38b62dcf46d4ccd7.bundle",
+        "member": "CAB-3795e044f5be9199dfbb711bdc9d52a8",
+        "path_id": -4090113624491487412,
+        "bytes": 1802189,
+        "sha256": "949b28d89f3db1c8da8362f5dd96cc27bae5b3f0d4f2a807fc89be692c494805",
+        "body_sha256": "a331cd5db06f1898abe4824113201c4e4426a270af812b1dbd69e97e01483f49"
+      },
+      "outputs": [
+        {
+          "bundle": "commando-prefab-lab",
+          "member": "CAB-b0611b01bbffecd06329c6d6eecf278c",
+          "path_id": 3115971018399462371,
+          "bytes": 40904,
+          "sha256": "199885a32c9835d423598ff2b677ae9a85b16022027c802613fb04b82337c394"
+        }
+      ]
+    },
+    {
+      "kind": "sdk",
+      "sdk_shader": 50,
+      "original": {
+        "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/calmwater_unitybuiltinshaders_244d4ed79dda70fa38b62dcf46d4ccd7.bundle",
+        "member": "CAB-3795e044f5be9199dfbb711bdc9d52a8",
+        "path_id": -5290706272961163444,
+        "bytes": 1802189,
+        "sha256": "949b28d89f3db1c8da8362f5dd96cc27bae5b3f0d4f2a807fc89be692c494805",
+        "body_sha256": "35c3a27cfc6a32e5fae0f7be3e984747adbe6384d5e49780d44b2105ba4683a3"
+      },
+      "outputs": [
+        {
+          "bundle": "commando-prefab-lab",
+          "member": "CAB-b0611b01bbffecd06329c6d6eecf278c",
+          "path_id": 3464988009001945076,
+          "bytes": 21320,
+          "sha256": "052274e79f4eb757e8a7f686f5a78d959636a24ead0c8a0b77c88412bd838e56"
+        }
+      ]
+    }
+  ]
+}

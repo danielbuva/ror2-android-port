@@ -1,22 +1,24 @@
-"""Keep temporary CI filesystem cleanup separate from verification status."""
+"""Cleanup is now synchronous and bounded; failed mount reconciliation preserves."""
 
+import importlib.util
 from pathlib import Path
-import shutil
 import subprocess
 import unittest
+from unittest import mock
+
+SPEC = importlib.util.spec_from_file_location("ci_scratch", Path(__file__).resolve().parents[1] / "scripts/ci-scratch.py")
+cleanup = importlib.util.module_from_spec(SPEC)
+SPEC.loader.exec_module(cleanup)
 
 
-class CiCleanupBackgroundTests(unittest.TestCase):
-    def test_blocked_detach_does_not_hold_exit_or_remove_mounted_scratch(self):
-        bash = shutil.which("bash")
-        if not bash:
-            self.skipTest("Bash is unavailable")
-        root = Path(__file__).resolve().parents[1]
-        result = subprocess.run(
-            [bash, str(root / "tests/test_ci_cleanup_background.sh"), str(root / "scripts/ci-local.sh")],
-            capture_output=True,
-            text=True,
-            timeout=15,
-        )
-        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
-        self.assertIn("mounted scratch preservation passed", result.stdout)
+class CleanupTimeoutTests(unittest.TestCase):
+    def test_inventory_and_detach_have_finite_timeouts(self):
+        with mock.patch.object(cleanup.subprocess, "run", side_effect=subprocess.TimeoutExpired("hdiutil", 30)) as run:
+            with self.assertRaises(subprocess.TimeoutExpired):
+                cleanup.devices(Path("/synthetic/volume.sparseimage"))
+        self.assertEqual(run.call_args.kwargs["timeout"], 30)
+        with mock.patch.object(cleanup, "devices", return_value={"/dev/disk71"}):
+            with mock.patch.object(cleanup.subprocess, "run", side_effect=subprocess.TimeoutExpired("hdiutil", 30)) as run:
+                with self.assertRaises(subprocess.TimeoutExpired):
+                    cleanup.detach(Path("/synthetic/volume.sparseimage"))
+        self.assertEqual(run.call_args.kwargs["timeout"], 30)

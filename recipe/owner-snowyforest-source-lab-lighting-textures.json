@@ -1,0 +1,241 @@
+{
+  "input_id": "6af7ed94619fe1b4346974b4486afa03a8d1625a7820e92da0ff74d57208fe88",
+  "bundles": [
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-dlc1-snowyforest_scenes_all_147df7783cb7d99029e9372cdaa78c6d.bundle",
+      "sha256": "23633cde58b24e55de4bbabcd9dbdb78a9b1797924d5b026678aaac475e24da1",
+      "members": [
+        {
+          "name": "CAB-6c3191526dbc53a15faa1ef384fa4ce4",
+          "textures": [
+            {
+              "path_id": 13,
+              "offset": 1113568,
+              "bytes": 272,
+              "sha256": "bcaf77f8d05fd2c0d55abe8e80e670eaec9efae2fd3865fa3b9ecad185a4a8f3",
+              "fields": {
+                "m_Name": [
+                  0,
+                  4
+                ],
+                "m_IsAlphaChannelOptional": [
+                  9,
+                  3
+                ],
+                "m_CompleteImageSize": [
+                  20,
+                  4
+                ],
+                "m_TextureFormat": [
+                  28,
+                  4
+                ],
+                "m_MipCount": [
+                  32,
+                  4
+                ],
+                "m_LightmapFormat": [
+                  76,
+                  4
+                ],
+                "m_ColorSpace": [
+                  80,
+                  4
+                ],
+                "image data": [
+                  88,
+                  4
+                ],
+                "m_StreamData": [
+                  92,
+                  104
+                ]
+              },
+              "pixels": {
+                "member": "CAB-6c3191526dbc53a15faa1ef384fa4ce4.resS",
+                "offset": 1620096,
+                "bytes": 131232,
+                "sha256": "2eed5acce8c25833baab5a17d9d3278a38794fc1dcc91635e2553cf7926b9e9b"
+              },
+              "operation": "cube-preserve",
+              "width": 128,
+              "height": 128,
+              "outputs": [
+                {
+                  "bundle": "snowyforest-source-lab",
+                  "member": "BuildPlayer-snowyforest",
+                  "path_id": 1,
+                  "name": "",
+                  "alpha_optional": false,
+                  "usage": 0,
+                  "mips": 8,
+                  "colour_space": 0,
+                  "inline": false,
+                  "stream": {
+                    "offset": 0,
+                    "size": 131232,
+                    "path": "archive:/BuildPlayer-snowyforest/BuildPlayer-snowyforest.resS"
+                  },
+                  "pixel_bytes": 131232,
+                  "pixel_sha256": "2eed5acce8c25833baab5a17d9d3278a38794fc1dcc91635e2553cf7926b9e9b",
+                  "bytes": 248,
+                  "sha256": "8d2f27e812f6f1f1ec24bd6806e45c3412100ffa57844353561dc24ff0031be9"
+                }
+              ]
+            },
+            {
+              "path_id": 14,
+              "offset": 1113840,
+              "bytes": 272,
+              "sha256": "e32b0e72b4454d134921ba1186a2bfcabff3569d854c75f4be51a02a356dfc75",
+              "fields": {
+                "m_Name": [
+                  0,
+                  4
+                ],
+                "m_IsAlphaChannelOptional": [
+                  9,
+                  3
+                ],
+                "m_CompleteImageSize": [
+                  20,
+                  4
+                ],
+                "m_TextureFormat": [
+                  28,
+                  4
+                ],
+                "m_MipCount": [
+                  32,
+                  4
+                ],
+                "m_LightmapFormat": [
+                  76,
+                  4
+                ],
+                "m_ColorSpace": [
+                  80,
+                  4
+                ],
+                "image data": [
+                  88,
+                  4
+                ],
+                "m_StreamData": [
+                  92,
+                  104
+                ]
+              },
+              "pixels": {
+                "member": "CAB-6c3191526dbc53a15faa1ef384fa4ce4.resS",
+                "offset": 1751328,
+                "bytes": 131232,
+                "sha256": "c7d24e758ec16b9dc4cd768ab354907a78a1ed8731445dd358c4ef838a964b0c"
+              },
+              "operation": "cube-preserve",
+              "width": 128,
+              "height": 128,
+              "outputs": [
+                {
+                  "bundle": "snowyforest-source-lab",
+                  "member": "BuildPlayer-snowyforest",
+                  "path_id": 2,
+                  "name": "",
+                  "alpha_optional": false,
+                  "usage": 0,
+                  "mips": 8,
+                  "colour_space": 0,
+                  "inline": false,
+                  "stream": {
+                    "offset": 131232,
+                    "size": 131232,
+                    "path": "archive:/BuildPlayer-snowyforest/BuildPlayer-snowyforest.resS"
+                  },
+                  "pixel_bytes": 131232,
+                  "pixel_sha256": "c7d24e758ec16b9dc4cd768ab354907a78a1ed8731445dd358c4ef838a964b0c",
+                  "bytes": 248,
+                  "sha256": "5fbc78c9114a059166d0dfa1c6fba1484c5cffc4171510950a3936f0bbd1eb8d"
+                }
+              ]
+            },
+            {
+              "path_id": 15,
+              "offset": 1114112,
+              "bytes": 272,
+              "sha256": "93a6bfc4ff8054cee5c40a22b2d3cd4cc50a96fb0b967e70770068aad76e869f",
+              "fields": {
+                "m_Name": [
+                  0,
+                  4
+                ],
+                "m_IsAlphaChannelOptional": [
+                  9,
+                  3
+                ],
+                "m_CompleteImageSize": [
+                  20,
+                  4
+                ],
+                "m_TextureFormat": [
+                  28,
+                  4
+                ],
+                "m_MipCount": [
+                  32,
+                  4
+                ],
+                "m_LightmapFormat": [
+                  76,
+                  4
+                ],
+                "m_ColorSpace": [
+                  80,
+                  4
+                ],
+                "image data": [
+                  88,
+                  4
+                ],
+                "m_StreamData": [
+                  92,
+                  104
+                ]
+              },
+              "pixels": {
+                "member": "CAB-6c3191526dbc53a15faa1ef384fa4ce4.resS",
+                "offset": 1882560,
+                "bytes": 2097312,
+                "sha256": "4ceb76d3aaa31d231bbfd16e02bb6d94d260421c8a48e3614a441325a778cb85"
+              },
+              "operation": "cube-preserve",
+              "width": 512,
+              "height": 512,
+              "outputs": [
+                {
+                  "bundle": "snowyforest-source-lab",
+                  "member": "BuildPlayer-snowyforest",
+                  "path_id": 3,
+                  "name": "",
+                  "alpha_optional": false,
+                  "usage": 0,
+                  "mips": 10,
+                  "colour_space": 0,
+                  "inline": false,
+                  "stream": {
+                    "offset": 262464,
+                    "size": 2097312,
+                    "path": "archive:/BuildPlayer-snowyforest/BuildPlayer-snowyforest.resS"
+                  },
+                  "pixel_bytes": 2097312,
+                  "pixel_sha256": "4ceb76d3aaa31d231bbfd16e02bb6d94d260421c8a48e3614a441325a778cb85",
+                  "bytes": 248,
+                  "sha256": "c02e44ac07717e4ac520ab323f96337d02c976e735e972ff6d5303416ce22512"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

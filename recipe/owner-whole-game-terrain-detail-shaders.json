@@ -1,0 +1,147 @@
+{
+  "input_id": "6af7ed94619fe1b4346974b4486afa03a8d1625a7820e92da0ff74d57208fe88",
+  "sdk": {
+    "MacOS/Unity": {
+      "bytes": 79453472,
+      "sha256": "906123118e45d56c6bcf20f3776ed2373417553042500714023daeb9e53058e8"
+    },
+    "Tools/UnityShaderCompiler": {
+      "bytes": 12603248,
+      "sha256": "4f4e5be21d27dd7541fa9385ea480b15816e70ddaa83b516df0ab60b819142b5"
+    },
+    "Resources/unity_builtin_extra": {
+      "bytes": 133069551,
+      "sha256": "db99888b83efb4ec35e6ce219de78c951fc37bc0129712579131360312cc4f8e"
+    }
+  },
+  "includes_sha256": "163fad0ca42bd98ea1628888dedd01d91fcbb9f6bda60a8120f9b453cc565144",
+  "settings": {
+    "color_space": 1,
+    "caching_preprocessor": true,
+    "tier0": {
+      "standardShaderQuality": 0,
+      "renderingPath": 3,
+      "hdrMode": 1,
+      "realtimeGICPUUsage": 25,
+      "useReflectionProbeBoxProjection": 0,
+      "useReflectionProbeBlending": 0,
+      "useHDR": 1,
+      "useDetailNormalMap": 0,
+      "useCascadedShadowMaps": 0,
+      "prefer32BitShadowMaps": 0,
+      "enableLPPV": 0,
+      "useDitherMaskForAlphaBlendedShadows": 0
+    },
+    "virtual_texturing": 0,
+    "vulkan_pretransform": 0,
+    "shader_precision_model": 0,
+    "deferred_reflections": 1
+  },
+  "shader_links": [
+    {
+      "sdk_shader": 6,
+      "to": [
+        3,
+        6
+      ]
+    }
+  ],
+  "records": [
+    {
+      "kind": "sdk",
+      "sdk_shader": 10500,
+      "terrain": {
+        "original": {
+          "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-base-title_assets_all_18739930b22bc7a40f3ccea9c29c95d5.bundle",
+          "member": "CAB-3e08c3bcda7564a36a8a1d94862890e3",
+          "path_id": -2098901902549316928,
+          "bytes": 2066699,
+          "sha256": "ee181b83ea5a37b8d899c255e5d1991b1c6782a6f3849b9381ad4041e40bdcf5",
+          "body_sha256": "bfe6364b621e5a64bdc276072584c0a03af450cdcd794ed8241f263c81886235"
+        },
+        "shader_file_id": 24
+      },
+      "original": {
+        "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/calmwater_unitybuiltinshaders_244d4ed79dda70fa38b62dcf46d4ccd7.bundle",
+        "member": "CAB-3795e044f5be9199dfbb711bdc9d52a8",
+        "path_id": 5456271791553777484,
+        "bytes": 1802189,
+        "sha256": "949b28d89f3db1c8da8362f5dd96cc27bae5b3f0d4f2a807fc89be692c494805",
+        "body_sha256": "f711e03565ad92eb8a360542c183193247c516d3c8c6e349fbb022cfee91f524"
+      },
+      "outputs": [
+        {
+          "bundle": "whole-game-content",
+          "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+          "path_id": -861737796657473081,
+          "bytes": 39636,
+          "sha256": "95bedb69ff9eb774690becc8cc2904e6b3bc402bb859712203a55769c35ada0a"
+        }
+      ]
+    },
+    {
+      "kind": "sdk",
+      "sdk_shader": 10502,
+      "terrain": {
+        "original": {
+          "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-base-title_assets_all_18739930b22bc7a40f3ccea9c29c95d5.bundle",
+          "member": "CAB-3e08c3bcda7564a36a8a1d94862890e3",
+          "path_id": -2098901902549316928,
+          "bytes": 2066699,
+          "sha256": "ee181b83ea5a37b8d899c255e5d1991b1c6782a6f3849b9381ad4041e40bdcf5",
+          "body_sha256": "bfe6364b621e5a64bdc276072584c0a03af450cdcd794ed8241f263c81886235"
+        },
+        "shader_file_id": 24
+      },
+      "original": {
+        "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/calmwater_unitybuiltinshaders_244d4ed79dda70fa38b62dcf46d4ccd7.bundle",
+        "member": "CAB-3795e044f5be9199dfbb711bdc9d52a8",
+        "path_id": 9015162528297324364,
+        "bytes": 1802189,
+        "sha256": "949b28d89f3db1c8da8362f5dd96cc27bae5b3f0d4f2a807fc89be692c494805",
+        "body_sha256": "9c3f91d4431b6e9b598e6bcc6c971b994646ac75ece9482bf833fca8cbed173a"
+      },
+      "outputs": [
+        {
+          "bundle": "whole-game-content",
+          "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+          "path_id": 2152402734523175926,
+          "bytes": 40588,
+          "sha256": "6a4df5507c626fab5621bb1dd0db45f3302ec189e4b9cc0d2ccda2e3f4dd361a"
+        }
+      ]
+    },
+    {
+      "kind": "sdk",
+      "sdk_shader": 10501,
+      "terrain": {
+        "original": {
+          "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-base-title_assets_all_18739930b22bc7a40f3ccea9c29c95d5.bundle",
+          "member": "CAB-3e08c3bcda7564a36a8a1d94862890e3",
+          "path_id": -2098901902549316928,
+          "bytes": 2066699,
+          "sha256": "ee181b83ea5a37b8d899c255e5d1991b1c6782a6f3849b9381ad4041e40bdcf5",
+          "body_sha256": "bfe6364b621e5a64bdc276072584c0a03af450cdcd794ed8241f263c81886235"
+        },
+        "shader_file_id": 24
+      },
+      "original": {
+        "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/calmwater_unitybuiltinshaders_244d4ed79dda70fa38b62dcf46d4ccd7.bundle",
+        "member": "CAB-3795e044f5be9199dfbb711bdc9d52a8",
+        "path_id": -2820224755109654708,
+        "bytes": 1802189,
+        "sha256": "949b28d89f3db1c8da8362f5dd96cc27bae5b3f0d4f2a807fc89be692c494805",
+        "body_sha256": "054bf6a430de6616a001e491c9d3d31c5bc3bbfcd1b3d95727e5e199dee94834"
+      },
+      "outputs": [
+        {
+          "bundle": "whole-game-content",
+          "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+          "path_id": 6744968036880419126,
+          "bytes": 51772,
+          "sha256": "8b420d7ca6d589fa7d6dc0beff7df3f096f9e929ee187010937c1c01bf32af37"
+        }
+      ]
+    }
+  ]
+}

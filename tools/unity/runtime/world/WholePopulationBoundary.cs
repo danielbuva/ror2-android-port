@@ -35,9 +35,9 @@ public sealed partial class PortSession
     {
         GetWholePopulationSession().CleanupWholePickups();
     }
-    void PrepareWholeDroneCatalog()
+    void PrepareWholeDroneCatalog(JObject manifest)
     {
-        GetWholePopulationSession().PrepareWholeDroneCatalog();
+        GetWholePopulationSession().PrepareWholeDroneCatalog(manifest);
     }
     void PrepareWholeRunAvailability()
     {
@@ -144,8 +144,9 @@ public sealed partial class PortSession
             }
             ownsWholePickupOrb = false;
         }
-        public void PrepareWholeDroneCatalog()
+        public void PrepareWholeDroneCatalog(JObject manifest)
         {
+            TraceStartup("drone-owner-snapshot-begin");
             coordinator.Check(DroneCatalog.droneCount == 0 && priorWholeDroneFields.Count == 0, "Foreign drone catalog owner");
             var fields = typeof(DroneCatalog).GetFields(BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic);
             coordinator.Check(
@@ -154,15 +155,23 @@ public sealed partial class PortSession
             foreach (var field in fields)
                 if (!field.IsLiteral && (field.FieldType.IsArray || field.FieldType == typeof(global::ResourceAvailability)))
                     priorWholeDroneFields.Add(field, field.GetValue(null));
-            var definitions = WholeCatalogComposed.CategoryFamily(RoR2.ContentManagement.AddressablesLabels.droneDef, new DroneDef[0]);
+            TraceStartup("drone-owner-snapshot-ready-family-begin");
+            var definitions = WholeCatalogComposed.CategoryFamily(manifest, RoR2.ContentManagement.AddressablesLabels.droneDef, new DroneDef[0],
+                                                                 step => TraceStartup("drone-family-" + step));
+            TraceStartup("drone-family-ready-definition-snapshot-begin");
             foreach (var def in definitions)
                 priorWholeDroneDefinitions.Add(def, new object[] { def.droneIndex, def.requiredExpansion });
+            TraceStartup("drone-definition-snapshot-ready-native-set-begin");
             PortSession.StaticCall(typeof(DroneCatalog), "SetDroneDefs", new object[] { definitions });
+            TraceStartup("drone-native-set-ready-availability-begin");
             DroneCatalog.availability.MakeAvailable();
-            WholeCatalogComposed.PopulateDefinitionFields("DroneDefs", definitions);
+            TraceStartup("drone-availability-ready-holders-begin");
+            WholeCatalogComposed.PopulateDefinitionFields(manifest, "DroneDefs", definitions);
+            TraceStartup("drone-holders-ready-validation-begin");
             coordinator.Check(definitions.All(def => DroneCatalog.GetDroneDef(def.droneIndex) == def &&
                                                      DroneCatalog.GetBodyIndexFromDroneIndex(def.droneIndex) != BodyIndex.None),
                               "Original drone catalog identity differs");
+            TraceStartup("drone-validation-ready");
         }
         public void PrepareWholeRunAvailability()
         {
@@ -332,6 +341,7 @@ public sealed partial class PortSession
             // The original Beetle Gland behavior loads this card by legacy key each time
             // it summons. Bind only its prefab to the same owned master used by the native
             // catalog; restore the source card before releasing the content owner.
+            TraceStartup("director-master-template-loop-ready-ally-card-begin");
             const string allyPath = "SpawnCards/CharacterSpawnCards/cscBeetleGuardAlly";
             string allyKey;
             coordinator.Check(LegacyResourcesAPI.GetGuid(allyPath, out allyKey) && !string.IsNullOrEmpty(allyKey),

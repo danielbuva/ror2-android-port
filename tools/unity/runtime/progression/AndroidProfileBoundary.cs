@@ -1,6 +1,7 @@
 // Subsystem: progression (game path). Owner map: docs/ARCHITECTURE.md#ownership.
 // Session phases: setup PrepareAndroidProfile (AndroidProfileSession.Prepare), ApplyAndroidProfileLoadoutBeforeSpawn; teardown CleanupAndroidProfile (Dispose).
 using System;
+using Newtonsoft.Json.Linq;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
@@ -103,9 +104,9 @@ public sealed partial class PortSession
     {
         return GetAndroidProfileSession().HasOwnedProfileUnlock(definition);
     }
-    void PrepareAndroidProfile(CharacterBody player)
+    void PrepareAndroidProfile(CharacterBody player, JObject manifest)
     {
-        GetAndroidProfileSession().Prepare(player);
+        GetAndroidProfileSession().Prepare(player, manifest);
     }
     void PersistAndroidProfileResult(bool assisted)
     {
@@ -291,7 +292,7 @@ public sealed partial class PortSession
         bool ownsProfileContext;
         AsyncOperationHandle<UserProfileRedirectData> profileRedirectLease;
         bool ownsProfileRedirectLease;
-        public void Prepare(CharacterBody player)
+        public void Prepare(CharacterBody player, JObject manifest)
         {
             if (!Resources.Load<TextAsset>("WholeCatalogBootstrap"))
                 return;
@@ -317,8 +318,11 @@ public sealed partial class PortSession
             priorProfileRedirects = RewardField(typeof(XmlUtility), "ValueReplacements").GetValue(null);
             coordinator.Check(priorProfileRedirects == null, "Foreign profile redirect owner");
             ownsProfileContext = true;
+            TraceStartup("profile-survivor-family-begin");
             var definitions =
-                WholeCatalogComposed.CategoryFamily(RoR2.ContentManagement.AddressablesLabels.survivorDef, Array.Empty<SurvivorDef>());
+                WholeCatalogComposed.CategoryFamily(manifest, RoR2.ContentManagement.AddressablesLabels.survivorDef,
+                                                    Array.Empty<SurvivorDef>(), step => TraceStartup("profile-survivor-family-" + step));
+            TraceStartup("profile-survivor-family-ready-registration-begin");
             foreach (var def in definitions)
                 priorProfileSurvivors.Add(def, def.survivorIndex);
             StaticCall(typeof(SurvivorCatalog), "SetSurvivorDefs", new object[] { definitions });
@@ -329,8 +333,11 @@ public sealed partial class PortSession
                                            SurvivorCatalog.GetBodyIndexFromSurvivorIndex(def.survivorIndex) != BodyIndex.None),
                 "Original survivor identity differs");
             coordinator.androidProgression = new AndroidProgressionBoundary();
+            TraceStartup("profile-unlockable-family-begin");
             var metadata = coordinator.androidProgression.Prepare(
-                WholeCatalogComposed.CategoryFamily(RoR2.ContentManagement.AddressablesLabels.unlockableDef, Array.Empty<UnlockableDef>()));
+                WholeCatalogComposed.CategoryFamily(manifest, RoR2.ContentManagement.AddressablesLabels.unlockableDef,
+                                                    Array.Empty<UnlockableDef>(), step => TraceStartup("profile-unlockable-family-" + step)));
+            TraceStartup("profile-unlockable-family-ready-metadata-begin");
             // This original initializer yields only scheduling nulls. Any new asynchronous
             // dependency must be handled explicitly rather than discarded by this drain.
             try
@@ -347,9 +354,12 @@ public sealed partial class PortSession
             coordinator.r.profile.unlockables = coordinator.androidProgression.unlockables;
             coordinator.r.profile.achievements = coordinator.androidProgression.achievements;
             coordinator.r.profile.persistentStatAchievements = coordinator.androidProgression.persistentStatDefinitions.Length;
+            TraceStartup("profile-progression-metadata-ready");
             // Native rule choices capture these catalog unlock references, and replaying
             // saved RunReports later requires RuleBook default-value metadata.
-            coordinator.PrepareObjectiveRuleCatalog();
+            TraceStartup("profile-rule-metadata-begin");
+            coordinator.PrepareObjectiveRuleCatalog(manifest);
+            TraceStartup("profile-rule-metadata-ready");
             // Pair the source serializer's otherwise unretained redirect-asset load with
             // the existing composed provider owner; no extra bundle or input copy.
             profileRedirectLease = Addressables.LoadAssetAsync<UserProfileRedirectData>("RoR2/Base/Core/UserProfileRedirects.asset");

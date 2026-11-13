@@ -92,21 +92,33 @@ PUBLISHING_SOURCE_FILES = {
             "index.html",
             "owner-host.js",
             "release.py",
+            "alpha_policy.py",
+            "ProfileStore.java",
+            "ProfileRetentionProvider.java",
             "public_release.py",
             "updates.py",
+            "release_source.py",
             "release_jobs.py",
+            "install_inputs.py",
+            "install_flow.py",
+            "atomic_io.py",
+            "game_import.py",
         )
     },
     *{"tools/phone-build/accepted-output/" + name + ".py" for name in ("package", "assemble", "sdk_package", "sdk_inputs")},
     "tools/phone-build/owner-code/native.py",
-    *{"launcher/" + name for name in ("app.js", "controller.js", "style.css", "background.png", "PROVENANCE.md")},
+    *{"launcher/" + name for name in ("app.js", "controller.js", "feedback.js", "style.css", "background.png", "PROVENANCE.md")},
     *{
         "tools/phone-build/managed-host/" + name
         for name in (
             "AndroidManifest.xml",
             "ToolHostActivity.java",
             "OwnerInstaller.java",
+            "OwnerAlphaInstall.java",
             "OwnerUpdateState.java",
+            "OwnerBuildService.java",
+            "OwnerInputImport.java",
+            "OwnerInputSource.java",
             "NativePythonHost.c",
             "NativeDotnetMuxer.c",
             "NativeJavaHost.c",
@@ -118,6 +130,27 @@ PUBLISHING_SOURCE_FILES = {
         )
     },
 }
+
+
+def alpha_schema(value):
+    """Only the currently implemented native profile protocol may be published."""
+    RELEASE.ALPHA.data_schema(value)
+    if value != {"writes": 1, "reads": [1]}:
+        raise ValueError("alpha publication supports only data_schema writes 1 / reads [1]; native migration is not implemented")
+    return {"writes": 1, "reads": [1]}
+
+
+def publication_policy(application_id, minimum_installer_version, data_schema):
+    RELEASE.ALPHA.identity(application_id)
+    if type(minimum_installer_version) is not int or not 3 <= minimum_installer_version <= RELEASE.ALPHA.MAX_VERSION_CODE:
+        raise ValueError("alpha publication requires installer version 3 or later")
+    return alpha_schema(data_schema)
+
+
+def validate_alpha_release(body):
+    """Publication policy is stricter than the reusable legacy release contract."""
+    RELEASE.validate(body, RELEASE.ALPHA.MAX_VERSION_CODE, body.get("application_id"), 0)
+    publication_policy(body["application_id"], body["minimum_installer_version"], body.get("data_schema"))
 
 
 def load_json(data):
@@ -289,8 +322,16 @@ def entry_dependencies(index, name):
 
 
 def validate_bundle_index(index, release):
-    if not isinstance(index, dict) or set(index) != {"schema", "files", "entries"} or type(index["schema"]) is not int or index["schema"] != 1:
+    if (
+        not isinstance(index, dict)
+        or set(index) - {"install_plan"} != {"schema", "files", "entries"}
+        or type(index["schema"]) is not int
+        or index["schema"] != 1
+    ):
         raise ValueError("public bundle index schema 1 required")
+    if "install_plan" in index:
+        installer = _module("public_install_inputs", Path(__file__).with_name("install_inputs.py"))
+        installer.validate_plan(index["install_plan"], index["files"])
     if not isinstance(index["files"], dict) or not index["files"] or INDEX in index["files"]:
         raise ValueError("explicit public bundle files required")
     for path, digest in index["files"].items():
@@ -335,15 +376,24 @@ def _blob(root, tracked, name):
 def build_bundle(repository, plan, output):
     """Build deterministic ZIP from HEAD blobs only, never untracked/work bytes.
 
-    Plan: {schema: 1, files: [extra public files], entries: {output: closures}}.
+    Plan: {schema: 1, files: [extra public files], entries: {output: closures},
+    data_schema?: {writes: 1, reads: [1]}}. Publication requires data_schema;
+    it has one authority in the signed release body, not a duplicate index field.
     Each closure has recipe_files, producer_files and a job JSON path. Explicit
     closures are reviewed release-author inputs, not guessed import discovery.
     """
     root, output = Path(repository).resolve(), Path(output)
-    if not isinstance(plan, dict) or set(plan) != {"schema", "files", "entries"} or type(plan["schema"]) is not int or plan["schema"] != 1:
+    if (
+        not isinstance(plan, dict)
+        or set(plan) - {"install_plan", "data_schema"} != {"schema", "files", "entries"}
+        or type(plan["schema"]) is not int
+        or plan["schema"] != 1
+    ):
         raise ValueError("release bundle plan schema 1 required")
     if not isinstance(plan["files"], list) or any(not isinstance(path, str) for path in plan["files"]) or not isinstance(plan["entries"], dict):
         raise ValueError("explicit public files and entries required")
+    if "data_schema" in plan:
+        alpha_schema(plan["data_schema"])
     selected = set(plan["files"])
     for row in plan["entries"].values():
         if not isinstance(row, dict) or set(row) != {"recipe_files", "producer_files", "job"}:
@@ -352,6 +402,10 @@ def build_bundle(repository, plan, output):
             if not isinstance(row[field], list) or any(not isinstance(path, str) for path in row[field]):
                 raise ValueError("dependency file list required")
             selected.update(row[field])
+    if "install_plan" in plan:
+        selected.add(public_path(plan["install_plan"]["required_inputs"]))
+        for stage in plan["install_plan"]["stages"]:
+            selected.update(stage["jobs"])
     if INDEX in selected:
         raise ValueError("bundle index is generated, not supplied")
     tracked = _tracked(root)
@@ -366,6 +420,8 @@ def build_bundle(repository, plan, output):
         if sum(map(len, contents.values())) > MAX_BUNDLE_BYTES:
             raise ValueError("public source bundle size limit exceeded")
     index = {"schema": 1, "files": {name: hashlib.sha256(data).hexdigest() for name, data in contents.items()}, "entries": plan["entries"]}
+    if "install_plan" in plan:
+        index["install_plan"] = plan["install_plan"]
     dependencies = {name: entry_dependencies(index, name) for name in index["entries"]}
     body = {
         "version": "validation",
@@ -393,6 +449,7 @@ def validate_publication(bundle_path, body):
     This checks the public orchestration contract, not game/input/device
     readiness. Reviewed dependency lists still own non-Python/toolchain closure.
     """
+    validate_alpha_release(body)
     if RELEASE.digest(bundle_path) != body["bundle_sha256"]:
         raise ValueError("public bundle changed before publication")
     with zipfile.ZipFile(bundle_path) as archive:
@@ -401,10 +458,19 @@ def validate_publication(bundle_path, body):
         missing = PUBLISHING_SOURCE_FILES - index["files"].keys()
         if missing:
             raise ValueError("public bundle lacks installer/assembly/toolchain source: " + ", ".join(sorted(missing)))
+        if "install_plan" not in index:
+            raise ValueError("alpha publication requires a complete signed phone install plan")
         here = Path(__file__).resolve().parent
         jobs = _module("publisher_source_jobs", here / "release_jobs.py")
         jobs.validate_jobs(index, body, lambda name: load_json(archive.read(public_path(name))))
+        if "install_plan" in index:
+            flow = _module("publication_install_flow", here / "install_flow.py")
+            flow.validate_plan(index["install_plan"], index, lambda name: load_json(archive.read(public_path(name))))
+            inputs = _module("publication_install_inputs", here / "install_inputs.py")
+            inputs.input_description(index["install_plan"], load_json(archive.read(index["install_plan"]["required_inputs"])))
         owner = _module("publisher_apk_owner", here / "build_owner_apk.py")
+        if "install_plan" in index:
+            owner.validate_source_payload(body["entries"])
         sdk = _module("publisher_sdk_owner", here.parent / "accepted-output/sdk_package.py")
         if not {"apk/" + name for name in owner.CODE_ENTRIES | sdk.SDK_ENTRIES} <= body["entries"].keys():
             raise ValueError("public release requires all native, metadata, Burst and Android SDK outputs")
@@ -412,7 +478,7 @@ def validate_publication(bundle_path, body):
 
 def sign_envelope(body, key_id, private_key, public_key, *, openssl="openssl"):
     """Sign with explicitly supplied existing publisher material, then verify."""
-    RELEASE.validate(body, 2100000000, body.get("application_id"), 0)
+    validate_alpha_release(body)
     public_numbers(public_key)
     with tempfile.TemporaryDirectory(prefix="public-release-sign-") as temporary:
         source, signature = Path(temporary) / "release-body.json", Path(temporary) / "signature"
@@ -440,17 +506,19 @@ def main():
     parser.add_argument("--output", type=Path, required=True, help="new public release directory")
     parser.add_argument("--version", required=True)
     parser.add_argument("--version-code", type=int, required=True)
-    parser.add_argument("--minimum-installer-version", type=int, default=1)
+    parser.add_argument("--minimum-installer-version", type=int, default=3)
     parser.add_argument("--application-id", default="dev.ror2lab.alpha")
     parser.add_argument("--key-id", required=True)
     parser.add_argument("--signing-key", type=Path, required=True)
     parser.add_argument("--public-key", type=Path, required=True)
     args = parser.parse_args()
     plan = load_json(_blob(args.repository, _tracked(args.repository), args.plan))
+    schema = publication_policy(args.application_id, args.minimum_installer_version, plan.get("data_schema"))
     args.output.mkdir(parents=True)
     bundle = build_bundle(args.repository, plan, args.output / "public-tools.zip")
     body = {
         "version": args.version,
+        "data_schema": schema,
         "version_code": args.version_code,
         "application_id": args.application_id,
         "minimum_installer_version": args.minimum_installer_version,

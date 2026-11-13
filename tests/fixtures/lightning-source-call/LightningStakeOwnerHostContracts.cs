@@ -63,6 +63,22 @@ internal static class LightningStakeOwnerHostContracts
         for (int i = 1; i < 9; i++) Send(damage, hit, info);
         Require(report.sourceCallCount == 9 && report.sourceCalls.Count == 8 && report.historyCapped,
             "history bound or saturation metadata changed");
+        var firstRow = report.sourceCalls[0];
+        for (int i = 9; i < 1304; i++) Send(damage, hit, info);
+        var lateInvalid = damage;
+        lateInvalid.force = new Vector3(float.NaN, 10f, 11f);
+        Send(lateInvalid, hit, info);
+        var lateWitness = report.sourceCalls[7];
+        Require(report.sourceCallCount == 1305 && report.sourceCalls.Count == 8 &&
+                object.ReferenceEquals(report.sourceCalls[0], firstRow) &&
+                !lateWitness.finiteDamageInfoForce && lateWitness.damageInfoForce == "NaN,10,11",
+            "late invalid source operand disappeared after the eight-row cap");
+        Send(damage, hit, info);
+        lateInvalid.position = new Vector3(float.PositiveInfinity, 0, 0);
+        Send(lateInvalid, hit, info);
+        Require(report.sourceCallCount == 1307 && report.sourceCalls.Count == 8 &&
+                object.ReferenceEquals(report.sourceCalls[7], lateWitness),
+            "later calls replaced the first invalid source witness or grew history");
         owner.Dispose();
         Require(report.detached && report.status == "detached" && !Observer.HasLightningStakeSourceCallObserver(),
             "owner did not detach its exact bridge callback");
@@ -77,6 +93,13 @@ internal static class LightningStakeOwnerHostContracts
             Require(nonfiniteReport.sourceCalls.Count == 1 && !nonfiniteReport.sourceCalls[0].finiteDamagePosition &&
                     !nonfiniteReport.sourceCalls[0].finiteDamageInfoForce && nonfiniteReport.sourceCalls[0].damageInfoForce == "Infinity,1,2",
                 "nonfinite source input was lost or marked finite");
+            var earlyWitness = nonfiniteReport.sourceCalls[0];
+            for (int i = 0; i < 9; i++) Send(damage, hit, info);
+            Send(badPosition, hit, info);
+            Require(nonfiniteReport.sourceCalls.Count == 8 && nonfiniteReport.historyCapped &&
+                    object.ReferenceEquals(nonfiniteReport.sourceCalls[0], earlyWitness) &&
+                    nonfiniteReport.sourceCalls[7].finiteDamagePosition,
+                "an already-retained invalid source call was displaced or duplicated at the cap");
         }
         Require(nonfiniteReport.detached, "nonfinite capture owner failed teardown");
 

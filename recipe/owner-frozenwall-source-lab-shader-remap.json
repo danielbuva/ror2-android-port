@@ -1,0 +1,20 @@
+{
+  "input_id": "6af7ed94619fe1b4346974b4486afa03a8d1625a7820e92da0ff74d57208fe88",
+  "records": [
+    {
+      "source_profile_sha256": "3f757ceb9f619881c1406b2f27284648c68857d780c6bcbdbf4e86452a84ad71",
+      "source": [
+        "whole-scene-rootjungle",
+        "BuildPlayer-rootjungle.sharedAssets",
+        143
+      ],
+      "destination": [
+        "frozenwall-source-lab",
+        "BuildPlayer-frozenwall.sharedAssets",
+        70
+      ],
+      "bytes": 568056,
+      "sha256": "3a1e8fe2d089b600ac7dc5fdd3452449ace9df52d858476ea0ae7b7267242916"
+    }
+  ]
+}

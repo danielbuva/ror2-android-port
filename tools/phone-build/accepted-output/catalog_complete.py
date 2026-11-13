@@ -1,0 +1,437 @@
+"""Complete a pinned source catalog against actual produced Android containers.
+
+Typed identity follows pinned R2API AddressReferencedAsset; duplicate container
+keys follow UnityPy ContainerHelper, but invalid endpoints are never skipped.
+This validates advertised endpoints, not every gameplay reference in a bundle.
+"""
+
+import argparse
+import hashlib
+import importlib.util
+import io
+import json
+from pathlib import Path
+import re
+import struct
+import sys
+
+HERE = Path(__file__).resolve().parent
+ROOT = HERE.parents[2]
+
+
+def module(name, path):
+    spec = importlib.util.spec_from_file_location(name, path)
+    value = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(value)
+    return value
+
+
+W = module("_catalog_complete_write", HERE / "unity_write.py")
+S = module("_catalog_complete_identity", ROOT / "scripts/lab/script_identity.py")
+# Public Unity ClassIDType values; RuntimeAnimatorController is an abstract base.
+NATIVE_TYPES = {
+    "GameObject": {1},
+    "Material": {21},
+    "Texture2D": {28},
+    "Mesh": {43},
+    "Shader": {48},
+    "PhysicMaterial": {134},
+    "Cubemap": {89},
+    "Avatar": {90},
+    "RuntimeAnimatorController": {91, 221},
+    "AnimationClip": {74},
+    "Font": {128},
+    "TerrainData": {156},
+    "AnimatorOverrideController": {221},
+    "Sprite": {213},
+    "AvatarMask": {319},
+    "LightingSettings": {850595691},
+}
+
+
+def deferred_references(tree):
+    """Find serialized GUID keys, retaining AssetReference subobject identity.
+
+    PPtrs do not represent these edges. Scan all string fields as well as the
+    Addressables structure: state preloads and game wrappers use plain strings.
+    Candidates still require resolution against the legitimate input catalog;
+    an arbitrary GUID string alone does not establish an asset dependency.
+    """
+    guid_key = re.compile(r"([a-fA-F0-9]{32})(?:\[([^\]]+)\])?")
+
+    def visit(value, field):
+        if isinstance(value, dict):
+            guid = value.get("m_AssetGUID")
+            if isinstance(guid, str) and re.fullmatch(r"[a-fA-F0-9]{32}", guid):
+                subobject = value.get("m_SubObjectName") or ""
+                edge = dict(field=list(field), guid=guid, key=guid + ("[" + subobject + "]" if subobject else ""), kind="AssetReference")
+                if subobject:
+                    edge["subobject_name"] = subobject
+                    edge["subobject_type"] = value.get("m_SubObjectType") or ""
+                yield edge
+                omitted = {"m_AssetGUID", "m_SubObjectName", "m_SubObjectType", "m_SubObjectGUID"}
+            else:
+                omitted = set()
+            for name, child in value.items():
+                if name not in omitted:
+                    yield from visit(child, (*field, name))
+        elif isinstance(value, (list, tuple)):
+            for index, child in enumerate(value):
+                yield from visit(child, (*field, index))
+        elif isinstance(value, str):
+            match = guid_key.fullmatch(value)
+            if match:
+                yield dict(field=list(field), guid=match[1], key=value, kind="guid-string")
+
+    yield from visit(tree, ())
+
+
+def deferred_reference_locations(edge, locations):
+    """Keep the requested AssetReference subobject type, including its assembly.
+
+    A GUID can advertise a model, meshes, avatar and controller behaviours at
+    once. Version qualifiers do not select a different CLR type, but assembly
+    identity does. Missing type metadata retains all candidates for subsequent
+    native identity/ownership resolution; it never selects the first sibling.
+    """
+    requested = edge.get("subobject_type")
+    if not requested:
+        return list(locations)
+
+    def identity(value):
+        return tuple(part.strip() for part in value.split(",")[:2])
+
+    expected = identity(requested)
+    return [location for location in locations if identity(location["type"]) == expected]
+
+
+def text(stream):
+    (size,) = W.B.unpack(stream, "<I")
+    value = W.B.exact(stream, size).decode("utf-8")
+    W.B.align(stream)
+    return value
+
+
+def containers(body):
+    """Retain every duplicate key and its own preload interval."""
+    stream = io.BytesIO(body)
+    text(stream)
+    (count,) = W.B.unpack(stream, "<I")
+    preload = [W.B.unpack(stream, "<iq") for _ in range(count)]
+    (count,) = W.B.unpack(stream, "<I")
+    rows = []
+    for _ in range(count):
+        path = text(stream)
+        start, size, file_id, path_id = W.B.unpack(stream, "<iiiq")
+        if start < 0 or size < 0 or start + size > len(preload):
+            raise ValueError("container preload extent invalid: " + path)
+        rows.append((path, (file_id, path_id), preload[start : start + size]))
+    W.B.exact(stream, 24)  # main asset and runtime compatibility
+    text(stream)
+    (count,) = W.B.unpack(stream, "<I")
+    for _ in range(count):
+        text(stream)
+    (scene,) = W.B.unpack(stream, "<?")
+    return rows, scene
+
+
+def script_identity(body):
+    stream = io.BytesIO(body)
+    text(stream)
+    W.B.exact(stream, 20)  # execution order and properties hash
+    name, namespace, assembly = text(stream), text(stream), text(stream)
+    return name, namespace, assembly
+
+
+class ProducedMembers:
+    def __init__(self):
+        self.members = {}
+        self.bundles = {}
+        self.sprite_textures = None
+
+    def add(self, name, stream, bundle):
+        if name in self.members:
+            raise ValueError("duplicate produced serialized member: " + name)
+        layout = W.read_serialized(stream)
+        if layout["platform"] != 13:
+            raise ValueError("expected produced Android serialized member")
+        self.members[name] = (stream, layout, {row["path_id"]: row for row in layout["objects"]})
+        self.bundles.setdefault(bundle, []).append(name)
+
+    def resolve(self, member, pointer):
+        file_id, path_id = pointer
+        layout = self.members[member][1]
+        if not 0 <= file_id <= len(layout["externals"]) or not path_id:
+            raise ValueError("invalid produced PPtr: " + str(pointer))
+        if file_id:
+            member = layout["externals"][file_id - 1]["path"].rsplit("/", 1)[-1]
+        if member not in self.members or path_id not in self.members[member][2]:
+            raise ValueError("missing produced PPtr target: " + member + ":" + str(path_id))
+        return member, self.members[member][2][path_id]
+
+    def record(self, member, pointer):
+        member, row = self.resolve(member, pointer)
+        stream, layout, _ = self.members[member]
+        stream.seek(layout["data_offset"] + row["offset"])
+        return member, layout["types"][row["type_id"]], W.B.exact(stream, row["bytes"])
+
+    def managed_identity(self, member, typ, body):
+        if len(body) < 28:
+            raise ValueError("truncated produced MonoBehaviour")
+        script_member, script_type, script = self.record(member, struct.unpack_from("<iq", body, 16))
+        if script_type["class_id"] != 115:
+            raise ValueError("produced m_Script is not a MonoScript")
+        identity = script_identity(script)
+        if typ["script_id"] != S.md4("".join(identity).encode()):
+            raise ValueError("produced MonoScript binding differs from serialized type")
+        return identity
+
+    def texture_has_sprites(self, member, pointer):
+        """A Sprite subasset must explicitly reference this texture as m_RD.texture."""
+        texture_member, texture_row = self.resolve(member, pointer)
+        if self.sprite_textures is None:
+            records = module("_catalog_sprite_records", HERE / "record_produce.py")
+            textures = set()
+            for owner, (_, layout, objects) in self.members.items():
+                for path_id, row in objects.items():
+                    typ = layout["types"][row["type_id"]]
+                    # Player builtin resources omit type trees; they cannot prove ownership.
+                    if typ["class_id"] != 213 or "tree" not in typ:
+                        continue
+                    _, _, body = self.record(owner, (0, path_id))
+                    root = records.SCHEMA.type_tree(io.BytesIO(typ["tree"]))
+                    _, spans = records.fields(body, root)
+                    path = ("m_RD", "texture")
+                    start, end = spans[path]
+                    if end - start != 12 or path + ("m_FileID",) not in spans or path + ("m_PathID",) not in spans:
+                        raise ValueError("invalid Sprite texture ownership PPtr")
+                    reference = struct.unpack_from("<iq", body, start)
+                    target, target_row = self.resolve(owner, reference)
+                    target_type = self.members[target][1]["types"][target_row["type_id"]]
+                    if target_type["class_id"] != 28:
+                        raise ValueError("Sprite texture ownership type differs")
+                    textures.add((target, target_row["path_id"]))
+            self.sprite_textures = textures
+        return (texture_member, texture_row["path_id"]) in self.sprite_textures
+
+    def controller_behaviours(self, member, typ, body):
+        """Only explicit controller subassets qualify, never arbitrary preloads."""
+        records = module("_catalog_controller_records", HERE / "record_produce.py")
+        root = records.SCHEMA.type_tree(io.BytesIO(typ["tree"]))
+        _, spans = records.fields(body, root)
+        start, end = spans[("m_StateMachineBehaviours",)]
+        (count,) = struct.unpack_from("<I", body, start)
+        if end - start != 4 + 12 * count:
+            raise ValueError("invalid controller behaviour array extent")
+        identities = []
+        for index in range(count):
+            pointer = struct.unpack_from("<iq", body, start + 4 + 12 * index)
+            owner, behaviour_type, behaviour = self.record(member, pointer)
+            if behaviour_type["class_id"] != 114:
+                raise ValueError("controller behaviour is not a MonoBehaviour")
+            identities.append(self.managed_identity(owner, behaviour_type, behaviour))
+        return identities
+
+    def owned_subassets(self, member, typ, body, identity):
+        """Follow measured TMP and Timeline ownership fields, not preload membership."""
+        records = module("_catalog_subasset_records", HERE / "record_produce.py")
+        pending = [(member, typ, body, identity)]
+        seen = set()
+        identities = []
+        while pending:
+            owner, current_type, current_body, current = pending.pop()
+            if current == 213:
+                routes = {("m_RD", "texture"): 28}
+            elif current == ("TMP_FontAsset", "TMPro", "Unity.TextMeshPro.dll"):
+                routes = {("material",): 21, ("atlas",): 28, ("m_AtlasTextures", "Array", "*"): 28}
+            elif current == ("TMP_SpriteAsset", "TMPro", "Unity.TextMeshPro.dll"):
+                routes = {("material",): 21, ("spriteSheet",): 28}
+            elif isinstance(current, tuple) and current[1:] == ("UnityEngine.Timeline", "Unity.Timeline.dll"):
+                routes = dict.fromkeys(
+                    [("m_Tracks", "Array", "*"), ("m_MarkerTrack",), ("m_Children", "Array", "*"), ("m_Parent",), ("m_Clips", "Array", "*", "m_Asset")], 114
+                )
+            else:
+                continue
+            root = records.SCHEMA.type_tree(io.BytesIO(current_type["tree"]))
+            _, spans = records.fields(current_body, root)
+            for path, (start, end) in spans.items():
+                route = tuple("*" if part.isdigit() else part for part in path)
+                if route not in routes:
+                    continue
+                if end - start != 12 or path + ("m_FileID",) not in spans or path + ("m_PathID",) not in spans:
+                    raise ValueError("invalid subasset ownership PPtr: " + str(path))
+                pointer = struct.unpack_from("<iq", current_body, start)
+                if not pointer[1]:
+                    continue
+                target_member, target_row = self.resolve(owner, pointer)
+                key = (target_member, target_row["path_id"])
+                if key in seen:
+                    continue
+                seen.add(key)
+                target_member, target_type, target_body = self.record(owner, pointer)
+                if target_type["class_id"] != routes[route]:
+                    raise ValueError("subasset ownership type differs: " + str(path))
+                target_identity = target_type["class_id"]
+                if target_identity == 114:
+                    target_identity = self.managed_identity(target_member, target_type, target_body)
+                    if target_identity[1:] != ("UnityEngine.Timeline", "Unity.Timeline.dll"):
+                        raise ValueError("Timeline ownership target is not a Timeline subasset")
+                identities.append(target_identity)
+                pending.append((target_member, target_type, target_body, target_identity))
+        return identities
+
+
+def validate_locations(metadata, members, registry):
+    runtime_scripts = set()
+    for member in members.bundles[registry]:
+        layout = members.members[member][1]
+        for path_id, row in members.members[member][2].items():
+            if layout["types"][row["type_id"]]["class_id"] == 115:
+                _, _, body = members.record(member, (0, path_id))
+                runtime_scripts.add(script_identity(body))
+    advertised = {}
+    for bundle in set(row["bundle"] for row in metadata["locations"]):
+        for member in members.bundles.get(bundle, []):
+            layout = members.members[member][1]
+            for path_id, row in members.members[member][2].items():
+                if layout["types"][row["type_id"]]["class_id"] != 142:
+                    continue
+                _, _, body = members.record(member, (0, path_id))
+                entries, scene = containers(body)
+                for path, pointer, preload in entries:
+                    for reference in preload:
+                        members.resolve(member, reference)
+                    if pointer == (0, 0):
+                        if not scene or not path.lower().endswith(".unity") or preload:
+                            raise ValueError("null container root requires streamed scene")
+                        actual = "scene"
+                    else:
+                        owner, root_type, root = members.record(member, pointer)
+                        actual = root_type["class_id"]
+                        if actual == 114:
+                            actual = members.managed_identity(owner, root_type, root)
+                            if actual not in runtime_scripts:
+                                raise ValueError("catalog MonoScript absent from current runtime registry: " + str(actual))
+                    advertised.setdefault((bundle, path.casefold()), []).append(actual)
+                    if isinstance(actual, tuple) and actual[1:] in {("TMPro", "Unity.TextMeshPro.dll"), ("UnityEngine.Timeline", "Unity.Timeline.dll")}:
+                        for identity in members.owned_subassets(owner, root_type, root, actual):
+                            if isinstance(identity, tuple) and identity not in runtime_scripts:
+                                raise ValueError("subasset MonoScript absent from current runtime registry: " + str(identity))
+                            advertised[(bundle, path.casefold())].append(identity)
+                    if actual == 213:
+                        advertised[(bundle, path.casefold())].extend(members.owned_subassets(owner, root_type, root, actual))
+                    if actual == 28 and members.texture_has_sprites(member, pointer):
+                        advertised[(bundle, path.casefold())].append(213)
+                    if actual == 91:
+                        for identity in members.controller_behaviours(owner, root_type, root):
+                            if identity not in runtime_scripts:
+                                raise ValueError("controller MonoScript absent from current runtime registry: " + str(identity))
+                            advertised[(bundle, path.casefold())].append(identity)
+    for row in metadata["locations"]:
+        expected = row["type"].split(", ")
+        qualified = expected[0]
+        candidates = advertised.get((row["bundle"], row["path"].casefold()), [])
+        if qualified == "UnityEngine.ResourceManagement.ResourceProviders.SceneInstance":
+            valid = "scene" in candidates
+        elif qualified == "UnityEngine.Object":
+            valid = bool(candidates) and any(value != "scene" for value in candidates)
+        elif qualified.startswith("UnityEngine.") and qualified.removeprefix("UnityEngine.") in NATIVE_TYPES:
+            valid = any(value in NATIVE_TYPES[qualified.removeprefix("UnityEngine.")] for value in candidates if isinstance(value, int))
+        else:
+            namespace, _, name = qualified.rpartition(".")
+            identity = (name, namespace, expected[1] + ".dll")
+            valid = identity in candidates
+        if not valid:
+            raise ValueError(
+                "catalog endpoint absent or type differs: " + str(row["id"]) + " " + row["path"] + " expected " + qualified + " actual " + str(candidates)
+            )
+    return dict(locations=len(metadata["locations"]), container_paths=len(advertised), runtime_scripts=len(runtime_scripts))
+
+
+def produce(inputs, output):
+    inputs = Path(inputs).resolve(strict=True)
+    request_bytes = inputs.read_bytes()
+    request = json.loads(request_bytes)
+    if (
+        set(request) - {"resources"} != {"schema", "metadata", "profiles", "bundles", "registry", "input_id", "attempt"}
+        or request["schema"] != "owner-catalog-inputs-v1"
+    ):
+        raise ValueError("unsupported catalog completion input contract")
+    pins = {}
+
+    def pinned(row):
+        if set(row) != {"path", "sha256", "bytes"}:
+            raise ValueError("unsupported catalog input pin")
+        path = Path(row["path"])
+        path = (inputs.parent / path).resolve(strict=True) if not path.is_absolute() else path.resolve(strict=True)
+        pin = dict(bytes=path.stat().st_size, sha256=W.B.sha(path))
+        if pin != {key: row[key] for key in pin}:
+            raise ValueError("catalog input differs: " + str(path))
+        pins[path] = pin
+        return path
+
+    metadata = json.loads(pinned(request["metadata"]).read_bytes())
+    if any(metadata[key] != request[key] for key in ("input_id", "attempt")):
+        raise ValueError("catalog input/startup identity differs")
+    profiles = [json.loads(pinned(row).read_bytes()) for row in request["profiles"]]
+    files = {name: pinned(row) for name, row in request["bundles"].items()}
+    registry = pinned(request["registry"])
+    resources = {name: pinned(row) for name, row in request.get("resources", {}).items()}
+    if not set(resources) <= {"unity_builtin_extra", "unity default resources"}:
+        raise ValueError("unsupported player resource member")
+    sys.path.insert(0, str(ROOT / "scripts/lab"))
+    from whole_catalog import integration_bundle_metadata, integration_catalog, integration_profile_builds, produced_bundle_metadata
+
+    builds = integration_profile_builds(profiles)
+    metadata = integration_bundle_metadata(metadata, builds)
+    names = {row["assetBundleName"] for row in builds} | {row["bundle"] for row in metadata["locations"]}
+    if set(files) != names:
+        raise ValueError("produced bundle population differs; missing=" + str(sorted(names - files.keys())) + " extra=" + str(sorted(files.keys() - names)))
+    facts = produced_bundle_metadata(files)
+    raw = integration_catalog(metadata, facts, bundle_names=names)
+    members = ProducedMembers()
+    for name, path in files.items():
+        bundle = W.B.Bundle(path)
+        for member in bundle.members:
+            if not member.endswith((".resS", ".resource")):
+                members.add(member, bundle.member(member), name)
+    for name, path in resources.items():
+        resource = io.BytesIO(path.read_bytes())
+        resource.size = len(resource.getbuffer())
+        members.add(name, resource, "@player-resources")
+    stream = io.BytesIO(registry.read_bytes())
+    stream.size = len(stream.getbuffer())
+    members.add(registry.name, stream, "@runtime-registry")
+    checks = validate_locations(metadata, members, "@runtime-registry")
+    if inputs.read_bytes() != request_bytes or any(dict(bytes=path.stat().st_size, sha256=W.B.sha(path)) != pin for path, pin in pins.items()):
+        raise ValueError("catalog inputs changed during production")
+    output = Path(output)
+    output.mkdir(exist_ok=False)
+    (output / "whole-catalog.json").write_bytes(raw)
+    receipt = dict(
+        success=True,
+        phase="catalog-completed",
+        input_sha256=hashlib.sha256(request_bytes).hexdigest(),
+        producer_sha256=W.B.sha(Path(__file__)),
+        input_id=request["input_id"],
+        attempt=request["attempt"],
+        file=dict(bytes=len(raw), sha256=hashlib.sha256(raw).hexdigest()),
+        bundles=facts,
+        checks=checks,
+        runtime_qualified=False,
+        phone_qualified=False,
+    )
+    (output / "result.json").write_text(json.dumps(receipt, indent=2) + "\n")
+    return receipt
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--inputs", type=Path, required=True)
+    parser.add_argument("--output", type=Path, required=True)
+    args = parser.parse_args()
+    print(json.dumps(produce(args.inputs, args.output)))
+
+
+if __name__ == "__main__":
+    main()

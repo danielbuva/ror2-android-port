@@ -15,6 +15,7 @@ internal sealed class LightningStakeSourceCallObserver : IDisposable
     readonly PortSession.LightningStakeSourceCallReport report;
     readonly Action<object, object, object> callback;
     int calls;
+    bool retainedNonFiniteCall;
     bool attached;
     bool disposed;
 
@@ -57,10 +58,7 @@ internal sealed class LightningStakeSourceCallObserver : IDisposable
         if (calls < int.MaxValue) calls++;
         report.sourceCallCount = calls;
         if (report.sourceCalls.Count >= MaxSourceCalls)
-        {
             report.historyCapped = true;
-            return;
-        }
         try
         {
             if (!(damageInfoValue is DamageInfo damageInfo) || !(projectileInfoValue is FireProjectileInfo projectileInfo))
@@ -81,8 +79,15 @@ internal sealed class LightningStakeSourceCallObserver : IDisposable
             var ownerPosition = projectileOwner ? projectileOwner.transform.position : Vector3.zero;
             var ownerVelocity = ownerMotor ? ownerMotor.velocity : Vector3.zero;
             var hitPosition = hitTransform ? hitTransform.position : Vector3.zero;
+            // Keep inspecting scalars after the history fills. Long observations
+            // must not lose their first invalid source operand after call eight.
+            bool finite = Finite(damagePosition) && Finite(spawnPosition) && Finite(ownerPosition) &&
+                Finite(ownerVelocity) && Finite(hitPosition) && Finite(damageInfo.damage) &&
+                Finite(damageInfo.force) && Finite(projectileInfo.damage) && Finite(projectileInfo.force);
+            bool full = report.sourceCalls.Count >= MaxSourceCalls;
+            if (full && (finite || retainedNonFiniteCall)) return;
             int projectileIndex = prefab ? ProjectileCatalog.FindProjectileIndex(prefab.name) : -1;
-            report.sourceCalls.Add(new PortSession.LightningStakeSourceCallObservation {
+            var observation = new PortSession.LightningStakeSourceCallObservation {
                 frame = Time.frameCount,
                 damageAttackerInstance = attacker ? attacker.GetInstanceID() : 0,
                 projectileOwnerInstance = projectileOwner ? projectileOwner.GetInstanceID() : 0,
@@ -123,7 +128,10 @@ internal sealed class LightningStakeSourceCallObserver : IDisposable
                 finiteDamageInfoForce = Finite(damageInfo.force),
                 finiteProjectileDamage = Finite(projectileInfo.damage),
                 finiteProjectileForce = Finite(projectileInfo.force)
-            });
+            };
+            if (full) report.sourceCalls[MaxSourceCalls - 1] = observation;
+            else report.sourceCalls.Add(observation);
+            retainedNonFiniteCall |= !finite;
         }
         catch (Exception error)
         {

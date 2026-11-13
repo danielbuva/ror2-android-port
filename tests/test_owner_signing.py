@@ -8,6 +8,7 @@ import json
 from pathlib import Path
 import shutil
 import subprocess
+import struct
 import tempfile
 import unittest
 from unittest.mock import patch
@@ -21,6 +22,21 @@ SDK = OWNER.module("owner_test_sdk", PATH.parent.parent / "accepted-output/sdk_p
 
 
 class OwnerSigningTests(unittest.TestCase):
+    def test_resource_package_changes_lookup_identity_preserving_ids_and_bodies(self):
+        package = bytearray(struct.pack("<HHII", 0x200, 288, 304, 0x7F))
+        package += "dev.fixture.original".encode("utf-16-le").ljust(256, b"\0")
+        package += bytes(20) + b"authored entries"
+        package += bytes(304 - len(package))
+        pool = struct.pack("<HHI", 1, 8, 8)
+        source = struct.pack("<HHII", 2, 12, 12 + len(pool) + len(package), 1) + pool + package
+        changed = OWNER.resource_package(source, "dev.fixture.converted")
+        self.assertEqual(changed[:32], source[:32])
+        self.assertEqual(changed[288:], source[288:])
+        self.assertEqual(changed[32:288].decode("utf-16-le").rstrip("\0"), "dev.fixture.converted")
+        self.assertEqual(OWNER.resource_package(changed, "dev.fixture.converted"), changed)
+        with self.assertRaisesRegex(ValueError, "complete Android resource table"):
+            OWNER.resource_package(source[:-1], "dev.fixture.converted")
+
     def test_build_refuses_version_exhaustion_before_creating_output(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
@@ -115,6 +131,8 @@ class OwnerSigningTests(unittest.TestCase):
                     Path(argv[argv.index("-keystore") + 1]).write_bytes(b"independent durable key witness")
                 elif Path(argv[0]).name == "zipalign" and "-c" not in argv:
                     shutil.copyfile(argv[-2], argv[-1])
+                elif "verify" in argv:
+                    kwargs["stdout"].write(("Signer #1 certificate SHA-256 digest: " + "a" * 64 + "\n").encode())
                 elif "sign" in argv:
                     target = Path(argv[argv.index("--out") + 1])
                     shutil.copyfile(argv[-1], target)
@@ -132,6 +150,8 @@ class OwnerSigningTests(unittest.TestCase):
                 request.write_text(json.dumps(second_request))
                 second = OWNER.sign(request, root / "second")
             self.assertTrue(first["success"] and second["success"])
+            self.assertEqual(first["signer_sha256"], "a" * 64)
+            self.assertEqual(second["signer_sha256"], first["signer_sha256"])
             self.assertTrue(first["new_owner_key"])
             self.assertFalse(second["new_owner_key"])
             self.assertEqual(sum("-genkeypair" in argv for argv in calls), 1)
@@ -418,7 +438,7 @@ class OwnerAssemblyTests(unittest.TestCase):
                     new = old + b" and new original input"
                     path.write_bytes(new)
                     _, drift[name] = self.drift_proof(root, name, old, new)
-            for name in ("app.js", "controller.js", "style.css", "background.png"):
+            for name in ("app.js", "controller.js", "feedback.js", "style.css", "background.png"):
                 (frontend / name).write_bytes(("independent frontend " + name).encode())
             for name in ("java", "libjavactool.so", "android.jar", "d8.jar", "manifest.json"):
                 (root / name).write_bytes(("independent tool " + name).encode())
@@ -503,6 +523,9 @@ class OwnerAssemblyTests(unittest.TestCase):
                 self.assertEqual(archive.read(result["new_dex"]), b"independent DEX witness")
                 self.assertEqual(archive.read("assets/authored.txt"), (targets / "apk/assets/authored.txt").read_bytes())
                 self.assertEqual(archive.read("assets/owner-bootstrap/data/authored.bundle"), (targets / "payload/authored.bundle").read_bytes())
+                self.assertEqual(archive.read("assets/owner-bootstrap/ui/feedback.js"), (frontend / "feedback.js").read_bytes())
+                bootstrap = (OWNER.SOURCE / "PayloadBootstrapActivity.java").read_text()
+                self.assertIn("controller.js|feedback.js|", bootstrap)
                 index = json.loads(archive.read("assets/owner-bootstrap/payload-index.json"))
                 payload_file = targets / "payload/authored.bundle"
                 self.assertEqual(index["files"], [{"name": "authored.bundle", "bytes": payload_file.stat().st_size, "sha256": OWNER.sha(payload_file)}])

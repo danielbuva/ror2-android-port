@@ -38,9 +38,16 @@ class BuildSourceGateTests(unittest.TestCase):
         self.assertEqual(identity["clean_paths"], list(build.BUILD_SOURCE_PATHS))
 
     def test_modified_or_untracked_build_sources_refuse(self):
-        for path, content in (("tools/unity/runtime/A.cs", "draft\n"), ("tools/catalog/New.cs", "new\n"), ("android/Assets/Editor/LabBuild.cs", "draft\n")):
+        for path, content in (
+            ("tools/unity/runtime/A.cs", "draft\n"),
+            ("tools/catalog/New.cs", "new\n"),
+            ("android/Assets/Editor/LabBuild.cs", "draft\n"),
+            ("android/Assets/Plugins/Android/SettingsWriteObserver.androidlib/New.java", "new\n"),
+            ("tools/android-write-interruption/New.java", "new\n"),
+        ):
             with self.subTest(path=path):
                 original = (self.root / path).read_text() if (self.root / path).exists() else None
+                (self.root / path).parent.mkdir(parents=True, exist_ok=True)
                 (self.root / path).write_text(content)
                 with self.assertRaisesRegex(RuntimeError, "Uncommitted build sources.*" + Path(path).name):
                     build.build_source_identity()

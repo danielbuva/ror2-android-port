@@ -1,0 +1,97 @@
+{
+  "input_id": "6af7ed94619fe1b4346974b4486afa03a8d1625a7820e92da0ff74d57208fe88",
+  "sdk": {
+    "MacOS/Unity": {
+      "bytes": 79453472,
+      "sha256": "906123118e45d56c6bcf20f3776ed2373417553042500714023daeb9e53058e8"
+    },
+    "Tools/UnityShaderCompiler": {
+      "bytes": 12603248,
+      "sha256": "4f4e5be21d27dd7541fa9385ea480b15816e70ddaa83b516df0ab60b819142b5"
+    },
+    "Resources/unity_builtin_extra": {
+      "bytes": 133069551,
+      "sha256": "db99888b83efb4ec35e6ce219de78c951fc37bc0129712579131360312cc4f8e"
+    }
+  },
+  "includes_sha256": "163fad0ca42bd98ea1628888dedd01d91fcbb9f6bda60a8120f9b453cc565144",
+  "settings": {
+    "color_space": 1,
+    "caching_preprocessor": true,
+    "tier0": {
+      "standardShaderQuality": 0,
+      "renderingPath": 3,
+      "hdrMode": 1,
+      "realtimeGICPUUsage": 25,
+      "useReflectionProbeBoxProjection": 0,
+      "useReflectionProbeBlending": 0,
+      "useHDR": 1,
+      "useDetailNormalMap": 0,
+      "useCascadedShadowMaps": 0,
+      "prefer32BitShadowMaps": 0,
+      "enableLPPV": 0,
+      "useDitherMaskForAlphaBlendedShadows": 0
+    },
+    "virtual_texturing": 0,
+    "vulkan_pretransform": 0,
+    "shader_precision_model": 0,
+    "deferred_reflections": 1
+  },
+  "exporter_revision": "1ac666f47d8e9dedf96afb0b914c70d7656151ea",
+  "template_inputs": {
+    "Templates.json": {
+      "bytes": 640,
+      "sha256": "b046b777ec15bc92caaea19558a438e041f2ce174cdbeb6bb570055e2eb557cc"
+    },
+    "Default.txt": {
+      "bytes": 655,
+      "sha256": "f719eed3344dcbee3c438803a7518fe548b8906f6e18020f3b4b26d47293f266"
+    },
+    "SingleTexture.txt": {
+      "bytes": 942,
+      "sha256": "7b7ae955e72eb9d5b0c084aed0749ae21846098236abd4f30281d162738c9371"
+    },
+    "SingleColor.txt": {
+      "bytes": 652,
+      "sha256": "63c072b5e86316be6d0c8a5ce72cdc4a3bfc3c06df6efcc1bc02495240654f63"
+    },
+    "TransparentDiffuse.txt": {
+      "bytes": 969,
+      "sha256": "ceed4bd0bd18e0e2a56a1399ff37e13b1fe9a569e45b145ef6ad851425cfdc0a"
+    }
+  },
+  "shader_links": [
+    {
+      "sdk_shader": 34,
+      "to": [
+        0,
+        -4404651390618690416
+      ]
+    }
+  ],
+  "records": [
+    {
+      "kind": "dummy",
+      "original": {
+        "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-base-shaders_shader_assets_all_45ab8c24dd5dcd99e5cb60900de0231b.bundle",
+        "member": "CAB-779f6fd4edc30ec27d018e8344a8081e",
+        "path_id": 5835426186192874872,
+        "bytes": 2601960,
+        "sha256": "bd1acda75caf15bcb9014dc14e7a0fc5680419e39d61cf24baca429509c12906",
+        "body_sha256": "a843f2245db7f4db912014ab946513c122ccdd221f430a2eca1aa6bf75cbb336"
+      },
+      "source_filename": "Assets/WholeGame/RoR2/Base/Shaders/FX/HGDreadFog.shader",
+      "template": "SingleTexture",
+      "fallback_sdk_shader": 34,
+      "outputs": [
+        {
+          "bundle": "whole-game-content",
+          "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+          "path_id": 6962825375190783222,
+          "bytes": 10968,
+          "sha256": "b66f9b558d346092aeae299a433081022ec7b8d5aea01977ca75b47173edfc5b"
+        }
+      ]
+    }
+  ]
+}

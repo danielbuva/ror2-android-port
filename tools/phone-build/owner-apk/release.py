@@ -10,6 +10,16 @@ from pathlib import Path, PurePosixPath
 import os
 import re
 import tempfile
+import importlib.util
+
+_atomic_spec = importlib.util.spec_from_file_location("owner_atomic_io", Path(__file__).with_name("atomic_io.py"))
+ATOMIC = importlib.util.module_from_spec(_atomic_spec)
+_atomic_spec.loader.exec_module(ATOMIC)
+
+
+_spec = importlib.util.spec_from_file_location("owner_alpha_policy", Path(__file__).with_name("alpha_policy.py"))
+ALPHA = importlib.util.module_from_spec(_spec)
+_spec.loader.exec_module(ALPHA)
 
 
 def signed_bytes(release):
@@ -23,8 +33,17 @@ def digest(path):
 
 
 def validate(release, installer_version, application_id, installed_version):
-    if not isinstance(release, dict) or set(release) != {"version", "version_code", "application_id", "minimum_installer_version", "bundle_sha256", "entries"}:
+    if not isinstance(release, dict) or set(release) - {"data_schema"} != {
+        "version",
+        "version_code",
+        "application_id",
+        "minimum_installer_version",
+        "bundle_sha256",
+        "entries",
+    }:
         raise ValueError("explicit release fields required")
+    if "data_schema" in release:
+        ALPHA.data_schema(release["data_schema"])
     if not isinstance(release["version"], str) or not release["version"].strip():
         raise ValueError("release version required")
     if not isinstance(release["application_id"], str) or not re.fullmatch(r"[A-Za-z][A-Za-z0-9_]*(?:\.[A-Za-z][A-Za-z0-9_]*)+", release["application_id"]):
@@ -67,44 +86,52 @@ def rebuild(release, *, installer_version, application_id, installed_version, in
     """
     validate(release, installer_version, application_id, installed_version)
     root = Path(root).resolve()
-    root.mkdir(parents=True, exist_ok=True)
+    ATOMIC.mkdirs(root)
     state = root / "release-cache.json"
     previous = json.loads(state.read_text()) if state.exists() else {}
     old = previous.get("entries", {}) if previous.get("input_sha256") == input_sha256 else {}
-    rows, changed = {}, []
+    rows = {name: old[name] for name in release["entries"] if name in old}
+    changed = []
     for name, dependencies in sorted(release["entries"].items()):
         output = root / name
         if not output.resolve().is_relative_to(root):
             raise ValueError("output escapes owner cache")
         cached = old.get(name, {})
         if cached.get("dependencies") != dependencies or not output.is_file() or digest(output) != cached.get("sha256"):
-            output.parent.mkdir(parents=True, exist_ok=True)
+            ATOMIC.mkdirs(output.parent)
             stage = output.with_name(output.name + ".building")
             stage.unlink(missing_ok=True)
-            produce(name, dependencies, stage)
-            if stage.is_symlink() or not stage.is_file():
-                raise ValueError("producer did not produce entry: " + name)
-            stage.replace(output)
+            try:
+                produce(name, dependencies, stage)
+                if stage.is_symlink() or not stage.is_file():
+                    raise ValueError("producer did not produce entry: " + name)
+                ATOMIC.publish(stage, output)
+            finally:
+                ATOMIC.discard(stage)
             changed.append(name)
         rows[name] = {"dependencies": dict(dependencies), "sha256": digest(output)}
-    result = {"input_sha256": input_sha256, "entries": rows}
-    stage = state.with_suffix(".building")
-    stage.write_text(json.dumps(result, sort_keys=True) + "\n")
-    stage.replace(state)
+        # Keep prior candidates if a later producer fails or is killed. Every
+        # entry still passes the dependency and output checks before reuse.
+        ATOMIC.write_json(state, {"input_sha256": input_sha256, "entries": rows})
     return {"rebuilt": changed, "reused": sorted(set(rows) - set(changed)), "outputs": {name: str(root / name) for name in rows}}
 
 
-def sign_release(owner, release, signing_request, output, *, installer_version, application_id, installed_version):
+def sign_release(owner, release, signing_request, output, *, installer_version, application_id, installed_version, install_version_code=None):
     """Sign an assembled release with the existing owner; never replace lost keys.
 
     The installer supplies actual installed identity/version and assembles using
-    release.version_code before calling. Installation remains its responsibility.
+    a separately issued install_version_code before calling. Installation remains
+    its responsibility; publisher ordering is never Android install ordering.
     """
-    validate(release, installer_version, application_id, installed_version)
+    validate(release, installer_version, application_id, 0 if install_version_code is not None else installed_version)
+    if install_version_code is not None:
+        ALPHA.identity(application_id)
+        if ALPHA.code(install_version_code) <= ALPHA.code(installed_version, zero=True):
+            raise ValueError("issued install version must increase")
     request = dict(signing_request)
     keys = Path(request["key_directory"])
     if installed_version and not all((keys / name).is_file() for name in ("owner.p12", "password")):
-        raise ValueError("owner key lost: export saves and reinstall; update refused")
+        raise ValueError("owner key lost: restore the same private key; update refused")
     output = Path(output)
     output.parent.mkdir(parents=True, exist_ok=True)
     descriptor, temporary = tempfile.mkstemp(prefix=output.name + "-request-", suffix=".json", dir=output.parent)

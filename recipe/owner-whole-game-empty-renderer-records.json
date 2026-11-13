@@ -1,0 +1,455 @@
+{
+  "input_id": "6af7ed94619fe1b4346974b4486afa03a8d1625a7820e92da0ff74d57208fe88",
+  "bundles": [
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-dlc3-conduitcanyon_assets_all_7fc05e6a70ca1e10f44996c82383cb2f.bundle",
+      "sha256": "6ad82e5e6e336b702fbcc08f184fbbec20ba73e00922f7dac9e36f0fb1d5f2ea",
+      "members": [
+        {
+          "name": "CAB-f2259b9b0100c78bef6c0846c7f862a6",
+          "objects": [
+            {
+              "path_id": -9091718463855540467,
+              "class_id": 23,
+              "sha256": "cc1f5952260474940838405c50f834781a80e00845f80c44a113d70521603ed9",
+              "outputs": [
+                {
+                  "bundle": "whole-game-content",
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "path_id": -8741166434067555788,
+                  "bytes": 144,
+                  "sha256": "e751c1d2b7227d24bac7ed0e521c5bd854085771903dd871531d08cee191c3e2",
+                  "transform": {
+                    "empty_mesh_renderer": true,
+                    "references": [
+                      {
+                        "offset": 0,
+                        "from": [
+                          0,
+                          7538853480606844685
+                        ],
+                        "to": [
+                          0,
+                          -6699357637978324212
+                        ]
+                      }
+                    ]
+                  },
+                  "native_type_hash": "e07b8fbbe1e7b8f953df1f094e626daa"
+                },
+                {
+                  "bundle": "whole-game-content",
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "path_id": -6926896071978992404,
+                  "bytes": 144,
+                  "sha256": "a5fa4ee1a8b95b84438ce1b9a5fbedf67adbe6d92aeda4bae93dcec77646b44e",
+                  "transform": {
+                    "empty_mesh_renderer": true,
+                    "references": [
+                      {
+                        "offset": 0,
+                        "from": [
+                          0,
+                          7538853480606844685
+                        ],
+                        "to": [
+                          0,
+                          6577635852375520592
+                        ]
+                      }
+                    ]
+                  },
+                  "native_type_hash": "e07b8fbbe1e7b8f953df1f094e626daa"
+                },
+                {
+                  "bundle": "whole-game-content",
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "path_id": -6218075803648282372,
+                  "bytes": 144,
+                  "sha256": "46b8b52b94ac518ce884f1ae2c409f7e9b8d20310c5d779e8960c787c960233d",
+                  "transform": {
+                    "empty_mesh_renderer": true,
+                    "references": [
+                      {
+                        "offset": 0,
+                        "from": [
+                          0,
+                          7538853480606844685
+                        ],
+                        "to": [
+                          0,
+                          621964067863461132
+                        ]
+                      }
+                    ]
+                  },
+                  "native_type_hash": "e07b8fbbe1e7b8f953df1f094e626daa"
+                },
+                {
+                  "bundle": "whole-game-content",
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "path_id": -5391815413240921359,
+                  "bytes": 144,
+                  "sha256": "d4ba6664acbc72e99aeada8a866e5432907f986b8db066d3e7d76718a701fac7",
+                  "transform": {
+                    "empty_mesh_renderer": true,
+                    "references": [
+                      {
+                        "offset": 0,
+                        "from": [
+                          0,
+                          7538853480606844685
+                        ],
+                        "to": [
+                          0,
+                          -7784787061512429118
+                        ]
+                      }
+                    ]
+                  },
+                  "native_type_hash": "e07b8fbbe1e7b8f953df1f094e626daa"
+                },
+                {
+                  "bundle": "whole-game-content",
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "path_id": -4058823902354597487,
+                  "bytes": 144,
+                  "sha256": "47f2a18f55aa4f70a88f5c4b50c24d7abe35a1e0d9ba78a9a8ed52f2f2e94319",
+                  "transform": {
+                    "empty_mesh_renderer": true,
+                    "references": [
+                      {
+                        "offset": 0,
+                        "from": [
+                          0,
+                          7538853480606844685
+                        ],
+                        "to": [
+                          0,
+                          -6433177430030483853
+                        ]
+                      }
+                    ]
+                  },
+                  "native_type_hash": "e07b8fbbe1e7b8f953df1f094e626daa"
+                },
+                {
+                  "bundle": "whole-game-content",
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "path_id": -4031818718438801447,
+                  "bytes": 144,
+                  "sha256": "adcd5795cecd5cef1c0bc30ed97a279b95efffaf1098983c5f93f3ee864dbcfb",
+                  "transform": {
+                    "empty_mesh_renderer": true,
+                    "references": [
+                      {
+                        "offset": 0,
+                        "from": [
+                          0,
+                          7538853480606844685
+                        ],
+                        "to": [
+                          0,
+                          -4180793639600925688
+                        ]
+                      }
+                    ]
+                  },
+                  "native_type_hash": "e07b8fbbe1e7b8f953df1f094e626daa"
+                },
+                {
+                  "bundle": "whole-game-content",
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "path_id": -1545980184978291440,
+                  "bytes": 144,
+                  "sha256": "eea952759a4d23c0cff30ad9d7aea94b8bf945c3ee7e919baaa9c553318e7f01",
+                  "transform": {
+                    "empty_mesh_renderer": true,
+                    "references": [
+                      {
+                        "offset": 0,
+                        "from": [
+                          0,
+                          7538853480606844685
+                        ],
+                        "to": [
+                          0,
+                          2656237297342400726
+                        ]
+                      }
+                    ]
+                  },
+                  "native_type_hash": "e07b8fbbe1e7b8f953df1f094e626daa"
+                },
+                {
+                  "bundle": "whole-game-content",
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "path_id": -506129462699650649,
+                  "bytes": 144,
+                  "sha256": "3ec9dd69ca2b3c21c30896fd2067a7a5c372203e284b0b2d2a508ae4abd852cb",
+                  "transform": {
+                    "empty_mesh_renderer": true,
+                    "references": [
+                      {
+                        "offset": 0,
+                        "from": [
+                          0,
+                          7538853480606844685
+                        ],
+                        "to": [
+                          0,
+                          5084594568092730416
+                        ]
+                      }
+                    ]
+                  },
+                  "native_type_hash": "e07b8fbbe1e7b8f953df1f094e626daa"
+                },
+                {
+                  "bundle": "whole-game-content",
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "path_id": -313843123959308467,
+                  "bytes": 144,
+                  "sha256": "944cbac231a3bb3c55c251e888331b148ce09aeb5aefa7afa25be773606a636e",
+                  "transform": {
+                    "empty_mesh_renderer": true,
+                    "references": [
+                      {
+                        "offset": 0,
+                        "from": [
+                          0,
+                          7538853480606844685
+                        ],
+                        "to": [
+                          0,
+                          -3939956738286591951
+                        ]
+                      }
+                    ]
+                  },
+                  "native_type_hash": "e07b8fbbe1e7b8f953df1f094e626daa"
+                },
+                {
+                  "bundle": "whole-game-content",
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "path_id": 761674433076218238,
+                  "bytes": 144,
+                  "sha256": "b5d0484d704317fae622f92402bc485d1bdb8b1214a3230f0003289d7cc11a09",
+                  "transform": {
+                    "empty_mesh_renderer": true,
+                    "references": [
+                      {
+                        "offset": 0,
+                        "from": [
+                          0,
+                          7538853480606844685
+                        ],
+                        "to": [
+                          0,
+                          1761990701487082182
+                        ]
+                      }
+                    ]
+                  },
+                  "native_type_hash": "e07b8fbbe1e7b8f953df1f094e626daa"
+                },
+                {
+                  "bundle": "whole-game-content",
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "path_id": 1230334173799264810,
+                  "bytes": 144,
+                  "sha256": "28bc1949c42df3df00ee6b8573ed4673f0033d9710605ac22e76badfd4193cf1",
+                  "transform": {
+                    "empty_mesh_renderer": true,
+                    "references": [
+                      {
+                        "offset": 0,
+                        "from": [
+                          0,
+                          7538853480606844685
+                        ],
+                        "to": [
+                          0,
+                          504821593444508365
+                        ]
+                      }
+                    ]
+                  },
+                  "native_type_hash": "e07b8fbbe1e7b8f953df1f094e626daa"
+                },
+                {
+                  "bundle": "whole-game-content",
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "path_id": 1994337769509398903,
+                  "bytes": 144,
+                  "sha256": "589a61e02265a04f8622d8f9ee7b454322cddc24a9abd3e1e8fb23dff0faca16",
+                  "transform": {
+                    "empty_mesh_renderer": true,
+                    "references": [
+                      {
+                        "offset": 0,
+                        "from": [
+                          0,
+                          7538853480606844685
+                        ],
+                        "to": [
+                          0,
+                          8339858209526948722
+                        ]
+                      }
+                    ]
+                  },
+                  "native_type_hash": "e07b8fbbe1e7b8f953df1f094e626daa"
+                },
+                {
+                  "bundle": "whole-game-content",
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "path_id": 2011137077697086689,
+                  "bytes": 144,
+                  "sha256": "2df02b00648dd03bfc2f6ce8ef42c76613bbd221e69690fee09498da6318665b",
+                  "transform": {
+                    "empty_mesh_renderer": true,
+                    "references": [
+                      {
+                        "offset": 0,
+                        "from": [
+                          0,
+                          7538853480606844685
+                        ],
+                        "to": [
+                          0,
+                          3407103401096611618
+                        ]
+                      }
+                    ]
+                  },
+                  "native_type_hash": "e07b8fbbe1e7b8f953df1f094e626daa"
+                },
+                {
+                  "bundle": "whole-game-content",
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "path_id": 2526538626416649068,
+                  "bytes": 144,
+                  "sha256": "aec9fe9f9f9c8314b7acc243c210ecf9bdfe6fe9ad82c042156f14f11059aabe",
+                  "transform": {
+                    "empty_mesh_renderer": true,
+                    "references": [
+                      {
+                        "offset": 0,
+                        "from": [
+                          0,
+                          7538853480606844685
+                        ],
+                        "to": [
+                          0,
+                          -6441687712532723431
+                        ]
+                      }
+                    ]
+                  },
+                  "native_type_hash": "e07b8fbbe1e7b8f953df1f094e626daa"
+                },
+                {
+                  "bundle": "whole-game-content",
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "path_id": 3086833400033867109,
+                  "bytes": 144,
+                  "sha256": "7dcda2cc88e3da275b835a1c85a845dac3b40c597306c726fe0021ab8d7cdd97",
+                  "transform": {
+                    "empty_mesh_renderer": true,
+                    "references": [
+                      {
+                        "offset": 0,
+                        "from": [
+                          0,
+                          7538853480606844685
+                        ],
+                        "to": [
+                          0,
+                          -4509276931767622698
+                        ]
+                      }
+                    ]
+                  },
+                  "native_type_hash": "e07b8fbbe1e7b8f953df1f094e626daa"
+                },
+                {
+                  "bundle": "whole-game-content",
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "path_id": 3308788201289185147,
+                  "bytes": 144,
+                  "sha256": "371f1f67bccf52037c24a6e4560ca981398ffa72d7ab9f3885a9195a6ecebea0",
+                  "transform": {
+                    "empty_mesh_renderer": true,
+                    "references": [
+                      {
+                        "offset": 0,
+                        "from": [
+                          0,
+                          7538853480606844685
+                        ],
+                        "to": [
+                          0,
+                          545354382921768114
+                        ]
+                      }
+                    ]
+                  },
+                  "native_type_hash": "e07b8fbbe1e7b8f953df1f094e626daa"
+                },
+                {
+                  "bundle": "whole-game-content",
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "path_id": 6400810030738858988,
+                  "bytes": 144,
+                  "sha256": "f1e1be2d8b49c85bcba7f56b75477ca6184fcd983954ccbcf4b64683883da3a3",
+                  "transform": {
+                    "empty_mesh_renderer": true,
+                    "references": [
+                      {
+                        "offset": 0,
+                        "from": [
+                          0,
+                          7538853480606844685
+                        ],
+                        "to": [
+                          0,
+                          350094942622047995
+                        ]
+                      }
+                    ]
+                  },
+                  "native_type_hash": "e07b8fbbe1e7b8f953df1f094e626daa"
+                },
+                {
+                  "bundle": "whole-game-content",
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "path_id": 9069888673118237601,
+                  "bytes": 144,
+                  "sha256": "c3e7b4e7503ba8629e902377a1e372ccf8443148e116ddd2c7c90835fc471f0e",
+                  "transform": {
+                    "empty_mesh_renderer": true,
+                    "references": [
+                      {
+                        "offset": 0,
+                        "from": [
+                          0,
+                          7538853480606844685
+                        ],
+                        "to": [
+                          0,
+                          3669380291271782010
+                        ]
+                      }
+                    ]
+                  },
+                  "native_type_hash": "e07b8fbbe1e7b8f953df1f094e626daa"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

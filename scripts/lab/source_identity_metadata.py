@@ -1,4 +1,4 @@
-"""Generate runtime-resolvable source identity metadata from a staged Unity scene."""
+"""Generate runtime identity metadata from decoded records or staged Unity YAML."""
 
 import base64
 import hashlib
@@ -39,29 +39,13 @@ def _blocks(scene_path):
     return source, raw, blocks, ordered
 
 
-def read_scene(scene_path):
-    source, raw, blocks, ordered = _blocks(scene_path)
-    game_objects = {}
-    transforms = {}
-    game_transforms = {}
-    for file_id, kind, block in ordered:
-        if kind == 1:
-            name = _unquote(_scalar(block, r"^  m_Name: (.*)$"))
-            components = re.findall(r"^  - component: \{fileID: (-?\d+)\}$", block, re.M)
-            if name is None:
-                raise ValueError(f"GameObject has no name in {scene_path.name}: {file_id}")
-            game_objects[file_id] = {"name": name, "components": components}
-        elif kind in (4, 224):
-            owner = _scalar(block, r"^  m_GameObject: \{fileID: (-?\d+)\}$")
-            father = _scalar(block, r"^  m_Father: \{fileID: (-?\d+)\}$", "0")
-            root_order = _scalar(block, r"^  m_RootOrder: (-?\d+)$")
-            children_field = re.search(r"^  m_Children:(.*?)(?=^  m_Father:)", block, re.M | re.S)
-            children = re.findall(r"^\s+- \{fileID: (-?\d+)\}$", children_field.group(1), re.M) if children_field else []
-            if owner is None or root_order is None:
-                raise ValueError(f"Transform is unresolved in {scene_path.name}: {file_id}")
-            transforms[file_id] = {"gameObject": owner, "father": father, "rootOrder": int(root_order), "children": children}
-            game_transforms[owner] = file_id
+def from_records(game_objects, transforms, identities, toggle_rows, source_scene_sha256, source_name="scene"):
+    """Build the same identity contract from decoded original or staged records.
 
+    Inputs use string local IDs and explicit active booleans. The caller owns
+    source identity validation and the declared provenance digest representation.
+    """
+    game_transforms = {row["gameObject"]: fid for fid, row in transforms.items()}
     roots = [file_id for file_id, transform in transforms.items() if transform["father"] == "0"]
     root_name_counts = {}
     for transform_id in roots:
@@ -74,7 +58,7 @@ def read_scene(scene_path):
             return shape_cache[transform_id]
         active = set() if active is None else active
         if transform_id in active or transform_id not in transforms:
-            raise ValueError(f"Transform graph is cyclic or incomplete in {scene_path.name}")
+            raise ValueError(f"Transform graph is cyclic or incomplete in {source_name}")
         active.add(transform_id)
         row = transforms[transform_id]
         name = game_objects[row["gameObject"]]["name"]
@@ -97,12 +81,12 @@ def read_scene(scene_path):
             return None
         transform_id = game_transforms.get(go_id)
         if transform_id is None:
-            raise ValueError(f"Referenced GameObject has no Transform in {scene_path.name}: {go_id}")
+            raise ValueError(f"Referenced GameObject has no Transform in {source_name}: {go_id}")
         reversed_path = []
         seen = set()
         while transform_id:
             if transform_id in seen or transform_id not in transforms:
-                raise ValueError(f"Transform path is cyclic or incomplete in {scene_path.name}: {go_id}")
+                raise ValueError(f"Transform path is cyclic or incomplete in {source_name}: {go_id}")
             seen.add(transform_id)
             row = transforms[transform_id]
             owner = row["gameObject"]
@@ -112,7 +96,7 @@ def read_scene(scene_path):
                 digest = root_hashes[transform_id]
                 same_shape = root_shape_counts[(name, digest)]
                 if same_shape != 1:
-                    raise ValueError(f"Duplicate same-name, same-shape roots are ambiguous in {scene_path.name}: {name}")
+                    raise ValueError(f"Duplicate same-name, same-shape roots are ambiguous in {source_name}: {name}")
                 reversed_path.append(
                     {
                         "root": True,
@@ -128,10 +112,10 @@ def read_scene(scene_path):
             else:
                 parent = transforms.get(father)
                 if parent is None or transform_id not in parent["children"]:
-                    raise ValueError(f"Serialized parent/child order mismatch in {scene_path.name}: {go_id}")
+                    raise ValueError(f"Serialized parent/child order mismatch in {source_name}: {go_id}")
                 index = parent["children"].index(transform_id)
                 if row["rootOrder"] != index:
-                    raise ValueError(f"Serialized sibling index differs from child list in {scene_path.name}: {go_id}")
+                    raise ValueError(f"Serialized sibling index differs from child list in {source_name}: {go_id}")
                 reversed_path.append(
                     {
                         "root": False,
@@ -146,78 +130,85 @@ def read_scene(scene_path):
                 transform_id = father
         return list(reversed(reversed_path))
 
+    identities = [
+        dict(
+            row,
+            name=game_objects[str(row["source_game_object_file_id"])]["name"],
+            active_self=game_objects[str(row["source_game_object_file_id"])]["active_self"],
+        )
+        for row in identities
+        if row["scene_id"] != 0
+    ]
+    identities.sort(key=lambda row: row["scene_id"])
+    if len({row["scene_id"] for row in identities}) != len(identities):
+        raise ValueError(f"Duplicate nonzero NetworkIdentity scene ID in {source_name}")
+    controllers = []
+    for row in toggle_rows:
+        component_id, owner_id = row["source_component_file_id"], row["source_game_object_file_id"]
+        groups = []
+        for group in row["groups"]:
+            objects = [{"source_game_object_file_id": int(ref), "transform_path": path_for(str(ref))} for ref in group["objects"]]
+            groups.append({"min_enabled": group["min_enabled"], "max_enabled": group["max_enabled"], "objects": objects})
+        owner_identity = [item for item in identities if item["source_game_object_file_id"] == int(owner_id)]
+        if len(owner_identity) > 1:
+            raise ValueError(f"Toggle controller has multiple NetworkIdentity components in {source_name}")
+        controllers.append(
+            {
+                "scene_id": owner_identity[0]["scene_id"] if owner_identity else None,
+                "source_component_file_id": int(component_id),
+                "source_game_object_file_id": int(owner_id),
+                "transform_path": path_for(str(owner_id)),
+                "groups": groups,
+            }
+        )
+    return {"schema_version": 1, "source_scene_sha256": source_scene_sha256, "network_identities": identities, "toggle_controllers": controllers}
+
+
+def read_scene(scene_path):
+    _, raw, _, ordered = _blocks(scene_path)
+    game_objects, transforms = {}, {}
+    for file_id, kind, block in ordered:
+        if kind == 1:
+            name = _unquote(_scalar(block, r"^  m_Name: (.*)$"))
+            if name is None:
+                raise ValueError(f"GameObject has no name in {scene_path.name}: {file_id}")
+            game_objects[file_id] = {"name": name, "active_self": _scalar(block, r"^  m_IsActive: ([01])$", "1") == "1"}
+        elif kind in (4, 224):
+            owner = _scalar(block, r"^  m_GameObject: \{fileID: (-?\d+)\}$")
+            father = _scalar(block, r"^  m_Father: \{fileID: (-?\d+)\}$", "0")
+            root_order = _scalar(block, r"^  m_RootOrder: (-?\d+)$")
+            children_field = re.search(r"^  m_Children:(.*?)(?=^  m_Father:)", block, re.M | re.S)
+            children = re.findall(r"^\s+- \{fileID: (-?\d+)\}$", children_field.group(1), re.M) if children_field else []
+            if owner is None or root_order is None:
+                raise ValueError(f"Transform is unresolved in {scene_path.name}: {file_id}")
+            transforms[file_id] = {"gameObject": owner, "father": father, "rootOrder": int(root_order), "children": children}
+
     def component_script_id(block, expected_guid):
         match = re.search(r"^  m_Script: \{fileID: (-?\d+), guid: ([0-9a-f]+), type: 3\}$", block, re.M)
-        if not match or match.group(2) != expected_guid:
-            return None
-        return int(match.group(1))
+        return int(match.group(1)) if match and match.group(2) == expected_guid else None
 
-    identities = []
-    toggle_controllers = []
+    identities, toggles = [], []
     for component_id, kind, block in ordered:
         if kind != 114:
             continue
         owner = _scalar(block, r"^  m_GameObject: \{fileID: (-?\d+)\}$")
         if owner is None or owner not in game_objects:
             continue
-        script_id = component_script_id(block, NETWORK_IDENTITY_GUID)
-        if script_id is not None and script_id == 372142912 and "m_SceneId:" in block:
+        if component_script_id(block, NETWORK_IDENTITY_GUID) == 372142912 and "m_SceneId:" in block:
             scene_id = _scalar(block, r"^    m_Value: (\d+)$")
             if scene_id is None:
                 raise ValueError(f"NetworkIdentity scene ID missing in {scene_path.name}: {component_id}")
-            if int(scene_id) != 0:
-                go = game_objects[owner]
-                active = _scalar(blocks[owner][1], r"^  m_IsActive: ([01])$", "1") == "1"
-                identities.append(
-                    {
-                        "scene_id": int(scene_id),
-                        "name": go["name"],
-                        "active_self": active,
-                        "source_component_file_id": int(component_id),
-                        "source_game_object_file_id": int(owner),
-                    }
-                )
-        script_id = component_script_id(block, SCENE_TOGGLE_GUID)
-        if script_id is not None and script_id == 1517225185 and re.search(r"^  toggleGroups:", block, re.M):
-            toggle_controllers.append((component_id, owner, block))
-
-    identities.sort(key=lambda row: row["scene_id"])
-    if len({row["scene_id"] for row in identities}) != len(identities):
-        raise ValueError(f"Duplicate nonzero NetworkIdentity scene ID in {scene_path.name}")
-    controllers = []
-    for component_id, owner_id, controller_block in toggle_controllers:
-        controller_path = path_for(owner_id)
-        group_text = controller_block.split("  toggleGroups:", 1)[1]
-        groups = []
-        for group in re.split(r"(?=^  - objects:)", group_text, flags=re.M):
-            if not re.search(r"^  - objects:", group, re.M):
-                continue
-            refs = re.findall(r"^    - \{fileID: (-?\d+)\}$", group, re.M)
-            minimum = _scalar(group, r"^    minEnabled: (-?\d+)$")
-            maximum = _scalar(group, r"^    maxEnabled: (-?\d+)$")
-            if minimum is None or maximum is None:
-                raise ValueError(f"Toggle group range is incomplete in {scene_path.name}")
-            objects = []
-            for ref in refs:
-                binding = path_for(ref)
-                objects.append({"source_game_object_file_id": int(ref), "transform_path": binding})
-            groups.append({"min_enabled": int(minimum), "max_enabled": int(maximum), "objects": objects})
-        owner_identity = [row for row in identities if row["source_game_object_file_id"] == int(owner_id)]
-        if len(owner_identity) > 1:
-            raise ValueError(f"Toggle controller has multiple NetworkIdentity components in {scene_path.name}")
-        controllers.append(
-            {
-                "scene_id": owner_identity[0]["scene_id"] if owner_identity else None,
-                "source_component_file_id": int(component_id),
-                "source_game_object_file_id": int(owner_id),
-                "transform_path": controller_path,
-                "groups": groups,
-            }
-        )
-
-    return {
-        "schema_version": 1,
-        "source_scene_sha256": hashlib.sha256(raw).hexdigest(),
-        "network_identities": identities,
-        "toggle_controllers": controllers,
-    }
+            identities.append(dict(scene_id=int(scene_id), source_component_file_id=int(component_id), source_game_object_file_id=int(owner)))
+        if component_script_id(block, SCENE_TOGGLE_GUID) == 1517225185 and re.search(r"^  toggleGroups:", block, re.M):
+            groups = []
+            for group in re.split(r"(?=^  - objects:)", block.split("  toggleGroups:", 1)[1], flags=re.M):
+                if not re.search(r"^  - objects:", group, re.M):
+                    continue
+                refs = re.findall(r"^    - \{fileID: (-?\d+)\}$", group, re.M)
+                minimum = _scalar(group, r"^    minEnabled: (-?\d+)$")
+                maximum = _scalar(group, r"^    maxEnabled: (-?\d+)$")
+                if minimum is None or maximum is None:
+                    raise ValueError(f"Toggle group range is incomplete in {scene_path.name}")
+                groups.append(dict(min_enabled=int(minimum), max_enabled=int(maximum), objects=refs))
+            toggles.append(dict(source_component_file_id=int(component_id), source_game_object_file_id=int(owner), groups=groups))
+    return from_records(game_objects, transforms, identities, toggles, hashlib.sha256(raw).hexdigest(), scene_path.name)

@@ -43,10 +43,32 @@ class ManagedHostStageTests(unittest.TestCase):
         self.assertEqual((self.destination / "repo/source.py").read_bytes(), (self.profile / "source.py").read_bytes())
         for name, expected in result["files"].items():
             self.assertEqual(hashlib.sha256((self.destination / name).read_bytes()).hexdigest(), expected)
+        for name in stage.JAVA_SOURCES:
+            self.assertEqual((self.destination / Path(name).name).read_bytes(), (stage.SOURCE / name).read_bytes())
         self.assertEqual(json.loads((self.destination / "stage-receipt.json").read_text()), result)
-        for name in ("OwnerInstaller.java", "OwnerUpdateState.java", "release-trust.json"):
+        for name in (
+            "OwnerInstaller.java",
+            "OwnerAlphaInstall.java",
+            "OwnerUpdateState.java",
+            "OwnerBuildService.java",
+            "OwnerInputImport.java",
+            "OwnerInputSource.java",
+            "release-trust.json",
+        ):
             self.assertIn(name, result["files"])
-        for name in ("release.py", "updates.py", "public_release.py", "release_jobs.py"):
+        for name in (
+            "release.py",
+            "updates.py",
+            "public_release.py",
+            "release_jobs.py",
+            "game_import.py",
+            "install_flow.py",
+            "atomic_io.py",
+            "install_inputs.py",
+            "alpha_policy.py",
+            "ProfileStore.java",
+            "ProfileRetentionProvider.java",
+        ):
             self.assertIn("repo/tools/phone-build/owner-apk/" + name, result["files"])
         trust = json.loads((self.destination / "release-trust.json").read_text())
         self.assertEqual(trust["keys"], {})
@@ -104,6 +126,10 @@ class ManagedHostStageTests(unittest.TestCase):
         receiver = value.find("application/receiver")
         self.assertEqual(receiver.attrib[android + "name"], "dev.ror2lab.phonebuildhostfixture.OwnerInstaller$Result")
         self.assertEqual(receiver.attrib[android + "exported"], "false")
+        service = value.find("application/service")
+        self.assertEqual(service.attrib[android + "name"], "dev.ror2lab.phonebuildhostfixture.OwnerBuildService")
+        self.assertEqual(service.attrib[android + "exported"], "false")
+        self.assertEqual(service.attrib[android + "stopWithTask"], "false")
         permissions = {node.attrib[android + "name"] for node in value.findall("uses-permission")}
         self.assertIn("android.permission.UPDATE_PACKAGES_WITHOUT_USER_ACTION", permissions)
         self.assertIn("dev.ror2lab.alpha", {node.attrib[android + "name"] for node in value.findall("queries/package")})
@@ -119,6 +145,10 @@ class ManagedHostStageTests(unittest.TestCase):
         value = ET.parse(output).getroot()
         android = "{http://schemas.android.com/apk/res/android}"
         self.assertEqual([node.attrib[android + "name"] for node in value.findall("queries/package")], ["example.authored.game"])
+        self.assertEqual(
+            [node.attrib[android + "name"] for node in value.findall("queries/intent/action")],
+            ["android.settings.APPLICATION_DEVELOPMENT_SETTINGS"],
+        )
         with self.assertRaisesRegex(ValueError, "separate lab tool"):
             stage.tool_manifest(stage.SOURCE / "AndroidManifest.xml", output, "dev.ror2lab.authoredtool", game_package="dev.ror2lab.authoredtool")
 
@@ -134,7 +164,7 @@ class ManagedHostStageTests(unittest.TestCase):
 class ManagedHostMetadataTests(unittest.TestCase):
     def test_network_extensions_are_explicit_pinned_inputs_before_any_build(self):
         with tempfile.TemporaryDirectory() as temporary:
-            root = Path(temporary)
+            root = Path(temporary).resolve()
             extra = {"natives": {}, "links": {}}
             for target, link in stage.UPDATE_NETWORK_MODULES.items():
                 path = root / Path(link).name

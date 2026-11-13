@@ -2,8 +2,10 @@ package dev.ror2lab.phonebuildhostfixture;
 
 import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.ActivityInfo;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageInstaller;
 import android.content.pm.PackageManager;
@@ -22,11 +24,11 @@ public final class OwnerInstaller {
     }
 
     public static boolean busy(Context app) {
-        return "INSTALLING".equals(state(app)) || "AWAITING_CONFIRMATION".equals(state(app));
+        return "INSTALLING".equals(state(app)) || "AWAITING_CONFIRMATION".equals(state(app)) || "VERIFYING_PROFILE".equals(state(app)) || "RECOVERING_PROFILE".equals(state(app));
     }
 
     public static void clearTerminalStatus(Context app) {
-        if (busy(app)) throw new IllegalStateException("Installation is pending");
+        if (busy(app) || OwnerAlphaInstall.pending(app)) throw new IllegalStateException("Installation or profile recovery is pending");
         app.getSharedPreferences(STATUS, 0).edit().putString("state", "IDLE").putString("status", "").putString("session", "").commit();
     }
 
@@ -36,6 +38,7 @@ public final class OwnerInstaller {
 
     private static void status(Context app, String state, String value) {
         app.getSharedPreferences(STATUS, 0).edit().putString("state", state).putString("status", value).commit();
+        ToolHostActivity.updateInstallCheckpoint(app, state, value);
     }
 
     public static String signer(PackageInfo info) throws Exception {
@@ -57,26 +60,65 @@ public final class OwnerInstaller {
         if (!Long.toString(version(actual)).equals(app.getSharedPreferences(STATUS, 0).getString("version", "")) ||
             !signer(actual).equals(app.getSharedPreferences(STATUS, 0).getString("signer", "")))
             throw new IOException("Installed identity differs from owner build");
-        status(app, "INSTALLED", "Installation complete. No uninstall or game-data reset was performed.");
+        if (OwnerAlphaInstall.PACKAGE.equals(name)) OwnerAlphaInstall.complete(app, actual);
+        status(app, "INSTALLED", "Installation complete; exact identity verified and any pre-update profile/settings snapshot verified. No uninstall or game-data reset was performed.");
     }
 
     /** Called only when this process has no install thread; reconcile after recreation. */
     public static void reconcile(Context app) {
         if (!busy(app)) return;
+        if ("VERIFYING_PROFILE".equals(state(app)) || "RECOVERING_PROFILE".equals(state(app))) { OwnerBuildService.launch(app, "install-verify"); return; }
         try {
             int id = Integer.parseInt(app.getSharedPreferences(STATUS, 0).getString("session", "-1"));
             PackageInstaller installer = app.getPackageManager().getPackageInstaller();
             PackageInstaller.SessionInfo session = installer.getSessionInfo(id);
-            if (session == null) verifyInstalled(app);
+            if (session == null) {
+                if (OwnerAlphaInstall.pending(app)) {
+                    status(app, "VERIFYING_PROFILE", "Verifying installed identity and retained profiles/settings…");
+                    OwnerBuildService.launch(app, "install-verify");
+                } else verifyInstalled(app);
+            }
             else if (Build.VERSION.SDK_INT >= 26 && !session.isSealed()) {
                 installer.abandonSession(id);
-                status(app, "ERROR", "Installation was interrupted before commit. Check for updates to retry.");
+                recoverLater(app, "Installation was interrupted before commit. Rebuild to allocate a fresh version before retrying.");
             }
-        } catch (Exception error) { status(app, "ERROR", "Installation interrupted or not verified: " + error.getMessage()); }
+        } catch (Exception error) { recoverLater(app, "Installation interrupted or not verified: " + error.getMessage()); }
     }
 
     public static void install(Context app, File apk, String expectedHash) throws Exception {
         install(app, apk, expectedHash, null, 0);
+    }
+
+    // Diagnostics are best effort and never alter install decisions or expose identities.
+    private static void diagnostic(Context app, String stage, String callback, boolean match) {
+        try { ToolHostActivity.updateInstallDiagnostic(app, stage, callback, match); }
+        catch (RuntimeException ignored) { }
+    }
+
+    private static void receiverDiagnostic(Context app, String registration, boolean entered) {
+        try { ToolHostActivity.updateInstallReceiverDiagnostic(app, registration, entered); }
+        catch (RuntimeException ignored) { }
+    }
+
+    // Query only our exact packaged receiver; report no class/package/device identities.
+    // This is observation only: it must not change permission, commit or recovery behavior.
+    private static String receiverRegistration(Context app) {
+        try {
+            PackageManager manager = app.getPackageManager();
+            ComponentName component = new ComponentName(app, Result.class);
+            ActivityInfo receiver = manager.getReceiverInfo(component, PackageManager.MATCH_DISABLED_COMPONENTS);
+            if (receiver == null || receiver.applicationInfo == null) return "unavailable";
+            int setting = manager.getComponentEnabledSetting(component);
+            boolean enabled;
+            if (setting == PackageManager.COMPONENT_ENABLED_STATE_DEFAULT) enabled = receiver.enabled;
+            else if (setting == PackageManager.COMPONENT_ENABLED_STATE_ENABLED) enabled = true;
+            else if (setting == PackageManager.COMPONENT_ENABLED_STATE_DISABLED || setting == PackageManager.COMPONENT_ENABLED_STATE_DISABLED_USER
+                    || setting == PackageManager.COMPONENT_ENABLED_STATE_DISABLED_UNTIL_USED) enabled = false;
+            else return "unavailable";
+            if (!enabled || !receiver.applicationInfo.enabled) return "disabled";
+            return receiver.exported ? "exported" : "private";
+        } catch (PackageManager.NameNotFoundException missing) { return "missing"; }
+        catch (RuntimeException unavailable) { return "unavailable"; }
     }
 
     public static synchronized void install(Context app, File apk, String expectedHash, String expectedPackage, long expectedVersion) throws Exception {
@@ -96,7 +138,12 @@ public final class OwnerInstaller {
             long newVersion = version(next);
             if (newVersion <= oldVersion) throw new IOException("Update version must increase");
             if (!Arrays.equals(current.signatures, next.signatures))
-                throw new IOException("Owner signing key differs. Export saves before reinstalling; never uninstall to update.");
+                throw new IOException("Owner signing key differs. Retain the original key; never uninstall to update or roll back.");
+        }
+        diagnostic(app, "prepare", null, false);
+        if (OwnerAlphaInstall.PACKAGE.equals(next.packageName)) {
+            try { OwnerAlphaInstall.prepare(app, apk, expectedHash, next, current); }
+            catch (Exception error) { failed(app, error.getMessage()); throw error; }
         }
         PackageInstaller installer = manager.getPackageInstaller();
         PackageInstaller.SessionParams params = new PackageInstaller.SessionParams(PackageInstaller.SessionParams.MODE_FULL_INSTALL);
@@ -104,14 +151,19 @@ public final class OwnerInstaller {
         params.setSize(apk.length());
         if (Build.VERSION.SDK_INT >= 31 && current != null)
             params.setRequireUserAction(PackageInstaller.SessionParams.USER_ACTION_NOT_REQUIRED);
-        int id = installer.createSession(params);
+        int id;
+        diagnostic(app, "session-create", null, false);
+        try { id = installer.createSession(params); }
+        catch (Exception error) { failed(app, "Could not create installation session: " + error.getMessage()); throw error; }
         boolean committed = false;
+        diagnostic(app, "session-open", null, false);
         try (PackageInstaller.Session session = installer.openSession(id)) {
             if (!app.getSharedPreferences(STATUS, 0).edit().putString("session", Integer.toString(id))
                 .putString("package", next.packageName).putString("version", Long.toString(version(next)))
                 .putString("signer", nextSigner).commit()) throw new IOException("Could not retain installation identity");
             status(app, "INSTALLING", "Installing " + next.packageName + "…");
             MessageDigest hash = MessageDigest.getInstance("SHA-256");
+            diagnostic(app, "write-start", null, false);
             try (InputStream input = new FileInputStream(apk);
                  OutputStream output = session.openWrite("base.apk", 0, apk.length())) {
                 byte[] buffer = new byte[65536]; int count;
@@ -121,40 +173,84 @@ public final class OwnerInstaller {
                 StringBuilder actual = new StringBuilder();
                 for (byte value : hash.digest()) actual.append(String.format(Locale.ROOT, "%02x", value & 255));
                 if (!actual.toString().equals(expectedHash)) throw new IOException("Owner APK output drift");
+                diagnostic(app, "write-complete", null, false);
+                diagnostic(app, "fsync-start", null, false);
                 session.fsync(output);
+                diagnostic(app, "fsync-complete", null, false);
             }
             Intent callback = new Intent(app, Result.class).setAction(app.getPackageName() + ".OWNER_INSTALL");
             int flags = PendingIntent.FLAG_UPDATE_CURRENT;
             if (Build.VERSION.SDK_INT >= 31) flags |= PendingIntent.FLAG_MUTABLE;
             PendingIntent result = PendingIntent.getBroadcast(app, id, callback, flags);
+            receiverDiagnostic(app, receiverRegistration(app), false);
+            diagnostic(app, "commit-start", null, false);
             session.commit(result.getIntentSender());
+            diagnostic(app, "commit-returned", null, false);
             committed = true;
         } finally {
             if (!committed) {
                 installer.abandonSession(id);
-                status(app, "ERROR", "Installation did not complete; retry is available.");
+                failed(app, "Installation did not complete. Rebuild for a fresh issued code before retrying.");
             }
         }
     }
 
+    private static void recoverLater(Context app, String message) {
+        if (OwnerAlphaInstall.pending(app)) {
+            status(app, "RECOVERING_PROFILE", message);
+            if (!OwnerBuildService.isRunning()) OwnerBuildService.launch(app, "install-verify");
+        } else status(app, "ERROR", message);
+    }
+
+    private static void failed(Context app, String message) {
+        try {
+            boolean installed = OwnerAlphaInstall.recover(app);
+            status(app, installed ? "INSTALLED" : "ERROR", installed ? "Installation complete after verified profile/settings recovery." : message);
+        }
+        catch (Exception error) { status(app, "RECOVERY_REQUIRED", message + " Profile recovery remains pending. Fully stop the game, ensure free space, then tap Recover and verify retained profile/settings: " + error.getMessage()); }
+    }
+
+    public static void finishVerification(Context app) {
+        if ("RECOVERING_PROFILE".equals(state(app))) { failed(app, status(app)); return; }
+        try { verifyInstalled(app); }
+        catch (Exception error) { failed(app, "Could not verify installation: " + error.getMessage()); }
+    }
+
+    public static void recoverProfiles(Context app) {
+        try {
+            boolean installed = OwnerAlphaInstall.recover(app);
+            status(app, installed ? "INSTALLED" : "ERROR", installed ? "Installation complete after verified profile/settings recovery." :
+                "Previous profile/settings verified and released. Rebuild before retrying installation.");
+        } catch (Exception error) { status(app, "RECOVERY_REQUIRED", "Profile recovery remains pending. Fully stop the game, ensure free space, then retry recovery: " + error.getMessage()); }
+    }
+
     public static final class Result extends BroadcastReceiver {
         @Override public void onReceive(Context app, Intent intent) {
+            receiverDiagnostic(app, null, true);
             String session = app.getSharedPreferences(STATUS, 0).getString("session", "");
-            if (!session.equals(Integer.toString(intent.getIntExtra(PackageInstaller.EXTRA_SESSION_ID, -1)))) return;
+            boolean matches = session.equals(Integer.toString(intent.getIntExtra(PackageInstaller.EXTRA_SESSION_ID, -1)));
             int code = intent.getIntExtra(PackageInstaller.EXTRA_STATUS, PackageInstaller.STATUS_FAILURE);
+            diagnostic(app, null, code == PackageInstaller.STATUS_PENDING_USER_ACTION ? "pending-user-action" : code == PackageInstaller.STATUS_SUCCESS ? "success" : code == PackageInstaller.STATUS_FAILURE ? "failure" : "unknown", matches);
+            if (!matches) return;
             if (code == PackageInstaller.STATUS_PENDING_USER_ACTION) {
                 Intent confirmation = intent.getParcelableExtra(Intent.EXTRA_INTENT);
-                if (confirmation == null) { status(app, "ERROR", "Installation confirmation unavailable"); return; }
+                if (confirmation == null) { status(app, "AWAITING_CONFIRMATION", "Android confirmation unavailable; the existing install session is retained. No second session will be created."); return; }
                 status(app, "AWAITING_CONFIRMATION", "Confirm installation in Android, then return here.");
                 confirmation.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                 try { app.startActivity(confirmation); }
-                catch (RuntimeException error) { status(app, "ERROR", "Installation confirmation unavailable: " + error.getMessage()); }
+                catch (RuntimeException error) { status(app, "AWAITING_CONFIRMATION", "Android confirmation unavailable; existing session retained: " + error.getMessage()); }
             } else if (code == PackageInstaller.STATUS_SUCCESS) {
+                if (OwnerAlphaInstall.pending(app)) {
+                    status(app, "VERIFYING_PROFILE", "Verifying installed identity and retained profiles/settings…");
+                    if (!OwnerBuildService.isRunning()) OwnerBuildService.launch(app, "install-verify");
+                    return;
+                }
                 try {
                     verifyInstalled(app);
-                } catch (Exception error) { status(app, "ERROR", "Could not verify installation: " + error.getMessage()); }
+                } catch (Exception error) { failed(app, "Could not verify installation: " + error.getMessage()); }
             } else {
-                status(app, "ERROR", "Installation failed: " + intent.getStringExtra(PackageInstaller.EXTRA_STATUS_MESSAGE));
+                String message = "Installation failed: " + intent.getStringExtra(PackageInstaller.EXTRA_STATUS_MESSAGE);
+                recoverLater(app, message);
             }
         }
     }

@@ -131,6 +131,33 @@ def script_properties_fixture(root, pc, script_kind=115, sdk_kind=114, custom_na
     return selected, sdk, sdk_pin, P.SCRIPT.md4(feed), target_body
 
 
+class CurrentOutputReceiptTests(unittest.TestCase):
+    def test_fresh_registry_hash_is_diagnostic_and_receipt_stays_exact(self):
+        with tempfile.TemporaryDirectory() as folder:
+            output = Path(folder).resolve()
+            path = output / P.TARGET / "globalgamemanagers.assets"
+            path.parent.mkdir(parents=True)
+            path.write_bytes(b"authored current registry fixture")
+            current = dict(bytes=path.stat().st_size, sha256=P.sha(path))
+            old = dict(bytes=1, sha256="0" * 64)
+            files = {P.TARGET + path.name: {"source_role": "pc-sdk-and-authored"}}
+            P.verify_player_outputs(output, {path.name: old}, files, {path.name: current})
+            self.assertEqual(files[P.TARGET + path.name]["sha256"], current["sha256"])
+            self.assertFalse(files[P.TARGET + path.name]["historical_raw_exact"])
+            path.write_bytes(b"changed after producer completed")
+            with self.assertRaisesRegex(ValueError, "bytes differ"):
+                P.verify_player_outputs(output, {path.name: old}, files, {path.name: current})
+
+    def test_legacy_output_still_requires_historical_pin(self):
+        with tempfile.TemporaryDirectory() as folder:
+            output = Path(folder).resolve()
+            path = output / P.TARGET / "globalgamemanagers.assets"
+            path.parent.mkdir(parents=True)
+            path.write_bytes(b"authored changed registry fixture")
+            with self.assertRaisesRegex(ValueError, "bytes differ"):
+                P.verify_player_outputs(output, {path.name: dict(bytes=1, sha256="0" * 64)}, {P.TARGET + path.name: {}}, {})
+
+
 class SourceMetadataTests(unittest.TestCase):
     def fixture(self):
         tree = metadata_tree(
@@ -552,6 +579,67 @@ class PlayerDataTests(unittest.TestCase):
     def failed(self):
         self.assertFalse(json.loads((self.output / "result.json").read_text())["success"])
 
+    def test_current_metadata_keeps_actual_output_pins_when_historical_hash_differs(self):
+        name = "ScriptingAssemblies.json"
+        self.profile["outputs"][name] = {"bytes": 1, "sha256": "0" * 64}
+        self.profile_path.write_text(json.dumps(self.profile))
+        self.profile_hash = P.sha(self.profile_path)
+        request = self.root / "current-code.json"
+        request.write_text("{}")
+        result = P.produce(self.profile_path, self.profile_hash, self.pc, self.sdk, self.converter, self.receipt_hash, self.output, code_request=request)
+        self.assertFalse(result["metadata_comparison"][name])
+        self.assertEqual((self.output / (P.TARGET + name)).read_bytes(), self.generated[name])
+        self.assertEqual(result["files"][P.TARGET + name]["sha256"], hashlib.sha256(self.generated[name]).hexdigest())
+
+    def test_registry_evidence_binds_same_final_body_and_current_schemas(self):
+        selected, _, _, _, _ = script_properties_fixture(self.root, self.pc)
+        bundle = P.OBJECTS.B.Bundle(self.pc / selected["script_properties"]["path"])
+        with bundle.member("CAB-script") as stream:
+            layout = P.W.read_serialized(stream)
+            bodies = {}
+            for row in layout["objects"]:
+                stream.seek(layout["data_offset"] + row["offset"])
+                bodies[row["path_id"]] = stream.read(row["bytes"])
+        provider = self.pc / "owner.bin"
+        registry = dict(
+            layout=layout,
+            bodies=bodies,
+            script_ids={("Fixture.dll", "Invented", "Fixture"): -77},
+            transfer_schemas=[dict(identity=["Fixture.dll", "Invented", "Fixture"], tree=layout["types"][0]["tree"].hex(), properties="ab" * 16)],
+            provider_pins={str(provider): dict(bytes=provider.stat().st_size, sha256=P.sha(provider))},
+        )
+        name = "globalgamemanagers.assets"
+        self.profile["registry"] = dict(file=name, path="authored-registry.json")
+        self.profile["outputs"][name] = dict(bytes=1, sha256="0" * 64)
+        self.profile_path.write_text(json.dumps(self.profile))
+        self.profile_hash = P.sha(self.profile_path)
+        request = self.root / "current-code.json"
+        request.write_text("{}")
+        with patch.object(P, "registry_records", return_value=registry) as owner:
+            result = P.produce(self.profile_path, self.profile_hash, self.pc, self.sdk, self.converter, self.receipt_hash, self.output, code_request=request)
+        owner.assert_called_once()
+        evidence = json.loads((self.output / result["registry"]["receipt"]).read_text())
+        schemas = self.output / result["registry"]["schemas"]
+        body = self.output / (P.TARGET + name)
+        self.assertTrue(evidence["success"])
+        self.assertEqual(evidence["files"], {name: dict(bytes=body.stat().st_size, sha256=P.sha(body))})
+        self.assertEqual(evidence["files"][name]["sha256"], result["files"][P.TARGET + name]["sha256"])
+        self.assertEqual(json.loads(schemas.read_text()), registry["transfer_schemas"])
+        self.assertEqual(evidence["schemas"], dict(bytes=schemas.stat().st_size, sha256=P.sha(schemas)))
+        self.assertEqual(evidence["provider_pins"], registry["provider_pins"])
+        with body.open("rb") as stream:
+            stream.size = body.stat().st_size
+            metadata = P.W.read_serialized(stream)
+            for row in metadata["objects"]:
+                stream.seek(metadata["data_offset"] + row["offset"])
+                self.assertEqual(stream.read(row["bytes"]), bodies[row["path_id"]])
+        provider.write_bytes(b"changed after registry construction")
+        failed = self.root / "registry-drift"
+        with patch.object(P, "registry_records", return_value=registry), self.assertRaisesRegex(ValueError, "bytes differ"):
+            P.produce(self.profile_path, self.profile_hash, self.pc, self.sdk, self.converter, self.receipt_hash, failed, code_request=request)
+        self.assertFalse(json.loads((failed / "result.json").read_text())["success"])
+        self.assertFalse((failed / "registry-source/result.json").exists())
+
     def test_source_only_complete_target_tree_and_receipt(self):
         before = (self.pc / "owner.bin").read_bytes()
         result = self.produce()
@@ -661,6 +749,24 @@ class PlayerDataTests(unittest.TestCase):
         selected["script"] = [1, 34]
         with self.assertRaisesRegex(ValueError, "script relationship"):
             P.object_file(self.pc, selected, self.root / "wrong-script")
+
+    def test_current_script_identity_replaces_historical_body_and_type_binding(self):
+        selected, sdk, sdk_pin, _, target_body = script_properties_fixture(self.root, self.pc)
+        identity = ("Fixture.dll", "Invented", "Fixture")
+        registry = {"original_script_identities": {("CAB-script", -77): identity}, "script_ids": {identity: 91}}
+        destination = self.root / "current-script-player"
+        P.object_file(self.pc, selected, destination, P.script_sdk_schema(sdk, sdk_pin), registry)
+        expected = bytearray(target_body)
+        struct.pack_into("<iq", expected, 16, 1, 91)
+        with destination.open("rb") as stream:
+            stream.size = destination.stat().st_size
+            layout = P.W.read_serialized(stream)
+            self.assertEqual(layout["scripts"], [(1, 91)])
+            stream.seek(layout["data_offset"])
+            self.assertEqual(stream.read(), expected)
+        registry["script_ids"].clear()
+        with self.assertRaisesRegex(ValueError, "no current registry identity"):
+            P.object_file(self.pc, selected, self.root / "missing-current-script", P.script_sdk_schema(sdk, sdk_pin), registry)
 
     def test_selected_script_hash_uses_actual_original_identity_and_sdk_base(self):
         selected, sdk, sdk_pin, expected_hash, target_body = script_properties_fixture(self.root, self.pc)
@@ -1440,6 +1546,49 @@ class RegistryRequestAdapterTests(unittest.TestCase):
         self.assertEqual(set(result["provider_pins"]), {str(self.input_hashes), str(self.recipe), str(self.request)})
         for path, expected in result["provider_pins"].items():
             P.checked(Path(path), (expected["bytes"], expected["sha256"]))
+
+    def test_current_binding_uses_compiled_sources_and_stable_importers(self):
+        recipe = {"authored": {"guids": {"android/Assets/LabDiagnostics.cs": "a" * 32}, "support_sources": [], "generated": [], "execution_orders": {}}}
+        (self.root / "recipe/runtime-sources.json").write_text(json.dumps(["runtime/New.cs"]))
+        (self.root / "recipe/project-layout.json").write_text(json.dumps({"runtime_source_guids": {"runtime/New.cs": None}}))
+        names = ["tools/unity/runtime/New.cs", "android/Assets/LabDiagnostics.cs"]
+        sources = {}
+        for name in names:
+            path = self.root / name
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text("public class " + path.stem + " {}")
+            sources[str(path)] = P.sha(path)
+        (self.managed / "gameplay").mkdir()
+        (self.managed / "gameplay/inputs.json").write_text(json.dumps({"sources": sources}))
+        (self.managed / "result.json").write_text(json.dumps({"success": True, "phase": "managed-produced"}))
+        bound, pins = P.current_registry_bindings(recipe, self.managed, self.root)
+        self.assertEqual(bound["authored"]["runtime_sources"], names)
+        self.assertEqual(bound["authored"]["guids"][names[1]], "a" * 32)
+        self.assertRegex(bound["authored"]["guids"][names[0]], "^[a-f0-9]{32}$")
+        self.assertEqual(bound, P.current_registry_bindings(recipe, self.managed, self.root)[0])
+        self.assertEqual(len(pins), 4)
+        other_sources = {str(self.root / "other-checkout" / Path(name).relative_to(self.root)): digest for name, digest in sources.items()}
+        compiler = self.managed / "gameplay/inputs.json"
+        compiler.write_text(json.dumps({"sources": other_sources}))
+        self.assertEqual(bound, P.current_registry_bindings(recipe, self.managed, self.root)[0])
+        compiler.write_text(json.dumps({"sources": dict(sources, **other_sources)}))
+        with self.assertRaisesRegex(ValueError, "was not compiled"):
+            P.current_registry_bindings(recipe, self.managed, self.root)
+        compiler.write_text(json.dumps({"sources": other_sources}))
+        (self.root / names[0]).write_text("changed after compilation")
+        with self.assertRaisesRegex(ValueError, "was not compiled"):
+            P.current_registry_bindings(recipe, self.managed, self.root)
+
+    def test_current_request_uses_current_binding_and_keeps_its_pins(self):
+        self.request.write_text(json.dumps({"source_inputs": {"packages": str(self.packages)}}))
+        value = self.leaf_result()
+        bound = {"authored": {"current": True}}
+        pins = {str(self.input_hashes): {"bytes": self.input_hashes.stat().st_size, "sha256": P.sha(self.input_hashes)}}
+        with patch.object(P, "current_registry_bindings", return_value=(bound, pins)), patch.object(P.SCRIPT, "registry", return_value=value) as leaf:
+            self.run_adapter()
+        self.assertEqual(leaf.call_args.args[6], bound)
+        self.assertEqual(leaf.call_args.args[5], self.managed / "packages/inputs.json")
+        self.assertEqual(value["provider_pins"][str(self.input_hashes)], pins[str(self.input_hashes)])
 
     def test_early_recipe_drift_is_refused_before_registry_production(self):
         self.recipe.write_text(self.recipe.read_text() + " ")

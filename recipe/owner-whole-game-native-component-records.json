@@ -1,0 +1,106 @@
+{
+  "input_id": "6af7ed94619fe1b4346974b4486afa03a8d1625a7820e92da0ff74d57208fe88",
+  "bundles": [
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-base-ui_assets_all_5fb4a28e453c573571102591a1fcff71.bundle",
+      "sha256": "7a73b50fc657c48e14501e1b7f1840b815bcf48a5e255e7c6373d6ba3fe0ed6b",
+      "members": [
+        {
+          "name": "CAB-f70ea1e2c52c46b488c162a7fb6206df",
+          "objects": [
+            {
+              "path_id": -6947417429592232449,
+              "class_id": 223,
+              "sha256": "441ef3f625171671000a4d3759cb3899d711833d04ba3db3d93a8203d21fd6a8",
+              "outputs": [
+                {
+                  "bundle": "whole-game-content",
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "path_id": 918018058771676989,
+                  "bytes": 59,
+                  "sha256": "c587e89b9b47913e9d4eaac2f4f61277f33a9c1f39e046142316f7d351a8cdb8",
+                  "transform": {
+                    "references": [
+                      {
+                        "offset": 0,
+                        "from": [
+                          0,
+                          3191169796097060351
+                        ],
+                        "to": [
+                          0,
+                          -819177670440517718
+                        ]
+                      }
+                    ]
+                  },
+                  "native_type_hash": "3520ad69bc09fbf9c6f690ccf410e9d6"
+                }
+              ]
+            },
+            {
+              "path_id": 5133261019930701311,
+              "class_id": 54,
+              "sha256": "a6cf5227797ce4393b878420d04d933653c54f0812083b2e65ca55f0b9795f97",
+              "outputs": [
+                {
+                  "bundle": "whole-game-content",
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "path_id": 2856669138074505885,
+                  "bytes": 36,
+                  "sha256": "60820a02316bdfa55e7799fe39bc2da36222c5ff38deed511decda60aca9460f",
+                  "transform": {
+                    "references": [
+                      {
+                        "offset": 0,
+                        "from": [
+                          0,
+                          3191169796097060351
+                        ],
+                        "to": [
+                          0,
+                          -819177670440517718
+                        ]
+                      }
+                    ]
+                  },
+                  "native_type_hash": "d19c5b14d3d7fe6cdbba6b28f26bc5f4"
+                }
+              ]
+            },
+            {
+              "path_id": 8386828511838533775,
+              "class_id": 222,
+              "sha256": "927909d7138fa8eef44c3347a200c7aba8d3f0be1220252bd7e7f19c1ae5d538",
+              "outputs": [
+                {
+                  "bundle": "whole-game-content",
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "path_id": -1567698914607603460,
+                  "bytes": 13,
+                  "sha256": "e446f27e722a30c13770cff3668fcd19a5a440734b7376b675735d40800df438",
+                  "transform": {
+                    "references": [
+                      {
+                        "offset": 0,
+                        "from": [
+                          0,
+                          -5348838458566051697
+                        ],
+                        "to": [
+                          0,
+                          -7160601675847269499
+                        ]
+                      }
+                    ]
+                  },
+                  "native_type_hash": "5750e5904e20e1e9b768424d8704a10d"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,3073 @@
+{
+  "schema": "owner-source-menu-v1",
+  "input_id": "6af7ed94619fe1b4346974b4486afa03a8d1625a7820e92da0ff74d57208fe88",
+  "file": "974d3403001904c3d83f41d5f2c3bad4",
+  "source": {
+    "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-base-ui_assets_all_5fb4a28e453c573571102591a1fcff71.bundle",
+    "bytes": 3722877,
+    "sha256": "7a73b50fc657c48e14501e1b7f1840b815bcf48a5e255e7c6373d6ba3fe0ed6b",
+    "member": "CAB-f70ea1e2c52c46b488c162a7fb6206df"
+  },
+  "scripts_source": {
+    "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/calmwater_monoscripts_a69c140580dd1456807433bb923cc5ba.bundle",
+    "bytes": 87323,
+    "sha256": "68aee1b2d2633c3ce1713cc44238025f750d3ae0aa66f42e748d421b19178022",
+    "member": "CAB-29d1a7582c548fe5e49f4c4c7a96e47e"
+  },
+  "root_path_id": -5377355766890441412,
+  "root_name": "Menu",
+  "text_identity": "RoR2:RoR2.UI.HGTextMeshProUGUI",
+  "buttons": [
+    {
+      "name": "GenericMenuButton (Singleplayer)",
+      "token": "TITLE_SINGLEPLAYER",
+      "suffix": " (A)"
+    },
+    {
+      "name": "GenericMenuButton (Quit)",
+      "token": "SUBMENU_QUIT",
+      "suffix": ""
+    }
+  ],
+  "hidden_names": [
+    "FadePanel",
+    "MiscOptionsPanel",
+    "MiscInfo",
+    "SteamBuildLabel (1)",
+    "TextPanel",
+    "PatchNotesPanel",
+    "PublicTestPanel",
+    "GenericGlyphAndDescription",
+    "GenericGlyphAndDescription (3)"
+  ],
+  "enabled_names": [
+    "ButtonPanel (JUICED)"
+  ],
+  "sdk_ui_sources": {
+    "Selectable.cs": {
+      "bytes": 50136,
+      "sha256": "aa2703fa92ae0ec0386e309dcd06c3646c581ccc756f16a7735a19ab8fcb1a30"
+    },
+    "Navigation.cs": {
+      "bytes": 11088,
+      "sha256": "3f5f9ed35844271735eaacc5468bc7bf80e33ba74103313f75d7be0b6fe16a20"
+    },
+    "Button.cs": {
+      "bytes": 6376,
+      "sha256": "e8f00d2c3b759c08408c97c75084e065a2a539662783b7f5835fae5d937e9e26"
+    },
+    "AnimationTriggers.cs": {
+      "bytes": 5967,
+      "sha256": "5684afec6b809a93e2da0d6365e6fd464651de1fc535cda05217ad5b67413a01"
+    }
+  },
+  "texture_profiles": [
+    {
+      "path": "owner-uncompressed-textures.json",
+      "sha256": "e526418b4cf1e5f1903b18a2cb9305c719255724a2bce104d75fb1c0b3f813f5"
+    },
+    {
+      "path": "owner-alpha-textures.json",
+      "sha256": "fa23bc2cdc71234e3a5d4a084519a63bb59c6ef321e790fb964c295c8bd1d51a"
+    },
+    {
+      "path": "owner-rgba-textures.json",
+      "sha256": "76e596c4ec3049e471f292d42b2b623092e05596a1a756be66ff08e73bbe6f96"
+    },
+    {
+      "path": "owner-rgb-textures.json",
+      "sha256": "2c4c1c416f676d09a93f987d1ea9f1ecda46aa279baee5799a196beec59fc4ed"
+    },
+    {
+      "path": "owner-rgba-mip-textures.json",
+      "sha256": "723c4e641349941a172aef28d6a4b23eee2954c5390cd7257a75a54cd0bf66fd"
+    }
+  ],
+  "extra_sources": [
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-base-ui-largesplashes_assets_all_56327e2d08847298e3700f4a245c524f.bundle",
+      "bytes": 1484129,
+      "sha256": "bff1047789490bb835a709c5c813a0dd0a4f78b638e6e67949f7d49390216206",
+      "member": "CAB-bcf7bde6b5741a325ea476ea3f6c3fe9"
+    }
+  ],
+  "saved_object_ids": [
+    {
+      "path": "$/SafeZone/SubmenuLegend/GenericGlyphAndDescription[1]/Description",
+      "identity": "GameObject",
+      "id": 1
+    },
+    {
+      "path": "$/SafeZone/GenericMenuButtonPanel/JuicePanel/GenericMenuButton (Multiplayer)",
+      "identity": "GameObject",
+      "id": 2
+    },
+    {
+      "path": "$/SafeZone/GenericMenuButton/ButtonText",
+      "identity": "GameObject",
+      "id": 3
+    },
+    {
+      "path": "$/SafeZone/GenericMenuButtonPanel",
+      "identity": "GameObject",
+      "id": 4
+    },
+    {
+      "path": "$/MiscInfo/Copyright/SteamBuildLabel (1)/TMP SubMeshUI [NotoSans-Regular Atlas Material + NotoSansCJKsc-Regular SDF (Korean) Atlas]",
+      "identity": "GameObject",
+      "id": 5
+    },
+    {
+      "path": "$/SafeZone",
+      "identity": "GameObject",
+      "id": 6
+    },
+    {
+      "path": "$/SafeZone/GenericMenuButtonPanel/JuicePanel/GenericMenuButton (Quit)/BaseOutline",
+      "identity": "GameObject",
+      "id": 7
+    },
+    {
+      "path": "$/SafeZone/GenericMenuButtonPanel/JuicePanel/GenericMenuButton (Local Ad-Hoc MP)/BaseOutline",
+      "identity": "GameObject",
+      "id": 8
+    },
+    {
+      "path": "$/SafeZone/SubmenuLegend/GenericGlyphAndDescription (3)/Description",
+      "identity": "GameObject",
+      "id": 9
+    },
+    {
+      "path": "$/SafeZone/GenericMenuButtonPanel/JuicePanel/GenericMenuButton (Extra Game Mode)/BaseOutline",
+      "identity": "GameObject",
+      "id": 10
+    },
+    {
+      "path": "$/SafeZone/UpperRightMenuPanel/MiscOptionsPanel/LanguageDropdown/Template/Scrollbar",
+      "identity": "GameObject",
+      "id": 11
+    },
+    {
+      "path": "$/SafeZone/PublicTestDisplay/Warning/FaderAndScroller(JUICED)/Scroll View/Scrollbar Vertical/Sliding Area",
+      "identity": "GameObject",
+      "id": 12
+    },
+    {
+      "path": "$/SafeZone/SubmenuLegend/GenericGlyphAndDescription/Text",
+      "identity": "GameObject",
+      "id": 13
+    },
+    {
+      "path": "$/FadePanel",
+      "identity": "GameObject",
+      "id": 14
+    },
+    {
+      "path": "$/SafeZone/SubmenuLegend/GenericGlyphAndDescription/Description/TMP SubMeshUI [TextMeshPro/Sprite]",
+      "identity": "GameObject",
+      "id": 15
+    },
+    {
+      "path": "$/SafeZone/UpperRightMenuPanel/MiscOptionsPanel/NakedButton (Profile)/Text/TMP SubMeshUI [tmpBombStandard Material + NotoSansCJKsc-Regular SDF (CJK 4E00-5E56) Atlas][1]",
+      "identity": "GameObject",
+      "id": 16
+    },
+    {
+      "path": "$/SafeZone/UpperRightMenuPanel/MiscOptionsPanel/NakedButton (Profile)/Text/TMP SubMeshUI [tmpBombStandard Material + NotoSansCJKsc-Regular SDF (CJK 4E00-5E56) Atlas]",
+      "identity": "GameObject",
+      "id": 17
+    },
+    {
+      "path": "$/SafeZone/GenericMenuButtonPanel/JuicePanel/GenericMenuButton (Quit)/ButtonText",
+      "identity": "GameObject",
+      "id": 18
+    },
+    {
+      "path": "$/SafeZone/GenericMenuButtonPanel/JuicePanel/GenericMenuButton (Music&More)/BaseOutline",
+      "identity": "GameObject",
+      "id": 19
+    },
+    {
+      "path": "$/SafeZone/UpperRightMenuPanel/MiscOptionsPanel/LanguageDropdown/Template/Viewport/Content/Item/Item Checkmark",
+      "identity": "GameObject",
+      "id": 20
+    },
+    {
+      "path": "$/SafeZone/ButtonPanel (JUICED)",
+      "identity": "GameObject",
+      "id": 21
+    },
+    {
+      "path": "$/SafeZone/PublicTestDisplay/Warning/FaderAndScroller(JUICED)/ContentPanel/border",
+      "identity": "GameObject",
+      "id": 22
+    },
+    {
+      "path": "$/SafeZone/ButtonPanel (JUICED)/Button, Profile/ButtonText",
+      "identity": "GameObject",
+      "id": 23
+    },
+    {
+      "path": "$/SafeZone/SubmenuLegend/GenericGlyphAndDescription[1]/Text/TMP SubMeshUI [TextMeshPro/Sprite]",
+      "identity": "GameObject",
+      "id": 24
+    },
+    {
+      "path": "$/SafeZone/GenericMenuButtonPanel/JuicePanel/GenericMenuButton (Quit)/HoverOutline",
+      "identity": "GameObject",
+      "id": 25
+    },
+    {
+      "path": "$/SafeZone/SubmenuLegend/GenericGlyphAndDescription[2]/Text/TMP SubMeshUI [TextMeshPro/Sprite]",
+      "identity": "GameObject",
+      "id": 26
+    },
+    {
+      "path": "$/SafeZone/UpperRightMenuPanel/MiscOptionsPanel/NakedButton (Profile)/HoverOutline",
+      "identity": "GameObject",
+      "id": 27
+    },
+    {
+      "path": "$/SafeZone/GenericMenuButtonPanel/JuicePanel/GenericMenuButton (Multiplayer)/BaseOutline",
+      "identity": "GameObject",
+      "id": 28
+    },
+    {
+      "path": "$/SafeZone/GenericMenuButtonPanel/JuicePanel/GenericMenuButton (Quit)",
+      "identity": "GameObject",
+      "id": 29
+    },
+    {
+      "path": "$/MiscInfo/Copyright/SteamBuildLabel (1)",
+      "identity": "GameObject",
+      "id": 30
+    },
+    {
+      "path": "$/SafeZone/SubmenuLegend/GenericGlyphAndDescription (3)",
+      "identity": "GameObject",
+      "id": 31
+    },
+    {
+      "path": "$/SafeZone/SubmenuLegend/GenericGlyphAndDescription/Text (1)",
+      "identity": "GameObject",
+      "id": 32
+    },
+    {
+      "path": "$/SafeZone/GenericMenuButtonPanel/JuicePanel/GenericMenuButton (Local Ad-Hoc MP)",
+      "identity": "GameObject",
+      "id": 33
+    },
+    {
+      "path": "$/SafeZone/ImagePanel (JUICED)",
+      "identity": "GameObject",
+      "id": 34
+    },
+    {
+      "path": "$/SafeZone/SubmenuLegend/GenericGlyphAndDescription[1]/Text",
+      "identity": "GameObject",
+      "id": 35
+    },
+    {
+      "path": "$/SafeZone/UpperRightMenuPanel/MiscOptionsPanel/LanguageDropdown/Template/Viewport/Content/Item/Item Label",
+      "identity": "GameObject",
+      "id": 36
+    },
+    {
+      "path": "$/SafeZone/SubmenuLegend/GenericGlyphAndDescription/Description",
+      "identity": "GameObject",
+      "id": 37
+    },
+    {
+      "path": "$/SafeZone/GenericMenuButtonPanel/JuicePanel/GenericMenuButton (Splitscreen)/HoverOutline",
+      "identity": "GameObject",
+      "id": 38
+    },
+    {
+      "path": "$/SafeZone/UpperRightMenuPanel/MiscOptionsPanel",
+      "identity": "GameObject",
+      "id": 39
+    },
+    {
+      "path": "$/SafeZone/UpperRightMenuPanel/MiscOptionsPanel/LanguageDropdown/Template/Viewport/BlurPanel",
+      "identity": "GameObject",
+      "id": 40
+    },
+    {
+      "path": "$/SafeZone/GenericMenuButtonPanel/JuicePanel/GenericMenuButton (Music&More)/HoverOutline",
+      "identity": "GameObject",
+      "id": 41
+    },
+    {
+      "path": "$/SafeZone/UpperRightMenuPanel/MiscOptionsPanel/LanguageDropdown/Template/Viewport/Content",
+      "identity": "GameObject",
+      "id": 42
+    },
+    {
+      "path": "$/SafeZone/PublicTestDisplay/Warning/FaderAndScroller(JUICED)/Scroll View/Scrollbar Horizontal/Sliding Area/Handle",
+      "identity": "GameObject",
+      "id": 43
+    },
+    {
+      "path": "$/SafeZone/GenericMenuButtonPanel/JuicePanel/GenericMenuButton (Local Ad-Hoc MP)/HoverOutline",
+      "identity": "GameObject",
+      "id": 44
+    },
+    {
+      "path": "$/SafeZone/GenericMenuButtonPanel/JuicePanel/DescriptionPanel, Naked",
+      "identity": "GameObject",
+      "id": 45
+    },
+    {
+      "path": "$/SafeZone/SubmenuLegend/GenericGlyphAndDescription[2]/Text",
+      "identity": "GameObject",
+      "id": 46
+    },
+    {
+      "path": "$/SafeZone/PublicTestDisplay/Warning/FaderAndScroller(JUICED)/ContentPanel/TextPanel/Square",
+      "identity": "GameObject",
+      "id": 47
+    },
+    {
+      "path": "$/MiscInfo/Copyright",
+      "identity": "GameObject",
+      "id": 48
+    },
+    {
+      "path": "$/SafeZone/PublicTestDisplay/Warning/FaderAndScroller(JUICED)/Scroll View/Viewport/Square",
+      "identity": "GameObject",
+      "id": 49
+    },
+    {
+      "path": "$/SafeZone/UpperRightMenuPanel/MiscOptionsPanel/NakedButton (Profile)/Text",
+      "identity": "GameObject",
+      "id": 50
+    },
+    {
+      "path": "$/SafeZone/PublicTestDisplay/Warning/FaderAndScroller(JUICED)/ContentPanel/TextPanel/gip",
+      "identity": "GameObject",
+      "id": 51
+    },
+    {
+      "path": "$/SafeZone/PublicTestDisplay/Warning/FaderAndScroller(JUICED)/Scroll View/Viewport",
+      "identity": "GameObject",
+      "id": 52
+    },
+    {
+      "path": "$/SafeZone/PublicTestDisplay/Warning/FaderAndScroller(JUICED)/Scroll View",
+      "identity": "GameObject",
+      "id": 53
+    },
+    {
+      "path": "$/SafeZone/PlatformStoreButton/ButtonText",
+      "identity": "GameObject",
+      "id": 54
+    },
+    {
+      "path": "$/SafeZone/GenericMenuButton/BaseOutline",
+      "identity": "GameObject",
+      "id": 55
+    },
+    {
+      "path": "$/SafeZone/PublicTestDisplay/Warning",
+      "identity": "GameObject",
+      "id": 56
+    },
+    {
+      "path": "$/SafeZone/UpperRightMenuPanel/MiscOptionsPanel/LanguageDropdown",
+      "identity": "GameObject",
+      "id": 57
+    },
+    {
+      "path": "$/SafeZone/GenericMenuButtonPanel/JuicePanel/GenericMenuButton (Extra Game Mode)/ButtonText",
+      "identity": "GameObject",
+      "id": 58
+    },
+    {
+      "path": "$/SafeZone/PublicTestDisplay/Warning/FaderAndScroller(JUICED)/Scroll View/Scrollbar Vertical/Sliding Area/Handle/InteractableHighlight",
+      "identity": "GameObject",
+      "id": 59
+    },
+    {
+      "path": "$/MiscInfo/Copyright/Copyright (1)/TMP SubMeshUI [NotoSans-Regular Atlas Material + NotoSans-Regular SDF(ROOT Extended ASCII + Turkish) Atlas]",
+      "identity": "GameObject",
+      "id": 60
+    },
+    {
+      "path": "$/SafeZone/SubmenuLegend/GenericGlyphAndDescription/Text/TMP SubMeshUI [TextMeshPro/Sprite]",
+      "identity": "GameObject",
+      "id": 61
+    },
+    {
+      "path": "$/SafeZone/SubmenuLegend/GenericGlyphAndDescription/Text (1)/TMP SubMeshUI [TextMeshPro/Sprite]",
+      "identity": "GameObject",
+      "id": 62
+    },
+    {
+      "path": "$/SafeZone/GenericMenuButtonPanel/JuicePanel/GenericMenuButton (Splitscreen)/ButtonText",
+      "identity": "GameObject",
+      "id": 63
+    },
+    {
+      "path": "$/SafeZone/GenericMenuButton/HoverOutline",
+      "identity": "GameObject",
+      "id": 64
+    },
+    {
+      "path": "$/SafeZone/GenericMenuButton",
+      "identity": "GameObject",
+      "id": 65
+    },
+    {
+      "path": "$/SafeZone/GenericMenuButtonPanel/JuicePanel/GenericMenuButton (Extra Game Mode)",
+      "identity": "GameObject",
+      "id": 66
+    },
+    {
+      "path": "$/SafeZone/GenericMenuButtonPanel/JuicePanel/DescriptionPanel, Naked/ContentSizeFitter/DescriptionText",
+      "identity": "GameObject",
+      "id": 67
+    },
+    {
+      "path": "$/SafeZone/GenericMenuButtonPanel/JuicePanel/GenericMenuButton (Logbook)/HoverOutline",
+      "identity": "GameObject",
+      "id": 68
+    },
+    {
+      "path": "$/SafeZone/SubmenuLegend/GenericGlyphAndDescription (3)/Description/TMP SubMeshUI [TextMeshPro/Sprite]",
+      "identity": "GameObject",
+      "id": 69
+    },
+    {
+      "path": "$/SafeZone/PublicTestDisplay/Warning/FaderAndScroller(JUICED)/Scroll View/Scrollbar Vertical/Sliding Area/Handle",
+      "identity": "GameObject",
+      "id": 70
+    },
+    {
+      "path": "$/SafeZone/PublicTestDisplay/Warning/FaderAndScroller(JUICED)/ContentPanel",
+      "identity": "GameObject",
+      "id": 71
+    },
+    {
+      "path": "$/SafeZone/UpperRightMenuPanel/MiscOptionsPanel/NakedButton (Profile)/Backdrop",
+      "identity": "GameObject",
+      "id": 72
+    },
+    {
+      "path": "$/SafeZone/GenericMenuButtonPanel/JuicePanel/GenericMenuButton (Logbook)",
+      "identity": "GameObject",
+      "id": 73
+    },
+    {
+      "path": "$/SafeZone/UpperRightMenuPanel/MiscOptionsPanel/LanguageDropdown/Image",
+      "identity": "GameObject",
+      "id": 74
+    },
+    {
+      "path": "$/SafeZone/GenericMenuButtonPanel/JuicePanel/DescriptionPanel, Naked/ContentSizeFitter/DescriptionText/TMP SubMeshUI [NotoSans-Regular Atlas Material + NotoSansCJKsc-Regular SDF (Korean) Atlas]",
+      "identity": "GameObject",
+      "id": 75
+    },
+    {
+      "path": "$/SafeZone/SubmenuLegend",
+      "identity": "GameObject",
+      "id": 76
+    },
+    {
+      "path": "$/SafeZone/PublicTestDisplay/Warning/FaderAndScroller(JUICED)/Scroll View/Viewport/Content/gip",
+      "identity": "GameObject",
+      "id": 77
+    },
+    {
+      "path": "$/SafeZone/PublicTestDisplay/Warning/FaderAndScroller(JUICED)/Scroll View/Viewport/Content/LoreText",
+      "identity": "GameObject",
+      "id": 78
+    },
+    {
+      "path": "$/SafeZone/UpperRightMenuPanel/MiscOptionsPanel/LanguageDropdown/Arrow",
+      "identity": "GameObject",
+      "id": 79
+    },
+    {
+      "path": "$/SafeZone/PlatformStoreButton/BaseOutline",
+      "identity": "GameObject",
+      "id": 80
+    },
+    {
+      "path": "$/SafeZone/GenericMenuButtonPanel/JuicePanel/GenericMenuButton (Settings)/ButtonText",
+      "identity": "GameObject",
+      "id": 81
+    },
+    {
+      "path": "$/SafeZone/GenericMenuButtonPanel/JuicePanel/GenericMenuButton (Logbook)/BaseOutline",
+      "identity": "GameObject",
+      "id": 82
+    },
+    {
+      "path": "$/SafeZone/ButtonPanel (JUICED)/Button, Profile",
+      "identity": "GameObject",
+      "id": 83
+    },
+    {
+      "path": "$/SafeZone/UpperRightMenuPanel/MiscOptionsPanel/LanguageDropdown/Template/Viewport/Content/Item",
+      "identity": "GameObject",
+      "id": 84
+    },
+    {
+      "path": "$/SafeZone/UpperRightMenuPanel/MiscOptionsPanel/LanguageDropdown/Template/Viewport/Background",
+      "identity": "GameObject",
+      "id": 85
+    },
+    {
+      "path": "$/SafeZone/UpperRightMenuPanel/MiscOptionsPanel/LanguageDropdown/Template/Viewport/BorderImage",
+      "identity": "GameObject",
+      "id": 86
+    },
+    {
+      "path": "$/SafeZone/GenericMenuButtonPanel/JuicePanel/GenericMenuButton (Logbook)/ButtonText",
+      "identity": "GameObject",
+      "id": 87
+    },
+    {
+      "path": "$/SafeZone/PublicTestDisplay/Warning/FaderAndScroller(JUICED)/ContentPanel/TextPanel",
+      "identity": "GameObject",
+      "id": 88
+    },
+    {
+      "path": "$/SafeZone/UpperRightMenuPanel",
+      "identity": "GameObject",
+      "id": 89
+    },
+    {
+      "path": "$/SafeZone/SubmenuLegend/GenericGlyphAndDescription[2]/Description/TMP SubMeshUI [TextMeshPro/Sprite]",
+      "identity": "GameObject",
+      "id": 90
+    },
+    {
+      "path": "$/SafeZone/PublicTestDisplay/Warning/FaderAndScroller(JUICED)/Scroll View/Scrollbar Vertical/Sliding Area/Handle/HoverHighlight",
+      "identity": "GameObject",
+      "id": 91
+    },
+    {
+      "path": "$/SafeZone/GenericMenuButtonPanel/JuicePanel/GenericMenuButton (Settings)",
+      "identity": "GameObject",
+      "id": 92
+    },
+    {
+      "path": "$/SafeZone/SubmenuLegend/GenericGlyphAndDescription[2]/Description",
+      "identity": "GameObject",
+      "id": 93
+    },
+    {
+      "path": "$/SafeZone/PublicTestDisplay/Warning/FaderAndScroller(JUICED)/Scroll View/Scrollbar Horizontal/Sliding Area",
+      "identity": "GameObject",
+      "id": 94
+    },
+    {
+      "path": "$/SafeZone/UpperRightMenuPanel/MiscOptionsPanel/LanguageDropdown/Template/Viewport/Content/Item/Item Background",
+      "identity": "GameObject",
+      "id": 95
+    },
+    {
+      "path": "$",
+      "identity": "GameObject",
+      "id": 96
+    },
+    {
+      "path": "$/SafeZone/GenericMenuButtonPanel/JuicePanel/GenericMenuButton (Singleplayer)/BaseOutline",
+      "identity": "GameObject",
+      "id": 97
+    },
+    {
+      "path": "$/SafeZone/GenericMenuButtonPanel/JuicePanel/GenericMenuButton (Multiplayer)/HoverOutline",
+      "identity": "GameObject",
+      "id": 98
+    },
+    {
+      "path": "$/SafeZone/UpperRightMenuPanel/MiscOptionsPanel/LanguageDropdown/Template/Viewport/Content/Item/Item Image",
+      "identity": "GameObject",
+      "id": 99
+    },
+    {
+      "path": "$/SafeZone/SubmenuLegend/GenericGlyphAndDescription[1]/Description/TMP SubMeshUI [TextMeshPro/Sprite]",
+      "identity": "GameObject",
+      "id": 100
+    },
+    {
+      "path": "$/SafeZone/PublicTestDisplay/Warning/FaderAndScroller(JUICED)/Scroll View/Scrollbar Horizontal",
+      "identity": "GameObject",
+      "id": 101
+    },
+    {
+      "path": "$/SafeZone/SubmenuLegend/GenericGlyphAndDescription (3)/Text",
+      "identity": "GameObject",
+      "id": 102
+    },
+    {
+      "path": "$/SafeZone/ButtonPanel (JUICED)/Button, Profile/HoverOutline",
+      "identity": "GameObject",
+      "id": 103
+    },
+    {
+      "path": "$/SafeZone/PlatformStoreButton",
+      "identity": "GameObject",
+      "id": 104
+    },
+    {
+      "path": "$/SafeZone/PublicTestDisplay/Warning/FaderAndScroller(JUICED)/Scroll View/Viewport/Content/WarningText",
+      "identity": "GameObject",
+      "id": 105
+    },
+    {
+      "path": "$/SafeZone/GenericMenuButtonPanel/JuicePanel/GenericMenuButton (Singleplayer)",
+      "identity": "GameObject",
+      "id": 106
+    },
+    {
+      "path": "$/SafeZone/GenericMenuButtonPanel/JuicePanel/GenericMenuButton (Local Ad-Hoc MP)/ButtonText",
+      "identity": "GameObject",
+      "id": 107
+    },
+    {
+      "path": "$/SafeZone/GenericMenuButtonPanel/JuicePanel/GenericMenuButton (Music&More)",
+      "identity": "GameObject",
+      "id": 108
+    },
+    {
+      "path": "$/SafeZone/SubmenuLegend/GenericGlyphAndDescription[2]",
+      "identity": "GameObject",
+      "id": 109
+    },
+    {
+      "path": "$/SafeZone/UpperRightMenuPanel/MiscOptionsPanel/LanguageDropdown/Template",
+      "identity": "GameObject",
+      "id": 110
+    },
+    {
+      "path": "$/MiscInfo/Copyright/SteamBuildLabel (1)/TMP SubMeshUI [NotoSans-Regular Atlas Material + NotoSans-Regular SDF(ROOT Extended ASCII + Turkish) Atlas]",
+      "identity": "GameObject",
+      "id": 111
+    },
+    {
+      "path": "$/SafeZone/UpperRightMenuPanel/MiscOptionsPanel/LanguageDropdown/Template/Scrollbar/Sliding Area",
+      "identity": "GameObject",
+      "id": 112
+    },
+    {
+      "path": "$/SafeZone/ImagePanel (JUICED)/LogoImage",
+      "identity": "GameObject",
+      "id": 113
+    },
+    {
+      "path": "$/MiscInfo",
+      "identity": "GameObject",
+      "id": 114
+    },
+    {
+      "path": "$/SafeZone/GenericMenuButtonPanel/JuicePanel/DescriptionPanel, Naked/ContentSizeFitter/BlurPanel",
+      "identity": "GameObject",
+      "id": 115
+    },
+    {
+      "path": "$/SafeZone/SubmenuLegend/GenericGlyphAndDescription[1]",
+      "identity": "GameObject",
+      "id": 116
+    },
+    {
+      "path": "$/SafeZone/GenericMenuButtonPanel/JuicePanel/DescriptionPanel, Naked/ContentSizeFitter",
+      "identity": "GameObject",
+      "id": 117
+    },
+    {
+      "path": "$/SafeZone/ButtonPanel (JUICED)/Button, Profile/BaseOutline",
+      "identity": "GameObject",
+      "id": 118
+    },
+    {
+      "path": "$/SafeZone/GenericMenuButtonPanel/JuicePanel/GenericMenuButton (Singleplayer)/ButtonText",
+      "identity": "GameObject",
+      "id": 119
+    },
+    {
+      "path": "$/SafeZone/GenericMenuButtonPanel/JuicePanel/GenericMenuButton (Settings)/HoverOutline",
+      "identity": "GameObject",
+      "id": 120
+    },
+    {
+      "path": "$/SafeZone/PublicTestDisplay",
+      "identity": "GameObject",
+      "id": 121
+    },
+    {
+      "path": "$/SafeZone/PublicTestDisplay/Warning/FaderAndScroller(JUICED)/ContentPanel/TextPanel/WarningText",
+      "identity": "GameObject",
+      "id": 122
+    },
+    {
+      "path": "$/SafeZone/UpperRightMenuPanel/MiscOptionsPanel/NakedButton (Profile)/Text/TMP SubMeshUI [tmpBombStandard Material + NotoSansCJKsc-Regular SDF (Japanese) Atlas]",
+      "identity": "GameObject",
+      "id": 123
+    },
+    {
+      "path": "$/SafeZone/GenericMenuButtonPanel/JuicePanel/GenericMenuButton (Extra Game Mode)/HoverOutline",
+      "identity": "GameObject",
+      "id": 124
+    },
+    {
+      "path": "$/MiscInfo/Copyright/Copyright (1)",
+      "identity": "GameObject",
+      "id": 125
+    },
+    {
+      "path": "$/SafeZone/GenericMenuButtonPanel/JuicePanel/GenericMenuButton (Settings)/BaseOutline",
+      "identity": "GameObject",
+      "id": 126
+    },
+    {
+      "path": "$/SafeZone/UpperRightMenuPanel/MiscOptionsPanel/LanguageDropdown/Template/Scrollbar/Sliding Area/Handle",
+      "identity": "GameObject",
+      "id": 127
+    },
+    {
+      "path": "$/MiscInfo/Copyright/Copyright (1)/TMP SubMeshUI [NotoSans-Regular Atlas Material + NotoSansCJKsc-Regular SDF (Korean) Atlas]",
+      "identity": "GameObject",
+      "id": 128
+    },
+    {
+      "path": "$/SafeZone/GenericMenuButtonPanel/JuicePanel/GenericMenuButton (Singleplayer)/HoverOutline",
+      "identity": "GameObject",
+      "id": 129
+    },
+    {
+      "path": "$/SafeZone/GenericMenuButtonPanel/JuicePanel/GenericMenuButton (Splitscreen)/BaseOutline",
+      "identity": "GameObject",
+      "id": 130
+    },
+    {
+      "path": "$/SafeZone/UpperRightMenuPanel/MiscOptionsPanel/NakedButton (Profile)/Text/TMP SubMeshUI [tmpBombStandard Material + NotoSansCJKsc-Regular SDF (Japanese) Atlas][1]",
+      "identity": "GameObject",
+      "id": 131
+    },
+    {
+      "path": "$/SafeZone/PublicTestDisplay/Warning/FaderAndScroller(JUICED)/Scroll View/Scrollbar Vertical",
+      "identity": "GameObject",
+      "id": 132
+    },
+    {
+      "path": "$/SafeZone/PublicTestDisplay/Warning/FaderAndScroller(JUICED)/Scroll View/Viewport/Content",
+      "identity": "GameObject",
+      "id": 133
+    },
+    {
+      "path": "$/SafeZone/GenericMenuButtonPanel/JuicePanel/DescriptionPanel, Naked/ContentSizeFitter/CornerRect",
+      "identity": "GameObject",
+      "id": 134
+    },
+    {
+      "path": "$/SafeZone/UpperRightMenuPanel/MiscOptionsPanel/LanguageDropdown/Template/Viewport",
+      "identity": "GameObject",
+      "id": 135
+    },
+    {
+      "path": "$/SafeZone/GenericMenuButtonPanel/JuicePanel/GenericMenuButton (Multiplayer)/ButtonText",
+      "identity": "GameObject",
+      "id": 136
+    },
+    {
+      "path": "$/SafeZone/GenericMenuButtonPanel/JuicePanel",
+      "identity": "GameObject",
+      "id": 137
+    },
+    {
+      "path": "$/SafeZone/UpperRightMenuPanel/MiscOptionsPanel/NakedButton (Profile)",
+      "identity": "GameObject",
+      "id": 138
+    },
+    {
+      "path": "$/SafeZone/GenericMenuButtonPanel/JuicePanel/GenericMenuButton (Music&More)/ButtonText",
+      "identity": "GameObject",
+      "id": 139
+    },
+    {
+      "path": "$/SafeZone/PublicTestDisplay/Warning/FaderAndScroller(JUICED)",
+      "identity": "GameObject",
+      "id": 140
+    },
+    {
+      "path": "$/SafeZone/GenericMenuButtonPanel/JuicePanel/GenericMenuButton (Splitscreen)",
+      "identity": "GameObject",
+      "id": 141
+    },
+    {
+      "path": "$/SafeZone/UpperRightMenuPanel/MiscOptionsPanel/LanguageDropdown/Label",
+      "identity": "GameObject",
+      "id": 142
+    },
+    {
+      "path": "$/SafeZone/SubmenuLegend/GenericGlyphAndDescription",
+      "identity": "GameObject",
+      "id": 143
+    },
+    {
+      "path": "$/SafeZone/SubmenuLegend/GenericGlyphAndDescription (3)/Text/TMP SubMeshUI [TextMeshPro/Sprite]",
+      "identity": "GameObject",
+      "id": 144
+    },
+    {
+      "path": "$/SafeZone/PlatformStoreButton/HoverOutline",
+      "identity": "GameObject",
+      "id": 145
+    },
+    {
+      "path": "$/SafeZone/SubmenuLegend/GenericGlyphAndDescription[2]",
+      "identity": "CanvasRenderer",
+      "id": 146
+    },
+    {
+      "path": "$/SafeZone/PublicTestDisplay/Warning/FaderAndScroller(JUICED)/Scroll View/Viewport/Content/gip",
+      "identity": "CanvasRenderer",
+      "id": 147
+    },
+    {
+      "path": "$/SafeZone/UpperRightMenuPanel/MiscOptionsPanel/LanguageDropdown/Template/Viewport/Content/Item/Item Background",
+      "identity": "CanvasRenderer",
+      "id": 148
+    },
+    {
+      "path": "$/SafeZone/PlatformStoreButton/ButtonText",
+      "identity": "CanvasRenderer",
+      "id": 149
+    },
+    {
+      "path": "$/SafeZone/UpperRightMenuPanel/MiscOptionsPanel/LanguageDropdown/Template/Viewport/BlurPanel",
+      "identity": "CanvasRenderer",
+      "id": 150
+    },
+    {
+      "path": "$/SafeZone/GenericMenuButtonPanel/JuicePanel/GenericMenuButton (Logbook)/ButtonText",
+      "identity": "CanvasRenderer",
+      "id": 151
+    },
+    {
+      "path": "$/SafeZone/SubmenuLegend/GenericGlyphAndDescription[2]/Description/TMP SubMeshUI [TextMeshPro/Sprite]",
+      "identity": "CanvasRenderer",
+      "id": 152
+    },
+    {
+      "path": "$/SafeZone/GenericMenuButtonPanel/JuicePanel/GenericMenuButton (Multiplayer)/BaseOutline",
+      "identity": "CanvasRenderer",
+      "id": 153
+    },
+    {
+      "path": "$/SafeZone/PublicTestDisplay/Warning/FaderAndScroller(JUICED)/Scroll View/Viewport/Square",
+      "identity": "CanvasRenderer",
+      "id": 154
+    },
+    {
+      "path": "$/SafeZone/PublicTestDisplay/Warning/FaderAndScroller(JUICED)/Scroll View/Viewport/Content/LoreText",
+      "identity": "CanvasRenderer",
+      "id": 155
+    },
+    {
+      "path": "$/SafeZone/UpperRightMenuPanel/MiscOptionsPanel/LanguageDropdown/Template/Viewport/BorderImage",
+      "identity": "CanvasRenderer",
+      "id": 156
+    },
+    {
+      "path": "$/SafeZone/GenericMenuButtonPanel/JuicePanel/GenericMenuButton (Local Ad-Hoc MP)/HoverOutline",
+      "identity": "CanvasRenderer",
+      "id": 157
+    },
+    {
+      "path": "$/SafeZone/GenericMenuButtonPanel/JuicePanel/DescriptionPanel, Naked/ContentSizeFitter/CornerRect",
+      "identity": "CanvasRenderer",
+      "id": 158
+    },
+    {
+      "path": "$/SafeZone/GenericMenuButtonPanel/JuicePanel/GenericMenuButton (Quit)",
+      "identity": "CanvasRenderer",
+      "id": 159
+    },
+    {
+      "path": "$/SafeZone/GenericMenuButtonPanel/JuicePanel/GenericMenuButton (Extra Game Mode)/BaseOutline",
+      "identity": "CanvasRenderer",
+      "id": 160
+    },
+    {
+      "path": "$/SafeZone/SubmenuLegend/GenericGlyphAndDescription[2]/Description",
+      "identity": "CanvasRenderer",
+      "id": 161
+    },
+    {
+      "path": "$/SafeZone/GenericMenuButtonPanel/JuicePanel/GenericMenuButton (Settings)",
+      "identity": "CanvasRenderer",
+      "id": 162
+    },
+    {
+      "path": "$/SafeZone/PublicTestDisplay/Warning/FaderAndScroller(JUICED)/Scroll View/Scrollbar Vertical/Sliding Area/Handle/HoverHighlight",
+      "identity": "CanvasRenderer",
+      "id": 163
+    },
+    {
+      "path": "$/SafeZone/UpperRightMenuPanel/MiscOptionsPanel/LanguageDropdown/Template/Scrollbar",
+      "identity": "CanvasRenderer",
+      "id": 164
+    },
+    {
+      "path": "$/SafeZone/UpperRightMenuPanel/MiscOptionsPanel/NakedButton (Profile)",
+      "identity": "CanvasRenderer",
+      "id": 165
+    },
+    {
+      "path": "$/SafeZone/UpperRightMenuPanel/MiscOptionsPanel/LanguageDropdown/Template/Viewport",
+      "identity": "CanvasRenderer",
+      "id": 166
+    },
+    {
+      "path": "$/MiscInfo/Copyright/SteamBuildLabel (1)/TMP SubMeshUI [NotoSans-Regular Atlas Material + NotoSans-Regular SDF(ROOT Extended ASCII + Turkish) Atlas]",
+      "identity": "CanvasRenderer",
+      "id": 167
+    },
+    {
+      "path": "$/SafeZone/ImagePanel (JUICED)/LogoImage",
+      "identity": "CanvasRenderer",
+      "id": 168
+    },
+    {
+      "path": "$/SafeZone/SubmenuLegend/GenericGlyphAndDescription/Text (1)",
+      "identity": "CanvasRenderer",
+      "id": 169
+    },
+    {
+      "path": "$/SafeZone/PlatformStoreButton",
+      "identity": "CanvasRenderer",
+      "id": 170
+    },
+    {
+      "path": "$/SafeZone/GenericMenuButtonPanel/JuicePanel/GenericMenuButton (Extra Game Mode)",
+      "identity": "CanvasRenderer",
+      "id": 171
+    },
+    {
+      "path": "$/SafeZone/PublicTestDisplay/Warning/FaderAndScroller(JUICED)/Scroll View/Scrollbar Vertical",
+      "identity": "CanvasRenderer",
+      "id": 172
+    },
+    {
+      "path": "$/SafeZone/PublicTestDisplay/Warning/FaderAndScroller(JUICED)/ContentPanel/TextPanel/Square",
+      "identity": "CanvasRenderer",
+      "id": 173
+    },
+    {
+      "path": "$/SafeZone/GenericMenuButtonPanel/JuicePanel/GenericMenuButton (Singleplayer)/BaseOutline",
+      "identity": "CanvasRenderer",
+      "id": 174
+    },
+    {
+      "path": "$/SafeZone/GenericMenuButtonPanel/JuicePanel/GenericMenuButton (Extra Game Mode)/ButtonText",
+      "identity": "CanvasRenderer",
+      "id": 175
+    },
+    {
+      "path": "$/SafeZone/ButtonPanel (JUICED)/Button, Profile/ButtonText",
+      "identity": "CanvasRenderer",
+      "id": 176
+    },
+    {
+      "path": "$/SafeZone/UpperRightMenuPanel/MiscOptionsPanel/NakedButton (Profile)/Text/TMP SubMeshUI [tmpBombStandard Material + NotoSansCJKsc-Regular SDF (CJK 4E00-5E56) Atlas]",
+      "identity": "CanvasRenderer",
+      "id": 177
+    },
+    {
+      "path": "$/SafeZone/SubmenuLegend/GenericGlyphAndDescription[2]/Text",
+      "identity": "CanvasRenderer",
+      "id": 178
+    },
+    {
+      "path": "$/SafeZone/PublicTestDisplay/Warning/FaderAndScroller(JUICED)/Scroll View",
+      "identity": "CanvasRenderer",
+      "id": 179
+    },
+    {
+      "path": "$/SafeZone/GenericMenuButtonPanel/JuicePanel/GenericMenuButton (Extra Game Mode)/HoverOutline",
+      "identity": "CanvasRenderer",
+      "id": 180
+    },
+    {
+      "path": "$/SafeZone/UpperRightMenuPanel/MiscOptionsPanel/LanguageDropdown",
+      "identity": "CanvasRenderer",
+      "id": 181
+    },
+    {
+      "path": "$/SafeZone/GenericMenuButtonPanel/JuicePanel/GenericMenuButton (Logbook)/HoverOutline",
+      "identity": "CanvasRenderer",
+      "id": 182
+    },
+    {
+      "path": "$/SafeZone/SubmenuLegend/GenericGlyphAndDescription (3)/Text/TMP SubMeshUI [TextMeshPro/Sprite]",
+      "identity": "CanvasRenderer",
+      "id": 183
+    },
+    {
+      "path": "$/SafeZone/PublicTestDisplay/Warning/FaderAndScroller(JUICED)/ContentPanel/TextPanel/WarningText",
+      "identity": "CanvasRenderer",
+      "id": 184
+    },
+    {
+      "path": "$/SafeZone/UpperRightMenuPanel/MiscOptionsPanel/LanguageDropdown/Label",
+      "identity": "CanvasRenderer",
+      "id": 185
+    },
+    {
+      "path": "$/SafeZone/PlatformStoreButton/BaseOutline",
+      "identity": "CanvasRenderer",
+      "id": 186
+    },
+    {
+      "path": "$/SafeZone/PublicTestDisplay/Warning/FaderAndScroller(JUICED)/ContentPanel/TextPanel",
+      "identity": "CanvasRenderer",
+      "id": 187
+    },
+    {
+      "path": "$/SafeZone/GenericMenuButtonPanel/JuicePanel/GenericMenuButton (Logbook)/BaseOutline",
+      "identity": "CanvasRenderer",
+      "id": 188
+    },
+    {
+      "path": "$/SafeZone/SubmenuLegend/GenericGlyphAndDescription (3)/Description",
+      "identity": "CanvasRenderer",
+      "id": 189
+    },
+    {
+      "path": "$/SafeZone/GenericMenuButtonPanel/JuicePanel/GenericMenuButton (Singleplayer)/ButtonText",
+      "identity": "CanvasRenderer",
+      "id": 190
+    },
+    {
+      "path": "$/FadePanel",
+      "identity": "CanvasRenderer",
+      "id": 191
+    },
+    {
+      "path": "$/MiscInfo/Copyright/SteamBuildLabel (1)",
+      "identity": "CanvasRenderer",
+      "id": 192
+    },
+    {
+      "path": "$/MiscInfo",
+      "identity": "CanvasRenderer",
+      "id": 193
+    },
+    {
+      "path": "$/SafeZone/ButtonPanel (JUICED)/Button, Profile/BaseOutline",
+      "identity": "CanvasRenderer",
+      "id": 194
+    },
+    {
+      "path": "$/SafeZone/GenericMenuButtonPanel/JuicePanel/GenericMenuButton (Splitscreen)",
+      "identity": "CanvasRenderer",
+      "id": 195
+    },
+    {
+      "path": "$/SafeZone/GenericMenuButton",
+      "identity": "CanvasRenderer",
+      "id": 196
+    },
+    {
+      "path": "$/SafeZone/SubmenuLegend/GenericGlyphAndDescription[1]/Description",
+      "identity": "CanvasRenderer",
+      "id": 197
+    },
+    {
+      "path": "$/SafeZone/SubmenuLegend/GenericGlyphAndDescription/Description/TMP SubMeshUI [TextMeshPro/Sprite]",
+      "identity": "CanvasRenderer",
+      "id": 198
+    },
+    {
+      "path": "$/SafeZone/SubmenuLegend/GenericGlyphAndDescription/Text/TMP SubMeshUI [TextMeshPro/Sprite]",
+      "identity": "CanvasRenderer",
+      "id": 199
+    },
+    {
+      "path": "$/SafeZone/UpperRightMenuPanel/MiscOptionsPanel/LanguageDropdown/Template/Viewport/Content/Item/Item Image",
+      "identity": "CanvasRenderer",
+      "id": 200
+    },
+    {
+      "path": "$/SafeZone/SubmenuLegend/GenericGlyphAndDescription[2]/Text/TMP SubMeshUI [TextMeshPro/Sprite]",
+      "identity": "CanvasRenderer",
+      "id": 201
+    },
+    {
+      "path": "$/SafeZone/GenericMenuButton/HoverOutline",
+      "identity": "CanvasRenderer",
+      "id": 202
+    },
+    {
+      "path": "$/SafeZone/UpperRightMenuPanel/MiscOptionsPanel/LanguageDropdown/Template/Viewport/Background",
+      "identity": "CanvasRenderer",
+      "id": 203
+    },
+    {
+      "path": "$/SafeZone/GenericMenuButtonPanel/JuicePanel/GenericMenuButton (Singleplayer)",
+      "identity": "CanvasRenderer",
+      "id": 204
+    },
+    {
+      "path": "$/SafeZone/PublicTestDisplay/Warning/FaderAndScroller(JUICED)/Scroll View/Viewport/Content/WarningText",
+      "identity": "CanvasRenderer",
+      "id": 205
+    },
+    {
+      "path": "$/SafeZone/SubmenuLegend/GenericGlyphAndDescription[1]",
+      "identity": "CanvasRenderer",
+      "id": 206
+    },
+    {
+      "path": "$/SafeZone/UpperRightMenuPanel/MiscOptionsPanel/LanguageDropdown/Template/Viewport/Content/Item/Item Label",
+      "identity": "CanvasRenderer",
+      "id": 207
+    },
+    {
+      "path": "$/SafeZone/GenericMenuButtonPanel/JuicePanel/GenericMenuButton (Multiplayer)/HoverOutline",
+      "identity": "CanvasRenderer",
+      "id": 208
+    },
+    {
+      "path": "$/SafeZone/GenericMenuButtonPanel/JuicePanel/GenericMenuButton (Settings)/BaseOutline",
+      "identity": "CanvasRenderer",
+      "id": 209
+    },
+    {
+      "path": "$/SafeZone/UpperRightMenuPanel/MiscOptionsPanel/LanguageDropdown/Template/Scrollbar/Sliding Area/Handle",
+      "identity": "CanvasRenderer",
+      "id": 210
+    },
+    {
+      "path": "$/MiscInfo/Copyright/Copyright (1)/TMP SubMeshUI [NotoSans-Regular Atlas Material + NotoSans-Regular SDF(ROOT Extended ASCII + Turkish) Atlas]",
+      "identity": "CanvasRenderer",
+      "id": 211
+    },
+    {
+      "path": "$/SafeZone/GenericMenuButtonPanel/JuicePanel/GenericMenuButton (Local Ad-Hoc MP)/BaseOutline",
+      "identity": "CanvasRenderer",
+      "id": 212
+    },
+    {
+      "path": "$/SafeZone/UpperRightMenuPanel/MiscOptionsPanel/NakedButton (Profile)/Text/TMP SubMeshUI [tmpBombStandard Material + NotoSansCJKsc-Regular SDF (Japanese) Atlas][1]",
+      "identity": "CanvasRenderer",
+      "id": 213
+    },
+    {
+      "path": "$/SafeZone/ImagePanel (JUICED)",
+      "identity": "CanvasRenderer",
+      "id": 214
+    },
+    {
+      "path": "$/SafeZone/GenericMenuButton/ButtonText",
+      "identity": "CanvasRenderer",
+      "id": 215
+    },
+    {
+      "path": "$/SafeZone/ButtonPanel (JUICED)/Button, Profile",
+      "identity": "CanvasRenderer",
+      "id": 216
+    },
+    {
+      "path": "$/SafeZone/ButtonPanel (JUICED)/Button, Profile/HoverOutline",
+      "identity": "CanvasRenderer",
+      "id": 217
+    },
+    {
+      "path": "$/SafeZone/GenericMenuButtonPanel/JuicePanel/GenericMenuButton (Music&More)/ButtonText",
+      "identity": "CanvasRenderer",
+      "id": 218
+    },
+    {
+      "path": "$/SafeZone/GenericMenuButtonPanel/JuicePanel/DescriptionPanel, Naked/ContentSizeFitter/DescriptionText",
+      "identity": "CanvasRenderer",
+      "id": 219
+    },
+    {
+      "path": "$/SafeZone/PublicTestDisplay/Warning/FaderAndScroller(JUICED)/Scroll View/Scrollbar Horizontal/Sliding Area/Handle",
+      "identity": "CanvasRenderer",
+      "id": 220
+    },
+    {
+      "path": "$/SafeZone/SubmenuLegend/GenericGlyphAndDescription",
+      "identity": "CanvasRenderer",
+      "id": 221
+    },
+    {
+      "path": "$/SafeZone/GenericMenuButtonPanel/JuicePanel/GenericMenuButton (Singleplayer)/HoverOutline",
+      "identity": "CanvasRenderer",
+      "id": 222
+    },
+    {
+      "path": "$/SafeZone/GenericMenuButtonPanel/JuicePanel/GenericMenuButton (Music&More)",
+      "identity": "CanvasRenderer",
+      "id": 223
+    },
+    {
+      "path": "$/SafeZone/PublicTestDisplay/Warning/FaderAndScroller(JUICED)/Scroll View/Scrollbar Horizontal",
+      "identity": "CanvasRenderer",
+      "id": 224
+    },
+    {
+      "path": "$/SafeZone/GenericMenuButtonPanel/JuicePanel/GenericMenuButton (Settings)/ButtonText",
+      "identity": "CanvasRenderer",
+      "id": 225
+    },
+    {
+      "path": "$/SafeZone/SubmenuLegend",
+      "identity": "CanvasRenderer",
+      "id": 226
+    },
+    {
+      "path": "$/SafeZone/UpperRightMenuPanel/MiscOptionsPanel/NakedButton (Profile)/Text/TMP SubMeshUI [tmpBombStandard Material + NotoSansCJKsc-Regular SDF (Japanese) Atlas]",
+      "identity": "CanvasRenderer",
+      "id": 227
+    },
+    {
+      "path": "$/SafeZone/GenericMenuButtonPanel/JuicePanel/GenericMenuButton (Music&More)/BaseOutline",
+      "identity": "CanvasRenderer",
+      "id": 228
+    },
+    {
+      "path": "$/SafeZone/UpperRightMenuPanel/MiscOptionsPanel/LanguageDropdown/Template/Viewport/Content/Item/Item Checkmark",
+      "identity": "CanvasRenderer",
+      "id": 229
+    },
+    {
+      "path": "$/SafeZone/GenericMenuButtonPanel/JuicePanel/GenericMenuButton (Quit)/BaseOutline",
+      "identity": "CanvasRenderer",
+      "id": 230
+    },
+    {
+      "path": "$/SafeZone/SubmenuLegend/GenericGlyphAndDescription[1]/Text/TMP SubMeshUI [TextMeshPro/Sprite]",
+      "identity": "CanvasRenderer",
+      "id": 231
+    },
+    {
+      "path": "$/SafeZone/PlatformStoreButton/HoverOutline",
+      "identity": "CanvasRenderer",
+      "id": 232
+    },
+    {
+      "path": "$/SafeZone/SubmenuLegend/GenericGlyphAndDescription/Description",
+      "identity": "CanvasRenderer",
+      "id": 233
+    },
+    {
+      "path": "$/SafeZone/GenericMenuButtonPanel/JuicePanel/GenericMenuButton (Music&More)/HoverOutline",
+      "identity": "CanvasRenderer",
+      "id": 234
+    },
+    {
+      "path": "$/SafeZone/PublicTestDisplay/Warning/FaderAndScroller(JUICED)/ContentPanel/border",
+      "identity": "CanvasRenderer",
+      "id": 235
+    },
+    {
+      "path": "$/SafeZone/PublicTestDisplay/Warning/FaderAndScroller(JUICED)/Scroll View/Scrollbar Vertical/Sliding Area/Handle/InteractableHighlight",
+      "identity": "CanvasRenderer",
+      "id": 236
+    },
+    {
+      "path": "$/SafeZone/SubmenuLegend/GenericGlyphAndDescription[1]/Description/TMP SubMeshUI [TextMeshPro/Sprite]",
+      "identity": "CanvasRenderer",
+      "id": 237
+    },
+    {
+      "path": "$/SafeZone/SubmenuLegend/GenericGlyphAndDescription/Text (1)/TMP SubMeshUI [TextMeshPro/Sprite]",
+      "identity": "CanvasRenderer",
+      "id": 238
+    },
+    {
+      "path": "$/SafeZone/SubmenuLegend/GenericGlyphAndDescription (3)",
+      "identity": "CanvasRenderer",
+      "id": 239
+    },
+    {
+      "path": "$/SafeZone/GenericMenuButtonPanel/JuicePanel/DescriptionPanel, Naked",
+      "identity": "CanvasRenderer",
+      "id": 240
+    },
+    {
+      "path": "$/SafeZone/UpperRightMenuPanel/MiscOptionsPanel/LanguageDropdown/Arrow",
+      "identity": "CanvasRenderer",
+      "id": 241
+    },
+    {
+      "path": "$/SafeZone/GenericMenuButtonPanel/JuicePanel/GenericMenuButton (Logbook)",
+      "identity": "CanvasRenderer",
+      "id": 242
+    },
+    {
+      "path": "$/MiscInfo/Copyright/Copyright (1)/TMP SubMeshUI [NotoSans-Regular Atlas Material + NotoSansCJKsc-Regular SDF (Korean) Atlas]",
+      "identity": "CanvasRenderer",
+      "id": 243
+    },
+    {
+      "path": "$/SafeZone/SubmenuLegend/GenericGlyphAndDescription[1]/Text",
+      "identity": "CanvasRenderer",
+      "id": 244
+    },
+    {
+      "path": "$/SafeZone/GenericMenuButtonPanel/JuicePanel/DescriptionPanel, Naked/ContentSizeFitter",
+      "identity": "CanvasRenderer",
+      "id": 245
+    },
+    {
+      "path": "$/SafeZone/GenericMenuButtonPanel/JuicePanel/GenericMenuButton (Splitscreen)/ButtonText",
+      "identity": "CanvasRenderer",
+      "id": 246
+    },
+    {
+      "path": "$/MiscInfo/Copyright/SteamBuildLabel (1)/TMP SubMeshUI [NotoSans-Regular Atlas Material + NotoSansCJKsc-Regular SDF (Korean) Atlas]",
+      "identity": "CanvasRenderer",
+      "id": 247
+    },
+    {
+      "path": "$/SafeZone/GenericMenuButtonPanel/JuicePanel/GenericMenuButton (Settings)/HoverOutline",
+      "identity": "CanvasRenderer",
+      "id": 248
+    },
+    {
+      "path": "$/SafeZone/GenericMenuButtonPanel/JuicePanel/GenericMenuButton (Local Ad-Hoc MP)/ButtonText",
+      "identity": "CanvasRenderer",
+      "id": 249
+    },
+    {
+      "path": "$/SafeZone/GenericMenuButtonPanel/JuicePanel/GenericMenuButton (Multiplayer)/ButtonText",
+      "identity": "CanvasRenderer",
+      "id": 250
+    },
+    {
+      "path": "$/SafeZone/PublicTestDisplay/Warning/FaderAndScroller(JUICED)/ContentPanel/TextPanel/gip",
+      "identity": "CanvasRenderer",
+      "id": 251
+    },
+    {
+      "path": "$/SafeZone/UpperRightMenuPanel/MiscOptionsPanel/LanguageDropdown/Image",
+      "identity": "CanvasRenderer",
+      "id": 252
+    },
+    {
+      "path": "$/SafeZone/PublicTestDisplay/Warning/FaderAndScroller(JUICED)/Scroll View/Scrollbar Vertical/Sliding Area/Handle",
+      "identity": "CanvasRenderer",
+      "id": 253
+    },
+    {
+      "path": "$/SafeZone/UpperRightMenuPanel/MiscOptionsPanel/NakedButton (Profile)/Text/TMP SubMeshUI [tmpBombStandard Material + NotoSansCJKsc-Regular SDF (CJK 4E00-5E56) Atlas][1]",
+      "identity": "CanvasRenderer",
+      "id": 254
+    },
+    {
+      "path": "$/SafeZone/PublicTestDisplay/Warning/FaderAndScroller(JUICED)/ContentPanel",
+      "identity": "CanvasRenderer",
+      "id": 255
+    },
+    {
+      "path": "$/SafeZone/UpperRightMenuPanel/MiscOptionsPanel/NakedButton (Profile)/Text",
+      "identity": "CanvasRenderer",
+      "id": 256
+    },
+    {
+      "path": "$/SafeZone/SubmenuLegend/GenericGlyphAndDescription/Text",
+      "identity": "CanvasRenderer",
+      "id": 257
+    },
+    {
+      "path": "$/SafeZone/SubmenuLegend/GenericGlyphAndDescription (3)/Description/TMP SubMeshUI [TextMeshPro/Sprite]",
+      "identity": "CanvasRenderer",
+      "id": 258
+    },
+    {
+      "path": "$/SafeZone/UpperRightMenuPanel/MiscOptionsPanel/NakedButton (Profile)/HoverOutline",
+      "identity": "CanvasRenderer",
+      "id": 259
+    },
+    {
+      "path": "$/SafeZone/SubmenuLegend/GenericGlyphAndDescription (3)/Text",
+      "identity": "CanvasRenderer",
+      "id": 260
+    },
+    {
+      "path": "$/MiscInfo/Copyright/Copyright (1)",
+      "identity": "CanvasRenderer",
+      "id": 261
+    },
+    {
+      "path": "$/SafeZone/GenericMenuButtonPanel/JuicePanel/DescriptionPanel, Naked/ContentSizeFitter/DescriptionText/TMP SubMeshUI [NotoSans-Regular Atlas Material + NotoSansCJKsc-Regular SDF (Korean) Atlas]",
+      "identity": "CanvasRenderer",
+      "id": 262
+    },
+    {
+      "path": "$/SafeZone/GenericMenuButtonPanel/JuicePanel/GenericMenuButton (Splitscreen)/BaseOutline",
+      "identity": "CanvasRenderer",
+      "id": 263
+    },
+    {
+      "path": "$/SafeZone/UpperRightMenuPanel/MiscOptionsPanel/NakedButton (Profile)/Backdrop",
+      "identity": "CanvasRenderer",
+      "id": 264
+    },
+    {
+      "path": "$/SafeZone/UpperRightMenuPanel/MiscOptionsPanel/LanguageDropdown/Template",
+      "identity": "CanvasRenderer",
+      "id": 265
+    },
+    {
+      "path": "$/SafeZone/GenericMenuButton/BaseOutline",
+      "identity": "CanvasRenderer",
+      "id": 266
+    },
+    {
+      "path": "$/SafeZone/GenericMenuButtonPanel/JuicePanel/GenericMenuButton (Multiplayer)",
+      "identity": "CanvasRenderer",
+      "id": 267
+    },
+    {
+      "path": "$/SafeZone/GenericMenuButtonPanel/JuicePanel/GenericMenuButton (Quit)/ButtonText",
+      "identity": "CanvasRenderer",
+      "id": 268
+    },
+    {
+      "path": "$/SafeZone/GenericMenuButtonPanel/JuicePanel/GenericMenuButton (Splitscreen)/HoverOutline",
+      "identity": "CanvasRenderer",
+      "id": 269
+    },
+    {
+      "path": "$/SafeZone/PublicTestDisplay/Warning/FaderAndScroller(JUICED)/Scroll View/Viewport",
+      "identity": "CanvasRenderer",
+      "id": 270
+    },
+    {
+      "path": "$/SafeZone/GenericMenuButtonPanel/JuicePanel/GenericMenuButton (Local Ad-Hoc MP)",
+      "identity": "CanvasRenderer",
+      "id": 271
+    },
+    {
+      "path": "$/SafeZone/GenericMenuButtonPanel/JuicePanel/GenericMenuButton (Quit)/HoverOutline",
+      "identity": "CanvasRenderer",
+      "id": 272
+    },
+    {
+      "path": "$/SafeZone/GenericMenuButtonPanel/JuicePanel/GenericMenuButton (Settings)/HoverOutline",
+      "identity": "Canvas",
+      "id": 273
+    },
+    {
+      "path": "$/SafeZone/GenericMenuButtonPanel/JuicePanel/DescriptionPanel, Naked",
+      "identity": "Canvas",
+      "id": 274
+    },
+    {
+      "path": "$/SafeZone/GenericMenuButton/HoverOutline",
+      "identity": "Canvas",
+      "id": 275
+    },
+    {
+      "path": "$/SafeZone/GenericMenuButtonPanel/JuicePanel/GenericMenuButton (Singleplayer)/HoverOutline",
+      "identity": "Canvas",
+      "id": 276
+    },
+    {
+      "path": "$/SafeZone/GenericMenuButtonPanel/JuicePanel/GenericMenuButton (Extra Game Mode)/HoverOutline",
+      "identity": "Canvas",
+      "id": 277
+    },
+    {
+      "path": "$/SafeZone/PlatformStoreButton/HoverOutline",
+      "identity": "Canvas",
+      "id": 278
+    },
+    {
+      "path": "$/SafeZone/GenericMenuButtonPanel/JuicePanel/GenericMenuButton (Logbook)/HoverOutline",
+      "identity": "Canvas",
+      "id": 279
+    },
+    {
+      "path": "$/SafeZone/GenericMenuButtonPanel/JuicePanel/GenericMenuButton (Multiplayer)/HoverOutline",
+      "identity": "Canvas",
+      "id": 280
+    },
+    {
+      "path": "$/SafeZone/PublicTestDisplay/Warning/FaderAndScroller(JUICED)/Scroll View/Viewport/Square",
+      "identity": "Canvas",
+      "id": 281
+    },
+    {
+      "path": "$/SafeZone/GenericMenuButtonPanel/JuicePanel/GenericMenuButton (Splitscreen)/HoverOutline",
+      "identity": "Canvas",
+      "id": 282
+    },
+    {
+      "path": "$/SafeZone/GenericMenuButtonPanel/JuicePanel/GenericMenuButton (Music&More)/HoverOutline",
+      "identity": "Canvas",
+      "id": 283
+    },
+    {
+      "path": "$/SafeZone/UpperRightMenuPanel/MiscOptionsPanel/NakedButton (Profile)/Backdrop",
+      "identity": "Canvas",
+      "id": 284
+    },
+    {
+      "path": "$/SafeZone/GenericMenuButtonPanel/JuicePanel/GenericMenuButton (Local Ad-Hoc MP)/HoverOutline",
+      "identity": "Canvas",
+      "id": 285
+    },
+    {
+      "path": "$/SafeZone/PublicTestDisplay/Warning/FaderAndScroller(JUICED)/ContentPanel/TextPanel/Square",
+      "identity": "Canvas",
+      "id": 286
+    },
+    {
+      "path": "$/SafeZone/GenericMenuButtonPanel/JuicePanel/GenericMenuButton (Quit)/HoverOutline",
+      "identity": "Canvas",
+      "id": 287
+    },
+    {
+      "path": "$",
+      "identity": "Canvas",
+      "id": 288
+    },
+    {
+      "path": "$/SafeZone/UpperRightMenuPanel/MiscOptionsPanel/NakedButton (Profile)/HoverOutline",
+      "identity": "Canvas",
+      "id": 289
+    },
+    {
+      "path": "$/SafeZone/SubmenuLegend/GenericGlyphAndDescription/Text/TMP SubMeshUI [TextMeshPro/Sprite]",
+      "identity": "RectTransform",
+      "id": 290
+    },
+    {
+      "path": "$/SafeZone/SubmenuLegend/GenericGlyphAndDescription (3)",
+      "identity": "RectTransform",
+      "id": 291
+    },
+    {
+      "path": "$/SafeZone/UpperRightMenuPanel/MiscOptionsPanel/LanguageDropdown/Template/Viewport/Content/Item/Item Label",
+      "identity": "RectTransform",
+      "id": 292
+    },
+    {
+      "path": "$/SafeZone/SubmenuLegend/GenericGlyphAndDescription/Text (1)/TMP SubMeshUI [TextMeshPro/Sprite]",
+      "identity": "RectTransform",
+      "id": 293
+    },
+    {
+      "path": "$/SafeZone/GenericMenuButtonPanel/JuicePanel/GenericMenuButton (Local Ad-Hoc MP)/ButtonText",
+      "identity": "RectTransform",
+      "id": 294
+    },
+    {
+      "path": "$/SafeZone/PublicTestDisplay/Warning/FaderAndScroller(JUICED)/Scroll View/Viewport/Square",
+      "identity": "RectTransform",
+      "id": 295
+    },
+    {
+      "path": "$/SafeZone/GenericMenuButtonPanel/JuicePanel/DescriptionPanel, Naked/ContentSizeFitter",
+      "identity": "RectTransform",
+      "id": 296
+    },
+    {
+      "path": "$/SafeZone/GenericMenuButton",
+      "identity": "RectTransform",
+      "id": 297
+    },
+    {
+      "path": "$/SafeZone/UpperRightMenuPanel/MiscOptionsPanel/LanguageDropdown/Template",
+      "identity": "RectTransform",
+      "id": 298
+    },
+    {
+      "path": "$/SafeZone/PublicTestDisplay/Warning/FaderAndScroller(JUICED)",
+      "identity": "RectTransform",
+      "id": 299
+    },
+    {
+      "path": "$/SafeZone/UpperRightMenuPanel/MiscOptionsPanel/LanguageDropdown/Template/Viewport/Content/Item/Item Background",
+      "identity": "RectTransform",
+      "id": 300
+    },
+    {
+      "path": "$/SafeZone/PlatformStoreButton/BaseOutline",
+      "identity": "RectTransform",
+      "id": 301
+    },
+    {
+      "path": "$/SafeZone/PublicTestDisplay/Warning/FaderAndScroller(JUICED)/Scroll View/Scrollbar Vertical/Sliding Area/Handle/InteractableHighlight",
+      "identity": "RectTransform",
+      "id": 302
+    },
+    {
+      "path": "$/SafeZone/SubmenuLegend/GenericGlyphAndDescription[1]/Text/TMP SubMeshUI [TextMeshPro/Sprite]",
+      "identity": "RectTransform",
+      "id": 303
+    },
+    {
+      "path": "$/SafeZone/GenericMenuButtonPanel/JuicePanel/GenericMenuButton (Multiplayer)/BaseOutline",
+      "identity": "RectTransform",
+      "id": 304
+    },
+    {
+      "path": "$/SafeZone/ButtonPanel (JUICED)/Button, Profile",
+      "identity": "RectTransform",
+      "id": 305
+    },
+    {
+      "path": "$/SafeZone/UpperRightMenuPanel/MiscOptionsPanel/LanguageDropdown/Template/Scrollbar",
+      "identity": "RectTransform",
+      "id": 306
+    },
+    {
+      "path": "$/MiscInfo/Copyright/SteamBuildLabel (1)/TMP SubMeshUI [NotoSans-Regular Atlas Material + NotoSans-Regular SDF(ROOT Extended ASCII + Turkish) Atlas]",
+      "identity": "RectTransform",
+      "id": 307
+    },
+    {
+      "path": "$/SafeZone/UpperRightMenuPanel/MiscOptionsPanel/NakedButton (Profile)/Backdrop",
+      "identity": "RectTransform",
+      "id": 308
+    },
+    {
+      "path": "$",
+      "identity": "RectTransform",
+      "id": 309
+    },
+    {
+      "path": "$/SafeZone/UpperRightMenuPanel/MiscOptionsPanel/LanguageDropdown/Template/Viewport/Background",
+      "identity": "RectTransform",
+      "id": 310
+    },
+    {
+      "path": "$/SafeZone/ButtonPanel (JUICED)",
+      "identity": "RectTransform",
+      "id": 311
+    },
+    {
+      "path": "$/SafeZone/PublicTestDisplay/Warning/FaderAndScroller(JUICED)/Scroll View/Scrollbar Vertical/Sliding Area/Handle",
+      "identity": "RectTransform",
+      "id": 312
+    },
+    {
+      "path": "$/MiscInfo/Copyright/Copyright (1)",
+      "identity": "RectTransform",
+      "id": 313
+    },
+    {
+      "path": "$/SafeZone/SubmenuLegend/GenericGlyphAndDescription[1]/Text",
+      "identity": "RectTransform",
+      "id": 314
+    },
+    {
+      "path": "$/SafeZone/UpperRightMenuPanel/MiscOptionsPanel/NakedButton (Profile)/Text",
+      "identity": "RectTransform",
+      "id": 315
+    },
+    {
+      "path": "$/SafeZone/UpperRightMenuPanel/MiscOptionsPanel/LanguageDropdown/Label",
+      "identity": "RectTransform",
+      "id": 316
+    },
+    {
+      "path": "$/SafeZone/PublicTestDisplay/Warning",
+      "identity": "RectTransform",
+      "id": 317
+    },
+    {
+      "path": "$/SafeZone/SubmenuLegend",
+      "identity": "RectTransform",
+      "id": 318
+    },
+    {
+      "path": "$/SafeZone/GenericMenuButtonPanel/JuicePanel/GenericMenuButton (Singleplayer)",
+      "identity": "RectTransform",
+      "id": 319
+    },
+    {
+      "path": "$/SafeZone/GenericMenuButtonPanel/JuicePanel/DescriptionPanel, Naked/ContentSizeFitter/DescriptionText",
+      "identity": "RectTransform",
+      "id": 320
+    },
+    {
+      "path": "$/MiscInfo/Copyright/SteamBuildLabel (1)/TMP SubMeshUI [NotoSans-Regular Atlas Material + NotoSansCJKsc-Regular SDF (Korean) Atlas]",
+      "identity": "RectTransform",
+      "id": 321
+    },
+    {
+      "path": "$/SafeZone/PlatformStoreButton/HoverOutline",
+      "identity": "RectTransform",
+      "id": 322
+    },
+    {
+      "path": "$/FadePanel",
+      "identity": "RectTransform",
+      "id": 323
+    },
+    {
+      "path": "$/SafeZone/UpperRightMenuPanel/MiscOptionsPanel/LanguageDropdown/Template/Viewport/Content/Item",
+      "identity": "RectTransform",
+      "id": 324
+    },
+    {
+      "path": "$/SafeZone/GenericMenuButtonPanel/JuicePanel/GenericMenuButton (Settings)",
+      "identity": "RectTransform",
+      "id": 325
+    },
+    {
+      "path": "$/SafeZone/GenericMenuButtonPanel/JuicePanel/GenericMenuButton (Extra Game Mode)/ButtonText",
+      "identity": "RectTransform",
+      "id": 326
+    },
+    {
+      "path": "$/SafeZone/UpperRightMenuPanel/MiscOptionsPanel/LanguageDropdown/Template/Viewport/Content",
+      "identity": "RectTransform",
+      "id": 327
+    },
+    {
+      "path": "$/SafeZone/GenericMenuButtonPanel/JuicePanel/GenericMenuButton (Multiplayer)/HoverOutline",
+      "identity": "RectTransform",
+      "id": 328
+    },
+    {
+      "path": "$/SafeZone/GenericMenuButtonPanel/JuicePanel/GenericMenuButton (Quit)/HoverOutline",
+      "identity": "RectTransform",
+      "id": 329
+    },
+    {
+      "path": "$/SafeZone/GenericMenuButtonPanel/JuicePanel/DescriptionPanel, Naked/ContentSizeFitter/DescriptionText/TMP SubMeshUI [NotoSans-Regular Atlas Material + NotoSansCJKsc-Regular SDF (Korean) Atlas]",
+      "identity": "RectTransform",
+      "id": 330
+    },
+    {
+      "path": "$/SafeZone/UpperRightMenuPanel/MiscOptionsPanel/LanguageDropdown/Template/Viewport/BorderImage",
+      "identity": "RectTransform",
+      "id": 331
+    },
+    {
+      "path": "$/MiscInfo/Copyright",
+      "identity": "RectTransform",
+      "id": 332
+    },
+    {
+      "path": "$/SafeZone/PublicTestDisplay/Warning/FaderAndScroller(JUICED)/Scroll View/Scrollbar Vertical",
+      "identity": "RectTransform",
+      "id": 333
+    },
+    {
+      "path": "$/SafeZone/PublicTestDisplay/Warning/FaderAndScroller(JUICED)/Scroll View/Viewport/Content/gip",
+      "identity": "RectTransform",
+      "id": 334
+    },
+    {
+      "path": "$/SafeZone/SubmenuLegend/GenericGlyphAndDescription[2]/Description",
+      "identity": "RectTransform",
+      "id": 335
+    },
+    {
+      "path": "$/SafeZone/UpperRightMenuPanel/MiscOptionsPanel/NakedButton (Profile)/HoverOutline",
+      "identity": "RectTransform",
+      "id": 336
+    },
+    {
+      "path": "$/SafeZone/UpperRightMenuPanel/MiscOptionsPanel/LanguageDropdown/Template/Scrollbar/Sliding Area/Handle",
+      "identity": "RectTransform",
+      "id": 337
+    },
+    {
+      "path": "$/SafeZone/PublicTestDisplay/Warning/FaderAndScroller(JUICED)/Scroll View/Viewport/Content/LoreText",
+      "identity": "RectTransform",
+      "id": 338
+    },
+    {
+      "path": "$/SafeZone/GenericMenuButtonPanel/JuicePanel/GenericMenuButton (Multiplayer)/ButtonText",
+      "identity": "RectTransform",
+      "id": 339
+    },
+    {
+      "path": "$/SafeZone/SubmenuLegend/GenericGlyphAndDescription[2]/Text/TMP SubMeshUI [TextMeshPro/Sprite]",
+      "identity": "RectTransform",
+      "id": 340
+    },
+    {
+      "path": "$/SafeZone/PublicTestDisplay/Warning/FaderAndScroller(JUICED)/ContentPanel/TextPanel/Square",
+      "identity": "RectTransform",
+      "id": 341
+    },
+    {
+      "path": "$/SafeZone/PublicTestDisplay/Warning/FaderAndScroller(JUICED)/Scroll View/Viewport/Content",
+      "identity": "RectTransform",
+      "id": 342
+    },
+    {
+      "path": "$/SafeZone/ButtonPanel (JUICED)/Button, Profile/BaseOutline",
+      "identity": "RectTransform",
+      "id": 343
+    },
+    {
+      "path": "$/SafeZone/SubmenuLegend/GenericGlyphAndDescription[1]/Description",
+      "identity": "RectTransform",
+      "id": 344
+    },
+    {
+      "path": "$/SafeZone/SubmenuLegend/GenericGlyphAndDescription/Text",
+      "identity": "RectTransform",
+      "id": 345
+    },
+    {
+      "path": "$/SafeZone/UpperRightMenuPanel/MiscOptionsPanel/NakedButton (Profile)/Text/TMP SubMeshUI [tmpBombStandard Material + NotoSansCJKsc-Regular SDF (Japanese) Atlas][1]",
+      "identity": "RectTransform",
+      "id": 346
+    },
+    {
+      "path": "$/SafeZone/GenericMenuButton/BaseOutline",
+      "identity": "RectTransform",
+      "id": 347
+    },
+    {
+      "path": "$/SafeZone/GenericMenuButtonPanel/JuicePanel/GenericMenuButton (Local Ad-Hoc MP)/BaseOutline",
+      "identity": "RectTransform",
+      "id": 348
+    },
+    {
+      "path": "$/SafeZone/UpperRightMenuPanel/MiscOptionsPanel/NakedButton (Profile)/Text/TMP SubMeshUI [tmpBombStandard Material + NotoSansCJKsc-Regular SDF (Japanese) Atlas]",
+      "identity": "RectTransform",
+      "id": 349
+    },
+    {
+      "path": "$/SafeZone/SubmenuLegend/GenericGlyphAndDescription[1]",
+      "identity": "RectTransform",
+      "id": 350
+    },
+    {
+      "path": "$/SafeZone/UpperRightMenuPanel/MiscOptionsPanel/LanguageDropdown/Template/Viewport/Content/Item/Item Image",
+      "identity": "RectTransform",
+      "id": 351
+    },
+    {
+      "path": "$/SafeZone/UpperRightMenuPanel/MiscOptionsPanel/LanguageDropdown/Template/Viewport/BlurPanel",
+      "identity": "RectTransform",
+      "id": 352
+    },
+    {
+      "path": "$/SafeZone/SubmenuLegend/GenericGlyphAndDescription (3)/Text",
+      "identity": "RectTransform",
+      "id": 353
+    },
+    {
+      "path": "$/SafeZone/GenericMenuButtonPanel/JuicePanel/GenericMenuButton (Settings)/BaseOutline",
+      "identity": "RectTransform",
+      "id": 354
+    },
+    {
+      "path": "$/SafeZone/PublicTestDisplay/Warning/FaderAndScroller(JUICED)/Scroll View/Scrollbar Horizontal/Sliding Area/Handle",
+      "identity": "RectTransform",
+      "id": 355
+    },
+    {
+      "path": "$/SafeZone/GenericMenuButtonPanel/JuicePanel/DescriptionPanel, Naked/ContentSizeFitter/CornerRect",
+      "identity": "RectTransform",
+      "id": 356
+    },
+    {
+      "path": "$/SafeZone/PublicTestDisplay/Warning/FaderAndScroller(JUICED)/Scroll View/Scrollbar Vertical/Sliding Area/Handle/HoverHighlight",
+      "identity": "RectTransform",
+      "id": 357
+    },
+    {
+      "path": "$/MiscInfo/Copyright/Copyright (1)/TMP SubMeshUI [NotoSans-Regular Atlas Material + NotoSansCJKsc-Regular SDF (Korean) Atlas]",
+      "identity": "RectTransform",
+      "id": 358
+    },
+    {
+      "path": "$/SafeZone/GenericMenuButtonPanel/JuicePanel/GenericMenuButton (Extra Game Mode)/HoverOutline",
+      "identity": "RectTransform",
+      "id": 359
+    },
+    {
+      "path": "$/SafeZone/ImagePanel (JUICED)",
+      "identity": "RectTransform",
+      "id": 360
+    },
+    {
+      "path": "$/SafeZone/UpperRightMenuPanel/MiscOptionsPanel/NakedButton (Profile)",
+      "identity": "RectTransform",
+      "id": 361
+    },
+    {
+      "path": "$/SafeZone/GenericMenuButtonPanel/JuicePanel/GenericMenuButton (Extra Game Mode)/BaseOutline",
+      "identity": "RectTransform",
+      "id": 362
+    },
+    {
+      "path": "$/SafeZone/GenericMenuButtonPanel/JuicePanel/GenericMenuButton (Music&More)/BaseOutline",
+      "identity": "RectTransform",
+      "id": 363
+    },
+    {
+      "path": "$/SafeZone/SubmenuLegend/GenericGlyphAndDescription[2]/Description/TMP SubMeshUI [TextMeshPro/Sprite]",
+      "identity": "RectTransform",
+      "id": 364
+    },
+    {
+      "path": "$/SafeZone/GenericMenuButtonPanel",
+      "identity": "RectTransform",
+      "id": 365
+    },
+    {
+      "path": "$/SafeZone/PublicTestDisplay/Warning/FaderAndScroller(JUICED)/Scroll View",
+      "identity": "RectTransform",
+      "id": 366
+    },
+    {
+      "path": "$/SafeZone/GenericMenuButtonPanel/JuicePanel/GenericMenuButton (Splitscreen)",
+      "identity": "RectTransform",
+      "id": 367
+    },
+    {
+      "path": "$/SafeZone/GenericMenuButtonPanel/JuicePanel/GenericMenuButton (Logbook)/ButtonText",
+      "identity": "RectTransform",
+      "id": 368
+    },
+    {
+      "path": "$/SafeZone/GenericMenuButtonPanel/JuicePanel/GenericMenuButton (Singleplayer)/ButtonText",
+      "identity": "RectTransform",
+      "id": 369
+    },
+    {
+      "path": "$/SafeZone/GenericMenuButtonPanel/JuicePanel/GenericMenuButton (Local Ad-Hoc MP)",
+      "identity": "RectTransform",
+      "id": 370
+    },
+    {
+      "path": "$/SafeZone/GenericMenuButtonPanel/JuicePanel/GenericMenuButton (Multiplayer)",
+      "identity": "RectTransform",
+      "id": 371
+    },
+    {
+      "path": "$/SafeZone/UpperRightMenuPanel/MiscOptionsPanel/LanguageDropdown/Template/Viewport/Content/Item/Item Checkmark",
+      "identity": "RectTransform",
+      "id": 372
+    },
+    {
+      "path": "$/SafeZone/UpperRightMenuPanel/MiscOptionsPanel/LanguageDropdown/Image",
+      "identity": "RectTransform",
+      "id": 373
+    },
+    {
+      "path": "$/SafeZone/PublicTestDisplay/Warning/FaderAndScroller(JUICED)/Scroll View/Viewport",
+      "identity": "RectTransform",
+      "id": 374
+    },
+    {
+      "path": "$/SafeZone/GenericMenuButtonPanel/JuicePanel/GenericMenuButton (Quit)/BaseOutline",
+      "identity": "RectTransform",
+      "id": 375
+    },
+    {
+      "path": "$/SafeZone/UpperRightMenuPanel/MiscOptionsPanel/LanguageDropdown/Template/Viewport",
+      "identity": "RectTransform",
+      "id": 376
+    },
+    {
+      "path": "$/MiscInfo/Copyright/Copyright (1)/TMP SubMeshUI [NotoSans-Regular Atlas Material + NotoSans-Regular SDF(ROOT Extended ASCII + Turkish) Atlas]",
+      "identity": "RectTransform",
+      "id": 377
+    },
+    {
+      "path": "$/SafeZone/PublicTestDisplay",
+      "identity": "RectTransform",
+      "id": 378
+    },
+    {
+      "path": "$/SafeZone/GenericMenuButtonPanel/JuicePanel/GenericMenuButton (Extra Game Mode)",
+      "identity": "RectTransform",
+      "id": 379
+    },
+    {
+      "path": "$/SafeZone/PublicTestDisplay/Warning/FaderAndScroller(JUICED)/ContentPanel",
+      "identity": "RectTransform",
+      "id": 380
+    },
+    {
+      "path": "$/SafeZone/UpperRightMenuPanel/MiscOptionsPanel/NakedButton (Profile)/Text/TMP SubMeshUI [tmpBombStandard Material + NotoSansCJKsc-Regular SDF (CJK 4E00-5E56) Atlas]",
+      "identity": "RectTransform",
+      "id": 381
+    },
+    {
+      "path": "$/SafeZone/SubmenuLegend/GenericGlyphAndDescription[1]/Description/TMP SubMeshUI [TextMeshPro/Sprite]",
+      "identity": "RectTransform",
+      "id": 382
+    },
+    {
+      "path": "$/SafeZone/SubmenuLegend/GenericGlyphAndDescription",
+      "identity": "RectTransform",
+      "id": 383
+    },
+    {
+      "path": "$/SafeZone/GenericMenuButtonPanel/JuicePanel/GenericMenuButton (Singleplayer)/BaseOutline",
+      "identity": "RectTransform",
+      "id": 384
+    },
+    {
+      "path": "$/MiscInfo",
+      "identity": "RectTransform",
+      "id": 385
+    },
+    {
+      "path": "$/SafeZone/GenericMenuButtonPanel/JuicePanel/GenericMenuButton (Settings)/HoverOutline",
+      "identity": "RectTransform",
+      "id": 386
+    },
+    {
+      "path": "$/SafeZone/GenericMenuButtonPanel/JuicePanel/GenericMenuButton (Quit)/ButtonText",
+      "identity": "RectTransform",
+      "id": 387
+    },
+    {
+      "path": "$/SafeZone/PublicTestDisplay/Warning/FaderAndScroller(JUICED)/Scroll View/Scrollbar Vertical/Sliding Area",
+      "identity": "RectTransform",
+      "id": 388
+    },
+    {
+      "path": "$/SafeZone/GenericMenuButton/ButtonText",
+      "identity": "RectTransform",
+      "id": 389
+    },
+    {
+      "path": "$/SafeZone/GenericMenuButtonPanel/JuicePanel/GenericMenuButton (Logbook)",
+      "identity": "RectTransform",
+      "id": 390
+    },
+    {
+      "path": "$/SafeZone/PlatformStoreButton/ButtonText",
+      "identity": "RectTransform",
+      "id": 391
+    },
+    {
+      "path": "$/SafeZone/GenericMenuButtonPanel/JuicePanel/GenericMenuButton (Settings)/ButtonText",
+      "identity": "RectTransform",
+      "id": 392
+    },
+    {
+      "path": "$/SafeZone/PublicTestDisplay/Warning/FaderAndScroller(JUICED)/Scroll View/Scrollbar Horizontal",
+      "identity": "RectTransform",
+      "id": 393
+    },
+    {
+      "path": "$/SafeZone/SubmenuLegend/GenericGlyphAndDescription (3)/Description",
+      "identity": "RectTransform",
+      "id": 394
+    },
+    {
+      "path": "$/SafeZone/GenericMenuButtonPanel/JuicePanel/GenericMenuButton (Quit)",
+      "identity": "RectTransform",
+      "id": 395
+    },
+    {
+      "path": "$/SafeZone/GenericMenuButtonPanel/JuicePanel/DescriptionPanel, Naked",
+      "identity": "RectTransform",
+      "id": 396
+    },
+    {
+      "path": "$/SafeZone/PublicTestDisplay/Warning/FaderAndScroller(JUICED)/Scroll View/Scrollbar Horizontal/Sliding Area",
+      "identity": "RectTransform",
+      "id": 397
+    },
+    {
+      "path": "$/SafeZone/GenericMenuButtonPanel/JuicePanel/GenericMenuButton (Local Ad-Hoc MP)/HoverOutline",
+      "identity": "RectTransform",
+      "id": 398
+    },
+    {
+      "path": "$/SafeZone/PublicTestDisplay/Warning/FaderAndScroller(JUICED)/ContentPanel/border",
+      "identity": "RectTransform",
+      "id": 399
+    },
+    {
+      "path": "$/SafeZone/UpperRightMenuPanel",
+      "identity": "RectTransform",
+      "id": 400
+    },
+    {
+      "path": "$/SafeZone/GenericMenuButtonPanel/JuicePanel/GenericMenuButton (Splitscreen)/BaseOutline",
+      "identity": "RectTransform",
+      "id": 401
+    },
+    {
+      "path": "$/SafeZone/SubmenuLegend/GenericGlyphAndDescription[2]",
+      "identity": "RectTransform",
+      "id": 402
+    },
+    {
+      "path": "$/SafeZone",
+      "identity": "RectTransform",
+      "id": 403
+    },
+    {
+      "path": "$/SafeZone/GenericMenuButtonPanel/JuicePanel",
+      "identity": "RectTransform",
+      "id": 404
+    },
+    {
+      "path": "$/SafeZone/GenericMenuButtonPanel/JuicePanel/GenericMenuButton (Logbook)/BaseOutline",
+      "identity": "RectTransform",
+      "id": 405
+    },
+    {
+      "path": "$/SafeZone/ButtonPanel (JUICED)/Button, Profile/HoverOutline",
+      "identity": "RectTransform",
+      "id": 406
+    },
+    {
+      "path": "$/SafeZone/GenericMenuButton/HoverOutline",
+      "identity": "RectTransform",
+      "id": 407
+    },
+    {
+      "path": "$/SafeZone/SubmenuLegend/GenericGlyphAndDescription/Text (1)",
+      "identity": "RectTransform",
+      "id": 408
+    },
+    {
+      "path": "$/SafeZone/UpperRightMenuPanel/MiscOptionsPanel/LanguageDropdown",
+      "identity": "RectTransform",
+      "id": 409
+    },
+    {
+      "path": "$/SafeZone/GenericMenuButtonPanel/JuicePanel/GenericMenuButton (Music&More)",
+      "identity": "RectTransform",
+      "id": 410
+    },
+    {
+      "path": "$/SafeZone/ButtonPanel (JUICED)/Button, Profile/ButtonText",
+      "identity": "RectTransform",
+      "id": 411
+    },
+    {
+      "path": "$/SafeZone/PlatformStoreButton",
+      "identity": "RectTransform",
+      "id": 412
+    },
+    {
+      "path": "$/SafeZone/SubmenuLegend/GenericGlyphAndDescription (3)/Description/TMP SubMeshUI [TextMeshPro/Sprite]",
+      "identity": "RectTransform",
+      "id": 413
+    },
+    {
+      "path": "$/SafeZone/UpperRightMenuPanel/MiscOptionsPanel",
+      "identity": "RectTransform",
+      "id": 414
+    },
+    {
+      "path": "$/SafeZone/SubmenuLegend/GenericGlyphAndDescription/Description",
+      "identity": "RectTransform",
+      "id": 415
+    },
+    {
+      "path": "$/SafeZone/ImagePanel (JUICED)/LogoImage",
+      "identity": "RectTransform",
+      "id": 416
+    },
+    {
+      "path": "$/SafeZone/PublicTestDisplay/Warning/FaderAndScroller(JUICED)/ContentPanel/TextPanel/WarningText",
+      "identity": "RectTransform",
+      "id": 417
+    },
+    {
+      "path": "$/SafeZone/GenericMenuButtonPanel/JuicePanel/GenericMenuButton (Music&More)/HoverOutline",
+      "identity": "RectTransform",
+      "id": 418
+    },
+    {
+      "path": "$/SafeZone/SubmenuLegend/GenericGlyphAndDescription (3)/Text/TMP SubMeshUI [TextMeshPro/Sprite]",
+      "identity": "RectTransform",
+      "id": 419
+    },
+    {
+      "path": "$/SafeZone/GenericMenuButtonPanel/JuicePanel/GenericMenuButton (Music&More)/ButtonText",
+      "identity": "RectTransform",
+      "id": 420
+    },
+    {
+      "path": "$/SafeZone/SubmenuLegend/GenericGlyphAndDescription[2]/Text",
+      "identity": "RectTransform",
+      "id": 421
+    },
+    {
+      "path": "$/SafeZone/UpperRightMenuPanel/MiscOptionsPanel/LanguageDropdown/Arrow",
+      "identity": "RectTransform",
+      "id": 422
+    },
+    {
+      "path": "$/SafeZone/UpperRightMenuPanel/MiscOptionsPanel/NakedButton (Profile)/Text/TMP SubMeshUI [tmpBombStandard Material + NotoSansCJKsc-Regular SDF (CJK 4E00-5E56) Atlas][1]",
+      "identity": "RectTransform",
+      "id": 423
+    },
+    {
+      "path": "$/SafeZone/GenericMenuButtonPanel/JuicePanel/GenericMenuButton (Logbook)/HoverOutline",
+      "identity": "RectTransform",
+      "id": 424
+    },
+    {
+      "path": "$/SafeZone/UpperRightMenuPanel/MiscOptionsPanel/LanguageDropdown/Template/Scrollbar/Sliding Area",
+      "identity": "RectTransform",
+      "id": 425
+    },
+    {
+      "path": "$/SafeZone/PublicTestDisplay/Warning/FaderAndScroller(JUICED)/Scroll View/Viewport/Content/WarningText",
+      "identity": "RectTransform",
+      "id": 426
+    },
+    {
+      "path": "$/MiscInfo/Copyright/SteamBuildLabel (1)",
+      "identity": "RectTransform",
+      "id": 427
+    },
+    {
+      "path": "$/SafeZone/GenericMenuButtonPanel/JuicePanel/GenericMenuButton (Singleplayer)/HoverOutline",
+      "identity": "RectTransform",
+      "id": 428
+    },
+    {
+      "path": "$/SafeZone/PublicTestDisplay/Warning/FaderAndScroller(JUICED)/ContentPanel/TextPanel",
+      "identity": "RectTransform",
+      "id": 429
+    },
+    {
+      "path": "$/SafeZone/GenericMenuButtonPanel/JuicePanel/GenericMenuButton (Splitscreen)/ButtonText",
+      "identity": "RectTransform",
+      "id": 430
+    },
+    {
+      "path": "$/SafeZone/SubmenuLegend/GenericGlyphAndDescription/Description/TMP SubMeshUI [TextMeshPro/Sprite]",
+      "identity": "RectTransform",
+      "id": 431
+    },
+    {
+      "path": "$/SafeZone/GenericMenuButtonPanel/JuicePanel/DescriptionPanel, Naked/ContentSizeFitter/BlurPanel",
+      "identity": "RectTransform",
+      "id": 432
+    },
+    {
+      "path": "$/SafeZone/GenericMenuButtonPanel/JuicePanel/GenericMenuButton (Splitscreen)/HoverOutline",
+      "identity": "RectTransform",
+      "id": 433
+    },
+    {
+      "path": "$/SafeZone/PublicTestDisplay/Warning/FaderAndScroller(JUICED)/ContentPanel/TextPanel/gip",
+      "identity": "RectTransform",
+      "id": 434
+    },
+    {
+      "path": "$/SafeZone/ImagePanel (JUICED)",
+      "identity": "CanvasGroup",
+      "id": 435
+    },
+    {
+      "path": "$/MiscInfo",
+      "identity": "CanvasGroup",
+      "id": 436
+    },
+    {
+      "path": "$/SafeZone/PublicTestDisplay/Warning/FaderAndScroller(JUICED)",
+      "identity": "CanvasGroup",
+      "id": 437
+    },
+    {
+      "path": "$/SafeZone/SubmenuLegend",
+      "identity": "CanvasGroup",
+      "id": 438
+    },
+    {
+      "path": "$/SafeZone/ButtonPanel (JUICED)",
+      "identity": "CanvasGroup",
+      "id": 439
+    },
+    {
+      "path": "$",
+      "identity": "CanvasGroup",
+      "id": 440
+    },
+    {
+      "path": "$/SafeZone/UpperRightMenuPanel",
+      "identity": "CanvasGroup",
+      "id": 441
+    },
+    {
+      "path": "$/SafeZone/GenericMenuButtonPanel",
+      "identity": "CanvasGroup",
+      "id": 442
+    },
+    {
+      "path": "$/SafeZone/GenericMenuButtonPanel/JuicePanel/GenericMenuButton (Singleplayer)/HoverOutline",
+      "identity": "UnityEngine.UI:UnityEngine.UI.Image",
+      "id": 443
+    },
+    {
+      "path": "$/SafeZone/SubmenuLegend/GenericGlyphAndDescription[2]",
+      "identity": "UnityEngine.UI:UnityEngine.UI.LayoutElement",
+      "id": 444
+    },
+    {
+      "path": "$/SafeZone/GenericMenuButtonPanel/JuicePanel/GenericMenuButton (Logbook)",
+      "identity": "UnityEngine.UI:UnityEngine.UI.Image",
+      "id": 445
+    },
+    {
+      "path": "$/SafeZone/UpperRightMenuPanel/MiscOptionsPanel/LanguageDropdown/Template/Scrollbar",
+      "identity": "UnityEngine.UI:UnityEngine.UI.Scrollbar",
+      "id": 446
+    },
+    {
+      "path": "$/SafeZone/UpperRightMenuPanel/MiscOptionsPanel/LanguageDropdown",
+      "identity": "UnityEngine.UI:UnityEngine.UI.Image",
+      "id": 447
+    },
+    {
+      "path": "$/SafeZone/PlatformStoreButton/BaseOutline",
+      "identity": "UnityEngine.UI:UnityEngine.UI.Image",
+      "id": 448
+    },
+    {
+      "path": "$/FadePanel",
+      "identity": "UnityEngine.UI:UnityEngine.UI.Image",
+      "id": 449
+    },
+    {
+      "path": "$/SafeZone/SubmenuLegend/GenericGlyphAndDescription",
+      "identity": "UnityEngine.UI:UnityEngine.UI.LayoutElement",
+      "id": 450
+    },
+    {
+      "path": "$/SafeZone/GenericMenuButton/HoverOutline",
+      "identity": "UnityEngine.UI:UnityEngine.UI.Image",
+      "id": 451
+    },
+    {
+      "path": "$/SafeZone/UpperRightMenuPanel/MiscOptionsPanel/LanguageDropdown/Image",
+      "identity": "UnityEngine.UI:UnityEngine.UI.Image",
+      "id": 452
+    },
+    {
+      "path": "$/SafeZone/UpperRightMenuPanel/MiscOptionsPanel/LanguageDropdown/Template/Viewport/Content/Item/Item Label",
+      "identity": "RoR2:RoR2.UI.HGTextMeshProUGUI",
+      "id": 453
+    },
+    {
+      "path": "$/SafeZone/UpperRightMenuPanel/MiscOptionsPanel/LanguageDropdown/Template/Viewport/Content/Item/Item Image",
+      "identity": "UnityEngine.UI:UnityEngine.UI.Image",
+      "id": 454
+    },
+    {
+      "path": "$/SafeZone/ButtonPanel (JUICED)/Button, Profile/ButtonText",
+      "identity": "RoR2:RoR2.UI.HGTextMeshProUGUI",
+      "id": 455
+    },
+    {
+      "path": "$/SafeZone/PublicTestDisplay/Warning/FaderAndScroller(JUICED)/Scroll View",
+      "identity": "UnityEngine.UI:UnityEngine.UI.Image",
+      "id": 456
+    },
+    {
+      "path": "$/SafeZone/SubmenuLegend/GenericGlyphAndDescription[1]/Description",
+      "identity": "RoR2:RoR2.UI.HGTextMeshProUGUI",
+      "id": 457
+    },
+    {
+      "path": "$/SafeZone/GenericMenuButtonPanel/JuicePanel/GenericMenuButton (Settings)/BaseOutline",
+      "identity": "UnityEngine.UI:UnityEngine.UI.Image",
+      "id": 458
+    },
+    {
+      "path": "$/SafeZone/PublicTestDisplay/Warning/FaderAndScroller(JUICED)/Scroll View/Scrollbar Horizontal/Sliding Area/Handle",
+      "identity": "UnityEngine.UI:UnityEngine.UI.Image",
+      "id": 459
+    },
+    {
+      "path": "$/SafeZone/GenericMenuButtonPanel/JuicePanel/GenericMenuButton (Settings)",
+      "identity": "UnityEngine.UI:UnityEngine.UI.Image",
+      "id": 460
+    },
+    {
+      "path": "$/SafeZone/PublicTestDisplay/Warning/FaderAndScroller(JUICED)/Scroll View",
+      "identity": "UnityEngine.UI:UnityEngine.UI.ScrollRect",
+      "id": 461
+    },
+    {
+      "path": "$/SafeZone/PublicTestDisplay/Warning/FaderAndScroller(JUICED)/Scroll View/Viewport",
+      "identity": "UnityEngine.UI:UnityEngine.UI.Image",
+      "id": 462
+    },
+    {
+      "path": "$/SafeZone/GenericMenuButtonPanel/JuicePanel/GenericMenuButton (Multiplayer)/BaseOutline",
+      "identity": "UnityEngine.UI:UnityEngine.UI.Image",
+      "id": 463
+    },
+    {
+      "path": "$/SafeZone/SubmenuLegend/GenericGlyphAndDescription (3)/Text",
+      "identity": "UnityEngine.UI:UnityEngine.UI.LayoutElement",
+      "id": 464
+    },
+    {
+      "path": "$/SafeZone/PublicTestDisplay/Warning/FaderAndScroller(JUICED)/ContentPanel/TextPanel/gip",
+      "identity": "UnityEngine.UI:UnityEngine.UI.RawImage",
+      "id": 465
+    },
+    {
+      "path": "$/SafeZone/UpperRightMenuPanel/MiscOptionsPanel/NakedButton (Profile)/HoverOutline",
+      "identity": "UnityEngine.UI:UnityEngine.UI.Image",
+      "id": 466
+    },
+    {
+      "path": "$/SafeZone/GenericMenuButton",
+      "identity": "UnityEngine.UI:UnityEngine.UI.Image",
+      "id": 467
+    },
+    {
+      "path": "$/SafeZone/SubmenuLegend/GenericGlyphAndDescription/Text (1)",
+      "identity": "RoR2:RoR2.UI.HGTextMeshProUGUI",
+      "id": 468
+    },
+    {
+      "path": "$/SafeZone/UpperRightMenuPanel/MiscOptionsPanel/LanguageDropdown/Template/Viewport/BorderImage",
+      "identity": "UnityEngine.UI:UnityEngine.UI.Image",
+      "id": 469
+    },
+    {
+      "path": "$/SafeZone/GenericMenuButtonPanel/JuicePanel/GenericMenuButton (Singleplayer)",
+      "identity": "UnityEngine.UI:UnityEngine.UI.Button",
+      "id": 470
+    },
+    {
+      "path": "$/SafeZone/GenericMenuButtonPanel/JuicePanel/DescriptionPanel, Naked/ContentSizeFitter",
+      "identity": "UnityEngine.UI:UnityEngine.UI.VerticalLayoutGroup",
+      "id": 471
+    },
+    {
+      "path": "$/SafeZone/PlatformStoreButton/ButtonText",
+      "identity": "RoR2:RoR2.UI.HGTextMeshProUGUI",
+      "id": 472
+    },
+    {
+      "path": "$/SafeZone/PublicTestDisplay/Warning/FaderAndScroller(JUICED)/Scroll View/Viewport/Content/gip",
+      "identity": "UnityEngine.UI:UnityEngine.UI.LayoutElement",
+      "id": 473
+    },
+    {
+      "path": "$/SafeZone/PublicTestDisplay/Warning/FaderAndScroller(JUICED)/ContentPanel/TextPanel/WarningText",
+      "identity": "RoR2:RoR2.UI.HGTextMeshProUGUI",
+      "id": 474
+    },
+    {
+      "path": "$/SafeZone/GenericMenuButtonPanel/JuicePanel/GenericMenuButton (Music&More)/BaseOutline",
+      "identity": "UnityEngine.UI:UnityEngine.UI.Image",
+      "id": 475
+    },
+    {
+      "path": "$/SafeZone/GenericMenuButtonPanel/JuicePanel/GenericMenuButton (Music&More)",
+      "identity": "UnityEngine.UI:UnityEngine.UI.Image",
+      "id": 476
+    },
+    {
+      "path": "$/SafeZone/SubmenuLegend/GenericGlyphAndDescription[1]",
+      "identity": "UnityEngine.UI:UnityEngine.UI.LayoutElement",
+      "id": 477
+    },
+    {
+      "path": "$/SafeZone/PublicTestDisplay/Warning/FaderAndScroller(JUICED)/Scroll View/Scrollbar Vertical/Sliding Area/Handle/HoverHighlight",
+      "identity": "UnityEngine.UI:UnityEngine.UI.Image",
+      "id": 478
+    },
+    {
+      "path": "$/SafeZone/GenericMenuButtonPanel/JuicePanel/GenericMenuButton (Extra Game Mode)/HoverOutline",
+      "identity": "UnityEngine.UI:UnityEngine.UI.Image",
+      "id": 479
+    },
+    {
+      "path": "$/SafeZone/UpperRightMenuPanel/MiscOptionsPanel/LanguageDropdown/Template/Viewport/BorderImage",
+      "identity": "UnityEngine.UI:UnityEngine.UI.LayoutElement",
+      "id": 480
+    },
+    {
+      "path": "$",
+      "identity": "UnityEngine.UI:UnityEngine.UI.CanvasScaler",
+      "id": 481
+    },
+    {
+      "path": "$/SafeZone/PublicTestDisplay/Warning/FaderAndScroller(JUICED)/ContentPanel",
+      "identity": "UnityEngine.UI:UnityEngine.UI.LayoutElement",
+      "id": 482
+    },
+    {
+      "path": "$/SafeZone/GenericMenuButtonPanel/JuicePanel/DescriptionPanel, Naked/ContentSizeFitter/DescriptionText",
+      "identity": "RoR2:RoR2.UI.HGTextMeshProUGUI",
+      "id": 483
+    },
+    {
+      "path": "$/SafeZone/PublicTestDisplay/Warning/FaderAndScroller(JUICED)/ContentPanel",
+      "identity": "UnityEngine.UI:UnityEngine.UI.Image",
+      "id": 484
+    },
+    {
+      "path": "$/SafeZone/SubmenuLegend/GenericGlyphAndDescription[1]",
+      "identity": "UnityEngine.UI:UnityEngine.UI.HorizontalLayoutGroup",
+      "id": 485
+    },
+    {
+      "path": "$/SafeZone/SubmenuLegend/GenericGlyphAndDescription (3)/Text",
+      "identity": "RoR2:RoR2.UI.HGTextMeshProUGUI",
+      "id": 486
+    },
+    {
+      "path": "$/SafeZone/SubmenuLegend/GenericGlyphAndDescription (3)",
+      "identity": "UnityEngine.UI:UnityEngine.UI.Image",
+      "id": 487
+    },
+    {
+      "path": "$",
+      "identity": "Assembly-CSharp:.RecoveredHudPresentation",
+      "id": 488
+    },
+    {
+      "path": "$/SafeZone/PlatformStoreButton",
+      "identity": "UnityEngine.UI:UnityEngine.UI.Image",
+      "id": 489
+    },
+    {
+      "path": "$/SafeZone/GenericMenuButtonPanel/JuicePanel/GenericMenuButton (Multiplayer)",
+      "identity": "UnityEngine.UI:UnityEngine.UI.Image",
+      "id": 490
+    },
+    {
+      "path": "$/SafeZone/SubmenuLegend/GenericGlyphAndDescription/Description",
+      "identity": "RoR2:RoR2.UI.HGTextMeshProUGUI",
+      "id": 491
+    },
+    {
+      "path": "$/MiscInfo/Copyright/Copyright (1)",
+      "identity": "RoR2:RoR2.UI.HGTextMeshProUGUI",
+      "id": 492
+    },
+    {
+      "path": "$/SafeZone/GenericMenuButtonPanel/JuicePanel/GenericMenuButton (Local Ad-Hoc MP)",
+      "identity": "UnityEngine.UI:UnityEngine.UI.Image",
+      "id": 493
+    },
+    {
+      "path": "$/SafeZone/GenericMenuButtonPanel/JuicePanel/GenericMenuButton (Extra Game Mode)",
+      "identity": "UnityEngine.UI:UnityEngine.UI.Image",
+      "id": 494
+    },
+    {
+      "path": "$/SafeZone/PublicTestDisplay/Warning/FaderAndScroller(JUICED)/Scroll View/Viewport/Square",
+      "identity": "UnityEngine.UI:UnityEngine.UI.Image",
+      "id": 495
+    },
+    {
+      "path": "$/SafeZone/GenericMenuButtonPanel/JuicePanel/GenericMenuButton (Singleplayer)/BaseOutline",
+      "identity": "UnityEngine.UI:UnityEngine.UI.Image",
+      "id": 496
+    },
+    {
+      "path": "$/SafeZone/SubmenuLegend/GenericGlyphAndDescription (3)",
+      "identity": "UnityEngine.UI:UnityEngine.UI.ContentSizeFitter",
+      "id": 497
+    },
+    {
+      "path": "$/SafeZone/GenericMenuButtonPanel/JuicePanel/GenericMenuButton (Quit)/HoverOutline",
+      "identity": "UnityEngine.UI:UnityEngine.UI.Image",
+      "id": 498
+    },
+    {
+      "path": "$/SafeZone/PublicTestDisplay/Warning/FaderAndScroller(JUICED)",
+      "identity": "UnityEngine.UI:UnityEngine.UI.VerticalLayoutGroup",
+      "id": 499
+    },
+    {
+      "path": "$/SafeZone/SubmenuLegend/GenericGlyphAndDescription/Text",
+      "identity": "RoR2:RoR2.UI.HGTextMeshProUGUI",
+      "id": 500
+    },
+    {
+      "path": "$/SafeZone/PublicTestDisplay/Warning/FaderAndScroller(JUICED)/Scroll View/Viewport",
+      "identity": "UnityEngine.UI:UnityEngine.UI.Mask",
+      "id": 501
+    },
+    {
+      "path": "$/SafeZone/GenericMenuButtonPanel/JuicePanel/DescriptionPanel, Naked/ContentSizeFitter/CornerRect",
+      "identity": "UnityEngine.UI:UnityEngine.UI.Image",
+      "id": 502
+    },
+    {
+      "path": "$/SafeZone/UpperRightMenuPanel/MiscOptionsPanel/LanguageDropdown/Template/Viewport/BlurPanel",
+      "identity": "UnityEngine.UI:UnityEngine.UI.LayoutElement",
+      "id": 503
+    },
+    {
+      "path": "$/SafeZone/UpperRightMenuPanel",
+      "identity": "UnityEngine.UI:UnityEngine.UI.VerticalLayoutGroup",
+      "id": 504
+    },
+    {
+      "path": "$/SafeZone/GenericMenuButtonPanel/JuicePanel/GenericMenuButton (Extra Game Mode)/BaseOutline",
+      "identity": "UnityEngine.UI:UnityEngine.UI.Image",
+      "id": 505
+    },
+    {
+      "path": "$/SafeZone/PublicTestDisplay/Warning/FaderAndScroller(JUICED)/Scroll View/Viewport/Content/LoreText",
+      "identity": "RoR2:RoR2.UI.HGTextMeshProUGUI",
+      "id": 506
+    },
+    {
+      "path": "$/SafeZone/PublicTestDisplay/Warning/FaderAndScroller(JUICED)/Scroll View/Scrollbar Vertical/Sliding Area/Handle",
+      "identity": "UnityEngine.UI:UnityEngine.UI.Image",
+      "id": 507
+    },
+    {
+      "path": "$/SafeZone/SubmenuLegend/GenericGlyphAndDescription[1]/Text",
+      "identity": "RoR2:RoR2.UI.HGTextMeshProUGUI",
+      "id": 508
+    },
+    {
+      "path": "$/SafeZone/GenericMenuButtonPanel/JuicePanel/GenericMenuButton (Music&More)/ButtonText",
+      "identity": "RoR2:RoR2.UI.HGTextMeshProUGUI",
+      "id": 509
+    },
+    {
+      "path": "$/SafeZone/GenericMenuButtonPanel/JuicePanel/GenericMenuButton (Splitscreen)/ButtonText",
+      "identity": "RoR2:RoR2.UI.HGTextMeshProUGUI",
+      "id": 510
+    },
+    {
+      "path": "$/SafeZone/GenericMenuButtonPanel/JuicePanel/GenericMenuButton (Local Ad-Hoc MP)/ButtonText",
+      "identity": "RoR2:RoR2.UI.HGTextMeshProUGUI",
+      "id": 511
+    },
+    {
+      "path": "$/SafeZone/SubmenuLegend/GenericGlyphAndDescription/Text",
+      "identity": "UnityEngine.UI:UnityEngine.UI.LayoutElement",
+      "id": 512
+    },
+    {
+      "path": "$/SafeZone/UpperRightMenuPanel/MiscOptionsPanel/LanguageDropdown/Template/Viewport/Content/Item",
+      "identity": "UnityEngine.UI:UnityEngine.UI.Toggle",
+      "id": 513
+    },
+    {
+      "path": "$/SafeZone/UpperRightMenuPanel/MiscOptionsPanel/LanguageDropdown/Template/Viewport/Content/Item/Item Image",
+      "identity": "UnityEngine.UI:UnityEngine.UI.AspectRatioFitter",
+      "id": 514
+    },
+    {
+      "path": "$/SafeZone/UpperRightMenuPanel/MiscOptionsPanel/LanguageDropdown/Template/Scrollbar/Sliding Area/Handle",
+      "identity": "UnityEngine.UI:UnityEngine.UI.Image",
+      "id": 515
+    },
+    {
+      "path": "$/SafeZone/ButtonPanel (JUICED)/Button, Profile/BaseOutline",
+      "identity": "UnityEngine.UI:UnityEngine.UI.Image",
+      "id": 516
+    },
+    {
+      "path": "$/SafeZone/SubmenuLegend/GenericGlyphAndDescription (3)",
+      "identity": "UnityEngine.UI:UnityEngine.UI.HorizontalLayoutGroup",
+      "id": 517
+    },
+    {
+      "path": "$/MiscInfo/Copyright/SteamBuildLabel (1)",
+      "identity": "RoR2:RoR2.UI.HGTextMeshProUGUI",
+      "id": 518
+    },
+    {
+      "path": "$/SafeZone/UpperRightMenuPanel/MiscOptionsPanel/NakedButton (Profile)",
+      "identity": "UnityEngine.UI:UnityEngine.UI.Image",
+      "id": 519
+    },
+    {
+      "path": "$/SafeZone/UpperRightMenuPanel/MiscOptionsPanel/NakedButton (Profile)/Text",
+      "identity": "RoR2:RoR2.UI.HGTextMeshProUGUI",
+      "id": 520
+    },
+    {
+      "path": "$/SafeZone/PublicTestDisplay/Warning/FaderAndScroller(JUICED)/Scroll View/Viewport/Content",
+      "identity": "UnityEngine.UI:UnityEngine.UI.VerticalLayoutGroup",
+      "id": 521
+    },
+    {
+      "path": "$/SafeZone/UpperRightMenuPanel/MiscOptionsPanel/LanguageDropdown/Template",
+      "identity": "UnityEngine.UI:UnityEngine.UI.Image",
+      "id": 522
+    },
+    {
+      "path": "$/SafeZone/UpperRightMenuPanel/MiscOptionsPanel/LanguageDropdown/Image",
+      "identity": "UnityEngine.UI:UnityEngine.UI.AspectRatioFitter",
+      "id": 523
+    },
+    {
+      "path": "$/SafeZone/PublicTestDisplay/Warning/FaderAndScroller(JUICED)/Scroll View/Scrollbar Vertical/Sliding Area/Handle/InteractableHighlight",
+      "identity": "UnityEngine.UI:UnityEngine.UI.Image",
+      "id": 524
+    },
+    {
+      "path": "$/SafeZone/SubmenuLegend",
+      "identity": "UnityEngine.UI:UnityEngine.UI.HorizontalLayoutGroup",
+      "id": 525
+    },
+    {
+      "path": "$/SafeZone/SubmenuLegend",
+      "identity": "UnityEngine.UI:UnityEngine.UI.Image",
+      "id": 526
+    },
+    {
+      "path": "$/SafeZone/ButtonPanel (JUICED)/Button, Profile",
+      "identity": "UnityEngine.UI:UnityEngine.UI.Image",
+      "id": 527
+    },
+    {
+      "path": "$/SafeZone/GenericMenuButtonPanel/JuicePanel/GenericMenuButton (Splitscreen)/BaseOutline",
+      "identity": "UnityEngine.UI:UnityEngine.UI.Image",
+      "id": 528
+    },
+    {
+      "path": "$/SafeZone/GenericMenuButtonPanel/JuicePanel/GenericMenuButton (Multiplayer)/HoverOutline",
+      "identity": "UnityEngine.UI:UnityEngine.UI.Image",
+      "id": 529
+    },
+    {
+      "path": "$/SafeZone/UpperRightMenuPanel/MiscOptionsPanel/LanguageDropdown/Template",
+      "identity": "UnityEngine.UI:UnityEngine.UI.ScrollRect",
+      "id": 530
+    },
+    {
+      "path": "$/SafeZone/SubmenuLegend/GenericGlyphAndDescription[2]/Description",
+      "identity": "RoR2:RoR2.UI.HGTextMeshProUGUI",
+      "id": 531
+    },
+    {
+      "path": "$/SafeZone/PublicTestDisplay/Warning/FaderAndScroller(JUICED)/Scroll View/Scrollbar Horizontal",
+      "identity": "UnityEngine.UI:UnityEngine.UI.Image",
+      "id": 532
+    },
+    {
+      "path": "$/SafeZone/GenericMenuButtonPanel/JuicePanel/GenericMenuButton (Singleplayer)",
+      "identity": "UnityEngine.UI:UnityEngine.UI.Image",
+      "id": 533
+    },
+    {
+      "path": "$/SafeZone/UpperRightMenuPanel/MiscOptionsPanel/LanguageDropdown/Template/Viewport/Background",
+      "identity": "UnityEngine.UI:UnityEngine.UI.Image",
+      "id": 534
+    },
+    {
+      "path": "$",
+      "identity": "UnityEngine.UI:UnityEngine.UI.GraphicRaycaster",
+      "id": 535
+    },
+    {
+      "path": "$/SafeZone/GenericMenuButtonPanel/JuicePanel/GenericMenuButton (Logbook)/BaseOutline",
+      "identity": "UnityEngine.UI:UnityEngine.UI.Image",
+      "id": 536
+    },
+    {
+      "path": "$/SafeZone/GenericMenuButtonPanel/JuicePanel/DescriptionPanel, Naked/ContentSizeFitter/CornerRect",
+      "identity": "UnityEngine.UI:UnityEngine.UI.LayoutElement",
+      "id": 537
+    },
+    {
+      "path": "$/SafeZone/GenericMenuButton/ButtonText",
+      "identity": "RoR2:RoR2.UI.HGTextMeshProUGUI",
+      "id": 538
+    },
+    {
+      "path": "$/SafeZone/PublicTestDisplay/Warning/FaderAndScroller(JUICED)/ContentPanel/border",
+      "identity": "UnityEngine.UI:UnityEngine.UI.Image",
+      "id": 539
+    },
+    {
+      "path": "$/SafeZone/GenericMenuButton/BaseOutline",
+      "identity": "UnityEngine.UI:UnityEngine.UI.Image",
+      "id": 540
+    },
+    {
+      "path": "$/SafeZone/PublicTestDisplay/Warning/FaderAndScroller(JUICED)/ContentPanel/TextPanel/Square",
+      "identity": "UnityEngine.UI:UnityEngine.UI.Image",
+      "id": 541
+    },
+    {
+      "path": "$/SafeZone/UpperRightMenuPanel/MiscOptionsPanel/LanguageDropdown/Template/Scrollbar",
+      "identity": "UnityEngine.UI:UnityEngine.UI.Image",
+      "id": 542
+    },
+    {
+      "path": "$/SafeZone/ImagePanel (JUICED)/LogoImage",
+      "identity": "UnityEngine.UI:UnityEngine.UI.Image",
+      "id": 543
+    },
+    {
+      "path": "$/SafeZone/GenericMenuButtonPanel/JuicePanel/GenericMenuButton (Quit)",
+      "identity": "UnityEngine.UI:UnityEngine.UI.Image",
+      "id": 544
+    },
+    {
+      "path": "$/SafeZone/SubmenuLegend/GenericGlyphAndDescription[2]",
+      "identity": "UnityEngine.UI:UnityEngine.UI.Image",
+      "id": 545
+    },
+    {
+      "path": "$/SafeZone/PublicTestDisplay/Warning/FaderAndScroller(JUICED)/Scroll View/Viewport/Content/gip",
+      "identity": "UnityEngine.UI:UnityEngine.UI.RawImage",
+      "id": 546
+    },
+    {
+      "path": "$/SafeZone/SubmenuLegend/GenericGlyphAndDescription",
+      "identity": "UnityEngine.UI:UnityEngine.UI.Image",
+      "id": 547
+    },
+    {
+      "path": "$/SafeZone/SubmenuLegend/GenericGlyphAndDescription[2]",
+      "identity": "UnityEngine.UI:UnityEngine.UI.HorizontalLayoutGroup",
+      "id": 548
+    },
+    {
+      "path": "$/SafeZone/PublicTestDisplay/Warning/FaderAndScroller(JUICED)/Scroll View/Scrollbar Vertical",
+      "identity": "UnityEngine.UI:UnityEngine.UI.Image",
+      "id": 549
+    },
+    {
+      "path": "$/SafeZone/UpperRightMenuPanel/MiscOptionsPanel/LanguageDropdown/Arrow",
+      "identity": "UnityEngine.UI:UnityEngine.UI.Image",
+      "id": 550
+    },
+    {
+      "path": "$/SafeZone/ButtonPanel (JUICED)/Button, Profile/HoverOutline",
+      "identity": "UnityEngine.UI:UnityEngine.UI.Image",
+      "id": 551
+    },
+    {
+      "path": "$/SafeZone/GenericMenuButtonPanel/JuicePanel/GenericMenuButton (Quit)/BaseOutline",
+      "identity": "UnityEngine.UI:UnityEngine.UI.Image",
+      "id": 552
+    },
+    {
+      "path": "$/SafeZone/GenericMenuButtonPanel/JuicePanel/GenericMenuButton (Logbook)/ButtonText",
+      "identity": "RoR2:RoR2.UI.HGTextMeshProUGUI",
+      "id": 553
+    },
+    {
+      "path": "$/SafeZone/GenericMenuButtonPanel/JuicePanel/GenericMenuButton (Splitscreen)",
+      "identity": "UnityEngine.UI:UnityEngine.UI.Image",
+      "id": 554
+    },
+    {
+      "path": "$/SafeZone/PublicTestDisplay/Warning/FaderAndScroller(JUICED)/Scroll View/Viewport/Content",
+      "identity": "UnityEngine.UI:UnityEngine.UI.ContentSizeFitter",
+      "id": 555
+    },
+    {
+      "path": "$/SafeZone/SubmenuLegend/GenericGlyphAndDescription[1]",
+      "identity": "UnityEngine.UI:UnityEngine.UI.Image",
+      "id": 556
+    },
+    {
+      "path": "$/SafeZone/UpperRightMenuPanel/MiscOptionsPanel/LanguageDropdown",
+      "identity": "UnityEngine.UI:UnityEngine.UI.LayoutElement",
+      "id": 557
+    },
+    {
+      "path": "$/SafeZone/PublicTestDisplay/Warning/FaderAndScroller(JUICED)/Scroll View",
+      "identity": "UnityEngine.UI:UnityEngine.UI.LayoutElement",
+      "id": 558
+    },
+    {
+      "path": "$/SafeZone/GenericMenuButtonPanel/JuicePanel/GenericMenuButton (Settings)/ButtonText",
+      "identity": "RoR2:RoR2.UI.HGTextMeshProUGUI",
+      "id": 559
+    },
+    {
+      "path": "$/SafeZone/GenericMenuButtonPanel/JuicePanel/GenericMenuButton (Extra Game Mode)/ButtonText",
+      "identity": "RoR2:RoR2.UI.HGTextMeshProUGUI",
+      "id": 560
+    },
+    {
+      "path": "$/SafeZone/GenericMenuButtonPanel/JuicePanel/GenericMenuButton (Music&More)/HoverOutline",
+      "identity": "UnityEngine.UI:UnityEngine.UI.Image",
+      "id": 561
+    },
+    {
+      "path": "$/SafeZone/PublicTestDisplay/Warning/FaderAndScroller(JUICED)/ContentPanel/TextPanel",
+      "identity": "UnityEngine.UI:UnityEngine.UI.LayoutElement",
+      "id": 562
+    },
+    {
+      "path": "$/SafeZone/GenericMenuButtonPanel/JuicePanel/GenericMenuButton (Singleplayer)/ButtonText",
+      "identity": "RoR2:RoR2.UI.HGTextMeshProUGUI",
+      "id": 563
+    },
+    {
+      "path": "$/SafeZone/GenericMenuButtonPanel/JuicePanel/GenericMenuButton (Local Ad-Hoc MP)/HoverOutline",
+      "identity": "UnityEngine.UI:UnityEngine.UI.Image",
+      "id": 564
+    },
+    {
+      "path": "$/SafeZone/SubmenuLegend/GenericGlyphAndDescription[1]/Text",
+      "identity": "UnityEngine.UI:UnityEngine.UI.LayoutElement",
+      "id": 565
+    },
+    {
+      "path": "$/SafeZone/SubmenuLegend/GenericGlyphAndDescription[2]/Text",
+      "identity": "RoR2:RoR2.UI.HGTextMeshProUGUI",
+      "id": 566
+    },
+    {
+      "path": "$/SafeZone/GenericMenuButtonPanel/JuicePanel/GenericMenuButton (Quit)",
+      "identity": "UnityEngine.UI:UnityEngine.UI.Button",
+      "id": 567
+    },
+    {
+      "path": "$/SafeZone/SubmenuLegend",
+      "identity": "UnityEngine.UI:UnityEngine.UI.ContentSizeFitter",
+      "id": 568
+    },
+    {
+      "path": "$/SafeZone/PlatformStoreButton/HoverOutline",
+      "identity": "UnityEngine.UI:UnityEngine.UI.Image",
+      "id": 569
+    },
+    {
+      "path": "$/SafeZone/GenericMenuButtonPanel/JuicePanel/GenericMenuButton (Quit)/ButtonText",
+      "identity": "RoR2:RoR2.UI.HGTextMeshProUGUI",
+      "id": 570
+    },
+    {
+      "path": "$/SafeZone/GenericMenuButtonPanel/JuicePanel/DescriptionPanel, Naked",
+      "identity": "UnityEngine.UI:UnityEngine.UI.LayoutElement",
+      "id": 571
+    },
+    {
+      "path": "$/SafeZone/UpperRightMenuPanel/MiscOptionsPanel/NakedButton (Profile)/Backdrop",
+      "identity": "UnityEngine.UI:UnityEngine.UI.Image",
+      "id": 572
+    },
+    {
+      "path": "$/SafeZone/SubmenuLegend/GenericGlyphAndDescription",
+      "identity": "UnityEngine.UI:UnityEngine.UI.HorizontalLayoutGroup",
+      "id": 573
+    },
+    {
+      "path": "$/SafeZone/UpperRightMenuPanel/MiscOptionsPanel/LanguageDropdown/Template/Viewport",
+      "identity": "UnityEngine.UI:UnityEngine.UI.RectMask2D",
+      "id": 574
+    },
+    {
+      "path": "$/SafeZone/GenericMenuButtonPanel/JuicePanel/GenericMenuButton (Multiplayer)/ButtonText",
+      "identity": "RoR2:RoR2.UI.HGTextMeshProUGUI",
+      "id": 575
+    },
+    {
+      "path": "$/SafeZone/PublicTestDisplay/Warning/FaderAndScroller(JUICED)/Scroll View/Viewport/Content/WarningText",
+      "identity": "RoR2:RoR2.UI.HGTextMeshProUGUI",
+      "id": 576
+    },
+    {
+      "path": "$/SafeZone/SubmenuLegend/GenericGlyphAndDescription (3)",
+      "identity": "UnityEngine.UI:UnityEngine.UI.LayoutElement",
+      "id": 577
+    },
+    {
+      "path": "$/SafeZone/UpperRightMenuPanel/MiscOptionsPanel/LanguageDropdown/Template/Viewport/Background",
+      "identity": "UnityEngine.UI:UnityEngine.UI.LayoutElement",
+      "id": 578
+    },
+    {
+      "path": "$/SafeZone/UpperRightMenuPanel/MiscOptionsPanel/LanguageDropdown/Template/Viewport/Content/Item/Item Checkmark",
+      "identity": "UnityEngine.UI:UnityEngine.UI.Image",
+      "id": 579
+    },
+    {
+      "path": "$/SafeZone/UpperRightMenuPanel/MiscOptionsPanel/LanguageDropdown/Label",
+      "identity": "RoR2:RoR2.UI.HGTextMeshProUGUI",
+      "id": 580
+    },
+    {
+      "path": "$/SafeZone/ButtonPanel (JUICED)",
+      "identity": "UnityEngine.UI:UnityEngine.UI.VerticalLayoutGroup",
+      "id": 581
+    },
+    {
+      "path": "$/SafeZone/SubmenuLegend/GenericGlyphAndDescription[2]/Text",
+      "identity": "UnityEngine.UI:UnityEngine.UI.LayoutElement",
+      "id": 582
+    },
+    {
+      "path": "$/SafeZone/UpperRightMenuPanel/MiscOptionsPanel/LanguageDropdown/Template/Viewport/Content/Item/Item Background",
+      "identity": "UnityEngine.UI:UnityEngine.UI.Image",
+      "id": 583
+    },
+    {
+      "path": "$/SafeZone/GenericMenuButtonPanel/JuicePanel",
+      "identity": "UnityEngine.UI:UnityEngine.UI.VerticalLayoutGroup",
+      "id": 584
+    },
+    {
+      "path": "$/SafeZone/GenericMenuButtonPanel/JuicePanel/GenericMenuButton (Splitscreen)/HoverOutline",
+      "identity": "UnityEngine.UI:UnityEngine.UI.Image",
+      "id": 585
+    },
+    {
+      "path": "$/SafeZone/UpperRightMenuPanel/MiscOptionsPanel",
+      "identity": "UnityEngine.UI:UnityEngine.UI.HorizontalLayoutGroup",
+      "id": 586
+    },
+    {
+      "path": "$/SafeZone/GenericMenuButtonPanel/JuicePanel/GenericMenuButton (Settings)/HoverOutline",
+      "identity": "UnityEngine.UI:UnityEngine.UI.Image",
+      "id": 587
+    },
+    {
+      "path": "$/SafeZone/GenericMenuButtonPanel/JuicePanel/GenericMenuButton (Logbook)/HoverOutline",
+      "identity": "UnityEngine.UI:UnityEngine.UI.Image",
+      "id": 588
+    },
+    {
+      "path": "$/SafeZone/SubmenuLegend/GenericGlyphAndDescription/Text (1)",
+      "identity": "UnityEngine.UI:UnityEngine.UI.LayoutElement",
+      "id": 589
+    },
+    {
+      "path": "$/SafeZone/SubmenuLegend/GenericGlyphAndDescription (3)/Description",
+      "identity": "RoR2:RoR2.UI.HGTextMeshProUGUI",
+      "id": 590
+    },
+    {
+      "path": "$/SafeZone/GenericMenuButtonPanel/JuicePanel/GenericMenuButton (Local Ad-Hoc MP)/BaseOutline",
+      "identity": "UnityEngine.UI:UnityEngine.UI.Image",
+      "id": 591
+    }
+  ],
+  "saved_external_order": [
+    "globalgamemanagers.assets",
+    "9d561d7a2c589994a9456cde10aba827",
+    "46ab29d69371f6643bc433c5931e11ef",
+    "c96983003d6a5a142bbc7303962c6b2a",
+    "e24ad2e9e87603348befae7014f52a5c",
+    "777181c2a35334de183172e9419ed316",
+    "0000000000000000f000000000000000",
+    "b7ed2a6f029d611409557318509c6459",
+    "aec1c9bf0d4e6324ba5d6509b133dc77",
+    "ebe00a2d05dbb46548197adea59675b3",
+    "ab5d3470bb236c248b312cfb99ed69a0",
+    "30f34381229780a4abba04ce3fa38e5e",
+    "25ccca67afa07ef458e3974d937ebe29",
+    "a879a716720a40743a56a2f0e60e32f8",
+    "de8dbd6f4442cac4da63efed299999b6",
+    "851c85826e937874db123578f433bb74",
+    "ce815a1545f640640b567ad7144c9ddd",
+    "7a6bec5a7bf994f43bc117f9354a3ac3",
+    "6af05e39608d1aa47a160e5ec14779fa",
+    "fb9aebe13fe5ad649a7cab626cb92738"
+  ]
+}

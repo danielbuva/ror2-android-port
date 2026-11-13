@@ -3,12 +3,14 @@
 import os
 from pathlib import Path
 import subprocess
+import sys
 import tempfile
 import unittest
 
 from test_portable_diagnostic_input import extract_method
 
 ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT / "scripts/lab"))
 DEFAULT_JDK = Path("/Applications/Unity/Hub/Editor/2021.3.45f2/PlaybackEngines/AndroidPlayer/OpenJDK")
 
 
@@ -23,8 +25,13 @@ class PendingObserverLifetimeTests(unittest.TestCase):
         cls.addClassCleanup(cls.temporary.cleanup)
         cls.directory = Path(cls.temporary.name)
         source = (ROOT / "tools/android-write-interruption/LabPendingWriteStop.java").read_text()
-        methods = extract_method(source, "    static void enforceDeadline(") + extract_method(source, "    public static void main(")
-        fixture = """public final class LabPendingWriteStop {
+        methods = (
+            extract_method(source, "    static String observerNonce(")
+            + extract_method(source, "    static void enforceDeadline(")
+            + extract_method(source, "    public static void main(")
+        )
+        fixture = """import java.io.File;
+public final class LabPendingWriteStop {
 METHODS
     private static void run(String[] args) throws Exception {
         Thread observer = new Thread(() -> {
@@ -34,6 +41,11 @@ METHODS
         observer.start();
         if (args[0].equals("fail")) throw new Exception("authored observer failure");
         System.out.println("authored observer complete");
+    }
+}
+class NonceFixture {
+    public static void main(String[] args) {
+        System.out.print(LabPendingWriteStop.observerNonce(new File(args[0])));
     }
 }
 class DeadlineFixture {
@@ -66,3 +78,11 @@ class DeadlineFixture {
         result = self.run_fixture("DeadlineFixture")
         self.assertEqual(result.returncode, 124)
         self.assertIn("observer exceeded its deadline", result.stderr)
+
+    def test_ready_filename_nonce_satisfies_host_binding(self):
+        import settings_write_interrupt_check as check
+
+        nonce = "0123456789abcdef" * 2
+        result = self.run_fixture("NonceFixture", "/runtime/ror2lab-write-" + nonce + ".ready")
+        self.assertEqual(result.returncode, 0, result.stderr)
+        check.validate_observer_binding(dict(nonce=result.stdout, pid=123, uid=10001, observerPid=124), nonce, "123", 10001)

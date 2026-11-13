@@ -1,0 +1,241 @@
+{
+  "input_id": "6af7ed94619fe1b4346974b4486afa03a8d1625a7820e92da0ff74d57208fe88",
+  "bundles": [
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-dlc1_scenes_all_8ab06509b21ef64352cb8a62c76250bc.bundle",
+      "sha256": "edd7aefc758ed50170cc71670538a1171a49bc7ebe535d62dc83996d3e88a418",
+      "members": [
+        {
+          "name": "CAB-34a4ea22692e9f92fcfc3809d333e915",
+          "textures": [
+            {
+              "path_id": 25,
+              "offset": 3245112,
+              "bytes": 272,
+              "sha256": "ae8fbf36b1f454b7e8ed21e8b4eefc5353d2b1e663522c78287a59cad8eb97c5",
+              "fields": {
+                "m_Name": [
+                  0,
+                  4
+                ],
+                "m_IsAlphaChannelOptional": [
+                  9,
+                  3
+                ],
+                "m_CompleteImageSize": [
+                  20,
+                  4
+                ],
+                "m_TextureFormat": [
+                  28,
+                  4
+                ],
+                "m_MipCount": [
+                  32,
+                  4
+                ],
+                "m_LightmapFormat": [
+                  76,
+                  4
+                ],
+                "m_ColorSpace": [
+                  80,
+                  4
+                ],
+                "image data": [
+                  88,
+                  4
+                ],
+                "m_StreamData": [
+                  92,
+                  104
+                ]
+              },
+              "pixels": {
+                "member": "CAB-34a4ea22692e9f92fcfc3809d333e915.resS",
+                "offset": 9856880,
+                "bytes": 131232,
+                "sha256": "5241c0bb6f13bc0a37a167273a4e3ebc0528567b5ccc5554d189036891abbf1a"
+              },
+              "operation": "cube-preserve",
+              "width": 128,
+              "height": 128,
+              "outputs": [
+                {
+                  "bundle": "whole-scene-promovoidsurvivor",
+                  "member": "BuildPlayer-PromoVoidSurvivor",
+                  "path_id": 1,
+                  "name": "",
+                  "alpha_optional": false,
+                  "usage": 0,
+                  "mips": 8,
+                  "colour_space": 0,
+                  "inline": false,
+                  "stream": {
+                    "offset": 0,
+                    "size": 131232,
+                    "path": "archive:/BuildPlayer-PromoVoidSurvivor/BuildPlayer-PromoVoidSurvivor.resS"
+                  },
+                  "pixel_bytes": 131232,
+                  "pixel_sha256": "5241c0bb6f13bc0a37a167273a4e3ebc0528567b5ccc5554d189036891abbf1a",
+                  "bytes": 260,
+                  "sha256": "afd732653e263e4a674de76636aba5f9a4f0f3e89493c8f25411b2428f71675a"
+                }
+              ]
+            },
+            {
+              "path_id": 27,
+              "offset": 3245656,
+              "bytes": 272,
+              "sha256": "8f84e8f08c1d75a9e0872af357c9587432fa8a86fd4ecfe84da2a6abd1b4004c",
+              "fields": {
+                "m_Name": [
+                  0,
+                  4
+                ],
+                "m_IsAlphaChannelOptional": [
+                  9,
+                  3
+                ],
+                "m_CompleteImageSize": [
+                  20,
+                  4
+                ],
+                "m_TextureFormat": [
+                  28,
+                  4
+                ],
+                "m_MipCount": [
+                  32,
+                  4
+                ],
+                "m_LightmapFormat": [
+                  76,
+                  4
+                ],
+                "m_ColorSpace": [
+                  80,
+                  4
+                ],
+                "image data": [
+                  88,
+                  4
+                ],
+                "m_StreamData": [
+                  92,
+                  104
+                ]
+              },
+              "pixels": {
+                "member": "CAB-34a4ea22692e9f92fcfc3809d333e915.resS",
+                "offset": 10119344,
+                "bytes": 2097312,
+                "sha256": "60e5db458dcdaf066652b133ac5285d9a3f8a83b03e0abdc3f234d123a0184a6"
+              },
+              "operation": "cube-preserve",
+              "width": 512,
+              "height": 512,
+              "outputs": [
+                {
+                  "bundle": "whole-scene-promovoidsurvivor",
+                  "member": "BuildPlayer-PromoVoidSurvivor",
+                  "path_id": 2,
+                  "name": "",
+                  "alpha_optional": false,
+                  "usage": 0,
+                  "mips": 10,
+                  "colour_space": 0,
+                  "inline": false,
+                  "stream": {
+                    "offset": 131232,
+                    "size": 2097312,
+                    "path": "archive:/BuildPlayer-PromoVoidSurvivor/BuildPlayer-PromoVoidSurvivor.resS"
+                  },
+                  "pixel_bytes": 2097312,
+                  "pixel_sha256": "60e5db458dcdaf066652b133ac5285d9a3f8a83b03e0abdc3f234d123a0184a6",
+                  "bytes": 260,
+                  "sha256": "43191348540a5cc57412cb886b206f8ca9a20a053ac710ebdb6e69a78d864ef5"
+                }
+              ]
+            },
+            {
+              "path_id": 26,
+              "offset": 3245384,
+              "bytes": 272,
+              "sha256": "fd1baacee5150e62d319f69564fe17109c7f1a1baeb10b606d96232ec50b9905",
+              "fields": {
+                "m_Name": [
+                  0,
+                  4
+                ],
+                "m_IsAlphaChannelOptional": [
+                  9,
+                  3
+                ],
+                "m_CompleteImageSize": [
+                  20,
+                  4
+                ],
+                "m_TextureFormat": [
+                  28,
+                  4
+                ],
+                "m_MipCount": [
+                  32,
+                  4
+                ],
+                "m_LightmapFormat": [
+                  76,
+                  4
+                ],
+                "m_ColorSpace": [
+                  80,
+                  4
+                ],
+                "image data": [
+                  88,
+                  4
+                ],
+                "m_StreamData": [
+                  92,
+                  104
+                ]
+              },
+              "pixels": {
+                "member": "CAB-34a4ea22692e9f92fcfc3809d333e915.resS",
+                "offset": 9988112,
+                "bytes": 131232,
+                "sha256": "c7d24e758ec16b9dc4cd768ab354907a78a1ed8731445dd358c4ef838a964b0c"
+              },
+              "operation": "cube-preserve",
+              "width": 128,
+              "height": 128,
+              "outputs": [
+                {
+                  "bundle": "whole-scene-promovoidsurvivor",
+                  "member": "BuildPlayer-PromoVoidSurvivor",
+                  "path_id": 3,
+                  "name": "",
+                  "alpha_optional": false,
+                  "usage": 0,
+                  "mips": 8,
+                  "colour_space": 0,
+                  "inline": false,
+                  "stream": {
+                    "offset": 2228544,
+                    "size": 131232,
+                    "path": "archive:/BuildPlayer-PromoVoidSurvivor/BuildPlayer-PromoVoidSurvivor.resS"
+                  },
+                  "pixel_bytes": 131232,
+                  "pixel_sha256": "c7d24e758ec16b9dc4cd768ab354907a78a1ed8731445dd358c4ef838a964b0c",
+                  "bytes": 260,
+                  "sha256": "05d598efdc9fa1f942166ae656e6f7c2f3da84c501adaedbd0a86cde3e23211b"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

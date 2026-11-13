@@ -1,5 +1,57 @@
 # Reconstruct the accepted Android build from owner inputs
 
+The public converter must produce a playable Android APK from the user's legitimate
+game files, permitted SDK inputs and public recipes, retaining Architecture C and
+native IL2CPP. Acceptance is device-verified installation and play, matching the
+latest lab build in behaviour, content, visuals and performance as closely as
+possible without regressing its features. The current reference is APK
+`9f904392d02abc3854f9efc4b51cd03daec7afb6b7192a4c074f30fabc12fa22`,
+source `6c12b506`; future port releases advance that reference.
+
+PPtr/file IDs, serialized objects and type trees, MonoScript/script bindings,
+colliders and other gameplay-critical relationships remain strict structural and
+functional checks. Byte equality with J850 or the latest build is a diagnostic,
+never an acceptance gate; investigate differences when they explain a functional
+problem. Historical byte-exact results and counters below retain their original
+meaning and do not establish current playability. Remaining content outputs close
+through correct, loadable source-derived files and in-game verification.
+
+First deliver the fully playable APK; then qualify the complete phone-only flow:
+import → convert → install → play → update to a newer port release. Updates mean
+our recipes, code and content: retain the package identity, durable on-device
+signing key, profiles and settings, and rebuild only changed outputs where possible.
+Check for updates must lead through that same in-place update path. Discovery of
+newer Steam input versions is secondary; changed or unknown assets must be reported
+clearly, with no silent omission. Private historical values remain unnecessary
+public inputs; ownership, provenance and privacy boundaries are unchanged.
+
+J1254 supplies the two incidental startup files through a public producer;
+current historical host readiness is 693/705 available (685 raw-exact, three
+generated metadata/context files), with 12 reference entries still missing. Complete phone acceptance remains
+open; the daily snapshot retains its earlier count until its next refresh.
+The current source Menu producer now emits its complete 591-object graph and
+standalone media through the player-data path. Its type identities/hashes match
+J850, but current alignment and an original store-button Sprite differ from that
+reference. Those genuine differences remain visible and do not advance the
+historical readiness count; complete phone installation/update acceptance stays
+open.
+
+
+The public HUD phase emits its complete 2,021-object source graph and media
+without historical HUD artifacts. All 6,648 pointers close and 5,236 nonnull typed
+references match their target classes; script properties match the generated
+registry. Its 119-object difference from J850 includes original hierarchy changes,
+so historical exactness and native runtime acceptance remain open. J1264 records
+the public-input proof; readiness stays 693/705.
+
+
+The complete source manager phase now emits all 18 native managers through the
+public player-data path. Its 13,190 nonzero references resolve; native type hashes,
+required script properties and shader associations retain their strict checks.
+Build identity is independently generated; the fresh script cache contains actual
+emitted identities. J1265 records the guarded public-input result. This source
+candidate does not advance historical readiness or qualify native game behavior.
+
 
 The host-qualified [release update contract](../tools/phone-build/owner-apk/README.md#public-release-updates)
 covers signed public-tool acquisition, per-entry incremental reuse, existing-key
@@ -7,6 +59,14 @@ signing and session installation. Publisher trust and a reviewed complete releas
 plan require maintainer provisioning; complete phone production and installed-game
 update/save retention still require device qualification. No APK or game data
 is published by the release workflow.
+The [phone import/stage flow](../tools/phone-build/owner-apk/README.md#phone-only-import-and-installation)
+adds SAF folder/ZIP admission, private resumable copies, foreground checkpoints,
+unchanged thermal supervision and the existing session-install handoff. Public
+recipes bind required originals; assembly hashes are computed on the phone from
+verified source-produced outputs. No PC, Unity, private replay packet or supplied
+game APK is part of this flow. A complete published producer plan and real-phone
+qualification remain release gates, not conclusions from synthetic host tests.
+
 Assessment and implementation evidence: 2026-10-23. **Complete private
 accepted-output reconstruction now works on Android without Unity Editor or game
 compilation.** A pinned delta/frame package plus verified owner PC and SDK inputs
@@ -33,7 +93,7 @@ experience. Experiment evidence is recorded once in [J1036](history/journal-J1-J
 
 ## What the accepted build actually contains
 
-The immutable comparison target is J850: source `1780ea9545f1597c033a8d32e08074b03c7f38c8`,
+The historical byte-comparison target is J850: source `1780ea9545f1597c033a8d32e08074b03c7f38c8`,
 APK SHA-256 `f1550ce0ff030ea0fa7a1ab66de19d54ee7894a7ae2f5b344f993157d6713949`,
 accepted input `6af7ed94619fe1b4346974b4486afa03a8d1625a7820e92da0ff74d57208fe88`.
 Its two standard assisted checks passed. It is a laboratory baseline, not a
@@ -508,8 +568,10 @@ phone comparison or installation is qualified.
 
 [J1171](history/journal-J1-J1177/PORTING_JOURNAL.md#j1171--identical-input-scene-exports-change-historical-yaml-identity-hashes)
 confirms exporter GUID entropy in identical-input scene YAML repeats. The
-WholeStageContexts full-digest gate remains open; semantic agreement and
-comparison-only GUID normalization do not qualify its final file.
+WholeStageContexts remains non-exact to that historical YAML provenance. The
+current public original-record producer described below uses independently
+verifiable source provenance under the updated input contract; the historical
+raw-exact counter remains unchanged.
 
 J1185 completes source-derived Conduit Canyon through the existing owners:
 607/705 files available (602 raw-exact, two code comparisons, three drift-explained),
@@ -531,3 +593,46 @@ The complete single-mip RGBA source pack now has Android shell evidence
 host target after verified checkpoint continuation. This supplies existing
 receipt-pinned texture consumers; it does not close missing complete bundles.
 App-host texture dispatch reuses this producer, with device execution still open.
+
+J1220 closes Frozenwall, Villagenight and Foggyswamp source bundles and Skymeadow
+spine: 69,360 persisted objects, eight serialized members and four compressed
+bundles are host raw-exact to J850. Original Bezier curve operands plus 42
+captured build-angle triplets produce geometry locally; public recipes contain
+no captured geometry arrays. Receipt-pinned Shader index reuse preserves actual
+supplier provenance. The retained landed union includes Frozenwall spine and
+advances from 648 to 652/705 available (647 raw-exact, two code comparisons,
+three drift-explained), with 53 missing (7 APK, 46 payload). Evidence:
+`work/coordination/p1-scenes-ss/safe-five-v1/readiness-union/`.
+Goolake, Lakes, Lakesnight and Village source recipes remain open. Complete phone
+production, installation and original runtime behavior remain separate gates.
+
+J1256 adds the public original-record WholeStageContexts producer and narrow APK
+admission. All runtime fields in 23 population contexts and three identity/toggle
+graphs match J850; 26 incidental exporter hashes use explicit member/graph
+provenance. The complete named file is regenerated during admission, without
+masking fields or trusting a target-derived graph. Host availability becomes
+693/705: 685 raw-exact, two generated startup files, one generated source context,
+two code comparisons and three explained input differences; 12 files remain.
+Complete phone generation, installation, launch and data-preserving updates remain
+open. Evidence: `work/coordination/orchestrator/stage-context-public-v2/`.
+
+J1261 adds complete opt-in original-lighting alternatives for Promo and Snowy
+Forest. Public source production runs with historical outputs, exported projects
+and preparation captures denied as inputs. Of 30,149 objects, 30,141 are
+historically raw-exact; the other eight preserve original reflection chains and
+RenderSettings. Every native/script identity, script table and external-file
+identity matches J850. Source material/probe/sky relationships remain checked.
+Snowy's rebound empty component derives its correct cached script identity from
+the original MonoScript and SDK; no historical identifier is a literal input.
+These two source artifacts are separate from the unchanged historical 693/705
+count. Native BC6H support, complete phone generation, full game-runtime behavior
+and final source-output assembly/install/update qualification remain gates.
+Evidence: `work/coordination/orchestrator/scenes/promo-source-complete-v1/` and
+`work/coordination/orchestrator/scenes/snowy-source-complete-v2/`.
+
+Lighting GPU/sampling differences may now qualify through
+[ADR-003](ADR-003-lighting-tolerance.md)'s measured per-record numerical bounds
+and matched visual review. The full-scene comparison owner preserves every
+non-lighting byte and reports `tolerance-accepted` separately. No J850 lighting
+record has completed both gates: readiness remains 693/705 available,
+685 raw-exact, zero tolerance-accepted. Source alternatives above are unchanged.

@@ -1,0 +1,91 @@
+{
+  "input_id": "6af7ed94619fe1b4346974b4486afa03a8d1625a7820e92da0ff74d57208fe88",
+  "bundles": [
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-base-moon_assets_all_18eadbbfd8d87c261af347798957ba73.bundle",
+      "sha256": "7acb90bf61196c947733504e258abb9bb902a73a32a10950f78ecdd97d50ff3d",
+      "members": [
+        {
+          "name": "CAB-320763c720695cc847419dee943321af",
+          "textures": [
+            {
+              "path_id": 6893954354492948225,
+              "offset": 70615680,
+              "bytes": 292,
+              "sha256": "8f13f567824060aabfb3bf0ac7a5bf8c32071214cf7291d70d3b59219c49bafb",
+              "fields": {
+                "m_Name": [
+                  0,
+                  24
+                ],
+                "m_IsAlphaChannelOptional": [
+                  29,
+                  3
+                ],
+                "m_CompleteImageSize": [
+                  40,
+                  4
+                ],
+                "m_TextureFormat": [
+                  48,
+                  4
+                ],
+                "m_MipCount": [
+                  52,
+                  4
+                ],
+                "m_LightmapFormat": [
+                  96,
+                  4
+                ],
+                "m_ColorSpace": [
+                  100,
+                  4
+                ],
+                "image data": [
+                  108,
+                  4
+                ],
+                "m_StreamData": [
+                  112,
+                  104
+                ]
+              },
+              "pixels": {
+                "member": "CAB-320763c720695cc847419dee943321af.resS",
+                "offset": 2660448,
+                "bytes": 131232,
+                "sha256": "9c53b3a1b59dfd738d269939367e364716a5245a3ca85e325d900e127f181bee"
+              },
+              "operation": "cube-preserve",
+              "width": 128,
+              "height": 128,
+              "outputs": [
+                {
+                  "bundle": "moon2-spine-lab",
+                  "member": "BuildPlayer-moon2",
+                  "path_id": 1,
+                  "name": "ReflectionProbe-3",
+                  "alpha_optional": true,
+                  "usage": 0,
+                  "mips": 8,
+                  "colour_space": 0,
+                  "inline": false,
+                  "stream": {
+                    "offset": 0,
+                    "size": 131232,
+                    "path": "archive:/BuildPlayer-moon2/BuildPlayer-moon2.resS"
+                  },
+                  "pixel_bytes": 131232,
+                  "pixel_sha256": "9c53b3a1b59dfd738d269939367e364716a5245a3ca85e325d900e127f181bee",
+                  "bytes": 256,
+                  "sha256": "ee3642510d9f5205522b95cc81bdb7e783749cd077179b0b3dbda95776a8257a"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

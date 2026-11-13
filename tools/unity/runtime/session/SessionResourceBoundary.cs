@@ -10,7 +10,8 @@ using UnityEngine.Networking;
 using UnityEngine.Profiling;
 
 // Measurements and reclamation only at an already completed owned session.
-// No gameplay pools, live content, process caches or unrelated files are cleared.
+// Only the two measured returned-item pools are reclaimed, with no live world.
+// Checked-out objects, live content, other process caches and files are untouched.
 public sealed partial class PortSession
 {
     [Serializable]
@@ -40,7 +41,7 @@ public sealed partial class PortSession
         public int rootWalkNodes, rootWalkRoots, rootWalkReadFailures;
         public float rootWalkSeconds;
         public string[] rootWalkPaths, rootWalkFailureSamples, rootWalkCensus, rootWalkRootAttribution;
-        // Private diagnostic snapshots at menus 2/4; not ordinary growth/performance samples.
+        // Private diagnostic snapshots; not ordinary growth/performance samples.
         public bool memorySnapshotRequested, memorySnapshotComplete, memorySnapshotSuccess;
         public string memorySnapshotFile, memorySnapshotError;
     }
@@ -50,6 +51,7 @@ public sealed partial class PortSession
         public string attempt;
         public int diagnosticCompletedRootWalkSession;
         public bool diagnosticCompletedMemorySnapshots;
+        public int diagnosticCompletedMemorySnapshotFinalSession = 4;
     }
     const int RootWalkNodeBudget = 2000000;
     // Reads only the launch selector's opt-in session index; the coordinator's own parsing is
@@ -79,7 +81,8 @@ public sealed partial class PortSession
     void CaptureCompletedMemorySnapshot(SessionResourceSample sample)
     {
         var selection = ReadResourceDiagnostics();
-        if (selection == null || !selection.diagnosticCompletedMemorySnapshots || (sessionIndex != 2 && sessionIndex != 4))
+        if (selection == null || !selection.diagnosticCompletedMemorySnapshots ||
+            (sessionIndex != 2 && sessionIndex != selection.diagnosticCompletedMemorySnapshotFinalSession))
             return;
         sample.memorySnapshotRequested = true;
         if (!Debug.isDebugBuild || Run.instance || NetworkServer.active || NetworkClient.active)
@@ -421,6 +424,18 @@ public sealed partial class PortSession
         }
         return removed;
     }
+    // Native menu-4 capture reaches completed player stats through this scratch
+    // list. Original Fire clears it before discovery, but leaves its last targets
+    // afterwards. Release only destroyed targets at the idle teardown boundary.
+    int PruneDestroyedOverlapTargets()
+    {
+        Check(r.world.cleaned && !Run.instance && !NetworkServer.active && !NetworkClient.active,
+              "Refuse overlap-target cleanup in a live session");
+        var field = typeof(OverlapAttack).GetField("discoveredHurtboxes", BindingFlags.Static | BindingFlags.NonPublic);
+        var targets = field == null ? null : field.GetValue(null) as System.Collections.Generic.List<HurtBox>;
+        Check(targets != null, "Original overlap discovery storage changed");
+        return targets.RemoveAll(target => !target);
+    }
     // The captured J1091 graph identifies the original BulletHitPool as a root
     // for completed actors. Its Reset leaves hitHurtBox assigned. Visit only
     // returned items, after teardown, and release only Unity-destroyed targets.
@@ -445,6 +460,36 @@ public sealed partial class PortSession
         }
         return released;
     }
+    // Paired menu captures show unique returned items growing in these stacks.
+    // Original sphere-cast hits and serialized Highlight lists can enter them
+    // without an earlier rental, so their size is not a concurrency watermark.
+    // Reclaim their idle storage rather than retaining a new high-water mark
+    // after every session. Clearing the stacks never mutates checked-out items
+    // or lists (including any externally referenced returned item).
+    string[] ReclaimReturnedSessionPools()
+    {
+        Check(r.world.cleaned && !Run.instance && !NetworkServer.active && !NetworkClient.active,
+              "Refuse returned-pool reclamation in a live session");
+        var poolField = typeof(BulletAttack).GetField("bulletHitPool", BindingFlags.Static | BindingFlags.NonPublic);
+        var pool = poolField == null ? null : poolField.GetValue(null);
+        Check(pool != null, "Original bullet-hit pool changed");
+        var itemsField = pool.GetType().BaseType.GetField("items", BindingFlags.Instance | BindingFlags.NonPublic);
+        var hits = itemsField == null ? null : itemsField.GetValue(pool) as System.Collections.Generic.Stack<BulletAttack.BulletHit>;
+        var rendererField = typeof(HG.CollectionPool<Renderer, System.Collections.Generic.List<Renderer>>)
+            .GetField("pooledCollections", BindingFlags.Static | BindingFlags.NonPublic);
+        var renderers = rendererField == null ? null : rendererField.GetValue(null)
+            as System.Collections.Generic.Stack<System.Collections.Generic.List<Renderer>>;
+        Check(hits != null && renderers != null, "Original returned-session pool storage changed");
+        int hitCount = hits.Count, rendererCount = renderers.Count;
+        hits.Clear();
+        hits.TrimExcess();
+        renderers.Clear();
+        renderers.TrimExcess();
+        return new[] {
+            "BulletAttack.bulletHitPool.returnedItems:" + hitCount + "/" + hits.Count,
+            "HG.CollectionPool<Renderer,List<Renderer>>.returnedLists:" + rendererCount + "/" + renderers.Count
+        };
+    }
     IEnumerator ReclaimCompletedSessionResources()
     {
         Check(r.world.cleaned && !Run.instance && !NetworkServer.active && !NetworkClient.active,
@@ -454,8 +499,9 @@ public sealed partial class PortSession
         int pruned = PruneDestroyedDepossessionSubscribers();
         var registries = PruneDestroyedOriginalRegistries().Concat(new[] {
             "BulletAttack.bulletHitPool.destroyedTargets:" + ReleaseDestroyedPooledHitTargets(),
+            "OverlapAttack.discoveredHurtboxes.destroyedTargets:" + PruneDestroyedOverlapTargets(),
             "CharacterSpawnCard.loadoutAvailability.destroyedTargets:" + PruneDestroyedSpawnCardCallbacks()
-        }).ToArray();
+        }).Concat(ReclaimReturnedSessionPools()).ToArray();
         ObserveSessionResources("completed-before-reclaim");
         r.sessionResources.Last().prunedDestroyedDepossessionSubscribers = pruned;
         r.sessionResources.Last().prunedDestroyedRegistryEntries = registries;

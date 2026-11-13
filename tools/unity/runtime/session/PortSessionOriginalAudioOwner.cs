@@ -8,11 +8,20 @@ using UnityEngine;
 // termination delegate owns the narrow Android bank-release resume seam.
 public sealed class PortSessionOriginalAudioOwner : MonoBehaviour
 {
+    // Sparse setup seams only: no report writes, stack capture or coroutine yields.
+    static void TraceStartup(string step)
+    {
+        Debug.LogFormat(LogType.Log, LogOption.NoStacktrace, null, "{0}",
+                        "Original startup step=" + step + " at=" +
+                        Time.realtimeSinceStartup.ToString("R", System.Globalization.CultureInfo.InvariantCulture) +
+                        " frame=" + Time.frameCount);
+    }
     private const float StartupDeadlineSeconds = 180.0f;
     private static readonly object Sync = new object();
     private static PortSessionOriginalAudioOwner instance;
     private static int sessionEntries;
     private static bool pointSoundLogObserverAttached;
+    private static Action processOriginalPointSoundTimeouts;
     private bool started;
     private bool completed;
     private float elapsed;
@@ -300,6 +309,7 @@ public sealed class PortSessionOriginalAudioOwner : MonoBehaviour
                 }
             }
 
+            TraceStartup("audio-preparation-begin");
             IEnumerator preparation = null;
             try { preparation = GameAudioOriginalOwner.PrepareBeforeOriginalManagerInit(); }
             catch (Exception error)
@@ -326,6 +336,7 @@ public sealed class PortSessionOriginalAudioOwner : MonoBehaviour
                     yield return current;
                 }
             }
+            TraceStartup("audio-preparation-returned");
             if (!GameAudioOriginalOwner.StartupSelected) yield break;
 
             if (UnityEngine.Object.FindObjectOfType<AkInitializer>())
@@ -341,7 +352,9 @@ public sealed class PortSessionOriginalAudioOwner : MonoBehaviour
                 {
                     // Exact accepted static manager call; its unchanged body issues
                     // both LegacyResourcesAPI requests and preserves their callbacks.
+                    TraceStartup("audio-manager-init-begin");
                     RoR2.WwiseIntegrationManager.Init();
+                    TraceStartup("audio-manager-init-returned");
                     GameAudioOriginalOwner.RecordOriginalManagerInitReturned();
                 }
                 catch (Exception error) { managerError = error; }
@@ -353,9 +366,17 @@ public sealed class PortSessionOriginalAudioOwner : MonoBehaviour
                 }
             }
 
+            string lastAudioBlocker = GameAudioOriginalOwner.StartupBlocker;
+            TraceStartup("audio-wait-blocker:" + lastAudioBlocker);
             while (!GameAudioOriginalOwner.Ready && !GameAudioOriginalOwner.HasTerminalFailure &&
                    Time.realtimeSinceStartup - startedAt < StartupDeadlineSeconds)
             {
+                string blocker = GameAudioOriginalOwner.StartupBlocker;
+                if (blocker != lastAudioBlocker)
+                {
+                    lastAudioBlocker = blocker;
+                    TraceStartup("audio-wait-blocker:" + blocker);
+                }
                 elapsed = Time.realtimeSinceStartup - startedAt;
                 yield return null;
             }
@@ -364,19 +385,25 @@ public sealed class PortSessionOriginalAudioOwner : MonoBehaviour
                 GameAudioOriginalOwner.RecordStartupTimeout();
                 GameAudioOriginalOwner.AbandonPreparationBeforeOriginalInit();
             }
+            TraceStartup("audio-readiness-observed");
+            TraceStartup("audio-readiness-callbacks last-polled-blocker=" + lastAudioBlocker + " " +
+                         GameAudioOriginalOwner.CaptureStartupTiming());
             if (GameAudioOriginalOwner.Ready && GameAudioOriginalOwner.OptInRequested)
             {
                 if (!RoR2.WwiseIntegrationManager.noAudio)
                 {
                     try
                     {
+                        TraceStartup("audio-network-catalog-begin");
                         OriginalNetworkSoundEventCatalogOwner.InitializeBeforeWorld(
                             explicitlyRequested: true,
                             noAudio: RoR2.WwiseIntegrationManager.noAudio,
                             originalAudioReady: GameAudioOriginalOwner.Ready,
                             originalTermsReturned: GameAudioOriginalOwner.OriginalTermsReturned,
                             nativeEngineInitialized: AkSoundEngine.IsInitialized(),
-                            originalCatalogLeaseHeld: WholeCatalogComposed.OriginalAudioLeaseHeld);
+                            originalCatalogLeaseHeld: WholeCatalogComposed.OriginalAudioLeaseHeld,
+                            trace: step => TraceStartup("audio-network-family-" + step));
+                        TraceStartup("audio-network-catalog-returned");
                     }
                     catch
                     {
@@ -386,8 +413,10 @@ public sealed class PortSessionOriginalAudioOwner : MonoBehaviour
                         throw; // Preserve the exception; PortSession records the explicit startup refusal.
                     }
                 }
+                TraceStartup("audio-music-owner-begin");
                 AttachOriginalBankReleaseWakeup();
                 PortSessionOriginalMusicControllerOwner.StartForReadyAudio(this, explicitlyRequested: true);
+                TraceStartup("audio-music-owner-returned");
             }
         }
         finally
@@ -444,8 +473,29 @@ public sealed class PortSessionOriginalAudioOwner : MonoBehaviour
 
     private void OnDestroy() => DetachOriginalBankReleaseWakeup();
 
+    // The composed session keeps RoR2Application inactive. Dispatch only this
+    // original subscriber; its own clock, timeout and emitter pool stay authoritative.
+    private static void TickOriginalPointSoundTimeouts()
+    {
+        if (!GameAudioOriginalOwner.Ready || !GameAudioOriginalOwner.OptInRequested ||
+            !GameAudioOriginalOwner.NativeApiCallsAvailable || GameAudioOriginalOwner.OriginalTermsReturned ||
+            RoR2.WwiseIntegrationManager.noAudio)
+            return;
+        var application = RoR2.RoR2Application.instance;
+        if (application && application.isActiveAndEnabled) return;
+        if (processOriginalPointSoundTimeouts == null)
+        {
+            var type = typeof(RoR2.RoR2Application).Assembly.GetType("RoR2.Audio.PointSoundManager", true);
+            var method = type.GetMethod("ProcessTimeoutQueue",
+                System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.NonPublic);
+            processOriginalPointSoundTimeouts = (Action)Delegate.CreateDelegate(typeof(Action), method);
+        }
+        processOriginalPointSoundTimeouts();
+    }
+
     private void Update()
     {
+        TickOriginalPointSoundTimeouts();
         GameAudioOriginalOwner.TickPassiveCapture(Time.realtimeSinceStartup);
         if (GameAudioOriginalOwner.OriginalTermsReturned)
         {

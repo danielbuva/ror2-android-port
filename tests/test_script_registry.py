@@ -50,6 +50,19 @@ def reader():
 
 
 class ScriptRegistryTests(unittest.TestCase):
+    def test_current_field_names_include_inherited_private_fields_and_old_names(self):
+        base = definition("Parent", [field("inherited", public=False)])
+        current = definition("Current", [field("renamed"), field("runtimeCache", public=False)])
+        clr = reader()
+        clr.attributes["Fixture.dll"]["Field", 1].add(("UnityEngine.Serialization", "FormerlySerializedAsAttribute", b"\x01\x00\x07oldName\x00\x00"))
+        with (
+            patch.object(clr, "load", return_value=N(net=N(mdtables=N(TypeDef=N(rows=[current]))))),
+            patch.object(clr, "hierarchy", return_value=([("Fixture.dll", base), ("Fixture.dll", current)], True)),
+        ):
+            names = clr.declared_field_names("Current", "Fixture", "Fixture.dll")
+        self.assertEqual(names, {"inherited", "renamed", "runtimeCache", "oldName"})
+        clr.close()
+
     def test_stdlib_import_does_not_load_optional_clr_reader(self):
         program = "import importlib.util,sys; s=importlib.util.spec_from_file_location('x',sys.argv[1]); m=importlib.util.module_from_spec(s); s.loader.exec_module(m); assert 'dnfile' not in sys.modules"
         subprocess.run([sys.executable, "-c", program, str(ROOT / "scripts/lab/script_identity.py")], check=True)
@@ -237,6 +250,16 @@ class ScriptRegistryTests(unittest.TestCase):
                 patch.object(S, "_original_membership", side_effect=discovery),
             ):
                 with self.assertRaises(DiscoveryReached):
+                    S.registry(root, root / "sdk", root, root, root, root / "input-hashes.json", profile, writer)
+
+            # Current receipts retain source hashes and require original metadata.
+            (root / "Fixture.cs").write_text("authored fixture")
+            (root / "input-hashes.json").write_text(json.dumps({"packages": [{"inputs": {"Fixture.cs": "0" * 64}}]}))
+            with patch.object(S, "_native_subtrees", return_value=[[S._node("int", "tangentMode", 4)]]):
+                with self.assertRaises(FileNotFoundError):
+                    S.registry(root, root / "sdk", root, root, root, root / "input-hashes.json", profile, writer)
+                (root / "Fixture.cs.meta").write_text("guid: " + "a" * 32)
+                with self.assertRaisesRegex(ValueError, "source provider drift"):
                     S.registry(root, root / "sdk", root, root, root, root / "input-hashes.json", profile, writer)
 
     def test_original_membership_discards_parser_ownership_after_discovery(self):

@@ -1,0 +1,95 @@
+{
+  "input_id": "6af7ed94619fe1b4346974b4486afa03a8d1625a7820e92da0ff74d57208fe88",
+  "source_type": {
+    "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/calmwater_unitybuiltinshaders_244d4ed79dda70fa38b62dcf46d4ccd7.bundle",
+    "bytes": 1802189,
+    "sha256": "949b28d89f3db1c8da8362f5dd96cc27bae5b3f0d4f2a807fc89be692c494805",
+    "member": "CAB-3795e044f5be9199dfbb711bdc9d52a8",
+    "path_id": -8014961710185377972
+  },
+  "compiler_sdk": {
+    "MacOS/Unity": {
+      "bytes": 79453472,
+      "sha256": "906123118e45d56c6bcf20f3776ed2373417553042500714023daeb9e53058e8"
+    },
+    "Tools/UnityShaderCompiler": {
+      "bytes": 12603248,
+      "sha256": "4f4e5be21d27dd7541fa9385ea480b15816e70ddaa83b516df0ab60b819142b5"
+    },
+    "Resources/unity_builtin_extra": {
+      "bytes": 133069551,
+      "sha256": "db99888b83efb4ec35e6ce219de78c951fc37bc0129712579131360312cc4f8e"
+    }
+  },
+  "compiler_includes_sha256": "163fad0ca42bd98ea1628888dedd01d91fcbb9f6bda60a8120f9b453cc565144",
+  "settings": {
+    "color_space": 1,
+    "caching_preprocessor": true,
+    "tier0": {
+      "standardShaderQuality": 0,
+      "renderingPath": 3,
+      "hdrMode": 1,
+      "realtimeGICPUUsage": 25,
+      "useReflectionProbeBoxProjection": 0,
+      "useReflectionProbeBlending": 0,
+      "useHDR": 1,
+      "useDetailNormalMap": 0,
+      "useCascadedShadowMaps": 0,
+      "prefer32BitShadowMaps": 0,
+      "enableLPPV": 0,
+      "useDitherMaskForAlphaBlendedShadows": 0
+    },
+    "virtual_texturing": 0,
+    "vulkan_pretransform": 0,
+    "shader_precision_model": 0,
+    "deferred_reflections": 1
+  },
+  "materials": [
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-base-artifactworld_assets_all_acaa4363ca32993fecea25d233adf66a.bundle",
+      "bytes": 1265745,
+      "sha256": "65ffda5c96c050ec3a533ba092e496f6876225c18ba8f9da3fdcab37679b810c",
+      "member": "CAB-f41a70609c46f26e2324f6f3dcf5dd82",
+      "path_id": 6402547302839160652,
+      "body_sha256": "8875a520a8d6f662e27608054c60fcc85d4a63fad8cf49f7ac0567c52e79c6e4"
+    },
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-base-common_static_assets_all_c5d8595dcf1ebb5f39b6e5cea0902f85.bundle",
+      "bytes": 735944,
+      "sha256": "c8069f10e8c930d4cfba363c2f57523e1b1eb23b2032c81a48dc77f7dbfcfcd3",
+      "member": "CAB-7aadc3876a6282688f5d01e2e4272074",
+      "path_id": 9108416275216021957,
+      "body_sha256": "4d6f6f9ca6342053819bcf57919dedba27d0944a7e47fecffb7b3914dc060c0f"
+    },
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-junk-monstersonshrineuse_assets_all_d81e5a8d6b682ea8ec63b7f2b93b94b6.bundle",
+      "bytes": 35774,
+      "sha256": "0e19a86a2d7052185a6d27cd532202f765ae4ef16d0ecbb118b87f0aa4d6c758",
+      "member": "CAB-118b7e35e26a9ede6cfc2f129b4f0030",
+      "path_id": -7368122383288449395,
+      "body_sha256": "9f0d4cca9cf671036017e8fc39035f0f09798dbad90fdc8bf65de62781490ccd"
+    }
+  ],
+  "scene": {
+    "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-base-goldshores_scenes_all_07fa9d169cd61daf662ca1a8cd44d28f.bundle",
+    "bytes": 19784512,
+    "sha256": "fbcf4a1278afecb96c9ffcaa3753051ef79a29369a5ba302384e52e3992add10"
+  },
+  "outputs": [
+    {
+      "bundle": "whole-scene-goldshores",
+      "member": "BuildPlayer-goldshores.sharedAssets",
+      "path_id": 33
+    },
+    {
+      "bundle": "rootjungle-source-lab",
+      "member": "BuildPlayer-rootjungle.sharedAssets",
+      "path_id": 142
+    },
+    {
+      "bundle": "whole-scene-rootjungle",
+      "member": "BuildPlayer-rootjungle.sharedAssets",
+      "path_id": 143
+    }
+  ]
+}

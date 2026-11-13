@@ -215,7 +215,8 @@ static void RequireOutputUnderIgnoredWork(string output) {
     for (DirectoryInfo? d = dir; d is not null; d = d.Parent) Check((d.Attributes & FileAttributes.ReparsePoint) == 0, "Output path contains a symlink");
     Check(!File.Exists(output) && !Directory.Exists(output) && new FileInfo(output).LinkTarget is null, "Refusing to overwrite or follow output");
     var root = Directory.GetCurrentDirectory();
-    var work = Path.GetFullPath(Path.Combine(root, "work")) + Path.DirectorySeparatorChar;
+    var workEntry = Path.Combine(root, "work");
+    var work = CanonicalExistingPath(workEntry).TrimEnd(Path.DirectorySeparatorChar) + Path.DirectorySeparatorChar;
     Check(Path.GetFullPath(output).StartsWith(work, StringComparison.Ordinal), "Output must be beneath repository work/");
     var localConfig = Path.Combine(root, "work", "config", "local.json");
     Check(File.Exists(localConfig) && new FileInfo(localConfig).LinkTarget is null, "Required local config is unavailable");
@@ -226,7 +227,7 @@ static void RequireOutputUnderIgnoredWork(string output) {
     var gameRoot = CanonicalExistingPath(configured);
     Check(!IsWithin(Path.GetFullPath(output), gameRoot), "Output path is inside the configured accepted game installation");
     var gitInfo = new System.Diagnostics.ProcessStartInfo("git") { WorkingDirectory = root, UseShellExecute = false };
-    gitInfo.ArgumentList.Add("check-ignore"); gitInfo.ArgumentList.Add("--quiet"); gitInfo.ArgumentList.Add(output);
+    gitInfo.ArgumentList.Add("check-ignore"); gitInfo.ArgumentList.Add("--quiet"); gitInfo.ArgumentList.Add(new DirectoryInfo(workEntry).LinkTarget is null ? output : workEntry);
     using var git = System.Diagnostics.Process.Start(gitInfo);
     git!.WaitForExit(); Check(git.ExitCode == 0, "Output is not ignored by Git");
 }

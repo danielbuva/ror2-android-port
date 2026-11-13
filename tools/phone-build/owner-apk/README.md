@@ -48,7 +48,7 @@ shader mechanism or replacement content loader is introduced.
   access. Polling/subscription teardown does not cancel preparation. Only bundled
   allowlisted HTTPS-origin resources are served; navigation/network are blocked.
 - `index.html` provides accurate owner-APK preparation copy while reusing the
-  unchanged approved `launcher/{app.js,controller.js,style.css,background.png}`.
+  unchanged approved `launcher/{app.js,controller.js,feedback.js,style.css,background.png}`.
   The simulated demo is never included. There is no new tracked PNG exception.
 - `binary_manifest.py` edits binary XML using the existing public `phone_apk.py`
   chunk/string reader. `build_owner_apk.py` compiles only the authored Java to a
@@ -210,6 +210,54 @@ it never substitutes historical bytes. Keep these required private evidence
 inputs with their producer receipts as described in
 [LOCAL_STATE](../../../docs/LOCAL_STATE.md).
 
+### Lighting tolerance
+
+[ADR-003](../../../docs/ADR-003-lighting-tolerance.md) defines the narrow lighting
+exception. Optional `lighting_tolerance` maps a final target path to
+`{reference, recipe: {path, sha256}, visual: {path, sha256}}`. The reference is a
+private J850 file used only for qualification. The recipe is reviewed authored
+policy; bounds require recorded measurements, not a guessed epsilon. No actual
+J850 tolerance recipe has been accepted yet.
+
+A recipe contains `reference_sha256` and `members`, mapping UnityFS serialized
+member names to record rules. Use the empty member name for a standalone v22
+file. A rule contains `path_id`, `class_id` and `samples`; each sample contains
+`field` (native path components), `channels`, `max_abs` (one finite nonnegative
+measured bound per channel), and `measurement` (local numerical evidence and
+bound derivation). For example, this **synthetic** ambient rule uses an exactly
+representable fixture delta, not a game lighting bound:
+
+```json
+{"path_id": 1, "class_id": 104, "samples": [{
+  "field": ["m_AmbientProbe"], "channels": 27,
+  "max_abs": [0.125, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+              0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+  "measurement": "Authored fixture maximum"
+}]}
+```
+
+Cubemap rules also name `reflection_owner`, a local RenderSettings or
+ReflectionProbe path ID actually pointing to the cubemap. Texture2D rules name
+`lightmap_owner`, a local LightmapSettings path ID actually pointing to the
+texture in `m_Lightmaps`. Texel samples select `["image data", "Array", "payload"]`;
+LightProbes select `["m_BakedCoefficients", "Array", "payload"]`.
+Ambient recipes require 27 bounds, one per native coefficient in each probe. Missing embedded
+schemas, changed streamed resources and unsupported formats remain blocked.
+
+The visual document contains `reference_sha256`, `candidate_sha256`, `parity: true`
+and a nonempty `review` describing retained matched captures/settings and their
+review. The checker validates pins and recomputes all numerical differences;
+human review establishes that these measurements arise from GPU/sampling
+variation and that the captures show parity. No receipt alone proves that fact.
+
+An admitted file has status `tolerance-accepted`, `target_equal: false`, measured
+per-record maxima in `lighting_comparison`, and pinned `lighting_evidence`.
+`tolerance_accepted_count` counts admitted final files separately from raw-exact,
+drift and generated metadata counts. A changed unrelated byte still blocks the
+file. The assembler preserves current bytes, rechecks evidence and leaves
+`device_qualified` and `source_provenance_verified` false. Production never reads
+J850, bounds or captures to fill missing content.
+
 The normal build writes the same `readiness.json` and refuses all blocked inputs
 before launcher compilation or ZIP creation. Once the content owner materializes
 its final tree, use that unchanged request with `--request`, then pass the new
@@ -346,7 +394,7 @@ empty key map deliberately fails closed. Staging accepts an explicit
 `--release-trust` file for a maintainer-provisioned build. A key downloaded with a release is
 never trusted. Configure repository variables `PUBLISHER_KEY_ID`,
 `PUBLISHER_PUBLIC_KEY`, `PUBLIC_RELEASE_PLAN_PATH`, and optional
-`PUBLIC_MINIMUM_INSTALLER_VERSION` (default 1), and the repository secret
+`PUBLIC_MINIMUM_INSTALLER_VERSION` (default 3), and the repository secret
 `PUBLISHER_PRIVATE_KEY` with an **existing** matching publisher PEM. Protect the
 `public-release` GitHub environment and version tags. Do not put a private key in
 Git, a recipe, an artifact or a log. This implementation creates/configures no keys.
@@ -404,3 +452,343 @@ If the owner key is lost, stop: export saves through the game's supported path,
 explicitly reinstall with a new key, then restore saves. There is no automatic
 uninstall or save export. Host tests use synthetic data; phone install/update,
 interruption recovery and save survival remain the local orchestrator's checks.
+
+### Phone-only import and installation
+
+For the bounded synthetic lab flow, use the serialized runner with an exact
+published source tip and its matching `toolhost` APK:
+`scripts/lab-installer-updates.py --qualify-phone-flow --timeout 1800`.
+It freshly installs the disposable tool, reconstructs on the phone, verifies
+visible unknown-app permission and install consent, checks for updates, then
+verifies an in-place update with authored profile/settings witnesses. The actual
+UI reconstructs to READY **before** opening the permission page. Synthetic inputs
+and signed publisher fixtures are host-authored; this does not qualify SAF import
+or a real game profile. It stops after forward update, without repeating the
+already separate rollback/signature-refusal suite. Notifications are denied,
+including the device-qualified explicit second denial after this run's first
+denial, never pregranted.
+
+Each reported stage includes elapsed time (UI waits/polling/measurement overhead
+included), sampled app-process PSS, battery temperature and available bytes on
+the actual code/data backing. Samples occur at boundaries and at most every ten
+seconds in existing wait loops; sample count and largest gap are reported. These
+are **not true memory peaks**, and native child-tool memory may be omitted.
+Null means unavailable or not running/owned, never zero. Code/data may share a
+volume: do not sum their space or attribute the free-space delta solely to this
+app. Cleanup stops/uninstalls only this run's exact owned packages, sleeps the
+display, and retains diagnostics privately. Measurements do not establish the
+complete performance release gate.
+
+For a baseline-check timeout, the host-only retained-log mode
+`--inspect-check-timeout SOURCE_COMMIT` requires exactly one private run with
+that recorded source. It reports allowlisted state counts/transitions and the
+last retained Check control's flags, never UI text, state messages or paths.
+The binding is source-unique, **not an exact lab-run-ID binding**. Ambiguous
+runs are refused. It performs no device action and proves neither tap delivery
+nor handler entry. Existing raw diagnostics remain untouched.
+
+The qualified check observes persisted acknowledgment before waiting for backend
+completion. After an unacknowledged visible Check action, it permits only one
+additional tap: fresh APK ownership, two matching focused-app observations of
+one enabled/clickable Check control, and a final unchanged TEST_WAIT read are
+required. A late CHECKING/UPDATE_AVAILABLE prevents the retry; errors or unknown
+states stop. A second missing acknowledgment fails explicitly, rather than
+waiting the full reconstruction timeout. This is bounded recovery, not proof
+that the earlier missing action was caused by stale coordinates.
+
+The synthetic full-flow harness also retains a fixed `release-check-diagnostic`
+classification before failed Check cleanup. The debuggable disposable installer
+records handler entry, busy refusal, request-write failure or service-launch
+return in an independent Android preference, rather than through the atomic
+writer being investigated. Only fixed stage/error/root-alias classes are public;
+no preference XML, paths, exception text or release request is exported. An
+unavailable observation is not proof that the button listener did not execute.
+This diagnostic does not change Check dispatch, permissions or install consent.
+
+Managed JSON writes normalize only the platform-provided app-files root alias,
+not arbitrary target paths. The Context-aware writer retains child-link and
+atomic-write guards. Host tests reproduce the aliased-root failure and verify
+receipt preservation plus traversal/link refusal; a complete phone run is still
+required for each materially changed installation contract. The bounded
+synthetic flow below is qualified, not real-game import or converter performance.
+
+#### Qualified synthetic flow (2026-11-13)
+
+[Run 43348820195](https://github.com/danielbuva/ror2-android-port/actions/runs/43348820195)
+passed at `ce9242a54d4b5ccccf247dc978a7f18d9b967444` in 460 s: visible
+permission/consent, Check for updates, forward in-place update and synthetic
+profile/settings retention. Matching toolhost APK SHA-256:
+`f4eaafe1d56a40561d1fc1cf082bf7e635317d195db7d617828b01a887aa3773`.
+Owned test packages were verified absent. The
+[public result](https://github.com/danielbuva/ror2-android-port/issues/177#issuecomment-6841669800)
+retains exact bytes, sample counts and gaps; raw observations remain private.
+
+| Stage | Time (s) | Installer / alpha sampled PSS (MiB) | Installer free (GiB), start → end | Alpha free (GiB), start → end |
+| --- | ---: | --- | --- | --- |
+| Fresh installer | 26.005 | unavailable / unavailable | unavailable → 41.118 | unavailable |
+| Synthetic provision and initial check | 39.193 | 64.96 / unavailable | 41.117 → 39.371 | unavailable |
+| Baseline reconstruction | 85.248 | 63.12 / unavailable | 39.370 → 37.640 | unavailable |
+| Visible install permission | 67.632 | 58.79 / unavailable | 37.640 → 37.627 | unavailable |
+| Baseline install | 18.708 | 68.13 / unavailable | 37.627 → 37.622 | unavailable → 37.622 |
+| Seed retention witness | 7.841 | 60.58 / unavailable | 37.622 → 37.620 | 37.622 → 37.620 |
+| Check for updates | 25.967 | 72.96 / unavailable | 37.620 → 35.877 | 37.620 → 35.877 |
+| In-place update | 119.597 | 73.38 / 13.76 | 35.876 → 34.139 | 35.876 → 34.139 |
+| Verify profile/settings | 8.576 | 67.71 / 13.86 | 34.139 → 34.137 | 34.139 → 34.137 |
+
+Each package's code/data free readings round to the same values above; they are
+filesystem availability, not two independent allocations or app sizes. The nine
+stages total 398.767 s; setup/cleanup outside stages accounts for the remainder.
+Largest observation gap: 66.169 s. Maximum sampled battery temperature: 33 °C.
+Unavailable memory is not zero, and the largest sampled PSS is not a true peak
+or a native-child total. This does not replace packaging rollback/importer,
+SAF, legitimate-input, real-profile or complete-converter qualification.
+
+Installer version 3 extends the version-2 foreground-service flow: prepare the signed public
+release, choose the owner's PC game directory with Android's folder picker (or
+choose a ZIP), import, then reconstruct and install. Only required files are
+copied to app-private storage. Missing paths and size/hash/version mismatches
+block admission; extra files are reported and left untouched. Nothing from the
+selected folder/archive is uploaded. ZIP paths, duplicates and expanded lengths
+are checked before accepting output; other archive formats must be extracted by
+the owner first. A revoked picker grant requires selecting the source again.
+
+The signed bundle's optional `install_plan` has schema 1, `required_inputs`
+(a bundled JSON with `schema: 1`, `game_version`, and `files` rows containing
+`path`, `bytes`, `sha256`), `workspace_bytes`, `configuration: {bindings: ...}`,
+and eight ordered `stages` (`id`, `title`, `jobs`). Stage IDs are `admission`,
+`staging`, `assembly`, `textures`, `native`, `apk`, `signing`, `install`.
+Every producer and dependency occurs once in a production stage; dependencies
+cannot follow their consumer's stage. Bindings select only admitted original
+files/directories (`.` selects the imported root). Such releases require minimum
+installer version 3 for the final alpha policy. Maintainers must supply a complete reviewed source recipe;
+this feature does not invent missing game producers or supply private replay
+packets. The assembly receipt is generated locally from verified producer outputs,
+not shipped historical target hashes or game bytes.
+
+Before import, the app estimates missing input bytes plus the release's declared
+peak reconstruction workspace, a 5% input margin and a 2 GiB reserve. Existing
+assembly/tool reserve checks still apply. Completed imports and stage results are
+rehash-checked on resume; an incomplete file is restarted, not trusted. Space can
+change while running, so failures retain completed work and report the first
+failing stage. Cancel stops work without deleting original files, completed
+checkpoints, saves or the durable signing key. Retry reuses only verified results.
+
+A foreground notification keeps the operation visible when the activity closes.
+After process death or reboot, open the app and explicitly resume; reboot does
+not launch an installation. The UI shows stage progress, elapsed time and the
+existing thermal supervisor's battery/temperature observations. User pause is
+combined with thermal pause; resume never bypasses cooling, battery-health
+admission or existing cutoffs. Sensor loss is a failure, not permission to run
+unprotected. Successful reconstruction hands off to the existing Android package
+session; Android may request installation consent. Updates keep the same package
+and on-device key and never clear saves. If that key is lost, export saves before
+an explicit uninstall/reinstall; the app refuses to silently replace it.
+
+
+### Alpha policy, rollback and retention
+
+Installer v3 consumes only signed alpha releases for `dev.ror2lab.alpha`, with
+minimum installer 3 and explicit `data_schema: {writes: 1, reads: [1]}` in the
+reviewed publication plan. The signed release body owns that declaration.
+`alpha_policy.py` separates publisher ordering from owner-local issued Android
+codes; every attempt burns a durable code before dispatch, and missing state,
+reuse, downgrade or exhaustion refuses. Ready receipts bind source, originals,
+toolchain, output APK/payload and certificate. An occupied identity also requires
+its independently verified local installed receipt; laboratory migration is not
+implicit. `release-rollback` uses the previous signed APK reference, checks
+compatibility, rewrites only the version and calls the same retained-key signer.
+[Policy](../../../docs/ALPHA_POLICY.md#local-retention-and-rollback-storage)
+defines exact storage retention, profile files, pruning and phone gates.
+
+The required-input JSON may remain one schema-1 manifest or use schema 2 with
+`supported` and `recognized` arrays of schema-1 complete inventories. Recognition
+never grants support. Folder/ZIP streams are fingerprinted before copying;
+ambiguous, incomplete, changed or unknown input reports the found state,
+supported labels and next action, without guessing from names. Native and Python
+validation share the existing import owners; the pipeline rechecks private files.
+
+`ProfileStore.java` performs bounded byte-preserving backup/restore.
+`ProfileRetentionProvider` exposes control only at the alpha `.retention`
+authority, authenticated by Binder UID, exact installer package and the actual
+installer public certificate pinned during the owner build. Different game and
+installer keys are supported; no shared UID or broad file provider is assumed.
+The embedded `owner-bootstrap/retention-policy.json` has `schema`,
+`installer_package`, `installer_certificate_sha256`, and `data_schema`.
+The Unity activity is unexported; its bootstrap and certificate-checked control
+provider are exported. Unity launch is blocked during recovery, and Android
+Auto Backup is disabled.
+
+The installer calls `snapshot` with explicit user intent and the current schema,
+then `status`/`verify`/`restore`/`release` with the returned snapshot token/schema.
+Only the game process reads profile bytes. A released-token status is historical
+proof, not current byte equality: recovery first verifies the actual installed
+APK and issued receipt, then finalizes without overwriting subsequent gameplay.
+All native decoding, migration and cold-start acceptance remain game/phone gates.
+
+The legacy J850 comparison profile retains its narrow startup/context regeneration
+policies. The public `owner-source-output-v1` assembly receipt instead requires
+every output to match its complete local producer pins; historical metadata
+exceptions cannot override those pins. Both routes use the same assembler and
+retained signing key. Real phone installation and saved-data survival remain
+acceptance gates.
+
+### Interrupted writes and full storage
+
+`atomic_io.py` owns private installer receipt writes: sibling staging, file fsync,
+atomic replace and parent-directory fsync. Its caller must retain the existing
+import/update lock or foreground operation ownership. A retry overwrites only its
+owned partial; partial bytes are never completion evidence. `release.py` syncs
+producer outputs before publication and checkpoints each verified output, so a
+later producer failure does not discard earlier progress. `game_import.py`
+rehashes completed files on resume. A failed error-report write cannot mask the
+original storage error or invalidate the last durable checkpoint. An error after
+rename means durability is unconfirmed, not that the old bytes are still present.
+
+`OwnerInputImport` owns the matching Java atomic writer/directory sync used by
+`ToolHostActivity.writeJson` and streamed imports. Android uses `Os.fsync`; the
+Android-free fixture uses the host JVM. PackageInstaller still owns APK session
+commit, and no checkpoint claims installation success.
+
+Host acceptance: `python3 -m unittest tests.test_owner_atomic_writes` injects
+ENOSPC during staging, fsync and rename, kills a writer mid-write, and verifies
+cleanup, last-receipt preservation and explicit resume. Java compilation needs a
+JDK. The separately leased lab command is:
+
+```
+/lab script ref=dani/dots-atomic-installer-writes device=nova-b -- scripts/lab-installer-quota.py
+```
+
+The phone fixture creates only a fresh shell scratch directory and runs the same
+Java writer through `app_process`. It fills a **64 KiB logical quota**, injects
+ENOSPC after a bounded partial write, and verifies unchanged committed bytes,
+cleanup and retry. It never fills the filesystem, mounts a quota volume, installs
+an APK, or reads game/key state. Admission requires at least 15 GiB free on the
+actual scratch backing and the existing battery rule; a device-side watchdog
+refuses missing sensors, temperatures above 50 C, battery at 35 C or above, and
+runs longer than 10 s. Owned scratch is removed and the display sleeps on exit.
+The driver uses the pinned build-tools version and `JAVA_HOME`/`ANDROID_SDK_ROOT`
+(or the documented Unity Android toolchain). Raw diagnostics remain ignored.
+This is logical-quota failure injection, **not physical-filesystem ENOSPC or full
+installer UI qualification**. No phone result is implied by host fixture success.
+
+### Source bundle job compilation
+
+`release_graph.py` is the current host authoring step for selected complete
+source-bundle profiles. Pass `--repo`, repeated repo-relative `--profile`, and a
+new `--output` staging root. It resolves supplier profile hashes, emits standard
+`recipe/jobs/*.json` descriptors and `source-index.json`, and reports missing or
+unsupported suppliers before writing output. Player data and shaders expose
+their complete serialized files; remapping uses their top-level receipts, while
+player data consumes the nested shader pack and five texture suppliers.
+Compressed native-record recipes (`owner-*.jsonl.gz`) are discovered by their
+compressed SHA-256 and bounded header. Their existing record producer streams
+source groups; graph compilation does not expand the hierarchy.
+Sprite/native providers still need explicit wiring; this is not the complete
+source release. Optional `--player-phases recipe/owner-player-phases.json` wires
+all five existing player phases and declares their complete 33-file union,
+including generated Sprite/texture dependencies. Phase recipes, texture recipes
+and public policy inputs enter the signed closure. The dispatcher requires the
+player receipt to match declared membership exactly on production and reuse.
+New source media therefore reports a membership difference instead of silently
+omitting a referenced file.
+
+A selected `owner-bundle-preload-release-v1` profile declares `profiles` (the
+repo-relative prerequisite producer profiles) and `request` (the existing fresh
+preparation request, with its public `policy` object inline). Supplier file pins
+use declared job artifacts; public profile/witness pins use `${repo}/...` paths.
+The graph includes those public files in its signed closure and dispatches
+`bundle_preload.py --release` to prepare, emit and optionally repack once. Its
+actual final bundle and generated catalog profile feed catalog production.
+Referenced donor/staged bundles also ship and enter the native manifest because
+the emitted PPtrs depend on them. Pack-only suppliers remain intermediates.
+Managed witness documents must come from generated job artifacts; registry body,
+receipt and schemas must come from the same final player producer. The SDK
+properties file remains an explicitly pinned acquired leaf. Current managed
+cohort production, exact-editor load and phone execution still need qualification;
+the dispatcher host fixture uses an authored empty runtime registry.
+
+For host policy authoring, `Graph.bundle_bindings(rows, bundle, member)` maps
+one member's selected metadata to `bindings`, `suppliers` and prerequisite
+`profiles` using the public profile hash and declared pack artifacts. It returns
+every unmapped row in `unresolved`; resolve all of these before composing a
+release policy. Original source, producer output and destination identities stay
+separate, including when their path IDs coincide. The mapper reads no supplier
+bodies and does not qualify the graph. The caller still supplies address groups,
+exceptional routes, staged endpoints and generated managed witnesses. Final
+container suppliers require explicit staged bindings instead of record-pack pins.
+
+Pass explicit public profile hashes in `source_profiles` when a retained selection
+names a private index instead of a reproducible supplier. The mapper reverses
+the existing body selectors without reading generated packs. It prefers an exact
+source/output pair; otherwise it requires one public producer output for that
+original source. Bindings keep the original source and destination, name the fresh
+public `record_source`, and retain the private record pin and output identity in
+`selection`. Multiple candidates remain unresolved with their profile/output
+pairs. Only chosen suppliers become jobs; unrelated and unselected recipes are
+not compiled. Preparation still checks the original body selector, final type
+table and actual produced bytes; field routes and graph admission remain separate.
+
+Selecting the manager phase also creates the existing `startup_metadata.py`
+job. Bind `inventory` to the admitted original-game inventory; the smoke
+PlayerSettings and toolchain descriptor travel in the signed public closure.
+The manager consumes this job's receipt/hash, and its two final startup files
+enter the release automatically. No separately supplied startup receipt is
+required. Environment capture remains an explicit source-produced input.
+
+Optional `--burst-request recipe/<request>.json` adds the existing
+`owner-code/produce.py` Burst-only job. The caller's request uses
+`"output": "${output}"` and explicit tool/input bindings, with either `managed`
+providers (each path plus SHA-256) or the producer's `source_inputs` mapping.
+The latter generates its managed cohort first. The final library and linker
+preservation XML share the signed compiler-policy closure and incremental cache.
+No target APK input is required.
+
+Optional `--sdk-request recipe/owner-sdk-job-inputs.json` emits all 15 Android
+SDK entries through the existing pinned SDK package owner. Bind `sdk_install`,
+`sdk_android_jar`, `sdk_aapt`, `sdk_java`, `sdk_javac` and each
+`sdk_jar_<filename>` to acquired inputs. The authored Java helper is signed with
+the producer closure; all entries share one cached job. SDK packaging does not
+qualify gameplay or complete the remaining source bundle suppliers.
+
+Dispatcher bindings `pc`, `sdk` and `codec` select canonical private input paths.
+Only producers requiring SDK data receive the default SDK argument. Object
+profiles declaring SDK metadata bind `sdk_contents/..` as their Unity application
+root, preserving their pinned `Contents/Resources` paths. Optional
+`--extra-arguments` reads a JSON map from producer name to additional argv. Use this for the existing
+codec/helper/template tool options; no command shell or private output fallback
+is introduced. `input_sha256:NAME` hashes a declared regular input file, and
+`job_directory:JOB:ARTIFACT` selects the parent of a declared supplier receipt.
+Private input identity must cover acquired tools as well as original files, as
+required by the existing updater.
+
+Player jobs additionally bind `sdk_contents` (Unity Contents data), `converter`,
+`converter_receipt` (that directory's result.json), `code_request` and `managed`
+to freshly source-produced inputs. Shader jobs use `sdk_contents` and require
+their existing public recovery/compiler tool arguments through
+`--extra-arguments`. `--player-phases` wires the existing optional player
+phase arguments and outputs. Missing inputs fail through the producer contracts;
+this compiler does not generate managed/native runtime inputs. Authored shader
+files, player registry/manifests/bootstrap/config and imported lab Python owners
+are included in the signed dependency closure.
+
+Overlay generated recipe files into a release source checkout, inspect/audit and
+commit them, then use the existing public publisher. The generated index is an
+input to release planning, not an issued or signed release. It conservatively
+includes the Python producer cohort because owners use dynamic imports.
+Production retains existing producer schema/reference checks and byte checks;
+this wiring does not relax a producer's historical comparison contract.
+
+Host evidence: `work/coordination/p1-scenes-w/end-to-end-v2/` rebuilt the current
+original death-effect bundle through the generated graph and dispatcher (one job).
+Wall 52.260 s, user/system CPU 50.315/1.412 s, peak RSS 6,341,328,896 bytes;
+sampled converter workspace grew by 521,201 logical bytes. This is one bundle,
+not APK or gameplay acceptance. The generated two-job synthetic fixture also
+checks receipt identity and reuse on the second run.
+
+The phase declaration additionally binds `ugui_source`, `sdk_binary`,
+`startup_receipt`, `scene_environment_result`, `scene_environment_request`,
+`scene_environment_bundle` and `scene_environment_images`. These are explicit
+source-produced/acquired inputs; startup/environment generation is not yet a
+job in this graph. Manager shaders use the existing shader job directly.
+This declares 210 player files with the current source recipes; it does not
+qualify a complete APK or runtime loading.

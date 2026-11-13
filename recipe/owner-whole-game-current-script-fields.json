@@ -1,0 +1,469 @@
+{
+  "input_id": "6af7ed94619fe1b4346974b4486afa03a8d1625a7820e92da0ff74d57208fe88",
+  "bundles": [
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-dlc4-catastrophes_static_assets_all_044878131fc05b07f338ff3e9c8ea48d.bundle",
+      "sha256": "c3c5ed0a82f3726acb66ad6bb7dfe63b2677bf4788b4f592a49361dd959652e4",
+      "members": [
+        {
+          "name": "CAB-4cde4ed5e14abef933ad66dc463f9126",
+          "objects": [
+            {
+              "path_id": 8742539132196909977,
+              "class_id": 114,
+              "sha256": "b5731ba0341bf5ec63971c5b7352f96ebfa2157787a560f6cea70b344e5fa739",
+              "outputs": [
+                {
+                  "bundle": "whole-game-content",
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "path_id": -6916924140076285685,
+                  "bytes": 68,
+                  "sha256": "3015f120e9613eca19f3a76e5b9b20c6a8006d431584e8b86f07df8a34f2f2ee",
+                  "transform": {
+                    "references": [
+                      {
+                        "offset": 0,
+                        "from": [
+                          0,
+                          8118090389768008601
+                        ],
+                        "to": [
+                          0,
+                          5476064332161124635
+                        ]
+                      },
+                      {
+                        "offset": 16,
+                        "from": [
+                          1,
+                          -2523071294247290014
+                        ],
+                        "to": [
+                          0,
+                          9039474586381758214
+                        ]
+                      },
+                      {
+                        "offset": 48,
+                        "from": [
+                          0,
+                          275453741599978393
+                        ],
+                        "to": [
+                          0,
+                          2071600674418005652
+                        ]
+                      }
+                    ]
+                  },
+                  "native_type_hash": "2978efb9472741cf7cd8be466cd212ac"
+                }
+              ],
+              "properties_hash": {
+                "script": {
+                  "bundle": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/calmwater_monoscripts_a69c140580dd1456807433bb923cc5ba.bundle",
+                  "bundle_sha256": "68aee1b2d2633c3ce1713cc44238025f750d3ae0aa66f42e748d421b19178022",
+                  "member": "CAB-29d1a7582c548fe5e49f4c4c7a96e47e",
+                  "path_id": -2523071294247290014,
+                  "class_id": 115,
+                  "bytes": 72,
+                  "sha256": "b83cd52f38c5467b0ab0e1e6823ac1e742a878926d6e77eb3bfa63fdce1864f9"
+                }
+              },
+              "prune_absent_script_fields": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-dlc4-hollowman_assets_all_569031149f59a4cb1ff4d7c9b8c35cf8.bundle",
+      "sha256": "1613c79275fd933d0f7a06cdc2a7989f14f5371d5c992a6ee3a74fc08ba3e9a9",
+      "members": [
+        {
+          "name": "CAB-5ab2f1713b2f60dc9c6b83c9af961689",
+          "objects": [
+            {
+              "path_id": -2622054232636835950,
+              "class_id": 114,
+              "sha256": "eafb8b0b16837597d042f6eed6abed13fb26721f1934321b8c8fa306a709d8bd",
+              "outputs": [
+                {
+                  "bundle": "whole-game-content",
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "path_id": 8395237799940171747,
+                  "bytes": 68,
+                  "sha256": "acad36d8212b0b9404a8c1a7cc5b801e94d65d9f810e14cf560d78833c4c5142",
+                  "transform": {
+                    "references": [
+                      {
+                        "offset": 0,
+                        "from": [
+                          0,
+                          5354450040266700690
+                        ],
+                        "to": [
+                          0,
+                          -5190486510671187110
+                        ]
+                      },
+                      {
+                        "offset": 16,
+                        "from": [
+                          1,
+                          -2523071294247290014
+                        ],
+                        "to": [
+                          0,
+                          9039474586381758214
+                        ]
+                      },
+                      {
+                        "offset": 48,
+                        "from": [
+                          0,
+                          -7212094807722805358
+                        ],
+                        "to": [
+                          0,
+                          2990650827136790592
+                        ]
+                      }
+                    ]
+                  },
+                  "native_type_hash": "2978efb9472741cf7cd8be466cd212ac"
+                }
+              ],
+              "properties_hash": {
+                "script": {
+                  "bundle": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/calmwater_monoscripts_a69c140580dd1456807433bb923cc5ba.bundle",
+                  "bundle_sha256": "68aee1b2d2633c3ce1713cc44238025f750d3ae0aa66f42e748d421b19178022",
+                  "member": "CAB-29d1a7582c548fe5e49f4c4c7a96e47e",
+                  "path_id": -2523071294247290014,
+                  "class_id": 115,
+                  "bytes": 72,
+                  "sha256": "b83cd52f38c5467b0ab0e1e6823ac1e742a878926d6e77eb3bfa63fdce1864f9"
+                }
+              },
+              "prune_absent_script_fields": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-dlc4-hollowman_static_assets_all_0991a7dcbadd3274dde446aadd26c1c7.bundle",
+      "sha256": "24fe303e412b804de6a37a73ceee27e58dc4a3489268993d47acac7fd1210083",
+      "members": [
+        {
+          "name": "CAB-7f50f32955bbe9af01f372e6f5459071",
+          "objects": [
+            {
+              "path_id": 2903175201397394194,
+              "class_id": 114,
+              "sha256": "7c0075f4e1abfb04eb1ea0fa28eef1eb06add10e14b2d1fa8453fe7bba99a4df",
+              "outputs": [
+                {
+                  "bundle": "whole-game-content",
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "path_id": 8285609193356144832,
+                  "bytes": 80,
+                  "sha256": "fe3da29b9447b17823be1fe67f280b2455d41c06c73590434c8bb9e6cbd56625",
+                  "transform": {
+                    "references": [
+                      {
+                        "offset": 0,
+                        "from": [
+                          0,
+                          3326832031373576978
+                        ],
+                        "to": [
+                          0,
+                          -3265917011541549558
+                        ]
+                      },
+                      {
+                        "offset": 16,
+                        "from": [
+                          1,
+                          -2523071294247290014
+                        ],
+                        "to": [
+                          0,
+                          9039474586381758214
+                        ]
+                      },
+                      {
+                        "offset": 32,
+                        "from": [
+                          0,
+                          -359794620486726894
+                        ],
+                        "to": [
+                          0,
+                          -6032488807886623141
+                        ]
+                      },
+                      {
+                        "offset": 48,
+                        "from": [
+                          0,
+                          5702891352372988690
+                        ],
+                        "to": [
+                          0,
+                          -8792726556036455304
+                        ]
+                      },
+                      {
+                        "offset": 60,
+                        "from": [
+                          0,
+                          -8750337008935580910
+                        ],
+                        "to": [
+                          0,
+                          3341659367218571059
+                        ]
+                      }
+                    ]
+                  },
+                  "native_type_hash": "2978efb9472741cf7cd8be466cd212ac"
+                }
+              ],
+              "properties_hash": {
+                "script": {
+                  "bundle": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/calmwater_monoscripts_a69c140580dd1456807433bb923cc5ba.bundle",
+                  "bundle_sha256": "68aee1b2d2633c3ce1713cc44238025f750d3ae0aa66f42e748d421b19178022",
+                  "member": "CAB-29d1a7582c548fe5e49f4c4c7a96e47e",
+                  "path_id": -2523071294247290014,
+                  "class_id": 115,
+                  "bytes": 72,
+                  "sha256": "b83cd52f38c5467b0ab0e1e6823ac1e742a878926d6e77eb3bfa63fdce1864f9"
+                }
+              },
+              "prune_absent_script_fields": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-dlc4-shrinedeath_static_assets_all_be4cf084c883236fa359af31d313055b.bundle",
+      "sha256": "11e2ebe1f52b3c979c5988ca80ab65c91b991603546ad3e2763a7fb0e1d6b25b",
+      "members": [
+        {
+          "name": "CAB-c5e1827eebeeecc4848d3645dc74eba7",
+          "objects": [
+            {
+              "path_id": 2974053084615736532,
+              "class_id": 114,
+              "sha256": "3444f74a00118b9364cef72a2cf8b4fd5d5c4d1afbc7a8e420910a0d51fa11a9",
+              "outputs": [
+                {
+                  "bundle": "whole-game-content",
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "path_id": -2874021036175379780,
+                  "bytes": 104,
+                  "sha256": "e43a2f93ace14db8e31edf0526459fa9d4dcd027c4f36671e347f8ee4c413542",
+                  "transform": {
+                    "references": [
+                      {
+                        "offset": 0,
+                        "from": [
+                          0,
+                          -3847796549423334188
+                        ],
+                        "to": [
+                          0,
+                          1941826406329224692
+                        ]
+                      },
+                      {
+                        "offset": 16,
+                        "from": [
+                          1,
+                          -2523071294247290014
+                        ],
+                        "to": [
+                          0,
+                          9039474586381758214
+                        ]
+                      },
+                      {
+                        "offset": 48,
+                        "from": [
+                          0,
+                          6339942530289630420
+                        ],
+                        "to": [
+                          0,
+                          -648208645954461389
+                        ]
+                      },
+                      {
+                        "offset": 60,
+                        "from": [
+                          0,
+                          -3804315519402705708
+                        ],
+                        "to": [
+                          0,
+                          6907169489105054423
+                        ]
+                      },
+                      {
+                        "offset": 72,
+                        "from": [
+                          0,
+                          -4989302016376308524
+                        ],
+                        "to": [
+                          0,
+                          9075896847512159401
+                        ]
+                      },
+                      {
+                        "offset": 88,
+                        "from": [
+                          0,
+                          8098213583670869204
+                        ],
+                        "to": [
+                          0,
+                          -8599955740754297035
+                        ]
+                      }
+                    ]
+                  },
+                  "native_type_hash": "2978efb9472741cf7cd8be466cd212ac"
+                }
+              ],
+              "properties_hash": {
+                "script": {
+                  "bundle": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/calmwater_monoscripts_a69c140580dd1456807433bb923cc5ba.bundle",
+                  "bundle_sha256": "68aee1b2d2633c3ce1713cc44238025f750d3ae0aa66f42e748d421b19178022",
+                  "member": "CAB-29d1a7582c548fe5e49f4c4c7a96e47e",
+                  "path_id": -2523071294247290014,
+                  "class_id": 115,
+                  "bytes": 72,
+                  "sha256": "b83cd52f38c5467b0ab0e1e6823ac1e742a878926d6e77eb3bfa63fdce1864f9"
+                }
+              },
+              "prune_absent_script_fields": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-dlc4-wake_static_assets_all_61a271efd3f07a9b89a6806340a1cd8b.bundle",
+      "sha256": "fa2fb0cb08608203f404bf088c4187e32e74e1623c3176840f7005c86af3bf1e",
+      "members": [
+        {
+          "name": "CAB-032b3d33e00b29f79c3c9625c17a15ef",
+          "objects": [
+            {
+              "path_id": -4281630312699761665,
+              "class_id": 114,
+              "sha256": "655e008450a41f5d04ae0e37417cd7c9236874baa1a8abb871d646c52361aa1b",
+              "outputs": [
+                {
+                  "bundle": "whole-game-content",
+                  "member": "CAB-db73b5db4016675ba5b1a0ee354adfb9",
+                  "path_id": 6558872154165830952,
+                  "bytes": 92,
+                  "sha256": "9b61558ecb212951928b2758cb257e9df877f3fdaeb3909fecf9598c6b70b909",
+                  "transform": {
+                    "references": [
+                      {
+                        "offset": 0,
+                        "from": [
+                          0,
+                          -5132269533220279297
+                        ],
+                        "to": [
+                          0,
+                          5485579674739267902
+                        ]
+                      },
+                      {
+                        "offset": 16,
+                        "from": [
+                          1,
+                          -2523071294247290014
+                        ],
+                        "to": [
+                          0,
+                          9039474586381758214
+                        ]
+                      },
+                      {
+                        "offset": 48,
+                        "from": [
+                          0,
+                          7570992523239451647
+                        ],
+                        "to": [
+                          0,
+                          1580257174969791047
+                        ]
+                      },
+                      {
+                        "offset": 60,
+                        "from": [
+                          0,
+                          -5163994159486768129
+                        ],
+                        "to": [
+                          0,
+                          -6815914906958471739
+                        ]
+                      },
+                      {
+                        "offset": 76,
+                        "from": [
+                          0,
+                          4715185607635921919
+                        ],
+                        "to": [
+                          0,
+                          -5588415118221396006
+                        ]
+                      }
+                    ]
+                  },
+                  "native_type_hash": "2978efb9472741cf7cd8be466cd212ac"
+                }
+              ],
+              "properties_hash": {
+                "script": {
+                  "bundle": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/calmwater_monoscripts_a69c140580dd1456807433bb923cc5ba.bundle",
+                  "bundle_sha256": "68aee1b2d2633c3ce1713cc44238025f750d3ae0aa66f42e748d421b19178022",
+                  "member": "CAB-29d1a7582c548fe5e49f4c4c7a96e47e",
+                  "path_id": -2523071294247290014,
+                  "class_id": 115,
+                  "bytes": 72,
+                  "sha256": "b83cd52f38c5467b0ab0e1e6823ac1e742a878926d6e77eb3bfa63fdce1864f9"
+                }
+              },
+              "prune_absent_script_fields": true
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "sdk": {
+    "path": "Contents/Resources/unity editor resources",
+    "sha256": "25bcb42474a8e1d639d4835a28fa2017dc153e2612e3961c6b09895f5ac3a190",
+    "path_id": -9215203055440829681
+  },
+  "managed": {
+    "path": "Risk of Rain 2_Data/Managed",
+    "files": {
+      "RoR2.dll": "a5f7d83c7e6872fdd6099fdc299adb7d4fa03cbf465e526d6f5efcc35c2c281d",
+      "UnityEngine.CoreModule.dll": "e468e19789d608b41e2c7fe4f367c7082fece7d1883f568e75870f6c5384cc86"
+    }
+  }
+}

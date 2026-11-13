@@ -1,7 +1,8 @@
 #!/bin/sh
 # Refuse a push that would fail GitHub's host-tests check: scripts/ci-local.sh runs its steps
 # (Ruff on changed files, audits, host tests) on the committed content being pushed, in a fresh
-# clone with the Unity install hidden and case-sensitive temp files. Takes about a minute.
+# checkout with the Unity install hidden and case-sensitive temp files. Only source objects
+# and keyed dependencies are reused; all checks run again for every pushed commit.
 # Installed with: git config core.hooksPath scripts/git-hooks. Bypass only with the operator's say-so.
 root=$(git rev-parse --show-toplevel) || exit 1
 zero=0000000000000000000000000000000000000000

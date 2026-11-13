@@ -79,7 +79,7 @@ public static class SirenEggTargetSelectionPolicy
 
     // Selection changes only which already validated original egg receives the
     // ordinary movement/aim request. An attackable target wins over proximity;
-    // otherwise approach the nearest egg, rather than a distant visible one.
+    // otherwise keep a revalidated approach target through its native detour.
     public static bool Prefer(bool candidateVisible, float candidateDistanceSqr, bool bestExists, bool bestVisible, float bestDistanceSqr)
     {
         if (float.IsNaN(candidateDistanceSqr) || float.IsInfinity(candidateDistanceSqr) || candidateDistanceSqr < 0f)
@@ -89,6 +89,16 @@ public static class SirenEggTargetSelectionPolicy
         if (candidateVisible != bestVisible)
             return candidateVisible;
         return candidateDistanceSqr < bestDistanceSqr;
+    }
+
+    public static bool PreferApproach(bool candidateRetained, float candidateDistanceSqr, bool bestExists,
+                                      bool bestRetained, float bestDistanceSqr)
+    {
+        if (float.IsNaN(candidateDistanceSqr) || float.IsInfinity(candidateDistanceSqr) || candidateDistanceSqr < 0f)
+            return false;
+        if (bestExists && candidateRetained != bestRetained)
+            return candidateRetained;
+        return Prefer(false, candidateDistanceSqr, bestExists, false, bestDistanceSqr);
     }
 
     public static bool CanRequestPrimary(bool visible, bool nativeRangeKnown, float distance, float maximumDistance)
@@ -568,6 +578,7 @@ public sealed class SirenEggDiagnosticInput : IDisposable
     readonly SirenEggInputLease inputLease = new SirenEggInputLease();
     readonly List<CharacterBody> sourceEggCandidates = new List<CharacterBody>();
     NovaInputBridge ownedBridge;
+    CharacterBody approachEgg;
     float beganAt = float.NaN;
     int startedSceneHandle;
     int lastObservedInputTick = int.MinValue;
@@ -720,7 +731,7 @@ public sealed class SirenEggDiagnosticInput : IDisposable
         CharacterBody nearestEgg = null, attackableEgg = null;
         Vector3 nearestPoint = Vector3.zero, attackablePoint = Vector3.zero;
         float nearestDistanceSqr = float.PositiveInfinity, attackableDistanceSqr = float.PositiveInfinity;
-        bool hasNearest = false, hasAttackable = false, nearestVisible = false;
+        bool hasNearest = false, hasAttackable = false, nearestVisible = false, nearestRetained = false;
         for (int i = 0; i < sourceEggCandidates.Count; i++)
         {
             CharacterBody candidate = sourceEggCandidates[i];
@@ -732,13 +743,17 @@ public sealed class SirenEggDiagnosticInput : IDisposable
             bool candidateRangeKnown = context.TryReadNavigationTrigger(player, candidate, out candidateDistance, out candidateMaximumDistance);
             bool attackable = SirenEggTargetSelectionPolicy.CanRequestPrimary(candidateVisible, candidateRangeKnown,
                                                                              candidateDistance, candidateMaximumDistance);
-            if (SirenEggTargetSelectionPolicy.Prefer(false, distanceSqr, hasNearest, false, nearestDistanceSqr))
+            // Revalidation above excludes dead, unregistered or foreign eggs. A
+            // native detour may pass nearer another nest without reaching its goal.
+            bool retained = ReferenceEquals(candidate, approachEgg);
+            if (SirenEggTargetSelectionPolicy.PreferApproach(retained, distanceSqr, hasNearest, nearestRetained, nearestDistanceSqr))
             {
                 nearestEgg = candidate;
                 nearestPoint = candidatePoint;
                 nearestDistanceSqr = distanceSqr;
                 hasNearest = true;
                 nearestVisible = candidateVisible;
+                nearestRetained = retained;
             }
             if (attackable && SirenEggTargetSelectionPolicy.Prefer(true, distanceSqr, hasAttackable, true, attackableDistanceSqr))
             {
@@ -754,6 +769,7 @@ public sealed class SirenEggDiagnosticInput : IDisposable
             Yield("no-current-source-egg-target");
             return false;
         }
+        approachEgg = egg;
         // Recheck the live owner/start boundary immediately before writing the
         // ordinary bridge requests. The candidate itself was revalidated above.
         if (context.FirstFailure)
@@ -1220,6 +1236,7 @@ public sealed class SirenEggDiagnosticInput : IDisposable
             return;
         navigationObservation.Complete(reason);
         ReleaseIfStillOwned();
+        approachEgg = null;
         terminal = true;
         report.terminal = true;
         report.stopReason = reason;
@@ -1238,6 +1255,7 @@ public sealed class SirenEggDiagnosticInput : IDisposable
     {
         if (disposed)
             return;
+        approachEgg = null;
         navigationObservation.Dispose();
         ReleaseIfStillOwned();
         report.cleaned = true;

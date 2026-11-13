@@ -24,6 +24,15 @@ def controller_presence_source():
 
 
 class NovaInputPresenceTests(unittest.TestCase):
+    def test_lab_startup_requests_gameplay_frame_rate_before_first_frame(self):
+        source = (ROOT / "android/Assets/LabDiagnostics.cs").read_text()
+        startup = source.index("IEnumerator Start()")
+        request = source.index("Application.targetFrameRate = 300;", startup)
+        first_frame = source.index("yield return", startup)
+        ready = source.index('Dump("LAB_READY")', startup)
+        self.assertLess(request, first_frame)
+        self.assertLess(first_frame, ready)
+
     def test_loading_render_interval_covers_preparation_and_restores_before_play_and_recovery(self):
         source = (ROOT / "tools/unity/runtime/input/NovaInputBoundary.cs").read_text()
         begin = source.index("public IEnumerator NovaInputBoundary(")
@@ -31,7 +40,7 @@ class NovaInputPresenceTests(unittest.TestCase):
         prepare = source.index("coordinator.PrepareIntegratedWorld(body, cfg)", begin)
         restore = "OnDemandRendering.renderFrameInterval = priorRenderFrameInterval;"
         ready = source.index(restore, prepare)
-        playing = source.index("Application.targetFrameRate = 300;", prepare)
+        playing = source.index("coordinator.GetOfflineApplicationSession().ReapplyDisplayPreference();", prepare)
         first_input_frame = source.index("yield return new WaitForEndOfFrame();", playing)
         cleanup = source.index("finally", first_input_frame)
         recovery = source.index("if (coordinator.r.sourceStageLifecycleRecoveryRequired)", cleanup)

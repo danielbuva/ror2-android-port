@@ -206,10 +206,13 @@ def _shift(nodes, delta):
     return [dict(node, level=node["level"] + delta) for node in nodes]
 
 
-def _tree(nodes):
+def _tree(nodes, common_strings=False):
     strings, offsets, entries = bytearray(), {}, []
+    common = {value: 0x80000000 + key for key, value in COMMON.items()} if common_strings else {}
 
     def offset(value):
+        if value in common:
+            return common[value]
         if value not in offsets:
             offsets[value] = len(strings)
             strings.extend(value.encode() + b"\0")
@@ -333,6 +336,8 @@ def _compact_metadata(pe, coded):
                 identity = _type_name(owner.row)
         if identity in {("UnityEngine", "SerializeField"), ("UnityEngine", "SerializeReference")}:
             attributes["Field", parent.row_index].add(identity)
+        elif identity == ("UnityEngine.Serialization", "FormerlySerializedAsAttribute"):
+            attributes["Field", parent.row_index].add((*identity, bytes(row.Value.value)))
     exported = [
         N(
             TypeName=str(row.TypeName),
@@ -525,6 +530,29 @@ class _RegistryTypes:
         return not (field.Flags.fdStatic or field.Flags.fdInitOnly or field.Flags.fdNotSerialized) and (
             field.Flags.fdPublic or bool({("UnityEngine", "SerializeField"), ("UnityEngine", "SerializeReference")} & attributes)
         )
+
+    def declared_field_names(self, class_name, namespace, assembly):
+        found = [row for row in self.load(assembly).net.mdtables.TypeDef.rows if _type_name(row) == (namespace, class_name)]
+        if len(found) != 1:
+            raise ValueError("current script CLR identity is absent or ambiguous")
+        hierarchy, is_object = self.hierarchy(assembly, found[0], arguments=False)
+        if not is_object:
+            raise ValueError("current script CLR hierarchy is not a Unity object")
+        names = set()
+        for owner, row in hierarchy:
+            for index in row.FieldList:
+                names.add(str(index.row.Name))
+                for attribute in self.attributes[owner]["Field", index.row_index]:
+                    if attribute[:2] != ("UnityEngine.Serialization", "FormerlySerializedAsAttribute"):
+                        continue
+                    blob = attribute[2]
+                    if len(blob) < 5 or blob[:2] != b"\x01\0" or blob[2] == 255:
+                        raise ValueError("unsupported original serialized-name alias")
+                    length, start = self.compressed(blob, 2)
+                    if start + length + 2 != len(blob) or blob[-2:] != bytes(2):
+                        raise ValueError("unsupported original serialized-name alias arguments")
+                    names.add(blob[start : start + length].decode("utf-8"))
+        return names
 
     def custom_fields(self, hierarchy, depth=0):
         result = []
@@ -772,18 +800,19 @@ class _RegistryTypes:
         walk(("type", assembly, row), "")
         return result
 
-    def script_hash(self, identity, schemas):
+    def script_schema(self, identity, schemas):
+        """Return the source-derived editor transfer tree for a concrete object."""
         assembly, namespace, class_name = identity
         pe = self.load(assembly)
         found = [row for row in pe.net.mdtables.TypeDef.rows if _type_name(row) == (namespace, class_name)]
         if not found:
-            return bytes(16)
+            return None
         if len(found) != 1:
             raise ValueError("ambiguous registry source class")
         row = found[0]
         hierarchy, is_object = self.hierarchy(assembly, row)
         if not is_object or row.Flags.tdAbstract or "`" in class_name:
-            return bytes(16)
+            return None
         if identity in schemas:
             trees = schemas[identity]
             if len({properties_hash(class_name, namespace, assembly, tree, self.native) for tree in trees}) != 1:
@@ -799,7 +828,106 @@ class _RegistryTypes:
             tree = _tree(self.editor_curves(nodes))
         else:
             tree = _tree(self.base + self.custom_fields(hierarchy))
+        return tree
+
+    def script_hash(self, identity, schemas):
+        tree = self.script_schema(identity, schemas)
+        if tree is None:
+            return bytes(16)
+        assembly, namespace, class_name = identity
         return properties_hash(class_name, namespace, assembly, tree, self.native)
+
+
+class OriginalScriptFields:
+    """Scoped original CLR declarations under the existing pinned managed contract."""
+
+    def __init__(self, pc, managed):
+        self.pc = Path(pc).resolve(strict=True)
+        relative = PurePosixPath(managed["path"])
+        if relative.is_absolute() or ".." in relative.parts or "\\" in managed["path"]:
+            raise ValueError("unsafe original script field root")
+        self.directory = (self.pc / relative).resolve(strict=True)
+        if not self.directory.is_relative_to(self.pc):
+            raise ValueError("original script field root leaves game input")
+        self.files, self.pins = managed["files"], {}
+        self.clr = _RegistryTypes(self.directory, {}, self.pin, None, {})
+
+    def pin(self, path, provider=None):
+        path = Path(path).resolve(strict=True)
+        if path.parent != self.directory or path.name not in self.files:
+            raise ValueError("unadmitted original script field assembly")
+        with path.open("rb") as stream:
+            actual = hashlib.file_digest(stream, "sha256").hexdigest()
+        if actual != self.files[path.name]:
+            raise ValueError("original script field assembly drift")
+        self.pins[str(path.relative_to(self.pc))] = actual
+
+    def names(self, script):
+        assembly, namespace, class_name = _script_record(script)["identity"]
+        return self.clr.declared_field_names(class_name, namespace, assembly)
+
+    def verify(self):
+        for path in list(self.pins):
+            self.pin(self.pc / path)
+
+    def close(self):
+        self.clr.close()
+
+
+def pointer_script_schema(pc, managed, script, base_tree, pointer_tree, sdk_tree):
+    """Derive a one-pointer script schema from pinned CLR and native inputs."""
+    pc = Path(pc).resolve(strict=True)
+    relative = PurePosixPath(managed["path"])
+    if relative.is_absolute() or ".." in relative.parts or "\\" in managed["path"]:
+        raise ValueError("unsafe script schema managed root")
+    directory = (pc / relative).resolve(strict=True)
+    if not directory.is_relative_to(pc):
+        raise ValueError("script schema managed root leaves original input")
+    pins = {}
+
+    def pin(path, provider=None):
+        path = Path(path).resolve(strict=True)
+        if path.parent != directory or path.name not in managed["files"]:
+            raise ValueError("unadmitted script schema assembly")
+        with path.open("rb") as stream:
+            actual = hashlib.file_digest(stream, "sha256").hexdigest()
+        if actual != managed["files"][path.name]:
+            raise ValueError("script schema assembly drift")
+        pins[str(path.relative_to(pc))] = actual
+
+    identity = _script_record(script)["identity"]
+    assembly, namespace, class_name = identity
+    base = tree_nodes(base_tree)
+    native_names = {n["name"] for n in tree_nodes(sdk_tree) if n["level"] == 1}
+    if any(n["level"] == 1 and n["name"] not in native_names for n in base):
+        raise ValueError("script schema base has custom fields")
+    prototype = [n for field, nodes in _fields(tree_nodes(pointer_tree)).items() if field not in native_names for n in nodes]
+    if len(prototype) != 3 or not prototype[0]["type"].startswith("PPtr<") or [n["name"] for n in prototype[1:]] != ["m_FileID", "m_PathID"]:
+        raise ValueError("script schema prototype is not one original pointer")
+    with closing(_RegistryTypes(directory, {}, pin, b"", {})) as clr:
+        found = [row for row in clr.load(assembly).net.mdtables.TypeDef.rows if _type_name(row) == (namespace, class_name)]
+        if len(found) != 1:
+            raise ValueError("script schema original class identity differs")
+        hierarchy, is_object = clr.hierarchy(assembly, found[0])
+        if not is_object:
+            raise ValueError("script schema class is not a Unity object")
+        custom = clr.custom_fields(hierarchy)
+    if len(custom) != 3 or not custom[0]["type"].startswith("PPtr<$"):
+        raise ValueError("script schema CLR fields are not one object pointer")
+    release = copy.deepcopy(prototype)
+    for original, generated in zip(release, custom, strict=True):
+        if any(original[key] != generated[key] for key in ("level", "flags", "size", "version")):
+            raise ValueError("script schema pointer transfer differs")
+        original.update(type=generated["type"], name=generated["name"])
+    tree = _tree(base + release, common_strings=True)
+    properties = properties_hash(class_name, namespace, assembly, tree, sdk_tree)
+    if properties != _script_record(script)["properties"]:
+        raise ValueError("script schema differs from original script properties")
+    for path, expected in list(pins.items()):
+        pin(pc / path)
+        if pins[path] != expected:
+            raise ValueError("script schema assembly changed during production")
+    return {"tree": tree, "hash": properties, "script_id": md4((class_name + namespace + assembly).encode())}, pins
 
 
 def _script_record(body):
@@ -903,6 +1031,64 @@ def _original_membership(managed, scripts, imported_assemblies, pin):
         gc.collect()
 
 
+def managed_providers(pins, provider_pin, receipt_pin):
+    """Retain a produced cohort or explicitly pinned gameplay/dependency refresh."""
+    providers = pins.read(provider_pin)
+    receipt = pins.read(receipt_pin)
+    if receipt.get("success") is not True or receipt.get("phase") not in ("managed-produced", "gameplay-refreshed"):
+        raise ValueError("fresh successful managed production required")
+    if "providers_sha256" in receipt and receipt["providers_sha256"] != provider_pin["sha256"]:
+        raise ValueError("managed production provider manifest differs")
+    if receipt["phase"] == "gameplay-refreshed":
+        refreshed = receipt.get("refreshed_providers", {"Assembly-CSharp.dll": receipt["gameplay"]})
+        if receipt.get("providers_sha256") != provider_pin["sha256"] or (receipt.get("provider_count"), receipt.get("reused_provider_count")) != (
+            len(providers),
+            len(providers) - len(refreshed),
+        ):
+            raise ValueError("gameplay refresh provider manifest/count differs")
+        base_pin = receipt["base_providers"]
+        base_path = pins.path(base_pin["path"], pins.pin(receipt_pin).parent)
+        base = json.loads(pins.add(base_path, dict(bytes=base_path.stat().st_size, sha256=base_pin["sha256"])).read_bytes())
+        if set(base) != set(providers) or "Assembly-CSharp.dll" not in refreshed or not set(refreshed) <= set(providers):
+            raise ValueError("gameplay refresh provider membership differs")
+        if any(value["sha256"] != base[name]["sha256"] for name, value in providers.items() if name not in refreshed):
+            raise ValueError("gameplay refresh changed a reused provider")
+        for name, value in [*refreshed.items(), ("Assembly-CSharp.dll", receipt["gameplay"])]:
+            produced = providers[name]
+            if value["sha256"] != produced["sha256"] or pins.path(value["path"], pins.pin(receipt_pin).parent) != pins.path(
+                produced["path"], pins.pin(provider_pin).parent
+            ):
+                raise ValueError("gameplay refresh output differs: " + name)
+    return providers
+
+
+def registry_managed_providers(directory, source_commit, pin):
+    """Admit the same produced/refresh receipt used by current CLR witnesses."""
+    directory = Path(directory)
+
+    def add(path, expected):
+        path = Path(path).resolve(strict=True)
+        pin(path, expected)
+        return path
+
+    def path(value, base):
+        return (base / value).resolve(strict=True)
+
+    pins = N(
+        read=lambda value: json.loads(add(value["path"], value).read_bytes()),
+        pin=lambda value: Path(value["path"]).resolve(strict=True),
+        path=path,
+        add=add,
+    )
+    receipt = dict(path=str(directory / "result.json"))
+    providers = dict(path=str(directory / "providers.json"))
+    receipt.update(pin(receipt["path"]))
+    providers.update(pin(providers["path"]))
+    if pins.read(receipt).get("source_commit") != source_commit:
+        raise ValueError("fresh public-source managed production required")
+    return managed_providers(pins, providers, receipt)
+
+
 def registry(pc, editor_resources, managed_production, authored_root, packages_root, input_hashes, registry_profile, W):
     """Produce a complete registry from admitted original/public/SDK sources.
 
@@ -991,12 +1177,7 @@ def registry(pc, editor_resources, managed_production, authored_root, packages_r
     sdk = native_type = curves = typ = row = None
     gc.collect()
 
-    result_path, providers_path = managed_production / "result.json", managed_production / "providers.json"
-    pin(result_path)
-    pin(providers_path)
-    result, providers = json.loads(result_path.read_text()), json.loads(providers_path.read_text())
-    if result.get("success") is not True or result.get("phase") != "managed-produced" or result.get("source_commit") != authored["source_commit"]:
-        raise ValueError("fresh public-source managed production required")
+    providers = registry_managed_providers(managed_production, authored["source_commit"], pin)
     compiler_inputs = managed_production / "gameplay/inputs.json"
     pin(compiler_inputs)
     for name, digest in json.loads(compiler_inputs.read_text())["sources"].items():
@@ -1085,6 +1266,20 @@ def registry(pc, editor_resources, managed_production, authored_root, packages_r
     package_manifest = Path(input_hashes).resolve(strict=True)
     pin(package_manifest)
     package_inputs = json.loads(package_manifest.read_text())
+    if "packages" in package_inputs:
+        # Current compilation records the actual package source selection.
+        # Importer metadata is original package input, read and pinned here.
+        selected = {}
+        for package in package_inputs["packages"]:
+            for name, digest in package["inputs"].items():
+                key = "packages/" + name
+                if key in selected and selected[key] != digest:
+                    raise ValueError("conflicting compiled package input")
+                selected[key] = digest
+                if name.endswith(".cs"):
+                    meta = relative(packages_root, name + ".meta")
+                    selected[key + ".meta"] = pin(meta)["sha256"]
+        package_inputs = selected
     package_files = {}
     for name, digest in package_inputs.items():
         if not name.startswith("packages/"):
@@ -1143,6 +1338,7 @@ def registry(pc, editor_resources, managed_production, authored_root, packages_r
     with closing(_RegistryTypes(managed, providers, pin, native, native_templates)) as clr:
         schemas = {identity: trees for identity, trees in schemas.items() if identity[0] in providers or (managed / identity[0]).is_file()}
         clr.cache_fields(schemas)
+        transfer_schemas = []
 
         def body_for(identity, previous=None):
             assembly, namespace, class_name = identity
@@ -1155,13 +1351,28 @@ def registry(pc, editor_resources, managed_production, authored_root, packages_r
                 provider_path = Path(provider["path"]) if provider else original_path
                 if previous is None or pin(provider_path)["sha256"] != actual["sha256"]:
                     raise ValueError("unsupported native registry transfer with changed/new provider: " + str(identity))
+                transfer_schemas.append(
+                    {
+                        "identity": identity,
+                        "unsupported": unsupported,
+                        "unchanged_provider_sha256": actual["sha256"],
+                        "source_trees": [tree.hex() for tree in schemas.get(identity, [])],
+                    }
+                )
                 return previous["body"]
-            properties = clr.script_hash(identity, schemas)
+            tree = clr.script_schema(identity, schemas)
+            properties = properties_hash(class_name, namespace, assembly, tree, native) if tree is not None else bytes(16)
+            transfer_schemas.append({"identity": identity, "tree": tree.hex() if tree is not None else None, "properties": properties.hex()})
             if previous:
                 body = previous["body"]
                 start = (4 + struct.unpack_from("<I", body)[0] + 3) // 4 * 4 + 4
                 return body[:start] + properties + body[start + 16 :]
             return _script_body(identity, properties)
+
+        # Source importers are registered before CLR loading; measure their
+        # current provider too, including package-owned UI components.
+        for imported in rows:
+            imported["body"] = body_for(imported["identity"], _script_record(imported["body"]))
 
         for identity in original_identities:
             assembly, namespace, class_name = identity
@@ -1215,4 +1426,11 @@ def registry(pc, editor_resources, managed_production, authored_root, packages_r
         layout["objects"] = sorted(objects, key=lambda row: row["path_id"])
         for path, expected in list(pins.items()):
             pin(Path(path), expected)
-        return {"layout": layout, "bodies": bodies, "script_ids": script_ids, "provider_pins": pins}
+        return {
+            "layout": layout,
+            "bodies": bodies,
+            "script_ids": script_ids,
+            "transfer_schemas": transfer_schemas,
+            "provider_pins": pins,
+            "original_script_identities": {(member, pid): identity for member, scripts in member_scripts.items() for pid, identity in scripts.items()},
+        }

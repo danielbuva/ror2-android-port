@@ -7,6 +7,7 @@ owner workspace. Incomplete producer cohorts fail rather than selecting replay.
 
 import hashlib
 import importlib.util
+import json
 import os
 from pathlib import Path
 import re
@@ -36,6 +37,16 @@ PRODUCERS = {
             "player_data",
             "sdk_package",
             "payload_shader_records",
+            "shader_context",
+            "shader_prefab",
+            "record_remap",
+            "sprite_produce",
+            "bundle_manifest",
+            "catalog_complete",
+            "bundle_preload",
+            "bundle_endpoints",
+            "stage_contexts",
+            "startup_metadata",
         )
     },
 }
@@ -56,10 +67,20 @@ def validate_jobs(index, release, read_job):
                 return
             seen.add(name)
             job = read_job(name)
-            if set(job) - {"request", "needs", "artifacts"} != {"schema", "script", "arguments", "outputs"} or job["schema"] != 1:
+            if set(job) - {"request", "needs", "artifacts", "source_files"} != {"schema", "script", "arguments", "outputs"} or job["schema"] != 1:
                 raise ValueError("explicit source producer job schema required")
             if job["script"] not in PRODUCERS or name not in row["recipe_files"] or job["script"] not in row["producer_files"]:
                 raise ValueError("existing source producer and complete signed job closure required")
+            if "source_files" in job:
+                sources = job["source_files"]
+                if (
+                    not isinstance(sources, list)
+                    or not all(isinstance(path, str) for path in sources)
+                    or len(set(sources)) != len(sources)
+                    or not {name, job["script"]}.issubset(sources)
+                    or not set(sources).issubset(set(row["recipe_files"]) | set(row["producer_files"]))
+                ):
+                    raise ValueError("job source files require its descriptor, producer and complete signed membership")
             if not isinstance(job["arguments"], list) or not job["arguments"] or not all(isinstance(v, str) for v in job["arguments"]):
                 raise ValueError("producer argument vector required; shell commands are forbidden")
             if not isinstance(job["outputs"], dict) or not isinstance(job.get("artifacts", {}), dict) or not (job["outputs"] or job.get("artifacts")):
@@ -80,13 +101,14 @@ def validate_jobs(index, release, read_job):
 
 
 class Dispatcher:
-    def __init__(self, repo, index, release, inputs, runtime, native, config, input_sha256, *, python=None):
+    def __init__(self, repo, index, release, inputs, runtime, native, config, input_sha256, *, python=None, progress=None):
         self.repo, self.inputs, self.runtime = [Path(p).resolve(strict=True) for p in (repo, inputs, runtime)]
         installed_runtime = self.runtime
         self.native = Path(native).resolve(strict=True)
         self.index, self.release, self.config, self.input_sha256 = index, release, config, input_sha256
         self.python = python or [str(self.native / "libpythonhost.so"), str(self.native / "libpython3.14.so"), str(self.runtime / "python")]
         self.completed, self.running, self.descriptors = {}, set(), {}
+        self.progress = progress or (lambda name, reused: None)
         self.jobs_root = UPDATES.within(self.inputs, "work/releases/jobs")
         self.jobs_root.mkdir(parents=True, exist_ok=True)
         self.validate()
@@ -126,6 +148,16 @@ class Dispatcher:
             if UPDATES.RELEASE.digest(UPDATES.within(self.repo, name, exists=True)) != expected:
                 raise ValueError("verified public source changed before/during production: " + name)
 
+    def cache_sources(self, name):
+        """Pin this job and its suppliers, without pinning downstream consumers."""
+        job = self.descriptor(name)
+        if "source_files" not in job:
+            return self.closure(name)
+        files = {path: self.index["files"][path] for path in job["source_files"]}
+        for dependency in job.get("needs", []):
+            files.update(self.cache_sources(dependency))
+        return dict(sorted(files.items()))
+
     def expand(self, value, job, output, request_path):
         if isinstance(value, dict):
             return {key: self.expand(item, job, output, request_path) for key, item in value.items()}
@@ -148,11 +180,15 @@ class Dispatcher:
             key = match.group(1)
             if key in roots:
                 return str(roots[key])
-            if key.startswith(("input:", "input_relative:")):
+            if key.startswith(("input:", "input_relative:", "input_sha256:")):
                 binding = self.config.get("bindings", {}).get(key.split(":", 1)[1])
                 selected = UPDATES.within(self.inputs, binding, exists=True)
+                if key.startswith("input_sha256:"):
+                    if not selected.is_file():
+                        raise ValueError("input hash requires a regular file")
+                    return UPDATES.RELEASE.digest(selected)
                 return str(selected.relative_to(self.inputs) if key.startswith("input_relative:") else selected)
-            if key.startswith(("job:", "job_relative:", "sha256:")):
+            if key.startswith(("job:", "job_relative:", "job_directory:", "sha256:", "bytes:")):
                 parts = key.split(":")
                 if len(parts) != 3 or parts[1] not in job.get("needs", []):
                     raise ValueError("artifact must name a declared job dependency")
@@ -161,17 +197,19 @@ class Dispatcher:
                 if artifact is None:
                     raise ValueError("unknown producer artifact")
                 selected = UPDATES.within(self.completed[parts[1]], artifact, exists=True)
-                if parts[0] == "sha256":
+                if parts[0] == "job_directory":
+                    return str(selected.parent)
+                if parts[0] in {"sha256", "bytes"}:
                     if not selected.is_file():
                         raise ValueError("receipt hash requires a regular artifact file")
-                    return UPDATES.RELEASE.digest(selected)
+                    return str(selected.stat().st_size) if parts[0] == "bytes" else UPDATES.RELEASE.digest(selected)
                 return str(selected.relative_to(self.inputs) if parts[0] == "job_relative" else selected)
             raise ValueError("unknown release job substitution: " + key)
 
         result = TOKEN.sub(replace, value)
         if "${" in result:
             raise ValueError("malformed release job substitution")
-        return result
+        return int(result) if value.startswith("${bytes:") and TOKEN.fullmatch(value) else result
 
     @staticmethod
     def files_in(output, job):
@@ -181,6 +219,13 @@ class Dispatcher:
         Declared files and prerequisite artifacts must remain canonical, regular
         private results; a scratch link is never followed or cached as output.
         """
+        if job.get("script") == "tools/phone-build/accepted-output/player_data.py":
+            receipt = UPDATES.public().load_json(UPDATES.within(output, "result.json", exists=True).read_bytes())
+            actual, declared = set(receipt["files"]), set(job["outputs"])
+            if receipt.get("success") is not True or actual != declared:
+                raise ValueError(
+                    "player output membership differs: undeclared=" + str(sorted(actual - declared)) + "; missing=" + str(sorted(declared - actual))
+                )
         files = {}
         for name in {*job["outputs"].values(), *job.get("artifacts", {}).values()}:
             selected = UPDATES.within(output, name, exists=True)
@@ -194,6 +239,26 @@ class Dispatcher:
                     raise ValueError("producer declared a nonregular artifact")
         return files
 
+    def input_pins(self, name):
+        """Pin dynamic file witnesses, including suppliers, before cache reuse."""
+        pins, seen = {}, set()
+
+        def visit(job_name):
+            if job_name in seen:
+                return
+            seen.add(job_name)
+            descriptor = self.descriptor(job_name)
+            for binding in re.findall(r"\$\{input_sha256:([^}]+)\}", json.dumps(descriptor)):
+                selected = UPDATES.within(self.inputs, self.config.get("bindings", {}).get(binding), exists=True)
+                if not selected.is_file():
+                    raise ValueError("input hash requires a regular file")
+                pins[binding] = UPDATES.RELEASE.digest(selected)
+            for dependency in descriptor.get("needs", []):
+                visit(dependency)
+
+        visit(name)
+        return pins
+
     def execute(self, name):
         if name in self.completed:
             return self.completed[name]
@@ -206,7 +271,11 @@ class Dispatcher:
                 self.execute(needed)
             files = self.closure(name)
             self.verify_sources(files)
-            identity = hashlib.sha256(UPDATES.RELEASE.signed_bytes({"job": name, "files": files, "input_sha256": self.input_sha256})).hexdigest()
+            identity = hashlib.sha256(
+                UPDATES.RELEASE.signed_bytes(
+                    {"job": name, "files": self.cache_sources(name), "input_sha256": self.input_sha256, "input_pins": self.input_pins(name)}
+                )
+            ).hexdigest()
             receipt_path = self.jobs_root / (identity + ".json")
             if receipt_path.exists():
                 receipt = UPDATES.public().load_json(receipt_path.read_bytes())
@@ -217,6 +286,7 @@ class Dispatcher:
                     reusable = False
                 if reusable:
                     self.completed[name] = cached
+                    self.progress(name, True)
                     return cached
             attempt = Path(tempfile.mkdtemp(prefix=identity[:16] + "-", dir=self.jobs_root))
             output = attempt / "output"
@@ -231,7 +301,20 @@ class Dispatcher:
                 # Preserve the updater lock in the producer if its Python parent
                 # is interrupted. The outer phone runner supervises its family.
                 lock_fds = (int(inherited_lock),) if inherited_lock is not None else ()
-                subprocess.run(command, cwd=self.repo, stdout=log, stderr=subprocess.STDOUT, check=True, pass_fds=lock_fds)
+                process = subprocess.Popen(command, cwd=self.repo, stdout=log, stderr=subprocess.STDOUT, pass_fds=lock_fds)
+                try:
+                    while True:
+                        try:
+                            result = process.wait(timeout=0.5)
+                            if result:
+                                raise subprocess.CalledProcessError(result, command)
+                            break
+                        except subprocess.TimeoutExpired:
+                            self.progress(name, None)  # Persist elapsed time, not invented sub-job progress.
+                except BaseException:
+                    process.kill()
+                    process.wait()
+                    raise
             if not output.is_dir() or output.is_symlink():
                 raise ValueError("producer did not create its private output directory")
             for relative in job["outputs"].values():
@@ -243,6 +326,7 @@ class Dispatcher:
             outputs = self.files_in(output, job)
             UPDATES.write_json(receipt_path, {"directory": output.relative_to(self.jobs_root).as_posix(), "files": outputs})
             self.completed[name] = output
+            self.progress(name, False)
             return output
         finally:
             self.running.remove(name)

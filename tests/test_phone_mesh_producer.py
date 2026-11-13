@@ -62,7 +62,7 @@ def authored_mesh(streamed=False):
     return body, schema, vertex
 
 
-def serialized(body, schema, path_id=-123):
+def serialized(body, schema, path_id=-123, class_id=43):
     strings = bytearray()
     offsets = {}
 
@@ -80,11 +80,12 @@ def serialized(body, schema, path_id=-123):
             flatten(child, level + 1)
 
     flatten(schema, 0)
-    metadata = b"2021.3.45f2\0" + struct.pack("<iBIiBh", 19, 1, 1, 43, 0, -1) + bytes(16)
+    metadata = b"2021.3.45f2\0" + struct.pack("<iBIiBh", 19, 1, 1, class_id, 0, -1) + bytes(16)
     metadata += struct.pack("<II", len(nodes), len(strings)) + b"".join(nodes) + strings + bytes(4)
     metadata += struct.pack("<I", 1)
     metadata += bytes(-len(metadata) % 4)
     metadata += struct.pack("<qqIi", path_id, 0, len(body), 0)
+    metadata += bytes(13)  # Empty scripts, externals, reference types and user string.
     data_offset = (48 + len(metadata) + 15) // 16 * 16
     header = struct.pack(">IIII", 0, 0, 22, 0) + bytes(4) + struct.pack(">Iqqq", len(metadata), data_offset + len(body), data_offset, 0)
     return header + metadata + bytes(data_offset - 48 - len(metadata)) + body
@@ -108,6 +109,24 @@ def bundle(members, tail=False):
 
 
 class MeshProducerTests(unittest.TestCase):
+    def test_packed_tangent_repair_reconstructs_unit_pairs_and_retains_other_fields(self):
+        body, schema, _ = authored_mesh()
+        packed = ((1023 << 20) | (1023 << 30)).to_bytes(5, "little")
+        tangent = node(
+            "m_Tangents",
+            children=[node("m_NumItems", 4), node("m_Range", 4), node("m_Start", 4), array("m_Data", node("data", 1)), node("m_BitSize", 1, meta=0x4000)],
+        )
+        schema.children.append(node("m_CompressedMesh", children=[tangent]))
+        suffix = struct.pack("<Iff", 4, 2.0, -1.0) + vector(packed, 5) + bytes((10, 0, 0, 0))
+        source = body + suffix
+        # The authored pairs (-1,-1) and (1,1) reconstruct negative Z squared.
+        # Repair produces +/-1/sqrt(2), retaining their original quantized endpoints.
+        expected = body + struct.pack("<Iff", 4, 1.4142135381698608, -0.7071067690849304) + suffix[12:]
+        actual, external = M.transform(source, schema, {"packed_tangents": "repair_negative_z"})
+        self.assertEqual(expected, actual)
+        self.assertIsNone(external)
+        self.assertEqual(source, M.transform(source, schema, {})[0])
+
     def test_fixed_struct_array_honors_descendant_padding(self):
         shape = node("data", 10, children=[node("first", 4), node("count", 4), node("normal", 1), node("tangent", 1, meta=0x4000)])
         schema = node("Base", children=[array("shapes", shape), node("marker", 4)])
@@ -206,6 +225,11 @@ class MeshProducerTests(unittest.TestCase):
                 receipt = P.produce(profile_path, B.sha(profile_path), pc, root / "output")
                 self.assertTrue(receipt["success"])
                 self.assertEqual((root / "output/objects.bin").read_bytes(), body)
+                O = P.module("object_produce")
+                packed = json.loads((root / "output/index.jsonl").read_text())
+                types = json.loads((root / "output/types.json").read_text())
+                self.assertEqual(types[packed["type_id"]], O.json_layout(O.source_record_type(source, "CAB-authored", -123, 43)))
+                self.assertEqual(receipt["outputs"]["types.json"]["sha256"], B.sha(root / "output/types.json"))
                 self.assertEqual(B.sha(source), original_hash)
                 with self.assertRaises(ValueError):
                     P.produce(profile_path, B.sha(profile_path), pc, root / "output")

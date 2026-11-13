@@ -1,0 +1,468 @@
+{
+  "schema": 1,
+  "input_id": "6af7ed94619fe1b4346974b4486afa03a8d1625a7820e92da0ff74d57208fe88",
+  "bundles": [
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-base-eliteice_static_assets_all_721dc383df96b1fc5d28e865d0761c45.bundle",
+      "sha256": "70b49a3c6d6ea0880d1b197f2ca9bd34c60836e78d9adaa080debd1476b707ae",
+      "members": [
+        {
+          "name": "CAB-920eb0804634fcdbbe7269f25ed49c7e",
+          "objects": [
+            {
+              "id": "sprite-a1d1d15c22cfe705",
+              "path_id": 7441579239762947346,
+              "sha256": "ccc1b76035ca1d84b8eef4def34bfe3860fd58dc5172b04095955b6268f35a84",
+              "texture": {
+                "path_id": 2630744903013821714,
+                "sha256": "4e4f49392b4f816d7306a5ffff2be170b7be71208b9db8e8a0fab1719c1ec694"
+              },
+              "importer_guid": "b8431cf18ad50fd44b509d63d0b036a7",
+              "outputs": [
+                {
+                  "bundle": "commando-prefab-lab",
+                  "member": "CAB-b0611b01bbffecd06329c6d6eecf278c",
+                  "path_id": -6786412969819379963,
+                  "bytes": 1128,
+                  "sha256": "5d511583cce2754fa0edc168e8f1e58f554fade79b26db43e6f4c46b8124a49b",
+                  "references": [
+                    {
+                      "offset": 124,
+                      "from": [
+                        0,
+                        2630744903013821714
+                      ],
+                      "to": [
+                        0,
+                        1956985900626591272
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-dlc1-elitevoid_static_assets_all_4402a3bc80c4d94b9bca1ca5d1bc2801.bundle",
+      "sha256": "9c900ee923be00a45695ca3186b7eacd4aca1fa60fb37b26f928c1938f5fed63",
+      "members": [
+        {
+          "name": "CAB-25f2ce8d5e19a650b6e6483f39cee3ae",
+          "objects": [
+            {
+              "id": "sprite-bcc3fb4262c878b1",
+              "path_id": -6122899300289131430,
+              "sha256": "02e52370eb9b6604c63b6de6354cb5592093988c7281e12ef0a8e7bdb3c015f3",
+              "texture": {
+                "path_id": -7970876139307709350,
+                "sha256": "90ddec45eaaf878493af764c2659b1d8059f25320b7be7bc652ad9b55570803b"
+              },
+              "importer_guid": "6ee9779bc5eb0024da8e5ee90f374fc3",
+              "outputs": [
+                {
+                  "bundle": "commando-prefab-lab",
+                  "member": "CAB-b0611b01bbffecd06329c6d6eecf278c",
+                  "path_id": -4844752511576803151,
+                  "bytes": 952,
+                  "sha256": "b0026e07ab250e6fe5330ad2621fa44ae978b61e8d5c0ca2d48879184665d4ea",
+                  "references": [
+                    {
+                      "offset": 120,
+                      "from": [
+                        0,
+                        -7970876139307709350
+                      ],
+                      "to": [
+                        0,
+                        4134845340688900825
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-base-common_static_assets_all_c5d8595dcf1ebb5f39b6e5cea0902f85.bundle",
+      "sha256": "c8069f10e8c930d4cfba363c2f57523e1b1eb23b2032c81a48dc77f7dbfcfcd3",
+      "members": [
+        {
+          "name": "CAB-7aadc3876a6282688f5d01e2e4272074",
+          "objects": [
+            {
+              "id": "sprite-d10875335432b549",
+              "path_id": 8394344349561476064,
+              "sha256": "79650e79c30c83814902351f8bff5c9fa7375f039ae0c4fa3e49bf849149ea31",
+              "texture": {
+                "path_id": -4056930821178698784,
+                "sha256": "c670aae11ffa87d1f110dc5d66116d5c3713e44785287e252e3c6851cfbc815f"
+              },
+              "importer_guid": "efbc39dde52b5194b890991247b503c5",
+              "outputs": [
+                {
+                  "bundle": "commando-prefab-lab",
+                  "member": "CAB-b0611b01bbffecd06329c6d6eecf278c",
+                  "path_id": -3384326256652536503,
+                  "bytes": 1280,
+                  "sha256": "dbf87ba7cdb3013ca3be0919f2a1d39e9a7d0f8cba8f481bd4fcd404ec0cea81",
+                  "references": [
+                    {
+                      "offset": 124,
+                      "from": [
+                        0,
+                        -4056930821178698784
+                      ],
+                      "to": [
+                        0,
+                        -7506547169792936826
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "sprite-3ef6ae2d340f5bb0",
+              "path_id": 8513592844723060710,
+              "sha256": "dcfeaee635a6cb9d0865f0643933829842fddc41cfbddb8839dda8390f1e4fa9",
+              "texture": {
+                "path_id": -5194021711293743130,
+                "sha256": "a9fed33c0ff30558d2a21bbeaa9d02e0bfd6f8c10f73573d7ea2173043a60bcd"
+              },
+              "importer_guid": "3dab2c1c83381ad4aa42f756fed6ec9f",
+              "outputs": [
+                {
+                  "bundle": "commando-prefab-lab",
+                  "member": "CAB-b0611b01bbffecd06329c6d6eecf278c",
+                  "path_id": 4537005183792536496,
+                  "bytes": 648,
+                  "sha256": "81b7e02fd45dbb4407a61faafd495cd23985bc8f8e70199e2b2536b6260989e5",
+                  "references": [
+                    {
+                      "offset": 124,
+                      "from": [
+                        0,
+                        -5194021711293743130
+                      ],
+                      "to": [
+                        0,
+                        1840559729108493910
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-base-elitelightning_static_assets_all_db8c04f3e8c2b568229edf6c99c9c813.bundle",
+      "sha256": "ded76cfd1b91029fc68ba42595853d6ca671c2f5b2f389e1db10b6901e1a82da",
+      "members": [
+        {
+          "name": "CAB-3d83aaeedb81cc659597e8e794dd07e9",
+          "objects": [
+            {
+              "id": "sprite-d436e26a32e5f858",
+              "path_id": 1921891939569745900,
+              "sha256": "80a955d32a4ac13c73ea806c6b6a6b9afd965ea3c8bc38160c93c79577c1ba41",
+              "texture": {
+                "path_id": 1649680990828937196,
+                "sha256": "40e7c6db440fce646a1c5426ab3597fbc6853a60e2242b88b6fc1392173ded47"
+              },
+              "importer_guid": "589770b3464d4b740b802a00c4bdb101",
+              "outputs": [
+                {
+                  "bundle": "commando-prefab-lab",
+                  "member": "CAB-b0611b01bbffecd06329c6d6eecf278c",
+                  "path_id": -3155085543178110888,
+                  "bytes": 1072,
+                  "sha256": "085d13c33fd2a94a65b75424194b499e5e20f39f81bd7c5d52e8cb898ceaf6ba",
+                  "references": [
+                    {
+                      "offset": 120,
+                      "from": [
+                        0,
+                        1649680990828937196
+                      ],
+                      "to": [
+                        0,
+                        -6854448147929422151
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-dlc1-eliteearth_static_assets_all_88a410130a04a5f434a468cf96959c07.bundle",
+      "sha256": "d45fbfe269c0d2850b06cad3a3cd630b6a69f9a101815131dfeb15823665469d",
+      "members": [
+        {
+          "name": "CAB-4062a700630cd68dcac701624ecc6e95",
+          "objects": [
+            {
+              "id": "sprite-e32e6399bd72ebf2",
+              "path_id": 2293540027081415849,
+              "sha256": "22620915d7df0ffb080d3c307c7dfd1227356a6416011d226fdb5a3006f1ab47",
+              "texture": {
+                "path_id": 1079457688587984041,
+                "sha256": "3b5a8a12695cc3f6120f4fd9a35fb3a1330d8e2b53a0269d38de73f6ff3c5955"
+              },
+              "importer_guid": "23b78461e2df5734a82d9491759e7bb6",
+              "outputs": [
+                {
+                  "bundle": "commando-prefab-lab",
+                  "member": "CAB-b0611b01bbffecd06329c6d6eecf278c",
+                  "path_id": -2076612866211648526,
+                  "bytes": 1120,
+                  "sha256": "eff692b129c9a89c1a58b23bf22b2c2e3b120a460b9644487a5daa3bb880d789",
+                  "references": [
+                    {
+                      "offset": 124,
+                      "from": [
+                        0,
+                        1079457688587984041
+                      ],
+                      "to": [
+                        0,
+                        2857078805928712427
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-base-critonuse_assets_all_cdccb1c74ca4feb5ce33ae9b3fe6e083.bundle",
+      "sha256": "3f300f947a424d6c45690a4273cfaca13e756b507dd86f7b45123d2d59384c06",
+      "members": [
+        {
+          "name": "CAB-a8e016c753599b1af7132be20f1a8a0a",
+          "objects": [
+            {
+              "id": "sprite-0a25480f52e1d197",
+              "path_id": 5996270927170414329,
+              "sha256": "d90227b04b2d915370c565d27a03bc52b0b398895bbf8f9e5cc4e6d893b807e6",
+              "texture": {
+                "path_id": 6715535865787164409,
+                "sha256": "a0d69bcab9a01ec9c17bf481ae0853a2492b339f363a8542d666364e4876fbf5"
+              },
+              "importer_guid": "272d8ba9a608d384c9d8b137a3d3f509",
+              "outputs": [
+                {
+                  "bundle": "commando-prefab-lab",
+                  "member": "CAB-b0611b01bbffecd06329c6d6eecf278c",
+                  "path_id": 731069745169813911,
+                  "bytes": 1768,
+                  "sha256": "684f26d9be35d307841fd575871e700aa39f08e79bb249e5b0ada071bcd1e604",
+                  "references": [
+                    {
+                      "offset": 124,
+                      "from": [
+                        0,
+                        6715535865787164409
+                      ],
+                      "to": [
+                        0,
+                        -982369381965729422
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-base-elitepoison_static_assets_all_1a32566136fa53b5043d0a81b707f2c8.bundle",
+      "sha256": "8373dd69c248771c0399a2d946781253ff808734de0012f63c4f431cbdd5e449",
+      "members": [
+        {
+          "name": "CAB-2fd6a74065619d468095603f83cb6551",
+          "objects": [
+            {
+              "id": "sprite-1d795667d083ad78",
+              "path_id": 8004043537871844672,
+              "sha256": "1189790215ddc34446d09bfaa223fd99082184194c067c1e67e131717781f7aa",
+              "texture": {
+                "path_id": 3745081542317684032,
+                "sha256": "a3be080f2a05763929546a79d2089ca5e461c31fa90d807d1a1a984a114c976c"
+              },
+              "importer_guid": "1ad382fc4d164c441a93388348f1a48d",
+              "outputs": [
+                {
+                  "bundle": "commando-prefab-lab",
+                  "member": "CAB-b0611b01bbffecd06329c6d6eecf278c",
+                  "path_id": 2123823703161810296,
+                  "bytes": 1060,
+                  "sha256": "1d5e4fc1251939d670363311504562750561533e16c3a2be376c930b9e08d321",
+                  "references": [
+                    {
+                      "offset": 128,
+                      "from": [
+                        0,
+                        3745081542317684032
+                      ],
+                      "to": [
+                        0,
+                        -7394815846198048529
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-base-elitefire_static_assets_all_0a9dd95e286c0473da92004def51b52b.bundle",
+      "sha256": "e313d30428c2dc4affaa825564a0e2f0706e704506632ccd4e19b72e76e8e07f",
+      "members": [
+        {
+          "name": "CAB-97a4bf4e1617facec197aaadff50a8b7",
+          "objects": [
+            {
+              "id": "sprite-3860e012477ec800",
+              "path_id": -2484957994888181573,
+              "sha256": "b9a4079108e0efd4818f4dbfd85452b727f4e8b3a07be1c3ef0bdb0acab72e49",
+              "texture": {
+                "path_id": 5916720845123700923,
+                "sha256": "fc704ae78220d4cceec5e467ae141f73146b4f5d2937d7c6dd07ea9381b28c4d"
+              },
+              "importer_guid": "60f648e2197987440abe60040017c3f9",
+              "outputs": [
+                {
+                  "bundle": "commando-prefab-lab",
+                  "member": "CAB-b0611b01bbffecd06329c6d6eecf278c",
+                  "path_id": 4062493233001711616,
+                  "bytes": 1116,
+                  "sha256": "2ad5d39036a665d27d6ee9eb0ffdbf4c24e063109a0c70e38c0f267e0b388e7e",
+                  "references": [
+                    {
+                      "offset": 120,
+                      "from": [
+                        0,
+                        5916720845123700923
+                      ],
+                      "to": [
+                        0,
+                        -5931653200027121398
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-base-elitehaunted_static_assets_all_6e43580f30aa87b1643c341af8aea8b3.bundle",
+      "sha256": "d0b56722d2dc2b222f1b388ad2d9dd22c58ab98b6fe955b6aaf5824975a397e9",
+      "members": [
+        {
+          "name": "CAB-1471a418739d53723c102ba6b809b5f3",
+          "objects": [
+            {
+              "id": "sprite-52e844122c90efb8",
+              "path_id": 7522970730336723122,
+              "sha256": "ccf0dfb8722e410ff2b9596d6884745864cfd4f5410cfd59328284496d8039b7",
+              "texture": {
+                "path_id": 6035594271739453618,
+                "sha256": "ff1c9975d7926edce0e392eb794ba6ad4dd487b2de884636b47d4e61be9b6318"
+              },
+              "importer_guid": "376466aa42a94604882dd86009ed886e",
+              "outputs": [
+                {
+                  "bundle": "commando-prefab-lab",
+                  "member": "CAB-b0611b01bbffecd06329c6d6eecf278c",
+                  "path_id": 5974099750554759096,
+                  "bytes": 912,
+                  "sha256": "29383c2be134d8dfd45bccb04f35725c657e2e618b6cbe42451de975bf52649c",
+                  "references": [
+                    {
+                      "offset": 124,
+                      "from": [
+                        0,
+                        6035594271739453618
+                      ],
+                      "to": [
+                        0,
+                        -4377011818767230867
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-base-grandparent_static_assets_all_8b8b59baac46679aabe8d5345def00a4.bundle",
+      "sha256": "2f789cc36235336e2dd3050874f72241ca67945da478210f03a363067834091e",
+      "members": [
+        {
+          "name": "CAB-ca0f87adf73ab806113ffa9e87430dac",
+          "objects": [
+            {
+              "id": "sprite-7be2b7aedb79de43",
+              "path_id": 3557583064769420200,
+              "sha256": "272459a3b952a85894c7f589f5fc0d8a1cc0138d3135029ecd12474148eea932",
+              "texture": {
+                "path_id": 942177988050541480,
+                "sha256": "47c07913cff5a9f84f9ad3da9324fee6426c86c9fdf7a2f4f3eb033e7bd6cb7e"
+              },
+              "importer_guid": "9959f35266937c6429e869ffc96645e6",
+              "outputs": [
+                {
+                  "bundle": "commando-prefab-lab",
+                  "member": "CAB-b0611b01bbffecd06329c6d6eecf278c",
+                  "path_id": 8926899373036133955,
+                  "bytes": 2360,
+                  "sha256": "1032c2f063787c45c9a5b40013b25ce41ce67aaa2cf7a1812fbbafbe7d2dbff5",
+                  "references": [
+                    {
+                      "offset": 120,
+                      "from": [
+                        0,
+                        942177988050541480
+                      ],
+                      "to": [
+                        0,
+                        -2019851048955889878
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

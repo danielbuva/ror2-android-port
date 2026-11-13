@@ -89,6 +89,9 @@ class AndroidFeedbackTests(unittest.TestCase):
     def test_escape_clears_notes_consent_and_focus(self):
         self.run_case("screen-escape")
 
+    def test_rebind_modal_owns_buttons_cancel_failed_save_retry_focus_and_cleanup(self):
+        self.run_case("rebind-modal")
+
     def test_settings_pause_input_isolation_and_cleanup(self):
         self.run_case("settings-lifecycle")
 
@@ -100,6 +103,9 @@ class AndroidFeedbackTests(unittest.TestCase):
 
     def test_screen_policy_spans_loading_and_restores_only_owned_state(self):
         self.run_case("screen-policy")
+
+    def test_saved_display_preference_survives_resume_and_releases_at_app_teardown(self):
+        self.run_case("display-preference")
 
     def test_failed_save_preserves_pause_and_allows_an_honest_retry(self):
         self.run_case("settings-save-failure")

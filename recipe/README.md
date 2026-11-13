@@ -1,5 +1,48 @@
 # Build recipes
 
+2026-11-05 artifact/holder snapshot audit: refreshed the authored session source
+pin and producer/camera manifest bindings after sharing one synchronous manifest
+read. Only repository source hashes change; provenance, privacy, licensing and
+sensitive-content review passed. No game bytes or private identifiers are added.
+
+2026-11-05 item-discovery attribution audit: the original-audio owner source
+pin and producer/camera manifest bindings follow two authored timing markers
+around the existing comparison-item discovery call. Only repository source
+hashes change; no game data, private paths, identifiers or license changes are
+introduced. Provenance, privacy and sensitive-content review passed.
+
+2026-11-04 EventSystem audit: objective-support and Commando recipes construct
+32 EventSystem components from the pinned SDK declarations and constructor
+initializers, preserving source base-component references. Current receipt-bound
+MonoScript identity and properties hashes qualify the resulting schema. Recipes
+contain only the SDK-relative source path/hash and authored policy; no SDK source,
+game bytes, private paths or identifiers are added. The other fieldless components
+retain their strict fieldless contract. Provenance, privacy, licensing and
+sensitive-content review passed; Android load/play gates remain open.
+
+2026-11-04 startup-attribution audit: `original-audio-owner-sources.json`
+refreshes three authored session/audio timing-marker hashes. The explicit
+`build-hook-pins` refresh keeps producer/camera manifest bindings consistent;
+builds validate without changing source. Only repository source hashes change;
+no game bytes, private paths, identifiers or licensing changes are introduced.
+
+2026-11-04 player-startup audit: `original-audio-owner-sources.json` refreshes
+the authored session source hash and its producer/camera manifest pins. Only
+repository source hashes change; no game bytes, private paths or identifiers are
+added. Ordinary startup removes its fixed delay and selects the player lifecycle;
+explicit lab selectors retain their existing contracts.
+
+`owner-sdk-job-inputs.json` binds caller-acquired SDK/platform/Java/AAPT2 and
+public Maven jars to the existing SDK package producer. It contains only
+dispatcher binding names, public artifact filenames and an output token. No
+SDK bytes, game content, private paths or credentials are included. Existing
+producer pins and license boundaries remain unchanged. Provenance, privacy,
+licensing and sensitive-content audit: 2026-11-04.
+
+The typed startup-discovery change refreshes the authored world-owner and
+camera/build source pins. Audit: 2026-11-04; repository source hashes only,
+with no game data, private paths, identifiers or licensing changes.
+
 ## Original assembly placement audit (R1, 2026-10-18)
 
 `original-assemblies.json` records only source/project identities, source SHA-256,
@@ -55,7 +98,91 @@ Before adding a file, audit it for provenance, privacy, licensing and sensitive 
 record the result below, and run `python3 scripts/audit-public.py`. Where a generator can
 produce the file from the input, prefer tracking the generator.
 
+## Recipe change audit (2026-11-11)
+
+Scope: all 30 paths added or changed under `recipe/` from the last commit before
+2026-11-04 UTC, `e44ada9ed7c48b9ccba6064b3f5c91afa542b01a`, through
+`2d7df7d5`. This includes 29 recipe files and this README's audit additions.
+The subsequent main update through `7d5ad354` changes no recipe files.
+Acceptance: each path has a recorded provenance, privacy, licensing and
+protected-content review, including decompressed JSONL, with any violation fixed
+or explicitly reported. This is a host-only publication audit, not a loadability,
+playability or phone-install qualification.
+
+All 29 recipe files pass the existing Recipe boundaries above. The table pins
+reviewed bytes and identifies the purpose of each change. Original-input
+selectors, hashes, GUIDs, object IDs and pointer relationships are needed to
+locate or link content from the user's installation; none supplies asset bodies,
+serialized gameplay values, shader implementation, pixels, audio or game code.
+No private paths, device/storage/account identifiers, credentials or access-control
+bypasses were found. Repository source pin changes refer to authored tooling;
+SDK/package rows retain acquisition and license checks rather than embedding
+third-party implementation. No new redistribution permission is implied.
+
+Menu's saved path/type/object IDs and provider order are build identities, not
+layout/content replacements. `player_ui.py` checks the complete source graph and
+resolves providers before applying them. Managed/Tree records remain original-
+input gated in `record_produce.py`; the compressed Tree profile was inspected as
+JSON, not treated as an opaque binary. The complete profile contains 66 Trees in
+seven source members, with four new records and unchanged earlier records.
+EventSystem policies name the pinned SDK declaration and hash; constructor
+values are derived locally. Shader remaps bind produced source suppliers;
+Uber's 36 package shader/compute selectors (12 compute) name resources and
+kernel/thread-group contracts while the pinned package supplies implementation.
+Dispatcher requests contain symbolic input/output bindings only.
+
+This README's changed prose and tables were also reviewed: they describe
+provenance and bounded reconstruction relationships, without protected content
+or private capture. Corrected the older Tree member count from 37 to seven.
+No clear recipe boundary violations or unresolved publication findings remain.
+
+| Recipe | Reviewed change | SHA-256 |
+| --- | --- | --- |
+| `native-view-camera-transform.json` | Authored build/camera source pins | `92c77d4d5b5fbd5072502077cfbcacdb4e567243f3d1d5ccfff2db58190d2fb2` |
+| `original-audio-owner-sources.json` | Authored runtime/audio source pins | `90a4d356a5af40fadc94724df38823c1b9ae80a1ef111f4f3248776ba97e4e99` |
+| `owner-artifactworld01-native-records.json` | Original component selectors and pointer relocations | `728ac3483b07550d4f46e1cfa50f011a69e0b24284dc62754a23ec61fb0cec80` |
+| `owner-champrush-director-records.json` | Original director selectors and pointer relocations | `a7d60a106ef9b5be7c22010acbb2ea9118f4cbe6ad6e6226f034e047ece16536` |
+| `owner-commando-objects.json` | SDK EventSystem policy, script identities and supplier pins | `42777b5337e15e18a6fd1c8a65fee68b6eb831d03830604851aa2635ed54d972` |
+| `owner-commando-reused-records.json` | 347 MonoScript identities and supplier pins | `6474d221dbdb80e9d29c4f3a2f6d2ce3a132980c06c4240d48dc25b55592cb2c` |
+| `owner-conduitcanyon-director-records.json` | Original director selectors and pointer relocations | `5899bf05658d41d38794ca5e1a3fe89413613b45c9931ae041f8b313c026b632` |
+| `owner-foggyswamp-source-objects.json` | Existing source-produced supplier hash references | `fd127632b42ede902cf0609a4a4ee7a4ab394a73843d766c43c9af8a97139763` |
+| `owner-intro-whole-objects.json` | Existing source-produced supplier hash references | `4c2b26d74e53b26396c90b408d2b2320c7f312925151ee0d476c5d708e08dd3b` |
+| `owner-meridian-whole-objects.json` | Existing source-produced supplier hash references | `591d9044b0e374c138fc312c32e6beae8dffe3a5bdfa43b7ae29212eb2591afd` |
+| `owner-native-job-inputs.json` | Dispatcher placeholders for acquired native inputs | `8aac45cbe864a1364ab2e306fae59ff3d94e1ac07a51b2940a473a565125f9cf` |
+| `owner-objective-reused-records.json` | SDK EventSystem script identity | `0f03acd21a7000bd31127aed63acd0957ebb3d72bdd3737c0cbd40c71619742c` |
+| `owner-objective-support-objects.json` | SDK EventSystem policy, script identity and supplier pins | `afe5e32ab5f57f19949f672d7cd4a3d91a97a861f332d41ab46330d239baabf0` |
+| `owner-outro-whole-objects.json` | Existing source-produced supplier hash references | `0b3707206ccb85b269b4ffb7fdbc2281e29996f6102b823b1a5f3a8e4939f5b7` |
+| `owner-player-menu.json` | 591 path/type/object IDs and 20 external provider identities | `68cdf84752aceffbeab7f9d975eeaae706e67eb1a7aff0015b974e8e2ee2120b` |
+| `owner-player-phases.json` | Five source profiles and complete output filename sets | `49f3c80455532ce9c3c94db2e8dd4807ab0ceb7a96c144d78a064ddb94dcd8fc` |
+| `owner-promorailgunner-whole-objects.json` | Existing source-produced supplier hash references | `465ee55dcb13fd58aaeacb0aec4e620756444822c43e4eaaccb8547e08dd3509` |
+| `owner-promovoidsurvivor-source-lighting-objects.json` | Existing source-produced supplier hash references | `3a3f55032bc988f25fca554416d433ee2c9d1860a2649f79c475ea30a161013a` |
+| `owner-satellitescene-whole-objects.json` | Existing source-produced supplier hash references | `80531ba46512543942b88c586f2c31700e39ae5cda3cb4d43dc292603123e676` |
+| `owner-sdk-job-inputs.json` | SDK/Maven filenames and dispatcher placeholders | `bbcfc451a0320389b0d7e0d79786670a0108e3fcb30991c2c5cead859afa15ad` |
+| `owner-splash-director-records.json` | Original director selectors and pointer relocations | `66953dab4e23d78963177719232bd2accd92cf47402f88fc5bfc0378370acad8` |
+| `owner-voidoutro-whole-objects.json` | Existing source-produced supplier hash references | `362766b8df0d529abf265f0073d4dc7664841f3da1c401c8f5c9656188a69012` |
+| `owner-whole-game-bundle-managed-records.json` | 221 original managed selectors and 512 pointer relocations | `732e8280a4446a4f1472937b1885533d65fd95749d60e551e78d8f653a2a3a79` |
+| `owner-whole-game-bundle-tree-records.jsonl.gz` | Four added Tree/WindAsset identity relationships | `d4151bf43fee3a6512203eb3a346bcdb986e54665984fc1deacc976adac2f302` |
+| `owner-whole-scene-postprocess-shader-remap.json` | 24 source-produced shader identity remaps | `a88c83cd062eca5241bdd8a57b2b34a0d211cd093d3e474ac90c9b0c8df138cc` |
+| `owner-whole-scene-standard-shader-remap.json` | Two source-produced shader identity remaps | `367d8fc933e722d167036230a28446879695703d10859d202ae71f25433e10da` |
+| `shader-catalog-overrides.json` | Authored generator/recipe pins | `f2cd730b79cb92f5eb797111916e1259ca2e0371172801d83699f251001aff19` |
+| `shader-postprocessing-uber-candidate.json` | Public package selectors and camera program contracts | `948b003b521e440ab6b087093c715624bb0073acb04c8df13056272aa8503805` |
+| `shader-translucent-candidate.json` | Authored shader helper source pin | `5e73e7b54dbd9970ae78f61855b393fb6aa79ef38a03320dd7e1c42ea6d0920b` |
+
 ## Audit record
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-sdk-job-inputs.json` | `bbcfc451a0320389b0d7e0d79786670a0108e3fcb30991c2c5cead859afa15ad` |
+| `owner-player-phases.json` | `49f3c80455532ce9c3c94db2e8dd4807ab0ceb7a96c144d78a064ddb94dcd8fc` |
+
+`owner-player-phases.json` declares the five existing source phase recipe hashes
+and their complete output filename sets (including UUID5 Sprite/texture names).
+These are minimum reconstruction/layout identities from the current source
+producer receipts, without file bodies, target hashes, images or private paths.
+The declaration supplies no content; all files must be regenerated from original
+inputs and checked by their existing owners. Provenance, privacy, licensing and
+sensitive-content audit: 2026-11-04. No entitlement or historical-byte claim.
+
 
 `owner-j850-code.json` additionally names the 69 legitimate debug-symbol
 companions required by the fixed target's managed closure. These are SDK or
@@ -154,9 +281,10 @@ resource field, source Uber placeholder, run profile settings, and official
 Post Processing 2.3.0 archive/license/source hashes. The shader source declares
 three passes and the accepted caller selects pass 0; generation also pins the
 shader closure and preserves each source asset's `.meta`, resource, and camera
-bytes. The same recipe now binds five AO/LUT compute and two AO/LUT graphics
-programs to the original resource fields, asset identities and 22 kernel/thread
-group contracts. These use new deterministic lab GUIDs under the loading scene's
+bytes. The same recipe binds all 12 compute and 24 graphics programs to the original
+resource fields, asset identities, Shader names and compute kernel/thread-group
+contracts. Typed resource joins distinguish identically named Shader and Compute
+slots. These use new deterministic lab GUIDs under the loading scene's
 Resources directory. No original program body, profile values or code is tracked;
 only the minimum reconstruction identities and compatibility contracts are public.
 The archive and generated source
@@ -220,10 +348,11 @@ visual parity is claimed. Manual provenance/privacy review: 2026-10-24.
 | `owner-rgb-mip-textures.json` | Complete ETC1 mip-chain target cohort | Original/destination selectors, field/pixel extents, hashes, full mip counts and source JPEG/normal relationships. | No pixels, vectors, encoded blocks, SDK bytes or target frames; audit below, 2026-10-24. | Existing texture owner, native pixel/mip helper and public ETC/JPEG/Unity Crunch tools; J1110 qualifies the full host cohort, Android pending. |
 | `owner-rgba-mip-textures.json` | Full RGBA mip-chain target cohort | Original/destination selectors, field/resource extents, source import relationships and hashes. | No pixels, block literals, serialized templates or SDK bytes; audit below, 2026-10-25. | Existing texture owner plus explicit SDK/public EAC tools; J1128 host qualification, Android open. |
 | `owner-cubemap-textures.json` | 110 source-derived Cubemaps | Original face-chain selectors, field/resource extents, import relationships and hashes. | No pixels, encoded blocks, target body templates or native-probe fallback; audit below, 2026-10-25. | Existing texture owner and pinned public/SDK tools; J1128 host qualification, Android open. |
+| `owner-source-baked-reflections.json` | Two original baked HDR probes | Original record/stream selectors, hashes and storage relationships; retains all original mip bytes. | No pixels, blocks, serialized templates, private settings or generated target supplier; audit below, 2026-10-29. | Existing texture owner, opt-in `cube-preserve`; device native format support required; full-file admission open. |
 | `owner-avatars.json` | Private replay Avatar bodies (J1075) | Minimum original/destination identities, hashes, source extents and source-entry permutations. | No strings, poses, rig/geometry values, target literals or byte frames; full audit above, 2026-10-24. | Explicit PC-input-only `avatar_produce.py`; no current game-build consumer. |
 | `owner-meshes.json` | Protected mesh bodies in the private replay packet, for the included cohort only (J1070) | Original bundle/object/resource selectors, destination identities/hashes and authored import/conversion settings. | No geometry arrays, collision data, target byte frames or float literals; full audit above, 2026-10-24. Two cases remain excluded. | Explicit original-input-only `mesh_produce.py`; no current game-build consumer. |
 | `shader-postprocessing-bloom-candidate.json` | Exported one-pass Bloom and exact source-camera CopyStd placeholders | Accepted-input source/meta/resource identities, official Unity package/license hashes and pass contracts; authored camera staging pin refreshed without changing camera transforms. | Authored selection metadata only; upstream source and generated content stay local under Unity Companion License. Manual audit 2026-10-23 described above. | `shader_postprocessing_bloom`, whole-catalog preparation and catalog replay comparison; default off. |
-| `shader-postprocessing-uber-candidate.json` | Exact source-camera `PostProcessResources.uber` one-pass constant-white placeholder | Accepted-input Main Camera/resource/shader/profile identities, official archive/license/source hashes, pass-0 call contract, seven original AO/LUT resource joins, 22 kernel/thread groups and transitive includes. | Reconstruction metadata only; official shader/includes and generated candidates stay ignored under Unity Companion License. Package 2.3.0 is a compatible reference, not a shipped-version claim. Audited 2026-10-24. | `shader_postprocessing_uber`, whole-catalog preparation and catalog replay comparison; independent default-off activation. |
+| `shader-postprocessing-uber-candidate.json` | Exact source-camera `PostProcessResources.uber` one-pass constant-white placeholder | Accepted-input Main Camera/resource/shader/profile identities, official archive/license/source hashes, pass-0 call contract, 36 original typed program/resource joins, Shader names and compute kernel/thread groups and transitive includes. | Reconstruction metadata only; official shader/includes and generated candidates stay ignored under Unity Companion License. Package 2.3.0 is a compatible reference, not a shipped-version claim. Audited 2026-10-24. | `shader_postprocessing_uber`, whole-catalog preparation and catalog replay comparison; independent default-off activation. |
 
 | `owner-app-host-tools.json` | Private scoped native-host staging plan | Exact open Python/dependency file hashes, relative package paths/link targets and 21 pinned public producer source hashes; source commit is a retrieval hint. | Authored tool metadata only; no binary, SDK/game content, keys, credentials, private paths or device/storage identifiers. License/distribution boundaries are recorded below. Audited 2026-10-23. | `tools/phone-build/managed-host/stage.py` validates the fixed profile; its staged phone builder verifies file hashes and creates a separate private fixture, with no game/default-build consumer. |
 | `wwise-init-android.json` | Private fixture-only Init metadata generator constants (J744) | Minimum source-bank path, format/identity/size and plugin/device/bus relationships; generated bank bodies remain local. | Authored parsing/serialization and metadata only; accepted full inventory plus explicit source hash required, exclusive ignored outputs, no SDK/media/implementation/private identifiers. Audit details below. | `wwise_init_platform.py`, explicitly invoked support tool; no current game-build dependency. |
@@ -2298,6 +2427,15 @@ remain required. No generated assembly or protected implementation is included.
 
 ## App-host build-tool metadata audit (2026-10-23)
 
+2026-11-12: the existing native plan also selects the supplied Android CPython
+`_sqlite3` extension and SQLite 3.54.1 for the bundle producer's disk indexes.
+Actual AArch64 ELF dependencies resolve through the existing Python, Android
+support and zlib selections plus Android system libraries. The dependency's
+versioned regular file is pinned; its installed `libsqlite3.so` link retains the
+actual ELF lookup name. Only relative selectors, hashes and link metadata are
+tracked. Native bytes and tool notices remain with the separately supplied
+tools; this metadata audit grants no redistribution approval or phone acceptance.
+
 `owner-app-host-tools.json` contains relative paths, names, hashes and native
 link selections for the scoped Python 3.14.8 build-tool profile, plus 21 public
 producer source digests. Its source commit is a retrieval hint; readers compare
@@ -2452,6 +2590,16 @@ No upstream implementation or captured heap bytes are included. J1091 records
 31 passing tests and actual-file decode/export; the provider's Unity Companion
 License/notices stay with the private checkout and outputs. Provenance/privacy
 audit: 2026-10-24; no runtime/content redistribution grant changes.
+
+`memory-snapshot-data-tools-root-labels.patch` is a second authored, zero-context
+transformation for the same pinned CLI, applied after the empty-array patch. It
+prints one stderr line per proven root while the crawler seeds them:
+`LAB_GC_HANDLE_ROOT <managed_object_index> <gc handle index>` and
+`LAB_STATIC_ROOT <managed_object_index> <type>.<field>`, with indexes matching
+the DuckDB export's `managed_objects`. It restores the private J1122 root-label
+adaptation for retained-root attribution; behaviour and outputs are otherwise
+unchanged. No upstream implementation or heap bytes are included.
+Provenance/privacy audit: 2026-10-27; no runtime/content redistribution grant changes.
 
 ### Lane source-restaging audit
 
@@ -3016,6 +3164,11 @@ input, private path, account/device identifier, credential or generated shader
 output is added. This audit authorizes tooling/selection metadata only, with no
 new redistribution or ownership claim. Full evidence and remaining gates are
 recorded once in J1144/J1146/J1147/J1151/J1157.
+
+The current helper pins retain J1204's measured resource binding kind 2,
+J1369's SDK TMP package sources and the existing deferred-pass compiler/reflection
+support. The manager recipe pins this reviewed Shader recipe as one cohort.
+This refresh changes public tooling hashes only; generated Shader data stays private.
 
 The original UI Alpha extension selects one original Shader and two original
 Materials, derives their feature sets and regenerates every selected original
@@ -3690,7 +3843,7 @@ complete Title assembly, phone production and runtime qualification remain open.
 | Recipe | SHA-256 |
 | --- | --- |
 | `owner-title-whole-objects.json` | `1f4ea96d713b60b159e5c1cd030bb5b49e7df1e387d9cbe10831290b033498ee` |
-| `owner-satellitescene-whole-objects.json` | `a035d84e5f5e930eb24bf23bd3ef37bd400d34bce1b0a7d9f665c63a672cd911` |
+| `owner-satellitescene-whole-objects.json` | `80531ba46512543942b88c586f2c31700e39ae5cda3cb4d43dc292603123e676` |
 
 Manual provenance, privacy, licensing and sensitive-content audit: these
 profiles contain source selectors, hashes, checked pointer relationships and
@@ -3754,8 +3907,6 @@ generated records stay ignored. Phone and runtime qualification remain open.
 | `owner-village-spine-lab-standard-shaders.json` | `fed66e3f3f11e27ce2f7d281ce2f1f0e26a19ccc1b9c59feb528aa4e51be7e47` |
 | `owner-shipgraveyard-spine-objects.json` | `a62dd18b06ae62970984089ddd31fe11d26c4e2081432029a7e16ee0a4195b24` |
 | `owner-shipgraveyard-spine-lab-standard-shaders.json` | `27c295f0fc7dfed9f6cb1009829f0698943ea3fde79096a235d1b4846e28d393` |
-| `owner-goolake-spine-objects.json` | `396ec87613ecbc97e825f7680fa89800920239057a4436d6875c93cd000ad10a` |
-| `owner-goolake-spine-lab-standard-shaders.json` | `485f9a4d3477285cf2c061245ffc7c74f91a3df83dab520a0279b500f94ac918` |
 | `owner-golemplains-spine-objects.json` | `88350424b9e313ec47bacdf8210d962aa9cafeda2fc1610c01d4ce5a881382e0` |
 | `owner-golemplains-spine-lab-standard-shaders.json` | `84cca571218bc56551f82813e3aeb01b45e27dc1b48441365181155849743665` |
 | `owner-blackbeach-spine-objects.json` | `18adebc9c4b4dc9aaa8aa4ea1f54ea23b91d4787a8904801534035382d3f97a1` |
@@ -4014,3 +4165,2876 @@ files, separately acquired SDK and receipt-pinned source-produced media/Shader
 packs remain required. Generated outputs and evidence stay ignored. Existing
 ownership and redistribution boundaries apply; phone production, installation
 and original scene behavior remain open.
+
+J1282 refreshes the existing audio-owner manifest's authored `PortSession.cs`
+source hash for the reviewed mapping-startup reader change. The merge retains
+main's integrated-world pin and refreshes the dependent camera build-hook
+identity. No original audio data, account input or proprietary content is added. Manual provenance/privacy/licensing review: 2026-10-26. Audio output
+and device behavior gain no qualification from this pin refresh.
+
+## Native graph detour owner repin (2026-10-26)
+
+Refresh the authored integrated-world owner hash after preserving progressing
+native graph detours, and refresh the producer/camera recipe pins together.
+The prior recipe remains the parent hash. Reviewed changes contain only authored
+source and hashes; no game content, middleware, private paths or identifiers.
+This pin update does not qualify native encounter or audio behavior.
+
+The same audit covers the camera build-hook hash following its refreshed
+authored audio-producer recipe pin. This changes source validation metadata
+only; no generated content or additional input identifiers are published.
+
+## Meridian source particle Shader selection (2026-10-26)
+
+| Profile | SHA-256 |
+| --- | --- |
+| `owner-meridian-source-lab-particles-shaders.json` | `f4790f6f732e987af47d3af7aeb1cfa156d398bcd0ac653336a31b1212b62d79` |
+
+Manual provenance, privacy, licensing and sensitive-content audit: this profile
+contains original source/material selectors, body hashes and pinned public SDK
+and tool identities only. Recursive original scene dependencies select three
+particle materials; the existing SDK 211 producer supplies programs and native
+order. No shader body, program, copied source, private path or credential is
+included. Legitimate PC input and independently acquired SDK remain required;
+generated records and evidence stay ignored. The persisted 25,056 B record is
+host raw-exact against J850; full-scene and phone gates remain separate.
+
+## Frozenwall complete spine-scene selections (2026-10-26)
+
+| Profile | SHA-256 |
+| --- | --- |
+| `owner-frozenwall-spine-objects.json` | `9cb32f87690d2b479eb778ec2e27b50d52249eff781affe93e7cee58bdc9200f` |
+| `owner-frozenwall-spine-lab-standard-shaders.json` | `c7afd2cce11237e6db2131c5eddeb7037ca360866de80ecbe75825bc5fbe5829` |
+
+Manual provenance, privacy, licensing and sensitive-content audit: these
+profiles contain original selectors, hashes, checked pointer relationships,
+SDK/public-tool pins and existing authored import policies only. Lossless JSON
+compaction preserves every decoded object selection; the separately qualified
+Standard profile is unchanged. Original renderer, skybox and local-material
+roots select reduced-spine Standard variants using the J1183/J1192 policy.
+No original body, curve, scalar payload, pixel, shader program, copied source,
+private path or credential is included. Legitimate PC files, separately acquired
+SDK and receipt-pinned source-produced media/Shader packs remain required.
+Generated outputs and evidence stay ignored. Existing ownership and
+redistribution boundaries apply; phone production and runtime remain open.
+
+## Meridian complete object selection (2026-10-26)
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-meridian-whole-objects.json` | `f5845e43875b94e900374c34221e51630e0dfffcd1dff7858428ac2c0623170b` |
+
+Manual provenance, privacy, licensing and sensitive-content audit: this profile
+contains source selectors, hashes, checked pointer relationships and authored
+import policies only. Lossless compaction preserves every decoded selection.
+No original body, curve, scalar, pixel, program, copied source, private path or
+credential is included. Legitimate PC files, SDK resources and receipt-pinned
+source-produced record packs remain required. Generated outputs and evidence
+stay ignored. Existing ownership and redistribution boundaries apply; phone
+production, installation and original scene behavior remain open.
+
+## Computational Exchange Standard selection (2026-10-26)
+
+| Profile | SHA-256 |
+| --- | --- |
+| `owner-computationalexchange-whole-standard-shaders.json` | `74d83b24333b4d44ab832629953f3150fca8833088fcb9256993cbc72b401272` |
+
+Manual provenance, privacy, licensing and sensitive-content audit: this profile
+contains original scene/material selectors, body hashes, pinned public SDK/tool
+identities and existing authored import settings only. Recursive original
+dependencies select Standard features; the existing SDK compiler supplies
+programs. No original body, program, copied source, private path or credential
+is included. Legitimate PC input and independently acquired SDK remain required;
+generated records and evidence stay ignored. The persisted 301,384 B record is
+host raw-exact to J850; complete-scene and phone gates remain separate.
+
+## Computational Exchange complete object selection (2026-10-26)
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-computationalexchange-whole-objects.json` | `7f76a47065416c33a1606186da9c10e9bf6bdc22cea0aaecbb2611eb29433413` |
+
+Manual provenance, privacy, licensing and sensitive-content audit: this profile
+contains source selectors, hashes, checked pointer relationships and authored
+import policies only. Lossless compaction preserves every decoded selection.
+No original body, curve, scalar, pixel, program, copied source, private path or
+credential is included. Legitimate PC files, SDK resources and receipt-pinned
+source-produced record packs remain required. Generated outputs and evidence
+stay ignored. Existing ownership and redistribution boundaries apply; phone
+production, installation and original scene behavior remain open.
+
+## Champrush source Shader selections (2026-10-27)
+
+| Profile | SHA-256 |
+| --- | --- |
+| `owner-champrush-whole-postprocess-shaders.json` | `39d2fce2857346432b0a334c5d46e7e1ef174fc450bf95d364b05bb37a017444` |
+| `owner-champrush-whole-standard-shaders.json` | `8dc74a60c9cb554ec5dca9d3fc13120b7037fc5ef1b2e3c74e76ff13a612c09d` |
+| `owner-champrush-whole-particles-shaders.json` | `62f078d212e0bda8bf30b961cbfbfd3012db9770a75fa0923995d5c3e8595115` |
+
+Manual provenance, privacy, licensing and sensitive-content audit: these profiles
+contain original scene/material/Shader selectors, hashes, pinned public SDK/tool
+identities and existing authored import settings only. Original dependency
+relationships select post-processing, Standard and particle records; existing
+exporter templates and SDK compilation supply programs. No original body,
+program, copied source, private path or credential is included. Legitimate PC
+input and independently acquired SDK remain required. Generated records and
+evidence stay ignored. All 26 persisted records are host raw-exact to J850;
+complete-scene readiness and phone qualification remain separate gates.
+
+## Champrush complete object selection (2026-10-27)
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-champrush-whole-objects.json` | `1b2fbf67b368c857c30739458bf4b4ca95b76d0e4c7a182b844b0c222c608572` |
+
+Manual provenance, privacy, licensing and sensitive-content audit: this profile
+contains source selectors, hashes, checked pointer relationships and authored
+import policies only. Lossless compaction preserves every decoded selection.
+Eight original Timeline/Track managed roots are admitted only through pinned
+class 114 bodies and their original PreloadData membership. No original body,
+curve, scalar, pixel, program, copied source, private path or credential is
+included. Legitimate PC files, SDK resources and receipt-pinned source-produced
+record packs remain required. Generated outputs and evidence stay ignored.
+Phone production, installation and original scene behavior remain open.
+
+## Voidstage complete object selection (2026-10-27)
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-voidstage-whole-objects.json` | `1c45133b5df7083d5343beed4b79deeabd71b8b400b6762c31272302f5a78978` |
+
+Manual provenance, privacy, licensing and sensitive-content audit: this profile
+contains source selectors, hashes, checked pointer relationships and authored
+import policies only. Lossless compaction preserves every decoded selection.
+The original Rigidbody is admitted through its reciprocal GameObject component
+relationship and complete source body/type identity. No original body, scalar,
+curve, pixel, program, copied source, private path or credential is included.
+Legitimate PC files, SDK resources and receipt-pinned source-produced record
+packs remain required; generated outputs and evidence stay ignored. Phone
+production, installation and original scene behavior remain open.
+
+## Bazaar complete scene selections (2026-10-27)
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-bazaar-whole-objects.json` | `e1a7f4be014786b9871446a64b8686bd01458be4ba4050856011ec21ee6615d1` |
+| `owner-bazaar-whole-particles-shaders.json` | `33d92f822a2304108864bd07d4c91c1c2df4550898e2bcff0d71a9e68cb013d4` |
+| `owner-bazaar-whole-postprocess-shaders.json` | `201ec49da0c3c758946200846089e3b508070d329437adf1111f8e9de00588a6` |
+| `owner-bazaar-whole-standard-shaders.json` | `9f9fdd13a55e2a63eff8412af49922b7bc8c88f16bec5e6603fe91371bced7d1` |
+
+Manual provenance, privacy, licensing and sensitive-content audit: these profiles
+contain source selectors, hashes, checked pointer relationships and authored
+import policies only. Lossless compaction preserves every decoded selection.
+Seven original wind-disabled Bezier lines use the existing hierarchy evaluator;
+four CharacterMaster bodies and their script use the qualified aligned Boolean
+tail policy, complete schema and reciprocal component/body-prefab witnesses.
+Original dependencies select 24 post-processing records; original recursive
+materials select Standard and particles through the pinned SDK compiler.
+No original body, curve, scalar, pixel, program, copied source, private path or
+credential is included. Legitimate PC files, SDK resources and receipt-pinned
+source-produced packs remain required; outputs and evidence stay ignored.
+Phone production, installation and original scene behavior remain open.
+
+## Voidstage source Shader selections (2026-10-27)
+
+| Profile | SHA-256 |
+| --- | --- |
+| `owner-voidstage-whole-postprocess-shaders.json` | `5d34926684243892ae14bec7cb22e402fcfae94ef65dc09619a8107fc378c5df` |
+| `owner-voidstage-whole-standard-shaders.json` | `7c40fe5f02ed72235f6f1e32deccf5ef2d7c98f9c8afe10e4c7e27180544adca` |
+
+Manual provenance, privacy, licensing and sensitive-content audit: these profiles
+contain original scene/material/Shader selectors, hashes, pinned public SDK/tool
+identities and existing authored settings only. Original resource relationships
+select 24 post-processing records; recursive original materials select Standard.
+Programs come from the existing exporter-template and pinned SDK compiler owners.
+No target bytes, copied game source, private paths or credentials are included.
+Legitimate PC input and independently acquired SDK remain required. Generated
+outputs and evidence stay ignored. All 25 persisted records are host raw-exact
+to J850; complete-scene readiness and phone qualification remain separate.
+
+The existing SDK 211 particle producer accepts optional `stripped_keywords` in
+an audited profile. It removes source-derived variant rows containing a declared
+keyword before native ordering; omission preserves all existing selections.
+This policy records explicit build stripping, without supplying program bytes.
+
+## Four scene source selections and Shader index reuse (2026-10-27)
+
+| Profile | SHA-256 |
+| --- | --- |
+| `owner-frozenwall-source-objects.json` | `c14602ed5360bdf2bce5fbf1c5b283798ce1141c81cfdd049acd913564e6313e` |
+| `owner-frozenwall-source-lab-shader-remap.json` | `7dfbdb627abd591fdb29b89135362be539efff15b5b854bbc7d680cc6fa59f3d` |
+| `owner-villagenight-source-objects.json` | `f66f0fa9e4743dcd8094c9ae1be7b8bdd373d583133a5979c8075971e480c423` |
+| `owner-villagenight-source-lab-shader-remap.json` | `99f4c31e05205ea7f7f63f9c19dd64c0f1b3ffd53099c05ff0a4cac72fc8d126` |
+| `owner-foggyswamp-source-objects.json` | `fd127632b42ede902cf0609a4a4ee7a4ab394a73843d766c43c9af8a97139763` |
+| `owner-foggyswamp-source-lab-shader-remap.json` | `5ca166d5b4f672050fd12f72f5ae29f437e21cb8f89a0f96ac2d79e7144c2b49` |
+| `owner-skymeadow-spine-objects.json` | `e650c9495f22ff2e7f74d60bf35d5e896cdf725a375a5fab0bfc45c293ab38cf` |
+| `owner-skymeadow-spine-lab-particles-shaders.json` | `cfc075285f7edbed499356558389e2d94f04889f7c8280448a7a80980f995b76` |
+| `owner-goldshores-standard-reuse-shaders.json` | `3f757ceb9f619881c1406b2f27284648c68857d780c6bcbdbf4e86452a84ad71` |
+
+Manual provenance, privacy, licensing and sensitive-content audit: object
+profiles contain original selectors, hashes, checked pointer relationships,
+SDK pins and authored transformation policies. Forty-two animated wind lines
+retain three build-state angles each; all evaluated positions and original
+curve operands come from the legitimate input. Complete captured xyz arrays
+remain private and are excluded. Lakes, Lakesnight and Village remain open; Goolake follows the scoped audit below.
+Skymeadow's `_ALPHAMODULATE_ON` stripping keyword records our accepted build's
+variant selection; programs still come from the pinned public SDK producer.
+Shader remap recipes select independently source-produced bodies by profile,
+identity, length and hash. `record_remap.py` changes destination index identities
+only, retaining the source dependency rows and supplier receipt provenance;
+none is claimed as compilation from its destination scene. No asset body,
+program, pixel, copied source, private path, device identifier or credential
+is included. Legitimate PC input and independently acquired SDK remain required.
+Outputs and qualification evidence stay ignored; phone qualification remains open.
+
+Skymeadow particle profile SHA-256: `cfc075285f7edbed499356558389e2d94f04889f7c8280448a7a80980f995b76`.
+
+`owner-goldshores-standard-reuse-shaders.json` preserves the previously qualified
+three-output Standard supplier profile, SHA-256
+`3f757ceb9f619881c1406b2f27284648c68857d780c6bcbdbf4e86452a84ad71`.
+It differs from the current Goldshores profile only by omitting the later fourth
+output identity; its original material/scene selectors, SDK and compiler policy
+are identical. This audited retained profile makes the Frozenwall remap's
+supplier identity reproducible without relabelling it as Frozenwall compilation.
+
+Retained J1192 Goolake spine selections (unchanged from PR 140):
+
+| Profile | SHA-256 |
+| --- | --- |
+| `owner-goolake-spine-objects.json` | `396ec87613ecbc97e825f7680fa89800920239057a4436d6875c93cd000ad10a` |
+| `owner-goolake-spine-lab-standard-shaders.json` | `485f9a4d3477285cf2c061245ffc7c74f91a3df83dab520a0279b500f94ac918` |
+
+These retain the J1192 source-selection audit and existing original-input/SDK
+requirements. This table restores audit indexing only; no profile content changes.
+
+The original-audio owner manifest follows the authored native-waypoint progress
+and neutral-terrain recovery changes in `IntegratedWorldBoundary.cs`. Reviewed
+source hash pins only; no game-derived content, private paths or identifiers.
+
+## Goolake source-scene build-rounding selections
+
+The existing original-curve owner uses eighteen build-angle triplets and ten
+sparse accepted-build Y words on two curves. The 2026-10-27 orchestrator decision
+authorizes these lab build arithmetic values; each word pins the expected
+evaluated bits before applying the captured final float32 bits. The other
+coordinates and all curve operands still require the legitimate input. Complete
+XYZ arrays remain excluded. No asset body, shader program, private path, device
+identifier or credential is included. The shader index adapter retains the
+source-produced Sulfurpools supplier identity and dependencies. Host qualification
+is separate from phone production, installation and runtime.
+
+| Profile | SHA-256 |
+| --- | --- |
+| `owner-goolake-source-objects.json` | `6193e1a8f15a8cac28be940941f7973b9cb25099261b3805d3c735862d868609` |
+| `owner-goolake-source-lab-shader-remap.json` | `02fdd8eda8b9b3e1b20e7398c15aaf46d165852b1e7e8884430b2561d7c708a9` |
+
+## Voidraid complete scene selections (2026-10-27)
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-voidraid-whole-objects.json` | `b417dc2dc65e32f4b80cee374b054ee5d4996d8d8dfd90ef95fa280955950af4` |
+| `owner-voidraid-whole-postprocess-shaders.json` | `0e32bb35568d9913c8c3c85bcea8dc4416e3bc1697b39552acb1953768ffa6d6` |
+| `owner-voidraid-whole-standard-shaders.json` | `5f6a306dfb6118d06fed41f78e59453e2af739f60a07c23e856f6fa322f79a00` |
+
+Manual provenance, privacy, licensing and sensitive-content audit: these profiles
+contain source selectors, hashes, checked pointer relationships and authored
+import policies only. Lossless compaction preserves every decoded selection.
+Original component/GameObject relationships and complete source bodies/types
+admit Billboard and Rigidbody dependencies; retained original wind records
+preserve their complete body/type identities. Original resource and
+material relationships select 24 post-processing records and Standard through
+the existing pinned SDK compiler owners. No original body, curve, scalar, pixel,
+program, copied source, private path or credential is included. Legitimate PC
+files, SDK resources and receipt-pinned source-produced record packs remain
+required. Generated outputs and evidence stay ignored. All 39,861 persisted
+objects, two serialized members and the compressed bundle are host raw-exact
+to J850; phone production, installation and original scene behavior remain open.
+
+## Surv2 complete scene selections (2026-10-27)
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-surv2-whole-objects.json` | `1e9e78edbba4c72e4265119bd32bef9257d5369dd08e461d3731736cb1915292` |
+| `owner-surv2-whole-standard-shaders.json` | `46994cb9bfd6c2361be78bb9fc3186db5320eb0400dcb8cf793097b7980c8c9f` |
+
+Manual provenance, privacy, licensing and sensitive-content audit: these profiles
+contain source selectors, hashes, checked pointer relationships, build-assigned
+identity/order constants (IDs only) and authored import policies only. Three
+SpeedTree wind records select byte-identical original Black Beach records; the
+Rewired helper component whose script is absent from the build uses the new
+`missing_script_base` policy (original component truncated to the base fields,
+original base MonoBehaviour type); the AkInitializer instance reuses the shipped
+script schema hash. Standard is selected through the existing pinned SDK compiler
+owner. No original body, curve, scalar, pixel, program, copied source, private path
+or credential is included. All 30,311 persisted objects, two serialized members and
+the compressed bundle are host raw-exact to J850; phone production, installation
+and original scene behavior remain open.
+
+## nest complete scene selections (2026-10-27)
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-nest-whole-objects.json` | `88de6a4e782772ad993fcbaed674e1e1ac260ad69fb373fa91619d4afd94acf4` |
+| `owner-nest-whole-standard-shaders.json` | `2bf9a8d7b3569a141729fda0c6777dabd29b729602fceb33f7363a0559e39e8e` |
+
+Manual provenance, privacy, licensing and sensitive-content audit: these profiles contain source
+selectors, hashes, checked pointer relationships and authored import policies only. Records with no
+same-scene source select byte-identical original records found by exact body hash, or original
+records that differ only in object references (remapped). No original body, curve, scalar, pixel,
+program, copied source, private path or credential is included. All 33,275 persisted
+objects, two serialized members and the compressed bundle are host raw-exact to J850; phone
+production, installation and original scene behavior remain open.
+
+## golemplains2 complete scene selections (2026-10-27)
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-golemplains2-whole-objects.json` | `4170f596493029d58dec8dd4156c9464d438a58c25a3c162b62061ce72f02715` |
+| `owner-golemplains2-whole-standard-shaders.json` | `2dd1f714cf9414c5ee0807f4b6fcacd952b5e1120a20c42f6630b53d62e75ee7` |
+
+Manual provenance, privacy, licensing and sensitive-content audit: these profiles contain source
+selectors, hashes, checked pointer relationships and authored import policies only. Records with no
+same-scene source select byte-identical original records found by exact body hash, or original
+records that differ only in object references (remapped). No original body, curve, scalar, pixel,
+program, copied source, private path or credential is included. All 8,785 persisted
+objects, two serialized members and the compressed bundle are host raw-exact to J850; phone
+production, installation and original scene behavior remain open.
+
+## infinitetowerworld complete scene selections (2026-10-27)
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-infinitetowerworld-whole-objects.json` | `a8de58752f2aedb7002a5c6c4374d1571f2b3b550e938fcada8232d247276d07` |
+| `owner-infinitetowerworld-whole-postprocess-shaders.json` | `09ba0ea50f22a4f11e1f71ed9c2a0f47a015beb3da3277d24197c985d848dfc7` |
+
+Manual provenance, privacy, licensing and sensitive-content audit: these profiles contain source
+selectors, hashes, checked pointer relationships and authored import policies only. Records with no
+same-scene source select byte-identical original records found by exact body hash, or original
+records that differ only in object references (remapped). No original body, curve, scalar, pixel,
+program, copied source, private path or credential is included. All 1,750 persisted
+objects, two serialized members and the compressed bundle are host raw-exact to J850; phone
+production, installation and original scene behavior remain open.
+
+## lemuriantemple complete scene selections (2026-10-27)
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-lemuriantemple-whole-objects.json` | `79266e44ce1cfc9cbe121331cf9930997abeb70701134f745386f00b07e456b4` |
+| `owner-lemuriantemple-whole-standard-shaders.json` | `f0cc93f619a2c154c8d2f2a3cefab1d5e12b23062342b0aafd9f27742921359a` |
+
+Manual provenance, privacy, licensing and sensitive-content audit: these profiles contain source
+selectors, hashes, checked pointer relationships and authored import policies only. Records with no
+same-scene source select byte-identical original records found by exact body hash, or original
+records that differ only in object references (remapped). No original body, curve, scalar, pixel,
+program, copied source, private path or credential is included. All 10,928 persisted
+objects, two serialized members and the compressed bundle are host raw-exact to J850; phone
+production, installation and original scene behavior remain open.
+
+## artifactworld complete scene selections (2026-10-27)
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-artifactworld-whole-objects.json` | `4656205ad8a77ad07afe53e715a516767d7d2bc3da0c6ecfd7c231303ae1c5e9` |
+| `owner-artifactworld-whole-postprocess-shaders.json` | `5b16a509c3c80f18b5519edf82440870a80aa7be1f37e1d2a68c4588d9a9bfc7` |
+
+Manual provenance, privacy, licensing and sensitive-content audit: these profiles contain source
+selectors, hashes, checked pointer relationships and authored import policies only. Records with no
+same-scene source select byte-identical original records found by exact body hash, or original
+records that differ only in object references (remapped). No original body, curve, scalar, pixel,
+program, copied source, private path or credential is included. All 4,095 persisted
+objects, two serialized members and the compressed bundle are host raw-exact to J850; phone
+production, installation and original scene behavior remain open.
+
+## blackbeach complete scene selections (2026-10-27)
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-blackbeach-whole-objects.json` | `c2708a4bebe83c5e56a87762e0f2ab4793e89b7e144f58d23bcf65897f1c34e4` |
+| `owner-blackbeach-whole-standard-shaders.json` | `46a25f83086a97208cddc989e0a3b41ad73bcb8027aa1a725f2940b1c9648889` |
+
+Manual provenance, privacy, licensing and sensitive-content audit: these profiles contain source
+selectors, hashes, checked pointer relationships and authored import policies only. Records with no
+same-scene source select byte-identical original records found by exact body hash, or original
+records that differ only in object references (remapped). No original body, curve, scalar, pixel,
+program, copied source, private path or credential is included. All 19,098 persisted
+objects, two serialized members and the compressed bundle are host raw-exact to J850; phone
+production, installation and original scene behavior remain open.
+
+## blackbeach2 complete scene selections (2026-10-27)
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-blackbeach2-whole-objects.json` | `5dd9af8c497db3c77e3f2fa786f507a9cd2e1c88c8af5d63bf54ba373930e61e` |
+| `owner-blackbeach2-whole-standard-shaders.json` | `130bf7ef5a8f58d4f006d111a0b36047f9283a26f40e2068dd882c1a73567145` |
+
+Manual provenance, privacy, licensing and sensitive-content audit: these profiles contain source
+selectors, hashes, checked pointer relationships and authored import policies only. Records with no
+same-scene source select byte-identical original records found by exact body hash, or original
+records that differ only in object references (remapped). No original body, curve, scalar, pixel,
+program, copied source, private path or credential is included. All 18,363 persisted
+objects, two serialized members and the compressed bundle are host raw-exact to J850; phone
+production, installation and original scene behavior remain open.
+
+## ancientloft complete scene selections (2026-10-27)
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-ancientloft-whole-objects.json` | `c8eafdd4432409a1e504842c47a422c3dc07cec9bf09684de83fa87b485072fc` |
+| `owner-ancientloft-whole-postprocess-shaders.json` | `32a3485299c8c3047294cf1de4d2b406226b43f424271362dbc83c77fcc3fc3d` |
+| `owner-ancientloft-whole-standard-shaders.json` | `ef097dd4722843134f5cdf22971ac7061f57bd24d1a2897d294f5966ac161a5f` |
+
+Manual provenance, privacy, licensing and sensitive-content audit: these profiles contain source
+selectors, hashes, checked pointer relationships and authored import policies only. Records with no
+same-scene source select byte-identical original records found by exact body hash, or original
+records that differ only in object references (remapped). No original body, curve, scalar, pixel,
+program, copied source, private path or credential is included. All 19,637 persisted
+objects, two serialized members and the compressed bundle are host raw-exact to J850; phone
+production, installation and original scene behavior remain open.
+
+## arena complete scene selections (2026-10-27)
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-arena-whole-objects.json` | `77fc2d740a4f7e034865472e0af57333f2ab351d39a94d69b64f6c6e5f905968` |
+| `owner-arena-whole-postprocess-shaders.json` | `5b443240a415e018a88d54105bc2ee0992037c22dfdec1f67784d88e52582dcd` |
+| `owner-arena-whole-standard-shaders.json` | `d69d7c952ad0e89f16db8cedf8f8eef1a6e704b6547a885932ac48573bd6aa19` |
+
+Manual provenance, privacy, licensing and sensitive-content audit: these profiles contain source
+selectors, hashes, checked pointer relationships and authored import policies only. Records with no
+same-scene source select byte-identical original records found by exact body hash, or original
+records that differ only in object references (remapped). No original body, curve, scalar, pixel,
+program, copied source, private path or credential is included. All 4,777 persisted
+objects, two serialized members and the compressed bundle are host raw-exact to J850; phone
+production, installation and original scene behavior remain open.
+
+## villagenight complete scene selections (2026-10-27)
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-villagenight-whole-objects.json` | `44a8014cf5240cec0636e0437f4f1f80bfa837658df45fb79b524cc6b51f4402` |
+| `owner-villagenight-whole-postprocess-shaders.json` | `1b255324e3fb5112e7928faf8814ca90be2b83b39e63b80fe1a19a801a9a46e5` |
+
+Manual provenance, privacy, licensing and sensitive-content audit: these profiles contain source
+selectors, hashes, checked pointer relationships and authored import policies only. Records with no
+same-scene source select byte-identical original records found by exact body hash, or original
+records that differ only in object references (remapped). No original body, curve, scalar, pixel,
+program, copied source, private path or credential is included. All 14,033 persisted
+objects, two serialized members and the compressed bundle are host raw-exact to J850; phone
+production, installation and original scene behavior remain open.
+
+## lakes complete scene selections (2026-10-27)
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-lakes-whole-objects.json` | `7916752404e6c4395ae6730101b1ed1290b995f675d7129f6c57ef994ef13758` |
+| `owner-lakes-whole-standard-shaders.json` | `d18b02e1cefc5667436a0ea7ba06a5977ca832b93712d30017244c3189dd274e` |
+
+Manual provenance, privacy, licensing and sensitive-content audit: these profiles contain source
+selectors, hashes, checked pointer relationships and authored import policies only. Records with no
+same-scene source select byte-identical original records found by exact body hash, or original
+records that differ only in object references (remapped). No original body, curve, scalar, pixel,
+program, copied source, private path or credential is included. All 22,163 persisted
+objects, two serialized members and the compressed bundle are host raw-exact to J850; phone
+production, installation and original scene behavior remain open.
+
+## lakesnight complete scene selections (2026-10-27)
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-lakesnight-whole-objects.json` | `d99f7132bc86f8cfb0a2aa91aa1cc24a0120838989faddf3b66539366cb27c05` |
+| `owner-lakesnight-whole-standard-shaders.json` | `efd2ca4d71f06b8bd226bc3e5d28dc10a1e86df0e4d5fea6ad894f0d358ef6ad` |
+
+Manual provenance, privacy, licensing and sensitive-content audit: these profiles contain source
+selectors, hashes, checked pointer relationships and authored import policies only. Records with no
+same-scene source select byte-identical original records found by exact body hash, or original
+records that differ only in object references (remapped). No original body, curve, scalar, pixel,
+program, copied source, private path or credential is included. All 21,397 persisted
+objects, two serialized members and the compressed bundle are host raw-exact to J850; phone
+production, installation and original scene behavior remain open.
+
+## artifactworld02 complete scene selections (2026-10-27)
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-artifactworld02-whole-objects.json` | `d2d16e304c97c277030a20590277f7433d85a534468ad7adc35e01b2c69137b5` |
+| `owner-artifactworld02-whole-postprocess-shaders.json` | `3944ced88ae1cb7b1016273a89813cb809cfbd3405afc85ec5eb373bd55a770f` |
+| `owner-artifactworld02-whole-standard-shaders.json` | `ca901e27ae0730fa23f779e9c91ca1769524edf08bc8ef8338e37ef61f99e742` |
+
+Manual provenance, privacy, licensing and sensitive-content audit: these profiles contain source
+selectors, hashes, checked pointer relationships and authored import policies only. Records with no
+same-scene source select byte-identical original records found by exact body hash, or original
+records that differ only in object references (remapped). No original body, curve, scalar, pixel,
+program, copied source, private path or credential is included. All 9,558 persisted
+objects, two serialized members and the compressed bundle are host raw-exact to J850; phone
+production, installation and original scene behavior remain open.
+
+## sanctum complete scene selections (2026-10-27)
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-sanctum-whole-objects.json` | `a7bc05d8521f836851d9ca4b716117f181bb04685abcab65ddca7edfe4eb5e2e` |
+| `owner-sanctum-whole-standard-shaders.json` | `c49b3d36b1f96376233e5cfc94f769ffa10bc30551342cc30151f270bf5fdfdd` |
+
+Manual provenance, privacy, licensing and sensitive-content audit: these profiles contain source
+selectors, hashes, checked pointer relationships and authored import policies only. Records with no
+same-scene source select byte-identical original records found by exact body hash, or original
+records that differ only in object references (remapped). No original body, curve, scalar, pixel,
+program, copied source, private path or credential is included. All 53,196 persisted
+objects, two serialized members and the compressed bundle are host raw-exact to J850; phone
+production, installation and original scene behavior remain open.
+
+## village complete scene selections (2026-10-27)
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-village-whole-objects.json` | `d04b581a8a982c151149618891dbcabe99b78c1431b2771604d28c9a126b9d78` |
+| `owner-village-whole-postprocess-shaders.json` | `6acba1001463127e7ff4e6370bec0d831b264e18231448823b82d4db41a16fd2` |
+| `owner-village-whole-standard-shaders.json` | `d42f0a98fe480671a06d4d2f32e989c32bc5483b34ac6debf7da36ad28a61533` |
+
+Manual provenance, privacy, licensing and sensitive-content audit: these profiles contain source
+selectors, hashes, checked pointer relationships and authored import policies only. Records with no
+same-scene source select byte-identical original records found by exact body hash, or original
+records that differ only in object references (remapped). No original body, curve, scalar, pixel,
+program, copied source, private path or credential is included. All 15,130 persisted
+objects, two serialized members and the compressed bundle are host raw-exact to J850; phone
+production, installation and original scene behavior remain open.
+
+## habitatfall complete scene selections (2026-10-27)
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-habitatfall-whole-objects.json` | `88d76b380e653281c1931c90beb75e8ff5fdc62d7842c93b592a0e1faf493fa9` |
+| `owner-habitatfall-whole-postprocess-shaders.json` | `9b29fa479de844429a1871f73a2a8c3c13f01812074d4bad29a0946b8d006dcb` |
+
+Manual provenance, privacy, licensing and sensitive-content audit: these profiles contain source
+selectors, hashes, checked pointer relationships and authored import policies only. Records with no
+same-scene source select byte-identical original records found by exact body hash, or original
+records that differ only in object references (remapped). No original body, curve, scalar, pixel,
+program, copied source, private path or credential is included. All 13,909 persisted
+objects, two serialized members and the compressed bundle are host raw-exact to J850; phone
+production, installation and original scene behavior remain open.
+
+## sulfurpools complete scene selections (2026-10-27)
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-sulfurpools-whole-objects.json` | `2ddce4d098dc78a398af712f45965b4083b620325c82a68717f9b3c9c8ff0988` |
+| `owner-sulfurpools-whole-postprocess-shaders.json` | `d7e3732878e026b42250b7dfad829ce1e78fbda754b29b7abcf0a2160fd92bb5` |
+| `owner-sulfurpools-whole-standard-shaders.json` | `30df15708ee410e6331c033fa4f7efadd5414be18ad4c361bceb87c62dcd45ab` |
+
+Manual provenance, privacy, licensing and sensitive-content audit: these profiles contain source
+selectors, hashes, checked pointer relationships and authored import policies only. Records with no
+same-scene source select byte-identical original records found by exact body hash, or original
+records that differ only in object references (remapped). No original body, curve, scalar, pixel,
+program, copied source, private path or credential is included. All 19,544 persisted
+objects, two serialized members and the compressed bundle are host raw-exact to J850; phone
+production, installation and original scene behavior remain open.
+
+## sad1 complete scene selections (2026-10-27)
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-sad1-whole-objects.json` | `f5f02d8c9daed39df7bc40c64936c26bb7e909da1a74c796604bdd67251dbc92` |
+| `owner-sad1-whole-standard-shaders.json` | `9e8f88ff014b935b7ca0360bd666d1be7e5fedf7e960e0a0f9848dbe6ce87c5e` |
+
+Manual provenance, privacy, licensing and sensitive-content audit: these profiles contain source
+selectors, hashes, checked pointer relationships and authored import policies only. Records with no
+same-scene source select byte-identical original records found by exact body hash, or original
+records that differ only in object references (remapped). No original body, curve, scalar, pixel,
+program, copied source, private path or credential is included. All 64,308 persisted
+objects, two serialized members and the compressed bundle are host raw-exact to J850; phone
+production, installation and original scene behavior remain open.
+
+## moon complete scene selections (2026-10-27)
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-moon-whole-objects.json` | `b189deb255fddec61d5050d6ac46ce569c497b7e684d9170728cd3fe82e62548` |
+| `owner-moon-whole-postprocess-shaders.json` | `0dea5e8f940a372425605b5873629e0c1be0cdbca17a293e0d18c0082b1f47e1` |
+| `owner-moon-whole-standard-shaders.json` | `eda74a93c5df8e0632bf843b6288a43b916eab13a7848d9a7c44aeeaa910fe38` |
+
+Manual provenance, privacy, licensing and sensitive-content audit: these profiles contain source
+selectors, hashes, checked pointer relationships and authored import policies only. Records with no
+same-scene source select byte-identical original records found by exact body hash, or original
+records that differ only in object references (remapped). No original body, curve, scalar, pixel,
+program, copied source, private path or credential is included. All 17,327 persisted
+objects, two serialized members and the compressed bundle are host raw-exact to J850; phone
+production, installation and original scene behavior remain open.
+
+## ITDampcave complete scene selections (2026-10-28)
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-itdampcave-whole-objects.json` | `e3d76295e12d466ce3df0b14c1777bd3664138d1dd70bdd153550b29ca1eb01c` |
+| `owner-itdampcave-whole-standard-shaders.json` | `635e5d70180edb9e26a94a2cd9e8de88b5d5b4137fce933fa87417890b73701e` |
+| `owner-itdampcave-whole-postprocess-shaders.json` | `96b22c526b8f9e222e6efd88d18240f67e9ceca3853c28c9022c9a6513a478c4` |
+
+Manual provenance, privacy, licensing and sensitive-content audit: these profiles contain
+original-input selectors, hashes, checked pointer relationships and authored import policies.
+Post-processing selections follow the original Dampcavesimple resource supplying these records;
+Standard selections retain ITDampcave's recursive material dependencies. SDK and public-tool
+pins supply compilation. No original body, scalar array, pixel, program, copied source,
+private path or credential is included. All 18,225 persisted objects, both serialized members
+and the compressed bundle are host raw-exact to J850. Phone production, installation and
+original scene behavior remain open.
+
+## itfrozenwall complete scene selections (2026-10-28)
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-itfrozenwall-whole-objects.json` | `029c4800ff7880eb1b42f279538625a150dd4f6280fa9ae11c7477156a7e2a22` |
+| `owner-itfrozenwall-whole-postprocess-shaders.json` | `486f1393c2f9d9202b8bdd27a31f881a00ae49ecccc52f580e3c1347038825c3` |
+| `owner-itfrozenwall-whole-standard-shaders.json` | `fc4e6333a0dcbccdad913325ffedb6c346421215a71d46de7cf3f486a5bb176d` |
+
+Manual provenance, privacy, licensing and sensitive-content audit: these profiles contain
+original-input selectors, hashes, checked pointer relationships and authored import policies.
+Original material keywords use the existing dummy-shader demotion policy. Explicit preload
+admissions retain original scene membership and source identity checks. No original object body,
+scalar array, pixel, program, copied source, private path or credential is included. All
+8,727 objects, both serialized members and the compressed bundle are host raw-exact
+to J850. Phone production, installation and original scene behavior remain open.
+
+
+## soul1 complete scene selections (2026-10-28)
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-soul1-whole-objects.json` | `704048d30efaa1838baa181cce3db709fa189f2afc4cd1602da49dac1dd65a04` |
+| `owner-soul1-whole-postprocess-shaders.json` | `d8f7e95a047bee50d7e97d8e6bb106b58699f1c15ce425ce3ef25fba365e9200` |
+| `owner-soul1-whole-standard-shaders.json` | `9797dd28c9122624409ba61fdec33c0c22a9ce69fcad7f46aefb49bc29ee9c70` |
+
+Manual provenance, privacy, licensing and sensitive-content audit: these profiles contain
+original-input selectors, hashes, checked pointer relationships and authored import policies.
+Original material keywords use the existing dummy-shader demotion policy. Explicit preload
+admissions retain original scene membership and source identity checks. No original object body,
+scalar array, pixel, program, copied source, private path or credential is included. All
+290,159 objects, both serialized members and the compressed bundle are host raw-exact
+to J850. Phone production, installation and original scene behavior remain open.
+
+## Solutionalhaunt complete scene selections (2026-10-28)
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-solutionalhaunt-whole-objects.json` | `d321ca690b8b4eacb28db58b468d5f3d8ffed4b030f8d74e94368ce25e98238e` |
+| `owner-solutionalhaunt-whole-standard-shaders.json` | `cdf672c1eb408908a4dfe1fa58560fdaf4166fcd989e87e1dcbdc74df756391d` |
+| `owner-solutionalhaunt-director-records.json` | `743873197658b5f034584dd5b5a8931c0b32fe8e56850cf35eb1d18c67308cc7` |
+
+Manual provenance, privacy, licensing and sensitive-content audit: profiles contain original
+input selectors, file/body hashes, checked references, source schema selectors and authored
+import policies. Original PC player MonoScripts and pinned original CLR metadata supply
+added trigger identity and fields; original native prototypes supply transfer flags. Original
+preload roots retain direct membership or reciprocal Animator/GameObject ownership. The
+Director profile uses the existing PropertyName importer. No original body, type-tree blob,
+scalar array, program, copied source, private path or credential is included. All 31,264
+objects, both serialized members and the compressed bundle are host raw-exact to J850.
+Phone production, installation and original scene behavior remain open.
+
+Shader profile publication preserves qualified file bytes because object selections refer
+to their SHA-256 identities. The 37 existing whole-scene Shader audit rows above now retain
+their qualified representations; structured profile contents and produced records are
+unchanged. Their original provenance/privacy/licensing audits remain applicable.
+
+## Intro, Outro, PromoRailgunner, Voidoutro and Goolake complete selections (2026-10-28)
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-intro-whole-objects.json` | `4c2b26d74e53b26396c90b408d2b2320c7f312925151ee0d476c5d708e08dd3b` |
+| `owner-intro-whole-standard-shaders.json` | `8de2632786c035a1f4d14f17e7b1b791161a262a49a0cb79a28c1de0f6f76537` |
+| `owner-intro-whole-postprocess-shaders.json` | `8bdbbacfabe38d510fe51281eb539ee090520b95815500268fce92fb88c2899b` |
+| `owner-intro-director-records.json` | `48c603ad0fc7e48fd392b9a3ca98b7b1099c8fbc051d8dbee0e34410397a5caf` |
+| `owner-outro-whole-objects.json` | `0b3707206ccb85b269b4ffb7fdbc2281e29996f6102b823b1a5f3a8e4939f5b7` |
+| `owner-outro-whole-standard-shaders.json` | `071612d2d698a5a9a888e8011c2b9ba61c2e2849fca43be01fe990914b500586` |
+| `owner-outro-whole-postprocess-shaders.json` | `ac901312c73648ff7a69474cd46cc96e9c1e5c8f156e3a0b17c58a3e6ded587e` |
+| `owner-outro-director-records.json` | `c197ee4c189c077d4bed6f829ffec2f840e5390c55fc85f960907a49df5292f2` |
+| `owner-promorailgunner-whole-objects.json` | `465ee55dcb13fd58aaeacb0aec4e620756444822c43e4eaaccb8547e08dd3509` |
+| `owner-promorailgunner-whole-standard-shaders.json` | `83f35d4aa060d96397cb805364bf8ef8e8ff4bed36a89ebde6b960c7ac88ec0c` |
+| `owner-promorailgunner-whole-postprocess-shaders.json` | `151995096acce879007a27a352a880c65c363d20a3b5b03552a6d9b5d9dddcbe` |
+| `owner-promorailgunner-director-records.json` | `8650ff9af49eb78e9f742ee8ae64a9c2af36dad4334ef8b89d05c24ea700f216` |
+| `owner-voidoutro-whole-objects.json` | `362766b8df0d529abf265f0073d4dc7664841f3da1c401c8f5c9656188a69012` |
+| `owner-voidoutro-whole-standard-shaders.json` | `cc29702a3737f8da1448b653838914a9934f6f7b7bfdda69e5c6e929718a9aec` |
+| `owner-voidoutro-whole-postprocess-shaders.json` | `a4f65b9fe72339efb40bda7db0fb422abd365aa6881c9f051ffc65051b6b37b3` |
+| `owner-voidoutro-whole-particles-shaders.json` | `864c09f923538e53efb9a8223779f1804ca826122f184ea6c051d772d4dd918a` |
+| `owner-voidoutro-director-records.json` | `68dcef75464391ddda32bd0a848ad8d99954d3a9e46377fc7073d33b545ee71e` |
+| `owner-goolake-whole-objects.json` | `e6a07d5d74992bce4e5886bc5121db3d12374b86143a78b1c52f63cd2d11185d` |
+| `owner-goolake-whole-standard-shaders.json` | `447916fb9ecf8b3cb4985f7f7cc6c28c80d4d937f0b7785f8c85b813c1ecf2ec` |
+
+Manual provenance, privacy, licensing and sensitive-content audit: profiles contain original
+input selectors, file/body hashes, checked pointer relationships and authored import policies.
+The existing animation packs supply clips/controllers; original Timeline assets retain their
+script identity and differ only through checked references and the shipped properties-hash
+owner. Director profiles use the existing PropertyName importer. Goolake retains the original
+Dampcave Rigidbody/GameObject preload witness. Voidoutro uses the existing explicit
+`_ALPHAMODULATE_ON` stripping policy qualified for Skymeadow spine; original keyword order
+and compiled programs remain source-derived. Shader and Director profile bytes preserve the
+qualified digests used by the object selections. No original body, curve, scalar array, pixel,
+program, copied source, private path or credential is included. Every object, all ten serialized
+members and all five compressed bundles are host raw-exact to J850. Phone production,
+installation and original scene behavior remain open.
+
+## Lakes, Lakesnight and Village source-scene selections (2026-10-28)
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-lakes-source-objects.json` | `06038b6c2f1b2430468a34982217335895b20abb9ba56144eba52177cffcbfe0` |
+| `owner-lakes-source-lab-standard-shaders.json` | `5c07fb48414eca3d3842b2c0e8a8a096345dc4e7b2ef994ee8f56dc9e230bb28` |
+| `owner-lakesnight-source-objects.json` | `32be87ed851edb32a1deb0e59c92b287662a65a27e03657f4fdaab8022f97ffd` |
+| `owner-lakesnight-source-lab-standard-shaders.json` | `5c3dc310f61866139b766abe07c4d796bd229673240b8c55d54fea5eefcdac60` |
+| `owner-village-source-objects.json` | `8aa6fe590e0cf1d983f9538ca27077e193cd0ea77e44727b5ac4891773ee13de` |
+| `owner-village-source-lab-standard-shaders.json` | `ae4698a1b89b659349a047b7262e944030fa47cabc3dafee68dd5a96f51cd24c` |
+| `owner-village-source-lab-postprocess-shaders.json` | `8d75bbdda25d9975348060f716d92386d6b211e21aefe887f7c15523e607f5f5` |
+
+Manual provenance, privacy, licensing and sensitive-content audit: profiles contain original
+input selectors, file/body hashes, checked pointer relationships, SDK/tool pins and authored
+import policies only. Retained source selections now use the shipped generic original-body,
+component, properties-hash and animated-wind owners. Shader programs come from the existing
+SDK/exporter owners. Qualified Shader profile bytes preserve object pack reference digests.
+No original body, curve, scalar array, pixel, program, copied source, private path or credential
+is included. All 58,555 objects, six serialized members and three compressed bundles are
+host raw-exact to J850. Phone production, installation and original behavior remain open.
+
+## Compressed tangent normalization selection (2026-10-28)
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-compressed-tangent-mesh.json` | `85902c2e2ab235eba9e7bcd46de5baf6957c862bc6126f9ed355dcb7c47bb7a9` |
+
+Manual provenance, privacy, licensing and sensitive-content audit: this profile contains
+one original file/body selector, hashes, a destination relationship and the authored
+`repair_negative_z` policy. Original compressed XY fields reconstruct a negative Z-squared
+case; float32 normalization derives the new packing bounds and integers. No target float,
+geometry, byte patch, original body, private path or credential is included. The original
+mesh cohort profile remains immutable. Consulted pinned AssetRipper `1ac666f`
+`CompressedMeshExtensions.GetTangents` and `PackedFloatVectorExtensions.Unpack` for the
+normalization observation; implementation is independently authored. Guarded tracked-CLI
+production persists before comparison and matches the one 1,564 B MercSwordSwipe mesh.
+This record does not close a file readiness entry; complete Commando assembly and phone
+production remain open. Generated outputs and raw comparison evidence remain ignored.
+
+## Objective native bundle selections (2026-10-28)
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-native-alias-records.json` | `4f041c4fdb4b9b928c1301fb8fa207e060ad94cc4b1e40ad8e1ef43c5b54aab2` |
+| `owner-objective-reused-records.json` | `0f03acd21a7000bd31127aed63acd0957ebb3d72bdd3737c0cbd40c71619742c` |
+| `owner-objective-legacy-particle-shader.json` | `0c8c53f8075478878bf812b6bb89df9a34b44bc034d09bc928cb813e2b008304` |
+| `owner-objective-support-objects.json` | `6177f393bceff837be35af0f5741ed514a11eb5f673fa5632839e65686e0d09c` |
+
+Manual provenance, privacy, licensing and sensitive-content audit: these profiles
+contain original source selectors, expected hashes, checked pointer/component
+relationships and authored transformation policies. Native aliases retain the
+original class, script, schema and all nonpointer bytes; duplicate source
+fingerprints are permitted only when checked relocation reproduces the selected
+record. The qualified alias cohort also supplies future Commando/Labgeometry
+assembly; it does not close those complete bundles.
+
+Reused records select receipt-pinned, source-produced player/Shader outputs;
+no earlier producer was replayed. The object owner checks schema-declared
+relocations and derives fieldless authored component metadata from a produced
+MonoScript and the pinned SDK base. Default materials reuse SDK declarations and
+original Shader properties. Sprite GUIDs name the local standalone import;
+coordinates remain derived from original crop data. The Legacy particle Shader
+uses the explicitly pinned SDK source and prefab/no-fog variant policy. Bundle
+preload order records authored build relationships; an explicit 16-byte resource
+alignment policy supplies only measured zero padding after the final extent. No original scalar/geometry
+array, program, pixel, copied source, private path, device identifier or credential
+is included. Original legitimate PC input and the acquired SDK remain required.
+
+All 1,623 persisted objects, every member and the 543,216-byte
+compressed Objective bundle are host raw-exact to J850. Evidence stays ignored
+under `work/coordination/orchestrator/objective-native-final-v5/`. Phone production,
+installation and original game behavior remain open.
+
+## Presentation native bundle selections (2026-10-28)
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-presentation-reused-records.json` | `3ae4b2168323b26c4a8d5fe4f071a6301d4f0b0f6b4077fe043cef29d61aa3fe` |
+| `owner-presentation-objects.json` | `035b43e697027df07c4dd0087cc4b6a32622e214daa62658767d690be15e0357` |
+
+Manual provenance, privacy, licensing and sensitive-content audit: these profiles
+contain original schema selectors, expected hashes, authored build relationships
+and receipt-pinned source-produced record selections. All 358 Shader bodies and
+two generated material manifests reuse qualified player outputs without byte
+changes or recompilation. The manifests remain generated by the existing player
+owner from original metadata and authored transformations. Two textures reuse
+the qualified original-input RGB owner. Original PC types supply embedded schema;
+no target type tree or body is a production supplier. Container preload order
+records authored build relationships. No program, pixel, original scalar or
+geometry array, copied source, private path, device identifier or credential is
+included. Legitimate original PC input and the acquired SDK remain required.
+
+All 363 persisted objects, both members and the 3,337,229-byte
+compressed presentation bundle are host raw-exact to J850. Evidence stays ignored
+under `work/coordination/orchestrator/presentation-native-final-v1/`. Phone
+production, installation and original game behavior remain open.
+
+## Root-motion float math provenance
+
+The bounded `small_atan2f` projection in `record_produce.py` adapts the
+positive-x, small-argument branches of FreeBSD msun's
+[s_atanf.c](https://github.com/freebsd/freebsd-src/blob/389ae8e4fabeaf1c655f8116b1a1402e597fa515/lib/msun/src/s_atanf.c)
+and
+[e_atan2f.c](https://github.com/freebsd/freebsd-src/blob/389ae8e4fabeaf1c655f8116b1a1402e597fa515/lib/msun/src/e_atan2f.c).
+The original Sun permission notice is retained beside the routine. Its five
+polynomial coefficients are public numerical-library constants. Native host
+`atan2f` served only as a local diagnostic reference; production uses portable
+float32 operations and original clip samples. The explicit projection preserves
+existing root-average arithmetic for other selections.
+
+Provenance, privacy, licensing and sensitive-content review: 2026-10-28. No game
+coefficient, pose, curve, program, pixel, private identifier or SDK binary is
+included. Raw comparisons and native-reference diagnostics remain ignored.
+
+## Shader context transformation provenance
+
+`shader_context.py` reuses explicitly qualified source-produced Shader records
+while deriving editor pass identities from original dummy properties or SDK
+snippets, compiler capabilities, settings and common includes. It delegates the
+existing public source generator and pass-key algorithm. Checked schema spans
+limit changes to editor identities; compiled programs and unrelated data remain
+source-produced. Profile/provider/input/extent hashes guard the resulting pack.
+This accommodates the observed Gamma/SDK33 to Linear/SDK45 metadata-context
+difference without recompiling identical programs or supplying accepted keys.
+
+Provenance, privacy, licensing and sensitive-content review: 2026-10-28. No target
+pass-key table, program, SDK include, copied source, private path, device identity
+or game property values are included. Generated source, records and diagnostics
+remain ignored; legitimate original input and acquired SDK remain required.
+
+## Native Sprite transformation provenance
+
+`sprite_produce.py` reconstructs native Sprite inputs from the user's original
+Sprite/Texture2D records. It reuses the audited public block decoder and existing
+source crop arithmetic. Its PNG writer only packages decoded source pixels;
+`SpriteNativeFixture.cs` calls the exact SDK's runtime constructor to derive
+mesh and fallback physics data. `sprite_native_record.py` retains original
+serialization, zero-UV convention, references and unrelated fields, deriving
+new stream allocations from native vertex/index counts. Importer GUIDs and
+pointer mappings name only required source/build relationships. The native
+provider and every resulting record are hash-checked; exported images and
+accepted body/geometry tables are not production suppliers.
+
+Provenance, privacy, licensing and sensitive-content review: 2026-10-28. These
+authored transformations include no game pixel, geometry, physics polygon,
+program, copied source, SDK binary, private path or device identifier. Generated
+images, native outputs and device comparisons remain ignored. The original
+legitimate input and acquired SDK remain required.
+
+## Prefab Shader transformation provenance
+
+`shader_prefab.py` composes existing source generation, standalone compilation
+and SDK record serialization. It selects no-scene runtime axes from SDK
+declarations, particle features from acquired default materials and native
+particle order from original Shader metadata. Dummy forms use original
+properties and pinned public exporter templates; inherited SDK snippet order
+owns fallback keyword registration. SDK dependency traversal maps only named
+destination relationships. Complete body pins verify results without supplying
+programs or accepted keyword tables.
+
+Provenance, privacy, licensing and sensitive-content review: 2026-10-28. Public
+code contains no game properties, ShaderLab expressions, program bytes, SDK
+binaries/includes, private paths or device identifiers. Generated source and
+records stay ignored; legitimate original input and the acquired SDK remain
+required. The compiler/codec owners retain their cleanup and failure evidence.
+
+## Grouped prefab container transformation provenance
+
+`bundle_preload.py` derives preload closure from typed source-produced objects.
+Profiles name asset paths, original or authored importer GUIDs and imported
+root identities; those relationships group subassets and determine Unity GUID
+ordering. Original component selectors, whole/body pins, GameObject back-links
+and membership validate external owner relationships. Resource identities and
+serialized member names determine file order. Existing bundle framing writes
+shared preload ranges and sorted container entries after producing all objects.
+No accepted container/preload array or game content table is supplied.
+
+Prior art: pinned AssetRipper `1ac666f` AssetBundleExtensions separates bundle
+name from collection name, and Pass103 PPtrNodeHelper enumerates dependencies
+with their field paths. Existing typed readers provide that boundary; current
+source metadata and comparison evidence determine native grouping/order.
+Provenance, privacy, licensing and sensitive-content review: 2026-10-28. Public
+code contains format rules and identity relationships only, with no copied
+upstream implementation, original bodies, private paths or device identifiers.
+
+## Unchanged script metadata provenance
+
+`object_produce.py` may retain the editor properties hash embedded in the
+original MonoScript when its identity and runtime schema match the selected
+MonoBehaviour exactly. Profiles select original records and the retention
+policy; no accepted hashes or replacement schemas are inputs. Schema omission
+policies still derive their own hashes. RunPresence's existing counter omission
+now emits Unity common-string type labels, preserving its decoded field tree.
+
+Reviewed pinned AssetRipper `1ac666f` MonoScriptExtensions identity comparison
+and AnimationCurveExtensions' versioned curve boundary alongside the acquired
+SDK and original metadata. Editor-only curve details need no new recovery when
+the legitimate MonoScript already supplies their property identity. Provenance,
+privacy, licensing and sensitive-content audit: 2026-10-28. No script-property hash literal,
+curve value, node table, program, private path or device identifier is tracked.
+
+## Complete Commando source selections (2026-10-28)
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-commando-objects.json` | `bfd084b6e1d649f0e0b62eb56714bc12535d5c2fd4720b708e313aa0f7641def` |
+| `owner-commando-reused-records.json` | `7e5f9478375a58032aa204a1f57979faaf29f212b3c9b40e2a1fbe90dbdfb6d7` |
+| `owner-commando-original-sprites-1.json` | `503c9feb21cf0865a6429c4a5d51f5b97ee2767b8235e9454635041bf1efb09f` |
+| `owner-commando-sdk-shaders.json` | `9d109f1048dbc1bdddbae266dd4fee798be5328ef759226611262adbcf8e3ede` |
+| `owner-commando-native-sprites-2.json` | `12f487a6c66e4645820a8a73b4e597fd9134b906ccf68bc7a323ae0bd2b9b594` |
+| `owner-commando-original-sprites-2.json` | `d55cfe90cacd5f8b27924b2a7f6f790f2231bb81c2f0c22e7c31676ddb65fe16` |
+| `owner-commando-shader-context.json` | `9aa18a1fc48f4bb406cb52b585aa4fa2f24956a5b8807c327ac5495ed30e8452` |
+| `owner-commando-native-sprites-3.json` | `e42a307b1f0bf64785ccc9334f2ac765d4ae9308bb1dcf84ded24f4cae23a45c` |
+| `owner-commando-animation-records.json` | `ca92c2afe7d58f52372fe036e7997c0edbe58d015e7deb25fad0880c348ad1d9` |
+| `owner-commando-dummy-shaders-1.json` | `fe854ab6c532125f223378d66bfd7ec221d96b1067f2130009500407f1c520bc` |
+| `owner-commando-native-sprites-1.json` | `2e60a186dce679c50288a4d09f57e77eb05ec2880060a0fd1902080a604e11ef` |
+| `owner-commando-fallback-shaders.json` | `2104145b499f7e7cb6489d7589f19d29368f10415b6575e7dec832c73172300f` |
+| `owner-commando-particle-shader.json` | `8dd5f5febaca10abdec83d1f0a5ef8bfedc8af0aa3a28e0121bb1532dfecc671` |
+| `owner-commando-dummy-shaders-2.json` | `5863b4e8e6549a2ba3d23b4b45ce6b68b3e323b3fd55eb4d7f27813774896176` |
+| `owner-commando-crosshair-sprite.json` | `b4a02c56fca0af8926914d20e9fee2a7f12ea59f4bb7a4fa2f4a76eee52eefe3` |
+| `owner-commando-dummy-shaders-3.json` | `28f54e8e82c93611267028655bf5abdb838166ca154ef8af68c7eff32cb057a7` |
+
+These profiles complete `commando-prefab-lab` through the existing original-object,
+record, Sprite, SDK Shader, template Shader and record-remap owners. All 75,378
+persisted objects, the serialized/resource members and the 87,954,431-byte bundle
+are host raw-exact to J850 (`50a6af87…`). Profile bytes are preserved exactly so
+explicit record-provider receipt hashes remain reproducible.
+
+Production starts with original selectors and the acquired SDK. The animation,
+original Sprite and crosshair profiles use `record_produce.py`; native Sprite
+profiles use `sprite_produce.py` with its source-pixel request generator and the
+repository's exact-SDK fixture. SDK/fallback/particle Shader profiles use
+`shader_prefab.py`, dummy profiles use `payload_shader_records.py`, and the context
+profile uses `shader_context.py` with the explicit existing Barrier source pack.
+`record_remap.py` extracts the reused records from the already-qualified original/
+SDK player and Objective providers. `object_produce.py` takes the full object
+profile, these independently produced packs and the existing hierarchy, generic,
+mesh, texture and avatar providers as explicit receipt-pinned CLI inputs. No
+retained run directory is an implicit supplier; generators and required local
+SDK/fixture inputs remain described in `docs/LOCAL_STATE.md`.
+
+Manual provenance, privacy, licensing and sensitive-content audit: the profiles
+contain original selectors, hashes, minimal GUID/root/pointer relationships and
+authored transformation policies. Native Sprite geometry is generated locally
+from original pixels; curves, poses, programs, textures and original bodies are
+never embedded in recipes. Original script hashes retain their original identity
+and unchanged schema; grouped preloads derive from the produced typed graph.
+No original code, game-derived body, scalar/geometry/program table, private path,
+device identifier, credential or redistribution payload is published. Phone
+production of the complete bundle, installation and gameplay readiness remain
+open; host byte equality is the only closure here.
+
+## Labgeometry source selections (2026-10-29)
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-labgeometry-meshes.json` | `6725e325f560e5ac2e75c39b8e0c06de72aaf9dbace3e7ac663180c74ad454da` |
+| `owner-labgeometry-shaders.json` | `020afc23cb7a813b74a01d870f1f085d1d6c5c9e841f5acdfd512e03d36cd223` |
+| `owner-labgeometry-objects.json` | `0c35f4a9c60b8bd0267300a35e850d6f3fffa33ff731dd7c03a8108c583e5825` |
+
+All 10 objects, the serialized member and the 108,365-byte `labgeometry` bundle
+are host raw-exact to J850 (`09ca79f4bd66…`). `mesh_produce.py` regenerates the
+static OBJ mesh from original geometry through separately acquired pinned public
+MikkTSpace and Apple BSD sort sources; `build_mesh_obj.py` builds that helper.
+`shader_prefab.py` compiles the SDK Standard Shader with its explicitly selected
+SDK material's instancing setting. `object_produce.py` consumes those packs and
+`owner-native-alias-records.json`, constructs default OBJ hierarchy nodes, derives
+the Lambert material from original/SDK metadata, and derives grouped preloads
+from the produced graph. Pass all provider directories and receipts explicitly.
+The model material reads the supplied SDK FBX library statically without loading
+native SDK code. Generated outputs and comparison evidence remain ignored.
+
+Manual provenance, privacy, licensing and sensitive-content audit: these profiles
+contain minimum original asset/type identities, importer/root/PPtr relationships,
+expected hashes and authored transformation policies. Source attributes and SDK
+property declarations/defaults determine geometry, tangents, material values and
+programs locally. No copied game/SDK source, native instruction sequence, protected
+body, property-value table, vertex/program array, private path, device identifier,
+credential or redistribution payload is published. Public helper dependencies
+retain their notices; the separately acquired SDK and legitimate game remain
+required. Evidence: `work/coordination/orchestrator/labgeometry-native-final-v2/`.
+Phone production of the complete bundle, installation and game behavior remain open.
+
+## Public startup metadata policy
+
+`startup_metadata.py` derives app/build identifiers from complete source inventory,
+public settings, toolchain and producer hashes. Its five boot options are authored
+converter policy and public PlayerSettings, with no development connection fields.
+Manual provenance/privacy/licensing review: no historical identifier, private
+configuration, target byte span, game content, SDK implementation or credential
+is embedded. No identity used for ownership, authentication, signing or saved-data
+placement is replaced. Outputs/receipts remain ignored; host qualification is
+recorded under `work/coordination/orchestrator/public-startup-metadata-v2/`.
+
+## Source Menu profile
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-player-menu.json` | `68cdf84752aceffbeab7f9d975eeaae706e67eb1a7aff0015b974e8e2ee2120b` |
+
+`owner-player-menu.json` selects minimum original UI/script/dependency members,
+the original prefab root, public English tokens and authored hide/action policies.
+It pins four separately supplied SDK UGUI source files and existing public texture
+recipes. `player_ui.py` derives all component values, geometry, pixels, script
+metadata and references locally. The audited `saved_object_ids` rows retain only
+build-assigned path/component IDs and order, under the explicit 2026-10-31
+build-identity decision; no saved prefab, body or field value is supplied.
+Manual provenance/privacy/licensing review (updated 2026-11-04): the 591 saved
+rows contain only minimum hierarchy paths, component identities and allocated
+integers. These describe build identity, not asset content or ownership/authentication.
+The profile contains source hashes and authored policy, with no copied game/SDK
+code, asset body, pixel/geometry table, private path, connection value or credential.
+Outputs and
+receipts remain ignored. Genuine J850 field differences and phone/runtime
+acceptance remain open; evidence: `work/coordination/orchestrator/menu-public-source-v1/`.
+
+## Original-record stage contexts
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-stage-contexts.json` | `e9098b415c66f74530b23aac1206443f0932daf7619b6c6ad192ef6e254ea807` |
+
+The recipe selects 23 original scene members, population component IDs, original
+catalog pool suppliers and TextAsset type metadata. Four required global roots
+and an optional camera use the existing authored suppression policy. It contains
+only minimum input identities/hashes and authored policy: no exported scene,
+accepted context, game field-value table, protected implementation, SDK body,
+private configuration, device identifier or credential. All policy values,
+identity/toggle graphs and catalog keys are read from legitimate source records.
+Manual provenance/privacy/licensing review: source selectors do not substitute
+for owning the game; generated files and receipts remain ignored. Member and
+canonical graph digests explicitly replace incidental exporter YAML hashes;
+the complete public profile and producer hashes bind graph provenance.
+Evidence: `work/coordination/orchestrator/stage-context-public-v2/`.
+Complete phone production and runtime compatibility remain open.
+
+## Original baked reflection retention audit (2026-10-29)
+
+`owner-source-baked-reflections.json` selects two original BC6H Cubemaps from
+the accepted legitimate installation using the existing texture profile shape.
+`cube-preserve` verifies six complete face/mip chains and retains their bytes,
+format, color space, usage and mip count. Output hashes describe independently
+rewrapped source records, not captured J850 pixels. Native Android loading,
+17,825,760 sampled float components across compressed/lossless controls and HDR
+decode vectors pass (J1260); complete scene relationships and file admission
+remain open. The qualified 110-record historical profile is unchanged.
+
+Provenance, privacy, licensing and sensitive-content audit: selectors, extents,
+hashes and minimum storage/identity relationships only. No pixel/block arrays,
+serialized body/type templates, proprietary implementation, SDK bytes, private
+settings/paths, device identifiers or credentials are published. Original input
+hashes are rechecked before success. No game/SDK redistribution, ownership,
+authentication or entitlement success is granted. Pinned AssetRipper
+TextureConverter/ExrWriter informs face/chain ownership; its exporter does not
+regenerate baked lighting. The operation consumes no codec or private fixture;
+all generated packs, APKs and raw observations stay ignored. Native BC6H support
+must be established before selecting this profile on another device.
+
+## Complete original-lighting scene alternatives audit (2026-10-29)
+
+| Recipe | Scope | Tracked information | Boundaries | Owner and evidence |
+| --- | --- | --- | --- | --- |
+| `owner-promovoidsurvivor-source-lighting-objects.json` | Complete source lighting scene | Original selectors, checked relationships, public policy and hashes. | No body/type/pixel/program literals or private inputs; audit below, 2026-10-29. | `object_produce.py`; J1261 host complete-file qualification, phone/runtime gate open. |
+| `owner-promovoidsurvivor-source-lighting-textures.json` | Three original BC6H reflection chains | Original selectors, checked relationships, public policy and hashes. | No body/type/pixel/program literals or private inputs; audit below, 2026-10-29. | `texture_produce.py`; J1261 host complete-file qualification, phone/runtime gate open. |
+| `owner-promovoidsurvivor-standard-shaders.json` | Original Standard Shader | Original selectors, checked relationships, public policy and hashes. | No body/type/pixel/program literals or private inputs; audit below, 2026-10-29. | `payload_shader_records.py`; J1261 host complete-file qualification, phone/runtime gate open. |
+| `owner-promovoidsurvivor-postprocess-shaders.json` | Original post-processing Shaders | Original selectors, checked relationships, public policy and hashes. | No body/type/pixel/program literals or private inputs; audit below, 2026-10-29. | `payload_shader_records.py`; J1261 host complete-file qualification, phone/runtime gate open. |
+| `owner-snowyforest-source-lighting-objects.json` | Complete source lighting scene | Original selectors, checked relationships, public policy and hashes. | No body/type/pixel/program literals or private inputs; audit below, 2026-10-29. | `object_produce.py`; J1261 host complete-file qualification, phone/runtime gate open. |
+| `owner-snowyforest-source-lighting-textures.json` | Three original BC6H reflection chains | Original selectors, checked relationships, public policy and hashes. | No body/type/pixel/program literals or private inputs; audit below, 2026-10-29. | `texture_produce.py`; J1261 host complete-file qualification, phone/runtime gate open. |
+| `owner-snowyforest-standard-shaders.json` | Original Standard Shader | Original selectors, checked relationships, public policy and hashes. | No body/type/pixel/program literals or private inputs; audit below, 2026-10-29. | `payload_shader_records.py`; J1261 host complete-file qualification, phone/runtime gate open. |
+| `owner-snowyforest-postprocess-shaders.json` | Original post-processing Shaders | Original selectors, checked relationships, public policy and hashes. | No body/type/pixel/program literals or private inputs; audit below, 2026-10-29. | `payload_shader_records.py`; J1261 host complete-file qualification, phone/runtime gate open. |
+| `owner-promovoidsurvivor-timeline-records.json` | Complete imported Director record | Original selectors, binding identities, authored null relationships and hashes. | No curve/pose/event/body literal or private inputs; audit below, 2026-10-29. | `record_produce.py`; J1261 full-file host qualification, phone/runtime gate open. |
+
+J1261: `owner-promovoidsurvivor-source-lighting-objects.json` and
+`owner-snowyforest-source-lighting-objects.json` select complete source records,
+types, hash expectations and minimum relocated relationships. Their companion
+`source-lighting-textures`, `standard-shaders` and `postprocess-shaders` profiles
+select original reflections and existing source shader transformations. Promo's
+`owner-promovoidsurvivor-timeline-records.json` additionally declares imported
+unbound track relationships; null bindings introduce no animation/event data.
+All other required packs use existing public mesh, texture and animation recipes;
+producer/recipe closure is listed in the accepted-output README.
+
+Provenance, privacy, licensing and sensitive-content audit: all nine new profiles
+contain source selectors, identifiers, field extents, reconstruction policy and
+hashes only. The complete object profiles contain no floating-point literals or
+long encoded strings. They contain no pixels, geometry/curve/coefficient arrays,
+serialized body/type templates, proprietary implementation, SDK bytes, private
+paths/settings, device/account identifiers, credentials or signing material.
+Original reflection and ambient data are read from legitimate game records.
+All producer inputs are public recipes, the owner's installation, permitted SDK
+and pinned public tooling; every required source-pack profile is published.
+Guarded complete-file production denies target bundles, exports and preparation
+captures. Independent comparison checks every object/type, all resource bytes
+and native references. Native BC6H is an explicit device capability gate; full
+game-runtime qualification and historical raw-exact admission remain open.
+Existing source/tool licensing applies; no redistribution, ownership,
+authentication or entitlement success is granted. Generated outputs stay ignored.
+
+## Source HUD profile
+
+| Recipe | Source | Audit | Consumer |
+| --- | --- | --- | --- |
+| `owner-player-hud.json` | Original UI/script/dependency selectors and existing texture recipes. | Identifiers, hashes and source relationships only; audit below, 2026-10-29. | `player_hud.py`; J1264 host-only, native runtime gate open. |
+
+`owner-player-hud.json` SHA-256
+`471b7f74f5e9143c0dfe7bba03c5138389a019d9f55b40fa581f881f75bd2241`
+selects four original UI roots, original script/dependency members and five existing
+public texture recipes. `player_hud.py` derives all hierarchy, fields, schemas,
+geometry, pixels and relationships locally through the public HUD constructor.
+Manual provenance/privacy/licensing/sensitive-content review: identifiers, hashes
+and minimum source relationships only; no captured target IDs, prefab/body/field
+value tables, protected implementation, SDK bytes, private settings or credentials.
+Generated outputs and evidence stay ignored. Public-input evidence:
+`work/coordination/orchestrator/hud-public-source-v1/`. Historical graph differences,
+complete phone production and native runtime acceptance remain open.
+
+## Source native manager profile
+
+| Recipe | Source | Audit | Consumer |
+| --- | --- | --- | --- |
+| `owner-player-managers.json` | Original manager selection, public settings/source pins and authored startup/capability policy. | Identifiers, hashes and public policy only; audit below, 2026-10-29. | `player_managers.py`; J1265 host-only, native runtime gate open. |
+
+Profile SHA-256: `0ec07f8658fb40f22cf3d8db4ea3e2878888d94aa9f184a756b9475626d24350`.
+The recipe pins original manager metadata, public project/settings owners and
+existing shader/context/copy recipes. It disables paid capability flags, retains
+on-demand shader loading and selects the SDK's default dynamic batching for the
+empty public platform override. This declares converter behavior; it grants no
+SDK rights and asserts no ownership, authentication or entitlement success.
+
+Manual provenance/privacy/licensing/sensitive-content review: source selectors,
+hashes and authored configuration only. No captured manager body, target graph,
+private connection/license value, game field table, SDK implementation/table,
+credential or signing material is published. Original records, supplied SDK and
+fresh source-phase outputs provide every serialized value and relationship.
+PyYAML 6.0.3's pure Python SafeLoader reads public settings; digit-only encoded
+arrays retain their lexical representation. Dependencies retain their licenses.
+Evidence: `work/coordination/orchestrator/manager-public-source-v4/`.
+Independent build identity, unused historical hash-cache entries and current UI
+graph differences remain explicit; full phone/runtime acceptance remains open.
+
+## Source default-scene profile
+
+| Recipe | Source | Audit | Consumer |
+| --- | --- | --- | --- |
+| `owner-default-scene.json` | Original native record selectors, public Lab scene policy and exact SDK/source pins. | Identifiers, hashes and authored configuration only; audit below, 2026-10-29. | `player_scene.py`; native lighting/load qualification remains open. |
+
+Profile SHA-256: `c02e13f130379c3d33eaf35260f28cc09173cd4e33179f6771013a0585c44a6d`.
+This profile names the minimum original native suppliers and the public camera,
+light and primitive policy. Built-in tag numbers and Cube identity are read from
+the supplied SDK; local object IDs follow independent construction order. Native
+schemas and fieldless diagnostics properties must match the source registry.
+
+Manual provenance/privacy/licensing/sensitive-content review: no serialized game
+body, native field dump, historical IDs, baked pixels/coefficients, SDK code or
+registration table, private configuration, credential or signing input is stored.
+The explicit environment inputs are generated phase outputs, with request,
+material, face/mip and source-owner checks. The material is compared with the
+legitimate default sky's parameters; no protected parameter table is published.
+All output remains ignored. Host-built diagnostic inputs qualify the API only;
+phone-built tool construction, native scene loading and lighting compatibility
+remain open. Historical readiness is unchanged. Evidence:
+`work/coordination/orchestrator/default-scene-public-v2/`.
+
+## Moon2 source spine lighting
+
+| Profile | Scope | Provenance and privacy audit | Owner/evidence |
+| --- | --- | --- | --- |
+| `owner-moon2-spine-source-lighting-objects.json` | Complete 30,450-record legacy Moon2 scene | Original selectors, relationships, named lab activation policy and hashes only. | `object_produce.py`; J1268, host source candidate; full phone/runtime gate open. |
+| `owner-moon2-spine-source-lighting-textures.json` | Original baked reflection, complete face/mip chain | Original record/resource selectors, layout extents and hashes only. | `texture_produce.py`, `cube-preserve`; J1268. |
+
+2026-10-29 provenance/privacy/licensing/sensitive-content audit: both profiles
+contain no serialized bodies/types, pixels, protected implementation, numeric
+lighting/material data, private paths/settings, account/device identifiers or
+signing material. The object policy has no floating-point literals. Original
+lighting and sky material relationships come from the legitimate input; all
+required record-pack profiles are public and listed in the accepted-output README.
+Native/script metadata and all 30,447 other bodies remain strict against J850.
+The preload table preserves all historical dependencies and adds the original sky
+material; source activation policy retains existing lab suppression. Guarded
+production denies accepted bundles and preparation captures. SDK/tool licensing
+and ownership/entitlement boundaries remain unchanged; no runtime distribution
+or authentication success is granted. Generated outputs stay ignored. Complete
+phone/game-runtime and install/update acceptance remain open.
+
+## Snowy Forest source and spine lab lighting
+
+| Profile | Scope | Provenance and privacy audit | Owner/evidence |
+| --- | --- | --- | --- |
+| `owner-snowyforest-source-lab-lighting-objects.json` | Complete 15,933-record source lab | Original selectors/relationships, existing lab policy and hashes only. | `object_produce.py`; J1269, phone/runtime gate open. |
+| `owner-snowyforest-source-lab-lighting-textures.json` | Three original reflection chains | Original selectors, storage extents and hashes only. | `texture_produce.py`, `cube-preserve`; J1269. |
+| `owner-snowyforest-spine-lab-lighting-objects.json` | Complete 14,001-record spine lab | Original selectors/relationships, existing lab policy and hashes only. | `object_produce.py`; J1269, phone/runtime gate open. |
+| `owner-snowyforest-spine-lab-lighting-textures.json` | Three original reflection chains | Original selectors, storage extents and hashes only. | `texture_produce.py`, `cube-preserve`; J1269. |
+
+2026-10-29 provenance/privacy/licensing/sensitive-content audit: all four profiles
+contain no body/type templates, pixels, material/lighting coefficient literals,
+protected implementation, private paths/configuration, account/device identifiers
+or signing material. Object policies contain no floating-point literals. Source
+lighting is read from the legitimate installation; every other record, native/
+script identity, external identity and script table remains strict against J850.
+The existing public pack owners and qualified Snowy Shader profiles supply all
+other records; checked namespace aliases preserve each lab's local relationships.
+No private generated artifact is required. Guarded production denies historical
+bundles and preparation captures; independent full-file comparison verifies source
+reflection faces/mips and native relationships. Existing tool/SDK licensing and
+ownership/entitlement boundaries apply. No redistribution or authentication
+success is granted. Full phone/game-runtime and install/update acceptance remain
+open; generated outputs and raw evidence stay ignored.
+
+### Whole-game native Sprite imports (J1272)
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-whole-game-native-sprites.json` | `100f834f8665f79b3075668d18e4b2f35866a6204753fddbad0125f95765d7d4` |
+
+`owner-whole-game-native-sprites.json` (SHA-256
+`100f834f8665f79b3075668d18e4b2f35866a6204753fddbad0125f95765d7d4`)
+selects 757 original Sprite/Texture2D pairs and their minimum importer GUIDs,
+output identities, pointer relationships and comparison hashes. It contains no
+pixels, geometry, physics contours, native output or private configuration.
+The existing public pixel decoder and exact SDK constructor generate those
+outputs locally. The pinned AssetRipper `1ac666f` SpriteProcessor normalizes
+crop/pivot/border before TextureExportCollection selects the importer mode.
+The authored producer preserves that ordering and native pixel-pivot rounding.
+Provenance/privacy review: original paths and GUIDs are reconstruction identities;
+all game-derived PNGs, native geometry, records and device evidence stay ignored.
+This adds no entitlement adapter, SDK redistribution or complete-game claim.
+
+### Whole-game source records (J1273)
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-whole-game-source-records.json` | `56209ed460cf480fda51214d16a549e04223c19c89c9149c8b489ee908f925eb` |
+
+Audit: minimum original bundle/member/object and MonoScript selectors, input and
+output hashes, checked pointer relationships and native type identity hashes.
+The 159 unchanged managed records use the existing SDK properties-hash rule;
+39 native records retain their original type and nonpointer bytes. No game field
+payload, type tree, source implementation, private configuration, SDK binary or
+generated body is included. All 198 persisted bodies and native type identities
+match J850; complete whole-game bundle and phone/runtime acceptance remain open.
+
+### Whole-game material and compute records (J1274)
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-whole-game-material-compute-records.json` | `578cd86236afa06d1df29ad4ecba50e86e0e2487702bd2c65ceb057e3ae146a2` |
+
+Audit: minimum original bundle/member/object selectors, hashes, checked pointer
+relationships and existing named import policies only. The 130 materials retain
+all original keyword strings and native values; the 24 compute records use the
+existing checked DXBC-shell policy, retaining declarations and keywords. No game
+field payload, type tree, shader program, SDK binary or private setting is
+included. All 154 persisted bodies and native type identities match J850. These
+compute shells supply no executable Android programs; complete bundle, phone
+production and runtime acceptance remain open.
+
+### Whole-game Shader records (J1275)
+
+`S` uses `payload_shader_records.py`; `F` uses `shader_prefab.py`. Each row
+pins a current original-input recipe.
+
+| Recipe | Producer | SHA-256 |
+| --- | --- | --- |
+| `owner-whole-game-shader-02b1e6e9370c8791.json` | S | `8836fb1f617dffbe8d680d89b65f9f08f3eeeeb7d36165c6672715a560f1a6a7` |
+| `owner-whole-game-shader-034fed06a241cf53.json` | S | `f62f49a8ff904e9b2d0d0bf2eca472979d816b55b6331125a36683fbeea7f419` |
+| `owner-whole-game-shader-070de82e6cf2da18.json` | S | `c8a480b49bd0f9812bad3eec1aea092b6090de99ff3b41ed6f5505f6809e6303` |
+| `owner-whole-game-shader-084c4240de06f760.json` | F | `4b0f783b9e833b1ce3b106748c2f93dc78b68a17a53e03347c51b86824360d28` |
+| `owner-whole-game-shader-0df842e9796d40b4.json` | S | `3c34f73582757fa0f134d182758b868075672b318f585f66b7a1540e12f37655` |
+| `owner-whole-game-shader-10f3b27d64b264f8.json` | F | `2d9cd4121d21a90c5cc48795ecf841218630a26520700c4272885339f3269d79` |
+| `owner-whole-game-shader-10f74c3751e9b1f2.json` | F | `e0ebd197a4531f9d4097ad802418c1cd74abba4f50fd36685a0e484972a964af` |
+| `owner-whole-game-shader-11736e6914b2b1ef.json` | F | `7dc4506be2f2869022f7c8a7f57c3688e3c2051a1e16fd0da5f0a00d24b036b2` |
+| `owner-whole-game-shader-12652c99b63bc31d.json` | F | `abfbd18b76936902712ec7bb1fc289e1c2702c7255f37fef11dcc30b58bdfaaa` |
+| `owner-whole-game-shader-126d20ddf6885aed.json` | S | `b5488e0638fe5606ba792583a88144f2b2a4eda80acf459b41ac709e5814f5df` |
+| `owner-whole-game-shader-15d4d911b3052355.json` | S | `e8e440603607959e8839d9775e6df180f921722fc6dc6b908cd3c62e8b803e9b` |
+| `owner-whole-game-shader-166772aece563fbc.json` | F | `c1d1350c6a239ec8786fd2c046d52fccdf19a42302da6f79c106d93a9b5d72b1` |
+| `owner-whole-game-shader-1984988ea199266a.json` | S | `57b9c27e3e1e25633b75f7faa1d020312bfe9d98fde10a9252f8ba10bb5ba000` |
+| `owner-whole-game-shader-1bd2823582554650.json` | F | `74dab9a770fd152fd52e0a35e0de7815884895a487801032138bfbf50d901bc5` |
+| `owner-whole-game-shader-230d1be6fa62d96e.json` | S | `44b014060425d4d0af11aaf5775e34e523163df213bea6a345cfd2c04d388b27` |
+| `owner-whole-game-shader-27d7abe9ab1b41d1.json` | F | `686b6c303fb2b6bc6a8a00e82e99137c8b2923cae7fbbe6652ff96cd47d24f0c` |
+| `owner-whole-game-shader-2df5ef09fd9b26c1.json` | S | `9ffbfd92669c5fa28e9eb7fdedb4067bc21393764fab664d6e0a293573d2a8cf` |
+| `owner-whole-game-shader-2f323612215e6871.json` | S | `749766d14872e0a0b1e6cf58b80a08640d7aa892622497c4bfdfbc2a5b69047e` |
+| `owner-whole-game-shader-2fc6e0eb1fd573dd.json` | S | `f07df0521f86d0f0fbbdce4ff7a20afc507e970082599f615f7ebf91d0222ee8` |
+| `owner-whole-game-shader-32f48bde88df56b8.json` | F | `a4d3f6af4b4ff6e1b84af01a49ce8747af733ae3045ccd374e7b802b231fd8b7` |
+| `owner-whole-game-shader-3793415a1ec890af.json` | S | `ed25c5bc3e8730c3c6d36a73b3426aaf034a41ce568aebabb875c917bf0d2f25` |
+| `owner-whole-game-shader-37eb61b60069d459.json` | S | `cb5e6313db4569720ab791844a409f92ad7bc222da9933c9e7e6636f4053dff1` |
+| `owner-whole-game-shader-3aed6d462ae09235.json` | S | `9778f90ebb6e6ac5b80bfc5f312f645d406bac9f1f836315113644b99a0ef8f5` |
+| `owner-whole-game-shader-3b722ab249c06fa5.json` | S | `bb2176e1c3e46163fdd6050f15dd6280f491bae6bb47e610477412ba9670810f` |
+| `owner-whole-game-shader-3b7c0a2b60b39dda.json` | F | `1337459d0dfa3ee635efcd7058b856b339455b2484e6394fe638cdf77fc06e85` |
+| `owner-whole-game-shader-3f03f5d706422ed7.json` | S | `dd8b96a606ff190116b828e62cfdb7a7d224e43bdde8c60124955bef5c8d973d` |
+| `owner-whole-game-shader-42f9d38d37a8f1ec.json` | F | `022870c0efd48d1a432574e819205b4a8f9eec7bc8182309715264fc21035207` |
+| `owner-whole-game-shader-449a91aa35081072.json` | F | `6487629edcf43d14de1f128bd13c465fde13e0102348e40eec3edb68bf27ad94` |
+| `owner-whole-game-shader-44c69ea486cdbc3b.json` | S | `caf2b43ddf57b91b8fa1ddc1df64ef7997d2a1ca0a2b811b9b8d7097017d3c98` |
+| `owner-whole-game-shader-46e4508af657c584.json` | S | `e3abab9523adea39a74937fd4337676cac1bcd48a6210e26b60740df8872b07a` |
+| `owner-whole-game-shader-49a2f29f9f475e6b.json` | S | `55910b35c106656f779bbc0b21a2b5e145dceeca408ca169c4f2f3b8a2e1d429` |
+| `owner-whole-game-shader-4e49d851def9ed88.json` | S | `8b929175cd9e7993bea09a6ea4f1c80639a072276ae109bbda8c89a39abb0766` |
+| `owner-whole-game-shader-515983f7190a3b0b.json` | S | `1e26e58df3f8af6a0af8d467a888bbb0aa71997bd6f51851c3ad59421845d9b9` |
+| `owner-whole-game-shader-532c55ed3d24cfac.json` | S | `75c47dbafe164e6c994765c7f5fafdfca09ee015fb7b676ddb099d7d69d5b444` |
+| `owner-whole-game-shader-53780e664f859ed3.json` | F | `f1b2ecf574b7308c17849add035b90d1de4e0984468e2d992753729b9818fe68` |
+| `owner-whole-game-shader-599a14580b0459cf.json` | F | `2cf40f6bcb29af0b96617a8c68027b0a7ad647ba08555d1aae02f0440778afa6` |
+| `owner-whole-game-shader-5b0b82f27f82e1cc.json` | F | `85de14ec662ff04f2f719fefc7586fc4588165fd213694237ba101f7744274b8` |
+| `owner-whole-game-shader-5bb1fd1123fbd18d.json` | S | `d868ada915a9b5298b2a537a240ba568886e61346144a3ff97619345e5d7e010` |
+| `owner-whole-game-shader-5bce32ea30c543fc.json` | S | `087011fa075d7e8f33599d7358cd6d09674dd9e4dd87e9e1f4acfe020fcfb4cb` |
+| `owner-whole-game-shader-5c02866f0f89ee19.json` | S | `e973dc0196c0511c7b0b9669de24749fb3eedb470181faf5e95bbc086d44573f` |
+| `owner-whole-game-shader-5d2dbb5ed3989742.json` | S | `ec1d6b0e0a3180033d67a8df695557d9d6c3b9efddc1fbc650918cf38e3af628` |
+| `owner-whole-game-shader-60a0ecc9c15294f6.json` | F | `6910ff79bd51333ba184f59e25811c722471a69ea76452f026f774a720d62e16` |
+| `owner-whole-game-shader-61725b5f506b57f4.json` | S | `0ab6fe88a01ba25de793686f2adcf492a37da2cc706ce266034eb01b7a7d2862` |
+| `owner-whole-game-shader-6175a41c51b80943.json` | F | `c51defb638df6e48b1aa9a2e002a3fc70cfb74fde98619d38ae8ef1a230c8649` |
+| `owner-whole-game-shader-61ac51f1a6278c21.json` | S | `3554a7cd18def14f7b52888fb7b48da51edb8e87aad9866a90059fc35b8d7d4f` |
+| `owner-whole-game-shader-647566a51860cd88.json` | S | `6875a4c6c8ee04b7e7144f7a347cb96bb2b23abf1c5c3b6e0f9047c30325cde2` |
+| `owner-whole-game-shader-6533208cff9364ae.json` | F | `e412281d1c8a3aa59c0cc68d22736ee9dcb83e3c61db4741bb929df5940e9033` |
+| `owner-whole-game-shader-65bc6451e47df640.json` | S | `e371df649843974d305c3cdccddb304b07c90046b5ebd465182ab43e2aaa2d08` |
+| `owner-whole-game-shader-66151dfc1e50de53.json` | S | `2d84d58f7d47935778465e51e700624760655abba854ff45d565d24e6191cc31` |
+| `owner-whole-game-shader-67be9f5752370119.json` | F | `5d3c4fe68faf768fb0e3f836b45f06aa8bb047e0c06f3cbda846ca655f2a85f6` |
+| `owner-whole-game-shader-68f9cbdffccc4c63.json` | S | `a06fa73e159192f12252e06d708c60162df24aee63462e2b0f6ccc0f91e25bd6` |
+| `owner-whole-game-shader-7824188d699af013.json` | S | `8f2ea997c8a74fe9805518cb903b52fcb45af25be87118248c470ba7105b7b06` |
+| `owner-whole-game-shader-78a1f9d5c3679a16.json` | S | `16f699b51dd21ee56035e3fb3be212dbd6d4269e726895434e12a13e2b817c6b` |
+| `owner-whole-game-shader-7972df511852774c.json` | F | `8f31da18f6f1f9e0de4c522c3f514a054294286bfdc64ef17b18ae33d17ce55c` |
+| `owner-whole-game-shader-7c853f6e8c0bd51f.json` | S | `adf72ac044d178fdccc6bf3290d34978aa5c5ac1da0be44a7e35e0c6e8078a71` |
+| `owner-whole-game-shader-7db3c9aecbd21e4b.json` | S | `0051ec36f18c04bb0911bf3847601a7d9fc35ba16d5b3f864269a539200a6bbf` |
+| `owner-whole-game-shader-7e5cc8e11f2d0296.json` | S | `8c801a8b02d46838e1c36478ed0c041947ab155f181a2597ff96962e2ce10ae1` |
+| `owner-whole-game-shader-7eb41628e2e25ec9.json` | S | `df63557b3756f601e5fa7a41f9c4040f05684f569ae24a321f0d7cb8f96ec0b5` |
+| `owner-whole-game-shader-7f501270ae51a30e.json` | F | `7439b2746491e7d8c15ba180be3e59fbfc7126ff5f7c4d4a782ee5acf423686b` |
+| `owner-whole-game-shader-81ed6ad28b4bac31.json` | S | `fa585c2aaa18000b55afbbeffb35410581498e0c4e467643485e7642298afab3` |
+| `owner-whole-game-shader-86a15f60b1145c37.json` | S | `afa44a467fd0cce88273435b4d5f823e676a20e6605b0f70fd3e255133999c68` |
+| `owner-whole-game-shader-87a2b9f5418f0dab.json` | S | `5a639d38e1b7d061ce92b1d1bb29e0443b205d5c73b8c3035a6c859f44ccc015` |
+| `owner-whole-game-shader-883cabdb92759697.json` | F | `3bb8a9f77bb65c849481da320555075288c26611228376956fe7b5b077699e40` |
+| `owner-whole-game-shader-89800c6dd864f5e9.json` | F | `9b317c0f7418ab90bd4f6a07da30867d2a8752a84ad3100b783e6ab1043beca7` |
+| `owner-whole-game-shader-8be7ae4b8896070d.json` | S | `820449891b33e8a55a93acf4391781fcb09c10322b75f48713f8f809ee84e3b8` |
+| `owner-whole-game-shader-8c4ce654e8d23f5a.json` | S | `ed3e44f9cdfbdce038de525d91a84ebfe13dc3a5b3e7746d667a7c0cbf6d873e` |
+| `owner-whole-game-shader-8cb5d4399b6e0722.json` | S | `7838fb4f5e80a5698d29723034e6e329ce9ae67c0e871d9121385ce5cf0a24f0` |
+| `owner-whole-game-shader-8e83f5a7d3e231ef.json` | S | `f5523849d3906eaa47d6e1fb6cc02974188b3edd4b3e0fe241a3b128359cc160` |
+| `owner-whole-game-shader-912669ffb1c93663.json` | S | `81a699079fd1a0393b2862de219e2a990babef4cdb82951835cee53b9121bed6` |
+| `owner-whole-game-shader-912e0b52dc8a3d2f.json` | F | `e6f89bbc05c6647a4e26f6f6003ce13ea1fed7b030c3e4db6790eaeb6745360b` |
+| `owner-whole-game-shader-91f604b3530fd829.json` | S | `9b0e7bfdbe9a389c465d9de396595d5d9851bbd567776f7506f744b380dd58c2` |
+| `owner-whole-game-shader-94add932987060ed.json` | F | `1485be301a50f119811fef8262c6bf920003130d11a8b560a27821d7858daf63` |
+| `owner-whole-game-shader-959647ed2410089f.json` | S | `c7af35876140f4b5f8f1aef02f4aa42a37c4178e4918bd96fdec8ffa5a4c1de8` |
+| `owner-whole-game-shader-9eccc184552cae8e.json` | S | `1bb137d2ec26900106b902be2c03a5847b6390e6bdde5582723a387faaf37d69` |
+| `owner-whole-game-shader-a056d464c41f7d17.json` | F | `12a6d2b609bcb494e6a8984f35e96cf2efd3b7cee68009b1c8c92c3243f662d6` |
+| `owner-whole-game-shader-a1fd6d502a9658bf.json` | S | `db7379bdaf304a499e71041b1b60b3754defd0a0c3b7246133c8689fe21952c7` |
+| `owner-whole-game-shader-a4e447b7dfb74c41.json` | S | `175316b5e34ea3e87c8dd5c8289711c608ef60e18a303bef61dc9adc7d373bb6` |
+| `owner-whole-game-shader-a52e461039bea821.json` | S | `57cc02d680d51a84da5c9f1466b4c61d43cc3eb978d2e59fe7aaac0a34bf7361` |
+| `owner-whole-game-shader-a54e3b741e838107.json` | S | `af6411444d5a281f131b76c02364b99065a2576b6b21b8e4d9fba389fd31348d` |
+| `owner-whole-game-shader-a806534dcc01a1a7.json` | S | `98260e278d094661fe5c31d4614aa5f28fe812b7d9c498c1d4cf2ed25b6c5eea` |
+| `owner-whole-game-shader-a991b143408c77f2.json` | S | `6baab3633db358d559b5fd714432fd7f7248b67d7cb2173d919205218255a413` |
+| `owner-whole-game-shader-abccadfad647c15c.json` | S | `31881d452b080037f1f159de6b96e89d6b69a5ad2c59ee429d24ae1443b5ca01` |
+| `owner-whole-game-shader-ad2a3ce1f02f5aff.json` | S | `7a6c544676a44065e831b0252be49d8d8e22050ed4f011d647e9c60abd423248` |
+| `owner-whole-game-shader-b0a7072e58e7bb60.json` | S | `5ce596f3513b6706061d09802a263999456519a907b8371246ef2b59c1081629` |
+| `owner-whole-game-shader-bae2f7d5ab826699.json` | S | `bf31e263b7ad3845ad5899049aa671da35e174049dae6f47bff2f35f55f3ea6b` |
+| `owner-whole-game-shader-bcdadc4fbcfeaebf.json` | F | `39f4c887d6e5e3b22c00ce8aa6b1fe2a55b72fac69922040a184c09714dc5ebe` |
+| `owner-whole-game-shader-be20eb501f634e8e.json` | F | `67ad72e8ac19098fdadee189639091ca59f8b292c219dd1b953570acadd2e965` |
+| `owner-whole-game-shader-be57447e98fc3b40.json` | S | `7e7a5cacf40033befe6b16702500e1468b2e62edde45c8b6aba718785cff5e69` |
+| `owner-whole-game-shader-bfeb1f932a13aced.json` | F | `b196abe89141308011bb18a6ee526b0c5074d8a2db78c370994c6e5190f8f878` |
+| `owner-whole-game-shader-c241bea3e672b193.json` | S | `157211392a7254863700cec25f3a642bd2ecd7e99654111b7388d6423c422dde` |
+| `owner-whole-game-shader-c653b61cdd6dc6df.json` | S | `62cd44dffb53c8b2e22ed0e87f73bc00654dffcecf63054a7ef52b54d7340d84` |
+| `owner-whole-game-shader-c904328f54247fc9.json` | F | `e7b1939cfea0a5d3b394cbc0ddc3afab2b442cbb4960cdbaffa3b0237c6518ea` |
+| `owner-whole-game-shader-ca1c6d4095d4ad7c.json` | S | `5d822f76119459e41702fef923bc890b92c65d4ccf69e1a83d2e6fc25917baa3` |
+| `owner-whole-game-shader-ca8387e579aae81f.json` | S | `cd09951bdcfaffbf9d442749ff2987fc292cbf037e9f033c939082a92a89b52b` |
+| `owner-whole-game-shader-cf3f9db0e1a2625a.json` | F | `e8ea662985bbefbf9b41a13a7ba208d8c0f80bacf4bfa3b2c7940054caf4d182` |
+| `owner-whole-game-shader-cfd807c65f3d3888.json` | F | `be016feb77d43ec03e55eca956f88d7673683dfa96eaa1e5a4b890f6879bbf9b` |
+| `owner-whole-game-shader-d2733c05837824d2.json` | F | `2821e63904943a0510b5f1f1603098476686730a665fa641d5d7298292d3e638` |
+| `owner-whole-game-shader-d3950d734eb81efc.json` | S | `c90ff2c9c26b11eed1acc81e8a54dd35026b3864fbc8c97c6c2e6cb774e94020` |
+| `owner-whole-game-shader-d77ffe1926f7e966.json` | S | `eae26f7fd04f2fa3844c82473bdb9f50f44c7ae191093c5081ddc747b80f480a` |
+| `owner-whole-game-shader-d99b3943ed2ab6cf.json` | S | `9528b8d6e5146636fa6809a23843462010c190b13bc68b0b18b862fe9999523d` |
+| `owner-whole-game-shader-da8e7363437ccb77.json` | S | `e7bdd609152432e9dbbbad337dc9e8bb741e417bf3189b7ffd2637c2ee4e3dee` |
+| `owner-whole-game-shader-db075d25d0d1688a.json` | S | `73eae1f4914f3c9a6810cfb0a4d2d5eed25ea49428167c706fcf51868d2aa205` |
+| `owner-whole-game-shader-dbe1e9b11eb1e5b9.json` | S | `bfa575f6d3eaaa525e3330a8fa8fb2a8f093b9e9a3e3631ef03c2e90ddb99638` |
+| `owner-whole-game-shader-e31bc85cbb80f18a.json` | F | `d00c55cdb8fbd4f85b39035983e2a3ef9bb2f91ccb05ac118d39a847b2d3248a` |
+| `owner-whole-game-shader-e45cf7013b5e74de.json` | S | `2ca60fbb87b20a811c96e36748978f1be3db0838675ebcde96805a5f1e96c18f` |
+| `owner-whole-game-shader-e52d452d03e22b87.json` | S | `4e49934feaf1cd7cde6e256a3500dc73f178a2d95fbebb8520f557251d068924` |
+| `owner-whole-game-shader-e77d203538848225.json` | S | `6ac65d0b90f4a1b5db06775f2e82c386ca2a2e4264caa3c111bc70d9b153df13` |
+| `owner-whole-game-shader-ec030340227418cb.json` | S | `f0ad144b328da31ab57f54fa04fade5db9f294311ba3854c7d0e03e3996be51d` |
+| `owner-whole-game-shader-ec366ea0ed0b7448.json` | F | `c64bf3bb9d0b14e55299b3ac809878e614ffecb2cc14510945d1b98955c22673` |
+| `owner-whole-game-shader-f175a9cf5b433cd2.json` | S | `e54faed8fb2dbf0d907a1b171d9258964fc1ab9c5b5e878b93f9c2ea504a975f` |
+| `owner-whole-game-shader-f978fab9f2141531.json` | S | `1715c187362b9525667ffa6fd3990da69c8e7da6c7acca442efa4be431102f89` |
+| `owner-whole-game-shader-f97c130db51c09fc.json` | S | `8ab987a48bbeecb882f02731cbb7e039159fe261ab3a2996cbcddec36a4eac84` |
+| `owner-whole-game-shader-f9aad7ffaaec4f02.json` | S | `7cbfaa43683177149a67cda64df5ff103cb336d4a08249d2a18c5bddd3ecf4b8` |
+| `owner-whole-game-shader-f9d89be4f62e7908.json` | F | `a96411a5a7c4140b5ec0ddb4b22deda1916eb07c5a378e24b74dd6ce01b0e190` |
+| `owner-whole-game-shader-fa41fb006744e15d.json` | S | `be3cdb08776e57f4ed5186ed8af6175e10140d1d2125d187e5eb1b605709f46d` |
+| `owner-whole-game-shader-facfd5c8e5f9eae1.json` | S | `85c7ac4e2e8ea815c908ab3bd94e9c3f1ded8f463971976cecf10c75d82fa41b` |
+| `owner-whole-game-shader-fff9ac02cfd7c247.json` | S | `ba02c7fa98df94ca68a2410d729ee6071065e64bb2a1553b1a014479deba4e92` |
+
+Audit: original bundle/member/Shader selectors and hashes, permitted SDK and
+public-template pins, authored compiler settings, logical source filenames and
+minimum output/PPtr relationships. No original property payload, program, type
+tree, generated output or private setting is included. Original properties and
+SDK fallback declarations supply keyword tables and dependencies. Stable logical
+filenames may derive from original identities, without historical export files.
+All 117 persisted records match J850; complete bundle, phone production and
+original rendering/gameplay acceptance remain open. Template licenses stay with
+local producer output; no third-party implementation is copied into these recipes.
+
+### Whole-game hierarchy path records (J1276)
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-whole-game-hierarchy-path-records.json` | `dd7494d9c69e9da37fc5c6ce7da58a343213f685840942d1e1044fc3ebc83d41` |
+| `owner-whole-game-path-managed-records.json` | `829c9316236c8b791a1eec0c08a607f3ea538af5befe93532b81b610da6292fe` |
+| `owner-whole-game-path-original-hash-records.json` | `2b20c132dfdba8209757581a3a18ac6961d7fbaf7f0158e094f5f0593fe856eb` |
+
+Audit: minimum original bundle/member/object/MonoScript selectors and hashes,
+checked PPtr relationships, native type hashes and existing SDK/original-script
+hash policies. Original roots and unique reciprocal child-name paths establish
+identity; only exact native state is admitted. No pose, scalar, type tree, source
+implementation, private setting or generated body is included. The 1,237 native
+and 108 managed records match J850 after persisted extent checks. The original
+script hash applies only to unchanged runtime identity/schema. Complete bundle,
+phone production, gameplay and installation/update acceptance remain open.
+
+### Whole-game prefab policies (J1277)
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-whole-game-prefab-policy-records.json` | `b8ddb04666bca02764ab2ea5ca46427d6e288e4db78c7f2444908036ca400992` |
+
+Audit: minimum original bundle/member/object selectors, source/output hashes,
+checked PPtr relationships and existing filename/component-append policies.
+Actual MonoScript identities and reciprocal owners retain the complete ordered
+original component sequence; five roots additionally list an already-produced
+public SilentProjectileBoundary. No component is omitted. No original body,
+scalar, type tree, source implementation or private setting is included. All
+17 persisted records and native type hashes match J850. Complete bundle, phone
+production, gameplay and data-preserving installation/update remain open.
+
+### Whole-game existing presentation policies (J1278)
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-whole-game-existing-presentation-records.json` | `c488c434588e1cefe832e467141f8cf4e224edd89a2fd30520f2a6194a78a6df` |
+
+Audit: minimum original bundle/member/object selectors, source/output hashes,
+checked PPtr relationships and component omission indices/identities. Existing
+`sanitize_optional_content` policy selects optional audio, decal and particle-tail
+components by original MonoScript assembly/importer identity. Retained components
+keep their original order and reciprocal owners; ambiguous duplicates are excluded.
+Existing filename and public adapter-append policies also apply. No new omission
+policy, original body/scalar/type tree, implementation or private setting is
+included. All 38 persisted records and native type hashes match J850. Complete
+bundle, phone production, gameplay and installation/update remain open.
+
+### Whole-game source registry records (J1279)
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-whole-game-registry-records.json` | `70e07b47f45255014324c4b166e1f52edaa0263b770ea6cf9f6f63bea31c5955` |
+
+Audit: existing public registry-profile hash, generated file/object selectors,
+output identities, body hashes and native type hashes. `script_registry.py`
+exposes the existing original/SDK/authored registry owner as a standalone phase;
+`record_remap.py` consumes its fresh successful receipt. No historical player
+file, private schema, generated body, original implementation or private setting
+is included or required publicly. All six persisted MonoScripts match J850.
+Generated registry IDs supply record selection, never original-asset identity
+witnesses. Complete bundle, phone production and runtime acceptance remain open.
+
+### Whole-game current script fields (J1280)
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-whole-game-current-script-fields.json` | `f38fbaede09af8041eb9e9678a7db03f1b2f0781e3be9fbb84d9502541ca095c` |
+
+Audit: original bundle/member/object/MonoScript selectors and hashes, SDK/native
+type pins, original managed-assembly hashes and checked PPtr relationships.
+The generic projection omits only whole source fields absent from current CLR
+declarations, inherited fields and serialized-name aliases. SDK native fields
+remain protected; retained bytes/alignment and script identity stay checked.
+No original implementation, field value, type tree, target template or private
+setting is included. Five persisted RunPresence records match J850; their stale
+counters are absent from the current original assembly. Complete bundle, phone
+production, gameplay and installation/update acceptance remain open.
+
+### Whole-game component edge records (J1281)
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-whole-game-component-edge-records.json` | `84413591dc94cd91944ccbbc526ae986f650ebaa3b452c10ed3021675e85d7d1` |
+
+Audit: minimum original bundle/member/object selectors and hashes, output IDs,
+checked PPtr relationships and native type hashes. Already-qualified original
+GameObject recipes supply explicit component-pointer mappings after checked
+omissions; append/reordering cases are excluded. Actual script names, native
+identity and reciprocal ownership agree. No field value, original body/type
+tree, implementation, private setting or generated prototype is published.
+All 16 persisted records match J850. Complete bundle, phone production, gameplay
+and data-preserving installation/update remain open.
+
+### Whole-game remaining native Sprite imports (J1285)
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-whole-game-native-sprites-2.json` | `113d582c6e2cf7f70fa66be6a2a58e7bc8b9ab0e9377b3265005f6d44674342c` |
+
+Audit: 65 minimum original Sprite/Texture2D selectors and hashes, importer GUIDs,
+output identities and checked pointer relationships. Current export metadata
+independently witnesses every importer GUID; 61 target texture edges select the
+same original texture, and four aliases have identical compressed mip bytes,
+dimensions and format. Production always decodes each Sprite's own original
+texture. Pinned AssetRipper `1ac666f` SpriteProcessor/TextureExportCollection
+normalization and EditorKit typed lookup guidance remain the prior art used by
+the existing producer; target pixels or geometry never supply production input.
+No pixels, contours, geometry, native output, original implementation or private
+configuration is published. Exact-SDK host constructor output and every persisted
+record extent match J850. Complete bundle and phone/install/update gates stay open.
+
+### Whole-game selected controller relationships (J1286)
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-animator-controllers.json` | `28724ccbb02362eb2f5814bc8d3718a3171e5ed6976fdbfe0eb16317a4fe1411` |
+
+Audit: 2026-10-31. This extends the J1143 source-relationship policy with 24
+whole-game controllers. Profiles select original objects, clip/state ordinals,
+checked PPtr relationships and source TOS entries; the existing owner enforces
+bijections and regenerates strings from the original source. Selected FullPathID
+relationships qualify these records; they do not establish a generic state-order
+inference algorithm. Pinned AssetRipper controller behaviour ranges, hierarchy
+mask omissions and BlendTree leaf/child indices remain the prior art. No target
+scalar, string, body, type template, original implementation or private setting
+is included. All 358 persisted controller records match J850, including the
+24 additions; existing 334 outputs are unchanged. Generated bodies remain local.
+Complete bundle, phone production and install/update acceptance stay open.
+
+### Whole-game duplicate behaviour relationships (J1287)
+
+`owner-animator-controllers.json` SHA-256: `23a81b8615260e23de8d9ab985535bd8a96428e3e9a431e4dafc7aa992a2edac`.
+Audit: 2026-10-31. The J1143/J1286 selection policy now includes Totem,
+Bandit and LynxAmbusher. Original layer/state keys and range ordinals identify
+otherwise identical behaviour bodies; script/body equality and original
+PPtr edges are checked. Pinned AssetRipper `GetStateBehaviours` documents the
+range-to-index relationship. The recipe adds source identities, ordinals,
+operations and checked pointer remaps; no target scalar, string, native body,
+type template, implementation or private setting. Three new persisted records
+(40,044 bytes) are raw-exact J850; earlier selections are unchanged. Generated
+bodies remain ignored. Complete bundle, phone and install/update gates stay open.
+
+### Whole-game ordered behaviour ranges (J1288)
+
+Audit: 2026-10-31. The existing source-relationship policy adds MimicLogbook and
+four original state behaviours (two ClearLayerWeight, two SetRandomIntOnEnter).
+Original layer/state keys, range membership and ordinal resolve their identities;
+script identities, SDK-derived properties hashes, source schemas and full bodies
+are checked. Pinned AssetRipper `GetStateBehaviours` traverses every range member.
+Only original selectors/hashes, index permutations and checked pointer remaps
+are published; no target scalar, string, body, type template or implementation.
+New-only persisted production reproduces five records (16,252 bytes) raw-exact
+J850. Previous outputs are unchanged; complete bundle and phone gates stay open.
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-animator-controllers.json` | `df6381c71730c913a105808e25656b827f50c25af43fab2d2b3436ed1a6edd2f` |
+| `owner-whole-game-path-managed-records.json` | `fe49a139288fb404846159f821cc149b71dab1beb5f1bfb8b35810a682ab7118` |
+
+### Whole-game authored prefab activation (J1289)
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-whole-game-activation-records.json` | `720bb9f36bed638f194afb1a20d62f4d8691795e91568abf43f4ca440b423c6f` |
+
+Audit: 2026-10-31. Existing `asset-transforms.json` policies deactivate the
+original ItemIcon, HUDSimple and ClassicRunInfoHudPanel roots. Generic record
+production delegates the same named-active-source check to the object owner.
+Ordered component PPtrs, reciprocal ownership and 16 independently qualified
+public component edges establish source identity. Three other native slots
+(CanvasRenderer, Canvas, Rigidbody) have equal schemas, normalized bodies,
+pointer fields and ordinals; those component records are not claimed produced.
+Pinned AssetRipper GameObjectExtensions separates activation from ordered
+component PPtrs. The profile contains only original selectors/hashes, authored
+activation policy and checked pointer remaps, with no target body, type template,
+implementation or private data. Three persisted records (317 bytes) match J850
+raw-exact. Complete-file, phone production and install/update gates remain open.
+
+### LightningStake late source witness (2026-10-31)
+
+The default-off source observer continues checking scalar finiteness after its
+eight-row cap, preserving the first later invalid call in the final row unless
+an earlier invalid call is already retained. Its source hash and the shared
+audio/camera owner-cohort pins are refreshed together. Review: authored observer
+and metadata only; no game-derived content, private paths or identifiers. This
+is diagnostic capture, with no projectile mutation or device-acceptance claim.
+
+### Whole-game native HUD component slots (J1290)
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-whole-game-native-component-records.json` | `581a2f05b14d6ae18365386646a1e8b541cc33f2c0c26c7278f6e6913733d78f` |
+
+Audit: 2026-10-31. Original HUDSimple Canvas/Rigidbody and ItemIcon
+CanvasRenderer slots are identified by ordered component PPtrs, reciprocal
+qualified GameObject ownership, equal complete schemas and equal normalized
+bodies. Pinned AssetRipper GameObjectExtensions exposes ordered component
+traversal; existing J1273 native record production relocates only the checked
+GameObject pointer. No producer change or target scalar/body/template is added.
+The profile contains original selectors/hashes, native type identities and
+checked pointer remaps; generated bodies remain ignored. Three persisted records
+(108 bytes) are raw-exact J850. Complete-file, phone and install/update gates
+remain open.
+
+### Whole-game Timeline relationships (J1291)
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-whole-game-timeline-records.json` | `30557118e6555f13c9ba3b50510e2cd0b986c4d7fe422fcb580906a8043e513e` |
+
+Audit: 2026-10-31. Minimum original object selectors/hashes, output identities,
+checked PPtr relationships and one named import operation select 20 unique
+incoming tracks and their 23 ControlPlayableAsset children. An authored fixture
+in the exact editor independently proves managed PropertyName mapping import
+uses the default value. Original managed metadata establishes default integer
+zero; pinned AssetRipper `813fed1597bac674def7256ce633a227e7b27497`
+`YamlWalker`/`PropertyNameExtensions` establishes native decimal encoding.
+No target scalar template, native body, type tree, game implementation or private
+setting is published. All 43 persisted records match J850 raw-exact. Complete
+bundle, phone production, gameplay and install/update acceptance remain open.
+
+### Whole-game original prefab sources (J1292)
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-whole-game-prefab-source-records.json` | `fbc447822e5509b12a4ea6ca3c4f10d5a92b532609b44052d19bc627b5374cdb` |
+
+Audit: 2026-10-31. Ordered equal component fingerprints, reciprocal ownership
+and parent hierarchy select ten original SpeedTree GameObjects. Eight original
+ItemInfection prefab roots use the existing exported-filename projection; native
+components match, and managed components retain script identity, normalized body
+and pointer schema despite imported native hash differences. BrotherSwing uses
+the existing J288 detacher-removal policy after checking both original
+DetachParticleOnDestroyAndEndEmission script identities and retained component
+order. Pinned AssetRipper GameObjectExtensions establishes ordered component and
+root-parent traversal. Existing generic record production supplies every body;
+only original selectors/hashes, named policies, type identities and checked PPtr
+remaps are published. No target body, scalar template or implementation is added.
+All 19 persisted records (1,493 bytes) match J850 raw-exact; complete-file, phone
+production and install/update gates remain open.
+
+2026-10-31 authored owner pin refresh: `original-audio-owner-sources.json`
+updates only the public `PortSession.cs` hash for the default-off settings
+write observer startup request. Provenance, privacy, licensing and sensitive-content
+audit: authored source hash only; no game content, private inputs or identifiers.
+
+2026-11-04 ordinary-player startup build pin refresh: the camera build-hook
+source hash now includes the reviewed audio owner manifest pin from the startup
+change. Only the authored build-hook hash changes; no game-derived content or
+new input is introduced. A host contract verifies the camera source pin set.
+
+2026-10-31 camera build-hook pin refresh: `native-view-camera-transform.json`
+tracks the authored hook hash after its owner-manifest pin update. Provenance,
+privacy, licensing and sensitive-content audit: public authored hash only; no
+game content, private inputs or identifiers. Runtime camera outputs are unchanged.
+
+### Whole-game empty renderer membership (J1294)
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-whole-game-empty-renderer-records.json` | `6ea471b31c1f52acccf13a5679c7ce4dfa3ff5b450170aa831a7e5c4b9e5c07b` |
+| `owner-whole-game-renderer-membership-records.json` | `f3114997dbf56ebb1a63730b62fccb2501ddaf3375752821da5e29a5c700367c` |
+
+Audit: 2026-10-31. Existing J245 original AnimateShaderAlpha repair applies
+when an original GameObject lacks a renderer and its decal reference is absent
+or removed by the existing decal omission policy. Ordered original component
+lists and reciprocal ownership establish all fourteen cases. The existing empty
+MeshRenderer constructor preserves the original donor's native fields and type
+identity while applying its three disabled flags. Generic record production
+delegates that constructor, relocates checked owner PPtrs and uses existing
+component append for GameObject membership. Pinned AssetRipper
+GameObjectExtensions supplies ordered component traversal knowledge. Profiles
+contain only original selectors/hashes, native identities, named operations and
+checked relationships; no native body, scalar template, game implementation or
+private input is published. All 28 persisted records (3,090 bytes) match J850
+raw-exact. Complete-file, phone production and install/update gates remain open.
+
+### Whole-game catalog-witnessed materials (J1293)
+
+`owner-whole-game-material-compute-records.json` SHA-256:
+`2a8face247ee9a9b5480de17751bd075e89541393eafaae83bc4ad3f741cb9f7`.
+
+Audit: two original material selectors extend the existing record owner. Original
+catalog-root relationships independently identify the Enforcer and LunarGolem
+materials; original native schemas, pointer slots and all non-pointer fields match
+under the existing named keyword import policies. The recipe retains source pins,
+checked pointer mappings and output hashes only. No field payload, keyword string,
+type tree, shader program, private path or generated game content is included.
+J367/J371 and pinned EditorKit `HopooCloudRemapGUI` inform preservation of original
+property/blend fields rather than exporter defaults; no upstream code is copied.
+Both persisted records (2,856 bytes) match J850 raw-exact; 11 other witnessed
+materials still differ after existing policies and are excluded. Complete bundle,
+phone production, gameplay and install/update acceptance remain open.
+
+### Whole-game original MeshFilter ownership (J1296)
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-whole-game-meshfilter-records.json` | `4518372445d82bbdfaabfe197fed2fed9f54155c22e0fe7cdbc0dd78d16871f9` |
+
+Audit: 2026-10-31. Existing public GameObject source selections and the unique
+original MeshFilter class slot identify fourteen records. Reciprocal component
+ownership and both original pointer endpoints are checked against existing public
+suppliers, resolving external mesh members explicitly. Pinned EditorKit
+AddressablesPathDictionaryCache supplies GameObject/type component lookup
+knowledge. The existing generic record owner preserves schemas and all nonpointer
+bytes and relocates checked GameObject/mesh identities. This profile contains only
+original selectors, input/output hashes, native type identities and pointer
+relationships; no object bodies, scalar templates, game implementation or private
+paths are published. All fourteen persisted records (336 bytes) match J850
+raw-exact. Complete-file, phone production and install/update gates remain open.
+
+### Whole-game reciprocal managed ownership (J1295)
+
+`owner-whole-game-path-managed-records.json` SHA-256:
+`a96162e8d171e9ad73fdfdd90878a9ad448cdadb4e424072dc3614121f4ddb50`.
+
+Audit: ten original managed component selections extend the existing record owner:
+eight ItemDisplay and two EffectManagerHelper records. Qualified original
+GameObject component order and reciprocal owner links identify each component;
+full assembly/namespace/class identity and source MonoScript hashes independently
+check its type. The existing SDK properties-hash policy retains schema identity.
+Pinned ThunderKit FileIdUtil and AssetRipper MonoScriptExtensions inform these
+identity checks; no upstream implementation is copied. The additions contain
+only source selectors/hashes, native identities, checked pointer mappings and
+output hashes. No scalar template, original body, game implementation, private
+path or generated content is included. All ten persisted records (880 bytes)
+match J850 raw-exact. Complete bundle, phone and install/update gates remain open.
+
+### Whole-game original MeshRenderer ownership (J1298)
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-whole-game-renderer-records.json` | `65810a7caa3fba3a55557c0044cf5bccbbf66a0082d0bed02a0dd96b4224d208` |
+
+Audit: 2026-10-31. Existing public GameObject source selections and each unique
+original MeshRenderer class slot identify twelve records. Reciprocal component
+ownership and every original pointer endpoint, including unchanged and null
+references, are checked against existing public suppliers. Two records with
+unresolved material suppliers are excluded. Pinned EditorKit
+AddressablesPathDictionaryCache informs GameObject/type component lookup.
+The existing generic record owner preserves schemas and nonpointer bytes while
+relocating checked references. This profile contains only source selectors,
+input/output hashes, native type identities and pointer relationships; no object
+bodies, scalar templates, game implementation or private paths are published.
+All twelve persisted records (1,944 bytes) match J850 raw-exact. Complete-file,
+phone production and install/update gates remain open.
+| `owner-whole-game-shader-particle.json` | Original particle material and Shader pins, SDK declaration identity, dependency pointers and output hash; `shader_prefab.py`; J1297. |
+
+### Whole-game original-material particle Shader (J1297)
+
+`owner-whole-game-shader-particle.json` SHA-256:
+`cb4108d7c0c3484f208d2f8b48057cf93786674f96a7cee9120512abf66c9a83`.
+
+Audit: existing `shader_prefab.py` compiles acquired SDK 211 declarations using
+original particle fragment order and an original UI material whose checked
+external Shader pointer identifies the selected original shader. The existing
+particle owner retains runtime feature alternatives and excludes scene fog;
+no accepted keyword/pass/program table is an input. Pinned AssetRipper
+`DummyShaderTextExporter` at `1ac666f47d8e9dedf96afb0b914c70d7656151ea`
+continues to inform property/fallback contracts; it supplies no particle code.
+The profile contains only input pins, source identities, dependency pointers and
+output hashes. No source body, private path or generated content is published.
+The persisted 25,056-byte record is independently raw-exact to J850. Complete
+bundle, phone, gameplay and install/update gates remain open.
+
+### Whole-game original Tree and WindAsset ownership (J1300)
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-whole-game-tree-records.json` | `751feacef112c6688858ab239c0206f57fa4759d72b489b6e6f741f25d578da0` |
+
+Audit: 2026-10-31. Published original prefab GameObjects, unique Tree class
+slots and reciprocal component ownership identify eight Trees. Their original
+non-owner pointers identify two SpeedTreeWindAssets. Every pointer endpoint,
+including null and unchanged references, resolves to a checked public supplier.
+Pinned EditorKit AddressablesPathDictionaryCache informs component lookup through
+GameObjects. The existing generic record owner preserves native schemas and all
+nonpointer bytes; class 228 admission adds WindAssets to that owner. This profile
+contains only original selectors, hashes, native type identities and pointer
+relationships. No object bodies, scalar templates, game implementation or private
+paths are published. All ten persisted records (2,952 bytes) match J850 raw-exact.
+Complete-file, phone production and install/update gates remain open.
+
+| `owner-whole-game-shader-calmwater.json` | Original CalmWater Shader pins, checked local fallback edge, public template identity and output hashes; `shader_prefab.py`; J1299. |
+
+### Whole-game original CalmWater fallback graphs (J1299)
+
+`owner-whole-game-shader-calmwater.json` SHA-256:
+`2f272216acd8c3979f866937400ca0ee6b685aba9ae370a9a532af55530a61c1`.
+
+Audit: existing `shader_prefab.py` combines original parsed properties with the
+pinned public SingleColor exporter template and acquired SDK compiler. Original
+local dependencies independently witness the DX11 fallback edge; DoubleSided
+retains its original unresolved fallback literal without a dependency. Pinned
+AssetRipper `DummyShaderTextExporter` at
+`1ac666f47d8e9dedf96afb0b914c70d7656151ea` emits fallback literals independently
+of resolution, informing this preservation policy. No original implementation,
+accepted keyword table or shader program is a producer input. The recipe contains
+only original/SDK/template pins, source identities, one pointer mapping and output
+hashes; no protected body, private path or generated bytes are published. Both
+persisted records (12,928 bytes) independently match J850 raw-exact. Complete
+bundle, phone production, gameplay and install/update gates remain open.
+
+
+| `owner-whole-game-transform-owner-records.json` | Original Transform selectors, checked component/owner relationships, native schemas and output hashes; `record_produce.py`; J1301. |
+
+### Whole-game original Transform ownership (J1301)
+
+`owner-whole-game-transform-owner-records.json` SHA-256:
+`e02b80ee9fa096e2d497187ae5f1b9bc5ae0ff988747579f13265d9831a1e44e`.
+
+Audit: qualified public GameObject recipes independently identify the original
+Transform through its ordered component slot and reciprocal GameObject pointer.
+Ten common-props and eight Brother records retain their original native type
+hash, pointer shape and every nonpointer byte, including float bits. Only checked
+references relocate through the unchanged generic record owner. J426's pinned
+UnityPy `PPtr.deref` and `ObjectReader.peek_name` inform original member/path-ID
+ownership; names alone do not select these records. Source parent/child edges
+remain intact. The eight unresolved SolusWing records are excluded because their
+original scale bits differ; no target scalar template or rounding policy is added.
+The recipe contains only original selectors, hashes and relationship mappings;
+no protected bodies, implementation, private paths or generated content. All
+eighteen persisted records (1,320 bytes) match J850 raw-exact. Complete-bundle,
+phone production and install/update acceptance remain open.
+
+
+### Whole-game original Billboard ownership (J1302)
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-whole-game-billboard-records.json` | `fabfa2f7e4692c71063f3c723b6f585681ef291dd603b34f0bb5798446c4c79e` |
+
+Audit: 2026-10-31. Qualified original GameObjects, unique BillboardRenderer
+component slots and reciprocal ownership identify two renderers. Their original
+Billboard pointers identify two BillboardAssets; original material endpoints
+resolve to existing public suppliers. Pinned AssetRipper PPtrExtensions at
+`813fed1597bac674def7256ce633a227e7b27497` informs local/dependency pointer
+resolution. The existing generic owner admits native classes 226/227, preserving
+native schemas and every nonpointer byte. This profile contains only original
+selectors, hashes, native identities and checked pointer relationships. No object
+body, scalar template, game implementation, private path or generated content is
+published. All four persisted records (808 bytes) match J850 raw-exact. Three
+remove saved census residuals; the fourth's overlap is unproven. Complete-file,
+phone production and install/update gates remain open.
+
+
+### Whole-game original LODGroup ownership (J1304)
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-whole-game-lodgroup-records.json` | `4b1fb0450355c9ce57b70bf223a2d73a0820703f8b081ebfb1d0bd9ea62b4e59` |
+
+Audit: 2026-10-31. A unique original LODGroup component slot and reciprocal
+qualified GameObject ownership select the source. Every original LOD renderer
+endpoint resolves to an existing public supplier, including J1302's Billboard.
+Pinned AssetRipper PPtrExtensions at `813fed1597bac674def7256ce633a227e7b27497`
+informs local/dependency pointer resolution. The unchanged generic record owner
+preserves native class 205, schema and every nonpointer byte, relocating only
+checked references. The profile contains original selectors, hashes, native
+identity and relationship mappings; no protected bodies, scalar templates,
+implementation, private paths or generated content. The persisted record is
+raw-exact to J850 (140 bytes). A second candidate remains excluded for missing
+public renderer suppliers. Complete-file, phone production and install/update
+acceptance remain open.
+
+
+### Whole-game original PlayableDirector ownership (J1305)
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-whole-game-director-records.json` | `a76af2367dc096d0bf862455af699c4f817f6ec40bc9d848a0d5a7a03bec036f` |
+
+Audit: 2026-10-31. Unique original Director component slots and reciprocal
+qualified GameObject ownership select ConduitCanyon and SolusAmalgam sources.
+All original pointer endpoints resolve through shipped selectors, including
+compressed hierarchy suppliers and checked typed reference endpoints. Pinned
+AssetRipper PropertyNameExtensions.GetIdString and YamlWalker explain signed
+integer exposed-name export; the existing record owner reimports those names
+and relocates checked references while preserving the native schema and fields.
+The profile contains selectors, hashes, native identity and relationship mappings;
+no protected bodies, target scalar templates, implementation or private paths.
+All three persisted records (1,380 bytes) match J850 raw-exact (J1305/J1309).
+Champrush endpoints follow 80 original Transform pairs rooted at a published
+GameObject selection and seven connected Director suppliers, including the
+reciprocal Animator component slot. Only identities and checked relationships
+are published; original hierarchy/animation data stays local.
+Complete-file, phone and install/update gates remain open.
+
+### Whole-game Meridian material relationships (J1303)
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-whole-game-meridian-material-records.json` | `d6438f2ab2ddb8170bda115fba368259f2e9f0801fe0cbd83dcdaa9fcd8a307a` |
+
+Audit: 2026-10-31. Four original Meridian Materials retain their complete
+source bodies and keyword state; the existing `record_produce.py` owner changes
+only schema-checked Shader/texture references. Original material identities and
+public texture selections witness the endpoints; the shared original Shader
+identity is retained as a dependency, without claiming its production is closed.
+The profile contains only legitimate input selectors, hashes, pointer mappings
+and output identities. No source body, generated program, private path or
+protected implementation is published. Pinned community source/identity techniques
+in `docs/community-prior-art.md` inform relationship inspection; current input
+and persisted J850 byte comparison remain authoritative.
+
+All four persisted records are raw-exact (1,184 bytes); one belongs to the saved
+unresolved census, reducing 104 to 103. Other overlapping outputs are not counted
+as new closures. Complete bundle, phone production and runtime gates stay open.
+
+### Whole-game Standard fallback keyword registration (J1306)
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-whole-game-shader-standard-fallback.json` | `1b2b7eaad21fc49eb1eea48ed17484ad0709604a8247c4f16ed5d41bd8147668` |
+
+Audit: 2026-10-31. The existing prefab Shader owner derives two original
+Shader records from pinned legitimate input, public exporter templates and
+acquired SDK fallback 46. Keyword registration traverses each snippet's stages,
+then global/local declarations and builtin names, preserving first registration
+and existing flags. No accepted keyword table is supplied to production.
+Pinned AssetRipper `1ac666f47d8e9dedf96afb0b914c70d7656151ea`,
+`DummyShaderTextExporter.cs:49-78`, informs property/template/fallback handling;
+current SDK metadata and independently persisted J850 equality qualify ordering.
+The profile contains only original selectors, hashes, authored filenames,
+public template identities, SDK relationships and output pins. No protected
+source body, program, generated data, private path or credential is published.
+Both persisted records are raw-exact (12,004 bytes); complete-file, phone
+production and runtime acceptance remain open.
+
+### Whole-game inserted-component sequence ownership (J1308)
+
+`owner-whole-game-path-managed-records.json` SHA-256:
+`f60ed7b00484c57041745ef89a292dbfd0b84cfc3a9cff59b77466c8b489a4e8`.
+
+Audit: 2026-10-31. Five original managed component selectors extend the existing
+record owner: four ProjectileNetworkTransform records and one TeamFilter.
+Already-qualified GameObject recipes declare source omissions and the appended
+SilentProjectileBoundary identity. Filtering that insertion leaves the complete
+original class and assembly/namespace/class sequence unchanged; ordered occurrence
+and reciprocal GameObject owners uniquely identify duplicate components.
+Pinned ThunderKit FileIdUtil and AssetRipper MonoScriptExtensions inform full
+script identity, as in J1281/J1295. Native schema and all nonpointer bytes remain
+original; only GameObject/MonoScript pointers relocate. The recipe contains input
+selectors, hashes, native identities and checked relationship mappings, without
+protected bodies, scalar templates, implementation, private paths or generated
+content. All five persisted records match J850 raw-exact (360 bytes). Complete
+bundle, phone production and install/update acceptance remain open.
+
+### Whole-game original TerrainData Shader closure (J1310)
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-whole-game-terrain-shaders.json` | `f9611252293e4750fab696f851005b5ea5b907323de7fdad4ef7068c3d89b7bf` |
+
+Audit: 2026-10-31. The shipped original Title TerrainData selection supplies
+eleven explicit preload Shader relationships. Its checked external bundle
+contains the actual original Shader records; names, properties and native schema
+select acquired SDK Shader equivalents through the unchanged `shader_prefab.py`
+owner. SDK native terrain preload collection corroborates inclusion but is not
+a recipe input. Pinned AssetRipper `1ac666f47d8e9dedf96afb0b914c70d7656151ea`,
+`DummyShaderTextExporter.cs:49-78`, informs source name/property preservation;
+current original pointers and persisted J850 comparison remain authoritative.
+The profile contains only source selectors, SDK identities/settings and hash pins;
+no protected body, shader program, generated content or private path is published.
+All eleven persisted records are raw-exact, 79,656 bytes; exact public coverage
+reduces the saved residual from 93 to 82. Complete bundle, phone
+production, installation and original runtime remain open.
+
+### Whole-game empty TerrainData detail Shaders (J1312)
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-whole-game-terrain-detail-shaders.json` | `90928b2df1554a0e43c0ae93543a71b8be37e1da05baab917aa3108282f4b0ee` |
+
+Audit: 2026-10-31. Original Title TerrainData's three indexed default Shader
+pointers identify the original detail Shaders. Its empty detail prototype array
+supplies the usage witness for the existing fresh-mono instancing stripping
+policy; the acquired SDK DetailRenderer constructor corroborates that no
+prototype instancing caches are created. Original Shader records retain their
+instancing declarations and supply names, properties, native schema and fallback
+identity. The existing `shader_prefab.py` owner checks the pinned TerrainData,
+external member and default Shader identity before selecting variants.
+Pinned AssetRipper `1ac666f47d8e9dedf96afb0b914c70d7656151ea`,
+`DummyShaderTextExporter.cs:49-78`, informs property/fallback preservation.
+Only input selectors, relationships, SDK settings and hashes are published;
+no protected source/program body, generated content or private path is included.
+All three persisted records are independently raw-exact to J850, 131,996 bytes;
+public saved residual reduces from 82 to 79. Complete bundle, phone production,
+installation and runtime gates remain open.
+
+### Whole-game controller-owned managed record (J1314)
+
+`owner-whole-game-path-managed-records.json` SHA-256:
+`37c587c9c70e6027a7f876e455a7a4324e8da8d93fec3fcb2374c81837cffad1`.
+
+Audit: 2026-10-31. The qualified original VoidRaidCrab AnimatorController's
+indexed state-machine behaviour array identifies one original managed record.
+The existing controller behaviour order supplies the output identity; original
+native type/script schema and every nonpointer byte agree independently. Only
+the MonoScript pointer relocates through the unchanged record producer.
+Pinned ThunderKit FileIdUtil and AssetRipper MonoScriptExtensions full
+assembly/namespace/class identity inform script checks, as in J1281/J1295.
+Only source selectors, relationship mappings and hash pins are published; no
+protected body, implementation, generated content or private path is included.
+The persisted record is raw-exact to J850, 60 bytes. Saved public residual
+79 to 78 excludes parallel controller closures; complete bundle, phone
+production, installation/update and runtime acceptance remain open.
+
+### Whole-game duplicate clip-name controllers (J1313)
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-animator-controllers.json` | `c417169cfdd6dcc7255c475d94cbcbc23bfbbfaac333f8796962730a0b567abe` |
+
+Audit: 2026-10-31. Existing J1143/J1286-J1288 relationship policies add
+DroneTech, FalseSonNew and Drifter. Original clip identities, selected export-name
+collision ordinals, state permutations and checked PPtr edges feed the unchanged
+controller producer. Original layer/state keys, range indices and ordinal resolve
+identical behaviour bodies; script/body equality remains checked. Pinned
+AssetRipper ExportCollection.GetUniqueFileName and GetStateBehaviours document
+the collision and range relationships. This is a selected reconstruction, not a
+generic historical export-order inference. Only source selectors/hashes, ordinal
+policies and checked pointer remaps ship; no target strings, scalar values, body,
+type template, implementation or private settings. Three new persisted records
+(107,980 bytes) match J850 raw-exact. Earlier outputs are unchanged; complete
+bundle, phone production and install/update gates remain open.
+
+### Whole-game controller state-range managed records (J1316)
+
+`owner-whole-game-path-managed-records.json` SHA-256:
+`46138646bcc4c0c6974638fdcf8b16a2fd47f9de0ae2a28d363aaf7a737b8dde`.
+
+Audit: 2026-10-31. Twelve original managed records are selected by original
+AnimatorController identity, matching layer/state dictionary keys, range count
+and behaviour ordinal through the indexed behaviour array. Railgunner, FalseSon,
+and Chef source controllers supply these relationships independently
+of whether their complete controller records can already be reconstructed.
+Original native/script schemas and all nonpointer bytes agree; the unchanged
+record producer relocates only checked MonoScript pointers. Pinned AssetRipper
+`1ac666f47d8e9dedf96afb0b914c70d7656151ea`,
+`AnimatorControllerExtensions.cs:44-71`, documents the range/index indirection.
+Only source selectors, relationship mappings and hashes are published; no
+protected body, implementation, generated content or private path is included.
+All twelve persisted records are raw-exact to J850, 716 bytes. Saved public
+residual 75 to 63 includes the merged controller closures. Complete bundle,
+phone production, installation/update and runtime gates remain open.
+
+
+### Whole-game native component and Material suppliers (J1319)
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-whole-game-native-material-supplier-records.json` | `d7e1b7f4ec940109e3228445e42318154a368f8862710827c4131e7257d80d6e` |
+
+Audit: 2026-10-31. Original GameObject component lists, reciprocal ownership and
+unique native class slots select two Renderers and one LODGroup. Ordered
+Renderer Material slots identify four Materials; every relocated pointer has an
+original supplier witness. The shared Shader mapping comes from the public
+Commando fallback recipe. The unchanged record producer preserves native schemas
+and nonpointer bytes, using the existing dummy-Shader keyword demotion policy.
+Pinned RoR2EditorKit AddressablesPathDictionaryCache.cs:203-214 and AssetRipper
+GameObjectExtensions FetchComponents/GetComponentAccessList inform identity;
+the pinned TransparentDiffuse template has no keyword variants. Only original
+selectors, identity relationships, checked pointer remaps and hash pins ship;
+no body, keyword string, material value, protected program or private path.
+Seven persisted records are raw-exact to J850, 2,768 bytes. Complete bundle,
+phone production, installation/update and runtime acceptance remain open.
+### Whole-game shrine component relationships (J1318)
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-whole-game-hierarchy-path-records.json` | `633ffe0b124232321bb76ee8a46f209c97481888fea4388dc9a014ce195125e7` |
+| `owner-whole-game-path-managed-records.json` | `2a32cff26498ddef58c73f87f57daaa58e1e4c406ccb7948ac36d76977793d95` |
+
+Audit: 2026-10-31. Original typed ShrineCombatPoison prefab path identifies
+its GameObject. Its complete sixteen-component native/script sequence and
+reciprocal owners identify both CombatDirector slots without name matching.
+Existing source record production retains native schemas and nonpointer bytes
+and relocates checked component, script and object references. Pinned R2API
+DirectorAPIinternal.cs:22-28,75-78 describes per-instance Director state;
+it supplies no shortcut for serialized duplicate identity. Original typed paths
+and full sequences retain the J1276/J1281/J1308 policies. Only original selectors,
+relationship mappings and hashes ship; no protected body, implementation,
+generated content or private path is included. All three persisted records
+are independently raw-exact to J850, 699 bytes. Saved public residual 63 to 60
+excludes parallel closures; complete bundle and phone/runtime gates remain open.
+
+### Whole-game build-missing script component
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-whole-game-missing-script-records.json` | `36732035bfe1a3fecf454e024a740850e4c92faba98f295bbddf073a898ae571` |
+
+Audit: 2026-10-31. The original Rewired GameObject's existing public selector,
+component slot two and reciprocal owner select NintendoSwitchInputManager.
+The existing J1225 `missing_script_base` policy retains its first 32 base bytes,
+uses the pinned original Black Beach base MonoBehaviour type and relocates the
+checked owner and absent-script pointers. The complete donor type agrees with
+the accepted type. Pinned RoR2ImportExtensions `AssemblyBlacklist.Process`
+illustrates platform/import-dependent assembly provision; it supplies no Android
+script replacement. Existing Rewired runtime results remain untouched.
+Only source selectors, hashes, extent and checked relationships ship; no body,
+type template, decompiled implementation or private settings are published.
+The persisted 32-byte record is raw-exact to J850. Saved residual 60 to 59
+excludes parallel closures; complete bundle and phone/runtime gates remain open.
+
+### Whole-game fallback Material keywords
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-whole-game-fallback-material-records.json` | `715a6477f46159d5d85f8f4726713b6d14583d2b2c329ae39443936eccfd78c8` |
+
+Audit: 2026-10-31. Existing catalog identities select eleven original Materials
+whose Texture Scrolling Wireframe Shader uses the published Standard fallback.
+The existing SDK Shader reader and keyword registry derive its declaration space
+from pinned SDK object 46; original strings partition into valid/invalid arrays,
+with invalid names sorted by the existing ordinal policy. All scalar/property
+bytes remain original. Pinned AssetRipper 1ac666f DummyShaderTextExporter retains
+fallback names; EditorKit metadata informs property boundaries, not scalar fitting.
+The Gauntlet skybox Material uses its original catalog identity (comma-normalized
+export path) and existing dummy sorting. Published Commando Shader and RGBA texture
+recipes independently witness all five endpoints. Only selectors, hashes, named
+policies and checked pointer relationships ship; no body, generated content or
+private paths are included. Twelve persisted records are raw-exact to J850,
+39,788 bytes. Saved public residual 57 to 45; final-file readiness remains
+693/705 available, 685 raw-exact. Complete bundle and phone/runtime gates stay open.
+
+
+### Whole-game synced motion and Mimic controllers
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-animator-controllers.json` | `ff69865d77a5987188f2f230c57c597ed9fcd7b865313ef9c0bc4caca4d4a610` |
+
+Audit: 2026-10-31. Original VoidSurvivor and Chef controller identities select
+synced layers whose pinned AssetRipper 813fed15 processor omits motion overrides.
+StateConstantExtensions.GetBlendTree selects the first source tree; the producer
+retains that tree, remaps surviving clip occurrences and omits later overrides.
+Only the observed empty single-leaf shape is admitted: 68 serialized bytes,
+nine arrays, one node and no populated nested blend data. Source-only matching
+across 479 controller pairs establishes a 152-byte blob-size marginal per tree;
+this is empirical source evidence, not native deserializer heap allocation.
+Mimic reuses existing collision-ordinal and source relationship policies.
+Only source selectors, policies, pointer relationships and hashes ship; no
+controller body, decompiled implementation or generated content is included.
+Three persisted records are raw-exact to J850, 28,684 bytes. Saved residual
+45 to 42; readiness stays 693/705 available, 685 raw-exact. Complete bundle,
+phone production, installation/update and runtime gates remain open.
+
+### Whole-game Scope Shader texture dimension
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-whole-game-scope-shader.json` | `6f3c838d45980ceb52454834035df7b40000735a5193906b9844e78abe7f8948` |
+
+Audit: 2026-10-31. The original Shader body/hash and existing authored export
+path select the Scope record. Pinned AssetRipper 1ac666f
+`DummyShaderTextExporter.cs` texture switch (lines 163–168) emits `any` for
+native texture dimension one. The existing property owner now retains that
+texture type/dimension instead of rejecting the declaration. Original property
+metadata independently agrees; no integer-property change is included. The pinned
+TransparentDiffuse template and existing producer supply the Android record.
+Only original selectors, hashes, authored paths and public template pins ship;
+no original property strings, shader programs, generated bytes or private paths.
+The persisted record is independently raw-exact to J850, 4,940 bytes. Saved
+public residual 45 to 44 excludes pending peer closures; readiness remains
+693/705 available, 685 raw-exact. Complete bundle and phone/runtime gates stay open.
+
+### Whole-game PowerOrb synced motion controller
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-animator-controllers.json` | `ff672f2499ca6604fd3524f47adf8c8385c110c2c76f6ef2a5577a4f81dcf64d` |
+
+Audit: 2026-10-31. Original PowerOrb controller identity selects the shared
+state machine and synced layers. Pinned AssetRipper 813fed15
+VirtualAnimationFactory.cs:215-223 and StateConstantExtensions.cs:18-20 select
+the first source tree; AnimatorControllerProcessor.cs:93-139 leaves synced
+overrides empty. The existing controller owner retains source clip occurrences,
+clears skeleton masks and applies J1322's source-evidenced 152-byte marginal.
+Only selectors, hashes, named policies and checked pointer relationships ship;
+no controller body, generated content or private path is included. One persisted
+record is independently raw-exact to J850, 1,256 bytes. Final-file readiness
+stays 693/705 available, 685 raw-exact; complete bundle, phone production,
+installation/update and runtime gates remain open.
+
+
+### Whole-game Legacy Transparent Shader material selection
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-whole-game-legacy-transparent-shader.json` | `c3889bebdd48bbbb8f26ee966f484e2e8b87c6920ab7cbad8e030310fd3f9e9d` |
+
+Audit: 2026-10-31. A complete current-input census of 970 bundles and 9,080
+Materials identifies six native-pointer users of Legacy Transparent/Diffuse.
+All six original Materials disable instancing. Their pinned bodies and checked
+Shader relationships select the existing SDK no-scene variant policy without
+instancing; the particle-specific feature policy remains intact. Prior art:
+EditorKit SerializableShaderWrapper preserves Shader name/GUID identity; pinned
+AssetRipper 1ac666f exporter templates supply original declaration metadata.
+Only source selectors, hashes, settings, relationships and SDK/template pins ship;
+no original bodies, programs, keyword strings or generated content are included.
+One persisted record is independently raw-exact to J850, 14,416 bytes. Combined
+saved public residual 41 to 40; readiness stays 693/705 available, 685 raw-exact.
+Complete bundle, phone production, installation/update and runtime remain open.
+
+### Whole-game VoidWard synced motion controller
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-animator-controllers.json` | `9254e6205034e97264824935588371a776032270b13eedd843bc2fb105d3dbef` |
+
+Audit: 2026-10-31. Original animVoidWardCrab identity selects its source states,
+first-tree motions and clip occurrences through the existing J1322 controller
+owner. Pinned AssetRipper 813fed15 StateConstantExtensions.cs:18-20 selects
+tree zero; AnimatorControllerProcessor.cs:108-138 recreates synced links without
+motion overrides. The existing source-evidenced 152-byte marginal applies.
+Only selectors, hashes, named policies and checked pointer relationships ship;
+no controller body, generated content or private path is included. One persisted
+record independently matches J850 raw-exact, 2,020 bytes. Final-file readiness
+stays 693/705 available, 685 raw-exact. Complete bundle, phone production,
+installation/update and runtime gates remain open.
+
+
+### Whole-game False Son synchronized behaviour controller
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-animator-controllers.json` | `6ca5a23b0f40b8067a3fa02a1d62c18ce0ea676484b724a913c05898535b509d` |
+
+Audit: 2026-10-31. Original False Son layer/state keys select synchronized
+behaviour overrides omitted by pinned AssetRipper 813fed15
+AnimatorControllerProcessor.cs:93-138. The existing controller owner retains
+source index order, compacts surviving ranges and preserves pointer identities;
+its existing first-tree motion and clip policies apply. Only source selectors,
+hashes, policies and checked pointer relationships ship; no controller body,
+generated content, target byte patch or private path is included.
+One persisted controller independently matches J850 raw-exact, 2,420 bytes.
+Authored fixtures cover range compaction independently of game inputs.
+Final-file readiness stays 693/705 available, 685 raw-exact. Complete bundle,
+phone production, installation/update and runtime gates remain open.
+
+### Whole-game UI and Railgunner display synchronized controllers
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-animator-controllers.json` | `142d4b25e4566ddf4aa257f5e1fbc87b720346d0ed28556784b7e2181e38c9be` |
+
+Audit: 2026-10-31. Original UI and Railgunner display layer/state identities
+select the existing controller owner's first-tree motion, null-motion and
+synchronized override policies. Pinned AssetRipper 813fed15
+AnimatorControllerProcessor.cs:93-138 leaves synchronized overrides unset.
+Only source selectors, hashes, policies and checked pointer relationships ship;
+no controller body, generated content, target byte patch or private path is included.
+Two persisted controllers independently match J850 raw-exact, 6,140 bytes.
+Final-file readiness stays 693/705 available, 685 raw-exact. Complete bundle,
+phone production, installation/update and runtime gates remain open.
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-animator-controllers.json` | `88683044a35ff7884575ad4c9f05bc4128dfccbbee2e6e46be919e1392b48231` |
+
+Audit: 2026-10-31. Original Seeker layer/state identities select the existing
+controller owner's source ordering, null-motion and synchronized override policies.
+Pinned AssetRipper 813fed15 AnimatorControllerProcessor.cs:93-138 omits synced
+overrides. Only source selectors, hashes, policies and checked pointer relationships
+ship; no controller body, generated content, target patch or private path.
+One independently persisted controller matches J850 raw-exact, 24,584 bytes.
+Final-file readiness stays 693/705 available, 685 raw-exact; complete bundle,
+phone production, installation/update and runtime remain open.
+
+### Whole-game remaining alpha renderer records
+
+Audit: 2026-10-31. Four selectors extend the existing J1294 empty-renderer
+profile and constructor; no new producer or payload template is introduced.
+Original ordered component lists, retained sibling suppliers and reciprocal
+GameObject ownership independently identify the Chef, BeetleQueen, DLC4 and
+Croco alpha hosts. The J245 omitted-Decalicious repair explains renderer
+insertion. Pinned AssetRipper GameObjectExtensions supplies ordered component
+traversal knowledge. Published additions contain only original donor selectors,
+checked owner PPtr relocations, type identities and output hashes; no game body,
+private path, generated content or proprietary implementation is included.
+Four persisted records, 576 bytes, match J850 raw-exact; GameObject membership
+and complete-file, phone installation/update gates are separate and remain open.
+
+### Whole-game False Son Boss controller
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-animator-controllers.json` | `3481bfc27161bb1386a3072a574d7d091b455df70ce2b42620420e4d7836fc42` |
+
+Audit: 2026-10-31. Original False Son Boss layer/state identities select the
+existing controller owner, including duplicate clip-name collision ordinals.
+Pinned AssetRipper 813fed15 ExportCollection.cs:70-91 derives unique exported
+names after clone/instance cleanup. Only source selectors, hashes, policies and
+checked pointer relationships ship; no controller body, generated content,
+target byte patch or private path is included.
+One independently persisted controller matches J850 raw-exact, 19,584 bytes.
+Final-file readiness stays 693/705 available, 685 raw-exact; complete bundle,
+phone production, installation/update and runtime remain open.
+
+### Whole-game expanding-wave Transform callbacks
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-whole-game-transform-owner-records.json` | `8de79965e62ba314f968dd1be244296c2f404ef3a9a6671c9fe94acb98470104` |
+
+Audit: 2026-10-31. Eight original Transform selectors extend the existing record
+owner with a source callback endpoint-distance projection. Pinned original
+MonoScripts identify the two expanding-wave callback types; source radius, segment
+count, curve endpoint and root position supply the float32 calculation. Reciprocal
+Transform hierarchy and HitBoxGroup/ghost membership establish ownership.
+Pinned AssetRipper 1ac666 TransformExtensions.cs:11 and YamlWalker.cs:430 preserve
+floats unchanged; this is a callback-specific projection, not generic rounding.
+Only selectors, hashes, checked pointer relationships and an authored calculation
+ship. No original implementation, target-derived scalar, game body or private path
+is included. Other native bytes remain intact before checked pointer relocation.
+Eight persisted records match J850 raw-exact, 592 bytes. Complete-file readiness,
+phone installation/update and runtime gates remain open.
+
+### Whole-game VoidSurvivor synchronized layer chain
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-animator-controllers.json` | `e84b83a4ce6b4ae8734c8d52a40f69410b45dccd867c2dc02e08d7f517370c9d` |
+
+Audit: 2026-10-31. Original VoidSurvivor layers select the existing controller
+owner's synchronized-link resolution. Inspected AssetRipper 1ac666f
+AnimatorControllerProcessor.InitializeLayer exports machine indices as layer
+links; resolving those original chains derives machine groups and ordinals.
+Exact-editor allocation tracing establishes aligned source index-array sizes.
+Only selectors, policies, hashes and checked pointer relationships ship; no
+controller body, generated content, target byte patch or private path is included.
+One independently persisted controller matches J850 raw-exact, 16,376 bytes.
+Final-file readiness stays 693/705 available, 685 raw-exact; complete bundle,
+phone production, installation/update and runtime remain open.
+
+### Whole-game Reaper secondary-swing animation
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-animation-clips.json` | `20b3c6bc413a89c082070597290a8181f0343ec5d324ff261eb731a2ad309031` |
+
+Audit: 2026-10-31. One original AnimationClip selector uses the existing native
+stream, reference-pose removal, quaternion normalization and atan2 root-average
+policies. Original curve channels, orientation, loop and mirror fields supply
+the calculation. J1143's pinned AssetRipper 1ac666 StreamedCurveKey and
+CustomCurveResolver provide tangent/binding prior art; the existing synthetic
+root-motion fixture checks atan2 projection. Only selectors, hashes and existing
+policy flags ship; no curve, target scalar, generated body or private path is
+included. Independently persisted output matches J850 raw-exact, 262,216 bytes.
+Complete bundle, phone installation/update and original runtime remain open.
+
+### Whole-game Heretic/Railgunner base-motion normalization
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-animator-controllers.json` | `88f20d197bb515390ef1f68ac242b48823a16fd16e6b3096c27c3f470edff165` |
+
+Audit: 2026-10-31. The existing controller owner follows pinned AssetRipper
+813fed1597bac674def7256ce633a227e7b27497 StateConstantExtensions.GetBlendTree
+and VirtualAnimationFactory: retained tree zero becomes base motion regardless
+of its original synchronized slot. Override indices become unavailable.
+Only original selectors, hashes, checked relationships and policies ship; no
+controller body, target patch, generated data or private path is included.
+Two independently persisted records match J850 raw-exact, 28,916 bytes.
+Complete bundle, phone production, installation/update and runtime remain open.
+
+### Whole-game Bandit/Enforcer populated synchronized trees
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-animator-controllers.json` | `c9d9c6b31cce330d6f5fbc1ada7331582f675bc9031377ca3e420cafaa874178` |
+
+Audit: 2026-10-31. The existing controller owner derives omitted populated
+1D/2D tree allocation from original node, child, threshold and neighbor counts.
+Exact-editor source-only native tracing supplies pointer/header strides and
+alignment; pinned AssetRipper 813fed1597 GetBlendTree supplies tree-zero export
+prior art. Only original selectors, checked pointer relationships, hashes and
+policies ship; no controller body, target size patch, generated data or private
+path is included. Two independently persisted records match J850 raw-exact,
+44,048 bytes. The previously qualified VoidSurvivor selector is restored to the
+profile bundle list from an incorrectly nested member. Complete bundle, phone
+production, installation/update and original runtime remain open.
+
+The point-sound timeout owner source pin admits the authored session dispatcher
+that calls the unchanged original timeout method while its application owner is
+inactive. Original timeout configuration, clock and pool behavior remain source-owned.
+The recipe contains only the authored-source hash; no original code or runtime data.
+
+### Whole-game Acolyte null AvatarMask defaults
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-animator-controllers.json` | `b6b9c1e95887a702b1cffda99b2f4e980c7f6bfadddb8bb5b45b7c32933a4154` |
+
+Audit: 2026-10-31. The existing mask-omission policy restores the native full
+83-bit human mask and removes skeleton entries when exported AvatarMasks are
+null. Pinned AssetRipper 813fed1597 AnimatorControllerProcessor.InitializeLayer
+leaves recreated masks null; exact-editor BuildAsset/GetMask/FullBodyMask
+tracing establishes the default independently of accepted output. Only source
+selectors, relationships, hashes and policies ship; no controller body, target
+patch, generated data or private path is included. One independently persisted
+record matches J850 raw-exact, 23,108 bytes. Complete bundle, phone production,
+installation/update and runtime remain open.
+
+### Whole-game BeetleQueen ghost FX managed records
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-whole-game-path-managed-records.json` | `da13fa261b0f5933a675ed5a8ec60a308cf3ed3e7becde684d89c0414ada01ac` |
+
+Audit: 2026-10-31. Existing record production selects the original
+BeetleQueenAcidGhost/FX components through the already qualified root and unique
+reciprocal Transform hierarchy. Pinned AssetRipper GameObjectExtensions
+FetchComponents/GetTransform supplies hierarchy observation prior art.
+Original script/type identity and scalar bytes remain unchanged; only checked
+PPtrs relocate, including the omitted component's null reference. Recipes hold
+source/destination selectors, hashes and pointer relationships; no scalar patch,
+protected body, generated data or private path ships. Two independently persisted
+records match J850 raw-exact, 216 bytes. Complete bundle, phone production,
+installation/update and original runtime remain open.
+
+### Whole-game Billboard material-feature Shader
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-whole-game-billboard-shader.json` | `e1c4e3a399233ded23e25eb36fdb01cf899c0947c849cd4adc3b2147f79765f7` |
+
+Audit: 2026-10-31. Six original published Material witnesses retain the default
+and observed feature combinations separately. Original vertex-stage keyword
+records order retained variants, including vertex-only runtime alternatives;
+the existing SDK native-order mechanism governs compiled-program interning.
+Pinned AssetRipper 1ac666 SimpleShaderExporter/DummyShaderTextExporter supplies
+exporter prior art but no permutation authority. Only selectors, hashes,
+relationships and policies ship; no Shader text, program, target patch or private
+path is included. Persisted public output is J850 raw-exact, 292,980 bytes.
+Complete bundle, phone production, installation/update and runtime remain open.
+
+### Whole-game original Noto Font
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-whole-game-font-records.json` | `6bbe62c89e40b8660d8f4bba1d9fae670ecc4c02f25e768eb004ee246401aa6b` |
+
+Audit: 2026-10-31. J1113's pinned original Noto Font supplies the complete
+FontData and native schema. Published original Material/Texture relationships
+identify the two relocated pointers. Pinned AssetRipper FontExtensions
+TryGetFontMaterial/TryGetFontTexture/GetFontExtension supplies observation prior
+art. The existing generic record owner admits Font class 128 and preserves all
+nonpointer bytes. Only selectors, hashes and checked relationships ship; no font
+bytes, generated data, scalar patches or private paths are included. Independent
+public production reproduces one J850 record, 16,412,474 bytes. Complete bundle,
+phone production, installation/update and original runtime remain open.
+
+### Whole-game surface Shader stage context
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-whole-game-surface-shader.json` | `039a7b6f522ba3ffc63d1ab4111e8a0c4782b6862bd228759deb7ffcd4186bf2` |
+
+Audit: 2026-10-31. Two published original Materials select default and observed
+feature combinations. Original pass name/LightMode identifies the SDK pass;
+original vertex/fragment keyword records supply cyclic order, lifted over
+vertex-only contexts. The SDK UnityPBSLighting deferred declaration requires
+UNITY_PASS_DEFERRED during compilation only. Pinned AssetRipper 1ac666
+SimpleShaderExporter/DummyShaderTextExporter provides exporter/template prior
+art, without a stage-order or pass-context solution. Only selectors, hashes,
+relationships and authored transformations ship; no Shader text, programs,
+accepted-output patches or private paths. Independent public production is
+J850 raw-exact for one 130,700-byte record. Complete bundle, phone production,
+installation/update and runtime remain open.
+
+### Whole-game overlapping SDK Shader axes
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-whole-game-overlapping-axis-shader.json` | `59aa3ad7423237bb0a86edb4aa355d4efa89c3632b5192d7323353f9b2a339fc` |
+
+Audit: 2026-10-31. Eleven pinned original Materials supply observed feature
+combinations; acquired SDK declarations supply defaults and cross-stage axes.
+Original vertex records supply the remaining first-seen contexts. Duplicate
+serialized identities remain intact; native compilation interns first occurrences.
+Pinned AssetRipper 1ac666 DummyShaderTextExporter:49–78 informs template/property
+and fallback contracts but provides no stage-order solution. Only selectors,
+hashes, relationships and authored transformations ship; no Shader text, programs,
+accepted-output patches or private paths. Independent production reproduces one
+J850 record, 1,322,972 bytes. Complete bundle, phone production, installation/update
+and original runtime remain open.
+
+### Whole-game Shader material-signature template
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-whole-game-material-template-shader.json` | `7dc38fe947997a87a7053a58e8af8666b2a7584b29c4ef6d27dfa1cea838084e` |
+
+Audit: 2026-10-31. Twenty-nine pinned original Materials select feature
+combinations. Original fragment records supply a complete cyclic material
+signature template, checked in full before lifting over first-seen vertex
+contexts. SDK nonstripped user and builtin declarations together identify runtime
+keywords. Pinned R2Wiki Assets/Extraction.md documents post-SOTS dummy Shader
+exports versus legacy YAML; it supplies no Android permutation solution.
+Only selectors, hashes, relationships and authored transformations ship; no
+Shader text, program, target patch, generated data or private path is included.
+Independent source-only production reproduces one J850 record, 871,652 bytes.
+Complete bundle, phone production, installation/update and runtime remain open.
+
+
+### Whole-game Recorded animation source selection
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-animation-clips.json` | `f396aa130b0c64c0d63c34bbe162f082279145617617ad19925bb1cb5a896acb` |
+
+Audit: 2026-10-31. The original Champrush Recorded AnimationClip supplies the
+remaining whole-game record through existing native-stream and reference-pose
+removal policies. Native type and script-aware binding multisets qualify the
+source; two checked original script references relocate to published identities.
+J1143's pinned AssetRipper StreamedCurveKey/CustomCurveResolver prior art informs
+binding/tangent identity; the existing alternate-clip/index-profile diagnostics
+check the actual input. Only source selectors, hashes and relationship/policy
+metadata ship; no curves, generated bytes, target scalars or private paths ship.
+Independent persisted public production matches J850 raw-exact, 2,460 bytes.
+Saved residual 7 to 6 is selector subtraction; file readiness remains unchanged.
+Complete bundle, phone production, installation/update and runtime stay open.
+
+
+### Whole-game CustomRenderTexture records
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-whole-game-custom-render-textures.json` | `9ac40604e9d543d5275d28996a8b02020f7bf514ebd18fee7d3d3926408f4bfb` |
+
+Audit: 2026-10-31. Three original CustomRenderTextures retain their native
+schemas and all nonpointer fields through the existing generic record owner.
+Three typed PPtrs per record relocate to published Material and Texture suppliers;
+original external metadata checks cross-bundle source identities. Pinned UnityPy
+1.25.3 classes/generated.py CustomRenderTexture and classes/PPtr.py inform typed
+fields and local/external resolution (community-prior-art.md); J1273/J1281 supply
+the existing owner precedent. Only selectors, hashes and checked relationships
+ship; no texture pixels, native bodies, target patches or private paths ship.
+Independent persisted public production matches three J850 records, 596 bytes.
+Saved unresolved count falls 6 to 3 by selector subtraction. File readiness is
+unchanged; complete bundle, phone production, install/update and runtime stay open.
+
+
+### Preparation marker stack policy
+
+Audit: 2026-10-31. `original-audio-owner-sources.json` refreshes only the
+reviewed authored `IntegratedWorldBoundary.cs` cohort hash;
+`native-view-camera-transform.json` refreshes its manifest-consuming build-hook
+hash. The marker uses Unity's per-call `LogOption.NoStacktrace`, preserving
+message delivery and original/error stack policies. Pinned BepInEx `5b766a3b`
+log callback observation informs the subscriber boundary; exact Unity 2021.3.45f2
+CoreModule API documents the per-call option. Recipes contain authored source
+hashes only, with no captured text, protected code, game bytes or private paths.
+
+### Composed Console retention default
+
+The authored offline application owner applies the original private `maxMessages`
+convar's own metadata default when composed startup omits Console initialization.
+It does not copy the logger, suppress warnings, purge logs or change subscriptions.
+The default is process-wide; live Console configuration and later explicit values
+remain authoritative. The synthetic host fixture tests startup and replacement
+lifetime without game source or assets. Provenance/privacy review: authored field
+access only; original implementation, raw heap strings and evidence remain ignored.
+Device qualification remains required before claiming bounded session growth.
+
+### Whole-game Bandit Sprite source relationship
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-whole-game-sprite-relationships.json` | `f0fe7954defbc1de2d408f693577abb30408562db5bbdf32ae4b368f4cc0eb19` |
+
+The recipe selects one original Sprite, its source hash, the
+current export texture GUID and one checked Texture2D relocation. The original
+source container independently supplies the Sprite root; current PNG metadata
+witnesses the GUID and single-Sprite importer context. Pinned AssetRipper
+`1ac666f` TextureExportCollection single-Sprite relationships and the existing
+J1285 exporter audit supply prior art. Existing `record_produce.py` applies
+`player_data.sprite_key` before pointer relocation; no new reconstruction rule,
+pixels, geometry, native output or proprietary implementation is published.
+The complete 476-byte persisted record matches J850. This fills a provider gap;
+residual three and historical readiness remain unchanged. Complete bundle and
+phone/install/update qualification stay open.
+
+
+### Whole-game bundle Material provider records
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-whole-game-bundle-material-records.json` | `f195b009ae494b3bc4dccc203753d2365c2da12f0281c426c45a7c6ed0db7a08` |
+
+Audit: 2026-10-31. The existing generic record owner selects 58 original
+Materials with unique typed Shader/Texture endpoints. Mandatory inverse-source
+ambiguity exclusions retain unresolved alternatives. Published SingleColor dummy
+Shader selectors witness the existing `dummy-shader-sort-invalid` policy
+(J1274/J1321): original keyword strings are demoted and sorted ordinally; all
+other native fields remain source-owned. Pinned AssetRipper DummyShaderTextExporter
+and TemplateList selection inform the dummy declaration boundary; EditorKit typed
+EntryLookup informs identity (docs/community-prior-art.md). Only source selectors,
+hashes and checked pointer relationships ship; no native bodies, keyword strings,
+pixels, target repairs or private paths ship. Independent persisted production
+matches all 58 J850 records, 116,100 bytes. This supplies 80 group occurrences;
+complete groups have not been requalified. Saved residual three and file readiness
+remain unchanged; complete bundle, phone/install/update and runtime stay open.
+
+Nine further Materials use published Default/TransparentDiffuse dummy Shader
+selectors with the same source-owned policy and ambiguity exclusions. Independent
+persisted qualification matches all nine J850 records (29,860 bytes); the owner
+now supplies 67 records. Source selectors, hashes and typed relationships only;
+no new producer logic or protected content is published. The 59 previously
+completed source groups compare exact diagnostically; final bundle qualification
+and readiness remain open.
+
+
+### Whole-game bundle CanvasRenderer provider records
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-whole-game-bundle-canvas-records.jsonl.gz` | `24452f8b3a4365fea92e96f9c391586fa7d18c67825494eb31fbf1d920e66df7` |
+
+Audit: 2026-10-31. The existing generic `record_produce.py` native owner selects
+10,870 original CanvasRenderers across 66 source members. Qualified original
+GameObject component PPtrs and reciprocal CanvasRenderer GameObject pointers
+supply unique source identities and checked pointer relocations. Pinned
+EditorKit `4128710` EntryLookup component requirements/child searches require
+actual typed ownership; J1290's ordered component/backlink technique supplies
+prior art. Only selectors, source/output hashes and checked relationships ship;
+no native body, scalar template, target repair, protected implementation or
+private path is included. The deterministic gzip JSONL profile uses the existing
+bounded source-group reader. Native schema is derived from original input;
+optional native type hashes are omitted. Independent persisted production
+matches all 10,870 J850 records (141,310 bytes). Saved residual three and final
+file readiness remain unchanged; complete groups, bundle, phone/install/update
+and runtime gates stay open.
+
+### Whole-game bundle Tree provider records
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-whole-game-bundle-tree-records.jsonl.gz` | `d4151bf43fee3a6512203eb3a346bcdb986e54665984fc1deacc976adac2f302` |
+
+Audit: 2026-10-31. The existing generic native record owner selects 62 original
+Trees across seven source members. Qualified GameObject component edges and
+reciprocal original GameObject pointers establish unique typed identities and
+checked relocations. Additional nonzero pointers exclude 2,028 candidates;
+no WindAsset endpoint is guessed. Pinned EditorKit `4128710` EntryLookup
+component requirements (lines 48–68), documented in community-prior-art.md,
+and the J1354 reciprocal ownership technique inform selection. Only source
+selectors, source/output hashes and checked relationships ship; no native
+bodies, target repairs, protected implementation or private paths ship.
+The deterministic gzip JSONL profile uses the existing bounded reader;
+all native scalar fields and schemas remain source-owned. Independent
+persisted production matches all 62 J850 records (1,488 bytes). Saved residual
+three and final-file readiness remain unchanged; group, complete bundle,
+phone/install/update and runtime gates remain open.
+
+Four additional original Trees resolve their nonzero WindAsset pointer through
+qualified class-228 suppliers, using actual recipe bundle/member/object identity
+and unique original external-member routes (J1351), while retaining reciprocal
+GameObject ownership. Independent persisted qualification matches all four J850
+records (96 bytes); the profile now supplies 66 Trees. Audit: 2026-11-04; only
+source selectors, hashes and checked typed relationships are added. The existing
+producer is unchanged. Of the prior 2,028 exclusions, 2,024 remain unresolved;
+saved residual three and final-file readiness remain unchanged.
+
+
+### Whole-game bundle managed provider records
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-whole-game-bundle-managed-records.json` | `732e8280a4446a4f1472937b1885533d65fd95749d60e551e78d8f653a2a3a79` |
+
+Audit: 2026-11-04. The existing `record_produce.py` managed owner selects 221
+original MonoBehaviours through qualified GameObject component offsets,
+reciprocal original ownership and unique typed source-derived endpoints.
+Original MonoScript selectors and the pinned editor SDK provide the existing
+`properties_hash` policy; all native body fields remain original-input owned.
+Pinned EditorKit `4128710` AddressReferencedAssetDrawer lines 169–181 establish
+typed component requirements and hierarchy search as identity constraints;
+J1295/J1340 supply reciprocal ownership and SDK type-hash prior art.
+Source discovery reads no accepted target. Persisted production precedes
+independent raw-exact qualification: 221 of 247 candidates match J850
+(18,880 bytes), while all 26 nonexact candidates are excluded. Source selectors,
+hashes and checked relationships only; no native bodies, scalar templates,
+target repairs, protected implementation or private paths ship.
+Saved residual three and final-file readiness remain unchanged; complete groups,
+bundle, phone/install/update and runtime gates remain open.
+Menu provider identity follow-up (2026-11-04): the same audited build-identity
+policy retains the 20 external provider filenames/order already declared by the
+public player-data suppliers. The linker resolves all providers from source
+before assigning their saved external IDs; additional source providers append.
+No Sprite, layout value, asset body or null override is retained in this table.
+
+Native release job request audit (2026-11-04):
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-native-job-inputs.json` | `8aac45cbe864a1364ab2e306fae59ff3d94e1ac07a51b2940a473a565125f9cf` |
+
+This request contains only dispatcher bindings for acquired SDK/converter inputs and a private
+output location. No game bytes, generated sources, native binaries, private paths
+or credentials are retained. The existing native policy and converter receipt
+checks own compilation and metadata provenance; APK/device gates remain open.
+
+## Complete converter supplier wiring (2026-11-04)
+
+The seven scene/prefab animation consumers select the current audited original-
+AnimationClip producer. All 622 destination identities, sizes and hashes match;
+source selectors, native schemas and checked pointer relationships are unchanged.
+Meridian and Satellite reuse the independently source-produced Sulfurpools
+Standard Shader through the existing record index adapter. Its body, type and
+dependencies stay source-owned; only the two explicit destination identities
+change. No asset bytes, private paths or runtime capture are included.
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-whole-scene-standard-shader-remap.json` | `367d8fc933e722d167036230a28446879695703d10859d202ae71f25433e10da` |
+
+Audit: 2026-11-04. `original-audio-owner-sources.json` refreshes only the
+payload-copy owner's authored source hash. Capacity preflight now checks
+path/type/size; actual bank/media reuse retains complete integrity hashing.
+No original audio bytes, identifiers, local paths or third-party code are added.
+
+Meridian post-processing Shader identities reuse the current source-produced
+Habitatfall cohort through `record_remap.py`. Only destination indices change;
+source bodies and supplier receipts remain checked. The consumer retains native
+type, serialized-reference and pointer validation. This recipe contains authored
+relationships and integrity pins, with no game-derived bodies or pixels.
+
+| Authored recipe | SHA-256 |
+| --- | --- |
+| `owner-whole-scene-postprocess-shader-remap.json` | `a88c83cd062eca5241bdd8a57b2b34a0d211cd093d3e474ac90c9b0c8df138cc` |
+
+The early world-preparation timing seams refresh the reviewed authored
+`IntegratedWorldBoundary.cs` source pin and its audio-owner manifest consumers.
+The change adds six scalar, stack-free diagnostic markers only; no protected
+content, identifiers, generated data or native/audio bytes are published.
+
+## Commando controller supplier refresh (2026-11-04)
+
+The complete Commando recipe selects the current public AnimatorController
+supplier. All 32 selected path IDs retain their qualified lengths and hashes;
+only the supplier identity changes. Existing source, schema and PPtr checks remain.
+No game-derived bodies or new external inputs are included.
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-commando-objects.json` | `b7029a2b1dbb5f417c393840ab8545170b4d46f1b2d0708c1159ec04ab08d25c` |
+
+## Current EventSystem supplier identity (2026-11-04)
+
+The objective and Commando remap/object profiles above select EventSystem by
+assembly, namespace and class in the fresh source-produced player registry.
+Their audited hash rows include this policy and the refreshed supplier links.
+Manual provenance, privacy, licensing and sensitive-content audit: the change
+adds only a public script identity and authored selection policy; no serialized
+body, game code, private path or credential is included. The pinned AssetRipper
+MonoScriptExtensions full-name comparison informs identity selection. The
+producer retains receipt/file/native-type checks and records historical body
+equality as a diagnostic; generated bodies remain ignored.
+
+## Current-script bundle comparison (2026-11-04)
+
+Objective support and Commando use the existing diagnostic bundle comparison
+policy because their receipt-bound current MonoScripts and SDK EventSystem schemas
+change serialized layout. Original source hashes, per-record checks, script
+bindings, native type identities and reference relocation remain enforced. The
+producer records actual bundle and serialized hashes and historical equality
+separately; this does not establish loadability or device playability.
+Manual provenance, privacy, licensing and sensitive-content audit: only authored
+comparison policy and supplier pins changed; no game-derived bytes or private
+inputs are published.
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-objective-support-objects.json` | `afe5e32ab5f57f19949f672d7cd4a3d91a97a861f332d41ab46330d239baabf0` |
+| `owner-commando-reused-records.json` | `6474d221dbdb80e9d29c4f3a2f6d2ce3a132980c06c4240d48dc25b55592cb2c` |
+| `owner-commando-objects.json` | `42777b5337e15e18a6fd1c8a65fee68b6eb831d03830604851aa2635ed54d972` |
+
+Commando reused MonoScripts select assembly, namespace and class identities from
+the receipt-pinned source-produced player registry. All 347 body hashes uniquely
+match that current registry; numeric IDs from the historical registry are not
+identity selectors. The object recipe carries the same explicit identities,
+checked by the existing serialized-supplier and native-type contracts. Only
+minimal reconstruction relationships are tracked; generated script bodies and
+local registry evidence remain ignored. Provenance/privacy audit: no game code,
+asset bodies, private paths or account data added.
+
+The SDK EventSystem policy retains its explicit EventSystem identity when the
+other Commando scripts are resolved from current source registry matches. A
+hash-unique supplier match does not establish a component's semantic binding.
+The object owner's preflight checks declared local source-schema/script identity
+relationships before emission and aggregates mismatches in its receipt. Pinned
+source/SDK/codec and preload checks remain strict. Provenance/privacy review:
+only authored policy, script names and relationship checks changed; generated
+bodies and local audit evidence remain ignored. No device admission is claimed.
+
+Audit: 2026-11-05. `original-audio-owner-sources.json` and the camera
+transform recipe refresh only reviewed authored source and manifest hashes for
+bounded startup/transport timing seams. No new inputs, game-derived bytes,
+private paths, identifiers or third-party code are included. Full audio integrity
+verification and native bank initialization order are unchanged.
+
+The same authored audio-owner pins now include the install-bound private
+verification cache. Native payload bytes, packaged cohort validation
+and bank order are unchanged. The receipt uses kernel change time as well as
+modification time and inode; J1386 records adopted-storage corruption refusal,
+restoration and measured cache hits.
+No private cached receipts or captured identities are tracked.
+
+## Scene source record suppliers (2026-11-05)
+
+Artifactworld01, Champrush, Splash and Conduitcanyon publish existing source-only record
+selectors through `record_produce.py`. They restore missing release-graph
+suppliers: six original AkTriggerDisable component relationships and five
+original PlayableDirector records with typed pointer relocations and the
+existing exposed-name policy. Source bundles, native schemas and reference
+checks remain authoritative; generated record bodies stay ignored.
+Manual provenance, privacy, licensing and sensitive-content audit: these
+recipes contain only minimum original-input selectors, hashes and authored
+reference relationships, with no asset bodies, game code, private paths,
+identifiers or credentials. They do not establish complete bundle loadability
+or device playability.
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-artifactworld01-native-records.json` | `728ac3483b07550d4f46e1cfa50f011a69e0b24284dc62754a23ec61fb0cec80` |
+| `owner-champrush-director-records.json` | `a7d60a106ef9b5be7c22010acbb2ea9118f4cbe6ad6e6226f034e047ece16536` |
+| `owner-splash-director-records.json` | `66953dab4e23d78963177719232bd2accd92cf47402f88fc5bfc0378370acad8` |
+
+Conduitcanyon uses the same source PlayableDirector transform with 13 checked
+pointer relocations; its consumer selects the newly published supplier.
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-conduitcanyon-director-records.json` | `5899bf05658d41d38794ca5e1a3fe89413613b45c9931ae041f8b313c026b632` |
+| `owner-conduitcanyon-objects.json` | `28241c71cbe333cb25a2ac210c75cf10c91e92aab7887dec0179248e37827474` |
+
+The generic record owner's opt-in `editor_curve_properties` policy reuses the
+strict SDK curve projection from the legacy animation owner (J1163). Only a
+temporary properties-hash tree gains editor tangent metadata; original record
+bytes and runtime schemas remain source-owned. The pinned public toolchain
+supplies editor layouts. Authored fixtures contain no original game data.
+
+The complete source-camera program cohort extends the existing public-package
+recipe with identity/hash selectors and measured kernel/thread-group contracts.
+Manual provenance/privacy review (2026-11-11): no original body, shader math,
+pixels, upstream implementation or private configuration is tracked. Generated
+implementations stay ignored under the pinned package license; compilation and
+device acceptance remain separate gates.
+
+The complete player Shader helper refresh also updates dependent recipe hashes
+through the existing release graph. Manual provenance/privacy review
+(2026-11-12): changed consumer values are public recipe SHA-256 selectors only;
+no original bodies, SDK files or private paths are added.
+
+## Grandparent source Material (2026-11-12)
+
+`owner-whole-game-grandparent-material-records.json` selects one original Material
+for the existing native record producer. The original body and native schema
+are preserved except for one checked Shader pointer relocation; the selected
+Shader and its final dependencies require independent consumer qualification.
+The profile contains only the minimum source/destination identities, input/body
+hashes, native type hash and authored pointer relationship. Manual provenance,
+privacy, licensing and sensitive-content audit: no asset body, shader program,
+game code, third-party implementation, private path or credential is included.
+Generated packs and local evidence stay ignored; this does not establish Unity
+loadability, a complete bundle or device play.
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-whole-game-grandparent-material-records.json` | `acc2ea9fa96183a4b049f3679b6a2db6583fcce4192d6487bf4cb4a67a00fc21` |

@@ -4,6 +4,8 @@ import importlib.util
 from pathlib import Path
 import struct
 import unittest
+import tempfile
+from unittest.mock import patch
 
 PATH = Path(__file__).resolve().parents[1] / "tools/phone-build/owner-code/shader.py"
 SPEC = importlib.util.spec_from_file_location("owner_shader", PATH)
@@ -34,6 +36,28 @@ class Stream:
 
 
 class OwnerShaderTests(unittest.TestCase):
+    def test_linux_compiler_rejects_flattened_sdk_before_launch(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            executable = root / "UnityShaderCompiler"
+            executable.write_bytes(b"\x7fELF authored executable witness")
+            dependencies = ("libdxcompiler.so", "D3DCompiler_47.dll")
+            for name in dependencies:
+                (root / name).write_bytes(b"authored library witness")
+            for missing in dependencies:
+                with self.subTest(missing=missing), patch.object(SHADER.subprocess, "Popen") as launch:
+                    with self.assertRaisesRegex(FileNotFoundError, missing.replace(".", r"\.")):
+                        with SHADER.compiler(["gnu-runner", "-L", "sysroot", executable], root, root / "output"):
+                            self.fail("incomplete SDK must not open a compiler session")
+                    launch.assert_not_called()
+                    self.assertFalse((root / "output").exists())
+                (root / "Tools").mkdir(exist_ok=True)
+                (root / "Tools" / missing).write_bytes(b"authored library witness")
+            with patch.object(SHADER.socket, "socket", side_effect=RuntimeError("layout admitted")):
+                with self.assertRaisesRegex(RuntimeError, "layout admitted"):
+                    with SHADER.compiler([executable], root, root / "output"):
+                        pass
+
     def test_initialization_uses_64_bit_strings_and_all_platform_capabilities(self):
         stream = Stream(string("") + number(1 << 18) + (number(7, 64) + number(0)) * 25)
         capabilities = SHADER.Connection(stream).initialize(["sdk/includes"], {"old": "new"})

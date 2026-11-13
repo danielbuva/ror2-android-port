@@ -1,0 +1,83 @@
+{
+  "schema": "owner-source-hud-v1",
+  "input_id": "6af7ed94619fe1b4346974b4486afa03a8d1625a7820e92da0ff74d57208fe88",
+  "file": "af2c47caea9174d649e9f9997fd416d9",
+  "roots": {
+    "hudSource": {
+      "source": {
+        "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-base-ui_assets_all_5fb4a28e453c573571102591a1fcff71.bundle",
+        "member": "CAB-f70ea1e2c52c46b488c162a7fb6206df",
+        "bytes": 3722877,
+        "sha256": "7a73b50fc657c48e14501e1b7f1840b815bcf48a5e255e7c6373d6ba3fe0ed6b",
+        "path_id": 3191169796097060351
+      },
+      "asset_path": "Assets/RoR2/Base/UI/HUD/HUDSimple.prefab"
+    },
+    "runInfoSource": {
+      "source": {
+        "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-base-classicrun_static_assets_all_c8292536e5a2c356369426f34c3a078e.bundle",
+        "member": "CAB-df4c06bc6f85f327c94fbbf974f6553f",
+        "bytes": 36153,
+        "sha256": "1e21aaff8b1759fef23a5dfccd474516d5f5f1b74b602ec08ed223d615272e20",
+        "path_id": 1754628994771890740
+      },
+      "asset_path": "Assets/RoR2/Base/GameModes/ClassicRun/ClassicRunInfoHudPanel.prefab"
+    },
+    "itemIconSource": {
+      "source": {
+        "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-base-ui_assets_all_5fb4a28e453c573571102591a1fcff71.bundle",
+        "member": "CAB-f70ea1e2c52c46b488c162a7fb6206df",
+        "bytes": 3722877,
+        "sha256": "7a73b50fc657c48e14501e1b7f1840b815bcf48a5e255e7c6373d6ba3fe0ed6b",
+        "path_id": -5348838458566051697
+      },
+      "asset_path": "Assets/RoR2/Base/UI/ItemIcon.prefab"
+    },
+    "crosshairSource": {
+      "source": {
+        "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-base-ui_assets_all_5fb4a28e453c573571102591a1fcff71.bundle",
+        "member": "CAB-f70ea1e2c52c46b488c162a7fb6206df",
+        "bytes": 3722877,
+        "sha256": "7a73b50fc657c48e14501e1b7f1840b815bcf48a5e255e7c6373d6ba3fe0ed6b",
+        "path_id": 2228904006261448798
+      },
+      "asset_path": "Assets/RoR2/Base/UI/Crosshair/StandardCrosshair.prefab"
+    }
+  },
+  "scripts_source": {
+    "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/calmwater_monoscripts_a69c140580dd1456807433bb923cc5ba.bundle",
+    "bytes": 87323,
+    "sha256": "68aee1b2d2633c3ce1713cc44238025f750d3ae0aa66f42e748d421b19178022",
+    "member": "CAB-29d1a7582c548fe5e49f4c4c7a96e47e"
+  },
+  "texture_profiles": [
+    {
+      "path": "owner-uncompressed-textures.json",
+      "sha256": "e526418b4cf1e5f1903b18a2cb9305c719255724a2bce104d75fb1c0b3f813f5"
+    },
+    {
+      "path": "owner-alpha-textures.json",
+      "sha256": "fa23bc2cdc71234e3a5d4a084519a63bb59c6ef321e790fb964c295c8bd1d51a"
+    },
+    {
+      "path": "owner-rgba-textures.json",
+      "sha256": "76e596c4ec3049e471f292d42b2b623092e05596a1a756be66ff08e73bbe6f96"
+    },
+    {
+      "path": "owner-rgb-textures.json",
+      "sha256": "2c4c1c416f676d09a93f987d1ea9f1ecda46aa279baee5799a196beec59fc4ed"
+    },
+    {
+      "path": "owner-rgba-mip-textures.json",
+      "sha256": "723c4e641349941a172aef28d6a4b23eee2954c5390cd7257a75a54cd0bf66fd"
+    }
+  ],
+  "extra_sources": [
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-base-ui-largesplashes_assets_all_56327e2d08847298e3700f4a245c524f.bundle",
+      "bytes": 1484129,
+      "sha256": "bff1047789490bb835a709c5c813a0dd0a4f78b638e6e67949f7d49390216206",
+      "member": "CAB-bcf7bde6b5741a325ea476ea3f6c3fe9"
+    }
+  ]
+}

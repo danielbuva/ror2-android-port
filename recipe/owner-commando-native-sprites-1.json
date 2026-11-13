@@ -1,0 +1,434 @@
+{
+  "schema": 1,
+  "input_id": "6af7ed94619fe1b4346974b4486afa03a8d1625a7820e92da0ff74d57208fe88",
+  "bundles": [
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-base-common-vfx-particlemasks_assets_all_bbb9bf19da64bbc1f92348b0fdab0867.bundle",
+      "sha256": "7d6c6a8dfdd292f7b984e2996a5e7a3c2926729a0520f03300e217d49256c22b",
+      "members": [
+        {
+          "name": "CAB-62938927b11643a21a3e779791df79c8",
+          "objects": [
+            {
+              "id": "texWideGlowMask",
+              "path_id": 4541564500015985758,
+              "sha256": "fb6b9712dddabc3745893aba2df4c35fc5dbd0475d258bd198fc18d2ae3050fe",
+              "texture": {
+                "path_id": -8789752741758028706,
+                "sha256": "3da1657f0db5c448a688e934d01734099dab2e45e70da62194344104b9d5502c"
+              },
+              "importer_guid": "e3358c1873c1b394a995821f3249d8a9",
+              "outputs": [
+                {
+                  "bundle": "commando-prefab-lab",
+                  "member": "CAB-b0611b01bbffecd06329c6d6eecf278c",
+                  "path_id": -691472861032521170,
+                  "bytes": 692,
+                  "sha256": "fc7efb1eafae6a68e3dac6bd3e5551f9faf0c0b11f639bccfe5f1670779c1673",
+                  "references": [
+                    {
+                      "offset": 120,
+                      "from": [
+                        0,
+                        -8789752741758028706
+                      ],
+                      "to": [
+                        0,
+                        6204500195005606887
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-base-elitelightning_assets_all_c53a8f296eb4cb7cec0ea60a75121e6d.bundle",
+      "sha256": "b3180a547ce557a4a165cba23a84db9a3211b9ff923e04c01020517d4ae16197",
+      "members": [
+        {
+          "name": "CAB-24b4868a475f190be202906ca9d6cf5f",
+          "objects": [
+            {
+              "id": "texAffixBlueIcon",
+              "path_id": 1041590491162035484,
+              "sha256": "ee12291774677da5a7ed70c2b1d9672db40ab63af67a195d2f9028fe5de64556",
+              "texture": {
+                "path_id": -694697605986826980,
+                "sha256": "167b5b9913a1aed880254c11c8cafcbe4d24744a9a149dc80839f580e1248e6c"
+              },
+              "importer_guid": "010330b651e47a64ca52f87ab778d730",
+              "outputs": [
+                {
+                  "bundle": "commando-prefab-lab",
+                  "member": "CAB-b0611b01bbffecd06329c6d6eecf278c",
+                  "path_id": -1783649657477552830,
+                  "bytes": 1304,
+                  "sha256": "b03a6e0b90efe33d3a1a05304a121ce3f17508ca4fe7c5341ec27ad3f04582e5",
+                  "references": [
+                    {
+                      "offset": 120,
+                      "from": [
+                        0,
+                        -694697605986826980
+                      ],
+                      "to": [
+                        0,
+                        7922855153561528435
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-base-ui_assets_all_5fb4a28e453c573571102591a1fcff71.bundle",
+      "sha256": "7a73b50fc657c48e14501e1b7f1840b815bcf48a5e255e7c6373d6ba3fe0ed6b",
+      "members": [
+        {
+          "name": "CAB-f70ea1e2c52c46b488c162a7fb6206df",
+          "objects": [
+            {
+              "id": "texCrosshairCircle",
+              "path_id": -1174513275215895477,
+              "sha256": "f397d157a10fc0f7823598dbb749a068cad2a7566ee7feafbaa994724afb4a27",
+              "texture": {
+                "path_id": 3814607698085913675,
+                "sha256": "512d2fcb60da53459e571b0cc124c0ba44f80a878a3368beffe650f482adc766"
+              },
+              "importer_guid": "98967d67f788a864fb138ed02a8a1679",
+              "outputs": [
+                {
+                  "bundle": "commando-prefab-lab",
+                  "member": "CAB-b0611b01bbffecd06329c6d6eecf278c",
+                  "path_id": -4815763031512579923,
+                  "bytes": 1488,
+                  "sha256": "8999c4b183344b9f7abe189e6275045e1052be6b8beec140716fe2d1cbdda9da",
+                  "references": [
+                    {
+                      "offset": 124,
+                      "from": [
+                        0,
+                        3814607698085913675
+                      ],
+                      "to": [
+                        0,
+                        6801997884036469738
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "texCrosshairDot",
+              "path_id": 7861731316656997419,
+              "sha256": "64c8cf959447210702d6d79332957b5bb1803e90cedfbb14eee066933ccdcc6a",
+              "texture": {
+                "path_id": -7442013940721875925,
+                "sha256": "70c0c3088606cedb3842769599b3f8c2ec5bfb886d138c168710cdd09e04f795"
+              },
+              "importer_guid": "b6356f20f0ca2204e830809e16bca323",
+              "outputs": [
+                {
+                  "bundle": "commando-prefab-lab",
+                  "member": "CAB-b0611b01bbffecd06329c6d6eecf278c",
+                  "path_id": 6939237795344292711,
+                  "bytes": 596,
+                  "sha256": "7bd24e10ca51cd4b328c5158201d745e91f4fbd2ae7c0fee2a7a3850faf482f2",
+                  "references": [
+                    {
+                      "offset": 120,
+                      "from": [
+                        0,
+                        -7442013940721875925
+                      ],
+                      "to": [
+                        0,
+                        6256431684070703659
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "texCrosshairNibBar",
+              "path_id": -589399204235780380,
+              "sha256": "59dd5b21c069b172f6f9f8352c63dd4afe498987e20ba73df3eb751ec2c81dcc",
+              "texture": {
+                "path_id": -8421198824982192412,
+                "sha256": "d28e504a81baac8a84dde69b9e592b1a9446694ccfc3a031aae2f5dcb5aee324"
+              },
+              "importer_guid": "e3c1194aa44648f4d9d55e0f61968803",
+              "outputs": [
+                {
+                  "bundle": "commando-prefab-lab",
+                  "member": "CAB-b0611b01bbffecd06329c6d6eecf278c",
+                  "path_id": -3690299388627288520,
+                  "bytes": 540,
+                  "sha256": "8ea89c66b805787d0d527b021a2f5768f058f2b29546ddbfe3ea7384cdae4fb4",
+                  "references": [
+                    {
+                      "offset": 124,
+                      "from": [
+                        0,
+                        -8421198824982192412
+                      ],
+                      "to": [
+                        0,
+                        3467058475517307358
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "texCrosshairNibBracket",
+              "path_id": 519929638896831416,
+              "sha256": "1a24bfa987a02e653a67398e3a0493e10bb6f27ea1800b7472160e3b1fc9b196",
+              "texture": {
+                "path_id": 2225817304855055288,
+                "sha256": "ad07432f303a93c9a0a3e050cf6623b96f8870bb0aa2b6c961c29455f60d7780"
+              },
+              "importer_guid": "7ee6a152bc4b85943b01d1bc596749dd",
+              "outputs": [
+                {
+                  "bundle": "commando-prefab-lab",
+                  "member": "CAB-b0611b01bbffecd06329c6d6eecf278c",
+                  "path_id": -3012519407698646753,
+                  "bytes": 628,
+                  "sha256": "c0ab8dabfb8648ca93f3f11edf4a474c901197ead32c0c8736f4c29994bfd254",
+                  "references": [
+                    {
+                      "offset": 128,
+                      "from": [
+                        0,
+                        2225817304855055288
+                      ],
+                      "to": [
+                        0,
+                        -7234462582425367798
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "texUIAnimateSliceNakedButton",
+              "path_id": -712882546512032017,
+              "sha256": "1760b285fa939d344d97542d0ceb130507ee2c2abba6e163b89f9857834b45b1",
+              "texture": {
+                "path_id": -5729221266023969041,
+                "sha256": "1e59a36488aca413b4b17a1ca00c72b788cda90f91c7e631102c6ceb8f4c89a2"
+              },
+              "importer_guid": "550bc19d10cf19044a75d16090835a39",
+              "outputs": [
+                {
+                  "bundle": "commando-prefab-lab",
+                  "member": "CAB-b0611b01bbffecd06329c6d6eecf278c",
+                  "path_id": 5252406096555660977,
+                  "bytes": 480,
+                  "sha256": "1d619798806ef3455719e1f0733dd8d1f5fedb17e89eabe284c4e8d9d8d33502",
+                  "references": [
+                    {
+                      "offset": 132,
+                      "from": [
+                        0,
+                        -5729221266023969041
+                      ],
+                      "to": [
+                        0,
+                        5359641529861039830
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "texUICleanButton",
+              "path_id": 311007179711047257,
+              "sha256": "a738aec81c9d03e893f58088abae9014398f14955d5bbd05d312873704669463",
+              "texture": {
+                "path_id": -7482665743438125479,
+                "sha256": "bc8f0db783511cf08f9147004f383e7d5ce8e59c089b89dd98379e6e92eeff94"
+              },
+              "importer_guid": "d36120d99b8d5d4439a0d0608bf4d26d",
+              "outputs": [
+                {
+                  "bundle": "commando-prefab-lab",
+                  "member": "CAB-b0611b01bbffecd06329c6d6eecf278c",
+                  "path_id": -1168956449566187247,
+                  "bytes": 544,
+                  "sha256": "ac14bc363fb7a076d3ce4d2a104b56160a784519dbdbaac61f063acf92d50b23",
+                  "references": [
+                    {
+                      "offset": 120,
+                      "from": [
+                        0,
+                        -7482665743438125479
+                      ],
+                      "to": [
+                        0,
+                        -3985249152907623725
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "texUIHeaderDouble",
+              "path_id": -6257269597091093854,
+              "sha256": "e43909ae29e7513e4f6b006d710ec632eb5f334f9ae078c51983d120b91e67f7",
+              "texture": {
+                "path_id": 2811613615197823650,
+                "sha256": "545b923cc81b13d5571f3c72e927071427aab6010fee571988339cc4b11ae428"
+              },
+              "importer_guid": "b60b372f03220724099ba8ee6ea2270a",
+              "outputs": [
+                {
+                  "bundle": "commando-prefab-lab",
+                  "member": "CAB-b0611b01bbffecd06329c6d6eecf278c",
+                  "path_id": 1593109391626894751,
+                  "bytes": 632,
+                  "sha256": "0aa41aeb38cc492ef54595e0e8a97725a0b21db8d0050077b9f4c098a3287e73",
+                  "references": [
+                    {
+                      "offset": 124,
+                      "from": [
+                        0,
+                        2811613615197823650
+                      ],
+                      "to": [
+                        0,
+                        3867330103031043493
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "texUIHighlightBoxOutlineThick",
+              "path_id": 6559414901554754719,
+              "sha256": "37a043a4395c1c055347ac9097108b6c884088555f5cd818ebc02e9d263aeea9",
+              "texture": {
+                "path_id": 4915868151891637407,
+                "sha256": "871a49d50a89517f26d4a61d7ffa963732c48a1852216ac9ce112df9034cd49b"
+              },
+              "importer_guid": "5c04b3b04d4401747834009733f25eaa",
+              "outputs": [
+                {
+                  "bundle": "commando-prefab-lab",
+                  "member": "CAB-b0611b01bbffecd06329c6d6eecf278c",
+                  "path_id": 9131999729018278303,
+                  "bytes": 720,
+                  "sha256": "299490020f1e7572f192469f104986b0c42cd6d0cdf03e5b7467d86d10c5105e",
+                  "references": [
+                    {
+                      "offset": 136,
+                      "from": [
+                        0,
+                        4915868151891637407
+                      ],
+                      "to": [
+                        0,
+                        3247902170922792149
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "texUIMainRect",
+              "path_id": 6654772279298712402,
+              "sha256": "a6409525b4da63721ba529888f6b3ced9b1fd8c6da4ebb3a80f5ca64d7d5f187",
+              "texture": {
+                "path_id": -6811294329827269806,
+                "sha256": "6a2c42d8843dfee66211c5444eb81ed3e9791aee11a25eb394f231f94c183c49"
+              },
+              "importer_guid": "0d9ea9fbc5b8d7c4d8e1c00227ac616f",
+              "outputs": [
+                {
+                  "bundle": "commando-prefab-lab",
+                  "member": "CAB-b0611b01bbffecd06329c6d6eecf278c",
+                  "path_id": 590639357182311620,
+                  "bytes": 500,
+                  "sha256": "2f2dec0ab173f947a64d82fd2354785abb19d6b6583866b921ecacb74502f2fb",
+                  "references": [
+                    {
+                      "offset": 120,
+                      "from": [
+                        0,
+                        -6811294329827269806
+                      ],
+                      "to": [
+                        0,
+                        5926414637099209323
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-base-ui_static_assets_all_5d313c7e47307b196191805d0d888100.bundle",
+      "sha256": "cc863c269ab8a6e8805747e39e7cf8f6ec1f9b0607a7edf360b325d59d92f2a1",
+      "members": [
+        {
+          "name": "CAB-f577e1b0f31ba8603bc9e7c474dc5b6c",
+          "objects": [
+            {
+              "id": "texCrosshairGlaive",
+              "path_id": -692493449856753731,
+              "sha256": "e59e543ec72672531b9a8809ca74c6e8bbc3303729d65b43ef4155fd810215a8",
+              "texture": {
+                "path_id": 6290532292744503229,
+                "sha256": "fa10873e6de20f8e28090c1074cb5468ca7959449eaecdd55f94c7b4a90d4cbf"
+              },
+              "importer_guid": "e363116e9f3a93445946fab2d3ab8619",
+              "outputs": [
+                {
+                  "bundle": "commando-prefab-lab",
+                  "member": "CAB-b0611b01bbffecd06329c6d6eecf278c",
+                  "path_id": 2897888500528260187,
+                  "bytes": 900,
+                  "sha256": "eb8b039ad354c22b3f5c484e4e693784c2515a7725bd67356f4a324a99cf514e",
+                  "references": [
+                    {
+                      "offset": 124,
+                      "from": [
+                        0,
+                        6290532292744503229
+                      ],
+                      "to": [
+                        0,
+                        -4978320695179238590
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
