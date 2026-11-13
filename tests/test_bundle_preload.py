@@ -27,6 +27,18 @@ def pointer(name):
 
 
 class BundlePreloadTests(unittest.TestCase):
+    def test_bulk_descriptors_preserve_order_and_duplicate_contracts(self):
+        with tempfile.TemporaryDirectory() as tmp, closing(P.DiskIndexes(tmp)) as store:
+            rows = store.mapping()
+            rows.load([(("b", 2), {"first": 1, "second": 2}), (("a", 1), {"value": 3})], duplicate="duplicate")
+            rows.load([(("b", 2), {"second": 2, "first": 1})], duplicate="conflict", allow_equal=True)
+            self.assertEqual(list(rows), [("b", 2), ("a", 1)])
+            self.assertEqual(rows["b", 2], {"first": 1, "second": 2})
+            with self.assertRaisesRegex(ValueError, "conflict"):
+                rows.load([(("b", 2), {"first": 4, "second": 2})], duplicate="conflict", allow_equal=True)
+            with self.assertRaisesRegex(ValueError, "duplicate"):
+                rows.load([(("a", 1), {"value": 3})], duplicate="duplicate")
+
     def canonical_fixture(self, root, broken=None):
         M, W = P.module("bundle_manifest"), P.module("unity_write")
 

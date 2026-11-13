@@ -56,8 +56,10 @@ Request qualification and emission share attempt-owned SQLite descriptor and
 provider indexes. Only the current rows are decoded; parsed type trees use a
 bounded cache and object bodies retain the existing streamed storage. Teardown
 closes and removes the temporary indexes. Provider descriptors stream through
-SQLite bulk insertion, retaining ordered duplicate extents; metadata conflicts
-and differing duplicate bytes still fail. These disposable indexes disable
+SQLite bulk insertion, retaining original JSON lines and ordered duplicate
+extents; metadata conflicts and differing duplicate bytes still fail. Descriptor
+maps also bulk-load rows, rejecting duplicate graph/route identities and checking
+equal endpoint collisions without per-row membership reads. These disposable indexes disable
 journaling; the separate incremental cache retains its durable checkpoints.
 The `--inputs` CLI defaults to two record workers (`--workers 1` selects serial).
 `RecordWorkers` starts them before loading indexes, bounds queued bytes to

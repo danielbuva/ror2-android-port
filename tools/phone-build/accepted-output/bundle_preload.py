@@ -19,6 +19,7 @@ class DiskIndexes:
     """Attempt-owned descriptor indexes; object bodies keep their original owners."""
 
     def __init__(self, parent):
+        import json
         import sqlite3
         import tempfile
 
@@ -34,6 +35,13 @@ class DiskIndexes:
         self.connection.execute("CREATE TABLE entries (collection INTEGER, key TEXT, value TEXT, UNIQUE(collection,key))")
         self.connection.execute("CREATE TABLE provider_entries (collection INTEGER, key TEXT, value TEXT)")
         self.connection.execute("CREATE INDEX provider_identity ON provider_entries(collection,key)")
+
+        def equal_json(before, after):
+            if json.loads(before) != json.loads(after):
+                raise ValueError("Conflicting descriptor")
+            return before
+
+        self.connection.create_function("equal_json", 2, equal_json)
         self.collections, self.pending = 0, 0
         self.providers = {}
 
@@ -41,14 +49,20 @@ class DiskIndexes:
         self.collections += 1
         return DiskIndex(self, self.collections)
 
-    def provider(self, rows):
+    def provider(self, path):
         """Stream descriptors once; decode duplicates only when they exist."""
+        import json
+
         self.collections += 1
         index = ProviderIndex(self, self.collections)
-        self.connection.executemany(
-            "INSERT INTO provider_entries VALUES (?,?,?)",
-            ((index.collection, DiskIndex.encode((row["bundle"], row["member"], row["path_id"])), DiskIndex.encode(row)) for row in rows),
-        )
+        with Path(path).open() as stream:
+
+            def rows():
+                for line in stream:
+                    row = json.loads(line)
+                    yield index.collection, DiskIndex.encode((row["bundle"], row["member"], row["path_id"])), line
+
+            self.connection.executemany("INSERT INTO provider_entries VALUES (?,?,?)", rows())
         for (key,) in self.connection.execute("SELECT key FROM provider_entries WHERE collection=? GROUP BY key HAVING count(*)>1", (index.collection,)):
             copies = index.encoded_key(key)
             if any({k: v for k, v in row.items() if k != "offset"} != {k: v for k, v in copies[0].items() if k != "offset"} for row in copies[1:]):
@@ -90,6 +104,22 @@ class DiskIndex(MutableMapping):
         if self.store.pending >= 1000:
             self.store.connection.commit()
             self.store.pending = 0
+
+    def load(self, rows, *, duplicate, allow_equal=False):
+        """Bulk-load checked descriptors; only actual collisions cross into Python."""
+        import sqlite3
+
+        sql = "INSERT INTO entries VALUES (?,?,?)"
+        if allow_equal:
+            sql += " ON CONFLICT(collection,key) DO UPDATE SET value=CASE WHEN entries.value=excluded.value THEN entries.value ELSE equal_json(entries.value,excluded.value) END"
+        try:
+            self.store.connection.executemany(sql, ((self.collection, self.encode(key), self.encode(value)) for key, value in rows))
+        except (sqlite3.IntegrityError, sqlite3.OperationalError) as error:
+            if isinstance(error, sqlite3.IntegrityError) or str(error) == "user-defined function raised exception":
+                raise ValueError(duplicate) from error
+            raise
+        self.store.connection.commit()
+        self.store.pending = 0
 
     def __delitem__(self, key):
         cursor = self.store.connection.execute("DELETE FROM entries WHERE collection=? AND key=?", (self.collection, self.encode(key)))
@@ -873,7 +903,7 @@ class ProducerRecords:
             if pin["index_sha256"] != expected:
                 raise ValueError("Native provider index drift")
             if self.index_store is not None:
-                index = self.index_store.provider(json_rows(directory / "index.jsonl"))
+                index = self.index_store.provider(directory / "index.jsonl")
             else:
                 index = {}
                 for row in json_rows(directory / "index.jsonl"):
@@ -1071,11 +1101,9 @@ def _emit_closed_native(
     if retained.get("success") is not True:
         raise ValueError("Unsuccessful source graph")
     all_records = index_store.mapping()
-    for row in json_rows(graph_directory / "selected-records.jsonl"):
-        key = tuple(row["destination"])
-        if key in all_records:
-            raise ValueError("Duplicate selected destination")
-        all_records[key] = row
+    all_records.load(
+        ((tuple(row["destination"]), row) for row in json_rows(graph_directory / "selected-records.jsonl")), duplicate="Duplicate selected destination"
+    )
     selected = index_store.mapping()
     if required is None:
         for key, row in all_records.items():
@@ -1925,12 +1953,11 @@ def _produce_request(inputs, output, *, cache_directory, index_store, record_wor
                 raise ValueError("Conflicting complete native schema")
             types[key] = value
     selected = index_store.mapping()
-    for path in (pins.pin(request["endpoints"]), graph_files["selected-records.jsonl"]):
-        for value in json_rows(path):
-            key = tuple(value["destination"])
-            if key in selected and selected[key] != value:
-                raise ValueError("Conflicting endpoint descriptor")
-            selected[key] = value
+    selected.load(
+        ((tuple(value["destination"]), value) for path in (pins.pin(request["endpoints"]), graph_files["selected-records.jsonl"]) for value in json_rows(path)),
+        duplicate="Conflicting endpoint descriptor",
+        allow_equal=True,
+    )
     required = pins.read(request["required"])
     for key in ("name", "member"):
         expected = request["bundle" if key == "name" else key]
@@ -1938,11 +1965,7 @@ def _produce_request(inputs, output, *, cache_directory, index_store, record_wor
             raise ValueError("Required bundle/member identity differs")
         required[key] = expected
     routes = index_store.mapping()
-    for value in json_rows(pins.pin(request["routes"])):
-        key = tuple(value["owner"])
-        if key in routes:
-            raise ValueError("Duplicate structural route owner")
-        routes[key] = value["edges"]
+    routes.load(((tuple(value["owner"]), value["edges"]) for value in json_rows(pins.pin(request["routes"]))), duplicate="Duplicate structural route owner")
     codec = pins.pin(request["codec"])
     canonical = request.get("canonical")
     if canonical is not None:
