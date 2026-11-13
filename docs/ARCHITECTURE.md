@@ -1,5 +1,24 @@
 # Architecture
 
+`OfflineApplicationSession` owns controller/keyboard menu routes, loadout modal
+visibility, Quit confirmation and persisted-results return. The existing
+`OfflineLoadoutBoundary` edits only unlocked source skill/skin choices and owns
+row selection/scroll; Start remains the persistence boundary. Modal teardown
+restores the owned recovered menu. The shared device runner's `player-screens`
+workload injects keyboard aliases through these same semantic routes, observes
+native loss/persisted results, checks protected hashes and expects process exit
+only after confirmed Quit. Physical controller/digitizer certification stays in
+the owner playtest gate.
+
+`OfflineSettingsBoundary.OfflineSettingsSession` owns the read-only Software
+notices modal, Back/Escape/controller close, scroll state and teardown with
+settings. `RecoveredHudPresentation.SoftwareNotices` discovers original
+`CREDITS_SOFTWARE_*_TEXT` values in the existing owner-generated language table;
+no game text is stored in authored source. The shared device runner's
+`software-notices` workload waits for the PID/attempt-bound menu, captures the
+screen and menu return, and verifies unchanged profile/results/settings files.
+It changes no original credits, license terms or game state.
+
 The shared device request's `settings-save-failure` workload exercises the owned
 settings screen with attempt-bound, default-off write and rename failures.
 `AndroidOfflineSettings` consumes each instance-owned ENOSPC injection once;

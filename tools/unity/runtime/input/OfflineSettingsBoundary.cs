@@ -14,6 +14,10 @@ public sealed partial class PortSession
     {
         public bool ready, visible, paused, persisted, canEndRun, sessionAbandoned;
         public bool endRunConfirmationVisible;
+        public bool softwareNoticesVisible;
+        public bool softwareNoticesAvailable;
+        public float softwareNoticesScroll;
+        public float softwareNoticesBackX, softwareNoticesBackY;
         public string recovery, error;
         public string injectedSaveFailure;
         public string rebindAction, rebindError;
@@ -72,6 +76,10 @@ public sealed partial class PortSession
     {
         readonly PortSession coordinator;
         readonly AndroidFeedbackScreen feedback = new AndroidFeedbackScreen();
+        bool softwareNoticesVisible;
+        Vector2 softwareNoticesScroll;
+        string softwareNotices;
+        GUIStyle softwareNoticesStyle;
         bool confirmEndRun;
         bool rebindVisible;
         NovaInputBridge.ButtonRebind rebind;
@@ -123,6 +131,9 @@ public sealed partial class PortSession
             coordinator.r.settings.visible = coordinator.offlineSettingsVisible;
             coordinator.r.settings.paused = coordinator.offlineSettingsPaused;
             coordinator.r.settings.endRunConfirmationVisible = confirmEndRun;
+            coordinator.r.settings.softwareNoticesVisible = softwareNoticesVisible;
+            coordinator.r.settings.softwareNoticesAvailable = !string.IsNullOrEmpty(softwareNotices);
+            coordinator.r.settings.softwareNoticesScroll = softwareNoticesScroll.y;
             coordinator.r.settings.confirmEndRunButtonX = Screen.width * .5f - 115;
             coordinator.r.settings.confirmEndRunButtonY = Screen.height * .5f + 42.5f;
             coordinator.r.settings.timeScale = Time.timeScale;
@@ -136,6 +147,8 @@ public sealed partial class PortSession
             if (show == coordinator.offlineSettingsVisible)
                 return;
             confirmEndRun = false;
+            softwareNoticesVisible = false;
+            softwareNoticesScroll = Vector2.zero;
             rebindVisible = false;
             rebind = null;
             if (!show)
@@ -222,6 +235,11 @@ public sealed partial class PortSession
             // adapter's menu/back action; it does not alter the original input bank.
             if (UnityEngine.Input.GetKeyDown(KeyCode.Joystick1Button1))
             {
+                if (softwareNoticesVisible)
+                {
+                    CloseSoftwareNotices();
+                    return;
+                }
                 if (feedback.Visible)
                 {
                     feedback.Close();
@@ -245,7 +263,7 @@ public sealed partial class PortSession
                     Show(true);
                 }
             }
-            if (!feedback.Visible && !confirmEndRun && coordinator.offlineSettingsVisible && coordinator.r.nova != null && coordinator.r.nova.physicalInputAvailable &&
+            if (!softwareNoticesVisible && !feedback.Visible && !confirmEndRun && coordinator.offlineSettingsVisible && coordinator.r.nova != null && coordinator.r.nova.physicalInputAvailable &&
                 coordinator.r.nova.mapping != null &&
                 UnityEngine.Input.GetKeyDown((KeyCode)((int)KeyCode.Joystick1Button0 + coordinator.r.nova.mapping.jump)))
             {
@@ -260,6 +278,12 @@ public sealed partial class PortSession
         {
             if (coordinator.offlineSettings == null)
                 return false;
+            if (softwareNoticesVisible)
+            {
+                DrawSoftwareNotices();
+                // Opening/closing events cannot reach the menu, feedback or Save.
+                return true;
+            }
             if (rebindVisible)
                 return DrawRebind();
             if (confirmEndRun)
@@ -353,8 +377,20 @@ public sealed partial class PortSession
                 GUI.Label(new Rect(x, y + 337, 420, 44), "Android profile · " + coordinator.r.profile.appliedRuns + " genuine results · " +
                                                              coordinator.r.profile.kills +
                                                              " kills\nSteam/cloud and Rewired maps unavailable");
-            if (GUI.Button(new Rect(x, y + 391, 420, 45), "Send feedback"))
+            if (GUI.Button(new Rect(x, y + 391, 200, 45), "Send feedback"))
+            {
                 feedback.Open();
+                return true;
+            }
+            if (GUI.Button(new Rect(x + 220, y + 391, 200, 45), "Software notices"))
+            {
+                softwareNotices = RecoveredHudPresentation.SoftwareNotices();
+                softwareNoticesVisible = true;
+                softwareNoticesScroll = Vector2.zero;
+                Observe();
+                coordinator.Save();
+                return true;
+            }
             if (CanRebind() && GUI.Button(new Rect(x, y + 446, 420, 45), "Rebind controller buttons"))
             {
                 rebindVisible = true;
@@ -369,6 +405,56 @@ public sealed partial class PortSession
                 coordinator.Save();
             }
             return true;
+        }
+        void CloseSoftwareNotices()
+        {
+            softwareNoticesVisible = false;
+            softwareNoticesScroll = Vector2.zero;
+            Observe();
+            coordinator.Save();
+        }
+        void DrawSoftwareNotices()
+        {
+            if (Event.current.type == EventType.KeyDown && Event.current.keyCode == KeyCode.Escape)
+            {
+                CloseSoftwareNotices();
+                Event.current.Use();
+                return;
+            }
+            if (softwareNoticesStyle == null)
+                softwareNoticesStyle = new GUIStyle(GUI.skin.label) { fontSize = 22, wordWrap = true, richText = true };
+            var savedMatrix = GUI.matrix;
+            try
+            {
+                var safe = Screen.safeArea;
+                if (safe.width <= 0 || safe.height <= 0)
+                    safe = new Rect(0, 0, Screen.width, Screen.height);
+                var scale = Mathf.Min(safe.width / 760f, safe.height / 540f);
+                coordinator.r.settings.softwareNoticesBackX = safe.x + (safe.width - 760 * scale) * .5f + 645 * scale;
+                coordinator.r.settings.softwareNoticesBackY = Screen.height - safe.yMax + (safe.height - 540 * scale) * .5f + 35 * scale;
+                GUI.matrix = Matrix4x4.TRS(new Vector3(safe.x + (safe.width - 760 * scale) * .5f,
+                                                     Screen.height - safe.yMax + (safe.height - 540 * scale) * .5f, 0),
+                                         Quaternion.identity, new Vector3(scale, scale, 1));
+                GUI.Box(new Rect(0, 0, 760, 540), "Software notices");
+                if (GUI.Button(new Rect(550, 14, 190, 42), "Back to settings"))
+                {
+                    CloseSoftwareNotices();
+                    return;
+                }
+                GUI.Label(new Rect(20, 65, 720, 72), "Software acknowledgements from your game files.", softwareNoticesStyle);
+                var value = string.IsNullOrEmpty(softwareNotices) ? "Software notices are unavailable in this input." : softwareNotices;
+                var height = Mathf.Max(370, softwareNoticesStyle.CalcHeight(new GUIContent(value), 670));
+                softwareNoticesScroll = GUI.BeginScrollView(new Rect(20, 145, 720, 375), softwareNoticesScroll, new Rect(0, 0, 680, height));
+                GUI.Label(new Rect(0, 0, 670, height), value, softwareNoticesStyle);
+                GUI.EndScrollView();
+            }
+            finally
+            {
+                GUI.matrix = savedMatrix;
+            }
+            Observe();
+            if (Event.current.type == EventType.Repaint && Time.frameCount % 30 == 0)
+                coordinator.Save();
         }
         bool DrawRebind()
         {
@@ -454,11 +540,18 @@ public sealed partial class PortSession
         {
             CancelWriteObserver();
             feedback.Close();
+            softwareNoticesVisible = false;
+            softwareNoticesScroll = Vector2.zero;
+            softwareNotices = null;
             rebindVisible = false;
             rebind = null;
             confirmEndRun = false;
             if (coordinator.r != null && coordinator.r.settings != null)
+            {
                 coordinator.r.settings.endRunConfirmationVisible = false;
+                coordinator.r.settings.softwareNoticesVisible = false;
+                coordinator.r.settings.softwareNoticesScroll = 0;
+            }
             if (coordinator.offlineSettingsPaused)
                 Show(false);
         }
