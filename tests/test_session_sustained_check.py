@@ -1,5 +1,6 @@
 import copy
 from datetime import datetime, timedelta, timezone
+import json
 from pathlib import Path
 import sys
 import unittest
@@ -8,6 +9,7 @@ from unittest import mock
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts/lab"))
 import session_sustained_check as sustained
+import device_session as runner
 
 
 def fixtures():
@@ -28,6 +30,66 @@ def fixtures():
 
 
 class SustainedCheckTests(unittest.TestCase):
+    def test_runner_detailed_visual_samples_capture_screenshot_beside_world_and_perf(self):
+        for detailed in (False, True):
+            with self.subTest(detailed=detailed), tempfile.TemporaryDirectory() as folder:
+                root = Path(folder)
+                output = root / "work/evidence"
+                report, snapshot, _ = fixtures()
+                report["settings"] = dict(screenWidth=1920, screenHeight=1080)
+                menu = dict(report, phase="offline-start-menu")
+                device = mock.Mock()
+                device.owned.return_value = dict(apk_sha256="a" * 64)
+                device.read_receipt.return_value = dict(persistentDataPath="/owned")
+                device.evidence_directory.side_effect = [output.parent, output]
+                device.sh.side_effect = lambda *args, **kwargs: {
+                    ("dumpsys", "battery"): "temperature: 350",
+                    ("dumpsys", "thermalservice"): "Thermal Status: 0",
+                }.get(args, "")
+                with (
+                    mock.patch.object(sustained, "WORK", root / "work"),
+                    mock.patch.object(sustained, "Device", return_value=device),
+                    mock.patch.object(sustained, "attempt_from_installed", return_value="authored-attempt"),
+                    mock.patch.object(sustained.cleanup, "_remote_path_state", return_value="absent"),
+                    mock.patch.object(sustained.cleanup, "_same_process", return_value=True),
+                    mock.patch.object(sustained.cleanup, "_read_json", side_effect=[menu, report, report, report, snapshot]),
+                    mock.patch.object(sustained.cleanup, "matches_run", return_value=True),
+                    mock.patch.object(sustained.cleanup, "report_errors", return_value=[]),
+                    mock.patch.object(sustained.cleanup, "survivor_identity_failures", return_value=[]),
+                    mock.patch.object(sustained.cleanup, "first_stage_errors", return_value=[]),
+                    mock.patch.object(sustained.cleanup, "menu_start_coordinates", return_value=(100, 100)),
+                    mock.patch.object(sustained.cleanup, "_profile_counts", return_value={}),
+                    mock.patch.object(sustained.touch_gesture, "run", return_value=dict(termination="steps-complete")),
+                    mock.patch.object(sustained, "observation_sample", return_value={}),
+                    mock.patch.object(sustained.time, "sleep", side_effect=RuntimeError("fixture ends after first capture")),
+                    mock.patch.object(runner, "launch", return_value=dict(pid=73)),
+                    mock.patch.object(runner, "capture"),
+                ):
+                    result = {}
+                    with self.assertRaisesRegex(RuntimeError, "Sustained assisted check failed"):
+                        runner.run_workload(
+                            device,
+                            mock.Mock(),
+                            dict(
+                                mode="sustained",
+                                apk_sha256="a" * 64,
+                                duration_seconds=30,
+                                capture_interval_seconds=10,
+                                selection=dict(detailedVisualDiagnostics=detailed),
+                            ),
+                            root / "runner",
+                            result,
+                        )
+                self.assertEqual(result["session_result_files"], [str(output / "result.json")])
+                self.assertEqual(json.loads((output / "result.json").read_text())["observation_interval_seconds"], 10)
+                sample = output / "sample-0000"
+                self.assertTrue((sample / "world.json").is_file())
+                expected = [mock.call("perf", sample)]
+                if detailed:
+                    expected.append(mock.call("screenshot", sample))
+                self.assertEqual(device.collect.call_args_list, expected)
+                device.display.assert_any_call(False)
+
     def test_sensors_preserve_frequency_units_skin_and_unavailable_values(self):
         row = sustained.sensor_sample(
             "/sys/devices/system/cpu/cpufreq/policy0/scaling_cur_freq\t1800000\n/sys/class/kgsl/kgsl-3d0/devfreq/cur_freq\t680000000\nskin-therm\t39000\nskin-bad\tUNREADABLE\n"

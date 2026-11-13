@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J1475](PORTING_JOURNAL.md#j1475--recover-native-trail-and-projectile-source-materials) | 2026-11-12 | Recover native trail and projectile source materials | 2026-11-13. |
 | [J1474](PORTING_JOURNAL.md#j1474--qualify-injected-player-screen-routes-and-software-notices) | 2026-11-12 | Qualify injected player-screen routes and software notices | 2026-11-13. |
 | [J1473](PORTING_JOURNAL.md#j1473--recover-settings-from-injected-write-and-rename-enospc) | 2026-11-12 | Recover settings from injected write and rename ENOSPC | 2026-11-13. |
 | [J1471](PORTING_JOURNAL.md#j1471--attribute-live-enemy-and-attack-material-bindings) | 2026-11-12 | Attribute live enemy and attack material bindings | 2026-11-13. |
