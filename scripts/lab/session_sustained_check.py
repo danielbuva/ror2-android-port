@@ -359,6 +359,8 @@ def check_session_sustained(
                 folder = out / ("sample-%04d" % index)
                 write(folder / "world.json", report)
                 device.collect("perf", folder)
+                if detailed_visual_diagnostics:
+                    device.collect("screenshot", folder)
                 last_capture = elapsed
                 index += 1
             write(out / "progress.json", result)

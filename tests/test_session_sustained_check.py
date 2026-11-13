@@ -28,6 +28,51 @@ def fixtures():
 
 
 class SustainedCheckTests(unittest.TestCase):
+    def test_detailed_visual_samples_capture_screenshot_beside_world_and_perf(self):
+        for detailed in (False, True):
+            with self.subTest(detailed=detailed), tempfile.TemporaryDirectory() as folder:
+                root = Path(folder)
+                output = root / "work/evidence"
+                report, snapshot, _ = fixtures()
+                report["settings"] = dict(screenWidth=1920, screenHeight=1080)
+                menu = dict(report, phase="offline-start-menu")
+                device = mock.Mock()
+                device.owned.return_value = dict(apk_sha256="a" * 64)
+                device.read_receipt.return_value = dict(persistentDataPath="/owned")
+                device.evidence_directory.return_value = output
+                device.sh.side_effect = lambda *args, **kwargs: {
+                    ("dumpsys", "battery"): "temperature: 350",
+                    ("dumpsys", "thermalservice"): "Thermal Status: 0",
+                }.get(args, "")
+                with (
+                    mock.patch.object(sustained, "WORK", root / "work"),
+                    mock.patch.object(sustained, "Device", return_value=device),
+                    mock.patch.object(sustained, "attempt_from_installed", return_value="authored-attempt"),
+                    mock.patch.object(sustained.cleanup, "_remote_path_state", return_value="absent"),
+                    mock.patch.object(sustained.cleanup, "_same_process", return_value=True),
+                    mock.patch.object(sustained.cleanup, "_read_json", side_effect=[menu, report, report, report, snapshot]),
+                    mock.patch.object(sustained.cleanup, "matches_run", return_value=True),
+                    mock.patch.object(sustained.cleanup, "report_errors", return_value=[]),
+                    mock.patch.object(sustained.cleanup, "survivor_identity_failures", return_value=[]),
+                    mock.patch.object(sustained.cleanup, "first_stage_errors", return_value=[]),
+                    mock.patch.object(sustained.cleanup, "menu_start_coordinates", return_value=(100, 100)),
+                    mock.patch.object(sustained.cleanup, "_profile_counts", return_value={}),
+                    mock.patch.object(sustained.touch_gesture, "run", return_value=dict(termination="steps-complete")),
+                    mock.patch.object(sustained, "observation_sample", return_value={}),
+                    mock.patch.object(sustained.time, "sleep", side_effect=RuntimeError("fixture ends after first capture")),
+                ):
+                    with self.assertRaisesRegex(RuntimeError, "Sustained assisted check failed"):
+                        sustained.check_session_sustained(
+                            "a" * 64, _launch=lambda current: dict(pid=73), detailed_visual_diagnostics=detailed, capture_interval_seconds=10
+                        )
+                sample = output / "sample-0000"
+                self.assertTrue((sample / "world.json").is_file())
+                expected = [mock.call("perf", sample)]
+                if detailed:
+                    expected.append(mock.call("screenshot", sample))
+                self.assertEqual(device.collect.call_args_list, expected)
+                device.display.assert_any_call(False)
+
     def test_world_preparation_does_not_admit_before_selected_assist_is_applied(self):
         report, _, _ = fixtures()
         self.assertTrue(sustained.sustained_world_ready(report))
