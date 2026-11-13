@@ -5595,6 +5595,10 @@ Its explicit host-only `--refresh-emission-manifest` action repins only tracked
 source diagnostics, total bytes, outer hash and the requested runner commit.
 Its durable `device-state.json` owns setup state, the detached handle and terminal
 outcome; each confirmed retry gets a fresh output directory and reuses the cache.
+Explicit `--restage-emission` replaces confirmed-terminal owned staging for new
+pins after verifying the installed toolhost; ordinary resume remains pin-strict.
+The phone supervisor waits before producer launch when valid admission readings
+are warm, reporting cooling and enforcing cancellation and the wall deadline.
 Unknown outcomes retain the lease for exact-handle reattachment after the previous
 host runner exits. Output and owned app remain for downstream consumers, which
 must dispose of them after use. Runner finalization sleeps the display and prunes

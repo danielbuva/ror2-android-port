@@ -2443,6 +2443,7 @@ def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--emission-request", help="Current shared-runner operation: pinned source bundle emission; no synthetic installer UI")
     parser.add_argument("--resume-emission", action="store_true", help="Reattach a retained job, or retry its confirmed failure with the same durable cache")
+    parser.add_argument("--restage-emission", action="store_true", help="Replace this owned confirmed-terminal staging from the new pinned manifest")
     parser.add_argument(
         "--host-only", action="store_true", help="Build/sign synthetic fixtures on the lab host, without any phone operation or phone PASS claim"
     )
@@ -2486,9 +2487,11 @@ def main(argv=None):
     if args.emission_request:
         sys.path.insert(0, str(ROOT / "scripts/lab"))
         operation = module("lab_toolhost_emission", ROOT / "scripts/lab/toolhost_emission.py")
-        return 0 if operation.execute(args.emission_request, sys.modules[__name__], resume=args.resume_emission)["success"] else 1
-    if args.resume_emission:
-        parser.error("--resume-emission requires --emission-request")
+        return (
+            0 if operation.execute(args.emission_request, sys.modules[__name__], resume=args.resume_emission, restage=args.restage_emission)["success"] else 1
+        )
+    if args.resume_emission or args.restage_emission:
+        parser.error("--resume-emission/--restage-emission requires --emission-request")
     qualify_prompts = args.qualify_install_prompts or args.qualify_phone_flow
     if qualify_prompts and (
         args.allow_test_installs

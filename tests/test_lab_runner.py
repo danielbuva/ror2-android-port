@@ -104,6 +104,15 @@ class OwnerGateTest(unittest.TestCase):
 
 
 class RefusedLeaseTest(unittest.TestCase):
+    def test_explicit_restage_uses_the_shared_installer_resume_path(self):
+        with tempfile.TemporaryDirectory() as directory:
+            repo = Path(directory).resolve()
+            request = repo / "request.json"
+            request.write_text(json.dumps(dict(runner=dict(repo=str(repo), ref="main", device="synthetic"), done_file=str(repo / "work/terminal.json"))))
+            with mock.patch.object(lab_runner.Runner, "execute", return_value=(1, None)) as execute:
+                self.assertEqual(lab_runner.local_emission(request, restage=True), 1)
+            self.assertEqual(execute.call_args.args[0]["args"][-2:], ["--resume-emission", "--restage-emission"])
+
     def test_local_emission_publishes_failure_done_file_after_runner_cleanup(self):
         with tempfile.TemporaryDirectory() as directory:
             repo = Path(directory).resolve()

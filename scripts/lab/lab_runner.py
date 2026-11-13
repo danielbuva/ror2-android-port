@@ -309,7 +309,7 @@ def toolhost_summary(out):
     return f"success={result.get('success')} apk_sha256={result.get('apk_sha256') or result.get('tool_apk_sha256')} dir=$LAB_TOOLHOST_ROOT/{out.name}"
 
 
-def local_emission(path, *, dry_run=False, resume=False):
+def local_emission(path, *, dry_run=False, resume=False, restage=False):
     """Private request entry point; same script/worktree/lease owner as /lab."""
     request = json.loads(Path(path).read_bytes())
     configuration = request["runner"]
@@ -326,7 +326,7 @@ def local_emission(path, *, dry_run=False, resume=False):
         return 0
     result = dict(success=False)
     runner = Runner(repo, {})
-    if resume:
+    if resume or restage:
         runner.resume_state = done.parent / "device-state.json"
 
     def interrupt(number, frame):
@@ -346,6 +346,8 @@ def local_emission(path, *, dry_run=False, resume=False):
         )
         if resume:
             command += " --resume-emission"
+        if restage:
+            command += " --resume-emission --restage-emission" if not resume else " --restage-emission"
         code, _ = runner.execute(parse_command(command))
         operation = done.with_suffix(".operation.json")
         if operation.exists():
@@ -406,6 +408,7 @@ if __name__ == "__main__":
         mode = parser.add_mutually_exclusive_group()
         mode.add_argument("--dry-run", action="store_true")
         mode.add_argument("--resume-emission", action="store_true")
+        mode.add_argument("--restage-emission", action="store_true", help="Replace confirmed-terminal owned staging with newly pinned producers/inputs")
         mode.add_argument("--refresh-emission-manifest", metavar="CHECKOUT", help="Host-only: repin repo producers from a clean committed checkout")
         arguments = parser.parse_args()
         if arguments.refresh_emission_manifest:
@@ -413,5 +416,5 @@ if __name__ == "__main__":
 
             print(json.dumps(refresh_manifest(arguments.emission_request, arguments.refresh_emission_manifest)))
             sys.exit(0)
-        sys.exit(local_emission(arguments.emission_request, dry_run=arguments.dry_run, resume=arguments.resume_emission))
+        sys.exit(local_emission(arguments.emission_request, dry_run=arguments.dry_run, resume=arguments.resume_emission, restage=arguments.restage_emission))
     sys.exit(main())

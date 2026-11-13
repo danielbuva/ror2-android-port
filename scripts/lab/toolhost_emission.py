@@ -190,7 +190,7 @@ def collect(phone, state, destination):
     return result
 
 
-def execute(path, installer, *, dry_run=False, resume=False):
+def execute(path, installer, *, dry_run=False, resume=False, restage=False):
     """Run beneath Runner.execute; its lease spans transfer, wait and cleanup."""
     started = time.monotonic()
     request = json.loads(Path(path).read_bytes())
@@ -239,9 +239,11 @@ def execute(path, installer, *, dry_run=False, resume=False):
         if resume:
             state = json.loads(state_path.read_bytes())
         active = bool(state and state.get("job") and state.get("terminal") is None)
+        if restage and (not resume or active or state.get("terminal") is None):
+            raise RuntimeError("emission-restage-confirmed-terminal-required")
         if not active:
             required = request["estimated_output_bytes"] + 20 * 1024**3
-            if not state or not state.get("staged"):
+            if restage or not state or not state.get("staged"):
                 required += sum(pin["bytes"] for pin in files.values())
             if storage["internal"]["free_bytes"] < required:
                 raise RuntimeError("emission-device-space-budget")
@@ -257,11 +259,25 @@ def execute(path, installer, *, dry_run=False, resume=False):
         if resume:
             if (
                 state["apk_sha256"] != apk_hash
-                or state["manifest_sha256"] != request["manifest"]["sha256"]
+                or (not restage and state["manifest_sha256"] != request["manifest"]["sha256"])
                 or phone.package_hash(installer.PACKAGE) != apk_hash
             ):
                 raise RuntimeError("emission-resume-identity")
             phone.owned_installer, phone.installer_hash = True, apk_hash
+            if restage:
+                # Explicit producer qualification replaces only this receipt's
+                # confirmed-terminal scratch. Unknown jobs never reach here.
+                previous = state["remote"]
+                parent, separator, name = previous.rpartition("/files/owner-input/emission-")
+                if not separator or not parent.startswith(("/data/user/", "/data/data/")) or not re.fullmatch(r"[0-9a-f]{32}", name):
+                    raise RuntimeError("emission-restage-owned-root-required")
+                phone.shell("run-as", installer.PACKAGE, "rm", "-rf", previous, label="emission-retire-staging")
+                state = dict(
+                    apk_sha256=apk_hash, manifest_sha256=request["manifest"]["sha256"], remote=parent + separator + uuid.uuid4().hex, native=state["native"]
+                )
+                write(state_path, state)
+                phone.shell("run-as", installer.PACKAGE, "mkdir", "-p", state["remote"], label="emission-input-directory")
+                result["restaged_after_terminal"] = True
         else:
             if phone.occupied(installer.PACKAGE):
                 raise RuntimeError("emission-preexisting-package")
