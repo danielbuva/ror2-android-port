@@ -129,6 +129,14 @@ class EmissionTests(unittest.TestCase):
         self.phone.install.assert_called_once()
         self.phone.cleanup.assert_not_called()
 
+    def test_android_invocation_uses_serial_records_without_multiprocessing_extension(self):
+        result = self.run_request()
+        self.assertTrue(result["success"])
+        self.assertEqual(result["record_workers"], 1)
+        command = self.phone.transport.start_detached.call_args.args[0]
+        producer = command[command.index("--") + 1 :]
+        self.assertEqual(producer[producer.index("--workers") + 1], "1")
+
     def test_exact_cli_dry_run_validates_pins_without_device_or_terminal(self):
         observed = subprocess.run(
             [sys.executable, str(ROOT / "scripts/lab/lab_runner.py"), "--emission-request", str(self.path), "--dry-run"], capture_output=True, text=True

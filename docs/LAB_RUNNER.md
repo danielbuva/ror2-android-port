@@ -59,8 +59,16 @@ The ignored JSON config has exactly these fields:
 
 The manifest's `files` maps relative staged paths to `source`, `bytes` and
 `sha256`. Include the public producer closure beneath `repo/`; this operation
-executes the tracked `phone_runner.py` and `bundle_preload.py` there. It streams
-the pinned APK's Python runtime and pinned inputs without host archive copies.
+executes the tracked `phone_runner.py` and `bundle_preload.py` there.
+
+Android record emission explicitly uses `--workers 1`: the packaged Python has
+no `_multiprocessing` extension. The operation's `record_workers` records this
+selection; the thermal receipt's `workers` remains the native-library limit.
+Host emission still defaults to two record workers. Structural checks and cache
+checkpoints are the same in both modes.
+
+The operation streams the pinned APK's Python runtime and pinned inputs without
+host archive copies.
 Dry-run validates pins without device access. Live execution uses the standard
 fresh checkout, lease, cooldown, package-identity, storage and display owners.
 The current runtime staging supports configured internal-only devices; adopted
