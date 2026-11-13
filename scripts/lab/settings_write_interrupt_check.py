@@ -106,7 +106,10 @@ def check_settings_save_failure(device, output, expected, launch, cancelled):
             write(output / (stage + "-retry.json"), retried)
             result["stages"].append(dict(stage=stage, pid=pid, prior_generations_retained=True, visible_error=True, retry=True))
             device.sh("am", "force-stop", PACKAGE)
-        device.sh("rm", selector)
+        # Keep the report route, but do not re-arm either failure on cold load.
+        # Without a selector normal startup uses the player report ID instead.
+        write(output / "recovery-selection.json", selection(attempt))
+        device.cmd("push", str(output / "recovery-selection.json"), selector)
         pid = str(launch(device)["pid"])
         cold = wait(lambda r: r.get("phase") == "offline-start-menu" and r.get("settings", {}).get("recovery") == "validated-primary")
         if _read_raw(device, primary) != original or protected_hashes(device, runtime) != protected:
