@@ -473,41 +473,44 @@ public sealed partial class PortSession
         }
         public void PresentRegisteredNativeEffects()
         {
-            // Only registered, owned effect sources are adapted before their native pool
-            // instantiates them. Retain the original arrays for existing scoped teardown.
             var entries = (EffectDef[])PortSession.RewardField(typeof(EffectCatalog), "entries").GetValue(null);
-            foreach (var renderer in entries.Where(x => x != null && x.prefabEffectComponent && x.prefab)
-                         .SelectMany(x => x.prefab.GetComponentsInChildren<Renderer>(true))
-                         .Distinct())
+            foreach (var entry in entries.Where(x => x != null && x.prefabEffectComponent && x.prefab))
+                PresentNativeEffectSource(entry.prefab);
+            // CharacterBody loads this native trail outside EffectCatalog. Its segment
+            // is a prefab reference, not a child, and must be ready before the first tick.
+            PresentNativeEffectSource(LegacyResourcesAPI.Load<GameObject>("Prefabs/FireTrail"));
+        }
+        void PresentNativeEffectSource(GameObject source)
+        {
+            var visited = new HashSet<GameObject>();
+            void Present(GameObject root)
             {
-                if (coordinator.worldLootSourceMaterials.ContainsKey(renderer))
-                    continue;
-                var originals = renderer.sharedMaterials;
-                var copies = (Material[])originals.Clone();
-                bool changed = false;
-                for (int i = 0; i < originals.Length; i++)
+                if (!root || !visited.Add(root))
+                    return;
+                foreach (var renderer in root.GetComponentsInChildren<Renderer>(true))
                 {
-                    var original = originals[i];
-                    if (!original)
+                    if (coordinator.worldLootSourceMaterials.ContainsKey(renderer))
                         continue;
-                    var copy = new Material(original);
-                    if (!AndroidNativeDeferredPresentation.Apply(original, copy))
-                    {
-                        Destroy(copy);
+                    var originals = renderer.sharedMaterials;
+                    var particle = renderer as ParticleSystemRenderer;
+                    var trail = particle ? particle.trailMaterial : null;
+                    int changed = AndroidMaterialPresentation.ApplyRecovered(renderer, coordinator.worldMaterials);
+                    if (changed == 0)
                         continue;
-                    }
-                    copies[i] = copy;
-                    coordinator.worldMaterials.Add(copy);
-                    coordinator.r.world.nativeEffectSourceMaterials++;
-                    changed = true;
-                }
-                if (changed)
-                {
                     coordinator.worldLootSourceMaterials.Add(renderer, originals);
-                    renderer.sharedMaterials = copies;
+                    if (particle && particle.trailMaterial != trail)
+                        coordinator.worldLootSourceTrails.Add(particle, trail);
+                    coordinator.r.world.nativeEffectSourceMaterials += changed;
                     coordinator.r.world.nativeEffectSourceRenderers++;
                 }
+                // Native pools instantiate these referenced roots independently of the
+                // parent prefab. Follow the typed edges rather than scanning live scenes.
+                foreach (var damageTrail in root.GetComponentsInChildren<DamageTrail>(true))
+                    Present(damageTrail.segmentPrefab);
+                foreach (var projectile in root.GetComponentsInChildren<RoR2.Projectile.ProjectileController>(true))
+                    Present(coordinator.OriginalProjectileGhost(projectile));
             }
+            Present(source);
         }
         public void CleanupObjectiveEffects()
         {
@@ -848,6 +851,7 @@ public sealed partial class PortSession
                         }
                         var owned = Instantiate(projectile, objectiveProjectileTemplates.transform);
                         owned.name = projectile.name;
+                        PresentNativeEffectSource(owned);
                         owned.SetActive(true);
                         if (!owned.GetComponent<SilentProjectileBoundary>())
                             owned.AddComponent<SilentProjectileBoundary>();

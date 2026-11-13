@@ -120,6 +120,7 @@ on an installed candidate.
 | End run | Open confirmation, cancel without teardown, reopen and confirm; no completed result/reward is fabricated; owned native teardown reaches menu |
 | Second session | Start through the menu in the same process; no stale world/input/listener ownership, profile change or runtime error |
 | Genuine loss/results | Natural defeat, native result/ledger persistence exactly once, results navigation and ready same-process restart |
+| Enemy and attack presentation | Check FireTrail, projectile ghosts and Golem attacks during ordinary play against matched PC captures; record any opaque squares, wrong blend or missing effects. The bounded assisted trail check does not qualify every attack family. |
 
 The [screen inventory](SCREEN_COVERAGE.md) identifies absent original screens.
 Touch gestures feed the existing native input bank and camera adapter. Keep
