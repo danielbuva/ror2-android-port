@@ -99,12 +99,34 @@ class PruneGeneratedTests(unittest.TestCase):
         (self.root / "docs").mkdir()
         (self.root / "docs/history-retention.md").write_text("d" * 64)
         planner = self.plan()
-        self.assertEqual({item["path"] for item in planner.items}, {stale, history})
+        self.assertEqual({item["path"] for item in planner.items}, {stale, history, marked})
         reasons = {Path(item["path"]).name: item["reason"] for item in planner.kept}
         self.assertEqual(reasons[current.name], "current-build cache entry")
         self.assertEqual(reasons[base.name], "iteration-base cache entry")
         self.assertIn("latest installed APK", reasons[latest.name])
-        self.assertEqual(reasons[marked.name], ".prune-keep")
+
+    def test_only_newest_build_referenced_by_each_worker_handoff_survives(self):
+        old = self.cache_entry("worker-old", "b" * 64)
+        latest = self.cache_entry("worker-new", "c" * 64)
+        (old / ".prune-keep").touch()
+        age(old)
+        os.utime(latest / "result.json", (OLD + 3600, OLD + 3600))
+        handoffs = self.root / ".local/orchestrator/handoff"
+        handoffs.mkdir(parents=True)
+        (handoffs / "fixture-worker.md").write_text("old " + "b" * 64 + "\ncurrent " + "c" * 64)
+        self.assertEqual([item["path"] for item in self.plan().items], [old])
+
+    def test_three_hour_cache_guard_does_not_lower_other_output_age_guard(self):
+        stale = self.cache_entry("stale", "b" * 64)
+        recent = self.cache_entry("recent", "c" * 64)
+        for path in (stale, recent):
+            timestamp = time.time() - (4 if path == stale else 2) * 3600
+            for child in [*path.rglob("*"), path]:
+                os.utime(child, (timestamp, timestamp))
+        planner = prune.Planner(self.work, set(), set(), 24, cache_min_age_hours=3)
+        planner.build_cache()
+        self.assertEqual([item["path"] for item in planner.items], [stale])
+        self.assertTrue(planner.old(stale) is False)
 
     def test_cache_uses_authoritative_install_receipt_per_device_and_explicit_keep(self):
         stale = self.cache_entry("stale", "b" * 64)
