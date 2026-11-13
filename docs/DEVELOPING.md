@@ -25,6 +25,10 @@ before launch) and `capture_interval_seconds` (launch-mode cadence, default 60).
 Scheduled scripts resolve relative to the request and use the same live PID,
 APK hash and 30-second gesture limit. Times start after the startup input script;
 each dispatch and its actual elapsed time are retained in the terminal receipt.
+`start_from_menu: true` (lab launch mode only) waits for the owned native menu,
+injects Start and waits for a ready world before the observation clock begins.
+Use it with an explicit auto-route selector for stage-transition memory soaks;
+physical and ordinary-play qualification remain separate.
 `pacing_diagnostics: true` retains read-only Unity, Android display, compositor
 and OS frame-rate intervention evidence during sustained observations. The
 settings failure workload owns its attempt-bound selector and injects one

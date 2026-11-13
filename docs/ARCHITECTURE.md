@@ -1,14 +1,5 @@
 # Architecture
 
-The shared device runner's launch request accepts `start_from_menu` for automatic
-route observations. It waits for the installed attempt/PID-bound native menu,
-requires owned display-zero focus, injects Start and waits for a ready world
-before the observation clock begins. Existing periodic captures retain PSS,
-native heap and managed/allocation snapshots across stage transitions. The
-ordinary selector controls the route; sustained combat's stationary first-stage
-selector is separate. Existing shared cleanup stops the process and removes the
-selector. These measurements do not certify physical or ordinary play.
-
 `OfflineApplicationSession` owns controller/keyboard menu routes, loadout modal
 visibility, Quit confirmation and persisted-results return. The existing
 `OfflineLoadoutBoundary` edits only unlocked source skill/skin choices and owns
@@ -2905,6 +2896,15 @@ under `packages/dev.ror2lab.converted`. A prior peer receipt can be imported onl
 after matching its device, package, live path and APK hash. Converted launches
 resolve the real launcher activity; a launch observation alone does not prove
 that bootstrap or gameplay succeeded.
+The shared device runner's launch request accepts `start_from_menu` for automatic
+route observations. It waits for the installed attempt/PID-bound native menu,
+requires owned display-zero focus, injects Start and waits for a ready world
+before the observation clock begins. Existing periodic captures retain PSS,
+native heap and managed/allocation snapshots across stage transitions. The
+ordinary selector controls the route; sustained combat's stationary first-stage
+selector is separate. Existing shared cleanup stops the process and removes the
+selector. These measurements do not certify physical or ordinary play.
+
 Launch-mode `input_schedule` adds ordered, relative-time targeted-touch scripts
 within the observation window, allowing ordinary input and End Run in the same
 owned session. The existing touch owner validates each script before dispatch,

@@ -247,6 +247,13 @@ thermal sampling policy; proposed performance budgets do not change those limits
       objects in menus 2/33; discovered managed-object bytes rise from 26,895,878
       to 30,242,305. This extends the measured interval without establishing a
       lifetime ceiling or closing ordinary long play.
+- [x] Record assisted stage-transition memory and the post-teardown tail.
+      [J1477](PORTING_JOURNAL.md#j1477--capture-stage-transition-memory-and-a-bounded-passive-tail)
+      retains 61 samples over 1,831.747 s and four transitions. Routing completes
+      at 663.070 s; the final 600 s is passive Lab with flat or declining heaps
+      and Unity allocation fitted growth of 0.0132% of its median. No observed
+      OOM/LMK/native crash; a source-rock null-reference exception remains
+      unattributed. This leaves active long-play memory and ordinary play open.
 - [ ] Qualify a long unassisted physical session, including ordinary results
       navigation, continued dependency retention and memory observations
       ([owner checklist](PLAYTESTING.md#stability-persistence-and-updates)).
