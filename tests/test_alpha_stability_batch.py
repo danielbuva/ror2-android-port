@@ -649,11 +649,15 @@ class GameThermalOwnerTests(unittest.TestCase):
                 self.device.cmd.return_value = "cpu-0 49000 /thermal_zone0/temp"
                 observations = iter((351, 350))
                 self.device.sh.side_effect = lambda *a, **k: f"temperature: {next(observations, 350)}\nlevel: {level}\nstatus: {status}"
-                with mock.patch.object(batch.time, "sleep") as sleep:
+                clock = [0.0]
+                with (
+                    mock.patch.object(batch.time, "monotonic", side_effect=lambda: clock[0]),
+                    mock.patch.object(batch.time, "sleep", side_effect=lambda seconds: clock.__setitem__(0, clock[0] + seconds)) as sleep,
+                ):
                     if refused:
                         with self.assertRaisesRegex(RuntimeError, "charge separation/limit"):
                             self.owner.cool()
-                        self.assertEqual(sleep.call_args_list, [] if level > 85 else [mock.call(10), mock.call(10)])
+                        self.assertEqual(sleep.call_args_list, [] if level > 85 else [mock.call(30)] * 20)
                     else:
                         self.owner.cool()
                         sleep.assert_called_once_with(batch.THERMAL_INTERVAL_SECONDS)
@@ -665,8 +669,18 @@ class GameThermalOwnerTests(unittest.TestCase):
             with self.subTest(readings=readings), mock.patch.object(batch.time, "sleep") as sleep:
                 self.current.side_effect = readings
                 self.owner.cool()
-                self.assertEqual(sleep.call_args_list, [mock.call(10)] * (len(readings) - 1))
+                self.assertEqual(sleep.call_args_list, [mock.call(30)] * (len(readings) - 1))
                 self.assertEqual(self.owner.admission_battery["level"], 80)
+
+    def test_charge_limit_top_up_waits_then_admits_on_not_charging(self):
+        self.device.cmd.return_value = "cpu-0 49000 /thermal_zone0/temp"
+        self.device.sh.side_effect = ["temperature: 340\nlevel: 80\nstatus: 2", "temperature: 340\nlevel: 80\nstatus: 3"]
+        self.current.side_effect = [1, -1]
+        with mock.patch.object(batch.time, "sleep") as sleep:
+            self.owner.cool()
+        sleep.assert_called_once_with(30)
+        self.assertEqual(self.owner.admission_battery["status"], 3)
+        self.device.display.assert_called_once_with(False)
 
     def test_runtime_battery_service_boundary_is_recorded(self):
         self.owner.runtime_zones = [("cpu-0", "/thermal_zone0/temp")]

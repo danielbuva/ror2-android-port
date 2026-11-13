@@ -308,16 +308,18 @@ class _GameThermalOwner:
         if not self.device.display(False):
             raise RuntimeError("Thermal cooldown requires verified OLED sleep")
         self.previous = None  # No heavy job during display/idle setup.
-        charging_samples = 0
+        charging_since = None
         while True:
             maximum = self.sample(all_zones=True)
             if self.battery["level"] >= 80 and self.battery_current_now > 0:
-                charging_samples += 1
-                if charging_samples == 3:
-                    raise RuntimeError("Battery charge separation/limit admission refused; report without retry")
-                time.sleep(10)
+                now = time.monotonic()
+                if charging_since is None:
+                    charging_since = now
+                if now - charging_since >= 600:
+                    raise RuntimeError("Battery charge separation/limit admission refused after ten minutes charging; report without retry")
+                time.sleep(30)
                 continue
-            charging_samples = 0
+            charging_since = None
             if maximum <= 50 and max(self.battery["celsius"], self.battery_zone_celsius) <= 35:
                 self.admission_battery = self.battery.copy()
                 break

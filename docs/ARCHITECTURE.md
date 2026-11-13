@@ -2833,7 +2833,13 @@ An optional `payload_directory` uses the existing incremental `Device.sync`
 owner after installation, with its size included in the storage reservation.
 Launch mode retains screenshots (default 60 seconds, configurable with
 `capture_interval_seconds`), logs, runtime reports and performance snapshots;
-sustained mode delegates to the existing sustained-session owner.
+sustained mode delegates to the existing sustained-session owner, using
+`capture_interval_seconds` for observations (default five seconds). Observations
+follow elapsed-time boundaries and retain available CPU policy frequencies (kHz),
+Qualcomm GPU frequency (Hz), skin temperatures and opt-in diagnostic projectile
+and effect counts. Unavailable sensors/counts remain empty or null; frequencies
+alone do not establish thermal throttling. The independent safety sampler keeps
+its existing subsecond cadence.
 Optional diagnostics/selection/input-mapping settings are read back and restored.
 The mapping must match the APK attempt and accepted measured bridge checkpoint.
 Converted runs also reset and independently verify the separately owned lab
@@ -2913,8 +2919,9 @@ Before each stage, readable CPU/GPU/battery/skin zones must cool to at most
 50 C with the OLED asleep, with battery back to at most 35 C before every
 stage. Hot admission readings wait for cooldown; there is no separate 80 C
 admission abort. Excluded power/charger/USB zones remain recorded metrics even
-above 80 C. Positive battery `current_now` at level >= 80%, or level > 85%, refuses
-admission without retry; a charging label with zero current is admitted. Charging
+above 80 C. Positive battery `current_now` at level >= 80% waits with the OLED
+asleep, polling every 30 seconds for up to ten minutes before refusing admission.
+A level > 85% refuses immediately; a charging label with zero current is admitted. Charging
 settings remain user-owned. Admission records the measured sysfs current; the
 observer reads battery temperature, level and status through bounded dumpsys
 calls and retains them in trace rows and stage receipts. Other physical zones, including power-management,

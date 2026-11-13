@@ -123,6 +123,28 @@ class DeviceSessionTests(unittest.TestCase):
         self.assertEqual([call.args[1].name for call in capture.call_args_list], ["sample-0", "sample-5", "sample-10", "final"])
         self.assertEqual(result["observed_seconds"], 10)
 
+    def test_sustained_request_forwards_observation_cadence(self):
+        import session_sustained_check as sustained
+
+        evidence = self.root / "sustained"
+        evidence.mkdir()
+        target = mock.Mock(package=self.request["package"])
+        target.evidence_directory.return_value = evidence
+
+        def complete(**kwargs):
+            runner.save(evidence / "one/result.json", dict(success=True))
+            return dict(success=True)
+
+        request = dict(self.request, mode="sustained", capture_interval_seconds=30)
+        runner.save(self.request_file, request)
+        self.assertEqual(runner.load_request(self.request_file)["capture_interval_seconds"], 30)
+        with mock.patch.object(sustained, "check_session_sustained", side_effect=complete) as check:
+            runner.run_workload(target, mock.Mock(), request, self.output, {})
+        self.assertEqual(check.call_args.kwargs["observation_interval_seconds"], 30)
+        del request["capture_interval_seconds"]
+        runner.save(self.request_file, request)
+        self.assertEqual(runner.load_request(self.request_file)["capture_interval_seconds"], 5)
+
     def test_pacing_observation_queries_only_selected_package_surfaces(self):
         target = mock.Mock(package="dev.ror2lab.arm64")
         responses = {

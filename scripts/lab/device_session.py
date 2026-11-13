@@ -64,11 +64,11 @@ def load_request(path):
         raise ValueError("Explicit serial and workstream required")
     if not re.fullmatch(r"[0-9a-f]{64}", value["apk_sha256"]):
         raise ValueError("Expected APK SHA-256 required")
-    for name, default in (("duration_seconds", None), ("cooldown_seconds", 3600), ("capture_interval_seconds", 60)):
+    value.setdefault("mode", "launch")
+    for name, default in (("duration_seconds", None), ("cooldown_seconds", 3600), ("capture_interval_seconds", 5 if value["mode"] == "sustained" else 60)):
         value.setdefault(name, default)
         if type(value[name]) is not int or value[name] <= 0:
             raise ValueError(name + " must be a positive integer")
-    value.setdefault("mode", "launch")
     if value["mode"] not in {"launch", "sustained", "settings-save-failure"}:
         raise ValueError("mode must be launch, sustained or settings-save-failure")
     if value["mode"] != "launch" and value["package"] != "dev.ror2lab.arm64":
@@ -334,6 +334,7 @@ def run_workload(device, thermal, request, output, result):
                 _launch=checked_launch,
                 raw_frame_times=True,
                 duration_seconds=request["duration_seconds"],
+                observation_interval_seconds=request.get("capture_interval_seconds", 5),
                 _observe=observe_pacing if request.get("pacing_diagnostics") else None,
             )
         finally:

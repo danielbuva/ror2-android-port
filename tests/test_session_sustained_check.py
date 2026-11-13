@@ -28,6 +28,28 @@ def fixtures():
 
 
 class SustainedCheckTests(unittest.TestCase):
+    def test_sensors_preserve_frequency_units_skin_and_unavailable_values(self):
+        row = sustained.sensor_sample(
+            "/sys/devices/system/cpu/cpufreq/policy0/scaling_cur_freq\t1800000\n/sys/class/kgsl/kgsl-3d0/devfreq/cur_freq\t680000000\nskin-therm\t39000\nskin-bad\tUNREADABLE\n"
+        )
+        self.assertEqual(row, dict(cpu_frequency_khz={"policy0": 1800000}, gpu_frequency_hz=680000000, skin_celsius={"skin-therm": 39}))
+        self.assertEqual(sustained.sensor_sample("permission denied"), dict(cpu_frequency_khz={}, gpu_frequency_hz=None, skin_celsius={}))
+
+    def test_workload_counts_require_enabled_successful_snapshot(self):
+        report, snapshot, utc = fixtures()
+        self.assertIsNone(sustained.observation_sample(report, snapshot, 0, utc=utc)["active_projectiles"])
+        snapshot.update(workloadCounts=True, activeProjectiles=3, activeEffects=4, workloadCountMs=0.4)
+        row = sustained.observation_sample(report, snapshot, 0, utc=utc)
+        self.assertEqual((row["active_projectiles"], row["active_effects"], row["workload_count_ms"]), (3, 4, 0.4))
+        snapshot["workloadCountError"] = "type unavailable"
+        self.assertIsNone(sustained.observation_sample(report, snapshot, 0, utc=utc)["active_projectiles"])
+
+    def test_invalid_observation_cadence_refuses_before_device_access(self):
+        with mock.patch.object(sustained, "Device") as device:
+            with self.assertRaisesRegex(ValueError, "observation_interval_seconds"):
+                sustained.check_session_sustained("a" * 64, observation_interval_seconds=0)
+            device.assert_not_called()
+
     def test_world_preparation_does_not_admit_before_selected_assist_is_applied(self):
         report, _, _ = fixtures()
         self.assertTrue(sustained.sustained_world_ready(report))
