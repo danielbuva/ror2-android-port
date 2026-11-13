@@ -2435,6 +2435,7 @@ BUILD_EDITOR_SOURCES = [
     "SourceIdentityTransformParityFixture.cs",
     "MercEvisImpactEffectExactEditorFixture.cs",
     "WholeCatalogBuild.cs",
+    "WholeCatalogHost.cs",
 ]
 
 
