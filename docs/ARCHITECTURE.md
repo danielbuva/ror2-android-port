@@ -5518,6 +5518,9 @@ The same owner's current local `--emission-request` entry point executes
 `scripts/lab/toolhost_emission.py` through the existing installer driver. This
 operation validates a pinned input manifest and toolhost, streams runtime/inputs,
 and invokes `bundle_preload.py` beneath the existing on-phone thermal supervisor.
+Its explicit host-only `--refresh-emission-manifest` action repins only tracked
+`repo/` producers from a clean commit, preserves all other input pins, and updates
+source diagnostics, total bytes, outer hash and the requested runner commit.
 Its durable `device-state.json` owns setup state, the detached handle and terminal
 outcome; each confirmed retry gets a fresh output directory and reuses the cache.
 Unknown outcomes retain the lease for exact-handle reattachment after the previous

@@ -403,8 +403,15 @@ if __name__ == "__main__":
 
         parser = argparse.ArgumentParser(description="Current shared device runner: pinned toolhost emission request")
         parser.add_argument("--emission-request", required=True)
-        parser.add_argument("--dry-run", action="store_true")
-        parser.add_argument("--resume-emission", action="store_true")
+        mode = parser.add_mutually_exclusive_group()
+        mode.add_argument("--dry-run", action="store_true")
+        mode.add_argument("--resume-emission", action="store_true")
+        mode.add_argument("--refresh-emission-manifest", metavar="CHECKOUT", help="Host-only: repin repo producers from a clean committed checkout")
         arguments = parser.parse_args()
+        if arguments.refresh_emission_manifest:
+            from toolhost_emission import refresh_manifest
+
+            print(json.dumps(refresh_manifest(arguments.emission_request, arguments.refresh_emission_manifest)))
+            sys.exit(0)
         sys.exit(local_emission(arguments.emission_request, dry_run=arguments.dry_run, resume=arguments.resume_emission))
     sys.exit(main())

@@ -109,6 +109,66 @@ class EmissionTests(unittest.TestCase):
         self.assertTrue(json.loads(observed.stdout)["dry_run"])
         self.assertFalse(Path(self.request["done_file"]).exists())
 
+    def producer_checkout(self):
+        checkout = self.root / "producer"
+        checkout.mkdir()
+        subprocess.run(["git", "init", "-q", str(checkout)], check=True)
+        source = checkout / "producer.py"
+        source.write_text("print('authored new producer')\n")
+        subprocess.run(["git", "-C", str(checkout), "add", "producer.py"], check=True)
+        subprocess.run(
+            ["git", "-C", str(checkout), "-c", "user.name=Fixture", "-c", "user.email=fixture@invalid", "commit", "-qm", "fixture"],
+            check=True,
+        )
+        manifest = Path(self.request["manifest"]["path"])
+        value = json.loads(manifest.read_bytes())
+        value["files"]["repo/producer.py"] = dict(value["files"]["request.json"])
+        value["original_input"] = {"sha256": "a" * 64}
+        manifest.write_text(json.dumps(value))
+        self.request["manifest"]["sha256"] = EMISSION.digest(manifest)
+        self.path.write_text(json.dumps(self.request))
+        return checkout, value
+
+    def test_cli_refresh_repins_only_repo_files_without_device_access(self):
+        checkout, original = self.producer_checkout()
+        observed = subprocess.run(
+            [sys.executable, str(ROOT / "scripts/lab/lab_runner.py"), "--emission-request", str(self.path), "--refresh-emission-manifest", str(checkout)],
+            capture_output=True,
+            text=True,
+        )
+        self.assertEqual(observed.returncode, 0, observed.stderr)
+        result = json.loads(observed.stdout)
+        self.assertEqual(result["refreshed_repo_files"], 1)
+        request, files = EMISSION.load_request(self.path)
+        manifest = json.loads(Path(request["manifest"]["path"]).read_bytes())
+        self.assertEqual(files["request.json"], original["files"]["request.json"])
+        self.assertEqual(manifest["original_input"], original["original_input"])
+        self.assertEqual(files["repo/producer.py"]["source"], str(checkout / "producer.py"))
+        self.assertEqual(manifest["bytes"], sum(pin["bytes"] for pin in files.values()))
+        self.assertEqual(manifest["source_commit"], request["runner"]["ref"])
+        self.assertEqual(manifest["source_checkout"], str(checkout))
+        self.assertFalse(Path(request["done_file"]).exists())
+        self.device.storage.assert_not_called()
+
+    def test_refresh_refuses_invalid_outer_pin_before_git_or_device(self):
+        self.request["manifest"]["sha256"] = "0" * 64
+        self.path.write_text(json.dumps(self.request))
+        before = self.path.read_bytes()
+        with patch.object(EMISSION.subprocess, "check_output") as git:
+            with self.assertRaisesRegex(ValueError, "emission-input-pin"):
+                EMISSION.refresh_manifest(self.path, self.root)
+        git.assert_not_called()
+        self.assertEqual(self.path.read_bytes(), before)
+        self.device.storage.assert_not_called()
+
+    def test_refresh_refuses_uncommitted_producer(self):
+        checkout, _ = self.producer_checkout()
+        (checkout / "producer.py").write_text("print('uncommitted')\n")
+        before = self.path.read_bytes()
+        with self.assertRaisesRegex(ValueError, "emission-clean-producer-checkout-required"):
+            EMISSION.refresh_manifest(self.path, checkout)
+        self.assertEqual(self.path.read_bytes(), before)
+
     def test_uncertain_remote_job_retains_lease_and_resume_never_relaunches(self):
         self.phone.transport.wait_detached.side_effect = INSTALLER.TRANSPORT.DetachedUncertain(self.job)
         first = self.run_request()

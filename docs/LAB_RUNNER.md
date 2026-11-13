@@ -66,6 +66,18 @@ fresh checkout, lease, cooldown, package-identity, storage and display owners.
 The current runtime staging supports configured internal-only devices; adopted
 storage is refused without an internal-storage fallback.
 
+Before a new producer qualification, repin the existing manifest explicitly:
+
+```
+.local/lab-venv/bin/python scripts/lab/lab_runner.py --emission-request <config.json> --refresh-emission-manifest <clean-checkout>
+```
+
+This host-only action validates the existing pins, replaces only `repo/` entries
+with tracked files from a clean committed checkout, updates the manifest's total
+bytes/source diagnostics and outer hash, and sets `runner.ref` to that commit.
+Publish that commit before live execution. Every non-repo input pin is preserved.
+A changed manifest needs fresh device staging; it cannot resume an old identity.
+
 `device-state.json` beside the terminal path records the owned toolhost,
 staging root and detached handle before launch. The on-phone thermal supervisor
 owns producer duty cycling. Receipts and logs return to the host; output bundles

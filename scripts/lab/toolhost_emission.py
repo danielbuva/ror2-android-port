@@ -64,6 +64,39 @@ def load_request(path):
     return request, files
 
 
+def refresh_manifest(path, checkout):
+    """Explicit host-only producer update; retain every pinned non-repo input."""
+    request, files = load_request(path)
+    checkout = Path(checkout).resolve()
+
+    def git(*arguments):
+        return subprocess.check_output(["git", "-C", str(checkout), *arguments])
+
+    if Path(git("rev-parse", "--show-toplevel").decode().strip()).resolve() != checkout:
+        raise ValueError("emission-checkout-root-required")
+    if git("status", "--porcelain", "--untracked-files=no"):
+        raise ValueError("emission-clean-producer-checkout-required")
+    tracked = set(git("ls-files", "-z").decode().split("\0"))
+    commit = git("rev-parse", "HEAD").decode().strip()
+    replaced = 0
+    for name in files:
+        if name.startswith("repo/"):
+            local = name.removeprefix("repo/")
+            if local not in tracked:
+                raise ValueError("emission-tracked-producer-required")
+            source = checkout / local
+            files[name] = dict(source=str(source), bytes=source.stat().st_size, sha256=digest(source))
+            replaced += 1
+    manifest_path = Path(request["manifest"]["path"])
+    manifest = json.loads(manifest_path.read_bytes())
+    manifest.update(files=files, bytes=sum(pin["bytes"] for pin in files.values()), source_checkout=str(checkout), source_commit=commit)
+    write(manifest_path, manifest)
+    request["manifest"]["sha256"] = digest(manifest_path)
+    request["runner"]["ref"] = commit
+    write(path, request)
+    return dict(success=True, refreshed_repo_files=replaced, input_bytes=manifest["bytes"], source_commit=commit)
+
+
 def transfer(phone, apk, files, remote, native):
     """Stream pinned inputs/runtime once, without another host copy or archive."""
     with zipfile.ZipFile(apk) as archive:
