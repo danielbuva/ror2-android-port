@@ -55,7 +55,17 @@ separate work; this interface adds no device claim.
 Request qualification and emission share attempt-owned SQLite descriptor and
 provider indexes. Only the current rows are decoded; parsed type trees use a
 bounded cache and object bodies retain the existing streamed storage. Teardown
-closes and removes the temporary indexes. The optional emission cache commits
+closes and removes the temporary indexes. Provider descriptors stream through
+SQLite bulk insertion, retaining ordered duplicate extents; metadata conflicts
+and differing duplicate bytes still fail. These disposable indexes disable
+journaling; the separate incremental cache retains its durable checkpoints.
+The `--inputs` CLI defaults to two record workers (`--workers 1` selects serial).
+`RecordWorkers` starts them before loading indexes, bounds queued bytes to
+8 MiB (an oversized record runs alone), and retains an 8 MiB schema cache per
+worker. Workers relocate and inspect immutable bytes. The parent owns provider
+reads, endpoint qualification, cache access, resource placement and ordered
+writes, draining each provider before its checkpoint. Teardown joins workers
+on success or failure. The optional emission cache commits
 completed record batches and preload groups so an interrupted attempt can reuse
 their transformations; source, endpoint and CLR qualification still runs again.
 The emitter atomically writes `progress.json` with phase and completed/total
@@ -264,9 +274,13 @@ optional `--table` extends the existing per-stage table. Each child process
 records wall/user/system time, wait4 RSS, block operations and sampled logical/
 allocated workspace bytes, including failed exits. Process exit stops sampling;
 logs/JSON remain caller-owned. Workspace preparation and validation are separate
-from measured commands. Sampling gives a peak lower bound; child RSS accounting
-is not simultaneous process-tree RSS. These host metrics do not qualify phone
-heat, installation or complete converter performance.
+from measured commands. A separate one-second sample sums simultaneous resident
+bytes for the command and its descendants; sampling gives a peak lower bound,
+and measurement errors invalidate success. Optional absolute `--done-file`
+writes a terminal receipt after pruning on command success, failure or SIGTERM.
+`--detach` starts the same tracked profiler in a new session with a retained
+supervisor log and requires that terminal receipt. These host metrics do not
+qualify phone heat, installation or complete converter performance.
 
 The current release graph selects diagnostic historical-output comparison for
 object, record, remap, mesh, avatar, texture and shader producers. Standalone
