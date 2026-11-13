@@ -1372,6 +1372,13 @@ unchanged, and the installer visibly labels the active test source.
 `scripts/lab-installer-updates.py` owns the synthetic lab acceptance setup,
 local signed fixture server, actual UI/session assertions and owned cleanup.
 Its runner-provided toolhost and generated binaries/keys never leave the lab.
+`scripts/lab-alpha-packaging.py` extends that owner with synthetic package issuance,
+installed-version/ledger and actual importer contracts. Its optional
+`--qualify-install-prompts` mode retains the same visible permission and pending
+consent checks, refusing pregrant; setup and cleanup remain with the installer
+owner. `AlphaPackagingHarness.java` uses generated input only. These checks do
+not qualify SAF/provider UI, legitimate cohorts, power-loss or game profiles.
+
 `Phone.retain_build_artifact` streams one explicitly selected, cache-receipt-pinned
 result from the currently owned installer to ignored host `work/` before cleanup.
 It checks the received hash before publishing the file, keeps binary bytes out of
