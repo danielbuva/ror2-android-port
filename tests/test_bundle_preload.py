@@ -1,7 +1,7 @@
 """Authored contracts for typed prefab dependency/group framing."""
 
 import hashlib
-from contextlib import nullcontext
+from contextlib import closing, nullcontext
 import importlib
 import io
 import json
@@ -13,6 +13,7 @@ import tempfile
 from types import SimpleNamespace as Node
 import unittest
 from unittest.mock import patch
+import weakref
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "tools/phone-build/accepted-output"))
 P = importlib.import_module("bundle_preload")
@@ -27,6 +28,37 @@ def pointer(name):
 
 
 class BundlePreloadTests(unittest.TestCase):
+    def test_qualification_reuses_decoded_native_type(self):
+        endpoints = P.module("bundle_endpoints")
+        encoded = dict(class_id=134, tree="1234", hash="ab" * 16, dependencies=[])
+        with closing(endpoints.Qualification(P, None, dict(bundle="authored", member="CAB-authored"), {}, {"key": encoded}, {})) as qualification:
+            first = qualification.typ(dict(full_type="key"))
+            self.assertIs(first, qualification.typ(dict(full_type="key")))
+            self.assertEqual(first, dict(encoded, tree=b"\x12\x34", hash=b"\xab" * 16))
+            self.assertEqual(encoded["tree"], "1234")
+
+    def test_bulk_descriptors_preserve_order_and_duplicate_contracts(self):
+        with tempfile.TemporaryDirectory() as tmp, closing(P.DiskIndexes(tmp)) as store:
+            rows = store.mapping()
+            rows.load([(("b", 2), {"first": 1, "second": 2}), (("a", 1), {"value": 3})], duplicate="duplicate")
+            rows.load([(("b", 2), {"second": 2, "first": 1})], duplicate="conflict", allow_equal=True)
+            self.assertEqual(list(rows), [("b", 2), ("a", 1)])
+            self.assertEqual(rows["b", 2], {"first": 1, "second": 2})
+            with self.assertRaisesRegex(ValueError, "conflict"):
+                rows.load([(("b", 2), {"first": 4, "second": 2})], duplicate="conflict", allow_equal=True)
+            with self.assertRaisesRegex(ValueError, "duplicate"):
+                rows.load([(("a", 1), {"value": 3})], duplicate="duplicate")
+
+    def test_descriptor_keys_match_independently_parsed_strings_and_lists(self):
+        with tempfile.TemporaryDirectory() as tmp, closing(P.DiskIndexes(tmp)) as store:
+            rows = store.mapping()
+            key = ("bundle", "member", -(2**63))
+            rows[key] = {"edges": [[0, 2**63 - 1]]}
+            parsed = json.loads(json.dumps(key))
+            self.assertEqual(rows[parsed], rows[key])
+            self.assertEqual(list(rows), [key])
+            self.assertEqual(dict(rows.items()), {key: {"edges": [[0, 2**63 - 1]]}})
+
     def canonical_fixture(self, root, broken=None):
         M, W = P.module("bundle_manifest"), P.module("unity_write")
 
@@ -487,6 +519,49 @@ class BundlePreloadTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "body or full type"):
                 P.qualify_structural_fields(owner, body, typ, routes, read)
 
+    def test_empty_external_relocation_checks_coverage_without_reimporting_parser(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            owner, _, typ, _, _, _ = self.external_contract(Path(tmp))
+            body = struct.pack("<iqiqi", 0, 100, 0, 20, 73)
+            schemas = P.ParsedTrees()
+            with patch.object(P.O, "remap_record", side_effect=AssertionError("unchanged body entered relocation")):
+                self.assertIs(P.relocate_external_fields(owner, body, typ, {}, [], schemas=schemas), body)
+                self.assertEqual(len(schemas), 1)
+                with self.assertRaisesRegex(ValueError, "complete per-field coverage"):
+                    P.relocate_external_fields(owner, struct.pack("<iqiqi", 1, 100, 0, 20, 73), typ, {}, [], schemas=schemas)
+                with self.assertRaisesRegex(ValueError, "Ambiguous external"):
+                    P.relocate_external_fields(owner, body, typ, {}, [owner["destination"][1]], schemas=schemas)
+                with self.assertRaises(ValueError):
+                    P.relocate_external_fields(owner, body[:-1], typ, {}, [], schemas=schemas)
+
+    def test_structural_route_schema_cache_still_checks_changed_endpoints(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            owner, _, typ, proofs, endpoints, read = self.external_contract(Path(tmp))
+            body = struct.pack("<iqiqi", 1, 100, 0, 20, 73)
+            owner.update(bytes=len(body), sha256=hashlib.sha256(body).hexdigest(), edges=[[1, 100], [0, 20]])
+            fields = P.pointers(body, typ, {})
+            routes = [dict(field=p["field"], pointer=fields[tuple(p["field"])], target=p["target"]) for p in proofs]
+            schemas = P.ParsedTrees()
+            with patch.object(P.A.SCHEMA, "type_tree", wraps=P.A.SCHEMA.type_tree) as parse:
+                first = P.qualify_structural_fields(owner, body, typ, routes, read, schemas=schemas)
+                count = parse.call_count
+                self.assertEqual(P.qualify_structural_fields(owner, body, typ, routes, read, schemas=schemas), first)
+                self.assertEqual(parse.call_count, count)
+                self.assertGreater(count, 0)
+                endpoints["dependency", "CAB-dependency", 100][1].write_bytes(b"changed")
+                with self.assertRaisesRegex(ValueError, "body or full type"):
+                    P.qualify_structural_fields(owner, body, typ, routes, read, schemas=schemas)
+
+    def test_nonempty_relocation_reuses_loaded_parser_and_reparses_result(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            owner, body, typ, proofs, _, _ = self.external_contract(Path(tmp))
+            targets = {tuple(row["field"]): row["target"] for row in proofs}
+            with patch.object(P.O, "module", side_effect=AssertionError("record parser reimported")):
+                revised = P.relocate_pointer_fields(owner, body, typ, targets, ["CAB-dependency"])
+            fields = P.pointers(revised, typ, {})
+            self.assertEqual(fields[("first",)], (1, 100))
+            self.assertEqual(fields[("second",)], (0, 20))
+
     def test_external_fields_require_each_field_proof_and_effective_provider(self):
         import copy
 
@@ -674,6 +749,51 @@ class BundlePreloadTests(unittest.TestCase):
             assets=[dict(name="assets/root.asset", type="PhysicMaterial")],
         )
         return graph, types, rows, required
+
+    def test_required_emission_bounds_retained_tiny_endpoint_descriptors(self):
+        class Descriptor(dict):
+            pass
+
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            graph, types, original, required = self.required_graph(root)
+            identities = list(range(10, 310))
+            provider = Path(original[0]["provider"])
+            rows, bodies, routes, indexes = [], {}, {}, []
+            for identity, target in zip(identities, identities[1:] + identities[:1]):
+                body = bodies[identity] = struct.pack("<iq", 0, target)
+                row = dict(original[0], destination=["authored", "CAB-authored", identity], edges=[[0, target]], sha256=hashlib.sha256(body).hexdigest())
+                row["record_source"] = ["source", "native", identity]
+                indexes.append(dict(bundle="source", member="native", path_id=identity, bytes=len(body), offset=12 * len(rows), sha256=row["sha256"]))
+                rows.append(row)
+                routes[tuple(row["destination"])] = [dict(field=["link"], pointer=[0, target], target=["authored", "CAB-authored", target])]
+            (provider / "objects.bin").write_bytes(b"".join(bodies.values()))
+            index = provider / "index.jsonl"
+            index.write_text("".join(json.dumps(row) + "\n" for row in indexes))
+            receipt = json.loads((provider / "result.json").read_text())
+            receipt["outputs"]["index.jsonl"]["sha256"] = P.O.B.sha(index)
+            (provider / "result.json").write_text(json.dumps(receipt))
+            (graph / "selected-records.jsonl").write_text("".join(json.dumps(row) + "\n" for row in rows))
+            required["path_ids"] = identities
+            typ = next(iter(json.loads(types.read_text()).values()))
+            typ = {**typ, "tree": bytes.fromhex(typ["tree"]), "hash": bytes.fromhex(typ["hash"])}
+            selected = {row["destination"][2]: row for row in rows}
+            retained, peak = weakref.WeakValueDictionary(), 0
+
+            def endpoint(target):
+                nonlocal peak
+                identity = target[2]
+                value = Descriptor(selected[identity])
+                retained[identity] = value
+                peak = max(peak, len(retained))
+                return value, bodies[identity], typ
+
+            result = P.emit_closed_native(
+                graph, [types], root / "emitted", "authored", "CAB-authored", required=required, structural_routes=routes, endpoint_record=endpoint
+            )
+            self.assertEqual(result["records"], len(identities))
+            self.assertGreater(peak, 250)
+            self.assertLessEqual(peak, 257)
 
     def request_fixture(self, root):
         graph, types, rows, required = self.required_graph(root)
@@ -1218,15 +1338,27 @@ class BundlePreloadTests(unittest.TestCase):
                 document["outputs"]["index.jsonl"]["sha256"] = P.O.B.sha(index)
                 receipt.write_text(json.dumps(document))
 
-            pin_rows([row, copy])
-            self.assertEqual(P.ProducerRecords().record(value)[1], body)
-            pin_rows([row, {**copy, "native_type_hash": "cd" * 16}])
-            with self.assertRaisesRegex(ValueError, "Conflicting native provider identity"):
-                P.ProducerRecords().record(value)
-            pin_rows([row, copy])
-            (provider / "objects.bin").write_bytes(body + b"x" * len(body))
-            with self.assertRaisesRegex(ValueError, "extent drift"):
-                P.ProducerRecords().record(value)
+            for disk in (False, True):
+
+                def reader():
+                    store = P.DiskIndexes(tmp) if disk else None
+                    return (closing(store) if disk else nullcontext()), P.ProducerRecords(index_store=store)
+
+                with self.subTest(disk=disk):
+                    pin_rows([row, copy])
+                    (provider / "objects.bin").write_bytes(body + body)
+                    context, records = reader()
+                    with context:
+                        self.assertEqual(records.record(value)[1], body)
+                    pin_rows([row, {**copy, "native_type_hash": "cd" * 16}])
+                    context, records = reader()
+                    with context, self.assertRaisesRegex(ValueError, "Conflicting native provider identity"):
+                        records.record(value)
+                    pin_rows([row, copy])
+                    (provider / "objects.bin").write_bytes(body + b"x" * len(body))
+                    context, records = reader()
+                    with context, self.assertRaisesRegex(ValueError, "extent drift"):
+                        records.record(value)
 
     def test_required_emission_preserves_exact_objects_and_multiple_subasset_roots(self):
         import UnityPy
@@ -1804,6 +1936,21 @@ P.emit_closed_native(root/'graph', [root/'types.json'], root/'killed', 'authored
                 resource.seek(offset)
                 self.assertEqual(resource.read(19), bytes([identity]) * 19)
                 self.assertNotEqual(receipt["source_body_sha256"], receipt["emitted_body_sha256"])
+
+    def test_bounded_workers_preserve_ordered_objects_resources_and_failures(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            with P.RecordWorkers(2, pending_bytes=4096) as workers:
+                graph, types = self.streamed_graph(root)
+                serial = P.emit_closed_native(graph, [types], root / "serial", "authored", "CAB-authored")
+                parallel = P.emit_closed_native(graph, [types], root / "parallel", "authored", "CAB-authored", record_workers=workers)
+                self.assertEqual(parallel["sha256"], serial["sha256"])
+                self.assertEqual((serial["record_workers"], parallel["record_workers"]), (1, 2))
+                self.assertEqual((root / "parallel/resources.jsonl").read_bytes(), (root / "serial/resources.jsonl").read_bytes())
+                owner, body, native, _, _, _ = self.external_contract(root)
+                task = (owner, body[:-1], native, {}, [], None, None, "unused", None, False)
+                with self.assertRaises(ValueError):
+                    list(workers.transform([("broken", task)]))
 
     def test_streamed_native_rejects_descriptor_or_resource_extent_drift(self):
         for failure in ("descriptor", "resource"):

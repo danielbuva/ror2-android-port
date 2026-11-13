@@ -788,6 +788,7 @@ class Qualification:
         self.owner, self.pins, self.request = owner, pins, request
         self.member = request["bundle"], request["member"]
         self.selected, self.types = selected, types
+        self.qualified_types = {}
         self.required = required
         self.staged = FinalMembers(owner, selected, types)
         self.final = None
@@ -823,7 +824,10 @@ class Qualification:
         return self
 
     def typ(self, value):
-        return {key: bytes.fromhex(item) if key in ("tree", "hash", "script_id") else item for key, item in self.types[value["full_type"]].items()}
+        key = value["full_type"]
+        if key not in self.qualified_types:
+            self.qualified_types[key] = {name: bytes.fromhex(item) if name in ("tree", "hash", "script_id") else item for name, item in self.types[key].items()}
+        return self.qualified_types[key]
 
     def retained(self, target):
         value = self.selected[tuple(target)]

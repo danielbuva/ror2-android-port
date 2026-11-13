@@ -8,6 +8,7 @@ and container bodies are never inputs.
 import io
 import hashlib
 import importlib.util
+import marshal
 from pathlib import Path
 import re
 import struct
@@ -25,15 +26,48 @@ class DiskIndexes:
         Path(parent).mkdir(parents=True, exist_ok=True)
         self.scratch = tempfile.TemporaryDirectory(prefix=".native-index-", dir=parent)
         self.connection = sqlite3.connect(Path(self.scratch.name) / "index.sqlite3")
+        # Disposable attempt indexes are rebuilt after interruption. Durable
+        # transformed bytes remain in the separately checkpointed EmissionCache.
+        self.connection.execute("PRAGMA journal_mode=OFF")
+        self.connection.execute("PRAGMA synchronous=OFF")
         self.connection.execute("PRAGMA cache_size=-8192")
-        self.connection.execute("PRAGMA temp_store=FILE")
-        self.connection.execute("CREATE TABLE entries (collection INTEGER, key TEXT, value TEXT, UNIQUE(collection,key))")
-        self.collections, self.pending = 0, 0
+        self.connection.execute("PRAGMA temp_store=MEMORY")
+        self.connection.execute("CREATE TABLE entries (collection INTEGER, key BLOB, value BLOB, UNIQUE(collection,key))")
+
+        def equal_value(before, after):
+            if marshal.loads(before) != marshal.loads(after):
+                raise ValueError("Conflicting descriptor")
+            return before
+
+        self.connection.create_function("equal_value", 2, equal_value)
+        self.collections = 0
         self.providers = {}
 
     def mapping(self):
         self.collections += 1
         return DiskIndex(self, self.collections)
+
+    def provider(self, path):
+        """Parse once, bulk insert, then index native identity columns."""
+        import json
+
+        self.collections += 1
+        index = ProviderIndex(self, self.collections)
+        self.connection.execute(f"CREATE TABLE {index.table} (bundle TEXT, member TEXT, path_id INTEGER, value TEXT)")
+        with Path(path).open() as stream:
+
+            def rows():
+                for line in stream:
+                    row = json.loads(line)
+                    yield row["bundle"], row["member"], row["path_id"], line
+
+            self.connection.executemany(f"INSERT INTO {index.table} VALUES (?,?,?,?)", rows())
+        self.connection.execute(f"CREATE INDEX {index.table}_identity ON {index.table}(bundle,member,path_id)")
+        for key in self.connection.execute(f"SELECT bundle,member,path_id FROM {index.table} GROUP BY bundle,member,path_id HAVING count(*)>1"):
+            copies = index[key]
+            if any({k: v for k, v in row.items() if k != "offset"} != {k: v for k, v in copies[0].items() if k != "offset"} for row in copies[1:]):
+                raise ValueError("Conflicting native provider identity")
+        return index
 
     def close(self):
         self.connection.close()
@@ -41,34 +75,42 @@ class DiskIndexes:
 
 
 class DiskIndex(MutableMapping):
-    """JSON rows in insertion order, without retaining decoded descriptors."""
+    """Attempt-local descriptor blobs in insertion order, without Python retention."""
 
     def __init__(self, store, collection):
         self.store, self.collection = store, collection
 
     @staticmethod
     def encode(value):
-        import json
-
-        return json.dumps(value, separators=(",", ":"))
+        # Version 2 has no reference/interning flags, keeping key bytes stable
+        # across independently parsed strings. Match the former list/tuple key.
+        return marshal.dumps(tuple(value) if isinstance(value, list) else value, 2)
 
     def __getitem__(self, key):
-        import json
-
         row = self.store.connection.execute("SELECT value FROM entries WHERE collection=? AND key=?", (self.collection, self.encode(key))).fetchone()
         if row is None:
             raise KeyError(key)
-        return json.loads(row[0])
+        return marshal.loads(row[0])
 
     def __setitem__(self, key, value):
         self.store.connection.execute(
             "INSERT INTO entries VALUES (?,?,?) ON CONFLICT(collection,key) DO UPDATE SET value=excluded.value",
-            (self.collection, self.encode(key), self.encode(value)),
+            (self.collection, self.encode(key), marshal.dumps(value)),
         )
-        self.store.pending += 1
-        if self.store.pending >= 1000:
-            self.store.connection.commit()
-            self.store.pending = 0
+
+    def load(self, rows, *, duplicate, allow_equal=False):
+        """Bulk-load checked descriptors; only actual collisions cross into Python."""
+        import sqlite3
+
+        sql = "INSERT INTO entries VALUES (?,?,?)"
+        if allow_equal:
+            sql += " ON CONFLICT(collection,key) DO UPDATE SET value=CASE WHEN entries.value=excluded.value THEN entries.value ELSE equal_value(entries.value,excluded.value) END"
+        try:
+            self.store.connection.executemany(sql, ((self.collection, self.encode(key), marshal.dumps(value)) for key, value in rows))
+        except (sqlite3.IntegrityError, sqlite3.OperationalError) as error:
+            if isinstance(error, sqlite3.IntegrityError) or str(error) == "user-defined function raised exception":
+                raise ValueError(duplicate) from error
+            raise
 
     def __delitem__(self, key):
         cursor = self.store.connection.execute("DELETE FROM entries WHERE collection=? AND key=?", (self.collection, self.encode(key)))
@@ -79,22 +121,35 @@ class DiskIndex(MutableMapping):
         return self.store.connection.execute("SELECT count(*) FROM entries WHERE collection=?", (self.collection,)).fetchone()[0]
 
     def __iter__(self):
-        import json
-
         for (key,) in self.store.connection.execute("SELECT key FROM entries WHERE collection=? ORDER BY rowid", (self.collection,)):
-            value = json.loads(key)
-            yield tuple(value) if isinstance(value, list) else value
+            yield marshal.loads(key)
 
     def items(self):
-        import json
-
         for key, value in self.store.connection.execute("SELECT key,value FROM entries WHERE collection=? ORDER BY rowid", (self.collection,)):
-            key = json.loads(key)
-            yield tuple(key) if isinstance(key, list) else key, json.loads(value)
+            yield marshal.loads(key), marshal.loads(value)
 
     def values(self):
         for _, value in self.items():
             yield value
+
+
+class ProviderIndex:
+    """One extent row per descriptor, preserving duplicate order and checking bodies on read."""
+
+    def __init__(self, store, collection):
+        self.store, self.collection = store, collection
+        self.table = f"provider_{collection}"
+
+    def __getitem__(self, key):
+        import json
+
+        copies = [
+            json.loads(value)
+            for (value,) in self.store.connection.execute(f"SELECT value FROM {self.table} WHERE bundle=? AND member=? AND path_id=? ORDER BY rowid", key)
+        ]
+        if not copies:
+            raise KeyError(key)
+        return copies
 
 
 class ParsedTrees(OrderedDict):
@@ -117,6 +172,86 @@ class ParsedTrees(OrderedDict):
         while self.bytes > self.limit and len(self) > 1:
             prior, _ = self.popitem(last=False)
             self.bytes -= len(prior)
+
+
+_record_schemas = None
+
+
+def _transform_record(task):
+    """Inspect immutable bytes only; provider readers and SQLite stay in the parent."""
+    global _record_schemas
+    if task is None:
+        return None
+    if _record_schemas is None:
+        _record_schemas = ParsedTrees()
+    value, body, typ, targets, externals, resource, offset, path, reused, required = task
+    descriptor = None
+    if reused is None and required:
+        body = relocate_external_fields(value, body, typ, targets, externals, schemas=_record_schemas)
+    if resource:
+        descriptor = dict(offset=offset, size=resource["bytes"], path=path)
+        if reused is None:
+            body, descriptor = repack_stream(body, typ, resource, offset, path, _record_schemas)
+    if reused is not None:
+        body = reused
+    return body, set(pointers(body, typ, _record_schemas).values()), descriptor, hashlib.sha256(body).hexdigest()
+
+
+class RecordWorkers:
+    """Two small, early-started workers with ordered, byte-bounded submissions."""
+
+    def __init__(self, workers=1, pending_bytes=8 * 1024 * 1024):
+        if workers not in (1, 2) or pending_bytes <= 0:
+            raise ValueError("Record workers require one or two workers and a positive byte budget")
+        self.workers, self.pending_bytes, self.pool = workers, pending_bytes, None
+
+    def __enter__(self):
+        if self.workers > 1:
+            import importlib
+            import multiprocessing
+            import sys
+            from concurrent.futures import ProcessPoolExecutor
+
+            sys.path.insert(0, str(Path(__file__).parent))
+            self.worker = importlib.import_module("bundle_preload")._transform_record
+            self.pool = ProcessPoolExecutor(max_workers=self.workers, mp_context=multiprocessing.get_context("fork"))
+            # Fork before descriptor indexes/seek handles exist, so child RSS
+            # does not include a full parent's loaded graph or SQLite buffers.
+            self.pool.submit(self.worker, None).result()
+        return self
+
+    def __exit__(self, *exc):
+        if self.pool is not None:
+            self.pool.shutdown(wait=True, cancel_futures=True)
+
+    def transform(self, records):
+        from collections import deque
+
+        pending, size = deque(), 0
+        for context, task in records:
+            if task is None:
+                while pending:
+                    prior, future, _ = pending.popleft()
+                    yield prior, future.result()
+                size = 0
+                yield context, None
+                continue
+            if self.pool is None:
+                yield context, _transform_record(task)
+                continue
+            weight = len(task[1]) + len(task[2]["tree"]) + len(task[8] or b"")
+            while pending and (size + weight > self.pending_bytes or len(pending) >= 2 * self.workers):
+                prior, future, used = pending.popleft()
+                size -= used
+                yield prior, future.result()
+            pending.append((context, self.pool.submit(self.worker, task), weight))
+            size += weight
+            if weight > self.pending_bytes:
+                prior, future, _ = pending.popleft()
+                size = 0
+                yield prior, future.result()
+        for context, future, _ in pending:
+            yield context, future.result()
 
 
 class EmissionCache:
@@ -401,7 +536,7 @@ def checked_fields(record, raw, native, schemas=None):
     return fields
 
 
-def qualify_structural_fields(value, body, typ, routes, endpoint_record):
+def qualify_structural_fields(value, body, typ, routes, endpoint_record, *, schemas=None):
     """Check complete current routes without historical field provenance.
 
     The caller binds routes and selected descriptors to its current census and
@@ -411,7 +546,7 @@ def qualify_structural_fields(value, body, typ, routes, endpoint_record):
     """
 
     owner = tuple(value["destination"])
-    fields = checked_fields(value, body, typ)
+    fields = checked_fields(value, body, typ, schemas)
     nonnull = {field: pointer for field, pointer in fields.items() if pointer[1]}
     targets = {}
     for route in routes:
@@ -423,23 +558,27 @@ def qualify_structural_fields(value, body, typ, routes, endpoint_record):
         endpoint, raw, native = endpoint_record(target)
         if tuple(endpoint["destination"]) != target:
             raise ValueError("Structural route endpoint identity differs")
-        checked_fields(endpoint, raw, native)
+        checked_fields(endpoint, raw, native, schemas)
         targets[field] = target
     if set(targets) != set(nonnull):
         raise ValueError("Structural routes require every nonnull field")
     return {field: target for field, target in targets.items() if nonnull[field][0]}
 
 
-def relocate_external_fields(value, body, typ, targets, externals):
+def relocate_external_fields(value, body, typ, targets, externals, *, schemas=None):
     """Allocate qualified fields by destination member, never by an old slot."""
-    fields = pointers(body, typ, {})
+    fields = pointers(body, typ, {} if schemas is None else schemas)
     required = {field for field, (fid, pid) in fields.items() if fid and pid}
     if set(targets) != required:
         raise ValueError("External relocation requires complete per-field coverage")
-    return relocate_pointer_fields(value, body, typ, targets, externals)
+    if not targets:
+        if len(set(externals)) != len(externals) or value["destination"][1] in externals:
+            raise ValueError("Ambiguous external member allocation")
+        return body
+    return relocate_pointer_fields(value, body, typ, targets, externals, schemas=schemas)
 
 
-def relocate_pointer_fields(value, body, typ, targets, externals):
+def relocate_pointer_fields(value, body, typ, targets, externals, *, schemas=None):
     """Apply source-qualified, parent-specific routes to local or external fields.
 
     A shared old path ID does not identify a source object: callers supply each
@@ -452,7 +591,8 @@ def relocate_pointer_fields(value, body, typ, targets, externals):
         identity = tuple(target[:2])
         if members.setdefault(target[1], identity) != identity:
             raise ValueError("Ambiguous external member allocation")
-    fields = pointers(body, typ, {})
+    schemas = {} if schemas is None else schemas
+    fields = pointers(body, typ, schemas)
     if any(field not in fields or not fields[field][1] for field in targets):
         raise ValueError("Relocation requires an existing non-null pointer field")
     references = []
@@ -466,8 +606,8 @@ def relocate_pointer_fields(value, body, typ, targets, externals):
                 raise ValueError("External relocation member absent or ambiguous")
             pointer = (externals.index(target[1]) + 1, target[2])
         references.append(dict(field=list(field), **{"from": list(fields[field]), "to": list(pointer)}))
-    result = O.remap_record(body, typ, references, externals)
-    actual = pointers(result, typ, {})
+    result = O.remap_record(body, typ, references, externals, records=A, root=schemas[typ["tree"]])
+    actual = pointers(result, typ, schemas)
     revised = {tuple(row["field"]): tuple(row["to"]) for row in references}
     if actual != {field: revised.get(field, pointer) for field, pointer in fields.items()}:
         raise ValueError("External relocation changed an unqualified field")
@@ -743,14 +883,17 @@ class ProducerRecords:
                     raise ValueError("Retained native provider extent or witness drift")
             if pin["index_sha256"] != expected:
                 raise ValueError("Native provider index drift")
-            index = {} if self.index_store is None else self.index_store.mapping()
-            for row in json_rows(directory / "index.jsonl"):
-                identity = row["bundle"], row["member"], row["path_id"]
-                copies = index.get(identity, [])
-                if copies and {k: v for k, v in row.items() if k != "offset"} != {k: v for k, v in copies[0].items() if k != "offset"}:
-                    raise ValueError("Conflicting native provider identity")
-                copies.append(row)
-                index[identity] = copies
+            if self.index_store is not None:
+                index = self.index_store.provider(directory / "index.jsonl")
+            else:
+                index = {}
+                for row in json_rows(directory / "index.jsonl"):
+                    identity = row["bundle"], row["member"], row["path_id"]
+                    copies = index.get(identity, [])
+                    if copies and {k: v for k, v in row.items() if k != "offset"} != {k: v for k, v in copies[0].items() if k != "offset"}:
+                        raise ValueError("Conflicting native provider identity")
+                    copies.append(row)
+                    index[identity] = copies
             self.cache[directory] = receipt, index, pin
         receipt, index, pin = self.cache[directory]
         self.pins[str(directory)] = pin
@@ -889,6 +1032,7 @@ def _emit_closed_native(
     cache_inputs=(),
     provider_paths=None,
     index_store=None,
+    record_workers=None,
 ):
     """Emit the declared local/native subset of a qualified producer graph.
 
@@ -938,11 +1082,9 @@ def _emit_closed_native(
     if retained.get("success") is not True:
         raise ValueError("Unsuccessful source graph")
     all_records = index_store.mapping()
-    for row in json_rows(graph_directory / "selected-records.jsonl"):
-        key = tuple(row["destination"])
-        if key in all_records:
-            raise ValueError("Duplicate selected destination")
-        all_records[key] = row
+    all_records.load(
+        ((tuple(row["destination"]), row) for row in json_rows(graph_directory / "selected-records.jsonl")), duplicate="Duplicate selected destination"
+    )
     selected = index_store.mapping()
     if required is None:
         for key, row in all_records.items():
@@ -1060,7 +1202,9 @@ def _emit_closed_native(
             raise ValueError("Persisted external endpoint drift")
         external_bodies[target] = value, raw, typ
         external_bytes += len(raw)
-        while external_bytes > 32 * 1024 * 1024 and external_bodies:
+        # Tiny bodies can own large descriptors/types. Match the endpoint
+        # reader's count bound as well as limiting retained body bytes.
+        while external_bodies and (external_bytes > 32 * 1024 * 1024 or len(external_bodies) > 256):
             _, (_, prior, _) = external_bodies.popitem(last=False)
             external_bytes -= len(prior)
         return value, raw, typ
@@ -1096,7 +1240,9 @@ def _emit_closed_native(
             if emission_cache is not None
             else None
         )
-        with store.open("wb") as destination:
+
+        def prepare_records():
+            nonlocal resource_size
             for provider, values in by_provider.items():
                 directory = providers.directory(provider)
                 for destination_identity in values:
@@ -1121,7 +1267,7 @@ def _emit_closed_native(
                         if structural_routes is None:
                             targets = qualify_external_fields(value, body, typ, proofs.get(tuple(value["destination"]), ()), read_external)
                         else:
-                            targets = qualify_structural_fields(value, body, typ, structural_routes[tuple(value["destination"])], read_external)
+                            targets = qualify_structural_fields(value, body, typ, structural_routes[tuple(value["destination"])], read_external, schemas=cache)
                         qualified_targets[identity] = list(targets.items())
                         if typ["class_id"] == 114:
                             managed_rows[identity] = value["full_type"]
@@ -1145,38 +1291,38 @@ def _emit_closed_native(
                         else None
                     )
                     reused = emission_cache.get("records", record_key) if emission_cache is not None else None
-                    if reused is None and required is not None:
-                        body = relocate_external_fields(value, body, typ, targets, externals)
                     if row.get("resource"):
-                        resource_size = offset
-                        descriptor = dict(offset=offset, size=row["resource"]["bytes"], path=resource_path)
-                        if reused is None:
-                            body, descriptor = repack_stream(body, typ, row["resource"], resource_size, resource_path, cache)
-                    if reused is not None:
-                        body = reused
-                    elif emission_cache is not None:
-                        emission_cache.put("records", record_key, body)
-                    edges = set(pointers(body, typ, cache).values())
-                    if row.get("resource"):
-                        resource_extents.append((resource_size, directory / "resources.bin", row["resource"]))
-                        resource_rows.append(
-                            dict(
-                                path_id=identity,
-                                source_body_sha256=row["sha256"],
-                                source_resource=row["resource"],
-                                emitted=descriptor,
-                                emitted_body_sha256=hashlib.sha256(body).hexdigest(),
-                            )
+                        resource_size = offset + row["resource"]["bytes"]
+                    context = provider, directory, identity, row, typ, record_key, reused is None, offset
+                    yield context, (value, body, typ, targets, externals, row.get("resource"), offset, resource_path, reused, required is not None)
+                # Drain and durably checkpoint this provider before reading the
+                # next one, including when that next provider raises or dies.
+                yield (provider,), None
+
+        workers = RecordWorkers() if record_workers is None else record_workers
+        with store.open("wb") as destination:
+            for context, result in workers.transform(prepare_records()):
+                if result is None:
+                    progress("records", len(objects), provider=context[0])
+                    continue
+                body, edges, descriptor, digest = result
+                provider, directory, identity, row, typ, record_key, missed, offset = context
+                if emission_cache is not None and missed:
+                    emission_cache.put("records", record_key, body)
+                if row.get("resource"):
+                    resource_extents.append((offset, directory / "resources.bin", row["resource"]))
+                    resource_rows.append(
+                        dict(
+                            path_id=identity, source_body_sha256=row["sha256"], source_resource=row["resource"], emitted=descriptor, emitted_body_sha256=digest
                         )
-                        resource_size += row["resource"]["bytes"]
-                    emitted_hashes[identity] = hashlib.sha256(body).hexdigest()
-                    graph[identity] = edges
-                    bodymap[identity] = destination.tell(), len(body)
-                    destination.write(body)
-                    objects.append(dict(path_id=identity, type=typ, body_bytes=len(body), prefix=body[:32]))
-                    if len(objects) % 256 == 0:
-                        progress("records", len(objects), provider=provider)
-                progress("records", len(objects), provider=provider)
+                    )
+                emitted_hashes[identity] = digest
+                graph[identity] = edges
+                bodymap[identity] = destination.tell(), len(body)
+                destination.write(body)
+                objects.append(dict(path_id=identity, type=typ, body_bytes=len(body), prefix=body[:32]))
+                if len(objects) % 256 == 0:
+                    progress("records", len(objects), provider=provider)
         stage("records")
         validate_graph(graph, len(externals))
         if required is not None and set(graph) != set(required["path_ids"]):
@@ -1380,6 +1526,7 @@ def _emit_closed_native(
         bytes=bundle.stat().st_size,
         compression=dict(method="lz4", codec_sha256=codec_sha256) if codec is not None else dict(method="none"),
         records=len(selected),
+        record_workers=workers.workers,
         resource_records=len(resource_rows),
         resource_bytes=resource_size,
         roots=len(roots),
@@ -1738,15 +1885,15 @@ def prepare_request(inputs, output):
     return module("bundle_prepare").prepare(SimpleNamespace(**globals()), inputs, output)
 
 
-def produce_request(inputs, output, *, cache_directory=None):
+def produce_request(inputs, output, *, cache_directory=None, workers=1):
     """Run the checked emitter/repacker with explicit, request-relative inputs."""
     from contextlib import closing
 
-    with closing(DiskIndexes(Path(output).parent)) as indexes:
-        return _produce_request(inputs, output, cache_directory=cache_directory, index_store=indexes)
+    with RecordWorkers(workers) as records, closing(DiskIndexes(Path(output).parent)) as indexes:
+        return _produce_request(inputs, output, cache_directory=cache_directory, index_store=indexes, record_workers=records)
 
 
-def _produce_request(inputs, output, *, cache_directory, index_store):
+def _produce_request(inputs, output, *, cache_directory, index_store, record_workers=None):
     from contextlib import closing
     import json
     from types import SimpleNamespace
@@ -1789,12 +1936,11 @@ def _produce_request(inputs, output, *, cache_directory, index_store):
                 raise ValueError("Conflicting complete native schema")
             types[key] = value
     selected = index_store.mapping()
-    for path in (pins.pin(request["endpoints"]), graph_files["selected-records.jsonl"]):
-        for value in json_rows(path):
-            key = tuple(value["destination"])
-            if key in selected and selected[key] != value:
-                raise ValueError("Conflicting endpoint descriptor")
-            selected[key] = value
+    selected.load(
+        ((tuple(value["destination"]), value) for path in (pins.pin(request["endpoints"]), graph_files["selected-records.jsonl"]) for value in json_rows(path)),
+        duplicate="Conflicting endpoint descriptor",
+        allow_equal=True,
+    )
     required = pins.read(request["required"])
     for key in ("name", "member"):
         expected = request["bundle" if key == "name" else key]
@@ -1802,11 +1948,7 @@ def _produce_request(inputs, output, *, cache_directory, index_store):
             raise ValueError("Required bundle/member identity differs")
         required[key] = expected
     routes = index_store.mapping()
-    for value in json_rows(pins.pin(request["routes"])):
-        key = tuple(value["owner"])
-        if key in routes:
-            raise ValueError("Duplicate structural route owner")
-        routes[key] = value["edges"]
+    routes.load(((tuple(value["owner"]), value["edges"]) for value in json_rows(pins.pin(request["routes"]))), duplicate="Duplicate structural route owner")
     codec = pins.pin(request["codec"])
     canonical = request.get("canonical")
     if canonical is not None:
@@ -1836,6 +1978,7 @@ def _produce_request(inputs, output, *, cache_directory, index_store):
             cache_inputs=pins.files,
             provider_paths=provider_paths,
             index_store=index_store,
+            record_workers=record_workers,
         )
         qualification.check_final(emission["bundle"])
         final = emission
@@ -1906,6 +2049,7 @@ def main():
     parser.add_argument("--prepare", type=Path, help="derive emission inputs from pinned source packs and declarative policy")
     parser.add_argument("--release", type=Path, help="prepare and emit a signed release-graph policy in one private workspace")
     parser.add_argument("--cache", type=Path, help="private incremental emission/preload/repack cache")
+    parser.add_argument("--workers", type=int, choices=(1, 2), default=2, help="bounded immutable record transforms for --inputs (default: 2)")
     parser.add_argument("--graph", type=Path)
     parser.add_argument("--schema", type=Path, action="append")
     parser.add_argument("--output", type=Path, required=True)
@@ -1930,7 +2074,7 @@ def main():
     if args.inputs is not None:
         if any(value is not None for value in (args.graph, args.schema, args.bundle, args.member, args.codec, args.codec_sha256)):
             parser.error("--inputs cannot be combined with legacy emission inputs")
-        print(json.dumps(produce_request(args.inputs, args.output, cache_directory=args.cache), indent=2))
+        print(json.dumps(produce_request(args.inputs, args.output, cache_directory=args.cache, workers=args.workers), indent=2))
         return
     if args.cache is not None or any(value is None for value in (args.graph, args.schema, args.bundle, args.member)):
         parser.error("legacy emission requires --graph, --schema, --bundle and --member; --cache requires --inputs")

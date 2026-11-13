@@ -33,7 +33,7 @@ SCHEMA = module("unity_mesh")
 
 def fields(body, root, canonical=None):
     """Locate source fields and normalize only schema-declared float32 values."""
-    result, revised = {}, bytearray(body)
+    result, revised = {}, bytearray(body) if canonical else body
     cursor = 0
 
     def word(offset):
@@ -77,11 +77,16 @@ def fields(body, root, canonical=None):
         if path:
             result[path] = (start, cursor)
 
-    for child in root.children:
-        walk(child, (child.name,))
-    if cursor != len(body):
-        raise ValueError("unparsed AnimationClip bytes")
-    return bytes(revised), result
+    try:
+        for child in root.children:
+            walk(child, (child.name,))
+        if cursor != len(body):
+            raise ValueError("unparsed AnimationClip bytes")
+        return bytes(revised), result
+    finally:
+        # Recursive closures otherwise keep every field span and body alive
+        # until cyclic GC, including readers promoted during a large walk.
+        walk = None
 
 
 def streamed(data, canonical=None, fold=False):
