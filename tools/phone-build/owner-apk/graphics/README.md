@@ -91,7 +91,7 @@ Preferences page, enable Developer options or write Android global preferences.
 Synthetic smoke requests `graphics_fixture=true` on the tool-host intent. Only
 debuggable `dev.ror2lab.installertest` on API 28+ displays the conspicuous fixture
 mode and controls. It simulates Adreno/Mali capability rows but keeps the native
-provider unavailable. The future lab harness may inject only `package.zip` and a
+provider unavailable. The lab harness injects only `package.zip` and a
 64-byte lowercase `sha256` pin into the freshly owned app's `files/graphics-fixture`.
 The ZIP is at most 4 KiB and contains `meta.json` with schemaVersion 1, name
 `Authored graphics fixture`, driverVersion `synthetic-only`, minApi 28 and libraryName
@@ -107,8 +107,8 @@ Smoke controls: **Use System driver**, **View driver source and licenses**,
 accessibility descriptions `graphics-selection`, `graphics-choices`, `graphics-result`,
 `graphics-active`. The `graphics-license` source dialog closes with **Back to
 graphics drivers**. The smoke must not open Android settings or grant permissions
-merely to exercise this UI. Actual APK/UI, SAF, native binding and completed frames
-are separate gates, not established by host tests.
+merely to exercise this UI. The synthetic APK/UI result below is separate from
+SAF, native binding and completed-frame qualification.
 
 `scripts/lab-graphics-picker.py` is the bounded nine-case UI smoke, run only through
 the serialized `/lab` queue after an exact-tip `toolhost` build. It reuses the
@@ -151,6 +151,23 @@ notification policy. This follows the pinned Android 13
 [handler](https://android.googlesource.com/platform/packages/modules/Permission/+/9b03c01d78cb8642b3ae8f4e9da9c5af7386242b/PermissionController/src/com/android/permissioncontroller/permission/ui/handheld/GrantPermissionsViewHandlerImpl.kt#510)
 and [permission-state model](https://android.googlesource.com/platform/packages/modules/Permission/+/9b03c01d78cb8642b3ae8f4e9da9c5af7386242b/PermissionController/src/com/android/permissioncontroller/permission/ui/model/GrantPermissionsViewModel.kt#908),
 not an assertion that a legacy time-window candidate proves exact runner binding.
+
+## Verified synthetic picker UI (2026-11-12)
+
+All nine cases above passed on nova-b in 287 seconds at source
+`d0ca1517c4da7c7a63249d4ef974d621f8a33782`, using toolhost APK SHA-256
+`e9ee86315aeb4a58f6a5b024940f93d2029ec8840ca5278dbbb17c07265f28b9`.
+The [smoke result](https://github.com/danielbuva/ror2-android-port/issues/177#issuecomment-6817498096)
+includes explicit user-fixed notification denial, System reset/cold restart and
+close/reopen; owned-package cleanup passed and the finalizer removed zero items.
+The [follow-up status](https://github.com/danielbuva/ror2-android-port/issues/177#issuecomment-6817522407)
+confirmed no remaining leases. PR #424 is merged.
+
+This qualifies the actual picker UI and authored package-verification/recovery
+flow, with simulated Adreno/Mali capability rows and non-executable driver bytes.
+The curated catalog remains empty and custom activation unavailable. No real
+driver download/load, Settings navigation, game launch or Unity frame was tested;
+the native integration and completed-frame gates below remain open.
 
 ## Prior art and integration gates
 

@@ -110,6 +110,65 @@ class OwnerPhoneFlowTests(unittest.TestCase):
         self.assertNotIn("System.load", picker)
         self.assertNotIn("GraphicsDriverPolicy.begin", picker)
 
+    def test_check_diagnostic_is_independent_fixed_class_and_failure_tolerant(self):
+        compiler = shutil.which("javac")
+        if not compiler:
+            self.skipTest("Java compiler absent")
+        source = (SOURCE / "ToolHostActivity.java").read_text()
+        method = source.split("    static void checkDiagnostic(", 1)[1].split("    private void startUpdate", 1)[0]
+        harness = r"""
+import java.io.*; import java.nio.file.*; import java.util.*;
+public class CheckDiagnosticHarness {
+ static class Prefs {
+  Map<String,String> values=new HashMap<>(); boolean fails;
+  Prefs edit(){if(fails)throw new IllegalStateException("PRIVATE");return this;}
+  Prefs clear(){values.clear();return this;} Prefs putString(String k,String v){values.put(k,v);return this;}
+  boolean commit(){return true;}
+ }
+ static class Context {
+  String name="dev.ror2lab.installertest"; boolean debug=true; File root; Prefs prefs=new Prefs();
+  String getPackageName(){return name;} File getFilesDir(){return root;}
+  Prefs getSharedPreferences(String name,int mode){if(!name.equals("owner-check-diagnostic"))throw new AssertionError();return prefs;}
+ }
+ static boolean debuggable(Context app){return app.debug;}
+ METHOD
+ public static void main(String[] args) throws Exception {
+  Context app=new Context(); app.root=new File(args[0]).getCanonicalFile();
+  checkDiagnostic(app,"release-check","failed-request-write",new IOException("PRIVATE PATH"));
+  if(!app.prefs.values.equals(new HashMap<String,String>(){{put("stage","failed-request-write");put("files_root","canonical");put("error","io");}}))throw new AssertionError(app.prefs.values);
+  app.prefs.values.clear(); app.debug=false; checkDiagnostic(app,"release-check","entered",null);
+  if(!app.prefs.values.isEmpty())throw new AssertionError("non-debug");
+  app.debug=true; app.name="other"; checkDiagnostic(app,"release-check","entered",null);
+  if(!app.prefs.values.isEmpty())throw new AssertionError("other app");
+  app.name="dev.ror2lab.installertest"; checkDiagnostic(app,"release-build","entered",null);
+  if(!app.prefs.values.isEmpty())throw new AssertionError("other action");
+  Path alias=app.root.toPath().resolveSibling("alias"); Files.createSymbolicLink(alias,app.root.toPath()); app.root=alias.toFile();
+  checkDiagnostic(app,"release-check","entered",null);
+  if(!app.prefs.values.get("files_root").equals("alias"))throw new AssertionError("root alias");
+  app.prefs.fails=true; checkDiagnostic(app,"release-check","entered",new IOException("PRIVATE"));
+ }
+}
+""".replace("METHOD", "static void checkDiagnostic(" + method)
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            (root / "org/json").mkdir(parents=True)
+            (root / "org/json/JSONException.java").write_text("package org.json; public class JSONException extends Exception {}")
+            (root / "data").mkdir()
+            (root / "CheckDiagnosticHarness.java").write_text(harness)
+            result = subprocess.run(
+                [compiler, "-d", str(root), str(root / "org/json/JSONException.java"), str(root / "CheckDiagnosticHarness.java")],
+                capture_output=True,
+                text=True,
+            )
+            self.assertEqual(result.returncode, 0, result.stderr)
+            result = subprocess.run(
+                [str(Path(compiler).with_name("java")), "-cp", str(root), "CheckDiagnosticHarness", str(root / "data")], capture_output=True, text=True
+            )
+            self.assertEqual(result.returncode, 0, result.stderr)
+        start = source.split("private void startUpdate", 1)[1].split("private void installReady", 1)[0]
+        self.assertLess(start.index('checkStage = "request-write"'), start.index('writeJson(app, new File(getFilesDir(), "owner-input/update-request.json")'))
+        self.assertIn('checkDiagnostic(app, action, "failed-" + checkStage, error)', start)
+
     def test_managed_host_compiles_with_fixture_android_bootclasspath(self):
         compiler = Path(os.environ.get("JAVA_HOME", "/absent")) / "bin/javac"
         if not compiler.is_file():

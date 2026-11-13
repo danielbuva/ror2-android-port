@@ -1387,6 +1387,26 @@ explicitly authorized notification consent independently of
 `--allow-test-installs`. Prompt inspection, classification and owned cleanup
 remain with this driver.
 
+The existing `ToolHostActivity` Check handler records a test-only, fixed-class
+observation in Android preferences for the debuggable disposable installer. It
+is independent of the owner atomic writer, whose failure can otherwise suppress
+both CHECKING and its ERROR fallback. `lab-installer-updates.py` captures and
+allowlists that last observation before owned-package cleanup on a failed Check;
+no raw preference content or request metadata is published. Dispatch and
+permission policy are unchanged, and no new worker or lifecycle is introduced.
+
+Its `--qualify-phone-flow` mode uses the same visible permission/session and
+synthetic profile/settings witnesses, stopping after the verified forward update.
+`FlowMetrics` samples only the freshly owned fixed apps at stage boundaries and
+at most once per ten seconds in existing polling loops, without a background ADB
+worker. It emits numeric elapsed time, sampled app-process PSS, battery heat and
+actual code/data backing free bytes. Missing readings remain null; shared-volume
+free-space changes are not exclusive app consumption, and sampled PSS excludes
+unobserved peaks/native child tools. Optional observation/report failure never
+replaces acceptance failure or bypasses owned cleanup. Raw observations stay in
+the existing ignored diagnostics. This mode is not production import/gameplay
+or the complete converter performance gate.
+
 Phone installation uses the same release transaction. `owner-apk/game_import.py`
 owns bounded original-file validation, free-space estimates and resumable private
 copies; `install_inputs.py` binds the signed input/stage plan to admitted local
@@ -1412,6 +1432,16 @@ The existing import/release/update owners retain verified-entry retry state.
 bounded retained-log inspection; setup uses fresh owned scratch and teardown
 keeps local evidence while removing disposable device scratch. Its host/phone
 controls do not qualify real filesystem exhaustion or physical power loss.
+Managed JSON writes receive their owning Android `Context` explicitly. The
+existing `OwnerInputImport.privateFile` boundary rebases only that trusted
+`getFilesDir()` root spelling onto its canonical root, so Android's platform
+alias is not mistaken for an untrusted descendant link. Canonical-root callers
+are also accepted; root-equal, outside and traversal targets are refused, and
+existing child-link, staging-link and atomic durability checks remain in force.
+Activity, service, worker and alpha/input-source receipts share this boundary.
+The observed Check request-write failure is the motivating device evidence;
+complete phone-flow qualification remains a separate gate.
+
 `OwnerInputImport.syncDirectory` uses Android's public read-only open flag,
 then fsync and finally close; it does not reflect a hidden `O_DIRECTORY` field.
 A host Android-API fixture exercises the quota harness through that path,
