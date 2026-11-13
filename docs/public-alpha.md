@@ -171,6 +171,14 @@ inspection comparison. Neither window qualifies sustained 60 FPS, 120 FPS,
 ordinary play or a causal speedup.
 Full scene inspection remains explicitly available; periodic snapshots omit it by default.
 
+The [2026-11-13 shared-runner capture](performance-game.md#shared-runner-and-bounded-combat-qualification)
+qualifies 30 minutes of bounded assisted native combat, with 54 kills and 2–12
+enemies at a retained 120 Hz request. Whole/covered-tail means are 59.800/59.749 FPS;
+raw p50/p95/p99 are 16.654/24.889/25.000 ms overall. Both means miss the strict
+60 FPS floor, and 3.481 seconds of tail boundary coverage remain absent.
+Thermal coverage and lifecycle cleanup pass. Ordinary play, other stages,
+physical input, visual parity and energy qualification remain open.
+
 Startup [audio-verification reuse](PORTING_JOURNAL.md#j1386--reuse-install-bound-audio-verification-and-partition-loading-costs)
 and [catalog discovery](PORTING_JOURNAL.md#j1390--reuse-typed-item-provider-discovery-during-ordinary-startup)
 provide bounded device evidence; complete converter and sustained-game profiles
