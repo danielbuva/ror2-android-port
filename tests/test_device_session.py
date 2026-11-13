@@ -163,6 +163,16 @@ class DeviceSessionTests(unittest.TestCase):
         target.cmd.assert_not_called()
         self.assertFalse(any(call.args[0] == "sha256sum" for call in target.sh.call_args_list))
 
+    def test_capture_records_extracted_metadata_and_unity_extraction_decision(self):
+        target = mock.Mock()
+        target.cmd.return_value = "Unity extraction diagnostic"
+        target.sh.return_value = "metadata hash fixture"
+        target.read_receipt.return_value = dict(persistentDataPath="/owned/files")
+        runner.capture(target, self.output, "7")
+        self.assertEqual((self.output / "il2cpp-metadata-sha256.txt").read_text(), "metadata hash fixture")
+        target.sh.assert_any_call("sha256sum", "/owned/files/il2cpp/Metadata/global-metadata.dat", check=False)
+        self.assertIn("Unity:D", target.cmd.call_args_list[0].args)
+
     def run_case(self, *, workload_error=False, terminal_error=False, thermal_error=False, payload=False):
         events = []
         lease_path = runner.Lease(self.request).path
@@ -228,6 +238,7 @@ class DeviceSessionTests(unittest.TestCase):
             mock.patch.object(device_module, "Device", return_value=target),
             mock.patch.object(runner, "placement", return_value={}) as placement,
             mock.patch.object(runner, "run_workload", side_effect=workload),
+            mock.patch.object(runner, "prepare_launch") as prepare,
             mock.patch.object(batch, "_GameThermalOwner", return_value=thermal) as owner,
             mock.patch.object(batch, "_idle_readback", side_effect=idle),
             mock.patch.object(batch, "_prune", side_effect=prune),
@@ -237,6 +248,7 @@ class DeviceSessionTests(unittest.TestCase):
         ):
             result = runner.execute(self.request)
         self.assertEqual(placement.call_args_list[0].args[1], self.apk.stat().st_size + payload_size + 20 * 1024**3)
+        prepare.assert_called_once_with(target, result["prelaunch"])
         if payload:
             target.sync.assert_called_once_with(self.root / "payload")
             self.assertLess(events.index("sync:" + str(self.root / "payload")), events.index("workload"))
@@ -291,6 +303,43 @@ class DeviceSessionTests(unittest.TestCase):
         target.sh.side_effect = [receipt["package_path"], self.digest]
         runner.adopt_receipt(target, prior)
         target.write_receipt.assert_called_once_with("installed.json", receipt)
+
+    def test_unsecured_keyguard_is_dismissed_before_launch(self):
+        target = mock.Mock()
+        target.sh.side_effect = ["", "mShowingLockscreen=true\nKeyguardServiceDelegate\nsecure=false", "", "mShowingLockscreen=false"]
+        record = {}
+        with mock.patch.object(runner.time, "sleep"):
+            runner.prepare_launch(target, record)
+        self.assertEqual(target.sh.call_args_list[0].args, ("input", "keyevent", "KEYCODE_WAKEUP"))
+        self.assertIn(mock.call("wm", "dismiss-keyguard"), target.sh.call_args_list)
+        self.assertFalse(record["after_dismiss"]["showing"])
+
+    def test_swipe_fallback_verifies_unsecured_keyguard(self):
+        target = mock.Mock()
+        locked = "mDreamingLockscreen=false mShowingLockscreen=true\nKeyguardServiceDelegate\nshowing=true\nsecure=false"
+        target.sh.side_effect = ["", locked, "", locked, "Physical size: 1080x1920\nOverride size: 720x1280", "", "isKeyguardShowing=false"]
+        record = {}
+        with mock.patch.object(runner.time, "sleep"):
+            runner.prepare_launch(target, record)
+        self.assertTrue(record["swipe"])
+        self.assertFalse(record["after_swipe"]["showing"])
+        self.assertIn(mock.call("input", "-d", "0", "swipe", "360", "1024", "360", "256", "300"), target.sh.call_args_list)
+
+    def test_secure_keyguard_aborts_without_dismiss_or_swipe(self):
+        target = mock.Mock()
+        target.sh.side_effect = ["", "KeyguardServiceDelegate\nshowing=true\nsecure=true"]
+        with self.assertRaisesRegex(RuntimeError, "Secure keyguard requires user credential"):
+            runner.prepare_launch(target, {})
+        self.assertEqual(target.sh.call_count, 2)
+
+    def test_unknown_or_persistent_keyguard_aborts_before_launch(self):
+        for policy in ("unrecognized policy", "mShowingLockscreen=true"):
+            with self.subTest(policy=policy):
+                target = mock.Mock()
+                target.sh.side_effect = ["", policy, "", policy, "Physical size: 1080x1920", "", policy]
+                with mock.patch.object(runner.time, "sleep"), self.assertRaisesRegex(RuntimeError, "Keyguard dismissal not verified"):
+                    runner.prepare_launch(target, {})
+                self.assertFalse(any(call.args[:2] == ("am", "start") for call in target.sh.call_args_list))
 
     def test_converted_launch_resolves_bootstrap_instead_of_unity_activity(self):
         target = mock.Mock(package="dev.ror2lab.converted")

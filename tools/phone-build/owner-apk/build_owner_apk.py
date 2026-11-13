@@ -18,6 +18,7 @@ import struct
 import subprocess
 import sys
 import time
+import uuid
 import zipfile
 
 
@@ -30,6 +31,14 @@ CODE_ENTRIES = {
     "lib/arm64-v8a/lib_burst_generated.so",
     "assets/bin/Data/Managed/Metadata/global-metadata.dat",
 }
+APP_GUID = "assets/bin/Data/unity_app_guid"
+
+
+def runtime_app_guid(original, code):
+    """Invalidate Unity's extracted IL2CPP cache when produced code changes."""
+    cohort = {name: code[name]["sha256"] for name in sorted(CODE_ENTRIES)}
+    identity = json.dumps(cohort, sort_keys=True, separators=(",", ":"))
+    return str(uuid.uuid5(uuid.UUID(original.decode()), identity)).encode()
 
 
 def module(name, path):
@@ -47,6 +56,101 @@ MANIFEST = module("_owner_manifest", SOURCE / "binary_manifest.py")
 def sha(path):
     with Path(path).open("rb") as stream:
         return hashlib.file_digest(stream, "sha256").hexdigest()
+
+
+def dex_classes(data):
+    """Read defined class descriptors, rather than string references, from DEX."""
+    if len(data) < 112 or not data.startswith(b"dex\n") or struct.unpack_from("<I", data, 32)[0] != len(data):
+        raise ValueError("complete standard DEX required")
+    strings_count, strings_offset, types_count, types_offset = struct.unpack_from("<4I", data, 56)
+    classes_count, classes_offset = struct.unpack_from("<2I", data, 96)
+
+    def uint(offset):
+        return struct.unpack_from("<I", data, offset)[0]
+
+    def descriptor(index):
+        if index >= types_count:
+            raise ValueError("DEX class type index outside table")
+        string_index = uint(types_offset + index * 4)
+        if string_index >= strings_count:
+            raise ValueError("DEX descriptor string outside table")
+        offset = uint(strings_offset + string_index * 4)
+        for _ in range(5):
+            value = data[offset]
+            offset += 1
+            if value < 128:
+                break
+        else:
+            raise ValueError("invalid DEX string length")
+        return data[offset : data.index(b"\0", offset)].decode("utf-8")
+
+    return {descriptor(uint(classes_offset + index * 32)) for index in range(classes_count)}
+
+
+def apk_classes(path):
+    with zipfile.ZipFile(path) as archive:
+        return set().union(*(dex_classes(archive.read(name)) for name in archive.namelist() if re.fullmatch(r"classes(?:[2-9]|[1-9][0-9]+)?\.dex", name)))
+
+
+def authored_class_contract(reference, actual):
+    expected = {name for name in reference if name.startswith("Ldev/ror2lab/")}
+    missing = sorted(expected - actual)
+    if missing:
+        raise ValueError("missing authored APK classes: " + ", ".join(missing))
+    return dict(reference_classes=sorted(expected), verified_count=len(expected))
+
+
+def authored_sources():
+    """Same source cohort as scripts/lab/build.py:stage_android_assets."""
+    root = SOURCE.parents[2]
+    plugin = root / "android/Assets/Plugins/Android/SettingsWriteObserver.androidlib/src/main/java"
+    return (
+        [SOURCE / name for name in ("PayloadStore.java", "PayloadBootstrapActivity.java", "ProfileStore.java", "ProfileRetentionProvider.java")]
+        + sorted(plugin.rglob("*.java"))
+        + [root / "tools/android-write-interruption/LabPendingWriteStop.java"]
+    )
+
+
+def compile_authored(roots, output, existing, run):
+    classes, dex = output / "classes", output / "dex"
+    classes.mkdir()
+    dex.mkdir()
+    config = output / "BuildConfig.java"
+    config.write_text(
+        'package dev.ror2lab.diagnostics; public final class BuildConfig { public static final boolean DEBUG = true; public static final String LIBRARY_PACKAGE_NAME = "dev.ror2lab.diagnostics"; public static final String BUILD_TYPE = "debug"; }\n'
+    )
+    resources = output / "R.java"
+    resources.write_text("package dev.ror2lab.diagnostics; public final class R {}\n")
+    run(
+        [
+            roots.get("javac", roots["java"].with_name("javac")),
+            "-source",
+            "8",
+            "-target",
+            "8",
+            "-classpath",
+            roots["android_jar"],
+            "-d",
+            classes,
+            config,
+            resources,
+            *authored_sources(),
+        ],
+        "javac",
+    )
+    jar = output / "bootstrap.jar"
+    with zipfile.ZipFile(jar, "x") as archive:
+        for path in sorted(classes.rglob("*.class")):
+            name = path.relative_to(classes).as_posix()
+            if "L" + name.removesuffix(".class") + ";" not in existing:
+                archive.writestr(zipfile.ZipInfo(name, (2020, 1, 1, 0, 0, 0)), path.read_bytes())
+    run(
+        [roots["java"], "-Xmx512m", "-cp", roots["d8_jar"], "com.android.tools.r8.D8", "--min-api", "22", "--lib", roots["android_jar"], "--output", dex, jar],
+        "dex",
+    )
+    if {p.name for p in dex.iterdir()} != {"classes.dex"}:
+        raise ValueError("bootstrap requires exactly one authored DEX")
+    return dex / "classes.dex"
 
 
 def resource_package(data, application_id):
@@ -599,6 +703,7 @@ def build(request_path, output):
             "startup_metadata",
             "stage_contexts",
             "lighting_tolerance",
+            "authored_class_reference",
         }
         != fields
     ):
@@ -654,6 +759,13 @@ def build(request_path, output):
                 "build_owner_apk.py",
             )
         ]
+        tracked += authored_sources()
+        if "authored_class_reference" in request:
+            pin = request["authored_class_reference"]
+            reference = Path(pin["path"]).resolve(strict=True)
+            if sha(reference) != pin["sha256"]:
+                raise ValueError("authored class reference APK pin differs")
+            tracked.append(reference)
         tracked += [roots["frontend"] / n for n in ("app.js", "controller.js", "feedback.js", "style.css", "background.png")]
         tracked += [Path(PACKET.__file__), Path(ASSEMBLY.__file__)]
         if len(code) > len(CODE_ENTRIES):
@@ -681,51 +793,14 @@ def build(request_path, output):
             with (output / (label + ".log")).open("x") as log:
                 subprocess.run([str(x) for x in command], stdout=log, stderr=subprocess.STDOUT, check=True, timeout=180)
 
-        classes, dex = output / "classes", output / "dex"
-        classes.mkdir()
-        dex.mkdir()
-        run(
-            [
-                roots.get("javac", roots["java"].with_name("javac")),
-                "-source",
-                "8",
-                "-target",
-                "8",
-                "-classpath",
-                roots["android_jar"],
-                "-d",
-                classes,
-                SOURCE / "PayloadStore.java",
-                SOURCE / "PayloadBootstrapActivity.java",
-                SOURCE / "ProfileStore.java",
-                SOURCE / "ProfileRetentionProvider.java",
-            ],
-            "javac",
-        )
-        jar = output / "bootstrap.jar"
-        with zipfile.ZipFile(jar, "x") as archive:
-            for path in sorted(classes.rglob("*.class")):
-                archive.writestr(zipfile.ZipInfo(path.relative_to(classes).as_posix(), (2020, 1, 1, 0, 0, 0)), path.read_bytes())
-        run(
-            [
-                roots["java"],
-                "-Xmx512m",
-                "-cp",
-                roots["d8_jar"],
-                "com.android.tools.r8.D8",
-                "--min-api",
-                "22",
-                "--lib",
-                roots["android_jar"],
-                "--output",
-                dex,
-                jar,
-            ],
-            "dex",
-        )
-        if {p.name for p in dex.iterdir()} != {"classes.dex"}:
-            raise ValueError("bootstrap requires exactly one authored DEX")
         apk_rows = {name[4:]: row for name, row in content.items() if name.startswith("apk/")}
+        existing_classes = set()
+        for name, row in apk_rows.items():
+            if re.fullmatch(r"classes(?:[2-9]|[1-9][0-9]+)?\.dex", name):
+                path = Path(code[name]["path"]) if name in code else PACKET.verify(roots["targets"], row)
+                existing_classes.update(dex_classes(path.read_bytes()))
+        authored_dex = compile_authored(roots, output, existing_classes, run)
+        result["authored_classes"] = sorted(dex_classes(authored_dex.read_bytes()))
         manifest_row = apk_rows["AndroidManifest.xml"]
         manifest_source = Path(code["AndroidManifest.xml"]["path"]) if "AndroidManifest.xml" in code else PACKET.verify(roots["targets"], manifest_row)
         manifest_bytes = manifest_source.read_bytes()
@@ -738,6 +813,7 @@ def build(request_path, output):
             version_name=request.get("version_name"),
             application_id=request.get("application_id"),
             retention=policy is not None,
+            lab_services=True,
         )
         (output / "AndroidManifest.xml").write_bytes(patched)
         payload = [row for name, row in content.items() if name.startswith("payload/")]
@@ -788,6 +864,11 @@ def build(request_path, output):
             for name, row in apk_rows.items():
                 if name == "AndroidManifest.xml":
                     entry(name, data=patched)
+                elif name == APP_GUID and code:
+                    original = PACKET.verify(roots["targets"], row).read_bytes()
+                    generated = runtime_app_guid(original, code)
+                    entry(name, data=generated)
+                    result["runtime_app_guid"] = generated.decode()
                 elif name == "resources.arsc" and request.get("application_id"):
                     if name in code:
                         produced = code[name]
@@ -802,7 +883,7 @@ def build(request_path, output):
                     entry(name, source=Path(produced["path"]), expected_sha=produced["sha256"], expected_bytes=produced["bytes"])
                 else:
                     entry(name, source=PACKET.verify(roots["targets"], row), expected_sha=row["sha256"], expected_bytes=row["bytes"])
-            entry(next_dex, source=dex / "classes.dex")
+            entry(next_dex, source=authored_dex)
             for name in ("app.js", "controller.js", "feedback.js", "style.css", "background.png"):
                 entry("assets/owner-bootstrap/ui/" + name, source=roots["frontend"] / name)
             for name in ("index.html", "owner-host.js"):
@@ -824,6 +905,8 @@ def build(request_path, output):
                 with archive.open(name) as stream:
                     if hashlib.file_digest(stream, "sha256").hexdigest() != row["sha256"]:
                         raise ValueError("owner APK independent readback differs")
+        if "authored_class_reference" in request:
+            result["authored_class_contract"] = authored_class_contract(apk_classes(reference), apk_classes(unsigned))
         for name, row in result["inputs"].items():
             if sha(Path(name)) != row["sha256"]:
                 raise ValueError("owner preparation input changed")
@@ -831,7 +914,7 @@ def build(request_path, output):
             success=True,
             apk_sha256=sha(unsigned),
             apk_bytes=unsigned.stat().st_size,
-            original_entries_preserved=len(apk_rows) - len(set(code) | {"AndroidManifest.xml"}),
+            original_entries_preserved=len(apk_rows) - len(set(code) | {"AndroidManifest.xml"} | ({APP_GUID} if code else set())),
             original_entry_changed="AndroidManifest.xml",
             new_dex=next_dex,
             entries_verified=len(expected),

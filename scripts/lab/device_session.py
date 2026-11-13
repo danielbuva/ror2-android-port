@@ -246,6 +246,39 @@ def ensure_runtime(device):
     return device.read_receipt("runtime.json")["persistentDataPath"]
 
 
+def keyguard_state(device):
+    policy = device.sh("dumpsys", "window", "policy")
+    flags = re.findall(r"\b(?:mDreamingLockscreen|isKeyguardShowing|mShowingLockscreen)=(true|false)\b", policy)
+    delegate = policy.partition("KeyguardServiceDelegate")[2]
+    flags += re.findall(r"\bshowing=(true|false)\b", delegate)
+    secure = re.findall(r"\bsecure=(true|false)\b", delegate)
+    return dict(showing=any(flag == "true" for flag in flags) if flags else None, secure=secure[0] == "true" if secure else None)
+
+
+def prepare_launch(device, record):
+    """Dismiss an unsecured keyguard before either owned launcher runs."""
+    device.sh("input", "keyevent", "KEYCODE_WAKEUP")
+    record["before"] = keyguard_state(device)
+    if record["before"]["showing"] is not False and record["before"]["secure"] is True:
+        raise RuntimeError("Secure keyguard requires user credential; device run aborted before launch")
+    device.sh("wm", "dismiss-keyguard")
+    time.sleep(0.5)
+    record["after_dismiss"] = keyguard_state(device)
+    if record["after_dismiss"]["showing"] is True and record["after_dismiss"]["secure"] is not True:
+        sizes = re.findall(r"(?:Physical|Override) size: (\d+)x(\d+)", device.sh("wm", "size"))
+        if not sizes:
+            raise RuntimeError("Keyguard swipe unavailable: display dimensions unknown")
+        width, height = map(int, sizes[-1])
+        record["swipe"] = True
+        device.sh("input", "-d", "0", "swipe", str(width // 2), str(height * 4 // 5), str(width // 2), str(height // 5), "300")
+        time.sleep(0.5)
+        record["after_swipe"] = keyguard_state(device)
+    final = record.get("after_swipe", record["after_dismiss"])
+    if final["showing"] is not False:
+        reason = "Secure keyguard requires user credential" if final["secure"] is True else "Keyguard dismissal not verified"
+        raise RuntimeError(reason + "; device run aborted before launch")
+
+
 def launch(device, thermal):
     if device.package == "dev.ror2lab.arm64":
         return thermal.launch(device)
@@ -271,10 +304,11 @@ def capture(device, output, pid):
     from session_cleanup_check import SPINE_ID
 
     output.mkdir(parents=True, exist_ok=True)
-    (output / "unity.log").write_text(device.cmd("logcat", "-d", "--pid=" + pid, "-v", "epoch", "Unity:I", "AndroidRuntime:E", "*:S"))
+    (output / "unity.log").write_text(device.cmd("logcat", "-d", "--pid=" + pid, "-v", "epoch", "Unity:D", "AndroidRuntime:E", "*:S"))
     (output / "crash.log").write_text(device.cmd("logcat", "-d", "-b", "crash", "-v", "epoch"))
     device.collect("screenshot", output)
     runtime = device.read_receipt("runtime.json")["persistentDataPath"]
+    (output / "il2cpp-metadata-sha256.txt").write_text(device.sh("sha256sum", runtime + "/il2cpp/Metadata/global-metadata.dat", check=False))
     for name in ("snapshot.json", "movement-batch-" + SPINE_ID + ".json", "exceptions.jsonl"):
         (output / name).write_text(device.sh("cat", runtime + "/" + name, check=False))
     device.collect("perf", output)
@@ -481,6 +515,7 @@ def execute(request):
         thermal.cool()
         thermal.deadline = time.monotonic() + request["duration_seconds"] + 600
         thermal.phase = request["mode"]
+        prepare_launch(device, result.setdefault("prelaunch", {}))
         thermal.start()
         run_workload(device, thermal, request, output, result)
         result["success"] = True

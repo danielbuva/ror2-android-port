@@ -406,6 +406,10 @@ class OwnerAssemblyTests(unittest.TestCase):
         self.check_assembly(OWNER.CODE_ENTRIES, drift_content=True, change_evidence=True)
 
     def check_assembly(self, entries, *, change_manifest=False, missing_content=False, drift_content=False, change_evidence=False):
+        dex = bytearray(112)
+        dex[:8] = b"dex\n035\0"
+        struct.pack_into("<I", dex, 32, len(dex))
+        dex = bytes(dex)
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary).resolve()
             targets, frontend, produced = (root / name for name in ("targets", "frontend", "produced"))
@@ -414,10 +418,11 @@ class OwnerAssemblyTests(unittest.TestCase):
             code = {}
             for i, name in enumerate(sorted(entries)):
                 path = produced / str(i)
-                path.write_bytes(("independent produced output " + name).encode())
+                path.write_bytes(dex if name.endswith(".dex") else ("independent produced output " + name).encode())
                 code[name] = str(path)
             profile = {"targets": []}
             names = {"apk/AndroidManifest.xml", "apk/classes.dex", "apk/assets/authored.txt", "payload/authored.bundle"}
+            names.add("apk/" + OWNER.APP_GUID)
             names |= {"apk/" + name for name in entries}
             for name in sorted(names):
                 if name.removeprefix("apk/") in code:
@@ -426,7 +431,9 @@ class OwnerAssemblyTests(unittest.TestCase):
                 else:
                     path = targets / name
                     path.parent.mkdir(parents=True, exist_ok=True)
-                    data = ("independent content " + name).encode()
+                    data = dex if name.endswith(".dex") else ("independent content " + name).encode()
+                    if name == "apk/" + OWNER.APP_GUID:
+                        data = b"0123456789abcdef0123456789abcdef"
                     path.write_bytes(data)
                     row = {"path": name, "bytes": len(data), "sha256": hashlib.sha256(data).hexdigest()}
                 profile["targets"].append(row)
@@ -473,7 +480,7 @@ class OwnerAssemblyTests(unittest.TestCase):
                 if Path(argv[0]).name == "libjavactool.so":
                     (Path(argv[argv.index("-d") + 1]) / "Authored.class").write_bytes(b"independent Java witness")
                 else:
-                    (Path(argv[argv.index("--output") + 1]) / "classes.dex").write_bytes(b"independent DEX witness")
+                    (Path(argv[argv.index("--output") + 1]) / "classes.dex").write_bytes(dex)
 
             with (
                 patch.object(OWNER.PACKET, "profile", return_value=(b"", profile)),
@@ -513,14 +520,14 @@ class OwnerAssemblyTests(unittest.TestCase):
             self.assertEqual(manifest_patch.call_args.args[0], original_manifest)
             self.assertTrue(result["success"])
             self.assertEqual(result["il2cpp_or_original_dex_changed"], bool(code))
-            self.assertEqual(result["original_entries_preserved"], 1 if "AndroidManifest.xml" in code else 2)
+            self.assertEqual(result["original_entries_preserved"], (1 if "AndroidManifest.xml" in code else 2) if code else 3)
             self.assertEqual(set(result["code_entries"]), entries)
             with zipfile.ZipFile(output / "owner-unsigned.apk") as archive:
                 self.assertEqual(archive.read("AndroidManifest.xml"), b"independent routed manifest")
                 for name, path in code.items():
                     if name != "AndroidManifest.xml":
                         self.assertEqual(archive.read(name), Path(path).read_bytes())
-                self.assertEqual(archive.read(result["new_dex"]), b"independent DEX witness")
+                self.assertEqual(archive.read(result["new_dex"]), dex)
                 self.assertEqual(archive.read("assets/authored.txt"), (targets / "apk/assets/authored.txt").read_bytes())
                 self.assertEqual(archive.read("assets/owner-bootstrap/data/authored.bundle"), (targets / "payload/authored.bundle").read_bytes())
                 self.assertEqual(archive.read("assets/owner-bootstrap/ui/feedback.js"), (frontend / "feedback.js").read_bytes())
