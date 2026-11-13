@@ -7,6 +7,8 @@ namespace UnityEngine
 {
     public class Object { public static implicit operator bool(Object value) => value != null; }
     public class GameObject : Object { }
+    public class TextAsset : Object { }
+    public static class Resources { public static T Load<T>(string path) where T : Object => null; }
     public struct Vector2 { public float x, y; public Vector2(float x, float y) { this.x = x; this.y = y; } public static Vector2 zero => new Vector2(); }
     public struct Vector3 { public Vector3(float x, float y, float z) { } }
     public struct Quaternion { public static Quaternion identity => new Quaternion(); }
@@ -178,6 +180,11 @@ public class AndroidOfflineSettings
         return !refuseSave;
     }
 }
+public static partial class RecoveredHudPresentation
+{
+    public static Dictionary<string, string> strings = new Dictionary<string, string>();
+    static string Label(string token) => token;
+}
 public sealed partial class PortSession
 {
     public class Mapping : NovaInputBridge.Mapping { }
@@ -348,6 +355,37 @@ public static class AndroidFeedbackHost
         Event.current = new Event(); screen.Open(); GUI.click = "Preview report"; screen.Draw();
         Check(LabelContains("Enter a description first."), "Escape retained notes");
         screen.Close(); screen.Close(); Check(!screen.Visible, "close not idempotent");
+    }
+    static void SoftwareNotices()
+    {
+        RecoveredHudPresentation.strings.Add("CREDITS_SOFTWARE_Z_TEXT", "Authored second notice");
+        RecoveredHudPresentation.strings.Add("CREDITS_SOFTWARE_A_TEXT", new string('a', 3000));
+        RecoveredHudPresentation.strings.Add("CREDITS_SOFTWARE_EMPTY_TEXT", " ");
+        RecoveredHudPresentation.strings.Add("UNRELATED_TEXT", "unrelated");
+        var expected = new string('a', 3000) + "\n\nAuthored second notice";
+        Check(RecoveredHudPresentation.SoftwareNotices() == expected, "notice discovery lost original text/order or admitted unrelated tokens");
+        var session = new PortSession(); session.Prepare(); session.Show(true);
+        GUI.click = "Software notices"; session.Render();
+        Check(session.r.settings.softwareNoticesVisible && session.underlying == 0, "opening notices leaked to hidden GUI");
+        session.Render();
+        Check(LabelContains(expected) && GUI.matrix.marker == 1, "notices lost source text or leaked GUI transform");
+        Input.down.Add(KeyCode.Joystick1Button0); session.Controller(); Input.down.Clear();
+        Check(session.SettingsSaves == 0 && session.Paused && session.r.settings.softwareNoticesVisible, "hidden Save consumed A");
+        GUI.click = "Back to settings"; session.Render();
+        Check(!session.r.settings.softwareNoticesVisible && session.SettingsVisible && session.Paused && session.underlying == 0, "Back leaked to underlying GUI or released pause");
+        GUI.click = "Software notices"; session.Render();
+        Input.down.Add(KeyCode.Joystick1Button0); Input.down.Add(KeyCode.Joystick1Button1); session.Controller(); Input.down.Clear();
+        Check(!session.r.settings.softwareNoticesVisible && session.SettingsSaves == 0 && session.SettingsVisible, "B reached Save/Resume");
+        GUI.click = "Software notices"; session.Render();
+        Event.current.type = EventType.KeyDown; Event.current.keyCode = KeyCode.Escape; session.Render();
+        Check(!session.r.settings.softwareNoticesVisible && Event.current.type == EventType.Used, "Escape leaked closing event");
+        Event.current.type = EventType.Repaint;
+        GUI.click = "Software notices"; session.Render(); session.Dispose();
+        Check(!session.r.settings.softwareNoticesVisible && !session.Paused, "cleanup retained modal/pause");
+        RecoveredHudPresentation.strings.Clear();
+        Check(RecoveredHudPresentation.SoftwareNotices() == "", "empty source invented notice text");
+        RecoveredHudPresentation.strings = null;
+        Check(RecoveredHudPresentation.SoftwareNotices() == "", "missing source did not degrade clearly");
     }
     static void SettingsLifecycle()
     {
@@ -524,6 +562,7 @@ public static class AndroidFeedbackHost
             case "screen-escape": ScreenEscape(); break;
             case "rebind-modal": RebindModal(); break;
             case "settings-lifecycle": SettingsLifecycle(); break;
+            case "software-notices": SoftwareNotices(); break;
             case "start-menu-input": StartMenuInput(); break;
             case "end-run-confirmation": EndRunConfirmation(); break;
             case "screen-policy": ScreenPolicy(); break;

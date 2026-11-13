@@ -1,5 +1,14 @@
 # Architecture
 
+`OfflineSettingsBoundary.OfflineSettingsSession` owns the read-only Software
+notices modal, Back/Escape/controller close, scroll state and teardown with
+settings. `RecoveredHudPresentation.SoftwareNotices` discovers original
+`CREDITS_SOFTWARE_*_TEXT` values in the existing owner-generated language table;
+no game text is stored in authored source. The shared device runner's
+`software-notices` workload waits for the PID/attempt-bound menu, captures the
+screen and menu return, and verifies unchanged profile/results/settings files.
+It changes no original credits, license terms or game state.
+
 The shared device request's `settings-save-failure` workload exercises the owned
 settings screen with attempt-bound, default-off write and rename failures.
 `AndroidOfflineSettings` consumes each instance-owned ENOSPC injection once;

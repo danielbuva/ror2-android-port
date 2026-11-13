@@ -47,6 +47,13 @@ class AndroidFeedbackTests(unittest.TestCase):
             + "\n} public void KeepAwake() { if (applicationInput == null) applicationInput = new OfflineApplicationSession(this); applicationInput.KeepScreenAwake(); }"
             + " public void ReleaseScreen() { applicationInput?.Dispose(); } }\n"
         )
+        presentation = (ROOT / "tools/unity/runtime/presentation/RecoveredHudPresentation.cs").read_text()
+        notices = presentation.split("    public static string SoftwareNotices()\n", 1)[1].split("    public static string DefeatObjective", 1)[0]
+        notices_caller = directory / "Notices.cs"
+        notices_caller.write_text(
+            "using System; using System.Collections.Generic; using UnityEngine; public static partial class RecoveredHudPresentation {\n"
+            "public static string SoftwareNotices()\n" + notices + "\n}\n"
+        )
         cls.executable = directory / "feedback.exe"
         compiled = subprocess.run(
             [
@@ -60,6 +67,7 @@ class AndroidFeedbackTests(unittest.TestCase):
                 str(RUNTIME / "OfflineSettingsBoundary.cs"),
                 str(caller),
                 str(application_caller),
+                str(notices_caller),
                 str(ROOT / "tests/fixtures/android_feedback_host.cs"),
             ],
             capture_output=True,
@@ -97,6 +105,9 @@ class AndroidFeedbackTests(unittest.TestCase):
 
     def test_application_input_gives_settings_priority_over_hidden_start_menu(self):
         self.run_case("start-menu-input")
+
+    def test_original_software_notices_are_discovered_read_only_and_own_modal_input(self):
+        self.run_case("software-notices")
 
     def test_end_run_requires_explicit_confirmation_and_cancel_preserves_pause(self):
         self.run_case("end-run-confirmation")

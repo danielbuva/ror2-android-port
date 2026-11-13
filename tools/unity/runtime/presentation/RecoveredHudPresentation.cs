@@ -122,6 +122,22 @@ public sealed partial class RecoveredHudPresentation : MonoBehaviour
         string value;
         return !string.IsNullOrEmpty(token) && strings.TryGetValue(token, out value) ? value : token ?? "";
     }
+    public static string SoftwareNotices()
+    {
+        // Use the same owner-supplied language table as the rest of this UI.
+        // Discover additions rather than pinning a particular game's middleware list.
+        if (strings == null && !Resources.Load<TextAsset>("RecoveredUI/Strings"))
+            return "";
+        Label("");
+        var keys = new List<string>(strings.Keys);
+        keys.Sort(StringComparer.Ordinal);
+        var notices = new List<string>();
+        foreach (var key in keys)
+            if (key.StartsWith("CREDITS_SOFTWARE_", StringComparison.Ordinal) &&
+                key.EndsWith("_TEXT", StringComparison.Ordinal) && !string.IsNullOrWhiteSpace(strings[key]))
+                notices.Add(strings[key]);
+        return string.Join("\n\n", notices);
+    }
     public static string DefeatObjective(string survivorName)
     {
         var survivor = SurvivorCatalog.FindSurvivorDef(survivorName);
