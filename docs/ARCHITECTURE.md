@@ -2896,6 +2896,13 @@ under `packages/dev.ror2lab.converted`. A prior peer receipt can be imported onl
 after matching its device, package, live path and APK hash. Converted launches
 resolve the real launcher activity; a launch observation alone does not prove
 that bootstrap or gameplay succeeded.
+Launch-mode `input_schedule` adds ordered, relative-time targeted-touch scripts
+within the observation window, allowing ordinary input and End Run in the same
+owned session. The existing touch owner validates each script before dispatch,
+binds its live PID/APK/UID and cleans temporary files; the runner retains actual
+dispatch times/results and continues its thermal and process checks. Captures
+resume after each bounded gesture; scheduled times are observation times, not
+proof of gameplay readiness. The shared session still owns all final cleanup.
 Before either package launches, the runner wakes display 0, dismisses an
 unsecured keyguard (with one swipe fallback) and verifies the window-policy
 lock flags are false. The terminal receipt retains boolean prelaunch readbacks;

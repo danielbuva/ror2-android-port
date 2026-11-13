@@ -254,6 +254,53 @@ class DeviceSessionTests(unittest.TestCase):
         self.assertEqual([call.args[1].name for call in capture.call_args_list], ["sample-0", "sample-5", "sample-10", "final"])
         self.assertEqual(result["observed_seconds"], 10)
 
+    def test_scheduled_touch_validates_and_runs_during_launch_observation(self):
+        gesture = dict(width=1280, height=960, steps=[dict(action="wait", ms=100)])
+        runner.save(self.root / "touch.json", gesture)
+        self.request["input_schedule"] = [dict(at_seconds=5, script="touch.json"), dict(at_seconds=10, script="touch.json")]
+        runner.save(self.request_file, self.request)
+        checked = runner.load_request(self.request_file)
+        self.assertEqual(checked["input_schedule"][0]["script"], str((self.root / "touch.json").resolve()))
+        target, thermal = mock.Mock(), mock.Mock()
+        target.sh.return_value = "7"
+        thermal.cancelled.is_set.return_value = False
+        clock = [0]
+        result = {}
+        with (
+            mock.patch.object(runner, "launch", return_value=dict(pid=7)),
+            mock.patch.object(runner, "capture"),
+            mock.patch.object(runner.time, "sleep", side_effect=lambda seconds: clock.__setitem__(0, clock[0] + seconds)),
+            mock.patch.object(runner.time, "monotonic", side_effect=lambda: clock[0]),
+            mock.patch("touch_gesture.run", return_value=dict(success=True)) as touch,
+        ):
+            runner.run_workload(target, thermal, dict(checked, duration_seconds=10), self.output, result)
+        self.assertEqual([item["dispatched_seconds"] for item in result["scheduled_inputs"]], [5, 10])
+        self.assertEqual(touch.call_count, 2)
+        for call in touch.call_args_list:
+            self.assertEqual(json.loads(call.args[0].read_text()), dict(gesture, pid="7"))
+            self.assertEqual(call.args[1], self.digest)
+            self.assertIs(call.kwargs["device"], target)
+        self.request["input_schedule"].reverse()
+        runner.save(self.request_file, self.request)
+        with self.assertRaisesRegex(ValueError, "ordered within"):
+            runner.load_request(self.request_file)
+        self.request["input_schedule"] = [dict(at_seconds=5, script="touch.json")]
+        runner.save(self.root / "touch.json", dict(gesture, steps=[dict(action="wait", ms=30001)]))
+        runner.save(self.request_file, self.request)
+        with self.assertRaisesRegex(ValueError, "30 seconds"):
+            runner.load_request(self.request_file)
+
+    def test_capture_retains_ordinary_and_bringup_reports(self):
+        target = mock.Mock()
+        target.cmd.return_value = "authored log"
+        target.sh.return_value = "{}"
+        target.read_receipt.return_value = dict(persistentDataPath="/fixture/runtime")
+        runner.capture(target, self.output, "7")
+        for suffix in ("", "-bringup"):
+            name = "movement-batch-body-state-spawn-state-auto-nova-spine" + suffix + ".json"
+            target.sh.assert_any_call("cat", "/fixture/runtime/" + name, check=False)
+            self.assertEqual((self.output / name).read_text(), "{}")
+
     def test_sustained_request_forwards_observation_cadence(self):
         import session_sustained_check as sustained
 
