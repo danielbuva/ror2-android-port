@@ -203,10 +203,23 @@ def assisted_teardown_contract(completed, pid, attempt, baseline):
     return failures
 
 
-def check_session_sustained(expected_apk_sha256=None, _launch=None, *, raw_frame_times=True, duration_seconds=None, _observe=None):
+def check_session_sustained(
+    expected_apk_sha256=None,
+    _launch=None,
+    *,
+    raw_frame_times=True,
+    duration_seconds=None,
+    capture_interval_seconds=60,
+    detailed_visual_diagnostics=False,
+    _observe=None,
+):
     """Observe aggregate counters in either mode; raw capture defaults to enabled."""
     if type(raw_frame_times) is not bool:
         raise ValueError("raw_frame_times must be an explicit boolean")
+    if type(detailed_visual_diagnostics) is not bool:
+        raise ValueError("detailed_visual_diagnostics must be an explicit boolean")
+    if type(capture_interval_seconds) is not int or capture_interval_seconds <= 0:
+        raise ValueError("capture_interval_seconds must be a positive integer")
     planned_seconds = PLANNED_SECONDS if duration_seconds is None else duration_seconds
     if type(planned_seconds) is not int or planned_seconds <= 0:
         raise ValueError("duration_seconds must be a positive integer")
@@ -296,6 +309,7 @@ def check_session_sustained(expected_apk_sha256=None, _launch=None, *, raw_frame
         selected = cleanup.selection(attempt)
         selected["rawFrameTimesRequested"] = raw_frame_times
         selected["combatPerformanceFocus"] = True
+        selected["detailedVisualDiagnostics"] = detailed_visual_diagnostics
         selected["debugOptions"].update(invincibility=True, purpose=SCOPE)
         write(out / "selection.json", selected)
         device.cmd("push", str(out / "selection.json"), selector)
@@ -322,7 +336,7 @@ def check_session_sustained(expected_apk_sha256=None, _launch=None, *, raw_frame
             raise RuntimeError("Native profile baseline unavailable")
         write(out / "world-start.json", report)
         began = time.monotonic()
-        last_capture = -60
+        last_capture = -capture_interval_seconds
         index = 0
         while True:
             elapsed = time.monotonic() - began
@@ -341,7 +355,7 @@ def check_session_sustained(expected_apk_sha256=None, _launch=None, *, raw_frame
             if _observe:
                 _observe(device, out / ("pacing-%04d" % len(result["samples"])), pid, snapshot)
             result["observed_seconds"] = elapsed
-            if elapsed - last_capture >= 60:
+            if elapsed - last_capture >= capture_interval_seconds:
                 folder = out / ("sample-%04d" % index)
                 write(folder / "world.json", report)
                 device.collect("perf", folder)

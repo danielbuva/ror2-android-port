@@ -2833,7 +2833,10 @@ An optional `payload_directory` uses the existing incremental `Device.sync`
 owner after installation, with its size included in the storage reservation.
 Launch mode retains screenshots (default 60 seconds, configurable with
 `capture_interval_seconds`), logs, runtime reports and performance snapshots;
-sustained mode delegates to the existing sustained-session owner.
+sustained mode delegates to the existing sustained-session owner, including the
+capture interval. That owner writes its seed-2, attempt-bound, invincibility-only
+selector after idle admission; sustained requests may set only
+`selection.detailedVisualDiagnostics`, never pre-upload a selector.
 Optional diagnostics/selection/input-mapping settings are read back and restored.
 The mapping must match the APK attempt and accepted measured bridge checkpoint.
 Converted runs also reset and independently verify the separately owned lab
