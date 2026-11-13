@@ -15,6 +15,7 @@ public sealed partial class PortSession
         public bool ready, visible, paused, persisted, canEndRun, sessionAbandoned;
         public bool endRunConfirmationVisible;
         public string recovery, error;
+        public string injectedSaveFailure;
         public string rebindAction, rebindError;
         public bool rebindVisible, rebindReady, rebindSavedForNextSession;
         public int rebindButton = -1;
@@ -86,6 +87,13 @@ public sealed partial class PortSession
             if (coordinator.offlineSettings != null)
                 return;
             coordinator.offlineSettings = new AndroidOfflineSettings(Path.Combine(Application.persistentDataPath, "offline-settings-v1"));
+            var diagnostic = coordinator.r.debugOptions;
+            if (diagnostic != null && !string.IsNullOrEmpty(diagnostic.settingsSaveFailure))
+            {
+                coordinator.Check(!string.IsNullOrWhiteSpace(diagnostic.purpose) && diagnostic.purpose.Length <= 160,
+                                  "Settings failure injection requires a lab purpose");
+                coordinator.offlineSettings.ArmSaveFailure(diagnostic.settingsSaveFailure);
+            }
             AndroidOfflineSettings.current = coordinator.offlineSettings.values;
             coordinator.ApplyOfflineDisplayPreference();
             coordinator.offlineDifficulty = (DifficultyIndex)coordinator.offlineSettings.values.offlineDifficulty;
@@ -106,6 +114,7 @@ public sealed partial class PortSession
             coordinator.r.settings.lookSensitivity = v.lookSensitivity;
             coordinator.r.settings.invertY = v.invertY;
             coordinator.r.settings.highRefreshRate = v.highRefreshRate;
+            coordinator.r.settings.injectedSaveFailure = coordinator.offlineSettings.injectedSaveFailure;
             coordinator.r.settings.rebindVisible = rebindVisible;
             coordinator.r.settings.rebindAction = rebind == null ? null : rebind.action;
             coordinator.r.settings.rebindReady = rebind != null && rebind.ready;

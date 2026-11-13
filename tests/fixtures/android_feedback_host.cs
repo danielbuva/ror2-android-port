@@ -165,6 +165,8 @@ public class AndroidOfflineSettings
     public Values values = new Values();
     public string recovery = "none";
     public string saveError;
+    public string injectedSaveFailure;
+    public void ArmSaveFailure(string stage) { }
     public bool refuseSave;
     public int saves;
     public AndroidOfflineSettings(string path) { }
@@ -181,6 +183,8 @@ public sealed partial class PortSession
     public class Mapping : NovaInputBridge.Mapping { }
     public class Report
     {
+        public class DebugOptions { public string settingsSaveFailure, purpose; }
+        public DebugOptions debugOptions;
         public OfflineSettingsReport settings;
         public Report runClock, nova, profile, results, world, primary, combat, enemy;
         public bool freePlay = true, physicalInputAvailable = true, ready, reportGenerated, integratedWorld = true, commandoPrimaryDiagnostic, persisted;
