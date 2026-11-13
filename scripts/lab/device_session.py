@@ -64,11 +64,11 @@ def load_request(path):
         raise ValueError("Explicit serial and workstream required")
     if not re.fullmatch(r"[0-9a-f]{64}", value["apk_sha256"]):
         raise ValueError("Expected APK SHA-256 required")
-    for name, default in (("duration_seconds", None), ("cooldown_seconds", 3600), ("capture_interval_seconds", 60)):
+    value.setdefault("mode", "launch")
+    for name, default in (("duration_seconds", None), ("cooldown_seconds", 3600), ("capture_interval_seconds", 5 if value["mode"] == "sustained" else 60)):
         value.setdefault(name, default)
         if type(value[name]) is not int or value[name] <= 0:
             raise ValueError(name + " must be a positive integer")
-    value.setdefault("mode", "launch")
     if value["mode"] not in {"launch", "sustained", "settings-save-failure"}:
         raise ValueError("mode must be launch, sustained or settings-save-failure")
     if value["mode"] != "launch" and value["package"] != "dev.ror2lab.arm64":
@@ -81,6 +81,10 @@ def load_request(path):
     for name in ("selection", "diagnostics"):
         if name in value and not isinstance(value[name], dict):
             raise ValueError(name + " must be a JSON object")
+    if value["mode"] == "sustained":
+        selection = value.get("selection", {})
+        if selection.keys() - {"detailedVisualDiagnostics"} or type(selection.get("detailedVisualDiagnostics", False)) is not bool:
+            raise ValueError("Sustained workload owns its seed-2 attempt-bound selector; only detailedVisualDiagnostics may be selected")
     apk = Path(value["apk"])
     with apk.open("rb") as stream:
         digest = hashlib.file_digest(stream, "sha256").hexdigest()
@@ -341,7 +345,7 @@ def qualify_high_refresh(device, thermal, output, pid):
     raise RuntimeError("Settings menu observation deadline")
 
 
-def run_workload(device, thermal, request, output, result):
+def run_workload(device, thermal, request, output, result, *, _reset_idle=None):
     if request["mode"] == "settings-save-failure":
         import settings_write_interrupt_check as settings
 
@@ -368,6 +372,9 @@ def run_workload(device, thermal, request, output, result):
                 _launch=checked_launch,
                 raw_frame_times=True,
                 duration_seconds=request["duration_seconds"],
+                observation_interval_seconds=request.get("capture_interval_seconds", 5),
+                detailed_visual_diagnostics=request.get("selection", {}).get("detailedVisualDiagnostics", False),
+                _reset_idle=_reset_idle,
                 _observe=observe_pacing if request.get("pacing_diagnostics") else None,
             )
         finally:
@@ -497,7 +504,7 @@ def execute(request):
         mapping = checked_mapping(request) if "input_mapping" in request else None
         for name, payload in (
             ("diagnostics.json", request.get("diagnostics")),
-            ("movement-batch-selection.json", request.get("selection")),
+            ("movement-batch-selection.json", request.get("selection") if request["mode"] == "launch" else None),
             ("nova-input-mapping.json", mapping),
         ):
             if payload is None:
@@ -517,7 +524,7 @@ def execute(request):
         thermal.phase = request["mode"]
         prepare_launch(device, result.setdefault("prelaunch", {}))
         thermal.start()
-        run_workload(device, thermal, request, output, result)
+        run_workload(device, thermal, request, output, result, _reset_idle=lambda current, record: reset_idle(current, lease, record))
         result["success"] = True
     except BaseException:
         result["error"] = traceback.format_exc()

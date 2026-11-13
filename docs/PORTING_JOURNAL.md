@@ -3984,3 +3984,18 @@ Install/sync/playable/capture: 31.515/57.703/69.024/90.989 s; peak CPU/GPU 89.2 
 Adopted placement, thermal sampling and stopped/asleep selector/lease cleanup pass.
 Prior art: pinned R2API content categories, EditorKit shader discovery and ImportExtensions deferred setup.
 No rendering fix/parity claim; uncaptured enemy/effect groups and shader repairs remain open.
+
+## J1473 — Recover settings from injected write and rename ENOSPC
+
+2026-11-13. Shared runner injects one-shot settings write/rename failures without filling storage.
+Both cases keep the process alive, show a visible save error and retain primary/backup bytes.
+Ordinary UI retry succeeds with saved values unchanged and no pending file; a fresh process
+loads the validated primary with unchanged settings and protected profile/result hashes.
+The cold launch retains attempt-bound report routing without rearming injection or assists.
+APK SHA-256: `5436f6e6fc14e9807813806f33f8792a0743bce2f2ed2af09851d4fe4bf491fa` (source `2cbf0fc8`).
+Evidence: `work/coordination/alpha-enospc-retry-20261113/nova/terminal.done.json`;
+failure screenshots, current-process reports and logs retained locally; runner success true.
+Peak CPU/GPU 91.1 C; 13.012 s above 80 C; no thermal abort. Adopted placement passes.
+Terminal process/selector/pending absent, display asleep and lease released.
+Host regression covers three distinct PIDs and all launch selectors. Profile-writer failure,
+physical power loss and sustained ordinary-play performance remain open.

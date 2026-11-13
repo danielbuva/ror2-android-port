@@ -123,6 +123,53 @@ class DeviceSessionTests(unittest.TestCase):
         self.assertEqual([call.args[1].name for call in capture.call_args_list], ["sample-0", "sample-5", "sample-10", "final"])
         self.assertEqual(result["observed_seconds"], 10)
 
+    def test_sustained_request_forwards_observation_cadence(self):
+        import session_sustained_check as sustained
+
+        evidence = self.root / "sustained"
+        evidence.mkdir()
+        target = mock.Mock(package=self.request["package"])
+        target.evidence_directory.return_value = evidence
+
+        def complete(**kwargs):
+            runner.save(evidence / "one/result.json", dict(success=True))
+            return dict(success=True)
+
+        request = dict(self.request, mode="sustained", capture_interval_seconds=30)
+        runner.save(self.request_file, request)
+        self.assertEqual(runner.load_request(self.request_file)["capture_interval_seconds"], 30)
+        with mock.patch.object(sustained, "check_session_sustained", side_effect=complete) as check:
+            runner.run_workload(target, mock.Mock(), request, self.output, {})
+        self.assertEqual(check.call_args.kwargs["observation_interval_seconds"], 30)
+        del request["capture_interval_seconds"]
+        runner.save(self.request_file, request)
+        self.assertEqual(runner.load_request(self.request_file)["capture_interval_seconds"], 5)
+
+    def test_sustained_delegates_selector_and_capture_cadence_after_idle_admission(self):
+        self.request.update(mode="sustained", selection=dict(detailedVisualDiagnostics=True), capture_interval_seconds=10)
+        runner.save(self.request_file, self.request)
+        request = runner.load_request(self.request_file)
+        self.assertTrue(self.run_case()["success"])
+        target = mock.Mock()
+        evidence = self.root / "sustained"
+        evidence.mkdir()
+        target.evidence_directory.return_value = evidence
+
+        def observe(**kwargs):
+            runner.save(evidence / "current/result.json", dict(success=True))
+            return dict(success=True)
+
+        result = {}
+        with mock.patch("session_sustained_check.check_session_sustained", side_effect=observe) as check:
+            runner.run_workload(target, mock.Mock(), request, self.output, result)
+        self.assertEqual(check.call_args.kwargs["observation_interval_seconds"], 10)
+        self.assertIs(check.call_args.kwargs["detailed_visual_diagnostics"], True)
+        self.assertEqual(len(result["session_result_files"]), 1)
+        self.request["selection"]["attempt"] = "stale-attempt"
+        runner.save(self.request_file, self.request)
+        with self.assertRaisesRegex(ValueError, "owns its seed-2 attempt-bound selector"):
+            runner.load_request(self.request_file)
+
     def test_pacing_observation_queries_only_selected_package_surfaces(self):
         target = mock.Mock(package="dev.ror2lab.arm64")
         responses = {
@@ -210,8 +257,11 @@ class DeviceSessionTests(unittest.TestCase):
         thermal.thread = thermal.stopper = None
         thermal.finish.side_effect = RuntimeError("safety stop") if thermal_error else lambda: events.append("thermal-finish")
 
-        def workload(*args):
+        def workload(*args, **kwargs):
             self.assertTrue(lease_path.is_dir())
+            self.assertIsNotNone(kwargs["_reset_idle"])
+            if self.request["mode"] == "sustained":
+                self.assertFalse(any(call.args[0] == "push" and call.args[-1].endswith("movement-batch-selection.json") for call in target.cmd.call_args_list))
             events.append("workload")
             if workload_error:
                 raise RuntimeError("observed workload failure")
@@ -262,6 +312,10 @@ class DeviceSessionTests(unittest.TestCase):
         self.assertEqual(json.loads((self.output / "terminal.done.json").read_text()), result)
         removed = [event for event in events if event.startswith("remove:")]
         self.assertTrue(removed)
+        self.assertEqual(events.count("stop"), 3)
+        self.assertLess(events.index("workload"), len(events) - 1 - events[::-1].index("stop"))
+        for suffix in runner.TRANSIENTS:
+            self.assertEqual(removed.count("remove:/owned/" + suffix), 2)
         self.assertTrue(all(event.removeprefix("remove:/owned/") in runner.TRANSIENTS for event in removed))
         return result
 

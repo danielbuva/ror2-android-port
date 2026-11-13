@@ -269,6 +269,13 @@ failure output is retained. A completed save or missed interruption window
 fails the case. This
 diagnostic does not qualify power loss, ENOSPC or a physical touchscreen.
 
+The shared runner's `settings-save-failure` mode separately injects one-shot
+ENOSPC at the settings writer's write and rename points. [J1473](PORTING_JOURNAL.md#j1473--recover-settings-from-injected-write-and-rename-enospc) verifies
+visible failure, unchanged primary/backup, successful UI retry and a fresh-process
+validated-primary load with unchanged settings and protected profile/result files.
+No storage is filled. This does not qualify profile-writer failure or physical
+power loss; keep those cases and sustained ordinary-play performance open.
+
 ## Review feedback and finish
 
 Settings feedback provides a notes draft, an exact fixed-field preview, sharing
