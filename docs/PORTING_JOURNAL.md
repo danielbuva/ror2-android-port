@@ -6,7 +6,7 @@ under ignored `work/coordination/`, not here. Entries J01–J1177 (2026-09-12 to
 [history/journal-J1-J1177/PORTING_JOURNAL.md](history/journal-J1-J1177/PORTING_JOURNAL.md) with its
 [index](history/journal-J1-J1177/JOURNAL_INDEX.md); numbering continues here.
 
-## J1474 — Converted APK reaches the original-catalog survivor menu
+## J1475 — Converted APK reaches the original-catalog survivor menu
 
 2026-11-13. The source-derived converted APK boots through managed startup into
 its original-catalog survivor menu with Commando selected; authored Android Java
