@@ -49,6 +49,7 @@ def load_request(path):
         "payload_directory",
         "capture_interval_seconds",
         "pacing_diagnostics",
+        "start_from_menu",
     }
     if not isinstance(value, dict) or not required <= value.keys() or value.keys() - required - optional:
         raise ValueError("Request has missing or unknown fields")
@@ -78,9 +79,11 @@ def load_request(path):
         raise ValueError("Settings failure workload owns its attempt-bound selector")
     if value["mode"] in {"software-notices", "player-screens"} and "selection" in value:
         raise ValueError("Software notices workload owns its attempt-bound selector")
-    for name in ("require_high_refresh", "pacing_diagnostics"):
+    for name in ("require_high_refresh", "pacing_diagnostics", "start_from_menu"):
         if name in value and type(value[name]) is not bool:
             raise ValueError(name + " must be boolean")
+    if value.get("start_from_menu") and (value["mode"] != "launch" or value["package"] != "dev.ror2lab.arm64"):
+        raise ValueError("start_from_menu requires the native lab launch workload")
     for name in ("selection", "diagnostics"):
         if name in value and not isinstance(value[name], dict):
             raise ValueError(name + " must be a JSON object")
@@ -329,7 +332,7 @@ def capture(device, output, pid):
 
     output.mkdir(parents=True, exist_ok=True)
     (output / "unity.log").write_text(device.cmd("logcat", "-d", "--pid=" + pid, "-v", "epoch", "Unity:D", "AndroidRuntime:E", "*:S"))
-    (output / "crash.log").write_text(device.cmd("logcat", "-d", "-b", "crash", "-v", "epoch"))
+    device.collect("crash", output)
     device.collect("screenshot", output)
     runtime = device.read_receipt("runtime.json")["persistentDataPath"]
     (output / "il2cpp-metadata-sha256.txt").write_text(device.sh("sha256sum", runtime + "/il2cpp/Metadata/global-metadata.dat", check=False))
@@ -524,6 +527,25 @@ def check_player_screens(device, thermal, request, output):
     raise RuntimeError("Confirmed Quit did not exit")
 
 
+def start_from_menu(device, thermal, pid, output):
+    """Start the observed owned menu before measuring an automatic route."""
+    from touch_gesture import owned_display_zero_focus
+
+    menu = wait_for_settings_report(device, thermal, pid, lambda r: r.get("phase") == "offline-start-menu", timeout=240)
+    save(output / "start-menu.json", menu)
+    if thermal.error:
+        raise RuntimeError(thermal.error)
+    if device.sh("pidof", device.package, check=False).strip() != pid:
+        raise RuntimeError("Owned process changed before menu Start")
+    if not owned_display_zero_focus(device.sh("dumpsys", "window", "displays"), device.package):
+        raise RuntimeError("Owned display-zero focus absent before menu Start")
+    device.sh("input", "keyboard", "keyevent", "KEYCODE_ENTER")
+    world = wait_for_settings_report(
+        device, thermal, pid, lambda r: r.get("phase") == "integrated-world-playing" and r.get("world", {}).get("ready") is True, timeout=240
+    )
+    save(output / "world-start.json", world)
+
+
 def run_workload(device, thermal, request, output, result, *, _reset_idle=None):
     if request["mode"] == "player-screens":
         result["player_screens"] = check_player_screens(device, thermal, request, output)
@@ -571,6 +593,8 @@ def run_workload(device, thermal, request, output, result, *, _reset_idle=None):
     launched = launch(device, thermal)
     save(output / "launch.json", launched)
     pid = str(launched["pid"])
+    if request.get("start_from_menu"):
+        start_from_menu(device, thermal, pid, output)
     if "input_script" in request:
         import touch_gesture
 
