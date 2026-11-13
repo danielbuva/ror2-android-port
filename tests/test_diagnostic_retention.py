@@ -19,6 +19,11 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 namespace UnityEngine {
+ public static class Application {public static int targetFrameRate=300;}
+ public static class QualitySettings {public static int vSyncCount=1;}
+ public struct Resolution {public int refreshRate;}
+ public static class Screen {public static Resolution currentResolution=new Resolution{refreshRate=120};}
+ public static class Time {public static int captureFramerate=0;public static float fixedDeltaTime=.02f,timeScale=1;}
  public class Object { public bool destroyed; public static int workloadCalls; public static Object[] FindObjectsOfType(Type type){workloadCalls++;return new Object[type.FullName.Contains("Projectile")?3:7];} public static implicit operator bool(Object x){return !ReferenceEquals(x,null)&&!x.destroyed;} }
  public class Component : Object {public int value=7;}
  public class Transform : Component {public string name;public Transform parent;public T[] GetComponents<T>(){return new[]{(T)(object)new Component()};}}
@@ -28,12 +33,14 @@ namespace UnityEngine {
  public static class Debug { public static List<string> logs=new List<string>(); public static void Log(string value){logs.Add(value);} }
  public static class JsonUtility { public static string ToJson(object value,bool pretty=false){return new System.Web.Script.Serialization.JavaScriptSerializer().Serialize(value);} }
 }
+namespace UnityEngine.Rendering {public static class OnDemandRendering {public static int renderFrameInterval=2,effectiveRenderFrameRate=60;}}
 namespace RoR2 {public class EffectComponent:UnityEngine.Component {}}
 namespace RoR2.Projectile {public class ProjectileController:UnityEngine.Component {}}
 class LabDiagnostics {
  public class Config {public bool sceneDetails,fields,workloadCounts;public string subtree="";}
  public class ObjectInfo {public string name,parent;public string[] components,fields;}
- public class Snapshot { public string checkpoint,payload;public bool sceneDetails,workloadCounts;public int activeProjectiles=-1,activeEffects=-1;public double workloadCountMs;public string workloadCountError;public string[] assemblies,renderers;public ObjectInfo[] hierarchy; }
+ public class Snapshot { public string checkpoint,payload;public bool sceneDetails,workloadCounts;public int activeProjectiles=-1,activeEffects=-1;public double workloadCountMs;public string workloadCountError;public string[] assemblies,renderers;public ObjectInfo[] hierarchy;
+ public int targetFrameRate,vSyncCount,displayRefreshRate,renderFrameInterval,effectiveRenderFrameRate,captureFramerate;public float fixedDeltaTime,timeScale; }
  Config config=new Config();bool permitCensus;int censusCalls;
  T[] FindObjectsOfType<T>(bool inactive){
   if(!permitCensus||!inactive)throw new Exception("Unrequested/incomplete census");censusCalls++;
@@ -45,8 +52,14 @@ class LabDiagnostics {
  ANCESTORS
  WORKLOAD_COUNTS
  COUNT_COMPONENTS
+ PACING
  public static void VerifySceneDetails(){
   var owner=new LabDiagnostics();var scalar=new Snapshot();owner.PopulateSceneDetails("periodic",scalar);
+  owner.PopulatePacing(scalar);
+  if(scalar.targetFrameRate!=300||scalar.vSyncCount!=1||scalar.displayRefreshRate!=120||scalar.renderFrameInterval!=2||scalar.effectiveRenderFrameRate!=60||scalar.captureFramerate!=0||scalar.fixedDeltaTime!=.02f||scalar.timeScale!=1)throw new Exception("Live pacing unavailable");
+  Application.targetFrameRate=60;QualitySettings.vSyncCount=0;UnityEngine.Rendering.OnDemandRendering.renderFrameInterval=1;Time.captureFramerate=30;
+  owner.PopulatePacing(scalar);
+  if(scalar.targetFrameRate!=60||scalar.vSyncCount!=0||scalar.renderFrameInterval!=1||scalar.captureFramerate!=30)throw new Exception("Cached startup pacing");
   if(scalar.sceneDetails||owner.censusCalls!=0||scalar.hierarchy.Length!=0||scalar.renderers.Length!=0||scalar.assemblies.Length!=0)throw new Exception("Default periodic scan");
   owner.PopulateWorkloadCounts(scalar);
   if(scalar.workloadCounts||UnityEngine.Object.workloadCalls!=0||scalar.activeProjectiles!=-1||scalar.activeEffects!=-1)throw new Exception("Unrequested workload census");
@@ -201,6 +214,7 @@ class DiagnosticRetentionTests(unittest.TestCase):
         code = code.replace("ANCESTORS", extract_method(diagnostic, " static string Ancestors("))
         code = code.replace("WORKLOAD_COUNTS", extract_method(diagnostic, " void PopulateWorkloadCounts("))
         code = code.replace("COUNT_COMPONENTS", extract_method(diagnostic, " int CountActiveComponents("))
+        code = code.replace("PACING", extract_method(diagnostic, " void PopulatePacing("))
         code = code.replace(
             "CLEANUP",
             extract_method((ROOT / "tools/unity/runtime/session/SessionResourceBoundary.cs").read_text(), "    int ReleaseDestroyedPooledHitTargets()"),

@@ -59,6 +59,26 @@ class DeviceSessionTests(unittest.TestCase):
         self.assertEqual(json.loads((lease.path / "owner.json").read_text()), lease.owner)
         self.assertTrue((self.output / "terminal.done.json").is_file())
 
+    def test_settings_failure_mode_uses_shared_launch_and_thermal_owner(self):
+        self.request["mode"] = "settings-save-failure"
+        runner.save(self.request_file, self.request)
+        checked = runner.load_request(self.request_file)
+        target, thermal = mock.Mock(), mock.Mock()
+        result = {}
+        with (
+            mock.patch("settings_write_interrupt_check.check_settings_save_failure", return_value={"success": True}) as check,
+            mock.patch.object(runner, "launch") as launch,
+        ):
+            runner.run_workload(target, thermal, checked, self.output, result)
+            check.call_args.args[3](target)
+        launch.assert_called_once_with(target, thermal)
+        self.assertIs(check.call_args.args[4], thermal.cancelled)
+        self.assertEqual(result["settings_save_failure"], {"success": True})
+        self.request["selection"] = {}
+        runner.save(self.request_file, self.request)
+        with self.assertRaisesRegex(ValueError, "owns its attempt-bound selector"):
+            runner.load_request(self.request_file)
+
     def test_dispatched_input_failure_writes_terminal_without_device_access(self):
         self.apk.unlink()
         with mock.patch.object(runner.subprocess, "run") as process:
@@ -102,6 +122,34 @@ class DeviceSessionTests(unittest.TestCase):
             runner.run_workload(target, thermal, dict(self.request, duration_seconds=10, capture_interval_seconds=5), self.output, result)
         self.assertEqual([call.args[1].name for call in capture.call_args_list], ["sample-0", "sample-5", "sample-10", "final"])
         self.assertEqual(result["observed_seconds"], 10)
+
+    def test_pacing_observation_queries_only_selected_package_surfaces(self):
+        target = mock.Mock(package="dev.ror2lab.arm64")
+        responses = {
+            ("dumpsys", "display"): "display modes",
+            ("dumpsys", "SurfaceFlinger", "--frame-rate-override"): "unsupported command",
+            ("dumpsys", "game", target.package): "game mode standard",
+            ("dumpsys", "gfxinfo", target.package, "framestats"): "IntendedVsync,FrameCompleted\n1,2",
+            ("cmd", "package", "list", "packages", "-U", target.package): "package:dev.ror2lab.arm64 uid:12345",
+            ("getprop",): "[debug.game_default_frame_rate]: [60]\n[debug.frame_rate]: [120]\n[unrelated]: [private]",
+            ("dumpsys", "SurfaceFlinger"): "unrelated layer\n Frame Rate Overrides: uid=12345 fps=60",
+            ("logcat", "-d", "--pid=7", "-v", "epoch"): "Swappy logs",
+            ("dumpsys", "SurfaceFlinger", "--list"): "SurfaceView dev.ror2lab.arm64 main\nSurfaceView other.app main\n",
+            ("dumpsys", "SurfaceFlinger", "--latency", "SurfaceView dev.ror2lab.arm64 main"): "8333333\n1 2 3\n",
+        }
+        target.sh.side_effect = lambda *args, **kwargs: responses[args]
+        snapshot = dict(targetFrameRate=300, renderFrameInterval=2)
+        runner.observe_pacing(target, self.output, "7", snapshot)
+        self.assertEqual(json.loads((self.output / "snapshot.json").read_text()), snapshot)
+        self.assertEqual((self.output / "latency-00.txt").read_text(), "8333333\n1 2 3\n")
+        target.sh.assert_any_call("dumpsys", "SurfaceFlinger", "--latency", "SurfaceView dev.ror2lab.arm64 main", check=False)
+        self.assertEqual(len(list(self.output.glob("latency-*.txt"))), 1)
+        self.assertEqual((self.output / "frame-rate-overrides.log").read_text(), "unsupported command")
+        self.assertEqual((self.output / "game.log").read_text(), "game mode standard")
+        self.assertEqual((self.output / "gfxinfo-framestats.log").read_text(), responses[("dumpsys", "gfxinfo", target.package, "framestats")])
+        self.assertIn("uid:12345", (self.output / "package.log").read_text())
+        self.assertEqual((self.output / "frame-rate-properties.log").read_text(), "[debug.game_default_frame_rate]: [60]\n[debug.frame_rate]: [120]\n")
+        self.assertEqual((self.output / "compositor-overrides.log").read_text(), " Frame Rate Overrides: uid=12345 fps=60\n")
 
     def test_payload_retention_marker_is_never_synced(self):
         payload = self.root / "payload"

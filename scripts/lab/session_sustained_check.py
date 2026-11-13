@@ -203,7 +203,7 @@ def assisted_teardown_contract(completed, pid, attempt, baseline):
     return failures
 
 
-def check_session_sustained(expected_apk_sha256=None, _launch=None, *, raw_frame_times=True, duration_seconds=None):
+def check_session_sustained(expected_apk_sha256=None, _launch=None, *, raw_frame_times=True, duration_seconds=None, _observe=None):
     """Observe aggregate counters in either mode; raw capture defaults to enabled."""
     if type(raw_frame_times) is not bool:
         raise ValueError("raw_frame_times must be an explicit boolean")
@@ -338,6 +338,8 @@ def check_session_sustained(expected_apk_sha256=None, _launch=None, *, raw_frame
             # Check stop thresholds at every sample, not only at capture time.
             row.update(thermal())
             result["samples"].append(row)
+            if _observe:
+                _observe(device, out / ("pacing-%04d" % len(result["samples"])), pid, snapshot)
             result["observed_seconds"] = elapsed
             if elapsed - last_capture >= 60:
                 folder = out / ("sample-%04d" % index)

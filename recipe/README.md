@@ -7038,3 +7038,11 @@ loadability, a complete bundle or device play.
 | Recipe | SHA-256 |
 | --- | --- |
 | `owner-whole-game-grandparent-material-records.json` | `acc2ea9fa96183a4b049f3679b6a2db6583fcce4192d6487bf4cb4a67a00fc21` |
+
+Runtime material selection audit (2026-11-13): the Golem, Lemurian and Wisp
+`recoveredMaterials` switches select existing source-derived Android presentation
+instead of the diagnostic preview. Only authored booleans change; existing
+minimum asset identities remain unchanged. Manual provenance, privacy, licensing
+and sensitive-content review found no game bytes, shader code, private paths,
+credentials or third-party implementation. Generated materials remain local;
+visual acceptance requires device evidence.

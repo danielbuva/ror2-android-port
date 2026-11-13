@@ -247,11 +247,14 @@ public sealed partial class PortSession
             var original = artifactBundle.LoadAsset<Material>(binding.material);
             Check(renderer && original, "Original Moon renderer/material missing: " + binding.path);
             var material = Instantiate(original);
-            material.shader = Resources.Load<Shader>("CommandoMaterialPreview");
-            material.shaderKeywords = new string[0];
-            material.SetFloat("_EmissionEnabled", 0);
             if (spec.recoveredMaterials)
                 AndroidMaterialPresentation.Apply(original, material);
+            else
+            {
+                material.shader = Resources.Load<Shader>("CommandoMaterialPreview");
+                material.shaderKeywords = new string[0];
+                material.SetFloat("_EmissionEnabled", 0);
+            }
             objectiveResources.Add(material);
             renderer.sharedMaterial = material;
             renderer.gameObject.layer = 30;
@@ -285,6 +288,8 @@ public sealed partial class PortSession
             if (renderer.sharedMaterial)
             {
                 renderer.gameObject.layer = 30;
+                if (spec.recoveredMaterials)
+                    AndroidMaterialPresentation.ApplyRecovered(renderer, worldMaterials);
             }
     }
     void ActivateMoonSource(IntegratedStageSpec spec)

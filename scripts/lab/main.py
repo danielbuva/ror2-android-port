@@ -7,6 +7,11 @@ if len(sys.argv) > 1 and sys.argv[1] == "device-session":
 
     sys.exit(main(sys.argv[2:]))
 
+if len(sys.argv) > 1 and sys.argv[1] == "shared-build":
+    from shared_checkout_build import main
+
+    sys.exit(main(sys.argv[2:]))
+
 if len(sys.argv) > 1 and sys.argv[1] == "lane" or os.environ.get("LAB_LANE"):
     from build_lanes import main, dispatch
 
@@ -22,6 +27,7 @@ p = argparse.ArgumentParser(
     epilog="""Command lifecycle (current tooling does not imply game readiness):
   lane: current
   device-session: current
+  shared-build: current
   diagnostics: current
   migrate-device-receipts: current
   test: current
@@ -57,6 +63,7 @@ p.add_argument(
     choices=[
         "lane",
         "device-session",
+        "shared-build",
         "diagnostics",
         "migrate-device-receipts",
         "test",

@@ -47,6 +47,7 @@ def load_request(path):
         "require_high_refresh",
         "payload_directory",
         "capture_interval_seconds",
+        "pacing_diagnostics",
     }
     if not isinstance(value, dict) or not required <= value.keys() or value.keys() - required - optional:
         raise ValueError("Request has missing or unknown fields")
@@ -68,12 +69,15 @@ def load_request(path):
         if type(value[name]) is not int or value[name] <= 0:
             raise ValueError(name + " must be a positive integer")
     value.setdefault("mode", "launch")
-    if value["mode"] not in {"launch", "sustained"}:
-        raise ValueError("mode must be launch or sustained")
-    if value["mode"] == "sustained" and value["package"] != "dev.ror2lab.arm64":
-        raise ValueError("The native sustained owner requires the lab package")
-    if "require_high_refresh" in value and type(value["require_high_refresh"]) is not bool:
-        raise ValueError("require_high_refresh must be boolean")
+    if value["mode"] not in {"launch", "sustained", "settings-save-failure"}:
+        raise ValueError("mode must be launch, sustained or settings-save-failure")
+    if value["mode"] != "launch" and value["package"] != "dev.ror2lab.arm64":
+        raise ValueError("The native workload owner requires the lab package")
+    if value["mode"] == "settings-save-failure" and "selection" in value:
+        raise ValueError("Settings failure workload owns its attempt-bound selector")
+    for name in ("require_high_refresh", "pacing_diagnostics"):
+        if name in value and type(value[name]) is not bool:
+            raise ValueError(name + " must be boolean")
     for name in ("selection", "diagnostics"):
         if name in value and not isinstance(value[name], dict):
             raise ValueError(name + " must be a JSON object")
@@ -338,6 +342,13 @@ def qualify_high_refresh(device, thermal, output, pid):
 
 
 def run_workload(device, thermal, request, output, result):
+    if request["mode"] == "settings-save-failure":
+        import settings_write_interrupt_check as settings
+
+        result["settings_save_failure"] = settings.check_settings_save_failure(
+            device, output, request["apk_sha256"], lambda current: launch(current, thermal), thermal.cancelled
+        )
+        return
     if request["mode"] == "sustained":
         import session_sustained_check as sustained
 
@@ -353,7 +364,11 @@ def run_workload(device, thermal, request, output, result):
         prior = set(evidence.glob("*/result.json"))
         try:
             result["session"] = sustained.check_session_sustained(
-                expected_apk_sha256=request["apk_sha256"], _launch=checked_launch, raw_frame_times=True, duration_seconds=request["duration_seconds"]
+                expected_apk_sha256=request["apk_sha256"],
+                _launch=checked_launch,
+                raw_frame_times=True,
+                duration_seconds=request["duration_seconds"],
+                _observe=observe_pacing if request.get("pacing_diagnostics") else None,
             )
         finally:
             fresh = set(evidence.glob("*/result.json")) - prior
@@ -386,6 +401,37 @@ def run_workload(device, thermal, request, output, result):
         time.sleep(0.5)
     capture(device, output / "final", pid)
     result["observed_seconds"] = time.monotonic() - began
+
+
+def observe_pacing(device, output, pid, snapshot):
+    """Read package pacing and OS interventions without changing frame policy."""
+    output.mkdir(parents=True, exist_ok=True)
+    save(output / "snapshot.json", snapshot)
+    (output / "display.log").write_text(device.sh("dumpsys", "display"))
+    for filename, command in (
+        ("frame-rate-overrides.log", ("dumpsys", "SurfaceFlinger", "--frame-rate-override")),
+        ("game.log", ("dumpsys", "game", device.package)),
+        ("gfxinfo-framestats.log", ("dumpsys", "gfxinfo", device.package, "framestats")),
+        ("package.log", ("cmd", "package", "list", "packages", "-U", device.package)),
+    ):
+        # Unsupported commands remain raw evidence; never infer no override
+        # from an empty or permission-refused response.
+        (output / filename).write_text(device.sh(*command, check=False))
+    properties = device.sh("getprop")
+    (output / "frame-rate-properties.log").write_text(
+        "\n".join(line for line in properties.splitlines() if re.search(r"frame.?rate|game.?default", line, re.I)) + "\n"
+    )
+    # Some Android versions expose overrides only in the complete SF dump.
+    # Retain just matching lines locally; the package UID above identifies ours.
+    compositor = device.sh("dumpsys", "SurfaceFlinger", check=False)
+    (output / "compositor-overrides.log").write_text("\n".join(line for line in compositor.splitlines() if "override" in line.lower()) + "\n")
+    (output / "frame-pacing.log").write_text(device.sh("logcat", "-d", "--pid=" + pid, "-v", "epoch"))
+    layers = device.sh("dumpsys", "SurfaceFlinger", "--list")
+    (output / "layers.txt").write_text(layers)
+    selected = [line for line in layers.splitlines() if device.package in line and "SurfaceView" in line]
+    for index, layer in enumerate(selected):
+        # Preserve explicit empty/permission-refused results as unavailable.
+        (output / ("latency-%02d.txt" % index)).write_text(device.sh("dumpsys", "SurfaceFlinger", "--latency", layer, check=False))
 
 
 def execute(request):
@@ -615,6 +661,7 @@ def main(argv=None):
     if args.dry_run:
         import alpha_stability_batch  # noqa: F401
         import session_sustained_check  # noqa: F401
+        import settings_write_interrupt_check  # noqa: F401
 
         print(json.dumps(dict(smoke=True, device_access=False, mode=request["mode"], apk_sha256=request["apk_sha256"])))
         return 0
