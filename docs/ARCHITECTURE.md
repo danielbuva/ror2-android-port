@@ -1,5 +1,14 @@
 # Architecture
 
+The shared device runner's launch request accepts `start_from_menu` for automatic
+route observations. It waits for the installed attempt/PID-bound native menu,
+requires owned display-zero focus, injects Start and waits for a ready world
+before the observation clock begins. Existing periodic captures retain PSS,
+native heap and managed/allocation snapshots across stage transitions. The
+ordinary selector controls the route; sustained combat's stationary first-stage
+selector is separate. Existing shared cleanup stops the process and removes the
+selector. These measurements do not certify physical or ordinary play.
+
 `OfflineApplicationSession` owns controller/keyboard menu routes, loadout modal
 visibility, Quit confirmation and persisted-results return. The existing
 `OfflineLoadoutBoundary` edits only unlocked source skill/skin choices and owns

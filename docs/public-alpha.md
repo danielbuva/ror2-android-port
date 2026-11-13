@@ -88,7 +88,10 @@ Owner playtest gate (10 minutes, physical controller and touchscreen):
       skill/skin, close it and Start. Repeat with touch; confirm no hidden Start
       fires while a modal owns input.
 - [ ] Play until an ordinary death, inspect the saved results, then use B to
-      return to character select. Repeat the results return with touch.
+      return to character select. Repeat the results return with touch. During
+      ordinary play, check stage continuation and dependency retention; record
+      crashes, missing content and memory observations separately from the
+      automated assisted soak.
 - [ ] Open Quit with Y, cancel with B, then confirm with A. Repeat with touch;
       cold launch and confirm profile/settings retention. Record actual hardware
       presses separately from injected software input.
