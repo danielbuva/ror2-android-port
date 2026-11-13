@@ -178,6 +178,10 @@ raw p50/p95/p99 are 16.654/24.889/25.000 ms overall. Both means miss the strict
 60 FPS floor, and 3.481 seconds of tail boundary coverage remain absent.
 Thermal coverage and lifecycle cleanup pass. Ordinary play, other stages,
 physical input, visual parity and energy qualification remain open.
+The subsequent [short live-policy observation](performance-game.md#live-gameplay-presentation-observation)
+retains 120 Hz and unchanged Unity frame-policy scalars while presentation changes
+from one to two refresh periods. GPU timing exceeds the 120 FPS budget; native
+interval selection and a causal pacing fix remain unproven.
 
 Startup [audio-verification reuse](PORTING_JOURNAL.md#j1386--reuse-install-bound-audio-verification-and-partition-loading-costs)
 and [catalog discovery](PORTING_JOURNAL.md#j1390--reuse-typed-item-provider-discovery-during-ordinary-startup)
