@@ -2743,7 +2743,33 @@ when a runtime log error interrupts a session; prior reports cannot replace it.
 The public Unity `MemorySnapshotDataTools` CLI can analyze them without an Editor
 package; no parser or third-party implementation is vendored into the lab/player.
 
-`alpha_stability_batch.py` owns the current detached diagnostic queue. The
+`scripts/lab/device_session.py` owns the current shared device lifecycle via
+`./dev device-session --request <private JSON> --dry-run` and `--detach`.
+The dispatcher grants a device first; the child takes the canonical atomic
+lease before ADB, sources the pinned environment and stops Unity's port-5038
+ADB server. Its request selects the canonical checkout, private output,
+workstream, explicit device/package, APK path/hash, adopted-only installation,
+duration and optional targeted-touch JSON. `Device` owns installation and live
+package/runtime placement verification; converted-package receipts are isolated
+under `packages/dev.ror2lab.converted`. A prior peer receipt can be imported only
+after matching its device, package, live path and APK hash. Converted launches
+resolve the real launcher activity; a launch observation alone does not prove
+that bootstrap or gameplay succeeded.
+Under its lease the runner records and removes only the owned package's stale
+selector/pending files and stops its process. It reserves estimated output plus
+20 GiB, gives each cooldown its own deadline, and reuses the batch thermal owner.
+Launch mode retains minute screenshots, logs, runtime reports and performance
+snapshots; sustained mode delegates to the existing sustained-session owner.
+Optional diagnostics/selection/input-mapping settings are read back and restored.
+The mapping must match the APK attempt and accepted measured bridge checkpoint.
+Converted runs also reset and independently verify the separately owned lab
+package at admission and cleanup. New raw traces are
+hash-verified on the host before device removal. Independent idle/package-byte
+readback and OLED sleep precede lease release; failed cleanup retains the lease
+for recovery. `terminal.done.json` records success or failure, including a
+dispatched child's failed input validation. Evidence and requests stay ignored.
+
+`alpha_stability_batch.py` owns the earlier detached diagnostic queue. The
 explicit device, installed APK digest and new absolute done-file select one
 canonical device lease before any device access. The actual driver PID owns that
 lease while existing SDK interruption and three-session native-heap owners run,

@@ -324,7 +324,7 @@ class GameThermalOwnerTests(unittest.TestCase):
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory()
         self.addCleanup(self.temp.cleanup)
-        self.device = mock.Mock()
+        self.device = mock.Mock(package="dev.ror2lab.arm64")
         self.device.sh.return_value = "temperature: 340\nlevel: 80\nstatus: 4\n"
         self.device.serial = SERIAL
         self.device.read_receipt.return_value = dict(apk_sha256=HASH, serial=SERIAL, package="dev.ror2lab.arm64", package_path="package:/fixture/base.apk")

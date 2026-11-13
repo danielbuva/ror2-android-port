@@ -251,7 +251,7 @@ class _GameThermalOwner:
         if not all_zones and gap > 1:
             raise RuntimeError("Thermal sample gap exceeded one second")
         if at >= self.deadline:
-            raise RuntimeError("Three-hour alpha driver deadline reached")
+            raise RuntimeError("Device run thermal deadline reached")
         if all_zones:
             if self.battery["level"] > 85:
                 raise RuntimeError("Battery charge separation/limit admission refused; report without retry")
@@ -283,24 +283,26 @@ class _GameThermalOwner:
     def terminate_game(self):
         from device import PACKAGE
 
+        package = getattr(self.device, "package", PACKAGE)
+
         # Receipt and live PID/cmdline are revalidated immediately before the
         # package-scoped stop. No remembered PID or unbound process is signaled.
         receipt = self.device.read_receipt("installed.json")
         bind_installed_apk(receipt, expected_sha256=self.expected)
-        if receipt.get("serial") != self.device.serial or receipt.get("package") != PACKAGE:
+        if receipt.get("serial") != self.device.serial or receipt.get("package") != package:
             raise RuntimeError("Selected package ownership changed; refuse thermal stop")
-        if self.device.cmd("shell", "pm path " + PACKAGE, timeout=0.7) != receipt.get("package_path"):
+        if self.device.cmd("shell", "pm path " + package, timeout=0.7) != receipt.get("package_path"):
             raise RuntimeError("Package placement changed; refuse thermal stop")
-        pid = self.device.cmd("shell", "pidof " + PACKAGE, check=False, timeout=0.7).strip()
+        pid = self.device.cmd("shell", "pidof " + package, check=False, timeout=0.7).strip()
         if not pid:
             return
         if not pid.isdecimal():
             raise RuntimeError("Ambiguous game PID; refuse thermal stop")
-        identity = self.device.cmd("shell", "cat /proc/" + pid + "/cmdline; echo; pidof " + PACKAGE, timeout=0.7)
+        identity = self.device.cmd("shell", "cat /proc/" + pid + "/cmdline; echo; pidof " + package, timeout=0.7)
         fields = identity.splitlines()
-        if len(fields) != 2 or fields[0].rstrip("\x00") != PACKAGE or fields[1] != pid:
+        if len(fields) != 2 or fields[0].rstrip("\x00") != package or fields[1] != pid:
             raise RuntimeError("Game identity changed; refuse late thermal stop")
-        self.device.cmd("shell", "am force-stop " + PACKAGE, timeout=2)
+        self.device.cmd("shell", "am force-stop " + package, timeout=2)
 
     def cool(self):
         if not self.device.display(False):
@@ -427,6 +429,8 @@ def _idle_readback(device, expected):
     from device import PACKAGE
     from session_cleanup_check import _remote_path_state
 
+    package = getattr(device, "package", PACKAGE)
+
     installed = device.owned()
     bind_installed_apk(installed, expected_sha256=expected)
     package_path = installed["package_path"]
@@ -436,7 +440,7 @@ def _idle_readback(device, expected):
     if not actual or actual[0] != expected:
         raise RuntimeError("Actual installed APK bytes differ")
     runtime = device.read_receipt("runtime.json")["persistentDataPath"]
-    process = device.sh("pidof", PACKAGE, check=False).strip()
+    process = device.sh("pidof", package, check=False).strip()
     selector = _remote_path_state(device, runtime + "/movement-batch-selection.json")
     pending = _remote_path_state(device, runtime + "/offline-settings-v1/preferences.json.pending")
     if process or selector != "absent" or pending != "absent":

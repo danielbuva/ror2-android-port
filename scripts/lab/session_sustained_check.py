@@ -203,10 +203,13 @@ def assisted_teardown_contract(completed, pid, attempt, baseline):
     return failures
 
 
-def check_session_sustained(expected_apk_sha256=None, _launch=None, *, raw_frame_times=True):
+def check_session_sustained(expected_apk_sha256=None, _launch=None, *, raw_frame_times=True, duration_seconds=None):
     """Observe aggregate counters in either mode; raw capture defaults to enabled."""
     if type(raw_frame_times) is not bool:
         raise ValueError("raw_frame_times must be an explicit boolean")
+    planned_seconds = PLANNED_SECONDS if duration_seconds is None else duration_seconds
+    if type(planned_seconds) is not int or planned_seconds <= 0:
+        raise ValueError("duration_seconds must be a positive integer")
     expected = validate_expected_apk_sha256(expected_apk_sha256)
     if expected is None:
         raise ValueError("session-sustained-check requires --expected-apk-sha256")
@@ -227,7 +230,7 @@ def check_session_sustained(expected_apk_sha256=None, _launch=None, *, raw_frame
         success=False,
         apk_sha256=expected,
         attempt=attempt,
-        planned_seconds=PLANNED_SECONDS,
+        planned_seconds=planned_seconds,
         scope=SCOPE,
         raw_frame_times_requested=raw_frame_times,
         samples=[],
@@ -343,7 +346,7 @@ def check_session_sustained(expected_apk_sha256=None, _launch=None, *, raw_frame
                 last_capture = elapsed
                 index += 1
             write(out / "progress.json", result)
-            if elapsed >= PLANNED_SECONDS:
+            if elapsed >= planned_seconds:
                 first, last = result["samples"][0], result["samples"][-1]
                 result["combat_activity"] = dict(kills=last["kills"] - first["kills"], primary_shots=last["primary_shots"] - first["primary_shots"])
                 if any(value <= 0 for value in result["combat_activity"].values()):

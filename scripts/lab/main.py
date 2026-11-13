@@ -2,6 +2,11 @@ import argparse
 import sys
 from common import *
 
+if len(sys.argv) > 1 and sys.argv[1] == "device-session":
+    from device_session import main
+
+    sys.exit(main(sys.argv[2:]))
+
 if len(sys.argv) > 1 and sys.argv[1] == "lane" or os.environ.get("LAB_LANE"):
     from build_lanes import main, dispatch
 
@@ -16,6 +21,7 @@ p = argparse.ArgumentParser(
     formatter_class=argparse.RawDescriptionHelpFormatter,
     epilog="""Command lifecycle (current tooling does not imply game readiness):
   lane: current
+  device-session: current shared request-JSON device lifecycle
   diagnostics: current
   migrate-device-receipts: current
   test: current
@@ -50,6 +56,7 @@ p.add_argument(
     "command",
     choices=[
         "lane",
+        "device-session",
         "diagnostics",
         "migrate-device-receipts",
         "test",
