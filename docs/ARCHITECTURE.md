@@ -5401,6 +5401,18 @@ orchestrator device lease, applies the battery rule, posts a sanitized result an
 prunes. `scripts/lab/lab-runner-guard.sh` is its job-started hook, installed outside
 the repository. Setup and command reference: [LAB_RUNNER](LAB_RUNNER.md).
 
+The same owner's current local `--emission-request` entry point executes
+`scripts/lab/toolhost_emission.py` through the existing installer driver. This
+operation validates a pinned input manifest and toolhost, streams runtime/inputs,
+and invokes `bundle_preload.py` beneath the existing on-phone thermal supervisor.
+Its durable `device-state.json` owns setup state, the detached handle and terminal
+outcome; each confirmed retry gets a fresh output directory and reuses the cache.
+Unknown outcomes retain the lease for exact-handle reattachment after the previous
+host runner exits. Output and owned app remain for downstream consumers, which
+must dispose of them after use. Runner finalization sleeps the display and prunes
+before publishing the terminal file. Current staging refuses adopted storage;
+host fixtures establish lifecycle contracts, not phone or gameplay acceptance.
+
 `scripts/lab/adb_transport.py` owns shared explicitly targeted ADB subprocesses
 for the runner and synthetic installer acceptance driver. It retries only
 caller-declared idempotent operations after a negative local signal status, with
@@ -5421,6 +5433,9 @@ accepts only a generated job path with terminal status. The installer uses this
 lifecycle for accessibility dumps and preserves final private dump/read diagnostic
 records. Authorization, storage discovery, exact package identity and lease policy
 remain caller-owned; the transport never discovers a target or grants ownership.
+Callers may persist the generated handle before launch and select an explicit
+`run-as` package context/root. App-private logs stream to host files without
+loading their full contents into memory.
 The workflow stages the runner and transport from one pinned trusted-main commit
 in a fresh bootstrap directory, including under isolated Python. Contracts:
 `test_adb_transport.py`, `test_lab_installer_updates.py`, `test_lab_runner.py`.

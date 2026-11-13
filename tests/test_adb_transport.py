@@ -63,6 +63,24 @@ print('synthetic-readback')
 
 
 class TransportTests(unittest.TestCase):
+    def test_owned_job_handle_is_persisted_before_launch_and_reattaches_without_relaunch(self):
+        observed = []
+        with patch.object(self.adb, "execute", side_effect=ADB.AdbError("synthetic-disconnection")):
+            job = self.adb.start_detached(
+                ["printf", "authored"],
+                root="/sdcard/Android/data/dev.synthetic/files",
+                shell_prefix=("run-as", "dev.synthetic"),
+                persist=lambda value: observed.append(value),
+            )
+        self.assertEqual(observed, [job.as_dict()])
+        restored = ADB.DetachedJob(**json.loads(json.dumps(observed[0])))
+        self.assertEqual(restored.shell_prefix, ("run-as", "dev.synthetic"))
+        self.assertTrue(restored.directory.startswith("/sdcard/"))
+        with patch.object(self.adb, "execute") as launch:
+            with self.assertRaisesRegex(ValueError, "adb-detached-job-owner"):
+                self.adb.start_detached(["printf", "authored"], root="/sdcard/test", shell_prefix=("shell", "arbitrary"))
+            launch.assert_not_called()
+
     def setUp(self):
         self.temporary = tempfile.TemporaryDirectory()
         self.addCleanup(self.temporary.cleanup)

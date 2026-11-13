@@ -1,0 +1,142 @@
+"""Shared emission lifecycle with authored files and fake device boundaries."""
+
+from contextlib import ExitStack
+import importlib.util
+import json
+import os
+from pathlib import Path
+import subprocess
+import sys
+import tempfile
+import unittest
+from unittest.mock import Mock, patch
+
+ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT / "scripts/lab"))
+import toolhost_emission as EMISSION  # noqa: E402
+
+SPEC = importlib.util.spec_from_file_location("emission_installer_fixture", ROOT / "scripts/lab-installer-updates.py")
+INSTALLER = importlib.util.module_from_spec(SPEC)
+SPEC.loader.exec_module(INSTALLER)
+
+
+class EmissionTests(unittest.TestCase):
+    def setUp(self):
+        self.temporary = tempfile.TemporaryDirectory()
+        self.addCleanup(self.temporary.cleanup)
+        self.root = Path(self.temporary.name).resolve()
+        self.output = self.root / "work/result"
+        self.output.mkdir(parents=True)
+        apk = self.root / "authored.apk"
+        apk.write_bytes(b"authored APK stand-in, never installed")
+        source = self.root / "input.json"
+        source.write_text('{"authored":true}\n')
+        manifest = self.root / "manifest.json"
+        manifest.write_text(json.dumps({"files": {"request.json": {"source": str(source), "bytes": source.stat().st_size, "sha256": EMISSION.digest(source)}}}))
+        self.request = dict(
+            runner=dict(repo=str(self.root), ref="main", device="synthetic"),
+            tool_apk=dict(path=str(apk), sha256=EMISSION.digest(apk)),
+            manifest=dict(path=str(manifest), sha256=EMISSION.digest(manifest)),
+            request="request.json",
+            done_file=str(self.output / "terminal.json"),
+            expected_records=3,
+            estimated_output_bytes=1024,
+            profile="thor",
+            timeout_seconds=10,
+        )
+        self.path = self.root / "request.json"
+        self.path.write_text(json.dumps(self.request))
+        self.lease = self.root / ".local/orchestrator/leases/synthetic-device"
+        self.lease.mkdir(parents=True)
+        (self.lease / "lab-runner.json").write_text(json.dumps(dict(pid=os.getppid())))
+        self.device = Mock()
+        self.device.storage.return_value = dict(mode="internal", internal=dict(free_bytes=1024**4))
+        self.device.display.return_value = True
+        self.phone = Mock()
+        self.phone.owned_installer = False
+        self.phone.occupied.return_value = False
+        self.phone.package_hash.return_value = self.request["tool_apk"]["sha256"]
+        self.phone.execute.return_value = subprocess.CompletedProcess([], 0, b"", b"")
+        self.phone.shell.side_effect = lambda *args, **kwargs: (
+            b"/data/user/0/dev.ror2lab.installertest\n" if kwargs["label"] == "emission-home" else b" nativeLibraryDir=/data/app/synthetic/lib/arm64\n"
+        )
+        self.phone.install.side_effect = lambda apk: setattr(self.phone, "owned_installer", True)
+        self.job = INSTALLER.TRANSPORT.DetachedJob("/data/user/0/dev.ror2lab.installertest/files/ror2-adb-job-" + "a" * 32, ("run-as", INSTALLER.PACKAGE))
+
+        def launch(*args, **kwargs):
+            kwargs["persist"](self.job.as_dict())
+            self.assertTrue((self.output / "device-state.json").exists())
+            self.assertEqual(json.loads((self.lease / "retain.json").read_text())["job"], self.job.as_dict())
+            return self.job
+
+        self.phone.transport.start_detached.side_effect = launch
+        self.phone.transport.wait_detached.return_value = subprocess.CompletedProcess([], 0, b"", b"")
+        self.collected = dict(emission=dict(bundle="retained-on-device", sha256="b" * 64, emission=dict(records=3, structural_accepted=True)))
+
+    def run_request(self, *, resume=False):
+        with ExitStack() as stack:
+            stack.enter_context(
+                patch.dict(os.environ, dict(LAB_CANONICAL_ROOT=str(self.root), LAB_RUNNER_LEASE=str(self.lease), LAB_DEVICE_SERIAL="synthetic-device"))
+            )
+            stack.enter_context(patch("device.Device", return_value=self.device))
+            thermal = stack.enter_context(patch("alpha_stability_batch._GameThermalOwner"))
+            thermal.return_value.admission_battery = dict(level=80, current_now=0, temperature=300)
+            stack.enter_context(patch.object(INSTALLER, "Phone", return_value=self.phone))
+            stack.enter_context(patch.object(EMISSION, "transfer"))
+            stack.enter_context(patch.object(EMISSION, "collect", return_value=self.collected))
+            return EMISSION.execute(self.path, INSTALLER, resume=resume)
+
+    def test_terminal_failure_retains_cache_and_retry_uses_new_output_same_cache(self):
+        self.phone.transport.wait_detached.return_value = subprocess.CompletedProcess([], 1, b"", b"")
+        first = self.run_request()
+        self.assertFalse(first["success"])
+        self.assertTrue(first["owned_app_and_cache_retained"])
+        first_command = self.phone.transport.start_detached.call_args.args[0]
+        self.phone.transport.wait_detached.return_value = subprocess.CompletedProcess([], 0, b"", b"")
+        second = self.run_request(resume=True)
+        second_command = self.phone.transport.start_detached.call_args.args[0]
+        self.assertTrue(second["success"])
+        self.assertNotEqual(first_command[first_command.index("--output") + 1], second_command[second_command.index("--output") + 1])
+        self.assertEqual(first_command[first_command.index("--cache") + 1], second_command[second_command.index("--cache") + 1])
+        self.phone.install.assert_called_once()
+        self.phone.cleanup.assert_not_called()
+
+    def test_exact_cli_dry_run_validates_pins_without_device_or_terminal(self):
+        observed = subprocess.run(
+            [sys.executable, str(ROOT / "scripts/lab/lab_runner.py"), "--emission-request", str(self.path), "--dry-run"], capture_output=True, text=True
+        )
+        self.assertEqual(observed.returncode, 0, observed.stderr)
+        self.assertTrue(json.loads(observed.stdout)["dry_run"])
+        self.assertFalse(Path(self.request["done_file"]).exists())
+
+    def test_uncertain_remote_job_retains_lease_and_resume_never_relaunches(self):
+        self.phone.transport.wait_detached.side_effect = INSTALLER.TRANSPORT.DetachedUncertain(self.job)
+        first = self.run_request()
+        self.assertFalse(first["success"])
+        self.assertTrue(first["lease_retained"])
+        self.assertTrue((self.lease / "retain.json").exists())
+        self.phone.transport.wait_detached.side_effect = None
+        second = self.run_request(resume=True)
+        self.assertTrue(second["success"])
+        self.phone.transport.start_detached.assert_called_once()
+        self.assertEqual(self.phone.transport.wait_detached.call_args.args[0].as_dict(), self.job.as_dict())
+        self.assertFalse((self.lease / "retain.json").exists())
+
+    def test_changed_input_refused_before_device_access_and_still_records_failure(self):
+        self.request["tool_apk"]["sha256"] = "0" * 64
+        self.path.write_text(json.dumps(self.request))
+        result = self.run_request()
+        self.assertFalse(result["success"])
+        self.assertEqual(result["error"], "emission-input-pin")
+        self.device.storage.assert_not_called()
+        self.assertFalse(json.loads((self.output / "terminal.operation.json").read_bytes())["success"])
+
+    def test_adopted_staging_refuses_internal_fallback(self):
+        self.device.storage.return_value = dict(mode="adopted")
+        result = self.run_request()
+        self.assertEqual(result["error"], "emission-adopted-external-runtime-staging-unavailable")
+        self.phone.install.assert_not_called()
+
+
+if __name__ == "__main__":
+    unittest.main()
