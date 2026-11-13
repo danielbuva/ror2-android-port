@@ -2921,6 +2921,8 @@ The shared runner supplies its lease-checked initial reset to the sustained owne
 so stale lab process/selector/pending state is cleared before admission. Its final
 cleanup always force-stops the owned package and removes those transient files,
 including after workload failure.
+Detailed visual samples retain a screenshot beside each world report and
+performance snapshot at the requested observation interval.
 Optional diagnostics/selection/input-mapping settings are read back and restored.
 The mapping must match the APK attempt and accepted measured bridge checkpoint.
 Converted runs also reset and independently verify the separately owned lab
@@ -4556,6 +4558,12 @@ the existing periodic handoff for objective and director-actor models; a rendere
 can receive new source slots after its first presentation. The authored
 `test_recovered_material_handoff.py` contract exercises slots, trails, late
 replacement, toggling and source ownership. Rendering remains a device gate.
+`TeleporterWorldSession.PresentNativeEffectSource` also prepares registered
+effect sources and native projectile ghosts and DamageTrail segment references
+before their pools instantiate them. It follows typed prefab edges with cycle
+protection, including CharacterBody's separately loaded FireTrail. Original
+source slots and particle trails are restored by integrated-world cleanup before
+the session destroys its material copies; source blend values remain intact.
 | Developer controls | `DebugAccelerationBoundary` ([debug-acceleration.md](debug-acceleration.md)) | nested `DebugAccelerationSession` (`IDisposable`) **own type** holds the body, saved god mode, ownership flag, charge scan/callback set and grant inventory; `debugPanel` stays shared with IntegratedWorld's graphics button; sticky "assisted" flags stay in the coordinator report | `PrepareDebugAcceleration` (calls `DebugAccelerationSession.Prepare`) → `CleanupDebugAcceleration` (calls `Dispose`; owner retained) | `test_debug_acceleration.py` |
 
 `AndroidProfileSession` reserves each original achievement event before its

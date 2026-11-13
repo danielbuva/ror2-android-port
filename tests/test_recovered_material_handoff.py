@@ -29,6 +29,9 @@ class RecoveredMaterialHandoffTests(unittest.TestCase):
         )
         source += "\n}\npublic static partial class AndroidNativeDeferredPresentation {\n"
         source += source_method(native, "public static bool IsSourceFamily(") + "\n}\n"
+        stage = (ROOT / "tools/unity/runtime/stage/TeleporterWorldBoundary.cs").read_text()
+        source += "\npublic partial class SourceSession {\n"
+        source += source_method(stage, "void PresentNativeEffectSource(") + "\n}\n"
         with tempfile.TemporaryDirectory() as temporary:
             scratch = Path(temporary)
             fixture = scratch / "RecoveredMaterials.cs"

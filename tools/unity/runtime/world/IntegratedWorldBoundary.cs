@@ -251,6 +251,7 @@ public sealed partial class PortSession
     readonly List<GameObject> worldObjects = new List<GameObject>();
     readonly List<Transform> worldModels = new List<Transform>();
     readonly List<Material> worldMaterials = new List<Material>();
+    readonly Dictionary<ParticleSystemRenderer, Material> worldLootSourceTrails = new Dictionary<ParticleSystemRenderer, Material>();
     readonly HashSet<int> worldPresented = new HashSet<int>();
     readonly List<BarrelInteraction> worldBarrels = new List<BarrelInteraction>();
     readonly List<ChestBehavior> worldChests = new List<ChestBehavior>();
@@ -1250,6 +1251,10 @@ public sealed partial class PortSession
                 if (pair.Key)
                     pair.Key.sharedMaterials = pair.Value;
             coordinator.worldLootSourceMaterials.Clear();
+            foreach (var pair in coordinator.worldLootSourceTrails)
+                if (pair.Key)
+                    pair.Key.trailMaterial = pair.Value;
+            coordinator.worldLootSourceTrails.Clear();
             foreach (var pair in coordinator.worldLootSourceLayers)
                 if (pair.Key)
                     pair.Key.layer = pair.Value;
