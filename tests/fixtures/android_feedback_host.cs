@@ -93,12 +93,13 @@ namespace UnityEngine
         public static string url;
         public static bool openFails;
         public static bool isFocused = true;
+        public static int quits;
         public static int targetFrameRate = -1;
         public static void OpenURL(string value) { if (openFails) throw new InvalidOperationException(); url = value; }
-        public static void Quit() { }
+        public static void Quit() { quits++; }
     }
     public enum EventType { Repaint, KeyDown, MouseDown, MouseUp, MouseDrag, Used }
-    public enum KeyCode { Escape = 27, Joystick1Button0 = 330, Joystick1Button1 = 331 }
+    public enum KeyCode { Escape = 27, Return = 13, L = 108, Q = 113, UpArrow = 273, DownArrow = 274, RightArrow = 275, LeftArrow = 276, Joystick1Button0 = 330, Joystick1Button1 = 331, Joystick1Button2 = 332, Joystick1Button3 = 333 }
     public class Event
     {
         public static Event current = new Event();
@@ -135,7 +136,7 @@ public class NovaInputBridge : UnityEngine.Object
 {
     public static bool ownGuiMouse;
     public bool OwnsTouchGuiMouse => ownGuiMouse;
-    public class Mapping { public int moveX, aimX = 1, jump; public bool enableInteraction; }
+    public class Mapping { public int moveX, moveY = 0, aimX = 1, jump; public bool enableInteraction; }
     public static string MeasuredControllerName => "Authored controller";
     public class ButtonRebind
     {
@@ -193,7 +194,9 @@ public sealed partial class PortSession
         public class DebugOptions { public string settingsSaveFailure, purpose; }
         public DebugOptions debugOptions;
         public OfflineSettingsReport settings;
-        public Report runClock, nova, profile, results, world, primary, combat, enemy;
+        public Report runClock, nova, profile, results, world, primary, combat, enemy, hud;
+        public bool menuLoadoutVisible, menuQuitConfirmation;
+        public int menuLoadoutRow, menuLoadoutCycles;
         public bool freePlay = true, physicalInputAvailable = true, ready, reportGenerated, integratedWorld = true, commandoPrimaryDiagnostic, persisted;
         public string phase = "world", attempt = "host";
         public Mapping mapping = new Mapping();
@@ -209,8 +212,13 @@ public sealed partial class PortSession
     public bool menuObscured;
     void SetRecoveredMenuObscured(bool value) { menuObscured = value; }
     bool offlineStartVisible, offlineStartSelected;
+    public bool offlineLoadoutVisible;
+    public int offlineLoadoutRow, loadoutCycles;
+    void MoveOfflineLoadoutRow(int direction) { offlineLoadoutRow = (offlineLoadoutRow + direction + 5) % 5; }
+    void CycleOfflineLoadoutRow(int direction) { loadoutCycles += direction; }
     bool UsesTouchUi() => false;
-    bool OfflineUiControllerPresent() => true;
+    public bool controllerPresent = true;
+    bool OfflineUiControllerPresent() => controllerPresent;
     bool CanAbandonOfflineRun() => true;
     void RequestAbandonOfflineRun() { abandonRequests++; }
     void Save() { saves++; }
@@ -255,7 +263,8 @@ public sealed partial class PortSession
     {
         readonly PortSession coordinator;
         NovaInputBridge.Mapping offlineMenuMapping = new NovaInputBridge.Mapping();
-        bool offlineSurvivorStickLatched, offlineDifficultyStickLatched;
+        bool offlineSurvivorStickLatched, offlineDifficultyStickLatched, quitConfirmation;
+        int loadoutCycles;
         public OfflineApplicationSession(PortSession coordinator) { this.coordinator = coordinator; }
         bool OfflineUiControllerPresent() => coordinator.OfflineUiControllerPresent();
         void CycleOfflineDifficulty(int direction) { coordinator.difficultyCycles++; }
@@ -441,6 +450,34 @@ public static class AndroidFeedbackHost
         session.Dispose();
         Check(!session.r.settings.rebindVisible && !session.Paused, "teardown retained modal/pause");
     }
+    static void PlayerScreens()
+    {
+        var s = new PortSession(); s.Prepare(); s.StartMenu(); s.r.hud = new PortSession.Report();
+        Action<KeyCode> press = key => { Input.down.Clear(); Input.down.Add(key); s.ApplicationController(); Input.down.Clear(); };
+        press(KeyCode.Joystick1Button2);
+        Check(s.offlineLoadoutVisible && s.menuObscured && !s.StartSelected, "X did not isolate loadout");
+        press(KeyCode.DownArrow); press(KeyCode.Joystick1Button0);
+        Check(s.offlineLoadoutRow == 1 && s.loadoutCycles == 1 && !s.StartSelected, "loadout A started run or missed selected skill");
+        press(KeyCode.Joystick1Button2); press(KeyCode.Joystick1Button1);
+        Check(!s.offlineLoadoutVisible && !s.menuObscured && s.loadoutCycles == 0, "loadout previous/back missed");
+        press(KeyCode.Joystick1Button3);
+        Check(s.r.hud.menuQuitConfirmation && s.menuObscured, "Y did not isolate Quit");
+        Input.down.Add(KeyCode.Joystick1Button0); Input.down.Add(KeyCode.Joystick1Button1); s.ApplicationController(); Input.down.Clear();
+        Check(!s.r.hud.menuQuitConfirmation && Application.quits == 0 && !s.StartSelected, "Quit cancel bled into confirm/Start");
+        s.controllerPresent = false;
+        press(KeyCode.Joystick1Button2); Check(!s.offlineLoadoutVisible, "unadmitted physical button routed");
+        press(KeyCode.L); press(KeyCode.Return); press(KeyCode.Escape);
+        Check(!s.offlineLoadoutVisible && s.loadoutCycles == 1 && !s.StartSelected, "keyboard alias did not share loadout route");
+        press(KeyCode.Q); press(KeyCode.Return);
+        Check(Application.quits == 1 && !s.StartSelected, "Quit confirm started hidden run");
+        // Native results alone authorize return; an unsaved defeat remains here.
+        var result = new PortSession(); result.Prepare(); result.r.phase = "commando-defeated";
+        result.r.results = new PortSession.Report();
+        Input.down.Add(KeyCode.Escape); result.ApplicationController();
+        Check(result.resultMenuRequests == 0, "unsaved defeat returned to menu");
+        result.r.results.persisted = true; result.ApplicationController(); Input.down.Clear();
+        Check(result.resultMenuRequests == 1, "saved defeat did not route to menu");
+    }
     static void StartMenuInput()
     {
         var session = new PortSession(); session.Prepare(); session.StartMenu(); session.Show(true);
@@ -562,6 +599,7 @@ public static class AndroidFeedbackHost
             case "screen-escape": ScreenEscape(); break;
             case "rebind-modal": RebindModal(); break;
             case "settings-lifecycle": SettingsLifecycle(); break;
+            case "player-screens": PlayerScreens(); break;
             case "software-notices": SoftwareNotices(); break;
             case "start-menu-input": StartMenuInput(); break;
             case "end-run-confirmation": EndRunConfirmation(); break;

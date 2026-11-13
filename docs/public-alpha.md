@@ -82,6 +82,17 @@ retain J595/J755 ownership guards; final alpha installation remains separate.
 
 ## Controls, UI and sessions
 
+Owner playtest gate (10 minutes, physical controller and touchscreen):
+
+- [ ] Use the controller to choose a survivor/difficulty, open loadout, select a
+      skill/skin, close it and Start. Repeat with touch; confirm no hidden Start
+      fires while a modal owns input.
+- [ ] Play until an ordinary death, inspect the saved results, then use B to
+      return to character select. Repeat the results return with touch.
+- [ ] Open Quit with Y, cancel with B, then confirm with A. Repeat with touch;
+      cold launch and confirm profile/settings retention. Record actual hardware
+      presses separately from injected software input.
+
 - [ ] Qualify ordinary physical input, original/native mappings and rebinding
       against the [measured-input contract](INPUT_QUALIFICATION.md).
       [PR #239](https://github.com/danielbuva/ror2-android-port/pull/239)

@@ -31,7 +31,8 @@ public sealed partial class RecoveredHudPresentation : MonoBehaviour
     [Serializable]
     public class Observation
     {
-        public bool ready, menuVisible, menuReferenceHidden, cleaned;
+        public bool ready, menuVisible, menuReferenceHidden, menuLoadoutVisible, menuQuitConfirmation, cleaned;
+        public int menuLoadoutRow, menuLoadoutCycles;
         public int frames, items, skillSlots, pickupIconBindings, loadedPickupIcons, survivorRosterCount, survivorSelectableCount;
         public float health, shield, barrier, level, bossHealth, charge;
         public uint money;
@@ -164,13 +165,13 @@ public sealed partial class RecoveredHudPresentation : MonoBehaviour
                 throw new InvalidOperationException("Recovered skill display reference absent");
         ValidateFeedback();
     }
-    public void BindMenu(Action start)
+    public void BindMenu(Action start, Action quit)
     {
         Validate();
         startButton.onClick = new Button.ButtonClickedEvent();
         quitButton.onClick = new Button.ButtonClickedEvent();
         startButton.onClick.AddListener(() => start());
-        quitButton.onClick.AddListener(() => Application.Quit());
+        quitButton.onClick.AddListener(() => quit());
     }
     public void Present(CharacterBody body, PortSession.SessionReport run, Observation report)
     {

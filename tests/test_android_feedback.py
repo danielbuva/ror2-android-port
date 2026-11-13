@@ -28,14 +28,14 @@ class AndroidFeedbackTests(unittest.TestCase):
         caller = directory / "Caller.cs"
         caller.write_text("using UnityEngine;\npublic sealed partial class PortSession {\nvoid OnGUI()\n" + method + "\n}\n")
         application = (ROOT / "tools/unity/runtime/session/OfflineApplicationBoundary.cs").read_text()
-        application_method = application.split("        public void ObserveOfflineApplicationInput()\n", 1)[1].split(
+        application_method = application.split("        bool MenuKey(KeyCode key, int button, bool controller)\n", 1)[1].split(
             "        public bool DrawOfflineStart()", 1
         )[0]
         application_caller = directory / "ApplicationInput.cs"
         application_caller.write_text(
             "using UnityEngine;\npublic sealed partial class PortSession {\n"
             "sealed partial class OfflineApplicationSession {\n"
-            "public void ObserveOfflineApplicationInput()\n" + application_method + "\n}\n}\n"
+            "bool MenuKey(KeyCode key, int button, bool controller)\n" + application_method + "\n}\n}\n"
         )
         lifetime = application.split("        // Application screen lifetime:", 1)[1].split("        public DifficultyIndex SelectedOfflineDifficulty()", 1)[0]
         lifetime = lifetime.split("        int priorScreenSleepTimeout;", 1)[1]
@@ -105,6 +105,9 @@ class AndroidFeedbackTests(unittest.TestCase):
 
     def test_application_input_gives_settings_priority_over_hidden_start_menu(self):
         self.run_case("start-menu-input")
+
+    def test_controller_and_keyboard_loadout_quit_and_defeated_menu_routes(self):
+        self.run_case("player-screens")
 
     def test_original_software_notices_are_discovered_read_only_and_own_modal_input(self):
         self.run_case("software-notices")

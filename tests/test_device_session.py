@@ -130,6 +130,71 @@ class DeviceSessionTests(unittest.TestCase):
         back = json.loads((self.output / "back.input.json").read_text())
         self.assertEqual((back["steps"][0]["x"], back["steps"][0]["y"]), (645, 35))
 
+    def test_player_screens_injected_routes_keep_native_loss_and_modal_order(self):
+        self.request["mode"] = "player-screens"
+        runner.save(self.request_file, self.request)
+        checked = runner.load_request(self.request_file)
+        target, thermal = mock.Mock(), mock.Mock(error=None)
+        target.read_receipt.return_value = {"persistentDataPath": "/synthetic"}
+        # Exactly the last post-confirm PID read exits; every input checks its owner.
+        target.sh.side_effect = lambda *args, **kwargs: "" if args[0] == "pidof" and len(keys) == 10 else "1"
+        reports = [
+            dict(phase="offline-start-menu"),
+            dict(phase="integrated-world-playing"),
+            dict(phase="commando-defeated", session=1, results=dict(persisted=True, serverEnding=True, clientEnding=True, reportReloaded=True)),
+            dict(phase="offline-start-menu", session=2),
+            dict(hud=dict(menuLoadoutVisible=True, menuLoadoutRow=0)),
+            dict(hud=dict(menuLoadoutRow=1, menuLoadoutCycles=0)),
+            dict(phase="offline-start-menu", hud=dict(menuLoadoutVisible=True, menuLoadoutCycles=1)),
+            dict(hud=dict(menuLoadoutVisible=False)),
+            dict(hud=dict(menuQuitConfirmation=True)),
+            dict(phase="offline-start-menu", hud=dict(menuQuitConfirmation=False)),
+            dict(hud=dict(menuQuitConfirmation=True)),
+        ]
+        keys = []
+
+        def command(*args, **kwargs):
+            if args[0] == "input":
+                keys.append(args[-1])
+                return ""
+            if args[0] == "pidof":
+                return "" if len(keys) == 10 else "1"
+            return "unchanged"
+
+        target.sh.side_effect = command
+
+        def observed(device, monitor, pid, predicate, timeout=100):
+            report = reports.pop(0)
+            self.assertTrue(predicate(report), report)
+            return report
+
+        with (
+            mock.patch.object(runner, "check_software_notices", return_value={"success": True}),
+            mock.patch.object(runner, "wait_for_settings_report", side_effect=observed),
+            mock.patch.object(runner, "capture"),
+            mock.patch("settings_write_interrupt_check.protected_hashes", return_value={"profile": "same"}),
+            mock.patch("touch_gesture.owned_display_zero_focus", return_value=True),
+        ):
+            result = runner.check_player_screens(target, thermal, checked, self.output)
+        self.assertTrue(result["quit_exited"])
+        self.assertFalse(result["physical_certification"])
+        self.assertEqual(
+            keys,
+            [
+                "KEYCODE_ENTER",
+                "KEYCODE_ESCAPE",
+                "KEYCODE_L",
+                "KEYCODE_DPAD_DOWN",
+                "KEYCODE_ENTER",
+                "KEYCODE_ESCAPE",
+                "KEYCODE_Q",
+                "KEYCODE_ESCAPE",
+                "KEYCODE_Q",
+                "KEYCODE_ENTER",
+            ],
+        )
+        self.assertEqual(reports, [])
+
     def test_settings_report_wait_rejects_process_change_and_native_failure(self):
         target, thermal = mock.Mock(), mock.Mock(error=None)
         target.read_receipt.return_value = {"persistentDataPath": "/synthetic"}

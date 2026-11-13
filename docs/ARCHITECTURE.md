@@ -1,5 +1,16 @@
 # Architecture
 
+`OfflineApplicationSession` owns controller/keyboard menu routes, loadout modal
+visibility, Quit confirmation and persisted-results return. The existing
+`OfflineLoadoutBoundary` edits only unlocked source skill/skin choices and owns
+row selection/scroll; Start remains the persistence boundary. Modal teardown
+restores the owned recovered menu. The shared device runner's `player-screens`
+workload injects keyboard aliases through these same semantic routes, observes
+native loss/persisted results, checks protected hashes and expects process exit
+only after confirmed Quit. Physical controller/digitizer certification stays in
+the owner playtest gate.
+
+
 `OfflineSettingsBoundary.OfflineSettingsSession` owns the read-only Software
 notices modal, Back/Escape/controller close, scroll state and teardown with
 settings. `RecoveredHudPresentation.SoftwareNotices` discovers original
