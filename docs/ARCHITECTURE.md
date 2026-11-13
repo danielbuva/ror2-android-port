@@ -2908,6 +2908,11 @@ An optional `payload_directory` uses the existing incremental `Device.sync`
 owner after installation, with its size included in the storage reservation.
 Launch mode retains screenshots (default 60 seconds, configurable with
 `capture_interval_seconds`), logs, runtime reports and performance snapshots;
+the native lab launch request may opt into `start_game` to wait for its live
+offline menu, inject Start only with owned display-zero focus and a matching PID,
+then await gameplay before capturing. This uses the existing assisted route and
+does not select or summon enemies. Its evidence stays in the run output; the
+same lease, thermal sampler and terminal cleanup own setup and teardown.
 sustained mode delegates to the existing sustained-session owner, using
 `capture_interval_seconds` for observations (default five seconds). Observations
 follow elapsed-time boundaries and retain available CPU policy frequencies (kHz),

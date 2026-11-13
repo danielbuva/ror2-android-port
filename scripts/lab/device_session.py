@@ -48,6 +48,7 @@ def load_request(path):
         "payload_directory",
         "capture_interval_seconds",
         "pacing_diagnostics",
+        "start_game",
     }
     if not isinstance(value, dict) or not required <= value.keys() or value.keys() - required - optional:
         raise ValueError("Request has missing or unknown fields")
@@ -77,9 +78,11 @@ def load_request(path):
         raise ValueError("Settings failure workload owns its attempt-bound selector")
     if value["mode"] in {"software-notices", "player-screens"} and "selection" in value:
         raise ValueError("Software notices workload owns its attempt-bound selector")
-    for name in ("require_high_refresh", "pacing_diagnostics"):
+    for name in ("require_high_refresh", "pacing_diagnostics", "start_game"):
         if name in value and type(value[name]) is not bool:
             raise ValueError(name + " must be boolean")
+    if value.get("start_game") and (value["mode"] != "launch" or value["package"] != "dev.ror2lab.arm64"):
+        raise ValueError("start_game requires the native lab launch workload")
     for name in ("selection", "diagnostics"):
         if name in value and not isinstance(value[name], dict):
             raise ValueError(name + " must be a JSON object")
@@ -342,6 +345,23 @@ def wait_for_settings_report(device, thermal, pid, predicate, timeout=100):
     raise RuntimeError("Settings menu observation deadline")
 
 
+def start_game(device, thermal, output, pid):
+    """Start the existing assisted route from its live native menu, on request."""
+    from touch_gesture import owned_display_zero_focus
+
+    menu = wait_for_settings_report(device, thermal, pid, lambda r: r.get("phase") == "offline-start-menu")
+    save(output / "start-menu.json", menu)
+    if thermal.error:
+        raise RuntimeError(thermal.error)
+    if device.sh("pidof", device.package, check=False).strip() != pid:
+        raise RuntimeError("Owned process changed before Start")
+    if not owned_display_zero_focus(device.sh("dumpsys", "window", "displays"), device.package):
+        raise RuntimeError("Owned display-zero focus absent before Start")
+    device.sh("input", "keyboard", "keyevent", "KEYCODE_ENTER")
+    playing = wait_for_settings_report(device, thermal, pid, lambda r: r.get("phase") == "integrated-world-playing", timeout=240)
+    save(output / "world-start.json", playing)
+
+
 def qualify_high_refresh(device, thermal, output, pid):
     report = wait_for_settings_report(device, thermal, pid, lambda r: r.get("phase") == "offline-start-menu" and r.get("settings", {}).get("ready") is True)
     save(output / "settings-report.json", report)
@@ -553,6 +573,8 @@ def run_workload(device, thermal, request, output, result, *, _reset_idle=None):
     launched = launch(device, thermal)
     save(output / "launch.json", launched)
     pid = str(launched["pid"])
+    if request.get("start_game"):
+        start_game(device, thermal, output, pid)
     if "input_script" in request:
         import touch_gesture
 

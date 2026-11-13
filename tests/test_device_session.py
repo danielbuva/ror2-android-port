@@ -59,6 +59,54 @@ class DeviceSessionTests(unittest.TestCase):
         self.assertEqual(json.loads((lease.path / "owner.json").read_text()), lease.owner)
         self.assertTrue((self.output / "terminal.done.json").is_file())
 
+    def test_launch_can_start_native_route_before_capturing(self):
+        self.request["start_game"] = True
+        runner.save(self.request_file, self.request)
+        checked = runner.load_request(self.request_file)
+        target, thermal = mock.Mock(), mock.Mock()
+        target.package = "dev.ror2lab.arm64"
+        target.sh.return_value = "1"
+        thermal.error = None
+        thermal.cancelled.is_set.return_value = False
+        reports = [dict(phase="offline-start-menu"), dict(phase="integrated-world-playing")]
+
+        def observe(device, monitor, pid, predicate, **kwargs):
+            report = reports.pop(0)
+            self.assertTrue(predicate(report))
+            return report
+
+        with (
+            mock.patch.object(runner, "launch", return_value={"pid": "1"}),
+            mock.patch.object(runner, "wait_for_settings_report", side_effect=observe),
+            mock.patch("touch_gesture.owned_display_zero_focus", return_value=True),
+            mock.patch.object(runner, "capture") as capture,
+            mock.patch.object(runner.time, "monotonic", side_effect=[0, 0, 31, 31]),
+            mock.patch.object(runner.time, "sleep"),
+        ):
+            result = {}
+            runner.run_workload(target, thermal, checked, self.output, result)
+        target.sh.assert_any_call("input", "keyboard", "keyevent", "KEYCODE_ENTER")
+        self.assertFalse(reports)
+        self.assertEqual(capture.call_count, 2)
+        self.assertEqual(json.loads((self.output / "world-start.json").read_text())["phase"], "integrated-world-playing")
+        self.request["mode"] = "sustained"
+        runner.save(self.request_file, self.request)
+        with self.assertRaisesRegex(ValueError, "native lab launch"):
+            runner.load_request(self.request_file)
+
+    def test_start_refuses_input_when_focus_is_not_owned(self):
+        target, thermal = mock.Mock(), mock.Mock()
+        target.package = "dev.ror2lab.arm64"
+        target.sh.return_value = "1"
+        thermal.error = None
+        with (
+            mock.patch.object(runner, "wait_for_settings_report", return_value={"phase": "offline-start-menu"}),
+            mock.patch("touch_gesture.owned_display_zero_focus", return_value=False),
+        ):
+            with self.assertRaisesRegex(RuntimeError, "focus absent"):
+                runner.start_game(target, thermal, self.output, "1")
+        self.assertNotIn(mock.call("input", "keyboard", "keyevent", "KEYCODE_ENTER"), target.sh.call_args_list)
+
     def test_settings_failure_mode_uses_shared_launch_and_thermal_owner(self):
         self.request["mode"] = "settings-save-failure"
         runner.save(self.request_file, self.request)
