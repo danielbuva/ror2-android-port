@@ -197,6 +197,13 @@ repack require their actual staged bodies and full native types, including on
 cache hits. The request qualification owner supplies the same current managed
 checks and closes staged streams on exit. This preserves declared independent
 preloads without adding catalog entries or a runtime owner.
+Canonical repack also seeds each aliased managed asset group's canonical root
+and its actual MonoScript from the pinned producer bundle. The advertised
+duplicate remains unchanged; loading its address preloads the instance now used
+by consumers. Unrelated external prefab graphs are not traversed.
+The current `bundle_preload.py --repack` action reuses an existing qualified
+emission through a hash-pinned request; it retains source/type/ownership checks
+and avoids repeating record production for a preload-only repair.
 
 [Alpha policy](ALPHA_POLICY.md) owns packaging/acquisition decisions;
 [screen inventory](SCREEN_COVERAGE.md) maps the current Android surfaces and their

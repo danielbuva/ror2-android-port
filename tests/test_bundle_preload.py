@@ -184,6 +184,26 @@ class BundlePreloadTests(unittest.TestCase):
                 with self.assertRaisesRegex(ValueError, "reciprocal ownership"):
                     P.repack_canonical_aliases(output=root / "repacked", **inputs)
 
+    def test_pinned_canonical_request_reuses_emission_and_refuses_input_drift(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            inputs, _ = self.canonical_fixture(root)
+            request = dict(schema="owner-bundle-canonical-inputs-v1", codec=None)
+            for key, value in inputs.items():
+                if isinstance(value, Path):
+                    path = value
+                else:
+                    path = root / (key + ".json")
+                    path.write_text("".join(json.dumps(row) + "\n" for row in value) if key == "selected_records" else json.dumps(value))
+                request[key] = dict(path=path.name, sha256=P.O.B.sha(path), bytes=path.stat().st_size)
+            path = root / "request.json"
+            path.write_text(json.dumps(request))
+            result = P.repack_request(path, root / "output")
+            self.assertTrue(result["success"])
+            inputs["source"].write_bytes(b"drift")
+            with self.assertRaises(ValueError):
+                P.repack_request(path, root / "changed")
+
     def test_canonical_repack_requires_body_provenance_and_complete_native_type(self):
         import copy
 
@@ -273,7 +293,10 @@ class BundlePreloadTests(unittest.TestCase):
                 path_ids=[60, 70],
                 externals=["CAB-canonical"],
                 dependencies=["canonical"],
-                asset_groups=[dict(guid="12" * 16, path="Assets/Def.asset", roots=[60])],
+                asset_groups=[
+                    dict(guid="12" * 16, path="Assets/Def.asset", roots=[60]),
+                    dict(guid="34" * 16, path="Assets/Separate.asset", roots=[70]),
+                ],
             )
 
             def write(path, member, pid, script_pid, binding, request=None):
@@ -325,8 +348,20 @@ class BundlePreloadTests(unittest.TestCase):
                     objects=[dict(path_id=600, source=[0, 1])],
                 ),
             )
+            inputs["cache_directory"] = root / "cache"
             result = P.repack_canonical_aliases(output=root / "matched", **inputs)
             self.assertEqual(tuple(result["source_identity_proof"][0]["canonical_script_identity"]), identity)
+            with W.B.Bundle(Path(result["bundle"])).member("CAB-authored") as stream:
+                layout = W.read_serialized(stream)
+                obj = next(row for row in layout["objects"] if layout["types"][row["type_id"]]["class_id"] == 142)
+                stream.seek(layout["data_offset"] + obj["offset"])
+                entries = C.containers(W.B.exact(stream, obj["bytes"]))[0]
+            groups = {path: (asset, set(preloads)) for path, asset, preloads in entries}
+            self.assertEqual(groups["assets/def.asset"], ((0, 60), {(0, 60), (0, 70), (1, 600), (1, 700)}))
+            self.assertEqual(groups["assets/separate.asset"], ((0, 70), {(0, 70)}))
+            warm = P.repack_canonical_aliases(output=root / "warm", **inputs)
+            self.assertTrue(warm["cache_reused"])
+            self.assertEqual(warm["sha256"], result["sha256"])
             write(canonical, "CAB-canonical", 600, 700, ("OtherDef", *identity[1:]))
             with self.assertRaisesRegex(ValueError, "MonoScript binding"):
                 P.repack_canonical_aliases(output=root / "mismatch", **inputs)
