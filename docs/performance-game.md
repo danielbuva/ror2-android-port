@@ -1,7 +1,9 @@
 # Sustained game performance baseline
 
-Latest sustained raw-frame observation: 2026-11-12; historical aggregate baseline: 2026-10-31.
-This is an assisted first-stage observation: invincibility, neutral movement and
+Latest sustained raw-frame observation: 2026-11-13, bounded assisted combat;
+see [the shared-runner qualification](#shared-runner-and-bounded-combat-qualification).
+Historical aggregate baseline: 2026-10-31. The earlier 2026-11-12 raw capture
+is an assisted first-stage observation: invincibility, neutral movement and
 small camera drags; composed renderer on a 120 Hz capable panel. The sustained trace
 below predates the saved refresh preference and scalar-only periodic inspection.
 All 29 retained
@@ -55,6 +57,48 @@ quantiles unavailable. Final-ten-minute quantiles also require a full 600-second
 endpoint window. These measure Unity active-frame intervals, not compositor
 presentation timing. Capture overhead and ordinary sustained-play qualification
 remain open; historical aggregate evidence below cannot acquire raw quantiles.
+
+### Shared runner and bounded combat qualification
+
+The request-based `./dev device-session` completed 1,803.165 seconds on
+2026-11-13, qualifying the shared install/cooldown/launch/capture/cleanup owner.
+The saved high-refresh request and Unity report both retain 120 Hz. This is
+stationary native primary-fire automation on source stage `lakes`, with invincibility
+only: 54 kills, 1,757 shots and 2–12 live enemies. The diagnostic-only native
+monster soft limit is 12; teardown restores its original value of 40. Ordinary
+sessions retain the original limit. This bounds the earlier accumulating-enemy
+workload without qualifying ordinary play or the other stages.
+
+All 270 observation intervals reconcile against the closed raw sidecar, with no
+dropped frames. The 107,656 active frames average 59.800 FPS; individual-frame
+p50/p95/p99 are 16.654/24.889/25.000 ms, with 132 frames above 50 ms (0.123%).
+The covered final window retains 596.519 of 600 seconds: 35,553 frames at
+59.749 FPS, p50/p95/p99 16.653/24.920/25.000 ms and 78 frames above 50 ms
+(0.219%). Full-ten-minute quantiles remain unavailable across the missing
+3.481-second boundary. Both means miss the strict 60 FPS floor; the performance
+gate stays open. This is a different workload, not a controlled speedup claim.
+
+The first and last complete minute's periodic CPU/GPU medians are
+16.438/11.019 ms and 16.521/9.766 ms. Inclusive marker deltas per observed frame
+include Camera.Render 4.522 ms, Semaphore.WaitForSignal 4.345 ms,
+Gfx.WaitForPresentOnGfxThread 3.025 ms, WaitForJobGroupID 2.710 ms,
+CoroutinesDelayedCalls 1.436 ms and FixedBehaviourUpdate 1.052 ms. These nested
+scopes and waits cannot be added or identify a lossless causal fix by themselves.
+No new profiler run follows from this attribution.
+
+Capture peaks are CPU/GPU/battery 95.5/80.2/41 C. The maximum thermal gap is
+0.469 seconds, with none above one second; the longest observed above-95 C
+interval is 0.397 seconds. Capture exposure above 80 C is 1,009.224 seconds;
+the wider runner reports 1,027.104 seconds. No safety limit was violated.
+Adopted package/runtime placement, native End Run, profile/settings retention,
+raw-scratch removal, independent stopped/asleep readback and lease release pass.
+Ordinary play, physical input, other stages, visual parity, unplugged energy,
+capture overhead and causal throttling remain open.
+
+Evidence: `work/coordination/alpha-shared-device-session-20261113T005754Z/`
+(`terminal.done.json`, `performance.json`, `performance.md`, `thermal.jsonl`).
+APK SHA-256: `0c440333e3906c483ad8280ab6287e299ca8f7e10238c696425f1e3423cde2ad`;
+build source `4e12f51b`. Raw evidence stays private.
 
 ### Sustained assisted raw-frame observation
 
