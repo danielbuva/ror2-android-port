@@ -17,7 +17,10 @@ its `work/`), `workstream`, `serial`, `package`, `apk`, `apk_sha256`,
 `cooldown_seconds` (default 3600), `mode` (`launch` or lab-only `sustained`),
 `input_script` (the existing targeted-touch JSON with the live PID supplied by
 the runner), `input_mapping` (the APK-attempt-bound measured bridge JSON), `selection`, `diagnostics`, `prior_receipt` and
-`require_high_refresh`. Requests and results stay private.
+`require_high_refresh`, `payload_directory` (incremental adopted-storage sync
+before launch) and `capture_interval_seconds` (launch-mode cadence, default 60).
+The device free-space reservation includes the requested payload size.
+Requests and results stay private.
 
 Generated-output cleanup retains only pinned APKs, current build/base, the
 latest installed APK per device and each worker's newest handoff-referenced

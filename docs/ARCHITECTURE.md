@@ -2759,8 +2759,11 @@ that bootstrap or gameplay succeeded.
 Under its lease the runner records and removes only the owned package's stale
 selector/pending files and stops its process. It reserves estimated output plus
 20 GiB, gives each cooldown its own deadline, and reuses the batch thermal owner.
-Launch mode retains minute screenshots, logs, runtime reports and performance
-snapshots; sustained mode delegates to the existing sustained-session owner.
+An optional `payload_directory` uses the existing incremental `Device.sync`
+owner after installation, with its size included in the storage reservation.
+Launch mode retains screenshots (default 60 seconds, configurable with
+`capture_interval_seconds`), logs, runtime reports and performance snapshots;
+sustained mode delegates to the existing sustained-session owner.
 Optional diagnostics/selection/input-mapping settings are read back and restored.
 The mapping must match the APK attempt and accepted measured bridge checkpoint.
 Converted runs also reset and independently verify the separately owned lab

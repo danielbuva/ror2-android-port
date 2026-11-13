@@ -68,7 +68,54 @@ class DeviceSessionTests(unittest.TestCase):
         self.assertFalse(result["success"])
         self.assertIn("FileNotFoundError", result["error"])
 
-    def run_case(self, *, workload_error=False, terminal_error=False, thermal_error=False):
+    def test_payload_request_rejects_empty_directory_and_invalid_cadence(self):
+        payload = self.root / "payload"
+        payload.mkdir()
+        (payload / ".prune-keep").touch()
+        (payload / "content.manifest").write_text("fixture manifest")
+        self.request["payload_directory"] = str(payload)
+        runner.save(self.request_file, self.request)
+        with self.assertRaisesRegex(ValueError, "runtime files"):
+            runner.load_request(self.request_file)
+        (payload / "content").write_bytes(b"fixture content")
+        self.request["capture_interval_seconds"] = 5
+        runner.save(self.request_file, self.request)
+        checked = runner.load_request(self.request_file)
+        self.assertEqual(runner.payload_files(checked), [(payload / "content").resolve()])
+        self.request["capture_interval_seconds"] = 0
+        runner.save(self.request_file, self.request)
+        with self.assertRaisesRegex(ValueError, "capture_interval_seconds"):
+            runner.load_request(self.request_file)
+
+    def test_launch_captures_requested_combat_cadence(self):
+        target = mock.Mock(package=self.request["package"])
+        target.sh.return_value = "7"
+        thermal = mock.Mock()
+        thermal.cancelled.is_set.return_value = False
+        result = {}
+        with (
+            mock.patch.object(runner, "launch", return_value=dict(pid=7)),
+            mock.patch.object(runner, "capture") as capture,
+            mock.patch.object(runner.time, "sleep"),
+            mock.patch.object(runner.time, "monotonic", side_effect=[0, 0, 5, 10, 10]),
+        ):
+            runner.run_workload(target, thermal, dict(self.request, duration_seconds=10, capture_interval_seconds=5), self.output, result)
+        self.assertEqual([call.args[1].name for call in capture.call_args_list], ["sample-0", "sample-5", "sample-10", "final"])
+        self.assertEqual(result["observed_seconds"], 10)
+
+    def test_payload_retention_marker_is_never_synced(self):
+        payload = self.root / "payload"
+        payload.mkdir()
+        (payload / ".prune-keep").touch()
+        (payload / "content.manifest").write_text("fixture manifest")
+        target = mock.Mock(package=self.request["package"])
+        target.read_receipt.return_value = dict(persistentDataPath="/owned/Android/data/" + target.package + "/files")
+        target.storage.return_value = dict(mode="internal", internal=dict(free_bytes=30 * 1024**3))
+        device_module.Device.sync(target, payload)
+        target.cmd.assert_not_called()
+        self.assertFalse(any(call.args[0] == "sha256sum" for call in target.sh.call_args_list))
+
+    def run_case(self, *, workload_error=False, terminal_error=False, thermal_error=False, payload=False):
         events = []
         lease_path = runner.Lease(self.request).path
         installed = dict(apk_sha256=self.digest, package_path="package:/fixture/base.apk", package=self.request["package"], serial=self.request["serial"])
@@ -80,6 +127,15 @@ class DeviceSessionTests(unittest.TestCase):
         receipt.touch()
         target.receipt.return_value = receipt
         target.install.return_value = installed
+        target.sync.side_effect = lambda path: events.append("sync:" + str(path)) or dict(files=["content"])
+        payload_size = 0
+        if payload:
+            directory = self.root / "payload"
+            directory.mkdir()
+            content = directory / "content"
+            content.write_bytes(b"authored payload fixture")
+            payload_size = content.stat().st_size
+            self.request["payload_directory"] = str(directory)
         target.display.side_effect = lambda awake: events.append("awake" if awake else "asleep") or True
 
         def shell(*args, **kwargs):
@@ -122,7 +178,7 @@ class DeviceSessionTests(unittest.TestCase):
             mock.patch.object(runner, "source_environment"),
             mock.patch.object(runner.subprocess, "run", return_value=subprocess.CompletedProcess([], 0)),
             mock.patch.object(device_module, "Device", return_value=target),
-            mock.patch.object(runner, "placement", return_value={}),
+            mock.patch.object(runner, "placement", return_value={}) as placement,
             mock.patch.object(runner, "run_workload", side_effect=workload),
             mock.patch.object(batch, "_GameThermalOwner", return_value=thermal) as owner,
             mock.patch.object(batch, "_idle_readback", side_effect=idle),
@@ -132,6 +188,13 @@ class DeviceSessionTests(unittest.TestCase):
             mock.patch.object(runner.shutil, "disk_usage", return_value=mock.Mock(free=30 * 1024**3)),
         ):
             result = runner.execute(self.request)
+        self.assertEqual(placement.call_args_list[0].args[1], self.apk.stat().st_size + payload_size + 20 * 1024**3)
+        if payload:
+            target.sync.assert_called_once_with(self.root / "payload")
+            self.assertLess(events.index("sync:" + str(self.root / "payload")), events.index("workload"))
+            self.assertEqual(result["sync"], dict(files=["content"]))
+        else:
+            target.sync.assert_not_called()
         self.assertEqual(owner.call_args.args[-1], 1060)  # run-local cooldown deadline
         self.assertEqual(thermal.deadline, 1630)  # independent workload deadline
         self.assertEqual(events[-1], "prune")
@@ -147,6 +210,9 @@ class DeviceSessionTests(unittest.TestCase):
         self.assertTrue(result["success"])
         self.assertTrue(result["lease_released"])
         self.assertTrue(result["terminal_readback"]["oled_asleep"])
+
+    def test_payload_synced_before_workload_and_included_in_storage_reserve(self):
+        self.assertTrue(self.run_case(payload=True)["success"])
 
     def test_workload_failure_still_stops_resets_sleeps_and_releases(self):
         result = self.run_case(workload_error=True)

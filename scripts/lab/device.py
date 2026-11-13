@@ -489,7 +489,7 @@ class Device:
             raise RuntimeError("Payload directory is empty or missing")
         manifest = []
         for p in sorted(files):
-            if not p.is_file() or p.suffix == ".manifest":
+            if not p.is_file() or p.suffix == ".manifest" or p.name == ".prune-keep":
                 continue
             with timing.phase("local_hash"):
                 h = sha(p)

@@ -36,10 +36,21 @@ def load_request(path):
     path = Path(path).resolve(strict=True)
     value = json.loads(path.read_text())
     required = {"canonical_root", "output", "workstream", "serial", "package", "apk", "apk_sha256", "adopted_install", "duration_seconds"}
-    optional = {"cooldown_seconds", "mode", "input_script", "input_mapping", "selection", "diagnostics", "prior_receipt", "require_high_refresh"}
+    optional = {
+        "cooldown_seconds",
+        "mode",
+        "input_script",
+        "input_mapping",
+        "selection",
+        "diagnostics",
+        "prior_receipt",
+        "require_high_refresh",
+        "payload_directory",
+        "capture_interval_seconds",
+    }
     if not isinstance(value, dict) or not required <= value.keys() or value.keys() - required - optional:
         raise ValueError("Request has missing or unknown fields")
-    for name in ("canonical_root", "output", "apk", "input_script", "input_mapping", "prior_receipt"):
+    for name in ("canonical_root", "output", "apk", "input_script", "input_mapping", "prior_receipt", "payload_directory"):
         if name in value:
             target = Path(value[name]).expanduser()
             value[name] = str((path.parent / target).resolve())
@@ -52,7 +63,7 @@ def load_request(path):
         raise ValueError("Explicit serial and workstream required")
     if not re.fullmatch(r"[0-9a-f]{64}", value["apk_sha256"]):
         raise ValueError("Expected APK SHA-256 required")
-    for name, default in (("duration_seconds", None), ("cooldown_seconds", 3600)):
+    for name, default in (("duration_seconds", None), ("cooldown_seconds", 3600), ("capture_interval_seconds", 60)):
         value.setdefault(name, default)
         if type(value[name]) is not int or value[name] <= 0:
             raise ValueError(name + " must be a positive integer")
@@ -71,6 +82,8 @@ def load_request(path):
         digest = hashlib.file_digest(stream, "sha256").hexdigest()
     if digest != value["apk_sha256"]:
         raise ValueError("APK bytes differ from the request hash")
+    if "payload_directory" in value and not payload_files(value):
+        raise ValueError("Payload directory must contain runtime files")
     if "input_script" in value:
         # A script is declarative targeted touch input, never executable code.
         import common
@@ -83,6 +96,12 @@ def load_request(path):
     if "input_mapping" in value:
         checked_mapping(value)
     return value
+
+
+def payload_files(request):
+    if "payload_directory" not in request:
+        return []
+    return [path for path in Path(request["payload_directory"]).glob("*") if path.is_file() and path.suffix != ".manifest" and path.name != ".prune-keep"]
 
 
 def checked_mapping(request):
@@ -327,7 +346,7 @@ def run_workload(device, thermal, request, output, result):
             raise RuntimeError("Owned process exited or changed")
         if elapsed >= next_capture:
             capture(device, output / ("sample-" + str(int(elapsed))), pid)
-            next_capture += 60
+            next_capture += request.get("capture_interval_seconds", 60)
         if elapsed >= request["duration_seconds"]:
             break
         time.sleep(0.5)
@@ -378,7 +397,7 @@ def execute(request):
             reset_idle(device, lease, result["initial_reset"])
             save(output / "initial-reset.json", result["initial_reset"])
             result["initial_idle"] = _idle_readback(device, active_hash)
-        reserve = Path(request["apk"]).stat().st_size + 20 * 1024**3
+        reserve = Path(request["apk"]).stat().st_size + sum(path.stat().st_size for path in payload_files(request)) + 20 * 1024**3
         result["storage_before"] = placement(device, reserve)
         try:
             result["install"] = device.install(Path(request["apk"]))
@@ -390,6 +409,8 @@ def execute(request):
         active_hash = request["apk_sha256"]
         result["storage_after"] = placement(device, 20 * 1024**3)
         runtime = ensure_runtime(device)
+        if "payload_directory" in request:
+            result["sync"] = device.sync(Path(request["payload_directory"]))
         result["installed_idle"] = _idle_readback(device, active_hash)
         initial_traces = set(device.sh("find", runtime, "-maxdepth", "1", "-type", "f", "-name", "frame-times-*.bin").splitlines())
         trace_inventory_ready = True
