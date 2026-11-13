@@ -5590,6 +5590,11 @@ The same owner's current local `--emission-request` entry point executes
 `scripts/lab/toolhost_emission.py` through the existing installer driver. This
 operation validates a pinned input manifest and toolhost, streams runtime/inputs,
 and invokes `bundle_preload.py` beneath the existing on-phone thermal supervisor.
+This Android invocation explicitly selects one record worker because its packaged
+Python lacks `_multiprocessing`; host emission retains the two-worker default.
+The operation receipt records `record_workers` separately from the supervisor's
+two-worker limits for native libraries. Serial emission retains all structural
+checks and cache checkpoints; phone throughput remains unqualified.
 Its explicit host-only `--refresh-emission-manifest` action repins only tracked
 `repo/` producers from a clean commit, preserves all other input pins, and updates
 source diagnostics, total bytes, outer hash and the requested runner commit.
