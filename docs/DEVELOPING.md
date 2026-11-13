@@ -14,11 +14,18 @@ grants the device. See [the lifecycle owner](ARCHITECTURE.md) for cleanup and
 evidence rules. Required request fields are `canonical_root`, `output` (under
 its `work/`), `workstream`, `serial`, `package`, `apk`, `apk_sha256`,
 `adopted_install: true` and `duration_seconds`. Optional fields are
-`cooldown_seconds` (default 3600), `mode` (`launch` or lab-only `sustained`),
+`cooldown_seconds` (default 3600), `mode` (`launch`, lab-only `sustained` or
+`settings-save-failure`),
 `input_script` (the existing targeted-touch JSON with the live PID supplied by
 the runner), `input_mapping` (the APK-attempt-bound measured bridge JSON), `selection`, `diagnostics`, `prior_receipt` and
 `require_high_refresh`, `payload_directory` (incremental adopted-storage sync
 before launch) and `capture_interval_seconds` (launch-mode cadence, default 60).
+`pacing_diagnostics: true` retains read-only Unity, Android display, compositor
+and OS frame-rate intervention evidence during sustained observations. The
+settings failure workload owns its attempt-bound selector and injects one
+write failure and one rename failure in the lab settings writer, checking
+visible retry, retained generations and cold recovery without filling storage.
+It requires the lab package and does not accept a custom `selection`.
 The device free-space reservation includes the requested payload size.
 Requests and results stay private.
 
