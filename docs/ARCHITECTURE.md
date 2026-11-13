@@ -10,7 +10,6 @@ native loss/persisted results, checks protected hashes and expects process exit
 only after confirmed Quit. Physical controller/digitizer certification stays in
 the owner playtest gate.
 
-
 `OfflineSettingsBoundary.OfflineSettingsSession` owns the read-only Software
 notices modal, Back/Escape/controller close, scroll state and teardown with
 settings. `RecoveredHudPresentation.SoftwareNotices` discovers original
