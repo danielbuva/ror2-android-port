@@ -8,6 +8,7 @@ and container bodies are never inputs.
 import io
 import hashlib
 import importlib.util
+import marshal
 from pathlib import Path
 import re
 import struct
@@ -19,7 +20,6 @@ class DiskIndexes:
     """Attempt-owned descriptor indexes; object bodies keep their original owners."""
 
     def __init__(self, parent):
-        import json
         import sqlite3
         import tempfile
 
@@ -31,18 +31,16 @@ class DiskIndexes:
         self.connection.execute("PRAGMA journal_mode=OFF")
         self.connection.execute("PRAGMA synchronous=OFF")
         self.connection.execute("PRAGMA cache_size=-8192")
-        self.connection.execute("PRAGMA temp_store=FILE")
-        self.connection.execute("CREATE TABLE entries (collection INTEGER, key TEXT, value TEXT, UNIQUE(collection,key))")
-        self.connection.execute("CREATE TABLE provider_entries (collection INTEGER, key TEXT, value TEXT)")
-        self.connection.execute("CREATE INDEX provider_identity ON provider_entries(collection,key)")
+        self.connection.execute("PRAGMA temp_store=MEMORY")
+        self.connection.execute("CREATE TABLE entries (collection INTEGER, key BLOB, value BLOB, UNIQUE(collection,key))")
 
-        def equal_json(before, after):
-            if json.loads(before) != json.loads(after):
+        def equal_value(before, after):
+            if marshal.loads(before) != marshal.loads(after):
                 raise ValueError("Conflicting descriptor")
             return before
 
-        self.connection.create_function("equal_json", 2, equal_json)
-        self.collections, self.pending = 0, 0
+        self.connection.create_function("equal_value", 2, equal_value)
+        self.collections = 0
         self.providers = {}
 
     def mapping(self):
@@ -50,24 +48,25 @@ class DiskIndexes:
         return DiskIndex(self, self.collections)
 
     def provider(self, path):
-        """Stream descriptors once; decode duplicates only when they exist."""
+        """Parse once, bulk insert, then index native identity columns."""
         import json
 
         self.collections += 1
         index = ProviderIndex(self, self.collections)
+        self.connection.execute(f"CREATE TABLE {index.table} (bundle TEXT, member TEXT, path_id INTEGER, value TEXT)")
         with Path(path).open() as stream:
 
             def rows():
                 for line in stream:
                     row = json.loads(line)
-                    yield index.collection, DiskIndex.encode((row["bundle"], row["member"], row["path_id"])), line
+                    yield row["bundle"], row["member"], row["path_id"], line
 
-            self.connection.executemany("INSERT INTO provider_entries VALUES (?,?,?)", rows())
-        for (key,) in self.connection.execute("SELECT key FROM provider_entries WHERE collection=? GROUP BY key HAVING count(*)>1", (index.collection,)):
-            copies = index.encoded_key(key)
+            self.connection.executemany(f"INSERT INTO {index.table} VALUES (?,?,?,?)", rows())
+        self.connection.execute(f"CREATE INDEX {index.table}_identity ON {index.table}(bundle,member,path_id)")
+        for key in self.connection.execute(f"SELECT bundle,member,path_id FROM {index.table} GROUP BY bundle,member,path_id HAVING count(*)>1"):
+            copies = index[key]
             if any({k: v for k, v in row.items() if k != "offset"} != {k: v for k, v in copies[0].items() if k != "offset"} for row in copies[1:]):
                 raise ValueError("Conflicting native provider identity")
-        self.connection.commit()
         return index
 
     def close(self):
@@ -76,34 +75,28 @@ class DiskIndexes:
 
 
 class DiskIndex(MutableMapping):
-    """JSON rows in insertion order, without retaining decoded descriptors."""
+    """Attempt-local descriptor blobs in insertion order, without Python retention."""
 
     def __init__(self, store, collection):
         self.store, self.collection = store, collection
 
     @staticmethod
     def encode(value):
-        import json
-
-        return json.dumps(value, separators=(",", ":"))
+        # Version 2 has no reference/interning flags, keeping key bytes stable
+        # across independently parsed strings. Match the former list/tuple key.
+        return marshal.dumps(tuple(value) if isinstance(value, list) else value, 2)
 
     def __getitem__(self, key):
-        import json
-
         row = self.store.connection.execute("SELECT value FROM entries WHERE collection=? AND key=?", (self.collection, self.encode(key))).fetchone()
         if row is None:
             raise KeyError(key)
-        return json.loads(row[0])
+        return marshal.loads(row[0])
 
     def __setitem__(self, key, value):
         self.store.connection.execute(
             "INSERT INTO entries VALUES (?,?,?) ON CONFLICT(collection,key) DO UPDATE SET value=excluded.value",
-            (self.collection, self.encode(key), self.encode(value)),
+            (self.collection, self.encode(key), marshal.dumps(value)),
         )
-        self.store.pending += 1
-        if self.store.pending >= 1000:
-            self.store.connection.commit()
-            self.store.pending = 0
 
     def load(self, rows, *, duplicate, allow_equal=False):
         """Bulk-load checked descriptors; only actual collisions cross into Python."""
@@ -111,15 +104,13 @@ class DiskIndex(MutableMapping):
 
         sql = "INSERT INTO entries VALUES (?,?,?)"
         if allow_equal:
-            sql += " ON CONFLICT(collection,key) DO UPDATE SET value=CASE WHEN entries.value=excluded.value THEN entries.value ELSE equal_json(entries.value,excluded.value) END"
+            sql += " ON CONFLICT(collection,key) DO UPDATE SET value=CASE WHEN entries.value=excluded.value THEN entries.value ELSE equal_value(entries.value,excluded.value) END"
         try:
-            self.store.connection.executemany(sql, ((self.collection, self.encode(key), self.encode(value)) for key, value in rows))
+            self.store.connection.executemany(sql, ((self.collection, self.encode(key), marshal.dumps(value)) for key, value in rows))
         except (sqlite3.IntegrityError, sqlite3.OperationalError) as error:
             if isinstance(error, sqlite3.IntegrityError) or str(error) == "user-defined function raised exception":
                 raise ValueError(duplicate) from error
             raise
-        self.store.connection.commit()
-        self.store.pending = 0
 
     def __delitem__(self, key):
         cursor = self.store.connection.execute("DELETE FROM entries WHERE collection=? AND key=?", (self.collection, self.encode(key)))
@@ -130,18 +121,12 @@ class DiskIndex(MutableMapping):
         return self.store.connection.execute("SELECT count(*) FROM entries WHERE collection=?", (self.collection,)).fetchone()[0]
 
     def __iter__(self):
-        import json
-
         for (key,) in self.store.connection.execute("SELECT key FROM entries WHERE collection=? ORDER BY rowid", (self.collection,)):
-            value = json.loads(key)
-            yield tuple(value) if isinstance(value, list) else value
+            yield marshal.loads(key)
 
     def items(self):
-        import json
-
         for key, value in self.store.connection.execute("SELECT key,value FROM entries WHERE collection=? ORDER BY rowid", (self.collection,)):
-            key = json.loads(key)
-            yield tuple(key) if isinstance(key, list) else key, json.loads(value)
+            yield marshal.loads(key), marshal.loads(value)
 
     def values(self):
         for _, value in self.items():
@@ -153,19 +138,15 @@ class ProviderIndex:
 
     def __init__(self, store, collection):
         self.store, self.collection = store, collection
-
-    def encoded_key(self, key):
-        import json
-
-        return [
-            json.loads(value)
-            for (value,) in self.store.connection.execute(
-                "SELECT value FROM provider_entries WHERE collection=? AND key=? ORDER BY rowid", (self.collection, key)
-            )
-        ]
+        self.table = f"provider_{collection}"
 
     def __getitem__(self, key):
-        copies = self.encoded_key(DiskIndex.encode(key))
+        import json
+
+        copies = [
+            json.loads(value)
+            for (value,) in self.store.connection.execute(f"SELECT value FROM {self.table} WHERE bundle=? AND member=? AND path_id=? ORDER BY rowid", key)
+        ]
         if not copies:
             raise KeyError(key)
         return copies

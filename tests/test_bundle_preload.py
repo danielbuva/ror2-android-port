@@ -39,6 +39,16 @@ class BundlePreloadTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "duplicate"):
                 rows.load([(("a", 1), {"value": 3})], duplicate="duplicate")
 
+    def test_descriptor_keys_match_independently_parsed_strings_and_lists(self):
+        with tempfile.TemporaryDirectory() as tmp, closing(P.DiskIndexes(tmp)) as store:
+            rows = store.mapping()
+            key = ("bundle", "member", -(2**63))
+            rows[key] = {"edges": [[0, 2**63 - 1]]}
+            parsed = json.loads(json.dumps(key))
+            self.assertEqual(rows[parsed], rows[key])
+            self.assertEqual(list(rows), [key])
+            self.assertEqual(dict(rows.items()), {key: {"edges": [[0, 2**63 - 1]]}})
+
     def canonical_fixture(self, root, broken=None):
         M, W = P.module("bundle_manifest"), P.module("unity_write")
 

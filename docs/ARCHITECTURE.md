@@ -1926,6 +1926,13 @@ and original body extent is read and hash-checked. Repeated source identities
 are accepted only with identical metadata apart from offsets, and every copy
 is read and verified. The emitter still validates
 the selected body's complete type, PPtrs and final endpoints separately.
+Attempt-local descriptor maps store parsed rows as binary blobs in one disposable
+SQLite transaction. Provider indexes retain original JSON lines under native
+bundle/member/path-ID columns and build nonunique lookup indexes after insertion.
+Every duplicate remains ordered and checked. Temporary sort data uses memory;
+the measured aggregate process RSS remains a separate host/device admission gate.
+These indexes close and disappear with the invocation; durable transformed-byte
+cache checkpoints and public input formats retain their existing owners.
 The shared `object_produce.make_layout` writer accepts explicitly qualified
 external MonoScript pointers separately from scene membership. It checks each
 managed body's script against the local records or supplied external allowlist,
