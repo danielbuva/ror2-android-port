@@ -40,6 +40,7 @@ def load_request(path):
         "cooldown_seconds",
         "mode",
         "input_script",
+        "input_schedule",
         "input_mapping",
         "selection",
         "diagnostics",
@@ -92,15 +93,32 @@ def load_request(path):
         raise ValueError("APK bytes differ from the request hash")
     if "payload_directory" in value and not payload_files(value):
         raise ValueError("Payload directory must contain runtime files")
-    if "input_script" in value:
+    scripts = [value["input_script"]] if "input_script" in value else []
+    if "input_schedule" in value:
+        schedule = value["input_schedule"]
+        if value["mode"] != "launch" or not isinstance(schedule, list) or not schedule:
+            raise ValueError("input_schedule requires launch mode and a nonempty list")
+        previous = -1
+        for item in schedule:
+            if not isinstance(item, dict) or set(item) != {"at_seconds", "script"}:
+                raise ValueError("Scheduled touch requires at_seconds and script")
+            when = item["at_seconds"]
+            if type(when) is not int or not previous <= when <= value["duration_seconds"] or when < 0:
+                raise ValueError("Scheduled touch times must be ordered within the observation")
+            target = Path(item["script"]).expanduser()
+            item["script"] = str((path.parent / target).resolve())
+            scripts.append(item["script"])
+            previous = when
+    if scripts:
         # A script is declarative targeted touch input, never executable code.
         import common
 
         common.WORK = root / "work"
         import touch_gesture
 
-        inputs = json.loads(Path(value["input_script"]).read_text())
-        touch_gesture.validate_request(dict(inputs, pid="1"))
+        for script in scripts:
+            inputs = json.loads(Path(script).read_text())
+            touch_gesture.validate_request(dict(inputs, pid="1"))
     if "input_mapping" in value:
         checked_mapping(value)
     return value
@@ -394,12 +412,25 @@ def run_workload(device, thermal, request, output, result, *, _reset_idle=None):
         result["input"] = touch_gesture.run(output / "input.json", request["apk_sha256"], device=device)
     began = time.monotonic()
     next_capture = 0
+    scheduled = iter(enumerate(request.get("input_schedule", [])))
+    pending = next(scheduled, None)
     while True:
         if thermal.cancelled.is_set():
             raise RuntimeError(thermal.error)
         elapsed = time.monotonic() - began
         if device.sh("pidof", device.package, check=False).strip() != pid:
             raise RuntimeError("Owned process exited or changed")
+        while pending is not None and elapsed >= pending[1]["at_seconds"]:
+            import touch_gesture
+
+            index, item = pending
+            inputs = dict(json.loads(Path(item["script"]).read_text()), pid=pid)
+            input_path = output / ("scheduled-input-" + str(index) + ".json")
+            save(input_path, inputs)
+            observed = touch_gesture.run(input_path, request["apk_sha256"], device=device)
+            result.setdefault("scheduled_inputs", []).append(dict(at_seconds=item["at_seconds"], dispatched_seconds=elapsed, result=observed))
+            pending = next(scheduled, None)
+            elapsed = time.monotonic() - began
         if elapsed >= next_capture:
             capture(device, output / ("sample-" + str(int(elapsed))), pid)
             next_capture += request.get("capture_interval_seconds", 60)

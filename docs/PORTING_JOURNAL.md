@@ -6,6 +6,20 @@ under ignored `work/coordination/`, not here. Entries J01–J1177 (2026-09-12 to
 [history/journal-J1-J1177/PORTING_JOURNAL.md](history/journal-J1-J1177/PORTING_JOURNAL.md) with its
 [index](history/journal-J1-J1177/JOURNAL_INDEX.md); numbering continues here.
 
+## J1474 — Converted APK reaches the original-catalog survivor menu
+
+2026-11-13. The source-derived converted APK boots through managed startup into
+its original-catalog survivor menu with Commando selected; authored Android Java
+is packaged from repository source (17/17 accepted authored classes present).
+APK SHA-256: `20726b61542cc5d08ece1b1030a7512a5b05fafd995f4baa7b364ac817ca608a`.
+Content/runtime source `538d1f1c`; authored-Java packaging shipped in PR #518.
+Evidence: `work/coordination/p1-scenes-w/authored-java-packaging-v13/device-retry1/terminal.done.json`
+and `sample-170/{screenshot.png,snapshot.json,unity.log}` in that run directory.
+The retained menu snapshot reports 120.167 FPS / 8.322 ms; this is no sustained-play claim.
+Adopted install, selector removal, stopped/asleep readback and lease release pass.
+CPU/GPU peak 87.6 C, time above 80 C 1.503 s; battery admitted at 35 C.
+Remaining: ordinary Commando stage play, End Run, reference comparison and phone-only conversion/update.
+
 ## J1472 — Qualify the shared device runner with bounded native combat
 
 2026-11-13. One request-JSON owner installs, cools, resets stale owned state,
