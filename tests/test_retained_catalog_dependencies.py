@@ -31,10 +31,13 @@ def production_host(*, unload_mutant=False):
     methods = [
         braced_block(whole, signature)
         for signature in (
+            "sealed class DefinitionManifestIndex",
             "public static string RetainForOriginalAudioOwner(string expectedInputId)",
             "public static bool ReleaseOriginalAudioOwnerLease(string expectedIdentity)",
             "public static IEnumerator Prepare()",
             "public static void Release()",
+            "public static int[] ReleasedCatalogRetention()",
+            "internal static void ResetDefinitionManifest()",
         )
     ]
     cleanup = braced_block(body, "void CleanupBodyCatalog()")
@@ -127,6 +130,9 @@ class RetainedCatalogDependenciesTests(unittest.TestCase):
         result = execute_host(production_host(unload_mutant=True), "restart")
         self.assertNotEqual(result.returncode, 0, result.stdout + result.stderr)
         self.assertIn("Original free survivor choices unavailable", result.stderr)
+
+    def test_retention_prunes_dead_wrappers_preserving_live_targets_and_release_history(self):
+        self.assertEqual(self.run_scenario("retention"), {"generations": 8, "retained_live_pairs": 1, "pruned_wrappers": 4})
 
 
 if __name__ == "__main__":

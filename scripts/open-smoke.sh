@@ -14,5 +14,5 @@ if test -f smoke/Temp/UnityLockfile; then
     echo 'Smoke editor appears open. Use Window > MCP for Unity to connect, or close it before rerunning.'
     exit 1
 fi
-open -a "${UNITY_EDITOR%/Contents/MacOS/Unity}" --args -projectPath "$PWD/smoke" -executeMethod BootstrapMcp.Connect -logFile "$PWD/.local/logs/unity-editor.log"
+./dev editor --target smoke --action open
 echo 'Opening the isolated smoke editor and connecting Unity MCP.'

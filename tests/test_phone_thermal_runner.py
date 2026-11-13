@@ -20,7 +20,7 @@ def zones(cpu=45, gpu=45, battery=35):
 
 class DutyCycleTests(unittest.TestCase):
     def test_nova_and_thor_hysteresis_and_pause_accounting(self):
-        for profile, high, low in (("nova", 70, 55), ("thor", 75, 60)):
+        for profile, high, low in (("nova", 70, 55), ("thor", 70, 55)):
             policy = runner.ThermalDutyCycle(profile)
             policy.observe(zones(), 0, admission=True)
             self.assertEqual(policy.observe(zones(gpu=high), 0.25), signal.SIGSTOP)
@@ -109,6 +109,61 @@ class DutyCycleTests(unittest.TestCase):
             self.assertFalse(result["success"])
             self.assertEqual(result["pause_seconds"], 0.25)
             self.assertEqual([row.args[0] for row in family.send.call_args_list], [signal.SIGSTOP, signal.SIGKILL])
+
+    def test_startup_heat_and_warm_battery_wait_before_producer_launch(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            receipt, status = Path(temporary) / "receipt.json", Path(temporary) / "status.json"
+            tick = [0.0]
+            child, family = Mock(returncode=0), Mock()
+            child.poll.return_value = 0
+
+            def wait(seconds):
+                self.assertEqual(json.loads(status.read_text())["status"], "cooling")
+                tick[0] += seconds
+
+            def launch(*args, **kwargs):
+                self.assertEqual(tick[0], 0.5)
+                return child
+
+            with (
+                patch.object(runner, "efficiency_cpus", return_value={0}),
+                patch.object(runner.subprocess, "Popen", side_effect=launch) as spawn,
+                patch.object(runner, "Family", return_value=family),
+            ):
+                result = runner.run(
+                    ["producer"],
+                    receipt,
+                    status=status,
+                    clock=lambda: tick[0],
+                    wait=wait,
+                    sensor=lambda: zones(cpu=54.9 if tick[0] == 0 else 49, battery=36 if tick[0] == 0.25 else 35),
+                )
+            self.assertTrue(result["success"])
+            self.assertEqual(result["admission_seconds"], 0.5)
+            self.assertEqual(result["peak_phase"], "admission")
+            spawn.assert_called_once()
+
+    def test_cooling_cancellation_deadline_and_invalid_sensor_never_launch(self):
+        for reason in ("cancelled", "deadline", "invalid"):
+            with self.subTest(reason=reason), tempfile.TemporaryDirectory() as temporary:
+                tick = [0.0]
+
+                def wait(seconds):
+                    tick[0] += seconds
+
+                with patch.object(runner.subprocess, "Popen") as spawn:
+                    result = runner.run(
+                        ["producer"],
+                        Path(temporary) / "receipt.json",
+                        clock=lambda: tick[0],
+                        wait=wait,
+                        timeout=0.4,
+                        cancelled=lambda: reason == "cancelled" and tick[0] >= 0.25,
+                        sensor=lambda: zones(cpu=54.9, gpu=float("nan") if reason == "invalid" else 45),
+                    )
+                self.assertFalse(result["success"])
+                self.assertIn({"cancelled": "cancelled", "deadline": "deadline", "invalid": "invalid thermal"}[reason], result["error"])
+                spawn.assert_not_called()
 
     def test_escaped_child_and_reused_pid(self):
         child = Mock(pid=100, returncode=None)

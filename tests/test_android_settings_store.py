@@ -45,6 +45,9 @@ class AndroidSettingsStoreTests(unittest.TestCase):
     def test_successful_update_retains_previous_generation_and_cold_reloads(self):
         self.case("roundtrip")
 
+    def test_legacy_preferences_keep_the_existing_high_refresh_default(self):
+        self.case("legacy-refresh")
+
     def test_partial_pending_output_never_supersedes_a_valid_primary(self):
         self.case("partial-pending")
 
@@ -59,3 +62,9 @@ class AndroidSettingsStoreTests(unittest.TestCase):
 
     def test_invalid_values_never_replace_a_valid_primary(self):
         self.case("invalid-value")
+
+    def test_enospc_during_pending_write_retains_both_generations_and_retries(self):
+        self.case("enospc-write")
+
+    def test_enospc_before_rename_retains_both_generations_and_retries(self):
+        self.case("enospc-rename")

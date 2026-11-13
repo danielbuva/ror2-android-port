@@ -55,16 +55,21 @@ def copy_build_artifact(source, destination, *, verify=True):
     failures = []
     if (source_stat.st_dev, source_stat.st_ino) == (destination_stat.st_dev, destination_stat.st_ino):
         failures.append("source and destination share an inode")
-    if after != before:
-        fields = ("device", "inode", "size", "mtime_ns", "ctime_ns")
-        changes = {field: [old, new] for field, old, new in zip(fields, before, after) if old != new}
-        failures.append("source identity changed: " + json.dumps(changes, sort_keys=True))
+    fields = ("device", "inode", "size", "mtime_ns", "ctime_ns")
+    changes = {field: [old, new] for field, old, new in zip(fields, before, after) if old != new}
     if source_stat.st_size != destination_stat.st_size:
         failures.append(f"size differs: source={source_stat.st_size}, destination={destination_stat.st_size}")
-    if verify and sha(source) != sha(destination):
+    ctime_only = set(changes) == {"ctime_ns"}
+    verify_bytes = verify or ctime_only
+    hashes_match = verify_bytes and sha(source) == sha(destination)
+    if verify_bytes and not hashes_match:
         failures.append("SHA-256 differs")
+    if changes and not (ctime_only and hashes_match):
+        failures.append("source identity changed: " + json.dumps(changes, sort_keys=True))
     if failures:
         raise RuntimeError("Build snapshot independence or hash verification failed: " + "; ".join(failures))
+    if changes:
+        print("Build snapshot: benign ctime-only metadata change; source and destination SHA-256 match", file=sys.stderr)
     return str(destination)
 
 
@@ -175,6 +180,7 @@ def editor(target="lab", action="inspect"):
             env = os.environ.copy()
             env.update(
                 {
+                    "ANDROID_ADB_SERVER_PORT": "5038",
                     "ANDROID_SDK_HOME": str(ROOT / ".local/android-user"),
                     "ANDROID_USER_HOME": str(ROOT / ".local/android-user/.android"),
                     "GRADLE_USER_HOME": str(ROOT / ".local/gradle"),
@@ -208,10 +214,14 @@ def editor(target="lab", action="inspect"):
             "source-camera-graphics-host",
             "lightning-stake-host",
             "engineer-laser-host",
+            "commando-animation-host",
+            "enemy-material-audit",
         }:
             from whole_catalog import copy_catalog_asset
 
             fixture, owners = {
+                "commando-animation-host": ("SurvivorSkillInputHost.cs", []),
+                "enemy-material-audit": ("WholeCatalogHost.cs", []),
                 "lightning-stake-host": ("LightningStakeSourceContractFixture.cs", ["world/IntegratedWorldBoundary.cs"]),
                 "siren-input-host": (
                     "SirenEggDiagnosticInputExactEditorFixture.cs",
@@ -229,6 +239,8 @@ def editor(target="lab", action="inspect"):
                 if not staged.is_file() or sha(staged) != sha(ROOT / "tools/unity/runtime" / owner):
                     raise RuntimeError("Stage the current committed runtime through a build before this editor fixture: " + owner)
             copy_catalog_asset(ROOT / "tools/catalog" / fixture, WORK / "lab-project/Assets/Editor" / fixture)
+            if action == "commando-animation-host":
+                copy_catalog_asset(ROOT / "tools/catalog/WholeCatalogBuild.cs", WORK / "lab-project/Assets/Editor/WholeCatalogBuild.cs")
             editor("lab", "refresh")
         env = os.environ.copy()
         handoff_env, pass_fds = active_lock_handoff()
@@ -247,6 +259,11 @@ WHOLE_GENERATED_RUNTIME_SOURCES = {"OriginalBodyVisualMap.cs", "OriginalHealthVi
 # Authored runtime code compiled by original_game_audio_produce, not bundle data.
 # Keep importer metadata and the game/middleware assemblies frozen.
 WHOLE_APK_ASSEMBLIES = {"Assets/LabLoadingScene/Plugins/GameAudioOriginalBootstrap.dll"}
+# Authored Android player source; never consumed by external bundle builds.
+WHOLE_APK_ANDROID_CODE = {
+    "Assets/Plugins/Android/SettingsWriteObserver.androidlib/src/main/java/dev/ror2lab/diagnostics/LabDisplayPreference.java" + suffix
+    for suffix in ("", ".meta")
+}
 WHOLE_APK_RECEIPTS = {
     "Assets/StreamingAssets/Lab/" + name + suffix
     for name in ("NativeViewCameraStageReceipt", "OriginalGameAudioStageReceipt", "OriginalMusicOutputObserverStageReceipt")
@@ -290,6 +307,7 @@ def whole_player_inputs():
     # never consumed by the external asset-bundle builds.
     inputs.update(WHOLE_APK_RECEIPTS)
     inputs.update(WHOLE_APK_ASSEMBLIES)
+    inputs.update(WHOLE_APK_ANDROID_CODE)
     # APK-only consumers of unchanged converted assets; retain Unity-owned metadata.
     inputs.update(
         "Assets/LabLoadingScene/" + name + suffix
@@ -384,7 +402,8 @@ def validate_whole_payload_reuse(project, receipt_path=None):
     previous_allowed = set(receipt["allowed"])
     added = WHOLE_PLAYER_INPUTS - previous_allowed
     if previous_allowed - WHOLE_PLAYER_INPUTS or any(
-        p not in WHOLE_APK_RECEIPTS | WHOLE_APK_ASSEMBLIES and (not p.startswith("Assets/LabLoadingScene/") or not p.endswith((".cs", ".cs.meta")))
+        p not in WHOLE_APK_RECEIPTS | WHOLE_APK_ASSEMBLIES | WHOLE_APK_ANDROID_CODE
+        and (not p.startswith("Assets/LabLoadingScene/") or not p.endswith((".cs", ".cs.meta")))
         for p in added
     ):
         raise RuntimeError("Unexpected code-only content exception")
@@ -392,7 +411,7 @@ def validate_whole_payload_reuse(project, receipt_path=None):
     expected = {path: value for path, value in receipt["files"].items() if path not in added}
     if current != expected:
         raise RuntimeError("Content inputs changed; code-only bundle reuse rejected")
-    current_payload = {p.name: sha(p) for p in (WORK / "generated-android-data").iterdir() if p.is_file()}
+    current_payload = {p.name: sha(p) for p in (WORK / "generated-android-data").iterdir() if p.is_file() and p.name != ".prune-keep"}
     if current_payload != receipt["payload"]:
         raise RuntimeError("Frozen whole-catalog payload identity changed")
     if added:
@@ -980,7 +999,7 @@ def build(
         timing.phases["symbols_clone_hash_validation"] = time.monotonic() - symbols_start if android_symbols == "debugging" else 0.0
         payload = dest / "payload"
         with timing.phase("payload_reference" if iteration_mode else "payload_clone_hash"):
-            r["payload"] = {p.name: sha(p) for p in (WORK / "generated-android-data").glob("*") if p.is_file()}
+            r["payload"] = {p.name: sha(p) for p in (WORK / "generated-android-data").glob("*") if p.is_file() and p.name != ".prune-keep"}
             if iteration_mode:
                 payload = Path(anchor["payload_directory"])
                 if payload.resolve() != (Path(anchor["apk"]).parent / "payload").resolve() or not payload.resolve().is_relative_to(WORK.resolve()):
@@ -989,7 +1008,11 @@ def build(
                     raise RuntimeError("Normal-build payload reference is missing or changed")
             else:
                 shutil.copytree(
-                    WORK / "generated-android-data", payload, dirs_exist_ok=True, copy_function=lambda a, b: copy_build_artifact(a, b, verify=False)
+                    WORK / "generated-android-data",
+                    payload,
+                    dirs_exist_ok=True,
+                    ignore=shutil.ignore_patterns(".prune-keep"),
+                    copy_function=lambda a, b: copy_build_artifact(a, b, verify=False),
                 )
             r["payload_directory"] = str(payload)
         from iteration_apk import write_anchor

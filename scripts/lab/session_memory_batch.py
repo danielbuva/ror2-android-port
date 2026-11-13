@@ -4,6 +4,7 @@ Use through /lab script with device=<alias>. The bridge owns the sole lease;
 this synchronous adapter neither acquires another lease nor changes policy.
 Private evidence stays under work/. Stdout is an explicit numeric/hash summary.
 Capture is attribution only; measure omits snapshots and the static-root walk.
+Neither finite series qualifies a memory plateau or ordinary uninterrupted play.
 The inspect mode reads existing failed evidence without a device alias or access.
 The identity mode verifies the selected idle installation read-only and emits its hash.
 """
@@ -264,7 +265,15 @@ def run(mode, expected_apk_sha256, sessions=6, *, receipt, environ=None):
     from session_memory_check import check_session_memory
 
     environ = os.environ if environ is None else environ
-    public = dict(success=False, mode=mode, sessions_requested=sessions, thermal_stop_reason=None)
+    public = dict(
+        success=False,
+        mode=mode,
+        sessions_requested=sessions,
+        thermal_stop_reason=None,
+        diagnostic_only=True,
+        acceptance_available=False,
+        memory_bound_pass=False,
+    )
     private = dict(success=False, mode=mode)
     previous = command_selectors()
     out = None
@@ -317,7 +326,11 @@ def run(mode, expected_apk_sha256, sessions=6, *, receipt, environ=None):
                     try:
                         thermal.start()
                         stage = check_session_memory(
-                            sessions=sessions, expected_apk_sha256=expected, memory_snapshots=mode == "capture", _launch=thermal.launch
+                            sessions=sessions,
+                            expected_apk_sha256=expected,
+                            memory_snapshots=mode == "capture",
+                            _launch=thermal.launch,
+                            _between_sessions=thermal.between_sessions,
                         )
                     except BaseException as error:
                         stage_error = error
@@ -351,15 +364,10 @@ def run(mode, expected_apk_sha256, sessions=6, *, receipt, environ=None):
                     final = [x for x in growth.get("final_menu_samples", []) if x.get("phase") == "before-presentation"]
                     complete = len(rows) == sessions and all(type(x.get("managed_at_start")) is int for x in rows[1:])
                     complete = complete and len(final) == 1 and type(final[0].get("managed")) is int
-                    public["memory_bound_pass"] = bool(
-                        mode == "measure"
-                        and complete
-                        and public["sessions_observed"] == sessions
-                        and not public["runtime_error_count"]
-                        and not public["failure_count"]
-                        and _number(slope) is not None
-                        and slope <= 0.1 * 1024**2
-                    )
+                    public["matched_menu_samples_complete"] = complete and public["sessions_observed"] == sessions
+                    # Main's owner includes native losses and supervised cooldown.
+                    # A finite fitted slope, even a small or negative one, does
+                    # not establish a lifetime bound or uninterrupted-play gate.
                 public["success"] = True
             except BaseException as error:
                 private["error"] = str(error)

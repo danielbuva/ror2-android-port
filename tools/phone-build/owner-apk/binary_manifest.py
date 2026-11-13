@@ -41,11 +41,13 @@ def string_pool(strings, utf8):
     )
 
 
-def patch(data, wire, *, version_code=None, application_id=None, retention=False):
+def patch(data, wire, *, version_code=None, version_name=None, application_id=None, retention=False, lab_services=False):
     if type(retention) is not bool or (retention and (application_id != "dev.ror2lab.alpha" or version_code is None)):
         raise ValueError("retention requires explicit alpha identity and issued version")
     if version_code is not None and (type(version_code) is not int or not 1 <= version_code <= 2100000000):
         raise ValueError("owner version code must be between 1 and 2100000000")
+    if version_name is not None and (not isinstance(version_name, str) or not version_name.strip() or any(ord(c) < 32 for c in version_name)):
+        raise ValueError("literal owner version name required")
     if application_id is not None and (
         not isinstance(application_id, str) or not re.fullmatch(r"[A-Za-z][A-Za-z0-9_]*(?:\.[A-Za-z][A-Za-z0-9_]*)+", application_id)
     ):
@@ -177,6 +179,25 @@ def patch(data, wire, *, version_code=None, application_id=None, retention=False
         struct.pack_into("<I", changed, versions[0][0] + 8, NONE)
         struct.pack_into("<I", changed, versions[0][0] + 16, version_code)
         manifests[0]["start"] = bytes(changed)
+    if version_name is not None:
+        original = manifests[0]["start"]
+        node_header = struct.unpack_from("<H", original, 2)[0]
+        relative, stride, count = struct.unpack_from("<HHH", original, node_header + 8)
+        versions = []
+        for i in range(count):
+            position = node_header + relative + i * stride
+            ns, key, _, _, _, kind, value = struct.unpack_from("<IIIHBBI", original, position)
+            if ns == android and strings[key] == "versionName":
+                if kind != 3 or value >= original_count:
+                    raise ValueError("literal owner version name required")
+                versions.append(position)
+        if len(versions) != 1:
+            raise ValueError("one original owner version name required")
+        changed = bytearray(original)
+        selected = index(version_name)
+        struct.pack_into("<I", changed, versions[0] + 8, selected)
+        struct.pack_into("<I", changed, versions[0] + 16, selected)
+        manifests[0]["start"] = bytes(changed)
     filters = []
     for child in activities[0]["children"]:
         if not isinstance(child, dict) or child["tag"] != "intent-filter":
@@ -301,6 +322,32 @@ def patch(data, wire, *, version_code=None, application_id=None, retention=False
         opening = struct.pack("<HHIII", 0x102, 16, 36 + len(attrs), 1, NONE) + struct.pack("<IIHHHHHH", NONE, provider, 20, 20, len(values), 0, 0, 0) + attrs
         closing = struct.pack("<HHIIIII", 0x103, 16, 24, 1, NONE, NONE, provider)
         applications[0]["children"].append({"start": opening, "children": [], "end": closing})
+    if lab_services:
+        service_name = "dev.ror2lab.diagnostics.LabSettingsWriteObserver"
+        if not any(
+            isinstance(node, dict) and node.get("tag") == "service" and node["attrs"].get("name") == service_name for node in applications[0]["children"]
+        ):
+            service = index("service")
+            values = []
+            for key, resource, value, kind in (
+                ("name", 16842755, service_name, 3),
+                ("exported", 16842768, 0, 0x12),
+                ("process", 16842769, ":settings_write_observer", 3),
+                ("stopWithTask", 16843626, 1, 0x12),
+                ("isolatedProcess", 16843689, 0, 0x12),
+            ):
+                key_index = index(key)
+                resources.extend([0] * max(0, key_index + 1 - len(resources)))
+                if resources[key_index] not in (0, resource):
+                    raise ValueError("lab service attribute resource differs")
+                resources[key_index] = resource
+                number = index(value) if kind == 3 else value
+                values.append((resource, struct.pack("<IIIHBBI", android, key_index, number if kind == 3 else NONE, 8, 0, kind, number)))
+            block = b"".join(value for _, value in sorted(values))
+            opening = struct.pack("<HHIII", 0x102, 16, 36 + len(block), 1, NONE)
+            opening += struct.pack("<IIHHHHHH", NONE, service, 20, 20, len(values), 0, 0, 0) + block
+            closing = struct.pack("<HHIIIII", 0x103, 16, 24, 1, NONE, NONE, service)
+            applications[0]["children"].append({"start": opening, "children": [], "end": closing})
     pool = string_pool(strings, bool(struct.unpack_from("<I", data, start + 16)[0] & 0x100))
     resource_map = struct.pack("<HHI", 0x180, 8, 8 + 4 * len(resources)) + struct.pack("<" + "I" * len(resources), *resources)
 

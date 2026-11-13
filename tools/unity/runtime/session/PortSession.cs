@@ -256,6 +256,7 @@ public sealed partial class PortSession : MonoBehaviour
         public bool enhancedPresentation, pauseBeforeMoon;
         public AndroidMaterialPresentation.Report presentation;
         public AndroidPresentationCamera.Report framePacing;
+        public bool rawFrameTimesRequested;
         public string[] developerItemGrants, developerEquipmentSequence;
         public DebugAccelerationOptions debugOptions;
         public DebugAccelerationReport debugAcceleration;
@@ -654,6 +655,7 @@ public sealed partial class PortSession : MonoBehaviour
 
     private void OnDestroy()
     {
+        offlineRosterScrollStates.Dispose();
         offlineApplicationSession?.Dispose();
         // Close scheduling before teardown so a late callback cannot arm.
         passivePcmActivityArmPolicy?.Close();
@@ -877,7 +879,7 @@ public sealed partial class PortSession : MonoBehaviour
 #if UNITY_ANDROID && !UNITY_EDITOR
         using (var process = new AndroidJavaClass("android.os.Process")) r.pid = process.CallStatic<int>("myPid");
 #endif
-        r.detailedVisualDiagnostics = config.detailedVisualDiagnostics;
+        r.detailedVisualDiagnostics |= config.detailedVisualDiagnostics;
         if (r.diagnosticSirenEggInput || r.sirenNativeEncounterContinuationRequested)
             r.sirenEggInput = new SirenEggInputReport();
         r.recoveredHudEnabled = config.recoveredHudEnabled;
@@ -2626,32 +2628,36 @@ public sealed partial class PortSession : MonoBehaviour
                 Check(r.originalEquipmentHighlightAssets != null && r.originalEquipmentHighlightAssets.ready,
                       "Original equipment-highlight preparation did not complete");
                 TraceStartup("artifact-family-begin");
-                var wholeArtifacts =
-                    WholeCatalogComposed.CategoryFamily(RoR2.ContentManagement.AddressablesLabels.artifactDef,
-                                                        Enumerable.Range(0, ArtifactCatalog.artifactCount)
-                                                            .Select(index => ArtifactCatalog.GetArtifactDef((ArtifactIndex)index)));
-                StaticCall(typeof(ArtifactCatalog), "SetArtifactDefs", new object[] { wholeArtifacts });
-                TraceStartup("definition-holders-begin");
                 {
                     var holderManifest = WholeCatalogComposed.ReadDefinitionManifest();
+                    var wholeArtifacts =
+                        WholeCatalogComposed.CategoryFamily(holderManifest, RoR2.ContentManagement.AddressablesLabels.artifactDef,
+                                                            Enumerable.Range(0, ArtifactCatalog.artifactCount)
+                                                                .Select(index => ArtifactCatalog.GetArtifactDef((ArtifactIndex)index)));
+                    StaticCall(typeof(ArtifactCatalog), "SetArtifactDefs", new object[] { wholeArtifacts });
+                    TraceStartup("definition-holders-begin");
                     WholeCatalogComposed.PopulateDefinitionFields(holderManifest, "Artifacts", wholeArtifacts);
                     StaticCall(typeof(RunArtifactManager), "Init");
                     WholeCatalogComposed.PopulateDefinitionFields(holderManifest, "Items", ItemCatalog.allItemDefs.ToArray());
                     WholeCatalogComposed.PopulateDefinitionFields(
                         holderManifest, "Equipment", EquipmentCatalog.allEquipment.Select(index => EquipmentCatalog.GetEquipmentDef(index)).ToArray());
                     WholeCatalogComposed.PopulateBodyFields(holderManifest, BodyCatalog.allBodyPrefabs.ToArray());
+                    TraceStartup("drone-catalog-begin");
+                    PrepareWholeDroneCatalog(holderManifest);
+                    TraceStartup("projectile-catalog-begin");
+                    r.liveCatalogs.projectiles = WholeCatalogComposed.PrepareProjectiles(holderManifest,
+                                                                                     step => TraceStartup("projectile-" + step));
+                    TraceStartup("projectile-catalog-ready");
                 }
-                TraceStartup("drone-catalog-begin");
-                PrepareWholeDroneCatalog();
-                TraceStartup("projectile-catalog-begin");
-                r.liveCatalogs.projectiles = WholeCatalogComposed.PrepareProjectiles();
-                TraceStartup("projectile-catalog-ready");
+                TraceStartup("skins-begin");
                 var skins = RegisterOriginalSkins();
                 while (skins.MoveNext())
                     yield return skins.Current;
+                TraceStartup("skins-ready-buff-holders-begin");
                 WholeCatalogComposed.PopulateDefinitionFields(
                     "Buffs", Enumerable.Range(0, BuffCatalog.buffCount).Select(index => BuffCatalog.GetBuffDef((BuffIndex)index)).ToArray(),
                     "bd");
+                TraceStartup("buff-holders-ready");
             }
             manager = CreateTeamContext(out teamHost);
             Call(team, "Awake");
@@ -3035,9 +3041,12 @@ public sealed partial class PortSession : MonoBehaviour
             }
             if (cfg.integratedWorld && r.liveCatalogs != null)
             {
+                TraceStartup("profile-loadout-preview-begin");
                 r.phase = "original-profile-loadout-preview";
                 Save();
+                TraceStartup("profile-loadout-report-saved");
                 ApplyAndroidProfileLoadoutBeforeSpawn(master, prefab);
+                TraceStartup("profile-loadout-applied");
                 var profileWriter = new NetworkWriter();
                 master.loadout.Serialize(profileWriter);
                 var profileReader = new NetworkReader(profileWriter.ToArray());
@@ -3045,10 +3054,13 @@ public sealed partial class PortSession : MonoBehaviour
                 copied.Deserialize(profileReader);
                 Check(profileReader.Position == profileWriter.ToArray().Length && copied.ValueEquals(master.loadout),
                       "Original applied profile loadout serialization differs");
+                TraceStartup("profile-loadout-roundtrip-validated");
             }
             r.phase = "original-master-spawn";
             Save();
+            TraceStartup("master-spawn-body-begin");
             var spawned = master.SpawnBody(cfg.stageGeometry ? r.stage.spawnPosition : new Vector3(0, 12, 0), Quaternion.identity);
+            TraceStartup("master-spawn-body-returned");
             if (spawned)
                 spawned.gameObject.SetActive(false);
             Check(spawned && spawned != body, "Original body creation");
@@ -3487,28 +3499,50 @@ public sealed partial class PortSession : MonoBehaviour
         Check(machine.state == null && motor.moveDirection == Vector3.zero && !host.activeInHierarchy, "Recovered state exit/cleanup");
     }
 
-    static IEnumerator BuildStateCatalogRoutine(Type[] types, EntityStateConfiguration[] configs = null)
+    static IEnumerator BuildStateCatalogRoutine(Type[] types, EntityStateConfiguration[] configs = null,
+                                               Action<string> reportExecution = null)
     {
         var stack = new Stack<IEnumerator>();
+        var invokeStarted = reportExecution != null ? System.Diagnostics.Stopwatch.GetTimestamp() : 0;
         stack.Push((IEnumerator) typeof(EntityStateCatalog)
                        .GetMethod("SetElements", BindingFlags.Static | BindingFlags.NonPublic)
                        .Invoke(null, new object[] { types, configs ?? Array.Empty<EntityStateConfiguration>() }));
+        var invokeTicks = reportExecution != null ? System.Diagnostics.Stopwatch.GetTimestamp() - invokeStarted : 0;
+        long moveTicks = 0, maxMoveTicks = 0;
+        int moveCalls = 0, nullYields = 0, nestedYields = 0, otherYields = 0;
         // Drive native nested preload initialization too; dropping it silently skipped a catalog.
         try
         {
             while (stack.Count > 0)
             {
                 var routine = stack.Peek();
-                if (!routine.MoveNext())
+                var moveStarted = reportExecution != null ? System.Diagnostics.Stopwatch.GetTimestamp() : 0;
+                var advanced = routine.MoveNext();
+                if (reportExecution != null)
+                {
+                    var elapsed = System.Diagnostics.Stopwatch.GetTimestamp() - moveStarted;
+                    moveTicks += elapsed;
+                    maxMoveTicks = Math.Max(maxMoveTicks, elapsed);
+                    moveCalls++;
+                }
+                if (!advanced)
                 {
                     (stack.Pop() as IDisposable)?.Dispose();
                     continue;
                 }
                 var nested = routine.Current as IEnumerator;
                 if (nested != null)
+                {
+                    nestedYields++;
                     stack.Push(nested);
+                }
                 else
-                    yield return routine.Current;
+                {
+                    var yielded = routine.Current;
+                    if (yielded == null) nullYields++;
+                    else otherYields++;
+                    yield return yielded;
+                }
             }
         }
         finally
@@ -3516,6 +3550,14 @@ public sealed partial class PortSession : MonoBehaviour
             while (stack.Count > 0)
                 (stack.Pop() as IDisposable)?.Dispose();
         }
+        // Includes every directly driven nested MoveNext, but excludes scheduler
+        // gaps, Current access and disposal. Wall-minus-execution is not I/O proof.
+        reportExecution?.Invoke(String.Format(System.Globalization.CultureInfo.InvariantCulture,
+            "invokeSeconds={0:F6} moveSeconds={1:F6} maxMoveSeconds={2:F6} calls={3} nullYields={4} nestedYields={5} otherYields={6}",
+            (double)invokeTicks / System.Diagnostics.Stopwatch.Frequency,
+            (double)moveTicks / System.Diagnostics.Stopwatch.Frequency,
+            (double)maxMoveTicks / System.Diagnostics.Stopwatch.Frequency,
+            moveCalls, nullYields, nestedYields, otherYields));
     }
     static void BuildStateCatalog(Type[] types, EntityStateConfiguration[] configs = null)
     {

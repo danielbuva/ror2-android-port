@@ -61,21 +61,60 @@ public static class AndroidMaterialPresentation
             if (b.material)
                 b.material.shader = enabled ? b.enhanced : b.fallback;
     }
+    static bool ApplyNative(Material source, Material copy)
+    {
+        if (!AndroidNativeDeferredPresentation.Apply(source, copy))
+            return false;
+        var nativeFallback = LoadShader("AndroidSurfacePresentation");
+        bindings.Add(new Binding { material = copy, enhanced = copy.shader, fallback = nativeFallback });
+        if (!report.enabled)
+            copy.shader = nativeFallback;
+        report.surfaces++;
+        return true;
+    }
+    // Actor callbacks can add renderers after template preparation. Adapt only
+    // recovered source families; already-owned and unknown materials stay intact.
+    public static int ApplyRecovered(Renderer renderer, List<Material> owned)
+    {
+        int count = 0;
+        Material Recover(Material source)
+        {
+            if (!AndroidNativeDeferredPresentation.IsSourceFamily(source))
+                return source;
+            var copy = new Material(source);
+            if (!ApplyNative(source, copy))
+            {
+                UnityEngine.Object.Destroy(copy);
+                return source;
+            }
+            owned.Add(copy);
+            count++;
+            return copy;
+        }
+        var originals = renderer.sharedMaterials;
+        var copies = (Material[])originals.Clone();
+        for (int slot = 0; slot < copies.Length; slot++)
+            copies[slot] = Recover(originals[slot]);
+        if (count > 0)
+            renderer.sharedMaterials = copies;
+        var particle = renderer as ParticleSystemRenderer;
+        if (particle && particle.trailMaterial)
+        {
+            var original = particle.trailMaterial;
+            var copy = Recover(original);
+            if (copy != original)
+                particle.trailMaterial = copy;
+        }
+        return count;
+    }
     public static void Apply(Material source, Material copy)
     {
         if (!source || !copy)
             return;
         string name = source.shader.name;
         bool terrain = name.IndexOf("Triplanar", StringComparison.OrdinalIgnoreCase) >= 0;
-        if (AndroidNativeDeferredPresentation.Apply(source, copy))
-        {
-            var nativeFallback = LoadShader("AndroidSurfacePresentation");
-            bindings.Add(new Binding { material = copy, enhanced = copy.shader, fallback = nativeFallback });
-            if (!report.enabled)
-                copy.shader = nativeFallback;
-            report.surfaces++;
+        if (ApplyNative(source, copy))
             return;
-        }
         bool nativeParticle = name == "Mobile/Particles/Alpha Blended" || name == "Particles/Standard Unlit" ||
                               name == "Legacy Shaders/Particles/Additive" || name == "Legacy Shaders/Particles/Additive (Soft)";
         if (nativeParticle)

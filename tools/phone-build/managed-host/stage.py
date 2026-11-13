@@ -12,6 +12,20 @@ import xml.etree.ElementTree as ET
 SOURCE = Path(__file__).resolve().parent
 ROOT = SOURCE.parents[2]
 METADATA = ROOT / "recipe/owner-app-host-tools.json"
+JAVA_SOURCES = (
+    "ToolHostActivity.java",
+    "OwnerInstaller.java",
+    "OwnerAlphaInstall.java",
+    "OwnerUpdateState.java",
+    "OwnerBuildService.java",
+    "OwnerInputImport.java",
+    "OwnerInputSource.java",
+    "OwnerGraphicsPicker.java",
+    "../owner-apk/graphics/GraphicsDriverPackage.java",
+    "../owner-apk/graphics/GraphicsDriverPolicy.java",
+    "../owner-apk/graphics/GraphicsDriverProviders.java",
+    "../owner-apk/graphics/GraphicsDriverFixture.java",
+)
 UPDATE_NETWORK_MODULES = {
     "libpyext__socket.so": "python/lib/python3.14/lib-dynload/_socket.cpython-314-aarch64-linux-android.so",
     "libpyext__ssl.so": "python/lib/python3.14/lib-dynload/_ssl.cpython-314-aarch64-linux-android.so",
@@ -89,7 +103,8 @@ def tool_manifest(source, destination, package=None, game_package=None):
         queries = manifest.find("queries")
         if queries is None:
             queries = ET.SubElement(manifest, "queries")
-        for old in list(queries):
+        # Rewrite game-package visibility, retaining the narrow public Settings intent.
+        for old in queries.findall("package"):
             queries.remove(old)
         ET.SubElement(queries, "package", {android + "name": game_package})
     for node in manifest.iter():
@@ -139,6 +154,7 @@ def stage(profile_source, sdk, destination, *, root=ROOT, owner_backend=False, r
         "owner-apk/release_jobs.py",
         "owner-apk/game_import.py",
         "owner-apk/install_flow.py",
+        "owner-apk/atomic_io.py",
         "owner-apk/alpha_policy.py",
         "owner-apk/ProfileStore.java",
         "owner-apk/ProfileRetentionProvider.java",
@@ -163,19 +179,14 @@ def stage(profile_source, sdk, destination, *, root=ROOT, owner_backend=False, r
         "NativePythonHost.c",
         "NativeDotnetMuxer.c",
         "NativeJavaHost.c",
-        "ToolHostActivity.java",
-        "OwnerInstaller.java",
-        "OwnerAlphaInstall.java",
-        "OwnerUpdateState.java",
-        "OwnerBuildService.java",
-        "OwnerInputImport.java",
-        "OwnerInputSource.java",
         "run_profile.py",
         "stage.py",
         "build_fixture.py",
         "AndroidManifest.xml",
     ):
         bind(SOURCE / name, name)
+    for name in JAVA_SOURCES:
+        bind(SOURCE / name, Path(name).name)
     for name in ("NativeToolHost.c", "Hello.cs"):
         bind(SOURCE.parent / "native-host" / name, name)
     # This is build-time public trust, never a key learned from a downloaded release.

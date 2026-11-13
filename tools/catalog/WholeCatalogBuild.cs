@@ -100,6 +100,7 @@ public static class WholeCatalogBuild
         if (!manifest.StartsWith(Path.Combine(work, "experiments/whole-catalog") + Path.DirectorySeparatorChar, StringComparison.Ordinal))
             throw new Exception("Whole catalog recipe outside owned input");
         catalog = JObject.Parse(File.ReadAllText(manifest));
+        RestoreSourceAdditiveReferencePoses();
         ValidateSourceCameraPrograms();
         ValidateSourceCollisionPolicy();
         var owners = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
@@ -133,6 +134,63 @@ public static class WholeCatalogBuild
         foreach (var row in catalog["locations"])
             row["bundle"] = owners[(string)row["path"]];
         ValidateCameraShaderRows(new HashSet<string>(owners.Keys, StringComparer.OrdinalIgnoreCase));
+    }
+
+    public static object RestoreSourceAdditiveReferencePoses()
+    {
+        string recipe = Path.Combine(Path.GetDirectoryName(Application.dataPath), ".rebuild/source-animation-reference-poses.json");
+        var source = JObject.Parse(File.ReadAllText(recipe));
+        int clips = 0, curves = 0;
+        const string directory = "Assets/LabLoadingScene/AnimationReferencePoses";
+        Directory.CreateDirectory(directory);
+        foreach (var row in source["clips"])
+        {
+            string path = (string)row["clip"];
+            var clip = AssetDatabase.LoadAssetAtPath<AnimationClip>(path);
+            if (!clip)
+                throw new Exception("Source additive clip did not import: " + path);
+            if ((string)row["status"] == "unsupported-muscle-bindings")
+                Debug.LogWarning("Source additive reference repair unavailable for muscle bindings: " + path);
+            if (!row["curves"].Any())
+                continue;
+            var bindings = AnimationUtility.GetCurveBindings(clip);
+            var reference = new AnimationClip { name = clip.name + " source reference pose", frameRate = clip.frameRate };
+            foreach (var curve in row["curves"])
+            {
+                string transform = (string)curve["path"], property = (string)curve["property"];
+                if (!bindings.Any(binding => binding.type == typeof(Transform) && binding.path == transform && binding.propertyName == property))
+                    throw new Exception("Source additive reference binding absent from imported clip: " + path + ":" + transform + ":" + property);
+                AnimationUtility.SetEditorCurve(reference, EditorCurveBinding.FloatCurve(transform, typeof(Transform), property),
+                                                new AnimationCurve(new Keyframe(0, (float)curve["value"])));
+                curves++;
+            }
+            string referencePath = directory + "/" + AssetDatabase.AssetPathToGUID(path) + ".anim";
+            var existing = AssetDatabase.LoadAssetAtPath<AnimationClip>(referencePath);
+            if (existing)
+            {
+                EditorUtility.CopySerialized(reference, existing);
+                UnityEngine.Object.DestroyImmediate(reference);
+                reference = existing;
+            }
+            else
+                AssetDatabase.CreateAsset(reference, referencePath);
+            var settings = AnimationUtility.GetAnimationClipSettings(clip);
+            settings.additiveReferencePoseClip = reference;
+            settings.additiveReferencePoseTime = 0;
+            settings.hasAdditiveReferencePose = true;
+            AnimationUtility.SetAnimationClipSettings(clip, settings);
+            foreach (var curve in row["curves"])
+            {
+                var binding = EditorCurveBinding.FloatCurve((string)curve["path"], typeof(Transform), (string)curve["property"]);
+                var restored = AnimationUtility.GetEditorCurve(reference, binding);
+                if (restored == null || restored.Evaluate(0) != (float)curve["value"])
+                    throw new Exception("Source additive reference curve did not persist: " + path);
+            }
+            EditorUtility.SetDirty(clip);
+            clips++;
+        }
+        AssetDatabase.SaveAssets();
+        return new { clips, curves };
     }
 
     // Compare imported settings with the locally generated original-input receipt.

@@ -38,6 +38,27 @@ public static class ContentFixtureBuilder
             return BitConverter.ToString(hash.ComputeHash(stream)).Replace("-", "").ToLowerInvariant();
     }
 
+    static Type NativeContentType(string name)
+    {
+        switch (name)
+        {
+            case "LightingSettings": return typeof(LightingSettings);
+            case "Mesh": return typeof(Mesh);
+            case "Avatar": return typeof(Avatar);
+            case "AnimationClip": return typeof(AnimationClip);
+            case "Material": return typeof(Material);
+            case "Shader": return typeof(Shader);
+            case "Texture2D": return typeof(Texture2D);
+            case "Cubemap": return typeof(Cubemap);
+            case "Sprite": return typeof(Sprite);
+            case "GameObject": return typeof(GameObject);
+            case "AvatarMask": return typeof(AvatarMask);
+            case "PhysicMaterial": return typeof(PhysicMaterial);
+            case "AnimatorOverrideController": return typeof(AnimatorOverrideController);
+            default: throw new Exception("Unsupported native-content type: " + name);
+        }
+    }
+
     static void CheckNativeContent(string oracle)
     {
         string requestPath = Environment.GetEnvironmentVariable("ROR2_PHONE_NATIVE_CONTENT_CHECK");
@@ -62,15 +83,13 @@ public static class ContentFixtureBuilder
             var names = new HashSet<string>();
             foreach (var asset in request.assets)
                 if (asset == null || String.IsNullOrEmpty(asset.name) || !names.Add(asset.name)
-                    || asset.type != "LightingSettings")
+                    || String.IsNullOrEmpty(asset.type))
                     throw new Exception("Native-content asset name/type absent, duplicated or unsupported");
             bundle = AssetBundle.LoadFromFile(receipt.path);
             if (bundle == null) throw new Exception("Native-content bundle failed to load");
             foreach (var asset in request.assets)
             {
-                // This SDK exposes LightingSettings as a typed asset. Native-only
-                // classes need a separate consumer fixture before admission.
-                var type = typeof(LightingSettings);
+                var type = NativeContentType(asset.type);
                 var value = bundle.LoadAsset(asset.name, type);
                 if (value == null || value.GetType() != type)
                     throw new Exception("Native-content typed load failed: " + asset.name + " as " + type.FullName);

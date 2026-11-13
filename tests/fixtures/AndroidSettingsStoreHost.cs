@@ -25,9 +25,12 @@ namespace UnityEngine
             {
                 using (var stream = new MemoryStream(Encoding.UTF8.GetBytes(json)))
                 {
-                    var restored = new DataContractJsonSerializer(value.GetType()).ReadObject(stream);
+                    var serializer = new DataContractJsonSerializer(typeof(System.Collections.Generic.Dictionary<string, object>),
+                        new DataContractJsonSerializerSettings { UseSimpleDictionaryFormat = true });
+                    var restored = (System.Collections.Generic.Dictionary<string, object>)serializer.ReadObject(stream);
                     foreach (var field in value.GetType().GetFields(BindingFlags.Public | BindingFlags.Instance))
-                        field.SetValue(value, field.GetValue(restored));
+                        if (restored.TryGetValue(field.Name, out var member))
+                            field.SetValue(value, Convert.ChangeType(member, field.FieldType, System.Globalization.CultureInfo.InvariantCulture));
                 }
             }
             catch (SerializationException error) { throw new ArgumentException("invalid JSON", error); }
@@ -46,6 +49,7 @@ static class AndroidSettingsStoreHost
     static void Main(string[] args)
     {
         var store = new AndroidOfflineSettings(args[1]);
+        Check(store.values.highRefreshRate, "fresh settings preserve the existing high frame-rate request");
         string path = Path.Combine(args[1], "preferences.json"), pending = path + ".pending";
         store.values.deadzone = .18f;
         Check(store.TrySave(), "first save");
@@ -54,10 +58,16 @@ static class AndroidSettingsStoreHost
         {
             case "roundtrip":
                 store.values.deadzone = .3f; store.values.lookSensitivity = 1.5f; store.values.invertY = true;
+                store.values.highRefreshRate = false;
                 Check(store.TrySave(), "atomic update");
                 var loaded = new AndroidOfflineSettings(args[1]);
                 Check(loaded.values.deadzone == .3f && loaded.values.invertY && loaded.values.lookSensitivity == 1.5f, "cold reload");
+                Check(!loaded.values.highRefreshRate, "refresh preference not durable");
                 Check(Same(first, File.ReadAllBytes(path + ".backup")), "previous validated bytes retained");
+                break;
+            case "legacy-refresh":
+                File.WriteAllText(path, "{\"version\":1,\"offlineDifficulty\":0,\"deadzone\":0.18,\"lookSensitivity\":1,\"invertY\":false}");
+                Check(new AndroidOfflineSettings(args[1]).values.highRefreshRate, "legacy settings lost high-refresh default");
                 break;
             case "partial-pending":
                 File.WriteAllText(pending, "{partial");
@@ -90,6 +100,23 @@ static class AndroidSettingsStoreHost
                 Directory.Delete(pending);
                 Check(store.TrySave() && store.saveError == null, "repaired storage did not permit retry");
                 Check(new AndroidOfflineSettings(args[1]).values.deadzone == .3f, "retry not durable");
+                break;
+            case "enospc-write":
+            case "enospc-rename":
+                store.values.deadzone = .25f; Check(store.TrySave(), "seed backup generation");
+                var primaryBeforeFailure = File.ReadAllBytes(path);
+                var backupBeforeFailure = File.ReadAllBytes(path + ".backup");
+                store.values.deadzone = .3f;
+                var stage = args[0].Substring("enospc-".Length);
+                store.ArmSaveFailure(stage);
+                Check(!store.TrySave() && !string.IsNullOrEmpty(store.saveError), "ENOSPC claimed success");
+                Check(store.injectedSaveFailure == stage, "failure not observed at requested point");
+                Check(Same(primaryBeforeFailure, File.ReadAllBytes(path)), "ENOSPC changed primary");
+                Check(Same(backupBeforeFailure, File.ReadAllBytes(path + ".backup")), "ENOSPC changed backup");
+                Check(File.Exists(pending), "failed transaction left no pending witness");
+                Check(new AndroidOfflineSettings(args[1]).values.deadzone == .25f, "cold load accepted failed transaction");
+                Check(store.TrySave() && store.saveError == null && !File.Exists(pending), "one-shot failure prevented retry");
+                Check(new AndroidOfflineSettings(args[1]).values.deadzone == .3f, "ENOSPC retry not durable");
                 break;
             case "invalid-value":
                 store.values.deadzone = float.NaN;

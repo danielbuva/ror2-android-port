@@ -11,7 +11,7 @@ O = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(O)
 
 
-def serialized_records(directory, receipt, selected):
+def serialized_records(directory, receipt, selected, comparison="exact"):
     """Select bodies from an independently produced, receipt-pinned player file."""
     directory = directory.resolve(strict=True)
     relative, identity = selected["source"]
@@ -40,7 +40,7 @@ def serialized_records(directory, receipt, selected):
         original = matches[0]
         definition = metadata["types"][original["type_id"]]
         class_id = definition["class_id"]
-        if class_id != selected["class_id"] or ("script_identity" not in selected and original["bytes"] != selected["bytes"]):
+        if class_id != selected["class_id"] or (comparison == "exact" and "script_identity" not in selected and original["bytes"] != selected["bytes"]):
             raise ValueError("serialized supplier class or size differs")
         if "native_type_hash" in selected and selected["native_type_hash"] != definition["hash"].hex():
             raise ValueError("serialized supplier native type differs")
@@ -49,7 +49,7 @@ def serialized_records(directory, receipt, selected):
     body_hash = hashlib.sha256(body).hexdigest()
     if "script_identity" in selected:
         O.current_script_identity(body, class_id, selected["script_identity"])
-    elif body_hash != selected["sha256"]:
+    elif comparison == "exact" and body_hash != selected["sha256"]:
         raise ValueError("serialized supplier body differs")
     if path.stat().st_size != pin["bytes"] or O.B.sha(path) != pin["sha256"]:
         raise ValueError("serialized supplier changed during extraction")
@@ -60,13 +60,17 @@ def serialized_records(directory, receipt, selected):
         "native_type_hash": definition["hash"].hex(),
         "source_produced": {"profile_sha256": receipt["profile_sha256"], "file": relative, "path_id": original["path_id"], "file_sha256": pin["sha256"]},
     }
+    if comparison == "diagnostic":
+        row["source_produced"]["historical_raw_exact"] = body_hash == selected["sha256"] and len(body) == selected["bytes"]
     if "script_identity" in selected:
         row["source_produced"]["script_identity"] = selected["script_identity"]
         row["source_produced"]["historical_raw_exact"] = body_hash == selected["sha256"] and len(body) == selected["bytes"]
-    return row, body
+    return row, body, definition
 
 
-def produce(profile_path, profile_sha256, packs, output, serialized=()):
+def produce(profile_path, profile_sha256, packs, output, serialized=(), comparison="exact"):
+    if comparison not in ("exact", "diagnostic"):
+        raise ValueError("unknown output comparison policy")
     if O.B.sha(profile_path) != profile_sha256:
         raise ValueError("record remap profile drift")
     profile = json.loads(profile_path.read_text())
@@ -91,21 +95,37 @@ def produce(profile_path, profile_sha256, packs, output, serialized=()):
         for key, (directory, _, _) in providers.items()
         if key not in serialized_keys
     }
+    supplier_types = {
+        key: json.loads((directory / "types.json").read_text())
+        for key, (directory, _, receipt) in providers.items()
+        if "types.json" in receipt.get("outputs", {})
+    }
+    types, type_ids = [], {}
     rows, bodies, used, identities = [], [], set(), set()
     offset = 0
     for selected in profile["records"]:
         key = selected["source_profile_sha256"]
         source = selected["source"]
         if key in serialized_keys:
-            row, body = serialized_records(providers[key][0], providers[key][2], selected)
+            row, body, definition = serialized_records(providers[key][0], providers[key][2], selected, comparison)
         else:
             matches = [r for r in indices[key] if [r["bundle"], r["member"], r["path_id"]] == source]
             if len(matches) != 1:
                 raise ValueError("record remap source identity differs")
             row = matches[0]
-            if row["sha256"] != selected["sha256"] or row["bytes"] != selected["bytes"]:
+            if comparison == "exact" and (row["sha256"] != selected["sha256"] or row["bytes"] != selected["bytes"]):
                 raise ValueError("record remap source body differs")
             body = O.record_extent(providers[key][0] / "objects.bin", row)
+            definition = supplier_types[key][row["type_id"]] if "type_id" in row else None
+        if definition is not None:
+            definition = O.json_layout(definition)
+            type_key = json.dumps(definition, sort_keys=True)
+            if type_key not in type_ids:
+                type_ids[type_key] = len(types)
+                types.append(definition)
+            row = dict(row, type_id=type_ids[type_key])
+        if comparison == "diagnostic":
+            row = dict(row, historical_raw_exact=row["sha256"] == selected["sha256"] and row["bytes"] == selected["bytes"])
         destination = selected["destination"]
         identity = tuple(destination)
         if identity in identities:
@@ -125,13 +145,14 @@ def produce(profile_path, profile_sha256, packs, output, serialized=()):
         for body in bodies:
             stream.write(body)
     (output / "index.jsonl").write_text("".join(json.dumps(row) + "\n" for row in rows))
+    (output / "types.json").write_text(json.dumps(types, sort_keys=True, indent=2) + "\n")
     receipt = {
         "success": True,
         "input_id": profile["input_id"],
         "profile_sha256": profile_sha256,
         "scope": "Index remap only; source bodies and dependency provenance retained",
         "supplier_receipts": {key: pin for key, (_, pin, _) in providers.items()},
-        "outputs": {name: {"bytes": (output / name).stat().st_size, "sha256": O.B.sha(output / name)} for name in ("objects.bin", "index.jsonl")},
+        "outputs": {name: {"bytes": (output / name).stat().st_size, "sha256": O.B.sha(output / name)} for name in ("objects.bin", "index.jsonl", "types.json")},
     }
     (output / "result.json").write_text(json.dumps(receipt, indent=2) + "\n")
     return receipt
@@ -151,8 +172,9 @@ def main():
         help="receipt-pinned source-produced serialized files",
     )
     parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument("--comparison", choices=("exact", "diagnostic"), default="exact")
     args = parser.parse_args()
-    produce(args.profile, args.profile_sha256, args.record_pack, args.output, args.serialized_producer)
+    produce(args.profile, args.profile_sha256, args.record_pack, args.output, args.serialized_producer, args.comparison)
 
 
 if __name__ == "__main__":

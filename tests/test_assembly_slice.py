@@ -13,7 +13,13 @@ if "UNITY_EDITOR" not in os.environ or not (Path.home() / ".local/share/dotnet/d
     raise unittest.SkipTest("toolchain test: needs the exact Unity editor (source scripts/env.sh) and the local .NET SDK")
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts/lab"))
 from common import ROOT, WORK
-from boundaries import probe_tool
+from boundaries import CECIL, probe_tool
+
+try:
+    with CECIL.open("rb") as cecil:
+        cecil.read(1)
+except OSError:
+    raise unittest.SkipTest("toolchain test: needs the editor's readable Mono.Cecil assembly")
 
 
 class SliceTests(unittest.TestCase):

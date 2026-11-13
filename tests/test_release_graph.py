@@ -1,6 +1,7 @@
 """Source graph contracts with authored supplier bodies; no game inputs."""
 
 import gzip
+import hashlib
 import importlib.util
 import json
 from pathlib import Path
@@ -8,6 +9,7 @@ import shutil
 import sys
 import tempfile
 import unittest
+from unittest import mock
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -23,6 +25,339 @@ G, J = load("release_graph"), load("release_jobs")
 
 
 class ReleaseGraphTests(unittest.TestCase):
+    def test_private_record_pins_resolve_only_unique_source_and_output_pairs(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            repo = Path(temporary)
+            (repo / "recipe").mkdir()
+            source = ["original.bundle", "CAB-source", 10]
+            target = dict(bundle="pack", member="CAB-pack", path_id=20)
+
+            def profile(name, outputs):
+                path = repo / ("recipe/owner-" + name + ".json")
+                path.write_text(
+                    json.dumps(
+                        dict(
+                            bundles=[dict(path=source[0], sha256="a" * 64, members=[dict(name=source[1], objects=[dict(path_id=source[2], outputs=outputs)])])]
+                        )
+                    )
+                )
+                return G.digest(path)
+
+            first = profile("first", [target, dict(target, path_id=21)])
+            alias = profile("alias", [dict(target, path_id=22)])
+            duplicate = profile("duplicate", [target])
+            # An unrelated malformed recipe must remain unparsed.
+            (repo / "recipe/owner-unused.json").write_text("unread")
+            graph = G.Graph(repo, {})
+            selected = dict(record="f" * 64, source=source, record_source=["pack", "CAB-pack", 20], destination=["content", "CAB-content", 7])
+            resolved = graph.bundle_bindings([selected], "content", "CAB-content", source_profiles=[first, alias])
+            self.assertEqual(resolved["unresolved"], [])
+            self.assertEqual(
+                resolved["bindings"],
+                [
+                    {key: selected[key] for key in ("source", "record_source", "destination")}
+                    | dict(supplier=first, selection=dict(record=selected["record"], record_source=selected["record_source"]))
+                ],
+            )
+            self.assertEqual([row["name"] for row in resolved["suppliers"]], [first])
+            self.assertEqual(set(graph.jobs), {"recipe/jobs/owner-first.json"})
+            ambiguous = graph.bundle_bindings([selected], "content", "CAB-content", source_profiles=[first, duplicate])
+            self.assertEqual(ambiguous["bindings"], [])
+            self.assertEqual(ambiguous["unresolved"][0]["reason"], "ambiguous source supplier profiles")
+            self.assertEqual(len(ambiguous["unresolved"][0]["candidates"]), 3)
+            moved = graph.bundle_bindings([dict(selected, record_source=["pack", "CAB-pack", 99])], "content", "CAB-content", source_profiles=[alias])
+            self.assertEqual(moved["unresolved"], [])
+            self.assertEqual(moved["bindings"][0]["record_source"], ["pack", "CAB-pack", 22])
+            self.assertEqual(moved["bindings"][0]["selection"], dict(record="f" * 64, record_source=["pack", "CAB-pack", 99]))
+            self.assertEqual(selected["record_source"], ["pack", "CAB-pack", 20])
+            missing = graph.bundle_bindings([dict(selected, record_source=["pack", "CAB-pack", 99])], "content", "CAB-content", source_profiles=[first, alias])
+            self.assertEqual(missing["bindings"], [])
+            self.assertEqual(missing["unresolved"][0]["reason"], "ambiguous source supplier profiles")
+            self.assertEqual(len(missing["unresolved"][0]["candidates"]), 3)
+            foreign = graph.bundle_bindings([dict(selected, source=["other.bundle", *source[1:]])], "content", "CAB-content", source_profiles=[first])
+            self.assertEqual(foreign["unresolved"][0]["candidates"], [])
+
+    def test_bundle_binding_audit_keeps_missing_and_foreign_identities_explicit(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            repo = Path(temporary)
+            (repo / "recipe").mkdir()
+            profile = repo / "recipe/owner-records.jsonl.gz"
+            profile.write_bytes(gzip.compress(b'{"input_id":"authored"}\n'))
+            graph = G.Graph(repo, {})
+            pin = G.digest(profile)
+            good = dict(record=pin, destination=["content", "CAB-content", 7], source=["a.bundle", "CAB-a", 10], record_source=["pack", "CAB-pack", 20])
+            rows = [
+                good,
+                dict(good, destination=["content", "CAB-content", 8], source=["b.bundle", "CAB-b", 10]),
+                dict(good),
+                dict(good, destination=["content", "CAB-content", 9], record="f" * 64),
+                {key: value for key, value in dict(good, destination=["content", "CAB-content", 11]).items() if key != "source"},
+                dict(good, destination=["external", "CAB-content", 7]),
+            ]
+            result = graph.bundle_bindings(iter(rows), "content", "CAB-content")
+            self.assertEqual(len(result["bindings"]), 2)
+            self.assertNotEqual(result["bindings"][0]["source"], result["bindings"][1]["source"])
+            self.assertEqual(len(result["suppliers"]), 1)
+            supplier = result["suppliers"][0]
+            self.assertEqual(supplier["profile"], dict(path="${repo}/recipe/owner-records.jsonl.gz", bytes=profile.stat().st_size, sha256=pin))
+            self.assertEqual(supplier["types"], G.Graph.artifact_pin("recipe/jobs/owner-records.json", "types"))
+            self.assertEqual(
+                [row["reason"] for row in result["unresolved"]],
+                [
+                    "duplicate destination",
+                    "missing source supplier profile",
+                    "explicit source and record_source identities required",
+                    "foreign or missing destination",
+                ],
+            )
+            graph.jobs["recipe/jobs/owner-records.json"]["artifacts"].pop("types")
+            incomplete = graph.bundle_bindings([good], "content", "CAB-content")
+            self.assertEqual(incomplete["bindings"], [])
+            self.assertEqual(incomplete["unresolved"][0]["reason"], "supplier requires a final container instead of a typed record pack")
+
+    def test_current_witness_job_requires_and_signs_final_player_and_reader(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            repo = Path(temporary)
+            (repo / "recipe").mkdir()
+            source = repo / "tools/phone-build/metadata/Program.cs"
+            source.parent.mkdir(parents=True)
+            source.write_text("// authored metadata reader fixture\n")
+            player = repo / "recipe/owner-player.json"
+            player.write_text(json.dumps(dict(project_assemblies=[], outputs={}, registry=dict(file="registry.assets", path="registry.json"))))
+            player_job = "recipe/jobs/owner-player.json"
+            profile = repo / "recipe/owner-witness.json"
+            profile.write_text(
+                json.dumps(
+                    dict(
+                        schema="owner-bundle-managed-release-v1",
+                        profiles=[player.relative_to(repo).as_posix()],
+                        request=dict(
+                            registry_receipt=G.Graph.artifact_pin(player_job, "registry_receipt"),
+                            managed_providers=dict(path="${input:managed}/providers.json"),
+                        ),
+                    )
+                )
+            )
+            graph = G.Graph(repo, {})
+            job = graph.build(G.digest(profile))
+            descriptor = graph.jobs[job]
+            self.assertEqual(descriptor["needs"], [player_job])
+            self.assertEqual(descriptor["artifacts"]["metadata"], "metadata.json")
+            self.assertIn(source.relative_to(repo).as_posix(), graph.entry(job)["producer_files"])
+            self.assertIn(player_job, graph.entry(job)["recipe_files"])
+            value = json.loads(profile.read_text())
+            value["request"]["registry_receipt"]["path"] = "${input:retained_registry}"
+            profile.write_text(json.dumps(value))
+            with self.assertRaisesRegex(ValueError, "final player registry"):
+                G.Graph(repo, {}).build(G.digest(profile))
+
+    def test_catalog_fanin_binds_actual_outputs_and_embedded_bootstrap(self):
+        with tempfile.TemporaryDirectory() as directory:
+            repo = Path(directory)
+            (repo / "recipe").mkdir()
+            identity = dict(input_id="a" * 64, attempt="authored-startup")
+            bootstrap = repo / "recipe/bootstrap.json"
+            bootstrap.write_text(json.dumps(identity))
+            metadata = repo / "recipe/metadata.json"
+            metadata.write_text(json.dumps(identity))
+            request = repo / "recipe/catalog-request.json"
+            request.write_text(
+                json.dumps(
+                    dict(
+                        schema="owner-catalog-inputs-v1",
+                        metadata=dict(path="${input:catalog_metadata}", bytes=metadata.stat().st_size, sha256=G.digest(metadata)),
+                        **identity,
+                    )
+                )
+            )
+            graph = G.Graph(repo, {})
+            profiles = {
+                "final": dict(sources=[], bundle=dict(name="authored", asset="asset")),
+                "supplier": dict(bundles=[]),
+                "windows": dict(original_bundle={}),
+                "player": dict(
+                    project_assemblies=[],
+                    outputs={},
+                    registry=dict(file="registry.assets", path="registry-policy.json"),
+                    text_assets=dict(
+                        files=[
+                            dict(name="WholeCatalogBootstrap", recipe=dict(path="bootstrap.json", bytes=bootstrap.stat().st_size, sha256=G.digest(bootstrap)))
+                        ]
+                    ),
+                ),
+            }
+            for name, profile in profiles.items():
+                path = repo / ("recipe/" + name + ".json")
+                path.write_text(json.dumps(profile))
+                graph.profile_files[name] = path.relative_to(repo).as_posix()
+                graph.job_profiles[name] = profile
+                target = "apk/assets/bin/Data/registry.assets" if name == "player" else "payload/" + name
+                if name == "final":
+                    target = "payload/authored"
+                graph.jobs[name] = dict(script=G.PREFIX + "object_produce.py", outputs={target: "actual/" + name}, artifacts={}, needs=[])
+            name = graph.catalog_complete(list(profiles), "recipe/catalog-request.json")
+            job = graph.jobs[name]
+            self.assertIn(job["script"], J.PRODUCERS)
+            self.assertEqual(job["needs"], ["final", "player"])
+            self.assertEqual(set(job["request"]["bundles"]), {"authored"})
+            self.assertEqual(len(job["request"]["profiles"]), 1)
+            self.assertEqual(graph.jobs["final"]["artifacts"]["catalog_bundle"], "actual/final")
+            self.assertEqual(graph.jobs["player"]["artifacts"]["catalog_registry"], "actual/player")
+            closure = graph.entry(name)
+            for path in ("recipe/catalog-request.json", "recipe/final.json", "recipe/player.json", "recipe/bootstrap.json"):
+                self.assertIn(path, closure["recipe_files"])
+            self.assertNotIn("recipe/metadata.json", closure["producer_files"])
+            # Derived outputs must never feed back into the bundle population.
+            (repo / "recipe/registry-policy.json").write_text("{}")
+            for producer in ("catalog_complete", "bundle_manifest", "object_produce"):
+                script = repo / G.PREFIX / (producer + ".py")
+                script.parent.mkdir(parents=True, exist_ok=True)
+                script.write_text("# authored fixture\n")
+            selected = [graph.profile_files[value] for value in profiles]
+            names = {G.digest(repo / graph.profile_files[value]): value for value in profiles}
+            graph.build = lambda pin: names[pin]
+            index = graph.compile(selected, bundle_manifest=True, catalog_request="recipe/catalog-request.json")
+            self.assertIn("payload/whole-catalog.json", index["entries"])
+            manifest = graph.jobs["recipe/jobs/owner-bundle-manifest.json"]["request"]
+            self.assertNotIn("whole-catalog.json", [row["name"] for row in manifest["bundles"]])
+            self.assertEqual(set(job["request"]["bundles"]), {"authored"})
+            changed = json.loads(request.read_text())
+            changed["attempt"] = "other"
+            request.write_text(json.dumps(changed))
+            with self.assertRaisesRegex(ValueError, "catalog/bootstrap identity differs"):
+                graph.catalog_complete(list(profiles), "recipe/catalog-request.json")
+            changed["attempt"] = identity["attempt"]
+            request.write_text(json.dumps(changed))
+            bootstrap.write_text(json.dumps(dict(identity, attempt="other")))
+            with self.assertRaisesRegex(ValueError, "bootstrap pin differs"):
+                graph.catalog_complete(list(profiles), "recipe/catalog-request.json")
+            graph.job_profiles["player"]["text_assets"]["files"][0]["recipe"].update(bytes=bootstrap.stat().st_size, sha256=G.digest(bootstrap))
+            with self.assertRaisesRegex(ValueError, "catalog/bootstrap identity differs"):
+                graph.catalog_complete(list(profiles), "recipe/catalog-request.json")
+
+    @staticmethod
+    def selected_fixture(repo):
+        (repo / "recipe").mkdir()
+        supplier = repo / "recipe/owner-supplier.json"
+        supplier.write_text(json.dumps({"bundles": [{"members": [{"objects": []}]}]}))
+        selected = repo / "recipe/owner-selected.json"
+        selected.write_text(json.dumps({"sources": [], "bundle": {"name": "authored.bundle"}, "objects": [{"record": G.digest(supplier)}]}))
+        for name in ("object_produce", "record_produce", "bundle_manifest"):
+            path = repo / G.PREFIX / (name + ".py")
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text("# authored fixture\n")
+        return selected, supplier
+
+    def test_single_profile_selection_only_parses_selected_dependency_closure(self):
+        with tempfile.TemporaryDirectory() as directory:
+            repo = Path(directory).resolve()
+            selected, supplier = self.selected_fixture(repo)
+            # Unselected malformed bodies must not be parsed during indexing.
+            (repo / "recipe/owner-unselected.json").write_text("not JSON")
+            with gzip.open(repo / "recipe/owner-unselected.jsonl.gz", "wt") as stream:
+                stream.write('{"not_a_header": true}\n')
+            reads = []
+            read_bytes = Path.read_bytes
+
+            def tracked(path, *args, **kwargs):
+                reads.append(path)
+                return read_bytes(path, *args, **kwargs)
+
+            with mock.patch.object(Path, "read_bytes", tracked), mock.patch.object(G.gzip, "GzipFile", wraps=gzip.GzipFile) as compressed:
+                graph = G.Graph(repo, {})
+                self.assertEqual(reads, [])
+                graph.compile([selected.relative_to(repo).as_posix()])
+                self.assertEqual(reads, [selected, supplier])
+                graph.build(G.digest(selected))
+                self.assertEqual(reads, [selected, supplier])
+                compressed.assert_not_called()
+            with self.assertRaisesRegex(ValueError, "unknown compressed record profile header"):
+                graph.build(G.digest(repo / "recipe/owner-unselected.jsonl.gz"))
+            with self.assertRaises(json.JSONDecodeError):
+                graph.build(G.digest(repo / "recipe/owner-unselected.json"))
+
+    def test_supplier_changed_after_index_is_rejected_before_parsing(self):
+        with tempfile.TemporaryDirectory() as directory:
+            repo = Path(directory).resolve()
+            selected, supplier = self.selected_fixture(repo)
+            graph = G.Graph(repo, {})
+            supplier.write_text("not JSON")
+            with self.assertRaisesRegex(ValueError, "source supplier profile drift"):
+                graph.build(G.digest(selected))
+            self.assertEqual(graph.jobs, {})
+
+    def test_selected_compressed_header_is_checked_despite_job_name_collision(self):
+        with tempfile.TemporaryDirectory() as directory:
+            repo = Path(directory).resolve()
+            _, supplier = self.selected_fixture(repo)
+            compressed = supplier.with_suffix(".jsonl.gz")
+            with gzip.open(compressed, "wt") as stream:
+                stream.write('{"invalid_header": true}\n')
+            graph = G.Graph(repo, {})
+            graph.build(G.digest(supplier))
+            with self.assertRaisesRegex(ValueError, "unknown compressed record profile header"):
+                graph.build(G.digest(compressed))
+
+    def test_lazy_graph_output_matches_eager_serialized_fixture(self):
+        with tempfile.TemporaryDirectory() as directory:
+            repo = Path(directory).resolve()
+            self.selected_fixture(repo)
+            graph = G.Graph(repo, {})
+            index = graph.compile(["recipe/owner-selected.json"], bundle_manifest=True)
+
+            for name, job in graph.jobs.items():
+                closure = graph.entry(name)
+                self.assertEqual(job.pop("source_files"), sorted(set(closure["recipe_files"]) | set(closure["producer_files"])))
+
+            def wire(value):
+                return (json.dumps(value, sort_keys=True, indent=2) + "\n").encode()
+
+            for name, job in graph.jobs.items():
+                index["files"][name] = hashlib.sha256(wire(job)).hexdigest()
+            # Descriptor fixture includes final object layouts and record type tables,
+            # retaining exact closure ordering and source-index serialization.
+            self.assertEqual(
+                hashlib.sha256(wire({"index": index, "jobs": graph.jobs})).hexdigest(), "9073f8bf0e83bbab85307c0dcb5d625471949ac878e9b2dc8131a5160e84f062"
+            )
+
+    def test_scene_record_suppliers_close_published_consumers(self):
+        graph = G.Graph(ROOT, {})
+        for scene, supplier, count in (
+            ("artifactworld01", "artifactworld01-native-records", 6),
+            ("champrush", "champrush-director-records", 2),
+            ("splash", "splash-director-records", 2),
+            ("conduitcanyon", "conduitcanyon-director-records", 1),
+        ):
+            with self.subTest(scene=scene):
+                profile = ROOT / ("recipe/owner-" + supplier + ".json")
+                source = json.loads(profile.read_text())
+                outputs = [row for bundle in source["bundles"] for member in bundle["members"] for obj in member["objects"] for row in obj["outputs"]]
+                self.assertEqual(len(outputs), count)
+                name = graph.build(G.digest(ROOT / ("recipe/owner-" + scene + ("-objects.json" if scene == "conduitcanyon" else "-whole-objects.json"))))
+                self.assertIn("recipe/" + profile.name, graph.entry(name)["recipe_files"])
+                self.assertIn("payload/whole-scene-" + scene, graph.jobs[name]["outputs"])
+
+    def test_player_defaults_use_android_player_without_changing_shader_sdk(self):
+        graph = G.Graph(ROOT, {})
+        name = graph.build(G.digest(ROOT / "recipe/owner-player-data.json"))
+        arguments = graph.jobs[name]["arguments"]
+        self.assertEqual(arguments[arguments.index("--sdk") + 1], "${input:sdk_contents}/../../PlaybackEngines/AndroidPlayer")
+        for job in graph.jobs.values():
+            if Path(job["script"]).stem in {"shader_context", "shader_prefab", "payload_shader_records"}:
+                args = job["arguments"]
+                self.assertEqual(args[args.index("--sdk") + 1], "${input:sdk}")
+
+    def test_barrier_job_binds_legacy_sdk_and_current_output_policy(self):
+        graph = G.Graph(ROOT, {})
+        barrier = graph.build(G.digest(ROOT / "recipe/owner-barrier-shaders.json"))
+        args = graph.jobs[barrier]["arguments"]
+        self.assertEqual(args[args.index("--legacy-sdk") + 1], "${input:legacy_sdk}")
+        graph.build(G.digest(ROOT / "recipe/owner-commando-objects.json"))
+        supported = {"object_produce", "record_remap", "record_produce", "mesh_produce", "avatar_produce", "texture_produce", "shader_context", "shader_prefab"}
+        for job in graph.jobs.values():
+            if Path(job["script"]).stem in supported:
+                self.assertEqual(job["arguments"][job["arguments"].index("--comparison") + 1], "diagnostic")
+
     def test_object_sdk_profile_keeps_application_relative_resource_root(self):
         graph = G.Graph(ROOT, {})
         name = graph.build(G.digest(ROOT / "recipe/owner-objective-support-objects.json"))
@@ -31,6 +366,33 @@ class ReleaseGraphTests(unittest.TestCase):
         self.assertEqual(root, "${input:sdk_contents}/..")
         profile = graph.job_profiles[name]
         self.assertTrue(profile["sdk"]["path"].startswith("Contents/Resources/"))
+
+    def test_final_object_layout_and_record_types_are_declared_artifacts(self):
+        graph = G.Graph(ROOT, {})
+        graph.build(G.digest(ROOT / "recipe/owner-commando-objects.json"))
+        graph.build(G.digest(ROOT / "recipe/owner-whole-game-source-records.json"))
+        shader_job = graph.build(G.digest(ROOT / "recipe/owner-player-shaders.json"))
+        self.assertEqual(graph.jobs[shader_job]["artifacts"]["shared_types"], "shared-shaders/types.json")
+        seen = set()
+        for job in graph.jobs.values():
+            producer = Path(job["script"]).stem
+            if producer == "object_produce" and "objects" in job["artifacts"]:
+                self.assertEqual(job["artifacts"]["layout"], "layout.json")
+                seen.add(producer)
+            if producer in {
+                "record_produce",
+                "record_remap",
+                "mesh_produce",
+                "avatar_produce",
+                "texture_produce",
+                "shader_context",
+                "shader_prefab",
+                "payload_shader_records",
+            }:
+                self.assertEqual(job["artifacts"]["types"], "types.json")
+                seen.add(producer)
+        self.assertIn("object_produce", seen)
+        self.assertIn("record_produce", seen)
 
     def test_sprite_cohorts_bind_native_witness_and_standard_pack_artifacts(self):
         graph = G.Graph(ROOT, {})
@@ -43,7 +405,7 @@ class ReleaseGraphTests(unittest.TestCase):
             self.assertEqual(job["arguments"][0], "produce")
             for argument in ("--pc-root", "--functional", "${input:sprite_native_" + pin + "}", "${input_sha256:sprite_native_" + pin + "}"):
                 self.assertIn(argument, job["arguments"])
-            self.assertEqual(job["artifacts"], {"receipt": "result.json", "objects": "objects.bin", "index": "index.jsonl"})
+            self.assertEqual(job["artifacts"], {"receipt": "result.json", "objects": "objects.bin", "index": "index.jsonl", "types": "types.json"})
 
     def test_fallback_shader_job_binds_pinned_public_templates(self):
         graph = G.Graph(ROOT, {})
@@ -107,6 +469,10 @@ class ReleaseGraphTests(unittest.TestCase):
         player = "recipe/jobs/owner-player-data.json"
         job = graph.jobs[player]
         self.assertEqual(len(job["outputs"]), 210)
+        registry = "apk/assets/bin/Data/" + graph.job_profiles[player]["registry"]["file"]
+        self.assertEqual(job["artifacts"]["registry_body"], job["outputs"][registry])
+        self.assertEqual(job["artifacts"]["registry_receipt"], "registry-source/result.json")
+        self.assertEqual(job["artifacts"]["registry_schemas"], "registry-source/schemas.json")
         self.assertEqual(len(index["entries"]), 581)
         startup = "recipe/jobs/owner-startup-metadata.json"
         self.assertIn(startup, job["needs"])
@@ -449,7 +815,7 @@ if a.profile.endswith('.jsonl.gz'):
 for path,pin in a.record_pack:
  assert hashlib.sha256((pathlib.Path(path)/'result.json').read_bytes()).hexdigest()==pin
 out=pathlib.Path(a.output);out.mkdir()
-for name in ('objects.bin','index.jsonl','result.json'):(out/name).write_text('authored')
+for name in ('objects.bin','index.jsonl','types.json','layout.json','result.json'):(out/name).write_text('authored')
 (out/'payload').mkdir();(out/'payload/authored').write_text('source output')
 """
             for producer in ("record_produce", "object_produce"):

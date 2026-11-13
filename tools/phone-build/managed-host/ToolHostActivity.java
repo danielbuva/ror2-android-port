@@ -25,9 +25,11 @@ import java.util.concurrent.TimeUnit;
 import org.json.*;
 
 public final class ToolHostActivity extends Activity {
+    private OwnerGraphicsPicker graphicsPicker;
     private final OwnerUpdateState model = new OwnerUpdateState();
     private final android.os.Handler handler = new android.os.Handler(android.os.Looper.getMainLooper());
     private TextView statusView;
+    private final OwnerUpdateState.StatusRender statusRender = new OwnerUpdateState.StatusRender();
     private Button checkButton, rollbackButton, recoveryButton, prepareButton, treeButton, zipButton, importButton, buildButton, installButton, pauseButton, resumeButton, cancelButton, retryButton;
     private static final int PICK_TREE = 120, PICK_ZIP = 121;
     private String flowDetail = "";
@@ -45,6 +47,8 @@ public final class ToolHostActivity extends Activity {
         LinearLayout layout = new LinearLayout(this); layout.setOrientation(LinearLayout.VERTICAL); layout.setPadding(24, 24, 24, 24);
         scroll.addView(layout);
         statusView = new TextView(this); layout.addView(statusView);
+        graphicsPicker = new OwnerGraphicsPicker(this);
+        button(layout, "Graphics drivers", new Runnable() { public void run() { graphicsPicker.show(); } });
         checkButton = button(layout, "Check for updates", new Runnable() { public void run() { startUpdate("release-check"); } });
         rollbackButton = button(layout, "Rebuild and install previous release (same key)", new Runnable() { public void run() { startUpdate("release-rollback"); } });
         recoveryButton = button(layout, "Recover and verify retained profile/settings", new Runnable() { public void run() { OwnerBuildService.launch(ToolHostActivity.this, "profile-recover"); } });
@@ -68,6 +72,10 @@ public final class ToolHostActivity extends Activity {
         Button result = new Button(this); result.setText(label); layout.addView(result);
         result.setOnClickListener(new android.view.View.OnClickListener() { public void onClick(android.view.View ignored) { action.run(); } });
         return result;
+    }
+    @Override protected void onDestroy() {
+        if (graphicsPicker != null) graphicsPicker.close();
+        super.onDestroy();
     }
     private void pickSource(boolean tree) {
         if (OwnerBuildService.isRunning() || OwnerInstaller.busy(this)) return;
@@ -100,7 +108,7 @@ public final class ToolHostActivity extends Activity {
         if (OwnerBuildService.isRunning() || OwnerInstaller.busy(this)) return;
         try {
             if (!new File(getFilesDir(), "owner-input/install-inputs.json").isFile()) throw new IOException("Prepare a signed installation plan first");
-            writeJson(new File(getFilesDir(), "owner-input/import-state.json"), new JSONObject().put("state", "IMPORTING").put("message", "Checking required inputs and private free space…"));
+            writeJson(this, new File(getFilesDir(), "owner-input/import-state.json"), new JSONObject().put("state", "IMPORTING").put("message", "Checking required inputs and private free space…"));
             OwnerBuildService.launch(this, "import");
         } catch (Exception error) { updateStatus(this, "ERROR", error.getMessage()); }
         refreshStatus();
@@ -144,14 +152,15 @@ public final class ToolHostActivity extends Activity {
         }
         return new JSONObject(new String(bytes.toByteArray(), StandardCharsets.UTF_8));
     }
-    static synchronized void writeJson(File file, JSONObject value) throws Exception {
-        File parent = file.getParentFile(); if (!parent.isDirectory() && !parent.mkdirs()) throw new IOException("Private owner directory unavailable");
-        File staged = new File(parent, file.getName() + ".writing");
-        try (FileOutputStream output = new FileOutputStream(staged)) { output.write(value.toString().getBytes(StandardCharsets.UTF_8)); output.getFD().sync(); }
-        if (!staged.renameTo(file)) throw new IOException("Could not publish private status");
+    static synchronized void writeJson(Context app, File file, JSONObject value) throws Exception {
+        OwnerInputImport.writeAtomic(OwnerInputImport.privateFile(app.getFilesDir(), file), new OwnerInputImport.AtomicWriter() {
+            @Override public void write(FileOutputStream output) throws Exception {
+                output.write(value.toString().getBytes(StandardCharsets.UTF_8));
+            }
+        });
     }
     static void updateStatus(Context app, String phase, String message) {
-        try { File file = new File(app.getFilesDir(), "owner-input/update-state.json"); JSONObject value = file.isFile() ? readJson(file) : new JSONObject(); writeJson(file, value.put("state", phase).put("message", message)); }
+        try { File file = new File(app.getFilesDir(), "owner-input/update-state.json"); JSONObject value = file.isFile() ? readJson(file) : new JSONObject(); writeJson(app, file, value.put("state", phase).put("message", message)); }
         catch (Exception ignored) { /* Worker report retains the underlying failure if storage is unavailable. */ }
     }
     private static JSONObject installedRequest(Context app, String action) throws Exception {
@@ -175,17 +184,47 @@ public final class ToolHostActivity extends Activity {
             .put("installer_package", app.getPackageName()).put("installer_signer_sha256", OwnerInstaller.signer(installer));
     }
 
+    /** Test-only last Check observation, independent of the owner atomic writer.
+     * Fixed classes only: never paths, exception messages or release metadata.
+     */
+    static void checkDiagnostic(Context app, String action, String stage, Exception error) {
+        if (!"release-check".equals(action)) return;
+        try {
+            if (!"dev.ror2lab.installertest".equals(app.getPackageName()) || !debuggable(app)) return;
+            String kind = error == null ? "none" : error instanceof SecurityException ? "security" :
+                error instanceof IOException ? "io" : error instanceof org.json.JSONException ? "json" :
+                error instanceof java.lang.reflect.InvocationTargetException ? "reflected" : "other";
+            String root;
+            try { root = app.getFilesDir().getAbsoluteFile().equals(app.getFilesDir().getCanonicalFile()) ? "canonical" : "alias"; }
+            catch (Exception unavailable) { root = "unavailable"; }
+            app.getSharedPreferences("owner-check-diagnostic", 0).edit().clear()
+                .putString("stage", stage).putString("error", kind).putString("files_root", root).commit();
+        } catch (Exception ignored) { /* Observation must not change Check dispatch or its failure. */ }
+    }
     private void startUpdate(final String action) {
         final Context app = getApplicationContext();
-        if (OwnerBuildService.isRunning() || OwnerInstaller.busy(app) || OwnerAlphaInstall.pending(app)) return;
+        checkDiagnostic(app, action, "entered", null);
+        if (OwnerBuildService.isRunning() || OwnerInstaller.busy(app) || OwnerAlphaInstall.pending(app)) {
+            checkDiagnostic(app, action, "blocked-busy", null); return;
+        }
+        String checkStage = "clear-status";
         try {
             OwnerInstaller.clearTerminalStatus(app);
             if ("release-build".equals(action) || "release-rollback".equals(action))
                 if (!getSharedPreferences(OwnerBuildService.PREFERENCES, 0).edit().putString("last_build_action", action).commit()) throw new IOException("Could not retain explicit build action");
-            writeJson(new File(getFilesDir(), "owner-input/update-request.json"), installedRequest(app, action));
+            checkStage = "request-build";
+            JSONObject request = installedRequest(app, action);
+            checkStage = "request-write";
+            writeJson(app, new File(getFilesDir(), "owner-input/update-request.json"), request);
+            checkDiagnostic(app, action, "request-written", null);
             updateStatus(app, "release-check".equals(action) ? "CHECKING" : "BUILDING", "install-prepare".equals(action) ? "Verifying the signed installation plan…" : "Starting local release work…");
+            checkStage = "service-launch";
             OwnerBuildService.launch(app, action);
-        } catch (Exception error) { updateStatus(app, "ERROR", error.getMessage()); }
+            checkDiagnostic(app, action, "launch-returned", null);
+        } catch (Exception error) {
+            checkDiagnostic(app, action, "failed-" + checkStage, error);
+            updateStatus(app, "ERROR", error.getMessage());
+        }
         refreshStatus();
     }
     private void installReady() {
@@ -223,12 +262,44 @@ public final class ToolHostActivity extends Activity {
                 JSONObject stage = stages.getJSONObject(i);
                 if (current.equals(stage.optString("id")) && !"complete".equals(stage.optString("status"))) stage.put("status", "CANCELLED".equals(phase) ? "interrupted" : "failed");
             }
-            writeJson(file, checkpoint);
+            writeJson(app, file, checkpoint);
             File update = new File(app.getFilesDir(), "owner-input/update-state.json");
             JSONObject progress = update.isFile() ? readJson(update) : new JSONObject();
-            writeJson(update, progress.put("pipeline", checkpoint).put("state", phase).put("message", existingFailure == null ? message : existingFailure.optString("reason", message)));
+            writeJson(app, update, progress.put("pipeline", checkpoint).put("state", phase).put("message", existingFailure == null ? message : existingFailure.optString("reason", message)));
         } catch (Exception ignored) { updateStatus(app, phase, message); }
     }
+    /** Fixed-vocabulary observations only; failure never changes installation state. */
+    static synchronized void updateInstallDiagnostic(Context app, String stage, String callback, boolean match) {
+        writeInstallDiagnostic(app, stage, callback, match, null, false);
+    }
+
+    static synchronized void updateInstallReceiverDiagnostic(Context app, String registration, boolean entered) {
+        writeInstallDiagnostic(app, null, null, false, registration, entered);
+    }
+
+    private static void writeInstallDiagnostic(Context app, String stage, String callback, boolean match, String registration, boolean entered) {
+        try {
+            File file = new File(app.getFilesDir(), "owner-input/install-diagnostic.json");
+            JSONObject row = "prepare".equals(stage) || !file.isFile() ? new JSONObject() : readJson(file);
+            String previous = row.optString("stage", "unknown");
+            String observedStage = stage == null ? previous : stage;
+            if (!observedStage.matches("prepare|session-create|session-open|write-start|write-complete|fsync-start|fsync-complete|commit-start|commit-returned")) observedStage = "unknown";
+            String observedCallback = callback == null ? row.optString("callback", "none") : callback;
+            if (!observedCallback.matches("none|pending-user-action|success|failure")) observedCallback = "unknown";
+            Object priorMatch = row.opt("session_match");
+            if (!(priorMatch instanceof Boolean)) priorMatch = JSONObject.NULL;
+            String observedRegistration = registration == null ? row.optString("receiver_registration", "unavailable") : registration;
+            if (!observedRegistration.matches("private|exported|disabled|missing|unavailable")) observedRegistration = "unavailable";
+            String observedEntry = entered || callback != null ? "entered" : row.optString("callback_entry", "none");
+            if (!observedEntry.matches("none|entered|unknown")) observedEntry = "unknown";
+            // Rebuild the object rather than preserving arbitrary prior fields.
+            JSONObject safe = new JSONObject().put("schema", 2).put("stage", observedStage).put("callback", observedCallback)
+                    .put("session_match", callback == null ? priorMatch : match)
+                    .put("receiver_registration", observedRegistration).put("callback_entry", observedEntry);
+            writeJson(app, file, safe);
+        } catch (Exception ignored) { /* Missing diagnostics are not successful installation evidence. */ }
+    }
+
     static void updateInstallCheckpoint(Context app, String state, String message) {
         try {
             File file = new File(app.getFilesDir(), "owner-input/install-checkpoint.json");
@@ -242,10 +313,10 @@ public final class ToolHostActivity extends Activity {
                 JSONObject stage = stages.getJSONObject(i);
                 if ("install".equals(stage.getString("id"))) stage.put("status", phase).put("completed", "INSTALLED".equals(state) ? 1 : 0).put("total", 1);
             }
-            writeJson(file, checkpoint);
+            writeJson(app, file, checkpoint);
             File update = new File(app.getFilesDir(), "owner-input/update-state.json");
             JSONObject progress = update.isFile() ? readJson(update) : new JSONObject();
-            writeJson(update, progress.put("pipeline", checkpoint).put("state", state).put("message", message));
+            writeJson(app, update, progress.put("pipeline", checkpoint).put("state", state).put("message", message));
         } catch (Exception ignored) { /* PackageInstaller's durable identity/status remains authoritative. */ }
     }
     private void refreshStatus() {
@@ -360,7 +431,8 @@ public final class ToolHostActivity extends Activity {
     private void render() {
         String phase = model.phase() == OwnerUpdateState.Phase.ERROR ? "FAILED" : model.phase().toString().replace('_', ' ');
         try { flowDetail = phoneProgress(); } catch (Exception error) { flowDetail = "\nPrivate progress unavailable: " + error.getMessage(); }
-        statusView.setText(phase + "\n" + model.message() + flowDetail);
+        String statusText = phase + "\n" + model.message() + flowDetail;
+        if (statusRender.update(statusText, model.phase(), android.os.SystemClock.elapsedRealtime())) statusView.setText(statusText);
         boolean idle = !OwnerBuildService.isRunning() && !OwnerInstaller.busy(this) && !OwnerAlphaInstall.pending(this);
         rollbackButton.setEnabled(idle && OwnerAlphaInstall.canRollback(this));
         recoveryButton.setEnabled(!OwnerBuildService.isRunning() && !OwnerInstaller.busy(this) && OwnerAlphaInstall.pending(this));
@@ -405,9 +477,20 @@ public final class ToolHostActivity extends Activity {
         return (app.getApplicationInfo().flags & android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE) != 0;
     }
     public static class Runner extends Instrumentation {
-        public void onCreate(Bundle arguments) { super.onCreate(arguments); start(); }
+        private String action;
+        public void onCreate(Bundle arguments) {
+            super.onCreate(arguments);
+            action = arguments == null ? null : arguments.getString("action");
+            if (action != null && !"release-build".equals(action)) throw new IllegalArgumentException("Unsupported fixture action");
+            start();
+        }
         public void onStart() {
-            new Worker(getTargetContext()).executeFixture();
+            Worker worker = new Worker(getTargetContext());
+            if (action == null) worker.executeFixture();
+            else {
+                if (!debuggable(getTargetContext())) throw new SecurityException("Headless release build requires a debuggable fixture");
+                worker.executeUpdate(action);
+            }
             finish(Activity.RESULT_OK, new Bundle());
         }
     }
@@ -606,9 +689,9 @@ public final class ToolHostActivity extends Activity {
             }
         }
         try {
-            writeJson(new File(getFilesDir(), updateAction == null ? "tool-host-report.json" : "update-tool-report.json"), report);
+            writeJson(app, new File(getFilesDir(), updateAction == null ? "tool-host-report.json" : "update-tool-report.json"), report);
             if (("release-build".equals(updateAction) || "release-rollback".equals(updateAction)) && report.getBoolean("success") && report.has("ownerApk"))
-                writeJson(new File(getFilesDir(), "tool-host-report.json"), report);
+                writeJson(app, new File(getFilesDir(), "tool-host-report.json"), report);
         } catch(Exception error) { if (updateAction != null) updateStatus(app, "ERROR", "Could not retain build result: " + error.getMessage()); }
     }
     }

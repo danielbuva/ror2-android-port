@@ -1220,6 +1220,22 @@ def registry_records(profile_root, selected, pc, editor_resources, code_request,
     return value
 
 
+def registry_artifacts(registry, body, output):
+    """Retain managed validation evidence for the actual serialized registry."""
+    for source, pin in registry["provider_pins"].items():
+        checked(Path(source), (pin["bytes"], pin["sha256"]))
+    schemas = output / "schemas.json"
+    schemas.write_text(json.dumps(registry["transfer_schemas"], indent=2) + "\n")
+    return {
+        "success": True,
+        "files": {body.name: {"bytes": body.stat().st_size, "sha256": sha(body)}},
+        "scripts": len(registry["script_ids"]),
+        "objects": len(registry["layout"]["objects"]),
+        "schemas": {"bytes": schemas.stat().st_size, "sha256": sha(schemas)},
+        "provider_pins": registry["provider_pins"],
+    }
+
+
 def produce(
     profile_path,
     profile_sha256,
@@ -1296,6 +1312,7 @@ def produce(
             checked(source, (row["bytes"], row["sha256"]))
             original[name] = json.loads(source.read_text())
             pc_sources[name] = source
+        current_metadata = code_request is not None and "target" not in json.loads(Path(code_request).read_text())
         generated = metadata(original["ScriptingAssemblies.json"], original["RuntimeInitializeOnLoads.json"], profile["project_assemblies"])
         sources = {}
         for name, pin in expected.items():
@@ -1313,16 +1330,20 @@ def produce(
                 "source_role": role,
                 "source": source.relative_to(source_root).as_posix(),
             }
+        current_output_pins = {}
         for name, body in generated.items():
             row = profile["outputs"][name]
-            if (len(body), hashlib.sha256(body).hexdigest()) != (row["bytes"], row["sha256"]):
+            actual = {"bytes": len(body), "sha256": hashlib.sha256(body).hexdigest()}
+            if not current_metadata and (actual["bytes"], actual["sha256"]) != (row["bytes"], row["sha256"]):
                 raise ValueError("generated player metadata differs: " + name)
             (output / (TARGET + name)).write_bytes(body)
-            result["files"][TARGET + name] = {**row, "source_role": "pc-and-authored", "source": profile["sources"][name]["path"]}
+            result["files"][TARGET + name] = {**row, **actual, "source_role": "pc-and-authored", "source": profile["sources"][name]["path"]}
+            if current_metadata:
+                current_output_pins[name] = actual
+                result.setdefault("metadata_comparison", {})[name] = actual["bytes"] == row["bytes"] and actual["sha256"] == row["sha256"]
         registry = None
         if "registry" in profile:
             registry = registry_records(profile_path.parent.resolve(strict=True), profile["registry"], pc, editor_resources, code_request, managed_production)
-        current_output_pins = {}
         current_registry = registry is not None and "target" not in json.loads(Path(code_request).read_text())
         font = profile["font"]
         name = font["file"]
@@ -1467,6 +1488,12 @@ def produce(
             checked(Path(editor_resources).absolute(), (pin["bytes"], pin["sha256"]))
         for path, pin in registry_pins:
             checked(path, pin)
+        if registry is not None:
+            evidence = output / "registry-source"
+            evidence.mkdir()
+            registry_receipt = registry_artifacts(registry, output / (TARGET + profile["registry"]["file"]), evidence)
+            (evidence / "result.json").write_text(json.dumps(registry_receipt, indent=2) + "\n")
+            result["registry"] = {"receipt": "registry-source/result.json", "schemas": "registry-source/schemas.json"}
         result["success"] = True
         return result
     except Exception as error:

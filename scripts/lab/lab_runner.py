@@ -7,15 +7,23 @@ device, and a sanitized result comment (public repository: no paths, serials, st
 Raw output stays local under work/coordination/lab-runner/<run>/. See docs/LAB_RUNNER.md.
 """
 
+import importlib.util
 import json
 import os
 import re
 import shlex
 import shutil
+import signal
 import subprocess
 import sys
 import time
 from pathlib import Path
+
+# The workflow copies both files from the same pinned origin/main commit.
+# Explicit sibling loading also works under python -I (no ambient PYTHONPATH).
+_TRANSPORT_SPEC = importlib.util.spec_from_file_location("lab_adb_transport", Path(__file__).with_name("adb_transport.py"))
+_TRANSPORT = importlib.util.module_from_spec(_TRANSPORT_SPEC)
+_TRANSPORT_SPEC.loader.exec_module(_TRANSPORT)
 
 USAGE = """`/lab <job> [ref=<branch|sha>] [device=<alias>] [-- args...]`
 jobs: `status`, `host-tests`, `preflight`, `doctor`, `dev <action> ...`, `script <repo path .py> ...`, `toolhost`"""
@@ -93,8 +101,8 @@ def battery_refusal(level, current_now, temp_tenths):
         return f"battery at {level} % (> 85 %)"
     if level >= 80 and current_now > 0:
         return "battery is actually charging at >= 80 %"
-    if temp_tenths >= 350:
-        return f"battery at {temp_tenths / 10:.1f} C (>= 35 C)"
+    if temp_tenths > 350:
+        return f"battery at {temp_tenths / 10:.1f} C (> 35 C)"
     return None
 
 
@@ -111,6 +119,8 @@ class Runner:
         self.devices = self.config.get("devices", {})
         self.adb = shutil.which("adb", path="/opt/homebrew/bin") or "adb"
         self.leases = self.repo / ".local/orchestrator/leases"
+        self.resume_state = None
+        self.reattached = False
 
     def secrets(self):
         return [*self.devices.values(), str(self.repo), str(Path.home())]
@@ -141,24 +151,57 @@ class Runner:
                 return 124
 
     def adb_sh(self, serial, *args):
-        result = subprocess.run([self.adb, "-s", serial, "shell", *args], capture_output=True, text=True, timeout=30)
-        return result.stdout.strip()
+        try:
+            readonly = args in (("dumpsys", "battery"), ("cat", "/sys/class/power_supply/battery/current_now"))
+            return _TRANSPORT.AdbTransport(self.adb, serial).run("shell", *args, label="runner-observation", timeout=30, idempotent=readonly).decode().strip()
+        except (_TRANSPORT.AdbError, UnicodeError):
+            raise CommandError("device observation unavailable") from None
 
     def battery(self, serial):
         dump = self.adb_sh(serial, "dumpsys", "battery")
         values = dict(re.findall(r"^\s*(level|temperature):\s*(\d+)", dump, re.M))
-        current = self.adb_sh(serial, "cat", "/sys/class/power_supply/battery/current_now") or "0"
-        return int(values.get("level", 0)), int(current) if current.lstrip("-").isdigit() else 0, int(values.get("temperature", 0))
+        current = self.adb_sh(serial, "cat", "/sys/class/power_supply/battery/current_now")
+        if set(values) != {"level", "temperature"} or not re.fullmatch(r"-?[0-9]+", current):
+            raise CommandError("device battery observation incomplete")
+        return int(values["level"]), int(current), int(values["temperature"])
 
     def take_lease(self, alias, serial):
         lease = self.leases / serial
         try:
             lease.mkdir(parents=True)
         except FileExistsError:
-            holder = next((p.read_text()[:200] for p in lease.glob("*.json")), "unknown holder")
-            raise CommandError(f"device {alias} is leased by another worker ({sanitize(holder, self.secrets())}); retry later") from None
+            if self.resume_state is None:
+                raise CommandError(f"device {alias} is leased; retry after its owner releases it") from None
+            owner = json.loads((lease / "lab-runner.json").read_bytes())
+            retained = json.loads((lease / "retain.json").read_bytes())
+            state = json.loads(self.resume_state.read_bytes())
+            if owner.get("workstream") != "lab-runner" or retained.get("state") != str(self.resume_state) or retained.get("job") != state.get("job"):
+                raise CommandError("emission retained lease identity mismatch")
+            try:
+                os.kill(owner["pid"], 0)
+            except ProcessLookupError:
+                pass
+            else:
+                raise CommandError("emission previous runner is still alive")
+            try:
+                (lease / "resume-claim").mkdir()
+            except FileExistsError:
+                raise CommandError("emission lease already has a resume claimant") from None
+            self.reattached = True
         (lease / "lab-runner.json").write_text(json.dumps({"workstream": "lab-runner", "pid": os.getpid(), "run": self.run_id}))
+        if self.reattached:
+            (lease / "resume-claim").rmdir()
         return lease
+
+    def admit_battery(self, serial):
+        for sample in range(3):
+            level, current, temperature = self.battery(serial)
+            refusal = battery_refusal(level, current, temperature)
+            if level > 85 or temperature > 350 or not refusal:
+                return refusal
+            if sample != 2:
+                time.sleep(10)
+        return refusal  # Three positive-current observations, ten seconds apart.
 
     def worktree(self, ref):
         path = self.repo / ".local/worktrees" / f"lab-run-{self.run_id}"
@@ -217,7 +260,7 @@ class Runner:
         try:
             if serial:
                 lease = self.take_lease(request["device"], serial)
-                refusal = battery_refusal(*self.battery(serial))
+                refusal = None if self.reattached else self.admit_battery(serial)
                 if refusal:
                     raise CommandError(f"device {request['device']} not admitted: {refusal}")
             py = str(checkout / ".local/lab-venv/bin/python")
@@ -235,12 +278,28 @@ class Runner:
             extra = {"LAB_TOOLHOST_ROOT": str(toolhosts)}
             if serial:
                 extra["LAB_DEVICE_SERIAL"] = serial
+                extra["LAB_RUNNER_LEASE"] = str(lease)
+                extra["LAB_CANONICAL_ROOT"] = str(self.repo)
             code = self.run(argv, checkout, extra_env=extra)
             return code, None
         finally:
             if lease:  # only a device this job leased; a refused lease belongs to another worker's live run
-                subprocess.run([self.adb, "-s", serial, "shell", "input", "keyevent", "KEYCODE_SLEEP"], capture_output=True, timeout=30)
-                shutil.rmtree(lease, ignore_errors=True)
+                try:
+                    _TRANSPORT.AdbTransport(self.adb, serial).run(
+                        "shell",
+                        "input",
+                        "keyevent",
+                        "KEYCODE_SLEEP",
+                        label="runner-display-sleep",
+                        timeout=30,
+                        idempotent=True,
+                    )
+                except _TRANSPORT.AdbError:
+                    with self.log.open("a") as log:
+                        log.write("WARNING: device display sleep unverified\n")
+                finally:
+                    if not (lease / "retain.json").exists():
+                        shutil.rmtree(lease, ignore_errors=True)
             self.run(["git", "-C", str(self.repo), "worktree", "remove", "--force", str(checkout)], self.repo, timeout=600)
             self.run([sys.executable, "scripts/prune-generated.py", "--apply"], self.repo, timeout=1800)
 
@@ -248,6 +307,63 @@ class Runner:
 def toolhost_summary(out):
     result = json.loads((out / "result.json").read_text()) if (out / "result.json").is_file() else {}
     return f"success={result.get('success')} apk_sha256={result.get('apk_sha256') or result.get('tool_apk_sha256')} dir=$LAB_TOOLHOST_ROOT/{out.name}"
+
+
+def local_emission(path, *, dry_run=False, resume=False, restage=False):
+    """Private request entry point; same script/worktree/lease owner as /lab."""
+    request = json.loads(Path(path).read_bytes())
+    configuration = request["runner"]
+    repo = Path(configuration["repo"]).resolve()
+    done = Path(request["done_file"])
+    if not done.is_absolute() or done != done.resolve() or not done.is_relative_to(repo / "work") or done.exists():
+        raise ValueError("emission-new-absolute-work-done-file-required")
+    if dry_run:
+        spec = importlib.util.spec_from_file_location("lab_toolhost_emission", Path(__file__).with_name("toolhost_emission.py"))
+        operation = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(operation)
+        _, files = operation.load_request(path)
+        print(json.dumps(dict(success=True, dry_run=True, files=len(files))))
+        return 0
+    result = dict(success=False)
+    runner = Runner(repo, {})
+    if resume or restage:
+        runner.resume_state = done.parent / "device-state.json"
+
+    def interrupt(number, frame):
+        raise InterruptedError("emission-runner-interrupted")
+
+    previous = {number: signal.signal(number, interrupt) for number in (signal.SIGTERM, signal.SIGINT, signal.SIGHUP)}
+    try:
+        command = "/lab script " + shlex.join(
+            [
+                "ref=" + configuration["ref"],
+                "device=" + configuration["device"],
+                "--",
+                "scripts/lab-installer-updates.py",
+                "--emission-request",
+                str(Path(path).resolve()),
+            ]
+        )
+        if resume:
+            command += " --resume-emission"
+        if restage:
+            command += " --resume-emission --restage-emission" if not resume else " --restage-emission"
+        code, _ = runner.execute(parse_command(command))
+        operation = done.with_suffix(".operation.json")
+        if operation.exists():
+            result.update(json.loads(operation.read_bytes()))
+        result.update(success=code == 0 and result.get("success") is True, exitcode=code)
+    except BaseException as error:
+        result.update(success=False, error=str(error) or type(error).__name__)
+    finally:
+        done.parent.mkdir(parents=True, exist_ok=True)
+        temporary = done.with_suffix(done.suffix + ".tmp")
+        temporary.write_text(json.dumps(result, indent=2) + "\n")
+        temporary.replace(done)
+        for number, handler in previous.items():
+            signal.signal(number, handler)
+        print("WAITING done-file " + str(done), flush=True)
+    return 0 if result["success"] else 1
 
 
 def main(env=os.environ):
@@ -284,4 +400,21 @@ def main(env=os.environ):
 
 
 if __name__ == "__main__":
+    if sys.argv[1:2] == ["--emission-request"]:
+        import argparse
+
+        parser = argparse.ArgumentParser(description="Current shared device runner: pinned toolhost emission request")
+        parser.add_argument("--emission-request", required=True)
+        mode = parser.add_mutually_exclusive_group()
+        mode.add_argument("--dry-run", action="store_true")
+        mode.add_argument("--resume-emission", action="store_true")
+        mode.add_argument("--restage-emission", action="store_true", help="Replace confirmed-terminal owned staging with newly pinned producers/inputs")
+        mode.add_argument("--refresh-emission-manifest", metavar="CHECKOUT", help="Host-only: repin repo producers from a clean committed checkout")
+        arguments = parser.parse_args()
+        if arguments.refresh_emission_manifest:
+            from toolhost_emission import refresh_manifest
+
+            print(json.dumps(refresh_manifest(arguments.emission_request, arguments.refresh_emission_manifest)))
+            sys.exit(0)
+        sys.exit(local_emission(arguments.emission_request, dry_run=arguments.dry_run, resume=arguments.resume_emission, restage=arguments.restage_emission))
     sys.exit(main())

@@ -2,6 +2,7 @@ import sys
 import hashlib
 import json
 import tempfile
+import itertools
 from unittest import mock
 import unittest
 from pathlib import Path
@@ -31,6 +32,149 @@ def samples(start, after, probes=0):
 
 
 class SessionMemoryCheckTests(unittest.TestCase):
+    def test_disconnected_process_observation_is_runner_error(self):
+        with tempfile.TemporaryDirectory() as temporary, ExitStack() as stack:
+            root = Path(temporary)
+            out = root / "evidence"
+            device = mock.Mock()
+            device.settings = {"storage_mode": "internal"}
+            device.owned.return_value = {"storage": {"mode": "internal"}, "package_path": "/data/app/fixture/base.apk"}
+            device.storage.return_value = {"mode": "internal"}
+            device.read_receipt.return_value = {"persistentDataPath": "/fixture/Android/data/dev.ror2lab.arm64/files"}
+            device.evidence_directory.return_value = out
+            device.launch.return_value = {"pid": "314"}
+
+            def shell(*args, check=True):
+                if args[:2] == ("sh", "-c"):
+                    self.assertTrue(check)
+                    raise RuntimeError("adb: device not found")
+                return ""
+
+            device.sh.side_effect = shell
+            for name, value in {
+                "WORK": root / "work",
+                "SessionCleanupDevice": mock.Mock(return_value=device),
+                "bind_installed_apk": mock.Mock(return_value=("0" * 64, "fixture")),
+                "attempt_from_installed": mock.Mock(return_value="attempt-1"),
+                "current_errors": mock.Mock(return_value=[]),
+            }.items():
+                stack.enter_context(mock.patch.object(memory, name, value))
+            stack.enter_context(mock.patch.object(memory.cleanup, "_remote_path_state", return_value="absent"))
+            stack.enter_context(mock.patch.object(memory.cleanup, "_stop_process", return_value=True))
+            with self.assertRaisesRegex(RuntimeError, "Session memory check failed.*device not found"):
+                check_session_memory(sessions=3, expected_apk_sha256="0" * 64)
+            result = json.loads((out / "result.json").read_text())
+            self.assertEqual(result["stop"], "runner-error")
+            self.assertEqual(result["first_failure"], "adb: device not found")
+            self.assertEqual(result["sessions_observed"], 0)
+            self.assertFalse(result["success"])
+            device.display.assert_called_with(False)
+
+    def test_native_loss_returns_through_menu_and_keeps_actual_cleanup_contract(self):
+        from test_session_cleanup_check import abandoned_report, completed_report, live_report, ordinary_start_report, session_one_defeat_report
+
+        for fault in (None, "profile", "cleanup", "session", "stalled-menu"):
+            with self.subTest(fault=fault), tempfile.TemporaryDirectory() as temporary, ExitStack() as stack:
+                root = Path(temporary)
+                out = root / "evidence"
+                device = mock.Mock()
+                device.settings = {"storage_mode": "internal"}
+                device.owned.return_value = {"storage": {"mode": "internal"}, "package_path": "/data/app/fixture/base.apk"}
+                device.storage.return_value = {"mode": "internal"}
+                device.read_receipt.return_value = {"persistentDataPath": "/fixture/Android/data/dev.ror2lab.arm64/files"}
+                device.evidence_directory.return_value = out
+                device.launch.return_value = {"pid": "314"}
+
+                def shell(*args, **kwargs):
+                    if args == ("wm", "size"):
+                        return "Physical size: 1280x800"
+                    if args == ("dumpsys", "window", "displays"):
+                        return "mDisplayRotation=ROTATION_0"
+                    return ""
+
+                device.sh.side_effect = shell
+
+                def menu(session):
+                    return dict(ordinary_start_report(), session=session)
+
+                def live(session, visible=False):
+                    report = live_report(session=session)
+                    report["settings"].update(visible=visible, canEndRun=visible)
+                    return report
+
+                defeat = dict(session_one_defeat_report(), session=2)
+                current = iter([menu(1), live(1), live(1, True), menu(2), live(2), defeat, defeat, menu(3), live(3), live(3, True), menu(4)])
+                if fault == "stalled-menu":
+                    current = itertools.chain([menu(1), live(1), live(1, True)], itertools.repeat(menu(2)))
+                completions = {i: dict(abandoned_report("Commando"), session=i) for i in (1, 3)}
+                completions[2] = completed_report(session=2)
+                if fault == "profile":
+                    completions[2]["profile"]["appliedRuns"] += 1
+                elif fault == "cleanup":
+                    completions[2]["objective"]["nativeHostDeathListenersAfter"] = 1
+                elif fault == "session":
+                    completions[2]["session"] = 1
+
+                def read_report(_device, path):
+                    for session, report in completions.items():
+                        if path.endswith(completed_name(session)):
+                            return report
+                    return next(current)
+
+                clock = itertools.count()
+                replacements = {
+                    "WORK": root / "work",
+                    "SessionCleanupDevice": mock.Mock(return_value=device),
+                    "bind_installed_apk": mock.Mock(return_value=("0" * 64, "fixture")),
+                    "attempt_from_installed": mock.Mock(return_value="attempt-1"),
+                    # The existing readiness contract has its own timed runner fixtures.
+                    "abandon_observation_failures": mock.Mock(return_value=[]),
+                    "current_errors": mock.Mock(return_value=[]),
+                }
+                for name, value in replacements.items():
+                    stack.enter_context(mock.patch.object(memory, name, value))
+                stack.enter_context(mock.patch.object(memory.cleanup, "_remote_path_state", return_value="absent"))
+                stack.enter_context(mock.patch.object(memory.cleanup, "_same_process", return_value=True))
+                stack.enter_context(mock.patch.object(memory.cleanup, "_read_json", side_effect=read_report))
+                stack.enter_context(mock.patch.object(memory.cleanup, "_stop_process", return_value=True))
+                stack.enter_context(mock.patch.object(memory.time, "monotonic", side_effect=lambda: next(clock)))
+                stack.enter_context(mock.patch.object(memory.time, "sleep"))
+                cooldown = mock.Mock(return_value={"battery": {"celsius": 35}})
+                if fault:
+                    with self.assertRaisesRegex(RuntimeError, "Session memory check failed"):
+                        check_session_memory(sessions=3, expected_apk_sha256="0" * 64, _between_sessions=cooldown)
+                else:
+                    check_session_memory(sessions=3, expected_apk_sha256="0" * 64, _between_sessions=cooldown)
+                result = json.loads((out / "result.json").read_text())
+                self.assertEqual(result["success"], fault is None)
+                # One Return to menu tap despite two identical defeat reports; never Restart.
+                self.assertEqual(device.sh.call_args_list.count(mock.call("input", "tap", "610", "420")), 0 if fault == "stalled-menu" else 1)
+                self.assertNotIn(mock.call("input", "tap", "207", "420"), device.sh.call_args_list)
+                if fault is None:
+                    self.assertEqual([row["ending"] for row in result["session_outcomes"]], ["abandon", "loss", "abandon"])
+                    self.assertTrue(all(row["host_ready_to_end_request_seconds"] > 0 for row in result["session_outcomes"]))
+                    self.assertEqual([row["world_seconds"] for row in result["session_outcomes"]], [10.0, 10.0, 10.0])
+                    self.assertIn("mixed-ending", result["growth"]["limits"])
+                    self.assertEqual(result["sessions_observed"], 3)
+                    self.assertEqual(cooldown.call_count, 2)
+                    self.assertEqual([row["before_session"] for row in result["cooldowns"]], [2, 3])
+                    self.assertTrue(all(row["seconds"] > 0 for row in result["cooldowns"]))
+                    self.assertIn("OLED-sleep cooldown", result["growth"]["limits"])
+                else:
+                    cooldown.assert_called_once()  # Session 1 passed; the second ending failed before another cooldown.
+                    self.assertEqual(result["sessions_observed"], 1)
+                    self.assertEqual(device.sh.call_args_list.count(mock.call("input", "tap", "100", "200")), 2)
+                    if fault == "stalled-menu":
+                        self.assertEqual(result["stop"], "offline-menu-start-not-acknowledged")
+                        self.assertEqual(result["first_failure"], "session 2 stayed at the menu after Start")
+                        self.assertFalse(result["runtime_errors"])
+                        device.display.assert_called_with(False)
+
+    def test_results_menu_coordinates_require_matching_grid(self):
+        report = {"hud": {"screenWidth": 1280, "screenHeight": 800}}
+        self.assertEqual(memory.results_menu_coordinates(report, "Physical size: 800x1280", "mDisplayRotation=ROTATION_90"), (610, 420))
+        self.assertIsNone(memory.results_menu_coordinates(report, "Physical size: 800x1280", "mDisplayRotation=ROTATION_0"))
+
     def test_runtime_error_retains_only_matching_current_report_before_stopping(self):
         for report_pid in ("123", "999"):
             with tempfile.TemporaryDirectory() as temporary, self.subTest(report_pid=report_pid), ExitStack() as stack:
@@ -181,6 +325,34 @@ class SessionMemoryCheckTests(unittest.TestCase):
         self.assertEqual(growth_summary(observed)["per_session_slope_from_session_2"]["managed_before_presentation_bytes"], 0)
         final_menu = [{"phase": "before-presentation", "managed": 400}]
         self.assertEqual(growth_summary(observed, final_menu)["per_session_slope_from_session_2"]["managed_before_presentation_bytes"], 150)
+
+    def test_late_observations_separate_continued_warmup_from_flat_tail(self):
+        observed = [{"session": index, "samples": samples(value, value)} for index, value in enumerate([10, 20, 40, 80, 80, 80, 80, 80], 1)]
+        summary = growth_summary(observed, [{"phase": "before-presentation", "managed": 80}])
+        self.assertGreater(summary["per_session_slope_from_session_2"]["managed_before_presentation_bytes"], 0)
+        self.assertEqual(
+            summary["last_half_observations"]["managed_before_presentation_bytes"],
+            {"first_index": 6, "last_index": 9, "samples": 4, "slope_per_session": 0},
+        )
+        self.assertEqual(summary["last_half_observations"]["managed_after_collection_bytes"]["last_index"], 8)
+
+    def test_pss_uses_the_following_menu_and_retains_menu_two(self):
+        observed = [{"session": index, "menu_pss_kib": pss} for index, pss in enumerate([100, 1000, 1000], 1)]
+        summary = growth_summary(observed)
+        self.assertEqual([row["menu_pss_session"] for row in summary["rows"]], [2, 3, 4])
+        self.assertEqual(summary["per_session_slope_from_session_2"]["menu_pss_kib"], 450)
+        self.assertEqual(
+            summary["last_half_observations"]["menu_pss_kib"],
+            {"first_index": 3, "last_index": 4, "samples": 2, "slope_per_session": 0},
+        )
+
+    def test_tail_coverage_counts_only_available_measurements(self):
+        summary = growth_summary([{"session": 1}, {"session": 2, "menu_pss_kib": 0}, {"session": 3}])
+        self.assertEqual(
+            summary["last_half_observations"]["menu_pss_kib"],
+            {"first_index": 3, "last_index": 3, "samples": 1, "slope_per_session": None},
+        )
+        self.assertEqual(summary["last_half_observations"]["managed_after_collection_bytes"]["samples"], 0)
 
     def test_refuses_bad_counts_and_unbound_apk_before_device_access(self):
         with self.assertRaises(ValueError):

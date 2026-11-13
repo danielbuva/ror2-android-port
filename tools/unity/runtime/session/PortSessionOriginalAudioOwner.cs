@@ -366,9 +366,17 @@ public sealed class PortSessionOriginalAudioOwner : MonoBehaviour
                 }
             }
 
+            string lastAudioBlocker = GameAudioOriginalOwner.StartupBlocker;
+            TraceStartup("audio-wait-blocker:" + lastAudioBlocker);
             while (!GameAudioOriginalOwner.Ready && !GameAudioOriginalOwner.HasTerminalFailure &&
                    Time.realtimeSinceStartup - startedAt < StartupDeadlineSeconds)
             {
+                string blocker = GameAudioOriginalOwner.StartupBlocker;
+                if (blocker != lastAudioBlocker)
+                {
+                    lastAudioBlocker = blocker;
+                    TraceStartup("audio-wait-blocker:" + blocker);
+                }
                 elapsed = Time.realtimeSinceStartup - startedAt;
                 yield return null;
             }
@@ -378,19 +386,24 @@ public sealed class PortSessionOriginalAudioOwner : MonoBehaviour
                 GameAudioOriginalOwner.AbandonPreparationBeforeOriginalInit();
             }
             TraceStartup("audio-readiness-observed");
+            TraceStartup("audio-readiness-callbacks last-polled-blocker=" + lastAudioBlocker + " " +
+                         GameAudioOriginalOwner.CaptureStartupTiming());
             if (GameAudioOriginalOwner.Ready && GameAudioOriginalOwner.OptInRequested)
             {
                 if (!RoR2.WwiseIntegrationManager.noAudio)
                 {
                     try
                     {
+                        TraceStartup("audio-network-catalog-begin");
                         OriginalNetworkSoundEventCatalogOwner.InitializeBeforeWorld(
                             explicitlyRequested: true,
                             noAudio: RoR2.WwiseIntegrationManager.noAudio,
                             originalAudioReady: GameAudioOriginalOwner.Ready,
                             originalTermsReturned: GameAudioOriginalOwner.OriginalTermsReturned,
                             nativeEngineInitialized: AkSoundEngine.IsInitialized(),
-                            originalCatalogLeaseHeld: WholeCatalogComposed.OriginalAudioLeaseHeld);
+                            originalCatalogLeaseHeld: WholeCatalogComposed.OriginalAudioLeaseHeld,
+                            trace: step => TraceStartup("audio-network-family-" + step));
+                        TraceStartup("audio-network-catalog-returned");
                     }
                     catch
                     {
@@ -400,8 +413,10 @@ public sealed class PortSessionOriginalAudioOwner : MonoBehaviour
                         throw; // Preserve the exception; PortSession records the explicit startup refusal.
                     }
                 }
+                TraceStartup("audio-music-owner-begin");
                 AttachOriginalBankReleaseWakeup();
                 PortSessionOriginalMusicControllerOwner.StartForReadyAudio(this, explicitlyRequested: true);
+                TraceStartup("audio-music-owner-returned");
             }
         }
         finally

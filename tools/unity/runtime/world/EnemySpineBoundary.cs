@@ -289,6 +289,7 @@ public sealed partial class PortSession
             var context = PrepareEnemyContext(player, cfg);
             while (context.MoveNext())
                 yield return context.Current;
+            TraceStartup("enemy-context-ready");
             var fixture = SpawnAndObserveEnemyFixture(player, cfg);
             while (fixture.MoveNext())
                 yield return fixture.Current;
@@ -405,11 +406,7 @@ public sealed partial class PortSession
                         field.SetValue(sfx, null);
             var sourceMaterial = coordinator.artifactBundle.LoadAsset<Material>(cfg.enemyMaterialAsset);
             enemyMaterial = new Material(sourceMaterial);
-            enemyMaterial.shader = Resources.Load<Shader>("CommandoMaterialPreview");
-            enemyMaterial.shaderKeywords = new string[0];
-            enemyMaterial.SetTexture("_MainTex", sourceMaterial.GetTexture("_MainTex"));
-            enemyMaterial.SetColor("_Color", sourceMaterial.GetColor("_Color") * 2);
-            enemyMaterial.SetFloat("_EmissionEnabled", 0); // Opaque diagnostic preview; source alpha is not a cutout contract.
+            AndroidMaterialPresentation.Apply(sourceMaterial, enemyMaterial);
             foreach (var renderer in model.GetComponentsInChildren<Renderer>(true))
             {
                 renderer.gameObject.layer = 30;

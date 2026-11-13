@@ -133,6 +133,7 @@ class BuildEntryTests(unittest.TestCase):
             "SourceIdentityTransformParityFixture",
             "MercEvisImpactEffectExactEditorFixture",
             "WholeCatalogBuild",
+            "WholeCatalogHost",
         ):
             self.put(self.root / "tools/catalog" / (name + ".cs"), "class " + name + " {}")
         self.put(self.root / "tools/android-write-interruption/LabPendingWriteStop.java", "class LabPendingWriteStop {}")
@@ -187,6 +188,12 @@ class BuildEntryTests(unittest.TestCase):
 
     def r7_run(self):
         replay.build_entries(self.dest, self.work, self.input_id, self.r7, self.provenance)
+
+    def test_build_restages_catalog_host_after_runtime_contract_changes(self):
+        target = self.project / "Assets/Editor/WholeCatalogHost.cs"
+        self.put(target, "stale fixture with removed runtime fields")
+        whole_catalog.stage_editor_sources(StageIO(self.work))
+        self.assertEqual(target.read_bytes(), (self.root / "tools/catalog/WholeCatalogHost.cs").read_bytes())
 
     def r8_run(self):
         replay.runtime_sources(self.dest, self.work, self.input_id, self.r8, self.provenance)

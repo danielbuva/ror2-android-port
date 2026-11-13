@@ -133,6 +133,7 @@ namespace UnityEngine.AddressableAssets
     }
     public static class Addressables
     {
+        public static readonly List<IResourceLocator> ResourceLocators = new List<IResourceLocator>();
         public static readonly Manager ResourceManager = new Manager();
         public static void Release(AsyncOperationHandle<IAssetBundleResource> handle)
         {
@@ -174,17 +175,19 @@ public static partial class GameAudioOriginalOwner
 {
     public static bool OriginalManagerInitClaimed, NativeInitAttemptObserved, OriginalTermsReturned;
 }
-public static class WholeCatalogLoader { public static IResourceLocator locator; }
+public static class WholeCatalogLoader { public static IResourceLocator locator; public static void StopRequestLogging() {} }
 public static partial class WholeCatalogComposed
 {
     static AssetBundle owned;
     static IResourceLocator ownedLocator;
     static IResourceLocator[] priorLocators;
     static WeakReference currentManifest;
+    static WeakReference definitionManifest;
     static string activeInputId, activeAttempt, activeManifestSha256;
     static int lastDetachedAssetOperations;
     static HashSet<string> borrowedNames;
     static readonly List<WeakReference> releasedLocators = new List<WeakReference>(), releasedManifests = new List<WeakReference>();
+    static int releasedCatalogGenerations;
     static readonly Dictionary<string, UnityEngine.Object[]> definitionFamilies = new Dictionary<string, UnityEngine.Object[]>();
     static class BorrowedAssetProvider { public static void ResetFailures() { } }
     sealed class Locator : IResourceLocator { }
@@ -200,6 +203,34 @@ public static partial class WholeCatalogComposed
         ownedLocator = new Locator();
         currentManifest = new WeakReference(new object());
         priorLocators = new IResourceLocator[0];
+    }
+    public static void VerifyReleasedRetention(string manifest)
+    {
+        var locator = new Locator();
+        var document = new object();
+        var liveLocator = new WeakReference(locator);
+        var liveManifest = new WeakReference(document);
+        releasedLocators.AddRange(new[] { liveLocator, new WeakReference(null), null });
+        releasedManifests.AddRange(new[] { new WeakReference(null), null, liveManifest });
+        releasedCatalogGenerations = 7;
+        for (int report = 0; report < 2; report++)
+        {
+            var counts = ReleasedCatalogRetention();
+            if (!counts.SequenceEqual(new[] { 7, 1, 1, Addressables.ResourceLocators.Count(), 0 }) ||
+                releasedLocators.Count != 1 || releasedManifests.Count != 1 ||
+                !ReferenceEquals(releasedLocators[0], liveLocator) || !ReferenceEquals(releasedManifests[0], liveManifest))
+                throw new Exception("Retention must remove only dead/null wrappers and preserve history");
+        }
+        ConfigureForHost(manifest);
+        Release();
+        if (ReleasedCatalogRetention()[0] != 8)
+            throw new Exception("Real release must increment generation exactly once");
+        Release();
+        if (ReleasedCatalogRetention()[0] != 8)
+            throw new Exception("Redundant release must not increment generation");
+        GC.KeepAlive(locator);
+        GC.KeepAlive(document);
+        Console.WriteLine("{\"generations\":8,\"retained_live_pairs\":1,\"pruned_wrappers\":4}");
     }
     public static void CheckGraph(string root, IDictionary<string, string[]> graph, IEnumerable<AssetBundle> loaded)
     {
@@ -411,6 +442,7 @@ public static class RetainedCatalogHost
             File.WriteAllText(Path.Combine(Application.persistentDataPath, "payload", Root), "authored-placeholder");
             if (arguments.Single() == "restart") Restart();
             else if (arguments.Single() == "termination") Termination();
+            else if (arguments.Single() == "retention") WholeCatalogComposed.VerifyReleasedRetention(manifestPath);
             else Refusals();
             return 0;
         }

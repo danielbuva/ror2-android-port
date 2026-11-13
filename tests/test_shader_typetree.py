@@ -33,6 +33,15 @@ def schema():
         rows.append(struct.pack("<hBBIIiiiQ", 1, level, 0, offset(typ), offset(name), -1, len(rows), meta, 0))
 
     add(0, "Shader", "Base")
+    add(1, "unsigned int", "m_ObjectHideFlags")
+    for name in ("m_CorrespondingSourceObject", "m_PrefabInstance", "m_PrefabAsset"):
+        add(1, "PPtr<Prefab>", name)
+        add(2, "int", "m_FileID")
+        add(2, "SInt64", "m_PathID")
+    add(1, "set", "keywords")
+    add(2, "Array", "Array", 0x4000)
+    add(3, "int", "size")
+    add(3, "string", "data")
     add(1, "string", "m_Name")
     add(1, "map", "tags")
     add(2, "Array", "Array", 0x4000)
@@ -51,6 +60,11 @@ class ShaderTreeTests(unittest.TestCase):
         node = W.shader_node(blob)
         independent = TypeTreeNode.parse_blob(EndianBinaryReader(blob, endian="<"), 22)
         value = {
+            "m_ObjectHideFlags": 0,
+            "m_CorrespondingSourceObject": {"m_FileID": 0, "m_PathID": 0},
+            "m_PrefabInstance": {"m_FileID": 0, "m_PathID": 0},
+            "m_PrefabAsset": {"m_FileID": 0, "m_PathID": 0},
+            "keywords": ["FIRST", "SECOND"],
             "m_Name": "authored 𐐷 shader",
             "tags": [("duplicate", -7), ("duplicate", 12)],
             "int": -12,

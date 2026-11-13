@@ -25,7 +25,7 @@ public sealed partial class PortSession
         public int navigationTicks, navigationAgents, navigationAgentPeak;
         public float navigationTime, navigationPathUpdate;
         public string navigationError;
-        public int participatingPlayers, livingPlayers, creditSteps, monsterLimit, masterIndex, selectedCardWeight;
+        public int participatingPlayers, livingPlayers, creditSteps, monsterLimit, restoredMonsterLimit, masterIndex, selectedCardWeight;
         public float seconds, fixedSeconds, scheduledCreditSeconds, creditPeak, creditAfter, spent, spawnDistance, minDistance, maxDistance;
         public Vector3 position;
         public string scope;
@@ -113,6 +113,60 @@ public sealed partial class PortSession
         GetAutomaticDirectorSession().ReleaseDirectorAssets();
     }
 
+    sealed class DirectorStartupWork
+    {
+        public bool enabled = true;
+        int calls;
+        long totalTicks, maxTicks;
+        public void Run(Action work)
+        {
+            if (!enabled)
+            {
+                work();
+                return;
+            }
+            long began = System.Diagnostics.Stopwatch.GetTimestamp();
+            try
+            {
+                work();
+            }
+            finally
+            {
+                Record(began);
+            }
+        }
+        public void Run<T>(Action<T> work, T value)
+        {
+            if (!enabled)
+            {
+                work(value);
+                return;
+            }
+            long began = System.Diagnostics.Stopwatch.GetTimestamp();
+            try
+            {
+                work(value);
+            }
+            finally
+            {
+                Record(began);
+            }
+        }
+        void Record(long began)
+        {
+            long ticks = System.Diagnostics.Stopwatch.GetTimestamp() - began;
+            calls++;
+            totalTicks += ticks;
+            maxTicks = Math.Max(maxTicks, ticks);
+        }
+        public string Summary(string name)
+        {
+            return string.Format(System.Globalization.CultureInfo.InvariantCulture,
+                                 "{0}Calls={1} {0}Seconds={2:R} {0}MaxSeconds={3:R}", name, calls,
+                                 (double)totalTicks / System.Diagnostics.Stopwatch.Frequency,
+                                 (double)maxTicks / System.Diagnostics.Stopwatch.Frequency);
+        }
+    }
     // Create on first use, including Unity ticks before setup, and retain after
     // Dispose: director cleanup precedes the separate asset release at its call site.
     sealed class AutomaticDirectorSession : IDisposable
@@ -120,6 +174,7 @@ public sealed partial class PortSession
         readonly PortSession coordinator;
         bool directorPlayerRegistered;
         GameObject[] directorTeamEffects;
+        int? priorSustainedMonsterLimit;
         object priorDirectorEliteTiers;
         readonly Dictionary<FieldInfo, object> directorMasterFields = new Dictionary<FieldInfo, object>();
         IDictionary directorMasterMap;
@@ -293,6 +348,7 @@ public sealed partial class PortSession
             coordinator.Check(directorTeamEffects.All(x => x) && directorTeamEffects[0].name == "LevelUpEffect" &&
                                   directorTeamEffects[1].name == "LevelUpEffectEnemy" && monster.softCharacterLimit == 40,
                               "Original team limit/effect contracts missing");
+            PrepareSustainedPopulationLimit();
             yield return null;
         }
         // Native global initialization is kept separate from fixture deck/host activation.
@@ -318,6 +374,7 @@ public sealed partial class PortSession
         // deliberately does not select a one-card deck, activate a director, or spawn actors.
         MasterCatalog.MasterIndex PrepareNativeDirectorCatalogAndPlayerContext(GameObject template, CharacterBody player, SessionConfig cfg)
         {
+            TraceStartup("director-catalog-preparation-begin");
             foreach (var name in new[] { "masterPrefabs", "masterPrefabMasterComponents", "aiMasterPrefabs", "masterNames" })
             {
                 var field = RewardField(typeof(MasterCatalog), name);
@@ -328,8 +385,10 @@ public sealed partial class PortSession
             directorMasterMap = (IDictionary)RewardField(typeof(MasterCatalog), "nameToIndexMap").GetValue(null);
             coordinator.Check(directorMasterMap.Count == 0 && DirectorRequestedMasters().Count == 0 && DirectorMessageMasters().Count == 0,
                               "Existing preload/catalog state");
+            TraceStartup("director-objective-templates-begin");
             if (cfg.teleporterLoop)
                 coordinator.PrepareObjectiveActorTemplates(cfg);
+            TraceStartup("director-objective-templates-ready-master-family-begin");
             var adaptedMasters = (template ? new[] { template } : Array.Empty<GameObject>())
                                      .Concat(coordinator.objectiveTemplates.Where(x => x.GetComponent<CharacterMaster>()))
                                      .ToArray();
@@ -337,16 +396,21 @@ public sealed partial class PortSession
             if (coordinator.r.liveCatalogs != null)
             {
                 var originals =
-                    WholeCatalogComposed.CategoryFamily(RoR2.ContentManagement.AddressablesLabels.characterMaster, new GameObject[0]);
+                    WholeCatalogComposed.CategoryFamily(null, RoR2.ContentManagement.AddressablesLabels.characterMaster,
+                                                        new GameObject[0], step => TraceStartup("director-master-family-" + step));
                 var byName = adaptedMasters.ToDictionary(value => value.name, StringComparer.Ordinal);
                 coordinator.Check(byName.Keys.All(name => originals.Any(value => value.name == name)),
                                   "Owned adapted master absent from original provider category");
+                TraceStartup("director-master-family-ready-templates-begin");
                 masters = coordinator.PrepareWholeMasterTemplates(originals, adaptedMasters);
+                TraceStartup("director-master-templates-ready");
                 coordinator.r.liveCatalogs.masters = masters.Length;
                 coordinator.r.liveCatalogs.adaptedMasters =
                     masters.Count(value => coordinator.objectiveTemplates.Contains(value) || adaptedMasters.Contains(value));
             }
+            TraceStartup("director-master-catalog-set-begin");
             StaticCall(typeof(MasterCatalog), "SetEntries", new object[] { masters });
+            TraceStartup("director-master-catalog-set-ready");
             var catalogTemplate = template;
             if (!catalogTemplate)
             {
@@ -371,6 +435,7 @@ public sealed partial class PortSession
                                   !coordinator.directorPlayer.networkUser,
                               "Original participant/body counts or unavailable user contract changed");
             coordinator.StartOriginalRunClock();
+            TraceStartup("director-catalog-player-ready");
             return index;
         }
 
@@ -423,6 +488,27 @@ public sealed partial class PortSession
                               "Original player registration missing or duplicated");
         }
 
+        void PrepareSustainedPopulationLimit()
+        {
+            if (!coordinator.r.combatPerformanceFocus)
+                return;
+            // Bounded assisted workload, not an ordinary-play performance claim.
+            // Preserve native selection, credits, health and combat; only its
+            // existing spawn-admission limit differs for this diagnostic session.
+            var monster = TeamCatalog.GetTeamDef(TeamIndex.Monster);
+            priorSustainedMonsterLimit = monster.softCharacterLimit;
+            monster.softCharacterLimit = 12;
+        }
+        void RestoreSustainedPopulationLimit()
+        {
+            if (!priorSustainedMonsterLimit.HasValue)
+                return;
+            var monster = TeamCatalog.GetTeamDef(TeamIndex.Monster);
+            monster.softCharacterLimit = priorSustainedMonsterLimit.Value;
+            priorSustainedMonsterLimit = null;
+            if (coordinator.r.director != null)
+                coordinator.r.director.restoredMonsterLimit = monster.softCharacterLimit;
+        }
         public IEnumerator PrepareNativeFirstStageDirectorContext(CharacterBody player, SessionConfig cfg)
         {
             coordinator.Check(
@@ -442,6 +528,8 @@ public sealed partial class PortSession
                 scope =
                     "Native source-stage directors and complete accepted stage pool; no early diagnostic actor spawn or Beetle assertions."
             };
+            if (coordinator.r.combatPerformanceFocus)
+                coordinator.r.director.scope += " Assisted sustained workload: native monster soft limit 12; original limit restored at teardown.";
             var tiers = PrepareNativeDirectorEliteTiers();
             while (tiers.MoveNext())
                 yield return tiers.Current;
@@ -488,6 +576,8 @@ public sealed partial class PortSession
             if (cfg.integratedWorld)
                 coordinator.r.director.scope =
                     "Continuous original enabled fast director, one original base Beetle card and real team limit/credits/placement; no artificial spawn cutoff. Original Run clock with unavailable stock startup/user/profile/progression.";
+            if (coordinator.r.combatPerformanceFocus)
+                coordinator.r.director.scope += " Assisted sustained workload: native monster soft limit 12; original limit restored at teardown.";
             coordinator.r.phase = "automatic-director-context";
             coordinator.Save();
             coordinator.Check(RunArtifactManager.instance &&
@@ -540,7 +630,8 @@ public sealed partial class PortSession
             coordinator.Check(coordinator.r.director.sourceSettings, "Original fast director settings changed");
             coordinator.rewardDirector.monsterCards = coordinator.automaticDeck;
             var spawningDirector = coordinator.rewardDirector;
-            spawningDirector.onSpawnedServer.AddListener(
+            var spawnWork = new DirectorStartupWork { enabled = false };
+            Action<GameObject> recordSpawn =
                 obj =>
                 {
                     coordinator.RecordRewardSpawn(obj);
@@ -561,7 +652,8 @@ public sealed partial class PortSession
                         coordinator.r.director.stopped = true;
                         coordinator.r.director.stoppedAt = Time.realtimeSinceStartup - coordinator.automaticDirectorBegan;
                     }
-                });
+                };
+            spawningDirector.onSpawnedServer.AddListener(obj => spawnWork.Run(recordSpawn, obj));
             if (cfg.teleporterLoop)
             {
                 // Original charging disables CombatDirectors attached to DirectorCore, not descendants.
@@ -583,8 +675,12 @@ public sealed partial class PortSession
             coordinator.Check(CombatDirector.instancesList.Contains(coordinator.rewardDirector),
                               "Original natural director registration missing");
             float previous = 0;
+            var saveWork = new DirectorStartupWork();
+            var summonsWork = new DirectorStartupWork();
             try
             {
+                spawnWork.enabled = true;
+                TraceStartup("director-scheduled-spawn-wait-begin");
                 while (!coordinator.enemyBody && Time.realtimeSinceStartup - coordinator.automaticDirectorBegan < 55)
                 {
                     yield return new WaitForEndOfFrame();
@@ -596,15 +692,25 @@ public sealed partial class PortSession
                     coordinator.r.director.creditPeak = Mathf.Max(coordinator.r.director.creditPeak, credit);
                     coordinator.r.director.originalTarget |= coordinator.rewardDirector.currentSpawnTarget == player.gameObject;
                     if (Time.frameCount % 30 == 0)
-                        coordinator.Save();
+                        saveWork.Run(coordinator.Save);
                 }
             }
             finally
             {
-                coordinator.CaptureRewardSummons(template.GetComponent<CharacterMaster>().bodyPrefab, template);
+                try
+                {
+                    summonsWork.Run(() => coordinator.CaptureRewardSummons(template.GetComponent<CharacterMaster>().bodyPrefab, template));
+                }
+                finally
+                {
+                    spawnWork.enabled = false;
+                }
             }
             coordinator.Check(coordinator.enemyBody && coordinator.r.rewards.spawnEvents == 1 && coordinator.r.rewards.summonEvents == 1,
                               "Original scheduled spawn timed out");
+            TraceStartup("director-scheduled-spawn-work " + saveWork.Summary("save") + " " + spawnWork.Summary("spawn") + " " +
+                         summonsWork.Summary("summons"));
+            TraceStartup("director-scheduled-spawn-ready");
             yield return null;
             coordinator.r.director.creditAfter = coordinator.rewardDirector.monsterCredit;
             coordinator.r.director.spent = coordinator.rewardDirector.totalCreditsSpent;
@@ -640,6 +746,7 @@ public sealed partial class PortSession
         }
         public void Dispose()
         {
+            RestoreSustainedPopulationLimit();
             if (coordinator.r.nativeFirstStageLifecycleDiagnosticAttempt && nativeSourceDirectorRoot)
             {
                 var directors = nativeSourceDirectorRoot.GetComponents<CombatDirector>();

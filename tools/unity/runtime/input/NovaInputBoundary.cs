@@ -71,6 +71,11 @@ public sealed partial class PortSession
     {
         public bool originalAimAnimator, characterMatteApproximation;
         public float aimPitchCycle, aimYawCycle;
+        public string nativeMovementState;
+        public bool nativeMovementCacheAvailable, nativeMovementCachedIsMoving, nativeMovementCachedForwardSpeed,
+                    nativeMovementCachedRightSpeed, animatorIsMoving;
+        public float animatorForwardSpeed, animatorRightSpeed, animatorBaseStateTime;
+        public int animatorBaseStateHash;
         public Vector3 modelForward;
         public bool novaOnly, originalInputConsumer, stopped, aimConsumed, rendersOriginalModel, diagnosticInput;
         public bool commandoPrimaryDiagnostic;
@@ -257,6 +262,7 @@ public sealed partial class PortSession
         }
         public IEnumerator NovaInputBoundary(CharacterBody body, EntityStateMachine machine, SessionConfig cfg)
         {
+            TraceStartup("nova-input-preparation-begin");
             bool spine = coordinator.IsPlayableSpine(), bringup = coordinator.r.id.EndsWith("-bringup", StringComparison.Ordinal);
             bool commandoPrimaryDiagnostic = spine && IsCommandoPrimaryDiagnosticBody(body);
             coordinator.r.integratedWorld = cfg.integratedWorld;
@@ -358,6 +364,7 @@ public sealed partial class PortSession
                     Debug.Log("Integrated loading presentation interval=" + UnityEngine.Rendering.OnDemandRendering.renderFrameInterval +
                               " targetFrameRate=" + Application.targetFrameRate + " at=" + Time.realtimeSinceStartup);
                 }
+                TraceStartup("nova-landing-ready-display-begin");
                 // Diagnostic aim stance only; original state/direction still choose and turn toward bank aim.
                 body.SetAimTimer(130);
                 display = new NovaDiagnosticDisplay(body.modelLocator.modelTransform, coordinator.artifactBundle, cfg.displayAssets,
@@ -389,24 +396,32 @@ public sealed partial class PortSession
                     display.EnableNativeAimAfterAnimatorReady();
                 }
                 coordinator.r.framePacing = display.presentationCameraReport;
+                if (coordinator.r.rawFrameTimesRequested && display.presentationCamera)
+                    display.presentationCamera.BeginRawFrameCapture();
+                TraceStartup("nova-display-ready-combat-begin");
                 if (cfg.stageGeometry)
                     display.camera.cullingMask |= LayerIndex.world.mask;
                 if (cfg.combatSpine)
                     coordinator.PrepareCombatScene(body, cfg);
                 if (cfg.originalRunClock)
                 {
+                    TraceStartup("nova-run-context-begin");
                     var sceneContext = coordinator.PrepareRunSceneContext(cfg);
                     while (sceneContext.MoveNext())
                         yield return sceneContext.Current;
+                    TraceStartup("nova-run-context-ready");
                 }
                 if (!string.IsNullOrEmpty(cfg.playerDeathEffectAsset))
                 {
+                    TraceStartup("nova-defeat-preparation-begin");
                     var defeatSetup = coordinator.PreparePlayerDefeat(body, cfg);
                     while (defeatSetup.MoveNext())
                         yield return defeatSetup.Current;
+                    TraceStartup("nova-defeat-preparation-ready");
                 }
                 if (cfg.enemySpine)
                 {
+                    TraceStartup("nova-enemy-preparation-begin");
                     bool nativeFirstStageAttempt = coordinator.r.nativeFirstStageLifecycleDiagnosticAttempt;
                     if (nativeFirstStageAttempt)
                         coordinator.Check(
@@ -424,6 +439,7 @@ public sealed partial class PortSession
                         nativeFirstStageAttempt ? coordinator.PrepareEnemyContext(body, cfg) : coordinator.PrepareEnemy(body, cfg);
                     while (enemyRoutine.MoveNext())
                         yield return enemyRoutine.Current;
+                    TraceStartup("nova-enemy-preparation-ready");
                 }
                 if (cfg.integratedWorld)
                 {
@@ -481,7 +497,7 @@ public sealed partial class PortSession
                 if (cfg.integratedWorld)
                 {
                     UnityEngine.Rendering.OnDemandRendering.renderFrameInterval = priorRenderFrameInterval;
-                    Application.targetFrameRate = 300;
+                    coordinator.GetOfflineApplicationSession().ReapplyDisplayPreference();
                     Debug.Log("Integrated playing presentation interval=" + UnityEngine.Rendering.OnDemandRendering.renderFrameInterval +
                               " targetFrameRate=" + Application.targetFrameRate + " at=" + Time.realtimeSinceStartup);
                     coordinator.r.performance =
@@ -634,7 +650,7 @@ public sealed partial class PortSession
                         continue;
                     }
                     coordinator.ObserveAutomaticModelFollow(body);
-                    display.ObserveNativeAim(coordinator.r.nova);
+                    display.ObserveNativeAim(coordinator.r.nova, machine);
                     TemporaryOverlayManager.OverlayUpdate();
                     coordinator.Check(string.IsNullOrEmpty(bridge.error), "Nova bridge input failure: " + bridge.error);
                     coordinator.Check((cfg.combatSpine || machine.state == state) && body.gameObject.activeInHierarchy &&
@@ -1104,7 +1120,7 @@ public sealed partial class PortSession
                         solver.SetGroundSolvingActivation(false);
                     }
                     coordinator.worldView = null;
-                    Application.targetFrameRate = priorTargetFrameRate;
+                    coordinator.GetOfflineApplicationSession().RestoreGameplayFrameRate(priorTargetFrameRate);
                     if (ownsScreenSleepTimeout)
                         Screen.sleepTimeout = sleepTimeout;
                 }

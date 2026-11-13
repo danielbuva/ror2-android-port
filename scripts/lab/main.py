@@ -2,6 +2,16 @@ import argparse
 import sys
 from common import *
 
+if len(sys.argv) > 1 and sys.argv[1] == "device-session":
+    from device_session import main
+
+    sys.exit(main(sys.argv[2:]))
+
+if len(sys.argv) > 1 and sys.argv[1] == "shared-build":
+    from shared_checkout_build import main
+
+    sys.exit(main(sys.argv[2:]))
+
 if len(sys.argv) > 1 and sys.argv[1] == "lane" or os.environ.get("LAB_LANE"):
     from build_lanes import main, dispatch
 
@@ -16,6 +26,8 @@ p = argparse.ArgumentParser(
     formatter_class=argparse.RawDescriptionHelpFormatter,
     epilog="""Command lifecycle (current tooling does not imply game readiness):
   lane: current
+  device-session: current
+  shared-build: current
   diagnostics: current
   migrate-device-receipts: current
   test: current
@@ -50,6 +62,8 @@ p.add_argument(
     "command",
     choices=[
         "lane",
+        "device-session",
+        "shared-build",
         "diagnostics",
         "migrate-device-receipts",
         "test",
@@ -141,7 +155,7 @@ p.add_argument(
 )
 p.add_argument("--assembly")
 p.add_argument("--target", default="lab")
-p.add_argument("--action", help="Current build-hook-pins: check (default) or refresh reviewed source hashes; other command actions default to inspect")
+p.add_argument("--action", help="build-hook-pins: check (current, default) or refresh (current) reviewed hashes; other actions default to inspect")
 p.add_argument(
     "--profile-scope",
     choices=("pid", "app"),
@@ -150,6 +164,7 @@ p.add_argument(
 )
 p.add_argument("--subtree", default="")
 p.add_argument("--fields", action="store_true")
+p.add_argument("--scene-details", action="store_true", help="Include full scene inspection in periodic diagnostics (current; adds scene scans)")
 p.add_argument("--disable", action="store_true")
 p.add_argument("--sessions", type=int, help="Current: session-memory-check/root-check series length, 3 to 32 (default: 5); automatic diagnostic input only")
 p.add_argument(
@@ -332,7 +347,7 @@ try:
         if not path.endswith("/Android/data/" + __import__("device").PACKAGE + "/files"):
             raise RuntimeError("Unexpected diagnostics path")
         payload = d.receipt("diagnostics.json")
-        d.write_receipt("diagnostics.json", {"enabled": not a.disable, "subtree": a.subtree, "fields": a.fields})
+        d.write_receipt("diagnostics.json", {"enabled": not a.disable, "subtree": a.subtree, "fields": a.fields, "sceneDetails": a.scene_details})
         d.cmd("push", str(payload), path + "/diagnostics.json")
         print(json.dumps({"success": True, "config": read(payload)}))
     elif a.command == "build-hook-pins":

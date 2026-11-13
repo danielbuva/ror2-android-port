@@ -19,6 +19,7 @@ def module(name):
 
 BUNDLE = module("unity_bundle")
 MESH = module("mesh_produce")
+O = module("object_produce")
 
 
 def reorder(body, field, order):
@@ -47,7 +48,9 @@ def reorder(body, field, order):
     return body[: start + 4] + b"".join(entries[index] for index in order) + body[end:]
 
 
-def produce(profile_path, profile_sha256, pc, output):
+def produce(profile_path, profile_sha256, pc, output, comparison="exact"):
+    if comparison not in ("exact", "diagnostic"):
+        raise ValueError("unknown target comparison policy")
     if BUNDLE.sha(profile_path) != profile_sha256:
         raise ValueError("Avatar profile drift")
     profile = json.loads(profile_path.read_text())
@@ -66,6 +69,8 @@ def produce(profile_path, profile_sha256, pc, output):
     output.mkdir()
     started = time.monotonic()
     receipt = {"success": False, "input_id": MESH.INPUT_ID, "profile_sha256": profile_sha256, "objects": 0, "object_bytes": 0}
+    receipt.update(comparison=comparison, historical_mismatches=0)
+    types, type_ids = [], {}
     try:
         with (output / "objects.bin").open("xb") as data, (output / "index.jsonl").open("x") as index:
             for selected in profile["bundles"]:
@@ -76,7 +81,13 @@ def produce(profile_path, profile_sha256, pc, output):
                 bundle = BUNDLE.Bundle(path)
                 for selected_member in selected["members"]:
                     member = bundle.member(selected_member["name"])
+                    metadata = O.W.read_serialized(member)
+                    objects = {row["path_id"]: row for row in metadata["objects"]}
                     for avatar in selected_member["avatars"]:
+                        obj = objects[avatar["path_id"]]
+                        typ = metadata["types"][obj["type_id"]]
+                        if typ["class_id"] != 90 or (metadata["data_offset"] + obj["offset"], obj["bytes"]) != (avatar["offset"], avatar["bytes"]):
+                            raise ValueError("original Avatar metadata drift")
                         member.seek(avatar["offset"])
                         body = BUNDLE.exact(member, avatar["bytes"])
                         if hashlib.sha256(body).hexdigest() != avatar["sha256"]:
@@ -85,7 +96,9 @@ def produce(profile_path, profile_sha256, pc, output):
                             result = reorder(body, avatar["tos_field"], target["order"]) if "order" in target else body
                             digest = hashlib.sha256(result).hexdigest()
                             if digest != target["sha256"] or len(result) != target["bytes"]:
-                                raise ValueError("produced Avatar differs from accepted hash")
+                                if comparison == "exact":
+                                    raise ValueError("produced Avatar differs from accepted hash")
+                                receipt["historical_mismatches"] += 1
                             row = {
                                 "bundle": target["bundle"],
                                 "member": target["member"],
@@ -93,6 +106,7 @@ def produce(profile_path, profile_sha256, pc, output):
                                 "offset": data.tell(),
                                 "bytes": len(result),
                                 "sha256": digest,
+                                "type_id": O.record_type(typ, types, type_ids),
                             }
                             data.write(result)
                             index.write(json.dumps(row, sort_keys=True) + "\n")
@@ -107,7 +121,10 @@ def produce(profile_path, profile_sha256, pc, output):
                 data.seek(row["offset"])
                 if hashlib.sha256(BUNDLE.exact(data, row["bytes"])).hexdigest() != row["sha256"]:
                     raise ValueError("persisted Avatar extent drift")
-        receipt["outputs"] = {name: {"bytes": (output / name).stat().st_size, "sha256": BUNDLE.sha(output / name)} for name in ("objects.bin", "index.jsonl")}
+        (output / "types.json").write_text(json.dumps(types, sort_keys=True, indent=2) + "\n")
+        receipt["outputs"] = {
+            name: {"bytes": (output / name).stat().st_size, "sha256": BUNDLE.sha(output / name)} for name in ("objects.bin", "index.jsonl", "types.json")
+        }
         receipt["success"] = True
         return receipt
     except Exception as error:
@@ -124,8 +141,14 @@ def main():
     parser.add_argument("--profile-sha256", required=True)
     parser.add_argument("--pc", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument(
+        "--comparison",
+        choices=("exact", "diagnostic"),
+        default="exact",
+        help="Record historical output byte differences while retaining source and structural checks",
+    )
     args = parser.parse_args()
-    produce(args.profile, args.profile_sha256, args.pc, args.output)
+    produce(args.profile, args.profile_sha256, args.pc, args.output, comparison=args.comparison)
 
 
 if __name__ == "__main__":

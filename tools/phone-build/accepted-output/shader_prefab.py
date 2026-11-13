@@ -148,7 +148,9 @@ def particle_selections(source, original, material):
     return A.particles_selections(source, [material], None, carrier=original, stripped_keywords=features - enabled)
 
 
-def produce(profile_path, profile_pin, pc, sdk, asset_ripper, codec, codec_pin, output):
+def produce(profile_path, profile_pin, pc, sdk, asset_ripper, codec, codec_pin, output, comparison="exact"):
+    if comparison not in ("exact", "diagnostic"):
+        raise ValueError("unknown target comparison policy")
     import UnityPy
     from UnityPy.helpers.TypeTreeHelper import write_typetree
     from UnityPy.streams import EndianBinaryWriter
@@ -259,6 +261,8 @@ def produce(profile_path, profile_pin, pc, sdk, asset_ripper, codec, codec_pin, 
         "objects": 0,
         "object_bytes": 0,
     }
+    receipt.update(comparison=comparison, historical_mismatches=0)
+    types, type_ids = [], {}
     try:
         if templates:
             (output / "AssetRipper-LICENSE.md").write_bytes(
@@ -273,6 +277,8 @@ def produce(profile_path, profile_pin, pc, sdk, asset_ripper, codec, codec_pin, 
             for ordinal, selected in enumerate(profile["records"]):
                 obj = original(selected["original"])
                 source, node = obj.read_typetree(), obj.serialized_type.node
+                origin = selected["original"]
+                typ = O.source_record_type(P.relative(pc, origin["path"]), origin["member"], origin["path_id"], 48)
                 if selected["kind"] == "sdk":
                     identity = selected["sdk_shader"]
                     runtime = sdk_source(identity)
@@ -363,8 +369,11 @@ def produce(profile_path, profile_pin, pc, sdk, asset_ripper, codec, codec_pin, 
                 for target in selected["outputs"]:
                     made = O.remap(body, target.get("references", []))
                     if len(made) != target["bytes"] or hashlib.sha256(made).hexdigest() != target["sha256"]:
-                        raise ValueError("Prefab Shader record differs from accepted hash: " + str(ordinal))
-                    row = {key: target[key] for key in ("bundle", "member", "path_id", "bytes", "sha256")}
+                        if comparison == "exact":
+                            raise ValueError("Prefab Shader record differs from accepted hash: " + str(ordinal))
+                        receipt["historical_mismatches"] += 1
+                    row = {key: target[key] for key in ("bundle", "member", "path_id")}
+                    row.update(bytes=len(made), sha256=hashlib.sha256(made).hexdigest(), type_id=O.record_type(typ, types, type_ids))
                     row["offset"] = data.tell()
                     data.write(made)
                     index.write(json.dumps(row, sort_keys=True) + "\n")
@@ -380,8 +389,10 @@ def produce(profile_path, profile_pin, pc, sdk, asset_ripper, codec, codec_pin, 
                 original(selected["terrain"]["original"], "TerrainData")
         if P.includes(sdk / "CGIncludes")[0] != inventory:
             raise ValueError("Prefab Shader include inputs changed")
+        (output / "types.json").write_text(json.dumps(types, sort_keys=True, indent=2) + "\n")
         receipt.update(
-            success=True, outputs={name: {"bytes": (output / name).stat().st_size, "sha256": P.sha(output / name)} for name in ("objects.bin", "index.jsonl")}
+            success=True,
+            outputs={name: {"bytes": (output / name).stat().st_size, "sha256": P.sha(output / name)} for name in ("objects.bin", "index.jsonl", "types.json")},
         )
         return receipt
     except Exception as error:
@@ -397,8 +408,28 @@ def main():
     for name in ("profile", "profile-sha256", "pc-root", "sdk", "codec", "codec-sha256", "output"):
         parser.add_argument("--" + name, required=True)
     parser.add_argument("--asset-ripper")
+    parser.add_argument(
+        "--comparison",
+        choices=("exact", "diagnostic"),
+        default="exact",
+        help="Record historical output byte differences while retaining source and structural checks",
+    )
     args = parser.parse_args()
-    print(json.dumps(produce(args.profile, args.profile_sha256, args.pc_root, args.sdk, args.asset_ripper, args.codec, args.codec_sha256, args.output)))
+    print(
+        json.dumps(
+            produce(
+                args.profile,
+                args.profile_sha256,
+                args.pc_root,
+                args.sdk,
+                args.asset_ripper,
+                args.codec,
+                args.codec_sha256,
+                args.output,
+                comparison=args.comparison,
+            )
+        )
+    )
 
 
 if __name__ == "__main__":

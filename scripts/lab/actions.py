@@ -192,6 +192,15 @@ def _repair_reconstruction(function, kwargs, args):
 # Only the selected action's module is imported by dispatch().
 _ENTRIES = (
     Action(
+        "source-camera-program-bundle",
+        "source_camera_bundle",
+        "build",
+        {},
+        "current",
+        "Current host supplier: compile the input-qualified source-camera graphics/compute candidate into an isolated Android/Vulkan bundle; --target REQUEST.json names a fresh ignored output. Phone production and device loadability remain separate gates.",
+        handler=_target_json_result,
+    ),
+    Action(
         "phone-texture-fixture",
         "phone_texture_oracle",
         "stage_action",
@@ -481,7 +490,7 @@ _ENTRIES = (
         "check_session_memory",
         {},
         "current",
-        "Repeat ordinary Commando menu-start, 60 s ready Lakes play and UI-abandon sessions in one process (five by default, --sessions 3 to 32); each completed session must pass the session-abandon contract. Reports existing runtime resource samples and per-menu PSS as observations, not a leak fix or normal-game acceptance. Optional --memory-snapshots captures private native/managed heaps at menu 2 and the final menu for attribution; it allocates/pauses and is separate from ordinary growth/performance. Requires --expected-apk-sha256 bound to the selected device's ownership receipt.",
+        "Repeat ordinary Commando menu-start, 60 s ready Lakes play and UI-abandon sessions in one process (five by default, --sessions 3 to 32); an earlier native loss returns through results/menu. Each completed session must pass its actual ending cleanup contract with frozen profile counts. Records outcomes, durations, runtime resource samples and per-menu PSS as observations, not a leak fix or normal-game acceptance; mixed-loss series are labeled separately. Optional --memory-snapshots captures private native/managed heaps at menu 2 and the final menu for attribution; it allocates/pauses and is separate from ordinary growth/performance. Requires --expected-apk-sha256 bound to the selected device's ownership receipt.",
         handler=_session_memory,
     ),
     Action(

@@ -6,6 +6,7 @@
     "native-links/libcrypto.so.3": "libcrypto.so",
     "native-links/liblzma.so.5": "libpydep_lzma.so",
     "native-links/libpython3.14.so": "libpython3.14.so",
+    "native-links/libsqlite3.so": "libpydep_sqlite3.so",
     "native-links/libz.so.1": "libpydep_z.so",
     "native-links/libzstd.so.1": "libpydep_zstd.so",
     "python/lib/python3.14/lib-dynload/_bisect.cpython-314-aarch64-linux-android.so": "libpyext__bisect.so",
@@ -16,6 +17,7 @@
     "python/lib/python3.14/lib-dynload/_lzma.cpython-314-aarch64-linux-android.so": "libpyext__lzma.so",
     "python/lib/python3.14/lib-dynload/_posixsubprocess.cpython-314-aarch64-linux-android.so": "libpyext__posixsubprocess.so",
     "python/lib/python3.14/lib-dynload/_random.cpython-314-aarch64-linux-android.so": "libpyext__random.so",
+    "python/lib/python3.14/lib-dynload/_sqlite3.cpython-314-aarch64-linux-android.so": "libpyext__sqlite3.so",
     "python/lib/python3.14/lib-dynload/_struct.cpython-314-aarch64-linux-android.so": "libpyext__struct.so",
     "python/lib/python3.14/lib-dynload/_zstd.cpython-314-aarch64-linux-android.so": "libpyext__zstd.so",
     "python/lib/python3.14/lib-dynload/binascii.cpython-314-aarch64-linux-android.so": "libpyext_binascii.so",
@@ -79,6 +81,18 @@
       "root": "python",
       "sha256": "a00a9e4d4da69eab2633c22ba9c079dab2a8eea6637488acc9124b84a73d8462",
       "target": "libpyext__struct.so"
+    },
+    {
+      "path": "lib/python3.14/lib-dynload/_sqlite3.cpython-314-aarch64-linux-android.so",
+      "root": "python",
+      "sha256": "8f8f89571f3c1b0617fb864ab44f01c728f2f18fe2be32d1617328e751ae51d8",
+      "target": "libpyext__sqlite3.so"
+    },
+    {
+      "path": "lib/libsqlite3.so.3.54.1",
+      "root": "python",
+      "sha256": "5d5ffd18d581ebf0598342e233c0adc4e1d8db09590f06467bb300a8d0dec439",
+      "target": "libpydep_sqlite3.so"
     },
     {
       "path": "lib/python3.14/lib-dynload/_zstd.cpython-314-aarch64-linux-android.so",

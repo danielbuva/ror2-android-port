@@ -13,12 +13,29 @@ public sealed class AndroidOfflineSettings
         public int version = 1, offlineDifficulty;
         public float deadzone = .18f, lookSensitivity = 1;
         public bool invertY;
+        public bool highRefreshRate = true;
     }
     public static Values current = new Values();
     public readonly string directory;
     public string recovery = "none";
     public string saveError;
     public Values values;
+    // Instance-owned, default-off lab diagnostic. Recovery never arms it.
+    string saveFailure;
+    public string injectedSaveFailure { get; private set; }
+    public void ArmSaveFailure(string stage)
+    {
+        if (stage != "write" && stage != "rename")
+            throw new ArgumentException("Unknown settings save failure stage");
+        saveFailure = stage;
+    }
+    void FailSave(string stage)
+    {
+        if (saveFailure != stage) return;
+        saveFailure = null;
+        injectedSaveFailure = stage;
+        throw new IOException("ENOSPC: injected settings " + stage + " failure");
+    }
     public AndroidOfflineSettings(string directory)
     {
         this.directory = directory;
@@ -72,10 +89,11 @@ public sealed class AndroidOfflineSettings
         values = Read(path);
         recovery = "validated-backup";
     }
-    static void Write(string path, Values value)
+    void Write(string path, Values value, bool saving = false)
     {
         using (var stream = new FileStream(path, FileMode.Create, FileAccess.Write, FileShare.None))
         {
+            if (saving) FailSave("write");
             using (var writer = new StreamWriter(stream, System.Text.Encoding.UTF8, 1024, true))
             {
                 writer.Write(JsonUtility.ToJson(value, true));
@@ -89,15 +107,19 @@ public sealed class AndroidOfflineSettings
         Validate(values);
         var path = Path.Combine(directory, "preferences.json");
         var pending = path + ".pending";
-        Write(pending, values);
+        Write(pending, values, true);
         Read(pending);
         if (File.Exists(path))
         {
             Read(path);
+            FailSave("rename");
             File.Replace(pending, path, path + ".backup");
         }
         else
+        {
+            FailSave("rename");
             File.Move(pending, path);
+        }
         values = Read(path);
     }
     public bool TrySave()

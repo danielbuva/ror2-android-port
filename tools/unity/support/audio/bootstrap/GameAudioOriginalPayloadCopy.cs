@@ -47,11 +47,31 @@ public sealed class GameAudioOriginalPayloadCopy : IGameAudioOriginalPayloadCopy
     private const string ExpectedSoundbanksInfo = "2b8430716d15c1ac9f78e1cc7625dc2206df6b5081b06b54c8048979d99b6407";
     private const string ExpectedDirectory = "Audio/GeneratedSoundBanks/Android";
     private const float CopyDeadlineSeconds = 300.0f;
+    // Bump when verification or file-identity semantics change. Code-only APK
+    // updates may reuse compatible proofs for the same authenticated cohort.
+    private const int VerificationRevision = 1;
     private readonly string streamingRoot;
     private readonly string persistentRoot;
     private readonly HashSet<string> expectedNames;
     private readonly string expectedReceiptSha256;
     private string refusal;
+    [Serializable]
+    private sealed class VerifiedFile
+    {
+        public string path, sha256;
+        public long size, device, inode, modifiedSeconds, modifiedNanos, changedSeconds, changedNanos;
+    }
+    [Serializable]
+    private sealed class VerifiedCohort
+    {
+        public int verifierRevision;
+        public string receipt;
+        public VerifiedFile[] files;
+    }
+    private string cachePath;
+    private readonly Dictionary<string, VerifiedFile> verified = new Dictionary<string, VerifiedFile>(StringComparer.Ordinal);
+    private readonly List<VerifiedFile> observed = new List<VerifiedFile>();
+    private int cacheHits, fullVerifications;
 
     public GameAudioOriginalPayloadCopy(string streamingRootPath, string persistentRootPath,
         IEnumerable<string> sourceBankNames, string receiptSha256)
@@ -137,6 +157,7 @@ public sealed class GameAudioOriginalPayloadCopy : IGameAudioOriginalPayloadCopy
         if (!TryAvailableBytes(persistentRoot, out available) || available < checked(pendingBytes + largestPending))
         { refusal = "persistent_payload_space_insufficient_or_unknown"; yield break; }
 
+        LoadVerifiedCohort();
         TraceStartup("audio-payload-banks-begin");
         foreach (Entry entry in receipt.outputs)
         {
@@ -145,7 +166,7 @@ public sealed class GameAudioOriginalPayloadCopy : IGameAudioOriginalPayloadCopy
             string destination = Path.Combine(persistentRoot, entry.filename);
             if (PathExistsIncludingReparse(destination))
             {
-                if (!ExistingPayloadMatches(destination, entry.sha256, entry.size_bytes))
+                if (!VerifiedPayloadMatches(destination, entry.sha256, entry.size_bytes))
                 { refusal = "persistent_bank_conflict:" + entry.filename; yield break; }
                 continue;
             }
@@ -170,7 +191,7 @@ public sealed class GameAudioOriginalPayloadCopy : IGameAudioOriginalPayloadCopy
                 { refusal = "persistent_bank_race:" + entry.filename; yield break; }
                 File.Move(temporary, destination);
                 temporary = null;
-                if (!Matches(destination, entry.sha256, entry.size_bytes))
+                if (!VerifiedPayloadMatches(destination, entry.sha256, entry.size_bytes))
                 { refusal = "persistent_bank_postcopy_mismatch:" + entry.filename; yield break; }
             }
             finally
@@ -203,7 +224,7 @@ public sealed class GameAudioOriginalPayloadCopy : IGameAudioOriginalPayloadCopy
             string destination = Path.Combine(persistentRoot, relative);
             if (PathExistsIncludingReparse(destination))
             {
-                if (!ExistingPayloadMatches(destination, entry.sha256, entry.size_bytes))
+                if (!VerifiedPayloadMatches(destination, entry.sha256, entry.size_bytes))
                 { refusal = "persistent_media_conflict:" + entry.media_id; yield break; }
                 continue;
             }
@@ -228,7 +249,7 @@ public sealed class GameAudioOriginalPayloadCopy : IGameAudioOriginalPayloadCopy
                 { refusal = "persistent_media_race:" + entry.media_id; yield break; }
                 File.Move(temporary, destination);
                 temporary = null;
-                if (!Matches(destination, entry.sha256, entry.size_bytes))
+                if (!VerifiedPayloadMatches(destination, entry.sha256, entry.size_bytes))
                 { refusal = "persistent_media_postcopy_mismatch:" + entry.media_id; yield break; }
             }
             finally
@@ -239,6 +260,92 @@ public sealed class GameAudioOriginalPayloadCopy : IGameAudioOriginalPayloadCopy
             }
         }
         TraceStartup("audio-payload-media-ready");
+        SaveVerifiedCohort();
+        Debug.LogFormat(LogType.Log, LogOption.NoStacktrace, null, "{0}",
+            "Original audio payload verification cached=" + cacheHits + " full=" + fullVerifications);
+    }
+
+    private void LoadVerifiedCohort()
+    {
+        verified.Clear(); observed.Clear(); cacheHits = fullVerifications = 0;
+        cachePath = null;
+        try
+        {
+            using (var player = new AndroidJavaClass("com.unity3d.player.UnityPlayer"))
+            using (var activity = player.GetStatic<AndroidJavaObject>("currentActivity"))
+            using (var directory = activity.Call<AndroidJavaObject>("getCacheDir"))
+            {
+                cachePath = Path.Combine(directory.Call<string>("getAbsolutePath"), "original-audio-verified.json");
+            }
+            if (!File.Exists(cachePath) || IsReparse(cachePath)) return;
+            var cohort = JsonUtility.FromJson<VerifiedCohort>(File.ReadAllText(cachePath));
+            if (cohort == null || cohort.verifierRevision != VerificationRevision || cohort.receipt != expectedReceiptSha256 || cohort.files == null) return;
+            foreach (var file in cohort.files)
+                if (file != null && !String.IsNullOrEmpty(file.path)) verified[file.path] = file;
+        }
+        catch { verified.Clear(); }
+    }
+
+    private void SaveVerifiedCohort()
+    {
+        if (cachePath == null || observed.Count != 274) return;
+        string temporary = cachePath + ".part";
+        try
+        {
+            // Internal app cache is not shared payload storage. Clearing Android's
+            // app cache is the repair path. Receipt/verifier changes force rehash;
+            // unchanged audio can retain proofs across in-place APK updates.
+            File.WriteAllText(temporary, JsonUtility.ToJson(new VerifiedCohort {
+                verifierRevision = VerificationRevision, receipt = expectedReceiptSha256, files = observed.ToArray() }));
+            if (File.Exists(cachePath)) File.Delete(cachePath);
+            File.Move(temporary, cachePath);
+        }
+        catch { /* A lost or unwritable cache only costs another full verification. */ }
+        finally { try { if (File.Exists(temporary)) File.Delete(temporary); } catch { } }
+    }
+
+    private bool VerifiedPayloadMatches(string path, string hash, long size)
+    {
+        if (!ExistingPayloadHasExpectedSize(path, size)) return false;
+        var before = ReadVerifiedFile(path, hash);
+        VerifiedFile previous;
+        if (before != null && verified.TryGetValue(path, out previous) && SameVerifiedFile(previous, before))
+        {
+            observed.Add(before); cacheHits++; return true;
+        }
+        fullVerifications++;
+        if (!ExistingPayloadMatches(path, hash, size)) return false;
+        var after = ReadVerifiedFile(path, hash);
+        if (SameVerifiedFile(before, after)) observed.Add(after);
+        return true;
+    }
+
+    private static VerifiedFile ReadVerifiedFile(string path, string hash)
+    {
+        try
+        {
+            using (var os = new AndroidJavaClass("android.system.Os"))
+            using (var stat = os.CallStatic<AndroidJavaObject>("lstat", path))
+            using (var modified = stat.Get<AndroidJavaObject>("st_mtim"))
+            using (var changed = stat.Get<AndroidJavaObject>("st_ctim"))
+            {
+                return new VerifiedFile { path = path, sha256 = hash,
+                    size = stat.Get<long>("st_size"), device = stat.Get<long>("st_dev"), inode = stat.Get<long>("st_ino"),
+                    modifiedSeconds = modified.Get<long>("tv_sec"), modifiedNanos = modified.Get<long>("tv_nsec"),
+                    changedSeconds = changed.Get<long>("tv_sec"), changedNanos = changed.Get<long>("tv_nsec") };
+            }
+        }
+        catch { return null; }
+    }
+
+    private static bool SameVerifiedFile(VerifiedFile left, VerifiedFile right)
+    {
+        // Restoring mtime after a same-size write does not restore kernel ctime.
+        // Keep nanoseconds: multiple writes can occur within the same second.
+        return left != null && right != null && left.path == right.path && left.sha256 == right.sha256 &&
+            left.size == right.size && left.device == right.device && left.inode == right.inode &&
+            left.modifiedSeconds == right.modifiedSeconds && left.modifiedNanos == right.modifiedNanos &&
+            left.changedSeconds == right.changedSeconds && left.changedNanos == right.changedNanos;
     }
 
     internal static bool NativeSearchRootMatches(string bankRoot, string appRoot)
@@ -317,8 +424,8 @@ public sealed class GameAudioOriginalPayloadCopy : IGameAudioOriginalPayloadCopy
 
     private static bool ExistingPayloadHasExpectedSize(string path, long expectedSize)
     {
-        // Capacity preflight needs metadata only. Rehash at the actual reuse
-        // point: earlier copies may yield, so integrity is never cached here.
+        // Capacity preflight needs metadata only. Actual reuse checks the
+        // private verified receipt plus kernel change identity, or hashes fully.
         return File.Exists(path) && !Directory.Exists(path) && !IsReparse(path) && new FileInfo(path).Length == expectedSize;
     }
 

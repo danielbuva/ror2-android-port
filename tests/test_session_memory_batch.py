@@ -61,6 +61,7 @@ class SessionMemoryBatchTests(unittest.TestCase):
             start=lambda: self.record("start"),
             finish=lambda: self.record("finish"),
             launch=lambda d: self.record("launch"),
+            between_sessions=lambda: self.record("between-sessions", False),
         )
         self.owner._GameThermalOwner = lambda *args: self.thermal
         memory = types.ModuleType("session_memory_check")
@@ -103,6 +104,7 @@ class SessionMemoryBatchTests(unittest.TestCase):
         self.record("series")
         self.series_options = kwargs
         kwargs["_launch"](self.device)
+        kwargs["_between_sessions"]()
         snapshots = {str(i): {"file": f"session-{i}-private.snap", "sha256": "b" * 64, "bytes": 40} for i in (2, 4)} if kwargs["memory_snapshots"] else {}
         raw = dict(
             success=True,
@@ -133,17 +135,27 @@ class SessionMemoryBatchTests(unittest.TestCase):
         self.assertTrue(self.series_options["memory_snapshots"])
         self.assertNotIn("root_walk", self.series_options)
         self.assertFalse(result["memory_bound_pass"])
+        self.assertIs(self.series_options["_between_sessions"], self.thermal.between_sessions)
         self.assertEqual(result["snapshot_count"], 2)
-        self.assertEqual(self.events, ["device", "identity", "host-budget", "device-capacity", "cool", "start", "series", "launch", "finish", "terminal"])
+        self.assertEqual(
+            self.events,
+            ["device", "identity", "host-budget", "device-capacity", "cool", "start", "series", "launch", "between-sessions", "finish", "terminal"],
+        )
         pointer = self.common.read(self.root / self.receipt)
         self.assertEqual(set(pointer["memory_snapshots"]), {"2", "4"})
         self.assertEqual(pointer["apk_sha256"], APK)
         self.assertEqual(self.selector, (None, None))
         self.assertTrue(self.lease.exists())  # Only the outer runner releases it.
 
-    def test_measure_omits_capture_and_reports_bound(self):
+    def test_measure_omits_capture_but_small_slope_is_not_a_bound(self):
+        self.extra["session_outcomes"] = [{"ending": "loss"}, {"ending": "abandon"}]
         result = self.run_mode("measure")
-        self.assertTrue(result["memory_bound_pass"])
+        self.assertTrue(result["success"])
+        self.assertTrue(result["diagnostic_only"])
+        self.assertFalse(result["acceptance_available"])
+        self.assertFalse(result["memory_bound_pass"])
+        self.assertTrue(result["matched_menu_samples_complete"])
+        self.assertEqual(result["managed_menu_slope_bytes_per_session"], 100000)
         self.assertFalse(self.series_options["memory_snapshots"])
         self.assertNotIn("host-budget", self.events)
         self.assertEqual(self.common.read(self.root / self.receipt)["memory_snapshots"], {})
@@ -157,7 +169,9 @@ class SessionMemoryBatchTests(unittest.TestCase):
 
     def test_missing_menu_point_cannot_pass_bound(self):
         self.extra["growth"] = dict(rows=[], final_menu_samples=[], per_session_slope_from_session_2=dict(managed_before_presentation_bytes=-20))
-        self.assertFalse(self.run_mode("measure")["memory_bound_pass"])
+        result = self.run_mode("measure")
+        self.assertFalse(result["memory_bound_pass"])
+        self.assertFalse(result["matched_menu_samples_complete"])
 
     def test_preflight_never_launches_or_runs_sessions(self):
         result = self.run_mode("preflight")

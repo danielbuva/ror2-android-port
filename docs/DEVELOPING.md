@@ -8,6 +8,41 @@ from the repository root. It is for contributors, not a player installer.
 Current independent prepared builds use [build lanes](build-lanes.md):
 `./dev lane --action create --name NAME`, then `LAB_LANE=NAME ./dev …`.
 
+Shared device runs use the current `./dev device-session --request <JSON>`
+entry point. Validate with `--dry-run`, then use `--detach` after the dispatcher
+grants the device. See [the lifecycle owner](ARCHITECTURE.md) for cleanup and
+evidence rules. Required request fields are `canonical_root`, `output` (under
+its `work/`), `workstream`, `serial`, `package`, `apk`, `apk_sha256`,
+`adopted_install: true` and `duration_seconds`. Optional fields are
+`cooldown_seconds` (default 3600), `mode` (`launch`, lab-only `sustained` or
+`settings-save-failure`),
+`input_script` (the existing targeted-touch JSON with the live PID supplied by
+the runner), `input_mapping` (the APK-attempt-bound measured bridge JSON), `selection`, `diagnostics`, `prior_receipt` and
+`require_high_refresh`, `payload_directory` (incremental adopted-storage sync
+before launch) and `capture_interval_seconds` (launch-mode cadence, default 60).
+`pacing_diagnostics: true` retains read-only Unity, Android display, compositor
+and OS frame-rate intervention evidence during sustained observations. The
+settings failure workload owns its attempt-bound selector and injects one
+write failure and one rename failure in the lab settings writer, checking
+visible retry, retained generations and cold recovery without filling storage.
+It requires the lab package and does not accept a custom `selection`.
+The device free-space reservation includes the requested payload size.
+Requests and results stay private.
+
+Shared editor builds use current `./dev shared-build --request REQUEST.json`.
+JSON pins `source_commit`, boolean `full` and absolute `output` under primary
+`work/coordination`. Validate with `--dry-run`; `--detach` sources
+`scripts/env.sh` and retains `terminal.done.json` after build, source restoration
+and pruning on success or failure. This command performs no device actions.
+Optional `storage_wait_seconds` (0–3600) waits for full-build headroom before
+taking the editor mutex; timeout writes a failure receipt.
+
+Generated-output cleanup retains only pinned APKs, current build/base, the
+latest installed APK per device and each worker's newest handoff-referenced
+build in `work/build-cache`. Other cache entries become disposable after
+three hours, including entries with stale `.prune-keep` markers. Other generated
+output keeps the 24-hour guard and marker protections.
+
 An evidence-driven laboratory that runs the original PC game's managed code and converted
 content natively on ARM64 Android, using the user's own legitimate game installation.
 **It is not a finished or distributable port.** The current APK reaches the original offline
@@ -147,6 +182,7 @@ by hand. Regenerate with `python3 scripts/readme-actions.py`; CI checks freshnes
 
 | Command | What it does |
 | --- | --- |
+| `./dev prototype --action source-camera-program-bundle` | Current host supplier: compile the input-qualified source-camera graphics/compute candidate into an isolated Android/Vulkan bundle; --target REQUEST.json names a fresh ignored output. Phone production and device loadability remain separate gates. |
 | `./dev prototype --action phone-texture-fixture` | Experimental desktop oracle: stage a fresh SDK-only project for nine authored texture imports. No game inputs, player build or device action. |
 | `./dev prototype --action phone-texture-check` | Experimental desktop oracle: check explicit --target PROJECT with the exact editor under the primary mutex; retain all raw authored mip levels. Never a phone-production input. |
 | `./dev prototype --action phone-wrapper-oracle` | Experimental desktop verification only: --target REQUEST.json selects stage or check for a fresh SDK-only project. The exact editor reports native metadata and concrete Object-descendant wrapper queries under the shared mutex. No game files, player build, installation or phone-build input; preserves existing editors and refuses lock contention. |
@@ -182,7 +218,7 @@ by hand. Regenerate with `python3 scripts/readme-actions.py`; CI checks freshnes
 | `./dev prototype --action survivor-kit-check` | Assisted world skill check: --target all or comma-separated base survivor keys; optional --skill-variants supplies one strict per-run catalog selector; --skill-slot primary\|secondary\|utility\|special runs one bounded isolated native-input diagnostic; --toolbot-offhand runs the exact MUL-T Buzzsaw/Dual Wield sequence and requires --target Toolbot plus --skill-variants; --captain-supply-beacon runs native Captain PrepSupplyDrop, valid placement and owned deployable registration and requires exactly --target Captain with default loadout. Omit --expected-apk-sha256 to require current-build equality at check start; supplying it selects only a matching selected-device ownership receipt and its byte-verified APK, without calling it current. |
 | `./dev prototype --action session-cleanup-check` | Observe an original first-stage loss, native cleanup and same-process restart; diagnostic automatic input, gameplay debug assists off. Optional --target selects one base survivor (default Commando); locked choices are diagnostic overrides, no expansion. Optional --skill-variants applies one strict per-run native catalog selector to both sessions. Omit --expected-apk-sha256 to require current-build equality at check start; supplying it binds this diagnostic to the selected device's matching ownership receipt and receipt APK bytes without calling that APK current. |
 | `./dev prototype --action session-abandon-check` | After 60 s of ready first-stage play, observe original UI-driven end-run, native listener/template cleanup and same-process restart without an original loss/result; optional --target selects a base survivor (default Commando), locked choices are diagnostic overrides. Optional --skill-variants applies one strict per-run native catalog selector to both sessions. Omit --expected-apk-sha256 to require current-build equality at check start; supplying it binds this diagnostic to the selected device's matching ownership receipt and receipt APK bytes without calling that APK current. |
-| `./dev prototype --action session-memory-check` | Repeat ordinary Commando menu-start, 60 s ready Lakes play and UI-abandon sessions in one process (five by default, --sessions 3 to 32); each completed session must pass the session-abandon contract. Reports existing runtime resource samples and per-menu PSS as observations, not a leak fix or normal-game acceptance. Optional --memory-snapshots captures private native/managed heaps at menu 2 and the final menu for attribution; it allocates/pauses and is separate from ordinary growth/performance. Requires --expected-apk-sha256 bound to the selected device's ownership receipt. |
+| `./dev prototype --action session-memory-check` | Repeat ordinary Commando menu-start, 60 s ready Lakes play and UI-abandon sessions in one process (five by default, --sessions 3 to 32); an earlier native loss returns through results/menu. Each completed session must pass its actual ending cleanup contract with frozen profile counts. Records outcomes, durations, runtime resource samples and per-menu PSS as observations, not a leak fix or normal-game acceptance; mixed-loss series are labeled separately. Optional --memory-snapshots captures private native/managed heaps at menu 2 and the final menu for attribution; it allocates/pauses and is separate from ordinary growth/performance. Requires --expected-apk-sha256 bound to the selected device's ownership receipt. |
 | `./dev prototype --action settings-write-interrupt-check` | Cold native settings transaction: observe the pending-file create, stop only its owned writer, require an unchanged primary and retained pending file, then cold-recover and resave. Uses a diagnostic menu selector, no gameplay, power-cut or ENOSPC claim. Requires --expected-apk-sha256. |
 | `./dev prototype --action alpha-stability-batch` | Detached diagnostic driver: one canonical device lease across SDK settings interruption, three-session native heap attribution and 30-minute assisted sustained play. Requires explicit --device, --expected-apk-sha256 and a new absolute --done-file. Stop on first failure; publish terminal cleanup and lease release in that receipt. No automatic installation, physical-input, ordinary-play or memory-bound claim. Independent per-zone sampling targets 250 ms; gaps above 1 s abort. Admission and runtime limits follow the [current playtest thermal policy](PLAYTESTING.md#stability-persistence-and-updates), qualified on the host in J1156; retain failed cases without automatic retry. Completed stages checkpoint; one three-hour deadline. Thermal device qualification remains open. |
 | `./dev prototype --action touch-gesture` | Android 13+ lab diagnostic: --target JSON supplies PID, viewport and bounded multi-touch steps; requires --expected-apk-sha256 and the owned foreground game. Uses normal adb shell permission and target-UID dispatch; temporary files are removed. Leaves the session running on success; dispatch failure stops only the still-matching owned process. Does not qualify physical input or normal-game acceptance. |

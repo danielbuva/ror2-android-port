@@ -9,8 +9,11 @@ import argparse
 import gzip
 import hashlib
 import importlib.util
+import io
 import json
 from pathlib import Path
+import re
+from types import SimpleNamespace
 
 PREFIX = "tools/phone-build/accepted-output/"
 
@@ -21,6 +24,10 @@ def digest(path):
 
 
 def owner(profile):
+    if profile.get("schema") == "owner-bundle-managed-release-v1":
+        return "bundle_endpoints"
+    if profile.get("schema") == "owner-bundle-preload-release-v1":
+        return "bundle_preload"
     if "project_assemblies" in profile and "outputs" in profile:
         return "player_data"
     if "shaders" in profile and "authored_inputs" in profile and "includes_sha256" in profile:
@@ -66,20 +73,18 @@ class Graph:
         self.phase_path = player_phases
         self.phases = json.loads((self.repo / player_phases).read_text()) if player_phases else {}
         self.phase_files = set()
+        # Index content identities without retaining unrelated parsed recipes.
+        # Dependency pins still resolve in the same sorted, last-match order.
         self.profiles = {}
-        for path in sorted((self.repo / "recipe").glob("owner-*.json")):
-            self.profiles[digest(path)] = (path.relative_to(self.repo).as_posix(), json.loads(path.read_text()))
-        # Large native-record recipes are streamed by record_produce itself.
-        # Discover their identity without expanding the hierarchy into memory.
-        for path in sorted((self.repo / "recipe").glob("owner-*.jsonl.gz")):
-            with gzip.open(path, "rb") as stream:
-                header = json.loads(stream.readline(8 * 1024**2 + 1))
-            if set(header) != {"input_id"}:
-                raise ValueError("unknown compressed record profile header: " + path.name)
-            self.profiles[digest(path)] = (path.relative_to(self.repo).as_posix(), header)
+        for pattern in ("owner-*.json", "owner-*.jsonl.gz"):
+            for path in sorted((self.repo / "recipe").glob(pattern)):
+                self.profiles[digest(path)] = path.relative_to(self.repo).as_posix()
+        self.loaded_profiles = {}
         self.jobs = {}
         self.profile_files = {}
         self.job_profiles = {}
+        self.public_files = {}
+        self.bundle_release_jobs = set()
 
     def startup(self):
         """Share source startup identity between final files and managers."""
@@ -153,21 +158,57 @@ class Graph:
             raise ValueError("cyclic profile supplier: " + pin)
         if pin not in self.profiles:
             raise ValueError("missing source supplier profile: " + pin)
-        path, profile = self.profiles[pin]
+        path = self.profiles[pin]
         name = "recipe/jobs/" + (Path(path).name.removesuffix(".jsonl.gz") if path.endswith(".jsonl.gz") else Path(path).stem) + ".json"
+        if pin not in self.loaded_profiles:
+            encoded = (self.repo / path).read_bytes()
+            if hashlib.sha256(encoded).hexdigest() != pin:
+                raise ValueError("source supplier profile drift: " + path)
+            if path.endswith(".jsonl.gz"):
+                # Verify compressed identity from the same bytes as the header;
+                # never expand the native-record body into a Python hierarchy.
+                with gzip.GzipFile(fileobj=io.BytesIO(encoded)) as stream:
+                    profile = json.loads(stream.readline(8 * 1024**2 + 1))
+                if set(profile) != {"input_id"}:
+                    raise ValueError("unknown compressed record profile header: " + Path(path).name)
+            else:
+                profile = json.loads(encoded)
+            del encoded
+            self.loaded_profiles[pin] = profile
+        profile = self.loaded_profiles[pin]
         if name in self.jobs:
             return name
         producer = "record_produce" if path.endswith(".jsonl.gz") else owner(profile)
+        if producer == "bundle_endpoints":
+            return self.bundle_managed(path, profile, (*active, pin))
+        if producer == "bundle_preload":
+            return self.bundle_preload(path, profile, (*active, pin))
         if producer is None:
             raise ValueError("explicit producer wiring required for " + path)
         providers = {dependency: self.build(dependency, (*active, pin)) for dependency in suppliers(profile)}
         phase_arguments = self.player_arguments(providers) if producer == "player_data" else []
         needs = list(providers.values())
         arguments = ["--profile", "${repo}/" + path, "--profile-sha256", pin, "--output", "${output}"]
+        if producer in {
+            "object_produce",
+            "record_remap",
+            "record_produce",
+            "mesh_produce",
+            "avatar_produce",
+            "texture_produce",
+            "shader_context",
+            "shader_prefab",
+        }:
+            arguments += ["--comparison", "diagnostic"]
+        if producer == "payload_shader_records" and "legacy_sdk" in profile:
+            arguments += ["--legacy-sdk", "${input:legacy_sdk}"]
         if producer != "record_remap":
             arguments += ["--pc-root" if producer in {"shader_context", "shader_prefab", "sprite_produce"} else "--pc", "${input:pc}"]
-        if producer in {"record_produce", "shader_context", "shader_prefab", "payload_shader_records", "player_data"}:
+        if producer in {"record_produce", "shader_context", "shader_prefab", "payload_shader_records"}:
             arguments += ["--sdk", "${input:sdk}"]
+        if producer == "player_data":
+            # Player defaults belong to AndroidPlayer, not editor Contents.
+            arguments += ["--sdk", "${input:sdk_contents}/../../PlaybackEngines/AndroidPlayer"]
         if producer == "object_produce" and "sdk" in profile:
             # Object profiles pin paths relative to Unity.app, while shader
             # tools bind its Contents directory. Preserve the profile root.
@@ -242,6 +283,20 @@ class Graph:
         artifacts = {"receipt": "result.json", "objects": "objects.bin", "index": "index.jsonl"}
         if "original_bundle" in profile:
             artifacts = {"receipt": "result.json"}
+        elif producer == "object_produce":
+            artifacts["layout"] = "layout.json"
+        if producer in {
+            "record_produce",
+            "record_remap",
+            "mesh_produce",
+            "avatar_produce",
+            "texture_produce",
+            "sprite_produce",
+            "shader_context",
+            "shader_prefab",
+            "payload_shader_records",
+        }:
+            artifacts["types"] = "types.json"
         if producer in {"mesh_produce", "texture_produce"}:
             artifacts["resources"] = "resources.bin"
         if producer == "object_produce":
@@ -258,6 +313,7 @@ class Graph:
                             "shared_receipt": "shared-shaders/result.json",
                             "shared_objects": "shared-shaders/objects.bin",
                             "shared_index": "shared-shaders/index.jsonl",
+                            "shared_types": "shared-shaders/types.json",
                         }
                     )
             else:
@@ -269,12 +325,242 @@ class Graph:
                     targets.extend(row["outputs"])
                 if "registry" in profile:
                     targets.append(profile["registry"]["file"])
+                    artifacts.update(
+                        registry_body="apk/assets/bin/Data/" + profile["registry"]["file"],
+                        registry_receipt="registry-source/result.json",
+                        registry_schemas="registry-source/schemas.json",
+                    )
                 if "shared_defaults" in profile:
                     targets.append(profile["shared_defaults"]["file"])
             outputs = {"apk/assets/bin/Data/" + target: "apk/assets/bin/Data/" + target for target in targets}
         self.jobs[name] = {"schema": 1, "script": PREFIX + producer + ".py", "arguments": arguments, "needs": needs, "outputs": outputs, "artifacts": artifacts}
         self.profile_files[name] = path
         self.job_profiles[name] = profile
+        return name
+
+    def bundle_managed(self, path, profile, active):
+        """Generate current witnesses alongside the actual final player registry."""
+        if set(profile) != {"schema", "profiles", "request"}:
+            raise ValueError("unsupported managed witness release contract")
+        name = "recipe/jobs/" + Path(path).stem + ".json"
+        needs = [self.build(digest(self.repo / dependency), active) for dependency in profile["profiles"]]
+        request = profile["request"]
+        token = request["registry_receipt"]["path"]
+        match = re.fullmatch(r"\$\{job:([^:}]+):registry_receipt\}", token)
+        if match is None or match.group(1) not in needs or owner(self.job_profiles[match.group(1)]) != "player_data":
+            raise ValueError("managed witnesses require final player registry artifacts")
+        sources = {"tools/phone-build/metadata/Program.cs"}
+        for value in re.findall(r'"([^"\n]*)"', json.dumps(request)):
+            if value.startswith("${repo}/"):
+                relative = value.removeprefix("${repo}/")
+                source = self.repo / relative
+                if not source.resolve().is_relative_to(self.repo) or not source.is_file():
+                    raise ValueError("managed public input must be a repository file")
+                sources.add(relative)
+            for dependency, artifact in re.findall(r"\$\{(?:job|job_directory|job_relative|sha256|bytes):([^:}]+):([^}]+)\}", value):
+                if dependency not in needs or artifact not in self.jobs[dependency]["artifacts"]:
+                    raise ValueError("managed artifact requires a declared source producer")
+        self.jobs[name] = dict(
+            schema=1,
+            script=PREFIX + "bundle_endpoints.py",
+            arguments=["--managed", "${request}", "--output", "${output}"],
+            request=request,
+            needs=sorted(set(needs)),
+            outputs={},
+            artifacts=dict(
+                receipt="result.json",
+                runtime_request="runtime-request.json",
+                managed_providers="providers.json",
+                metadata="metadata.json",
+                provider_aliases="provider-aliases.json",
+            ),
+        )
+        self.profile_files[name], self.job_profiles[name], self.public_files[name] = path, profile, sources
+        return name
+
+    def source_suppliers(self, pins, sources):
+        """Find explicit public pack selectors without opening generated packs."""
+        modules = {}
+
+        def module(name):
+            if name not in modules:
+                path = Path(__file__).resolve().parent.parent / "accepted-output" / (name + ".py")
+                spec = importlib.util.spec_from_file_location("graph_source_" + name, path)
+                modules[name] = importlib.util.module_from_spec(spec)
+                spec.loader.exec_module(modules[name])
+            return modules[name]
+
+        result = {}
+        for pin in sorted(set(pins)):
+            if pin not in self.profiles:
+                raise ValueError("missing source supplier profile: " + pin)
+            path = self.repo / self.profiles[pin]
+            if digest(path) != pin:
+                raise ValueError("source supplier profile drift: " + self.profiles[pin])
+            if not str(path).endswith(".jsonl.gz") and owner(json.loads(path.read_bytes())) not in {
+                "record_produce",
+                "mesh_produce",
+                "avatar_produce",
+                "texture_produce",
+                "sprite_produce",
+            }:
+                raise ValueError("source lookup requires direct typed record selectors: " + pin)
+            # Reuse preparation's body selectors; type_source is never evidence
+            # that a profile produces that original object's serialized body.
+            reader = module("record_produce") if str(path).endswith(".jsonl.gz") else None
+            identities = module("bundle_prepare").original_identities(SimpleNamespace(A=reader), path)
+            for record, originals in identities.items():
+                for source in originals & sources:
+                    result.setdefault(source, set()).add((pin, record))
+        return result
+
+    def bundle_bindings(self, rows, bundle, member, source_profiles=()):
+        """Map selected metadata to fresh pack jobs without reading pack bodies.
+
+        The caller supplies only this member's selected records. Unresolved rows
+        remain explicit; the result is not a runnable policy or graph admission.
+        Routes, staged endpoints and managed witnesses retain their own owners.
+        source_profiles opts into public selector discovery for private record
+        pins. A unique producer output replaces the private pack identity while
+        selection retains that prior identity; source and destination stay fixed.
+        """
+        if source_profiles:
+            rows = list(rows)
+            sources = {tuple(row["source"]) for row in rows if isinstance(row.get("source"), list) and len(row["source"]) == 3}
+            candidates = self.source_suppliers(source_profiles, sources)
+        else:
+            candidates = {}
+        bindings, suppliers, profiles, unresolved, destinations, failures = [], {}, set(), [], set(), {}
+        for row in rows:
+            destination = row.get("destination", [])
+            pin = row.get("record")
+            record_source = row.get("record_source")
+            selection = None
+            problem = None
+            if len(destination) != 3 or tuple(destination[:2]) != (bundle, member):
+                problem = "foreign or missing destination"
+            elif tuple(destination) in destinations:
+                problem = "duplicate destination"
+            elif any(not isinstance(row.get(key), list) or len(row[key]) != 3 for key in ("source", "record_source")):
+                problem = "explicit source and record_source identities required"
+            elif pin not in self.profiles:
+                available = candidates.get(tuple(row["source"]), set())
+                matches = {candidate for candidate in available if candidate[1] == tuple(record_source)}
+                if not matches:
+                    matches = available
+                if len(matches) == 1:
+                    selection = dict(record=pin, record_source=record_source)
+                    pin, supplier_record = next(iter(matches))
+                    record_source = list(supplier_record)
+                else:
+                    problem = "ambiguous source supplier profiles" if matches else "missing source supplier profile"
+            if problem is None and pin in failures:
+                problem = failures[pin]
+            elif problem is None and pin not in suppliers:
+                try:
+                    job = self.build(pin)
+                    required = ("receipt", "objects", "index", "types")
+                    if not set(required) <= self.jobs[job]["artifacts"].keys():
+                        problem = "supplier requires a final container instead of a typed record pack"
+                    else:
+                        path = self.profiles[pin]
+                        source = self.repo / path
+                        suppliers[pin] = dict(
+                            name=pin,
+                            profile=dict(path="${repo}/" + path, sha256=pin, bytes=source.stat().st_size),
+                            **{key: self.artifact_pin(job, key) for key in required},
+                        )
+                        profiles.add(path)
+                except ValueError as error:
+                    problem = str(error)
+                if problem is not None:
+                    failures[pin] = problem
+            if len(destination) == 3:
+                destinations.add(tuple(destination))
+            if problem is not None:
+                failure = dict(destination=destination, record=pin, reason=problem)
+                if selection is not None:
+                    failure["selection"] = selection
+                if source_profiles and isinstance(row.get("source"), list) and len(row["source"]) == 3:
+                    failure["candidates"] = [
+                        dict(supplier=candidate, record_source=list(record)) for candidate, record in sorted(candidates.get(tuple(row["source"]), ()))
+                    ]
+                unresolved.append(failure)
+            else:
+                binding = {key: row[key] for key in ("destination", "source")} | dict(supplier=pin, record_source=record_source)
+                if selection is not None:
+                    binding["selection"] = selection
+                bindings.append(binding)
+        return dict(bindings=bindings, suppliers=[suppliers[key] for key in sorted(suppliers)], profiles=sorted(profiles), unresolved=unresolved)
+
+    def bundle_preload(self, path, profile, active):
+        """Bind fresh suppliers and actual final containers to a signed policy."""
+        if set(profile) != {"schema", "profiles", "request"}:
+            raise ValueError("unsupported bundle release contract")
+        name = "recipe/jobs/" + Path(path).stem + ".json"
+        needs = [self.build(digest(self.repo / dependency), active) for dependency in profile["profiles"]]
+        request = profile["request"]
+        policy = request["policy"]
+        sources = set()
+
+        def visit(value):
+            if isinstance(value, dict):
+                for item in value.values():
+                    visit(item)
+                if isinstance(value.get("path"), str) and value["path"].startswith("${repo}/"):
+                    source = self.repo / value["path"].removeprefix("${repo}/")
+                    if "sha256" in value and (digest(source) != value["sha256"] or source.stat().st_size != value["bytes"]):
+                        raise ValueError("bundle public input pin differs")
+            elif isinstance(value, list):
+                for item in value:
+                    visit(item)
+            elif isinstance(value, str):
+                if value.startswith("${repo}/"):
+                    relative = value.removeprefix("${repo}/")
+                    source = self.repo / relative
+                    if source.resolve().is_relative_to(self.repo) is False or not source.is_file():
+                        raise ValueError("bundle public input must be a repository file")
+                    sources.add(relative)
+                for dependency, artifact in re.findall(r"\$\{(?:job|job_directory|job_relative|sha256|bytes):([^:}]+):([^}]+)\}", value):
+                    if dependency not in needs or artifact not in self.jobs[dependency]["artifacts"]:
+                        raise ValueError("bundle artifact requires a declared source producer")
+
+        visit(request)
+        # Indirect managed witnesses must come from generators whose source and
+        # input closure the dispatcher can invalidate, rather than retained JSON.
+        managed = request["managed_inputs"]
+        for key, value in managed.items():
+            if key != "properties_sdk" and not value["path"].startswith("${job:"):
+                raise ValueError("bundle managed witnesses require generated artifacts")
+        if managed:
+            registry_jobs = set()
+            for key in ("body", "receipt", "schemas"):
+                match = re.fullmatch(r"\$\{job:([^:}]+):registry_" + key + r"\}", managed["registry_" + key]["path"])
+                if match is None:
+                    raise ValueError("bundle registry requires final player artifacts")
+                registry_jobs.add(match.group(1))
+            if len(registry_jobs) != 1 or owner(self.job_profiles[next(iter(registry_jobs))]) != "player_data":
+                raise ValueError("bundle registry must come from one final player producer")
+        final = ("canonical/" if "canonical" in policy else "emitted/") + policy["bundle"] + ".bundle"
+        self.jobs[name] = dict(
+            schema=1,
+            script=PREFIX + "bundle_preload.py",
+            arguments=["--release", "${request}", "--output", "${output}"],
+            request=profile,
+            needs=sorted(set(needs)),
+            outputs={"payload/" + policy["bundle"]: final},
+            artifacts={"receipt": "result.json", "catalog_profile": "catalog-profile.json", "catalog_bundle": final},
+        )
+        self.profile_files[name], self.job_profiles[name], self.public_files[name] = path, profile, sources
+
+        def include(job):
+            if job in self.bundle_release_jobs:
+                return
+            self.bundle_release_jobs.add(job)
+            for dependency in self.jobs[job]["needs"]:
+                include(dependency)
+
+        include(name)
         return name
 
     def entry(self, name):
@@ -288,6 +574,8 @@ class Graph:
             if job in self.profile_files:
                 recipes.add(self.profile_files[job])
             profile = self.job_profiles[job]
+            for path in self.public_files.get(job, ()):
+                (recipes if path.startswith("recipe/") else producers).add(path)
             producers.update(profile.get("authored_inputs", {}))
             if owner(profile) == "player_data":
                 if self.phase_path:
@@ -346,6 +634,91 @@ class Graph:
         }
         self.job_profiles[name] = {}
         return name
+
+    def catalog_complete(self, selected_jobs, request_path):
+        """Bind the source catalog to final containers and the embedded bootstrap."""
+        request = json.loads((self.repo / request_path).read_text())
+        if set(request) != {"schema", "metadata", "input_id", "attempt"} or request["schema"] != "owner-catalog-inputs-v1":
+            raise ValueError("unsupported catalog request template")
+        metadata = request["metadata"]
+        if set(metadata) != {"path", "sha256", "bytes"}:
+            raise ValueError("unsupported catalog metadata pin")
+        if not metadata["path"].startswith("${input:") or not metadata["path"].endswith("}"):
+            raise ValueError("catalog metadata must use a private input binding")
+        profiles, bundles, needs, registries = [], {}, [], []
+        resources = {}
+        for job in sorted(set(selected_jobs)):
+            profile = self.job_profiles[job]
+            descriptor = self.jobs[job]
+            if owner(profile) == "player_data":
+                bootstrap = [row["recipe"] for row in profile.get("text_assets", {}).get("files", []) if row.get("name") == "WholeCatalogBootstrap"]
+                if len(bootstrap) != 1:
+                    raise ValueError("catalog requires one embedded bootstrap")
+                pin = bootstrap[0]
+                path = self.repo / "recipe" / pin["path"]
+                if path.stat().st_size != pin["bytes"] or digest(path) != pin["sha256"]:
+                    raise ValueError("catalog bootstrap pin differs")
+                identity = json.loads(path.read_text())
+                if any(identity[key] != request[key] for key in ("input_id", "attempt")):
+                    raise ValueError("catalog/bootstrap identity differs")
+                target = "apk/assets/bin/Data/" + profile["registry"]["file"]
+                descriptor["artifacts"]["catalog_registry"] = descriptor["outputs"][target]
+                registries.append(self.artifact_pin(job, "catalog_registry"))
+                needs.append(job)
+            for target, member in (
+                ("apk/assets/bin/Data/Resources/unity_builtin_extra", "unity_builtin_extra"),
+                ("apk/assets/bin/Data/unity default resources", "unity default resources"),
+            ):
+                if target in descriptor["outputs"]:
+                    artifact = "catalog_resource_" + str(len(resources))
+                    descriptor["artifacts"][artifact] = descriptor["outputs"][target]
+                    if member in resources:
+                        raise ValueError("duplicate catalog player resource: " + member)
+                    resources[member] = self.artifact_pin(job, artifact)
+                    needs.append(job)
+            if owner(profile) == "bundle_preload":
+                bundle = profile["request"]["policy"]["bundle"]
+                profiles.append(self.artifact_pin(job, "catalog_profile"))
+                if bundle in bundles:
+                    raise ValueError("duplicate final catalog bundle")
+                bundles[bundle] = self.artifact_pin(job, "catalog_bundle")
+                needs.append(job)
+                continue
+            if owner(profile) != "object_produce" or "original_bundle" in profile:
+                continue
+            path = self.profile_files[job]
+            source = self.repo / path
+            profiles.append(dict(path="${repo}/" + path, sha256=digest(source), bytes=source.stat().st_size))
+            target = "payload/" + profile["bundle"]["name"]
+            descriptor["artifacts"]["catalog_bundle"] = descriptor["outputs"][target]
+            bundles[profile["bundle"]["name"]] = self.artifact_pin(job, "catalog_bundle")
+            needs.append(job)
+        if len(registries) != 1 or not bundles:
+            raise ValueError("catalog requires final bundles and one selected player registry")
+        request.update(profiles=profiles, bundles=bundles, registry=registries[0])
+        if resources:
+            request["resources"] = resources
+        name = "recipe/jobs/owner-catalog-complete.json"
+        self.jobs[name] = {
+            "schema": 1,
+            "script": PREFIX + "catalog_complete.py",
+            "arguments": ["--inputs", "${request}", "--output", "${output}"],
+            "request": request,
+            "needs": sorted(set(needs)),
+            "outputs": {"payload/whole-catalog.json": "whole-catalog.json"},
+            "artifacts": {"receipt": "result.json"},
+        }
+        self.profile_files[name] = request_path
+        self.job_profiles[name] = {}
+        return name
+
+    @staticmethod
+    def artifact_pin(job, artifact):
+        return {
+            "path": "${job:" + job + ":" + artifact + "}",
+            "sha256": "${sha256:" + job + ":" + artifact + "}",
+            "bytes": "${bytes:" + job + ":" + artifact + "}",
+        }
 
     def native_code(self, request_path):
         """Produce native code and its matching metadata from one converter cohort."""
@@ -415,14 +788,20 @@ class Graph:
         self.job_profiles[name] = {"authored_inputs": {path: digest(self.repo / path) for path in policies}}
         return name
 
-    def compile(self, selected, *, bundle_manifest=False, native_request=None, sdk_request=None, burst_request=None):
+    def compile(self, selected, *, bundle_manifest=False, native_request=None, sdk_request=None, burst_request=None, catalog_request=None):
         entries = {}
         selected_jobs = [self.build(digest(self.repo / path)) for path in selected]
+        # Referenced donors and staged bundles remain runtime dependencies. Ship
+        # their actual containers, while pack-only suppliers remain artifacts.
+        selected_jobs = list(dict.fromkeys([*selected_jobs, *sorted(job for job in self.bundle_release_jobs if self.jobs[job]["outputs"])]))
         startup = "recipe/jobs/owner-startup-metadata.json"
         if startup in self.jobs:
             selected_jobs.append(startup)
+        catalog_jobs = list(selected_jobs)
+        if catalog_request:
+            selected_jobs.append(self.catalog_complete(catalog_jobs, catalog_request))
         if bundle_manifest:
-            selected_jobs.append(self.bundle_manifest(selected_jobs))
+            selected_jobs.append(self.bundle_manifest(catalog_jobs))
         if native_request:
             selected_jobs.append(self.native_code(native_request))
         if sdk_request:
@@ -437,6 +816,9 @@ class Graph:
                 entries[output] = entry
         if not entries:
             raise ValueError("select at least one complete output profile")
+        for name, job in self.jobs.items():
+            closure = self.entry(name)
+            job["source_files"] = sorted(set(closure["recipe_files"]) | set(closure["producer_files"]))
         files = {path for row in entries.values() for key in ("recipe_files", "producer_files") for path in row[key] if path not in self.jobs}
         return {
             "schema": 1,
@@ -455,6 +837,7 @@ def main():
         action="store_true",
         help="generate the native manifest from every selected payload bundle; missing native dependencies fail production",
     )
+    parser.add_argument("--catalog-request", help="repo-relative source catalog metadata template; validates actual final containers and runtime registry")
     parser.add_argument("--native-request", help="repo-relative native request template; emits matching library and metadata from acquired converter inputs")
     parser.add_argument("--sdk-request", help="repo-relative SDK request template; emits Android resources, dex and engine libraries")
     parser.add_argument("--burst-request", help="repo-relative managed/source request template; compiles Burst and retains preservation roots")
@@ -465,6 +848,7 @@ def main():
     index = graph.compile(
         args.profile,
         bundle_manifest=args.bundle_manifest,
+        catalog_request=args.catalog_request,
         native_request=args.native_request,
         sdk_request=args.sdk_request,
         burst_request=args.burst_request,

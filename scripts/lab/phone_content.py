@@ -11,6 +11,24 @@ import uuid
 
 from phone_bundle import VERSION, make_bundle
 
+NATIVE_CONTENT_TYPES = frozenset(
+    (
+        "LightingSettings",
+        "Mesh",
+        "Avatar",
+        "AnimationClip",
+        "Material",
+        "Shader",
+        "Texture2D",
+        "Cubemap",
+        "Sprite",
+        "GameObject",
+        "AvatarMask",
+        "PhysicMaterial",
+        "AnimatorOverrideController",
+    )
+)
+
 SOURCES = {
     "ContentFixture.cs": "Assets",
     "NativeScriptSchemaFixture.cs": "Assets",
@@ -106,7 +124,7 @@ def native_content_request(path):
     names = set()
     for asset in assets:
         name = asset.get("name")
-        if not isinstance(name, str) or not name or name in names or asset.get("type") != "LightingSettings":
+        if not isinstance(name, str) or not name or name in names or asset.get("type") not in NATIVE_CONTENT_TYPES:
             raise RuntimeError("Native-content asset name/type absent, duplicated or unsupported")
         names.add(name)
     return request
@@ -233,6 +251,7 @@ def run_editor(project, *, build=False, ambient=False):
     log = attempt / "editor.log"
     method = "AmbientSkyFixture.Begin" if ambient else "ContentFixtureBuilder.Build" if build else "ContentFixtureBuilder.Check"
     env = dict(os.environ)
+    env["ANDROID_ADB_SERVER_PORT"] = "5038"
     env["ROR2_PHONE_ORACLE_REPORT"] = str(attempt / "oracle.json")
     if env.get("ROR2_PHONE_NATIVE_CONTENT_CHECK"):
         if ambient:

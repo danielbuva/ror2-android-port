@@ -21,6 +21,11 @@ leaves an adjacent <name>.retired.json marker. Rebuild from the recorded source
 commit if an old candidate is ever needed again.
 
 Defaults to a dry-run plan; --apply deletes and writes a ledger.
+Build-cache protection uses only pinned state/baseline APKs, current build/base
+entries, latest installed APKs, newest worker builds named in current handoffs,
+explicit keeps and the age guard. Stale `.prune-keep` markers, nested content
+hashes and historical device sync lists do not pin cache entries. The cache age
+guard defaults to three hours; other generated outputs retain the 24-hour guard.
 """
 
 import argparse
@@ -120,16 +125,75 @@ def read_receipt(path):
         return {}
 
 
+def cache_protected_state(work, extra):
+    """Select live cache references, never nested payload/member hash lists."""
+    hashes = {digest: "explicit --keep-sha256" for digest in extra}
+    keys = {}
+    for name in PROTECTION_DOCS[:2]:
+        path = ROOT / name
+        if path.is_file():
+            hashes.update({digest: "APK pinned in " + name for digest in HASH.findall(path.read_text(errors="replace"))})
+    cache_root = (work / "build-cache").resolve()
+    for name in ("current-build", "iteration-base"):
+        receipt = read_receipt(work / "config" / (name + ".json"))
+        # These two receipts point at a single cache entry, even when they also
+        # describe hundreds of input, overlay and payload member hashes.
+        apk = receipt.get("apk")
+        if apk:
+            path = Path(apk)
+            path = (path if path.is_absolute() else ROOT / path).resolve()
+            if path.is_relative_to(cache_root) and len(path.relative_to(cache_root).parts) >= 2:
+                key = path.relative_to(cache_root).parts[0]
+                keys[key] = keys[key] + "; " + name + " cache entry" if key in keys else name + " cache entry"
+        elif receipt.get("key"):
+            keys[receipt["key"]] = name + " cache entry"
+    # installed.json is overwritten by the install owner; attempts and sync
+    # receipts are not evidence that an APK remains installed.
+    installed = {}
+    legacy = read_receipt(work / "device/installed.json")
+    for path in [work / "device/installed.json", *sorted((work / "device").glob("*/installed.json"))]:
+        if path.is_file():
+            receipt = read_receipt(path)
+            identity = receipt.get("serial", str(path.parent))
+            # Match device_context.receipt_directory: scoped receipts supersede
+            # legacy receipts for that device only after migration activation.
+            if path.parent != work / "device" and identity == legacy.get("serial") and not (path.parent / ".device-context-active.json").is_file():
+                continue
+            installed[identity] = receipt
+    for receipt in installed.values():
+        digest = receipt.get("apk_sha256")
+        if digest:
+            hashes.setdefault(digest, "latest installed APK (device receipt)")
+    # Current handoffs are the worker-owned candidate references, unlike stale
+    # markers left by every previous build. Retain just the newest extant build
+    # referenced by each handoff, whether it names the cache key or APK hash.
+    candidates = []
+    for path in cache_root.glob("*/result.json"):
+        if path.parent.is_symlink() or not any(path.parent.glob("*.apk")):
+            continue
+        receipt = read_receipt(path)
+        candidates.append((path.stat().st_mtime, path.parent.name, receipt.get("apk_sha256")))
+    for handoff in (ROOT / ".local/orchestrator/handoff").glob("*.md"):
+        text = handoff.read_text(errors="replace")
+        matches = [entry for entry in candidates if entry[1] in text or entry[2] and entry[2] in text]
+        if matches:
+            _, key, _ = max(matches)
+            keys.setdefault(key, "newest build for worker " + handoff.stem)
+    return hashes, keys
+
+
 def is_protected_path(path, paths):
     resolved = path.resolve()
     return any(resolved == p or resolved.is_relative_to(p) or p.is_relative_to(resolved) for p in paths)
 
 
 class Planner:
-    def __init__(self, work, hashes, paths, min_age_hours):
+    def __init__(self, work, hashes, paths, min_age_hours, cache_protection=None, cache_min_age_hours=None):
         self.work, self.hashes, self.paths = work, hashes, paths
         self.cutoff = time.time() - min_age_hours * 3600
+        self.cache_cutoff = time.time() - (min_age_hours if cache_min_age_hours is None else cache_min_age_hours) * 3600
         self.items, self.kept = [], []
+        self.cache_hashes, self.cache_keys = cache_protection if cache_protection is not None else cache_protected_state(work, [])
 
     def old(self, path):
         return newest_mtime(path) < self.cutoff
@@ -230,7 +294,7 @@ class Planner:
                 for heap in heaps:
                     self.add(heap, "analyzed heap snapshot")
 
-    def add(self, path, kind, **extra):
+    def add(self, path, kind, receipt_protection=True, **extra):
         boundary = self.work if path.is_relative_to(self.work) else ROOT
         if (
             kept(path, boundary)
@@ -240,7 +304,7 @@ class Planner:
         ):
             self.keep(path, KEEP_MARKER)
             return
-        if is_protected_path(path, self.paths):
+        if receipt_protection and is_protected_path(path, self.paths):
             self.keep(path, "named by a protection receipt")
             return
         self.items.append({"path": path, "kind": kind, "bytes": tree_size(path), **extra})
@@ -259,14 +323,16 @@ class Planner:
                     apk_hash = json.loads(receipt.read_text()).get("apk_sha256")
                 except (OSError, ValueError):
                     pass
-            if apk_hash in self.hashes:
-                self.keep(entry, "protected APK " + apk_hash[:12])
-            elif is_protected_path(entry, self.paths):
-                self.keep(entry, "named by a protection receipt")
-            elif not self.old(entry):
+            if apk_hash in self.cache_hashes:
+                self.keep(entry, self.cache_hashes[apk_hash] + ": " + apk_hash[:12])
+            elif entry.name in self.cache_keys:
+                self.keep(entry, self.cache_keys[entry.name])
+            elif newest_mtime(entry) >= self.cache_cutoff:
                 self.keep(entry, "recent")
             elif tree_size(entry) - (receipt.stat().st_size if receipt.is_file() else 0) > 1 << 20:
-                self.add(entry, "build-cache entry", apk_sha256=apk_hash)
+                # Cache retention is an explicit bounded set. Oracle/payload
+                # .prune-keep markers outside build-cache keep their semantics.
+                self.items.append({"path": entry, "kind": "build-cache entry", "bytes": tree_size(entry), "apk_sha256": apk_hash})
 
     def lab_build(self):
         root = self.work / "lab-build"
@@ -370,6 +436,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--work-dir", default=str(ROOT / "work"))
     parser.add_argument("--min-age-hours", type=float, default=24.0)
+    parser.add_argument("--cache-min-age-hours", type=float, default=3.0, help="Age guard for superseded build-cache entries only")
     parser.add_argument("--keep-sha256", action="append", default=[], help="Additional APK SHA-256 to protect")
     parser.add_argument("--apply", action="store_true", help="Delete the planned items (default: print the plan only)")
     parser.add_argument("--json", action="store_true")
@@ -379,7 +446,7 @@ def main():
         sys.exit("work directory must exist inside this checkout")
     # No lock check: the --min-age-hours guard already excludes anything a running build writes.
     hashes, paths = protected_state(work, args.keep_sha256)
-    planner = Planner(work, hashes, paths, args.min_age_hours)
+    planner = Planner(work, hashes, paths, args.min_age_hours, cache_protected_state(work, args.keep_sha256), args.cache_min_age_hours)
     planner.build_cache()
     planner.lab_build()
     planner.lanes()
@@ -390,6 +457,8 @@ def main():
     summary = {
         "mode": "apply" if args.apply else "plan",
         "protected_hashes": len(hashes),
+        "cache_protected_hashes": len(planner.cache_hashes),
+        "cache_protected_keys": len(planner.cache_keys),
         "items": len(planner.items),
         "bytes": total,
         "gib": round(total / (1 << 30), 1),
@@ -400,7 +469,7 @@ def main():
         apply(planner.items, work, ledger)
         summary["ledger"] = str(ledger.relative_to(ROOT))
     if args.json:
-        print(json.dumps({**summary, "plan": [{**i, "path": str(i["path"].relative_to(ROOT))} for i in planner.items]}, indent=2))
+        print(json.dumps({**summary, "kept_items": planner.kept, "plan": [{**i, "path": str(i["path"].relative_to(ROOT))} for i in planner.items]}, indent=2))
     else:
         by_kind = {}
         for item in planner.items:

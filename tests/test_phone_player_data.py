@@ -579,6 +579,67 @@ class PlayerDataTests(unittest.TestCase):
     def failed(self):
         self.assertFalse(json.loads((self.output / "result.json").read_text())["success"])
 
+    def test_current_metadata_keeps_actual_output_pins_when_historical_hash_differs(self):
+        name = "ScriptingAssemblies.json"
+        self.profile["outputs"][name] = {"bytes": 1, "sha256": "0" * 64}
+        self.profile_path.write_text(json.dumps(self.profile))
+        self.profile_hash = P.sha(self.profile_path)
+        request = self.root / "current-code.json"
+        request.write_text("{}")
+        result = P.produce(self.profile_path, self.profile_hash, self.pc, self.sdk, self.converter, self.receipt_hash, self.output, code_request=request)
+        self.assertFalse(result["metadata_comparison"][name])
+        self.assertEqual((self.output / (P.TARGET + name)).read_bytes(), self.generated[name])
+        self.assertEqual(result["files"][P.TARGET + name]["sha256"], hashlib.sha256(self.generated[name]).hexdigest())
+
+    def test_registry_evidence_binds_same_final_body_and_current_schemas(self):
+        selected, _, _, _, _ = script_properties_fixture(self.root, self.pc)
+        bundle = P.OBJECTS.B.Bundle(self.pc / selected["script_properties"]["path"])
+        with bundle.member("CAB-script") as stream:
+            layout = P.W.read_serialized(stream)
+            bodies = {}
+            for row in layout["objects"]:
+                stream.seek(layout["data_offset"] + row["offset"])
+                bodies[row["path_id"]] = stream.read(row["bytes"])
+        provider = self.pc / "owner.bin"
+        registry = dict(
+            layout=layout,
+            bodies=bodies,
+            script_ids={("Fixture.dll", "Invented", "Fixture"): -77},
+            transfer_schemas=[dict(identity=["Fixture.dll", "Invented", "Fixture"], tree=layout["types"][0]["tree"].hex(), properties="ab" * 16)],
+            provider_pins={str(provider): dict(bytes=provider.stat().st_size, sha256=P.sha(provider))},
+        )
+        name = "globalgamemanagers.assets"
+        self.profile["registry"] = dict(file=name, path="authored-registry.json")
+        self.profile["outputs"][name] = dict(bytes=1, sha256="0" * 64)
+        self.profile_path.write_text(json.dumps(self.profile))
+        self.profile_hash = P.sha(self.profile_path)
+        request = self.root / "current-code.json"
+        request.write_text("{}")
+        with patch.object(P, "registry_records", return_value=registry) as owner:
+            result = P.produce(self.profile_path, self.profile_hash, self.pc, self.sdk, self.converter, self.receipt_hash, self.output, code_request=request)
+        owner.assert_called_once()
+        evidence = json.loads((self.output / result["registry"]["receipt"]).read_text())
+        schemas = self.output / result["registry"]["schemas"]
+        body = self.output / (P.TARGET + name)
+        self.assertTrue(evidence["success"])
+        self.assertEqual(evidence["files"], {name: dict(bytes=body.stat().st_size, sha256=P.sha(body))})
+        self.assertEqual(evidence["files"][name]["sha256"], result["files"][P.TARGET + name]["sha256"])
+        self.assertEqual(json.loads(schemas.read_text()), registry["transfer_schemas"])
+        self.assertEqual(evidence["schemas"], dict(bytes=schemas.stat().st_size, sha256=P.sha(schemas)))
+        self.assertEqual(evidence["provider_pins"], registry["provider_pins"])
+        with body.open("rb") as stream:
+            stream.size = body.stat().st_size
+            metadata = P.W.read_serialized(stream)
+            for row in metadata["objects"]:
+                stream.seek(metadata["data_offset"] + row["offset"])
+                self.assertEqual(stream.read(row["bytes"]), bodies[row["path_id"]])
+        provider.write_bytes(b"changed after registry construction")
+        failed = self.root / "registry-drift"
+        with patch.object(P, "registry_records", return_value=registry), self.assertRaisesRegex(ValueError, "bytes differ"):
+            P.produce(self.profile_path, self.profile_hash, self.pc, self.sdk, self.converter, self.receipt_hash, failed, code_request=request)
+        self.assertFalse(json.loads((failed / "result.json").read_text())["success"])
+        self.assertFalse((failed / "registry-source/result.json").exists())
+
     def test_source_only_complete_target_tree_and_receipt(self):
         before = (self.pc / "owner.bin").read_bytes()
         result = self.produce()

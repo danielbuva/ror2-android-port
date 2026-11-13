@@ -1,6 +1,7 @@
 // Subsystem: session (game path). Owner map: docs/ARCHITECTURE.md#ownership.
 // Session phases: setup PrepareResultsKeyItems, PrepareIntegratedResults (IntegratedResultsSession.Prepare); teardown CleanupIntegratedResults (Dispose).
 using System;
+using Newtonsoft.Json.Linq;
 using System.Collections.Generic;
 using System.IO;
 using Path = System.IO.Path;
@@ -156,22 +157,29 @@ public sealed partial class PortSession
         {
             if (!Resources.Load<TextAsset>("WholeCatalogBootstrap"))
                 return;
+            TraceStartup("results-item-groups-owner-check-begin");
             var map = (System.Collections.IDictionary)RewardField(typeof(ItemCatalog), "itemGroups").GetValue(null);
             coordinator.Check(!ownsResultsItemGroups && map.Count == 0, "Unowned item-group catalog");
-            var types = WholeCatalogComposed.ItemGroupTypes();
-            var providers = WholeCatalogComposed.ItemGroupProviders();
+            TraceStartup("results-item-groups-owner-check-ready-types-begin");
+            var types = WholeCatalogComposed.ItemGroupTypes(step => TraceStartup("results-item-groups-types-" + step));
+            TraceStartup("results-item-groups-types-ready-providers-begin");
+            var providers = WholeCatalogComposed.ItemGroupProviders(step => TraceStartup("results-item-groups-providers-" + step));
+            TraceStartup("results-item-groups-providers-ready-metadata-begin");
             var fields = typeof(DLC4Content.ItemGroupTypes).GetFields(BindingFlags.Public | BindingFlags.Static);
             coordinator.Check(types.Length > 0 && providers.Length > 0 && types.Length == fields.Length && types.All(type => type) &&
                                   types.Select(type => type.name).Distinct().Count() == types.Length &&
                                   providers.All(provider => provider && types.Contains(provider.groupType) && provider.groups != null &&
                                                             provider.groups.All(group => group.items != null)),
                               "Original item-group metadata missing or ambiguous");
+            TraceStartup("results-item-groups-metadata-ready-bindings-begin");
             foreach (var field in fields)
                 coordinator.BindEnemyDefinition(typeof(DLC4Content.ItemGroupTypes), field.Name,
                                                 types.Single(type => type.name == field.Name));
+            TraceStartup("results-item-groups-bindings-ready-native-set-begin");
             // Preserve shipped group slots, including source-null item references; never invent membership.
             ownsResultsItemGroups = true;
             StaticCall(typeof(ItemCatalog), "SetItemGroups", new object[] { providers });
+            TraceStartup("results-item-groups-native-set-ready-validation-begin");
             coordinator.Check(types.All(type => ItemCatalog.GetItemGroupsForGroupType(type).Length ==
                                                 providers.Where(provider => provider.groupType == type)
                                                     .Sum(provider => provider.groups.Count(group => group.items.Length > 0))),
@@ -179,6 +187,7 @@ public sealed partial class PortSession
             coordinator.r.results.itemGroupTypes = types.Length;
             coordinator.r.results.itemGroupProviders = providers.Length;
             coordinator.r.results.itemGroups = providers.Sum(provider => provider.groups.Length);
+            TraceStartup("results-item-groups-validation-ready");
         }
         void CleanupResultsItemGroups()
         {
@@ -187,10 +196,10 @@ public sealed partial class PortSession
             StaticCall(typeof(ItemCatalog), "SetItemGroups", new object[] { Array.Empty<ItemGroupProvider>() });
             ownsResultsItemGroups = false;
         }
-        void PrepareResultsItemRelationships()
+        JObject PrepareResultsItemRelationships()
         {
             if (!Resources.Load<TextAsset>("WholeCatalogBootstrap"))
-                return;
+                return null;
             var map = (System.Collections.IDictionary)RewardField(typeof(ItemCatalog), "itemRelationships").GetValue(null);
             var typeField = typeof(ContentManager).GetField("_itemRelationshipTypes", BindingFlags.NonPublic | BindingFlags.Static);
             var providerField = typeof(ContentManager).GetField("_itemRelationshipProviders", BindingFlags.NonPublic | BindingFlags.Static);
@@ -223,6 +232,7 @@ public sealed partial class PortSession
             coordinator.r.results.itemRelationshipTypes = types.Length;
             coordinator.r.results.itemRelationshipProviders = providers.Length;
             coordinator.r.results.itemRelationshipPairs = pairs.Length;
+            return manifest;
         }
         void CleanupResultsItemRelationships()
         {
@@ -266,14 +276,14 @@ public sealed partial class PortSession
         }
         void ResultsStep(string value)
         {
-            // Bound observation to existing setup seams; keep report writes and
-            // scheduling intact while partitioning measured results startup cost.
+            // These synchronous steps retain their log and in-memory checkpoint.
+            // Setup completion and failed checks persist the report; serializing
+            // it at every marker adds repeated loading work within the same frame.
             Debug.LogFormat(LogType.Log, LogOption.NoStacktrace, null, "{0}",
                       "Integrated results step=" + value + " at=" +
                       Time.realtimeSinceStartup.ToString("R", System.Globalization.CultureInfo.InvariantCulture) +
                       " frame=" + Time.frameCount);
             coordinator.r.results.initializationStep = value;
-            coordinator.Save();
         }
         void RecordOfflineStageBegin(Stage stage)
         {
@@ -455,7 +465,7 @@ public sealed partial class PortSession
             ResultsStep("item-groups");
             PrepareResultsItemGroups();
             ResultsStep("item-relationships");
-            PrepareResultsItemRelationships();
+            var profileManifest = PrepareResultsItemRelationships();
             ResultsStep("report-xml");
             var folder = RewardField(typeof(RunReport), "runReportsFolder");
             coordinator.Check(folder != null, "Original report-folder field absent");
@@ -471,7 +481,7 @@ public sealed partial class PortSession
             LoadAndroidRunLedger();
             coordinator.r.results.priorRuns = coordinator.resultsLedger.runs.Count;
             ResultsStep("android-profile");
-            coordinator.PrepareAndroidProfile(player);
+            coordinator.PrepareAndroidProfile(player, profileManifest);
             // GameOverController.Awake creates RunReport, whose RuleBook requires the
             // native default-value metadata. This applies no Run rules or availability.
             ResultsStep("rule-metadata");

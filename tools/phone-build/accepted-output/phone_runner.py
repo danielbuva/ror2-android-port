@@ -15,9 +15,13 @@ import subprocess
 import time
 
 
+class AdmissionPending(RuntimeError):
+    """Valid sensors require more idle cooling before producer startup."""
+
+
 class ThermalDutyCycle:
     def __init__(self, profile="nova"):
-        self.high, self.low = {"nova": (70, 55), "thor": (75, 60)}[profile]
+        self.high, self.low = {"nova": (70, 55), "thor": (70, 55)}[profile]
         self.paused = False
         self.since = None
         self.pause_seconds = 0.0
@@ -47,8 +51,6 @@ class ThermalDutyCycle:
         for name, (kind, value) in zones.items():
             if not math.isfinite(value) or not 0 < value < 150:
                 raise RuntimeError("invalid thermal value: " + name)
-            if admission and value > 50:
-                raise RuntimeError("thermal admission above 50 C")
             if kind == "battery" and not admission and value >= 43:
                 raise RuntimeError("battery at or above 43 C")
             if kind in ("cpu", "gpu"):
@@ -58,6 +60,10 @@ class ThermalDutyCycle:
                         raise RuntimeError("CPU/GPU above 95 C for 3 s")
                 else:
                     self.hot_since.pop(name, None)
+        if admission:
+            if any(value > (35 if kind == "battery" else 50) for kind, value in zones.values()):
+                raise AdmissionPending("thermal admission requires CPU/GPU/skin <= 50 C and battery <= 35 C")
+            return None
         if not self.paused and max(processors) >= self.high:
             self.paused, self.since = True, now
             self.pauses += 1
@@ -232,11 +238,22 @@ def run(
     try:
         if not math.isfinite(timeout) or timeout <= 0:
             raise ValueError("positive finite wall deadline required")
-        if cancelled():
-            raise InterruptedError("producer cancelled")
-        read_control()
-        zones = sensor()
-        policy.observe(zones, clock(), admission=True)
+        while True:
+            tick = clock()
+            if cancelled():
+                raise InterruptedError("producer cancelled")
+            read_control()
+            if tick - started > timeout:
+                raise TimeoutError("producer wall deadline")
+            zones = sensor()
+            try:
+                policy.observe(zones, tick, admission=True)
+            except AdmissionPending:
+                report(zones, "cooling")
+                wait(max(0, 0.25 - (clock() - tick)))
+                continue
+            break
+        result["admission_seconds"] = clock() - started
         write_clock()
         cpus = efficiency_cpus()
         result["affinity_cpus"] = sorted(cpus)

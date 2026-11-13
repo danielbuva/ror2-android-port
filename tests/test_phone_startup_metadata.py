@@ -25,6 +25,20 @@ OWNER = load("startup_apk_under_test", "tools/phone-build/owner-apk/build_owner_
 
 
 class StartupTests(unittest.TestCase):
+    def test_final_app_guid_invalidates_extracted_metadata_for_code_updates(self):
+        original = str(uuid.UUID(int=123)).encode()
+        cohort = {name: {"sha256": "a" * 64, "path": "/first/location"} for name in OWNER.CODE_ENTRIES}
+        first = OWNER.runtime_app_guid(original, cohort)
+        self.assertNotEqual(first, original)
+        relocated = copy.deepcopy(cohort)
+        for row in relocated.values():
+            row["path"] = "/another/location"
+        self.assertEqual(first, OWNER.runtime_app_guid(original, relocated))
+        for name in OWNER.CODE_ENTRIES:
+            changed = copy.deepcopy(cohort)
+            changed[name]["sha256"] = "b" * 64
+            self.assertNotEqual(first, OWNER.runtime_app_guid(original, changed))
+
     def produce(self, root, name="output"):
         paths = [root / name for name in ("inventory.json", "settings.asset", "toolchain.json")]
         paths[0].write_text('{"files":["invented original input"]}')
@@ -67,6 +81,18 @@ class StartupTests(unittest.TestCase):
             path.write_text(json.dumps(receipt))
             with self.assertRaisesRegex(ValueError, "public inputs"):
                 P.verify(path, P.digest(path))
+
+    def test_identical_relocated_producer_verifies_but_changed_producer_refuses(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            receipt, path = self.produce(root)
+            producer = root / "relocated_startup.py"
+            producer.write_bytes(Path(P.__file__).read_bytes())
+            relocated = load("relocated_startup_under_test", producer)
+            self.assertEqual(relocated.verify(path, P.digest(path)), receipt["outputs"])
+            producer.write_bytes(producer.read_bytes() + b"\n# changed producer\n")
+            with self.assertRaisesRegex(ValueError, "startup producer changed"):
+                relocated.verify(path, P.digest(path))
 
     def test_admission_is_separate_from_exact_and_does_not_cover_game_data(self):
         with tempfile.TemporaryDirectory() as temporary:
