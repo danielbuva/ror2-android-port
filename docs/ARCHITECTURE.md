@@ -2840,6 +2840,8 @@ Qualcomm GPU frequency (Hz), skin temperatures and opt-in diagnostic projectile
 and effect counts. Unavailable sensors/counts remain empty or null; frequencies
 alone do not establish thermal throttling. The independent safety sampler keeps
 its existing subsecond cadence.
+Sustained requests may set only `selection.detailedVisualDiagnostics`; the owner
+writes its seed-2, attempt-bound, invincibility-only selector after idle admission.
 Optional diagnostics/selection/input-mapping settings are read back and restored.
 The mapping must match the APK attempt and accepted measured bridge checkpoint.
 Converted runs also reset and independently verify the separately owned lab

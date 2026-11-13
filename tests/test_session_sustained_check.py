@@ -91,6 +91,13 @@ class SustainedCheckTests(unittest.TestCase):
                 sustained.check_session_sustained("a" * 64, raw_frame_times="off")
             device.assert_not_called()
 
+    def test_visual_capture_options_reject_invalid_values_before_device_access(self):
+        for options in (dict(detailed_visual_diagnostics="true"), dict(capture_interval_seconds=0)):
+            with self.subTest(options=options), mock.patch.object(sustained, "Device") as device:
+                with self.assertRaises(ValueError):
+                    sustained.check_session_sustained("a" * 64, **options)
+                device.assert_not_called()
+
     def test_exact_total_avoids_rounded_mean_and_binds_trace(self):
         report, snapshot, utc = fixtures()
         report["framePacing"].update(totalMs=2000.125, rawFrameTrace="authored.bin")
