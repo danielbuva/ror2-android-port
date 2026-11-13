@@ -103,6 +103,16 @@ class DeviceSessionTests(unittest.TestCase):
         self.assertEqual([call.args[1].name for call in capture.call_args_list], ["sample-0", "sample-5", "sample-10", "final"])
         self.assertEqual(result["observed_seconds"], 10)
 
+    def test_pacing_observation_queries_only_selected_package_surfaces(self):
+        target = mock.Mock(package="dev.ror2lab.arm64")
+        target.sh.side_effect = ["display modes", "Swappy logs", "SurfaceView dev.ror2lab.arm64 main\nSurfaceView other.app main\n", "8333333\n1 2 3\n"]
+        snapshot = dict(targetFrameRate=300, renderFrameInterval=2)
+        runner.observe_pacing(target, self.output, "7", snapshot)
+        self.assertEqual(json.loads((self.output / "snapshot.json").read_text()), snapshot)
+        self.assertEqual((self.output / "latency-00.txt").read_text(), "8333333\n1 2 3\n")
+        target.sh.assert_any_call("dumpsys", "SurfaceFlinger", "--latency", "SurfaceView dev.ror2lab.arm64 main", check=False)
+        self.assertEqual(len(list(self.output.glob("latency-*.txt"))), 1)
+
     def test_payload_retention_marker_is_never_synced(self):
         payload = self.root / "payload"
         payload.mkdir()

@@ -1,5 +1,16 @@
 # Architecture
 
+`LabDiagnostics` records live frame caps, vSync, render interval, capture rate
+and timestep with its existing two-second snapshot. `LabDisplayPreference`
+adds a timestamped asynchronous read of the active Android display and window
+preferences without changing them. The shared device request's opt-in
+`pacing_diagnostics` retains these snapshots and matching compositor latency,
+display and process logs every sustained observation (about five seconds).
+Missing compositor access stays unavailable; it is not inferred from Unity FPS.
+There is no exported Swappy interval getter in the pinned player; logs and
+presentation timestamps supplement the configured optimized-pacing flag.
+Existing session cleanup owns teardown; these readers change no frame policy.
+
 What runs today, how it is built, and who owns what. The ADRs explain *why*
 ([ADR-001](ADR-001-port-architecture.md)); this page is the current map. Update it when a
 file, owner or pipeline step is added, moved or retired. Results and evidence live in the

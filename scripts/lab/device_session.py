@@ -47,6 +47,7 @@ def load_request(path):
         "require_high_refresh",
         "payload_directory",
         "capture_interval_seconds",
+        "pacing_diagnostics",
     }
     if not isinstance(value, dict) or not required <= value.keys() or value.keys() - required - optional:
         raise ValueError("Request has missing or unknown fields")
@@ -72,8 +73,9 @@ def load_request(path):
         raise ValueError("mode must be launch or sustained")
     if value["mode"] == "sustained" and value["package"] != "dev.ror2lab.arm64":
         raise ValueError("The native sustained owner requires the lab package")
-    if "require_high_refresh" in value and type(value["require_high_refresh"]) is not bool:
-        raise ValueError("require_high_refresh must be boolean")
+    for name in ("require_high_refresh", "pacing_diagnostics"):
+        if name in value and type(value[name]) is not bool:
+            raise ValueError(name + " must be boolean")
     for name in ("selection", "diagnostics"):
         if name in value and not isinstance(value[name], dict):
             raise ValueError(name + " must be a JSON object")
@@ -319,7 +321,11 @@ def run_workload(device, thermal, request, output, result):
         prior = set(evidence.glob("*/result.json"))
         try:
             result["session"] = sustained.check_session_sustained(
-                expected_apk_sha256=request["apk_sha256"], _launch=checked_launch, raw_frame_times=True, duration_seconds=request["duration_seconds"]
+                expected_apk_sha256=request["apk_sha256"],
+                _launch=checked_launch,
+                raw_frame_times=True,
+                duration_seconds=request["duration_seconds"],
+                _observe=observe_pacing if request.get("pacing_diagnostics") else None,
             )
         finally:
             fresh = set(evidence.glob("*/result.json")) - prior
@@ -352,6 +358,20 @@ def run_workload(device, thermal, request, output, result):
         time.sleep(0.5)
     capture(device, output / "final", pid)
     result["observed_seconds"] = time.monotonic() - began
+
+
+def observe_pacing(device, output, pid, snapshot):
+    """Read compositor presentation without attaching a native profiler."""
+    output.mkdir(parents=True, exist_ok=True)
+    save(output / "snapshot.json", snapshot)
+    (output / "display.log").write_text(device.sh("dumpsys", "display"))
+    (output / "frame-pacing.log").write_text(device.sh("logcat", "-d", "--pid=" + pid, "-v", "epoch"))
+    layers = device.sh("dumpsys", "SurfaceFlinger", "--list")
+    (output / "layers.txt").write_text(layers)
+    selected = [line for line in layers.splitlines() if device.package in line and "SurfaceView" in line]
+    for index, layer in enumerate(selected):
+        # Preserve explicit empty/permission-refused results as unavailable.
+        (output / ("latency-%02d.txt" % index)).write_text(device.sh("dumpsys", "SurfaceFlinger", "--latency", layer, check=False))
 
 
 def execute(request):

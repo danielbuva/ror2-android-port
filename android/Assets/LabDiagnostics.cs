@@ -15,6 +15,8 @@ public sealed class LabDiagnostics : MonoBehaviour
   public string audio="not initialized: isolated lab",network="not initialized: isolated lab",gameState="no RoR2 gameplay loaded";
   public bool playerExists,sceneDetails; public string[] controllers,renderers,assemblies; public ObjectInfo[] hierarchy;
   public float fps,frameMs; public long managedBytes,totalAllocatedBytes;public double cpuFrameMs,gpuFrameMs;
+  public int targetFrameRate,vSyncCount,displayRefreshRate,renderFrameInterval,effectiveRenderFrameRate,captureFramerate;
+  public float fixedDeltaTime,timeScale;public string androidDisplay;
   public bool workloadCounts;public int activeProjectiles=-1,activeEffects=-1;public double workloadCountMs;public string workloadCountError;
  }
  string root; float elapsed; int frames; float fps; bool ready; Config config=new Config();
@@ -69,12 +71,30 @@ public sealed class LabDiagnostics : MonoBehaviour
   var snapshot=new Snapshot{checkpoint=checkpoint,utc=DateTime.UtcNow.ToString("o"),scene=SceneManager.GetActiveScene().name,graphicsApi=SystemInfo.graphicsDeviceType.ToString(),gpu=SystemInfo.graphicsDeviceName,persistentDataPath=root,streamingAssetsPath=Application.streamingAssetsPath,camera=Camera.main?Camera.main.name:null,controllers=Input.GetJoystickNames(),fps=fps,frameMs=fps>0?1000/fps:0,managedBytes=Profiler.GetMonoUsedSizeLong(),totalAllocatedBytes=Profiler.GetTotalAllocatedMemoryLong(),playerExists=GameObject.Find("Player")!=null};
   PopulateSceneDetails(checkpoint,snapshot);
   PopulateWorkloadCounts(snapshot);
+  PopulatePacing(snapshot);
  #if UNITY_ANDROID && !UNITY_EDITOR
   using(var unity=new AndroidJavaClass("com.unity3d.player.UnityPlayer"))using(var activity=unity.GetStatic<AndroidJavaObject>("currentActivity"))using(var dir=activity.Call<AndroidJavaObject>("getFilesDir"))snapshot.privateDataPath=dir.Call<string>("getAbsolutePath");
  #endif
   var timings=new FrameTiming[1];if(FrameTimingManager.GetLatestTimings(1,timings)>0){snapshot.cpuFrameMs=timings[0].cpuFrameTime;snapshot.gpuFrameMs=timings[0].gpuFrameTime;}
   snapshot.unityVersion=Application.unityVersion;
   PublishSnapshot(checkpoint,snapshot);
+ }
+ // Live values, including during loading and gameplay; never infer a cap from
+ // the startup setting. Android observation carries its own monotonic timestamp.
+ void PopulatePacing(Snapshot snapshot) {
+  snapshot.targetFrameRate=Application.targetFrameRate;
+  snapshot.vSyncCount=QualitySettings.vSyncCount;
+  snapshot.displayRefreshRate=Screen.currentResolution.refreshRate;
+  snapshot.renderFrameInterval=UnityEngine.Rendering.OnDemandRendering.renderFrameInterval;
+  snapshot.effectiveRenderFrameRate=UnityEngine.Rendering.OnDemandRendering.effectiveRenderFrameRate;
+  snapshot.captureFramerate=Time.captureFramerate;
+  snapshot.fixedDeltaTime=Time.fixedDeltaTime;snapshot.timeScale=Time.timeScale;
+ #if UNITY_ANDROID && !UNITY_EDITOR
+  using(var unity=new AndroidJavaClass("com.unity3d.player.UnityPlayer"))
+  using(var activity=unity.GetStatic<AndroidJavaObject>("currentActivity"))
+  using(var display=new AndroidJavaClass("dev.ror2lab.diagnostics.LabDisplayPreference"))
+   snapshot.androidDisplay=display.CallStatic<string>("observe",activity);
+ #endif
  }
  // Keep live scalar diagnostics cheap. Whole-scene discovery and reflection are
  // inspection work, explicitly requested through ./dev diagnostics. Startup
