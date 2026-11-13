@@ -2484,6 +2484,7 @@ The remaining `--action` selectors are classified here:
 | editor | `siren-encounter-host` | current |
 | editor | `source-camera-graphics-host` | current |
 | editor | `commando-animation-host` | current |
+| editor | `enemy-material-audit` | current |
 | editor | `character-motor-order` | historical |
 | editor | `catalog-addresses` | historical |
 | editor | `reference-identities` | historical |
@@ -7112,3 +7113,23 @@ the original clips during aim, firing and hit reactions. The comparison override
 all Commando controller clips so a shared gesture defect cannot pass both sides.
 Bounded Commando aim/firing device evidence is recorded in the journal; other
 survivors and unassisted hit-reaction presentation remain separate gates.
+
+`WholeCatalogHost.AuditCombatMaterials` owns the current exact-editor
+`./dev editor --target lab --action enemy-material-audit` inventory. It reads
+native-provider body/projectile candidates and the prepared session's registered
+effect prefabs, including inactive renderer slots, Billboard materials, particle
+meshes and trails. Private receipts retain source keywords, texture bindings and
+recovered-resource coverage. It does not initialize native catalogs, mutate
+materials or establish Android shader support or visual parity. Setup requires
+the prepared lab project and generated catalog; completion retains a private
+editor receipt and adds no runtime state.
+
+`TeleporterWorldSession.ObserveOwnedSurface` supplies the existing opt-in live
+visual census. A matching lab selector may request `detailedVisualDiagnostics`;
+normal sessions retain the embedded default. Visible combat renderers enter the
+census regardless of shader name, including missing bindings. Each sampled slot,
+particle trail and Billboard material records shader support, keywords and
+texture state; particle renderers also report all meshes. The existing screen
+coverage ordering and 128-view limit remain: this is a sampled attribution tool,
+not proof that every prefab rendered. Session teardown discards the report with
+the other objective observations; it never changes materials or simulation.

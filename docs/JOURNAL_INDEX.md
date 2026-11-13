@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J1471](PORTING_JOURNAL.md#j1471--attribute-live-enemy-and-attack-material-bindings) | 2026-11-12 | Attribute live enemy and attack material bindings | 2026-11-13. |
 | [J1470](PORTING_JOURNAL.md#j1470--restore-commando-source-additive-aim-and-gesture-poses) | 2026-11-12 | Restore Commando source additive aim and gesture poses | 2026-11-12. |
 | [J1469](PORTING_JOURNAL.md#j1469--initialize-commando-locomotion-before-the-first-roll) | 2026-11-12 | Initialize Commando locomotion before the first roll | 2026-11-12. |
 | [J1468](PORTING_JOURNAL.md#j1468--save-app-refresh-policy-and-make-periodic-scene-inspection-explicit) | 2026-11-12 | Save app refresh policy and make periodic scene inspection explicit | Saved high-refresh preference requests app-window/surface modes; GUI Save selects 60/120 Hz, and high mode survives cold launch. |
