@@ -280,6 +280,8 @@ from measured commands. A separate one-second sample sums simultaneous resident
 bytes for the command and its descendants; sampling gives a peak lower bound,
 and measurement errors invalidate success. Optional absolute `--done-file`
 writes a terminal receipt after pruning on command success, failure or SIGTERM.
+Optional `--progress-file` joins current phase and record counts to each RSS
+sample in a local JSONL file, exposing growth within an emission phase.
 `--detach` starts the same tracked profiler in a new session with a retained
 supervisor log and requires that terminal receipt. These host metrics do not
 qualify phone heat, installation or complete converter performance.
@@ -1933,6 +1935,11 @@ Every duplicate remains ordered and checked. Temporary sort data uses memory;
 the measured aggregate process RSS remains a separate host/device admission gate.
 These indexes close and disappear with the invocation; durable transformed-byte
 cache checkpoints and public input formats retain their existing owners.
+Endpoint qualification decodes each full native type once per invocation and
+bounds retained endpoint bodies and descriptors by both 32 MiB and 256 entries.
+The shared record field walker releases its recursive closure on return, so
+parsed bodies and spans do not await cyclic garbage collection. All body,
+pointer and endpoint drift checks still run on each validation epoch.
 The shared `object_produce.make_layout` writer accepts explicitly qualified
 external MonoScript pointers separately from scene membership. It checks each
 managed body's script against the local records or supplied external allowlist,

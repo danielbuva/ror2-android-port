@@ -56,7 +56,7 @@ def process_tree_rss(pid, rows=None):
         selected.update(children)
 
 
-def measure(stage, command, workspace, evidence):
+def measure(stage, command, workspace, evidence, *, progress_file=None):
     workspace, evidence = Path(workspace), Path(evidence)
     evidence.mkdir(parents=True, exist_ok=True)
     initial = disk(workspace)
@@ -67,15 +67,31 @@ def measure(stage, command, workspace, evidence):
 
     def sample():
         nonlocal tree_peak
+        samples = None
         try:
+            if progress_file is not None:
+                samples = (evidence / f"{stage}.samples.jsonl").open("x")
             while True:
                 for index, value in enumerate(disk(workspace)):
                     peak[index] = max(peak[index], value)
-                tree_peak = max(tree_peak, process_tree_rss(child.pid))
+                rss = process_tree_rss(child.pid)
+                tree_peak = max(tree_peak, rss)
+                if samples is not None:
+                    try:
+                        progress = json.loads(Path(progress_file).read_text())
+                    except FileNotFoundError:
+                        progress = {}
+                    value = dict(seconds=time.monotonic() - started, process_tree_rss_bytes=rss)
+                    value.update({key: progress.get(key) for key in ("phase", "records_done", "records_total")})
+                    samples.write(json.dumps(value) + "\n")
+                    samples.flush()
                 if stop.wait(1):
                     break
         except Exception as error:
             sample_errors.append(str(error))
+        finally:
+            if samples is not None:
+                samples.close()
 
     started = time.monotonic()
     with (evidence / f"{stage}.log").open("x") as log:
@@ -125,6 +141,7 @@ def main():
     parser.add_argument("--workspace", type=Path, required=True)
     parser.add_argument("--evidence", type=Path, required=True)
     parser.add_argument("--table", type=Path)
+    parser.add_argument("--progress-file", type=Path, help="sample phase and record counts alongside process-tree RSS in local JSONL")
     parser.add_argument("--done-file", type=Path, help="write an absolute terminal receipt after lab cleanup, including command failure")
     parser.add_argument("--detach", action="store_true", help="launch this tracked profiler in a new session; requires --done-file")
     parser.add_argument("command", nargs=argparse.REMAINDER)
@@ -153,6 +170,8 @@ def main():
         ]
         if args.table:
             launch.extend(["--table", str(args.table.resolve())])
+        if args.progress_file:
+            launch.extend(["--progress-file", str(args.progress_file.resolve())])
         launch.extend(["--", *command])
         with supervisor_log.open("x") as log:
             child = subprocess.Popen(launch, stdin=subprocess.DEVNULL, stdout=log, stderr=subprocess.STDOUT, start_new_session=True)
@@ -165,7 +184,7 @@ def main():
 
     previous = signal.signal(signal.SIGTERM, interrupted)
     try:
-        row.update(measure(args.stage, command, args.workspace, args.evidence))
+        row.update(measure(args.stage, command, args.workspace, args.evidence, progress_file=args.progress_file))
         row["success"] = row["exit_code"] == 0 and not row.get("measurement_errors")
         if args.table:
             lines = args.table.read_text().splitlines()

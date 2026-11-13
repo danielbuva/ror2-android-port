@@ -31,6 +31,8 @@ class ConverterProfileStageTests(unittest.TestCase):
                 str(root),
                 "--done-file",
                 str(done),
+                "--progress-file",
+                str(root / "progress.json"),
                 "--",
                 sys.executable,
                 "-c",
@@ -43,6 +45,7 @@ class ConverterProfileStageTests(unittest.TestCase):
             self.assertEqual(command[:2], [sys.executable, str(SCRIPT)])
             self.assertNotIn("--detach", command)
             self.assertEqual(command[command.index("--done-file") + 1], str(done))
+            self.assertEqual(command[command.index("--progress-file") + 1], str((root / "progress.json").resolve()))
             self.assertEqual(command[-4:], ["--", sys.executable, "-c", "print('ok')"])
             self.assertTrue(launch.call_args.kwargs["start_new_session"])
             self.assertEqual(launch.call_args.kwargs["stdin"], subprocess.DEVNULL)
@@ -62,6 +65,20 @@ class ConverterProfileStageTests(unittest.TestCase):
             with patch.object(PROFILE, "process_tree_rss", side_effect=RuntimeError("sample failed")):
                 row = PROFILE.measure("sample", [sys.executable, "-c", "import time; time.sleep(0.05)"], root, root)
             self.assertEqual(row["measurement_errors"], ["sample failed"])
+
+    def test_samples_join_current_record_progress_to_simultaneous_rss(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            progress = root / "progress.json"
+            progress.write_text(json.dumps(dict(phase="records", records_done=2048, records_total=10000)))
+            with patch.object(PROFILE, "process_tree_rss", return_value=123456):
+                row = PROFILE.measure("sample", [sys.executable, "-c", "import time; time.sleep(0.05)"], root, root, progress_file=progress)
+            samples = [json.loads(line) for line in (root / "sample.samples.jsonl").read_text().splitlines()]
+            self.assertTrue(samples)
+            self.assertEqual(samples[0]["process_tree_rss_bytes"], 123456)
+            self.assertEqual((samples[0]["phase"], samples[0]["records_done"], samples[0]["records_total"]), ("records", 2048, 10000))
+            self.assertGreaterEqual(samples[0]["seconds"], 0)
+            self.assertEqual(row["measurement_errors"], [])
 
     def test_terminal_is_written_after_cleanup_for_command_and_launch_failure(self):
         for failure in (False, True):

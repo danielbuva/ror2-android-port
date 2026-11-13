@@ -1202,7 +1202,9 @@ def _emit_closed_native(
             raise ValueError("Persisted external endpoint drift")
         external_bodies[target] = value, raw, typ
         external_bytes += len(raw)
-        while external_bytes > 32 * 1024 * 1024 and external_bodies:
+        # Tiny bodies can own large descriptors/types. Match the endpoint
+        # reader's count bound as well as limiting retained body bytes.
+        while external_bodies and (external_bytes > 32 * 1024 * 1024 or len(external_bodies) > 256):
             _, (_, prior, _) = external_bodies.popitem(last=False)
             external_bytes -= len(prior)
         return value, raw, typ

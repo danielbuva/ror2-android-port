@@ -13,6 +13,7 @@ import tempfile
 from types import SimpleNamespace as Node
 import unittest
 from unittest.mock import patch
+import weakref
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "tools/phone-build/accepted-output"))
 P = importlib.import_module("bundle_preload")
@@ -27,6 +28,15 @@ def pointer(name):
 
 
 class BundlePreloadTests(unittest.TestCase):
+    def test_qualification_reuses_decoded_native_type(self):
+        endpoints = P.module("bundle_endpoints")
+        encoded = dict(class_id=134, tree="1234", hash="ab" * 16, dependencies=[])
+        with closing(endpoints.Qualification(P, None, dict(bundle="authored", member="CAB-authored"), {}, {"key": encoded}, {})) as qualification:
+            first = qualification.typ(dict(full_type="key"))
+            self.assertIs(first, qualification.typ(dict(full_type="key")))
+            self.assertEqual(first, dict(encoded, tree=b"\x12\x34", hash=b"\xab" * 16))
+            self.assertEqual(encoded["tree"], "1234")
+
     def test_bulk_descriptors_preserve_order_and_duplicate_contracts(self):
         with tempfile.TemporaryDirectory() as tmp, closing(P.DiskIndexes(tmp)) as store:
             rows = store.mapping()
@@ -739,6 +749,51 @@ class BundlePreloadTests(unittest.TestCase):
             assets=[dict(name="assets/root.asset", type="PhysicMaterial")],
         )
         return graph, types, rows, required
+
+    def test_required_emission_bounds_retained_tiny_endpoint_descriptors(self):
+        class Descriptor(dict):
+            pass
+
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            graph, types, original, required = self.required_graph(root)
+            identities = list(range(10, 310))
+            provider = Path(original[0]["provider"])
+            rows, bodies, routes, indexes = [], {}, {}, []
+            for identity, target in zip(identities, identities[1:] + identities[:1]):
+                body = bodies[identity] = struct.pack("<iq", 0, target)
+                row = dict(original[0], destination=["authored", "CAB-authored", identity], edges=[[0, target]], sha256=hashlib.sha256(body).hexdigest())
+                row["record_source"] = ["source", "native", identity]
+                indexes.append(dict(bundle="source", member="native", path_id=identity, bytes=len(body), offset=12 * len(rows), sha256=row["sha256"]))
+                rows.append(row)
+                routes[tuple(row["destination"])] = [dict(field=["link"], pointer=[0, target], target=["authored", "CAB-authored", target])]
+            (provider / "objects.bin").write_bytes(b"".join(bodies.values()))
+            index = provider / "index.jsonl"
+            index.write_text("".join(json.dumps(row) + "\n" for row in indexes))
+            receipt = json.loads((provider / "result.json").read_text())
+            receipt["outputs"]["index.jsonl"]["sha256"] = P.O.B.sha(index)
+            (provider / "result.json").write_text(json.dumps(receipt))
+            (graph / "selected-records.jsonl").write_text("".join(json.dumps(row) + "\n" for row in rows))
+            required["path_ids"] = identities
+            typ = next(iter(json.loads(types.read_text()).values()))
+            typ = {**typ, "tree": bytes.fromhex(typ["tree"]), "hash": bytes.fromhex(typ["hash"])}
+            selected = {row["destination"][2]: row for row in rows}
+            retained, peak = weakref.WeakValueDictionary(), 0
+
+            def endpoint(target):
+                nonlocal peak
+                identity = target[2]
+                value = Descriptor(selected[identity])
+                retained[identity] = value
+                peak = max(peak, len(retained))
+                return value, bodies[identity], typ
+
+            result = P.emit_closed_native(
+                graph, [types], root / "emitted", "authored", "CAB-authored", required=required, structural_routes=routes, endpoint_record=endpoint
+            )
+            self.assertEqual(result["records"], len(identities))
+            self.assertGreater(peak, 250)
+            self.assertLessEqual(peak, 257)
 
     def request_fixture(self, root):
         graph, types, rows, required = self.required_graph(root)
