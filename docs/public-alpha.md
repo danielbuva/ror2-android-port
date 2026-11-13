@@ -230,7 +230,10 @@ thermal sampling policy; proposed performance budgets do not change those limits
       cases on supported hardware.
       [J1311](PORTING_JOURNAL.md#j1311--recover-native-settings-after-writer-termination-and-activity-restart)
       qualifies writer termination, native recovery/resave and protected-file
-      retention; power-cut and filled-filesystem cases remain open.
+      retention. [J1473](PORTING_JOURNAL.md#j1473--recover-settings-from-injected-write-and-rename-enospc) qualifies injected settings ENOSPC at write and
+      rename: visible error, retained primary/backup, successful retry and cold
+      recovery with unchanged settings/profile/result files. Physical power loss
+      and profile-writer failure remain open; physical volume exhaustion was not tested.
       Apply the current [thermal policy](PLAYTESTING.md#stability-persistence-and-updates),
       including [J1356](PORTING_JOURNAL.md#j1356--honor-thermal-admission-exclusions-above-80-c).
       Host policy checks and assisted observations leave sustained ordinary play open.

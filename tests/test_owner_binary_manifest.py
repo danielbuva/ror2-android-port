@@ -105,6 +105,21 @@ def read(data):
 
 
 class OwnerBinaryManifestTests(unittest.TestCase):
+    def test_authored_settings_service_matches_plugin_and_preserves_existing_service(self):
+        for utf8 in (True, False):
+            result = PATCH.patch(authored_manifest(utf8=utf8), WIRE, lab_services=True)
+            service = next(node for node in read(result)[2] if node["tag"] == "service")
+            self.assertEqual(
+                service["attributes"],
+                {
+                    (PATCH.ANDROID, "name"): "dev.ror2lab.diagnostics.LabSettingsWriteObserver",
+                    (PATCH.ANDROID, "exported"): 0,
+                    (PATCH.ANDROID, "process"): ":settings_write_observer",
+                    (PATCH.ANDROID, "stopWithTask"): 1,
+                    (PATCH.ANDROID, "isolatedProcess"): 0,
+                },
+            )
+
     def test_disposable_package_has_explicit_version_name_and_preserves_other_attributes(self):
         for utf8 in (True, False):
             original = authored_manifest(utf8=utf8)

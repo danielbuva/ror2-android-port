@@ -32,6 +32,12 @@ file, owner or pipeline step is added, moved or retired. Results and evidence li
 `WholeCatalogLoader.RegisterLocations` wraps its completed map with an
 `IResourceLocator` request observer. Each lookup logs its original key, key type,
 requested asset type, phase and map result, including unresolved soft references.
+Resolved rows include their provider, member and bundle. The same owner registers
+the ResourceManager diagnostic callback and enables its diagnostic events while
+the composed locator is owned. It observes original operation completions and
+failures without requesting assets or changing reference counts. Release removes
+its callback and restores the prior diagnostic-event setting. Failed operations
+emit their exception at the failure event, after the original completion event.
 The wrapper delegates keys and results unchanged; the original dynamic locator
 still handles GUID subobjects afterwards. A map miss is not a global load failure.
 `WholeCatalogComposed.Release` removes the same owned wrapper and restores prior
@@ -78,7 +84,19 @@ separate work; this interface adds no device claim.
 Request qualification and emission share attempt-owned SQLite descriptor and
 provider indexes. Only the current rows are decoded; parsed type trees use a
 bounded cache and object bodies retain the existing streamed storage. Teardown
-closes and removes the temporary indexes. The optional emission cache commits
+closes and removes the temporary indexes. Provider descriptors stream through
+SQLite bulk insertion, retaining original JSON lines and ordered duplicate
+extents; metadata conflicts and differing duplicate bytes still fail. Descriptor
+maps also bulk-load rows, rejecting duplicate graph/route identities and checking
+equal endpoint collisions without per-row membership reads. These disposable indexes disable
+journaling; the separate incremental cache retains its durable checkpoints.
+The `--inputs` CLI defaults to two record workers (`--workers 1` selects serial).
+`RecordWorkers` starts them before loading indexes, bounds queued bytes to
+8 MiB (an oversized record runs alone), and retains an 8 MiB schema cache per
+worker. Workers relocate and inspect immutable bytes. The parent owns provider
+reads, endpoint qualification, cache access, resource placement and ordered
+writes, draining each provider before its checkpoint. Teardown joins workers
+on success or failure. The optional emission cache commits
 completed record batches and preload groups so an interrupted attempt can reuse
 their transformations; source, endpoint and CLR qualification still runs again.
 The emitter atomically writes `progress.json` with phase and completed/total
@@ -287,9 +305,15 @@ optional `--table` extends the existing per-stage table. Each child process
 records wall/user/system time, wait4 RSS, block operations and sampled logical/
 allocated workspace bytes, including failed exits. Process exit stops sampling;
 logs/JSON remain caller-owned. Workspace preparation and validation are separate
-from measured commands. Sampling gives a peak lower bound; child RSS accounting
-is not simultaneous process-tree RSS. These host metrics do not qualify phone
-heat, installation or complete converter performance.
+from measured commands. A separate one-second sample sums simultaneous resident
+bytes for the command and its descendants; sampling gives a peak lower bound,
+and measurement errors invalidate success. Optional absolute `--done-file`
+writes a terminal receipt after pruning on command success, failure or SIGTERM.
+Optional `--progress-file` joins current phase and record counts to each RSS
+sample in a local JSONL file, exposing growth within an emission phase.
+`--detach` starts the same tracked profiler in a new session with a retained
+supervisor log and requires that terminal receipt. These host metrics do not
+qualify phone heat, installation or complete converter performance.
 
 The current release graph selects diagnostic historical-output comparison for
 object, record, remap, mesh, avatar, texture and shader producers. Standalone
@@ -1235,6 +1259,17 @@ path. The packet's target information stays private; independent owner-input
 production, ordinary app execution, owner signing/alignment, install/update and
 public distribution of any game-bearing packet remain separate gates.
 
+The owner APK builder also compiles the authored Android plugin sources staged by
+`stage_android_assets`, including display preference and the settings observer's
+shared helper. Bundled SDK javac/d8 emit a separate DEX; classes already supplied
+by incoming DEX files are retained once. Generated plugin BuildConfig and empty
+resource namespace follow the plugin's authored package. The manifest owner
+preserves or adds its private observer service declaration. An optional pinned
+`authored_class_reference` APK qualifies the final defined class set against all
+reference `dev.ror2lab` classes, before installation; it supplies no output bytes.
+Input hashes and the class comparison persist in the assembly receipt. Compiler
+processes exit after packaging; existing runtime owners retain their lifecycle.
+
 `tools/phone-build/owner-apk/` owns a separate experimental owner-APK bootstrap
 candidate after reconstruction. `build_owner_apk.py` and `binary_manifest.py`
 compile only authored Java, preserve the selected content bytes and move the
@@ -1244,7 +1279,11 @@ original Unity entry private to enforce preparation. An optional owner-selected
 to routing; it must increase and updates retain the same private signer.
 An optional complete `code` selection supplies independently produced IL2CPP,
 metadata and Burst files; all three are required, their actual hashes are retained,
-and comparison-target code files are not read. The same dictionary can also
+and comparison-target code files are not read. Final APK assembly derives
+`unity_app_guid` from the source startup GUID and those three produced hashes,
+so a code update invalidates Unity's extracted IL2CPP metadata cache even when
+the original game inventory and PlayerSettings are unchanged. The receipt records
+the final GUID; identical relocated inputs retain it. The same dictionary can also
 include the complete 15-entry Android SDK cohort owned by
 `accepted-output/sdk_package.py::SDK_ENTRIES`; partial cohorts and unknown names
 refuse. The produced manifest feeds the existing routing/version patch, and
@@ -1933,6 +1972,18 @@ and original body extent is read and hash-checked. Repeated source identities
 are accepted only with identical metadata apart from offsets, and every copy
 is read and verified. The emitter still validates
 the selected body's complete type, PPtrs and final endpoints separately.
+Attempt-local descriptor maps store parsed rows as binary blobs in one disposable
+SQLite transaction. Provider indexes retain original JSON lines under native
+bundle/member/path-ID columns and build nonunique lookup indexes after insertion.
+Every duplicate remains ordered and checked. Temporary sort data uses memory;
+the measured aggregate process RSS remains a separate host/device admission gate.
+These indexes close and disappear with the invocation; durable transformed-byte
+cache checkpoints and public input formats retain their existing owners.
+Endpoint qualification decodes each full native type once per invocation and
+bounds retained endpoint bodies and descriptors by both 32 MiB and 256 entries.
+The shared record field walker releases its recursive closure on return, so
+parsed bodies and spans do not await cyclic garbage collection. All body,
+pointer and endpoint drift checks still run on each validation epoch.
 The shared `object_produce.make_layout` writer accepts explicitly qualified
 external MonoScript pointers separately from scene membership. It checks each
 managed body's script against the local records or supplied external allowlist,
@@ -2826,6 +2877,11 @@ under `packages/dev.ror2lab.converted`. A prior peer receipt can be imported onl
 after matching its device, package, live path and APK hash. Converted launches
 resolve the real launcher activity; a launch observation alone does not prove
 that bootstrap or gameplay succeeded.
+Before either package launches, the runner wakes display 0, dismisses an
+unsecured keyguard (with one swipe fallback) and verifies the window-policy
+lock flags are false. The terminal receipt retains boolean prelaunch readbacks;
+a credential lock or unknown lock state aborts before launch. Cleanup still
+stops the owned packages, sleeps the display and releases the lease.
 Under its lease the runner records and removes only the owned package's stale
 selector/pending files and stops its process. It reserves estimated output plus
 20 GiB, gives each cooldown its own deadline, and reuses the batch thermal owner.
@@ -2833,12 +2889,21 @@ An optional `payload_directory` uses the existing incremental `Device.sync`
 owner after installation, with its size included in the storage reservation.
 Launch mode retains screenshots (default 60 seconds, configurable with
 `capture_interval_seconds`), logs, runtime reports and performance snapshots;
-sustained mode delegates to the existing sustained-session owner, including the
-capture interval. That owner writes its seed-2, attempt-bound, invincibility-only
-selector after idle admission; sustained requests may set only
-`selection.detailedVisualDiagnostics`, never pre-upload a selector.
+sustained mode delegates to the existing sustained-session owner, using
+`capture_interval_seconds` for observations (default five seconds). Observations
+follow elapsed-time boundaries and retain available CPU policy frequencies (kHz),
+Qualcomm GPU frequency (Hz), skin temperatures and opt-in diagnostic projectile
+and effect counts. Unavailable sensors/counts remain empty or null; frequencies
+alone do not establish thermal throttling. The independent safety sampler keeps
+its existing subsecond cadence.
+Sustained requests may set only `selection.detailedVisualDiagnostics`; the owner
+writes its seed-2, attempt-bound, invincibility-only selector after idle admission.
+The shared runner supplies its lease-checked initial reset to the sustained owner,
+so stale lab process/selector/pending state is cleared before admission. Its final
+cleanup always force-stops the owned package and removes those transient files,
+including after workload failure.
 Detailed visual samples retain a screenshot beside each world report and
-performance snapshot at the requested capture interval.
+performance snapshot at the requested observation interval.
 Optional diagnostics/selection/input-mapping settings are read back and restored.
 The mapping must match the APK attempt and accepted measured bridge checkpoint.
 Converted runs also reset and independently verify the separately owned lab
@@ -2918,8 +2983,9 @@ Before each stage, readable CPU/GPU/battery/skin zones must cool to at most
 50 C with the OLED asleep, with battery back to at most 35 C before every
 stage. Hot admission readings wait for cooldown; there is no separate 80 C
 admission abort. Excluded power/charger/USB zones remain recorded metrics even
-above 80 C. Positive battery `current_now` at level >= 80%, or level > 85%, refuses
-admission without retry; a charging label with zero current is admitted. Charging
+above 80 C. Positive battery `current_now` at level >= 80% waits with the OLED
+asleep, polling every 30 seconds for up to ten minutes before refusing admission.
+A level > 85% refuses immediately; a charging label with zero current is admitted. Charging
 settings remain user-owned. Admission records the measured sysfs current; the
 observer reads battery temperature, level and status through bounded dumpsys
 calls and retains them in trace rows and stage receipts. Other physical zones, including power-management,
@@ -5532,8 +5598,15 @@ The same owner's current local `--emission-request` entry point executes
 `scripts/lab/toolhost_emission.py` through the existing installer driver. This
 operation validates a pinned input manifest and toolhost, streams runtime/inputs,
 and invokes `bundle_preload.py` beneath the existing on-phone thermal supervisor.
+Its explicit host-only `--refresh-emission-manifest` action repins only tracked
+`repo/` producers from a clean commit, preserves all other input pins, and updates
+source diagnostics, total bytes, outer hash and the requested runner commit.
 Its durable `device-state.json` owns setup state, the detached handle and terminal
 outcome; each confirmed retry gets a fresh output directory and reuses the cache.
+Explicit `--restage-emission` replaces confirmed-terminal owned staging for new
+pins after verifying the installed toolhost; ordinary resume remains pin-strict.
+The phone supervisor waits before producer launch when valid admission readings
+are warm, reporting cooling and enforcing cancellation and the wall deadline.
 Unknown outcomes retain the lease for exact-handle reattachment after the previous
 host runner exits. Output and owned app remain for downstream consumers, which
 must dispose of them after use. Runner finalization sleeps the display and prunes

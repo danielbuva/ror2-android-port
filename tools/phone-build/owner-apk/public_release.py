@@ -64,6 +64,11 @@ SOURCE_SUFFIXES = {
 LAUNCHER_ART_SHA256 = "6f73ee2c7a9d6544b5f2972832b12a7aed3f98cf9ba00fc04b218502f65ea4ff"
 PUBLISHING_SOURCE_FILES = {
     "environment/toolchain.json",
+    "tools/android-write-interruption/LabPendingWriteStop.java",
+    *{
+        "android/Assets/Plugins/Android/SettingsWriteObserver.androidlib/src/main/java/dev/ror2lab/diagnostics/" + name
+        for name in ("LabDisplayPreference.java", "LabSettingsWriteObserver.java")
+    },
     "recipe/owner-app-host-tools.json",
     "scripts/lab/phone_apk.py",
     *{
