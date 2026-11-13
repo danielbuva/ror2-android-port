@@ -39,7 +39,7 @@ def relative(value):
     return path
 
 
-def load_request(path):
+def load_request(path, *, refresh_repo=False):
     request = json.loads(Path(path).read_bytes())
     required = {"runner", "tool_apk", "manifest", "request", "done_file", "expected_records", "estimated_output_bytes", "profile", "timeout_seconds"}
     if set(request) != required or request["profile"] not in ("nova", "thor"):
@@ -58,6 +58,8 @@ def load_request(path):
         raise ValueError("emission-request-not-staged")
     for name, pin in files.items():
         relative(name)
+        if refresh_repo and name.startswith("repo/"):
+            continue  # Explicit refresh replaces these pins from a clean commit.
         path = Path(pin["source"])
         if path.stat().st_size != pin["bytes"] or digest(path) != pin["sha256"]:
             raise ValueError("emission-staged-input-pin")
@@ -66,7 +68,7 @@ def load_request(path):
 
 def refresh_manifest(path, checkout):
     """Explicit host-only producer update; retain every pinned non-repo input."""
-    request, files = load_request(path)
+    request, files = load_request(path, refresh_repo=True)
     checkout = Path(checkout).resolve()
 
     def git(*arguments):

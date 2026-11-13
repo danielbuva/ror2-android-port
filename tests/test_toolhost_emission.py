@@ -123,6 +123,7 @@ class EmissionTests(unittest.TestCase):
         manifest = Path(self.request["manifest"]["path"])
         value = json.loads(manifest.read_bytes())
         value["files"]["repo/producer.py"] = dict(value["files"]["request.json"])
+        value["files"]["repo/producer.py"]["bytes"] += 1  # Stale producer pin is the reason to refresh.
         value["original_input"] = {"sha256": "a" * 64}
         manifest.write_text(json.dumps(value))
         self.request["manifest"]["sha256"] = EMISSION.digest(manifest)
@@ -166,6 +167,14 @@ class EmissionTests(unittest.TestCase):
         (checkout / "producer.py").write_text("print('uncommitted')\n")
         before = self.path.read_bytes()
         with self.assertRaisesRegex(ValueError, "emission-clean-producer-checkout-required"):
+            EMISSION.refresh_manifest(self.path, checkout)
+        self.assertEqual(self.path.read_bytes(), before)
+
+    def test_refresh_refuses_changed_nonrepo_input(self):
+        checkout, _ = self.producer_checkout()
+        (self.root / "input.json").write_text('{"changed":true}\n')
+        before = self.path.read_bytes()
+        with self.assertRaisesRegex(ValueError, "emission-staged-input-pin"):
             EMISSION.refresh_manifest(self.path, checkout)
         self.assertEqual(self.path.read_bytes(), before)
 
