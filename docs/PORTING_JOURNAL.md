@@ -6,21 +6,6 @@ under ignored `work/coordination/`, not here. Entries J01–J1177 (2026-09-12 to
 [history/journal-J1-J1177/PORTING_JOURNAL.md](history/journal-J1-J1177/PORTING_JOURNAL.md) with its
 [index](history/journal-J1-J1177/JOURNAL_INDEX.md); numbering continues here.
 
-## J1473 — Observe live gameplay presentation policy
-
-2026-11-13. Shared-runner pacing diagnostics retain live Unity/Android scalars and
-owned-surface presentation timestamps without changing frame policy or attaching a profiler.
-APK SHA-256: `409d525f67a29c98b52045d5a00526955e228f15a69a28241d9f6f6065c05936` (source `3b34984e`).
-Evidence: `work/coordination/alpha-live-pacing-20261113/assessment.md` and `performance.json`.
-The 124.606 s assisted capture records 12 kills and 125 shots; all 19 samples retain
-120 Hz, target 300, render interval 1, vSync 1, capture 0 and normal timestep/scale.
-Presentation changes from 8.324 to 16.648 ms; no sampled scalar cap changes.
-GPU timing exceeds the 8.333 ms budget; adaptive pacing remains an inference.
-Raw 7,598-frame window: 62.796 FPS, p50/p95/p99 16.647/24.913/25.010 ms.
-Peak CPU/GPU/battery 95.9/78.7/35 C; thermal gaps <=0.414 s, no safety violation.
-Adopted backing, native teardown, settings restoration, stopped/asleep readback and lease release pass.
-Sustained 60 FPS, native swap interval, ordinary play, visual parity and energy remain open.
-
 ## J1472 — Qualify the shared device runner with bounded native combat
 
 2026-11-13. One request-JSON owner installs, cools, resets stale owned state,

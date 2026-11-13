@@ -100,36 +100,6 @@ Evidence: `work/coordination/alpha-shared-device-session-20261113T005754Z/`
 APK SHA-256: `0c440333e3906c483ad8280ab6287e299ca8f7e10238c696425f1e3423cde2ad`;
 build source `4e12f51b`. Raw evidence stays private.
 
-### Live gameplay presentation observation
-
-The 2026-11-13 short shared-runner capture adds live scalar and compositor
-observations. All 19 snapshots retain target frame rate 300, vSync 1, render
-interval 1, effective render rate 120, capture rate 0, fixed timestep 0.02 and
-time scale 1. Android active and preferred modes remain 120 Hz. Unity FPS changes
-from 111.677 to 60.069 while the owned BLAST surface's median presentation interval
-changes from 8.324 to 16.648 ms; its nominal period stays 8.333333 ms.
-
-GPU timing changes from 8.406 to 11.296 ms, above the 8.333 ms budget for 120 FPS.
-The [Android frame-pacing documentation](https://developer.android.com/games/sdk/frame-pacing)
-describes automatic interval selection from CPU/GPU time. Workload-dependent
-adaptive pacing is an inference here: the pinned Unity player exposes no public
-native interval getter, and these observations do not prove its selected interval
-or identify a changed settings cap. No frame policy changes or identical long
-replay follow from this diagnostic alone.
-
-The closed raw sidecar reconciles 7,598 frames: 62.796 FPS over its native counter
-window, p50/p95/p99 16.647/24.913/25.010 ms; the later steady sample window averages
-59.708 FPS. The 124.606 host-second assisted run records 12 kills and 125 shots.
-CPU/GPU/battery peak at 95.9/78.7/35 C; thermal gaps remain below 0.414 s.
-Native teardown, preferences restoration, adopted placement, stopped/asleep
-readback and lease release pass. This short observation does not close sustained
-60 FPS, ordinary play, visual parity, energy or causal throttling qualification.
-
-Evidence: `work/coordination/alpha-live-pacing-20261113/assessment.md`,
-`performance.json` and `nova/terminal.done.json`. APK SHA-256:
-`409d525f67a29c98b52045d5a00526955e228f15a69a28241d9f6f6065c05936`;
-source `3b34984e`. Raw evidence stays private.
-
 ### Sustained assisted raw-frame observation
 
 The existing sustained owner completed 1,800.810 host seconds on 2026-11-12.

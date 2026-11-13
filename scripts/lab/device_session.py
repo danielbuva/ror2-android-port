@@ -361,10 +361,27 @@ def run_workload(device, thermal, request, output, result):
 
 
 def observe_pacing(device, output, pid, snapshot):
-    """Read compositor presentation without attaching a native profiler."""
+    """Read package pacing and OS interventions without changing frame policy."""
     output.mkdir(parents=True, exist_ok=True)
     save(output / "snapshot.json", snapshot)
     (output / "display.log").write_text(device.sh("dumpsys", "display"))
+    for filename, command in (
+        ("frame-rate-overrides.log", ("dumpsys", "SurfaceFlinger", "--frame-rate-override")),
+        ("game.log", ("dumpsys", "game", device.package)),
+        ("gfxinfo-framestats.log", ("dumpsys", "gfxinfo", device.package, "framestats")),
+        ("package.log", ("cmd", "package", "list", "packages", "-U", device.package)),
+    ):
+        # Unsupported commands remain raw evidence; never infer no override
+        # from an empty or permission-refused response.
+        (output / filename).write_text(device.sh(*command, check=False))
+    properties = device.sh("getprop")
+    (output / "frame-rate-properties.log").write_text(
+        "\n".join(line for line in properties.splitlines() if re.search(r"frame.?rate|game.?default", line, re.I)) + "\n"
+    )
+    # Some Android versions expose overrides only in the complete SF dump.
+    # Retain just matching lines locally; the package UID above identifies ours.
+    compositor = device.sh("dumpsys", "SurfaceFlinger", check=False)
+    (output / "compositor-overrides.log").write_text("\n".join(line for line in compositor.splitlines() if "override" in line.lower()) + "\n")
     (output / "frame-pacing.log").write_text(device.sh("logcat", "-d", "--pid=" + pid, "-v", "epoch"))
     layers = device.sh("dumpsys", "SurfaceFlinger", "--list")
     (output / "layers.txt").write_text(layers)

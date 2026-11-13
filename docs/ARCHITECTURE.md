@@ -6,6 +6,9 @@ adds a timestamped asynchronous read of the active Android display and window
 preferences without changing them. The shared device request's opt-in
 `pacing_diagnostics` retains these snapshots and matching compositor latency,
 display and process logs every sustained observation (about five seconds).
+It also captures SurfaceFlinger override rows, the selected package UID and
+GameManager state, frame-rate properties and package gfxinfo framestats. These
+read-only OS diagnostics stay private; unsupported output is retained explicitly.
 Missing compositor access stays unavailable; it is not inferred from Unity FPS.
 There is no exported Swappy interval getter in the pinned player; logs and
 presentation timestamps supplement the configured optimized-pacing flag.

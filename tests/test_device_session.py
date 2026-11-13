@@ -105,13 +105,31 @@ class DeviceSessionTests(unittest.TestCase):
 
     def test_pacing_observation_queries_only_selected_package_surfaces(self):
         target = mock.Mock(package="dev.ror2lab.arm64")
-        target.sh.side_effect = ["display modes", "Swappy logs", "SurfaceView dev.ror2lab.arm64 main\nSurfaceView other.app main\n", "8333333\n1 2 3\n"]
+        responses = {
+            ("dumpsys", "display"): "display modes",
+            ("dumpsys", "SurfaceFlinger", "--frame-rate-override"): "unsupported command",
+            ("dumpsys", "game", target.package): "game mode standard",
+            ("dumpsys", "gfxinfo", target.package, "framestats"): "IntendedVsync,FrameCompleted\n1,2",
+            ("cmd", "package", "list", "packages", "-U", target.package): "package:dev.ror2lab.arm64 uid:12345",
+            ("getprop",): "[debug.game_default_frame_rate]: [60]\n[debug.frame_rate]: [120]\n[unrelated]: [private]",
+            ("dumpsys", "SurfaceFlinger"): "unrelated layer\n Frame Rate Overrides: uid=12345 fps=60",
+            ("logcat", "-d", "--pid=7", "-v", "epoch"): "Swappy logs",
+            ("dumpsys", "SurfaceFlinger", "--list"): "SurfaceView dev.ror2lab.arm64 main\nSurfaceView other.app main\n",
+            ("dumpsys", "SurfaceFlinger", "--latency", "SurfaceView dev.ror2lab.arm64 main"): "8333333\n1 2 3\n",
+        }
+        target.sh.side_effect = lambda *args, **kwargs: responses[args]
         snapshot = dict(targetFrameRate=300, renderFrameInterval=2)
         runner.observe_pacing(target, self.output, "7", snapshot)
         self.assertEqual(json.loads((self.output / "snapshot.json").read_text()), snapshot)
         self.assertEqual((self.output / "latency-00.txt").read_text(), "8333333\n1 2 3\n")
         target.sh.assert_any_call("dumpsys", "SurfaceFlinger", "--latency", "SurfaceView dev.ror2lab.arm64 main", check=False)
         self.assertEqual(len(list(self.output.glob("latency-*.txt"))), 1)
+        self.assertEqual((self.output / "frame-rate-overrides.log").read_text(), "unsupported command")
+        self.assertEqual((self.output / "game.log").read_text(), "game mode standard")
+        self.assertEqual((self.output / "gfxinfo-framestats.log").read_text(), responses[("dumpsys", "gfxinfo", target.package, "framestats")])
+        self.assertIn("uid:12345", (self.output / "package.log").read_text())
+        self.assertEqual((self.output / "frame-rate-properties.log").read_text(), "[debug.game_default_frame_rate]: [60]\n[debug.frame_rate]: [120]\n")
+        self.assertEqual((self.output / "compositor-overrides.log").read_text(), " Frame Rate Overrides: uid=12345 fps=60\n")
 
     def test_payload_retention_marker_is_never_synced(self):
         payload = self.root / "payload"
