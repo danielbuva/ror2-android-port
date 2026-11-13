@@ -18,6 +18,7 @@ import struct
 import subprocess
 import sys
 import time
+import uuid
 import zipfile
 
 
@@ -30,6 +31,14 @@ CODE_ENTRIES = {
     "lib/arm64-v8a/lib_burst_generated.so",
     "assets/bin/Data/Managed/Metadata/global-metadata.dat",
 }
+APP_GUID = "assets/bin/Data/unity_app_guid"
+
+
+def runtime_app_guid(original, code):
+    """Invalidate Unity's extracted IL2CPP cache when produced code changes."""
+    cohort = {name: code[name]["sha256"] for name in sorted(CODE_ENTRIES)}
+    identity = json.dumps(cohort, sort_keys=True, separators=(",", ":"))
+    return str(uuid.uuid5(uuid.UUID(original.decode()), identity)).encode()
 
 
 def module(name, path):
@@ -788,6 +797,11 @@ def build(request_path, output):
             for name, row in apk_rows.items():
                 if name == "AndroidManifest.xml":
                     entry(name, data=patched)
+                elif name == APP_GUID and code:
+                    original = PACKET.verify(roots["targets"], row).read_bytes()
+                    generated = runtime_app_guid(original, code)
+                    entry(name, data=generated)
+                    result["runtime_app_guid"] = generated.decode()
                 elif name == "resources.arsc" and request.get("application_id"):
                     if name in code:
                         produced = code[name]
@@ -831,7 +845,7 @@ def build(request_path, output):
             success=True,
             apk_sha256=sha(unsigned),
             apk_bytes=unsigned.stat().st_size,
-            original_entries_preserved=len(apk_rows) - len(set(code) | {"AndroidManifest.xml"}),
+            original_entries_preserved=len(apk_rows) - len(set(code) | {"AndroidManifest.xml"} | ({APP_GUID} if code else set())),
             original_entry_changed="AndroidManifest.xml",
             new_dex=next_dex,
             entries_verified=len(expected),

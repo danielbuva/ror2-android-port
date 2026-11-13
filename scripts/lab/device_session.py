@@ -267,10 +267,11 @@ def capture(device, output, pid):
     from session_cleanup_check import SPINE_ID
 
     output.mkdir(parents=True, exist_ok=True)
-    (output / "unity.log").write_text(device.cmd("logcat", "-d", "--pid=" + pid, "-v", "epoch", "Unity:I", "AndroidRuntime:E", "*:S"))
+    (output / "unity.log").write_text(device.cmd("logcat", "-d", "--pid=" + pid, "-v", "epoch", "Unity:D", "AndroidRuntime:E", "*:S"))
     (output / "crash.log").write_text(device.cmd("logcat", "-d", "-b", "crash", "-v", "epoch"))
     device.collect("screenshot", output)
     runtime = device.read_receipt("runtime.json")["persistentDataPath"]
+    (output / "il2cpp-metadata-sha256.txt").write_text(device.sh("sha256sum", runtime + "/il2cpp/Metadata/global-metadata.dat", check=False))
     for name in ("snapshot.json", "movement-batch-" + SPINE_ID + ".json", "exceptions.jsonl"):
         (output / name).write_text(device.sh("cat", runtime + "/" + name, check=False))
     device.collect("perf", output)

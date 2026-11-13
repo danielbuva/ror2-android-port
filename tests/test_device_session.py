@@ -115,6 +115,16 @@ class DeviceSessionTests(unittest.TestCase):
         target.cmd.assert_not_called()
         self.assertFalse(any(call.args[0] == "sha256sum" for call in target.sh.call_args_list))
 
+    def test_capture_records_extracted_metadata_and_unity_extraction_decision(self):
+        target = mock.Mock()
+        target.cmd.return_value = "Unity extraction diagnostic"
+        target.sh.return_value = "metadata hash fixture"
+        target.read_receipt.return_value = dict(persistentDataPath="/owned/files")
+        runner.capture(target, self.output, "7")
+        self.assertEqual((self.output / "il2cpp-metadata-sha256.txt").read_text(), "metadata hash fixture")
+        target.sh.assert_any_call("sha256sum", "/owned/files/il2cpp/Metadata/global-metadata.dat", check=False)
+        self.assertIn("Unity:D", target.cmd.call_args_list[0].args)
+
     def run_case(self, *, workload_error=False, terminal_error=False, thermal_error=False, payload=False):
         events = []
         lease_path = runner.Lease(self.request).path

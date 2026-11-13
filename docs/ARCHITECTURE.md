@@ -1217,7 +1217,11 @@ original Unity entry private to enforce preparation. An optional owner-selected
 to routing; it must increase and updates retain the same private signer.
 An optional complete `code` selection supplies independently produced IL2CPP,
 metadata and Burst files; all three are required, their actual hashes are retained,
-and comparison-target code files are not read. The same dictionary can also
+and comparison-target code files are not read. Final APK assembly derives
+`unity_app_guid` from the source startup GUID and those three produced hashes,
+so a code update invalidates Unity's extracted IL2CPP metadata cache even when
+the original game inventory and PlayerSettings are unchanged. The receipt records
+the final GUID; identical relocated inputs retain it. The same dictionary can also
 include the complete 15-entry Android SDK cohort owned by
 `accepted-output/sdk_package.py::SDK_ENTRIES`; partial cohorts and unknown names
 refuse. The produced manifest feeds the existing routing/version patch, and
