@@ -4014,3 +4014,19 @@ stopped process, absent selector/pending file, asleep display and released lease
 Retained assisted sustained gate accepted: 84.447/83.325 FPS whole/covered tail; Camera.Render 4.132 ms leads (`work/coordination/alpha-sustained-30s-20261113/assessment.json`).
 Exact-editor UI 15 and shared-runner 29 tests pass; pinned R2API.Language and J1071/J1402 guide reuse.
 Physical controller/digitizer owner checklist, ordinary long play, memory plateau and visual parity remain open.
+
+## J1475 — Recover native trail and projectile source materials
+
+2026-11-13. TeleporterWorldSession follows typed DamageTrail segments and projectile ghosts,
+including CharacterBody FireTrail; recovered clones preserve original blend values and restore on cleanup.
+Shared sustained samples now retain screenshots; the fixture invokes the real runner and checker.
+APK SHA-256: `6d2c3ff3def4853cd92c280f35933d0e2134ed8324d6f8d773ec47e7f9174d40` (runtime source `32f7be98`).
+Evidence: `work/coordination/gameplay-fidelity-particle-handoff-20261113/nova-particle-visual-current-api/terminal.done.json`.
+All 17 frames reviewed: no black particle squares. Sample 0002 reports 14 active visible FireTrail
+segment renderers, 78 particles, recovered Family0Variant36, queue 3000 and original One/One blend.
+The 191 s native first-stage run records 213 primary shots and 20 kills; invincibility only is assisted.
+Peak CPU/GPU 94.3 C, 53.608 s above 80 C; thermal safety, native teardown, adopted placement,
+stopped process, absent selector/pending, asleep OLED and lease release pass.
+Recovered-material 2, sustained 16 and shared-runner 29 host tests plus preflight pass.
+Prior art: pinned EditorKit HopooCloudRemapGUI blend metadata and source-native prefab relationships.
+Golem, other attack families, ordinary play, matched PC visual parity and performance remain open.
