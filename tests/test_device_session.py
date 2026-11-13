@@ -79,6 +79,137 @@ class DeviceSessionTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "owns its attempt-bound selector"):
             runner.load_request(self.request_file)
 
+    def test_software_notices_uses_shared_lifecycle_and_owns_selector(self):
+        self.request["mode"] = "software-notices"
+        runner.save(self.request_file, self.request)
+        checked = runner.load_request(self.request_file)
+        target, thermal = mock.Mock(), mock.Mock()
+        result = {}
+        with mock.patch.object(runner, "check_software_notices", return_value={"success": True}) as check:
+            runner.run_workload(target, thermal, checked, self.output, result)
+        check.assert_called_once_with(target, thermal, checked, self.output)
+        self.assertEqual(result["software_notices"], {"success": True})
+        self.request["selection"] = {}
+        runner.save(self.request_file, self.request)
+        with self.assertRaisesRegex(ValueError, "owns its attempt-bound selector"):
+            runner.load_request(self.request_file)
+
+    def test_software_notices_flow_uses_report_coordinates_and_preserves_files(self):
+        target, thermal = mock.Mock(), mock.Mock()
+        target.read_receipt.return_value = {"persistentDataPath": "/synthetic"}
+        target.sh.return_value = "unchanged settings hashes"
+        reports = [
+            dict(phase="offline-start-menu", settings=dict(ready=True, visible=False)),
+            dict(settings=dict(visible=True)),
+            dict(settings=dict(softwareNoticesVisible=True, softwareNoticesAvailable=True, softwareNoticesBackX=645, softwareNoticesBackY=35)),
+            dict(settings=dict(visible=True, softwareNoticesVisible=False)),
+            dict(phase="offline-start-menu", settings=dict(visible=False)),
+        ]
+        for report in reports:
+            report["settings"].update(screenWidth=1920, screenHeight=1080, buttonX=100, buttonY=100)
+
+        def observed(device, monitor, pid, predicate):
+            report = reports.pop(0)
+            self.assertTrue(predicate(report))
+            return report
+
+        with (
+            mock.patch("installed_attempt.attempt_from_installed", return_value="fixture"),
+            mock.patch("session_cleanup_check.selection", return_value={}),
+            mock.patch("settings_write_interrupt_check.protected_hashes", return_value={"profile": "same"}),
+            mock.patch.object(runner, "launch", return_value={"pid": "1"}),
+            mock.patch.object(runner, "wait_for_settings_report", side_effect=observed),
+            mock.patch.object(runner, "capture") as capture,
+            mock.patch("touch_gesture.run") as gesture,
+        ):
+            result = runner.check_software_notices(target, thermal, self.request, self.output)
+        self.assertTrue(result["protected_files_unchanged"])
+        self.assertEqual(len(reports), 0)
+        self.assertEqual(gesture.call_count, 4)
+        self.assertEqual(capture.call_count, 2)
+        back = json.loads((self.output / "back.input.json").read_text())
+        self.assertEqual((back["steps"][0]["x"], back["steps"][0]["y"]), (645, 35))
+
+    def test_player_screens_injected_routes_keep_native_loss_and_modal_order(self):
+        self.request["mode"] = "player-screens"
+        runner.save(self.request_file, self.request)
+        checked = runner.load_request(self.request_file)
+        target, thermal = mock.Mock(), mock.Mock(error=None)
+        target.read_receipt.return_value = {"persistentDataPath": "/synthetic"}
+        # Exactly the last post-confirm PID read exits; every input checks its owner.
+        target.sh.side_effect = lambda *args, **kwargs: "" if args[0] == "pidof" and len(keys) == 10 else "1"
+        reports = [
+            dict(phase="offline-start-menu"),
+            dict(phase="integrated-world-playing"),
+            dict(phase="commando-defeated", session=1, results=dict(persisted=True, serverEnding=True, clientEnding=True, reportReloaded=True)),
+            dict(phase="offline-start-menu", session=2),
+            dict(hud=dict(menuLoadoutVisible=True, menuLoadoutRow=0)),
+            dict(hud=dict(menuLoadoutRow=1, menuLoadoutCycles=0)),
+            dict(phase="offline-start-menu", hud=dict(menuLoadoutVisible=True, menuLoadoutCycles=1)),
+            dict(hud=dict(menuLoadoutVisible=False)),
+            dict(hud=dict(menuQuitConfirmation=True)),
+            dict(phase="offline-start-menu", hud=dict(menuQuitConfirmation=False)),
+            dict(hud=dict(menuQuitConfirmation=True)),
+        ]
+        keys = []
+
+        def command(*args, **kwargs):
+            if args[0] == "input":
+                keys.append(args[-1])
+                return ""
+            if args[0] == "pidof":
+                return "" if len(keys) == 10 else "1"
+            return "unchanged"
+
+        target.sh.side_effect = command
+
+        def observed(device, monitor, pid, predicate, timeout=100):
+            report = reports.pop(0)
+            self.assertTrue(predicate(report), report)
+            return report
+
+        with (
+            mock.patch.object(runner, "check_software_notices", return_value={"success": True}),
+            mock.patch.object(runner, "wait_for_settings_report", side_effect=observed),
+            mock.patch.object(runner, "capture"),
+            mock.patch("settings_write_interrupt_check.protected_hashes", return_value={"profile": "same"}),
+            mock.patch("touch_gesture.owned_display_zero_focus", return_value=True),
+        ):
+            result = runner.check_player_screens(target, thermal, checked, self.output)
+        self.assertTrue(result["quit_exited"])
+        self.assertFalse(result["physical_certification"])
+        self.assertEqual(
+            keys,
+            [
+                "KEYCODE_ENTER",
+                "KEYCODE_ESCAPE",
+                "KEYCODE_L",
+                "KEYCODE_DPAD_DOWN",
+                "KEYCODE_ENTER",
+                "KEYCODE_ESCAPE",
+                "KEYCODE_Q",
+                "KEYCODE_ESCAPE",
+                "KEYCODE_Q",
+                "KEYCODE_ENTER",
+            ],
+        )
+        self.assertEqual(reports, [])
+
+    def test_settings_report_wait_rejects_process_change_and_native_failure(self):
+        target, thermal = mock.Mock(), mock.Mock(error=None)
+        target.read_receipt.return_value = {"persistentDataPath": "/synthetic"}
+        target.sh.return_value = "other-pid"
+        with mock.patch("installed_attempt.attempt_from_installed", return_value="fixture"):
+            with self.assertRaisesRegex(RuntimeError, "Owned process changed"):
+                runner.wait_for_settings_report(target, thermal, "1", lambda r: True)
+            target.sh.return_value = "1"
+            with (
+                mock.patch("session_cleanup_check._read_json", return_value={"firstFailure": "fixture defect"}),
+                mock.patch("session_cleanup_check.matches_run", return_value=True),
+            ):
+                with self.assertRaisesRegex(RuntimeError, "Native first failure: fixture defect"):
+                    runner.wait_for_settings_report(target, thermal, "1", lambda r: True)
+
     def test_dispatched_input_failure_writes_terminal_without_device_access(self):
         self.apk.unlink()
         with mock.patch.object(runner.subprocess, "run") as process:

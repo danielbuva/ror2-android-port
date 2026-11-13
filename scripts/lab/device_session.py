@@ -70,12 +70,14 @@ def load_request(path):
         value.setdefault(name, default)
         if type(value[name]) is not int or value[name] <= 0:
             raise ValueError(name + " must be a positive integer")
-    if value["mode"] not in {"launch", "sustained", "settings-save-failure"}:
-        raise ValueError("mode must be launch, sustained or settings-save-failure")
+    if value["mode"] not in {"launch", "sustained", "settings-save-failure", "software-notices", "player-screens"}:
+        raise ValueError("mode must be launch, sustained, settings-save-failure or software-notices or player-screens")
     if value["mode"] != "launch" and value["package"] != "dev.ror2lab.arm64":
         raise ValueError("The native workload owner requires the lab package")
     if value["mode"] == "settings-save-failure" and "selection" in value:
         raise ValueError("Settings failure workload owns its attempt-bound selector")
+    if value["mode"] in {"software-notices", "player-screens"} and "selection" in value:
+        raise ValueError("Software notices workload owns its attempt-bound selector")
     for name in ("require_high_refresh", "pacing_diagnostics"):
         if name in value and type(value[name]) is not bool:
             raise ValueError(name + " must be boolean")
@@ -336,34 +338,199 @@ def capture(device, output, pid):
     device.collect("perf", output)
 
 
-def qualify_high_refresh(device, thermal, output, pid):
+def wait_for_settings_report(device, thermal, pid, predicate, timeout=100):
     import session_cleanup_check as cleanup
     from installed_attempt import attempt_from_installed
 
     attempt = attempt_from_installed(device.owned())
     runtime = device.read_receipt("runtime.json")["persistentDataPath"]
-    deadline = time.monotonic() + 100
+    deadline = time.monotonic() + timeout
     while time.monotonic() < deadline:
         if thermal.error:
             raise RuntimeError(thermal.error)
         if device.sh("pidof", device.package, check=False).strip() != pid:
             raise RuntimeError("Owned process changed during settings admission")
         report = cleanup._read_json(device, runtime + "/movement-batch-" + cleanup.SPINE_ID + ".json")
-        if cleanup.matches_run(report, pid, attempt) and report.get("phase") == "offline-start-menu" and report.get("settings", {}).get("ready") is True:
-            save(output / "settings-report.json", report)
-            if report["settings"].get("highRefreshRate") is not True:
-                raise RuntimeError("High-refresh preference disabled; preserve user choice")
-            logs = device.sh("logcat", "-d", "--pid=" + pid, "-v", "epoch", "RoR2LabDisplay:I", "*:S")
-            (output / "display-request.log").write_text(logs)
-            matches = re.findall(r"request high=(true|false) mode=(\d+) rate=([0-9.]+) observed=([0-9.]+) surfaces=(\d+)", logs)
-            if not matches or matches[-1][0] != "true" or float(matches[-1][2]) < 119 or int(matches[-1][4]) <= 0:
-                raise RuntimeError("Persisted 120 Hz app request unavailable")
-            return
+        if cleanup.matches_run(report, pid, attempt):
+            if report.get("firstFailure"):
+                raise RuntimeError("Native first failure: " + str(report["firstFailure"]))
+            if predicate(report):
+                return report
         time.sleep(0.5)
     raise RuntimeError("Settings menu observation deadline")
 
 
+def qualify_high_refresh(device, thermal, output, pid):
+    report = wait_for_settings_report(device, thermal, pid, lambda r: r.get("phase") == "offline-start-menu" and r.get("settings", {}).get("ready") is True)
+    save(output / "settings-report.json", report)
+    if report["settings"].get("highRefreshRate") is not True:
+        raise RuntimeError("High-refresh preference disabled; preserve user choice")
+    logs = device.sh("logcat", "-d", "--pid=" + pid, "-v", "epoch", "RoR2LabDisplay:I", "*:S")
+    (output / "display-request.log").write_text(logs)
+    matches = re.findall(r"request high=(true|false) mode=(\d+) rate=([0-9.]+) observed=([0-9.]+) surfaces=(\d+)", logs)
+    if not matches or matches[-1][0] != "true" or float(matches[-1][2]) < 119 or int(matches[-1][4]) <= 0:
+        raise RuntimeError("Persisted 120 Hz app request unavailable")
+
+
+def check_software_notices(device, thermal, request, output):
+    """One owned menu/settings/notices/back flow; shared runner owns lifecycle."""
+    from installed_attempt import attempt_from_installed
+    from session_cleanup_check import selection
+    from settings_write_interrupt_check import protected_hashes
+    import touch_gesture
+
+    runtime = device.read_receipt("runtime.json")["persistentDataPath"]
+    before = protected_hashes(device, runtime)
+    settings_before = device.sh("find", runtime + "/offline-settings-v1", "-type", "f", "-exec", "sha256sum", "{}", "+", check=False)
+    selected = output / "notices-selection.json"
+    save(selected, selection(attempt_from_installed(device.owned())))
+    device.cmd("push", str(selected), runtime + "/movement-batch-selection.json")
+    launched = launch(device, thermal)
+    save(output / "launch.json", launched)
+    pid = str(launched["pid"])
+
+    def wait(name, predicate):
+        report = wait_for_settings_report(device, thermal, pid, predicate)
+        save(output / (name + ".json"), report)
+        return report
+
+    def tap(name, report, x, y):
+        path = output / (name + ".input.json")
+        save(
+            path,
+            dict(
+                pid=pid,
+                width=report["settings"]["screenWidth"],
+                height=report["settings"]["screenHeight"],
+                steps=[dict(action="down", id=0, x=x, y=y), dict(action="wait", ms=100), dict(action="up", id=0, x=x, y=y), dict(action="wait", ms=400)],
+            ),
+        )
+        touch_gesture.run(path, request["apk_sha256"], device=device)
+
+    menu = wait("menu", lambda r: r.get("phase") == "offline-start-menu" and r.get("settings", {}).get("ready") is True)
+    tap("open-settings", menu, menu["settings"]["buttonX"], menu["settings"]["buttonY"])
+    settings = wait("settings", lambda r: r["settings"]["visible"] is True)
+    width, height = settings["settings"]["screenWidth"], settings["settings"]["screenHeight"]
+    tap("open-notices", settings, width * 0.5 + 110, height * 0.5 + 238.5)
+    notices = wait("notices", lambda r: r["settings"].get("softwareNoticesVisible") is True and r["settings"].get("softwareNoticesBackX", 0) > 0)
+    if notices["settings"].get("softwareNoticesAvailable") is not True:
+        raise RuntimeError("Source software notices are unavailable")
+    capture(device, output / "notices-screen", pid)
+    tap("back", notices, notices["settings"]["softwareNoticesBackX"], notices["settings"]["softwareNoticesBackY"])
+    returned = wait("returned-settings", lambda r: r["settings"]["visible"] is True and r["settings"].get("softwareNoticesVisible") is False)
+    tap("close-settings", returned, returned["settings"]["buttonX"], returned["settings"]["buttonY"])
+    wait("returned-menu", lambda r: r.get("phase") == "offline-start-menu" and r["settings"]["visible"] is False)
+    capture(device, output / "returned-menu-screen", pid)
+    if (
+        protected_hashes(device, runtime) != before
+        or device.sh("find", runtime + "/offline-settings-v1", "-type", "f", "-exec", "sha256sum", "{}", "+", check=False) != settings_before
+    ):
+        raise RuntimeError("Read-only notices flow changed protected profiles/results/settings")
+    return dict(success=True, process_continuity=True, protected_files_unchanged=True)
+
+
+def check_player_screens(device, thermal, request, output):
+    """Injected keyboard aliases share controller routes; physical playtest stays open."""
+    from settings_write_interrupt_check import protected_hashes
+    from touch_gesture import owned_display_zero_focus
+
+    notices = check_software_notices(device, thermal, request, output / "software-notices")
+    pid = device.sh("pidof", device.package, check=False).strip()
+    runtime = device.read_receipt("runtime.json")["persistentDataPath"]
+
+    def wait(name, predicate, timeout=100):
+        report = wait_for_settings_report(device, thermal, pid, predicate, timeout=timeout)
+        save(output / (name + ".json"), report)
+        return report
+
+    def key(name):
+        if thermal.error:
+            raise RuntimeError(thermal.error)
+        if device.sh("pidof", device.package, check=False).strip() != pid:
+            raise RuntimeError("Owned process changed before injected key")
+        if not owned_display_zero_focus(device.sh("dumpsys", "window", "displays"), device.package):
+            raise RuntimeError("Owned display-zero focus absent before injected key")
+        device.sh("input", "keyboard", "keyevent", name)
+
+    def hashes():
+        return dict(
+            protected=protected_hashes(device, runtime),
+            settings=device.sh("find", runtime + "/offline-settings-v1", "-type", "f", "-exec", "sha256sum", "{}", "+", check=False),
+        )
+
+    wait("first-menu", lambda r: r.get("phase") == "offline-start-menu")
+    key("KEYCODE_ENTER")
+    wait("playing", lambda r: r.get("phase") == "integrated-world-playing", timeout=request["duration_seconds"])
+    capture(device, output / "playing-screen", pid)
+    ended = wait(
+        "persisted-defeat",
+        lambda r: r.get("phase") == "commando-defeated"
+        and r.get("results", {}).get("persisted") is True
+        and r["results"].get("serverEnding") is True
+        and r["results"].get("clientEnding") is True
+        and r["results"].get("reportReloaded") is True,
+        timeout=request["duration_seconds"],
+    )
+    capture(device, output / "results-screen", pid)
+    before = hashes()
+    key("KEYCODE_ESCAPE")
+    menu = wait("returned-menu", lambda r: r.get("session", 0) > ended["session"] and r.get("phase") == "offline-start-menu")
+    if menu.get("firstFailure"):
+        raise RuntimeError("Returned menu has a native failure")
+    key("KEYCODE_L")
+    wait("loadout", lambda r: r.get("hud", {}).get("menuLoadoutVisible") is True and r["hud"].get("menuLoadoutRow") == 0)
+    key("KEYCODE_DPAD_DOWN")
+    row = wait("loadout-row", lambda r: r.get("hud", {}).get("menuLoadoutRow") == 1)
+    key("KEYCODE_ENTER")
+    wait(
+        "loadout-cycle",
+        lambda r: r.get("phase") == "offline-start-menu"
+        and r.get("hud", {}).get("menuLoadoutVisible") is True
+        and r["hud"].get("menuLoadoutCycles", 0) > row["hud"].get("menuLoadoutCycles", 0),
+    )
+    capture(device, output / "loadout-screen", pid)
+    key("KEYCODE_ESCAPE")
+    wait("loadout-closed", lambda r: r.get("hud", {}).get("menuLoadoutVisible") is False)
+    key("KEYCODE_Q")
+    wait("quit-confirmation", lambda r: r.get("hud", {}).get("menuQuitConfirmation") is True)
+    capture(device, output / "quit-screen", pid)
+    key("KEYCODE_ESCAPE")
+    wait("quit-cancelled", lambda r: r.get("hud", {}).get("menuQuitConfirmation") is False and r.get("phase") == "offline-start-menu")
+    after = hashes()
+    save(output / "protected-files.json", dict(before=before, after=after))
+    if after != before:
+        raise RuntimeError("Menu/loadout/Quit cancel changed persisted profiles/results/settings")
+    key("KEYCODE_Q")
+    wait("quit-final", lambda r: r.get("hud", {}).get("menuQuitConfirmation") is True)
+    key("KEYCODE_ENTER")
+    deadline = time.monotonic() + 30
+    while time.monotonic() < deadline:
+        if thermal.error:
+            raise RuntimeError(thermal.error)
+        current = device.sh("pidof", device.package, check=False).strip()
+        if not current:
+            return dict(
+                success=True,
+                software_notices=notices,
+                injected_keyboard_routes=True,
+                physical_certification=False,
+                protected_files_unchanged=True,
+                process_continuity_until_quit=True,
+                quit_exited=True,
+            )
+        if current != pid:
+            raise RuntimeError("Quit unexpectedly replaced the owned process")
+        time.sleep(0.5)
+    raise RuntimeError("Confirmed Quit did not exit")
+
+
 def run_workload(device, thermal, request, output, result, *, _reset_idle=None):
+    if request["mode"] == "player-screens":
+        result["player_screens"] = check_player_screens(device, thermal, request, output)
+        return
+    if request["mode"] == "software-notices":
+        result["software_notices"] = check_software_notices(device, thermal, request, output)
+        return
     if request["mode"] == "settings-save-failure":
         import settings_write_interrupt_check as settings
 

@@ -44,7 +44,7 @@ public sealed partial class PortSession
     }
     void SetRecoveredMenuObscured(bool obscured)
     {
-        GetRecoveredHudSession().SetMenuObscured(obscured);
+        GetRecoveredHudSession().SetMenuObscured(obscured || offlineLoadoutVisible || offlineApplicationSession?.QuitConfirmationVisible == true);
     }
     void CleanupRecoveredHud()
     {
@@ -118,7 +118,7 @@ public sealed partial class PortSession
                                                  typeof(UnityEngine.EventSystems.StandaloneInputModule));
             recoveredMenuEvents.GetComponent<UnityEngine.EventSystems.EventSystem>().sendNavigationEvents = false;
             coordinator.recoveredMenu = Instantiate(source);
-            coordinator.recoveredMenu.BindMenu(() => coordinator.offlineStartSelected = true);
+            coordinator.recoveredMenu.BindMenu(() => coordinator.offlineStartSelected = true, coordinator.RequestOfflineQuit);
             coordinator.recoveredMenu.gameObject.SetActive(true);
             Canvas.ForceUpdateCanvases();
             var rect = (RectTransform)coordinator.recoveredMenu.startButton.transform;
@@ -126,7 +126,7 @@ public sealed partial class PortSession
             coordinator.r.hud.menuStartX = point.x;
             coordinator.r.hud.menuStartY = Screen.height - point.y;
             // Observe the existing Quit target for guarded original-audio
-            // shutdown checks; the button still owns Application.Quit.
+            // shutdown checks; application flow owns its Quit confirmation.
             var quitRect = (RectTransform)coordinator.recoveredMenu.quitButton.transform;
             var quitPoint = RectTransformUtility.WorldToScreenPoint(null, quitRect.TransformPoint(quitRect.rect.center));
             coordinator.r.hud.menuQuitX = quitPoint.x;

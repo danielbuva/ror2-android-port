@@ -710,7 +710,7 @@ public sealed partial class PortSession
                 if (coordinator.r.phase == "commando-defeated" && GUI.Button(new Rect(32, 390, 350, 60), "Restart run (A)"))
                     coordinator.RequestWorldRestart();
                 if (GUI.Button(new Rect(410, 390, 400, 60),
-                               coordinator.r.phase == "commando-defeated" ? "Return to menu" : "Return to menu (A)"))
+                               coordinator.r.phase == "commando-defeated" ? "Return to menu (B / Escape)" : "Return to menu (A / Enter)"))
                     coordinator.RequestResultsMenu();
             }
             var lines = new List<string> { title };

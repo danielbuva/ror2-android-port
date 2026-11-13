@@ -4013,3 +4013,18 @@ Peak CPU/GPU 91.1 C; 13.012 s above 80 C; no thermal abort. Adopted placement pa
 Terminal process/selector/pending absent, display asleep and lease released.
 Host regression covers three distinct PIDs and all launch selectors. Profile-writer failure,
 physical power loss and sustained ordinary-play performance remain open.
+
+## J1474 — Qualify injected player-screen routes and software notices
+
+2026-11-13. Existing session/loadout owners add modal row/cycle/close, Quit cancel/confirm
+and guarded native defeat → persisted results → menu return. Source unlocked choices remain authoritative.
+Software notices resolve original language tokens locally; no original notice text is tracked.
+Shared runner verifies touch notices/back and injected keyboard aliases for controller semantics;
+PID survives through cancelled Quit, exits on confirmation, and protected save/settings hashes stay unchanged.
+APK SHA-256: `48b8a7f5ca26d15d53a6fb86bec9c5264e7419e4e5ab3cfe8a1b6c9b482192c1` (source `f94c0c30`).
+Evidence: `work/coordination/alpha-player-screens-20261113/nova/terminal.done.json`; screenshots reviewed locally.
+Peak CPU/GPU 96.3 C, 198.051 s above 80 C; thermal safety passes. Adopted placement,
+stopped process, absent selector/pending file, asleep display and released lease pass.
+Retained assisted sustained gate accepted: 84.447/83.325 FPS whole/covered tail; Camera.Render 4.132 ms leads (`work/coordination/alpha-sustained-30s-20261113/assessment.json`).
+Exact-editor UI 15 and shared-runner 29 tests pass; pinned R2API.Language and J1071/J1402 guide reuse.
+Physical controller/digitizer owner checklist, ordinary long play, memory plateau and visual parity remain open.
