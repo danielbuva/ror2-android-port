@@ -101,12 +101,13 @@ PUBLISHING_SOURCE_FILES = {
             "release_jobs.py",
             "install_inputs.py",
             "install_flow.py",
+            "atomic_io.py",
             "game_import.py",
         )
     },
     *{"tools/phone-build/accepted-output/" + name + ".py" for name in ("package", "assemble", "sdk_package", "sdk_inputs")},
     "tools/phone-build/owner-code/native.py",
-    *{"launcher/" + name for name in ("app.js", "controller.js", "style.css", "background.png", "PROVENANCE.md")},
+    *{"launcher/" + name for name in ("app.js", "controller.js", "feedback.js", "style.css", "background.png", "PROVENANCE.md")},
     *{
         "tools/phone-build/managed-host/" + name
         for name in (

@@ -43,6 +43,8 @@ PRODUCERS = {
             "sprite_produce",
             "bundle_manifest",
             "catalog_complete",
+            "bundle_preload",
+            "bundle_endpoints",
             "stage_contexts",
             "startup_metadata",
         )
@@ -65,10 +67,20 @@ def validate_jobs(index, release, read_job):
                 return
             seen.add(name)
             job = read_job(name)
-            if set(job) - {"request", "needs", "artifacts"} != {"schema", "script", "arguments", "outputs"} or job["schema"] != 1:
+            if set(job) - {"request", "needs", "artifacts", "source_files"} != {"schema", "script", "arguments", "outputs"} or job["schema"] != 1:
                 raise ValueError("explicit source producer job schema required")
             if job["script"] not in PRODUCERS or name not in row["recipe_files"] or job["script"] not in row["producer_files"]:
                 raise ValueError("existing source producer and complete signed job closure required")
+            if "source_files" in job:
+                sources = job["source_files"]
+                if (
+                    not isinstance(sources, list)
+                    or not all(isinstance(path, str) for path in sources)
+                    or len(set(sources)) != len(sources)
+                    or not {name, job["script"]}.issubset(sources)
+                    or not set(sources).issubset(set(row["recipe_files"]) | set(row["producer_files"]))
+                ):
+                    raise ValueError("job source files require its descriptor, producer and complete signed membership")
             if not isinstance(job["arguments"], list) or not job["arguments"] or not all(isinstance(v, str) for v in job["arguments"]):
                 raise ValueError("producer argument vector required; shell commands are forbidden")
             if not isinstance(job["outputs"], dict) or not isinstance(job.get("artifacts", {}), dict) or not (job["outputs"] or job.get("artifacts")):
@@ -135,6 +147,16 @@ class Dispatcher:
         for name, expected in files.items():
             if UPDATES.RELEASE.digest(UPDATES.within(self.repo, name, exists=True)) != expected:
                 raise ValueError("verified public source changed before/during production: " + name)
+
+    def cache_sources(self, name):
+        """Pin this job and its suppliers, without pinning downstream consumers."""
+        job = self.descriptor(name)
+        if "source_files" not in job:
+            return self.closure(name)
+        files = {path: self.index["files"][path] for path in job["source_files"]}
+        for dependency in job.get("needs", []):
+            files.update(self.cache_sources(dependency))
+        return dict(sorted(files.items()))
 
     def expand(self, value, job, output, request_path):
         if isinstance(value, dict):
@@ -250,7 +272,9 @@ class Dispatcher:
             files = self.closure(name)
             self.verify_sources(files)
             identity = hashlib.sha256(
-                UPDATES.RELEASE.signed_bytes({"job": name, "files": files, "input_sha256": self.input_sha256, "input_pins": self.input_pins(name)})
+                UPDATES.RELEASE.signed_bytes(
+                    {"job": name, "files": self.cache_sources(name), "input_sha256": self.input_sha256, "input_pins": self.input_pins(name)}
+                )
             ).hexdigest()
             receipt_path = self.jobs_root / (identity + ".json")
             if receipt_path.exists():

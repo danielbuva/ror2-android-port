@@ -43,7 +43,7 @@ ALL_ZONES = (
     "for z in /sys/class/thermal/thermal_zone*; do "
     'read -r t < "$z/type" || { printf "Thermal type read failed: %s\\n" "$z/type" >&2; exit 1; }; '
     'read -r v < "$z/temp" || { printf "%s\\tUNREADABLE\\t%s\\n" "$t" "$z/temp"; continue; }; '
-    'printf "%s\\t%s\\t%s\\n" "$t" "$v" "$z/temp"; done'
+    'printf "%s\\t%s\\t%s\\n" "$t" "$v" "$z/temp"; done; :'
 )
 NON_TEMPERATURE_ZONES = {
     "pm8550-bcl-lvl0",
@@ -251,7 +251,7 @@ class _GameThermalOwner:
         if not all_zones and gap > 1:
             raise RuntimeError("Thermal sample gap exceeded one second")
         if at >= self.deadline:
-            raise RuntimeError("Three-hour alpha driver deadline reached")
+            raise RuntimeError("Device run thermal deadline reached")
         if all_zones:
             if self.battery["level"] > 85:
                 raise RuntimeError("Battery charge separation/limit admission refused; report without retry")
@@ -283,24 +283,26 @@ class _GameThermalOwner:
     def terminate_game(self):
         from device import PACKAGE
 
+        package = getattr(self.device, "package", PACKAGE)
+
         # Receipt and live PID/cmdline are revalidated immediately before the
         # package-scoped stop. No remembered PID or unbound process is signaled.
         receipt = self.device.read_receipt("installed.json")
         bind_installed_apk(receipt, expected_sha256=self.expected)
-        if receipt.get("serial") != self.device.serial or receipt.get("package") != PACKAGE:
+        if receipt.get("serial") != self.device.serial or receipt.get("package") != package:
             raise RuntimeError("Selected package ownership changed; refuse thermal stop")
-        if self.device.cmd("shell", "pm path " + PACKAGE, timeout=0.7) != receipt.get("package_path"):
+        if self.device.cmd("shell", "pm path " + package, timeout=0.7) != receipt.get("package_path"):
             raise RuntimeError("Package placement changed; refuse thermal stop")
-        pid = self.device.cmd("shell", "pidof " + PACKAGE, check=False, timeout=0.7).strip()
+        pid = self.device.cmd("shell", "pidof " + package, check=False, timeout=0.7).strip()
         if not pid:
             return
         if not pid.isdecimal():
             raise RuntimeError("Ambiguous game PID; refuse thermal stop")
-        identity = self.device.cmd("shell", "cat /proc/" + pid + "/cmdline; echo; pidof " + PACKAGE, timeout=0.7)
+        identity = self.device.cmd("shell", "cat /proc/" + pid + "/cmdline; echo; pidof " + package, timeout=0.7)
         fields = identity.splitlines()
-        if len(fields) != 2 or fields[0].rstrip("\x00") != PACKAGE or fields[1] != pid:
+        if len(fields) != 2 or fields[0].rstrip("\x00") != package or fields[1] != pid:
             raise RuntimeError("Game identity changed; refuse late thermal stop")
-        self.device.cmd("shell", "am force-stop " + PACKAGE, timeout=2)
+        self.device.cmd("shell", "am force-stop " + package, timeout=2)
 
     def cool(self):
         if not self.device.display(False):
@@ -353,6 +355,30 @@ class _GameThermalOwner:
         self.thread.start()
         self.stopper.start()
 
+    def between_sessions(self):
+        """Cool at the verified menu while the runtime observer stays active."""
+        phase = self.phase
+        self.phase = "session-memory-cooldown"
+        try:
+            if not self.device.display(False):
+                raise RuntimeError("Between-session cooldown requires verified OLED sleep")
+            while True:
+                if self.error:
+                    raise ThermalCancelled(self.error)
+                admitted = dict(battery=self.battery.copy(), battery_zone_celsius=self.battery_zone_celsius)
+                if max(admitted["battery"]["celsius"], admitted["battery_zone_celsius"]) <= 35:
+                    break
+                time.sleep(THERMAL_INTERVAL_SECONDS)
+            if not self.device.display(True):
+                raise RuntimeError("Between-session cooldown could not restore the menu display")
+            if self.error:
+                raise ThermalCancelled(self.error)
+            # The observer continues through display wake. Keep the readings
+            # that admitted this session rather than later, mutable readings.
+            return admitted
+        finally:
+            self.phase = phase
+
     def _terminate_serially(self):
         with self.stop_lock:
             self.terminate_game()
@@ -403,6 +429,8 @@ def _idle_readback(device, expected):
     from device import PACKAGE
     from session_cleanup_check import _remote_path_state
 
+    package = getattr(device, "package", PACKAGE)
+
     installed = device.owned()
     bind_installed_apk(installed, expected_sha256=expected)
     package_path = installed["package_path"]
@@ -412,7 +440,7 @@ def _idle_readback(device, expected):
     if not actual or actual[0] != expected:
         raise RuntimeError("Actual installed APK bytes differ")
     runtime = device.read_receipt("runtime.json")["persistentDataPath"]
-    process = device.sh("pidof", PACKAGE, check=False).strip()
+    process = device.sh("pidof", package, check=False).strip()
     selector = _remote_path_state(device, runtime + "/movement-batch-selection.json")
     pending = _remote_path_state(device, runtime + "/offline-settings-v1/preferences.json.pending")
     if process or selector != "absent" or pending != "absent":
@@ -556,6 +584,8 @@ def check_alpha_stability_batch(*, device_serial, expected_apk_sha256, canonical
                 thermal.cool()  # No game running; admit the next stage at <=50 C.
                 thermal.start()
                 try:
+                    if name == "session-memory":
+                        kwargs["_between_sessions"] = thermal.between_sessions
                     stage = function(expected_apk_sha256=expected, _launch=thermal.launch, **kwargs)
                 except BaseException as error:
                     stage_error = error

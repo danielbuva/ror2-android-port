@@ -48,6 +48,10 @@ public sealed partial class PortSession
     {
         GetOfflineApplicationSession().OnApplicationPause(paused);
     }
+    void ApplyOfflineDisplayPreference()
+    {
+        GetOfflineApplicationSession().ApplyDisplayPreference();
+    }
     static bool AllowsOfflineSessionMenu(SessionReport session)
     {
         return OfflineApplicationSession.AllowsOfflineSessionMenu(session);
@@ -120,6 +124,39 @@ public sealed partial class PortSession
         // preparation, before the body-input iterator can hold NeverSleep.
         int priorScreenSleepTimeout;
         bool ownsScreenSleepTimeout;
+        int priorDisplayFrameRate, requestedDisplayFrameRate;
+        bool ownsDisplayPreference;
+        bool appliedHighRefreshRate;
+#if UNITY_ANDROID && !UNITY_EDITOR
+        AndroidJavaObject displayPreference;
+#endif
+        public void ApplyDisplayPreference()
+        {
+            appliedHighRefreshRate = AndroidOfflineSettings.current.highRefreshRate;
+            ReapplyDisplayPreference();
+        }
+        public void ReapplyDisplayPreference()
+        {
+            if (!ownsDisplayPreference)
+            {
+                appliedHighRefreshRate = AndroidOfflineSettings.current.highRefreshRate;
+                priorDisplayFrameRate = Application.targetFrameRate;
+                ownsDisplayPreference = true;
+            }
+            requestedDisplayFrameRate = appliedHighRefreshRate ? 300 : 60;
+            Application.targetFrameRate = requestedDisplayFrameRate;
+#if UNITY_ANDROID && !UNITY_EDITOR
+            if (displayPreference == null)
+                using (var unity = new AndroidJavaClass("com.unity3d.player.UnityPlayer"))
+                using (var activity = unity.GetStatic<AndroidJavaObject>("currentActivity"))
+                    displayPreference = new AndroidJavaObject("dev.ror2lab.diagnostics.LabDisplayPreference", activity);
+            displayPreference.Call("apply", appliedHighRefreshRate);
+#endif
+        }
+        public void RestoreGameplayFrameRate(int priorFrameRate)
+        {
+            Application.targetFrameRate = ownsDisplayPreference ? requestedDisplayFrameRate : priorFrameRate;
+        }
         public void KeepScreenAwake()
         {
             if (ownsScreenSleepTimeout)
@@ -130,6 +167,20 @@ public sealed partial class PortSession
         }
         public void Dispose()
         {
+#if UNITY_ANDROID && !UNITY_EDITOR
+            if (displayPreference != null)
+            {
+                displayPreference.Call("close");
+                displayPreference.Dispose();
+                displayPreference = null;
+            }
+#endif
+            if (ownsDisplayPreference)
+            {
+                ownsDisplayPreference = false;
+                if (Application.targetFrameRate == requestedDisplayFrameRate)
+                    Application.targetFrameRate = priorDisplayFrameRate;
+            }
             if (!ownsScreenSleepTimeout)
                 return;
             ownsScreenSleepTimeout = false;
@@ -196,11 +247,15 @@ public sealed partial class PortSession
         {
             if (!focused)
                 offlineUiPresence?.Suspend();
+            else if (ownsDisplayPreference)
+                ReapplyDisplayPreference();
         }
         public void OnApplicationPause(bool paused)
         {
             if (paused)
                 offlineUiPresence?.Suspend();
+            else if (ownsDisplayPreference)
+                ReapplyDisplayPreference();
         }
         public static bool AllowsOfflineSessionMenu(SessionReport session)
         {

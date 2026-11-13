@@ -23,7 +23,7 @@ class TouchGestureTests(unittest.TestCase):
             dex = root / "classes.dex"
             dex.write_bytes(b"authored fixture")
             runtime = "/sdcard/Android/data/" + touch_gesture.PACKAGE + "/files"
-            device = Mock()
+            device = Mock(package=touch_gesture.PACKAGE)
             device.owned.return_value = dict(apk_sha256="a" * 64)
             device.read_receipt.return_value = dict(persistentDataPath=runtime)
             device.evidence_directory.return_value = root / "evidence"
@@ -113,7 +113,7 @@ class TouchGestureTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory) / "gesture.json"
             path.write_text(json.dumps(request()))
-            device = Mock()
+            device = Mock(package=touch_gesture.PACKAGE)
             device.sh.side_effect = sh
             with (
                 patch.object(touch_gesture, "Device", return_value=device),

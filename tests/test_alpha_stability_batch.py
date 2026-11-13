@@ -112,6 +112,10 @@ class AlphaStabilityBatchTests(unittest.TestCase):
             self.assertEqual(json.loads((self.lease / "owner.json").read_text())["pid"], os.getpid())
             self.assertFalse(self.done.exists())
             kwargs.pop("_launch")
+            if name == "memory":
+                self.assertEqual(kwargs.pop("_between_sessions"), thermal.return_value.between_sessions)
+            else:
+                self.assertNotIn("_between_sessions", kwargs)
             events.append((name, kwargs))
             if name == fail_at:
                 raise RuntimeError("authored first failure")
@@ -320,7 +324,7 @@ class GameThermalOwnerTests(unittest.TestCase):
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory()
         self.addCleanup(self.temp.cleanup)
-        self.device = mock.Mock()
+        self.device = mock.Mock(package="dev.ror2lab.arm64")
         self.device.sh.return_value = "temperature: 340\nlevel: 80\nstatus: 4\n"
         self.device.serial = SERIAL
         self.device.read_receipt.return_value = dict(apk_sha256=HASH, serial=SERIAL, package="dev.ror2lab.arm64", package_path="package:/fixture/base.apk")
@@ -332,6 +336,59 @@ class GameThermalOwnerTests(unittest.TestCase):
     @staticmethod
     def runtime_reply(raw, battery="temperature: 340\nlevel: 80\nstatus: 4"):
         return raw.rstrip("\n") + "\n__LAB_BATTERY__\n" + battery
+
+    def test_between_sessions_waits_for_both_battery_sources_without_resampling(self):
+        self.owner.battery = dict(celsius=40, level=80, status=4)
+        self.owner.battery_zone_celsius = 40
+        self.owner.previous = 123
+        temperatures = iter(((35, 35.1), (35, 35)))
+
+        def cool(_seconds):
+            self.assertEqual(self.owner.phase, "session-memory-cooldown")
+            self.assertEqual(self.device.display.call_args_list, [mock.call(False)])
+            service, zone = next(temperatures)
+            self.owner.battery = dict(celsius=service, level=80, status=4)
+            self.owner.battery_zone_celsius = zone
+
+        with mock.patch.object(batch.time, "sleep", side_effect=cool) as sleep, mock.patch.object(self.owner, "sample") as sample:
+            result = self.owner.between_sessions()
+        self.assertEqual(sleep.call_count, 2)
+        sample.assert_not_called()
+        self.assertEqual(self.owner.previous, 123)
+        self.assertEqual(result["battery"]["celsius"], 35)
+        self.assertEqual(result["battery_zone_celsius"], 35)
+        self.assertEqual(self.device.display.call_args_list, [mock.call(False), mock.call(True)])
+        self.assertEqual(self.owner.phase, "gameplay")
+
+    def test_between_sessions_preserves_admission_readings_across_wake(self):
+        self.owner.battery = dict(celsius=35, level=80, status=4)
+        self.owner.battery_zone_celsius = 35
+
+        def display(awake):
+            if awake:
+                self.owner.battery["celsius"] = 36
+                self.owner.battery_zone_celsius = 36
+            return True
+
+        self.device.display.side_effect = display
+        result = self.owner.between_sessions()
+        self.assertEqual(result["battery"]["celsius"], 35)
+        self.assertEqual(result["battery_zone_celsius"], 35)
+        self.assertEqual(self.owner.battery["celsius"], 36)
+        self.assertEqual(self.owner.battery_zone_celsius, 36)
+        self.assertEqual(self.device.display.call_args_list, [mock.call(False), mock.call(True)])
+
+    def test_between_sessions_cancellation_leaves_oled_asleep(self):
+        self.owner.battery = dict(celsius=40)
+        self.owner.battery_zone_celsius = 40
+
+        def cancel(_seconds):
+            self.owner.error = "Battery at or above 43 C"
+
+        with mock.patch.object(batch.time, "sleep", side_effect=cancel), self.assertRaisesRegex(batch.ThermalCancelled, "43 C"):
+            self.owner.between_sessions()
+        self.device.display.assert_called_once_with(False)
+        self.assertEqual(self.owner.phase, "gameplay")
 
     def test_actual_gap_and_unknown_read_are_hard_refusals(self):
         self.owner.runtime_zones = [("cpu-0", "/thermal_zone0/temp")]
@@ -432,6 +489,13 @@ class GameThermalOwnerTests(unittest.TestCase):
         self.assertEqual(
             result.stdout, "pa\t34600\t" + str(first / "temp") + "\npa1\tUNREADABLE\t" + str(failed / "temp") + "\ncpu-0\t49000\t" + str(last / "temp") + "\n"
         )
+        final = root / "thermal_zone3"
+        final.mkdir()
+        (final / "type").write_text("pa2\n")
+        (final / "temp").write_text("")
+        result = subprocess.run(["/bin/sh", "-c", command], capture_output=True, text=True)
+        self.assertEqual(result.returncode, 0)
+        self.assertTrue(result.stdout.endswith("pa2\tUNREADABLE\t" + str(final / "temp") + "\n"))
         (failed / "type").unlink()
         result = subprocess.run(["/bin/sh", "-c", command], capture_output=True, text=True)
         self.assertNotEqual(result.returncode, 0)

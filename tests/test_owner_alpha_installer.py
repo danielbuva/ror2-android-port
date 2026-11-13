@@ -45,7 +45,7 @@ EXTRA = {
         public static void updateInstallDiagnostic(android.content.Context c,String stage,String callback,boolean match){}
         public static void updateInstallReceiverDiagnostic(android.content.Context c,String registration,boolean entered){}
         public static JSONObject readJson(File f)throws Exception{if(!f.isFile())throw new IOException("absent "+f);return values.get(f.getCanonicalPath());}
-        public static void writeJson(File f,JSONObject v)throws Exception{f.getParentFile().mkdirs();try(FileOutputStream o=new FileOutputStream(f)){o.write(1);}values.put(f.getCanonicalPath(),v);}}
+        public static void writeJson(android.content.Context c,File f,JSONObject v)throws Exception{f.getParentFile().mkdirs();try(FileOutputStream o=new FileOutputStream(f)){o.write(1);}values.put(f.getCanonicalPath(),v);}}
     """,
 }
 
@@ -57,7 +57,7 @@ public class AlphaHarness {
     interface Action {void run()throws Exception;} static void refuse(String word,Action a)throws Exception{
         try{a.run();throw new AssertionError("accepted "+word);}catch(Exception e){if(!e.getMessage().contains(word))throw e;checks++;}}
     static String hash(File f)throws Exception{StringBuilder s=new StringBuilder();for(byte b:MessageDigest.getInstance("SHA-256").digest(Files.readAllBytes(f.toPath())))s.append(String.format("%02x",b&255));return s.toString();}
-    static void put(Context c,String n,JSONObject v)throws Exception{ToolHostActivity.writeJson(new File(c.getFilesDir(),"owner-input/"+n),v);}
+    static void put(Context c,String n,JSONObject v)throws Exception{ToolHostActivity.writeJson(c,new File(c.getFilesDir(),"owner-input/"+n),v);}
     static JSONObject get(Context c,String n)throws Exception{return ToolHostActivity.readJson(new File(c.getFilesDir(),"owner-input/"+n));}
     static File stream(Context c,String n)throws Exception{File f=new File(c.getFilesDir(),"owner-input/work/releases/"+n);f.getParentFile().mkdirs();Files.write(f.toPath(),("synthetic stream "+n).getBytes("UTF-8"));return f;}
     static JSONObject ready(Context c,int code,File f)throws Exception {
@@ -139,8 +139,8 @@ class AlphaInstallerTests(unittest.TestCase):
         self.assertIn('"profile-recover"', activity)
         self.assertIn("USER_ACTION_NOT_REQUIRED", installer)
         self.assertIn("awaitInstallation()", service)
-        for name in ("stage.py", "build_fixture.py"):
-            self.assertIn('"OwnerAlphaInstall.java"', (SOURCE / name).read_text())
+        self.assertIn('"OwnerAlphaInstall.java"', (SOURCE / "stage.py").read_text())
+        self.assertIn("staging.JAVA_SOURCES", (SOURCE / "build_fixture.py").read_text())
         for name in ("ProfileStore.java", "ProfileRetentionProvider.java", "alpha_policy.py"):
             self.assertIn(name, (SOURCE / "stage.py").read_text())
         self.assertNotIn("getExternalFilesDir", (SOURCE / "OwnerAlphaInstall.java").read_text())

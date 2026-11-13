@@ -43,15 +43,21 @@ class ScopedDefinitionManifestTests(unittest.TestCase):
         methods = [
             braced_block(source, signature)
             for signature in (
+                "sealed class DefinitionManifestIndex",
+                "static DefinitionManifestIndex IndexDefinitionManifest(JObject manifest)",
                 "public static RoR2.BuffDef[] BuffDefinitions()",
                 "public static RoR2.ItemDef[] ItemDefinitions()",
                 "public static RoR2.KeyItemDef[] KeyItemDefinitions()",
                 "public static RoR2.ItemGroupType[] ItemGroupTypes()",
+                "internal static RoR2.ItemGroupType[] ItemGroupTypes(Action<string> trace)",
                 "public static RoR2.ItemGroupProvider[] ItemGroupProviders()",
+                "internal static RoR2.ItemGroupProvider[] ItemGroupProviders(Action<string> trace)",
                 "public static T[] DefinitionFamily<T>(System.Collections.Generic.IEnumerable<T> selected)",
+                "internal static T[] DefinitionFamily<T>(System.Collections.Generic.IEnumerable<T> selected, Action<string> trace)",
                 "public static int[][] FamilyLocationGroups(JObject manifest, string category)",
                 "public static T[] CategoryFamily<T>(string category, IEnumerable<T> selected)",
                 "internal static JObject ReadDefinitionManifest()",
+                "internal static void ResetDefinitionManifest()",
                 "internal static T[] CategoryFamily<T>(JObject manifest, string category, IEnumerable<T> selected)",
                 "internal static T[] CategoryFamily<T>(JObject manifest, string category, IEnumerable<T> selected, Action<string> trace)",
                 'public static void PopulateDefinitionFields<T>(string family, T[] definitions, string prefix = "")',

@@ -16,14 +16,51 @@ using System;
 using System.IO;
 using System.Reflection;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 namespace UnityEngine {
- public class Object { public bool destroyed; public static implicit operator bool(Object x){return !ReferenceEquals(x,null)&&!x.destroyed;} }
+ public class Object { public bool destroyed; public static int workloadCalls; public static Object[] FindObjectsOfType(Type type){workloadCalls++;return new Object[type.FullName.Contains("Projectile")?3:7];} public static implicit operator bool(Object x){return !ReferenceEquals(x,null)&&!x.destroyed;} }
+ public class Component : Object {public int value=7;}
+ public class Transform : Component {public string name;public Transform parent;public T[] GetComponents<T>(){return new[]{(T)(object)new Component()};}}
+ public class Shader {public string name="shader";}
+ public class Material {public Shader shader=new Shader();}
+ public class Renderer : Object {public string name="renderer";public Material[] sharedMaterials=new[]{new Material()};}
  public static class Debug { public static List<string> logs=new List<string>(); public static void Log(string value){logs.Add(value);} }
  public static class JsonUtility { public static string ToJson(object value,bool pretty=false){return new System.Web.Script.Serialization.JavaScriptSerializer().Serialize(value);} }
 }
+namespace RoR2 {public class EffectComponent:UnityEngine.Component {}}
+namespace RoR2.Projectile {public class ProjectileController:UnityEngine.Component {}}
 class LabDiagnostics {
- public class Snapshot { public string checkpoint,payload; }
+ public class Config {public bool sceneDetails,fields,workloadCounts;public string subtree="";}
+ public class ObjectInfo {public string name,parent;public string[] components,fields;}
+ public class Snapshot { public string checkpoint,payload;public bool sceneDetails,workloadCounts;public int activeProjectiles=-1,activeEffects=-1;public double workloadCountMs;public string workloadCountError;public string[] assemblies,renderers;public ObjectInfo[] hierarchy; }
+ Config config=new Config();bool permitCensus;int censusCalls;
+ T[] FindObjectsOfType<T>(bool inactive){
+  if(!permitCensus||!inactive)throw new Exception("Unrequested/incomplete census");censusCalls++;
+  if(typeof(T)==typeof(Transform))return (T[])(object)new[]{new Transform{name="parent"},new Transform{name="child",parent=new Transform{name="parent"}}};
+  return (T[])(object)new[]{new Renderer()};
+ }
+ SCENE_DETAILS
+ SAFE_FIELD
+ ANCESTORS
+ WORKLOAD_COUNTS
+ COUNT_COMPONENTS
+ public static void VerifySceneDetails(){
+  var owner=new LabDiagnostics();var scalar=new Snapshot();owner.PopulateSceneDetails("periodic",scalar);
+  if(scalar.sceneDetails||owner.censusCalls!=0||scalar.hierarchy.Length!=0||scalar.renderers.Length!=0||scalar.assemblies.Length!=0)throw new Exception("Default periodic scan");
+  owner.PopulateWorkloadCounts(scalar);
+  if(scalar.workloadCounts||UnityEngine.Object.workloadCalls!=0||scalar.activeProjectiles!=-1||scalar.activeEffects!=-1)throw new Exception("Unrequested workload census");
+  owner.config.workloadCounts=true;var workload=new Snapshot();owner.PopulateWorkloadCounts(workload);
+  if(!workload.workloadCounts||workload.activeProjectiles!=3||workload.activeEffects!=7||UnityEngine.Object.workloadCalls!=2||workload.workloadCountError!=null||workload.workloadCountMs<0)throw new Exception("Requested live component census");
+  try{owner.CountActiveComponents("Missing.Component");throw new Exception("Missing type fabricated a count");}catch(InvalidOperationException){}
+  owner.permitCensus=true;
+  foreach(var mode in new[]{"startup","scene","fields","subtree"}){
+   owner.config=new Config{sceneDetails=mode=="scene",fields=mode=="fields",subtree=mode=="subtree"?"parent":""};
+   var detail=new Snapshot();int before=owner.censusCalls;owner.PopulateSceneDetails(mode=="startup"?"LAB_READY":"periodic",detail);
+   if(!detail.sceneDetails||owner.censusCalls-before!=2||detail.hierarchy.Length!=2||detail.renderers.Single()!="renderer:shader"||detail.assemblies.Length==0)throw new Exception("Requested census lost");
+   if((detail.hierarchy[0].fields.Length>0)!=(mode=="fields"))throw new Exception("Field inspection changed");
+  }
+ }
  string root;
  PUBLICATION
  public static void Verify(string root){
@@ -59,6 +96,12 @@ class BulletAttack {
  private static HitPool bulletHitPool=new HitPool();
  public static Stack<BulletHit> Returned {get{return bulletHitPool.Returned;}}
 }
+namespace HG {
+ public abstract class CollectionPool<T,C> where C:ICollection<T>,new() {
+  private static readonly Stack<C> pooledCollections=new Stack<C>();
+  public static Stack<C> Returned {get{return pooledCollections;}}
+ }
+}
 static class Run {public static UnityEngine.Object instance;}
 static class NetworkServer {public static bool active;}
 static class NetworkClient {public static bool active;}
@@ -70,6 +113,32 @@ class ResourceOwner {
  CLEANUP
  OVERLAP_METHOD
  SPAWN_METHOD
+ RETURNED_POOLS
+ public static void VerifyReturnedPools(){
+  var owner=new ResourceOwner();var target=new HurtBox();
+  var rentedHit=new BulletAttack.BulletHit {hitHurtBox=target,other=target};
+  var rentedList=new List<Renderer> {new Renderer()};
+  var returnedHit=new BulletAttack.BulletHit {hitHurtBox=target,other=target};
+  var returnedList=new List<Renderer> {rentedList[0]};
+  var hits=BulletAttack.Returned;var lists=HG.CollectionPool<Renderer,List<Renderer>>.Returned;
+  hits.Push(returnedHit);lists.Push(returnedList);
+  for(int flag=0;flag<4;flag++){
+   owner.r.world.cleaned=flag!=0;Run.instance=flag==1?new UnityEngine.Object():null;NetworkServer.active=flag==2;NetworkClient.active=flag==3;
+   bool refused=false;try{owner.ReclaimReturnedSessionPools();}catch(InvalidOperationException){refused=true;}
+   if(!refused||hits.Count!=1||lists.Count!=1)throw new Exception("Live-session returned storage mutated");
+  }
+  owner.r.world.cleaned=true;Run.instance=null;NetworkServer.active=NetworkClient.active=false;
+  for(int session=0;session<3;session++){
+   // Fresh deserialized/allocated objects may be returned without an earlier rent.
+   for(int i=0;i<100;i++){hits.Push(new BulletAttack.BulletHit());lists.Push(new List<Renderer>());}
+   var counts=owner.ReclaimReturnedSessionPools();
+   if(hits.Count!=0||lists.Count!=0||!counts[0].EndsWith(session==0?":101/0":":100/0")||!counts[1].EndsWith(session==0?":101/0":":100/0"))throw new Exception("Returned storage retained or counts lost");
+   if(((Array)hits.GetType().GetField("_array",BindingFlags.Instance|BindingFlags.NonPublic).GetValue(hits)).Length!=0||((Array)lists.GetType().GetField("_array",BindingFlags.Instance|BindingFlags.NonPublic).GetValue(lists)).Length!=0)throw new Exception("Empty pool backing capacity retained");
+  }
+  if(!ReferenceEquals(rentedHit.hitHurtBox,target)||!ReferenceEquals(rentedHit.other,target)||rentedList.Count!=1||!ReferenceEquals(returnedHit.hitHurtBox,target)||returnedList.Count!=1||!ReferenceEquals(returnedList[0],rentedList[0]))throw new Exception("Pool reclamation mutated an item or a checked-out list");
+  var empty=owner.ReclaimReturnedSessionPools();
+  if(!empty[0].EndsWith(":0/0")||!empty[1].EndsWith(":0/0"))throw new Exception("Reclamation not idempotent");
+ }
  public static void VerifyOverlap(){
   var owner=new ResourceOwner();var dead=new HurtBox {destroyed=true};var live=new HurtBox();var second=new HurtBox();
   var list=OverlapAttack.Targets;list.Add(dead);list.Add(live);list.Add(null);list.Add(dead);list.Add(second);int capacity=list.Capacity;
@@ -111,7 +180,7 @@ class ResourceOwner {
   if(owner.ReleaseDestroyedPooledHitTargets()!=0)throw new Exception("Cleanup not idempotent");
  }
 }
-class Program {static void Main(string[] args){if(args[0]=="publication")LabDiagnostics.Verify(args[1]);else if(args[0]=="overlap")ResourceOwner.VerifyOverlap();else if(args[0]=="spawn")ResourceOwner.VerifySpawn();else ResourceOwner.Verify();Console.WriteLine(args[0]+": PASS");}}
+class Program {static void Main(string[] args){if(args[0]=="scene-details")LabDiagnostics.VerifySceneDetails();else if(args[0]=="publication")LabDiagnostics.Verify(args[1]);else if(args[0]=="returned-pools")ResourceOwner.VerifyReturnedPools();else if(args[0]=="overlap")ResourceOwner.VerifyOverlap();else if(args[0]=="spawn")ResourceOwner.VerifySpawn();else ResourceOwner.Verify();Console.WriteLine(args[0]+": PASS");}}
 """
 
 
@@ -126,6 +195,12 @@ class DiagnosticRetentionTests(unittest.TestCase):
         cls.addClassCleanup(cls.temp.cleanup)
         directory = Path(cls.temp.name)
         code = HOST.replace("PUBLICATION", extract_method((ROOT / "android/Assets/LabDiagnostics.cs").read_text(), " void PublishSnapshot("))
+        diagnostic = (ROOT / "android/Assets/LabDiagnostics.cs").read_text()
+        code = code.replace("SCENE_DETAILS", extract_method(diagnostic, " void PopulateSceneDetails("))
+        code = code.replace("SAFE_FIELD", extract_method(diagnostic, " static string SafeField("))
+        code = code.replace("ANCESTORS", extract_method(diagnostic, " static string Ancestors("))
+        code = code.replace("WORKLOAD_COUNTS", extract_method(diagnostic, " void PopulateWorkloadCounts("))
+        code = code.replace("COUNT_COMPONENTS", extract_method(diagnostic, " int CountActiveComponents("))
         code = code.replace(
             "CLEANUP",
             extract_method((ROOT / "tools/unity/runtime/session/SessionResourceBoundary.cs").read_text(), "    int ReleaseDestroyedPooledHitTargets()"),
@@ -133,6 +208,7 @@ class DiagnosticRetentionTests(unittest.TestCase):
         resource = (ROOT / "tools/unity/runtime/session/SessionResourceBoundary.cs").read_text()
         code = code.replace("OVERLAP_METHOD", extract_method(resource, "    int PruneDestroyedOverlapTargets()"))
         code = code.replace("SPAWN_METHOD", extract_method(resource, "    int PruneDestroyedSpawnCardCallbacks()"))
+        code = code.replace("RETURNED_POOLS", extract_method(resource, "    string[] ReclaimReturnedSessionPools()"))
         code = code.replace("REMOVE_TARGETS", extract_method(resource, "    public static Delegate RemoveTargets("))
         source = directory / "Production.cs"
         source.write_text(code)
@@ -169,8 +245,14 @@ class DiagnosticRetentionTests(unittest.TestCase):
     def test_periodic_large_snapshots_replace_one_file_without_console_retention(self):
         self.case("publication")
 
+    def test_periodic_scene_census_requires_explicit_inspection_and_startup_keeps_details(self):
+        self.case("scene-details")
+
     def test_teardown_releases_only_destroyed_targets_of_returned_hits(self):
         self.case("cleanup")
+
+    def test_idle_teardown_reclaims_returned_storage_without_mutating_rentals(self):
+        self.case("returned-pools")
 
     def test_teardown_releases_only_destroyed_spawn_card_callbacks(self):
         self.case("spawn")

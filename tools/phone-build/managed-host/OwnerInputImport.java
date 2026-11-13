@@ -10,6 +10,80 @@ import java.util.zip.ZipInputStream;
 
 /** Local, Android-free streaming import. No networking, archive extraction or source writes. */
 public final class OwnerInputImport {
+    /** Directory durability on Android API 24+, with a host-JVM fixture path.
+     * Reflection keeps this streaming owner Android-free without linking the
+     * API-26 java.nio.file classes on an API-24 device.
+     */
+    public static void syncDirectory(File directory) throws Exception {
+        Class<?> os;
+        try { os = Class.forName("android.system.Os"); }
+        catch (ClassNotFoundException host) {
+            Class<?> path = Class.forName("java.nio.file.Path");
+            Class<?> option = Class.forName("java.nio.file.OpenOption");
+            Object options = java.lang.reflect.Array.newInstance(option, 1);
+            Object read = Class.forName("java.nio.file.StandardOpenOption").getField("READ").get(null);
+            java.lang.reflect.Array.set(options, 0, read);
+            Object target = File.class.getMethod("toPath").invoke(directory);
+            try (java.nio.channels.FileChannel channel = (java.nio.channels.FileChannel)
+                    java.nio.channels.FileChannel.class.getMethod("open", path, options.getClass()).invoke(null, target, options)) {
+                channel.force(true);
+            }
+            return;
+        }
+        Class<?> constants = Class.forName("android.system.OsConstants");
+        // O_DIRECTORY is not a public Android OsConstants field. Callers own and validate the directory.
+        int flags = constants.getField("O_RDONLY").getInt(null);
+        FileDescriptor descriptor = (FileDescriptor) os.getMethod("open", String.class, int.class, int.class).invoke(null, directory.getPath(), flags, 0);
+        try { os.getMethod("fsync", FileDescriptor.class).invoke(null, descriptor); }
+        finally { os.getMethod("close", FileDescriptor.class).invoke(null, descriptor); }
+    }
+    public static void durableDirectory(File directory) throws Exception {
+        if (!directory.getAbsoluteFile().equals(directory.getCanonicalFile())) throw new IOException("Private directory contains links");
+        if (!directory.isDirectory()) {
+            File parent = directory.getAbsoluteFile().getParentFile();
+            durableDirectory(parent);
+            if (!directory.mkdir() && !directory.isDirectory()) throw new IOException("Private directory unavailable");
+            syncDirectory(parent);
+        }
+    }
+    /** Both paths are private and on the same filesystem; never copy/delete fallback. */
+    public static void publish(File temporary, File destination) throws Exception {
+        if (!temporary.getAbsoluteFile().equals(temporary.getCanonicalFile()) ||
+                !destination.getAbsoluteFile().equals(destination.getCanonicalFile())) throw new IOException("Private atomic file contains links");
+        if (!temporary.renameTo(destination)) throw new IOException("Could not publish private file");
+        syncDirectory(destination.getParentFile());
+        if (!temporary.getParentFile().equals(destination.getParentFile())) syncDirectory(temporary.getParentFile());
+    }
+    /** Rebase only an explicitly trusted app root alias; descendants remain link-free.
+     * Android Context owns the root. This is not canonicalization of arbitrary targets.
+     */
+    public static File privateFile(File trustedRoot, File target) throws IOException {
+        File root = trustedRoot.getAbsoluteFile(), canonical = trustedRoot.getCanonicalFile();
+        if (!root.isDirectory()) throw new IOException("Private root unavailable");
+        String value = target.getAbsolutePath(), relative = null;
+        for (File base : new File[]{root, canonical}) {
+            String prefix = base.getPath() + File.separator;
+            if (value.startsWith(prefix)) { relative = value.substring(prefix.length()); break; }
+        }
+        if (relative == null || relative.isEmpty()) throw new IOException("Target outside private root");
+        for (String part : relative.split("/", -1))
+            if (part.isEmpty() || part.equals(".") || part.equals("..")) throw new IOException("Unsafe private target");
+        File result = new File(canonical, relative);
+        if (!result.getAbsoluteFile().equals(result.getCanonicalFile())) throw new IOException("Private target contains links");
+        return result;
+    }
+    public interface AtomicWriter { void write(FileOutputStream output) throws Exception; }
+    /** Caller serializes this target. Interrupted .writing bytes are overwritten, never trusted. */
+    public static void writeAtomic(File file, AtomicWriter writer) throws Exception {
+        File parent = file.getParentFile(); durableDirectory(parent);
+        File staged = new File(parent, file.getName() + ".writing");
+        if (!staged.getAbsoluteFile().equals(staged.getCanonicalFile()) ||
+                !file.getAbsoluteFile().equals(file.getCanonicalFile())) throw new IOException("Private atomic file contains links");
+        try {
+            try (FileOutputStream output = new FileOutputStream(staged)) { writer.write(output); output.getFD().sync(); }
+            publish(staged, file);
+        } finally { staged.delete(); }
+    }
     public static final long MARGIN = 2L * 1024 * 1024 * 1024;
     public static final class Required {
         public final String path, sha256;
@@ -220,11 +294,11 @@ public final class OwnerInputImport {
     private void copy(Required row, InputStream input) throws Exception {
         observer.checkpoint();
         File file = target(row.path), temporary = new File(new File(root, "native-staging"), hex(MessageDigest.getInstance("SHA-256").digest(row.path.getBytes(StandardCharsets.UTF_8))) + ".part");
-        if (!temporary.getParentFile().isDirectory() && !temporary.getParentFile().mkdirs()) throw new IOException("Private input staging unavailable");
+        durableDirectory(temporary.getParentFile());
         boolean reuse = reusable(row);
         ensureSpace(remainingBytes);
         if (!temporary.getCanonicalFile().equals(temporary.getAbsoluteFile())) throw new IOException("Private temporary input contains links");
-        if (!file.getParentFile().isDirectory() && !file.getParentFile().mkdirs()) throw new IOException("Private input directory unavailable");
+        durableDirectory(file.getParentFile());
         MessageDigest hash = MessageDigest.getInstance("SHA-256"); long copied = 0;
         try (FileOutputStream output = reuse ? null : new FileOutputStream(temporary)) {
             byte[] bytes = new byte[65536]; int count;
@@ -237,7 +311,10 @@ public final class OwnerInputImport {
             if (copied != row.bytes || !hex(hash.digest()).equals(row.sha256)) throw new IOException("Version mismatch (size/hash): " + row.path);
             if (output != null) output.getFD().sync();
         } catch (Exception error) { temporary.delete(); throw error; }
-        if (!reuse && !temporary.renameTo(file)) throw new IOException("Could not publish verified input: " + row.path);
+        if (!reuse) {
+            try { publish(temporary, file); }
+            finally { temporary.delete(); }
+        }
         if (!reuse) remainingBytes -= copied;
         completed += copied; observer.progress(row.path, completed, total);
     }

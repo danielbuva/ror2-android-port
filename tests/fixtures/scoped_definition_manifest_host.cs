@@ -21,9 +21,12 @@ namespace UnityEngine
     {
         public static AssetBundle owner = new AssetBundle { name = "source" };
         public static Dictionary<string, Object> assets = new Dictionary<string, Object>();
-        public static AssetBundle[] GetAllLoadedAssetBundles() { return new[] { owner }; }
+        public static AssetBundle[] loadedOwners;
+        public static int enumerations;
+        public static Action<string> onLoad;
+        public static AssetBundle[] GetAllLoadedAssetBundles() { enumerations++; return loadedOwners ?? new[] { owner }; }
         public static int typedLoads;
-        public T LoadAsset<T>(string path) where T : Object { typedLoads++; return (T)assets[path]; }
+        public T LoadAsset<T>(string path) where T : Object { typedLoads++; onLoad?.Invoke(path); return (T)assets[path]; }
         public T[] LoadAllAssets<T>() where T : Object { throw new Exception("Unrelated drop table activated before native Run setup"); }
     }
 }
@@ -65,7 +68,10 @@ namespace RoR2.ContentManagement
 public class Definition : Object {}
 public class SourceProvider
 {
-    readonly RoR2.ContentManagement.ContentPack contentPack = new RoR2.ContentManagement.ContentPack { allowed = true };
+    public static bool allowed = true;
+    public static int constructions;
+    public SourceProvider() { constructions++; }
+    readonly RoR2.ContentManagement.ContentPack contentPack = new RoR2.ContentManagement.ContentPack { allowed = allowed };
     public class ItemRelationshipTypes { public static Definition Related; }
     public class BodyPrefabs { public static RoR2.CharacterBody Player; }
 }
@@ -76,6 +82,7 @@ public class ExcludedProvider
 public static partial class WholeCatalogComposed
 {
     static AssetBundle owned = AssetBundle.owner;
+    static WeakReference definitionManifest;
     static readonly Dictionary<string, Object[]> definitionFamilies = new Dictionary<string, Object[]>();
     static readonly Dictionary<FieldInfo, object> priorDefinitionFields = new Dictionary<FieldInfo, object>();
     static void Check(bool value) { if (!value) throw new Exception("Scoped manifest contract differs"); }
@@ -83,6 +90,8 @@ public static partial class WholeCatalogComposed
     {
         Directory.CreateDirectory("payload");
         ManifestParseContract();
+        ManifestWeakCacheContract();
+        ManifestIndexContract();
         var type = new Definition { name = "Related" };
         var provider = new Definition { name = "Provider" };
         var player = new GameObject { name = "Player" };
@@ -96,7 +105,7 @@ public static partial class WholeCatalogComposed
             ["keys"] = new JArray(new JObject { ["key"] = "ContentPack:source", ["locations"] = new JArray(1, 2) },
                                   new JObject { ["key"] = "types", ["locations"] = new JArray(1) },
                                   new JObject { ["key"] = "providers", ["locations"] = new JArray(2) }) };
-        File.WriteAllText("payload/whole-catalog.json", data.ToString());
+        WriteManifest(data.ToString());
         var survivor = new RoR2.SurvivorDef { name = "Commando" };
         var unlockable = new RoR2.UnlockableDef { name = "Earned" };
         AssetBundle.assets.Add("survivor", survivor);
@@ -107,14 +116,14 @@ public static partial class WholeCatalogComposed
         ((JArray)data["keys"]).Add(new JObject { ["key"] = "unlockables", ["locations"] = new JArray(4) });
         ((JArray)data["keys"][0]["locations"]).Add(3);
         ((JArray)data["keys"][0]["locations"]).Add(4);
-        File.WriteAllText("payload/whole-catalog.json", data.ToString());
+        WriteManifest(data.ToString());
         var snapshot = ReadDefinitionManifest();
         File.Delete("payload/whole-catalog.json"); // All three operations must use the supplied snapshot.
         var profile = new ProfileScope();
         profile.Run(snapshot);
         Check(ReferenceEquals(profile.ruleManifest, snapshot));
         Check(ReferenceEquals(profile.survivors.Single(), survivor) && ReferenceEquals(profile.unlockables.Single(), unlockable));
-        Check(profile.trace.SequenceEqual(new[] {
+        Check(profile.trace.Where(value => !value.Contains("assets-costs ")).SequenceEqual(new[] {
             "profile-survivor-family-manifest-begin", "profile-survivor-family-manifest-ready-index-begin",
             "profile-survivor-family-index-ready-assets-begin", "profile-survivor-family-assets-ready",
             "profile-unlockable-family-manifest-begin", "profile-unlockable-family-manifest-ready-index-begin",
@@ -123,13 +132,14 @@ public static partial class WholeCatalogComposed
         profile.Run(null); // Warm families use no file and emit no trace.
         Check(profile.trace.Count == 0);
         definitionFamilies.Clear();
-        File.WriteAllText("payload/whole-catalog.json", data.ToString());
+        WriteManifest(data.ToString());
         profile.Run(null); // Cold fallback remains supported.
         Check(ReferenceEquals(profile.survivors.Single(), survivor) && ReferenceEquals(profile.unlockables.Single(), unlockable));
         File.Delete("payload/whole-catalog.json");
         var trace = new List<string>();
         var types = CategoryFamily(snapshot, "types", new[] { type }, trace.Add);
-        Check(trace.SequenceEqual(new[] { "manifest-begin", "manifest-ready-index-begin", "index-ready-assets-begin", "assets-ready" }));
+        Check(trace.Where(value => !value.StartsWith("assets-costs ")).SequenceEqual(new[] { "manifest-begin", "manifest-ready-index-begin", "index-ready-assets-begin", "assets-ready" }));
+        CheckCosts(trace, 1, 1);
         var providers = CategoryFamily(snapshot, "providers", new[] { provider });
         PopulateDefinitionFields(snapshot, "ItemRelationshipTypes", types);
         PopulateBodyFields(snapshot, new[] { player });
@@ -159,16 +169,72 @@ public static partial class WholeCatalogComposed
         Check(SourceProvider.ItemRelationshipTypes.Related == null);
         Check(SourceProvider.BodyPrefabs.Player == null);
         data["locations"][0]["path"] = "provider";
-        File.WriteAllText("payload/whole-catalog.json", data.ToString());
+        WriteManifest(data.ToString());
         Check(ReferenceEquals(CategoryFamily("types", new[] { provider }).Single(), provider));
         DefinitionFamilyContract<RoR2.BuffDef>(BuffDefinitions);
         DefinitionFamilyContract<RoR2.ItemDef>(ItemDefinitions);
         LabeledFamilyContract<RoR2.KeyItemDef>(KeyItemDefinitions, "KeyItemDef");
-        LabeledFamilyContract<RoR2.ItemGroupType>(ItemGroupTypes, "ItemGroupType");
-        LabeledFamilyContract<RoR2.ItemGroupProvider>(ItemGroupProviders, "ItemGroupProvider");
+        LabeledFamilyContract<RoR2.ItemGroupType>(ItemGroupTypes, "ItemGroupType", ItemGroupTypes);
+        LabeledFamilyContract<RoR2.ItemGroupProvider>(ItemGroupProviders, "ItemGroupProvider", ItemGroupProviders);
+        CategoryBundleContract();
         Console.WriteLine("scope identity policy restoration buffs items PASS");
     }
-    static void LabeledFamilyContract<T>(Func<T[]> definitions, string label) where T : Object, new()
+    static void CheckCosts(List<string> trace, int rows, int bundles)
+    {
+        var values = trace.Single(value => value.StartsWith("assets-costs ")).Split(' ').Skip(1)
+                          .Select(value => value.Split('='))
+                          .ToDictionary(value => value[0], value => long.Parse(value[1]));
+        Check(values["rows"] == rows && values["bundles"] == bundles && values["frequency"] > 0);
+        Check(values["typeTicks"] >= 0 && values["ownerTicks"] >= 0 && values["loadTicks"] >= 0 && values["collectionTicks"] >= 0);
+        Check(values["totalTicks"] == values["typeTicks"] + values["ownerTicks"] + values["loadTicks"] + values["collectionTicks"]);
+    }
+    static void CategoryBundleContract()
+    {
+        var first = new Definition { name = "First" };
+        var second = new Definition { name = "Second" };
+        AssetBundle.assets["first"] = first;
+        AssetBundle.assets["second"] = second;
+        var data = new JObject {
+            ["providers"] = new JArray(new JObject { ["type"] = "SourceProvider", ["identifier"] = "source" }),
+            ["locations"] = new JArray(
+                new JObject { ["id"] = 1, ["type"] = "Definition", ["bundle"] = "source", ["path"] = "first" },
+                new JObject { ["id"] = 2, ["type"] = "Definition", ["bundle"] = "source", ["path"] = "second" }),
+            ["keys"] = new JArray(new JObject { ["key"] = "ContentPack:source", ["locations"] = new JArray(1, 2) },
+                                  new JObject { ["key"] = "category", ["locations"] = new JArray(1, 2) }) };
+        var unrelated = new AssetBundle { name = "unrelated" };
+        AssetBundle.loadedOwners = new[] { AssetBundle.owner, unrelated, unrelated };
+        definitionFamilies.Clear();
+        int before = AssetBundle.enumerations;
+        int loads = AssetBundle.typedLoads;
+        var unobserved = CategoryFamily(data, "category", new[] { second });
+        Check(unobserved.SequenceEqual(new[] { first, second }));
+        Check(AssetBundle.enumerations == before + 1 && AssetBundle.typedLoads == loads + 2);
+        definitionFamilies.Clear();
+        var trace = new List<string>();
+        Check(CategoryFamily(data, "category", new[] { second }, trace.Add).SequenceEqual(unobserved));
+        CheckCosts(trace, 2, 1);
+        Check(AssetBundle.enumerations == before + 2 && AssetBundle.typedLoads == loads + 4);
+        trace.Clear();
+        Check(CategoryFamily(data, "category", new[] { first }, trace.Add).SequenceEqual(unobserved));
+        Check(trace.Count == 0 && AssetBundle.enumerations == before + 2 && AssetBundle.typedLoads == loads + 4);
+        definitionFamilies.Clear();
+        AssetBundle.loadedOwners = new[] { AssetBundle.owner, AssetBundle.owner };
+        Refuses(() => CategoryFamily(data, "category", new Definition[0]));
+        AssetBundle.loadedOwners = new[] { unrelated };
+        Refuses(() => CategoryFamily(data, "category", new Definition[0]));
+        // First-use resolution preserves a later owner loaded by an asset callback.
+        AssetBundle.loadedOwners = new[] { AssetBundle.owner };
+        var later = new AssetBundle { name = "later" };
+        data["locations"][1]["bundle"] = "later";
+        AssetBundle.onLoad = path => { if (path == "first") AssetBundle.loadedOwners = new[] { AssetBundle.owner, later }; };
+        before = AssetBundle.enumerations;
+        Check(CategoryFamily(data, "category", new Definition[0]).SequenceEqual(new[] { first, second }));
+        Check(AssetBundle.enumerations == before + 2);
+        AssetBundle.onLoad = null;
+        AssetBundle.loadedOwners = null;
+        definitionFamilies.Clear();
+    }
+    static void LabeledFamilyContract<T>(Func<T[]> definitions, string label, Func<Action<string>, T[]> observed = null) where T : Object, new()
     {
         definitionFamilies.Clear();
         var first = new T { name = "First" };
@@ -184,15 +250,26 @@ public static partial class WholeCatalogComposed
             ["keys"] = new JArray(
                 new JObject { ["key"] = "ContentPack:source", ["locations"] = new JArray(1, 2, 3) },
                 new JObject { ["key"] = label, ["locations"] = new JArray(1, 2) }) };
-        File.WriteAllText("payload/whole-catalog.json", data.ToString());
+        WriteManifest(data.ToString());
         int before = AssetBundle.typedLoads;
         Check(definitions().SequenceEqual(new[] { first, second }));
         Check(AssetBundle.typedLoads == before + 2);
+        if (observed != null)
+        {
+            var trace = new List<string>();
+            Check(observed(trace.Add).SequenceEqual(new[] { first, second }) && trace.Count == 0);
+            definitionFamilies.Clear();
+            Check(observed(trace.Add).SequenceEqual(new[] { first, second }));
+            Check(trace.Where(value => !value.StartsWith("assets-costs ")).SequenceEqual(new[] {
+                "manifest-begin", "manifest-ready-index-begin", "index-ready-assets-begin", "assets-ready" }));
+            CheckCosts(trace, 2, 1);
+            before += 2;
+        }
         File.Delete("payload/whole-catalog.json");
         Check(definitions().SequenceEqual(new[] { first, second }));
         Check(AssetBundle.typedLoads == before + 2);
         definitionFamilies.Clear(); // A later catalog generation must reload its own definitions.
-        File.WriteAllText("payload/whole-catalog.json", data.ToString());
+        WriteManifest(data.ToString());
         AssetBundle.assets["second-key"] = null;
         Refuses(() => definitions());
         AssetBundle.assets["second-key"] = second;
@@ -206,7 +283,7 @@ public static partial class WholeCatalogComposed
                             ""a"": ""\u03bb\uD83D\uDE80"" },
             ""duplicate"": 1, ""after"": {}, ""duplicate"": 2
         } // trailing comment";
-        File.WriteAllText("payload/whole-catalog.json", source);
+        WriteManifest(source);
         var expected = JObject.Parse(source);
         var actual = ReadDefinitionManifest();
         Check(JToken.DeepEquals(expected, actual));
@@ -218,9 +295,13 @@ public static partial class WholeCatalogComposed
             .SequenceEqual(actualTokens.OfType<JProperty>().Select(property => property.Name)));
         Check(expectedTokens.Any(token => ((Newtonsoft.Json.IJsonLineInfo)token).HasLineInfo()));
         Check(actualTokens.All(token => !((Newtonsoft.Json.IJsonLineInfo)token).HasLineInfo()));
+        // Values and escaped Unicode spanning the stream buffer retain their types/order.
+        string buffered = "{\"text\":\"" + new string('x', 8191) + "\\u03bb\\uD83D\\uDE80\",\"tail\":[1,true,null]}";
+        WriteManifest(buffered);
+        Check(JToken.DeepEquals(JObject.Parse(buffered), ReadDefinitionManifest()));
         foreach (string invalid in new[] { "{\"unfinished\":", "{\"items\":[1,}", "{} {}", "{} trailing" })
         {
-            File.WriteAllText("payload/whole-catalog.json", invalid);
+            WriteManifest(invalid);
             foreach (Func<JObject> parse in new Func<JObject>[] { () => JObject.Parse(invalid), ReadDefinitionManifest })
             {
                 bool refused = false;
@@ -228,6 +309,78 @@ public static partial class WholeCatalogComposed
                 Check(refused);
             }
         }
+    }
+    static void WriteManifest(string content)
+    {
+        ResetDefinitionManifest();
+        File.WriteAllText("payload/whole-catalog.json", content);
+    }
+    static void ManifestIndexContract()
+    {
+        var data = new JObject {
+            ["providers"] = new JArray(new JObject { ["type"] = "SourceProvider", ["identifier"] = "source" },
+                                       new JObject { ["type"] = "ExcludedProvider", ["identifier"] = "excluded" }),
+            ["locations"] = new JArray(new JObject { ["id"] = 1 }, new JObject { ["id"] = 2 }),
+            ["keys"] = new JArray(new JObject { ["key"] = "ContentPack:source", ["locations"] = new JArray(2, 1, 2) },
+                                  new JObject { ["key"] = "category", ["locations"] = new JArray(1, 2) },
+                                  new JObject { ["key"] = "category", ["keyType"] = "System.Int32", ["locations"] = new JArray(99) }) };
+        WriteManifest(data.ToString());
+        var snapshot = ReadDefinitionManifest();
+        var index = IndexDefinitionManifest(snapshot);
+        Check(ReferenceEquals(index, IndexDefinitionManifest(snapshot)));
+        Check(ReferenceEquals(index.Keys(snapshot), IndexDefinitionManifest(snapshot).Keys(snapshot)));
+        Check(ReferenceEquals(index.Locations(snapshot), IndexDefinitionManifest(snapshot).Locations(snapshot)));
+        int before = SourceProvider.constructions;
+        var groups = FamilyLocationGroups(snapshot, "category");
+        Check(groups.Length == 2 && groups[0].SequenceEqual(new[] { 2, 1 }) && groups[1].Length == 0);
+        SourceProvider.allowed = false;
+        Check(FamilyLocationGroups(snapshot, "category").All(group => group.Length == 0));
+        Check(SourceProvider.constructions == before + 2);
+        SourceProvider.allowed = true;
+        ResetDefinitionManifest();
+        Check(snapshot.Annotation<DefinitionManifestIndex>() == null);
+        Check(!ReferenceEquals(index, IndexDefinitionManifest(snapshot)));
+        // Mutable callers keep fresh key/ID validation and original failure order.
+        Check(!ReferenceEquals(IndexDefinitionManifest(data), IndexDefinitionManifest(data)));
+        data["keys"][0]["locations"] = new JArray(1);
+        Check(FamilyLocationGroups(data, "category")[0].SequenceEqual(new[] { 1 }));
+        ((JArray)data["locations"]).Add(new JObject { ["id"] = 1 });
+        Check(FamilyLocationGroups(data, "category")[0].SequenceEqual(new[] { 1 }));
+        Refuses(() => IndexDefinitionManifest(data).Locations(data));
+        ((JArray)data["keys"]).Add(new JObject { ["key"] = "category", ["locations"] = new JArray(1) });
+        Refuses(() => FamilyLocationGroups(data, "category"));
+        ((JArray)data["keys"]).RemoveAt(3);
+        ((JArray)data["keys"]).RemoveAt(1);
+        Refuses(() => FamilyLocationGroups(data, "category"));
+    }
+    [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.NoInlining)]
+    static WeakReference ReadLiveSnapshot()
+    {
+        var first = ReadDefinitionManifest();
+        Check(ReferenceEquals(first, ReadDefinitionManifest()));
+        var index = IndexDefinitionManifest(first);
+        index.Keys(first);
+        index.Locations(first);
+        return new WeakReference(first);
+    }
+    static void ManifestWeakCacheContract()
+    {
+        WriteManifest("{\"generation\":1,\"keys\":[],\"locations\":[{\"id\":1}]}");
+        var snapshot = ReadLiveSnapshot();
+        GC.Collect();
+        GC.WaitForPendingFinalizers();
+        GC.Collect();
+        Check(!snapshot.IsAlive);
+        var first = ReadDefinitionManifest();
+        Check((int)first["generation"] == 1);
+        WriteManifest("{\"generation\":2}");
+        var second = ReadDefinitionManifest();
+        Check(!ReferenceEquals(first, second) && (int)second["generation"] == 2);
+        WriteManifest("{\"unfinished\":");
+        Refuses(() => ReadDefinitionManifest());
+        WriteManifest("{}");
+        Check(ReadDefinitionManifest().Count == 0);
+        ResetDefinitionManifest();
     }
     static void Refuses(Action action)
     {
@@ -244,22 +397,36 @@ public static partial class WholeCatalogComposed
         AssetBundle.assets["second"] = second;
         AssetBundle.assets["excluded"] = excluded;
         var data = new JObject {
-            ["provider_roots"] = new JArray(10, 11, 12),
+            ["provider_roots"] = new JArray(10, 11, 12, 14, 15),
             ["locations"] = new JArray(
                 new JObject { ["id"] = 10, ["type"] = typeof(T).FullName, ["bundle"] = "source", ["path"] = "first" },
                 new JObject { ["id"] = 11, ["type"] = typeof(T).FullName, ["bundle"] = "source", ["path"] = "second" },
                 new JObject { ["id"] = 12, ["type"] = typeof(T).FullName, ["bundle"] = "source", ["path"] = "first" },
-                new JObject { ["id"] = 13, ["type"] = typeof(T).FullName, ["bundle"] = "source", ["path"] = "excluded" }) };
+                new JObject { ["id"] = 13, ["type"] = "Unavailable.NonRoot", ["bundle"] = "source", ["path"] = "excluded" },
+                new JObject { ["id"] = 14, ["type"] = typeof(Definition).FullName, ["bundle"] = "unloaded", ["path"] = "excluded" },
+                new JObject { ["id"] = 15, ["type"] = typeof(Definition).FullName, ["bundle"] = "unloaded", ["path"] = "excluded" }) };
         definitionFamilies.Clear();
-        File.WriteAllText("payload/whole-catalog.json", data.ToString());
+        WriteManifest(data.ToString());
         int before = AssetBundle.typedLoads;
+        int ownerLookups = AssetBundle.enumerations;
         var buffs = definitions();
         Check(buffs.Length == 2 && ReferenceEquals(buffs[0], first) && ReferenceEquals(buffs[1], second));
         Check(AssetBundle.typedLoads == before + 3); // Alias roots retain one native identity.
+        Check(AssetBundle.enumerations == ownerLookups + 1);
         File.Delete("payload/whole-catalog.json");
         Check(definitions().SequenceEqual(buffs) && AssetBundle.typedLoads == before + 3);
         Check(DefinitionFamily(new[] { second }).SequenceEqual(buffs));
-        Refuses(() => DefinitionFamily(new[] { excluded }));
+        var trace = new System.Collections.Generic.List<string>();
+        Check(DefinitionFamily(new[] { second }, trace.Add).SequenceEqual(buffs) && trace.Count == 0);
+        definitionFamilies.Clear();
+        WriteManifest(data.ToString());
+        Check(DefinitionFamily(new[] { second }, trace.Add).SequenceEqual(buffs));
+        Check(trace.Count == 5 && trace[0] == "manifest-begin" && trace[1] == "manifest-ready-assets-begin" &&
+              trace[2].StartsWith("assets-costs scannedRows=6 loadedRows=3 bundles=1 ") &&
+              trace[3] == "assets-ready-validation-begin" && trace[4] == "validation-ready");
+
+        Check(AssetBundle.enumerations == ownerLookups + 2);
+        Refuses(() => DefinitionFamily(new[] { excluded }, trace.Add));
         var previousOwner = owned;
         owned = null;
         Refuses(() => definitions());
@@ -268,7 +435,7 @@ public static partial class WholeCatalogComposed
         definitionFamilies.Clear();
         data["locations"][0]["path"] = "second";
         data["locations"][1]["path"] = "first";
-        File.WriteAllText("payload/whole-catalog.json", data.ToString());
+        WriteManifest(data.ToString());
         Check(ReferenceEquals(definitions()[0], second));
         definitionFamilies.Clear();
         second.name = first.name;
@@ -280,8 +447,11 @@ public static partial class WholeCatalogComposed
         AssetBundle.owner.name = "other";
         Refuses(() => definitions());
         AssetBundle.owner.name = "source";
+        AssetBundle.loadedOwners = new[] { AssetBundle.owner, new AssetBundle { name = "source" } };
+        Refuses(() => definitions());
+        AssetBundle.loadedOwners = null;
         data["provider_roots"] = new JArray();
-        File.WriteAllText("payload/whole-catalog.json", data.ToString());
+        WriteManifest(data.ToString());
         Refuses(() => definitions());
         definitionFamilies.Clear();
     }

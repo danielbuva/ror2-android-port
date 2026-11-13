@@ -46,6 +46,33 @@ class ReleaseTests(unittest.TestCase):
             options["input_sha256"] = "e" * 64
             self.assertEqual(len(OWNER.rebuild(self.release, **options)["rebuilt"]), 2)
 
+    def test_failed_update_retains_unvisited_unchanged_entries_for_retry(self):
+        dependencies = {"recipe_sha256": "a" * 64, "producer_sha256": "b" * 64}
+        self.release["entries"] = {"payload/" + name: dict(dependencies) for name in ("a", "b", "c")}
+        with tempfile.TemporaryDirectory() as temporary:
+            calls = []
+            fail = False
+
+            def produce(name, row, output):
+                calls.append(name)
+                if fail and name == "payload/b":
+                    raise RuntimeError("interrupted update")
+                output.write_text(name + row["recipe_sha256"])
+
+            options = dict(self.context, root=temporary, input_sha256="c" * 64, produce=produce)
+            OWNER.rebuild(self.release, **options)
+            self.release["entries"]["payload/b"]["recipe_sha256"] = "d" * 64
+            fail = True
+            with self.assertRaisesRegex(RuntimeError, "interrupted update"):
+                OWNER.rebuild(self.release, **options)
+            fail = False
+            calls.clear()
+            result = OWNER.rebuild(self.release, **options)
+            self.assertEqual(calls, ["payload/b"])
+            self.assertEqual(result["rebuilt"], ["payload/b"])
+            self.assertEqual(result["reused"], ["payload/a", "payload/c"])
+            self.assertEqual(set(result["outputs"]), set(self.release["entries"]))
+
     def test_update_requires_retained_key_then_delegates_existing_signer(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)

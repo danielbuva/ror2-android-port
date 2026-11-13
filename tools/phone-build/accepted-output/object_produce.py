@@ -45,6 +45,17 @@ def source_member(path, member):
     return B.Bundle(path).member(member)
 
 
+def source_record_type(path, member, path_id, class_id):
+    """Read a selected original record's complete serialized descriptor."""
+    with source_member(path, member) as stream:
+        metadata = W.read_serialized(stream)
+    obj = next(row for row in metadata["objects"] if row["path_id"] == path_id)
+    typ = metadata["types"][obj["type_id"]]
+    if typ["class_id"] != class_id:
+        raise ValueError("original record class differs")
+    return typ
+
+
 def remap(body, references):
     """Replace checked 12-byte PPtrs; preserve every other source byte."""
     result = bytearray(body)
@@ -611,6 +622,16 @@ def json_layout(value):
     return value
 
 
+def record_type(typ, types, type_ids):
+    """Intern the complete final descriptor in a record pack's local table."""
+    definition = json_layout(typ)
+    key = json.dumps(definition, sort_keys=True)
+    if key not in type_ids:
+        type_ids[key] = len(types)
+        types.append(definition)
+    return type_ids[key]
+
+
 def make_layout(selected, records, scene_members=(), engine="2021.3.45f2", *, include_bodies=True, external_scripts=()):
     """Canonical release order, with explicit qualified external script pointers.
 
@@ -711,7 +732,12 @@ def record_packs(members, supplied, bundle):
         profile = value.get("profile_sha256")
         if value.get("success") is not True or value.get("input_id") != M.INPUT_ID or profile not in required or profile in providers:
             raise ValueError("unexpected or unsuccessful record producer")
-        if not {"objects.bin", "index.jsonl"} <= value["outputs"].keys() or value["outputs"].keys() - {"objects.bin", "resources.bin", "index.jsonl"}:
+        if not {"objects.bin", "index.jsonl"} <= value["outputs"].keys() or value["outputs"].keys() - {
+            "objects.bin",
+            "resources.bin",
+            "index.jsonl",
+            "types.json",
+        }:
             raise ValueError("incomplete record producer outputs")
         providers[profile] = directory, receipt_sha256, value
     if providers.keys() != required:

@@ -49,6 +49,33 @@ def sha(path):
         return hashlib.file_digest(stream, "sha256").hexdigest()
 
 
+def resource_package(data, application_id):
+    """Bind resource-name lookup to the installed package, preserving IDs/bodies."""
+    name = application_id.encode("utf-16-le")
+    if len(name) > 254 or len(data) < 12:
+        raise ValueError("invalid resource package")
+    kind, header, size, count = struct.unpack_from("<HHII", data)
+    if kind != 2 or header < 12 or size != len(data) or count != 1:
+        raise ValueError("one complete Android resource table required")
+    result = bytearray(data)
+    offset, packages = header, 0
+    while offset < size:
+        if offset + 8 > size:
+            raise ValueError("truncated resource chunk")
+        kind, child_header, child_size = struct.unpack_from("<HHI", data, offset)
+        if child_header < 8 or child_size < child_header or offset + child_size > size:
+            raise ValueError("invalid resource chunk extent")
+        if kind == 0x200:
+            if child_header < 284:
+                raise ValueError("invalid resource package header")
+            result[offset + 12 : offset + 268] = name.ljust(256, b"\0")
+            packages += 1
+        offset += child_size
+    if packages != 1:
+        raise ValueError("one resource package required")
+    return bytes(result)
+
+
 def code_paths(request):
     """Select a complete produced cohort, never replay fallbacks."""
     if "code" not in request:
@@ -627,7 +654,7 @@ def build(request_path, output):
                 "build_owner_apk.py",
             )
         ]
-        tracked += [roots["frontend"] / n for n in ("app.js", "controller.js", "style.css", "background.png")]
+        tracked += [roots["frontend"] / n for n in ("app.js", "controller.js", "feedback.js", "style.css", "background.png")]
         tracked += [Path(PACKET.__file__), Path(ASSEMBLY.__file__)]
         if len(code) > len(CODE_ENTRIES):
             tracked.append(SOURCE.parent / "accepted-output/sdk_package.py")
@@ -761,13 +788,22 @@ def build(request_path, output):
             for name, row in apk_rows.items():
                 if name == "AndroidManifest.xml":
                     entry(name, data=patched)
+                elif name == "resources.arsc" and request.get("application_id"):
+                    if name in code:
+                        produced = code[name]
+                        data = Path(produced["path"]).read_bytes()
+                        if len(data) != produced["bytes"] or hashlib.sha256(data).hexdigest() != produced["sha256"]:
+                            raise ValueError("owner APK source bytes differ")
+                    else:
+                        data = PACKET.verify(roots["targets"], row).read_bytes()
+                    entry(name, data=resource_package(data, request["application_id"]))
                 elif name in code:
                     produced = code[name]
                     entry(name, source=Path(produced["path"]), expected_sha=produced["sha256"], expected_bytes=produced["bytes"])
                 else:
                     entry(name, source=PACKET.verify(roots["targets"], row), expected_sha=row["sha256"], expected_bytes=row["bytes"])
             entry(next_dex, source=dex / "classes.dex")
-            for name in ("app.js", "controller.js", "style.css", "background.png"):
+            for name in ("app.js", "controller.js", "feedback.js", "style.css", "background.png"):
                 entry("assets/owner-bootstrap/ui/" + name, source=roots["frontend"] / name)
             for name in ("index.html", "owner-host.js"):
                 entry("assets/owner-bootstrap/ui/" + name, source=SOURCE / name)

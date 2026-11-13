@@ -24,7 +24,7 @@ namespace RoR2
     public static class WholeCatalogComposed
     {
         public static NetworkSoundEventDef[] Definitions = Array.Empty<NetworkSoundEventDef>();
-        public static NetworkSoundEventDef[] DefinitionFamily(NetworkSoundEventDef[] selected) => Definitions;
+        public static NetworkSoundEventDef[] DefinitionFamily(NetworkSoundEventDef[] selected, Action<string> trace = null) => Definitions;
     }
 }
 namespace RoR2.Audio

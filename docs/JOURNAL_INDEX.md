@@ -10,6 +10,71 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J1471](PORTING_JOURNAL.md#j1471--attribute-live-enemy-and-attack-material-bindings) | 2026-11-12 | Attribute live enemy and attack material bindings | 2026-11-13. |
+| [J1470](PORTING_JOURNAL.md#j1470--restore-commando-source-additive-aim-and-gesture-poses) | 2026-11-12 | Restore Commando source additive aim and gesture poses | 2026-11-12. |
+| [J1469](PORTING_JOURNAL.md#j1469--initialize-commando-locomotion-before-the-first-roll) | 2026-11-12 | Initialize Commando locomotion before the first roll | 2026-11-12. |
+| [J1468](PORTING_JOURNAL.md#j1468--save-app-refresh-policy-and-make-periodic-scene-inspection-explicit) | 2026-11-12 | Save app refresh policy and make periodic scene inspection explicit | Saved high-refresh preference requests app-window/surface modes; GUI Save selects 60/120 Hz, and high mode survives cold launch. |
+| [J1467](PORTING_JOURNAL.md#j1467--release-retired-roster-scroll-states-without-clearing-other-controls) | 2026-11-12 | Release retired roster scroll states without clearing other controls | 2026-11-12. |
+| [J1464](PORTING_JOURNAL.md#j1464--protect-live-cache-references-without-retaining-superseded-builds) | 2026-11-12 | Protect live cache references without retaining superseded builds | 2026-11-12. |
+| [J1463](PORTING_JOURNAL.md#j1463--bound-collected-catalog-diagnostics-across-32-sessions) | 2026-11-12 | Bound collected catalog diagnostics across 32 sessions | 2026-11-12. |
+| [J1462](PORTING_JOURNAL.md#j1462--relocate-managed-witness-inputs-without-rewriting-receipts) | 2026-11-12 | Relocate managed witness inputs without rewriting receipts | 2026-11-12. |
+| [J1461](PORTING_JOURNAL.md#j1461--accept-refreshed-managed-metadata-with-exact-retained-inputs) | 2026-11-12 | Accept refreshed managed metadata with exact retained inputs | 2026-11-12. |
+| [J1460](PORTING_JOURNAL.md#j1460--supply-the-source-grandparent-default-material) | 2026-11-12 | Supply the source Grandparent default Material | 2026-11-12. |
+| [J1458](PORTING_JOURNAL.md#j1458--resolve-private-selections-through-public-source-profiles) | 2026-11-12 | Resolve private selections through public source profiles | 2026-11-12. |
+| [J1459](PORTING_JOURNAL.md#j1459--sustained-pacing-compared-with-proposed-budgets) | 2026-11-12 | Sustained pacing compared with proposed budgets | 2026-11-12. |
+| [J1457](PORTING_JOURNAL.md#j1457--derive-source-policy-supplier-bindings-from-selected-metadata) | 2026-11-12 | Derive source-policy supplier bindings from selected metadata | 2026-11-12. |
+| [J1456](PORTING_JOURNAL.md#j1456--stream-definition-manifest-snapshots) | 2026-11-12 | Stream definition manifest snapshots | 2026-11-12. |
+| [J1454](PORTING_JOURNAL.md#j1454--reuse-type-resolution-within-provider-root-families) | 2026-11-12 | Reuse type resolution within provider-root families | 2026-11-12. |
+| [J1455](PORTING_JOURNAL.md#j1455--retain-selected-phone-produced-artifacts-before-cleanup) | 2026-11-12 | Retain selected phone-produced artifacts before cleanup | 2026-11-12. |
+| [J1452](PORTING_JOURNAL.md#j1452--report-covered-tail-quantiles-from-sustained-raw-capture) | 2026-11-12 | Report covered-tail quantiles from sustained raw capture | 2026-11-12. |
+| [J1453](PORTING_JOURNAL.md#j1453--preserve-original-paths-during-phone-source-upload) | 2026-11-12 | Preserve original paths during phone source upload | 2026-11-12. |
+| [J1451](PORTING_JOURNAL.md#j1451--complete-signed-phone-bundle-production-with-launcher-feedback) | 2026-11-12 | Complete signed phone bundle production with launcher feedback | 2026-11-12. |
+| [J1450](PORTING_JOURNAL.md#j1450--attribute-post-readiness-network-and-music-startup) | 2026-11-12 | Attribute post-readiness network and music startup | 2026-11-12. |
+| [J1448](PORTING_JOURNAL.md#j1448--omit-unused-process-audio-lease-manifest-annotations) | 2026-11-12 | Omit unused process audio-lease manifest annotations | 2026-11-12. |
+| [J1449](PORTING_JOURNAL.md#j1449--supply-sqlite-and-expose-signed-toolhost-build-execution) | 2026-11-12 | Supply SQLite and expose signed toolhost build execution | 2026-11-12. |
+| [J1446](PORTING_JOURNAL.md#j1446--refresh-complete-player-shader-helper-pins) | 2026-11-12 | Refresh complete player Shader helper pins | 2026-11-12. |
+| [J1447](PORTING_JOURNAL.md#j1447--select-sustained-capture-mode-and-compare-bounded-windows) | 2026-11-12 | Select sustained capture mode and compare bounded windows | 2026-11-12. |
+| [J1444](PORTING_JOURNAL.md#j1444--retain-bounded-active-frame-durations-for-checked-quantiles) | 2026-11-11 | Retain bounded active-frame durations for checked quantiles | 2026-11-12. |
+| [J1445](PORTING_JOURNAL.md#j1445--accept-receipt-bound-record-supplier-type-tables) | 2026-11-11 | Accept receipt-bound record supplier type tables | 2026-11-12. |
+| [J1442](PORTING_JOURNAL.md#j1442--coalesce-synchronous-results-diagnostic-report-writes) | 2026-11-11 | Coalesce synchronous results diagnostic report writes | 2026-11-12. |
+| [J1443](PORTING_JOURNAL.md#j1443--generate-current-managed-witnesses-from-produced-providers) | 2026-11-11 | Generate current managed witnesses from produced providers | 2026-11-12. |
+| [J1441](PORTING_JOURNAL.md#j1441--attribute-item-group-manifest-index-and-typed-load-costs) | 2026-11-11 | Attribute item-group manifest, index and typed-load costs | 2026-11-12. |
+| [J1440](PORTING_JOURNAL.md#j1440--dispatch-fresh-bundle-preparation-through-signed-releases) | 2026-11-11 | Dispatch fresh bundle preparation through signed releases | 2026-11-12. |
+| [J1439](PORTING_JOURNAL.md#j1439--reuse-serialized-type-resolution-within-category-families) | 2026-11-11 | Reuse serialized type resolution within category families | 2026-11-12. |
+| [J1438](PORTING_JOURNAL.md#j1438--derive-closed-bundle-requests-from-pinned-source-suppliers) | 2026-11-11 | Derive closed bundle requests from pinned source suppliers | 2026-11-12. |
+| [J1437](PORTING_JOURNAL.md#j1437--attribute-synchronous-category-asset-loading-costs) | 2026-11-11 | Attribute synchronous category asset loading costs | 2026-11-12. |
+| [J1435](PORTING_JOURNAL.md#j1435--reuse-bundle-ownership-lookups-within-definition-families) | 2026-11-11 | Reuse bundle ownership lookups within definition families | 2026-11-12. |
+| [J1436](PORTING_JOURNAL.md#j1436--export-receipt-bound-final-supplier-type-descriptors) | 2026-11-11 | Export receipt-bound final supplier type descriptors | 2026-11-12. |
+| [J1434](PORTING_JOURNAL.md#j1434--retain-final-emitted-catalog-declaration-artifacts) | 2026-11-11 | Retain final emitted catalog declaration artifacts | 2026-11-12. |
+| [J1432](PORTING_JOURNAL.md#j1432--retain-registry-witnesses-from-final-player-production) | 2026-11-11 | Retain registry witnesses from final player production | 2026-11-12. |
+| [J1433](PORTING_JOURNAL.md#j1433--attribute-native-results-item-group-startup-phases) | 2026-11-11 | Attribute native results item-group startup phases | 2026-11-12. |
+| [J1430](PORTING_JOURNAL.md#j1430--attribute-native-director-startup-observer-work) | 2026-11-11 | Attribute native director startup observer work | 2026-11-12. |
+| [J1431](PORTING_JOURNAL.md#j1431--materialize-bundle-cache-artifacts-and-relocate-sdk-witnesses) | 2026-11-11 | Materialize bundle cache artifacts and relocate SDK witnesses | 2026-11-12. |
+| [J1429](PORTING_JOURNAL.md#j1429--relocate-pinned-native-producer-packs-without-rewriting-provenance) | 2026-11-11 | Relocate pinned native producer packs without rewriting provenance | 2026-11-12. |
+| [J1427](PORTING_JOURNAL.md#j1427--expose-checked-bundle-emission-and-canonical-repack-requests) | 2026-11-11 | Expose checked bundle emission and canonical repack requests | 2026-11-12. |
+| [J1428](PORTING_JOURNAL.md#j1428--attribute-original-projectile-catalog-startup-phases) | 2026-11-11 | Attribute original projectile catalog startup phases | 2026-11-12. |
+| [J1425](PORTING_JOURNAL.md#j1425--measure-direct-native-state-catalog-iterator-execution) | 2026-11-11 | Measure direct native state catalog iterator execution | 2026-11-12. |
+| [J1426](PORTING_JOURNAL.md#j1426--scope-incremental-job-pins-to-their-source-dependencies) | 2026-11-11 | Scope incremental job pins to their source dependencies | 2026-11-12. |
+| [J1424](PORTING_JOURNAL.md#j1424--attribute-original-drone-catalog-startup-phases) | 2026-11-11 | Attribute original drone catalog startup phases | 2026-11-12. |
+| [J1423](PORTING_JOURNAL.md#j1423--keep-disjoint-preload-groups-cached-after-pointer-changes) | 2026-11-11 | Keep disjoint preload groups cached after pointer changes | 2026-11-12. |
+| [J1422](PORTING_JOURNAL.md#j1422--attribute-original-audio-readiness-callback-waits) | 2026-11-11 | Attribute original audio readiness callback waits | 2026-11-12. |
+| [J1421](PORTING_JOURNAL.md#j1421--canonical-catalog-consumers-retain-prefab-ownership) | 2026-11-11 | Canonical catalog consumers retain prefab ownership | 2026-11-12. |
+| [J1420](PORTING_JOURNAL.md#j1420--reuse-indexes-within-canonical-content-snapshots) | 2026-11-11 | Reuse indexes within canonical content snapshots | 2026-11-12. |
+| [J1419](PORTING_JOURNAL.md#j1419--reuse-bundle-owner-lookups-within-catalog-families) | 2026-11-11 | Reuse bundle owner lookups within catalog families | 2026-11-11. |
+| [J1418](PORTING_JOURNAL.md#j1418--attribute-state-catalog-and-profile-preparation-before-spawn) | 2026-11-11 | Attribute state catalog and profile preparation before spawn | 2026-11-11. |
+| [J1417](PORTING_JOURNAL.md#j1417--reuse-checked-native-bundle-emissions-for-port-updates) | 2026-11-11 | Reuse checked native bundle emissions for port updates | 2026-11-11. |
+| [J1415](PORTING_JOURNAL.md#j1415--validate-explicit-catalog-subassets-and-inspect-verified-apk-archives) | 2026-11-11 | Validate explicit catalog subassets and inspect verified APK archives | 2026-11-11. |
+| [J1416](PORTING_JOURNAL.md#j1416--retain-compatible-audio-verification-across-in-place-installs) | 2026-11-11 | Retain compatible audio verification across in-place installs | 2026-11-11. |
+| [J1414](PORTING_JOURNAL.md#j1414--reuse-live-definition-manifests-without-retaining-their-graphs) | 2026-11-11 | Reuse live definition manifests without retaining their graphs | 2026-11-11. |
+| [J1413](PORTING_JOURNAL.md#j1413--measure-direct-native-skin-iterator-execution) | 2026-11-11 | Measure direct native skin iterator execution | 2026-11-11. |
+| [J1412](PORTING_JOURNAL.md#j1412--attribute-native-skin-startup-without-changing-its-coroutine) | 2026-11-11 | Attribute native skin startup without changing its coroutine | 2026-11-11. |
+| [J1411](PORTING_JOURNAL.md#j1411--reuse-the-definition-manifest-reader-for-provider-root-families) | 2026-11-11 | Reuse the definition manifest reader for provider-root families | 2026-11-11. |
+| [J1409](PORTING_JOURNAL.md#j1409--align-memory-observations-with-their-measured-menus) | 2026-11-11 | Align memory observations with their measured menus | 2026-11-11. |
+| [J1410](PORTING_JOURNAL.md#j1410--emit-complete-graphs-with-current-structural-field-routes) | 2026-11-11 | Emit complete graphs with current structural field routes | 2026-11-11. |
+| [J1408](PORTING_JOURNAL.md#j1408--reclaim-measured-returned-pool-storage-after-completed-sessions) | 2026-11-11 | Reclaim measured returned pool storage after completed sessions | 2026-11-11. |
+| [J1407](PORTING_JOURNAL.md#j1407--preserve-cooldown-admission-readings-across-display-wake) | 2026-11-11 | Preserve cooldown admission readings across display wake | 2026-11-11. |
+| [J1406](PORTING_JOURNAL.md#j1406--bound-unacknowledged-session-start-requests) | 2026-11-11 | Bound unacknowledged session Start requests | 2026-11-11. |
+| [J1405](PORTING_JOURNAL.md#j1405--cool-supervised-memory-sessions-between-verified-endings) | 2026-11-10 | Cool supervised memory sessions between verified endings | 2026-11-11. |
 | [J1404](PORTING_JOURNAL.md#j1404--combine-runtime-thermal-and-battery-reads) | 2026-11-10 | Combine runtime thermal and battery reads | 2026-11-11. |
 | [J1403](PORTING_JOURNAL.md#j1403--preserve-session-process-transport-failures) | 2026-11-10 | Preserve session process transport failures | 2026-11-11. |
 | [J1402](PORTING_JOURNAL.md#j1402--continue-memory-observations-through-native-loss-and-menu) | 2026-11-10 | Continue memory observations through native loss and menu | 2026-11-11. |
@@ -239,3 +304,6 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 | [J1181](PORTING_JOURNAL.md#j1181--loading-presentation-pacing) | 2026-10-25 | Loading presentation pacing | 2026-10-26. |
 | [J1179](PORTING_JOURNAL.md#j1179--recursive-standard-shaders-and-five-complete-scene-bundles) | 2026-10-25 | Recursive Standard Shaders and five complete scene bundles | 2026-10-26. |
 | [J1178](PORTING_JOURNAL.md#j1178--journal-archived-and-documentation-slimmed) | 2026-10-25 | Journal archived and documentation slimmed | 2026-10-26. |
+| [J1465](PORTING_JOURNAL.md#j1465--bind-managed-dependency-refreshes-to-their-produced-cohort) | 2026-11-12 | Bind managed dependency refreshes to their produced cohort | 2026-11-12. |
+| [J1466](PORTING_JOURNAL.md#j1466--validate-refreshed-ui-providers-and-relocated-startup-producers) | 2026-11-12 | Validate refreshed UI providers and relocated startup producers | 2026-11-12. |
+| [J1472](PORTING_JOURNAL.md#j1472--qualify-the-shared-device-runner-with-bounded-native-combat) | 2026-11-12 | Qualify the shared device runner with bounded native combat | 2026-11-13. |

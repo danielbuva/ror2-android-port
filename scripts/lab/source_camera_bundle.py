@@ -53,58 +53,60 @@ def build(target):
     if not output.is_relative_to(WORK):
         raise ValueError("Program bundle output must stay under ignored work")
     output.mkdir(parents=True, exist_ok=False)
-    (output / ".prune-keep").touch()
     project = output / "project"
-    from phone_content import stage
-
-    stage(project)
-    # The SDK fixture supplies project settings only; compile no fixture gameplay.
-    shutil.rmtree(project / "Assets")
-    (project / "Assets/Editor").mkdir(parents=True)
-    fixture = ROOT / "tools/phone-build/SourceCameraProgramBundle.cs"
-    shutil.copyfile(fixture, project / "Assets/Editor" / fixture.name)
-    recipe = json.loads(RECIPE.read_text())
-    for kind in ("includes", "programs"):
-        for row in manifest[kind]:
-            relative = recipe["include_target_prefix"] + row["package_path"] if kind == "includes" else row["target"]
-            source = candidate / row["candidate_path"]
-            dest = project / relative
-            dest.parent.mkdir(parents=True, exist_ok=True)
-            for suffix in ("", ".meta"):
-                shutil.copyfile(str(source) + suffix, str(dest) + suffix)
-    programs = []
-    for row in manifest["programs"]:
-        kernels = [{"name": name, "x": group[0], "y": group[1], "z": group[2]} for name, group in zip(row["kernels"], row["kernel_thread_groups"], strict=True)]
-        programs.append({"target": row["target"], "kernels": kernels})
-    (project / "programs.json").write_text(json.dumps({"programs": programs}))
-    receipt = {
-        "success": False,
-        "device_accepted": False,
-        "phone_producer_qualified": False,
-        "source_commit": subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip(),
-        "candidate_manifest_sha256": digest(candidate / "manifest.json"),
-        "fixture_sha256": digest(fixture),
-        "recipe_sha256": digest(RECIPE),
-        "programs": manifest["programs"],
-        "includes": manifest["includes"],
-    }
-    args = [
-        os.environ["UNITY_EDITOR"],
-        "-batchmode",
-        # Kernel reflection needs a real host graphics device, even though the
-        # supplier bundle targets Android/Vulkan. Null graphics has no kernels.
-        "-force-metal",
-        "-quit",
-        "-projectPath",
-        str(project),
-        "-buildTarget",
-        "Android",
-        "-executeMethod",
-        "SourceCameraProgramBundle.Build",
-        "-logFile",
-        str(output / "editor.log"),
-    ]
+    receipt = {"success": False, "device_accepted": False, "phone_producer_qualified": False}
     try:
+        (output / ".prune-keep").touch()
+        from phone_content import stage
+
+        stage(project)
+        # The SDK fixture supplies project settings only; compile no fixture gameplay.
+        shutil.rmtree(project / "Assets")
+        (project / "Assets/Editor").mkdir(parents=True)
+        fixture = ROOT / "tools/phone-build/SourceCameraProgramBundle.cs"
+        shutil.copyfile(fixture, project / "Assets/Editor" / fixture.name)
+        recipe = json.loads(RECIPE.read_text())
+        for kind in ("includes", "programs"):
+            for row in manifest[kind]:
+                relative = recipe["include_target_prefix"] + row["package_path"] if kind == "includes" else row["target"]
+                source = candidate / row["candidate_path"]
+                dest = project / relative
+                dest.parent.mkdir(parents=True, exist_ok=True)
+                for suffix in ("", ".meta"):
+                    shutil.copyfile(str(source) + suffix, str(dest) + suffix)
+        programs = []
+        for row in manifest["programs"]:
+            kernels = [
+                {"name": name, "x": group[0], "y": group[1], "z": group[2]} for name, group in zip(row["kernels"], row["kernel_thread_groups"], strict=True)
+            ]
+            programs.append({"target": row["target"], "kernels": kernels})
+        (project / "programs.json").write_text(json.dumps({"programs": programs}))
+        receipt.update(
+            {
+                "source_commit": subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip(),
+                "candidate_manifest_sha256": digest(candidate / "manifest.json"),
+                "fixture_sha256": digest(fixture),
+                "recipe_sha256": digest(RECIPE),
+                "programs": manifest["programs"],
+                "includes": manifest["includes"],
+            }
+        )
+        args = [
+            os.environ["UNITY_EDITOR"],
+            "-batchmode",
+            # Kernel reflection needs a real host graphics device, even though the
+            # supplier bundle targets Android/Vulkan. Null graphics has no kernels.
+            "-force-metal",
+            "-quit",
+            "-projectPath",
+            str(project),
+            "-buildTarget",
+            "Android",
+            "-executeMethod",
+            "SourceCameraProgramBundle.Build",
+            "-logFile",
+            str(output / "editor.log"),
+        ]
         with host_build_lock(HOST_BUILD_LOCK, operation="Source camera program bundle", timeout=1):
             subprocess.run(args, env=dict(os.environ, ANDROID_ADB_SERVER_PORT="5038"), check=True, timeout=1200)
         actual = json.loads((output / "compiled.json").read_text())
@@ -117,4 +119,5 @@ def build(target):
     finally:
         (output / "result.json").write_text(json.dumps(receipt, indent=2) + "\n")
         # Preserve receipts and compiled supplier; discard the isolated editor cache.
-        shutil.rmtree(project)
+        if project.exists():
+            shutil.rmtree(project)

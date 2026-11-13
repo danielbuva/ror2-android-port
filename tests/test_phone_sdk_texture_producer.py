@@ -11,7 +11,7 @@ import tempfile
 import unittest
 from unittest.mock import patch
 
-from test_phone_texture_producer import FIXTURE, ROOT, T, authored_body, digest, load
+from test_phone_texture_producer import FIXTURE, ROOT, T, authored_body, digest, load, serialized_textures
 
 SDK_FIXTURE = load("authored_sdk_fixture", ROOT / "tests/test_phone_sdk_codec.py").FIXTURE
 BUILD = load("sdk_texture_builder", ROOT / "tools/phone-build/accepted-output/build_texture_sdk.py")
@@ -377,11 +377,12 @@ class SdkTextureTests(unittest.TestCase):
             encoded_pixels = bytes([255]) * 8 + pixels[:8]
             target_body, _ = authored_body("Target", 16, 47, encoded_pixels, empty)
             source = pc / "authored.bundle"
-            source.write_bytes(FIXTURE.bundle([("CAB-authored", body, 4)], True))
+            serialized, offsets = serialized_textures([body], [99])
+            source.write_bytes(FIXTURE.bundle([("CAB-authored", serialized, 4)], True))
             start, _ = spans["image data"]
             selected = {
                 "path_id": 99,
-                "offset": 0,
+                "offset": offsets[0],
                 "bytes": len(body),
                 "sha256": digest(body),
                 "fields": spans,

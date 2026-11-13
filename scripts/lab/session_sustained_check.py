@@ -1,11 +1,12 @@
-"""Current: thirty-minute invincibility-only, manual-neutral software-touch observation.
+"""Current: thirty-minute bounded assisted combat observation.
 
-Small camera drags keep this an explicitly assisted first-stage workload. Native
+Existing visible-enemy primary-fire automation keeps this an assisted workload. Native
 End Run/menu 2 teardown is checked separately; no ordinary play, digitizer,
 full-game, sustained performance acceptance or memory bound follows.
 """
 
 from datetime import datetime, timezone
+import hashlib
 import math
 import re
 import time
@@ -18,10 +19,12 @@ import session_cleanup_check as cleanup
 import touch_gesture
 
 PLANNED_SECONDS = 1800
+MONSTER_LIMIT = 12
 ALL_OFF_REFUSAL = "diagnostic assistance evidence or all-off debug options differ"
 ASSISTS = ("invincibility", "highDamage", "fastCharge", "movementBoost", "jumpBoost")
 SCOPE = (
-    "Assisted single original first-stage world, manual neutral input with small camera drags; invincibility ON only. "
+    "Assisted single original first-stage world, stationary visible-enemy native primary-fire automation; invincibility ON only, "
+    "native monster soft limit 12 (original 40 restored at teardown). "
     "Composed renderer; no ordinary play, digitizer, full-game/performance acceptance or repeated-session memory-bound claim."
 )
 
@@ -30,6 +33,19 @@ def require_invincibility_only(report):
     active = (report.get("debugAcceleration") or {}).get("active") or {}
     if active.get("invincibility") is not True or any(active.get(key) is not False for key in ASSISTS[1:]):
         raise RuntimeError("Sustained workload requires exactly invincibility ON")
+
+
+def sustained_world_ready(report):
+    # World preparation publishes this phase before NovaInputBoundary installs
+    # the selected debug options. Admit the workload only after both owners are ready.
+    if report.get("phase") != "integrated-world-playing" or (report.get("world") or {}).get("ready") is not True:
+        return False
+    if ((report.get("debugAcceleration") or {}).get("active") or {}).get("invincibility") is not True:
+        return False
+    require_invincibility_only(report)
+    if (report.get("director") or {}).get("monsterLimit") != MONSTER_LIMIT:
+        raise RuntimeError("Sustained workload requires the bounded native monster limit")
+    return True
 
 
 def thermal_sample(battery, thermal):
@@ -56,16 +72,19 @@ def observation_sample(report, snapshot, elapsed, previous=None, utc=None):
         or report.get("phase") != "integrated-world-playing"
         or world.get("ready") is not True
         or world.get("authority") is not True
-        or world.get("manualTakeover") is not True
-        or world.get("diagnosticInput") is not False
+        or world.get("manualTakeover") is not False
+        or world.get("diagnosticInput") is not True
+        or report.get("combatPerformanceFocus") is not True
     ):
-        raise RuntimeError("Native world/authority/manual-neutral state failed")
+        raise RuntimeError("Native world/authority/automated-combat state failed")
     require_invincibility_only(report)
     row = dict(
         host_seconds=round(elapsed, 3),
         native_seconds=(report.get("runClock") or {}).get("stopwatch"),
         native_frames=world.get("frames"),
         live_enemies=world.get("liveEnemies"),
+        kills=world.get("kills"),
+        primary_shots=(report.get("primary") or {}).get("shots"),
         health=world.get("health"),
         snapshot_utc=snapshot["utc"],
     )
@@ -93,6 +112,9 @@ def observation_sample(report, snapshot, elapsed, previous=None, utc=None):
         "native_seconds",
         "native_frames",
         "health",
+        "live_enemies",
+        "kills",
+        "primary_shots",
         "fps",
         "frame_ms",
         "managed_bytes",
@@ -105,14 +127,57 @@ def observation_sample(report, snapshot, elapsed, previous=None, utc=None):
     )
     if any(type(row[key]) not in (int, float) or not math.isfinite(row[key]) or row[key] < 0 for key in required) or row["health"] <= 0:
         raise RuntimeError("Missing/non-finite live diagnostic measurement or native body died")
+    if row["live_enemies"] > MONSTER_LIMIT:
+        raise RuntimeError("Native monster population exceeded the bounded sustained workload")
     if previous and (
         row["native_frames"] <= previous["native_frames"]
         or row["native_seconds"] <= previous["native_seconds"]
         or stamp <= datetime.fromisoformat(previous["snapshot_utc"].replace("Z", "+00:00"))
     ):
         raise RuntimeError("Native world/periodic diagnostics did not advance")
-    row["pacing_total_ms"] = row["pacing_frames"] * row["pacing_mean_ms"]
+    row["pacing_total_ms_exact"] = "totalMs" in pacing
+    row["pacing_total_ms"] = pacing.get("totalMs", row["pacing_frames"] * row["pacing_mean_ms"])
+    if type(row["pacing_total_ms"]) not in (int, float) or not math.isfinite(row["pacing_total_ms"]) or row["pacing_total_ms"] < 0:
+        raise RuntimeError("Missing/non-finite cumulative frame duration")
+    row["pacing_trace"] = pacing.get("rawFrameTrace")
     return row
+
+
+def collect_raw_frames(device, runtime, out, completed, samples, *, enabled=True):
+    """Pull only this session's closed trace; remove device scratch after retention."""
+    pacing = completed.get("framePacing") or {}
+    if not enabled:
+        if any(row.get("pacing_trace") for row in samples) or any(
+            pacing.get(key) for key in ("rawFrameTrace", "rawFrameTraceClosed", "rawFrameTraceError", "rawFrameTraceFrames", "rawFrameTraceDropped")
+        ):
+            raise RuntimeError("Raw frame capture active despite disabled request")
+        return None
+    name = pacing.get("rawFrameTrace") or ""
+    if (
+        not re.fullmatch(r"frame-times-[0-9a-f]{32}\.bin", name)
+        or pacing.get("rawFrameTraceClosed") is not True
+        or pacing.get("rawFrameTraceError")
+        or any(row.get("pacing_trace") != name for row in samples)
+    ):
+        raise RuntimeError("Missing closed session-bound raw frame capture")
+    path = out / name
+    device.cmd("pull", runtime + "/" + name, str(path))
+    data = path.read_bytes()
+    # Evidence is now retained on the host, including malformed/partial output.
+    device.sh("rm", "--", runtime + "/" + name)
+    import perf_report
+
+    trace = perf_report.read_raw_frames(data)
+    if (
+        trace["first_frame"] != pacing.get("rawFrameTraceFirstFrame")
+        or trace["retained_frames"] != pacing.get("rawFrameTraceFrames")
+        or trace["dropped_frames"] != pacing.get("rawFrameTraceDropped")
+    ):
+        raise RuntimeError("Raw sidecar and completed report coverage differ")
+    for first, last in zip(samples, samples[1:]):
+        if not perf_report.raw_frame_window(first, last, trace)["complete"]:
+            raise RuntimeError("Raw capture overflow or uncovered observation window")
+    return dict(file=name, sha256=hashlib.sha256(data).hexdigest(), **{key: value for key, value in trace.items() if key != "durations_ms"})
 
 
 def assisted_teardown_contract(completed, pid, attempt, baseline):
@@ -120,6 +185,9 @@ def assisted_teardown_contract(completed, pid, attempt, baseline):
     # Preserve the exact all-off refusal. No other teardown failure is waived.
     if failures != [ALL_OFF_REFUSAL]:
         raise RuntimeError("Unexpected native teardown failure: " + repr(failures))
+    director = completed.get("director") or {}
+    if director.get("monsterLimit") != MONSTER_LIMIT or director.get("restoredMonsterLimit") != 40:
+        raise RuntimeError("Bounded native monster limit was not restored")
     acceleration = completed.get("debugAcceleration") or {}
     active = acceleration.get("active") or {}
     if (
@@ -135,7 +203,13 @@ def assisted_teardown_contract(completed, pid, attempt, baseline):
     return failures
 
 
-def check_session_sustained(expected_apk_sha256=None, _launch=None):
+def check_session_sustained(expected_apk_sha256=None, _launch=None, *, raw_frame_times=True, duration_seconds=None):
+    """Observe aggregate counters in either mode; raw capture defaults to enabled."""
+    if type(raw_frame_times) is not bool:
+        raise ValueError("raw_frame_times must be an explicit boolean")
+    planned_seconds = PLANNED_SECONDS if duration_seconds is None else duration_seconds
+    if type(planned_seconds) is not int or planned_seconds <= 0:
+        raise ValueError("duration_seconds must be a positive integer")
     expected = validate_expected_apk_sha256(expected_apk_sha256)
     if expected is None:
         raise ValueError("session-sustained-check requires --expected-apk-sha256")
@@ -152,7 +226,15 @@ def check_session_sustained(expected_apk_sha256=None, _launch=None):
         raise RuntimeError("Preserve existing pending settings state")
     out = device.evidence_directory("experiments", "session-sustained", now())
     out.mkdir(parents=True, exist_ok=False)
-    result = dict(success=False, apk_sha256=expected, attempt=attempt, planned_seconds=PLANNED_SECONDS, scope=SCOPE, samples=[])
+    result = dict(
+        success=False,
+        apk_sha256=expected,
+        attempt=attempt,
+        planned_seconds=planned_seconds,
+        scope=SCOPE,
+        raw_frame_times_requested=raw_frame_times,
+        samples=[],
+    )
     pid = None
     width = height = None
 
@@ -212,6 +294,8 @@ def check_session_sustained(expected_apk_sha256=None, _launch=None):
         # Refuse an already hot/unknown device before beginning the workload.
         thermal()
         selected = cleanup.selection(attempt)
+        selected["rawFrameTimesRequested"] = raw_frame_times
+        selected["combatPerformanceFocus"] = True
         selected["debugOptions"].update(invincibility=True, purpose=SCOPE)
         write(out / "selection.json", selected)
         device.cmd("push", str(out / "selection.json"), selector)
@@ -225,17 +309,20 @@ def check_session_sustained(expected_apk_sha256=None, _launch=None):
         if coords is None:
             raise RuntimeError("Current native menu Start geometry unavailable")
         tap("start", *coords)
-        report = wait(lambda r: r.get("phase") == "integrated-world-playing" and r.get("world", {}).get("ready") is True, 240)
+        report = wait(sustained_world_ready, 240)
         require_invincibility_only(report)
-        tap("manual-neutral", width * 0.5, 34)
-        report = wait(lambda r: r.get("world", {}).get("manualTakeover") is True and (r.get("nova", {}).get("touch") or {}).get("moveRadius", 0) > 0, 20)
+        report = wait(
+            lambda r: r.get("combatPerformanceFocus") is True
+            and r.get("world", {}).get("diagnosticInput") is True
+            and r.get("world", {}).get("manualTakeover") is False,
+            20,
+        )
         baseline = cleanup._profile_counts(report)
         if baseline is None:
             raise RuntimeError("Native profile baseline unavailable")
         write(out / "world-start.json", report)
         began = time.monotonic()
         last_capture = -60
-        last_camera = 0
         index = 0
         while True:
             elapsed = time.monotonic() - began
@@ -259,17 +346,14 @@ def check_session_sustained(expected_apk_sha256=None, _launch=None):
                 last_capture = elapsed
                 index += 1
             write(out / "progress.json", result)
-            if elapsed >= PLANNED_SECONDS:
+            if elapsed >= planned_seconds:
+                first, last = result["samples"][0], result["samples"][-1]
+                result["combat_activity"] = dict(kills=last["kills"] - first["kills"], primary_shots=last["primary_shots"] - first["primary_shots"])
+                if any(value <= 0 for value in result["combat_activity"].values()):
+                    raise RuntimeError("Automated combat did not fire and clear enemies")
                 result["sustained_observation_complete"] = True
                 write(out / "world-end.json", report)
                 break
-            if elapsed - last_camera >= 60:
-                x, y = width * 0.73, height * 0.3
-                gesture(
-                    "camera-%04d" % index,
-                    [edge("down", x, y), dict(action="wait", ms=100), edge("move", x + 20, y), dict(action="wait", ms=100), edge("up", x + 20, y)],
-                )
-                last_camera = elapsed
             time.sleep(5)
         for key, condition in (
             ("button", lambda r: r["settings"]["visible"] is True),
@@ -287,6 +371,7 @@ def check_session_sustained(expected_apk_sha256=None, _launch=None):
         write(out / "completed-session.json", completed)
         write(out / "returned-menu.json", report)
         result["all_off_contract_refusals"] = assisted_teardown_contract(completed, pid, attempt, baseline)
+        result["raw_frame_trace"] = collect_raw_frames(device, runtime, out, completed, result["samples"], enabled=raw_frame_times)
         errors("complete-process")
         result.update(native_teardown_complete=True, success=True)
     except BaseException as error:

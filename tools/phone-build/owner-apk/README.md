@@ -48,7 +48,7 @@ shader mechanism or replacement content loader is introduced.
   access. Polling/subscription teardown does not cancel preparation. Only bundled
   allowlisted HTTPS-origin resources are served; navigation/network are blocked.
 - `index.html` provides accurate owner-APK preparation copy while reusing the
-  unchanged approved `launcher/{app.js,controller.js,style.css,background.png}`.
+  unchanged approved `launcher/{app.js,controller.js,feedback.js,style.css,background.png}`.
   The simulated demo is never included. There is no new tracked PNG exception.
 - `binary_manifest.py` edits binary XML using the existing public `phone_apk.py`
   chunk/string reader. `build_owner_apk.py` compiles only the authored Java to a
@@ -455,6 +455,94 @@ interruption recovery and save survival remain the local orchestrator's checks.
 
 ### Phone-only import and installation
 
+For the bounded synthetic lab flow, use the serialized runner with an exact
+published source tip and its matching `toolhost` APK:
+`scripts/lab-installer-updates.py --qualify-phone-flow --timeout 1800`.
+It freshly installs the disposable tool, reconstructs on the phone, verifies
+visible unknown-app permission and install consent, checks for updates, then
+verifies an in-place update with authored profile/settings witnesses. The actual
+UI reconstructs to READY **before** opening the permission page. Synthetic inputs
+and signed publisher fixtures are host-authored; this does not qualify SAF import
+or a real game profile. It stops after forward update, without repeating the
+already separate rollback/signature-refusal suite. Notifications are denied,
+including the device-qualified explicit second denial after this run's first
+denial, never pregranted.
+
+Each reported stage includes elapsed time (UI waits/polling/measurement overhead
+included), sampled app-process PSS, battery temperature and available bytes on
+the actual code/data backing. Samples occur at boundaries and at most every ten
+seconds in existing wait loops; sample count and largest gap are reported. These
+are **not true memory peaks**, and native child-tool memory may be omitted.
+Null means unavailable or not running/owned, never zero. Code/data may share a
+volume: do not sum their space or attribute the free-space delta solely to this
+app. Cleanup stops/uninstalls only this run's exact owned packages, sleeps the
+display, and retains diagnostics privately. Measurements do not establish the
+complete performance release gate.
+
+For a baseline-check timeout, the host-only retained-log mode
+`--inspect-check-timeout SOURCE_COMMIT` requires exactly one private run with
+that recorded source. It reports allowlisted state counts/transitions and the
+last retained Check control's flags, never UI text, state messages or paths.
+The binding is source-unique, **not an exact lab-run-ID binding**. Ambiguous
+runs are refused. It performs no device action and proves neither tap delivery
+nor handler entry. Existing raw diagnostics remain untouched.
+
+The qualified check observes persisted acknowledgment before waiting for backend
+completion. After an unacknowledged visible Check action, it permits only one
+additional tap: fresh APK ownership, two matching focused-app observations of
+one enabled/clickable Check control, and a final unchanged TEST_WAIT read are
+required. A late CHECKING/UPDATE_AVAILABLE prevents the retry; errors or unknown
+states stop. A second missing acknowledgment fails explicitly, rather than
+waiting the full reconstruction timeout. This is bounded recovery, not proof
+that the earlier missing action was caused by stale coordinates.
+
+The synthetic full-flow harness also retains a fixed `release-check-diagnostic`
+classification before failed Check cleanup. The debuggable disposable installer
+records handler entry, busy refusal, request-write failure or service-launch
+return in an independent Android preference, rather than through the atomic
+writer being investigated. Only fixed stage/error/root-alias classes are public;
+no preference XML, paths, exception text or release request is exported. An
+unavailable observation is not proof that the button listener did not execute.
+This diagnostic does not change Check dispatch, permissions or install consent.
+
+Managed JSON writes normalize only the platform-provided app-files root alias,
+not arbitrary target paths. The Context-aware writer retains child-link and
+atomic-write guards. Host tests reproduce the aliased-root failure and verify
+receipt preservation plus traversal/link refusal; a complete phone run is still
+required for each materially changed installation contract. The bounded
+synthetic flow below is qualified, not real-game import or converter performance.
+
+#### Qualified synthetic flow (2026-11-13)
+
+[Run 43348820195](https://github.com/danielbuva/ror2-android-port/actions/runs/43348820195)
+passed at `ce9242a54d4b5ccccf247dc978a7f18d9b967444` in 460 s: visible
+permission/consent, Check for updates, forward in-place update and synthetic
+profile/settings retention. Matching toolhost APK SHA-256:
+`f4eaafe1d56a40561d1fc1cf082bf7e635317d195db7d617828b01a887aa3773`.
+Owned test packages were verified absent. The
+[public result](https://github.com/danielbuva/ror2-android-port/issues/177#issuecomment-6841669800)
+retains exact bytes, sample counts and gaps; raw observations remain private.
+
+| Stage | Time (s) | Installer / alpha sampled PSS (MiB) | Installer free (GiB), start → end | Alpha free (GiB), start → end |
+| --- | ---: | --- | --- | --- |
+| Fresh installer | 26.005 | unavailable / unavailable | unavailable → 41.118 | unavailable |
+| Synthetic provision and initial check | 39.193 | 64.96 / unavailable | 41.117 → 39.371 | unavailable |
+| Baseline reconstruction | 85.248 | 63.12 / unavailable | 39.370 → 37.640 | unavailable |
+| Visible install permission | 67.632 | 58.79 / unavailable | 37.640 → 37.627 | unavailable |
+| Baseline install | 18.708 | 68.13 / unavailable | 37.627 → 37.622 | unavailable → 37.622 |
+| Seed retention witness | 7.841 | 60.58 / unavailable | 37.622 → 37.620 | 37.622 → 37.620 |
+| Check for updates | 25.967 | 72.96 / unavailable | 37.620 → 35.877 | 37.620 → 35.877 |
+| In-place update | 119.597 | 73.38 / 13.76 | 35.876 → 34.139 | 35.876 → 34.139 |
+| Verify profile/settings | 8.576 | 67.71 / 13.86 | 34.139 → 34.137 | 34.139 → 34.137 |
+
+Each package's code/data free readings round to the same values above; they are
+filesystem availability, not two independent allocations or app sizes. The nine
+stages total 398.767 s; setup/cleanup outside stages accounts for the remainder.
+Largest observation gap: 66.169 s. Maximum sampled battery temperature: 33 °C.
+Unavailable memory is not zero, and the largest sampled PSS is not a true peak
+or a native-child total. This does not replace packaging rollback/importer,
+SAF, legitimate-input, real-profile or complete-converter qualification.
+
 Installer version 3 extends the version-2 foreground-service flow: prepare the signed public
 release, choose the owner's PC game directory with Android's folder picker (or
 choose a ZIP), import, then reconstruct and install. Only required files are
@@ -544,6 +632,44 @@ exceptions cannot override those pins. Both routes use the same assembler and
 retained signing key. Real phone installation and saved-data survival remain
 acceptance gates.
 
+### Interrupted writes and full storage
+
+`atomic_io.py` owns private installer receipt writes: sibling staging, file fsync,
+atomic replace and parent-directory fsync. Its caller must retain the existing
+import/update lock or foreground operation ownership. A retry overwrites only its
+owned partial; partial bytes are never completion evidence. `release.py` syncs
+producer outputs before publication and checkpoints each verified output, so a
+later producer failure does not discard earlier progress. `game_import.py`
+rehashes completed files on resume. A failed error-report write cannot mask the
+original storage error or invalidate the last durable checkpoint. An error after
+rename means durability is unconfirmed, not that the old bytes are still present.
+
+`OwnerInputImport` owns the matching Java atomic writer/directory sync used by
+`ToolHostActivity.writeJson` and streamed imports. Android uses `Os.fsync`; the
+Android-free fixture uses the host JVM. PackageInstaller still owns APK session
+commit, and no checkpoint claims installation success.
+
+Host acceptance: `python3 -m unittest tests.test_owner_atomic_writes` injects
+ENOSPC during staging, fsync and rename, kills a writer mid-write, and verifies
+cleanup, last-receipt preservation and explicit resume. Java compilation needs a
+JDK. The separately leased lab command is:
+
+```
+/lab script ref=dani/dots-atomic-installer-writes device=nova-b -- scripts/lab-installer-quota.py
+```
+
+The phone fixture creates only a fresh shell scratch directory and runs the same
+Java writer through `app_process`. It fills a **64 KiB logical quota**, injects
+ENOSPC after a bounded partial write, and verifies unchanged committed bytes,
+cleanup and retry. It never fills the filesystem, mounts a quota volume, installs
+an APK, or reads game/key state. Admission requires at least 15 GiB free on the
+actual scratch backing and the existing battery rule; a device-side watchdog
+refuses missing sensors, temperatures above 50 C, battery at 35 C or above, and
+runs longer than 10 s. Owned scratch is removed and the display sleeps on exit.
+The driver uses the pinned build-tools version and `JAVA_HOME`/`ANDROID_SDK_ROOT`
+(or the documented Unity Android toolchain). Raw diagnostics remain ignored.
+This is logical-quota failure injection, **not physical-filesystem ENOSPC or full
+installer UI qualification**. No phone result is implied by host fixture success.
 
 ### Source bundle job compilation
 
@@ -565,6 +691,42 @@ and public policy inputs enter the signed closure. The dispatcher requires the
 player receipt to match declared membership exactly on production and reuse.
 New source media therefore reports a membership difference instead of silently
 omitting a referenced file.
+
+A selected `owner-bundle-preload-release-v1` profile declares `profiles` (the
+repo-relative prerequisite producer profiles) and `request` (the existing fresh
+preparation request, with its public `policy` object inline). Supplier file pins
+use declared job artifacts; public profile/witness pins use `${repo}/...` paths.
+The graph includes those public files in its signed closure and dispatches
+`bundle_preload.py --release` to prepare, emit and optionally repack once. Its
+actual final bundle and generated catalog profile feed catalog production.
+Referenced donor/staged bundles also ship and enter the native manifest because
+the emitted PPtrs depend on them. Pack-only suppliers remain intermediates.
+Managed witness documents must come from generated job artifacts; registry body,
+receipt and schemas must come from the same final player producer. The SDK
+properties file remains an explicitly pinned acquired leaf. Current managed
+cohort production, exact-editor load and phone execution still need qualification;
+the dispatcher host fixture uses an authored empty runtime registry.
+
+For host policy authoring, `Graph.bundle_bindings(rows, bundle, member)` maps
+one member's selected metadata to `bindings`, `suppliers` and prerequisite
+`profiles` using the public profile hash and declared pack artifacts. It returns
+every unmapped row in `unresolved`; resolve all of these before composing a
+release policy. Original source, producer output and destination identities stay
+separate, including when their path IDs coincide. The mapper reads no supplier
+bodies and does not qualify the graph. The caller still supplies address groups,
+exceptional routes, staged endpoints and generated managed witnesses. Final
+container suppliers require explicit staged bindings instead of record-pack pins.
+
+Pass explicit public profile hashes in `source_profiles` when a retained selection
+names a private index instead of a reproducible supplier. The mapper reverses
+the existing body selectors without reading generated packs. It prefers an exact
+source/output pair; otherwise it requires one public producer output for that
+original source. Bindings keep the original source and destination, name the fresh
+public `record_source`, and retain the private record pin and output identity in
+`selection`. Multiple candidates remain unresolved with their profile/output
+pairs. Only chosen suppliers become jobs; unrelated and unselected recipes are
+not compiled. Preparation still checks the original body selector, final type
+table and actual produced bytes; field routes and graph admission remain separate.
 
 Selecting the manager phase also creates the existing `startup_metadata.py`
 job. Bind `inventory` to the admitted original-game inventory; the smoke

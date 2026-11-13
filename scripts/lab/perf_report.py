@@ -1,7 +1,8 @@
 """Host-only analysis of session_sustained_check receipts; never accesses a device.
 
 Periodic frame_ms is reciprocal averaged FPS, not an individual frame duration.
-True frame-time quantiles and causal throttling onset remain unavailable.
+Raw frame quantiles require a complete, counter-reconciled optional sidecar.
+Causal throttling onset remains unavailable.
 """
 
 import argparse
@@ -11,6 +12,64 @@ import json
 import math
 from pathlib import Path
 import statistics
+import struct
+
+RAW_HEADER = struct.Struct("<8siiii")
+RAW_CAPACITY = 262144
+HITCH33_MS = struct.unpack("<f", struct.pack("<f", 33.334))[0]
+
+
+def read_raw_frames(data):
+    if len(data) < RAW_HEADER.size:
+        raise ValueError("Truncated raw frame header")
+    magic, first, count, last, dropped = RAW_HEADER.unpack_from(data)
+    if (
+        magic != b"ROR2FRAM"
+        or first < 1
+        or not 0 <= count <= RAW_CAPACITY
+        or dropped < 0
+        or last != first + count + dropped - 1
+        or len(data) != RAW_HEADER.size + count * 4
+    ):
+        raise ValueError("Invalid raw frame coverage/header")
+    durations = [row[0] for row in struct.iter_unpack("<f", data[RAW_HEADER.size :])]
+    if any(not math.isfinite(ms) or ms < 0 for ms in durations):
+        raise ValueError("Invalid raw frame duration")
+    return dict(first_frame=first, last_frame=last, retained_frames=count, dropped_frames=dropped, durations_ms=durations)
+
+
+def raw_frame_window(first, last, trace):
+    begin = first["pacing_frames"] + 1 - trace["first_frame"]
+    end = last["pacing_frames"] + 1 - trace["first_frame"]
+    result = dict(
+        first_frame=first["pacing_frames"] + 1,
+        last_frame=last["pacing_frames"],
+        complete=False,
+        percentiles_ms=None,
+    )
+    if begin < 0 or end > trace["retained_frames"]:
+        result["reason"] = "Raw capture does not cover every frame in this counter window"
+        return result
+    if first.get("pacing_total_ms_exact") is not True or last.get("pacing_total_ms_exact") is not True:
+        raise ValueError("Raw reconciliation requires exact cumulative duration counters")
+    durations = trace["durations_ms"][begin:end]
+    window = frame_window(first, last)
+    if (
+        len(durations) != window["frames"]
+        or sum(ms > HITCH33_MS for ms in durations) != window["over33ms"]
+        or sum(ms > 50 for ms in durations) != window["over50ms"]
+        or not math.isclose(sum(durations), last["pacing_total_ms"] - first["pacing_total_ms"], rel_tol=1e-12, abs_tol=1e-5)
+    ):
+        raise ValueError("Raw durations do not reconcile with frame/duration/hitch counters")
+    result.update(
+        complete=True,
+        frames=len(durations),
+        total_ms=sum(durations),
+        over33ms=window["over33ms"],
+        over50ms=window["over50ms"],
+        percentiles_ms=dict(samples=len(durations), **{f"p{p}": percentile(durations, p) for p in (50, 95, 99)}),
+    )
+    return result
 
 
 def stamp(value):
@@ -96,7 +155,79 @@ def final_ten_minutes(samples):
     )
 
 
-def analyze(session, thermal):
+def proposed_pacing_comparison(window, quantiles, observed_seconds, required_seconds):
+    """Compare retained observations with public-alpha's proposed targets only."""
+    values = dict(
+        average_fps=window["average_fps"] if window else None,
+        **{f"p{p}_ms": quantiles[f"p{p}"] if quantiles else None for p in (50, 95, 99)},
+        over50ms_percent=100 * window["over50ms"] / window["frames"] if window else None,
+    )
+    targets = dict(average_fps=60, p50_ms=16.67, p95_ms=33.334, p99_ms=50, over50ms_percent=1)
+    metrics = {}
+    for name, target in targets.items():
+        value = values[name]
+        minimum = name == "average_fps"
+        metrics[name] = dict(
+            observed=value,
+            target=target,
+            comparison=">=" if minimum else "<=",
+            meets_target=None if value is None else value >= target if minimum else value <= target,
+        )
+    return dict(
+        observed_seconds=observed_seconds,
+        required_seconds=required_seconds,
+        complete_duration=observed_seconds >= required_seconds,
+        metrics=metrics,
+    )
+
+
+def camera_profile(session, completed):
+    """Summarize retained recorder windows, without inventing per-frame attribution."""
+    camera = completed["framePacing"]
+    if completed["attempt"] != session["attempt"] or (camera.get("rawFrameTrace") or None) != (session.get("raw_frame_trace") or {}).get("file"):
+        raise ValueError("Completed camera report belongs to a different sustained session")
+    first, last = session["samples"][0], session["samples"][-1]
+    # Each camera row contains means since the preceding row. Do not admit a
+    # partial boundary window, weight every row equally, or count repeated copies.
+    windows = [(a, b) for a, b in zip(camera["samples"], camera["samples"][1:]) if first["pacing_frames"] <= a["frames"] < b["frames"] <= last["pacing_frames"]]
+    metrics = {}
+    for name, value, count in (
+        ("cpu_frame_ms", "sampledCpuMs", "frameTimingSamples"),
+        ("gpu_frame_ms", "sampledGpuMs", "gpuTimingSamples"),
+        ("main_thread_ms", "sampledMainActiveMs", "mainTimingSamples"),
+        ("render_thread_ms", "sampledRenderActiveMs", "renderTimingSamples"),
+        ("gc_allocated_bytes", "sampledGcAllocBytes", "gcAllocSamples"),
+        ("draw_calls", "sampledDrawCalls", "renderCounterSamples"),
+        ("setpass_calls", "sampledSetPassCalls", "renderCounterSamples"),
+        ("vertices", "sampledVertices", "renderCounterSamples"),
+    ):
+        rows = [b for _, b in windows if b.get(count, 0) > 0]
+        total = sum(row[count] for row in rows)
+        metrics[name] = dict(
+            samples=total,
+            windows=len(rows),
+            positive_windows=sum(row[value] > 0 for row in rows),
+            weighted_mean=sum(row[value] * row[count] for row in rows) / total if total else None,
+        )
+    start, end = (windows[0][0], windows[-1][1]) if windows else (None, None)
+    return dict(
+        windows=len(windows),
+        first_frame=start["frames"] + 1 if start else None,
+        last_frame=end["frames"] if end else None,
+        observed_seconds=end["seconds"] - start["seconds"] if start else 0,
+        gc_collections=sum(b["gcCollections"] - a["gcCollections"] for a, b in windows),
+        metrics=metrics,
+        limitations=[
+            "Only complete retained camera windows inside the sustained frame endpoints are included; boundary windows are excluded.",
+            "Means are weighted by recorder sample counts, not frames; CPU/GPU, thread and allocation recorders sample at different cadences.",
+            "Main/Render Thread recorder durations do not separate work from waits or name simulation/render-submission costs.",
+            "All-zero render timings cannot distinguish an idle thread from an unavailable duration; they do not establish zero rendering cost.",
+            "Allocation bytes and collection counts are not GC duration; no per-hitch or causal GC attribution is available.",
+        ],
+    )
+
+
+def analyze(session, thermal, raw_trace=None, completed=None):
     samples = session["samples"]
     if len(samples) < 2:
         raise ValueError("At least two periodic observations are required")
@@ -107,6 +238,24 @@ def analyze(session, thermal):
             raise ValueError("Pacing counters reset; split sessions before analysis")
     first, last = samples[0], samples[-1]
     window = frame_window(first, last)
+    tail = final_ten_minutes(samples)
+    raw_window = None
+    raw_coverage = None
+    tail["true_frame_time_percentiles_ms"] = None
+    if raw_trace is not None:
+        binding = session.get("raw_frame_trace") or {}
+        if not binding.get("file") or any(row.get("pacing_trace") != binding["file"] for row in samples):
+            raise ValueError("Raw trace identity differs from observation counters")
+        raw_coverage = {key: value for key, value in raw_trace.items() if key != "durations_ms"}
+        # Reconcile each retained interval, not just a coincidentally matching total.
+        for a, b in zip(samples, samples[1:]):
+            raw_frame_window(a, b, raw_trace)
+        raw_window = raw_frame_window(first, last, raw_trace)
+        if tail["frame_window"]:
+            tail_first = next(row for row in samples if row["host_seconds"] == tail["start_host_seconds"])
+            tail["raw_frame_window"] = raw_frame_window(tail_first, last, raw_trace)
+            if tail["boundary_uncovered_seconds"] == 0:
+                tail["true_frame_time_percentiles_ms"] = tail["raw_frame_window"]["percentiles_ms"]
     start, end = stamp(first["snapshot_utc"]), stamp(last["snapshot_utc"])
     heat = [r for r in thermal_samples(thermal) if start <= r["utc_seconds"] <= end]
     gaps = [b["utc_seconds"] - a["utc_seconds"] for a, b in zip(heat, heat[1:])]
@@ -129,18 +278,21 @@ def analyze(session, thermal):
                 )
             )
     statuses = [r for r in samples if type(r.get("thermal_status")) is int and r["thermal_status"] > 0]
-    return dict(
+    report = dict(
         scope=session.get("scope"),
         apk_sha256=session.get("apk_sha256"),
         observations=len(samples),
         observed_seconds=last["host_seconds"] - first["host_seconds"],
         frame_window=window,
-        final_ten_minutes=final_ten_minutes(samples),
-        true_frame_time_percentiles_ms=None,
+        final_ten_minutes=tail,
+        raw_frame_coverage=raw_coverage,
+        raw_frame_window=raw_window,
+        true_frame_time_percentiles_ms=raw_window["percentiles_ms"] if raw_window else None,
         periodic_frame_mean_ms=distribution([r.get("frame_ms") for r in samples]),
         periodic_fps=distribution([r.get("fps") for r in samples]),
         cpu_frame_ms=distribution([r.get("cpu_frame_ms") for r in samples]),
         gpu_frame_ms=distribution([r.get("gpu_frame_ms") for r in samples]),
+        camera_profile=camera_profile(session, completed) if completed is not None else None,
         thermal=dict(
             samples=len(heat),
             max_gap_seconds=max(gaps) if gaps else None,
@@ -155,6 +307,8 @@ def analyze(session, thermal):
         bins=bins,
         limitations=[
             "Periodic frame_ms is reciprocal averaged FPS; its quantiles are not individual-frame quantiles.",
+            "Raw quantiles require complete frame coverage and reconciled counters; final-ten-minute quantiles also require all 600 host seconds.",
+            "Raw durations are Unity unscaled active-frame intervals, not compositor presentation or synchronized CPU/GPU samples.",
             "Hitches are frame counts, not distinct hitch episodes; >50 ms is a subset of >33.334 ms. Startup counters are subtracted.",
             "CPU/GPU timings are latest FrameTimingManager observations, not a synchronized per-frame critical-path trace.",
             "Five-minute thermal bins align snapshot UTC with thermal UTC; runtime counter window uses first/last host observations.",
@@ -163,6 +317,19 @@ def analyze(session, thermal):
             "No clocks or scheduler trace: HAL status alone cannot establish or exclude throttling. Battery drain is unmeasured while plugged in.",
         ],
     )
+    report["proposed_pacing_budget"] = dict(
+        qualification="Observation comparison only; proposed targets do not establish release readiness.",
+        whole_session=proposed_pacing_comparison(window, report["true_frame_time_percentiles_ms"], report["observed_seconds"], 1800),
+        covered_tail=proposed_pacing_comparison(tail["frame_window"], tail["true_frame_time_percentiles_ms"], tail["observed_seconds"], 600),
+        evidence_not_established=[
+            "Representative ordinary play on every supported stage, with assistance state recorded.",
+            "Visual fidelity against the original.",
+            "Unplugged battery drain and an accepted energy budget.",
+            "Clock/limit evidence for causal throttling attribution.",
+            "Causal raw-capture overhead qualification.",
+        ],
+    )
+    return report
 
 
 def markdown(report):
@@ -173,6 +340,12 @@ def markdown(report):
         return "unavailable" if value is None else f"{value:.2f}"
 
     tail = report["final_ten_minutes"]
+
+    def quantile_line(label, values):
+        if values is None:
+            return label + ": unavailable (raw capture or complete window coverage absent)."
+        return label + f": {fmt(values['p50'])}/{fmt(values['p95'])}/{fmt(values['p99'])} ms ({values['samples']} frames)."
+
     tail_window = tail["frame_window"]
     tail_lines = [
         f"Final ten-minute coverage: {tail['observed_seconds']:.3f}/600 s; {tail['boundary_uncovered_seconds']:.3f} s uncovered; "
@@ -186,8 +359,35 @@ def markdown(report):
         )
     else:
         tail_lines.append("Final ten-minute frame statistics: unavailable (fewer than two retained observations inside the window).")
+    budget = report["proposed_pacing_budget"]
+    budget_lines = [budget["qualification"], "", "| Observation | Metric | Measured | Proposed target | Comparison |", "| --- | --- | --- | --- | --- |"]
+    for label, key in (("Whole session", "whole_session"), ("Covered tail", "covered_tail")):
+        comparison = budget[key]
+        for name, metric in comparison["metrics"].items():
+            status = "unavailable" if metric["meets_target"] is None else "within target" if metric["meets_target"] else "outside target"
+            budget_lines.append(f"| {label} | {name} | {fmt(metric['observed'])} | {metric['comparison']} {metric['target']} | {status} |")
+    budget_lines += [
+        "",
+        "A partial covered tail retains measured FPS/hitches; full-tail quantile comparisons remain unavailable.",
+        "This report does not establish: " + " ".join(budget["evidence_not_established"]),
+    ]
+    camera = report["camera_profile"]
+    camera_lines = ["Camera recorder attribution: unavailable (completed native report not supplied)."]
+    if camera is not None:
+        camera_lines = [
+            f"Camera recorder coverage: {camera['windows']} complete windows, {camera['observed_seconds']:.3f} s; "
+            f"frames {camera['first_frame']}–{camera['last_frame']}; {camera['gc_collections']} GC collections.",
+            "",
+            "| Recorder | Sample-weighted mean | Samples | Positive windows / measured windows |",
+            "| --- | --- | --- | --- |",
+        ]
+        for name, metric in camera["metrics"].items():
+            camera_lines.append(f"| {name} | {fmt(metric['weighted_mean'])} | {metric['samples']} | {metric['positive_windows']} / {metric['windows']} |")
+        camera_lines += ["", *camera["limitations"]]
     lines = [
         "# Sustained game performance report",
+        "",
+        f"Scope: {report['scope'] or 'unspecified; workload qualification unavailable'}",
         "",
         f"{report['observations']} observations over {report['observed_seconds']:.1f} s; {window['frames']} counter-window frames.",
         f"Mean {window['mean_ms']:.3f} ms ({window['average_fps']:.3f} FPS).",
@@ -196,9 +396,15 @@ def markdown(report):
         "",
         *tail_lines,
         "",
-        "Individual-frame p50/p95/p99: unavailable (no raw frame durations retained).",
+        quantile_line("Covered-tail individual-frame p50/p95/p99", (tail.get("raw_frame_window") or {}).get("percentiles_ms")),
+        quantile_line("Individual-frame p50/p95/p99", report["true_frame_time_percentiles_ms"]),
+        quantile_line("Final ten-minute individual-frame p50/p95/p99", tail["true_frame_time_percentiles_ms"]),
         f"Periodic frame-mean p50/p95/p99: {fmt(proxy['p50'])}/{fmt(proxy['p95'])}/{fmt(proxy['p99'])} ms (equal observation weights).",
         "Throttling onset: unestablished; no clocks/scheduler trace retained.",
+        "",
+        *budget_lines,
+        "",
+        *camera_lines,
         "",
         "| Start (min) | Samples | Median FPS | CPU ms | GPU ms | CPU C | GPU C | Battery C | Enemies |",
         "| --- | --- | --- | --- | --- | --- | --- | --- | --- |",
@@ -221,9 +427,25 @@ def main():
     parser.add_argument("session", type=Path, help="session_sustained_check result.json")
     parser.add_argument("thermal", type=Path, help="session-sustained-thermal.jsonl")
     parser.add_argument("--output", type=Path, required=True, help="Local JSON output; adjacent Markdown is also written")
+    parser.add_argument("--raw-frames", type=Path, help="Optional session-bound frame-times sidecar")
+    parser.add_argument("--completed-session", type=Path, help="Optional completed native report containing retained camera recorder windows")
     args = parser.parse_args()
-    report = analyze(json.loads(args.session.read_text()), [json.loads(line) for line in args.thermal.read_text().splitlines() if line.strip()])
+    session = json.loads(args.session.read_text())
+    raw_trace = None
+    raw_hash = None
+    if args.raw_frames:
+        data = args.raw_frames.read_bytes()
+        raw_hash = hashlib.sha256(data).hexdigest()
+        if raw_hash != (session.get("raw_frame_trace") or {}).get("sha256"):
+            raise ValueError("Raw frame sidecar hash differs from retained session")
+        raw_trace = read_raw_frames(data)
+    completed = json.loads(args.completed_session.read_text()) if args.completed_session else None
+    report = analyze(session, [json.loads(line) for line in args.thermal.read_text().splitlines() if line.strip()], raw_trace, completed)
     report["input_sha256"] = {key: hashlib.sha256(path.read_bytes()).hexdigest() for key, path in (("session", args.session), ("thermal", args.thermal))}
+    if raw_hash:
+        report["input_sha256"]["raw_frames"] = raw_hash
+    if args.completed_session:
+        report["input_sha256"]["completed_session"] = hashlib.sha256(args.completed_session.read_bytes()).hexdigest()
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(json.dumps(report, indent=2, allow_nan=False) + "\n")
     args.output.with_suffix(".md").write_text(markdown(report))

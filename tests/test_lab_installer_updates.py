@@ -5,6 +5,7 @@ import importlib.util
 import io
 import json
 import os
+import shlex
 import shutil
 from pathlib import Path
 import subprocess
@@ -21,6 +22,389 @@ SPEC.loader.exec_module(LAB)
 
 
 class LabInstallerUpdatesTests(unittest.TestCase):
+    def test_retain_declared_phone_artifact_streams_exact_bytes_before_cleanup(self):
+        phone = LAB.Phone("synthetic-private-selector", 1)
+        phone.owned_installer = True
+        phone.installer_hash = "a" * 64
+        directory = "b" * 16 + "-test/output"
+        name = "emitted/Test Game.bundle"
+        data = b"authored synthetic bundle witness\x00\xff\n" * 1000
+        receipt = {"directory": directory, "files": {name: LAB.sha(data)}}
+        real_run = subprocess.run
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            source = root / "phone/files/owner-input/work/releases/jobs" / directory / name
+            source.parent.mkdir(parents=True)
+            source.write_bytes(data)
+            target = root / "work/retained/content.bundle"
+
+            def transfer(argv, **kwargs):
+                self.assertEqual(argv[:4], [str(phone.adb), "-s", phone.serial, "exec-out"])
+                remote = shlex.split(argv[4])
+                self.assertEqual(remote[:4], ["run-as", LAB.PACKAGE, "sh", "-c"])
+                self.assertTrue(hasattr(kwargs["stdout"], "fileno"))
+                return real_run(["sh", "-c", remote[4]], cwd=root / "phone", **kwargs)
+
+            with patch.object(LAB, "ROOT", root), patch.object(phone, "package_hash", return_value=phone.installer_hash):
+                with patch.object(LAB.subprocess, "run", side_effect=transfer), patch.object(LAB, "DIAGNOSTICS", Mock()) as diagnostics:
+                    self.assertEqual(phone.retain_build_artifact(receipt, name, target), {"bytes": len(data), "sha256": LAB.sha(data)})
+                    diagnostics.record.assert_not_called()
+                self.assertEqual(target.read_bytes(), data)
+                shutil.rmtree(root / "phone")  # Owned device cleanup cannot remove retained output.
+                self.assertEqual(target.read_bytes(), data)
+                with self.assertRaisesRegex(LAB.Failure, "artifact-host-output-exists"):
+                    phone.retain_build_artifact(receipt, name, target)
+            self.assertEqual(list(target.parent.iterdir()), [target])
+
+    def test_retain_artifact_refuses_unowned_undeclared_or_incomplete_results(self):
+        phone = LAB.Phone("synthetic-private-selector", 1)
+        phone.owned_installer = True
+        phone.installer_hash = "a" * 64
+        receipt = {"directory": "b" * 16 + "-test/output", "files": {"content.bundle": LAB.sha(b"complete")}}
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            target = root / "work/retained/content.bundle"
+            with patch.object(LAB, "ROOT", root), patch.object(phone, "package_hash", return_value=phone.installer_hash):
+                for selected, name, output, reason in (
+                    (receipt, "missing.bundle", target, "artifact-receipt-hash"),
+                    ({**receipt, "directory": "../other/output"}, "content.bundle", target, "artifact-receipt-directory"),
+                    ({**receipt, "files": {"../secret": "c" * 64}}, "../secret", target, "artifact-receipt-path"),
+                    (receipt, "content.bundle", root / "tracked.bundle", "artifact-host-output-not-private"),
+                ):
+                    with self.subTest(reason=reason), patch.object(LAB.subprocess, "run") as transfer:
+                        with self.assertRaisesRegex(LAB.Failure, reason):
+                            phone.retain_build_artifact(selected, name, output)
+                        transfer.assert_not_called()
+
+                def partial(argv, **kwargs):
+                    kwargs["stdout"].write(b"partial")
+                    return subprocess.CompletedProcess(argv, 0, b"", b"")
+
+                with patch.object(LAB.subprocess, "run", side_effect=partial):
+                    with self.assertRaisesRegex(LAB.Failure, "artifact-transfer-hash-mismatch"):
+                        phone.retain_build_artifact(receipt, "content.bundle", target)
+                with patch.object(LAB.subprocess, "run", side_effect=subprocess.TimeoutExpired("synthetic", 1)):
+                    with self.assertRaisesRegex(LAB.Failure, "artifact-transfer-unavailable"):
+                        phone.retain_build_artifact(receipt, "content.bundle", target)
+                self.assertFalse(target.exists())
+                self.assertEqual(list(target.parent.iterdir()), [])
+            with patch.object(phone, "package_hash", return_value="d" * 64), patch.object(LAB.subprocess, "run") as transfer:
+                with self.assertRaisesRegex(LAB.Failure, "artifact-installer-not-owned"):
+                    phone.retain_build_artifact(receipt, "content.bundle", target)
+                transfer.assert_not_called()
+
+    def test_import_upload_preserves_space_containing_game_path_and_bytes(self):
+        phone = LAB.Phone("synthetic-private-selector", 1)
+        phone.owned_installer = True
+        name = "import/files/pc/Test Game_Data/StreamingAssets/sample.bundle"
+        data = b"authored synthetic bytes\x00\xff\n"
+        with tempfile.TemporaryDirectory() as temporary:
+
+            def shell(*args, stdin=None, **kwargs):
+                self.assertEqual(args[0], "shell")
+                command = " ".join(args[1:])
+                prefix = "run-as " + LAB.PACKAGE + " "
+                self.assertTrue(command.startswith(prefix))
+                return subprocess.run(["sh", "-c", command.removeprefix(prefix)], input=stdin, cwd=temporary, check=True, capture_output=True).stdout
+
+            with patch.object(phone, "command", side_effect=shell):
+                phone.put(name, data)
+            target = Path(temporary) / "files/owner-input" / name
+            self.assertEqual(target.read_bytes(), data)
+            self.assertEqual([path for path in Path(temporary).rglob("*") if path.is_file()], [target])
+
+    @staticmethod
+    def check_control(bounds="[1,2][30,40]", enabled="true"):
+        return ET.fromstring(
+            f'<hierarchy><node package="{LAB.PACKAGE}"><node package="{LAB.PACKAGE}" class="android.widget.Button" text="Check for updates" clickable="true" enabled="{enabled}" bounds="{bounds}"/></node></hierarchy>'
+        )
+
+    def test_check_diagnostic_only_reports_fixed_classes(self):
+        valid = b'<map><string name="stage">failed-request-write</string><string name="error">io</string><string name="files_root">alias</string></map>'
+        self.assertEqual(LAB.check_diagnostic_summary(valid), {"status": "observed", "stage": "failed-request-write", "error": "io", "files_root": "alias"})
+        self.assertEqual(LAB.check_diagnostic_summary(b""), {"status": "unavailable", "reason": "not-recorded"})
+        for raw in (
+            valid.replace(b"io</", b"PRIVATE MESSAGE</"),
+            valid.replace(b"alias", b"PRIVATE PATH"),
+            valid.replace(b"stage", b"secret"),
+            valid + b"x",
+            b"x" * 4097,
+            valid.replace(b"</map>", b'<string name="error">io</string></map>'),
+            b"<!DOCTYPE map>" + valid,
+            valid.replace(b"<map>", b'<map secret="PRIVATE">'),
+        ):
+            self.assertEqual(LAB.check_diagnostic_summary(raw), {"status": "unavailable", "reason": "invalid-record"})
+
+    def test_check_diagnostic_reads_only_fresh_owned_fixed_preference(self):
+        phone = LAB.Phone("synthetic-private", 1)
+        with patch.object(phone, "require_owned_installer", side_effect=LAB.Failure("unowned")), patch.object(phone, "shell") as shell:
+            with self.assertRaisesRegex(LAB.Failure, "unowned"):
+                phone.capture_check_diagnostic()
+            shell.assert_not_called()
+        with patch.object(phone, "require_owned_installer"), patch.object(phone, "shell", return_value=b"") as shell:
+            self.assertEqual(phone.capture_check_diagnostic()["reason"], "not-recorded")
+        args = shell.call_args.args
+        self.assertEqual(args[:4], ("run-as", LAB.PACKAGE, "sh", "-c"))
+        self.assertIn("head -c 4097 shared_prefs/owner-check-diagnostic.xml", args[4])
+        self.assertIn('[ ! -L "$p" ] || exit 1', args[4])
+        self.assertNotIn("update-request", args[4])
+        self.assertEqual(shell.call_args.kwargs["timeout"], 15)
+
+    def test_check_acknowledgement_wait_is_short_read_only_and_bounded(self):
+        phone, clock = LAB.Phone("synthetic-private", 1800), [0.0]
+        phone.flow_metrics = Mock()
+        with (
+            patch.object(LAB.time, "monotonic", side_effect=lambda: clock[0]),
+            patch.object(LAB.time, "sleep", side_effect=lambda seconds: clock.__setitem__(0, clock[0] + seconds)),
+        ):
+            with patch.object(phone, "read", return_value={"state": "TEST_WAIT"}) as read:
+                self.assertIsNone(phone.check_acknowledgement())
+                self.assertEqual(clock[0], 15)
+                self.assertTrue(all(0 < call.kwargs["timeout"] <= 5 for call in read.call_args_list))
+        phone.flow_metrics.sample.assert_not_called()
+        for state, reason in (
+            ("ERROR", "installer-update-error"),
+            ("UP_TO_DATE", "release-check-state-unavailable"),
+            (None, "release-check-state-unavailable"),
+        ):
+            with patch.object(phone, "read", return_value={"state": state}):
+                with self.assertRaisesRegex(LAB.Failure, "^" + reason + "$"):
+                    phone.check_acknowledgement()
+
+    def test_check_acknowledged_action_never_retries_or_resets_state(self):
+        phone = LAB.Phone("synthetic-private", 1)
+        available = {"state": "UPDATE_AVAILABLE", "release": {"version_code": 2}}
+        for state in (available, {"state": "CHECKING"}):
+            with (
+                patch.object(phone, "put") as put,
+                patch.object(phone, "tap") as tap,
+                patch.object(phone, "check_acknowledgement", return_value=state),
+                patch.object(phone, "wait_state", return_value=available) as wait,
+                patch.object(phone, "retry_unacknowledged_check", side_effect=AssertionError("no retry")),
+            ):
+                phone.check(2)
+                put.assert_called_once_with("update-state.json", LAB.encoded({"state": "TEST_WAIT"}))
+                tap.assert_called_once_with("Check for updates")
+                self.assertEqual(wait.call_count, int(state["state"] == "CHECKING"))
+
+    def test_check_retries_once_after_fresh_owned_control_and_unchanged_state(self):
+        phone = LAB.Phone("synthetic-private", 1)
+        available = {"state": "UPDATE_AVAILABLE", "release": {"version_code": 2}}
+        with (
+            patch.object(phone, "put") as put,
+            patch.object(phone, "tap"),
+            patch.object(phone, "check_acknowledgement", side_effect=[None, available]),
+            patch.object(phone, "require_owned_installer") as owner,
+            patch.object(phone, "shell"),
+            patch.object(phone, "ui_windows", side_effect=[self.check_control(), self.check_control()]) as ui,
+            patch.object(phone, "read", return_value={"state": "TEST_WAIT"}) as read,
+            patch.object(phone, "tap_prompt_node") as retry,
+        ):
+            phone.check(2)
+            self.assertEqual(put.call_count, 1)
+            owner.assert_called_once()
+            self.assertEqual(ui.call_count, 2)
+            self.assertEqual(read.call_count, 2)
+            self.assertTrue(all(call.kwargs == {"timeout": 5} for call in read.call_args_list))
+            retry.assert_called_once()
+        with (
+            patch.object(phone, "put"),
+            patch.object(phone, "tap"),
+            patch.object(phone, "check_acknowledgement", return_value=None),
+            patch.object(phone, "retry_unacknowledged_check", return_value=None) as retry,
+        ):
+            with self.assertRaisesRegex(LAB.Failure, "^check-action-not-acknowledged$"):
+                phone.check(2)
+            retry.assert_called_once()
+
+    def test_check_late_acknowledgement_prohibits_the_second_tap(self):
+        phone = LAB.Phone("synthetic-private", 1)
+        for state in ("CHECKING", "UPDATE_AVAILABLE"):
+            row = {"state": state, "release": {"version_code": 2}}
+            for reads, ui_count in (([row], 0), ([{"state": "TEST_WAIT"}, row], 2)):
+                with (
+                    patch.object(phone, "require_owned_installer"),
+                    patch.object(phone, "shell"),
+                    patch.object(phone, "ui_windows", side_effect=[self.check_control(), self.check_control()]) as ui,
+                    patch.object(phone, "read", side_effect=reads),
+                    patch.object(phone, "tap_prompt_node", side_effect=AssertionError("late ack must not tap")),
+                    patch.object(phone, "put", side_effect=AssertionError("must not reset")),
+                ):
+                    self.assertEqual(phone.retry_unacknowledged_check(), row)
+                    self.assertEqual(ui.call_count, ui_count)
+
+    def test_check_retry_refuses_changed_ambiguous_or_unowned_controls(self):
+        phone = LAB.Phone("synthetic-private", 1)
+        wrong = self.check_control()
+        wrong.find("node").set("package", "synthetic-private")
+        duplicate = self.check_control()
+        duplicate.find("node").append(self.check_control().find("node/node"))
+        for second in (
+            wrong,
+            duplicate,
+            self.check_control(enabled="false"),
+            self.check_control(bounds="[5,6][30,40]"),
+            self.check_control(bounds="[0,0][0,0]"),
+        ):
+            with (
+                patch.object(phone, "require_owned_installer"),
+                patch.object(phone, "shell"),
+                patch.object(phone, "ui_windows", side_effect=[self.check_control(), second]),
+                patch.object(phone, "read", return_value={"state": "TEST_WAIT"}),
+                patch.object(phone, "tap_prompt_node", side_effect=AssertionError("unqualified control must not tap")),
+            ):
+                with self.assertRaises(LAB.Failure):
+                    phone.retry_unacknowledged_check()
+        with (
+            patch.object(phone, "require_owned_installer", side_effect=LAB.Failure("owned-hash-changed")),
+            patch.object(phone, "ui_windows", side_effect=AssertionError("changed owner")),
+        ):
+            with self.assertRaisesRegex(LAB.Failure, "owned-hash-changed"):
+                phone.retry_unacknowledged_check()
+
+    def test_check_retry_refuses_unknown_state_and_never_changes_permissions(self):
+        phone = LAB.Phone("synthetic-private", 1)
+        for state in (None, {"state": "ERROR"}, {"state": "UP_TO_DATE"}):
+            with (
+                patch.object(phone, "require_owned_installer"),
+                patch.object(phone, "shell"),
+                patch.object(phone, "ui_windows", side_effect=[self.check_control(), self.check_control()]),
+                patch.object(phone, "read", return_value=state),
+                patch.object(phone, "tap_prompt_node", side_effect=AssertionError("unknown state")),
+                patch.object(phone, "install", side_effect=AssertionError("no install")),
+                patch.object(phone, "allow_visible_install_permission", side_effect=AssertionError("no permission")),
+            ):
+                with self.assertRaises(LAB.Failure):
+                    phone.retry_unacknowledged_check()
+
+    @staticmethod
+    def timeout_records(root, states=("TEST_WAIT", "CHECKING"), name="run-first000", source="a" * 40):
+        directory = root / "work/coordination/installer-update-acceptance" / name
+        directory.mkdir(parents=True)
+
+        def record(number, category, output, phase="baseline-N-check", code=0):
+            path = directory / f"{number:05d}-{category}.json"
+            path.write_bytes(LAB.encoded({"phase": phase, "category": category, "returncode": code, "outcome": "returned"}))
+            path.with_suffix(".stdout.log").write_bytes(output)
+            return path
+
+        record(1, "resolve-source-commit", source.encode() + b"\n", "setup")
+        for number, state in enumerate(states, 10):
+            record(number, "device-state-read", LAB.encoded({"state": state, "message": "synthetic-private"}))
+        ui = f'<hierarchy><node package="{LAB.PACKAGE}"><node package="{LAB.PACKAGE}" text="Check for updates" enabled="true" clickable="true" bounds="[1,2][3,4]"/><node package="{LAB.PACKAGE}" text="synthetic-private"/></node></hierarchy>'.encode()
+        record(5, "device-ui-read", ui)
+        return directory
+
+    def timeout_inspection(self, root, *args):
+        output = io.StringIO()
+        phone_type = LAB.Phone
+        with ExitStack() as stack:
+            stack.enter_context(patch.object(LAB, "ROOT", root))
+            stack.enter_context(patch.dict(os.environ, {}, clear=True))
+            for name in ("read_context", "PrivateDiagnostics", "prepare_artifacts", "publisher_keys", "acceptance", "server"):
+                stack.enter_context(patch.object(LAB, name, side_effect=AssertionError("inspection must not call " + name)))
+            stack.enter_context(patch.object(LAB, "Phone", wraps=phone_type, side_effect=AssertionError("no device construction")))
+            stack.enter_context(patch.object(LAB.subprocess, "run", side_effect=AssertionError("no commands")))
+            stack.enter_context(redirect_stdout(output))
+            code = LAB.main(["--inspect-check-timeout", *args])
+        self.assertEqual(len(output.getvalue().splitlines()), 1)
+        self.assertNotIn(str(root), output.getvalue())
+        self.assertNotIn("synthetic-private", output.getvalue())
+        return code, json.loads(output.getvalue())
+
+    def test_timeout_inspector_preserves_states_and_redacts_private_material(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            self.timeout_records(root, ("TEST_WAIT", "TEST_WAIT", "CHECKING", "UP_TO_DATE", "synthetic-private", {}, None))
+            self.timeout_records(root, name="run-other000", source="b" * 40)
+            before = {str(p): p.read_bytes() for p in root.rglob("*") if p.is_file()}
+            code, result = self.timeout_inspection(root, "a" * 40)
+            self.assertEqual(code, 0)
+            self.assertEqual(result["binding"], "unique-retained-source-not-run-id")
+            self.assertEqual(result["state_counts"], {"TEST_WAIT": 2, "CHECKING": 1, "UP_TO_DATE": 1, "unknown": 3})
+            self.assertEqual(result["first_transitions"], ["TEST_WAIT", "CHECKING", "UP_TO_DATE", "unknown"])
+            self.assertEqual(
+                result["last_retained_check_control"],
+                {"status": "owned-root", "kind": "hierarchy", "count": 1, "enabled_count": 1, "clickable_count": 1, "bounds_valid_count": 1},
+            )
+            self.assertEqual(before, {str(p): p.read_bytes() for p in root.rglob("*") if p.is_file()})
+
+    def test_timeout_inspector_refuses_ambiguous_or_missing_source(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            self.timeout_records(root)
+            for source in ("../synthetic-private", "b" * 40):
+                self.assertEqual(self.timeout_inspection(root, source)[0], 1)
+            self.timeout_records(root, name="run-second00")
+            code, result = self.timeout_inspection(root, "a" * 40)
+            self.assertEqual(code, 1)
+            self.assertEqual(result["source_candidates"], 2)
+            self.assertNotIn("state_counts", result)
+
+    def test_timeout_inspector_rejects_other_modes_before_reading(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            for flag in (
+                "--host-only",
+                "--inspect-state",
+                "--inspect-ui-failure",
+                "--inspect-update-failure",
+                "--allow-test-installs",
+                "--allow-test-notifications",
+                "--qualify-phone-flow",
+                "--qualify-install-prompts",
+            ):
+                with patch.object(LAB, "inspect_check_timeout", wraps=LAB.inspect_check_timeout):
+                    # Prompt conflicts use the existing fixed FAIL output contract.
+                    if flag.startswith("--qualify"):
+                        with redirect_stdout(io.StringIO()):
+                            self.assertEqual(LAB.main(["--inspect-check-timeout", "a" * 40, flag]), 1)
+                    else:
+                        self.assertEqual(self.timeout_inspection(Path(temporary), "a" * 40, flag)[0], 1)
+            self.assertEqual(self.timeout_inspection(Path(temporary), "a" * 40, "--diagnostic-run", "newest")[0], 1)
+
+    def test_timeout_inspector_does_not_follow_log_symlinks(self):
+        for name in ("00010-device-state-read.stdout.log", "00005-device-ui-read.stdout.log", "00001-resolve-source-commit.stdout.log"):
+            with self.subTest(name=name), tempfile.TemporaryDirectory() as temporary:
+                root = Path(temporary)
+                directory = self.timeout_records(root)
+                path = directory / name
+                path.unlink()
+                path.symlink_to(root / "private-missing")
+                code, result = self.timeout_inspection(root, "a" * 40)
+                self.assertEqual(code, 1)
+                self.assertEqual(result["errors"], ["log-inspection-record-unavailable"])
+
+    def test_timeout_inspector_classifies_control_without_tap_or_coordinates(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            directory = self.timeout_records(root)
+            path = directory / "00005-device-ui-read.stdout.log"
+            original = path.read_text()
+            path.write_text(original.replace("[1,2][3,4]", "[0,0][0,0]"))
+            code, result = self.timeout_inspection(root, "a" * 40)
+            self.assertEqual(code, 0)
+            self.assertEqual(result["last_retained_check_control"]["bounds_valid_count"], 0)
+            path.write_text(original.replace(LAB.PACKAGE, "synthetic-private"))
+            code, result = self.timeout_inspection(root, "a" * 40)
+            self.assertEqual(code, 0)
+            self.assertEqual(result["last_retained_check_control"], {"status": "unclassified"})
+
+    def test_timeout_inspector_bounds_transitions_and_distinguishes_absent_reads(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            directory = self.timeout_records(root, ("TEST_WAIT", "CHECKING") * 20)
+            path = directory / "00049-device-state-read.stdout.log"
+            path.write_text("null")
+            code, result = self.timeout_inspection(root, "a" * 40)
+            self.assertEqual(code, 0)
+            self.assertEqual(len(result["first_transitions"]), 16)
+            self.assertEqual(result["last_state"], "null")
+            metadata_path = directory / "00049-device-state-read.json"
+            metadata = json.loads(metadata_path.read_text())
+            metadata["returncode"] = 1
+            metadata_path.write_bytes(LAB.encoded(metadata))
+            self.assertEqual(self.timeout_inspection(root, "a" * 40)[1]["last_state"], "read-unavailable")
+
     def test_transport_reads_retry_signals_but_taps_do_not(self):
         phone = LAB.Phone("synthetic-private-selector", 1)
         killed = subprocess.CompletedProcess([], -9, b"", b"")
@@ -513,6 +897,74 @@ class LabInstallerUpdatesTests(unittest.TestCase):
             phone.allow_visible_install_permission()
         self.assertIn("INFO install-permission-switch actor=harness", output.getvalue())
         self.assertTrue(all(call.kwargs == {"recovery": False} for call in ui.call_args_list))
+
+    def test_consent_summary_exports_only_fixed_classes_and_counts(self):
+        nodes = [
+            {"resource-id": "android:id/alertTitle", "text": "PRIVATE APP", "content-desc": "PRIVATE DESCRIPTION"},
+            {"resource-id": "android:id/button1", "text": "PRIVATE ACTION", "enabled": "false"},
+            {"resource-id": "android:id/message", "text": "PRIVATE ERROR"},
+            {"resource-id": "PRIVATE RESOURCE", "text": "PRIVATE CONTENT"},
+        ]
+        summary = LAB.install_consent_summary(nodes)
+        self.assertEqual(
+            summary,
+            {
+                "expected_label_location": "neither",
+                "title_class": "other",
+                "button1_count": 1,
+                "button1_enabled_count": 0,
+                "button1_caption_class": "other",
+                "layout_class": "message-dialog",
+            },
+        )
+        self.assertNotIn("PRIVATE", json.dumps(summary))
+        self.assertEqual(LAB.install_consent_summary([])["title_class"], "missing")
+        nodes.append(dict(nodes[0]))
+        nodes.append(dict(nodes[1]))
+        self.assertEqual(LAB.install_consent_summary(nodes)["title_class"], "multiple")
+        self.assertEqual(LAB.install_consent_summary(nodes)["button1_caption_class"], "multiple")
+
+    def test_consent_summary_classifies_known_labels_without_broadening_tap_gate(self):
+        for title, classification in (
+            ("Synthetic update fixture", "synthetic-fixture"),
+            (LAB.GAME, "fixture-package"),
+            ("Owner game installer", "installer-host"),
+        ):
+            nodes = [
+                {"resource-id": "android:id/alertTitle", "text": title},
+                {"resource-id": "com.android.packageinstaller:id/install_confirm_question"},
+                {"resource-id": "android:id/button1", "text": "Update", "enabled": "true"},
+            ]
+            result = LAB.install_consent_summary(nodes)
+            self.assertEqual(result["title_class"], classification)
+            self.assertEqual(result["layout_class"], "confirmation-control")
+            self.assertEqual(result["button1_caption_class"], "update")
+            self.assertEqual(result["button1_enabled_count"], 1)
+        nodes.append({"content-desc": "Synthetic update fixture"})
+        self.assertEqual(LAB.install_consent_summary(nodes)["expected_label_location"], "content-desc")
+        nodes.append({"text": "Synthetic update fixture"})
+        self.assertEqual(LAB.install_consent_summary(nodes)["expected_label_location"], "both")
+
+    def test_refused_consent_emits_fixed_observation_without_a_tap(self):
+        phone = self.owned_phone()
+        tree = self.consent_prompt()
+        tree.find("node")[0].set("text", "PRIVATE APP")
+        tree.find("node")[0].set("content-desc", "Synthetic update fixture")
+        with (
+            patch.object(phone, "require_owned_installer"),
+            patch.object(phone, "install_identity", return_value=self.install_verified()),
+            patch.object(phone, "ui_windows", return_value=tree),
+            patch.object(phone, "shell") as shell,
+            redirect_stdout(io.StringIO()) as output,
+        ):
+            with self.assertRaisesRegex(LAB.Failure, "^install-consent-fixture-not-identified$"):
+                phone.confirm_synthetic_install()
+        result = json.loads(output.getvalue())
+        self.assertEqual(result["mode"], "install-consent-fixture")
+        self.assertTrue(result["identity_verified"])
+        self.assertEqual(result["observed"]["expected_label_location"], "content-desc")
+        self.assertNotIn("PRIVATE", output.getvalue())
+        self.assertFalse(any(call.args[:2] == ("input", "tap") for call in shell.call_args_list))
 
     def test_synthetic_install_consent_requires_owned_fixture_and_identified_button(self):
         phone = self.owned_phone()
@@ -2238,6 +2690,124 @@ public class Review {
             with self.subTest(allow=allow), patch.object(phone, "ui_for", return_value=dialog), patch.object(phone, "shell") as shell:
                 with self.assertRaisesRegex(LAB.Failure, "notification-dialog-not-dismissed"):
                     phone.dismiss_notification_permission()
+            self.assertEqual(shell.call_count, 1)
+
+    @classmethod
+    def focused_notification_dialog(cls, **kwargs):
+        tree = ET.Element("hierarchy")
+        root = ET.SubElement(tree, "node", {"package": "com.android.permissioncontroller"})
+        for node in cls.notification_dialog(**kwargs):
+            root.append(node)
+        root[-1].set("clickable", "true")
+        return tree
+
+    def test_repeat_notification_denial_is_explicit_user_fixed_after_observed_first_denial(self):
+        phone = LAB.Phone("synthetic-private-selector", 1)
+        phone.owned_installer, phone.installer_hash = True, "a" * 64
+        dialog = self.focused_notification_dialog(button="permission_deny_and_dont_ask_again_button")
+        app = ET.Element("hierarchy")
+        ET.SubElement(app, "node", {"package": LAB.PACKAGE})
+        output = io.StringIO()
+        with (
+            patch.object(phone, "package_hash", return_value=phone.installer_hash) as owned,
+            patch.object(phone, "ui_for", side_effect=[self.notification_dialog(), ET.Element("hierarchy")]) as ordinary,
+            patch.object(phone, "ui_windows", side_effect=[dialog, dialog, app]) as focused,
+            patch.object(phone, "shell") as shell,
+            redirect_stdout(output),
+        ):
+            self.assertTrue(phone.dismiss_notification_permission())
+            self.assertTrue(phone.notification_denied)
+            self.assertTrue(phone.dismiss_notification_permission(repeat_denial=True))
+        self.assertEqual([c.kwargs["label"] for c in shell.call_args_list], ["device-notification-deny", "device-notification-deny-and-dont-ask-again"])
+        self.assertEqual(ordinary.call_count, 2)
+        self.assertEqual(owned.call_count, 2)
+        self.assertEqual(
+            [c.args for c in focused.call_args_list],
+            [
+                ((LAB.PACKAGE, "com.android.permissioncontroller"),),
+                (("com.android.permissioncontroller",),),
+                ((LAB.PACKAGE, "com.android.permissioncontroller"),),
+            ],
+        )
+        self.assertTrue(all(c.kwargs == {"recovery": False} for c in focused.call_args_list))
+        self.assertIn("effect=user-fixed scope=owned-disposable-installer", output.getvalue())
+
+    def test_repeat_notification_control_is_not_an_ordinary_denial_or_grant_alias(self):
+        phone = LAB.Phone("synthetic-private-selector", 1)
+        phone.owned_installer, phone.notification_denied = True, True
+        dialog = self.notification_dialog(button="permission_deny_and_dont_ask_again_button")
+        with patch.object(phone, "ui_for", return_value=dialog), patch.object(phone, "shell") as shell:
+            with self.assertRaisesRegex(LAB.Failure, "notification-denial-unavailable"):
+                phone.dismiss_notification_permission()
+            shell.assert_not_called()
+        phone.allow_test_notifications = True
+        with patch.object(phone, "ui_windows") as ui, patch.object(phone, "shell") as shell:
+            with self.assertRaisesRegex(LAB.Failure, "notification-repeat-denial-conflicting-policy"):
+                phone.dismiss_notification_permission(repeat_denial=True)
+            ui.assert_not_called()
+            shell.assert_not_called()
+
+    def test_repeat_notification_denial_rejects_changed_ambiguous_or_unowned_prompt_without_tap(self):
+        for mode in (
+            "no-prior-denial",
+            "disabled",
+            "not-clickable",
+            "duplicate",
+            "both-negative",
+            "misspelled",
+            "wrong-purpose",
+            "foreign",
+            "zero-bounds",
+            "changed-focus",
+            "changed-apk",
+        ):
+            phone = LAB.Phone("synthetic-private-selector", 1)
+            phone.owned_installer, phone.installer_hash, phone.notification_denied = True, "a" * 64, mode != "no-prior-denial"
+            dialog = self.focused_notification_dialog(button="permission_deny_and_dont_ask_again_button")
+            button = dialog.find("node")[-1]
+            if mode == "disabled":
+                button.set("enabled", "false")
+            if mode == "not-clickable":
+                button.set("clickable", "false")
+            if mode in ("duplicate", "both-negative"):
+                other = ET.fromstring(ET.tostring(button))
+                if mode == "both-negative":
+                    other.set("resource-id", "com.android.permissioncontroller:id/permission_deny_button")
+                dialog.find("node").append(other)
+            if mode == "misspelled":
+                button.set("resource-id", "com.android.permissioncontroller:id/permission_deny_dont_ask_again_button")
+            if mode == "wrong-purpose":
+                dialog.find("node")[0].set("text", "Allow Owner game installer to access camera?")
+            if mode == "foreign":
+                button.set("package", "foreign")
+            if mode == "zero-bounds":
+                button.set("bounds", "[10,10][10,10]")
+            confirm = ET.fromstring(ET.tostring(dialog))
+            if mode == "changed-focus":
+                confirm.find("node")[-1].set("bounds", "[50,60][100,120]")
+            with (
+                self.subTest(mode=mode),
+                patch.object(phone, "package_hash", return_value="b" * 64 if mode == "changed-apk" else phone.installer_hash),
+                patch.object(phone, "ui_windows", side_effect=[dialog, confirm]),
+                patch.object(phone, "shell") as shell,
+                self.assertRaises(LAB.Failure),
+            ):
+                try:
+                    phone.dismiss_notification_permission(repeat_denial=True)
+                finally:
+                    shell.assert_not_called()
+
+    def test_repeat_notification_denial_requires_observed_dismissal(self):
+        phone = LAB.Phone("synthetic-private-selector", 1)
+        phone.owned_installer, phone.installer_hash, phone.notification_denied = True, "a" * 64, True
+        dialog = self.focused_notification_dialog(button="permission_deny_and_dont_ask_again_button")
+        with (
+            patch.object(phone, "package_hash", return_value=phone.installer_hash),
+            patch.object(phone, "ui_windows", return_value=dialog),
+            patch.object(phone, "shell") as shell,
+        ):
+            with self.assertRaisesRegex(LAB.Failure, "notification-dialog-not-dismissed"):
+                phone.dismiss_notification_permission(repeat_denial=True)
             self.assertEqual(shell.call_count, 1)
 
     def test_occupied_alpha_refuses_before_build_and_key_creation(self):

@@ -63,7 +63,7 @@ public static class WholeCatalogComposed
         Check(ReferenceEquals(manifest, snapshot) && values.SequenceEqual(BodyCatalog.allBodyPrefabs));
         events.Add("bodies");
     }
-    public static int PrepareProjectiles(JObject manifest)
+    public static int PrepareProjectiles(JObject manifest, Action<string> trace)
     {
         Check(ReferenceEquals(manifest, snapshot));
         events.Add("projectiles");
