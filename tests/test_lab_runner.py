@@ -1,3 +1,4 @@
+import json
 import os
 import subprocess
 import sys
@@ -65,7 +66,35 @@ class BatteryRuleTest(unittest.TestCase):
         self.assertIsNone(lab_runner.battery_refusal(80, 0, 260))  # limit holding with zero current
         self.assertIsNotNone(lab_runner.battery_refusal(80, 500, 260))  # actually charging at the limit
         self.assertIsNotNone(lab_runner.battery_refusal(86, -100, 260))
-        self.assertIsNotNone(lab_runner.battery_refusal(70, 0, 350))
+        self.assertIsNone(lab_runner.battery_refusal(70, 0, 350))
+        self.assertIsNotNone(lab_runner.battery_refusal(70, 0, 351))
+
+    def test_charging_requires_three_consecutive_observations(self):
+        with tempfile.TemporaryDirectory() as repo:
+            runner = lab_runner.Runner(repo, {})
+            with mock.patch.object(runner, "battery", side_effect=[(80, 1, 300), (80, 0, 300)]), mock.patch.object(lab_runner.time, "sleep") as sleep:
+                self.assertIsNone(runner.admit_battery("synthetic"))
+                sleep.assert_called_once_with(10)
+            with mock.patch.object(runner, "battery", return_value=(80, 1, 300)) as battery, mock.patch.object(lab_runner.time, "sleep"):
+                self.assertIsNotNone(runner.admit_battery("synthetic"))
+                self.assertEqual(battery.call_count, 3)
+
+    def test_uncertain_emission_preserves_lease_through_runner_cleanup(self):
+        with tempfile.TemporaryDirectory() as repo:
+            runner = lab_runner.Runner(repo, {})
+            runner.devices = {"synthetic": "synthetic-device"}
+            runner.worktree = lambda ref: Path(repo)
+
+            def run(*args, **kwargs):
+                if kwargs.get("extra_env"):
+                    lease = Path(kwargs["extra_env"]["LAB_RUNNER_LEASE"])
+                    (lease / "retain.json").write_text("{}")
+                return 1
+
+            with mock.patch.object(runner, "battery", return_value=(70, 0, 300)), mock.patch.object(runner, "run", side_effect=run):
+                with mock.patch.object(lab_runner._TRANSPORT.AdbTransport, "run", return_value=b""):
+                    runner.execute(lab_runner.parse_command("/lab script device=synthetic -- scripts/synthetic.py"))
+            self.assertTrue((runner.leases / "synthetic-device/retain.json").exists())
 
 
 class OwnerGateTest(unittest.TestCase):
@@ -75,6 +104,33 @@ class OwnerGateTest(unittest.TestCase):
 
 
 class RefusedLeaseTest(unittest.TestCase):
+    def test_local_emission_publishes_failure_done_file_after_runner_cleanup(self):
+        with tempfile.TemporaryDirectory() as directory:
+            repo = Path(directory).resolve()
+            request = repo / "request.json"
+            done = repo / "work/terminal.json"
+            request.write_text(json.dumps(dict(runner=dict(repo=str(repo), ref="main", device="synthetic"), done_file=str(done))))
+            with mock.patch.object(lab_runner.Runner, "execute", side_effect=RuntimeError("synthetic failure")):
+                self.assertEqual(lab_runner.local_emission(request), 1)
+            self.assertEqual(json.loads(done.read_text())["error"], "synthetic failure")
+
+    def test_resume_claims_only_its_retained_lease_after_previous_runner_exits(self):
+        with tempfile.TemporaryDirectory() as repo:
+            runner = lab_runner.Runner(repo, {})
+            lease = runner.leases / "synthetic"
+            lease.mkdir(parents=True)
+            runner.resume_state = Path(repo) / "state.json"
+            job = {"directory": "synthetic-job"}
+            runner.resume_state.write_text(json.dumps({"job": job}))
+            (lease / "retain.json").write_text(json.dumps({"job": job, "state": str(runner.resume_state)}))
+            (lease / "lab-runner.json").write_text(json.dumps({"workstream": "lab-runner", "pid": 12}))
+            with mock.patch.object(lab_runner.os, "kill", return_value=None), self.assertRaisesRegex(lab_runner.CommandError, "still alive"):
+                runner.take_lease("synthetic", "synthetic")
+            with mock.patch.object(lab_runner.os, "kill", side_effect=ProcessLookupError):
+                self.assertEqual(runner.take_lease("synthetic", "synthetic"), lease)
+            self.assertTrue(runner.reattached)
+            self.assertEqual(json.loads((lease / "lab-runner.json").read_text())["pid"], os.getpid())
+
     def test_refused_lease_never_touches_the_busy_device(self):
         with tempfile.TemporaryDirectory() as repo:
             runner = lab_runner.Runner(repo, {"LAB_RUN_ID": "t"})

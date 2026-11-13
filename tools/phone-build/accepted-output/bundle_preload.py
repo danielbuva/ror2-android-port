@@ -11,6 +11,112 @@ import importlib.util
 from pathlib import Path
 import re
 import struct
+from collections import OrderedDict
+from collections.abc import MutableMapping
+
+
+class DiskIndexes:
+    """Attempt-owned descriptor indexes; object bodies keep their original owners."""
+
+    def __init__(self, parent):
+        import sqlite3
+        import tempfile
+
+        Path(parent).mkdir(parents=True, exist_ok=True)
+        self.scratch = tempfile.TemporaryDirectory(prefix=".native-index-", dir=parent)
+        self.connection = sqlite3.connect(Path(self.scratch.name) / "index.sqlite3")
+        self.connection.execute("PRAGMA cache_size=-8192")
+        self.connection.execute("PRAGMA temp_store=FILE")
+        self.connection.execute("CREATE TABLE entries (collection INTEGER, key TEXT, value TEXT, UNIQUE(collection,key))")
+        self.collections, self.pending = 0, 0
+        self.providers = {}
+
+    def mapping(self):
+        self.collections += 1
+        return DiskIndex(self, self.collections)
+
+    def close(self):
+        self.connection.close()
+        self.scratch.cleanup()
+
+
+class DiskIndex(MutableMapping):
+    """JSON rows in insertion order, without retaining decoded descriptors."""
+
+    def __init__(self, store, collection):
+        self.store, self.collection = store, collection
+
+    @staticmethod
+    def encode(value):
+        import json
+
+        return json.dumps(value, separators=(",", ":"))
+
+    def __getitem__(self, key):
+        import json
+
+        row = self.store.connection.execute("SELECT value FROM entries WHERE collection=? AND key=?", (self.collection, self.encode(key))).fetchone()
+        if row is None:
+            raise KeyError(key)
+        return json.loads(row[0])
+
+    def __setitem__(self, key, value):
+        self.store.connection.execute(
+            "INSERT INTO entries VALUES (?,?,?) ON CONFLICT(collection,key) DO UPDATE SET value=excluded.value",
+            (self.collection, self.encode(key), self.encode(value)),
+        )
+        self.store.pending += 1
+        if self.store.pending >= 1000:
+            self.store.connection.commit()
+            self.store.pending = 0
+
+    def __delitem__(self, key):
+        cursor = self.store.connection.execute("DELETE FROM entries WHERE collection=? AND key=?", (self.collection, self.encode(key)))
+        if not cursor.rowcount:
+            raise KeyError(key)
+
+    def __len__(self):
+        return self.store.connection.execute("SELECT count(*) FROM entries WHERE collection=?", (self.collection,)).fetchone()[0]
+
+    def __iter__(self):
+        import json
+
+        for (key,) in self.store.connection.execute("SELECT key FROM entries WHERE collection=? ORDER BY rowid", (self.collection,)):
+            value = json.loads(key)
+            yield tuple(value) if isinstance(value, list) else value
+
+    def items(self):
+        import json
+
+        for key, value in self.store.connection.execute("SELECT key,value FROM entries WHERE collection=? ORDER BY rowid", (self.collection,)):
+            key = json.loads(key)
+            yield tuple(key) if isinstance(key, list) else key, json.loads(value)
+
+    def values(self):
+        for _, value in self.items():
+            yield value
+
+
+class ParsedTrees(OrderedDict):
+    """Bound parsed-tree retention by encoded size; keep one oversized tree usable."""
+
+    def __init__(self, limit=8 * 1024 * 1024):
+        super().__init__()
+        self.limit, self.bytes = limit, 0
+
+    def __getitem__(self, key):
+        value = super().__getitem__(key)
+        self.move_to_end(key)
+        return value
+
+    def __setitem__(self, key, value):
+        if key not in self:
+            self.bytes += len(key)
+        super().__setitem__(key, value)
+        self.move_to_end(key)
+        while self.bytes > self.limit and len(self) > 1:
+            prior, _ = self.popitem(last=False)
+            self.bytes -= len(prior)
 
 
 class EmissionCache:
@@ -48,8 +154,12 @@ class EmissionCache:
     def put(self, kind, key, body):
         self.connection.execute("INSERT OR REPLACE INTO entries VALUES (?,?,?,?)", (kind, key, body, hashlib.sha256(body).hexdigest()))
 
-    def close(self):
+    def checkpoint(self):
+        """Retain completed transformations across process death, never qualification."""
         self.connection.commit()
+
+    def close(self):
+        self.checkpoint()
         self.connection.close()
 
 
@@ -526,6 +636,7 @@ def produce_graph(selected, graph, sources, *, emission_cache=None, endpoint_rec
                 key = EmissionCache.key([group_scope, [(identity, node_keys[identity]) for identity in members]])
                 emission_cache.put("groups", key, packed)
                 emission_cache.put("group_members", group_scope, b"".join(struct.pack("<q", identity) for identity in members))
+                emission_cache.checkpoint()
         count = len(packed) // 12
         containers.extend((group["path"].lower(), preload_count, count, root) for root in roots)
         stream.write(packed)
@@ -601,8 +712,9 @@ class ProducerRecords:
     PPtr and final endpoint qualification still belong to the emitter.
     """
 
-    def __init__(self, provider_paths=None):
-        self.cache = {}
+    def __init__(self, provider_paths=None, index_store=None):
+        self.cache = {} if index_store is None else index_store.providers
+        self.index_store = index_store
         self.pins = {}
         self.provider_paths = provider_paths or {}
 
@@ -631,16 +743,18 @@ class ProducerRecords:
                     raise ValueError("Retained native provider extent or witness drift")
             if pin["index_sha256"] != expected:
                 raise ValueError("Native provider index drift")
-            index = {}
+            index = {} if self.index_store is None else self.index_store.mapping()
             for row in json_rows(directory / "index.jsonl"):
                 identity = row["bundle"], row["member"], row["path_id"]
-                copies = index.setdefault(identity, [])
+                copies = index.get(identity, [])
                 if copies and {k: v for k, v in row.items() if k != "offset"} != {k: v for k, v in copies[0].items() if k != "offset"}:
                     raise ValueError("Conflicting native provider identity")
                 copies.append(row)
-            self.pins[str(directory)] = pin
-            self.cache[directory] = receipt, index
-        return self.cache[directory]
+                index[identity] = copies
+            self.cache[directory] = receipt, index, pin
+        receipt, index, pin = self.cache[directory]
+        self.pins[str(directory)] = pin
+        return receipt, index
 
     def record(self, value):
         directory = self.directory(value["provider"])
@@ -737,21 +851,24 @@ def retain_type_metadata(records, output, qualify):
     return revised
 
 
-def emit_closed_native(*args, cache_directory=None, cache_inputs=None, **kwargs):
+def emit_closed_native(*args, cache_directory=None, cache_inputs=None, index_store=None, **kwargs):
     """Emit checked native content, optionally reusing pinned private outputs.
 
     cache_inputs must enumerate all files consumed by endpoint_record and
     managed_check, including their code, current CLR/SDK metadata and containers.
     A whole-output hit returns a reference to the prior bundle (no payload copy).
     """
-    from contextlib import closing
+    from contextlib import ExitStack, closing
 
-    if cache_directory is None:
-        return _emit_closed_native(*args, **kwargs)
-    if cache_inputs is None:
-        raise ValueError("Emission cache requires explicit callback input files")
-    with closing(EmissionCache(cache_directory)) as cache:
-        return _emit_closed_native(*args, emission_cache=cache, cache_inputs=cache_inputs, **kwargs)
+    with ExitStack() as stack:
+        if index_store is None:
+            index_store = stack.enter_context(closing(DiskIndexes(Path(args[2] if len(args) > 2 else kwargs["output"]).parent)))
+        if cache_directory is None:
+            return _emit_closed_native(*args, index_store=index_store, **kwargs)
+        if cache_inputs is None:
+            raise ValueError("Emission cache requires explicit callback input files")
+        cache = stack.enter_context(closing(EmissionCache(cache_directory)))
+        return _emit_closed_native(*args, emission_cache=cache, cache_inputs=cache_inputs, index_store=index_store, **kwargs)
 
 
 def _emit_closed_native(
@@ -771,6 +888,7 @@ def _emit_closed_native(
     emission_cache=None,
     cache_inputs=(),
     provider_paths=None,
+    index_store=None,
 ):
     """Emit the declared local/native subset of a qualified producer graph.
 
@@ -819,26 +937,24 @@ def _emit_closed_native(
     retained = json.loads((graph_directory / "done.json").read_text())
     if retained.get("success") is not True:
         raise ValueError("Unsuccessful source graph")
-    all_records = {}
+    all_records = index_store.mapping()
     for row in json_rows(graph_directory / "selected-records.jsonl"):
         key = tuple(row["destination"])
         if key in all_records:
             raise ValueError("Duplicate selected destination")
         all_records[key] = row
-    selected = (
-        {}
-        if required is not None
-        else {
-            key: row
-            for key, row in all_records.items()
-            if key[:2] == (name, member)
-            and (ProducerRecords(provider_paths).directory(row["provider"]) / "result.json").is_file()
-            and row.get("schema")
-            and row["class_id"] not in (114, 115, 142)
-            and (not row.get("resource") or row["class_id"] in (28, 89, 43))
-            and all(edge[0] == 0 for edge in row.get("edges", [[1, 1]]))
-        }
-    )
+    selected = index_store.mapping()
+    if required is None:
+        for key, row in all_records.items():
+            if (
+                key[:2] == (name, member)
+                and (ProducerRecords(provider_paths).directory(row["provider"]) / "result.json").is_file()
+                and row.get("schema")
+                and row["class_id"] not in (114, 115, 142)
+                and (not row.get("resource") or row["class_id"] in (28, 89, 43))
+                and all(edge[0] == 0 for edge in row.get("edges", [[1, 1]]))
+            ):
+                selected[key] = row
     if required is not None:
         identities = required["path_ids"]
         if not identities or len(set(identities)) != len(identities):
@@ -846,7 +962,8 @@ def _emit_closed_native(
         missing = sorted(identity for identity in identities if (name, member, identity) not in all_records)
         if missing:
             raise ValueError(f"Required produced objects absent: {missing}")
-        selected = {(name, member, identity): all_records[name, member, identity] for identity in identities}
+        for identity in identities:
+            selected[name, member, identity] = all_records[name, member, identity]
         if any(row["class_id"] == 142 for row in selected.values()):
             raise ValueError("Required object set must exclude the regenerated AssetBundle container")
         if any(row["class_id"] == 114 for row in selected.values()) and managed_check is None:
@@ -861,6 +978,10 @@ def _emit_closed_native(
     if emission_cache is not None:
         input_pins = emission_input_pins(selected, graph_directory, schema_paths, codec, cache_inputs, provider_paths)
         # Routes are field-qualified and can include endpoints outside selected.
+        route_digest = hashlib.sha256()
+        if structural_routes is not None:
+            for key in sorted(structural_routes):
+                route_digest.update(json.dumps([key, structural_routes[key]], sort_keys=True, separators=(",", ":")).encode() + b"\n")
         request_key = EmissionCache.key(
             dict(
                 inputs=input_pins,
@@ -869,7 +990,7 @@ def _emit_closed_native(
                 required=required,
                 codec_sha256=codec_sha256,
                 field_proofs=field_proofs,
-                structural_routes=None if structural_routes is None else sorted((list(key), value) for key, value in structural_routes.items()),
+                structural_routes=None if structural_routes is None else route_digest.hexdigest(),
             )
         )
         saved = emission_cache.get("outputs", request_key)
@@ -911,6 +1032,7 @@ def _emit_closed_native(
         if required is None:
             typ.setdefault("dependencies", [])
         typed[key] = typ
+    del schemas
     externals = [] if required is None else list(required["externals"])
     dependencies = [] if required is None else list(required["dependencies"])
     if len(set(externals)) != len(externals) or member in externals:
@@ -933,7 +1055,7 @@ def _emit_closed_native(
         if endpoint_record is None:
             raise ValueError("Required external endpoint reader absent")
         value, raw, typ = endpoint_record(target)
-        pin = json.dumps(value, sort_keys=True), hashlib.sha256(raw).hexdigest(), full_type_key(typ)
+        pin = hashlib.sha256(json.dumps(value, sort_keys=True).encode()).hexdigest(), hashlib.sha256(raw).hexdigest(), full_type_key(typ)
         if endpoint_pins.setdefault(tuple(target), pin) != pin:
             raise ValueError("Persisted external endpoint drift")
         external_bodies[target] = value, raw, typ
@@ -945,14 +1067,27 @@ def _emit_closed_native(
 
     by_provider = defaultdict(list)
     for row in selected.values():
-        by_provider[row["provider"]].append(row)
+        by_provider[row["provider"]].append(row["destination"][2])
     output.mkdir(parents=True, exist_ok=False)
+    selected_count = len(selected)
+
+    def progress(phase, completed, **extra):
+        if emission_cache is not None:
+            emission_cache.checkpoint()
+        value = dict(phase=phase, records_done=completed, records_total=selected_count, seconds=time.monotonic() - started, **extra)
+        if emission_cache is not None:
+            value["cache"] = dict(emission_cache.counts)
+        temporary = output / "progress.json.tmp"
+        temporary.write_text(json.dumps(value) + "\n")
+        temporary.replace(output / "progress.json")
+
+    progress("records", 0)
     with tempfile.TemporaryDirectory(prefix=".emission-", dir=output) as scratch:
         store = Path(scratch) / "bodies.bin"
-        objects, graph, bodymap, cache = [], {}, {}, {}
-        providers = ProducerRecords(provider_paths)
+        objects, graph, bodymap, cache = [], {}, {}, ParsedTrees()
+        providers = ProducerRecords(provider_paths, index_store=index_store)
         resource_extents, resource_rows, emitted_hashes = [], [], {}
-        qualified_targets, managed_rows = {}, {}
+        qualified_targets, managed_rows = index_store.mapping(), {}
         resource_size = 0
         resource_member = member + ".resS"
         resource_path = "archive:/" + member + "/" + resource_member
@@ -964,7 +1099,8 @@ def _emit_closed_native(
         with store.open("wb") as destination:
             for provider, values in by_provider.items():
                 directory = providers.directory(provider)
-                for value in values:
+                for destination_identity in values:
+                    value = selected[name, member, destination_identity]
                     identity = value["destination"][2]
                     row, body = providers.record(value)
                     typ = typed[value["full_type"] if required is not None else value["schema"]]
@@ -986,9 +1122,9 @@ def _emit_closed_native(
                             targets = qualify_external_fields(value, body, typ, proofs.get(tuple(value["destination"]), ()), read_external)
                         else:
                             targets = qualify_structural_fields(value, body, typ, structural_routes[tuple(value["destination"])], read_external)
-                        qualified_targets[identity] = targets
+                        qualified_targets[identity] = list(targets.items())
                         if typ["class_id"] == 114:
-                            managed_rows[identity] = value, typ
+                            managed_rows[identity] = value["full_type"]
                     offset = (resource_size + 15) // 16 * 16 if row.get("resource") else None
                     record_key = (
                         EmissionCache.key(
@@ -1038,6 +1174,9 @@ def _emit_closed_native(
                     bodymap[identity] = destination.tell(), len(body)
                     destination.write(body)
                     objects.append(dict(path_id=identity, type=typ, body_bytes=len(body), prefix=body[:32]))
+                    if len(objects) % 256 == 0:
+                        progress("records", len(objects), provider=provider)
+                progress("records", len(objects), provider=provider)
         stage("records")
         validate_graph(graph, len(externals))
         if required is not None and set(graph) != set(required["path_ids"]):
@@ -1053,8 +1192,9 @@ def _emit_closed_native(
                 raw = O.B.exact(stream, size)
             return value, raw, typed[value["full_type"]]
 
-        for identity, (value, typ) in managed_rows.items():
-            managed_check(value, read_produced((name, member, identity))[1], typ, read_produced)
+        for identity, type_key in managed_rows.items():
+            managed_check(selected[name, member, identity], read_produced((name, member, identity))[1], typed[type_key], read_produced)
+        progress("managed_qualification", len(objects))
         stage("managed_qualification")
         grouped = defaultdict(list)
         for row in () if required is not None else json_rows(graph_directory / "selected-roots.jsonl"):
@@ -1115,6 +1255,7 @@ def _emit_closed_native(
             module("catalog_complete").text(count_stream)
             preloads = range(O.B.unpack(count_stream, "<I")[0])
         stage("preload_groups")
+        progress("preload_groups", len(objects))
         container_id = 1
         while container_id in graph:
             container_id += 1
@@ -1193,9 +1334,9 @@ def _emit_closed_native(
                 fields = pointers(data, typ, cache)
                 if set(fields.values()) != graph[identity]:
                     raise ValueError("Persisted required object references differ")
-                for field, target in qualified_targets[identity].items():
+                for field, target in qualified_targets[identity]:
                     expected_pointer = (0, target[2]) if tuple(target[:2]) == (name, member) else (externals.index(target[1]) + 1, target[2])
-                    if fields[field] != expected_pointer:
+                    if fields[tuple(field)] != expected_pointer:
                         raise ValueError("Persisted qualified external field differs")
                     endpoint, raw, endpoint_type = read_final(target)
                     if tuple(target[:2]) != (name, member) and (
@@ -1259,14 +1400,14 @@ def _emit_closed_native(
         result["field_qualification"] = "structural-current-routes" if structural_routes is not None else "source-provenance"
         result["required_request_sha256"] = hashlib.sha256(json.dumps(required, sort_keys=True).encode()).hexdigest()
         result["qualified_endpoint_pins"] = [
-            dict(destination=list(target), selected_row_sha256=hashlib.sha256(pin[0].encode()).hexdigest(), body_sha256=pin[1], full_type=pin[2])
-            for target, pin in sorted(endpoint_pins.items())
+            dict(destination=list(target), selected_row_sha256=pin[0], body_sha256=pin[1], full_type=pin[2]) for target, pin in sorted(endpoint_pins.items())
         ]
         gaps.update(
             required_records=len(selected),
             complete=False,
             policy="Exact requested object set; whole catalog, Unity typed load and device acceptance remain open.",
         )
+    progress("complete", selected_count)
     for filename, value in (
         ("result.json", result),
         ("gaps.json", gaps),
@@ -1600,6 +1741,13 @@ def prepare_request(inputs, output):
 def produce_request(inputs, output, *, cache_directory=None):
     """Run the checked emitter/repacker with explicit, request-relative inputs."""
     from contextlib import closing
+
+    with closing(DiskIndexes(Path(output).parent)) as indexes:
+        return _produce_request(inputs, output, cache_directory=cache_directory, index_store=indexes)
+
+
+def _produce_request(inputs, output, *, cache_directory, index_store):
+    from contextlib import closing
     import json
     from types import SimpleNamespace
 
@@ -1640,7 +1788,7 @@ def produce_request(inputs, output, *, cache_directory=None):
             if key in types and types[key] != value:
                 raise ValueError("Conflicting complete native schema")
             types[key] = value
-    selected = {}
+    selected = index_store.mapping()
     for path in (pins.pin(request["endpoints"]), graph_files["selected-records.jsonl"]):
         for value in json_rows(path):
             key = tuple(value["destination"])
@@ -1653,7 +1801,7 @@ def produce_request(inputs, output, *, cache_directory=None):
         if key in required and required[key] != expected:
             raise ValueError("Required bundle/member identity differs")
         required[key] = expected
-    routes = {}
+    routes = index_store.mapping()
     for value in json_rows(pins.pin(request["routes"])):
         key = tuple(value["owner"])
         if key in routes:
@@ -1667,7 +1815,7 @@ def produce_request(inputs, output, *, cache_directory=None):
     root = Path(__file__).resolve().parents[3]
     for path in (root / "scripts/lab").glob("*.py"):
         pins.add(path)
-    with closing(E.Qualification(owner, pins, request, selected, types, required, provider_paths=provider_paths)) as qualification:
+    with closing(E.Qualification(owner, pins, request, selected, types, required, provider_paths=provider_paths, index_store=index_store)) as qualification:
         qualification.setup()
         # Populate external managed readback even when emission reuses an output.
         for target in sorted({tuple(edge["target"]) for edges in routes.values() for edge in edges if tuple(edge["target"][:2]) != qualification.member}):
@@ -1687,6 +1835,7 @@ def produce_request(inputs, output, *, cache_directory=None):
             cache_directory=cache_directory,
             cache_inputs=pins.files,
             provider_paths=provider_paths,
+            index_store=index_store,
         )
         qualification.check_final(emission["bundle"])
         final = emission
