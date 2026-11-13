@@ -1218,6 +1218,17 @@ path. The packet's target information stays private; independent owner-input
 production, ordinary app execution, owner signing/alignment, install/update and
 public distribution of any game-bearing packet remain separate gates.
 
+The owner APK builder also compiles the authored Android plugin sources staged by
+`stage_android_assets`, including display preference and the settings observer's
+shared helper. Bundled SDK javac/d8 emit a separate DEX; classes already supplied
+by incoming DEX files are retained once. Generated plugin BuildConfig and empty
+resource namespace follow the plugin's authored package. The manifest owner
+preserves or adds its private observer service declaration. An optional pinned
+`authored_class_reference` APK qualifies the final defined class set against all
+reference `dev.ror2lab` classes, before installation; it supplies no output bytes.
+Input hashes and the class comparison persist in the assembly receipt. Compiler
+processes exit after packaging; existing runtime owners retain their lifecycle.
+
 `tools/phone-build/owner-apk/` owns a separate experimental owner-APK bootstrap
 candidate after reconstruction. `build_owner_apk.py` and `binary_manifest.py`
 compile only authored Java, preserve the selected content bytes and move the

@@ -199,16 +199,8 @@ class AlphaBuildPolicyTests(unittest.TestCase):
         # than searching comments or accepting another unbound policy variable.
         tree = ast.parse(inspect.getsource(OWNER.build))
         calls = [node for node in ast.walk(tree) if isinstance(node, ast.Call)]
-        compile_call = next(
-            node
-            for node in calls
-            if isinstance(node.func, ast.Name)
-            and node.func.id == "run"
-            and len(node.args) == 2
-            and isinstance(node.args[1], ast.Constant)
-            and node.args[1].value == "javac"
-        )
-        sources = {node.right.value for node in compile_call.args[0].elts if isinstance(node, ast.BinOp) and isinstance(node.right, ast.Constant)}
+        self.assertTrue(any(isinstance(node.func, ast.Name) and node.func.id == "compile_authored" for node in calls))
+        sources = {path.name for path in OWNER.authored_sources()}
         self.assertTrue({"PayloadStore.java", "PayloadBootstrapActivity.java", "ProfileStore.java", "ProfileRetentionProvider.java"} <= sources)
         manifest = next(node for node in calls if isinstance(node.func, ast.Attribute) and ast.unparse(node.func) == "MANIFEST.patch")
         self.assertEqual(ast.unparse(next(row.value for row in manifest.keywords if row.arg == "retention")), "policy is not None")
