@@ -381,6 +381,17 @@ every produced bundle and the current runtime script
 registry, plus input/startup identity. Existing catalog helpers resolve ownership
 and dependency closure; final serialized containers independently check endpoint
 PPtrs, preload extents, native types and exact MonoScript/runtime bindings.
+Every emitted `ModelSkinController.skins` slot is checked against its actual
+local or external `RoR2.SkinDef` and registered MonoScript; controller and slot
+counts are recorded separately. This structural check does not establish that
+Unity deserializes those references successfully.
+`whole_catalog.py::host_skin_bundles` exposes
+`./dev prototype --action whole-catalog-skin-host --target REQUEST` through
+`tools/catalog/ValidateConvertedSkins.cs.txt`. It consumes that pinned catalog
+request in the idle exact editor under the shared mutex.
+It loads the actual produced bundles, follows native provider body membership,
+checks every typed model skin slot and unloads its bundle owners in `finally`.
+Its local receipt records failures separately from Android gameplay acceptance.
 Duplicate container keys retain every root. Managed subtype assignability is not
 yet admitted. AnimatorController typed subassets are resolved only through its
 schema-declared behaviour array, with the same script binding and current runtime

@@ -1,0 +1,46 @@
+var output=OUTPUT;
+if(UnityEngine.AssetBundle.GetAllLoadedAssetBundles().Any())throw new System.Exception("Skin fixture requires no existing bundle owners");
+var directory=System.IO.Path.GetDirectoryName(output);
+var requestPath=(string)Newtonsoft.Json.Linq.JObject.Parse(System.IO.File.ReadAllText(System.IO.Path.Combine(directory,"inputs.json")))["request"];
+var request=Newtonsoft.Json.Linq.JObject.Parse(System.IO.File.ReadAllText(requestPath));
+System.Func<Newtonsoft.Json.Linq.JToken,string> pin=row=>{
+ var path=System.IO.Path.GetFullPath(System.IO.Path.Combine(System.IO.Path.GetDirectoryName(requestPath),(string)row["path"]));
+ using(var stream=System.IO.File.OpenRead(path))using(var sha=System.Security.Cryptography.SHA256.Create()){
+  var hash=System.BitConverter.ToString(sha.ComputeHash(stream)).Replace("-","").ToLowerInvariant();
+  if(stream.Length!=(long)row["bytes"]||hash!=(string)row["sha256"])throw new System.Exception("Skin fixture input pin differs: "+path);
+ }return path;
+};
+var manifest=Newtonsoft.Json.Linq.JObject.Parse(System.IO.File.ReadAllText(pin(request["metadata"])));
+var locations=manifest["locations"].ToDictionary(row=>(int)row["id"]);
+var bundles=new System.Collections.Generic.Dictionary<string,UnityEngine.AssetBundle>();
+var rows=new System.Collections.Generic.List<object>();var failures=new System.Collections.Generic.List<object>();
+int bodies=0,controllers=0,slots=0;
+try{
+ foreach(var row in ((Newtonsoft.Json.Linq.JObject)request["bundles"]).Properties()){
+  var bundle=UnityEngine.AssetBundle.LoadFromFile(pin(row.Value));
+  if(!bundle)throw new System.Exception("Skin fixture bundle failed to load: "+row.Name);
+  bundles.Add(row.Name,bundle);
+ }
+ var groups=WholeCatalogComposed.FamilyLocationGroups(manifest,"CharacterBody");
+ foreach(int id in groups.SelectMany(group=>group).Distinct()){
+  var row=locations[id];string path=(string)row["path"],owner=(string)row["bundle"];
+  try{
+   var body=bundles[owner].LoadAsset<UnityEngine.GameObject>(path);
+   if(!body)throw new System.Exception("Typed body missing");
+   bodies++;
+   foreach(var controller in body.GetComponentsInChildren<RoR2.ModelSkinController>(true)){
+    controllers++;
+    if(controller.skins==null)throw new System.Exception("skins array null");
+    for(int index=0;index<controller.skins.Length;index++){
+     var skin=controller.skins[index];slots++;
+     rows.Add(new{body=body.name,path,index,loaded=(bool)skin,skin=skin?skin.name:null,root=skin&&skin.rootObject?skin.rootObject.name:null});
+     if(!skin)failures.Add(new{path,index,error="ModelSkinController.skins slot null"});
+    }
+   }
+  }catch(System.Exception error){failures.Add(new{path,error=error.ToString()});}
+ }
+}catch(System.Exception error){failures.Add(new{error=error.ToString()});}
+finally{foreach(var bundle in bundles.Values.Reverse())bundle.Unload(true);}
+var summary=new{bodies,controllers,slots,failed=failures.Count,scope="Exact-editor typed converted bundle references; no Android or gameplay acceptance"};
+var result=new{success=failures.Count==0&&bodies>0,summary,rows,failures};
+System.IO.File.WriteAllText(output,Newtonsoft.Json.JsonConvert.SerializeObject(result,Newtonsoft.Json.Formatting.Indented));return summary;

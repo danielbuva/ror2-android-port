@@ -6,6 +6,7 @@ import struct
 import sys
 import tempfile
 import unittest
+from contextlib import nullcontext
 from unittest.mock import patch
 from pathlib import Path
 
@@ -32,10 +33,38 @@ from whole_catalog import (
     source_mesh_subobjects,
 )
 import build
+import whole_catalog
 from common import read, sha, write
 
 
 class ProducedCatalogTests(unittest.TestCase):
+    def test_converted_skin_fixture_uses_pinned_request_and_reports_typed_failure(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            request = root / "request.json"
+            write(request, dict(schema="owner-catalog-inputs-v1"))
+            for success in (True, False):
+
+                def export(out, template, filename):
+                    self.assertEqual(template, "ValidateConvertedSkins.cs.txt")
+                    self.assertEqual(read(out / "inputs.json"), dict(request=str(request.resolve())))
+                    write(out / filename, dict(success=success, summary=dict(failed=int(not success))))
+
+                with (
+                    patch.object(whole_catalog, "WORK", root),
+                    patch.object(whole_catalog, "now", return_value=str(success)),
+                    patch.object(whole_catalog, "export_catalog", side_effect=export),
+                    patch("build_lock.host_build_lock", return_value=nullcontext()),
+                ):
+                    if success:
+                        whole_catalog.host_skin_bundles(request)
+                    else:
+                        with self.assertRaisesRegex(RuntimeError, "typed loads failed"):
+                            whole_catalog.host_skin_bundles(request)
+            write(request, dict(schema="other"))
+            with self.assertRaisesRegex(ValueError, "pinned catalog"):
+                whole_catalog.host_skin_bundles(request)
+
     def test_native_cycle_closure_sorted_members_and_compact_utf8(self):
         metadata = dict(attempt="authored é\n", locations=[dict(bundle="b")], keys=[])
         bundles = {
