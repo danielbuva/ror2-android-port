@@ -2484,6 +2484,7 @@ The remaining `--action` selectors are classified here:
 | editor | `siren-encounter-host` | current |
 | editor | `source-camera-graphics-host` | current |
 | editor | `commando-animation-host` | current |
+| editor | `enemy-material-audit` | current |
 | editor | `character-motor-order` | historical |
 | editor | `catalog-addresses` | historical |
 | editor | `reference-identities` | historical |
