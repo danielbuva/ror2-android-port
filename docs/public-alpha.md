@@ -255,6 +255,14 @@ thermal sampling policy; proposed performance budgets do not change those limits
       collected and two active locators. Its final 16 menus still add 634,880
       managed bytes, fitted +35,990.588 bytes/menu. The finite observed extent
       does not establish an aggregate cache ceiling or ordinary-play stability.
+      Runner diagnostics use `scripts/lab/session_memory_batch.py`: `preflight`,
+      receipt-bound `capture` for attribution, and separate no-snapshot `measure`
+      for matched-menu observations. These preserve supervised cooldown and
+      native-loss/mixed-duration semantics, not an uninterrupted ordinary run.
+      `session_heap_growth.py` binds exact exported heaps to the capture receipt
+      SHA-256 without publishing raw object contents or addresses. Endpoint deltas,
+      overlapping reachable groups and fitted slopes do not establish a memory
+      plateau, exclusive retained size or an ordinary-play acceptance result.
 - [ ] Complete real interrupted-write/ENOSPC and sustained performance/thermal
       cases on supported hardware.
       [J1311](PORTING_JOURNAL.md#j1311--recover-native-settings-after-writer-termination-and-activity-restart)
