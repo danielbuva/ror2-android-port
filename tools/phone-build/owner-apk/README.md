@@ -509,7 +509,39 @@ Managed JSON writes normalize only the platform-provided app-files root alias,
 not arbitrary target paths. The Context-aware writer retains child-link and
 atomic-write guards. Host tests reproduce the aliased-root failure and verify
 receipt preservation plus traversal/link refusal; a complete phone run is still
-required before claiming the installer/update flow works.
+required for each materially changed installation contract. The bounded
+synthetic flow below is qualified, not real-game import or converter performance.
+
+#### Qualified synthetic flow (2026-11-13)
+
+[Run 43348820195](https://github.com/danielbuva/ror2-android-port/actions/runs/43348820195)
+passed at `ce9242a54d4b5ccccf247dc978a7f18d9b967444` in 460 s: visible
+permission/consent, Check for updates, forward in-place update and synthetic
+profile/settings retention. Matching toolhost APK SHA-256:
+`f4eaafe1d56a40561d1fc1cf082bf7e635317d195db7d617828b01a887aa3773`.
+Owned test packages were verified absent. The
+[public result](https://github.com/danielbuva/ror2-android-port/issues/177#issuecomment-6841669800)
+retains exact bytes, sample counts and gaps; raw observations remain private.
+
+| Stage | Time (s) | Installer / alpha sampled PSS (MiB) | Installer free (GiB), start → end | Alpha free (GiB), start → end |
+| --- | ---: | --- | --- | --- |
+| Fresh installer | 26.005 | unavailable / unavailable | unavailable → 41.118 | unavailable |
+| Synthetic provision and initial check | 39.193 | 64.96 / unavailable | 41.117 → 39.371 | unavailable |
+| Baseline reconstruction | 85.248 | 63.12 / unavailable | 39.370 → 37.640 | unavailable |
+| Visible install permission | 67.632 | 58.79 / unavailable | 37.640 → 37.627 | unavailable |
+| Baseline install | 18.708 | 68.13 / unavailable | 37.627 → 37.622 | unavailable → 37.622 |
+| Seed retention witness | 7.841 | 60.58 / unavailable | 37.622 → 37.620 | 37.622 → 37.620 |
+| Check for updates | 25.967 | 72.96 / unavailable | 37.620 → 35.877 | 37.620 → 35.877 |
+| In-place update | 119.597 | 73.38 / 13.76 | 35.876 → 34.139 | 35.876 → 34.139 |
+| Verify profile/settings | 8.576 | 67.71 / 13.86 | 34.139 → 34.137 | 34.139 → 34.137 |
+
+Each package's code/data free readings round to the same values above; they are
+filesystem availability, not two independent allocations or app sizes. The nine
+stages total 398.767 s; setup/cleanup outside stages accounts for the remainder.
+Largest observation gap: 66.169 s. Maximum sampled battery temperature: 33 °C.
+Unavailable memory is not zero, and the largest sampled PSS is not a true peak
+or a native-child total. This does not replace packaging rollback/importer,
+SAF, legitimate-input, real-profile or complete-converter qualification.
 
 Installer version 3 extends the version-2 foreground-service flow: prepare the signed public
 release, choose the owner's PC game directory with Android's folder picker (or

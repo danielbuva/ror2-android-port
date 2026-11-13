@@ -784,14 +784,14 @@ def managed_context(owner, pins, inputs):
 class Qualification:
     """Own staged streams and current managed endpoints for one bundle request."""
 
-    def __init__(self, owner, pins, request, selected, types, required, *, provider_paths=None):
+    def __init__(self, owner, pins, request, selected, types, required, *, provider_paths=None, index_store=None):
         self.owner, self.pins, self.request = owner, pins, request
         self.member = request["bundle"], request["member"]
         self.selected, self.types = selected, types
         self.required = required
         self.staged = FinalMembers(owner, selected, types)
         self.final = None
-        self.producer = owner.ProducerRecords(provider_paths)
+        self.producer = owner.ProducerRecords(provider_paths, index_store=index_store)
         self.external_members = []
 
     def setup(self):

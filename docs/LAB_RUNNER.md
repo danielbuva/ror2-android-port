@@ -24,13 +24,63 @@ Post on any issue or pull request (first line only):
 
 With `device=<alias>` (aliases come from ignored `work/config/lab-runner.json`) the job takes the
 orchestrator's atomic device lease, refuses a battery above 85 %, actually charging at 80 % or more, or
-at 35 C or warmer, receives `--device` (for `dev`) or `LAB_DEVICE_SERIAL` (for `script`), and always
-puts the display to sleep and releases the lease. Every job ends with `prune-generated.py --apply`.
+above 35 C, receives `--device` (for `dev`) or `LAB_DEVICE_SERIAL` (for `script`), and always
+puts the display to sleep. Charging admission requires three positive-current samples 10 s apart.
+The lease is released unless an emission job's remote outcome is unknown. Every job ends with
+`prune-generated.py --apply`.
 The reply shows PASS/FAIL, the command, duration and the last 150 output lines with home paths,
 serials, storage UUIDs, emails, IPs and tokens removed. Full output: `work/coordination/lab-runner/<run>/`.
 Jobs run one at a time in comment order. Every job also gets `LAB_TOOLHOST_ROOT`: `toolhost` writes
 `<commit>/signed.apk`, `result.json` and `test-publisher.json` (the local path of the test publisher key the
 build trusts) there, so a later `script` job can install that build and sign synthetic test releases.
+
+## Current local emission request
+
+After obtaining the orchestrator's device grant, use the same runner locally:
+
+```
+source scripts/env.sh
+.local/lab-venv/bin/python scripts/lab/lab_runner.py --emission-request <config.json> --dry-run
+.local/lab-venv/bin/python scripts/lab/lab_runner.py --emission-request <config.json>
+```
+
+The ignored JSON config has exactly these fields:
+
+| Field | Value |
+| --- | --- |
+| `runner` | `repo` canonical checkout path, `ref` fetchable branch/commit, `device` configured alias |
+| `tool_apk`, `manifest` | Each has an absolute `path` and `sha256` |
+| `request` | Relative staged request path for `bundle_preload.py --inputs` |
+| `done_file` | New absolute terminal JSON path under canonical `work/` |
+| `expected_records` | Positive expected native record count |
+| `estimated_output_bytes` | Positive output-space budget, in addition to inputs and 20 GiB reserve |
+| `profile` | `thor` or `nova` thermal profile |
+| `timeout_seconds` | Positive producer time budget |
+
+The manifest's `files` maps relative staged paths to `source`, `bytes` and
+`sha256`. Include the public producer closure beneath `repo/`; this operation
+executes the tracked `phone_runner.py` and `bundle_preload.py` there. It streams
+the pinned APK's Python runtime and pinned inputs without host archive copies.
+Dry-run validates pins without device access. Live execution uses the standard
+fresh checkout, lease, cooldown, package-identity, storage and display owners.
+The current runtime staging supports configured internal-only devices; adopted
+storage is refused without an internal-storage fallback.
+
+`device-state.json` beside the terminal path records the owned toolhost,
+staging root and detached handle before launch. The on-phone thermal supervisor
+owns producer duty cycling. Receipts and logs return to the host; output bundles
+and the emission cache stay in the owned app for the next pipeline stage.
+Neither a producer failure nor a lost host connection uninstalls that app.
+
+To retry, use a new `done_file` **in the same directory** and add
+`--resume-emission`. An uncertain job is observed through its original handle;
+a confirmed terminal job starts a fresh output attempt with the same cache.
+A retained lease can be reclaimed only for that exact state/handle after its
+previous runner exits. Reattachment does not start another producer or require
+the active producer to cool down. The final done-file is written after runner
+cleanup and pruning, including on failure. Retention is temporary: after downstream
+consumers finish, dispose of the owned toolhost with its exact identity receipt.
+Host tests cover this contract; on-device qualification remains separate.
 
 ## Safety model
 

@@ -28,10 +28,25 @@ class DetachedUncertain(AdbError):
 
 
 class DetachedJob:
-    def __init__(self, directory):
-        if not re.fullmatch(r"/data/local/tmp/ror2-adb-job-[0-9a-f]{32}", directory):
+    def __init__(self, directory, shell_prefix=()):
+        parent, _, name = directory.rpartition("/")
+        if not re.fullmatch(r"ror2-adb-job-[0-9a-f]{32}", name):
+            raise ValueError("adb-detached-job-path")
+        if shell_prefix:
+            if len(shell_prefix) != 2 or shell_prefix[0] != "run-as" or not re.fullmatch(r"[A-Za-z][A-Za-z0-9_.]+", shell_prefix[1]):
+                raise ValueError("adb-detached-job-owner")
+            if not parent.startswith("/") or ".." in Path(parent).parts or not re.fullmatch(r"/[A-Za-z0-9_./-]+", parent):
+                raise ValueError("adb-detached-job-path")
+        elif parent != "/data/local/tmp":
             raise ValueError("adb-detached-job-path")
         self.directory = directory
+        self.shell_prefix = tuple(shell_prefix)
+
+    def shell(self, command):
+        return shlex.join([*self.shell_prefix, "sh", "-c", command]) if self.shell_prefix else command
+
+    def as_dict(self):
+        return {"directory": self.directory, "shell_prefix": list(self.shell_prefix)}
 
 
 class AdbTransport:
@@ -112,7 +127,7 @@ class AdbTransport:
             raise AdbError("adb-install-failed")
         raise InstallUncertain("adb-install-outcome-unknown")
 
-    def start_detached(self, command, *, label="adb-job", timeout=30):
+    def start_detached(self, command, *, label="adb-job", timeout=30, root="/data/local/tmp", shell_prefix=(), persist=None):
         """Launch once in a fresh owned directory; never resend an uncertain launch.
 
         mkdir is an exclusive claim. stdin, stdout and stderr are detached from
@@ -121,7 +136,9 @@ class AdbTransport:
         """
         if not command:
             raise ValueError("adb-detached-command-required")
-        job = DetachedJob("/data/local/tmp/ror2-adb-job-" + secrets.token_hex(16))
+        job = DetachedJob(root.rstrip("/") + "/ror2-adb-job-" + secrets.token_hex(16), shell_prefix)
+        if persist is not None:
+            persist(job.as_dict())  # Durable handle MUST precede the uncertain mutation.
         directory = shlex.quote(job.directory)
         worker = (
             f"{shlex.join(list(map(str, command)))} >{directory}/stdout.log 2>{directory}/stderr.log; "
@@ -129,7 +146,7 @@ class AdbTransport:
         )
         launch = f"umask 077; mkdir {directory} || exit 1; setsid sh -c {shlex.quote(worker)} </dev/null >/dev/null 2>&1 &"
         try:
-            result = self.execute("shell", launch, label=label + "-launch", timeout=timeout)
+            self.execute("shell", job.shell(launch), label=label + "-launch", timeout=timeout)
         except AdbError:
             # The remote launch may already exist. Only wait/readback is safe.
             return job
@@ -137,7 +154,7 @@ class AdbTransport:
         # The exclusive directory/status protocol, not host exit, decides.
         return job
 
-    def wait_detached(self, job, logs, *, label="adb-job", timeout=60, poll_interval=0.25):
+    def wait_detached(self, job, logs, *, label="adb-job", timeout=60, poll_interval=0.25, capture_logs=True):
         """Tolerate failed observations until deadline; pull logs before reporting.
 
         Timeout does not kill the remote job or remove its directory: neither
@@ -153,7 +170,9 @@ class AdbTransport:
         deadline, status, invalid = time.monotonic() + timeout, None, False
         while time.monotonic() < deadline:
             try:
-                result = self.execute("shell", probe, label=label + "-poll", timeout=min(10, max(0.001, deadline - time.monotonic())), idempotent=True)
+                result = self.execute(
+                    "shell", job.shell(probe), label=label + "-poll", timeout=min(10, max(0.001, deadline - time.monotonic())), idempotent=True
+                )
             except AdbError:
                 result = None
             if result is not None and result.returncode == 0:
@@ -170,8 +189,23 @@ class AdbTransport:
         transferred = True
         for name in ("stdout.log", "stderr.log"):
             try:
-                self.run("pull", job.directory + "/" + name, logs / name, label=label + "-logs", timeout=15, idempotent=True)
-            except AdbError:
+                if job.shell_prefix:
+                    # App-private evidence needs run-as. Stream rather than
+                    # accumulating a potentially large producer log in memory.
+                    target = logs / name
+                    with target.open("wb") as stream:
+                        result = subprocess.run(
+                            [self.adb, "-s", self.serial, "exec-out", job.shell("cat " + directory + "/" + name)],
+                            stdout=stream,
+                            stderr=subprocess.PIPE,
+                            timeout=15,
+                            check=False,
+                        )
+                    if result.returncode:
+                        raise AdbError("adb-detached-log-pull-failed")
+                else:
+                    self.run("pull", job.directory + "/" + name, logs / name, label=label + "-logs", timeout=15, idempotent=True)
+            except (AdbError, OSError, subprocess.TimeoutExpired):
                 transferred = False
         if invalid:
             raise AdbError("adb-detached-status-invalid")
@@ -179,11 +213,13 @@ class AdbTransport:
             raise DetachedUncertain(job)
         if not transferred:
             raise AdbError("adb-detached-log-pull-failed")
-        result = subprocess.CompletedProcess([], status, (logs / "stdout.log").read_bytes(), (logs / "stderr.log").read_bytes())
+        result = subprocess.CompletedProcess(
+            [], status, (logs / "stdout.log").read_bytes() if capture_logs else b"", (logs / "stderr.log").read_bytes() if capture_logs else b""
+        )
         return result
 
     def cleanup_detached(self, job, *, timeout=15):
         # Guard against deleting a still-running job, even if a caller gets its
         # wait lifecycle wrong. Exact generated path only; no arbitrary rm API.
         directory = shlex.quote(job.directory)
-        return self.run("shell", f"[ -f {directory}/status ] && rm -rf {directory}", label="adb-job-cleanup", timeout=timeout)
+        return self.run("shell", job.shell(f"[ -f {directory}/status ] && rm -rf {directory}"), label="adb-job-cleanup", timeout=timeout)
