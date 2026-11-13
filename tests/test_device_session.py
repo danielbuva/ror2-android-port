@@ -59,6 +59,26 @@ class DeviceSessionTests(unittest.TestCase):
         self.assertEqual(json.loads((lease.path / "owner.json").read_text()), lease.owner)
         self.assertTrue((self.output / "terminal.done.json").is_file())
 
+    def test_settings_failure_mode_uses_shared_launch_and_thermal_owner(self):
+        self.request["mode"] = "settings-save-failure"
+        runner.save(self.request_file, self.request)
+        checked = runner.load_request(self.request_file)
+        target, thermal = mock.Mock(), mock.Mock()
+        result = {}
+        with (
+            mock.patch("settings_write_interrupt_check.check_settings_save_failure", return_value={"success": True}) as check,
+            mock.patch.object(runner, "launch") as launch,
+        ):
+            runner.run_workload(target, thermal, checked, self.output, result)
+            check.call_args.args[3](target)
+        launch.assert_called_once_with(target, thermal)
+        self.assertIs(check.call_args.args[4], thermal.cancelled)
+        self.assertEqual(result["settings_save_failure"], {"success": True})
+        self.request["selection"] = {}
+        runner.save(self.request_file, self.request)
+        with self.assertRaisesRegex(ValueError, "owns its attempt-bound selector"):
+            runner.load_request(self.request_file)
+
     def test_dispatched_input_failure_writes_terminal_without_device_access(self):
         self.apk.unlink()
         with mock.patch.object(runner.subprocess, "run") as process:

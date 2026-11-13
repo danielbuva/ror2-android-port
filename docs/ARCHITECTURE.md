@@ -1,5 +1,14 @@
 # Architecture
 
+The shared device request's `settings-save-failure` workload exercises the owned
+settings screen with attempt-bound, default-off write and rename failures.
+`AndroidOfflineSettings` consumes each instance-owned ENOSPC injection once;
+recovery is uninstrumented. `OfflineSettingsBoundary` retains the visible error
+and ordinary retry. The existing settings checker verifies retained generations,
+process survival, retry and cold reload; shared runner cleanup owns selectors,
+lease and display sleep. This diagnostic does not establish physical filesystem
+exhaustion or profile-writer behavior.
+
 `LabDiagnostics` records live frame caps, vSync, render interval, capture rate
 and timestep with its existing two-second snapshot. `LabDisplayPreference`
 adds a timestamped asynchronous read of the active Android display and window

@@ -15,6 +15,7 @@ public sealed partial class PortSession
     {
         public bool invincibility, highDamage, fastCharge, movementBoost, jumpBoost;
         public string purpose;
+        public string settingsSaveFailure;
     }
     [Serializable]
     public class DebugToggleEvent

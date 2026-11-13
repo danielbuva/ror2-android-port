@@ -69,10 +69,12 @@ def load_request(path):
         if type(value[name]) is not int or value[name] <= 0:
             raise ValueError(name + " must be a positive integer")
     value.setdefault("mode", "launch")
-    if value["mode"] not in {"launch", "sustained"}:
-        raise ValueError("mode must be launch or sustained")
-    if value["mode"] == "sustained" and value["package"] != "dev.ror2lab.arm64":
-        raise ValueError("The native sustained owner requires the lab package")
+    if value["mode"] not in {"launch", "sustained", "settings-save-failure"}:
+        raise ValueError("mode must be launch, sustained or settings-save-failure")
+    if value["mode"] != "launch" and value["package"] != "dev.ror2lab.arm64":
+        raise ValueError("The native workload owner requires the lab package")
+    if value["mode"] == "settings-save-failure" and "selection" in value:
+        raise ValueError("Settings failure workload owns its attempt-bound selector")
     for name in ("require_high_refresh", "pacing_diagnostics"):
         if name in value and type(value[name]) is not bool:
             raise ValueError(name + " must be boolean")
@@ -306,6 +308,13 @@ def qualify_high_refresh(device, thermal, output, pid):
 
 
 def run_workload(device, thermal, request, output, result):
+    if request["mode"] == "settings-save-failure":
+        import settings_write_interrupt_check as settings
+
+        result["settings_save_failure"] = settings.check_settings_save_failure(
+            device, output, request["apk_sha256"], lambda current: launch(current, thermal), thermal.cancelled
+        )
+        return
     if request["mode"] == "sustained":
         import session_sustained_check as sustained
 
@@ -617,6 +626,7 @@ def main(argv=None):
     if args.dry_run:
         import alpha_stability_batch  # noqa: F401
         import session_sustained_check  # noqa: F401
+        import settings_write_interrupt_check  # noqa: F401
 
         print(json.dumps(dict(smoke=True, device_access=False, mode=request["mode"], apk_sha256=request["apk_sha256"])))
         return 0
