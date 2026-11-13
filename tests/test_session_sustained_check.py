@@ -1,5 +1,6 @@
 import copy
 from datetime import datetime, timedelta, timezone
+import json
 from pathlib import Path
 import sys
 import unittest
@@ -8,6 +9,7 @@ from unittest import mock
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts/lab"))
 import session_sustained_check as sustained
+import device_session as runner
 
 
 def fixtures():
@@ -28,7 +30,7 @@ def fixtures():
 
 
 class SustainedCheckTests(unittest.TestCase):
-    def test_detailed_visual_samples_capture_screenshot_beside_world_and_perf(self):
+    def test_runner_detailed_visual_samples_capture_screenshot_beside_world_and_perf(self):
         for detailed in (False, True):
             with self.subTest(detailed=detailed), tempfile.TemporaryDirectory() as folder:
                 root = Path(folder)
@@ -39,7 +41,7 @@ class SustainedCheckTests(unittest.TestCase):
                 device = mock.Mock()
                 device.owned.return_value = dict(apk_sha256="a" * 64)
                 device.read_receipt.return_value = dict(persistentDataPath="/owned")
-                device.evidence_directory.return_value = output
+                device.evidence_directory.side_effect = [output.parent, output]
                 device.sh.side_effect = lambda *args, **kwargs: {
                     ("dumpsys", "battery"): "temperature: 350",
                     ("dumpsys", "thermalservice"): "Thermal Status: 0",
@@ -60,11 +62,26 @@ class SustainedCheckTests(unittest.TestCase):
                     mock.patch.object(sustained.touch_gesture, "run", return_value=dict(termination="steps-complete")),
                     mock.patch.object(sustained, "observation_sample", return_value={}),
                     mock.patch.object(sustained.time, "sleep", side_effect=RuntimeError("fixture ends after first capture")),
+                    mock.patch.object(runner, "launch", return_value=dict(pid=73)),
+                    mock.patch.object(runner, "capture"),
                 ):
+                    result = {}
                     with self.assertRaisesRegex(RuntimeError, "Sustained assisted check failed"):
-                        sustained.check_session_sustained(
-                            "a" * 64, _launch=lambda current: dict(pid=73), detailed_visual_diagnostics=detailed, observation_interval_seconds=10
+                        runner.run_workload(
+                            device,
+                            mock.Mock(),
+                            dict(
+                                mode="sustained",
+                                apk_sha256="a" * 64,
+                                duration_seconds=30,
+                                capture_interval_seconds=10,
+                                selection=dict(detailedVisualDiagnostics=detailed),
+                            ),
+                            root / "runner",
+                            result,
                         )
+                self.assertEqual(result["session_result_files"], [str(output / "result.json")])
+                self.assertEqual(json.loads((output / "result.json").read_text())["observation_interval_seconds"], 10)
                 sample = output / "sample-0000"
                 self.assertTrue((sample / "world.json").is_file())
                 expected = [mock.call("perf", sample)]
