@@ -462,7 +462,7 @@ class BundlePreparationTests(unittest.TestCase):
                 )
             )
             result = P.module("catalog_complete").produce(catalog, root / "catalog")
-            self.assertEqual(result["checks"], dict(locations=1, container_paths=1, runtime_scripts=0))
+            self.assertEqual(result["checks"], dict(locations=1, container_paths=1, runtime_scripts=0, model_skin_controllers=0, model_skin_slots=0))
             actual = json.loads((root / "catalog/whole-catalog.json").read_bytes())
             self.assertEqual(actual["bundles"]["content"]["sha256"], emitted["sha256"])
 
