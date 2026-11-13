@@ -17,9 +17,14 @@ its `work/`), `workstream`, `serial`, `package`, `apk`, `apk_sha256`,
 `cooldown_seconds` (default 3600), `mode` (`launch`, lab-only `sustained` or
 `settings-save-failure`),
 `input_script` (the existing targeted-touch JSON with the live PID supplied by
-the runner), `input_mapping` (the APK-attempt-bound measured bridge JSON), `selection`, `diagnostics`, `prior_receipt` and
+the runner), `input_schedule` (launch-mode list of `{ "at_seconds": 5,
+"script": "touch.json" }`, ordered within the observation duration),
+`input_mapping` (the APK-attempt-bound measured bridge JSON), `selection`, `diagnostics`, `prior_receipt` and
 `require_high_refresh`, `payload_directory` (incremental adopted-storage sync
 before launch) and `capture_interval_seconds` (launch-mode cadence, default 60).
+Scheduled scripts resolve relative to the request and use the same live PID,
+APK hash and 30-second gesture limit. Times start after the startup input script;
+each dispatch and its actual elapsed time are retained in the terminal receipt.
 `pacing_diagnostics: true` retains read-only Unity, Android display, compositor
 and OS frame-rate intervention evidence during sustained observations. The
 settings failure workload owns its attempt-bound selector and injects one

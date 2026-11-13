@@ -310,3 +310,4 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 | [J1465](PORTING_JOURNAL.md#j1465--bind-managed-dependency-refreshes-to-their-produced-cohort) | 2026-11-12 | Bind managed dependency refreshes to their produced cohort | 2026-11-12. |
 | [J1466](PORTING_JOURNAL.md#j1466--validate-refreshed-ui-providers-and-relocated-startup-producers) | 2026-11-12 | Validate refreshed UI providers and relocated startup producers | 2026-11-12. |
 | [J1472](PORTING_JOURNAL.md#j1472--qualify-the-shared-device-runner-with-bounded-native-combat) | 2026-11-12 | Qualify the shared device runner with bounded native combat | 2026-11-13. |
+| [J1476](PORTING_JOURNAL.md#j1476--converted-apk-reaches-the-original-catalog-survivor-menu) | 2026-11-12 | Converted APK reaches the original-catalog survivor menu | 2026-11-13. |
