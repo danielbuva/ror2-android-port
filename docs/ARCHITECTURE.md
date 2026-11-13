@@ -2813,6 +2813,11 @@ under `packages/dev.ror2lab.converted`. A prior peer receipt can be imported onl
 after matching its device, package, live path and APK hash. Converted launches
 resolve the real launcher activity; a launch observation alone does not prove
 that bootstrap or gameplay succeeded.
+Before either package launches, the runner wakes display 0, dismisses an
+unsecured keyguard (with one swipe fallback) and verifies the window-policy
+lock flags are false. The terminal receipt retains boolean prelaunch readbacks;
+a credential lock or unknown lock state aborts before launch. Cleanup still
+stops the owned packages, sleeps the display and releases the lease.
 Under its lease the runner records and removes only the owned package's stale
 selector/pending files and stops its process. It reserves estimated output plus
 20 GiB, gives each cooldown its own deadline, and reuses the batch thermal owner.
