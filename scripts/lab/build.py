@@ -214,10 +214,14 @@ def editor(target="lab", action="inspect"):
             "source-camera-graphics-host",
             "lightning-stake-host",
             "engineer-laser-host",
+            "commando-animation-host",
+            "enemy-material-audit",
         }:
             from whole_catalog import copy_catalog_asset
 
             fixture, owners = {
+                "commando-animation-host": ("SurvivorSkillInputHost.cs", []),
+                "enemy-material-audit": ("WholeCatalogHost.cs", []),
                 "lightning-stake-host": ("LightningStakeSourceContractFixture.cs", ["world/IntegratedWorldBoundary.cs"]),
                 "siren-input-host": (
                     "SirenEggDiagnosticInputExactEditorFixture.cs",
@@ -235,6 +239,8 @@ def editor(target="lab", action="inspect"):
                 if not staged.is_file() or sha(staged) != sha(ROOT / "tools/unity/runtime" / owner):
                     raise RuntimeError("Stage the current committed runtime through a build before this editor fixture: " + owner)
             copy_catalog_asset(ROOT / "tools/catalog" / fixture, WORK / "lab-project/Assets/Editor" / fixture)
+            if action == "commando-animation-host":
+                copy_catalog_asset(ROOT / "tools/catalog/WholeCatalogBuild.cs", WORK / "lab-project/Assets/Editor/WholeCatalogBuild.cs")
             editor("lab", "refresh")
         env = os.environ.copy()
         handoff_env, pass_fds = active_lock_handoff()

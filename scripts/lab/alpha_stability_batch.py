@@ -43,7 +43,7 @@ ALL_ZONES = (
     "for z in /sys/class/thermal/thermal_zone*; do "
     'read -r t < "$z/type" || { printf "Thermal type read failed: %s\\n" "$z/type" >&2; exit 1; }; '
     'read -r v < "$z/temp" || { printf "%s\\tUNREADABLE\\t%s\\n" "$t" "$z/temp"; continue; }; '
-    'printf "%s\\t%s\\t%s\\n" "$t" "$v" "$z/temp"; done'
+    'printf "%s\\t%s\\t%s\\n" "$t" "$v" "$z/temp"; done; :'
 )
 NON_TEMPERATURE_ZONES = {
     "pm8550-bcl-lvl0",
