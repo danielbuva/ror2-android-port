@@ -109,6 +109,32 @@ class EmissionTests(unittest.TestCase):
         self.assertTrue(json.loads(observed.stdout)["dry_run"])
         self.assertFalse(Path(self.request["done_file"]).exists())
 
+    def test_installer_entry_imports_lab_helpers_without_ambient_pythonpath(self):
+        (self.lease / "lab-runner.json").write_text(json.dumps(dict(pid=os.getpid())))
+        script = """
+import runpy
+import sys
+import types
+
+device = types.ModuleType("device")
+def boundary(*args, **kwargs):
+    raise RuntimeError("fixture-device-boundary-reached")
+device.Device = boundary
+sys.modules["device"] = device
+sys.argv = sys.argv[1:]
+runpy.run_path(sys.argv[0], run_name="__main__")
+"""
+        observed = subprocess.run(
+            [sys.executable, "-I", "-c", script, str(ROOT / "scripts/lab-installer-updates.py"), "--emission-request", str(self.path)],
+            env=dict(os.environ, LAB_CANONICAL_ROOT=str(self.root), LAB_RUNNER_LEASE=str(self.lease), LAB_DEVICE_SERIAL="synthetic-device"),
+            capture_output=True,
+            text=True,
+        )
+        self.assertEqual(observed.returncode, 1, observed.stderr)
+        result = json.loads(Path(self.request["done_file"]).with_suffix(".operation.json").read_bytes())
+        self.assertEqual(result["error"], "fixture-device-boundary-reached")
+        self.assertFalse((self.output / "device-state.json").exists())
+
     def producer_checkout(self):
         checkout = self.root / "producer"
         checkout.mkdir()

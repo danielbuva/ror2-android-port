@@ -2484,6 +2484,7 @@ def main(argv=None):
     )
     args = parser.parse_args(argv)
     if args.emission_request:
+        sys.path.insert(0, str(ROOT / "scripts/lab"))
         operation = module("lab_toolhost_emission", ROOT / "scripts/lab/toolhost_emission.py")
         return 0 if operation.execute(args.emission_request, sys.modules[__name__], resume=args.resume_emission)["success"] else 1
     if args.resume_emission:
