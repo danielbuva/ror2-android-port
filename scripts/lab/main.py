@@ -21,7 +21,7 @@ p = argparse.ArgumentParser(
     formatter_class=argparse.RawDescriptionHelpFormatter,
     epilog="""Command lifecycle (current tooling does not imply game readiness):
   lane: current
-  device-session: current shared request-JSON device lifecycle
+  device-session: current
   diagnostics: current
   migrate-device-receipts: current
   test: current
