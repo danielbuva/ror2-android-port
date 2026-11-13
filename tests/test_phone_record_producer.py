@@ -1,5 +1,6 @@
 """Authored AnimationClip source transformations and persisted pack contracts."""
 
+import gc
 import gzip
 import hashlib
 import importlib.util
@@ -11,6 +12,7 @@ import struct
 import tempfile
 import unittest
 from unittest.mock import Mock, patch
+import weakref
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -233,6 +235,26 @@ def root_motion_fixture(turn=False):
 
 
 class AnimationProducerTests(unittest.TestCase):
+    def test_field_walk_releases_body_without_cyclic_collection(self):
+        class Body(bytearray):
+            pass
+
+        original, schema = fixture()
+        enabled = gc.isenabled()
+        gc.disable()
+        try:
+            for canonical in (None, "zero-and-nan"):
+                body = Body(original)
+                retained = weakref.ref(body)
+                parsed, spans = A.fields(body, schema, canonical)
+                self.assertEqual(len(parsed), len(original))
+                self.assertIn(("script",), spans)
+                del body
+                self.assertIsNone(retained())
+        finally:
+            if enabled:
+                gc.enable()
+
     def test_persisted_type_is_final_managed_projection_and_shared_across_outputs(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)

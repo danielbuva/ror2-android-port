@@ -84,7 +84,19 @@ separate work; this interface adds no device claim.
 Request qualification and emission share attempt-owned SQLite descriptor and
 provider indexes. Only the current rows are decoded; parsed type trees use a
 bounded cache and object bodies retain the existing streamed storage. Teardown
-closes and removes the temporary indexes. The optional emission cache commits
+closes and removes the temporary indexes. Provider descriptors stream through
+SQLite bulk insertion, retaining original JSON lines and ordered duplicate
+extents; metadata conflicts and differing duplicate bytes still fail. Descriptor
+maps also bulk-load rows, rejecting duplicate graph/route identities and checking
+equal endpoint collisions without per-row membership reads. These disposable indexes disable
+journaling; the separate incremental cache retains its durable checkpoints.
+The `--inputs` CLI defaults to two record workers (`--workers 1` selects serial).
+`RecordWorkers` starts them before loading indexes, bounds queued bytes to
+8 MiB (an oversized record runs alone), and retains an 8 MiB schema cache per
+worker. Workers relocate and inspect immutable bytes. The parent owns provider
+reads, endpoint qualification, cache access, resource placement and ordered
+writes, draining each provider before its checkpoint. Teardown joins workers
+on success or failure. The optional emission cache commits
 completed record batches and preload groups so an interrupted attempt can reuse
 their transformations; source, endpoint and CLR qualification still runs again.
 The emitter atomically writes `progress.json` with phase and completed/total
@@ -293,9 +305,15 @@ optional `--table` extends the existing per-stage table. Each child process
 records wall/user/system time, wait4 RSS, block operations and sampled logical/
 allocated workspace bytes, including failed exits. Process exit stops sampling;
 logs/JSON remain caller-owned. Workspace preparation and validation are separate
-from measured commands. Sampling gives a peak lower bound; child RSS accounting
-is not simultaneous process-tree RSS. These host metrics do not qualify phone
-heat, installation or complete converter performance.
+from measured commands. A separate one-second sample sums simultaneous resident
+bytes for the command and its descendants; sampling gives a peak lower bound,
+and measurement errors invalidate success. Optional absolute `--done-file`
+writes a terminal receipt after pruning on command success, failure or SIGTERM.
+Optional `--progress-file` joins current phase and record counts to each RSS
+sample in a local JSONL file, exposing growth within an emission phase.
+`--detach` starts the same tracked profiler in a new session with a retained
+supervisor log and requires that terminal receipt. These host metrics do not
+qualify phone heat, installation or complete converter performance.
 
 The current release graph selects diagnostic historical-output comparison for
 object, record, remap, mesh, avatar, texture and shader producers. Standalone
@@ -1954,6 +1972,18 @@ and original body extent is read and hash-checked. Repeated source identities
 are accepted only with identical metadata apart from offsets, and every copy
 is read and verified. The emitter still validates
 the selected body's complete type, PPtrs and final endpoints separately.
+Attempt-local descriptor maps store parsed rows as binary blobs in one disposable
+SQLite transaction. Provider indexes retain original JSON lines under native
+bundle/member/path-ID columns and build nonunique lookup indexes after insertion.
+Every duplicate remains ordered and checked. Temporary sort data uses memory;
+the measured aggregate process RSS remains a separate host/device admission gate.
+These indexes close and disappear with the invocation; durable transformed-byte
+cache checkpoints and public input formats retain their existing owners.
+Endpoint qualification decodes each full native type once per invocation and
+bounds retained endpoint bodies and descriptors by both 32 MiB and 256 entries.
+The shared record field walker releases its recursive closure on return, so
+parsed bodies and spans do not await cyclic garbage collection. All body,
+pointer and endpoint drift checks still run on each validation epoch.
 The shared `object_produce.make_layout` writer accepts explicitly qualified
 external MonoScript pointers separately from scene membership. It checks each
 managed body's script against the local records or supplied external allowlist,
@@ -5560,8 +5590,15 @@ The same owner's current local `--emission-request` entry point executes
 `scripts/lab/toolhost_emission.py` through the existing installer driver. This
 operation validates a pinned input manifest and toolhost, streams runtime/inputs,
 and invokes `bundle_preload.py` beneath the existing on-phone thermal supervisor.
+Its explicit host-only `--refresh-emission-manifest` action repins only tracked
+`repo/` producers from a clean commit, preserves all other input pins, and updates
+source diagnostics, total bytes, outer hash and the requested runner commit.
 Its durable `device-state.json` owns setup state, the detached handle and terminal
 outcome; each confirmed retry gets a fresh output directory and reuses the cache.
+Explicit `--restage-emission` replaces confirmed-terminal owned staging for new
+pins after verifying the installed toolhost; ordinary resume remains pin-strict.
+The phone supervisor waits before producer launch when valid admission readings
+are warm, reporting cooling and enforcing cancellation and the wall deadline.
 Unknown outcomes retain the lease for exact-handle reattachment after the previous
 host runner exits. Output and owned app remain for downstream consumers, which
 must dispose of them after use. Runner finalization sleeps the display and prunes

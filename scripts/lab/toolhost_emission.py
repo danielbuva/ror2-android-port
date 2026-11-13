@@ -39,7 +39,7 @@ def relative(value):
     return path
 
 
-def load_request(path):
+def load_request(path, *, refresh_repo=False):
     request = json.loads(Path(path).read_bytes())
     required = {"runner", "tool_apk", "manifest", "request", "done_file", "expected_records", "estimated_output_bytes", "profile", "timeout_seconds"}
     if set(request) != required or request["profile"] not in ("nova", "thor"):
@@ -58,10 +58,45 @@ def load_request(path):
         raise ValueError("emission-request-not-staged")
     for name, pin in files.items():
         relative(name)
+        if refresh_repo and name.startswith("repo/"):
+            continue  # Explicit refresh replaces these pins from a clean commit.
         path = Path(pin["source"])
         if path.stat().st_size != pin["bytes"] or digest(path) != pin["sha256"]:
             raise ValueError("emission-staged-input-pin")
     return request, files
+
+
+def refresh_manifest(path, checkout):
+    """Explicit host-only producer update; retain every pinned non-repo input."""
+    request, files = load_request(path, refresh_repo=True)
+    checkout = Path(checkout).resolve()
+
+    def git(*arguments):
+        return subprocess.check_output(["git", "-C", str(checkout), *arguments])
+
+    if Path(git("rev-parse", "--show-toplevel").decode().strip()).resolve() != checkout:
+        raise ValueError("emission-checkout-root-required")
+    if git("status", "--porcelain", "--untracked-files=no"):
+        raise ValueError("emission-clean-producer-checkout-required")
+    tracked = set(git("ls-files", "-z").decode().split("\0"))
+    commit = git("rev-parse", "HEAD").decode().strip()
+    replaced = 0
+    for name in files:
+        if name.startswith("repo/"):
+            local = name.removeprefix("repo/")
+            if local not in tracked:
+                raise ValueError("emission-tracked-producer-required")
+            source = checkout / local
+            files[name] = dict(source=str(source), bytes=source.stat().st_size, sha256=digest(source))
+            replaced += 1
+    manifest_path = Path(request["manifest"]["path"])
+    manifest = json.loads(manifest_path.read_bytes())
+    manifest.update(files=files, bytes=sum(pin["bytes"] for pin in files.values()), source_checkout=str(checkout), source_commit=commit)
+    write(manifest_path, manifest)
+    request["manifest"]["sha256"] = digest(manifest_path)
+    request["runner"]["ref"] = commit
+    write(path, request)
+    return dict(success=True, refreshed_repo_files=replaced, input_bytes=manifest["bytes"], source_commit=commit)
 
 
 def transfer(phone, apk, files, remote, native):
@@ -155,7 +190,7 @@ def collect(phone, state, destination):
     return result
 
 
-def execute(path, installer, *, dry_run=False, resume=False):
+def execute(path, installer, *, dry_run=False, resume=False, restage=False):
     """Run beneath Runner.execute; its lease spans transfer, wait and cleanup."""
     started = time.monotonic()
     request = json.loads(Path(path).read_bytes())
@@ -204,9 +239,11 @@ def execute(path, installer, *, dry_run=False, resume=False):
         if resume:
             state = json.loads(state_path.read_bytes())
         active = bool(state and state.get("job") and state.get("terminal") is None)
+        if restage and (not resume or active or state.get("terminal") is None):
+            raise RuntimeError("emission-restage-confirmed-terminal-required")
         if not active:
             required = request["estimated_output_bytes"] + 20 * 1024**3
-            if not state or not state.get("staged"):
+            if restage or not state or not state.get("staged"):
                 required += sum(pin["bytes"] for pin in files.values())
             if storage["internal"]["free_bytes"] < required:
                 raise RuntimeError("emission-device-space-budget")
@@ -222,11 +259,25 @@ def execute(path, installer, *, dry_run=False, resume=False):
         if resume:
             if (
                 state["apk_sha256"] != apk_hash
-                or state["manifest_sha256"] != request["manifest"]["sha256"]
+                or (not restage and state["manifest_sha256"] != request["manifest"]["sha256"])
                 or phone.package_hash(installer.PACKAGE) != apk_hash
             ):
                 raise RuntimeError("emission-resume-identity")
             phone.owned_installer, phone.installer_hash = True, apk_hash
+            if restage:
+                # Explicit producer qualification replaces only this receipt's
+                # confirmed-terminal scratch. Unknown jobs never reach here.
+                previous = state["remote"]
+                parent, separator, name = previous.rpartition("/files/owner-input/emission-")
+                if not separator or not parent.startswith(("/data/user/", "/data/data/")) or not re.fullmatch(r"[0-9a-f]{32}", name):
+                    raise RuntimeError("emission-restage-owned-root-required")
+                phone.shell("run-as", installer.PACKAGE, "rm", "-rf", previous, label="emission-retire-staging")
+                state = dict(
+                    apk_sha256=apk_hash, manifest_sha256=request["manifest"]["sha256"], remote=parent + separator + uuid.uuid4().hex, native=state["native"]
+                )
+                write(state_path, state)
+                phone.shell("run-as", installer.PACKAGE, "mkdir", "-p", state["remote"], label="emission-input-directory")
+                result["restaged_after_terminal"] = True
         else:
             if phone.occupied(installer.PACKAGE):
                 raise RuntimeError("emission-preexisting-package")

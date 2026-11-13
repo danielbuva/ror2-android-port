@@ -71,10 +71,10 @@ def remap(body, references):
     return bytes(result)
 
 
-def remap_record(body, typ, references, externals):
+def remap_record(body, typ, references, externals, *, records=None, root=None):
     """Relocate produced bodies at checked schema PPtrs, then reparse them."""
-    records = module("record_produce")
-    root = records.SCHEMA.type_tree(io.BytesIO(typ["tree"]))
+    records = module("record_produce") if records is None else records
+    root = records.SCHEMA.type_tree(io.BytesIO(typ["tree"])) if root is None else root
     _, spans = records.fields(body, root)
     pointers = {key: start for key, (start, end) in spans.items() if end - start == 12 and key + ("m_FileID",) in spans and key + ("m_PathID",) in spans}
     resolved = []
