@@ -311,7 +311,7 @@ def qualify_high_refresh(device, thermal, output, pid):
     raise RuntimeError("Settings menu observation deadline")
 
 
-def run_workload(device, thermal, request, output, result):
+def run_workload(device, thermal, request, output, result, *, _reset_idle=None):
     if request["mode"] == "settings-save-failure":
         import settings_write_interrupt_check as settings
 
@@ -340,6 +340,7 @@ def run_workload(device, thermal, request, output, result):
                 duration_seconds=request["duration_seconds"],
                 observation_interval_seconds=request.get("capture_interval_seconds", 5),
                 detailed_visual_diagnostics=request.get("selection", {}).get("detailedVisualDiagnostics", False),
+                _reset_idle=_reset_idle,
                 _observe=observe_pacing if request.get("pacing_diagnostics") else None,
             )
         finally:
@@ -488,7 +489,7 @@ def execute(request):
         thermal.deadline = time.monotonic() + request["duration_seconds"] + 600
         thermal.phase = request["mode"]
         thermal.start()
-        run_workload(device, thermal, request, output, result)
+        run_workload(device, thermal, request, output, result, _reset_idle=lambda current, record: reset_idle(current, lease, record))
         result["success"] = True
     except BaseException:
         result["error"] = traceback.format_exc()

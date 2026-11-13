@@ -247,8 +247,9 @@ class DeviceSessionTests(unittest.TestCase):
         thermal.thread = thermal.stopper = None
         thermal.finish.side_effect = RuntimeError("safety stop") if thermal_error else lambda: events.append("thermal-finish")
 
-        def workload(*args):
+        def workload(*args, **kwargs):
             self.assertTrue(lease_path.is_dir())
+            self.assertIsNotNone(kwargs["_reset_idle"])
             if self.request["mode"] == "sustained":
                 self.assertFalse(any(call.args[0] == "push" and call.args[-1].endswith("movement-batch-selection.json") for call in target.cmd.call_args_list))
             events.append("workload")
@@ -299,6 +300,10 @@ class DeviceSessionTests(unittest.TestCase):
         self.assertEqual(json.loads((self.output / "terminal.done.json").read_text()), result)
         removed = [event for event in events if event.startswith("remove:")]
         self.assertTrue(removed)
+        self.assertEqual(events.count("stop"), 3)
+        self.assertLess(events.index("workload"), len(events) - 1 - events[::-1].index("stop"))
+        for suffix in runner.TRANSIENTS:
+            self.assertEqual(removed.count("remove:/owned/" + suffix), 2)
         self.assertTrue(all(event.removeprefix("remove:/owned/") in runner.TRANSIENTS for event in removed))
         return result
 

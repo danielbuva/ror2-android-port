@@ -246,6 +246,7 @@ def check_session_sustained(
     duration_seconds=None,
     observation_interval_seconds=5,
     detailed_visual_diagnostics=False,
+    _reset_idle=None,
     _observe=None,
 ):
     """Observe aggregate counters in either mode; raw capture defaults to enabled."""
@@ -268,6 +269,10 @@ def check_session_sustained(
     runtime = device.read_receipt("runtime.json")["persistentDataPath"]
     selector = runtime + "/movement-batch-selection.json"
     report_path = runtime + "/movement-batch-" + cleanup.SPINE_ID + ".json"
+    initial_reset = {}
+    if _reset_idle is not None:
+        # The shared runner retains lease/ownership authority for this reset.
+        _reset_idle(device, initial_reset)
     if cleanup._remote_path_state(device, selector) != "absent" or device.sh("pidof", PACKAGE, check=False).strip():
         raise RuntimeError("Requires idle owned package and absent selector; preserve foreign state")
     if cleanup._remote_path_state(device, runtime + "/offline-settings-v1/preferences.json.pending") != "absent":
@@ -283,6 +288,7 @@ def check_session_sustained(
         raw_frame_times_requested=raw_frame_times,
         observation_interval_seconds=observation_interval_seconds,
         samples=[],
+        initial_reset=initial_reset,
     )
     pid = None
     width = height = None

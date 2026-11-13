@@ -2842,6 +2842,10 @@ alone do not establish thermal throttling. The independent safety sampler keeps
 its existing subsecond cadence.
 Sustained requests may set only `selection.detailedVisualDiagnostics`; the owner
 writes its seed-2, attempt-bound, invincibility-only selector after idle admission.
+The shared runner supplies its lease-checked initial reset to the sustained owner,
+so stale lab process/selector/pending state is cleared before admission. Its final
+cleanup always force-stops the owned package and removes those transient files,
+including after workload failure.
 Optional diagnostics/selection/input-mapping settings are read back and restored.
 The mapping must match the APK attempt and accepted measured bridge checkpoint.
 Converted runs also reset and independently verify the separately owned lab

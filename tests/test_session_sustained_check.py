@@ -92,7 +92,7 @@ class SustainedCheckTests(unittest.TestCase):
             device.assert_not_called()
 
     def test_visual_capture_options_reject_invalid_values_before_device_access(self):
-        for options in (dict(detailed_visual_diagnostics="true"), dict(capture_interval_seconds=0)):
+        for options in (dict(detailed_visual_diagnostics="true"), dict(observation_interval_seconds=0)):
             with self.subTest(options=options), mock.patch.object(sustained, "Device") as device:
                 with self.assertRaises(ValueError):
                     sustained.check_session_sustained("a" * 64, **options)
@@ -138,6 +138,45 @@ class SustainedCheckTests(unittest.TestCase):
                     sustained.collect_raw_frames(device, "/owned", out, invalid, samples)
                 device.cmd.assert_not_called()
                 device.sh.assert_not_called()
+
+    def test_shared_reset_clears_stale_process_selector_and_pending_before_admission(self):
+        import device_session as runner
+
+        device = mock.Mock(package="dev.ror2lab.arm64")
+        device.owned.return_value = dict(apk_sha256="a" * 64, package_path="package:/fixture/base.apk")
+        device.read_receipt.return_value = dict(persistentDataPath="/owned")
+        paths = {"/owned/" + suffix for suffix in runner.TRANSIENTS}
+        running = True
+
+        def shell(*args, **kwargs):
+            nonlocal running
+            if args[0] == "sha256sum":
+                return "a" * 64
+            if args[0] == "pidof":
+                return "73" if running else ""
+            if args[:2] == ("am", "force-stop"):
+                running = False
+            if args[0] == "rm":
+                paths.remove(args[-1])
+            return ""
+
+        device.sh.side_effect = shell
+        device.evidence_directory.side_effect = RuntimeError("reset admitted")
+        lease = mock.Mock()
+        reset = mock.Mock(side_effect=lambda current, record: runner.reset_idle(current, lease, record))
+        with (
+            mock.patch.object(sustained, "Device", return_value=device),
+            mock.patch.object(sustained, "attempt_from_installed", return_value="authored-attempt"),
+            mock.patch.object(sustained.cleanup, "_remote_path_state", side_effect=lambda current, path: "file" if path in paths else "absent"),
+        ):
+            with self.assertRaisesRegex(RuntimeError, "reset admitted"):
+                sustained.check_session_sustained("a" * 64, _reset_idle=reset)
+        reset.assert_called_once()
+        lease.require.assert_called()
+        self.assertFalse(paths)
+        self.assertFalse(running)
+        device.launch.assert_not_called()
+        device.cmd.assert_not_called()
 
     def test_foreign_selector_pending_and_live_process_are_preserved_before_launch(self):
         for selector, pending, process in (("file", "absent", ""), ("absent", "file", ""), ("absent", "absent", "73")):
