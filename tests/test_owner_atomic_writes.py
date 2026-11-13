@@ -426,7 +426,8 @@ class QuotaDriverTests(unittest.TestCase):
             (60, 0, 300, 16 * 1024**2, True),
             (86, -1, 300, 16 * 1024**2, False),
             (80, 1, 300, 16 * 1024**2, False),
-            (60, 0, 350, 16 * 1024**2, False),
+            (60, 0, 350, 16 * 1024**2, True),
+            (60, 0, 351, 16 * 1024**2, False),
             (60, 0, 300, 14 * 1024**2, False),
         ):
             with self.subTest(level=level, current=current, temperature=temperature, free=free):
