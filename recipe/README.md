@@ -5815,6 +5815,10 @@ The producer and camera hook refresh their manifest bindings, and the camera
 recipe pins the updated hook. The refresh contains only public authored source
 hashes and their bindings. No protected content or private data is included.
 
+2026-11-17 projectile presentation audit: the source pins cover transfer of
+the session's recovered material counts into the integrated-world report.
+The refresh contains only authored source hashes and their manifest bindings.
+
 2026-11-04 ordinary-player startup build pin refresh: the camera build-hook
 source hash now includes the reviewed audio owner manifest pin from the startup
 change. Only the authored build-hook hash changes; no game-derived content or

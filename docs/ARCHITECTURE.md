@@ -4609,6 +4609,8 @@ before their pools instantiate them. It follows typed prefab edges with cycle
 protection, including CharacterBody's separately loaded FireTrail. Original
 source slots and particle trails are restored by integrated-world cleanup before
 the session destroys its material copies; source blend values remain intact.
+The session counts objective projectile materials during catalog setup. The
+integrated-world report includes these counts from its first snapshot.
 | Developer controls | `DebugAccelerationBoundary` ([debug-acceleration.md](debug-acceleration.md)) | nested `DebugAccelerationSession` (`IDisposable`) **own type** holds the body, saved god mode, ownership flag, charge scan/callback set and grant inventory; `debugPanel` stays shared with IntegratedWorld's graphics button; sticky "assisted" flags stay in the coordinator report | `PrepareDebugAcceleration` (calls `DebugAccelerationSession.Prepare`) → `CleanupDebugAcceleration` (calls `Dispose`; owner retained) | `test_debug_acceleration.py` |
 
 `AndroidProfileSession` reserves each original achievement event before its
