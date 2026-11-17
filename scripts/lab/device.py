@@ -515,7 +515,7 @@ class Device:
         self.write_receipt("sync.json", result)
         return result
 
-    def collect(self, kind, out):
+    def collect(self, kind, out, *, include_exceptions=True):
         if kind in ["all", "screenshot"]:
             self.display(True)
         out.mkdir(parents=True, exist_ok=True)
@@ -549,7 +549,8 @@ class Device:
             (out / "thermal-zones.txt").write_text(self.sh("sh", "-c", zones, check=False))
             if self.receipt("runtime.json").exists():
                 path = self.read_receipt("runtime.json")["persistentDataPath"]
-                for name in ["snapshot.json", "exceptions.jsonl"]:
+                names = ("snapshot.json", "exceptions.jsonl") if include_exceptions else ("snapshot.json",)
+                for name in names:
                     text = self.sh("cat", path + "/" + name, check=False)
                     if text:
                         (out / name).write_text(text)

@@ -84,7 +84,7 @@ class SustainedCheckTests(unittest.TestCase):
                 self.assertEqual(json.loads((output / "result.json").read_text())["observation_interval_seconds"], 10)
                 sample = output / "sample-0000"
                 self.assertTrue((sample / "world.json").is_file())
-                expected = [mock.call("perf", sample)]
+                expected = [mock.call("perf", sample, include_exceptions=False)]
                 if detailed:
                     expected.append(mock.call("screenshot", sample))
                 self.assertEqual(device.collect.call_args_list, expected)
