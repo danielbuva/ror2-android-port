@@ -216,12 +216,14 @@ def editor(target="lab", action="inspect"):
             "engineer-laser-host",
             "commando-animation-host",
             "enemy-material-audit",
+            "body-animation-audit",
         }:
             from whole_catalog import copy_catalog_asset
 
             fixture, owners = {
                 "commando-animation-host": ("SurvivorSkillInputHost.cs", []),
                 "enemy-material-audit": ("WholeCatalogHost.cs", []),
+                "body-animation-audit": ("WholeCatalogHost.cs", []),
                 "lightning-stake-host": ("LightningStakeSourceContractFixture.cs", ["world/IntegratedWorldBoundary.cs"]),
                 "siren-input-host": (
                     "SirenEggDiagnosticInputExactEditorFixture.cs",

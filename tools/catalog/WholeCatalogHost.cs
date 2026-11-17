@@ -3,8 +3,10 @@ using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using Newtonsoft.Json.Linq;
 using UnityEditor;
+using UnityEditor.Animations;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.AddressableAssets.Initialization;
@@ -16,13 +18,266 @@ using UnityEngine.ResourceManagement.ResourceProviders;
 // Only the editor substitutes AssetDatabase for the Android bundle provider.
 public static class WholeCatalogHost
 {
-    // Current exact-editor inventory; published membership is the native provider policy.
-    // This inspects imported assets and resource coverage, never claims Android rendering.
-    public static object AuditCombatMaterials(string manifestPath, string outputPath)
+    public static object AuditBodyAnimations(string manifestPath, string outputPath)
+    {
+        RequireIdleEditor();
+        var manifest = JObject.Parse(File.ReadAllText(manifestPath));
+        var locations = manifest["locations"].ToDictionary(row => (int)row["id"], row => (string)row["path"]);
+        var addresses = new AnimationAddresses(manifest, locations);
+        var errors = new JArray();
+        var survivors = new JArray();
+        var survivorBodies = new HashSet<GameObject>();
+        foreach (string path in FamilyPaths(manifest, locations, "SurvivorDef"))
+        {
+            var survivor = AssetDatabase.LoadAssetAtPath<RoR2.SurvivorDef>(path);
+            var body = survivor ? survivor.bodyPrefab : null;
+            if (body)
+                survivorBodies.Add(body);
+            else
+                errors.Add(path + ": missing typed SurvivorDef/body prefab");
+            survivors.Add(new JObject { ["definition"] = path, ["body"] = AssetPath(body) });
+        }
+        var bodies = new JArray();
+        var seen = new HashSet<GameObject>();
+        foreach (string path in FamilyPaths(manifest, locations, "CharacterBody"))
+        {
+            var root = AssetDatabase.LoadAssetAtPath<GameObject>(path);
+            var body = root ? root.GetComponent<RoR2.CharacterBody>() : null;
+            if (!body)
+            {
+                errors.Add(path + ": missing typed CharacterBody prefab");
+                continue;
+            }
+            seen.Add(root);
+            var issues = new JArray();
+            var locator = root.GetComponent<RoR2.ModelLocator>();
+            var model = locator ? locator.modelTransform : null;
+            bool survivor = survivorBodies.Contains(root);
+            if (survivor && !model)
+                issues.Add("Survivor model locator has no model");
+            var animators = new JArray();
+            var controllers = new Dictionary<Animator, RuntimeAnimatorController>();
+            foreach (var animator in root.GetComponentsInChildren<Animator>(true))
+            {
+                string objectPath = HierarchyPath(animator.transform);
+                var skin = animator.GetComponent<RoR2.ModelSkinController>();
+                var serialized = skin ? new SerializedObject(skin) : null;
+                var controller = addresses.Inspect(serialized, "_animatorControllerAddress", animator.runtimeAnimatorController,
+                                                   skin ? skin._animatorController : null, out var controllerBinding);
+                var avatar = addresses.Inspect(serialized, "_avatarAddress", animator.avatar, skin ? skin._avatar : null,
+                                               out var avatarBinding);
+                if ((string)controllerBinding["addressStatus"] == "unresolved")
+                    issues.Add(objectPath + ": unresolved controller address");
+                if ((string)avatarBinding["addressStatus"] == "unresolved")
+                    issues.Add(objectPath + ": unresolved avatar address");
+                controllers.Add(animator, controller);
+                var skins = new JArray();
+                var visitedSkins = new HashSet<RoR2.SkinDef>();
+                if (skin && skin.skins != null)
+                    foreach (var definition in skin.skins)
+                        InspectAnimationSkin(definition, addresses, visitedSkins, skins, issues);
+                var clips = controller ? controller.animationClips.Where(clip => clip).Distinct().ToArray() : Array.Empty<AnimationClip>();
+                var events = InspectClipEvents(animator, clips);
+                var missingReceivers = events.Where(row => (bool)row["receiverRequired"] && !(bool)row["receiverPresent"])
+                    .Select(row => (string)row["function"]).Distinct().ToArray();
+                if (missingReceivers.Length != 0)
+                    issues.Add(objectPath + ": missing required clip-event receivers: " + string.Join(", ", missingReceivers));
+                animators.Add(new JObject { ["object"] = objectPath, ["enabled"] = animator.enabled,
+                                            ["controller"] = controllerBinding, ["avatar"] = avatarBinding,
+                                            ["avatarValid"] = avatar ? new JValue(avatar.isValid) : JValue.CreateNull(),
+                                            ["skins"] = skins, ["clips"] = clips.Length, ["events"] = events });
+            }
+            var machines = new JArray();
+            foreach (var machine in root.GetComponentsInChildren<RoR2.EntityStateMachine>(true))
+                machines.Add(new JObject { ["object"] = HierarchyPath(machine.transform), ["name"] = machine.customName,
+                                           ["initial"] = InspectState(machine, "initial", machine.initialStateType, issues),
+                                           ["main"] = InspectState(machine, "main", machine.mainStateType, issues) });
+            var aims = new JArray();
+            foreach (var aim in root.GetComponentsInChildren<RoR2.AimAnimator>(true))
+                aims.Add(InspectAim(body, locator, aim, controllers, issues));
+            foreach (string issue in issues.Values<string>())
+                errors.Add(path + ": " + issue);
+            bodies.Add(new JObject { ["path"] = path, ["survivor"] = survivor, ["model"] = HierarchyPath(model),
+                                     ["aimOrigin"] = HierarchyPath(body.aimOriginTransform), ["animators"] = animators,
+                                     ["stateMachines"] = machines, ["aim"] = aims });
+        }
+        foreach (var body in survivorBodies.Except(seen))
+            errors.Add(AssetPath(body) + ": survivor body outside the native CharacterBody family");
+        if (bodies.Count == 0 || survivors.Count == 0)
+            errors.Add("Native body or survivor family is empty");
+        File.WriteAllText(outputPath, new JObject { ["survivors"] = survivors, ["bodies"] = bodies, ["errors"] = errors }.ToString());
+        return new { bodies = bodies.Count, survivors = survivors.Count, errors = errors.Count, output = outputPath };
+    }
+
+    static IEnumerable<string> FamilyPaths(JObject manifest, Dictionary<int, string> locations, string category)
+    {
+        return WholeCatalogComposed.FamilyLocationGroups(manifest, category).SelectMany(group => group)
+            .Select(id => locations[id]).Distinct(StringComparer.Ordinal);
+    }
+
+    static string AssetPath(UnityEngine.Object asset)
+    {
+        return asset ? AssetDatabase.GetAssetPath(asset) : null;
+    }
+
+    static string HierarchyPath(Transform transform)
+    {
+        if (!transform)
+            return null;
+        var parts = new List<string>();
+        for (var node = transform; node; node = node.parent)
+            parts.Add(node.name + "[" + node.GetSiblingIndex() + "]");
+        parts.Reverse();
+        return string.Join("/", parts);
+    }
+
+    // Use the manifest's string keys and typed prepared assets without starting Addressables.
+    sealed class AnimationAddresses
+    {
+        readonly Dictionary<string, string[]> paths;
+
+        public AnimationAddresses(JObject manifest, Dictionary<int, string> locations)
+        {
+            paths = manifest["keys"].Where(row => row["keyType"] == null || (string)row["keyType"] == "System.String")
+                .ToDictionary(row => (string)row["key"],
+                              row => row["locations"].Values<int>().Where(locations.ContainsKey).Select(id => locations[id])
+                                  .Distinct(StringComparer.Ordinal).ToArray());
+        }
+
+        public T Inspect<T>(SerializedObject owner, string field, T animator, T direct, out JObject binding) where T : UnityEngine.Object
+        {
+            var address = owner?.FindProperty(field);
+            string key = address?.FindPropertyRelative("m_AssetGUID")?.stringValue;
+            string subobject = address?.FindPropertyRelative("m_SubObjectName")?.stringValue;
+            var deferred = Resolve<T>(key, subobject);
+            var resolved = animator ? animator : !string.IsNullOrEmpty(key) ? deferred : direct;
+            binding = new JObject { ["animator"] = AssetPath(animator), ["direct"] = AssetPath(direct), ["key"] = key,
+                                    ["subobject"] = subobject, ["address"] = AssetPath(deferred), ["effective"] = AssetPath(resolved),
+                                    ["addressStatus"] = string.IsNullOrEmpty(key) ? "empty" : deferred ? "resolved" : "unresolved" };
+            return resolved;
+        }
+
+        T Resolve<T>(string key, string subobject) where T : UnityEngine.Object
+        {
+            if (string.IsNullOrEmpty(key))
+                return null;
+            bool named = !string.IsNullOrEmpty(subobject);
+            if ((!named || !paths.TryGetValue(key + "[" + subobject + "]", out var candidates)) &&
+                !paths.TryGetValue(key, out candidates))
+                return null;
+            var matches = candidates
+                .SelectMany(path => named ? AssetDatabase.LoadAllAssetsAtPath(path).OfType<T>().Where(asset => asset.name == subobject)
+                                          : new[] { AssetDatabase.LoadAssetAtPath<T>(path) })
+                .Where(asset => asset).Distinct().Take(2).ToArray();
+            return matches.Length == 1 ? matches[0] : null;
+        }
+    }
+
+    static void InspectAnimationSkin(RoR2.SkinDef skin, AnimationAddresses addresses, HashSet<RoR2.SkinDef> visited, JArray rows,
+                                     JArray issues)
+    {
+        if (!skin)
+        {
+            issues.Add("Missing SkinDef in model's skin chain");
+            return;
+        }
+        if (!visited.Add(skin))
+            return;
+        addresses.Inspect(new SerializedObject(skin), "skinDefParamsAddress", null, skin.skinDefParams, out var parameters);
+        if ((string)parameters["addressStatus"] == "unresolved")
+            issues.Add(AssetPath(skin) + ": unresolved SkinDefParams address");
+        rows.Add(new JObject { ["skin"] = AssetPath(skin), ["root"] = AssetPath(skin.rootObject), ["parameters"] = parameters });
+        foreach (var parent in skin.baseSkins ?? Array.Empty<RoR2.SkinDef>())
+            InspectAnimationSkin(parent, addresses, visited, rows, issues);
+    }
+
+    static JObject InspectState(RoR2.EntityStateMachine machine, string slot, EntityStates.SerializableEntityStateType state, JArray issues)
+    {
+        var type = state.stateType;
+        if (!string.IsNullOrEmpty(state.typeName) && (type == null || type.IsAbstract))
+            issues.Add(machine.customName + ": " + slot + " state does not resolve to a concrete type: " + state.typeName);
+        return new JObject { ["configured"] = state.typeName, ["type"] = type?.FullName };
+    }
+
+    static JObject InspectAim(RoR2.CharacterBody body, RoR2.ModelLocator locator, RoR2.AimAnimator aim,
+                              Dictionary<Animator, RuntimeAnimatorController> controllers, JArray issues)
+    {
+        var animator = aim.GetComponent<Animator>();
+        // Read the prefab links used to initialize the native caches on activation.
+        if (!animator && locator && (aim.gameObject == body.gameObject || aim.GetComponent<RoR2.CharacterModel>()))
+            animator = locator.forcedAnimatorAtStart ? locator.forcedAnimatorAtStart :
+                locator.modelTransform ? locator.modelTransform.GetComponent<Animator>() : null;
+        RuntimeAnimatorController controller = null;
+        if (animator)
+            controllers.TryGetValue(animator, out controller);
+        while (controller is AnimatorOverrideController wrapper)
+            controller = wrapper.runtimeAnimatorController;
+        var imported = controller as AnimatorController;
+        var required = aim.enableAimWeight ? new[] { "aimPitchCycle", "aimYawCycle", "aimWeight" } : new[] { "aimPitchCycle", "aimYawCycle" };
+        var parameters = imported ? imported.parameters : Array.Empty<AnimatorControllerParameter>();
+        var missing = required.Where(name => !parameters.Any(parameter => parameter.name == name &&
+                                                                 parameter.type == AnimatorControllerParameterType.Float)).ToArray();
+        string objectPath = HierarchyPath(aim.transform);
+        bool input = aim.inputBank && aim.inputBank == body.GetComponent<RoR2.InputBankTest>();
+        bool direction = aim.directionComponent && aim.directionComponent == body.GetComponent<RoR2.CharacterDirection>();
+        // Native aim falls back to the model's forward direction when its input bank is absent.
+        // The serialized direction component is optional.
+        if (aim.enabled && ((aim.inputBank && !input) || (aim.directionComponent && !direction)))
+            issues.Add(objectPath + ": configured aim links point outside the body's input or direction component");
+        if (aim.enabled && missing.Length != 0)
+            issues.Add(objectPath + ": missing aim float parameters: " + string.Join(", ", missing));
+        return new JObject { ["object"] = objectPath, ["enabled"] = aim.enabled, ["mode"] = aim.aimType.ToString(),
+                             ["animator"] = animator ? HierarchyPath(animator.transform) : null,
+                             ["inputBank"] = aim.inputBank ? HierarchyPath(aim.inputBank.transform) : null,
+                             ["directionComponent"] = aim.directionComponent ? HierarchyPath(aim.directionComponent.transform) : null,
+                             ["inputBankMatches"] = input, ["directionMatches"] = direction, ["missingFloats"] = new JArray(missing),
+                             ["layers"] = new JArray(imported ? imported.layers.Select(layer => layer.name).ToArray() : Array.Empty<string>()) };
+    }
+
+    static JArray InspectClipEvents(Animator animator, AnimationClip[] clips)
+    {
+        var rows = new JArray();
+        if (clips.Length == 0)
+            return rows;
+        var methods = animator.GetComponents<MonoBehaviour>().Where(component => component)
+            .SelectMany(component => component.GetType().GetMethods(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic))
+            .ToLookup(method => method.Name, StringComparer.Ordinal);
+        foreach (var clip in clips)
+            foreach (var animationEvent in AnimationUtility.GetAnimationEvents(clip))
+            {
+                bool receiver = methods[animationEvent.functionName].Any(method => AcceptsAnimationEvent(method, animationEvent));
+                rows.Add(new JObject { ["clip"] = clip.name, ["path"] = AssetPath(clip), ["time"] = animationEvent.time,
+                                       ["function"] = animationEvent.functionName, ["receiverPresent"] = receiver,
+                                       ["receiverRequired"] = animationEvent.messageOptions == SendMessageOptions.RequireReceiver });
+            }
+        return rows;
+    }
+
+    static bool AcceptsAnimationEvent(MethodInfo method, AnimationEvent animationEvent)
+    {
+        if (method.IsGenericMethod || method.ReturnType != typeof(void))
+            return false;
+        var parameters = method.GetParameters();
+        if (parameters.Length != 1)
+            return parameters.Length == 0;
+        var type = parameters[0].ParameterType;
+        return type == typeof(AnimationEvent) || type == typeof(string) || type == typeof(float) || type == typeof(int) ||
+               type.IsEnum || (typeof(UnityEngine.Object).IsAssignableFrom(type) &&
+                               (!animationEvent.objectReferenceParameter || type.IsInstanceOfType(animationEvent.objectReferenceParameter)));
+    }
+
+    static void RequireIdleEditor()
     {
         if (EditorApplication.isCompiling || EditorApplication.isUpdating || EditorUtility.scriptCompilationFailed ||
             EditorApplication.isPlayingOrWillChangePlaymode || BuildPipeline.isBuildingPlayer || stack.Count != 0)
             throw new Exception("Editor busy or source not compiled");
+    }
+
+    // Current exact-editor inventory; published membership is the native provider policy.
+    // This inspects imported assets and resource coverage, never claims Android rendering.
+    public static object AuditCombatMaterials(string manifestPath, string outputPath)
+    {
+        RequireIdleEditor();
         var manifest = JObject.Parse(File.ReadAllText(manifestPath));
         var locations = manifest["locations"].ToDictionary(row => (int)row["id"]);
         var roots = new JArray();
