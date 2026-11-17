@@ -34,9 +34,8 @@ Completed records remain in the [journal](PORTING_JOURNAL.md) and
       UI/release fetch/session install and manifest/incremental rebuild/signing
       must pass together; partial host or installer tests do not close P1.
 - [ ] Complete public-input bootstrap without private generated assets or analysis
-      receipts; resolve required tool/component distribution grants and finish the
-      [ADR-002 findings review](ADR-002-public-alpha-distribution.md) before selecting
-      a replacement pipeline or final installation architecture.
+      receipts. Resolve required tool/component distribution grants before external
+      publication. See the [ADR-002 findings](ADR-002-public-alpha-distribution.md#findings-review).
 
 ## Alpha acquisition and playtests
 

@@ -47,14 +47,15 @@ build-pipeline changes. This checklist makes no alpha-readiness claim.
 - [ ] Qualify the complete owner-generated output on the selected alpha device,
       with committed source/input/toolchain receipts, ordinary installation/update
       and matched performance ([acceptance gates](phone-owner-build.md#proof-gates)).
-      Preserve the original installation, Main's editor/build mutex/device and
-      desktop fallback. IL2CPP alone does not prove equivalent performance.
+      Preserve the original installation, shared Unity build mutex, dispatcher
+      device leases and desktop fallback. IL2CPP alone does not prove equivalent
+      performance.
       [J1401](PORTING_JOURNAL.md#j1401--load-typed-results-definitions-before-dependent-drop-tables)
       verifies bounded ordinary Start on a lab APK, not the converter's output.
-- [ ] Complete the [ADR-002 findings review](ADR-002-public-alpha-distribution.md)
-      before adopting a replacement pipeline or final installation architecture.
-      Keep other gameplay backends excluded; audit public artifacts and keep
-      owner-generated game content private.
+- [x] Complete the [ADR-002 findings review](ADR-002-public-alpha-distribution.md#findings-review).
+      Architecture C, native IL2CPP and the desktop fallback remain the accepted
+      direction. Final phone installation and external publication approval
+      remain open.
 
 ## Packaging and acquisition
 
