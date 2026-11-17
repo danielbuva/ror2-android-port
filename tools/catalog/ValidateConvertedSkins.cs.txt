@@ -12,29 +12,57 @@ System.Func<Newtonsoft.Json.Linq.JToken,string> pin=row=>{
 };
 var manifest=Newtonsoft.Json.Linq.JObject.Parse(System.IO.File.ReadAllText(pin(request["metadata"])));
 var locations=manifest["locations"].ToDictionary(row=>(int)row["id"]);
+var fixture=request["skin_fixture"];
+var pins=(Newtonsoft.Json.Linq.JObject)request["bundles"];
+var startupOwners=fixture==null?pins.Properties().Select(row=>row.Name).ToArray():new[]{"whole-game-content","commando-prefab-lab","objective-support-lab"};
 var bundles=new System.Collections.Generic.Dictionary<string,UnityEngine.AssetBundle>();
 var rows=new System.Collections.Generic.List<object>();var failures=new System.Collections.Generic.List<object>();
+var typedBodies=new System.Collections.Generic.List<System.Collections.Generic.KeyValuePair<string,UnityEngine.GameObject>>();
 int bodies=0,controllers=0,slots=0;
+System.Func<string,string,UnityEngine.GameObject> loadBody=(owner,path)=>{
+ var body=bundles[owner].LoadAsset<UnityEngine.GameObject>(path);
+ if(!body)throw new System.Exception("Typed body missing: "+owner+"/"+path);
+ return body;
+};
 try{
- foreach(var row in ((Newtonsoft.Json.Linq.JObject)request["bundles"]).Properties()){
-  var bundle=UnityEngine.AssetBundle.LoadFromFile(pin(row.Value));
-  if(!bundle)throw new System.Exception("Skin fixture bundle failed to load: "+row.Name);
-  bundles.Add(row.Name,bundle);
+ foreach(var owner in startupOwners){
+  var bundle=UnityEngine.AssetBundle.LoadFromFile(pin(pins[owner]));
+  if(!bundle)throw new System.Exception("Skin fixture bundle failed to load: "+owner);
+  bundles.Add(owner,bundle);
  }
+ // Earlier startup orders are retained as controls for first-load failures.
+ var wardPath=(string)fixture?["ward_path"];
+ var commandoPath=(string)fixture?["commando_path"];
+ bool earlyWard=(bool?)fixture?["early_ward"]??false;
+ bool earlyCommando=(bool?)fixture?["early_commando"]??false;
+ if(earlyWard)loadBody("objective-support-lab",wardPath);
+ if(earlyCommando)loadBody("commando-prefab-lab",commandoPath);
  var groups=WholeCatalogComposed.FamilyLocationGroups(manifest,"CharacterBody");
  foreach(int id in groups.SelectMany(group=>group).Distinct()){
   var row=locations[id];string path=(string)row["path"],owner=(string)row["bundle"];
   try{
-   var body=bundles[owner].LoadAsset<UnityEngine.GameObject>(path);
-   if(!body)throw new System.Exception("Typed body missing");
+   typedBodies.Add(new System.Collections.Generic.KeyValuePair<string,UnityEngine.GameObject>(path,loadBody(owner,path)));
+  }catch(System.Exception error){failures.Add(new{path,owner,error=error.ToString()});}
+ }
+ if(commandoPath!=null&&!earlyCommando)loadBody("commando-prefab-lab",commandoPath);
+ if(wardPath!=null&&!earlyWard)loadBody("objective-support-lab",wardPath);
+ foreach(var entry in typedBodies){
+  var path=entry.Key;var body=entry.Value;
+  try{
    bodies++;
-   foreach(var controller in body.GetComponentsInChildren<RoR2.ModelSkinController>(true)){
+   var locator=body.GetComponent<RoR2.ModelLocator>();
+   var model=locator?locator.modelTransform:null;
+   var liveController=model?model.GetComponent<RoR2.ModelSkinController>():null;
+   var bodyControllers=fixture==null?body.GetComponentsInChildren<RoR2.ModelSkinController>(true):liveController?new[]{liveController}:new RoR2.ModelSkinController[0];
+   foreach(var controller in bodyControllers){
     controllers++;
     if(controller.skins==null)throw new System.Exception("skins array null");
     for(int index=0;index<controller.skins.Length;index++){
      var skin=controller.skins[index];slots++;
-     rows.Add(new{body=body.name,path,index,loaded=(bool)skin,skin=skin?skin.name:null,root=skin&&skin.rootObject?skin.rootObject.name:null});
-     if(!skin)failures.Add(new{path,index,error="ModelSkinController.skins slot null"});
+     var expected=manifest["bodySkinTargets"]?[body.name]?[index.ToString(System.Globalization.CultureInfo.InvariantCulture)];
+     rows.Add(new{body=body.name,path,index,loaded=(bool)skin,skin=skin?skin.name:null,root=skin&&skin.rootObject?skin.rootObject.name:null,expected});
+     if(!skin)failures.Add(new{body=body.name,path,index,expected,error="ModelSkinController.skins slot null"});
+     else if(skin.GetSkinParams().assetRef==null)failures.Add(new{body=body.name,path,index,expected,error="SkinDef.GetSkinParams().assetRef null"});
     }
    }
   }catch(System.Exception error){failures.Add(new{path,error=error.ToString()});}
@@ -42,5 +70,5 @@ try{
 }catch(System.Exception error){failures.Add(new{error=error.ToString()});}
 finally{foreach(var bundle in bundles.Values.Reverse())bundle.Unload(true);}
 var summary=new{bodies,controllers,slots,failed=failures.Count,scope="Exact-editor typed converted bundle references; no Android or gameplay acceptance"};
-var result=new{success=failures.Count==0&&bodies>0,summary,rows,failures};
+var result=new{success=failures.Count==0&&bodies>0,summary,startupOwners,deferredOwners=pins.Properties().Select(row=>row.Name).Except(startupOwners),fixture,rows,failures};
 System.IO.File.WriteAllText(output,Newtonsoft.Json.JsonConvert.SerializeObject(result,Newtonsoft.Json.Formatting.Indented));return summary;

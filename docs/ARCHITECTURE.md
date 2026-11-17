@@ -395,20 +395,28 @@ registry, plus input/startup identity. Existing catalog helpers resolve ownershi
 and dependency closure; final serialized containers independently check endpoint
 PPtrs, preload extents, native types and exact MonoScript/runtime bindings.
 Every emitted `ModelSkinController.skins` slot is checked against its actual
-local or external `RoR2.SkinDef` and registered MonoScript; controller and slot
-counts are recorded separately. This structural check does not establish that
-Unity deserializes those references successfully.
+local or external `RoR2.SkinDef` and registered MonoScript. The converter follows
+the serialized body `ModelLocator` to its model controller and records each
+expected SkinDef's bundle, serialized path ID and available container paths in
+`bodySkinTargets`. For retained objects, an equivalent path requires the same
+member, type and serialized body. `BodyCatalogSession` logs every invalid skin
+input in its startup snapshot. The native catalog initializes only after
+validation passes.
 `whole_catalog.py::host_skin_bundles` exposes
 `./dev prototype --action whole-catalog-skin-host --target REQUEST` through
 `tools/catalog/ValidateConvertedSkins.cs.txt`. It consumes that pinned catalog
 request in the idle exact editor under the shared mutex.
-It loads the actual produced bundles, follows native provider body membership,
-checks every typed model skin slot and unloads its bundle owners in `finally`.
-Its local receipt records failures separately from Android gameplay acceptance.
+The fixture-only `skin_fixture` specifies `commando_path` and `ward_path`.
+Optional `early_ward` and `early_commando` replay earlier load orders. The fixture
+opens the three startup owners, leaves deferred owners unopened, loads the typed
+bodies in provider order, and checks the same model controller as startup. All
+opened bundles are released in `finally`. Its local receipt records failures
+before the Android gameplay gate.
 During startup, `BodyCatalogSession` opens the objective-support bundle through
 `TeleporterWorldSession` before deserializing body prefabs. The original
-CharacterBody family loads in provider order before the explicit ward script
-binding check. The teleporter owner holds and releases the same bundle handle.
+CharacterBody family loads in provider order before the explicit Commando read
+and ward script binding check. The teleporter owner holds and releases the same
+bundle handle.
 Duplicate container keys retain every root. Managed subtype assignability is not
 yet admitted. AnimatorController typed subassets are resolved only through its
 schema-declared behaviour array, with the same script binding and current runtime

@@ -94,7 +94,9 @@ class CatalogCompletionTests(unittest.TestCase):
                     with self.assertRaisesRegex(ValueError, "unresolved model skin slot.*CAB-body:10 skins.Array.0"):
                         C.validate_model_skins(members, runtime)
                 else:
-                    self.assertEqual(C.validate_model_skins(members, runtime), dict(model_skin_controllers=1, model_skin_slots=1))
+                    targets = {}
+                    self.assertEqual(C.validate_model_skins(members, runtime, targets), dict(model_skin_controllers=1, model_skin_slots=1))
+                    self.assertEqual(targets, {("CAB-body", 10): {"0": ("CAB-skins", 20)}})
 
     def test_deferred_references_preserve_subobjects_and_plain_preloads(self):
         guid = "1234567890abcdef1234567890abcdef"

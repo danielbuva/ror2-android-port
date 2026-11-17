@@ -6,6 +6,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Collections.Generic;
+using Newtonsoft.Json.Linq;
 using RoR2.Skills;
 using RoR2.Projectile;
 using Path = System.IO.Path;
@@ -173,32 +174,75 @@ public sealed partial class PortSession
             coordinator.Check(priorSkinDefs.Length == 0 && priorSkinsByBody.Length == 0 && names.Count == 0 &&
                                   !priorSkinAvailability.available,
                               "Unowned original skin catalog state");
+            string firstFailure = null;
+            var invalidInputs = 0;
+            JObject skinTargets = null;
+            bool readSkinTargets = false;
+            void RecordInvalidInput(string field, string context, string body = null, string slot = null)
+            {
+                var message = "Original skin field null: " + field + context;
+                if (slot != null)
+                {
+                    if (!readSkinTargets)
+                    {
+                        skinTargets = WholeCatalogComposed.ReadDefinitionManifest()["bodySkinTargets"] as JObject;
+                        readSkinTargets = true;
+                    }
+                    var expected = skinTargets?[body]?[slot];
+                    message += " expectedSkinDef=" + (expected == null ? "<unavailable>" : expected.ToString(Newtonsoft.Json.Formatting.None));
+                }
+                Debug.LogError(message);
+                if (firstFailure == null)
+                    firstFailure = message;
+                invalidInputs++;
+            }
             var bodyIndex = 0;
             foreach (var prefab in BodyCatalog.allBodyPrefabs)
             {
                 var context = " bodyIndex=" + bodyIndex++ + " body=" + (prefab ? prefab.name : "<null>");
-                coordinator.Check(prefab, "Original skin field null: bodyPrefab" + context);
+                if (!prefab)
+                {
+                    RecordInvalidInput("bodyPrefab", context);
+                    continue;
+                }
                 var locator = prefab.GetComponent<ModelLocator>();
                 if (!locator || !locator.modelTransform)
                     continue;
                 var controller = locator.modelTransform.GetComponent<ModelSkinController>();
                 if (!controller)
                     continue;
-                coordinator.Check(controller.skins != null, "Original skin field null: ModelSkinController.skins" + context);
+                if (controller.skins == null)
+                {
+                    RecordInvalidInput("ModelSkinController.skins", context);
+                    continue;
+                }
                 for (var skinIndex = 0; skinIndex < controller.skins.Length; skinIndex++)
                 {
                     var skin = controller.skins[skinIndex];
                     var skinContext = context + " skinIndex=" + skinIndex;
-                    coordinator.Check(skin, "Original skin field null: ModelSkinController.skins[skinIndex]" + skinContext);
+                    if (!skin)
+                    {
+                        RecordInvalidInput("ModelSkinController.skins[skinIndex]", skinContext, prefab.name,
+                                           skinIndex.ToString(System.Globalization.CultureInfo.InvariantCulture));
+                        continue;
+                    }
                     var parameters = skin.GetSkinParams();
-                    coordinator.Check(parameters.assetRef != null,
-                        "Original skin field null: SkinDef.GetSkinParams().assetRef / skinDefParamsAddress" + skinContext + " skin=" + skin.name);
+                    if (parameters.assetRef == null)
+                    {
+                        RecordInvalidInput("SkinDef.GetSkinParams().assetRef / skinDefParamsAddress", skinContext + " skin=" + skin.name);
+                        continue;
+                    }
                     Debug.Log("original-skin-input" + skinContext + " skin=" + skin.name +
                         " paramsGuid=" + parameters.assetRef.AssetGUID + " directParams=" + (bool)parameters.directRef +
                         " nullField=" + (skin.name == null ? "SkinDef.name" : "none"));
                     if (!priorSkinIndices.ContainsKey(skin))
                         priorSkinIndices.Add(skin, skin.skinIndex);
                 }
+            }
+            if (invalidInputs != 0)
+            {
+                priorSkinIndices.Clear();
+                coordinator.Check(false, firstFailure + " invalidSkinInputs=" + invalidInputs);
             }
             foreach (var pair in names)
                 priorSkinNames.Add(pair.Key, pair.Value);
@@ -458,19 +502,21 @@ public sealed partial class PortSession
                 while (preload.MoveNext())
                     yield return preload.Current;
             }
-            var prefab = coordinator.artifactBundle.LoadAsset<GameObject>(cfg.bodyAsset);
-            coordinator.Check(prefab && !prefab.activeSelf && prefab.name == "CommandoBody", "Unexpected body prefab");
-            var body = prefab.GetComponent<CharacterBody>();
-            var portrait = body.portraitIcon;
-            coordinator.Check(portrait && portrait.name == "texCommandoIcon", "Serialized portrait missing");
             coordinator.r.phase = "original-body-catalog-register";
             coordinator.Save();
             IEnumerable<string> selectedBodyPaths = cfg.enemySpine ? new[] { cfg.enemyBodyAsset } : Enumerable.Empty<string>();
             if (cfg.teleporterLoop)
                 selectedBodyPaths = selectedBodyPaths.Concat(cfg.objectiveActors.Select(actor => actor.body));
-            // The first typed load of BeetleBody must follow the original family order for its external skins to resolve.
-            // CategoryFamily completes those loads before evaluating this configured selection.
-            var selectedBodies = new[] { prefab }.Concat(selectedBodyPaths.Select(coordinator.artifactBundle.LoadAsset<GameObject>));
+            // CategoryFamily resolves external skin references in provider order before reading configured prefabs.
+            GameObject prefab = null;
+            IEnumerable<GameObject> LoadSelectedBodies()
+            {
+                prefab = coordinator.artifactBundle.LoadAsset<GameObject>(cfg.bodyAsset);
+                yield return prefab;
+                foreach (var path in selectedBodyPaths)
+                    yield return coordinator.artifactBundle.LoadAsset<GameObject>(path);
+            }
+            var selectedBodies = LoadSelectedBodies();
             GameObject[] bodies;
             if (cfg.integratedWorld && Resources.Load<TextAsset>("WholeCatalogBootstrap"))
             {
@@ -479,6 +525,10 @@ public sealed partial class PortSession
             }
             else
                 bodies = selectedBodies.ToArray();
+            coordinator.Check(prefab && !prefab.activeSelf && prefab.name == "CommandoBody", "Unexpected body prefab");
+            var body = prefab.GetComponent<CharacterBody>();
+            var portrait = body.portraitIcon;
+            coordinator.Check(portrait && portrait.name == "texCommandoIcon", "Serialized portrait missing");
             // Open the support container early, then let the body family resolve the ward's external skins.
             if (cfg.teleporterLoop)
                 coordinator.GetTeleporterWorldSession().ValidatePreloadedWard(cfg);
