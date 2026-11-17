@@ -270,14 +270,19 @@ thermal sampling policy; proposed performance budgets do not change those limits
       SHA-256 without publishing raw object contents or addresses. Endpoint deltas,
       overlapping reachable groups and fitted slopes do not establish a memory
       plateau, exclusive retained size or an ordinary-play acceptance result.
-- [ ] Complete real interrupted-write/ENOSPC and sustained performance/thermal
+- [x] Recover an interrupted native profile commit after a durable unassisted loss.
+      [J1480](PORTING_JOURNAL.md#j1480--recover-an-interrupted-native-profile-commit)
+      observes the actual writer stop after pending-file creation, retains the
+      prior primary and checks two cold Starts for one application of the native
+      loss with unchanged settings.
+- [ ] Complete physical storage failure and sustained performance/thermal
       cases on supported hardware.
       [J1311](PORTING_JOURNAL.md#j1311--recover-native-settings-after-writer-termination-and-activity-restart)
       qualifies writer termination, native recovery/resave and protected-file
       retention. [J1473](PORTING_JOURNAL.md#j1473--recover-settings-from-injected-write-and-rename-enospc) qualifies injected settings ENOSPC at write and
       rename: visible error, retained primary/backup, successful retry and cold
       recovery with unchanged settings/profile/result files. Physical power loss
-      and profile-writer failure remain open; physical volume exhaustion was not tested.
+      and physical volume exhaustion remain open.
       Apply the current [thermal policy](PLAYTESTING.md#stability-persistence-and-updates),
       including [J1356](PORTING_JOURNAL.md#j1356--honor-thermal-admission-exclusions-above-80-c).
       Host policy checks and assisted observations leave sustained ordinary play open.

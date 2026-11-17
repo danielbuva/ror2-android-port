@@ -4085,3 +4085,16 @@ stopped process, absent selector/pending, asleep OLED and lease release pass.
 Recovered-material 2, sustained 16 and shared-runner 29 host tests plus preflight pass.
 Prior art: pinned EditorKit HopooCloudRemapGUI blend metadata and source-native prefab relationships.
 Golem, other attack families, ordinary play, matched PC visual parity and performance remain open.
+
+## J1480 — Recover an interrupted native profile commit
+
+2026-11-17. PortSession seeds the world report with native projectile material counts collected before world setup.
+On Nova B, ordinary Start reached native StandardLoss. The same-UID observer bound its nonce, writer PID and
+pending path, then stopped the writer after CREATE. The retained primary and durable loss XML survived.
+Two cold Starts applied the loss once, retained the pre-interruption primary as backup and preserved settings.
+APK SHA-256: `a7e37833c75abe5d402c1a7aa23fc612f48fcea6dbfefe596793a7d7d184e8e8` (runtime source `e98f95c7`).
+Evidence: `work/coordination/alpha-profile-recovery-20261117/nova-b-profile-replay-native-start/terminal.done.json`.
+Internal placement, 28 C battery admission, 87.6 C CPU/GPU peak, 2.491 s above 80 C and thermal coverage pass.
+Terminal process, selector and pending file were absent, display asleep and lease released.
+Three Windows shader-bundle load messages were recorded. Physical power loss, volume exhaustion and
+sustained ordinary play remain open.
