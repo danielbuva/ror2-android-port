@@ -8,6 +8,8 @@ lease atomically; it never waits for a peer, publishes, or grants itself a slot.
 """
 
 import argparse
+from concurrent.futures import ThreadPoolExecutor
+from contextlib import contextmanager, nullcontext
 import hashlib
 import json
 import os
@@ -17,11 +19,13 @@ import shutil
 import signal
 import subprocess
 import sys
+import threading
 import time
 import traceback
 
 PACKAGES = {"dev.ror2lab.arm64", "dev.ror2lab.converted"}
 TRANSIENTS = ("movement-batch-selection.json", "offline-settings-v1/preferences.json.pending")
+GOLEM_ATTACK = re.compile(r"^\s*(\d+\.\d+)\s+(\d+)\s+\d+\s+I Unity\s+:\s+EntityStates\.GolemMonster\.(ClapState|FireLaser):OnEnter\(\)\s*$")
 
 
 def save(path, value):
@@ -50,6 +54,7 @@ def load_request(path):
         "capture_interval_seconds",
         "pacing_diagnostics",
         "start_from_menu",
+        "capture_golem_attacks",
     }
     if not isinstance(value, dict) or not required <= value.keys() or value.keys() - required - optional:
         raise ValueError("Request has missing or unknown fields")
@@ -79,11 +84,12 @@ def load_request(path):
         raise ValueError("Settings failure workload owns its attempt-bound selector")
     if value["mode"] in {"software-notices", "player-screens"} and "selection" in value:
         raise ValueError("Software notices workload owns its attempt-bound selector")
-    for name in ("require_high_refresh", "pacing_diagnostics", "start_from_menu"):
+    for name in ("require_high_refresh", "pacing_diagnostics", "start_from_menu", "capture_golem_attacks"):
         if name in value and type(value[name]) is not bool:
             raise ValueError(name + " must be boolean")
-    if value.get("start_from_menu") and (value["mode"] != "launch" or value["package"] != "dev.ror2lab.arm64"):
-        raise ValueError("start_from_menu requires the native lab launch workload")
+    for name in ("start_from_menu", "capture_golem_attacks"):
+        if value.get(name) and (value["mode"] != "launch" or value["package"] != "dev.ror2lab.arm64"):
+            raise ValueError(name + " requires the native lab launch workload")
     for name in ("selection", "diagnostics"):
         if name in value and not isinstance(value[name], dict):
             raise ValueError(name + " must be a JSON object")
@@ -339,6 +345,73 @@ def capture(device, output, pid):
     for name in ("snapshot.json", "movement-batch-" + SPINE_ID + ".json", "movement-batch-" + SPINE_ID.removesuffix("-bringup") + ".json"):
         (output / name).write_text(device.sh("cat", runtime + "/" + name, check=False))
     device.collect("perf", output, include_exceptions=False)
+
+
+def record_golem_frames(device, thermal, pid, output, lines, stopping, events):
+    from touch_gesture import owned_display_zero_focus
+
+    for line in lines:
+        if stopping.is_set() or thermal.cancelled.is_set():
+            return
+        match = GOLEM_ATTACK.fullmatch(line)
+        if not match or match[2] != pid or len(events) >= 8:
+            continue
+        event = dict(log=line.strip(), received_epoch=time.time(), frames=[])
+        events.append(event)
+        if device.sh("pidof", device.package, check=False, timeout=3).strip() != pid:
+            event["skipped"] = "owned process changed"
+            continue
+        if not owned_display_zero_focus(device.sh("dumpsys", "window", "displays", timeout=3), device.package):
+            event["skipped"] = "owned display-zero focus absent"
+            continue
+        start = time.monotonic()
+        for frame in range(3):
+            stopping.wait(max(0, start + frame * 0.1 - time.monotonic()))
+            if stopping.is_set() or thermal.cancelled.is_set():
+                return
+            began = time.time()
+            data = subprocess.run(device.base + ["exec-out", "screencap", "-p"], capture_output=True, check=True, timeout=5).stdout
+            if not data.startswith(b"\x89PNG\r\n\x1a\n"):
+                raise RuntimeError("Invalid Golem event screenshot")
+            filename = f"event-{len(events):02d}-frame-{frame}.png"
+            (output / filename).write_bytes(data)
+            event["frames"].append(dict(file=filename, began_epoch=began, finished_epoch=time.time()))
+
+
+@contextmanager
+def capture_golem_attacks(device, thermal, pid, output):
+    """Watch the live Unity log while the normal workload collects full samples."""
+    from device import require_device_access
+
+    require_device_access()
+    output.mkdir(parents=True, exist_ok=True)
+    stopping = threading.Event()
+    events = []
+    command = device.base + ["logcat", "--pid=" + pid, "-T", "1", "-v", "epoch", "Unity:I", "*:S"]
+    with (
+        (output / "logcat.stderr").open("w") as error_log,
+        subprocess.Popen(command, stdout=subprocess.PIPE, stderr=error_log, text=True, errors="replace") as logs,
+        ThreadPoolExecutor(max_workers=1) as worker,
+    ):
+        capture_job = worker.submit(record_golem_frames, device, thermal, pid, output, logs.stdout, stopping, events)
+        try:
+            yield
+        finally:
+            stopping.set()
+            early_exit = logs.poll()
+            if early_exit is None:
+                logs.terminate()
+            try:
+                logs.wait(timeout=5)
+            except subprocess.TimeoutExpired:
+                logs.kill()
+                logs.wait()
+            try:
+                capture_job.result()
+                if early_exit is not None:
+                    raise RuntimeError(f"Golem log stream ended before observation completed ({early_exit})")
+            finally:
+                save(output / "events.json", events)
 
 
 def exception_log_size(device, path):
@@ -606,6 +679,12 @@ def run_workload(device, thermal, request, output, result, *, _reset_idle=None):
     launched = launch(device, thermal)
     save(output / "launch.json", launched)
     pid = str(launched["pid"])
+    capture_events = capture_golem_attacks(device, thermal, pid, output / "golem-attacks") if request.get("capture_golem_attacks") else nullcontext()
+    with capture_events:
+        observe_launch(device, thermal, request, output, result, pid)
+
+
+def observe_launch(device, thermal, request, output, result, pid):
     if request.get("start_from_menu"):
         start_from_menu(device, thermal, pid, output)
     if "input_script" in request:

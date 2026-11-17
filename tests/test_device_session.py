@@ -96,6 +96,48 @@ class DeviceSessionTests(unittest.TestCase):
             with self.assertRaises(ValueError):
                 runner.load_request(self.request_file)
 
+    def test_golem_capture_is_opt_in_for_native_lab_launch(self):
+        self.assertNotIn("capture_golem_attacks", runner.load_request(self.request_file))
+        self.request["capture_golem_attacks"] = True
+        runner.save(self.request_file, self.request)
+        self.assertTrue(runner.load_request(self.request_file)["capture_golem_attacks"])
+        for field, value in (("capture_golem_attacks", "yes"), ("mode", "sustained"), ("package", "dev.ror2lab.converted")):
+            runner.save(self.request_file, dict(self.request, **{field: value}))
+            with self.assertRaises(ValueError):
+                runner.load_request(self.request_file)
+
+    def test_attack_capture_uses_matching_native_state_and_open_display(self):
+        self.output.mkdir(parents=True)
+        target = mock.Mock(package="dev.ror2lab.arm64", base=["adb", "-s", "synthetic-device"])
+        target.sh.side_effect = ["12", "window fixture"]
+        thermal = mock.Mock(cancelled=runner.threading.Event())
+        stopping = runner.threading.Event()
+        stale = "  100.000 11 33 I Unity   : EntityStates.GolemMonster.ClapState:OnEnter()"
+        unrelated = "  100.001 12 33 I Unity   : EntityStates.GolemMonster.ChargeLaser:OnEnter()"
+        attack = "  100.002 12 33 I Unity   : EntityStates.GolemMonster.ClapState:OnEnter()"
+        png = b"\x89PNG\r\n\x1a\n"
+        events = []
+        with (
+            mock.patch("touch_gesture.owned_display_zero_focus", return_value=True) as focus,
+            mock.patch.object(runner.subprocess, "run", return_value=mock.Mock(stdout=png)) as snap,
+        ):
+            runner.record_golem_frames(target, thermal, "12", self.output, [stale, unrelated, attack], stopping, events)
+        focus.assert_called_once_with("window fixture", target.package)
+        self.assertEqual(snap.call_count, 3)
+        self.assertEqual(len(events), 1)
+        self.assertEqual(events[0]["log"], attack.strip())
+        self.assertEqual([(self.output / frame["file"]).read_bytes() for frame in events[0]["frames"]], [png] * 3)
+
+    def test_attack_capture_rejects_focus_outside_owned_display(self):
+        target, thermal = mock.Mock(), mock.Mock(cancelled=runner.threading.Event())
+        target.sh.return_value = "12"
+        attack = "  100.002 12 33 I Unity   : EntityStates.GolemMonster.FireLaser:OnEnter()"
+        events = []
+        with mock.patch("touch_gesture.owned_display_zero_focus", return_value=False), mock.patch.object(runner.subprocess, "run") as snap:
+            runner.record_golem_frames(target, thermal, "12", self.output, [attack], runner.threading.Event(), events)
+        snap.assert_not_called()
+        self.assertEqual(events[0]["skipped"], "owned display-zero focus absent")
+
     def test_periodic_capture_retains_heap_and_android_exit_reasons(self):
         target = mock.Mock()
         target.read_receipt.return_value = {"persistentDataPath": "/synthetic"}
