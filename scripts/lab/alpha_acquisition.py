@@ -7,6 +7,8 @@ import re
 import secrets
 import shlex
 import time
+from urllib.parse import unquote, urlsplit
+import xml.etree.ElementTree as ET
 import zipfile
 
 
@@ -61,6 +63,17 @@ def select_node(tree, texts, *, ids=(), clickable=False):
     if len(matches) > 1:
         raise ValueError("acquisition-ambiguous-visible-control")
     return matches[0] if matches else None
+
+
+def selected_document(preferences, kind, relative_path):
+    values = {entry.get("name"): entry.text for entry in ET.fromstring(preferences).findall("string")}
+    uri = urlsplit(values.get("source_uri") or "")
+    if values.get("source_kind") != kind or uri.scheme != "content" or uri.netloc != "com.android.externalstorage.documents":
+        return False
+    segment = "tree" if kind == "tree" else "document"
+    prefix, _, document = uri.path.rpartition("/")
+    volume, _, path = unquote(document).partition(":")
+    return prefix == "/" + segment and bool(volume) and path == relative_path
 
 
 class Acquisition:
@@ -177,11 +190,16 @@ class Acquisition:
                 button = select_node(self.picker(phone), (text,), clickable=True)
                 self.require(button is not None, "acquisition-folder-grant-control-unavailable")
                 phone.tap_prompt_node(button, "acquisition-confirm-folder-grant")
+        phone.ui_windows((self.installer.PACKAGE,), recovery=False)
         observed = phone.read("update-state.json")
         self.require(
             observed and observed.get("state") == "INPUT_REQUIRED" and "Source selected." in observed.get("message", ""),
             "acquisition-source-selection-unverified",
         )
+        preferences = phone.command(
+            "shell", "run-as", self.installer.PACKAGE, "cat", "shared_prefs/owner-phone-flow.xml", label="acquisition-selected-document", idempotent=True
+        )
+        self.require(selected_document(preferences, kind, f"Download/{self.stage_name}/{name}"), "acquisition-selected-document-mismatch")
 
     def prepare_plan(self, phone, service, version):
         self.installer.publish(service, self.releases[version], version)
@@ -248,6 +266,9 @@ class Acquisition:
             row = self.wait_import(phone, expected)
         self.require(all(part in row.get("message", "") for part in message), "acquisition-import-report-mismatch")
         self.visible_status(phone, expected, message)
+        if expected == "CANCELLED":
+            control = phone.read("update-control.json")
+            self.require(control and control.get("action") == "cancel" and control.get("id"), "acquisition-cancel-control-unverified")
         result.update(state=expected, seconds=round(time.monotonic() - start, 3))
         result["installer_pss_bytes"] = self.installer.process_pss(
             phone.shell("dumpsys", "meminfo", "-s", self.installer.PACKAGE, label="acquisition-installer-memory")

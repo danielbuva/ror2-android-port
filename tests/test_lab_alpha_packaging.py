@@ -66,6 +66,15 @@ class AlphaPackagingTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "acquisition-ambiguous-visible-control"):
             ACQUISITION.select_node(tree, ("older",), ids=("title",))
 
+    def test_acquisition_requires_the_persisted_document_and_source_kind(self):
+        provider = "content://com.android.externalstorage.documents"
+        tree = f'<map><string name="source_kind">tree</string><string name="source_uri">{provider}/tree/primary%3ADownload%2FLab%2FSupported</string></map>'
+        archive = tree.replace(">tree<", ">zip<").replace("/tree/", "/document/").replace("Supported<", "Supported.zip<")
+        self.assertTrue(ACQUISITION.selected_document(tree, "tree", "Download/Lab/Supported"))
+        self.assertTrue(ACQUISITION.selected_document(archive, "zip", "Download/Lab/Supported.zip"))
+        self.assertFalse(ACQUISITION.selected_document(tree, "zip", "Download/Lab/Supported.zip"))
+        self.assertFalse(ACQUISITION.selected_document(archive, "zip", "Download/Lab/Older.zip"))
+
     def test_thermal_cancellation_refuses_more_acceptance_commands(self):
         phone = A.Phone("synthetic-test-device", 20)
         phone.thermal = Mock()
