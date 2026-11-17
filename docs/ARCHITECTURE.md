@@ -2915,6 +2915,11 @@ under `packages/dev.ror2lab.converted`. A prior peer receipt can be imported onl
 after matching its device, package, live path and APK hash. Converted launches
 resolve the real launcher activity; a launch observation alone does not prove
 that bootstrap or gameplay succeeded.
+An Android signature mismatch allows one uninstall/reinstall only for the
+disposable lab package with a live hash-backed ownership receipt and an explicit
+payload source. The uninstall clears its data. The runner revalidates adopted
+placement, recreates the runtime directory, syncs the payload and records the
+recovery in the terminal receipt under the same lease.
 The shared device runner's launch request accepts `start_from_menu` for automatic
 route observations. It waits for the installed attempt/PID-bound native menu,
 requires owned display-zero focus, injects Start and waits for a ready world
