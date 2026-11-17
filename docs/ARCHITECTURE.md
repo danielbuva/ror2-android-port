@@ -157,7 +157,9 @@ artifacts name declared jobs. Referenced donor/staged containers remain payload
 and native-manifest dependencies. Catalog production consumes each actual final
 bundle and its emitted profile, independently of canonical body-identity proof.
 Managed witnesses must name generated artifacts, with registry body, receipt and
-schemas supplied by one final player job. Setup and teardown remain the scoped
+schemas supplied by one final player job. When `--code-request` selects fresh
+conversion, witness production reads the same pinned managed provider manifest
+and receipt as that player job. Setup and teardown remain the scoped
 preparation/emission owners; the dispatcher retains only declared final artifacts
 for reuse. Host synthetic-registry dispatch does not qualify current CLR/SDK
 production, exact-editor load or phone acceptance.
@@ -1457,6 +1459,9 @@ providers; it never substitutes a historical manifest. Its generated file shares
 the signed supplier closure and private incremental cache with those bundles.
 The dispatcher resolves supplier directories from declared receipt artifacts;
 input-file hash tokens bind acquired tools without embedding host paths.
+Fresh conversion bundle and shader jobs use the installer-packaged LZ4 worker.
+The dispatcher pins its installed file and includes that hash in consumer cache
+identity. The installer verifies its packaged native tool inventory on launch.
 Player/shader jobs declare complete serialized outputs; remapping consumes their
 top-level receipts, while player data consumes nested shared-shader and texture
 packs. Their authored shader and player configuration inputs travel in the

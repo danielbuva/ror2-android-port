@@ -17,6 +17,11 @@ from types import SimpleNamespace
 
 PREFIX = "tools/phone-build/accepted-output/"
 PLAYER_RESOURCE_ASSEMBLIES = ("System.Data", "System.Drawing", "mscorlib")
+INSTALLED_BUNDLE_CODEC = dict(
+    path="${native}/libbundlelz4.so",
+    sha256="${native_sha256:libbundlelz4.so}",
+    bytes="${native_bytes:libbundlelz4.so}",
+)
 
 
 def digest(path):
@@ -251,7 +256,8 @@ class Graph:
                 flag = "--" + binding.replace("_", "-")
                 arguments += [flag, "${input:" + binding + "}", flag + "-sha256", "${input_sha256:" + binding + "}"]
         if producer in {"object_produce", "shader_prefab", "payload_shader_records", "shader_produce"} and "original_bundle" not in profile:
-            arguments += ["--codec", "${input:codec}", "--codec-sha256", "${input_sha256:codec}"]
+            codec = INSTALLED_BUNDLE_CODEC if self.conversion else dict(path="${input:codec}", sha256="${input_sha256:codec}")
+            arguments += ["--codec", codec["path"], "--codec-sha256", codec["sha256"]]
         if producer == "shader_context":
             if len(needs) != 1:
                 raise ValueError("shader context requires one provider: " + path)
@@ -367,6 +373,13 @@ class Graph:
         match = re.fullmatch(r"\$\{job:([^:}]+):registry_receipt\}", token)
         if match is None or match.group(1) not in needs or owner(self.job_profiles[match.group(1)]) != "player_data":
             raise ValueError("managed witnesses require final player registry artifacts")
+        if self.conversion:
+            needs.append(self.conversion)
+            request = dict(
+                request,
+                managed_providers=self.artifact_pin(self.conversion, "managed_providers"),
+                managed_receipt=self.artifact_pin(self.conversion, "managed_receipt"),
+            )
         sources = {"tools/phone-build/metadata/Program.cs"}
         for value in re.findall(r'"([^"\n]*)"', json.dumps(request)):
             if value.startswith("${repo}/"):
@@ -518,6 +531,8 @@ class Graph:
         name = "recipe/jobs/" + Path(path).stem + ".json"
         needs = [self.build(digest(self.repo / dependency), active) for dependency in profile["profiles"]]
         request = profile["request"]
+        if self.conversion:
+            request = dict(request, codec=INSTALLED_BUNDLE_CODEC)
         policy = request["policy"]
         sources = set()
 
@@ -564,7 +579,7 @@ class Graph:
             schema=1,
             script=PREFIX + "bundle_preload.py",
             arguments=["--release", "${request}", "--output", "${output}"],
-            request=profile,
+            request=dict(profile, request=request),
             needs=sorted(set(needs)),
             outputs={"payload/" + policy["bundle"]: final},
             artifacts={"receipt": "result.json", "catalog_profile": "catalog-profile.json", "catalog_bundle": final},
@@ -961,7 +976,9 @@ def main():
         help="generate the native manifest from every selected payload bundle; missing native dependencies fail production",
     )
     parser.add_argument("--catalog-request", help="repo-relative source catalog metadata template; validates actual final containers and runtime registry")
-    parser.add_argument("--code-request", help="repo-relative original-input code request; supplies fresh conversion to player and native jobs")
+    parser.add_argument(
+        "--code-request", help="repo-relative original-input code request; supplies fresh conversion to player, managed witness and native jobs"
+    )
     parser.add_argument("--native-request", help="repo-relative native request; emits matching library and metadata from fresh or acquired conversion")
     parser.add_argument("--sdk-request", help="repo-relative SDK request template; emits Android resources, dex and engine libraries")
     parser.add_argument("--burst-request", help="repo-relative managed/source request template; compiles Burst and retains preservation roots")
