@@ -261,8 +261,8 @@ WHOLE_GENERATED_RUNTIME_SOURCES = {"OriginalBodyVisualMap.cs", "OriginalHealthVi
 WHOLE_APK_ASSEMBLIES = {"Assets/LabLoadingScene/Plugins/GameAudioOriginalBootstrap.dll"}
 # Authored Android player source; never consumed by external bundle builds.
 WHOLE_APK_ANDROID_CODE = {
-    "Assets/Plugins/Android/SettingsWriteObserver.androidlib/src/main/java/dev/ror2lab/diagnostics/LabDisplayPreference.java" + suffix
-    for suffix in ("", ".meta")
+    "Assets/Plugins/Android/SettingsWriteObserver.androidlib/src/main/java/dev/ror2lab/diagnostics/" + name
+    for name in ("LabDisplayPreference.java", "LabDisplayPreference.java.meta", "LabPendingWriteStop.java", "LabSettingsWriteObserver.java")
 }
 WHOLE_APK_RECEIPTS = {
     "Assets/StreamingAssets/Lab/" + name + suffix
