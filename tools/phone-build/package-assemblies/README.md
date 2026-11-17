@@ -40,6 +40,26 @@ OWNER_PACKAGES/
 
 Copy UGUI from the owner's
 `Unity.app/Contents/Resources/PackageManager/BuiltInPackages/com.unity.ugui`.
+
+Signed releases can prepare this input tree from private archives.
+`produce.py REQUEST.json --prepare-inputs` takes absolute `archives` and new
+`output` paths. Use the three registry tarball filenames
+`com.unity.burst-1.8.11.tgz`, `com.unity.collections-1.2.4.tgz` and
+`com.unity.mathematics-1.2.1.tgz`. Add `com.unity.ugui-1.0.0.tgz` from the
+owner's exact SDK, with `com.unity.ugui/` as the archive root.
+
+```sh
+COPYFILE_DISABLE=1 tar -czf "$ARCHIVES/com.unity.ugui-1.0.0.tgz" \
+  -C "$SDK_INSTALL/Unity.app/Contents/Resources/PackageManager/BuiltInPackages" com.unity.ugui
+```
+
+Preparation checks the registry tarballs' SHA-256s and runs the shared compiler
+selection against the archive contents. It stages the selected files and
+original adjacent script metas under `output/packages/`. Its receipt records
+the archive and staged file hashes. This prepared tree can supply
+`source_inputs.packages`. For a fixed-target player registry, retain the
+original importer inventory documented by the player owner.
+
 The SDK install root contains `Unity.app` and `PlaybackEngines`. Supply a private
 request with three explicit canonical absolute paths:
 

@@ -767,6 +767,15 @@ of files beneath `"${inputs}"`, `"${installed_runtime}"` or `"${native}"` that
 the job cache hashes. Use acquisition receipts from the tool owner or the
 acquired tool file itself. The graph strips the list from the producer request.
 
+With `--package-archives`, add `owner-package-inputs.json` before conversion
+in the assembly stage. Place the four private
+[compiler package archives](../package-assemblies/README.md) in
+`acquired/unity-packages/`. The package job supplies its verified versioned
+source directories to the compiler and tracks each archive in the incremental
+cache. Keep the code request's existing `source_inputs.packages` and flat
+inventory for the fixed-target player registry. That inventory also contains
+TestRunner and MCP importer sources.
+
 Optional `--burst-request recipe/<request>.json` adds the existing
 `owner-code/produce.py` Burst-only job. The caller's request uses
 `"output": "${output}"` and explicit tool/input bindings, with either `managed`

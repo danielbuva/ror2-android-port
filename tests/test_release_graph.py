@@ -647,6 +647,22 @@ out.mkdir();(out/'global-metadata.dat').write_bytes(metadata)
             package_manifest = inputs / "acquired/package-set/input-hashes.json"
             write(package_manifest, {"packages/Fixture.cs": "fixture identity"})
             write(package_manifest.parent / "packages/Fixture.cs", "class PackageFixture {}")
+            package_archive = inputs / "acquired/unity-packages/Fixture.tgz"
+            write(package_archive, "compiler input v1")
+            write(
+                repo / G.PACKAGE_PRODUCER,
+                """import json, pathlib, sys
+ARCHIVES = {'Fixture.tgz': None}
+if __name__ == '__main__':
+    assert sys.argv[2:] == ['--prepare-inputs']
+    request = json.loads(pathlib.Path(sys.argv[1]).read_text())
+    output = pathlib.Path(request['output'])
+    (output / 'packages').mkdir(parents=True)
+    data = (pathlib.Path(request['archives']) / 'Fixture.tgz').read_bytes()
+    (output / 'packages/Selected.cs').write_bytes(data)
+    (output / 'result.json').write_text('{"success":true}')
+""",
+            )
             write(sdk_witness, "sdk fixture 1")
             write(linker, "linker fixture 1")
             write(codec, "codec fixture 1")
@@ -678,7 +694,9 @@ assert sys.argv[2:] == ['--stop-after-conversion']
 work = pathlib.Path(request['owner_work'])
 assert (work / 'inventory/files.json').is_file()
 source = pathlib.Path(request['source_inputs']['original']).read_bytes()
+packages = pathlib.Path(request['source_inputs']['packages'])
 metadata = struct.pack('<II', 0xFAB11BAF, 31) + (pathlib.Path(request['sdk_install']) / 'receipt.json').read_bytes()
+metadata += (packages / 'Selected.cs').read_bytes()
 frame = pathlib.Path(request['output']) / 'backend/sources/Fixture.cpp.gz'
 frame.parent.mkdir(parents=True)
 frame.write_bytes(gzip.compress(source, mtime=0))
@@ -818,13 +836,14 @@ native.expand(providers['Fixture.cpp'], out / 'source.cpp')
             )
             admission, plan = load("install_inputs"), load("install_flow")
             code, native_job = "recipe/jobs/owner-code-conversion.json", "recipe/jobs/owner-native-code.json"
+            package_job = "recipe/jobs/owner-package-inputs.json"
             selected = {
                 "schema": 1,
                 "required_inputs": input_manifest,
                 "workspace_bytes": 0,
                 "configuration": {"bindings": {"original": "Data/source.txt", "pc": "."}},
                 "stages": [
-                    {"id": name, "title": name, "jobs": {"assembly": [code, player, witness, bundle], "native": [native_job]}.get(name, [])}
+                    {"id": name, "title": name, "jobs": {"assembly": [package_job, code, player, witness, bundle], "native": [native_job]}.get(name, [])}
                     for name in plan.STAGES
                 ],
             }
@@ -832,13 +851,14 @@ native.expand(providers['Fixture.cpp'], out / 'source.cpp')
 
             def build():
                 graph = G.Graph(repo, {})
-                index = graph.compile([bundle_profile], code_request=code_request, native_request=native_request)
+                index = graph.compile([bundle_profile], code_request=code_request, native_request=native_request, package_archives=True)
                 for name, job in graph.jobs.items():
                     write(repo / name, job)
                     index["files"][name] = G.digest(repo / name)
                 index["files"][input_manifest] = G.digest(repo / input_manifest)
                 index["install_plan"] = selected
                 self.assertIn("tools/unity/Fixture.cs", graph.jobs[code]["source_files"])
+                self.assertEqual(graph.jobs[code]["needs"], [package_job])
                 self.assertIn("recipe/runtime-sources.json", graph.jobs[player]["source_files"])
                 self.assertEqual(graph.jobs[witness]["needs"], [code, player])
                 release = {
@@ -856,7 +876,7 @@ native.expand(providers['Fixture.cpp'], out / 'source.cpp')
                 )
                 self.assertEqual(
                     plan.validate_plan(selected, index, dispatcher.descriptor),
-                    {code: "assembly", player: "assembly", witness: "assembly", bundle: "assembly", native_job: "native"},
+                    {package_job: "assembly", code: "assembly", player: "assembly", witness: "assembly", bundle: "assembly", native_job: "native"},
                 )
                 dispatcher.execute(bundle)
                 dispatcher.execute(native_job)
@@ -888,8 +908,14 @@ native.expand(providers['Fixture.cpp'], out / 'source.cpp')
             self.assertEqual(build()["rebuilt"], ["apk/assets/bin/Data/Managed/Metadata/global-metadata.dat"])
             write(codec, "codec fixture 2")
             self.assertEqual(build()["rebuilt"], ["payload/fixture"])
+            write(package_archive, "compiler input v2")
+            self.assertEqual(build()["rebuilt"], ["apk/assets/bin/Data/Managed/Metadata/global-metadata.dat"])
             self.assertEqual(
-                progress,
+                [cached for job, cached in progress if job == package_job],
+                [False, True, True, True, True, True, False],
+            )
+            self.assertEqual(
+                [event for event in progress if event[0] != package_job][:-5],
                 [
                     (code, False),
                     (player, False),
@@ -923,6 +949,7 @@ native.expand(providers['Fixture.cpp'], out / 'source.cpp')
                     (native_job, True),
                 ],
             )
+            self.assertEqual(progress[-5:], [(code, False), (player, False), (witness, False), (bundle, False), (native_job, False)])
 
     def test_burst_job_dispatches_both_cohorts_and_invalidates_changed_policy(self):
         for source in (False, True):

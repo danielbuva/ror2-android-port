@@ -1473,6 +1473,14 @@ checkout. The fresh code path also resolves editor data, the pinned macOS
 binary read by the manager, and built-in uGUI sources from the separately
 acquired SDK tree. Acquired converter and managed bindings remain available
 when no code request is selected.
+`--package-archives` runs the package assembly owner's `--prepare-inputs`
+stage before code conversion. It verifies the three Unity registry archives,
+stages only the pinned compiler groups and original script metas, and supplies
+their versioned directories to managed production. The dispatcher rechecks
+cached outputs and includes each archive hash in the dependency identity.
+The fixed-target registry retains its explicit package inventory, including
+the TestRunner and MCP importers. The package owner removes temporary
+extraction files and retains the selected inputs and terminal receipt.
 The optional `--native-request` adds `owner-code/native.py` as one cached job
 with final `libil2cpp.so` and matching `global-metadata.dat` outputs. With
 `--code-request`, an assembly-stage `produce.py --stop-after-conversion` job

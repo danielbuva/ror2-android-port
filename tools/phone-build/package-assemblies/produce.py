@@ -14,6 +14,8 @@ import re
 import shutil
 import signal
 import subprocess
+import tarfile
+import tempfile
 import time
 
 
@@ -27,6 +29,16 @@ ROWS = (
     ("com.unity.burst", "Unity.Burst.CodeGen/Unity.Burst.CodeGen.asmdef"),
 )
 PROFILE_SHA = "82a166f9663e492622e09a82f923dad3a0dd6182814c0e2e2aded4641b894c46"
+ARCHIVES = {
+    "com.unity.burst-1.8.11.tgz": "b478606a13d033f1782b42f603ff6be31e0062806045c3cbe3826a2a44d0837c",
+    "com.unity.collections-1.2.4.tgz": "507e94c8bf7ab636035789b3744f900f2e55262778573864cf7962251bd5686e",
+    "com.unity.mathematics-1.2.1.tgz": "3fb6ebcaccefc535c1a99197cca0c539b40ebd0f509c5d38c2bd9e9ee7081d77",
+    "com.unity.ugui-1.0.0.tgz": None,
+}
+HELPERS = {
+    "com.unity.burst": "Unity.Burst.Unsafe.dll",
+    "com.unity.collections": "Unity.Collections.LowLevel.ILSupport/Unity.Collections.LowLevel.ILSupport.dll",
+}
 RESERVE = 1024**3
 
 
@@ -77,6 +89,95 @@ def sources(asmdef):
         if not redirected:
             selected.append(path)
     return selected
+
+
+def package_group(packages, settings, package, relative):
+    root = packages / (package + "@" + settings["packages"][package])
+    asmdef = canonical(str(root / relative))
+    spec = json.loads(asmdef.read_text())
+    folder = asmdef.parent
+    selected = sources(asmdef)
+    extra = []
+    if spec["name"] == "Unity.Burst.CodeGen":
+        extra = [folder / name for name in spec["precompiledReferences"]]
+    elif package in HELPERS:
+        extra = [root / HELPERS[package]]
+    group = [asmdef, asmdef.with_suffix(".asmdef.meta"), *selected, *folder.rglob("*.asmref"), *extra]
+    hashes = {path.relative_to(packages).as_posix(): sha(canonical(str(path))) for path in group}
+    expected = settings["groups"][spec["name"]]
+    if len(selected) != expected["source_count"] or len(hashes) != expected["input_count"] or aggregate(hashes) != expected["aggregate_sha256"]:
+        raise ValueError("retained package source/precompiled input drift: " + spec["name"])
+    return spec, selected, extra, hashes
+
+
+def extract_candidates(archive, raw, archive_root, roots, helper):
+    with tarfile.open(archive, "r|gz") as source:
+        for member in source:
+            parts = Path(member.name).parts
+            if not parts or parts[0] != archive_root or ".." in parts:
+                raise ValueError("unexpected package archive path")
+            if len(parts) < 2 or member.isdir():
+                continue
+            relative = Path(*parts[1:])
+            if parts[1] not in roots and relative.as_posix() != helper:
+                continue
+            if not member.isfile():
+                raise ValueError("nonregular compiler package member")
+            destination = raw / relative
+            destination.parent.mkdir(parents=True, exist_ok=True)
+            with source.extractfile(member) as stream, destination.open("xb") as output:
+                shutil.copyfileobj(stream, output)
+
+
+def prepare_inputs(archives, output):
+    """Stage precisely the retained compiler groups and their original source metas."""
+    settings = profile()
+    archives = canonical(str(archives))
+    output = Path(output)
+    if not output.is_absolute() or output.resolve() != output or output.is_relative_to(archives):
+        raise ValueError("new package output must be separate from the archives")
+    pins = {}
+    for name, expected in ARCHIVES.items():
+        path = canonical(str(archives / name))
+        pins[name] = sha(path)
+        if expected is not None and pins[name] != expected:
+            raise ValueError("Unity package archive drift: " + name)
+    output.mkdir(mode=0o700)
+    result = {"schema": 1, "success": False, "archives": pins}
+    try:
+        with tempfile.TemporaryDirectory(dir=output) as scratch:
+            raw = Path(scratch)
+            for name, version in settings["packages"].items():
+                folders = {Path(relative).parts[0] for package, relative in ROWS if package == name}
+                extract_candidates(
+                    archives / f"{name}-{version}.tgz",
+                    raw / f"{name}@{version}",
+                    name if name == "com.unity.ugui" else "package",
+                    folders,
+                    HELPERS.get(name),
+                )
+            files = {}
+            for package, relative in ROWS:
+                _, selected, _, hashes = package_group(raw, settings, package, relative)
+                files.update(hashes)
+                for path in selected:
+                    meta = canonical(str(path.with_suffix(".cs.meta")))
+                    files[meta.relative_to(raw).as_posix()] = sha(meta)
+            for name, expected in files.items():
+                destination = output / "packages" / name
+                destination.parent.mkdir(parents=True, exist_ok=True)
+                (raw / name).replace(destination)
+                if sha(destination) != expected:
+                    raise ValueError("staged compiler package member changed: " + name)
+        if any(sha(archives / name) != digest for name, digest in pins.items()):
+            raise ValueError("Unity package archive changed during extraction")
+        result.update(success=True, files=files)
+    except Exception as error:
+        result["error"] = str(error)
+        raise
+    finally:
+        (output / "result.json").write_text(json.dumps(result, sort_keys=True, indent=2) + "\n")
+    return result
 
 
 def symbols(version, spec, versions):
@@ -219,23 +320,9 @@ def run(request):
             raise ValueError("SDK compiler/post-processor toolchain drift")
         requests, built, results = [], {}, []
         for package, relative in ROWS:
-            package_root = packages / (package + "@" + settings["packages"][package])
-            asmdef = canonical(str(package_root / relative))
-            spec = json.loads(asmdef.read_text())
-            name, folder = spec["name"], asmdef.parent
-            selected = sources(asmdef)
-            extra = []
-            if name == "Unity.Burst":
-                extra = [package_root / "Unity.Burst.Unsafe.dll"]
-            if name == "Unity.Collections":
-                extra = [packages / "com.unity.collections@1.2.4/Unity.Collections.LowLevel.ILSupport/Unity.Collections.LowLevel.ILSupport.dll"]
-            if name == "Unity.Burst.CodeGen":
-                extra = [folder / p for p in spec["precompiledReferences"]]
-            group = [asmdef, Path(str(asmdef) + ".meta"), *selected, *folder.rglob("*.asmref"), *extra]
-            hashes = {p.relative_to(packages).as_posix(): sha(bind(p)) for p in group}
-            expected = settings["groups"][name]
-            if len(selected) != expected["source_count"] or len(hashes) != expected["input_count"] or aggregate(hashes) != expected["aggregate_sha256"]:
-                raise ValueError("retained package source/precompiled input drift: " + name)
+            spec, selected, extra, hashes = package_group(packages, settings, package, relative)
+            inputs.update({str(packages / path): digest for path, digest in hashes.items()})
+            name = spec["name"]
             references = list(refs) + extra
             if name == "Unity.Collections":
                 references += [built["Unity.Burst"], built["Unity.Mathematics"]]
@@ -317,8 +404,10 @@ def run(request):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("request", type=Path, help="private JSON with canonical sdk_install, packages and new output")
+    parser.add_argument("--prepare-inputs", action="store_true", help="stage the compiler sources from private archives without running the compiler")
     args = parser.parse_args()
-    result = run(json.loads(args.request.read_text()))
+    request = json.loads(args.request.read_text())
+    result = prepare_inputs(**request) if args.prepare_inputs else run(request)
     print(json.dumps(result, indent=2))
 
 
