@@ -48,6 +48,43 @@ class DeviceSessionTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "bytes differ"):
             runner.load_request(self.request_file)
 
+    def test_device_option_selects_only_the_workstreams_granted_serial(self):
+        self.request.pop("serial")
+        self.request.pop("adopted_install")
+        runner.save(self.request_file, self.request)
+        grant = self.root / ".local/orchestrator/devqueue/second-fixture.granted"
+        grant.parent.mkdir(parents=True)
+        grant.write_text("another-worker\n")
+        with self.assertRaisesRegex(ValueError, "queue grant"):
+            runner.load_request(self.request_file, "second-fixture")
+        grant.write_text(self.request["workstream"] + "\n")
+        self.assertEqual(runner.load_request(self.request_file, "second-fixture")["serial"], "second-fixture")
+        with mock.patch.object(runner.subprocess, "Popen", return_value=mock.Mock(pid=12)) as process:
+            self.assertEqual(runner.main(["--request", str(self.request_file), "--device", "second-fixture", "--detach"]), 0)
+        self.assertEqual(process.call_args.args[0][-2:], ["--device", "second-fixture"])
+
+    def test_internal_placement_checks_apk_data_and_scratch_capacity(self):
+        package = self.request["package"]
+        storage = dict(mode="internal", internal=dict(total_bytes=100, free_bytes=runner.DEVICE_RESERVE_BYTES), shared=dict(total_bytes=100))
+        target = mock.Mock(package=package)
+        target.storage.return_value = storage
+        target.owned.return_value = dict(package_path="package:/data/app/base.apk")
+        target.sh.return_value = "  dataDir=/data/user/0/" + package + "\n"
+        target.install_capacity.return_value = dict(estimate_bytes=6 * 1024**3)
+        with self.assertRaisesRegex(RuntimeError, "requires adopted"):
+            runner.placement(target, 1, adopted_only=True)
+        with self.assertRaisesRegex(RuntimeError, "Insufficient internal free space"):
+            runner.placement(target, 1, install_apk=self.apk)
+        storage["internal"]["free_bytes"] += 1024**3
+        self.assertIs(runner.placement(target, 1, install_apk=self.apk), storage)
+        target.owned.return_value["package_path"] = "package:/mnt/expand/fixture/app/base.apk"
+        with self.assertRaisesRegex(RuntimeError, "Owned package"):
+            runner.placement(target, 1)
+        target.owned.return_value["package_path"] = "package:/data/app/base.apk"
+        target.sh.return_value = "  dataDir=/mnt/expand/fixture/user/0/" + package + "\n"
+        with self.assertRaisesRegex(RuntimeError, "Owned runtime data"):
+            runner.placement(target, 1)
+
     def test_busy_lease_refuses_before_any_adb_and_preserves_owner(self):
         lease = runner.Lease(self.request)
         lease.acquire()
@@ -100,7 +137,9 @@ class DeviceSessionTests(unittest.TestCase):
         target.sh.return_value = "{}"
         target.cmd.return_value = "fixture log"
         runner.capture(target, self.output, "12")
-        target.collect.assert_has_calls([mock.call("crash", self.output), mock.call("screenshot", self.output), mock.call("perf", self.output)])
+        target.collect.assert_has_calls(
+            [mock.call("crash", self.output), mock.call("screenshot", self.output), mock.call("perf", self.output, include_exceptions=False)]
+        )
 
     def test_settings_failure_mode_uses_shared_launch_and_thermal_owner(self):
         self.request["mode"] = "settings-save-failure"
@@ -339,6 +378,9 @@ class DeviceSessionTests(unittest.TestCase):
         target.sh.return_value = "{}"
         target.read_receipt.return_value = dict(persistentDataPath="/fixture/runtime")
         runner.capture(target, self.output, "7")
+        target.collect.assert_any_call("perf", self.output, include_exceptions=False)
+        self.assertFalse(any(call.args == ("cat", "/fixture/runtime/exceptions.jsonl") for call in target.sh.call_args_list))
+        self.assertFalse((self.output / "exceptions.jsonl").exists())
         for suffix in ("", "-bringup"):
             name = "movement-batch-body-state-spawn-state-auto-nova-spine" + suffix + ".json"
             target.sh.assert_any_call("cat", "/fixture/runtime/" + name, check=False)
@@ -362,6 +404,7 @@ class DeviceSessionTests(unittest.TestCase):
         with mock.patch.object(sustained, "check_session_sustained", side_effect=complete) as check:
             runner.run_workload(target, mock.Mock(), request, self.output, {})
         self.assertEqual(check.call_args.kwargs["observation_interval_seconds"], 30)
+        self.assertIs(check.call_args.kwargs["_include_exceptions"], False)
         del request["capture_interval_seconds"]
         runner.save(self.request_file, request)
         self.assertEqual(runner.load_request(self.request_file)["capture_interval_seconds"], 5)
@@ -431,6 +474,36 @@ class DeviceSessionTests(unittest.TestCase):
         target.cmd.assert_not_called()
         self.assertFalse(any(call.args[0] == "sha256sum" for call in target.sh.call_args_list))
 
+    def test_payload_sync_removes_only_verified_superseded_entries(self):
+        payload = self.root / "payload"
+        payload.mkdir()
+        (payload / "current").write_bytes(self.apk.read_bytes())
+        target = mock.Mock(package=self.request["package"])
+        runtime = "/owned/Android/data/" + target.package + "/files"
+        dest = runtime + "/payload/"
+        target.storage.return_value = dict(mode="internal", internal=dict(free_bytes=30 * 1024**3))
+        previous = dict(runtime_path=runtime, files=[dict(name=name, sha256=self.digest) for name in ("current", "old", "changed")])
+        target.read_receipt.side_effect = {"runtime.json": dict(persistentDataPath=runtime), "sync.json": previous}.__getitem__
+        target.sh.side_effect = lambda *args, **kwargs: self.digest if args[-1] in {dest + "current", dest + "old"} else ""
+        result = device_module.Device.sync(target, payload, replace_previous=True)
+        self.assertEqual(result["superseded_removed"], ["old"])
+        self.assertEqual([call for call in target.sh.call_args_list if call.args[0] == "rm"], [mock.call("rm", "--", dest + "old")])
+
+    def test_diagnostic_cleanup_retains_changed_and_new_files_before_removing_them(self):
+        self.output.mkdir(parents=True)
+        runtime = "/owned"
+        snapshot = runtime + "/snapshot.json"
+        old_trace = runtime + "/frame-times-old.bin"
+        new_trace = runtime + "/frame-times-new.bin"
+        target = mock.Mock()
+        target.sh.side_effect = lambda *args: (
+            f"{snapshot}|updated\n{old_trace}|same\n{new_trace}|new\n" if args[0] == "find" else self.digest if args[0] == "sha256sum" else ""
+        )
+        target.cmd.side_effect = lambda op, remote, local: Path(local).write_bytes(self.apk.read_bytes())
+        runner.retain_diagnostic_scratch(target, runtime, {snapshot: "earlier", old_trace: "same"}, self.output)
+        self.assertEqual({entry.name for entry in self.output.iterdir()}, {"snapshot.json", "frame-times-new.bin"})
+        self.assertEqual([call.args[-1] for call in target.sh.call_args_list if call.args[0] == "rm"], [new_trace, snapshot])
+
     def test_capture_records_extracted_metadata_and_unity_extraction_decision(self):
         target = mock.Mock()
         target.cmd.return_value = "Unity extraction diagnostic"
@@ -441,7 +514,7 @@ class DeviceSessionTests(unittest.TestCase):
         target.sh.assert_any_call("sha256sum", "/owned/files/il2cpp/Metadata/global-metadata.dat", check=False)
         self.assertIn("Unity:D", target.cmd.call_args_list[0].args)
 
-    def run_case(self, *, workload_error=False, terminal_error=False, thermal_error=False, payload=False):
+    def run_case(self, *, workload_error=False, terminal_error=False, thermal_error=False, payload=False, exception_rows="", signature_failure=False):
         events = []
         lease_path = runner.Lease(self.request).path
         installed = dict(apk_sha256=self.digest, package_path="package:/fixture/base.apk", package=self.request["package"], serial=self.request["serial"])
@@ -451,9 +524,53 @@ class DeviceSessionTests(unittest.TestCase):
         target.read_receipt.return_value = dict(persistentDataPath="/owned")
         receipt = self.root / "installed.json"
         receipt.touch()
-        target.receipt.return_value = receipt
+        runtime_receipt = self.root / "runtime.json"
+        runtime_receipt.touch()
+        target.receipt.side_effect = lambda name: self.root / name
         target.install.return_value = installed
-        target.sync.side_effect = lambda path: events.append("sync:" + str(path)) or dict(files=["content"])
+        target.sync.side_effect = lambda path, *, replace_previous: events.append("sync:" + str(path)) or dict(files=["content"])
+        device_class = device_module.Device
+        target.storage.return_value = {"mode": "adopted"}
+        if signature_failure:
+            installed["apk_sha256"] = "0" * 64
+            target.settings = {}
+            target.base = ["fake-adb", "-s", target.serial]
+            target.storage.return_value = {"mode": "adopted", "uuid": "fixture-adopted"}
+            target.install_counter.return_value = self.root / "install-count.json"
+            target.install.side_effect = lambda apk: device_class.install(target, apk)
+            target.reset.side_effect = lambda: device_class.reset(target)
+            target.cmd.side_effect = lambda *args, **kwargs: device_class.cmd(target, *args, **kwargs)
+
+            def write_receipt(name, value):
+                runner.save(target.receipt(name), value)
+                if name == "installed.json":
+                    target.owned.return_value = value
+
+            target.write_receipt.side_effect = write_receipt
+
+        def adb_process(args, **kwargs):
+            if args[-1] == "kill-server":
+                return subprocess.CompletedProcess(args, 0, b"", b"")
+            self.assertEqual(args[:3], target.base)
+            self.assertTrue(lease_path.is_dir())
+            if args[3] == "install":
+                self.assertEqual(args[4:], ["--streaming", "--no-incremental", "-r", "--force-uuid", "fixture-adopted", str(self.apk)])
+                if target.exists():
+                    events.append("signature-mismatch")
+                    return subprocess.CompletedProcess(
+                        args, 1, b"", b"adb: failed to install fixture: Failure [INSTALL_FAILED_UPDATE_INCOMPATIBLE: signatures do not match]\n"
+                    )
+                self.assertFalse(receipt.exists())
+                self.assertFalse(runtime_receipt.exists())
+                events.append("reinstall")
+                target.exists.return_value = True
+            else:
+                self.assertEqual(args[3:], ["shell", "pm uninstall dev.ror2lab.arm64"])
+                self.assertTrue(receipt.exists())
+                events.append("uninstall")
+                target.exists.return_value = False
+            return subprocess.CompletedProcess(args, 0, b"Success\n", b"")
+
         payload_size = 0
         if payload:
             directory = self.root / "payload"
@@ -466,7 +583,23 @@ class DeviceSessionTests(unittest.TestCase):
 
         def shell(*args, **kwargs):
             if args[0] == "sha256sum":
-                return self.digest + "  /fixture/base.apk"
+                return target.owned()["apk_sha256"] + "  /fixture/base.apk"
+            if args[:2] == ("pm", "uninstall"):
+                return device_class.sh(target, *args, **kwargs)
+            if args[:2] == ("pm", "path"):
+                return "package:/mnt/expand/fixture-adopted/app/base.apk"
+            if args[:2] == ("mkdir", "-p"):
+                events.append("recreate-runtime")
+            if args[:2] == ("sh", "-c") and args[-1] == "/owned/exceptions.jsonl":
+                if "workload" in events:
+                    self.assertEqual(events[-1], "stop")
+                    return str(120_000_000 + len(exception_rows.encode()))
+                return "120000000"
+            if args[0] == "tail":
+                self.assertEqual(events[-1], "stop")
+                self.assertEqual(args, ("tail", "-c", "+120000001", "--", "/owned/exceptions.jsonl"))
+                events.append("exception-tail")
+                return exception_rows.rstrip("\n")
             if args[:2] == ("am", "force-stop"):
                 events.append("stop")
             if args[0] == "rm":
@@ -505,8 +638,9 @@ class DeviceSessionTests(unittest.TestCase):
 
         with (
             mock.patch.object(runner, "source_environment"),
-            mock.patch.object(runner.subprocess, "run", return_value=subprocess.CompletedProcess([], 0)),
+            mock.patch.object(runner.subprocess, "run", side_effect=adb_process),
             mock.patch.object(device_module, "Device", return_value=target),
+            mock.patch.object(device_module, "validate_apk_identity"),
             mock.patch.object(runner, "placement", return_value={}) as placement,
             mock.patch.object(runner, "run_workload", side_effect=workload),
             mock.patch.object(runner, "prepare_launch") as prepare,
@@ -521,11 +655,23 @@ class DeviceSessionTests(unittest.TestCase):
         self.assertEqual(placement.call_args_list[0].args[1], self.apk.stat().st_size + payload_size + 20 * 1024**3)
         prepare.assert_called_once_with(target, result["prelaunch"])
         if payload:
-            target.sync.assert_called_once_with(self.root / "payload")
+            target.sync.assert_called_once_with(self.root / "payload", replace_previous=True)
             self.assertLess(events.index("sync:" + str(self.root / "payload")), events.index("workload"))
             self.assertEqual(result["sync"], dict(files=["content"]))
+            self.assertEqual(
+                [call.args[1] for call in placement.call_args_list[1:3]], [payload_size + runner.DEVICE_RESERVE_BYTES, runner.DEVICE_RESERVE_BYTES]
+            )
         else:
             target.sync.assert_not_called()
+        if signature_failure:
+            self.assertEqual(
+                [
+                    event
+                    for event in events
+                    if event in {"signature-mismatch", "uninstall", "reinstall", "recreate-runtime", "sync:" + str(self.root / "payload")}
+                ],
+                ["signature-mismatch", "uninstall", "reinstall", "recreate-runtime", "sync:" + str(self.root / "payload")],
+            )
         self.assertEqual(owner.call_args.args[-1], 1060)  # run-local cooldown deadline
         self.assertEqual(thermal.deadline, 1630)  # independent workload deadline
         self.assertEqual(events[-1], "prune")
@@ -534,6 +680,7 @@ class DeviceSessionTests(unittest.TestCase):
         removed = [event for event in events if event.startswith("remove:")]
         self.assertTrue(removed)
         self.assertEqual(events.count("stop"), 3)
+        self.assertEqual(events.count("exception-tail"), int(bool(exception_rows)))
         self.assertLess(events.index("workload"), len(events) - 1 - events[::-1].index("stop"))
         for suffix in runner.TRANSIENTS:
             self.assertEqual(removed.count("remove:/owned/" + suffix), 2)
@@ -545,6 +692,30 @@ class DeviceSessionTests(unittest.TestCase):
         self.assertTrue(result["success"])
         self.assertTrue(result["lease_released"])
         self.assertTrue(result["terminal_readback"]["oled_asleep"])
+        self.assertEqual((self.output / "exceptions.jsonl").read_text(), "")
+
+    def test_owned_lab_signer_mismatch_reinstalls_once_and_resyncs_under_lease(self):
+        result = self.run_case(payload=True, signature_failure=True)
+        self.assertTrue(result["success"])
+        self.assertTrue(result["lease_released"])
+        self.assertEqual(result["install"]["apk_sha256"], self.digest)
+        self.assertEqual(
+            result["install_recovery"],
+            dict(
+                reason="INSTALL_FAILED_UPDATE_INCOMPATIBLE",
+                previous_apk_sha256="0" * 64,
+                uninstall=dict(uninstall="Success", removed=True),
+                payload_resynced=True,
+            ),
+        )
+
+    def test_workload_failure_retains_only_appended_exception_rows_once(self):
+        rows = '{"message":"exception α"}\n{"message":"exception β"}\n'
+        result = self.run_case(workload_error=True, exception_rows=rows)
+        self.assertFalse(result["success"])
+        self.assertTrue(result["lease_released"])
+        self.assertNotIn("exception_capture_error", result)
+        self.assertEqual((self.output / "exceptions.jsonl").read_text(), rows)
 
     def test_payload_synced_before_workload_and_included_in_storage_reserve(self):
         self.assertTrue(self.run_case(payload=True)["success"])

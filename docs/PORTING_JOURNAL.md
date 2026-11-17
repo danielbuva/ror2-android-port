@@ -6,6 +6,32 @@ under ignored `work/coordination/`, not here. Entries J01–J1177 (2026-09-12 to
 [history/journal-J1-J1177/PORTING_JOURNAL.md](history/journal-J1-J1177/PORTING_JOURNAL.md) with its
 [index](history/journal-J1-J1177/JOURNAL_INDEX.md); numbering continues here.
 
+## J1479 — Qualify Nova-B for shared assisted gameplay
+
+2026-11-17. The shared runner selects the Nova in the queue grant and uses its
+configured storage. Nova-B installed the lab APK on internal storage in 26.7 s
+and verified 134 payload files in 44.5 s, transferring four.
+APK SHA-256: `48b8a7f5ca26d15d53a6fb86bec9c5264e7419e4e5ab3cfe8a1b6c9b482192c1` (source `f94c0c30`).
+Evidence: `work/coordination/nova-b-gameplay-20261117/terminal.done.json`
+links the sustained report, frame trace and captures.
+Assisted Commando on Verdant Falls (stage 1) recorded 175 primary shots and 18 kills
+in 180.002 s, with nine screenshots and native End Run back to the offline menu.
+CPU/GPU peaked at 89.2 C, with 18.7 s above 80 C. Battery peaked at 28 C.
+The runner retained and removed session scratch, verified app stop and OLED sleep,
+and released the lease. Ordinary play, physical input and sustained performance remain open.
+
+## J1478 — Emit the strict whole-game content request on Android
+
+2026-11-13. The Android toolhost ran the prepared source-derived request with one
+record worker. All 290,498 required records passed structural validation and
+produced a 571,046,138-byte bundle with SHA-256
+`1117c73fb1ca756d3769af25c066cecaabac620eb9ad8bf9bf13dda517fabc8b`, matching the host output.
+Evidence: `work/coordination/p1-wholegame-1031/phone-chain-audit-1112/thor-shared-bounded-v1/terminal-v4.done.json`.
+The resumed run took 11,211 s. Maximum reported stage RSS was 2.372 GB against
+the 3 GB target. CPU/GPU peaked at 68.8 C in production, with 0 s above 80 C.
+Remaining: Unity typed load of this bundle, integration with the matching
+catalog and native manifest, and converted APK gameplay.
+
 ## J1477 — Capture stage-transition memory and a bounded passive tail
 
 2026-11-13. Shared launch waits for the owned native menu and ready world before timing.

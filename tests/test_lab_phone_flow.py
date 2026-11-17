@@ -18,6 +18,182 @@ SPEC.loader.exec_module(LAB)
 
 
 class PhoneFlowTests(unittest.TestCase):
+    def test_ui_failure_inspection_skips_only_interleaved_telemetry(self):
+        for failed_read, intervening, expected_code in (
+            (False, "phone-flow-memory", 0),
+            (False, "phone-flow-code-free", 0),
+            (False, "phone-flow-data-free", 0),
+            (False, "phone-flow-temperature", 0),
+            (False, "phone-flow-package-path-query", 0),
+            (False, "phone-flow-package-hash", 0),
+            (False, "device-package-path-query", 1),
+            (False, "device-package-hash", 1),
+            (True, "phone-flow-memory", 0),
+            (False, "device-state-read", 1),
+        ):
+            with self.subTest(failed_read=failed_read, intervening=intervening), tempfile.TemporaryDirectory() as temporary:
+                root = Path(temporary)
+                directory = root / "work/coordination/installer-update-acceptance/run-fixture0"
+                directory.mkdir(parents=True)
+                categories = ["device-ui-windows-dump", "device-ui-read", "device-ui-remove", "device-ui-diagnostic-power"]
+                records = []
+                for category in categories:
+                    records.extend((category, intervening, intervening))
+                for sequence, category in enumerate(records, 1):
+                    prefix = directory / f"{sequence:05d}-{category}"
+                    metadata = dict(
+                        phase="baseline-N-check", category=category, returncode=1 if failed_read and category == "device-ui-read" else 0, outcome="returned"
+                    )
+                    Path(str(prefix) + ".json").write_bytes(LAB.encoded(metadata))
+                    Path(str(prefix) + ".stdout.log").write_bytes(b"synthetic-private")
+                    Path(str(prefix) + ".stderr.log").write_bytes(b"")
+                before = {path: path.read_bytes() for path in directory.iterdir()}
+                output = io.StringIO()
+                with (
+                    patch.object(LAB, "ROOT", root),
+                    patch.object(LAB.subprocess, "run", side_effect=AssertionError("no device calls")),
+                    redirect_stdout(output),
+                ):
+                    code = LAB.inspect_ui_failure("run-fixture0")
+                result = json.loads(output.getvalue())
+                self.assertEqual(code, expected_code)
+                if not expected_code:
+                    self.assertEqual([row["category"] for row in result["records"]], ["device-ui-windows-dump", "device-ui-read"])
+                self.assertNotIn("synthetic-private", output.getvalue())
+                self.assertEqual(before, {path: path.read_bytes() for path in directory.iterdir()})
+
+    def test_observation_ownership_queries_have_telemetry_labels(self):
+        phone = LAB.Phone("fixture", 1)
+        phone.owned_installer = True
+        phone.installer_hash = "a" * 64
+        labels = []
+
+        def execute(*args, label, **kwargs):
+            labels.append(label)
+            output = b""
+            if args[1:3] == ("pm", "path"):
+                output = b"package:/fixture/base.apk"
+            elif args[1] == "sha256sum":
+                output = (phone.installer_hash + "  fixture").encode()
+            return LAB.subprocess.CompletedProcess(args, 0, output, b"")
+
+        with patch.object(phone.transport, "execute", side_effect=execute):
+            phone.flow_observation()
+        self.assertEqual(labels.count("phone-flow-package-path-query"), 3)
+        self.assertEqual(labels.count("phone-flow-package-hash"), 2)
+        self.assertTrue(all(label.startswith("phone-flow-") for label in labels))
+
+    def test_update_failure_inspection_keeps_logs_across_telemetry(self):
+        for phase in ("baseline-N-check", "baseline-N-install"):
+            with self.subTest(phase=phase), tempfile.TemporaryDirectory() as temporary:
+                root = Path(temporary)
+                directory = root / "work/coordination/installer-update-acceptance/run-fixture0"
+                directory.mkdir(parents=True)
+                records = [("device-state-read", LAB.encoded(dict(state="ERROR", message="fixture")))]
+                records += [("phone-flow-package-hash", b"")] * 5
+                records += [("device-apk-javac-log", b"ROR2_APK_LOG_BEGIN\nfixture"), ("device-apk-dex-log", b"ROR2_APK_LOG_BEGIN\nfixture")]
+                for sequence, (category, data) in enumerate(records, 1):
+                    prefix = directory / f"{sequence:05d}-{category}"
+                    Path(str(prefix) + ".json").write_bytes(LAB.encoded(dict(phase=phase, category=category, returncode=0, outcome="returned")))
+                    Path(str(prefix) + ".stdout.log").write_bytes(data)
+                output = io.StringIO()
+                with patch.object(LAB, "ROOT", root), redirect_stdout(output):
+                    self.assertEqual(LAB.inspect_ui_failure("run-fixture0", update_failure=True), 0)
+                self.assertEqual([row["tool"] for row in json.loads(output.getvalue())["apk_logs"]], ["javac", "dex"])
+
+    def test_periodic_sampling_runs_without_pipeline_poll_and_joins_on_failure(self):
+        import threading
+
+        observed = threading.Event()
+        phone = Mock()
+        workers = []
+
+        def sample():
+            if threading.current_thread().name == "installer-stage-metrics":
+                workers.append(threading.current_thread())
+                observed.set()
+            return {"installer": {"pss_bytes": 17}}
+
+        phone.flow_observation.side_effect = sample
+        metrics = LAB.FlowMetrics(phone)
+        with patch.object(metrics, "INTERVAL", 0.01):
+            with self.assertRaisesRegex(LAB.Failure, "original-stage-error"):
+                with metrics.stage("baseline-reconstruction"):
+                    self.assertTrue(observed.wait(2), "periodic observation never ran")
+                    raise LAB.Failure("original-stage-error")
+        self.assertTrue(workers)
+        self.assertTrue(all(not thread.is_alive() for thread in workers))
+        self.assertIsNone(metrics.current)
+        self.assertFalse(metrics.report()["stages"][0]["completed"])
+
+    def test_timeline_missing_process_and_storage_high_water_are_not_final_values(self):
+        clock = [0]
+        phone = Mock()
+        phone.flow_observation.side_effect = [
+            {"installer": {"pss_bytes": 10, "data_free_bytes": 100}},
+            {"installer": {"pss_bytes": 50, "data_free_bytes": 40}},
+            {},  # Process exit / unavailable telemetry must not become zero.
+            {"installer": {"pss_bytes": 20, "data_free_bytes": 90}},
+        ]
+        metrics = LAB.FlowMetrics(phone)
+        with patch.object(LAB.time, "monotonic", side_effect=lambda: clock[0]):
+            with metrics.stage("baseline-reconstruction"):
+                for clock[0] in (10, 20):
+                    metrics.sample()
+                clock[0] = 30
+        row = metrics.report(include_samples=True)["stages"][0]
+        package = row["packages"]["installer"]
+        self.assertEqual(package["sampled_max_pss_bytes"], 50)
+        self.assertEqual(package["storage_end"]["data_free_bytes"], 90)
+        self.assertEqual(package["storage_sampled_min_free_bytes"]["data_free_bytes"], 40)
+        self.assertEqual(package["storage_sampled_max_drop_from_start_bytes"]["data_free_bytes"], 60)
+        self.assertEqual(
+            package["coverage"]["pss_bytes"],
+            {
+                "valid_samples": 3,
+                "missing_samples": 1,
+                "first_offset_seconds": 0,
+                "last_offset_seconds": 30,
+                "largest_unobserved_gap_seconds": 20,
+            },
+        )
+        self.assertEqual([sample["offset_seconds"] for sample in row["timeline"]], [0, 10, 20, 30])
+        self.assertIsNone(row["timeline"][2]["installer"]["pss_bytes"])
+        self.assertNotIn("timeline", metrics.report()["stages"][0])
+
+    def test_sample_bound_and_next_stage_do_not_mix_observations(self):
+        clock = [0]
+        phone = Mock()
+        phone.flow_observation.return_value = {"installer": {"pss_bytes": 7}}
+        metrics = LAB.FlowMetrics(phone)
+        with patch.object(metrics, "MAX_SAMPLES", 2), patch.object(LAB.time, "monotonic", side_effect=lambda: clock[0]):
+            with metrics.stage("baseline-reconstruction"):
+                clock[0] = 10
+                metrics.sample()
+                clock[0] = 20
+                metrics.sample()
+                clock[0] = 30
+            phone.flow_observation.return_value = {"installer": {"pss_bytes": 99}}
+            with metrics.stage("baseline-install"):
+                clock[0] = 35
+        first, second = metrics.report(include_samples=True)["stages"]
+        self.assertTrue(first["sample_limit_reached"])
+        self.assertEqual(first["samples"], 2)
+        self.assertEqual(first["packages"]["installer"]["coverage"]["pss_bytes"]["largest_unobserved_gap_seconds"], 20)
+        self.assertFalse(second["sample_limit_reached"])
+        self.assertEqual(second["packages"]["installer"]["sampled_max_pss_bytes"], 99)
+        self.assertEqual(second["timeline"][0]["offset_seconds"], 0)
+
+    def test_missing_start_storage_does_not_fabricate_consumption(self):
+        phone = Mock()
+        phone.flow_observation.side_effect = [{}, {"installer": {"data_free_bytes": 3}}]
+        metrics = LAB.FlowMetrics(phone)
+        with metrics.stage("fresh-installer"):
+            pass
+        row = metrics.report()["stages"][0]["packages"]["installer"]
+        self.assertEqual(row["storage_sampled_min_free_bytes"]["data_free_bytes"], 3)
+        self.assertIsNone(row["storage_sampled_max_drop_from_start_bytes"]["data_free_bytes"])
+
     def test_pss_is_one_numeric_total_not_a_true_peak(self):
         self.assertEqual(LAB.process_pss(b"TOTAL PSS: 123 TOTAL RSS: 456\n"), 123 * 1024)
         for value in (b"TOTAL PSS: -2", b"TOTAL PSS: unknown", b"TOTAL PSS: 1\nTOTAL PSS: 2", b"x" * 65537, "private-text"):

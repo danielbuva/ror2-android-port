@@ -1,6 +1,6 @@
 # Porting state
 
-Updated 2026-11-13 UTC. This laboratory is not a finished port. Evidence lives in
+Updated 2026-11-17 UTC. This laboratory is not a finished port. Evidence lives in
 [the journal](docs/PORTING_JOURNAL.md) and [index](docs/JOURNAL_INDEX.md);
 [J1–J1177 are frozen](docs/history/journal-J1-J1177/JOURNAL_INDEX.md).
 Named APK hashes are protected by the pruner.
@@ -11,18 +11,16 @@ Named APK hashes are protected by the pruner.
 | --- | --- |
 | Input and toolchain | Accepted Steam 25475991; Unity 2021.3.45f2 (88f88f591b2e), IL2CPP ARM64, Vulkan. Pins: `environment/toolchain.json`. |
 | Compatibility reference (P1) | Lab APK `9f904392d02abc3854f9efc4b51cd03daec7afb6b7192a4c074f30fabc12fa22`, source `6c12b506`. Match behaviour, content, visuals and performance as closely as possible; structural/gameplay checks stay strict, byte equality is diagnostic. |
-| Latest device-verified APK | Bounded assisted-combat APK `0c440333e3906c483ad8280ab6287e299ca8f7e10238c696425f1e3423cde2ad`, source `4e12f51b`. Shared runner completed 30 minutes on source stage `lakes`, with 54 kills, 2–12 enemies and native teardown. Whole/tail means 59.800/59.749 FPS leave the strict 60 FPS gate open. |
-| Installed now (last recorded) | Main Nova: the bounded-combat APK above, on adopted storage. Evidence: `work/coordination/alpha-shared-device-session-20261113T005754Z/terminal.done.json`. Profile/settings retention, package/runtime backing, stopped/asleep readback and lease release pass; no later device query in this refresh. |
-| Runtime source since that APK | Installed runtime remains `4e12f51b`. Subsequent shared-runner/storage tooling and newer merged runtime changes have not been built into this APK. Ordinary-play and converted-device acceptance remain separate gates. |
-| Converter | 79 source scenes staged (681-file inventory); whole-game closure inventory reports **0 catalog-missing**, 390,937 selected / 386,879 reachable records. These are staging/coverage facts: complete strict graph, current-CLR/script/reference checks, final typed load, APK assembly and converted-device play remain pending. |
-| Installer | [#241 merged](https://github.com/danielbuva/ror2-android-port/pull/241): authorized synthetic prompts and readable live status. [#417 open](https://github.com/danielbuva/ror2-android-port/pull/417): visible unknown-app permission/consent qualification; exact-source build and seven-case device acceptance remain open. Check for updates, same-key update/rollback and real profile retention still need complete phone qualification. |
+| Latest device-verified APK | Lab APK `48b8a7f5ca26d15d53a6fb86bec9c5264e7419e4e5ab3cfe8a1b6c9b482192c1`, source `f94c0c30`, completed the J1477 stage-transition and passive-tail diagnostic. Converted APK `20726b61542cc5d08ece1b1030a7512a5b05fafd995f4baa7b364ac817ca608a`, source `538d1f1c`, reached the original-catalog survivor menu (J1476). Converted ordinary stage play and End Run remain open. |
+| Installed now (last recorded) | Main Nova: the lab and converted packages above, on adopted storage. The J1477 and J1476 receipts record backing, stopped/asleep readback and lease release for their respective packages. |
+| Runtime source since the converted APK | Subsequent merged runtime changes include native results cleanup, settings interaction and HUD presentation. The installed converted APK predates those changes. |
+| Converter | Android emitted all 290,498 records of the strict whole-game bundle request. The output hash matches the host run (J1478). Unity typed load and playable APK integration of this specific bundle remain open. |
+| Installer | [#241](https://github.com/danielbuva/ror2-android-port/pull/241) ships authorized synthetic prompts and readable live status. [#417](https://github.com/danielbuva/ror2-android-port/pull/417) qualifies visible installer permission and consent. Check for updates, same-key update/rollback and real profile retention still need complete phone qualification. |
 
-Converter receipts: `work/coordination/p1-scenes-w/scene-completion-audit-0722/`
-and `work/coordination/p1-wholegame-1031/current-catalog-combined-repair-v2/`.
-Zero catalog-missing does not imply graph admission or loadability. Public
-production uses legitimate game files, permitted SDK inputs and public recipes;
-game-derived outputs remain private. Raw-exact, drift-explained,
-tolerance-accepted and device acceptance remain separate results.
+The full source inventory has 79 staged scenes and zero catalog-missing entries
+(`work/coordination/p1-wholegame-1031/current-catalog-combined-repair-v2/`).
+Public production uses legitimate game files, permitted SDK inputs and public
+recipes. Game-derived outputs remain private.
 
 ## Alpha loading and stability since November 4
 
@@ -30,6 +28,9 @@ The shared device runner now has a real 30-minute qualification, retaining a
 120 Hz request, reconciled raw frames and strict thermal coverage. It uses a
 diagnostic-only monster cap and invincibility; ordinary sessions retain native
 limits. See [the measured scope and open pacing gate](docs/performance-game.md#shared-runner-and-bounded-combat-qualification).
+Retained J1472 bounded-combat APK
+`0c440333e3906c483ad8280ab6287e299ca8f7e10238c696425f1e3423cde2ad`,
+source `4e12f51b`, recorded whole/tail means of 59.800/59.749 FPS.
 Retained ordinary-Start audio evidence remains APK
 `1cee9b5ab9e7453f9ba76977e49f3b1208308be52c3d8ebe07dc7824e913b5a1`,
 source `41c03a7a`; assisted combat does not replace that acceptance scope.

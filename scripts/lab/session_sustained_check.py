@@ -248,6 +248,7 @@ def check_session_sustained(
     detailed_visual_diagnostics=False,
     _reset_idle=None,
     _observe=None,
+    _include_exceptions=True,
 ):
     """Observe aggregate counters in either mode; raw capture defaults to enabled."""
     if type(raw_frame_times) is not bool:
@@ -402,7 +403,7 @@ def check_session_sustained(
             if elapsed - last_capture >= observation_interval_seconds:
                 folder = out / ("sample-%04d" % index)
                 write(folder / "world.json", report)
-                device.collect("perf", folder)
+                device.collect("perf", folder, include_exceptions=_include_exceptions)
                 if detailed_visual_diagnostics:
                     device.collect("screenshot", folder)
                 last_capture = elapsed
