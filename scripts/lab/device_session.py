@@ -87,12 +87,12 @@ def load_request(path, serial=None):
         value.setdefault(name, default)
         if type(value[name]) is not int or value[name] <= 0:
             raise ValueError(name + " must be a positive integer")
-    if value["mode"] not in {"launch", "sustained", "settings-save-failure", "software-notices", "player-screens"}:
-        raise ValueError("mode must be launch, sustained, settings-save-failure or software-notices or player-screens")
+    if value["mode"] not in {"launch", "sustained", "settings-save-failure", "profile-write-interrupt", "software-notices", "player-screens"}:
+        raise ValueError("Unknown device workload mode")
     if value["mode"] != "launch" and value["package"] != "dev.ror2lab.arm64":
         raise ValueError("The native workload owner requires the lab package")
-    if value["mode"] == "settings-save-failure" and "selection" in value:
-        raise ValueError("Settings failure workload owns its attempt-bound selector")
+    if value["mode"] in {"settings-save-failure", "profile-write-interrupt"} and "selection" in value:
+        raise ValueError("Persistence workload owns its attempt-bound selector")
     if value["mode"] in {"software-notices", "player-screens"} and "selection" in value:
         raise ValueError("Software notices workload owns its attempt-bound selector")
     for name in ("require_high_refresh", "pacing_diagnostics", "start_from_menu", "capture_golem_attacks"):
@@ -494,10 +494,11 @@ def retain_diagnostic_scratch(device, runtime, initial, output):
         device.sh("rm", "--", remote)
 
 
-def wait_for_settings_report(device, thermal, pid, predicate, timeout=100):
+def wait_for_settings_report(device, thermal, pid, predicate, timeout=100, *, report_id=None):
     import session_cleanup_check as cleanup
     from installed_attempt import attempt_from_installed
 
+    report_id = report_id or cleanup.SPINE_ID
     attempt = attempt_from_installed(device.owned())
     runtime = device.read_receipt("runtime.json")["persistentDataPath"]
     deadline = time.monotonic() + timeout
@@ -507,8 +508,8 @@ def wait_for_settings_report(device, thermal, pid, predicate, timeout=100):
             raise RuntimeError(thermal.error)
         if device.sh("pidof", device.package, check=False).strip() != pid:
             raise RuntimeError("Owned process changed during settings admission")
-        report = cleanup._read_json(device, runtime + "/movement-batch-" + cleanup.SPINE_ID + ".json")
-        if cleanup.matches_run(report, pid, attempt):
+        report = cleanup._read_json(device, runtime + "/movement-batch-" + report_id + ".json")
+        if cleanup.matches_run(report, pid, attempt, report_id=report_id):
             last_phase = report.get("phase")
             if report.get("firstFailure"):
                 raise RuntimeError("Native first failure: " + str(report["firstFailure"]))
@@ -682,31 +683,45 @@ def check_player_screens(device, thermal, request, output):
     raise RuntimeError("Confirmed Quit did not exit")
 
 
-def start_from_menu(device, thermal, pid, output):
-    """Start the observed owned menu before measuring an automatic route."""
+def start_from_menu(device, thermal, pid, output, *, report_id=None, tap_start=False):
+    """Start the observed owned menu and return the current world report."""
     from session_cleanup_check import menu_start_coordinates
     from touch_gesture import owned_display_zero_focus
 
-    menu = wait_for_settings_report(device, thermal, pid, lambda r: r.get("phase") == "offline-start-menu", timeout=240)
+    menu = wait_for_settings_report(device, thermal, pid, lambda r: r.get("phase") == "offline-start-menu", timeout=240, report_id=report_id)
     save(output / "start-menu.json", menu)
-    coordinates = menu_start_coordinates(menu)
-    if coordinates is None:
-        raise RuntimeError("Current native menu Start geometry unavailable")
     if thermal.error:
         raise RuntimeError(thermal.error)
     if device.sh("pidof", device.package, check=False).strip() != pid:
         raise RuntimeError("Owned process changed before menu Start")
     if not owned_display_zero_focus(device.sh("dumpsys", "window", "displays"), device.package):
         raise RuntimeError("Owned display-zero focus absent before menu Start")
-    x, y = coordinates
-    device.sh("input", "-d", "0", "tap", str(x), str(y))
+    if tap_start:
+        coordinates = menu_start_coordinates(menu)
+        if coordinates is None:
+            raise RuntimeError("Current native menu Start geometry unavailable")
+        x, y = coordinates
+        device.sh("input", "-d", "0", "tap", str(x), str(y))
+    else:
+        device.sh("input", "keyboard", "keyevent", "KEYCODE_ENTER")
     world = wait_for_settings_report(
-        device, thermal, pid, lambda r: r.get("phase") == "integrated-world-playing" and r.get("world", {}).get("ready") is True, timeout=240
+        device,
+        thermal,
+        pid,
+        lambda r: r.get("phase") == "integrated-world-playing" and r.get("world", {}).get("ready") is True,
+        timeout=240,
+        report_id=report_id,
     )
     save(output / "world-start.json", world)
+    return world
 
 
 def run_workload(device, thermal, request, output, result, *, _reset_idle=None):
+    if request["mode"] == "profile-write-interrupt":
+        from settings_write_interrupt_check import check_profile_write_interrupt
+
+        result["profile_write_interrupt"] = check_profile_write_interrupt(device, thermal, request, output, launch, start_from_menu)
+        return
     if request["mode"] == "player-screens":
         result["player_screens"] = check_player_screens(device, thermal, request, output)
         return
@@ -761,7 +776,7 @@ def run_workload(device, thermal, request, output, result, *, _reset_idle=None):
 
 def observe_launch(device, thermal, request, output, result, pid):
     if request.get("start_from_menu"):
-        start_from_menu(device, thermal, pid, output)
+        start_from_menu(device, thermal, pid, output, tap_start=True)
     if "input_script" in request:
         import touch_gesture
 

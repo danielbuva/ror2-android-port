@@ -2924,7 +2924,7 @@ on the configured volume, recreates the runtime directory, syncs the payload and
 records the recovery in the terminal receipt under the same lease.
 The shared device runner's launch request accepts `start_from_menu` for automatic
 route observations. It waits for the installed attempt/PID-bound native menu,
-requires owned display-zero focus, injects Start and waits for a ready world
+requires owned display-zero focus, taps the reported Start button and waits for a ready world
 before the observation clock begins. Existing periodic captures retain PSS,
 native heap and managed/allocation snapshots across stage transitions. The
 ordinary selector controls the route; sustained combat's stationary first-stage
@@ -2935,6 +2935,10 @@ The shared runner records the cumulative exception log's byte offset before
 launch. After stopping the owned package, it captures only the appended rows
 in the session root's `exceptions.jsonl`, including on workload failure.
 Periodic captures retain their PID-filtered logs and performance evidence.
+Opt-in `capture_golem_attacks` watches the live Unity stream for the owned
+process's native clap and laser entries and captures a bounded screenshot burst
+when display zero is focused. The observer stops with the launch workload and
+retains its event receipt alongside the regular captures.
 
 Launch-mode `input_schedule` adds ordered, relative-time targeted-touch scripts
 within the observation window, allowing ordinary input and End Run in the same
@@ -3189,6 +3193,16 @@ generated library build file does not enable the legacy `src` root. The host
 checks distinct service/main PIDs, retained original
 primary/pending bytes, cold recovery and native resave. Device survival after the
 writer kill remains a qualification gate.
+
+The shared runner's current `profile-write-interrupt` workload uses the same
+service with the profile pending path. `PortSession` reads the nonce-only
+`profile-write-observer.request` at launch. `IntegratedResultsBoundary` arms
+the service only for an unassisted native result with a prepared profile, then
+persists the native report and ledger before the profile commit. The runner
+binds the separate writer and observer, retains pending evidence by hash, and
+checks two cold world Starts for one reconciliation and unchanged settings.
+Native replay supersedes the pending generation. Cleanup stops the package and
+clears the attempt's request and witness files.
 
 Settings persistence remains owned by `AndroidOfflineSettings`. Its existing
 validated pending/primary/backup transaction is unchanged. `TrySave` converts
@@ -4620,6 +4634,8 @@ before their pools instantiate them. It follows typed prefab edges with cycle
 protection, including CharacterBody's separately loaded FireTrail. Original
 source slots and particle trails are restored by integrated-world cleanup before
 the session destroys its material copies; source blend values remain intact.
+The session counts objective projectile materials during catalog setup. The
+integrated-world report includes these counts from its first snapshot.
 | Developer controls | `DebugAccelerationBoundary` ([debug-acceleration.md](debug-acceleration.md)) | nested `DebugAccelerationSession` (`IDisposable`) **own type** holds the body, saved god mode, ownership flag, charge scan/callback set and grant inventory; `debugPanel` stays shared with IntegratedWorld's graphics button; sticky "assisted" flags stay in the coordinator report | `PrepareDebugAcceleration` (calls `DebugAccelerationSession.Prepare`) → `CleanupDebugAcceleration` (calls `Dispose`; owner retained) | `test_debug_acceleration.py` |
 
 `AndroidProfileSession` reserves each original achievement event before its

@@ -278,6 +278,7 @@ public sealed partial class PortSession
     readonly Dictionary<FieldInfo, GameObject> worldLootEffectSlots = new Dictionary<FieldInfo, GameObject>();
     readonly List<GameObject> worldLootTemporaryEffects = new List<GameObject>();
     readonly Dictionary<Renderer, Material[]> worldLootSourceMaterials = new Dictionary<Renderer, Material[]>();
+    int nativeEffectSourceMaterials, nativeEffectSourceRenderers;
     readonly Dictionary<GameObject, int> worldLootSourceLayers = new Dictionary<GameObject, int>();
     readonly Dictionary<int, int> worldNativeLootLeaseBaselines = new Dictionary<int, int>();
     readonly HashSet<GameObject> worldNativeLootObjects = new HashSet<GameObject>();
@@ -1290,6 +1291,8 @@ public sealed partial class PortSession
                 "Unowned effect pools before integrated world");
             coordinator.ownsIntegratedPools = true;
             coordinator.r.world = new WorldReport {
+                nativeEffectSourceMaterials = coordinator.nativeEffectSourceMaterials,
+                nativeEffectSourceRenderers = coordinator.nativeEffectSourceRenderers,
                 scope =
                     "Persistent original Commando/default skills, recovered golemplains collision/navigation, continuous original one-card director, local HLAPI client/authority, original Money purchases/chest animation/droplet/default pickup/server grants/gold/XP/stats. Authored layout/HUD/input/materials and explicit audio-unavailable pickup presentation. Original Run clock only: stock startup/menu/profile/route/victory remain unavailable; composed original teleporter is observed separately; no NetworkUser, LocalUser or entitlement grant.",
                 feedbackCapability = "Authored pickup HUD; original native-audio notification handler unavailable."

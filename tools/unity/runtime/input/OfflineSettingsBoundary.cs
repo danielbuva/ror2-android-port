@@ -60,14 +60,19 @@ public sealed partial class PortSession
         return offlineSettingsSession != null && offlineSettingsSession.Save();
     }
 
-    string settingsWriteObserverNonce;
-    void ReadSettingsWriteObserverRequest()
+    string settingsWriteObserverNonce, profileWriteObserverNonce;
+    void ReadWriteObserverRequests()
     {
-        var path = Path.Combine(Application.persistentDataPath, "settings-write-observer.request");
-        if (!File.Exists(path)) return;
+        settingsWriteObserverNonce = ReadWriteObserverNonce("settings-write-observer.request");
+        profileWriteObserverNonce = ReadWriteObserverNonce("profile-write-observer.request");
+    }
+    static string ReadWriteObserverNonce(string requestName)
+    {
+        var path = Path.Combine(Application.persistentDataPath, requestName);
+        if (!File.Exists(path))
+            return null;
         var nonce = File.ReadAllText(path).Trim();
-        if (System.Text.RegularExpressions.Regex.IsMatch(nonce, "\\A[0-9a-f]{32}\\z"))
-            settingsWriteObserverNonce = nonce;
+        return System.Text.RegularExpressions.Regex.IsMatch(nonce, "\\A[0-9a-f]{32}\\z") ? nonce : null;
     }
 
     // Nested so the owner can use the coordinator's shared state and report without

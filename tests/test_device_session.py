@@ -101,9 +101,12 @@ class DeviceSessionTests(unittest.TestCase):
         target.sh.return_value = "12"
         hud = dict(menuStartX=170.67, menuStartY=757.33, screenWidth=1920, screenHeight=1080)
         menu = dict(phase="offline-start-menu", hud=hud)
-        reports = [menu, dict(phase="integrated-world-playing", world=dict(ready=True))]
+        gameplay_report = dict(phase="integrated-world-playing", world=dict(ready=True))
+        reports = [menu, gameplay_report, menu, gameplay_report]
+        gameplay_route = "body-state-spawn-state-auto-player"
 
-        def observed(device, monitor, pid, predicate, timeout):
+        def observed(device, monitor, pid, predicate, timeout, *, report_id):
+            self.assertEqual(report_id, gameplay_route)
             report = reports.pop(0)
             self.assertTrue(predicate(report))
             return report
@@ -112,7 +115,9 @@ class DeviceSessionTests(unittest.TestCase):
             mock.patch.object(runner, "wait_for_settings_report", side_effect=observed),
             mock.patch("touch_gesture.owned_display_zero_focus", return_value=True),
         ):
-            runner.start_from_menu(target, thermal, "12", self.output)
+            self.assertEqual(runner.start_from_menu(target, thermal, "12", self.output, report_id=gameplay_route), gameplay_report)
+            self.assertEqual(runner.start_from_menu(target, thermal, "12", self.output, report_id=gameplay_route, tap_start=True), gameplay_report)
+        target.sh.assert_any_call("input", "keyboard", "keyevent", "KEYCODE_ENTER")
         target.sh.assert_any_call("input", "-d", "0", "tap", "171", "757")
         self.assertTrue((self.output / "world-start.json").is_file())
         with (

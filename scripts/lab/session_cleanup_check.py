@@ -158,12 +158,12 @@ def survivor_identity_failures(report, survivor):
     return failures
 
 
-def matches_run(report, pid, attempt, session=None):
+def matches_run(report, pid, attempt, session=None, *, report_id=SPINE_ID):
     return (
         isinstance(report, dict)
         and str(report.get("pid")) == str(pid)
         and report.get("attempt") == attempt
-        and report.get("id") == SPINE_ID
+        and report.get("id") == report_id
         and (session is None or report.get("session") == session)
     )
 
