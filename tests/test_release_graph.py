@@ -569,6 +569,176 @@ out.mkdir();(out/'global-metadata.dat').write_bytes(metadata)
             self.assertEqual((root / "global-metadata.dat").read_bytes(), metadata.read_bytes())
             self.assertEqual((root / "libil2cpp.so").read_bytes(), b"independent native output")
 
+    def test_signed_install_builds_native_from_fresh_conversion_and_reuses_unchanged_jobs(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory).resolve()
+            repo, inputs, runtime, native = [root / name for name in ("repo", "inputs", "runtime", "native")]
+            for path in (inputs, runtime, native):
+                path.mkdir()
+
+            def write(path, value):
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_text(json.dumps(value) if isinstance(value, dict) else value)
+
+            original = inputs / "import/files/Data/source.txt"
+            write(original, "owned fixture")
+            input_manifest = "recipe/inputs.json"
+            write(
+                repo / input_manifest,
+                {
+                    "schema": 1,
+                    "game_version": "synthetic-v1",
+                    "files": [{"path": "Data/source.txt", "bytes": original.stat().st_size, "sha256": G.digest(original)}],
+                },
+            )
+            authored = repo / "tools/unity/Fixture.cs"
+            write(authored, "class Fixture {}")
+            write(repo / "recipe/target.json", {"source_files": {"tools/unity/Fixture.cs": G.digest(authored)}})
+            for stem in ("owner-managed-code", "owner-player-code", "owner-native-arm64"):
+                write(repo / f"recipe/{stem}.json", {})
+            code_request, native_request = "recipe/owner-code-request.json", "recipe/owner-native-request.json"
+            sdk_witness, linker = inputs / "acquired/sdk/receipt.json", native / "linker"
+            write(sdk_witness, "sdk fixture 1")
+            write(linker, "linker fixture 1")
+            write(
+                repo / code_request,
+                {
+                    "owner_work": "${inputs}/work",
+                    "output": "${output}",
+                    "sdk_install": "${inputs}/acquired/sdk",
+                    "source_inputs": {"original": "${input:original}"},
+                    "target": {"profile": "${repo}/recipe/target.json", "source": "${repo}"},
+                    "cache_witnesses": ["${inputs}/acquired/sdk/receipt.json"],
+                },
+            )
+            native_template = {
+                "owner_work": "${inputs}/work",
+                "output": "${output}",
+                "sdk_install": "${inputs}/acquired/sdk",
+                "android_tools": {"linker": "${native}/linker"},
+                "cache_witnesses": ["${native}/linker"],
+            }
+            write(repo / native_request, native_template)
+            producer_root = repo / "tools/phone-build/owner-code"
+            write(
+                producer_root / "produce.py",
+                """import gzip, hashlib, json, pathlib, struct, sys
+request = json.loads(pathlib.Path(sys.argv[1]).read_text())
+assert sys.argv[2:] == ['--stop-after-conversion']
+work = pathlib.Path(request['owner_work'])
+assert (work / 'inventory/files.json').is_file()
+source = pathlib.Path(request['source_inputs']['original']).read_bytes()
+metadata = struct.pack('<II', 0xFAB11BAF, 31) + (pathlib.Path(request['sdk_install']) / 'receipt.json').read_bytes()
+frame = pathlib.Path(request['output']) / 'backend/sources/Fixture.cpp.gz'
+frame.parent.mkdir(parents=True)
+frame.write_bytes(gzip.compress(source, mtime=0))
+converter = frame.parent.parent / 'converter'
+metadata_path = converter / 'data/Metadata/global-metadata.dat'
+metadata_path.parent.mkdir(parents=True)
+metadata_path.write_bytes(metadata)
+def pin(data):
+    return dict(bytes=len(data), sha256=hashlib.sha256(data).hexdigest())
+(converter / 'result.json').write_text(json.dumps(dict(exit_code=0, inputs_unchanged=True, files={
+    'cpp/Fixture.cpp': pin(source), 'data/Metadata/global-metadata.dat': pin(metadata),
+})))
+""",
+            )
+            shutil.copyfile(ROOT / "tools/phone-build/owner-code/native.py", producer_root / "native_contract.py")
+            write(
+                producer_root / "native.py",
+                """import json, pathlib, sys
+import native_contract as native
+request = json.loads(pathlib.Path(sys.argv[1]).read_text())
+assert sys.argv[2:] == ['--from-conversion']
+receipt, sources, metadata = (pathlib.Path(request[name]) for name in ('converter_receipt', 'sources', 'metadata'))
+pin = request['converter_receipt_sha256']
+previous = dict(jobs=[dict(arguments=0, generated='Previous.cpp')], link=[dict(object=0)])
+profile = native.generated_profile(previous, native.converter_files(receipt, pin))
+providers, _ = native.converter_inputs(receipt, pin, sources, metadata, profile, request['sources_compressed'])
+out = pathlib.Path(request['output'])
+out.mkdir()
+native.expand(providers['Fixture.cpp'], out / 'source.cpp')
+(out / 'libil2cpp.so').write_bytes((out / 'source.cpp').read_bytes() + pathlib.Path(request['android_tools']['linker']).read_bytes())
+(out / 'global-metadata.dat').write_bytes(metadata.read_bytes())
+(out / 'result.json').write_text('{"success":true}')
+""",
+            )
+            admission, plan = load("install_inputs"), load("install_flow")
+            code, native_job = "recipe/jobs/owner-code-conversion.json", "recipe/jobs/owner-native-code.json"
+            selected = {
+                "schema": 1,
+                "required_inputs": input_manifest,
+                "workspace_bytes": 0,
+                "configuration": {"bindings": {"original": "Data/source.txt"}},
+                "stages": [{"id": name, "title": name, "jobs": {"assembly": [code], "native": [native_job]}.get(name, [])} for name in plan.STAGES],
+            }
+            progress = []
+
+            def build():
+                graph = G.Graph(repo, {})
+                index = graph.compile([], code_request=code_request, native_request=native_request)
+                for name, job in graph.jobs.items():
+                    write(repo / name, job)
+                    index["files"][name] = G.digest(repo / name)
+                index["files"][input_manifest] = G.digest(repo / input_manifest)
+                index["install_plan"] = selected
+                self.assertIn("tools/unity/Fixture.cs", graph.jobs[code]["source_files"])
+                release = {
+                    "version": "synthetic",
+                    "version_code": 2,
+                    "application_id": "dev.ror2lab.synthetic",
+                    "minimum_installer_version": 1,
+                    "bundle_sha256": "a" * 64,
+                    "entries": {name: J.UPDATES.public().entry_dependencies(index, name) for name in index["entries"]},
+                }
+                config = admission.prepare(index, repo, inputs)
+                identity = J.UPDATES.input_identity(inputs, config)
+                dispatcher = J.Dispatcher(
+                    repo, index, release, inputs, runtime, native, config, identity, python=[sys.executable], progress=lambda *args: progress.append(args)
+                )
+                self.assertEqual(plan.validate_plan(selected, index, dispatcher.descriptor), {code: "assembly", native_job: "native"})
+                dispatcher.execute(code)
+                dispatcher.execute(native_job)
+                result = J.UPDATES.RELEASE.rebuild(
+                    release,
+                    installer_version=1,
+                    application_id=release["application_id"],
+                    installed_version=0,
+                    input_sha256=identity,
+                    root=inputs / "work/releases/cache",
+                    produce=dispatcher.produce,
+                    producer_sha256=dispatcher.output_sha256,
+                )
+                return result
+
+            first = build()
+            self.assertEqual(len(first["rebuilt"]), 2)
+            self.assertFalse(build()["rebuilt"])
+            write(repo / native_request, dict(native_template, compile_timeout_seconds=60))
+            self.assertFalse(build()["rebuilt"])
+            write(linker, "linker fixture 2")
+            archive_lib = "apk/lib/arm64-v8a/libil2cpp.so"
+            changed = build()
+            self.assertEqual(changed["rebuilt"], [archive_lib])
+            self.assertEqual(Path(changed["outputs"][archive_lib]).read_bytes(), b"owned fixturelinker fixture 2")
+            write(sdk_witness, "sdk fixture 2")
+            self.assertEqual(build()["rebuilt"], ["apk/assets/bin/Data/Managed/Metadata/global-metadata.dat"])
+            self.assertEqual(
+                progress,
+                [
+                    (code, False),
+                    (native_job, False),
+                    (code, True),
+                    (native_job, True),
+                    (code, True),
+                    (native_job, False),
+                    (code, True),
+                    (native_job, False),
+                    (code, False),
+                    (native_job, False),
+                ],
+            )
+
     def test_burst_job_dispatches_both_cohorts_and_invalidates_changed_policy(self):
         for source in (False, True):
             with self.subTest(source=source), tempfile.TemporaryDirectory() as directory:

@@ -1462,12 +1462,17 @@ top-level receipts, while player data consumes nested shared-shader and texture
 packs. Their authored shader and player configuration inputs travel in the
 signed closure. Fresh converter/managed inputs remain explicit caller bindings.
 The optional `--native-request` adds `owner-code/native.py` as one cached job
-with final `libil2cpp.so` and matching `global-metadata.dat` outputs. Its public
-request template binds acquired converter receipt, source frames, metadata and
-SDK; the native policy travels in the signed closure. The native owner rechecks
-the converter cohort after linking and verifies its metadata copy before success.
-Planning and measured partial builds emit neither final metadata nor a complete
-release.
+with final `libil2cpp.so` and matching `global-metadata.dat` outputs. With
+`--code-request`, an assembly-stage `produce.py --stop-after-conversion` job
+provides its private receipt, compressed source frames and metadata to the
+native job. The signed closure includes the target profile, its authored files
+and compiler policies. Without `--code-request`, the native request supplies
+the existing converter bindings. The native owner rechecks the converter cohort
+after linking and verifies its metadata copy before success. Signed cache
+witness paths let acquired SDK/tool receipts invalidate the jobs that consume
+them. The staged install compares its verified producer output digests before
+reusing final entry copies. Planning and measured partial builds emit neither
+final metadata nor a complete release.
 The optional `--burst-request` dispatches `owner-code/produce.py --burst-only`
 with positional request input. Explicit managed providers reuse the current
 cohort; source-input requests first generate that cohort through the existing

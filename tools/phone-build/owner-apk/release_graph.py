@@ -720,24 +720,86 @@ class Graph:
             "bytes": "${bytes:" + job + ":" + artifact + "}",
         }
 
-    def native_code(self, request_path):
+    def code_conversion(self, request_path):
+        """Run original-input managed production and preserve its converter cohort."""
+        request = json.loads((self.repo / request_path).read_text())
+        if request.get("output") != "${output}" or "source_inputs" not in request:
+            raise ValueError("code request must select original source inputs and the dispatcher output")
+        target = request.get("target", {})
+        profile = target.get("profile", "")
+        source = target.get("source", "")
+        if not profile.startswith("${repo}/") or not (source == "${repo}" or source.startswith("${repo}/")):
+            raise ValueError("code request must select a public target profile and authored source root")
+        profile_path = self.repo / profile.removeprefix("${repo}/")
+        source_root = self.repo if source == "${repo}" else self.repo / source.removeprefix("${repo}/")
+        if any(path.resolve(strict=True) != path or not path.is_relative_to(self.repo) for path in (profile_path, source_root)):
+            raise ValueError("code target profile and source must be canonical public paths")
+        selected = json.loads(profile_path.read_text())
+        paths = [
+            profile_path.relative_to(self.repo).as_posix(),
+            "recipe/owner-managed-code.json",
+            "recipe/owner-player-code.json",
+            "recipe/owner-native-arm64.json",
+        ]
+        for relative, expected in selected["source_files"].items():
+            path = source_root / relative
+            if path.resolve(strict=True) != path or not path.is_relative_to(source_root) or digest(path) != expected:
+                raise ValueError("code target authored source drift: " + relative)
+            paths.append(path.relative_to(self.repo).as_posix())
+        name = "recipe/jobs/owner-code-conversion.json"
+        cache_witnesses = request.pop("cache_witnesses", [])
+        self.jobs[name] = {
+            "schema": 1,
+            "script": "tools/phone-build/owner-code/produce.py",
+            "arguments": ["${request}", "--stop-after-conversion"],
+            "request": request,
+            "needs": [],
+            "outputs": {},
+            "artifacts": {
+                "receipt": "backend/converter/result.json",
+                "metadata": "backend/converter/data/Metadata/global-metadata.dat",
+                "sources": "backend/sources",
+            },
+        }
+        if cache_witnesses:
+            self.jobs[name]["cache_witnesses"] = cache_witnesses
+        self.profile_files[name] = request_path
+        self.public_files[name] = paths
+        self.job_profiles[name] = {}
+        return name
+
+    def native_code(self, request_path, conversion=None):
         """Produce native code and its matching metadata from one converter cohort."""
         request = json.loads((self.repo / request_path).read_text())
         if request.get("output") != "${output}":
             raise ValueError("native request must use the dispatcher output")
+        arguments = ["${request}"]
+        if conversion:
+            receipt = self.artifact_pin(conversion, "receipt")
+            request.update(
+                converter_receipt=receipt["path"],
+                converter_receipt_sha256=receipt["sha256"],
+                metadata=self.artifact_pin(conversion, "metadata")["path"],
+                sources=self.artifact_pin(conversion, "sources")["path"],
+                sources_compressed=True,
+            )
+            arguments.append("--from-conversion")
         name = "recipe/jobs/owner-native-code.json"
+        cache_witnesses = request.pop("cache_witnesses", [])
         self.jobs[name] = {
             "schema": 1,
             "script": "tools/phone-build/owner-code/native.py",
-            "arguments": ["${request}"],
+            "arguments": arguments,
             "request": request,
-            "needs": [],
+            "needs": [conversion] if conversion else [],
             "outputs": {
                 "apk/lib/arm64-v8a/libil2cpp.so": "libil2cpp.so",
                 "apk/assets/bin/Data/Managed/Metadata/global-metadata.dat": "global-metadata.dat",
             },
             "artifacts": {"receipt": "result.json"},
         }
+        if cache_witnesses:
+            self.jobs[name]["cache_witnesses"] = cache_witnesses
         self.profile_files[name] = request_path
         policy = "recipe/owner-native-arm64.json"
         self.job_profiles[name] = {"authored_inputs": {policy: digest(self.repo / policy)}}
@@ -788,7 +850,7 @@ class Graph:
         self.job_profiles[name] = {"authored_inputs": {path: digest(self.repo / path) for path in policies}}
         return name
 
-    def compile(self, selected, *, bundle_manifest=False, native_request=None, sdk_request=None, burst_request=None, catalog_request=None):
+    def compile(self, selected, *, bundle_manifest=False, code_request=None, native_request=None, sdk_request=None, burst_request=None, catalog_request=None):
         entries = {}
         selected_jobs = [self.build(digest(self.repo / path)) for path in selected]
         # Referenced donors and staged bundles remain runtime dependencies. Ship
@@ -802,8 +864,11 @@ class Graph:
             selected_jobs.append(self.catalog_complete(catalog_jobs, catalog_request))
         if bundle_manifest:
             selected_jobs.append(self.bundle_manifest(catalog_jobs))
+        if code_request and not native_request:
+            raise ValueError("code conversion requires a native request consumer")
         if native_request:
-            selected_jobs.append(self.native_code(native_request))
+            conversion = self.code_conversion(code_request) if code_request else None
+            selected_jobs.append(self.native_code(native_request, conversion))
         if sdk_request:
             selected_jobs.append(self.sdk_package(sdk_request))
         if burst_request:
@@ -830,7 +895,7 @@ class Graph:
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--repo", type=Path, required=True)
-    parser.add_argument("--profile", action="append", required=True, help="repo-relative complete output profile; repeat for a cohort")
+    parser.add_argument("--profile", action="append", default=[], help="repo-relative complete output profile; repeat for a cohort")
     parser.add_argument("--player-phases", help="repo-relative complete optional player phase/output declaration")
     parser.add_argument(
         "--bundle-manifest",
@@ -838,7 +903,8 @@ def main():
         help="generate the native manifest from every selected payload bundle; missing native dependencies fail production",
     )
     parser.add_argument("--catalog-request", help="repo-relative source catalog metadata template; validates actual final containers and runtime registry")
-    parser.add_argument("--native-request", help="repo-relative native request template; emits matching library and metadata from acquired converter inputs")
+    parser.add_argument("--code-request", help="repo-relative original-input code request; supplies fresh conversion to the native request")
+    parser.add_argument("--native-request", help="repo-relative native request; emits matching library and metadata from fresh or acquired conversion")
     parser.add_argument("--sdk-request", help="repo-relative SDK request template; emits Android resources, dex and engine libraries")
     parser.add_argument("--burst-request", help="repo-relative managed/source request template; compiles Burst and retains preservation roots")
     parser.add_argument("--extra-arguments", type=Path, help="JSON producer name -> additional CLI argv, with dispatcher substitutions")
@@ -849,6 +915,7 @@ def main():
         args.profile,
         bundle_manifest=args.bundle_manifest,
         catalog_request=args.catalog_request,
+        code_request=args.code_request,
         native_request=args.native_request,
         sdk_request=args.sdk_request,
         burst_request=args.burst_request,
