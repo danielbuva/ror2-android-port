@@ -687,7 +687,7 @@ def execute(request):
     root, output = Path(request["canonical_root"]), Path(request["output"])
     common.WORK = root / "work"  # Set before importing owners that capture WORK.
     from alpha_stability_batch import _GameThermalOwner, _idle_readback, _prune
-    from device import Device
+    from device import PACKAGE, Device, InstallSignatureMismatch
     from device_context import command_selectors, set_command_selector
 
     output.mkdir(parents=True, exist_ok=True)
@@ -726,10 +726,28 @@ def execute(request):
             reset_idle(device, lease, result["initial_reset"])
             save(output / "initial-reset.json", result["initial_reset"])
             result["initial_idle"] = _idle_readback(device, active_hash)
-        reserve = Path(request["apk"]).stat().st_size + sum(path.stat().st_size for path in payload_files(request)) + 20 * 1024**3
+        apk = Path(request["apk"])
+        payload = payload_files(request)
+        reserve = apk.stat().st_size + sum(path.stat().st_size for path in payload) + 20 * 1024**3
         result["storage_before"] = placement(device, reserve)
         try:
-            result["install"] = device.install(Path(request["apk"]))
+            try:
+                result["install"] = device.install(apk)
+            except InstallSignatureMismatch:
+                if device.package != PACKAGE or not active_hash or not payload:
+                    raise
+                limit = device.settings.get("apk_install_limit")
+                if limit is not None and common.read(device.install_counter())["dispatched"] >= limit:
+                    raise RuntimeError("No authorized install remains for signature recovery")
+                lease.require()
+                verify_owned(device, active_hash)
+                recovery = result["install_recovery"] = dict(reason="INSTALL_FAILED_UPDATE_INCOMPATIBLE", previous_apk_sha256=active_hash)
+                recovery["uninstall"] = device.reset()
+                if not recovery["uninstall"]["removed"]:
+                    raise RuntimeError("Signature recovery could not verify package removal")
+                active_hash = None
+                device.receipt("runtime.json").unlink(missing_ok=True)
+                result["install"] = device.install(apk)
         finally:
             # The install owner saves its new receipt before placement checks.
             # If that check fails, cleanup must still bind the actual new APK.
@@ -740,6 +758,8 @@ def execute(request):
         runtime = ensure_runtime(device)
         if "payload_directory" in request:
             result["sync"] = device.sync(Path(request["payload_directory"]))
+            if "install_recovery" in result:
+                result["install_recovery"]["payload_resynced"] = True
         result["installed_idle"] = _idle_readback(device, active_hash)
         exception_log = runtime + "/exceptions.jsonl"
         initial_exception_bytes = exception_log_size(device, exception_log)
@@ -862,10 +882,17 @@ def execute(request):
                 clean("idle-reset", lambda: reset_idle(device, lease, result.setdefault("final_reset", {})))
                 clean("lab-idle-reset", lambda: reset_other_lab(request, lease, result.setdefault("final_lab_reset", {})))
 
+            if device and (active_hash or "install_recovery" in result):
+
                 def terminal():
                     independent = Device(selector=request["serial"], work_root=common.WORK, package=request["package"])
                     try:
-                        result["terminal_readback"] = _idle_readback(independent, active_hash)
+                        if active_hash:
+                            result["terminal_readback"] = _idle_readback(independent, active_hash)
+                        elif not independent.exists():
+                            result["terminal_readback"] = dict(installed=False)
+                        else:
+                            raise RuntimeError("Package appeared without verified ownership after signature recovery")
                     finally:
                         if not independent.display(False):
                             raise RuntimeError("Independent OLED sleep verification failed")
