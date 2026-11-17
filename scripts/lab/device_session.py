@@ -348,6 +348,7 @@ def wait_for_settings_report(device, thermal, pid, predicate, timeout=100):
     attempt = attempt_from_installed(device.owned())
     runtime = device.read_receipt("runtime.json")["persistentDataPath"]
     deadline = time.monotonic() + timeout
+    last_phase = None
     while time.monotonic() < deadline:
         if thermal.error:
             raise RuntimeError(thermal.error)
@@ -355,12 +356,13 @@ def wait_for_settings_report(device, thermal, pid, predicate, timeout=100):
             raise RuntimeError("Owned process changed during settings admission")
         report = cleanup._read_json(device, runtime + "/movement-batch-" + cleanup.SPINE_ID + ".json")
         if cleanup.matches_run(report, pid, attempt):
+            last_phase = report.get("phase")
             if report.get("firstFailure"):
                 raise RuntimeError("Native first failure: " + str(report["firstFailure"]))
             if predicate(report):
                 return report
         time.sleep(0.5)
-    raise RuntimeError("Settings menu observation deadline")
+    raise RuntimeError(f"Native report observation deadline (last owned phase: {last_phase or 'unavailable'})")
 
 
 def qualify_high_refresh(device, thermal, output, pid):
@@ -529,17 +531,22 @@ def check_player_screens(device, thermal, request, output):
 
 def start_from_menu(device, thermal, pid, output):
     """Start the observed owned menu before measuring an automatic route."""
+    from session_cleanup_check import menu_start_coordinates
     from touch_gesture import owned_display_zero_focus
 
     menu = wait_for_settings_report(device, thermal, pid, lambda r: r.get("phase") == "offline-start-menu", timeout=240)
     save(output / "start-menu.json", menu)
+    coordinates = menu_start_coordinates(menu)
+    if coordinates is None:
+        raise RuntimeError("Current native menu Start geometry unavailable")
     if thermal.error:
         raise RuntimeError(thermal.error)
     if device.sh("pidof", device.package, check=False).strip() != pid:
         raise RuntimeError("Owned process changed before menu Start")
     if not owned_display_zero_focus(device.sh("dumpsys", "window", "displays"), device.package):
         raise RuntimeError("Owned display-zero focus absent before menu Start")
-    device.sh("input", "keyboard", "keyevent", "KEYCODE_ENTER")
+    x, y = coordinates
+    device.sh("input", "-d", "0", "tap", str(x), str(y))
     world = wait_for_settings_report(
         device, thermal, pid, lambda r: r.get("phase") == "integrated-world-playing" and r.get("world", {}).get("ready") is True, timeout=240
     )

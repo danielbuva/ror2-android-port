@@ -62,7 +62,9 @@ class DeviceSessionTests(unittest.TestCase):
     def test_menu_start_waits_for_owned_menu_and_world_before_sampling(self):
         target, thermal = mock.Mock(), mock.Mock(error=None)
         target.sh.return_value = "12"
-        reports = [dict(phase="offline-start-menu"), dict(phase="integrated-world-playing", world=dict(ready=True))]
+        hud = dict(menuStartX=170.67, menuStartY=757.33, screenWidth=1920, screenHeight=1080)
+        menu = dict(phase="offline-start-menu", hud=hud)
+        reports = [menu, dict(phase="integrated-world-playing", world=dict(ready=True))]
 
         def observed(device, monitor, pid, predicate, timeout):
             report = reports.pop(0)
@@ -74,10 +76,10 @@ class DeviceSessionTests(unittest.TestCase):
             mock.patch("touch_gesture.owned_display_zero_focus", return_value=True),
         ):
             runner.start_from_menu(target, thermal, "12", self.output)
-        target.sh.assert_any_call("input", "keyboard", "keyevent", "KEYCODE_ENTER")
+        target.sh.assert_any_call("input", "-d", "0", "tap", "171", "757")
         self.assertTrue((self.output / "world-start.json").is_file())
         with (
-            mock.patch.object(runner, "wait_for_settings_report", return_value=dict(phase="offline-start-menu")),
+            mock.patch.object(runner, "wait_for_settings_report", return_value=menu),
             mock.patch("touch_gesture.owned_display_zero_focus", return_value=False),
         ):
             target.sh.reset_mock()
@@ -252,6 +254,23 @@ class DeviceSessionTests(unittest.TestCase):
             ):
                 with self.assertRaisesRegex(RuntimeError, "Native first failure: fixture defect"):
                     runner.wait_for_settings_report(target, thermal, "1", lambda r: True)
+
+    def test_native_report_deadline_names_last_owned_phase(self):
+        from session_cleanup_check import SPINE_ID
+
+        target, thermal = mock.Mock(), mock.Mock(error=None)
+        target.read_receipt.return_value = {"persistentDataPath": "/synthetic"}
+        target.sh.return_value = "12"
+        menu = dict(pid=12, attempt="fixture", id=SPINE_ID, phase="offline-start-menu")
+        stale = dict(menu, pid=11, phase="integrated-world-playing")
+        with (
+            mock.patch("installed_attempt.attempt_from_installed", return_value="fixture"),
+            mock.patch("session_cleanup_check._read_json", side_effect=[menu, stale]),
+            mock.patch.object(runner.time, "monotonic", side_effect=[0, 0, 1, 2]),
+            mock.patch.object(runner.time, "sleep"),
+        ):
+            with self.assertRaisesRegex(RuntimeError, "last owned phase: offline-start-menu"):
+                runner.wait_for_settings_report(target, thermal, "12", lambda r: r["phase"] == "integrated-world-playing", timeout=2)
 
     def test_dispatched_input_failure_writes_terminal_without_device_access(self):
         self.apk.unlink()
