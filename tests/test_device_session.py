@@ -508,7 +508,7 @@ class DeviceSessionTests(unittest.TestCase):
         target.sh.assert_any_call("sha256sum", "/owned/files/il2cpp/Metadata/global-metadata.dat", check=False)
         self.assertIn("Unity:D", target.cmd.call_args_list[0].args)
 
-    def run_case(self, *, workload_error=False, terminal_error=False, thermal_error=False, payload=False, exception_rows=""):
+    def run_case(self, *, workload_error=False, terminal_error=False, thermal_error=False, payload=False, exception_rows="", signature_failure=False):
         events = []
         lease_path = runner.Lease(self.request).path
         installed = dict(apk_sha256=self.digest, package_path="package:/fixture/base.apk", package=self.request["package"], serial=self.request["serial"])
@@ -518,9 +518,52 @@ class DeviceSessionTests(unittest.TestCase):
         target.read_receipt.return_value = dict(persistentDataPath="/owned")
         receipt = self.root / "installed.json"
         receipt.touch()
-        target.receipt.return_value = receipt
+        runtime_receipt = self.root / "runtime.json"
+        runtime_receipt.touch()
+        target.receipt.side_effect = lambda name: self.root / name
         target.install.return_value = installed
         target.sync.side_effect = lambda path: events.append("sync:" + str(path)) or dict(files=["content"])
+        device_class = device_module.Device
+        if signature_failure:
+            installed["apk_sha256"] = "0" * 64
+            target.settings = {}
+            target.base = ["fake-adb", "-s", target.serial]
+            target.storage.return_value = {"mode": "adopted", "uuid": "fixture-adopted"}
+            target.install_counter.return_value = self.root / "install-count.json"
+            target.install.side_effect = lambda apk: device_class.install(target, apk)
+            target.reset.side_effect = lambda: device_class.reset(target)
+            target.cmd.side_effect = lambda *args, **kwargs: device_class.cmd(target, *args, **kwargs)
+
+            def write_receipt(name, value):
+                runner.save(target.receipt(name), value)
+                if name == "installed.json":
+                    target.owned.return_value = value
+
+            target.write_receipt.side_effect = write_receipt
+
+        def adb_process(args, **kwargs):
+            if args[-1] == "kill-server":
+                return subprocess.CompletedProcess(args, 0, b"", b"")
+            self.assertEqual(args[:3], target.base)
+            self.assertTrue(lease_path.is_dir())
+            if args[3] == "install":
+                self.assertEqual(args[4:], ["--streaming", "--no-incremental", "-r", "--force-uuid", "fixture-adopted", str(self.apk)])
+                if target.exists():
+                    events.append("signature-mismatch")
+                    return subprocess.CompletedProcess(
+                        args, 1, b"", b"adb: failed to install fixture: Failure [INSTALL_FAILED_UPDATE_INCOMPATIBLE: signatures do not match]\n"
+                    )
+                self.assertFalse(receipt.exists())
+                self.assertFalse(runtime_receipt.exists())
+                events.append("reinstall")
+                target.exists.return_value = True
+            else:
+                self.assertEqual(args[3:], ["shell", "pm uninstall dev.ror2lab.arm64"])
+                self.assertTrue(receipt.exists())
+                events.append("uninstall")
+                target.exists.return_value = False
+            return subprocess.CompletedProcess(args, 0, b"Success\n", b"")
+
         payload_size = 0
         if payload:
             directory = self.root / "payload"
@@ -533,7 +576,13 @@ class DeviceSessionTests(unittest.TestCase):
 
         def shell(*args, **kwargs):
             if args[0] == "sha256sum":
-                return self.digest + "  /fixture/base.apk"
+                return target.owned()["apk_sha256"] + "  /fixture/base.apk"
+            if args[:2] == ("pm", "uninstall"):
+                return device_class.sh(target, *args, **kwargs)
+            if args[:2] == ("pm", "path"):
+                return "package:/mnt/expand/fixture-adopted/app/base.apk"
+            if args[:2] == ("mkdir", "-p"):
+                events.append("recreate-runtime")
             if args[:2] == ("sh", "-c") and args[-1] == "/owned/exceptions.jsonl":
                 if "workload" in events:
                     self.assertEqual(events[-1], "stop")
@@ -582,8 +631,9 @@ class DeviceSessionTests(unittest.TestCase):
 
         with (
             mock.patch.object(runner, "source_environment"),
-            mock.patch.object(runner.subprocess, "run", return_value=subprocess.CompletedProcess([], 0)),
+            mock.patch.object(runner.subprocess, "run", side_effect=adb_process),
             mock.patch.object(device_module, "Device", return_value=target),
+            mock.patch.object(device_module, "validate_apk_identity"),
             mock.patch.object(runner, "placement", return_value={}) as placement,
             mock.patch.object(runner, "run_workload", side_effect=workload),
             mock.patch.object(runner, "prepare_launch") as prepare,
@@ -603,6 +653,15 @@ class DeviceSessionTests(unittest.TestCase):
             self.assertEqual(result["sync"], dict(files=["content"]))
         else:
             target.sync.assert_not_called()
+        if signature_failure:
+            self.assertEqual(
+                [
+                    event
+                    for event in events
+                    if event in {"signature-mismatch", "uninstall", "reinstall", "recreate-runtime", "sync:" + str(self.root / "payload")}
+                ],
+                ["signature-mismatch", "uninstall", "reinstall", "recreate-runtime", "sync:" + str(self.root / "payload")],
+            )
         self.assertEqual(owner.call_args.args[-1], 1060)  # run-local cooldown deadline
         self.assertEqual(thermal.deadline, 1630)  # independent workload deadline
         self.assertEqual(events[-1], "prune")
@@ -624,6 +683,21 @@ class DeviceSessionTests(unittest.TestCase):
         self.assertTrue(result["lease_released"])
         self.assertTrue(result["terminal_readback"]["oled_asleep"])
         self.assertEqual((self.output / "exceptions.jsonl").read_text(), "")
+
+    def test_owned_lab_signer_mismatch_reinstalls_once_and_resyncs_under_lease(self):
+        result = self.run_case(payload=True, signature_failure=True)
+        self.assertTrue(result["success"])
+        self.assertTrue(result["lease_released"])
+        self.assertEqual(result["install"]["apk_sha256"], self.digest)
+        self.assertEqual(
+            result["install_recovery"],
+            dict(
+                reason="INSTALL_FAILED_UPDATE_INCOMPATIBLE",
+                previous_apk_sha256="0" * 64,
+                uninstall=dict(uninstall="Success", removed=True),
+                payload_resynced=True,
+            ),
+        )
 
     def test_workload_failure_retains_only_appended_exception_rows_once(self):
         rows = '{"message":"exception α"}\n{"message":"exception β"}\n'
