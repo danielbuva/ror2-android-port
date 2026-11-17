@@ -6,6 +6,34 @@ under ignored `work/coordination/`, not here. Entries J01–J1177 (2026-09-12 to
 [history/journal-J1-J1177/PORTING_JOURNAL.md](history/journal-J1-J1177/PORTING_JOURNAL.md) with its
 [index](history/journal-J1-J1177/JOURNAL_INDEX.md); numbering continues here.
 
+## J1481 — Retire Sky Meadow rock spawners before teardown
+
+2026-11-17. Stage geometry stops pending native rock spawners before retiring
+the projectile and Run services. The assisted J1477 route reaches Sky Meadow
+with 20 native rock projectiles at sample 690 and returns to Lab complete at 720.
+The live Unity log and run-local exception delta contain zero FireRock exceptions.
+APK SHA-256: `3fe278af144ff6b428bd7ed48edd6cdf5a07e60bd531f1f2ba6178b083d146b1` (source `f93b1676`).
+Evidence: `work/coordination/gameplay-fidelity-firerock-20261117/nova-firerock-teardown/terminal.done.json`.
+The matching Sky Meadow screenshot and hierarchy are in `sample-690/`.
+Sky Meadow snapshot: 50.37 FPS, 19.85 ms. CPU/GPU peak 95.5 C in Scorched Acres,
+484.703 s above 80 C, battery peak 33 C and no thermal safety trip.
+Adopted placement, stopped process, asleep OLED and lease release pass.
+Ordinary play and matched Stone Golem attack visuals remain open.
+
+## J1479 — Qualify Nova-B for shared assisted gameplay
+
+2026-11-17. The shared runner selects the Nova in the queue grant and uses its
+configured storage. Nova-B installed the lab APK on internal storage in 26.7 s
+and verified 134 payload files in 44.5 s, transferring four.
+APK SHA-256: `48b8a7f5ca26d15d53a6fb86bec9c5264e7419e4e5ab3cfe8a1b6c9b482192c1` (source `f94c0c30`).
+Evidence: `work/coordination/nova-b-gameplay-20261117/terminal.done.json`
+links the sustained report, frame trace and captures.
+Assisted Commando on Verdant Falls (stage 1) recorded 175 primary shots and 18 kills
+in 180.002 s, with nine screenshots and native End Run back to the offline menu.
+CPU/GPU peaked at 89.2 C, with 18.7 s above 80 C. Battery peaked at 28 C.
+The runner retained and removed session scratch, verified app stop and OLED sleep,
+and released the lease. Ordinary play, physical input and sustained performance remain open.
+
 ## J1478 — Emit the strict whole-game content request on Android
 
 2026-11-13. The Android toolhost ran the prepared source-derived request with one
@@ -4071,3 +4099,16 @@ stopped process, absent selector/pending, asleep OLED and lease release pass.
 Recovered-material 2, sustained 16 and shared-runner 29 host tests plus preflight pass.
 Prior art: pinned EditorKit HopooCloudRemapGUI blend metadata and source-native prefab relationships.
 Golem, other attack families, ordinary play, matched PC visual parity and performance remain open.
+
+## J1480 — Recover an interrupted native profile commit
+
+2026-11-17. PortSession seeds the world report with native projectile material counts collected before world setup.
+On Nova B, ordinary Start reached native StandardLoss. The same-UID observer bound its nonce, writer PID and
+pending path, then stopped the writer after CREATE. The retained primary and durable loss XML survived.
+Two cold Starts applied the loss once, retained the pre-interruption primary as backup and preserved settings.
+APK SHA-256: `a7e37833c75abe5d402c1a7aa23fc612f48fcea6dbfefe596793a7d7d184e8e8` (runtime source `e98f95c7`).
+Evidence: `work/coordination/alpha-profile-recovery-20261117/nova-b-profile-replay-native-start/terminal.done.json`.
+Internal placement, 28 C battery admission, 87.6 C CPU/GPU peak, 2.491 s above 80 C and thermal coverage pass.
+Terminal process, selector and pending file were absent, display asleep and lease released.
+Three Windows shader-bundle load messages were recorded. Physical power loss, volume exhaustion and
+sustained ordinary play remain open.

@@ -861,7 +861,7 @@ class Phone:
             if not expected:
                 continue
             try:
-                if self.package_hash(package) != expected:
+                if self.package_hash(package, telemetry=True) != expected:
                     continue
                 memory = self.shell("dumpsys", "meminfo", "-s", package, label="phone-flow-memory", timeout=10)
                 row["pss_bytes"] = process_pss(memory)
@@ -870,9 +870,9 @@ class Phone:
             try:
                 # Recheck ownership if memory sampling failed. Never derive a
                 # report from a replaced package or a remembered volume path.
-                if self.package_hash(package) != expected:
+                if self.package_hash(package, telemetry=True) != expected:
                     continue
-                paths = self.package_paths(package)
+                paths = self.package_paths(package, telemetry=True)
                 if len(paths) != 1 or not paths[0].startswith("package:"):
                     continue
                 row["code_free_bytes"] = self.available(self.shell("df", "-k", paths[0][8:], label="phone-flow-code-free", timeout=10))
@@ -967,10 +967,12 @@ class Phone:
         )
         return self.command("shell", *args, idempotent=readonly, **kwargs)
 
-    def package_paths(self, package):
+    def package_paths(self, package, *, telemetry=False):
         # Android pm path reports an absent package with either exit 0 or 1.
         # This exception belongs only to this read-only query, not generic ADB.
-        result = self.execute("shell", "pm", "path", package, label="device-package-path-query", timeout=60, idempotent=True)
+        result = self.execute(
+            "shell", "pm", "path", package, label="phone-flow-package-path-query" if telemetry else "device-package-path-query", timeout=60, idempotent=True
+        )
         if result.returncode in (0, 1) and result.stdout == b"" and result.stderr == b"":
             return []
         if result.returncode or result.stderr:
@@ -983,12 +985,12 @@ class Phone:
     def occupied(self, package):
         return bool(self.package_paths(package))
 
-    def package_hash(self, package):
-        paths = self.package_paths(package)
+    def package_hash(self, package, *, telemetry=False):
+        paths = self.package_paths(package, telemetry=True) if telemetry else self.package_paths(package)
         if len(paths) != 1 or not paths[0].startswith("package:"):
             raise Failure("installed-package-shape")
         # Hash only; APK bytes never leave the lab device for readback.
-        value = self.shell("sha256sum", paths[0][8:], label="device-package-hash").decode().split()[0]
+        value = self.shell("sha256sum", paths[0][8:], label="phone-flow-package-hash" if telemetry else "device-package-hash").decode().split()[0]
         if not re.fullmatch(r"[0-9a-f]{64}", value):
             raise Failure("installed-package-hash")
         return value
@@ -2234,6 +2236,33 @@ def inspect_ui_failure(selection, *, conflicting_mode=False, update_failure=Fals
                 raise Failure("log-inspection-record-unavailable")
             return path.read_bytes()
 
+        def adjacent(sequence, offset, phase="baseline-N-check"):
+            # Telemetry is the only concurrent producer. Skip its known records,
+            # retaining actual sequence IDs and every foreground boundary.
+            telemetry = (
+                "phone-flow-memory",
+                "phone-flow-code-free",
+                "phone-flow-data-free",
+                "phone-flow-temperature",
+                "phone-flow-package-path-query",
+                "phone-flow-package-hash",
+            )
+            direction = 1 if offset > 0 else -1
+            for _ in range(abs(offset)):
+                sequence += direction
+                while sequence >= 0:
+                    names = [f"{sequence:05d}-{category}.json" for category in telemetry]
+                    found = [name for name in names if (directory / name).exists()]
+                    if not found:
+                        break
+                    if len(list(directory.glob(f"{sequence:05d}-*.json"))) != 1:
+                        raise Failure("log-inspection-record-mismatch")
+                    metadata = json.loads(read(found[0]))
+                    if metadata.get("category") != found[0][6:-5] or metadata.get("phase") != phase:
+                        raise Failure("log-inspection-record-mismatch")
+                    sequence += direction
+            return sequence
+
         if update_failure:
             for path in sorted(directory.glob("[0-9][0-9][0-9][0-9][0-9]-device-state-read.json")):
                 metadata = json.loads(read(path.name))
@@ -2259,7 +2288,7 @@ def inspect_ui_failure(selection, *, conflicting_mode=False, update_failure=Fals
                     result["apk_logs"] = []
                     for log_path in sorted(directory.glob("[0-9][0-9][0-9][0-9][0-9]-device-apk-*-log.json")):
                         match = re.fullmatch(r"([0-9]{5})-device-apk-(javac|dex)-log\.json", log_path.name)
-                        if not match or not int(path.name[:5]) < int(match.group(1)) <= int(path.name[:5]) + 4:
+                        if not match or not int(path.name[:5]) < int(match.group(1)) <= adjacent(int(path.name[:5]), 4, metadata["phase"]):
                             continue
                         log_meta = json.loads(read(log_path.name))
                         if log_meta.get("phase") != metadata["phase"] or log_meta.get("category") != "device-apk-" + match.group(2) + "-log":
@@ -2295,9 +2324,9 @@ def inspect_ui_failure(selection, *, conflicting_mode=False, update_failure=Fals
                 selected_records = [(sequence, category)]
                 if category == "device-ui-read":
                     for previous in ("device-ui-dump", "device-ui-windows-dump"):
-                        if (directory / f"{sequence - 1:05d}-{previous}.json").is_file():
+                        if (directory / f"{adjacent(sequence, -1):05d}-{previous}.json").is_file():
                             dump_category = previous
-                            selected_records.insert(0, (sequence - 1, previous))
+                            selected_records.insert(0, (adjacent(sequence, -1), previous))
                             break
                 break
         if selected_records is None:
@@ -2310,17 +2339,17 @@ def inspect_ui_failure(selection, *, conflicting_mode=False, update_failure=Fals
                     sequence = int(path.name[:5])
                     # Successful fallbacks can precede the failure. Require the
                     # rejection-only diagnostic after this read and dump removal.
-                    marker = f"{sequence + 3:05d}-device-ui-diagnostic-power.json"
+                    marker = f"{adjacent(sequence, 3):05d}-device-ui-diagnostic-power.json"
                     if not (directory / marker).is_file():
                         continue
                     diagnostic = json.loads(read(marker))
                     if diagnostic.get("phase") != "baseline-N-check" or diagnostic.get("category") != "device-ui-diagnostic-power":
                         raise Failure("log-inspection-record-mismatch")
-                    failure_sequence = sequence + 1
+                    failure_sequence = adjacent(sequence, 1)
                     dump_category = "device-ui-windows-dump"
                     break
             if failure_sequence is not None:
-                selected_records = [(failure_sequence - 1, dump_category), (failure_sequence, "device-ui-read")]
+                selected_records = [(adjacent(failure_sequence, -1), dump_category), (failure_sequence, "device-ui-read")]
         if selected_records is None:
             raise Failure("log-inspection-ui-read-failure-not-found")
         for sequence, category in selected_records:

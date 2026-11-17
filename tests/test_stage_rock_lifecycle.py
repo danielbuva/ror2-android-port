@@ -1,0 +1,29 @@
+"""Check the stage-owned rock spawner retirement ordering."""
+
+from pathlib import Path
+import unittest
+
+RUNTIME = Path(__file__).resolve().parents[1] / "tools/unity/runtime"
+
+
+class StageRockLifecycleTests(unittest.TestCase):
+    def test_owned_spawners_retire_before_their_services(self):
+        geometry = (RUNTIME / "stage/StageGeometryBoundary.cs").read_text()
+        transport = (RUNTIME / "stage/IntegratedStageBoundary.cs").read_text()
+        gameplay = (RUNTIME / "input/NovaInputBoundary.cs").read_text()
+
+        # Collect from the loaded scene, then drop its references at retirement.
+        self.assertIn("var roots = coordinator.stageGeometryScene.GetRootGameObjects();", geometry)
+        self.assertIn("var previewCallbacks = roots.SelectMany", geometry)
+        self.assertIn("stageRockZones = previewCallbacks.OfType<MaulingRockZoneManager>().ToArray();", geometry)
+        retirement = geometry.split("public void StopStageRockCoroutines()", 1)[1].split("public bool", 1)[0]
+        self.assertIn("foreach (var zone in stageRockZones)", retirement)
+        self.assertLess(retirement.index("zone.StopAllCoroutines();"), retirement.index("stageRockZones = Array.Empty"))
+
+        transport_cleanup = transport.index("coordinator.StopStageRockCoroutines();")
+        self.assertLess(transport_cleanup, transport.index("NetworkServer.Destroy(projectile.gameObject);"))
+        run_cleanup = gameplay.index("coordinator.StopStageRockCoroutines();")
+        self.assertLess(run_cleanup, gameplay.index("coordinator.CleanupRunClock();"))
+        self.assertLess(run_cleanup, gameplay.index("coordinator.CleanupCombatScene();"))
+        geometry_cleanup = geometry.split("public IEnumerator CleanupStageGeometry()", 1)[1]
+        self.assertLess(geometry_cleanup.index("StopStageRockCoroutines();"), geometry_cleanup.index("SceneManager.UnloadSceneAsync"))

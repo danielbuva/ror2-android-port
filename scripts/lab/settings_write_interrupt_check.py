@@ -11,7 +11,7 @@ import time
 import uuid
 
 from common import ROOT, WORK, now, sha, write
-from device import Device, PACKAGE
+from device import Device, PACKAGE, remove_device_file, retain_device_file
 from nova_bridge import current_errors
 from installed_attempt import attempt_from_installed, bind_installed_apk, validate_expected_apk_sha256
 from session_cleanup_check import SPINE_ID, _read_json, _read_raw, _remote_path_state, matches_run, selection, selector_action
@@ -19,7 +19,11 @@ from touch_gesture import run as gesture
 
 
 def protected_hashes(device, runtime):
-    roots = [runtime + "/" + name for name in ("android-profile-v1", "offline-run-results-v1")]
+    return persistence_hashes(device, runtime, "android-profile-v1", "offline-run-results-v1")
+
+
+def persistence_hashes(device, runtime, *names):
+    roots = [runtime + "/" + name for name in names]
     value = device.sh("find", *roots, "-type", "f", "-exec", "sha256sum", "{}", "+", check=False)
     return {line[66:]: line[:64] for line in value.splitlines() if re.fullmatch(r"[0-9a-f]{64}  .+", line)}
 
@@ -149,6 +153,14 @@ def validate_observer_binding(observed, nonce, pid, uid):
         raise RuntimeError("Separate-process observer binding differs")
 
 
+def observer_uid(device):
+    packages = device.sh("cmd", "package", "list", "packages", "-U", PACKAGE)
+    matches = re.findall(r"^package:" + re.escape(PACKAGE) + r" uid:([0-9]+)$", packages, re.M)
+    if len(matches) != 1 or int(matches[0]) < 10000:
+        raise RuntimeError("Owned package UID is ambiguous")
+    return int(matches[0])
+
+
 def stop_after_observed_exit(device, observed, expected):
     """Keep the witnessed writer distinct from an Android activity restart."""
     if observed.get("success") is not True or observed.get("writerExited") is not True:
@@ -164,6 +176,166 @@ def stop_after_observed_exit(device, observed, expected):
             raise RuntimeError("Owned package remained after force-stop")
         time.sleep(0.1)
     return dict(writer_pid=observed["pid"], writer_absent=True, package_pids_before_stop=processes)
+
+
+def new_native_loss(before, after):
+    if len(after) != len(before) + 1 or after[:-1] != before:
+        raise RuntimeError("Native result ledger did not append exactly one entry")
+    entry = after[-1]
+    identity = re.fullmatch(r"run-([0-9a-f]{32})\.xml", str(entry.get("file", ""))) if isinstance(entry, dict) else None
+    if identity is None or entry.get("ending") != "StandardLoss" or entry.get("win") is not False or entry.get("debugAssisted") is not False:
+        raise RuntimeError("Appended ledger entry is not an unassisted native loss")
+    return identity[1], entry["file"]
+
+
+def check_profile_write_interrupt(device, thermal, request, output, launch, start_from_menu, device_cleanup=None):
+    """Interrupt the native profile commit while retaining its durable result."""
+    expected = request["apk_sha256"]
+    installed = device.owned()
+    bind_installed_apk(installed, expected_sha256=expected)
+    attempt = attempt_from_installed(installed)
+    runtime = device.read_receipt("runtime.json")["persistentDataPath"]
+    primary = runtime + "/android-profile-v1/profile.json"
+    backup, pending = primary + ".backup", primary + ".pending"
+    results = runtime + "/offline-run-results-v1/"
+    ledger = results + "profile.json"
+    settings = runtime + "/offline-settings-v1/preferences.json"
+    request_file = runtime + "/profile-write-observer.request"
+    report_id = "body-state-spawn-state-auto-player"
+    nonce = uuid.uuid4().hex
+    prefix = runtime + "/ror2lab-write-" + nonce
+    ready_path, result_path = prefix + ".ready", prefix + ".result"
+    witnesses = (ready_path, result_path, ready_path + ".tmp", result_path + ".tmp")
+    if any(
+        _remote_path_state(device, path) != "absent"
+        for path in (
+            pending,
+            request_file,
+            runtime + "/settings-write-observer.request",
+            runtime + "/movement-batch-selection.json",
+            runtime + "/whole-catalog-selection.json",
+            *witnesses,
+        )
+    ):
+        raise RuntimeError("Profile witness requires idle ordinary startup and no existing pending transaction")
+    if any(_remote_path_state(device, path) != "file" for path in (primary, settings)):
+        raise RuntimeError("Profile witness requires retained lab profile and settings")
+    uid = observer_uid(device)
+    receipt = dict(success=False, attempt=attempt, apk_sha256=expected)
+
+    def hashes():
+        return persistence_hashes(device, runtime, "android-profile-v1", "offline-run-results-v1", "offline-settings-v1")
+
+    def read_ledger():
+        if _remote_path_state(device, ledger) == "absent":
+            return []
+        value = _read_json(device, ledger)
+        if not isinstance(value, dict) or value.get("version") != 1 or not isinstance(value.get("runs"), list):
+            raise RuntimeError("Native result ledger readback is invalid")
+        return value["runs"]
+
+    def start(name):
+        launched = launch(device, thermal)
+        pid = str(launched["pid"])
+        world = start_from_menu(device, thermal, pid, output / name, report_id=report_id)
+        profile = world.get("profile", {})
+        if profile.get("ready") is not True or profile.get("recovery") != "validated-primary":
+            raise RuntimeError("Native Start did not validate the retained profile primary")
+        return pid, profile
+
+    try:
+        local = output / "profile-observer.request"
+        local.write_text(nonce)
+        device.cmd("push", str(local), request_file)
+        if _read_raw(device, request_file) != nonce:
+            raise RuntimeError("Profile observer request readback differs")
+        pid, profile = start("interrupted")
+        if profile.get("reconciledRuns") != 0:
+            raise RuntimeError("Initial Start reconciled earlier results")
+        before = hashes()
+        generation = _read_json(device, primary)
+        if primary not in before or settings not in before or not generation or generation.get("version") != 2:
+            raise RuntimeError("Missing validated primary or settings snapshot")
+        old_entries = read_ledger()
+        receipt["before"] = before
+        deadline = time.monotonic() + request["duration_seconds"]
+        while _remote_path_state(device, result_path) != "file":
+            if thermal.error:
+                raise RuntimeError(thermal.error)
+            if time.monotonic() >= deadline:
+                raise RuntimeError("Native loss/profile observer deadline")
+            latest = _read_json(device, runtime + "/movement-batch-" + report_id + ".json")
+            if matches_run(latest, pid, attempt, report_id=report_id) and latest.get("firstFailure"):
+                raise RuntimeError("Native first failure: " + latest["firstFailure"])
+            time.sleep(0.5)
+        ready, observed = _read_json(device, ready_path), _read_json(device, result_path)
+        receipt.update(observer_ready=ready, observer_result=observed)
+        for witness in (ready, observed):
+            validate_observer_binding(witness, nonce, pid, uid)
+            if witness.get("pendingName") != "profile.json.pending" or witness["observerPid"] != ready["observerPid"]:
+                raise RuntimeError("Profile observer did not bind the same separate process and path")
+        receipt["writer_exit"] = stop_after_observed_exit(device, observed, expected)
+        interrupted = hashes()
+        receipt["interrupted"] = interrupted
+        interrupted_transaction(before[primary], interrupted.get(primary), dict(state=_remote_path_state(device, pending)), observed)
+        if pending not in interrupted or any(interrupted.get(path) != digest for path, digest in before.items() if path not in (ledger, ledger + ".backup")):
+            raise RuntimeError("Interrupted write changed a retained profile, settings or native result")
+        entries = read_ledger()
+        run_id, report_file = new_native_loss(old_entries, entries)
+        if (
+            results + report_file in before
+            or results + report_file not in interrupted
+            or run_id in generation["appliedRuns"]
+            or run_id in generation["baselineRuns"]
+            or (ledger in before and interrupted.get(ledger + ".backup") != before[ledger])
+        ):
+            raise RuntimeError("New result identity was already present or lacked its durable XML")
+        receipt["run_id"] = run_id
+        if _read_raw(device, request_file) != nonce:
+            raise RuntimeError("Profile observer request ownership changed")
+        remove_device_file(device, request_file, device_cleanup)
+        receipt["first_cooldown"] = thermal.between_sessions()
+        recovery_pid, profile = start("first-cold")
+        recovered = hashes()
+        receipt["recovered"] = recovered
+        after = _read_json(device, primary)
+        if (
+            recovery_pid == pid
+            or profile.get("reconciledRuns") != 1
+            or not after
+            or after.get("appliedRuns") != generation["appliedRuns"] + [run_id]
+            or after.get("baselineRuns") != generation["baselineRuns"]
+            or recovered.get(backup) != before[primary]
+            or _remote_path_state(device, pending) != "absent"
+            or {path: digest for path, digest in recovered.items() if path not in (primary, backup)}
+            != {path: digest for path, digest in interrupted.items() if path not in (primary, backup, pending)}
+        ):
+            raise RuntimeError("First cold Start did not recover and apply only the durable native loss")
+        bind_installed_apk(device.owned(), expected_sha256=expected)
+        device.sh("am", "force-stop", PACKAGE)
+        receipt["second_cooldown"] = thermal.between_sessions()
+        repeat_pid, profile = start("second-cold")
+        if repeat_pid in (pid, recovery_pid) or profile.get("reconciledRuns") != 0 or hashes() != recovered:
+            raise RuntimeError("Second cold Start repeated the durable profile delta or changed persistence")
+        receipt.update(success=True, recovery_pid=recovery_pid, repeat_pid=repeat_pid)
+    finally:
+        try:
+            # Stop the writer/service before removing this attempt's breadcrumbs.
+            # Leave the profile pending file for native recovery on any failure.
+            bind_installed_apk(device.owned(), expected_sha256=expected)
+            if not receipt["success"]:
+                device.sh("am", "force-stop", PACKAGE)
+            if _read_raw(device, request_file) == nonce:
+                remove_device_file(device, request_file, device_cleanup)
+            for remote in witnesses:
+                if _remote_path_state(device, remote) != "absent":
+                    retain_device_file(device, remote, output / remote.rsplit("/", 1)[1], device_cleanup)
+        except Exception:
+            receipt["success"] = False
+            raise
+        finally:
+            write(output / "profile-write-interrupt.json", receipt)
+    return receipt
 
 
 def check_settings_write_interrupt(expected_apk_sha256=None, _launch=None):
@@ -268,11 +440,7 @@ def check_settings_write_interrupt(expected_apk_sha256=None, _launch=None):
         # Saving unchanged values still performs the real pending/replace transaction.
         # A retained newly-created pending file distinguishes interruption from commit.
         write(out / "native-settings-before-save.json", report)
-        packages = device.sh("cmd", "package", "list", "packages", "-U", PACKAGE)
-        matches = re.findall(r"^package:" + re.escape(PACKAGE) + r" uid:([0-9]+)$", packages, re.M)
-        if len(matches) != 1 or int(matches[0]) < 10000:
-            raise RuntimeError("Owned package UID is ambiguous")
-        uid = int(matches[0])
+        uid = observer_uid(device)
         deadline = time.monotonic() + 10
         while _remote_path_state(device, prefix + ".ready") != "file":
             if time.monotonic() >= deadline:

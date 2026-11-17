@@ -18,6 +18,89 @@ SPEC.loader.exec_module(LAB)
 
 
 class PhoneFlowTests(unittest.TestCase):
+    def test_ui_failure_inspection_skips_only_interleaved_telemetry(self):
+        for failed_read, intervening, expected_code in (
+            (False, "phone-flow-memory", 0),
+            (False, "phone-flow-code-free", 0),
+            (False, "phone-flow-data-free", 0),
+            (False, "phone-flow-temperature", 0),
+            (False, "phone-flow-package-path-query", 0),
+            (False, "phone-flow-package-hash", 0),
+            (False, "device-package-path-query", 1),
+            (False, "device-package-hash", 1),
+            (True, "phone-flow-memory", 0),
+            (False, "device-state-read", 1),
+        ):
+            with self.subTest(failed_read=failed_read, intervening=intervening), tempfile.TemporaryDirectory() as temporary:
+                root = Path(temporary)
+                directory = root / "work/coordination/installer-update-acceptance/run-fixture0"
+                directory.mkdir(parents=True)
+                categories = ["device-ui-windows-dump", "device-ui-read", "device-ui-remove", "device-ui-diagnostic-power"]
+                records = []
+                for category in categories:
+                    records.extend((category, intervening, intervening))
+                for sequence, category in enumerate(records, 1):
+                    prefix = directory / f"{sequence:05d}-{category}"
+                    metadata = dict(
+                        phase="baseline-N-check", category=category, returncode=1 if failed_read and category == "device-ui-read" else 0, outcome="returned"
+                    )
+                    Path(str(prefix) + ".json").write_bytes(LAB.encoded(metadata))
+                    Path(str(prefix) + ".stdout.log").write_bytes(b"synthetic-private")
+                    Path(str(prefix) + ".stderr.log").write_bytes(b"")
+                before = {path: path.read_bytes() for path in directory.iterdir()}
+                output = io.StringIO()
+                with (
+                    patch.object(LAB, "ROOT", root),
+                    patch.object(LAB.subprocess, "run", side_effect=AssertionError("no device calls")),
+                    redirect_stdout(output),
+                ):
+                    code = LAB.inspect_ui_failure("run-fixture0")
+                result = json.loads(output.getvalue())
+                self.assertEqual(code, expected_code)
+                if not expected_code:
+                    self.assertEqual([row["category"] for row in result["records"]], ["device-ui-windows-dump", "device-ui-read"])
+                self.assertNotIn("synthetic-private", output.getvalue())
+                self.assertEqual(before, {path: path.read_bytes() for path in directory.iterdir()})
+
+    def test_observation_ownership_queries_have_telemetry_labels(self):
+        phone = LAB.Phone("fixture", 1)
+        phone.owned_installer = True
+        phone.installer_hash = "a" * 64
+        labels = []
+
+        def execute(*args, label, **kwargs):
+            labels.append(label)
+            output = b""
+            if args[1:3] == ("pm", "path"):
+                output = b"package:/fixture/base.apk"
+            elif args[1] == "sha256sum":
+                output = (phone.installer_hash + "  fixture").encode()
+            return LAB.subprocess.CompletedProcess(args, 0, output, b"")
+
+        with patch.object(phone.transport, "execute", side_effect=execute):
+            phone.flow_observation()
+        self.assertEqual(labels.count("phone-flow-package-path-query"), 3)
+        self.assertEqual(labels.count("phone-flow-package-hash"), 2)
+        self.assertTrue(all(label.startswith("phone-flow-") for label in labels))
+
+    def test_update_failure_inspection_keeps_logs_across_telemetry(self):
+        for phase in ("baseline-N-check", "baseline-N-install"):
+            with self.subTest(phase=phase), tempfile.TemporaryDirectory() as temporary:
+                root = Path(temporary)
+                directory = root / "work/coordination/installer-update-acceptance/run-fixture0"
+                directory.mkdir(parents=True)
+                records = [("device-state-read", LAB.encoded(dict(state="ERROR", message="fixture")))]
+                records += [("phone-flow-package-hash", b"")] * 5
+                records += [("device-apk-javac-log", b"ROR2_APK_LOG_BEGIN\nfixture"), ("device-apk-dex-log", b"ROR2_APK_LOG_BEGIN\nfixture")]
+                for sequence, (category, data) in enumerate(records, 1):
+                    prefix = directory / f"{sequence:05d}-{category}"
+                    Path(str(prefix) + ".json").write_bytes(LAB.encoded(dict(phase=phase, category=category, returncode=0, outcome="returned")))
+                    Path(str(prefix) + ".stdout.log").write_bytes(data)
+                output = io.StringIO()
+                with patch.object(LAB, "ROOT", root), redirect_stdout(output):
+                    self.assertEqual(LAB.inspect_ui_failure("run-fixture0", update_failure=True), 0)
+                self.assertEqual([row["tool"] for row in json.loads(output.getvalue())["apk_logs"]], ["javac", "dex"])
+
     def test_periodic_sampling_runs_without_pipeline_poll_and_joins_on_failure(self):
         import threading
 

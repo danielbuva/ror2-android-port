@@ -500,8 +500,8 @@ public sealed partial class PortSession
                     coordinator.worldLootSourceMaterials.Add(renderer, originals);
                     if (particle && particle.trailMaterial != trail)
                         coordinator.worldLootSourceTrails.Add(particle, trail);
-                    coordinator.r.world.nativeEffectSourceMaterials += changed;
-                    coordinator.r.world.nativeEffectSourceRenderers++;
+                    coordinator.nativeEffectSourceMaterials += changed;
+                    coordinator.nativeEffectSourceRenderers++;
                 }
                 // Native pools instantiate these referenced roots independently of the
                 // parent prefab. Follow the typed edges rather than scanning live scenes.
@@ -511,6 +511,12 @@ public sealed partial class PortSession
                     Present(coordinator.OriginalProjectileGhost(projectile));
             }
             Present(source);
+            // Objective projectile templates can be presented before the world report exists.
+            if (coordinator.r.world != null)
+            {
+                coordinator.r.world.nativeEffectSourceMaterials = coordinator.nativeEffectSourceMaterials;
+                coordinator.r.world.nativeEffectSourceRenderers = coordinator.nativeEffectSourceRenderers;
+            }
         }
         public void CleanupObjectiveEffects()
         {

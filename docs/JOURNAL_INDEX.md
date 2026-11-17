@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J1480](PORTING_JOURNAL.md#j1480--recover-an-interrupted-native-profile-commit) | 2026-11-17 | Recover an interrupted native profile commit | 2026-11-17. |
 | [J1475](PORTING_JOURNAL.md#j1475--recover-native-trail-and-projectile-source-materials) | 2026-11-12 | Recover native trail and projectile source materials | 2026-11-13. |
 | [J1474](PORTING_JOURNAL.md#j1474--qualify-injected-player-screen-routes-and-software-notices) | 2026-11-12 | Qualify injected player-screen routes and software notices | 2026-11-13. |
 | [J1473](PORTING_JOURNAL.md#j1473--recover-settings-from-injected-write-and-rename-enospc) | 2026-11-12 | Recover settings from injected write and rename ENOSPC | 2026-11-13. |
@@ -313,3 +314,5 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 | [J1476](PORTING_JOURNAL.md#j1476--converted-apk-reaches-the-original-catalog-survivor-menu) | 2026-11-12 | Converted APK reaches the original-catalog survivor menu | 2026-11-13. |
 | [J1477](PORTING_JOURNAL.md#j1477--capture-stage-transition-memory-and-a-bounded-passive-tail) | 2026-11-17 | Capture stage-transition memory and a bounded passive tail | 2026-11-13. |
 | [J1478](PORTING_JOURNAL.md#j1478--emit-the-strict-whole-game-content-request-on-android) | 2026-11-17 | Emit the strict whole-game content request on Android | 2026-11-13. |
+| [J1479](PORTING_JOURNAL.md#j1479--qualify-nova-b-for-shared-assisted-gameplay) | 2026-11-17 | Qualify Nova-B for shared assisted gameplay | 2026-11-17. |
+| [J1481](PORTING_JOURNAL.md#j1481--retire-sky-meadow-rock-spawners-before-teardown) | 2026-11-17 | Retire Sky Meadow rock spawners before teardown | 2026-11-17. |

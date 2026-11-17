@@ -274,8 +274,13 @@ The shared runner's `settings-save-failure` mode separately injects one-shot
 ENOSPC at the settings writer's write and rename points. [J1473](PORTING_JOURNAL.md#j1473--recover-settings-from-injected-write-and-rename-enospc) verifies
 visible failure, unchanged primary/backup, successful UI retry and a fresh-process
 validated-primary load with unchanged settings and protected profile/result files.
-No storage is filled. This does not qualify profile-writer failure or physical
-power loss; keep those cases and sustained ordinary-play performance open.
+
+The shared runner's `profile-write-interrupt` mode follows an ordinary Start
+through native loss and stops the actual profile writer at pending-file creation.
+[J1480](PORTING_JOURNAL.md#j1480--recover-an-interrupted-native-profile-commit)
+checks the retained primary, durable result and two cold Starts for exactly one
+reconciliation with unchanged settings. Physical volume exhaustion, power loss
+and sustained ordinary-play performance remain open.
 
 ## Review feedback and finish
 
