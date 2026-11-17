@@ -2978,7 +2978,14 @@ Optional diagnostics/selection/input-mapping settings are read back and restored
 The mapping must match the APK attempt and accepted measured bridge checkpoint.
 Converted runs also reset and independently verify the separately owned lab
 package at admission and cleanup. New raw traces are
-hash-verified on the host before device removal. Independent idle/package-byte
+hash-verified on the host before device removal. The terminal receipt references
+the input APK by source path and SHA-256. Payload sync records each source file
+path and verified SHA-256, and retires hash-matching superseded members from the
+previous receipt. The runner retains changed diagnostic captures and observer
+witnesses before removing them. `device_cleanup` records each removed file's
+size measured before deletion, with totals updated only after absence readback.
+Completed removals remain recorded if capture, parsing or terminal verification
+fails. Independent idle/package-byte
 readback and OLED sleep precede lease release; failed cleanup retains the lease
 for recovery. `terminal.done.json` records success or failure, including a
 dispatched child's failed input validation. Evidence and requests stay ignored.

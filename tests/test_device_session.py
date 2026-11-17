@@ -487,10 +487,49 @@ class DeviceSessionTests(unittest.TestCase):
         target.storage.return_value = dict(mode="internal", internal=dict(free_bytes=30 * 1024**3))
         previous = dict(runtime_path=runtime, files=[dict(name=name, sha256=self.digest) for name in ("current", "old", "changed")])
         target.read_receipt.side_effect = {"runtime.json": dict(persistentDataPath=runtime), "sync.json": previous}.__getitem__
-        target.sh.side_effect = lambda *args, **kwargs: self.digest if args[-1] in {dest + "current", dest + "old"} else ""
-        result = device_module.Device.sync(target, payload, replace_previous=True)
+        remote = {dest + "current": self.digest, dest + "old": self.digest, dest + "changed": "0" * 64}
+
+        def shell(*args, **kwargs):
+            if args[0] == "sha256sum":
+                return remote[args[-1]]
+            if args[0] == "rm":
+                del remote[args[-1]]
+            if args[0] == "sh":
+                if "stat -c" in args[2]:
+                    self.assertIn(args[-2], remote)
+                    return "20"
+                self.assertNotIn(args[-1], remote)
+            return ""
+
+        target.sh.side_effect = shell
+        cleanup = dict(bytes_removed=0, files=[])
+        result = device_module.Device.sync(target, payload, replace_previous=True, cleanup=cleanup)
         self.assertEqual(result["superseded_removed"], ["old"])
+        self.assertEqual(cleanup, dict(bytes_removed=20, files=[dict(path=dest + "old", bytes=20)]))
+        self.assertEqual(set(remote), {dest + "current", dest + "changed"})
         self.assertEqual([call for call in target.sh.call_args_list if call.args[0] == "rm"], [mock.call("rm", "--", dest + "old")])
+
+    def test_large_payload_sync_references_original_verified_file(self):
+        payload = self.root / "payload"
+        payload.mkdir()
+        content = payload / "large.bundle"
+        size = 21 * 1024**2
+        with content.open("wb") as stream:
+            stream.truncate(size)
+        digest = device_module.sha(content)
+        target = mock.Mock(package=self.request["package"])
+        runtime = "/owned/Android/data/" + target.package + "/files"
+        remote = runtime + "/payload/" + content.name
+        target.read_receipt.return_value = dict(persistentDataPath=runtime)
+        target.storage.return_value = dict(mode="internal", internal=dict(free_bytes=30 * 1024**3))
+        target.sh.side_effect = lambda *args, **kwargs: digest if args[-1] == remote + ".partial" and args[0] == "sha256sum" else ""
+
+        result = device_module.Device.sync(target, payload)
+
+        target.cmd.assert_called_once_with("push", str(content.resolve()), remote + ".partial", timeout=300)
+        target.sh.assert_any_call("mv", remote + ".partial", remote)
+        self.assertEqual(result["files"], [dict(name=content.name, path=str(content.resolve()), sha256=digest, bytes=size, transferred=True)])
+        self.assertEqual(list(payload.iterdir()), [content])
 
     def test_diagnostic_cleanup_retains_changed_and_new_files_before_removing_them(self):
         self.output.mkdir(parents=True)
@@ -499,13 +538,50 @@ class DeviceSessionTests(unittest.TestCase):
         old_trace = runtime + "/frame-times-old.bin"
         new_trace = runtime + "/frame-times-new.bin"
         target = mock.Mock()
-        target.sh.side_effect = lambda *args: (
-            f"{snapshot}|updated\n{old_trace}|same\n{new_trace}|new\n" if args[0] == "find" else self.digest if args[0] == "sha256sum" else ""
-        )
+
+        def shell(*args):
+            if args[0] == "find":
+                return f"{snapshot}|updated\n{old_trace}|same\n{new_trace}|new\n"
+            if args[0] == "sha256sum":
+                return self.digest
+            if args[0] == "sh" and "stat -c" in args[2]:
+                return str(self.apk.stat().st_size)
+            return ""
+
+        target.sh.side_effect = shell
         target.cmd.side_effect = lambda op, remote, local: Path(local).write_bytes(self.apk.read_bytes())
-        runner.retain_diagnostic_scratch(target, runtime, {snapshot: "earlier", old_trace: "same"}, self.output)
+        cleanup = dict(bytes_removed=0, files=[])
+        runner.retain_diagnostic_scratch(target, runtime, {snapshot: "earlier", old_trace: "same"}, self.output, cleanup)
         self.assertEqual({entry.name for entry in self.output.iterdir()}, {"snapshot.json", "frame-times-new.bin"})
         self.assertEqual([call.args[-1] for call in target.sh.call_args_list if call.args[0] == "rm"], [new_trace, snapshot])
+        self.assertEqual(cleanup["bytes_removed"], 2 * self.apk.stat().st_size)
+
+    def test_diagnostic_cleanup_continues_and_counts_only_verified_absence(self):
+        self.output.mkdir(parents=True)
+        runtime = "/owned"
+        bad, good = runtime + "/frame-times-a.bin", runtime + "/frame-times-b.bin"
+        target = mock.Mock()
+        target.cmd.side_effect = lambda op, remote, local: Path(local).write_bytes(self.apk.read_bytes())
+
+        def shell(*args):
+            if args[0] == "find":
+                return f"{bad}|new\n{good}|new\n"
+            if args[0] == "sha256sum":
+                return self.digest
+            if args[0] == "sh" and "stat -c" in args[2]:
+                return str(self.apk.stat().st_size)
+            if args[0] == "sh" and args[-1] == bad:
+                raise RuntimeError("Still present after removal")
+            return ""
+
+        target.sh.side_effect = shell
+        cleanup = dict(bytes_removed=0, files=[])
+        with self.assertRaises(ExceptionGroup) as error:
+            runner.retain_diagnostic_scratch(target, runtime, {}, self.output, cleanup)
+        self.assertIn("Still present", str(error.exception.exceptions[0]))
+        size = self.apk.stat().st_size
+        self.assertEqual(cleanup, dict(bytes_removed=size, files=[dict(path=good, bytes=size)]))
+        self.assertEqual({entry.name for entry in self.output.iterdir()}, {Path(bad).name, Path(good).name})
 
     def test_capture_records_extracted_metadata_and_unity_extraction_decision(self):
         target = mock.Mock()
@@ -519,6 +595,8 @@ class DeviceSessionTests(unittest.TestCase):
 
     def run_case(self, *, workload_error=False, terminal_error=False, thermal_error=False, payload=False, exception_rows="", signature_failure=False):
         events = []
+        transient_paths = {"/owned/" + suffix for suffix in runner.TRANSIENTS}
+        live_transients = set(transient_paths)
         lease_path = runner.Lease(self.request).path
         installed = dict(apk_sha256=self.digest, package_path="package:/fixture/base.apk", package=self.request["package"], serial=self.request["serial"])
         target = mock.Mock(package=self.request["package"], serial=self.request["serial"])
@@ -531,7 +609,7 @@ class DeviceSessionTests(unittest.TestCase):
         runtime_receipt.touch()
         target.receipt.side_effect = lambda name: self.root / name
         target.install.return_value = installed
-        target.sync.side_effect = lambda path, *, replace_previous: events.append("sync:" + str(path)) or dict(files=["content"])
+        target.sync.side_effect = lambda path, *, replace_previous, cleanup: events.append("sync:" + str(path)) or dict(files=["content"])
         device_class = device_module.Device
         target.storage.return_value = {"mode": "adopted"}
         if signature_failure:
@@ -603,9 +681,13 @@ class DeviceSessionTests(unittest.TestCase):
                 self.assertEqual(args, ("tail", "-c", "+120000001", "--", "/owned/exceptions.jsonl"))
                 events.append("exception-tail")
                 return exception_rows.rstrip("\n")
+            if args[0] == "sh" and "stat -c" in args[2]:
+                self.assertIn(args[-2], live_transients)
+                return "17"
             if args[:2] == ("am", "force-stop"):
                 events.append("stop")
             if args[0] == "rm":
+                live_transients.remove(args[-1])
                 events.append("remove:" + args[-1])
             return ""
 
@@ -620,6 +702,7 @@ class DeviceSessionTests(unittest.TestCase):
             if self.request["mode"] == "sustained":
                 self.assertFalse(any(call.args[0] == "push" and call.args[-1].endswith("movement-batch-selection.json") for call in target.cmd.call_args_list))
             events.append("workload")
+            live_transients.update(transient_paths)
             if workload_error:
                 raise RuntimeError("observed workload failure")
 
@@ -650,15 +733,19 @@ class DeviceSessionTests(unittest.TestCase):
             mock.patch.object(batch, "_GameThermalOwner", return_value=thermal) as owner,
             mock.patch.object(batch, "_idle_readback", side_effect=idle),
             mock.patch.object(batch, "_prune", side_effect=prune),
-            mock.patch("session_cleanup_check._remote_path_state", return_value="absent"),
+            mock.patch(
+                "session_cleanup_check._remote_path_state",
+                side_effect=lambda current, path: "file" if path in live_transients else "absent",
+            ),
             mock.patch.object(runner.time, "monotonic", return_value=1000),
             mock.patch.object(runner.shutil, "disk_usage", return_value=mock.Mock(free=30 * 1024**3)),
         ):
             result = runner.execute(self.request)
         self.assertEqual(placement.call_args_list[0].args[1], self.apk.stat().st_size + payload_size + 20 * 1024**3)
+        self.assertIn("prelaunch", result, result.get("error"))
         prepare.assert_called_once_with(target, result["prelaunch"])
         if payload:
-            target.sync.assert_called_once_with(self.root / "payload", replace_previous=True)
+            target.sync.assert_called_once_with(self.root / "payload", replace_previous=True, cleanup=result["device_cleanup"])
             self.assertLess(events.index("sync:" + str(self.root / "payload")), events.index("workload"))
             self.assertEqual(result["sync"], dict(files=["content"]))
             self.assertEqual(
@@ -680,6 +767,10 @@ class DeviceSessionTests(unittest.TestCase):
         self.assertEqual(events[-1], "prune")
         self.assertIn("asleep", events)
         self.assertEqual(json.loads((self.output / "terminal.done.json").read_text()), result)
+        self.assertEqual((result["apk"], result["apk_sha256"]), (self.request["apk"], self.digest))
+        self.assertEqual(result["device_cleanup"]["bytes_removed"], 17 * 2 * len(runner.TRANSIENTS))
+        if not signature_failure:
+            target.install.assert_called_once_with(Path(self.request["apk"]))
         removed = [event for event in events if event.startswith("remove:")]
         self.assertTrue(removed)
         self.assertEqual(events.count("stop"), 3)
@@ -721,7 +812,14 @@ class DeviceSessionTests(unittest.TestCase):
         self.assertEqual((self.output / "exceptions.jsonl").read_text(), rows)
 
     def test_payload_synced_before_workload_and_included_in_storage_reserve(self):
+        with self.apk.open("wb") as stream:
+            stream.truncate(21 * 1024**2)
+        self.digest = device_module.sha(self.apk)
+        self.request.update(apk_sha256=self.digest)
+        runner.save(self.request_file, self.request)
+        self.request = runner.load_request(self.request_file)
         self.assertTrue(self.run_case(payload=True)["success"])
+        self.assertEqual(list(self.output.rglob("*.apk")), [])
 
     def test_workload_failure_still_stops_resets_sleeps_and_releases(self):
         result = self.run_case(workload_error=True)
@@ -826,7 +924,7 @@ class DeviceSessionTests(unittest.TestCase):
         ):
             record = {}
             runner.reset_other_lab(request, lease, record)
-        reset.assert_called_once_with(lab, lease, record)
+        reset.assert_called_once_with(lab, lease, record, None)
         idle.assert_called_once_with(lab, self.digest)
         self.assertEqual(record["readback"], dict(idle=True))
 

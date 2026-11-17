@@ -171,7 +171,7 @@ def checked_mapping(request):
     return mapping
 
 
-def reset_other_lab(request, lease, record):
+def reset_other_lab(request, lease, record, cleanup=None):
     """Converted runs also leave the separately owned lab package idle."""
     if request["package"] == "dev.ror2lab.arm64":
         return
@@ -184,7 +184,7 @@ def reset_other_lab(request, lease, record):
         record["installed"] = False
         return
     expected = verify_owned(lab)["apk_sha256"]
-    reset_idle(lab, lease, record)
+    reset_idle(lab, lease, record, cleanup)
     record["readback"] = _idle_readback(lab, expected)
 
 
@@ -227,9 +227,10 @@ def verify_owned(device, expected=None):
     return installed
 
 
-def reset_idle(device, lease, record):
+def reset_idle(device, lease, record, cleanup=None):
     """Remove exactly two known transient files from a verified owned package."""
     from session_cleanup_check import _remote_path_state
+    from device import remove_device_file
 
     lease.require()
     verify_owned(device)
@@ -242,7 +243,8 @@ def reset_idle(device, lease, record):
         remote = runtime + "/" + suffix
         row = dict(path=remote, before=_remote_path_state(device, remote), sha256=device.sh("sha256sum", "--", remote, check=False))
         record["removed"].append(row)
-        device.sh("rm", "-f", "--", remote)
+        if row["before"] != "absent":
+            remove_device_file(device, remote, cleanup)
 
 
 def placement(device, reserve, *, adopted_only=False, install_apk=None):
@@ -408,17 +410,19 @@ def diagnostic_scratch(device, runtime):
     return stamps
 
 
-def retain_diagnostic_scratch(device, runtime, initial, output):
-    from common import sha
+def retain_diagnostic_scratch(device, runtime, initial, output, cleanup):
+    from device import retain_device_file
 
+    errors = []
     for remote, stamp in sorted(diagnostic_scratch(device, runtime).items()):
         if initial.get(remote) == stamp:
             continue
-        local = output / Path(remote).name
-        device.cmd("pull", remote, str(local))
-        if device.sh("sha256sum", remote).split()[:1] != [sha(local)]:
-            raise RuntimeError("Retained diagnostic scratch hash differs")
-        device.sh("rm", "--", remote)
+        try:
+            retain_device_file(device, remote, output / Path(remote).name, cleanup)
+        except Exception as error:
+            errors.append(error)
+    if errors:
+        raise ExceptionGroup("Diagnostic scratch cleanup failed", errors)
 
 
 def wait_for_settings_report(device, thermal, pid, predicate, timeout=100, *, report_id=None):
@@ -637,7 +641,9 @@ def run_workload(device, thermal, request, output, result, *, _reset_idle=None):
     if request["mode"] == "profile-write-interrupt":
         from settings_write_interrupt_check import check_profile_write_interrupt
 
-        result["profile_write_interrupt"] = check_profile_write_interrupt(device, thermal, request, output, launch, start_from_menu)
+        result["profile_write_interrupt"] = check_profile_write_interrupt(
+            device, thermal, request, output, launch, start_from_menu, result.get("device_cleanup")
+        )
         return
     if request["mode"] == "player-screens":
         result["player_screens"] = check_player_screens(device, thermal, request, output)
@@ -676,6 +682,7 @@ def run_workload(device, thermal, request, output, result, *, _reset_idle=None):
                 _reset_idle=_reset_idle,
                 _observe=observe_pacing if request.get("pacing_diagnostics") else None,
                 _include_exceptions=False,
+                _device_cleanup=result.get("device_cleanup"),
             )
         finally:
             fresh = set(evidence.glob("*/result.json")) - prior
@@ -762,7 +769,7 @@ def execute(request):
     root, output = Path(request["canonical_root"]), Path(request["output"])
     common.WORK = root / "work"  # Set before importing owners that capture WORK.
     from alpha_stability_batch import _GameThermalOwner, _idle_readback, _prune
-    from device import PACKAGE, Device, InstallSignatureMismatch
+    from device import PACKAGE, Device, InstallSignatureMismatch, remove_device_file
     from device_context import command_selectors, set_command_selector
 
     output.mkdir(parents=True, exist_ok=True)
@@ -770,7 +777,17 @@ def execute(request):
     if done.exists():
         raise RuntimeError("Terminal receipt already exists; consume it instead of replaying")
     (output / ".prune-keep").touch()
-    result = dict(success=False, lease_released=False, apk_sha256=request["apk_sha256"], package=request["package"], mode=request["mode"])
+    apk = Path(request["apk"])
+    cleanup = dict(bytes_removed=0, files=[])
+    result = dict(
+        success=False,
+        lease_released=False,
+        apk=str(apk),
+        apk_sha256=request["apk_sha256"],
+        package=request["package"],
+        mode=request["mode"],
+        device_cleanup=cleanup,
+    )
     lease, device, thermal = Lease(request), None, None
     restore = {}
     initial_scratch = None
@@ -790,12 +807,11 @@ def execute(request):
         )
         set_command_selector(request["serial"], None)
         device = Device(selector=request["serial"], work_root=common.WORK, package=request["package"])
-        reset_other_lab(request, lease, result.setdefault("initial_lab_reset", {}))
+        reset_other_lab(request, lease, result.setdefault("initial_lab_reset", {}), cleanup)
         if device.exists():
             if not device.receipt("installed.json").exists() and "prior_receipt" in request:
                 adopt_receipt(device, request["prior_receipt"])
             active_hash = verify_owned(device)["apk_sha256"]
-        apk = Path(request["apk"])
         payload = payload_files(request)
         payload_size = sum(path.stat().st_size for path in payload)
         reserve = apk.stat().st_size + payload_size + DEVICE_RESERVE_BYTES
@@ -803,7 +819,7 @@ def execute(request):
         if active_hash:
             ensure_runtime(device)
             result["initial_reset"] = {}
-            reset_idle(device, lease, result["initial_reset"])
+            reset_idle(device, lease, result["initial_reset"], cleanup)
             save(output / "initial-reset.json", result["initial_reset"])
             result["initial_idle"] = _idle_readback(device, active_hash)
         try:
@@ -833,7 +849,7 @@ def execute(request):
         result["storage_after"] = placement(device, payload_size + DEVICE_RESERVE_BYTES)
         runtime = ensure_runtime(device)
         if "payload_directory" in request:
-            result["sync"] = device.sync(Path(request["payload_directory"]), replace_previous=True)
+            result["sync"] = device.sync(Path(request["payload_directory"]), replace_previous=True, cleanup=cleanup)
             if "install_recovery" in result:
                 result["install_recovery"]["payload_resynced"] = True
             result["storage_after_sync"] = placement(device, DEVICE_RESERVE_BYTES)
@@ -864,7 +880,7 @@ def execute(request):
         thermal.phase = request["mode"]
         prepare_launch(device, result.setdefault("prelaunch", {}))
         thermal.start()
-        run_workload(device, thermal, request, output, result, _reset_idle=lambda current, record: reset_idle(current, lease, record))
+        run_workload(device, thermal, request, output, result, _reset_idle=lambda current, record: reset_idle(current, lease, record, cleanup))
         result["success"] = True
     except BaseException:
         result["error"] = traceback.format_exc()
@@ -931,7 +947,7 @@ def execute(request):
                     def restore_file(remote=remote, previous=previous):
                         verify_owned(device, active_hash)
                         if previous is None:
-                            device.sh("rm", "-f", "--", remote)
+                            remove_device_file(device, remote, cleanup, missing_ok=True)
                         else:
                             local = output / ("restore-" + Path(remote).name)
                             local.write_text(previous)
@@ -946,11 +962,11 @@ def execute(request):
                         return
                     verify_owned(device, active_hash)
                     runtime = device.read_receipt("runtime.json")["persistentDataPath"]
-                    retain_diagnostic_scratch(device, runtime, initial_scratch, output)
+                    retain_diagnostic_scratch(device, runtime, initial_scratch, output, cleanup)
 
                 clean("diagnostic-scratch", retain_scratch)
-                clean("idle-reset", lambda: reset_idle(device, lease, result.setdefault("final_reset", {})))
-                clean("lab-idle-reset", lambda: reset_other_lab(request, lease, result.setdefault("final_lab_reset", {})))
+                clean("idle-reset", lambda: reset_idle(device, lease, result.setdefault("final_reset", {}), cleanup))
+                clean("lab-idle-reset", lambda: reset_other_lab(request, lease, result.setdefault("final_lab_reset", {}), cleanup))
 
             if device and (active_hash or "install_recovery" in result):
 
