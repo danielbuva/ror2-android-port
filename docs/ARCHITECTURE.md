@@ -1469,8 +1469,10 @@ signed closure. With `--code-request`, the player consumes converter resources
 and the managed receipt, provider manifest, CLR outputs and compiled source
 witnesses from the conversion job. The dispatcher expands the original package
 and authored source selections for the player registry in the current release
-checkout. Acquired converter and managed bindings remain available when no code
-request is selected.
+checkout. The fresh code path also resolves editor data, the pinned macOS
+binary read by the manager, and built-in uGUI sources from the separately
+acquired SDK tree. Acquired converter and managed bindings remain available
+when no code request is selected.
 The optional `--native-request` adds `owner-code/native.py` as one cached job
 with final `libil2cpp.so` and matching `global-metadata.dat` outputs. With
 `--code-request`, an assembly-stage `produce.py --stop-after-conversion` job
@@ -1496,7 +1498,14 @@ cached job for all 15 SDK APK entries. Its public request binds the acquired
 SDK, platform, AAPT2, Java tools and pinned public jars. The authored Java helper
 travels in the signed closure alongside Python producers. SDK resources, dex
 and engine libraries share production/reuse; temporary helper/tool files stay
-private and are excluded from declared outputs.
+private and are excluded from declared outputs. `--sdk-component` adds one
+signed `sdk_inputs.py --android-package` supplier for both player defaults and
+SDK packaging. It hashes the privately provisioned Unity Android Support
+archive and declares the extracted AndroidPlayer directory and receipt for
+cache readback. This archive stays separate from the original-game inventory
+and the compiler/editor SDK tree. The existing extractor owns verification,
+private output creation and terminal receipts. SDK packaging can pin its
+separately supplied platform and tool files with request cache witnesses.
 Generated jobs retain producer checks and do not establish complete APK or phone
 readiness. Setup uses explicit source checkout/profile/output paths; teardown
 keeps generated descriptors and caller-owned producer results. The managed-host

@@ -30,6 +30,7 @@ producer or acquisition reason must be recorded with the request.
 | --- | --- |
 | `pc`, `inventory` | Legitimate installation and reviewed inventory; existing inventory/acceptance tooling produces the inventory, never the original files. |
 | `sdk`, `sdk_contents`, `sdk_install`, `sdk_binary`, `legacy_sdk`, `ugui_source` | Separately acquired exact SDK/package sources; SDK metadata and binaries cannot be generated or distributed by this repository. |
+| `acquired/unity-android-support.pkg` | Private owner-supplied Unity Android Support archive for `--sdk-component`. The existing `sdk_inputs.py` job verifies it and generates the private AndroidPlayer files for player defaults and APK packaging. |
 | `asset_ripper`, `codec`, `jpeg_codec`, `etc_codec`, `sdk_toolchain` | Explicit pinned public sources/tools or generated helper manifests; existing Shader/texture/codec owners document acquisition and helper construction. No retained content output substitutes for a tool. |
 | `converter`, `converter_receipt`, `managed`, `converter_sources`, `converter_metadata` | Existing `owner-code/produce.py`, `managed.py` and converter owners generate the managed cohort, C++/metadata and receipts. Paths must select the matching source-produced cohort. |
 | `code_request` | Explicit caller-authored owner-code request selecting originals/toolchain and output; required local orchestration state unless supplied as a generated prerequisite request. |
