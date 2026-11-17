@@ -59,6 +59,49 @@ class DeviceSessionTests(unittest.TestCase):
         self.assertEqual(json.loads((lease.path / "owner.json").read_text()), lease.owner)
         self.assertTrue((self.output / "terminal.done.json").is_file())
 
+    def test_menu_start_waits_for_owned_menu_and_world_before_sampling(self):
+        target, thermal = mock.Mock(), mock.Mock(error=None)
+        target.sh.return_value = "12"
+        reports = [dict(phase="offline-start-menu"), dict(phase="integrated-world-playing", world=dict(ready=True))]
+
+        def observed(device, monitor, pid, predicate, timeout):
+            report = reports.pop(0)
+            self.assertTrue(predicate(report))
+            return report
+
+        with (
+            mock.patch.object(runner, "wait_for_settings_report", side_effect=observed),
+            mock.patch("touch_gesture.owned_display_zero_focus", return_value=True),
+        ):
+            runner.start_from_menu(target, thermal, "12", self.output)
+        target.sh.assert_any_call("input", "keyboard", "keyevent", "KEYCODE_ENTER")
+        self.assertTrue((self.output / "world-start.json").is_file())
+        with (
+            mock.patch.object(runner, "wait_for_settings_report", return_value=dict(phase="offline-start-menu")),
+            mock.patch("touch_gesture.owned_display_zero_focus", return_value=False),
+        ):
+            target.sh.reset_mock()
+            with self.assertRaisesRegex(RuntimeError, "focus absent"):
+                runner.start_from_menu(target, thermal, "12", self.output)
+        self.assertFalse(any(call.args[:1] == ("input",) for call in target.sh.call_args_list))
+
+    def test_menu_start_request_is_explicit_native_launch_only(self):
+        self.request["start_from_menu"] = True
+        runner.save(self.request_file, self.request)
+        self.assertTrue(runner.load_request(self.request_file)["start_from_menu"])
+        for field, value in (("start_from_menu", "yes"), ("mode", "sustained"), ("package", "dev.ror2lab.converted")):
+            runner.save(self.request_file, dict(self.request, **{field: value}))
+            with self.assertRaises(ValueError):
+                runner.load_request(self.request_file)
+
+    def test_periodic_capture_retains_heap_and_android_exit_reasons(self):
+        target = mock.Mock()
+        target.read_receipt.return_value = {"persistentDataPath": "/synthetic"}
+        target.sh.return_value = "{}"
+        target.cmd.return_value = "fixture log"
+        runner.capture(target, self.output, "12")
+        target.collect.assert_has_calls([mock.call("crash", self.output), mock.call("screenshot", self.output), mock.call("perf", self.output)])
+
     def test_settings_failure_mode_uses_shared_launch_and_thermal_owner(self):
         self.request["mode"] = "settings-save-failure"
         runner.save(self.request_file, self.request)
