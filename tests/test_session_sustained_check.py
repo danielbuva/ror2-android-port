@@ -95,8 +95,26 @@ class SustainedCheckTests(unittest.TestCase):
         row = sustained.sensor_sample(
             "/sys/devices/system/cpu/cpufreq/policy0/scaling_cur_freq\t1800000\n/sys/class/kgsl/kgsl-3d0/devfreq/cur_freq\t680000000\nskin-therm\t39000\nskin-bad\tUNREADABLE\n"
         )
-        self.assertEqual(row, dict(cpu_frequency_khz={"policy0": 1800000}, gpu_frequency_hz=680000000, skin_celsius={"skin-therm": 39}))
-        self.assertEqual(sustained.sensor_sample("permission denied"), dict(cpu_frequency_khz={}, gpu_frequency_hz=None, skin_celsius={}))
+        self.assertEqual(row["cpu_frequency_khz"], {"policy0": 1800000})
+        self.assertEqual(row["gpu_frequency_hz"], 680000000)
+        self.assertEqual(row["skin_celsius"], {"skin-therm": 39})
+        self.assertIsNone(row["battery_power_mw"])
+        self.assertFalse(sustained.sensor_sample("permission denied")["cooling_states"])
+
+    def test_sensors_preserve_signed_battery_power_and_clock_limits(self):
+        row = sustained.sensor_sample(
+            "/sys/class/power_supply/battery/current_now\t-800000\n"
+            "/sys/class/power_supply/battery/voltage_now\t4100000\n"
+            "/sys/class/power_supply/battery/charge_counter\t4200000\n"
+            "/sys/devices/system/cpu/cpufreq/policy0/scaling_max_freq\t1800000\n"
+            "/sys/class/kgsl/kgsl-3d0/devfreq/max_freq\t680000000\n"
+            "cooling:cooling_device3:gpu\t1\n"
+        )
+        self.assertEqual(row["battery_power_mw"], -3280)
+        self.assertEqual(row["battery_charge_uah"], 4200000)
+        self.assertEqual(row["cpu_limit_khz"], {"policy0": 1800000})
+        self.assertEqual(row["gpu_limit_hz"], 680000000)
+        self.assertEqual(row["cooling_states"], {"cooling_device3:gpu": 1})
 
     def test_workload_counts_require_enabled_successful_snapshot(self):
         report, snapshot, utc = fixtures()
@@ -302,7 +320,11 @@ class SustainedCheckTests(unittest.TestCase):
             device.assert_not_called()
 
     def test_battery_at_43_stops_and_hal_is_a_metric(self):
-        self.assertEqual(sustained.thermal_sample("temperature: 429", "Thermal Status: 3"), dict(battery_celsius=42.9, thermal_status=3))
+        self.assertEqual(
+            sustained.thermal_sample("temperature: 429\nlevel: 80\nUSB powered: true", "Thermal Status: 3"),
+            dict(battery_celsius=42.9, thermal_status=3, battery_level_percent=80, battery_external_power=True),
+        )
+        self.assertIsNone(sustained.thermal_sample("temperature: 350", "Thermal Status: 0")["battery_external_power"])
         for battery, thermal in (
             ("temperature: 430", "Thermal Status: 0"),
             ("", "Thermal Status: 0"),

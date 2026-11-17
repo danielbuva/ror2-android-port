@@ -214,6 +214,12 @@ High refresh ON remains uncapped up to the panel; OFF requests 60 FPS. The
 leaves ordinary play, visual parity and energy qualification open. No further
 performance recapture is required for this accepted assisted gate.
 
+The [2026-11-17 Main Nova run](performance-game.md#120-hz-battery-and-clock-observation)
+observed 3 percentage points of battery discharge in 30 minutes with the 120 Hz
+preference enabled and external power connected throughout. Mean signed power at
+the battery was −1,017 mW. The sampled clock limits and cooling states leave
+throttling onset unestablished. The unplugged energy budget remains open.
+
 Startup [audio-verification reuse](PORTING_JOURNAL.md#j1386--reuse-install-bound-audio-verification-and-partition-loading-costs)
 and [catalog discovery](PORTING_JOURNAL.md#j1390--reuse-typed-item-provider-discovery-during-ordinary-startup)
 provide bounded device evidence; complete converter and sustained-game profiles
