@@ -5809,6 +5809,12 @@ updates only the public `PortSession.cs` hash for the default-off settings
 write observer startup request. Provenance, privacy, licensing and sensitive-content
 audit: authored source hash only; no game content, private inputs or identifiers.
 
+2026-11-17 profile interruption audit: the audio owner manifest now pins the
+authored `PortSession.cs` startup call that reads the profile observer request.
+The producer and camera hook refresh their manifest bindings, and the camera
+recipe pins the updated hook. The refresh contains only public authored source
+hashes and their bindings. No protected content or private data is included.
+
 2026-11-04 ordinary-player startup build pin refresh: the camera build-hook
 source hash now includes the reviewed audio owner manifest pin from the startup
 change. Only the authored build-hook hash changes; no game-derived content or
