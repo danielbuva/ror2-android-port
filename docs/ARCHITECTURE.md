@@ -405,6 +405,10 @@ request in the idle exact editor under the shared mutex.
 It loads the actual produced bundles, follows native provider body membership,
 checks every typed model skin slot and unloads its bundle owners in `finally`.
 Its local receipt records failures separately from Android gameplay acceptance.
+During startup, `BodyCatalogSession` opens the objective-support bundle through
+`TeleporterWorldSession` before deserializing body prefabs. The original
+CharacterBody family loads in provider order before the explicit ward script
+binding check. The teleporter owner holds and releases the same bundle handle.
 Duplicate container keys retain every root. Managed subtype assignability is not
 yet admitted. AnimatorController typed subassets are resolved only through its
 schema-declared behaviour array, with the same script binding and current runtime

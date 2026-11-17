@@ -479,6 +479,9 @@ public sealed partial class PortSession
             }
             else
                 bodies = selectedBodies.ToArray();
+            // Open the support container early, then let the body family resolve the ward's external skins.
+            if (cfg.teleporterLoop)
+                coordinator.GetTeleporterWorldSession().ValidatePreloadedWard(cfg);
             coordinator.ownsBodyCatalog = true;
             PortSession.StaticCall(typeof(BodyCatalog), "SetBodyPrefabs", (object)bodies);
             deadline = Time.realtimeSinceStartup + 3;
