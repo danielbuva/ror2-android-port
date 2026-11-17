@@ -27,11 +27,13 @@ class PendingObserverLifetimeTests(unittest.TestCase):
         source = (ROOT / "tools/android-write-interruption/LabPendingWriteStop.java").read_text()
         methods = (
             extract_method(source, "    static String observerNonce(")
+            + extract_method(source, "    static String pendingFileName(")
             + extract_method(source, "    static void enforceDeadline(")
             + extract_method(source, "    public static void main(")
         )
         fixture = """import java.io.File;
 public final class LabPendingWriteStop {
+    private static final String PACKAGE = "dev.ror2lab.arm64";
 METHODS
     private static void run(String[] args) throws Exception {
         Thread observer = new Thread(() -> {
@@ -46,6 +48,11 @@ METHODS
 class NonceFixture {
     public static void main(String[] args) {
         System.out.print(LabPendingWriteStop.observerNonce(new File(args[0])));
+    }
+}
+class PendingTargetFixture {
+    public static void main(String[] args) {
+        System.out.print(LabPendingWriteStop.pendingFileName(new File(args[0])));
     }
 }
 class DeadlineFixture {
@@ -86,3 +93,16 @@ class DeadlineFixture {
         result = self.run_fixture("NonceFixture", "/runtime/ror2lab-write-" + nonce + ".ready")
         self.assertEqual(result.returncode, 0, result.stderr)
         check.validate_observer_binding(dict(nonce=result.stdout, pid=123, uid=10001, observerPid=124), nonce, "123", 10001)
+
+    def test_pending_target_only_allows_owned_settings_and_profile(self):
+        root = "/storage/fixture/Android/data/dev.ror2lab.arm64/files/"
+        for directory, pending in (("offline-settings-v1", "preferences.json.pending"), ("android-profile-v1", "profile.json.pending")):
+            with self.subTest(directory=directory):
+                result = self.run_fixture("PendingTargetFixture", root + directory)
+                self.assertEqual(result.returncode, 0, result.stderr)
+                self.assertEqual(result.stdout, pending)
+        for path in (root + "offline-run-results-v1", root.replace("dev.ror2lab.arm64", "dev.foreign") + "android-profile-v1"):
+            with self.subTest(path=path):
+                result = self.run_fixture("PendingTargetFixture", path)
+                self.assertNotEqual(result.returncode, 0)
+                self.assertIn("Unexpected persistence directory", result.stderr)

@@ -3155,6 +3155,16 @@ checks distinct service/main PIDs, retained original
 primary/pending bytes, cold recovery and native resave. Device survival after the
 writer kill remains a qualification gate.
 
+The shared runner's current `profile-write-interrupt` workload uses the same
+service with the profile pending path. `PortSession` reads the nonce-only
+`profile-write-observer.request` at launch. `IntegratedResultsBoundary` arms
+the service only for an unassisted native result with a prepared profile, then
+persists the native report and ledger before the profile commit. The runner
+binds the separate writer and observer, retains pending evidence by hash, and
+checks two cold world Starts for one reconciliation and unchanged settings.
+Native replay supersedes the pending generation. Cleanup stops the package and
+clears the attempt's request and witness files.
+
 Settings persistence remains owned by `AndroidOfflineSettings`. Its existing
 validated pending/primary/backup transaction is unchanged. `TrySave` converts
 expected storage/validation failures into a bounded message; the settings owner

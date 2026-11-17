@@ -63,8 +63,11 @@ class DeviceSessionTests(unittest.TestCase):
         target, thermal = mock.Mock(), mock.Mock(error=None)
         target.sh.return_value = "12"
         reports = [dict(phase="offline-start-menu"), dict(phase="integrated-world-playing", world=dict(ready=True))]
+        gameplay_report = reports[-1]
+        gameplay_route = "body-state-spawn-state-auto-player"
 
-        def observed(device, monitor, pid, predicate, timeout):
+        def observed(device, monitor, pid, predicate, timeout, report_id):
+            self.assertEqual(report_id, gameplay_route)
             report = reports.pop(0)
             self.assertTrue(predicate(report))
             return report
@@ -73,7 +76,7 @@ class DeviceSessionTests(unittest.TestCase):
             mock.patch.object(runner, "wait_for_settings_report", side_effect=observed),
             mock.patch("touch_gesture.owned_display_zero_focus", return_value=True),
         ):
-            runner.start_from_menu(target, thermal, "12", self.output)
+            self.assertEqual(runner.start_from_menu(target, thermal, "12", self.output, report_id=gameplay_route), gameplay_report)
         target.sh.assert_any_call("input", "keyboard", "keyevent", "KEYCODE_ENTER")
         self.assertTrue((self.output / "world-start.json").is_file())
         with (

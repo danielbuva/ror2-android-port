@@ -11,7 +11,7 @@ import java.io.File;
 import java.util.concurrent.atomic.AtomicBoolean;
 import org.json.JSONObject;
 
-/** Default-off same-UID observer; never changes the original settings save. */
+/** Default-off same-UID observer of the local settings or profile transaction. */
 public final class LabSettingsWriteObserver extends Service {
     private final AtomicBoolean cancelled = new AtomicBoolean();
     private Thread worker;
@@ -19,9 +19,15 @@ public final class LabSettingsWriteObserver extends Service {
     private final Runnable deadline = () -> { cancelled.set(true); stopSelf(); };
 
     public static void start(Context context, String nonce) {
+        start(context, nonce, false);
+    }
+    public static void startProfile(Context context, String nonce) {
+        start(context, nonce, true);
+    }
+    private static void start(Context context, String nonce, boolean profile) {
         if (nonce == null || !nonce.matches("[0-9a-f]{32}")) throw new IllegalArgumentException("Invalid nonce");
         Intent intent = new Intent(context, LabSettingsWriteObserver.class);
-        intent.putExtra("nonce", nonce).putExtra("writerPid", Process.myPid());
+        intent.putExtra("nonce", nonce).putExtra("writerPid", Process.myPid()).putExtra("profile", profile);
         context.startService(intent);
     }
     public static void cancel(Context context) {
@@ -37,12 +43,13 @@ public final class LabSettingsWriteObserver extends Service {
         }
         final File runtime = getExternalFilesDir(null);
         if (runtime == null) { stopSelf(); return START_NOT_STICKY; }
+        final String directory = intent.getBooleanExtra("profile", false) ? "android-profile-v1" : "offline-settings-v1";
         handler.postDelayed(deadline, 35000);
         worker = new Thread(() -> {
             JSONObject result = new JSONObject();
             try {
                 result = LabPendingWriteStop.observe(new String[] {
-                    new File(runtime, "offline-settings-v1").getPath(),
+                    new File(runtime, directory).getPath(),
                     new File(runtime, "ror2lab-write-" + nonce + ".ready").getPath(),
                     Integer.toString(pid), Integer.toString(Process.myUid())
                 }, cancelled::get);
