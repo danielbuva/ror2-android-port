@@ -56,7 +56,10 @@ def process_pss(data):
 
 
 class FlowMetrics:
-    """Optional, synchronous observations; never own a device or alter acceptance."""
+    """Optional bounded stage sampler; never owns a device or changes acceptance."""
+
+    INTERVAL = 10
+    MAX_SAMPLES = 1024
 
     STAGES = (
         "fresh-installer",
@@ -72,11 +75,19 @@ class FlowMetrics:
 
     def __init__(self, phone):
         self.phone, self.current, self.rows = phone, None, []
+        self.lock = threading.Lock()
 
     def sample(self, force=False):
+        with self.lock:
+            self._sample(force)
+
+    def _sample(self, force=False):
         row = self.current
         now = time.monotonic()
-        if row is None or not force and row["times"] and now - row["times"][-1] < 10:
+        if row is None or not force and row["times"] and now - row["times"][-1] < self.INTERVAL:
+            return
+        if len(row["samples"]) >= self.MAX_SAMPLES:
+            row["sample_limit_reached"] = True
             return
         row["times"].append(now)
         try:
@@ -96,24 +107,37 @@ class FlowMetrics:
         temperature = observed.get("battery_temp_tenths_c")
         safe["battery_temp_tenths_c"] = temperature if type(temperature) is int and temperature >= 0 else None
         row["samples"].append(safe)
+        row["ends"].append(time.monotonic())
+
+    def _periodic(self, stop):
+        while not stop.wait(self.INTERVAL):
+            self.sample()
 
     @contextmanager
     def stage(self, name):
         if name not in self.STAGES or self.current is not None:
             raise Failure("phone-flow-stage-contract")
-        row = {"stage": name, "started": time.monotonic(), "times": [], "samples": [], "completed": False}
+        row = {"stage": name, "started": time.monotonic(), "times": [], "ends": [], "samples": [], "completed": False, "sample_limit_reached": False}
         self.current = row
+        stop = threading.Event()
+        worker = threading.Thread(target=self._periodic, args=(stop,), name="installer-stage-metrics", daemon=True)
         self.sample(force=True)
+        worker.start()
         try:
             yield
             row["completed"] = True
         finally:
+            # Join before final observation, stage change or owned-package cleanup.
+            # The existing read-only ADB calls all have bounded timeouts.
+            stop.set()
+            worker.join()
+            row["end_sample_taken"] = len(row["samples"]) < self.MAX_SAMPLES
             self.sample(force=True)
             row["elapsed_seconds"] = round(time.monotonic() - row["started"], 3)
             self.current = None
             self.rows.append(row)
 
-    def report(self):
+    def report(self, *, include_samples=False):
         rows = []
         for row in self.rows:
             samples = row["samples"]
@@ -124,7 +148,21 @@ class FlowMetrics:
                     "memory_samples": len(memory),
                     "sampled_max_pss_bytes": max(memory) if memory else None,
                     "storage_start": {key: samples[0][package][key] for key in ("code_free_bytes", "data_free_bytes")},
-                    "storage_end": {key: samples[-1][package][key] for key in ("code_free_bytes", "data_free_bytes")},
+                    "storage_end": {key: samples[-1][package][key] if row["end_sample_taken"] else None for key in ("code_free_bytes", "data_free_bytes")},
+                    "coverage": {
+                        key: self.coverage(row, [i for i, sample in enumerate(samples) if sample[package][key] is not None])
+                        for key in ("pss_bytes", "code_free_bytes", "data_free_bytes")
+                    },
+                    "storage_sampled_min_free_bytes": {
+                        key: min((sample[package][key] for sample in samples if sample[package][key] is not None), default=None)
+                        for key in ("code_free_bytes", "data_free_bytes")
+                    },
+                    "storage_sampled_max_drop_from_start_bytes": {
+                        key: max((samples[0][package][key] - sample[package][key] for sample in samples if sample[package][key] is not None), default=None)
+                        if samples[0][package][key] is not None
+                        else None
+                        for key in ("code_free_bytes", "data_free_bytes")
+                    },
                 }
             rows.append(
                 {
@@ -132,6 +170,9 @@ class FlowMetrics:
                     "completed": row["completed"],
                     "elapsed_seconds": row["elapsed_seconds"],
                     "samples": len(samples),
+                    "sample_limit_reached": row["sample_limit_reached"],
+                    "observation_seconds": round(sum(b - a for a, b in zip(row["times"], row["ends"])), 3),
+                    "battery_temperature_coverage": self.coverage(row, [i for i, sample in enumerate(samples) if sample["battery_temp_tenths_c"] is not None]),
                     "largest_sample_gap_seconds": round(max((b - a for a, b in zip(row["times"], row["times"][1:])), default=0), 3),
                     "packages": packages,
                     "sampled_max_battery_temp_c": max(
@@ -139,7 +180,31 @@ class FlowMetrics:
                     ),
                 }
             )
-        return {"mode": "synthetic-phone-flow-metrics", "memory_scope": "sampled-app-process-pss-not-true-peak", "stages": rows}
+            if include_samples:
+                rows[-1]["timeline"] = [
+                    {"offset_seconds": round(start - row["started"], 3), "duration_seconds": round(end - start, 3), **sample}
+                    for start, end, sample in zip(row["times"], row["ends"], samples)
+                ]
+        return {
+            "mode": "synthetic-phone-flow-metrics",
+            "memory_scope": "sampled-app-process-pss-not-true-peak",
+            "storage_scope": "shared-backing-free-space-not-exclusive-app-consumption",
+            "sampling_interval_seconds": self.INTERVAL,
+            "max_samples_per_stage": self.MAX_SAMPLES,
+            "stages": rows,
+        }
+
+    @staticmethod
+    def coverage(row, indices):
+        # Coverage is observation availability, never interpolation across gaps.
+        times = [row["times"][i] - row["started"] for i in indices]
+        return {
+            "valid_samples": len(indices),
+            "missing_samples": len(row["samples"]) - len(indices),
+            "first_offset_seconds": round(times[0], 3) if times else None,
+            "last_offset_seconds": round(times[-1], 3) if times else None,
+            "largest_unobserved_gap_seconds": round(max(b - a for a, b in zip([0, *times], [*times, row["elapsed_seconds"]])), 3),
+        }
 
 
 def install_diagnostic_summary(data):
@@ -433,6 +498,7 @@ class PrivateDiagnostics:
         parent.mkdir(parents=True, exist_ok=True)
         self.directory = Path(tempfile.mkdtemp(prefix="run-", dir=parent))
         self.sequence = 0
+        self.lock = threading.Lock()
 
     def write(self, name, data):
         descriptor = os.open(self.directory / name, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
@@ -440,8 +506,9 @@ class PrivateDiagnostics:
             stream.write(data)
 
     def record(self, category, *, stdout=b"", stderr=b"", returncode=None, outcome="returned"):
-        self.sequence += 1
-        prefix = f"{self.sequence:05d}-{category}"
+        with self.lock:
+            self.sequence += 1
+            prefix = f"{self.sequence:05d}-{category}"
         self.write(prefix + ".stdout.log", stdout or b"")
         self.write(prefix + ".stderr.log", stderr or b"")
         self.write(prefix + ".json", encoded({"phase": CURRENT_PHASE, "category": category, "returncode": returncode, "outcome": outcome}))
@@ -2614,6 +2681,11 @@ def main(argv=None):
             if phone is not None:
                 if args.qualify_phone_flow:
                     metrics, phone.flow_metrics = phone.flow_metrics, None
+                    if metrics is not None and DIAGNOSTICS is not None:
+                        try:
+                            DIAGNOSTICS.write("phone-flow-metrics.json", encoded(metrics.report(include_samples=True)))
+                        except Exception:
+                            pass  # Optional retention cannot prevent owned cleanup.
                 set_phase("cleanup")
                 try:
                     cleanup_verified = phone.cleanup() == "verified-absent"
