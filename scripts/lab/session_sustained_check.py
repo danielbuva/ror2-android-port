@@ -31,8 +31,14 @@ SCOPE = (
 # frequencies are observations, never proof of thermal throttling by themselves.
 SENSOR_READS = (
     "for p in /sys/devices/system/cpu/cpufreq/policy*/scaling_cur_freq "
-    "/sys/class/kgsl/kgsl-3d0/devfreq/cur_freq; do "
+    "/sys/devices/system/cpu/cpufreq/policy*/scaling_max_freq "
+    "/sys/class/kgsl/kgsl-3d0/devfreq/cur_freq /sys/class/kgsl/kgsl-3d0/devfreq/max_freq "
+    "/sys/class/power_supply/battery/current_now /sys/class/power_supply/battery/voltage_now "
+    "/sys/class/power_supply/battery/charge_counter; do "
     'if read -r v < "$p" 2>/dev/null; then printf "%s\\t%s\\n" "$p" "$v"; fi; done; '
+    "for c in /sys/class/thermal/cooling_device*; do "
+    'if read -r t < "$c/type" 2>/dev/null && read -r v < "$c/cur_state" 2>/dev/null; '
+    'then printf "cooling:%s:%s\\t%s\\n" "${c##*/}" "$t" "$v"; fi; done; '
     "for z in /sys/class/thermal/thermal_zone*; do "
     'read -r t < "$z/type" || continue; case "$t" in *skin*|*Skin*) '
     'if read -r v < "$z/temp"; then printf "%s\\t%s\\n" "$t" "$v"; fi;; esac; done; :'
@@ -40,7 +46,19 @@ SENSOR_READS = (
 
 
 def sensor_sample(text):
-    row = dict(cpu_frequency_khz={}, gpu_frequency_hz=None, skin_celsius={})
+    row = dict(
+        cpu_frequency_khz={},
+        cpu_limit_khz={},
+        gpu_frequency_hz=None,
+        gpu_limit_hz=None,
+        skin_celsius={},
+        cooling_states={},
+        battery_current_ua=None,
+        battery_voltage_uv=None,
+        battery_charge_uah=None,
+        battery_power_mw=None,
+    )
+    battery_fields = {"current_now": "battery_current_ua", "voltage_now": "battery_voltage_uv", "charge_counter": "battery_charge_uah"}
     for line in text.splitlines():
         fields = line.split()
         if len(fields) != 2:
@@ -51,11 +69,23 @@ def sensor_sample(text):
         except ValueError:
             continue
         if name.startswith("/sys/devices/system/cpu/cpufreq/policy") and value > 0:
-            row["cpu_frequency_khz"][name.split("/")[-2]] = value
+            policy, field = name.rsplit("/", 2)[-2:]
+            row["cpu_frequency_khz" if field == "scaling_cur_freq" else "cpu_limit_khz"][policy] = value
         elif name == "/sys/class/kgsl/kgsl-3d0/devfreq/cur_freq" and value > 0:
             row["gpu_frequency_hz"] = value
+        elif name == "/sys/class/kgsl/kgsl-3d0/devfreq/max_freq" and value > 0:
+            row["gpu_limit_hz"] = value
+        elif name.startswith("/sys/class/power_supply/battery/"):
+            field = battery_fields.get(name.rsplit("/", 1)[-1])
+            if field is not None:
+                row[field] = value
+        elif name.startswith("cooling:") and value >= 0:
+            row["cooling_states"][name.removeprefix("cooling:")] = value
         elif "skin" in name.lower() and -30000 < value < 200000:
             row["skin_celsius"][name] = value / 1000
+    current, voltage = row["battery_current_ua"], row["battery_voltage_uv"]
+    if current is not None and voltage is not None and voltage > 0:
+        row["battery_power_mw"] = current * voltage / 1_000_000_000
     return row
 
 
@@ -84,6 +114,9 @@ def thermal_sample(battery, thermal):
     if not temperature or not status:
         raise RuntimeError("No interpretable battery/HAL observation; refuse sustained case")
     row = dict(battery_celsius=int(temperature[1]) / 10, thermal_status=int(status[1]))
+    level = re.search(r"^\s*level:\s*(\d+)\s*$", battery, re.M)
+    sources = re.findall(r"^\s*(?:AC|USB|Wireless|Dock) powered:\s*(true|false)\s*$", battery, re.M)
+    row.update(battery_level_percent=int(level[1]) if level else None, battery_external_power="true" in sources if sources else None)
     if row["battery_celsius"] >= 43:
         raise RuntimeError("Sustained case reached battery at or above 43 C stop: " + repr(row))
     return row

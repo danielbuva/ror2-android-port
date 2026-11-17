@@ -2981,11 +2981,14 @@ Launch mode retains screenshots (default 60 seconds, configurable with
 `capture_interval_seconds`), logs, runtime reports and performance snapshots;
 sustained mode delegates to the existing sustained-session owner, using
 `capture_interval_seconds` for observations (default five seconds). Observations
-follow elapsed-time boundaries and retain available CPU policy frequencies (kHz),
-Qualcomm GPU frequency (Hz), skin temperatures and opt-in diagnostic projectile
-and effect counts. Unavailable sensors/counts remain empty or null; frequencies
-alone do not establish thermal throttling. The independent safety sampler keeps
-its existing subsecond cadence.
+follow elapsed-time boundaries and retain available CPU/GPU clocks and limits,
+thermal cooling-device states, skin temperatures and opt-in diagnostic
+projectile and effect counts. Sustained samples retain external power status,
+battery percentage, signed battery current and voltage, charge counter and
+derived battery-terminal power in mW. Unavailable readings remain empty or null.
+Battery-terminal power excludes any upstream supply draw, and clock changes need
+thermal-limit corroboration. The independent safety sampler keeps its existing
+subsecond cadence.
 Sustained requests may set only `selection.detailedVisualDiagnostics`; the owner
 writes its seed-2, attempt-bound, invincibility-only selector after idle admission.
 The shared runner supplies its lease-checked initial reset to the sustained owner,
