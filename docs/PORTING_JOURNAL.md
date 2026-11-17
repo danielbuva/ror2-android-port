@@ -4112,3 +4112,18 @@ Internal placement, 28 C battery admission, 87.6 C CPU/GPU peak, 2.491 s above 8
 Terminal process, selector and pending file were absent, display asleep and lease released.
 Three Windows shader-bundle load messages were recorded. Physical power loss, volume exhaustion and
 sustained ordinary play remain open.
+
+## J1482 — Verify issued alpha versions and forward rollback on Android
+
+2026-11-17. Keep lab, converted and alpha package identities in separate signing lineages.
+On Nova B, Android permission and consent lead to synthetic alpha v1; Check for updates
+finds v2. In-place update and v3 forward rollback keep one certificate and retain the
+synthetic profile/settings through the retention provider. Rollback reinstalls the v1 payload.
+Wrong-key and tampered releases leave the installation intact. A cold installer restart
+retains the issued ledger and verifies the installed rollback APK by hash.
+Installer SHA-256: `d039987d29f58b09f84ca7b7a139c8bca55511d65c36aa28ccfde02594818d90` (source `109da3af`).
+Rollback APK SHA-256: `b43d1b16c98f8d35012f38dd7f763cf5573c8443081524c300712b1ef0cc6e51`.
+Evidence: `work/coordination/alpha-packaging-acceptance/run-lddx2pov/issued-packages.json`.
+Battery 29 C at admission; CPU/GPU peak 73.6 C; zero time above 80 C.
+Both owned packages were removed, the display was put to sleep and the lease released.
+Production Unity alpha, native save retention across alpha updates, key recovery and real interruption remain open.

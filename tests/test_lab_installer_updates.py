@@ -2342,8 +2342,8 @@ public class Review {
         shell.assert_called_once_with("input", "tap", "60", "60", label="device-notification-deny")
         with patch.object(phone, "shell") as shell, patch.object(LAB.time, "sleep"), patch.object(phone, "dismiss_notification_permission") as dismiss:
             phone.start()
-            phone.start()
-        self.assertEqual(dismiss.call_count, 2)
+            phone.start(repeat_notification_denial=True)
+        self.assertEqual([call.kwargs for call in dismiss.call_args_list], [{}, {"repeat_denial": True}])
         self.assertEqual(shell.call_args_list[0].args, ("input", "keyevent", "KEYCODE_WAKEUP"))
         self.assertEqual(shell.call_args_list[2].args, ("am", "start", "-W", "-n", LAB.ACTIVITY))
 

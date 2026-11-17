@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J1482](PORTING_JOURNAL.md#j1482--verify-issued-alpha-versions-and-forward-rollback-on-android) | 2026-11-17 | Verify issued alpha versions and forward rollback on Android | 2026-11-17. |
 | [J1480](PORTING_JOURNAL.md#j1480--recover-an-interrupted-native-profile-commit) | 2026-11-17 | Recover an interrupted native profile commit | 2026-11-17. |
 | [J1475](PORTING_JOURNAL.md#j1475--recover-native-trail-and-projectile-source-materials) | 2026-11-12 | Recover native trail and projectile source materials | 2026-11-13. |
 | [J1474](PORTING_JOURNAL.md#j1474--qualify-injected-player-screen-routes-and-software-notices) | 2026-11-12 | Qualify injected player-screen routes and software notices | 2026-11-13. |

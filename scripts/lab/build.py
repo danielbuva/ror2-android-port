@@ -177,12 +177,13 @@ def editor(target="lab", action="inspect"):
             commands = run(["/bin/ps", "-axo", "command"]).stdout.decode().splitlines()
             if any(c.startswith(os.environ["UNITY_EDITOR"] + " ") and " -projectPath " + str(project) + " " in c for c in commands):
                 return "Editor already open; inspect MCP connectivity with ./dev editor --target " + target
+            android_home = (WORK.parent if target == "lab" else ROOT) / ".local/android-user"
             env = os.environ.copy()
             env.update(
                 {
                     "ANDROID_ADB_SERVER_PORT": "5038",
-                    "ANDROID_SDK_HOME": str(ROOT / ".local/android-user"),
-                    "ANDROID_USER_HOME": str(ROOT / ".local/android-user/.android"),
+                    "ANDROID_SDK_HOME": str(android_home),
+                    "ANDROID_USER_HOME": str(android_home / ".android"),
                     "GRADLE_USER_HOME": str(ROOT / ".local/gradle"),
                 }
             )

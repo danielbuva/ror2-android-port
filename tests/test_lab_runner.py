@@ -104,6 +104,35 @@ class OwnerGateTest(unittest.TestCase):
 
 
 class RefusedLeaseTest(unittest.TestCase):
+    def test_local_packaging_refuses_without_a_grant_and_preserves_checkout(self):
+        with tempfile.TemporaryDirectory() as directory:
+            repo = Path(directory).resolve()
+            runner = lab_runner.Runner(repo, {})
+            runner.devices = {"nova-b": "fixture"}
+            command = lab_runner.parse_command("/lab script device=nova-b -- scripts/lab-alpha-packaging.py --package-only")
+            with mock.patch.object(runner, "run", return_value=0) as run, mock.patch.object(runner, "battery") as battery:
+                with self.assertRaisesRegex(lab_runner.CommandError, "grant required"):
+                    runner.execute(command, local_checkout=repo, workstream="fixture-worker")
+            battery.assert_not_called()
+            self.assertEqual(run.call_args.args[0][1:], ["scripts/prune-generated.py", "--apply"])
+
+    def test_local_packaging_publishes_terminal_after_shared_runner_failure(self):
+        with tempfile.TemporaryDirectory() as directory:
+            repo = Path(directory).resolve()
+            config = repo / "work/config/lab-runner.json"
+            config.parent.mkdir(parents=True)
+            config.write_text(json.dumps({"devices": {"nova-b": "fixture"}}))
+            request = repo / "request.json"
+            done = repo / "work/terminal.json"
+            request.write_text(json.dumps(dict(repo=str(repo), checkout=str(repo), workstream="fixture-worker", device="nova-b", done_file=str(done))))
+            with (
+                mock.patch.object(lab_runner.subprocess, "check_output", return_value=str(repo / ".git")),
+                mock.patch.object(lab_runner.Runner, "execute", side_effect=lab_runner.CommandError("fixture failure")) as execute,
+            ):
+                self.assertEqual(lab_runner.local_packaging(request), 1)
+            self.assertEqual(execute.call_args.kwargs, dict(local_checkout=repo, workstream="fixture-worker"))
+            self.assertEqual(json.loads(done.read_bytes())["error"], "fixture failure")
+
     def test_explicit_restage_uses_the_shared_installer_resume_path(self):
         with tempfile.TemporaryDirectory() as directory:
             repo = Path(directory).resolve()

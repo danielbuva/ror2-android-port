@@ -7,11 +7,17 @@ boundary in [ADR-002](ADR-002-public-alpha-distribution.md) remain fixed.
 
 ## Package and updates
 
-Reserve `dev.ror2lab.alpha` for the first owner alpha. Keep the disposable
-`dev.ror2lab.arm64` laboratory package and separate tool fixtures unchanged.
-The final owner installer enforces this identity; the laboratory and private replay
-identities are not migrated. Actual alpha package, storage, execution and update
-evidence is still required before release.
+| Package | Signing key |
+| --- | --- |
+| `dev.ror2lab.arm64` | The lab's existing debug key. Linked worktrees using the same lab project resolve its Android user home from the shared work root. Isolated build lanes use the copied lab key. |
+| `dev.ror2lab.converted` | A dedicated private converted-build key, reused for that package's updates. Standalone owner assemblies default to this package, including private replay assemblies. |
+| `dev.ror2lab.alpha` | The owner's durable on-device alpha key. The final installer requires the alpha identity, an issued version and its bound retention policy. |
+| Installer and tool fixtures | A separate durable tool signing key for each fixture identity. The managed host builder reserves all three game package IDs. |
+
+The APK assembly rewrites both the manifest and resource package to the selected
+owner identity. Existing laboratory data stays with its original package.
+Actual alpha package, storage, execution and update evidence is required before
+release.
 Do not adopt an existing installation without a local ownership receipt and
 matching package/signing identity. Do not remove a conflicting package to make
 an installation succeed. Migration of laboratory data is a separate reviewed
@@ -88,13 +94,18 @@ remains the desktop fallback.
 
 | Boundary | Required case and evidence | Existing coverage and remaining gate |
 | --- | --- | --- |
-| Final package identity | Inspect assembled/installed `dev.ror2lab.alpha`; require an occupied installation's ownership receipt, actual APK hash/version and same signer. No adoption/uninstall fallback. | Host-qualified: alpha publisher, manifest, issued-receipt and session guards. Phone gate: actual alpha package, placement and cold start. |
-| Issued versions | Durable codes 1–2,100,000,000 bind source/input/toolchain/APK/payload/certificate. Failed/cancelled attempts burn codes; reject reuse, downgrade, missing ledger and exhaustion. | Host-qualified: locked issuance and independent publisher/install ordering, including repeated source and rollback. Phone gate: durable recovery across real power/process interruption. |
+| Final package identity | Inspect assembled/installed `dev.ror2lab.alpha`; require an occupied installation's ownership receipt, actual APK hash/version and same signer. No adoption/uninstall fallback. | Host-qualified: alpha publisher, manifest, issued-receipt and session guards. Phone-qualified with a synthetic alpha package. Production Unity alpha placement and cold game start remain open. |
+| Issued versions | Durable codes 1–2,100,000,000 bind source/input/toolchain/APK/payload/certificate. Failed/cancelled attempts burn codes; reject reuse, downgrade, missing ledger and exhaustion. | Host-qualified: locked issuance and independent publisher/install ordering, including repeated source and rollback. Phone-qualified synthetic issuance and cold installer readback. Recovery across an interrupted issue/install remains open. |
 | Signing and recovery | Keep one private owner certificate; verify signatures/alignment and reject lost, redirected or exposed custody. | Existing signer plus new ledger/certificate checks pass synthetic contracts. J1095 remains authored-phone signing only. Real alpha key backup/recovery and signature continuity still need phone evidence. |
 | Legitimate local input | Hash complete supported inventories; clearly name known-unsupported/unknown/ambiguous inputs, supported versions and next action. No output admission from labels or partial copies. | Host-qualified: existing folder/ZIP import extended with shared version fingerprints, bounded reads, refusal and post-import verification. Phone gate: actual SAF providers and legitimate version cohorts. |
-| Retained rollback | Retain current/previous manifests and signed-APK references; require compatible schema, same key and a newly issued higher code. Never uninstall or force downgrade. | Host-qualified: real binary-manifest forward reversion, unchanged retained content, signing/refusal boundaries and safe reference pruning. Phone gate: actual session rollback and cold-start compatibility. |
-| Profile/settings retention | Preserve the bounded local file set below; snapshot before mutation, verify/restore before releasing the launch gate. | Host-qualified: executing Java store/installer tests, corruption/interruption/space refusal and released-token crash recovery without overwriting newer play. Phone gate: Binder caller checks, filesystem durability and real native profile/settings across update/rollback. |
-| Cancellation and updates | Cancel acquisition/build/install without modifying originals, accepting partial output or losing current/previous recovery references. | Host-qualified: importer/checkpoint/session/backup recovery contracts. Phone gate: ordinary Android consent, cancellation and retained game progress across cold starts. |
+| Retained rollback | Retain current/previous manifests and signed-APK references; require compatible schema, same key and a newly issued higher code. Never uninstall or force downgrade. | Host-qualified: real binary-manifest forward reversion, unchanged retained content, signing/refusal boundaries and safe reference pruning. Phone-qualified synthetic Android session rollback. Production alpha cold-start compatibility remains open. |
+| Profile/settings retention | Preserve the bounded local file set below; snapshot before mutation, verify/restore before releasing the launch gate. | Host-qualified: executing Java store/installer tests, corruption/interruption/space refusal and released-token crash recovery without overwriting newer play. Phone-qualified Binder provider and matching synthetic files across update/rollback. Native files and durability across production alpha update/rollback remain open. |
+| Cancellation and updates | Cancel acquisition/build/install without modifying originals, accepting partial output or losing current/previous recovery references. | Host-qualified: importer/checkpoint/session/backup recovery contracts. Phone-qualified ordinary Android consent for the synthetic alpha. Acquisition/build/install cancellation and production alpha progress across cold starts remain open. |
+
+The [issued-version device check](PORTING_JOURNAL.md#j1482--verify-issued-alpha-versions-and-forward-rollback-on-android)
+binds the synthetic v1/v2/v3 receipts and v3 rollback to their actual installed
+hashes. [J1480](PORTING_JOURNAL.md#j1480--recover-an-interrupted-native-profile-commit)
+verifies native profile interruption and cold-start recovery on the lab build.
 
 Run the existing host contracts without private input or an editor:
 

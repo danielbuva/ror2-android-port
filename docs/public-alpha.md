@@ -66,11 +66,14 @@ host contracts from installed-alpha acceptance.
 - [ ] Phone-qualify alpha identity, issued-version/same-key updates and forward
       rollback, including real profile/settings backup, verified restore,
       interruption and cold-start retention.
-      [J1258](PORTING_JOURNAL.md#j1258--integrate-owned-alpha-updates-rollback-and-profile-retention)
-      qualifies synthetic host contracts only.
-      [J1401](PORTING_JOURNAL.md#j1401--load-typed-results-definitions-before-dependent-drop-tables)
-      retains profile/settings hashes across a lab update; the final alpha
-      identity, owner signing, backup/restore and rollback flow remain unqualified.
+      [The issued-version device check](PORTING_JOURNAL.md#j1482--verify-issued-alpha-versions-and-forward-rollback-on-android)
+      installs the synthetic alpha through Android consent, updates in place,
+      rolls forward to the prior payload and verifies the issued ledger after
+      a cold installer restart. It verifies synthetic profile/settings retention.
+      [J1480](PORTING_JOURNAL.md#j1480--recover-an-interrupted-native-profile-commit)
+      verifies interrupted profile recovery and cold starts on the lab build.
+      The production alpha still needs native save retention through update and
+      rollback, interruption, cold launch and owner key recovery.
 - [ ] Phone-qualify folder/ZIP validation, cancellation and honest supported/unknown
       version refusal with legitimate input cohorts and actual SAF providers
       ([acceptance matrix](ALPHA_POLICY.md#final-flow-acceptance-contract)).
