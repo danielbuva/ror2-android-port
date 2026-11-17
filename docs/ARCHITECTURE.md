@@ -867,6 +867,11 @@ supply 19 PhysicMaterials and eight BillboardAssets from their original
 serialized members. Release graph preparation checks the full type layouts and
 PPtr closure. The verified source bodies have no nonnull references, so the
 profile leaves them intact.
+`recipe/owner-whole-game-prefab-component-source-records.json` supplies the
+original Transform, Light and Rigidbody records used by FireworkLight and
+SoundEmitter. Bundle preparation distinguishes file-local PPtrs from external
+member identities, resolves the component owners and checks every relocated
+pointer in the emitted prefab closure.
 The same record owner imports named `ControlPlayableAsset` PropertyName mappings
 with `control_exposed_name_default`. An exact-editor authored fixture establishes
 the mapping default; original managed metadata and pinned AssetRipper encoding
