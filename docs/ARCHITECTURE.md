@@ -2924,7 +2924,7 @@ on the configured volume, recreates the runtime directory, syncs the payload and
 records the recovery in the terminal receipt under the same lease.
 The shared device runner's launch request accepts `start_from_menu` for automatic
 route observations. It waits for the installed attempt/PID-bound native menu,
-requires owned display-zero focus, injects Start and waits for a ready world
+requires owned display-zero focus, taps the reported Start button and waits for a ready world
 before the observation clock begins. Existing periodic captures retain PSS,
 native heap and managed/allocation snapshots across stage transitions. The
 ordinary selector controls the route; sustained combat's stationary first-stage
@@ -2935,6 +2935,10 @@ The shared runner records the cumulative exception log's byte offset before
 launch. After stopping the owned package, it captures only the appended rows
 in the session root's `exceptions.jsonl`, including on workload failure.
 Periodic captures retain their PID-filtered logs and performance evidence.
+Opt-in `capture_golem_attacks` watches the live Unity stream for the owned
+process's native clap and laser entries and captures a bounded screenshot burst
+when display zero is focused. The observer stops with the launch workload and
+retains its event receipt alongside the regular captures.
 
 Launch-mode `input_schedule` adds ordered, relative-time targeted-touch scripts
 within the observation window, allowing ordinary input and End Run in the same
@@ -4486,12 +4490,17 @@ The enemy, world, model, teleport-material and barrier steps run through `RunGua
 (`PortSession.cs`), which records the failure and moves on. The reward,
 death-effect, geometry and reclaim steps, and the synchronous cleanup calls outside the
 `CleanupBodyCatalog` `try`, have no wrapper: an exception there stops the remaining
-release steps. `Start` itself has no
-enclosing `finally`, and `PortSession` has no `OnDestroy` or `OnApplicationQuit`:
+release steps. `Start` itself has no enclosing `finally`, and `PortSession` has
+no `OnDestroy` or `OnApplicationQuit`, so
 an error during catalog preparation or the menu, or the app being killed, skips the
 post-run release sequence. Per-boundary teardown inside the session (the 17-step call
 order and each `finally`) is in
 [architecture-file-map.md](architecture-file-map.md#d-playable-spine-runtime-sequence-and-ownership).
+
+`StageGeometrySession` tracks the loaded scene's rock spawners and stops their
+pending coroutines before stage transport clears projectiles or `NovaInputSession`
+retires the run and combat services. Geometry cleanup stops any remaining
+spawner coroutines before unloading the scene.
 
 ## Ownership
 

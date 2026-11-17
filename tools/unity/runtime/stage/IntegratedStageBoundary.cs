@@ -841,6 +841,7 @@ public sealed partial class PortSession
             report.playerSummonsRemoved += coordinator.DestroyWholePlayerSummons();
             // Old actors must release their original navigation agents before replacing source graphs.
             coordinator.CleanupDirectorActors();
+            coordinator.StopStageRockCoroutines();
             foreach (var projectile in PortSession.FindObjectsOfType<RoR2.Projectile.ProjectileController>())
                 NetworkServer.Destroy(projectile.gameObject);
             foreach (var instance in coordinator.objectiveSupportInstances)

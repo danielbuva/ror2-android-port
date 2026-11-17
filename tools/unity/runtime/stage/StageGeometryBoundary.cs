@@ -82,6 +82,10 @@ public sealed partial class PortSession
     {
         GetStageGeometrySession().PauseStageMapZones();
     }
+    void StopStageRockCoroutines()
+    {
+        stageGeometrySession?.StopStageRockCoroutines();
+    }
     bool InsideSourceStageBounds(Vector3 point)
     {
         return GetStageGeometrySession().InsideSourceStageBounds(point);
@@ -103,7 +107,7 @@ public sealed partial class PortSession
         return GetStageGeometrySession().CleanupStageGeometry();
     }
 
-    // Retain across stage handoffs and partial setup. All release stays in the
+    // Retain across stage handoffs and partial setup. Scene release stays in the
     // awaited cleanup coroutine at its existing call sites; Dispose does not run it.
     sealed class StageGeometrySession : IDisposable
     {
@@ -113,6 +117,7 @@ public sealed partial class PortSession
         int stageZoneNetworkObjects;
         string[] stageZoneActiveNames, stageSourceNames = new string[0];
         MapZone[] stageMapZones = new MapZone[0];
+        MaulingRockZoneManager[] stageRockZones = Array.Empty<MaulingRockZoneManager>();
         Action<CharacterBody, MapZone> stageZoneEntered, stageZoneLeft;
         Action<CharacterBody> stageZoneTeleported;
         bool ownsStageMapZoneObservations;
@@ -277,12 +282,13 @@ public sealed partial class PortSession
             coordinator.stageStaticRoots = new HashSet<GameObject>(roots);
             var transforms = roots.SelectMany(x => x.GetComponentsInChildren<Transform>(true)).ToArray();
             coordinator.r.stage.objects = transforms.Length;
-            coordinator.r.stage.behaviours = roots.Sum(x => x.GetComponentsInChildren<MonoBehaviour>(true).Length);
+            var previewCallbacks = roots.SelectMany(x => x.GetComponentsInChildren<MonoBehaviour>(true)).ToArray();
+            coordinator.r.stage.behaviours = previewCallbacks.Length;
+            stageRockZones = previewCallbacks.OfType<MaulingRockZoneManager>().ToArray();
             if (coordinator.stageSourceObjects)
             {
-                var rocks = roots.SelectMany(x => x.GetComponentsInChildren<MaulingRockZoneManager>(true)).ToArray();
-                coordinator.r.stage.sourceRockZones = rocks.Length;
-                foreach (var rock in rocks)
+                coordinator.r.stage.sourceRockZones = stageRockZones.Length;
+                foreach (var rock in stageRockZones)
                 {
                     if (rock.maulingRockProjectilePrefabs != null)
                     {
@@ -308,7 +314,6 @@ public sealed partial class PortSession
                         coordinator.r.stage.sourceDustLocationsResolved += manager.dustStreakLocations.Count(x => x);
                 }
             }
-            var previewCallbacks = roots.SelectMany(x => x.GetComponentsInChildren<MonoBehaviour>(true)).ToArray();
             coordinator.r.stage.sourceAudioComponents = previewCallbacks.Count(IsOriginalSceneAudio);
             // Shipped inactive variant parents legitimately prevent Start from running.
             coordinator.r.stage.previewDisableComponents = previewCallbacks.Count(x => x && x.GetType() == typeof(DisableOnStart));
@@ -658,6 +663,14 @@ public sealed partial class PortSession
             if (coordinator.r.stage != null)
                 coordinator.r.stage.mapZonesReady = false;
         }
+        public void StopStageRockCoroutines()
+        {
+            // Retire pending salvos before the outgoing stage loses its Run and projectile services.
+            foreach (var zone in stageRockZones)
+                if (zone)
+                    zone.StopAllCoroutines();
+            stageRockZones = Array.Empty<MaulingRockZoneManager>();
+        }
         public bool InsideSourceStageBounds(Vector3 point)
         {
             // Original spawn bounds allow alternative exit volumes. Enter volumes remain
@@ -720,6 +733,7 @@ public sealed partial class PortSession
         }
         public IEnumerator CleanupStageGeometry()
         {
+            StopStageRockCoroutines();
             PauseStageMapZones();
             StopStageMapZoneObservations();
             if (coordinator.stageGeometryScene.IsValid() && coordinator.stageGeometryScene.isLoaded)
