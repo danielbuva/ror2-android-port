@@ -1537,8 +1537,11 @@ or the complete converter performance gate.
 Phone installation uses the same release transaction. `owner-apk/game_import.py`
 owns bounded original-file validation, free-space estimates and resumable private
 copies; `install_inputs.py` binds the signed input/stage plan to admitted local
-paths and generates a local source-output assembly receipt. No private replay
-profile is a public release dependency. `install_flow.py` owns durable stage
+paths and writes the private original-file inventory and configuration used by
+the native-code owner. Startup metadata uses the admitted content hashes by
+default, so copying identical inputs again preserves its identity.
+`install_inputs.py` also generates the source-output assembly receipt.
+`install_flow.py` owns durable stage
 checkpoints and failure/retry state; producer receipts remain the authority for
 reuse. Managed-host `OwnerInputImport` is the Android-free stream counterpart,
 `OwnerInputSource` adapts SAF trees/ZIP streams, and `OwnerBuildService` owns the

@@ -571,7 +571,10 @@ and eight ordered `stages` (`id`, `title`, `jobs`). Stage IDs are `admission`,
 `staging`, `assembly`, `textures`, `native`, `apk`, `signing`, `install`.
 Every producer and dependency occurs once in a production stage; dependencies
 cannot follow their consumer's stage. Bindings select only admitted original
-files/directories (`.` selects the imported root). Such releases require minimum
+files/directories (`.` selects the imported root). Without an explicit
+`inventory` binding, startup metadata uses the admitted file hashes. Admission
+also writes the native-code owner's private inventory and local configuration
+from the selected reviewed version. Such releases require minimum
 installer version 3 for the final alpha policy. Maintainers must supply a complete reviewed source recipe;
 this feature does not invent missing game producers or supply private replay
 packets. The assembly receipt is generated locally from verified producer outputs,
