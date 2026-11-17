@@ -7046,3 +7046,22 @@ minimum asset identities remain unchanged. Manual provenance, privacy, licensing
 and sensitive-content review found no game bytes, shader code, private paths,
 credentials or third-party implementation. Generated materials remain local;
 visual acceptance requires device evidence.
+
+### Whole-game PhysicMaterial and BillboardAsset source records
+
+The profile selects 19 PhysicMaterials and eight BillboardAssets from 17
+original bundles. The record producer retains their original bodies and
+complete native types. Fresh bundle preparation checks the serialized PPtrs.
+The emitted records have no nonnull references. Host evidence is under
+`work/coordination/p1-wholegame-1031/phone-chain-audit-1112/current-native-null-pointer-assets-1117/`.
+Exact-editor load and device acceptance remain open.
+
+The provenance, privacy, licensing and sensitive-content audit found only the
+input identity, original asset paths and serialized IDs, body and file hash
+pins, sizes and destination identities. The profile includes no asset bodies,
+third-party implementation, private paths or credentials. Generated packs and
+evidence stay local.
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-whole-game-native-leaf-records.json` | `7a9d9587e463663be0b4410568c382ae48821a5ab7b3be33fa52d84396235f31` |

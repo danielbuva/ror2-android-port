@@ -856,6 +856,11 @@ require `native_type_hash` for each output. The pack retains that identity and
 `object_produce.py` checks it after its own source type projection, before bundle
 emission. Source readers close per supplier, script caches expire at process exit
 and input pins are rechecked; no new runtime owner is added.
+`recipe/owner-whole-game-native-leaf-records.json` uses the same owner to
+supply 19 PhysicMaterials and eight BillboardAssets from their original
+serialized members. Release graph preparation checks the full type layouts and
+PPtr closure. The verified source bodies have no nonnull references, so the
+profile leaves them intact.
 The same record owner imports named `ControlPlayableAsset` PropertyName mappings
 with `control_exposed_name_default`. An exact-editor authored fixture establishes
 the mapping default; original managed metadata and pinned AssetRipper encoding
