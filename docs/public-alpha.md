@@ -86,7 +86,8 @@ retain J595/J755 ownership guards; final alpha installation remains separate.
 
 ## Controls, UI and sessions
 
-Owner playtest gate (10 minutes, physical controller and touchscreen):
+[Owner playtest gate](PLAYTESTING.md#ten-minute-owner-playtest) (10 minutes,
+physical controller and touchscreen):
 
 - [ ] Use the controller to choose a survivor/difficulty, open loadout, select a
       skill/skin, close it and Start. Repeat with touch; confirm no hidden Start
