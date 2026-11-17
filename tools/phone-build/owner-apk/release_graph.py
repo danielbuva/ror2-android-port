@@ -16,6 +16,7 @@ import re
 from types import SimpleNamespace
 
 PREFIX = "tools/phone-build/accepted-output/"
+PLAYER_RESOURCE_ASSEMBLIES = ("System.Data", "System.Drawing", "mscorlib")
 
 
 def digest(path):
@@ -85,6 +86,7 @@ class Graph:
         self.job_profiles = {}
         self.public_files = {}
         self.bundle_release_jobs = set()
+        self.conversion = None
 
     def startup(self):
         """Share source startup identity between final files and managers."""
@@ -188,6 +190,7 @@ class Graph:
         providers = {dependency: self.build(dependency, (*active, pin)) for dependency in suppliers(profile)}
         phase_arguments = self.player_arguments(providers) if producer == "player_data" else []
         needs = list(providers.values())
+        request = None
         arguments = ["--profile", "${repo}/" + path, "--profile-sha256", pin, "--output", "${output}"]
         if producer in {
             "object_produce",
@@ -208,7 +211,13 @@ class Graph:
             arguments += ["--sdk", "${input:sdk}"]
         if producer == "player_data":
             # Player defaults belong to AndroidPlayer, not editor Contents.
-            arguments += ["--sdk", "${input:sdk_contents}/../../PlaybackEngines/AndroidPlayer"]
+            if self.conversion:
+                sdk = self.jobs[self.conversion]["request"]["sdk_install"]
+                sdk_contents = sdk + "/Unity.app/Contents"
+                arguments += ["--sdk", sdk + "/PlaybackEngines/AndroidPlayer"]
+            else:
+                sdk_contents = "${input:sdk_contents}"
+                arguments += ["--sdk", sdk_contents + "/../../PlaybackEngines/AndroidPlayer"]
         if producer == "object_produce" and "sdk" in profile:
             # Object profiles pin paths relative to Unity.app, while shader
             # tools bind its Contents directory. Preserve the profile root.
@@ -255,18 +264,25 @@ class Graph:
         elif producer == "player_data":
             arguments += [
                 "--builtin-extra",
-                "${input:sdk_contents}/Resources/unity_builtin_extra",
+                sdk_contents + "/Resources/unity_builtin_extra",
                 "--editor-resources",
-                "${input:sdk_contents}/Resources/unity editor resources",
-                "--converter",
-                "${input:converter}",
-                "--converter-receipt-sha256",
-                "${input_sha256:converter_receipt}",
-                "--code-request",
-                "${input:code_request}",
-                "--managed-production",
-                "${input:managed}",
+                sdk_contents + "/Resources/unity editor resources",
             ]
+            if self.conversion:
+                needs.append(self.conversion)
+                fresh_arguments, request = self.player_conversion()
+                arguments += fresh_arguments
+            else:
+                arguments += [
+                    "--converter",
+                    "${input:converter}",
+                    "--converter-receipt-sha256",
+                    "${input_sha256:converter_receipt}",
+                    "--code-request",
+                    "${input:code_request}",
+                    "--managed-production",
+                    "${input:managed}",
+                ]
             for texture in profile.get("textures", []):
                 dependency = providers[texture["profile_sha256"]]
                 arguments += ["--texture-pack", "${job_directory:" + dependency + ":receipt}", "${sha256:" + dependency + ":receipt}"]
@@ -319,7 +335,7 @@ class Graph:
             else:
                 targets += [
                     "unity default resources",
-                    *["Managed/Resources/" + name + "-resources.dat" for name in ("System.Data.dll", "System.Drawing.dll", "mscorlib.dll")],
+                    *["Managed/Resources/" + name + ".dll-resources.dat" for name in PLAYER_RESOURCE_ASSEMBLIES],
                 ]
                 for row in self.phases.values():
                     targets.extend(row["outputs"])
@@ -334,6 +350,8 @@ class Graph:
                     targets.append(profile["shared_defaults"]["file"])
             outputs = {"apk/assets/bin/Data/" + target: "apk/assets/bin/Data/" + target for target in targets}
         self.jobs[name] = {"schema": 1, "script": PREFIX + producer + ".py", "arguments": arguments, "needs": needs, "outputs": outputs, "artifacts": artifacts}
+        if request is not None:
+            self.jobs[name]["request"] = request
         self.profile_files[name] = path
         self.job_profiles[name] = profile
         return name
@@ -720,24 +738,126 @@ class Graph:
             "bytes": "${bytes:" + job + ":" + artifact + "}",
         }
 
-    def native_code(self, request_path):
+    def code_conversion(self, request_path):
+        """Run original-input managed production and preserve its converter cohort."""
+        request = json.loads((self.repo / request_path).read_text())
+        if request.get("output") != "${output}" or "source_inputs" not in request:
+            raise ValueError("code request must select original source inputs and the dispatcher output")
+        target = request.get("target", {})
+        profile = target.get("profile", "")
+        source = target.get("source", "")
+        if not profile.startswith("${repo}/") or not (source == "${repo}" or source.startswith("${repo}/")):
+            raise ValueError("code request must select a public target profile and authored source root")
+        profile_path = self.repo / profile.removeprefix("${repo}/")
+        source_root = self.repo if source == "${repo}" else self.repo / source.removeprefix("${repo}/")
+        if any(path.resolve(strict=True) != path or not path.is_relative_to(self.repo) for path in (profile_path, source_root)):
+            raise ValueError("code target profile and source must be canonical public paths")
+        selected = json.loads(profile_path.read_text())
+        paths = [
+            profile_path.relative_to(self.repo).as_posix(),
+            "recipe/owner-managed-code.json",
+            "recipe/owner-player-code.json",
+            "recipe/owner-native-arm64.json",
+            "recipe/original-assemblies.json",
+            "recipe/assembly-transforms.json",
+            "recipe/owner-public-tools.json",
+            "tools/phone-build/package-assemblies/profile.json",
+        ]
+        paths.extend((source_root / "recipe" / policy).relative_to(self.repo).as_posix() for policy in ("build-entry-inputs.json", "runtime-sources.json"))
+        transforms = json.loads((self.repo / "recipe/assembly-transforms.json").read_text())
+        paths.extend(transforms["tool_sources"])
+        for relative, expected in selected["source_files"].items():
+            path = source_root / relative
+            if path.resolve(strict=True) != path or not path.is_relative_to(source_root) or digest(path) != expected:
+                raise ValueError("code target authored source drift: " + relative)
+            paths.append(path.relative_to(self.repo).as_posix())
+        name = "recipe/jobs/owner-code-conversion.json"
+        cache_witnesses = request.pop("cache_witnesses", [])
+        self.jobs[name] = {
+            "schema": 1,
+            "script": "tools/phone-build/owner-code/produce.py",
+            "arguments": ["${request}", "--stop-after-conversion"],
+            "request": request,
+            "needs": [],
+            "outputs": {},
+            "artifacts": {
+                "receipt": "backend/converter/result.json",
+                "metadata": "backend/converter/data/Metadata/global-metadata.dat",
+                "sources": "backend/sources",
+            },
+        }
+        if cache_witnesses:
+            self.jobs[name]["cache_witnesses"] = cache_witnesses
+        self.profile_files[name] = request_path
+        self.public_files[name] = paths
+        self.job_profiles[name] = {}
+        return name
+
+    def player_conversion(self):
+        """Expose the converter resources and regular managed outputs used by the player."""
+        conversion = self.jobs[self.conversion]
+        managed = "managed-production/"
+        conversion["artifacts"].update(
+            managed_receipt=managed + "result.json",
+            managed_providers=managed + "providers.json",
+            managed_sources=managed + "gameplay/inputs.json",
+            managed_gameplay=managed + "gameplay/postprocessed/Assembly-CSharp.dll",
+            managed_packages=managed + "packages/postprocessed",
+            managed_maps=managed + "maps",
+            managed_support=managed + "support",
+            **{"managed_" + assembly: managed + "ordinary/" + assembly + ".dll" for assembly in ("RoR2", "AK.Wwise.Unity.API", "AK.Wwise.Unity.MonoBehaviour")},
+            **{"resource_" + assembly: "backend/converter/data/Resources/" + assembly + ".dll-resources.dat" for assembly in PLAYER_RESOURCE_ASSEMBLIES},
+        )
+        original_request = conversion["request"]
+        # The backend request contains managed provider paths but drops the
+        # original package source needed for importer metadata and script IDs.
+        request = {
+            "source_inputs": {"packages": original_request["source_inputs"]["packages"]},
+            "target": {"source": original_request["target"]["source"]},
+        }
+        return [
+            "--converter",
+            "${job_directory:" + self.conversion + ":receipt}",
+            "--converter-receipt-sha256",
+            "${sha256:" + self.conversion + ":receipt}",
+            "--code-request",
+            "${request}",
+            "--managed-production",
+            "${job_directory:" + self.conversion + ":managed_receipt}",
+        ], request
+
+    def native_code(self, request_path, conversion=None):
         """Produce native code and its matching metadata from one converter cohort."""
         request = json.loads((self.repo / request_path).read_text())
         if request.get("output") != "${output}":
             raise ValueError("native request must use the dispatcher output")
+        arguments = ["${request}"]
+        if conversion:
+            receipt = self.artifact_pin(conversion, "receipt")
+            request.update(
+                converter_receipt=receipt["path"],
+                converter_receipt_sha256=receipt["sha256"],
+                metadata=self.artifact_pin(conversion, "metadata")["path"],
+                sources=self.artifact_pin(conversion, "sources")["path"],
+                sources_compressed=True,
+            )
+            arguments.append("--from-conversion")
         name = "recipe/jobs/owner-native-code.json"
+        cache_witnesses = request.pop("cache_witnesses", [])
         self.jobs[name] = {
             "schema": 1,
             "script": "tools/phone-build/owner-code/native.py",
-            "arguments": ["${request}"],
+            "arguments": arguments,
             "request": request,
-            "needs": [],
+            "needs": [conversion] if conversion else [],
             "outputs": {
                 "apk/lib/arm64-v8a/libil2cpp.so": "libil2cpp.so",
                 "apk/assets/bin/Data/Managed/Metadata/global-metadata.dat": "global-metadata.dat",
             },
             "artifacts": {"receipt": "result.json"},
         }
+        if cache_witnesses:
+            self.jobs[name]["cache_witnesses"] = cache_witnesses
         self.profile_files[name] = request_path
         policy = "recipe/owner-native-arm64.json"
         self.job_profiles[name] = {"authored_inputs": {policy: digest(self.repo / policy)}}
@@ -788,8 +908,9 @@ class Graph:
         self.job_profiles[name] = {"authored_inputs": {path: digest(self.repo / path) for path in policies}}
         return name
 
-    def compile(self, selected, *, bundle_manifest=False, native_request=None, sdk_request=None, burst_request=None, catalog_request=None):
+    def compile(self, selected, *, bundle_manifest=False, code_request=None, native_request=None, sdk_request=None, burst_request=None, catalog_request=None):
         entries = {}
+        self.conversion = self.code_conversion(code_request) if code_request else None
         selected_jobs = [self.build(digest(self.repo / path)) for path in selected]
         # Referenced donors and staged bundles remain runtime dependencies. Ship
         # their actual containers, while pack-only suppliers remain artifacts.
@@ -802,8 +923,10 @@ class Graph:
             selected_jobs.append(self.catalog_complete(catalog_jobs, catalog_request))
         if bundle_manifest:
             selected_jobs.append(self.bundle_manifest(catalog_jobs))
+        if self.conversion and not native_request and not any(self.conversion in job["needs"] for job in self.jobs.values()):
+            raise ValueError("code conversion requires a player or native request consumer")
         if native_request:
-            selected_jobs.append(self.native_code(native_request))
+            selected_jobs.append(self.native_code(native_request, self.conversion))
         if sdk_request:
             selected_jobs.append(self.sdk_package(sdk_request))
         if burst_request:
@@ -830,7 +953,7 @@ class Graph:
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--repo", type=Path, required=True)
-    parser.add_argument("--profile", action="append", required=True, help="repo-relative complete output profile; repeat for a cohort")
+    parser.add_argument("--profile", action="append", default=[], help="repo-relative complete output profile; repeat for a cohort")
     parser.add_argument("--player-phases", help="repo-relative complete optional player phase/output declaration")
     parser.add_argument(
         "--bundle-manifest",
@@ -838,7 +961,8 @@ def main():
         help="generate the native manifest from every selected payload bundle; missing native dependencies fail production",
     )
     parser.add_argument("--catalog-request", help="repo-relative source catalog metadata template; validates actual final containers and runtime registry")
-    parser.add_argument("--native-request", help="repo-relative native request template; emits matching library and metadata from acquired converter inputs")
+    parser.add_argument("--code-request", help="repo-relative original-input code request; supplies fresh conversion to player and native jobs")
+    parser.add_argument("--native-request", help="repo-relative native request; emits matching library and metadata from fresh or acquired conversion")
     parser.add_argument("--sdk-request", help="repo-relative SDK request template; emits Android resources, dex and engine libraries")
     parser.add_argument("--burst-request", help="repo-relative managed/source request template; compiles Burst and retains preservation roots")
     parser.add_argument("--extra-arguments", type=Path, help="JSON producer name -> additional CLI argv, with dispatcher substitutions")
@@ -849,6 +973,7 @@ def main():
         args.profile,
         bundle_manifest=args.bundle_manifest,
         catalog_request=args.catalog_request,
+        code_request=args.code_request,
         native_request=args.native_request,
         sdk_request=args.sdk_request,
         burst_request=args.burst_request,

@@ -1,7 +1,7 @@
 # Sustained game performance baseline
 
-Latest sustained raw-frame observation: 2026-11-13, bounded assisted combat;
-see [the shared-runner qualification](#shared-runner-and-bounded-combat-qualification).
+The [2026-11-17 Nova observation](#120-hz-battery-and-clock-observation) covers
+30 minutes of bounded assisted combat with the 120 Hz preference enabled.
 Historical aggregate baseline: 2026-10-31. The earlier 2026-11-12 raw capture
 is an assisted first-stage observation: invincibility, neutral movement and
 small camera drags; composed renderer on a 120 Hz capable panel. The sustained trace
@@ -57,6 +57,36 @@ quantiles unavailable. Final-ten-minute quantiles also require a full 600-second
 endpoint window. These measure Unity active-frame intervals, not compositor
 presentation timing. Capture overhead and ordinary sustained-play qualification
 remain open; historical aggregate evidence below cannot acquire raw quantiles.
+
+### 120 Hz battery and clock observation
+
+The Main Nova completed 1,800.001 seconds of stationary native primary-fire
+combat with invincibility and a diagnostic 12-monster limit. The startup
+display request and Unity readback both reported 120 Hz. All 61 observations
+at the 30-second cadence recorded external power. The battery fell from
+80% to 77%, or 3 percentage points per 30 minutes (6 per hour), and the
+charge counter fell by 170,016 µAh. Trapezoidal weighting of signed current
+× voltage across the full window gave −1,017 mW at the battery terminals.
+External supply draw and the unplugged energy budget remain unknown.
+
+The sampled CPU policy maxima and CPU/GPU cooling states stayed unchanged.
+The GPU maximum was unavailable. Instantaneous clocks varied, leaving thermal
+throttling onset unestablished at the 30-second cadence. The safety sampler's
+largest runtime gap was 0.705 seconds. Peak CPU/GPU/battery temperatures in
+the observation were 97.1/86.5/39 C. Processor readings exceeded 80 C for
+1,799.575 covered seconds and 1,825.584 seconds in the wider monitored phase.
+Temperature excursions above 95 C cleared before the three-second stop limit.
+
+The reconciled 188,623 active frames average 104.966 FPS, with p50/p95/p99
+of 8.333/16.667/16.692 ms and 8 frames above 50 ms. The covered final
+599.996 seconds average 99.587 FPS, with 6 frames above 50 ms. Adopted package
+placement, native teardown, stopped/asleep readback and lease release passed.
+Ordinary sustained play, matched visual fidelity and capture overhead remain open.
+
+Evidence lives in `work/coordination/alpha-120hz-energy-20261117/nova/`
+(`terminal.done.json`, `performance.json`, `thermal.jsonl`, `display-request.log`).
+The APK SHA-256 is `3fe278af144ff6b428bd7ed48edd6cdf5a07e60bd531f1f2ba6178b083d146b1`
+from build source `f93b1676`.
 
 ### Shared runner and bounded combat qualification
 

@@ -281,6 +281,135 @@ class ProducedMembers:
         return identities
 
 
+def validate_model_skins(members, runtime_scripts, targets=None):
+    """Check every emitted model skin slot, including body/display subassets.
+
+    Catalog roots alone do not cover these referenced ScriptableObjects. Follow
+    their actual PPtrs and MonoScripts rather than trusting names or preloads.
+    Unity typed loading remains a separate check.
+    """
+    records = module("_catalog_skin_records", HERE / "record_produce.py")
+    controller = ("ModelSkinController", "RoR2", "RoR2.dll")
+    skin = ("SkinDef", "RoR2", "RoR2.dll")
+    controller_id = S.md4("".join(controller).encode())
+    schemas, controllers, slots = {}, 0, 0
+    for member, (_, layout, objects) in members.members.items():
+        for path_id, row in objects.items():
+            typ = layout["types"][row["type_id"]]
+            if typ["class_id"] != 114 or typ.get("script_id") != controller_id:
+                continue
+            _, typ, body = members.record(member, (0, path_id))
+            if members.managed_identity(member, typ, body) != controller or controller not in runtime_scripts:
+                raise ValueError("model skin controller absent from current runtime registry")
+            if typ["tree"] not in schemas:
+                schemas[typ["tree"]] = records.SCHEMA.type_tree(io.BytesIO(typ["tree"]))
+            _, fields = records.fields(body, schemas[typ["tree"]])
+            if ("skins", "Array") not in fields:
+                raise ValueError("model skin controller has no serialized skins array: " + member + ":" + str(path_id))
+            array_start, _ = fields[("skins", "Array")]
+            expected_slots = struct.unpack_from("<I", body, array_start)[0]
+            controller_slots = 0
+            for field, (start, end) in fields.items():
+                if field[:2] != ("skins", "Array") or len(field) != 3 or not field[2].isdigit():
+                    continue
+                context = member + ":" + str(path_id) + " " + ".".join(field)
+                if end - start != 12:
+                    raise ValueError("model skin slot is not a PPtr: " + context)
+                pointer = struct.unpack_from("<iq", body, start)
+                try:
+                    owner, target_type, target = members.record(member, pointer)
+                    if target_type["class_id"] != 114 or members.managed_identity(owner, target_type, target) != skin:
+                        raise ValueError("target is not RoR2.SkinDef")
+                    if skin not in runtime_scripts:
+                        raise ValueError("SkinDef absent from current runtime registry")
+                except ValueError as error:
+                    raise ValueError("unresolved model skin slot: " + context + ": " + str(error)) from error
+                slots += 1
+                controller_slots += 1
+                if targets is not None:
+                    targets.setdefault((member, path_id), {})[field[2]] = (owner, pointer[1])
+            if controller_slots != expected_slots:
+                raise ValueError("model skin array layout differs: " + member + ":" + str(path_id))
+            controllers += 1
+    return dict(model_skin_controllers=controllers, model_skin_slots=slots)
+
+
+def body_skin_targets(members, roots, slots, skin_paths):
+    """Follow the same body → ModelLocator → model → controller route as startup."""
+    records = module("_catalog_skin_records", HERE / "record_produce.py")
+    controller_id = S.md4(b"ModelSkinControllerRoR2RoR2.dll")
+    locator_id = S.md4(b"ModelLocatorRoR2RoR2.dll")
+    bundle_by_member = {member: bundle for bundle, names in members.bundles.items() for member in names}
+    schemas = {}
+
+    def spans(typ, body):
+        tree = typ["tree"]
+        if tree not in schemas:
+            schemas[tree] = records.SCHEMA.type_tree(io.BytesIO(tree))
+        return records.fields(body, schemas[tree])[1]
+
+    def component(member, body, fields, script_id):
+        for path, (start, _) in fields.items():
+            if len(path) != 4 or path[:2] != ("m_Component", "Array") or path[3] != "component":
+                continue
+            pointer = struct.unpack_from("<iq", body, start)
+            if not pointer[1]:
+                continue
+            owner, component_row = members.resolve(member, pointer)
+            typ = members.members[owner][1]["types"][component_row["type_id"]]
+            if typ["class_id"] == 114 and typ.get("script_id") == script_id:
+                return pointer
+
+    def skin_content(target):
+        owner, path_id = target
+        row = members.members[owner][2][path_id]
+        _, _, body = members.record(owner, (0, path_id))
+        # Identical bytes and type in one member use the same external PPtr table.
+        return owner, row["type_id"], hashlib.sha256(body).digest()
+
+    equivalent_paths = {}
+    for target, paths in skin_paths.items():
+        equivalent_paths.setdefault(skin_content(target), set()).update(paths)
+
+    result = {}
+    for member, pointer in roots:
+        owner, typ, body = members.record(member, pointer)
+        fields = spans(typ, body)
+        locator = component(owner, body, fields, locator_id)
+        if locator is None:
+            continue
+        name_start, _ = fields[("m_Name",)]
+        (size,) = struct.unpack_from("<I", body, name_start)
+        body_name = body[name_start + 4 : name_start + 4 + size].decode("utf-8")
+        owner, typ, body = members.record(owner, locator)
+        start, _ = spans(typ, body)[("_modelTransform",)]
+        model = struct.unpack_from("<iq", body, start)
+        if not model[1]:
+            continue
+        owner, typ, body = members.record(owner, model)
+        # Unity Transform begins with its serialized GameObject reference.
+        if typ["class_id"] not in (4, 224):
+            raise ValueError("body modelTransform did not resolve to a Transform: " + body_name)
+        owner, typ, body = members.record(owner, struct.unpack_from("<iq", body))
+        controller = component(owner, body, spans(typ, body), controller_id)
+        if controller is None:
+            continue
+        owner, row = members.resolve(owner, controller)
+        for index, target in slots.get((owner, row["path_id"]), {}).items():
+            target_owner, target_id = target
+            bundle = bundle_by_member[target_owner]
+            paths = sorted(skin_paths.get(target, ()))
+            expected = dict(bundle=bundle, serialized=f"{target_owner}:{target_id}")
+            if paths:
+                expected["paths"] = paths
+            elif aliases := equivalent_paths.get(skin_content(target)):
+                expected["equivalentPaths"] = sorted(aliases)
+            previous = result.setdefault(body_name, {}).setdefault(index, expected)
+            if previous != expected:
+                raise ValueError("ambiguous body skin target: " + body_name + " slot " + index)
+    return result
+
+
 def validate_locations(metadata, members, registry):
     runtime_scripts = set()
     for member in members.bundles[registry]:
@@ -289,7 +418,9 @@ def validate_locations(metadata, members, registry):
             if layout["types"][row["type_id"]]["class_id"] == 115:
                 _, _, body = members.record(member, (0, path_id))
                 runtime_scripts.add(script_identity(body))
-    advertised = {}
+    body_ids = {id_ for key in metadata.get("keys", ()) if key["key"] == "CharacterBody" for id_ in key["locations"]}
+    body_paths = {(row["bundle"], row["path"].casefold()) for row in metadata["locations"] if row["id"] in body_ids}
+    advertised, skin_paths, body_roots = {}, {}, set()
     for bundle in set(row["bundle"] for row in metadata["locations"]):
         for member in members.bundles.get(bundle, []):
             layout = members.members[member][1]
@@ -313,6 +444,10 @@ def validate_locations(metadata, members, registry):
                             if actual not in runtime_scripts:
                                 raise ValueError("catalog MonoScript absent from current runtime registry: " + str(actual))
                     advertised.setdefault((bundle, path.casefold()), []).append(actual)
+                    if actual == 1 and (bundle, path.casefold()) in body_paths:
+                        body_roots.add((member, pointer))
+                    if actual == ("SkinDef", "RoR2", "RoR2.dll"):
+                        skin_paths.setdefault((owner, pointer[1]), set()).add(path)
                     if isinstance(actual, tuple) and actual[1:] in {("TMPro", "Unity.TextMeshPro.dll"), ("UnityEngine.Timeline", "Unity.Timeline.dll")}:
                         for identity in members.owned_subassets(owner, root_type, root, actual):
                             if isinstance(identity, tuple) and identity not in runtime_scripts:
@@ -345,7 +480,17 @@ def validate_locations(metadata, members, registry):
             raise ValueError(
                 "catalog endpoint absent or type differs: " + str(row["id"]) + " " + row["path"] + " expected " + qualified + " actual " + str(candidates)
             )
-    return dict(locations=len(metadata["locations"]), container_paths=len(advertised), runtime_scripts=len(runtime_scripts))
+    slots = {}
+    skin_checks = validate_model_skins(members, runtime_scripts, slots)
+    targets = body_skin_targets(members, sorted(body_roots), slots, skin_paths)
+    if targets:
+        metadata["bodySkinTargets"] = targets
+    return dict(
+        locations=len(metadata["locations"]),
+        container_paths=len(advertised),
+        runtime_scripts=len(runtime_scripts),
+        **skin_checks,
+    )
 
 
 def produce(inputs, output):
@@ -388,7 +533,6 @@ def produce(inputs, output):
     if set(files) != names:
         raise ValueError("produced bundle population differs; missing=" + str(sorted(names - files.keys())) + " extra=" + str(sorted(files.keys() - names)))
     facts = produced_bundle_metadata(files)
-    raw = integration_catalog(metadata, facts, bundle_names=names)
     members = ProducedMembers()
     for name, path in files.items():
         bundle = W.B.Bundle(path)
@@ -403,6 +547,7 @@ def produce(inputs, output):
     stream.size = len(stream.getbuffer())
     members.add(registry.name, stream, "@runtime-registry")
     checks = validate_locations(metadata, members, "@runtime-registry")
+    raw = integration_catalog(metadata, facts, bundle_names=names)
     if inputs.read_bytes() != request_bytes or any(dict(bytes=path.stat().st_size, sha256=W.B.sha(path)) != pin for path, pin in pins.items()):
         raise ValueError("catalog inputs changed during production")
     output = Path(output)

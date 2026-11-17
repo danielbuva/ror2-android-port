@@ -8,6 +8,7 @@ from build_lock import (
 )
 import re
 import shutil
+import tempfile
 import time
 import zipfile
 import threading
@@ -217,12 +218,14 @@ def editor(target="lab", action="inspect"):
             "engineer-laser-host",
             "commando-animation-host",
             "enemy-material-audit",
+            "body-animation-audit",
         }:
             from whole_catalog import copy_catalog_asset
 
             fixture, owners = {
                 "commando-animation-host": ("SurvivorSkillInputHost.cs", []),
                 "enemy-material-audit": ("WholeCatalogHost.cs", []),
+                "body-animation-audit": ("WholeCatalogHost.cs", []),
                 "lightning-stake-host": ("LightningStakeSourceContractFixture.cs", ["world/IntegratedWorldBoundary.cs"]),
                 "siren-input-host": (
                     "SirenEggDiagnosticInputExactEditorFixture.cs",
@@ -397,7 +400,39 @@ def freeze_whole_payload(project, result, receipt=None):
     )
 
 
-def validate_whole_payload_reuse(project, receipt_path=None):
+def payload_hashes(directory):
+    return {p.name: sha(p) for p in directory.iterdir() if p.is_file() and p.name != ".prune-keep"}
+
+
+def cache_payload_path(work, directory):
+    """Only admit a direct, independent build-cache payload directory."""
+    cache = Path(work).resolve() / "build-cache"
+    directory = Path(directory)
+    if directory.parent.parent != cache or directory.name != "payload" or directory.resolve() != directory:
+        raise RuntimeError("Unexpected frozen payload reference")
+    return directory
+
+
+def verify_payload(directory, hashes):
+    if (
+        not directory.is_dir()
+        or any((directory / name).is_symlink() or not (directory / name).is_file() for name in hashes)
+        or payload_hashes(directory) != hashes
+    ):
+        raise RuntimeError("Frozen payload reference is missing or changed: " + str(directory))
+    return directory
+
+
+def clone_payload(source, destination, hashes):
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    with tempfile.TemporaryDirectory(dir=destination.parent) as temporary:
+        staged = Path(temporary) / "payload"
+        shutil.copytree(source, staged, ignore=shutil.ignore_patterns(".prune-keep"), copy_function=lambda a, b: copy_build_artifact(a, b, verify=False))
+        verify_payload(staged, hashes)
+        staged.rename(destination)
+
+
+def validate_whole_payload_reuse(project, receipt_path=None, *, check_generated=True):
     receipt_path = receipt_path or WORK / "whole-catalog-code-base.json"
     receipt = read(receipt_path)
     previous_allowed = set(receipt["allowed"])
@@ -412,11 +447,11 @@ def validate_whole_payload_reuse(project, receipt_path=None):
     expected = {path: value for path, value in receipt["files"].items() if path not in added}
     if current != expected:
         raise RuntimeError("Content inputs changed; code-only bundle reuse rejected")
-    current_payload = {p.name: sha(p) for p in (WORK / "generated-android-data").iterdir() if p.is_file() and p.name != ".prune-keep"}
-    if current_payload != receipt["payload"]:
+    if check_generated and payload_hashes(WORK / "generated-android-data") != receipt["payload"]:
         raise RuntimeError("Frozen whole-catalog payload identity changed")
     if added:
         write(receipt_path, dict(receipt, files=current, allowed=sorted(WHOLE_PLAYER_INPUTS)))
+    return receipt
 
 
 def reuse_uncompressed_payload(project):
@@ -818,9 +853,14 @@ def build(
         stage_android_assets(project)
         if bundle_compression:
             reuse_payload = reuse_uncompressed_payload(project)
+        frozen = None
         if reuse_payload:
-            validate_whole_payload_reuse(project, WORK / "whole-catalog-uncompressed-base.json" if bundle_compression else None)
+            frozen = validate_whole_payload_reuse(project, WORK / "whole-catalog-uncompressed-base.json" if bundle_compression else None, check_generated=False)
+        code_only = reuse_payload and not iteration_mode and not bundle_compression
+        generated = WORK / "generated-android-data"
         key = build_cache_key(project, api) if android_symbols == "none" else build_cache_key(project, api, android_symbols)
+        if code_only:
+            key = digest({"build": key, "frozen_payload": frozen["payload"]})
         if bundle_compression:
             key = digest({"build": key, "bundle_compression": bundle_compression})
         if iteration_mode:
@@ -846,14 +886,32 @@ def build(
             if r.get("success") and r.get("errors", 0) == 0 and Path(r["apk"]).exists() and sha(r["apk"]) == r["apk_sha256"]:
                 if android_symbols == "none" and r.get("android_symbols", "none") != "none":
                     raise RuntimeError("Build cache symbol mode does not match the requested normal build")
-                for name, h in r.get("payload", {}).items():
-                    source = dest / "payload" / name
-                    if not source.is_file() or sha(source) != h:
-                        raise RuntimeError("Cached payload is missing or changed: " + name)
-                    copy_build_artifact(source, WORK / "generated-android-data" / name, verify=False)
+                hashes = r["payload"]
+                payload = cache_payload_path(WORK, r.get("payload_directory", dest / "payload"))
+                if frozen is not None and hashes != frozen["payload"]:
+                    raise RuntimeError("Cached payload does not match the current frozen build")
+                verify_payload(payload, hashes)
+                for name in hashes:
+                    copy_build_artifact(payload / name, generated / name, verify=False)
+                if code_only and payload_hashes(generated) != hashes:
+                    raise RuntimeError("Frozen whole-catalog payload identity changed")
+                r["payload_directory"] = str(payload)
                 write(WORK / "config/current-build.json", r)
                 print(json.dumps({"cached": True, **r}, indent=2))
                 return r
+        if frozen is not None and payload_hashes(generated) != frozen["payload"]:
+            raise RuntimeError("Frozen whole-catalog payload identity changed")
+        payload_reference = None
+        if iteration_mode:
+            payload_reference = cache_payload_path(WORK, anchor["payload_directory"])
+            verify_payload(payload_reference, frozen["payload"])
+        elif code_only and frozen.get("build_key"):
+            payload_reference = cache_payload_path(WORK, WORK / "build-cache" / frozen["build_key"] / "payload")
+            if not payload_reference.exists():
+                # Older pruning could retire the full cache while leaving its
+                # freeze receipt. Recover once from the verified mutable copy.
+                clone_payload(generated, payload_reference, frozen["payload"])
+            verify_payload(payload_reference, frozen["payload"])
         (WORK / "graphics-api.txt").write_text(api)
         result = WORK / "lab-build/result.json"
         if result.exists():
@@ -902,6 +960,8 @@ def build(
         if not r["success"] or r.get("errors", 0) > 0:
             raise RuntimeError(r["result"] + "; build errors=" + str(r.get("errors", 0)))
         key = build_cache_key(project, api) if android_symbols == "none" else build_cache_key(project, api, android_symbols)
+        if code_only:
+            key = digest({"build": key, "frozen_payload": frozen["payload"]})
         if bundle_compression:
             key = digest({"build": key, "bundle_compression": bundle_compression})
         if iteration_mode:
@@ -911,7 +971,7 @@ def build(
 
             key = capture_cache_key(key, request_id)
         dest = WORK / "build-cache" / key
-        if dest.exists() and force and not capture_player_linker_inputs and not iteration_mode:
+        if dest.exists() and not capture_player_linker_inputs and not iteration_mode:
             key += "-build-" + request_id
             dest = WORK / "build-cache" / key
         receipt = dest / "result.json"
@@ -998,23 +1058,13 @@ def build(
                 }
             )
         timing.phases["symbols_clone_hash_validation"] = time.monotonic() - symbols_start if android_symbols == "debugging" else 0.0
-        payload = dest / "payload"
-        with timing.phase("payload_reference" if iteration_mode else "payload_clone_hash"):
-            r["payload"] = {p.name: sha(p) for p in (WORK / "generated-android-data").glob("*") if p.is_file() and p.name != ".prune-keep"}
-            if iteration_mode:
-                payload = Path(anchor["payload_directory"])
-                if payload.resolve() != (Path(anchor["apk"]).parent / "payload").resolve() or not payload.resolve().is_relative_to(WORK.resolve()):
-                    raise RuntimeError("Unexpected frozen payload reference")
-                if any(not (payload / name).is_file() or sha(payload / name) != expected for name, expected in r["payload"].items()):
-                    raise RuntimeError("Normal-build payload reference is missing or changed")
+        with timing.phase("payload_reference" if payload_reference else "payload_clone_hash"):
+            r["payload"] = payload_hashes(generated)
+            if payload_reference:
+                payload = verify_payload(payload_reference, r["payload"])
             else:
-                shutil.copytree(
-                    WORK / "generated-android-data",
-                    payload,
-                    dirs_exist_ok=True,
-                    ignore=shutil.ignore_patterns(".prune-keep"),
-                    copy_function=lambda a, b: copy_build_artifact(a, b, verify=False),
-                )
+                payload = dest / "payload"
+                clone_payload(generated, payload, r["payload"])
             r["payload_directory"] = str(payload)
         from iteration_apk import write_anchor
 

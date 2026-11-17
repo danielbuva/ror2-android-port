@@ -7075,3 +7075,23 @@ evidence stay local.
 | Recipe | SHA-256 |
 | --- | --- |
 | `owner-whole-game-native-leaf-records.json` | `7a9d9587e463663be0b4410568c382ae48821a5ab7b3be33fa52d84396235f31` |
+
+### Whole-game native prefab component sources
+
+The profile selects two Transforms, a Light and a Rigidbody from the original
+FireworkLight and SoundEmitter bundles. The producer retains their bodies and
+full layouts. Fresh host emission combines these with the existing GameObject
+selectors and reads back all six native records and eight relocated PPtrs.
+The FireworkLight component list is intact. SoundEmitter uses the existing
+projected GameObject selector. Typed Unity loading and device behavior remain
+open for this output. Host evidence is in
+`work/coordination/p1-wholegame-1031/phone-chain-audit-1112/current-native-route-index-1117/`.
+
+The provenance, privacy, licensing and sensitive-content audit found only the
+input identity, asset paths, serialized IDs, extents, type hashes and source
+and output pins. This profile contains no asset bodies, third-party
+implementation, private paths or credentials.
+
+| Recipe | SHA-256 |
+| --- | --- |
+| `owner-whole-game-prefab-component-source-records.json` | `d0fea0b51e8f32ca83e6fd71ca8d501f93814a6d9dd7c0d194877e5906244f80` |

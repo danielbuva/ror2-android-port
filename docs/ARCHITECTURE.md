@@ -197,6 +197,19 @@ repack require their actual staged bodies and full native types, including on
 cache hits. The request qualification owner supplies the same current managed
 checks and closes staged streams on exit. This preserves declared independent
 preloads without adding catalog entries or a runtime owner.
+Canonical repack also seeds each aliased managed asset group's canonical root
+and its actual MonoScript from the pinned producer bundle. The advertised
+duplicate remains unchanged; loading its address preloads the instance now used
+by consumers. Unrelated external prefab graphs are not traversed.
+For ModelSkinController PPtrs from that producer into the emitted bundle,
+canonical repack also admits retained SkinDefs into their source-matched asset
+groups. It qualifies the native type and actual MonoScript, keeps the advertised
+root, and reads back the retained IDs in those groups' persisted preloads.
+The current `bundle_preload.py --repack` action reuses an existing qualified
+emission through a hash-pinned request; it retains source/type/ownership checks
+and avoids repeating record production for a preload-only repair. The request
+includes selected records for canonical aliases and retained SkinDef source
+matches.
 
 [Alpha policy](ALPHA_POLICY.md) owns packaging/acquisition decisions;
 [screen inventory](SCREEN_COVERAGE.md) maps the current Android surfaces and their
@@ -387,6 +400,29 @@ every produced bundle and the current runtime script
 registry, plus input/startup identity. Existing catalog helpers resolve ownership
 and dependency closure; final serialized containers independently check endpoint
 PPtrs, preload extents, native types and exact MonoScript/runtime bindings.
+Every emitted `ModelSkinController.skins` slot is checked against its actual
+local or external `RoR2.SkinDef` and registered MonoScript. The converter follows
+the serialized body `ModelLocator` to its model controller and records each
+expected SkinDef's bundle, serialized path ID and available container paths in
+`bodySkinTargets`. For retained objects, an equivalent path requires the same
+member, type and serialized body. `BodyCatalogSession` logs every invalid skin
+input in its startup snapshot. The native catalog initializes only after
+validation passes.
+`whole_catalog.py::host_skin_bundles` exposes
+`./dev prototype --action whole-catalog-skin-host --target REQUEST` through
+`tools/catalog/ValidateConvertedSkins.cs.txt`. It consumes that pinned catalog
+request in the idle exact editor under the shared mutex.
+The fixture-only `skin_fixture` specifies `commando_path` and `ward_path`.
+Optional `early_ward` and `early_commando` replay earlier load orders. The fixture
+opens the three startup owners, leaves deferred owners unopened, loads the typed
+bodies in provider order, and checks the same model controller as startup. All
+opened bundles are released in `finally`. Its local receipt records failures
+before the Android gameplay gate.
+During startup, `BodyCatalogSession` opens the objective-support bundle through
+`TeleporterWorldSession` before deserializing body prefabs. The original
+CharacterBody family loads in provider order before the explicit Commando read
+and ward script binding check. The teleporter owner holds and releases the same
+bundle handle.
 Duplicate container keys retain every root. Managed subtype assignability is not
 yet admitted. AnimatorController typed subassets are resolved only through its
 schema-declared behaviour array, with the same script binding and current runtime
@@ -867,6 +903,11 @@ supply 19 PhysicMaterials and eight BillboardAssets from their original
 serialized members. Release graph preparation checks the full type layouts and
 PPtr closure. The verified source bodies have no nonnull references, so the
 profile leaves them intact.
+`recipe/owner-whole-game-prefab-component-source-records.json` supplies the
+original Transform, Light and Rigidbody records used by FireworkLight and
+SoundEmitter. Bundle preparation distinguishes file-local PPtrs from external
+member identities, resolves the component owners and checks every relocated
+pointer in the emitted prefab closure.
 The same record owner imports named `ControlPlayableAsset` PropertyName mappings
 with `control_exposed_name_default`. An exact-editor authored fixture establishes
 the mapping default; original managed metadata and pinned AssetRipper encoding
@@ -1419,14 +1460,24 @@ input-file hash tokens bind acquired tools without embedding host paths.
 Player/shader jobs declare complete serialized outputs; remapping consumes their
 top-level receipts, while player data consumes nested shared-shader and texture
 packs. Their authored shader and player configuration inputs travel in the
-signed closure. Fresh converter/managed inputs remain explicit caller bindings.
+signed closure. With `--code-request`, the player consumes converter resources
+and the managed receipt, provider manifest, CLR outputs and compiled source
+witnesses from the conversion job. The dispatcher expands the original package
+and authored source selections for the player registry in the current release
+checkout. Acquired converter and managed bindings remain available when no code
+request is selected.
 The optional `--native-request` adds `owner-code/native.py` as one cached job
-with final `libil2cpp.so` and matching `global-metadata.dat` outputs. Its public
-request template binds acquired converter receipt, source frames, metadata and
-SDK; the native policy travels in the signed closure. The native owner rechecks
-the converter cohort after linking and verifies its metadata copy before success.
-Planning and measured partial builds emit neither final metadata nor a complete
-release.
+with final `libil2cpp.so` and matching `global-metadata.dat` outputs. With
+`--code-request`, an assembly-stage `produce.py --stop-after-conversion` job
+provides its private receipt, compressed source frames and metadata to the
+native job. The signed closure includes the target profile, its authored files,
+package policy and public transform sources. Without `--code-request`, the
+native request supplies the existing converter bindings. The native owner rechecks the converter cohort
+after linking and verifies its metadata copy before success. Signed cache
+witness paths let acquired SDK/tool receipts invalidate the jobs that consume
+them. The staged install compares its verified producer output digests before
+reusing final entry copies. Planning and measured partial builds emit neither
+final metadata nor a complete release.
 The optional `--burst-request` dispatches `owner-code/produce.py --burst-only`
 with positional request input. Explicit managed providers reuse the current
 cohort; source-input requests first generate that cohort through the existing
@@ -1537,8 +1588,11 @@ or the complete converter performance gate.
 Phone installation uses the same release transaction. `owner-apk/game_import.py`
 owns bounded original-file validation, free-space estimates and resumable private
 copies; `install_inputs.py` binds the signed input/stage plan to admitted local
-paths and generates a local source-output assembly receipt. No private replay
-profile is a public release dependency. `install_flow.py` owns durable stage
+paths and writes the private original-file inventory and configuration used by
+the native-code owner. Startup metadata uses the admitted content hashes by
+default, so copying identical inputs again preserves its identity.
+`install_inputs.py` also generates the source-output assembly receipt.
+`install_flow.py` owns durable stage
 checkpoints and failure/retry state; producer receipts remain the authority for
 reuse. Managed-host `OwnerInputImport` is the Android-free stream counterpart,
 `OwnerInputSource` adapts SAF trees/ZIP streams, and `OwnerBuildService` owns the
@@ -2654,6 +2708,7 @@ The remaining `--action` selectors are classified here:
 | editor | `source-camera-graphics-host` | current |
 | editor | `commando-animation-host` | current |
 | editor | `enemy-material-audit` | current |
+| editor | `body-animation-audit` | current |
 | editor | `character-motor-order` | historical |
 | editor | `catalog-addresses` | historical |
 | editor | `reference-identities` | historical |
@@ -2980,11 +3035,14 @@ Launch mode retains screenshots (default 60 seconds, configurable with
 `capture_interval_seconds`), logs, runtime reports and performance snapshots;
 sustained mode delegates to the existing sustained-session owner, using
 `capture_interval_seconds` for observations (default five seconds). Observations
-follow elapsed-time boundaries and retain available CPU policy frequencies (kHz),
-Qualcomm GPU frequency (Hz), skin temperatures and opt-in diagnostic projectile
-and effect counts. Unavailable sensors/counts remain empty or null; frequencies
-alone do not establish thermal throttling. The independent safety sampler keeps
-its existing subsecond cadence.
+follow elapsed-time boundaries and retain available CPU/GPU clocks and limits,
+thermal cooling-device states, skin temperatures and opt-in diagnostic
+projectile and effect counts. Sustained samples retain external power status,
+battery percentage, signed battery current and voltage, charge counter and
+derived battery-terminal power in mW. Unavailable readings remain empty or null.
+Battery-terminal power excludes any upstream supply draw, and clock changes need
+thermal-limit corroboration. The independent safety sampler keeps its existing
+subsecond cadence.
 Sustained requests may set only `selection.detailedVisualDiagnostics`; the owner
 writes its seed-2, attempt-bound, invincibility-only selector after idle admission.
 The shared runner supplies its lease-checked initial reset to the sustained owner,
@@ -3290,8 +3348,11 @@ preserves unchanged ZIP records, aligns and signs using the existing local lab
 key. Failed attempts remain local; unsigned/alignment intermediates are removed
 after packaging. Each normal cache retains its own `iteration-base.json`; the
 active anchor is replaced only by another normal build. Iteration receipts
-reference that normal cache's hash-verified `payload_directory`, without another
-payload copy, and bind its previously verified signing certificate.
+reference a hash-verified `payload_directory` in the normal build cache and bind
+the normal APK's verified signing certificate. Ordinary code-only APKs also
+reference the frozen full-build payload by cache key. A cache hit verifies the
+referenced payload before restoring the writable staging files. The pruner keeps
+the current freeze keys and payloads referenced by retained APKs.
 `whole-catalog-scripts-build` evaluates `BuildScriptsOnly` with the same owner;
 it is not an acceptance build. `apk-member-compare` compares hash-bound builds
 of the same source without hiding build metadata differences. Normal full-build
@@ -6084,8 +6145,11 @@ content; the producer selects the checkout's own generation.
 bindings. Ordinary whole-catalog composition restores those preimages before
 its existing overlay/audio staging. Lane teardown deletes this private state.
 Generated content, game inputs and canonical staging are untouched. Completed
-artifacts are cloned/verified into canonical cache without changing current-build
-pointers. Teardown verifies process identities, stops private Gradle daemons
+APKs and symbols are cloned and verified in canonical cache without changing
+current-build pointers. Lane creation seeds only the frozen payload cache
+directories. Publication stores one independent canonical payload snapshot per
+member-hash set, shared by matching APK receipts and preserved after lane
+teardown. Teardown verifies process identities, stops private Gradle daemons
 through their own registry, retains logs/receipts, removes
 the checkout/work clone and preserves published artifacts. The pruner delegates
 old stopped lane removal to this owner. Lane device access refuses before ADB;
@@ -7470,6 +7534,15 @@ recovered-resource coverage. It does not initialize native catalogs, mutate
 materials or establish Android shader support or visual parity. Setup requires
 the prepared lab project and generated catalog; completion retains a private
 editor receipt and adds no runtime state.
+
+`WholeCatalogHost.AuditBodyAnimations` owns the current exact-editor
+`./dev editor --target lab --action body-animation-audit` census. It identifies
+survivors through the native provider's typed definitions and reads imported
+body prefabs without activating them. The private receipt lists direct and
+deferred controller, avatar and skin bindings, initial and main state types,
+aim links and controller parameters, and compatible clip-event receivers.
+It requires the prepared project and generated catalog and adds no runtime
+state. Playback and event timing require a device check.
 
 `TeleporterWorldSession.ObserveOwnedSurface` supplies the existing opt-in live
 visual census. A matching lab selector may request `detailedVisualDiagnostics`;

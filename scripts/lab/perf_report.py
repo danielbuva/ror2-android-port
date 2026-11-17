@@ -314,7 +314,7 @@ def analyze(session, thermal, raw_trace=None, completed=None):
             "Five-minute thermal bins align snapshot UTC with thermal UTC; runtime counter window uses first/last host observations.",
             "Final ten-minute counters use the first retained observation inside the last 600 host seconds; uncovered boundary time is reported, never interpolated.",
             "Thermal exposure uses left-sample hold only across gaps <=1 s; uncovered boundaries and longer gaps are unmeasured.",
-            "No clocks or scheduler trace: HAL status alone cannot establish or exclude throttling. Battery drain is unmeasured while plugged in.",
+            "This report does not attribute clock changes to thermal limits or calculate battery-terminal power. Unplugged drain requires an unplugged run.",
         ],
     )
     report["proposed_pacing_budget"] = dict(
@@ -400,7 +400,7 @@ def markdown(report):
         quantile_line("Individual-frame p50/p95/p99", report["true_frame_time_percentiles_ms"]),
         quantile_line("Final ten-minute individual-frame p50/p95/p99", tail["true_frame_time_percentiles_ms"]),
         f"Periodic frame-mean p50/p95/p99: {fmt(proxy['p50'])}/{fmt(proxy['p95'])}/{fmt(proxy['p99'])} ms (equal observation weights).",
-        "Throttling onset: unestablished; no clocks/scheduler trace retained.",
+        "Throttling onset: unestablished by this report.",
         "",
         *budget_lines,
         "",

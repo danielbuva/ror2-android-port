@@ -357,7 +357,12 @@ class BundlePreparationTests(unittest.TestCase):
     def test_fresh_preparation_emission_repack_and_warm_reuse(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
-            inputs, _, _, _ = self.fixture(root)
+            inputs, request, policy, pin = self.fixture(root)
+            # A local pointer must ignore the same member/path ID in another source file.
+            policy["staged_bindings"] = [dict(source=["other.bundle", "CAB-a", 40], destination=["external", "CAB-external", 10])]
+            (root / "policy.json").write_text(json.dumps(policy))
+            request["policy"] = pin(root / "policy.json")
+            inputs.write_text(json.dumps(request))
             result = P.prepare_request(inputs, root / "prepared")
             self.assertEqual((result["records"], result["endpoints"]), (4, 1))
             rows = list(P.json_rows(root / "prepared/selected-records.jsonl"))
@@ -462,7 +467,7 @@ class BundlePreparationTests(unittest.TestCase):
                 )
             )
             result = P.module("catalog_complete").produce(catalog, root / "catalog")
-            self.assertEqual(result["checks"], dict(locations=1, container_paths=1, runtime_scripts=0))
+            self.assertEqual(result["checks"], dict(locations=1, container_paths=1, runtime_scripts=0, model_skin_controllers=0, model_skin_slots=0))
             actual = json.loads((root / "catalog/whole-catalog.json").read_bytes())
             self.assertEqual(actual["bundles"]["content"]["sha256"], emitted["sha256"])
 
