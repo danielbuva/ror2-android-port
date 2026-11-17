@@ -197,6 +197,19 @@ repack require their actual staged bodies and full native types, including on
 cache hits. The request qualification owner supplies the same current managed
 checks and closes staged streams on exit. This preserves declared independent
 preloads without adding catalog entries or a runtime owner.
+Canonical repack also seeds each aliased managed asset group's canonical root
+and its actual MonoScript from the pinned producer bundle. The advertised
+duplicate remains unchanged; loading its address preloads the instance now used
+by consumers. Unrelated external prefab graphs are not traversed.
+For ModelSkinController PPtrs from that producer into the emitted bundle,
+canonical repack also admits retained SkinDefs into their source-matched asset
+groups. It qualifies the native type and actual MonoScript, keeps the advertised
+root, and reads back the retained IDs in those groups' persisted preloads.
+The current `bundle_preload.py --repack` action reuses an existing qualified
+emission through a hash-pinned request; it retains source/type/ownership checks
+and avoids repeating record production for a preload-only repair. The request
+includes selected records for canonical aliases and retained SkinDef source
+matches.
 
 [Alpha policy](ALPHA_POLICY.md) owns packaging/acquisition decisions;
 [screen inventory](SCREEN_COVERAGE.md) maps the current Android surfaces and their
@@ -387,6 +400,29 @@ every produced bundle and the current runtime script
 registry, plus input/startup identity. Existing catalog helpers resolve ownership
 and dependency closure; final serialized containers independently check endpoint
 PPtrs, preload extents, native types and exact MonoScript/runtime bindings.
+Every emitted `ModelSkinController.skins` slot is checked against its actual
+local or external `RoR2.SkinDef` and registered MonoScript. The converter follows
+the serialized body `ModelLocator` to its model controller and records each
+expected SkinDef's bundle, serialized path ID and available container paths in
+`bodySkinTargets`. For retained objects, an equivalent path requires the same
+member, type and serialized body. `BodyCatalogSession` logs every invalid skin
+input in its startup snapshot. The native catalog initializes only after
+validation passes.
+`whole_catalog.py::host_skin_bundles` exposes
+`./dev prototype --action whole-catalog-skin-host --target REQUEST` through
+`tools/catalog/ValidateConvertedSkins.cs.txt`. It consumes that pinned catalog
+request in the idle exact editor under the shared mutex.
+The fixture-only `skin_fixture` specifies `commando_path` and `ward_path`.
+Optional `early_ward` and `early_commando` replay earlier load orders. The fixture
+opens the three startup owners, leaves deferred owners unopened, loads the typed
+bodies in provider order, and checks the same model controller as startup. All
+opened bundles are released in `finally`. Its local receipt records failures
+before the Android gameplay gate.
+During startup, `BodyCatalogSession` opens the objective-support bundle through
+`TeleporterWorldSession` before deserializing body prefabs. The original
+CharacterBody family loads in provider order before the explicit Commando read
+and ward script binding check. The teleporter owner holds and releases the same
+bundle handle.
 Duplicate container keys retain every root. Managed subtype assignability is not
 yet admitted. AnimatorController typed subassets are resolved only through its
 schema-declared behaviour array, with the same script binding and current runtime

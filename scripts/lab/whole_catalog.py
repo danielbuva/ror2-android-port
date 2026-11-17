@@ -1278,7 +1278,8 @@ asyncio.run(main())
         + code
     )
     write(script.with_suffix(".json"), dict(project=str(WORK / "lab-project"), code=code, response=str(out / (Path(template).stem + "-query-result.json"))))
-    run([ROOT / ".local/tools/unity-mcp/Server/.venv/bin/python", script], timeout=180)
+    common_dir = Path(subprocess.check_output(["git", "rev-parse", "--path-format=absolute", "--git-common-dir"], cwd=ROOT, text=True).strip())
+    run([common_dir.parent / ".local/tools/unity-mcp/Server/.venv/bin/python", script], timeout=180)
 
 
 def contracts():
@@ -1985,6 +1986,25 @@ def host_integration():
     print(json.dumps(result["summary"], indent=2))
     if not result["success"]:
         raise RuntimeError("Whole-content import has concrete failures; inspect host-integration.json")
+
+
+def host_skin_bundles(target):
+    """Inspect actual converted body skin references in the idle exact editor."""
+    from build_lock import HOST_BUILD_LOCK, host_build_lock
+
+    request = Path(target).resolve(strict=True)
+    value = read(request)
+    if value.get("schema") != "owner-catalog-inputs-v1":
+        raise ValueError("Skin fixture requires a pinned catalog completion request")
+    out = WORK / "experiments/whole-catalog-skin-host" / now()
+    out.mkdir(parents=True)
+    write(out / "inputs.json", dict(request=str(request)))
+    with host_build_lock(HOST_BUILD_LOCK, operation="Converted body skin typed loads", timeout=1):
+        export_catalog(out, "ValidateConvertedSkins.cs.txt", "skin-host.json")
+    result = read(out / "skin-host.json")
+    print(json.dumps(dict(path=str(out), **result["summary"]), indent=2))
+    if not result["success"]:
+        raise RuntimeError("Converted body skin typed loads failed; inspect skin-host.json")
 
 
 def host_providers():

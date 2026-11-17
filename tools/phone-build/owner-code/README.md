@@ -98,6 +98,10 @@ python tools/phone-build/owner-code/native.py /absolute/owner/request.json --pla
 python tools/phone-build/owner-code/native.py /absolute/owner/new-request.json
 ```
 
+After `produce.py --stop-after-conversion`, use the emitted `native-request.json`
+with `--from-conversion` and a fresh `output`. The same pinned converter receipt
+selects the generated translation units and binds the metadata and sources.
+
 Each invocation needs a **different new output directory**. Requests have exactly
 these fields (all filesystem paths are explicit absolute canonical paths):
 

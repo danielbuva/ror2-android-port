@@ -1583,6 +1583,58 @@ def _emit_closed_native(
     return result
 
 
+def retained_skin_preloads(native, member, donor, groups, selected_records, schemas):
+    """Link the SkinDef IDs used by the donor to their local source asset groups."""
+    identity = ("SkinDef", "RoR2", "RoR2.dll")
+    catalog = module("catalog_complete")
+    skin_id = catalog.S.md4("".join(identity).encode())
+    controller_id = catalog.S.md4(b"ModelSkinControllerRoR2RoR2.dll")
+    _, layout, objects = native.members[donor]
+    file_ids = {i for i, row in enumerate(layout["externals"], 1) if row["path"].rsplit("/", 1)[-1] == member}
+    if not file_ids:
+        return {}
+    targets = set()
+    for pid, row in objects.items():
+        typ = layout["types"][row["type_id"]]
+        if typ.get("script_id") != controller_id:
+            continue
+        _, _, body = native.record(donor, (0, pid))
+        for field, (file_id, path_id) in pointers(body, typ, schemas).items():
+            if field[:2] == ("skins", "Array") and file_id in file_ids and path_id:
+                targets.add(path_id)
+
+    roots = {root for group in groups for root in group["roots"]}
+    retained = targets - roots
+    if not retained:
+        return {}
+    _, layout, objects = native.members[member]
+    descriptors = {}
+    source_roots = {}
+    for row in selected_records:
+        _, owner, pid = row["destination"]
+        if owner != member or pid not in objects or (pid not in roots and pid not in retained):
+            continue
+        typ = layout["types"][objects[pid]["type_id"]]
+        if typ.get("script_id") != skin_id or not row.get("source"):
+            continue
+        key = (tuple(row["source"]), row["sha256"], full_type_key(typ))
+        descriptors[pid] = key
+        if pid in roots:
+            source_roots.setdefault(key, set()).add(pid)
+
+    links = {}
+    for pid in sorted(retained):
+        matches = source_roots.get(descriptors.get(pid), ())
+        if not matches:
+            raise ValueError(f"Donor SkinDef {pid} has no source-matched local asset root")
+        for candidate in (pid, *matches):
+            _, typ, body = native.record(member, (0, candidate))
+            if native.managed_identity(member, typ, body) != identity:
+                raise ValueError(f"Donor SkinDef {pid} has a different managed binding")
+        links[pid] = sorted(matches)
+    return links
+
+
 def repack_canonical_aliases(
     source,
     output,
@@ -1614,7 +1666,7 @@ def repack_canonical_aliases(
     import tempfile
     import time
 
-    W = module("unity_write")
+    W, C = module("unity_write"), module("catalog_complete")
     source, output, canonical_bundle = Path(source), Path(output), Path(canonical_bundle)
     aliases, selected_records = list(aliases), list(selected_records)
     name, member = required["name"], required["member"]
@@ -1663,7 +1715,7 @@ def repack_canonical_aliases(
             externals = [row["path"].rsplit("/", 1)[-1] if row["path"].startswith("archive:/") else row["path"] for row in layout["externals"]]
             if externals != required["externals"] or canonical["member"] not in externals:
                 raise ValueError("Canonical repack must preserve the external member table")
-            native = module("catalog_complete").ProducedMembers()
+            native = C.ProducedMembers()
             native.add(member, stream, name)
             native.add(canonical["member"], target_stream, canonical["name"])
             specifications = {row["path_id"]: row for row in canonical_profile["objects"]}
@@ -1777,7 +1829,59 @@ def repack_canonical_aliases(
             if container is None or set(graph) != set(required["path_ids"]):
                 raise ValueError("Canonical repack required object set differs")
             validate_graph(graph, len(externals))
-            replacements[container] = produce_graph(required, graph, {}, emission_cache=emission_cache, endpoint_record=endpoint_record)
+            # An advertised managed root remains a duplicate, while its consumers
+            # now use the canonical instance. Loading that address must also load
+            # the canonical instance and its script, just like a direct PPtr.
+            # Do not walk unrelated external prefab graphs or change containers.
+            preload_required = copy.deepcopy(required)
+            skin_links = retained_skin_preloads(native, member, canonical["member"], required["asset_groups"], selected_records, schemas)
+            skins_by_root = {}
+            for skin, roots in skin_links.items():
+                for root in roots:
+                    skins_by_root.setdefault(root, []).append(skin)
+            skin_group_preloads = {}
+            for group in preload_required["asset_groups"]:
+                seeds = group.setdefault("preload_roots", [])
+                for root in group["roots"]:
+                    for skin in skins_by_root.get(root, ()):
+                        seed = [name, member, skin]
+                        if seed not in seeds:
+                            seeds.append(seed)
+                        skin_group_preloads.setdefault(group["path"].lower(), set()).add((0, skin))
+                    alias = mapping.get((name, member, root))
+                    if alias is None or alias["duplicate_class_id"] != 114:
+                        continue
+                    target = alias["canonical"]
+                    _, typ, body = native.record(target[1], (0, target[2]))
+                    native.managed_identity(target[1], typ, body)
+                    script_member, script = native.resolve(target[1], struct.unpack_from("<iq", body, 16))
+                    script_bundle = next(bundle for bundle, members in native.bundles.items() if script_member in members)
+                    for seed in (target, [script_bundle, script_member, script["path_id"]]):
+                        if seed not in seeds:
+                            seeds.append(seed)
+
+            def preload_endpoint(target):
+                if target[1] not in native.members:
+                    if endpoint_record is None:
+                        raise ValueError("External preload root requires an actual endpoint reader")
+                    return endpoint_record(target)
+                _, typ, body = native.record(target[1], (0, target[2]))
+                return (
+                    dict(
+                        destination=list(target),
+                        bytes=len(body),
+                        sha256=hashlib.sha256(body).hexdigest(),
+                        class_id=typ["class_id"],
+                        native_type_hash=typ["hash"].hex(),
+                        full_type=full_type_key(typ),
+                        schema=hashlib.sha256(typ["tree"]).hexdigest(),
+                        edges=list(pointers(body, typ, schemas).values()),
+                    ),
+                    body,
+                    typ,
+                )
+
+            replacements[container] = produce_graph(preload_required, graph, {}, emission_cache=emission_cache, endpoint_record=preload_endpoint)
             revised = copy.deepcopy(layout)
             offset = 0
             for obj in sorted(revised["objects"], key=lambda row: row["offset"]):
@@ -1817,6 +1921,11 @@ def repack_canonical_aliases(
                     expected = hashlib.sha256(replacements[pid]).hexdigest() if pid in replacements else hashes[pid]
                     if hashlib.sha256(raw).hexdigest() != expected:
                         raise ValueError("Persisted canonical body differs")
+                    if pid == container and skin_group_preloads:
+                        groups = C.containers(raw)[0]
+                        checked = {path for path, _, preloads in groups if path in skin_group_preloads and skin_group_preloads[path].issubset(preloads)}
+                        if checked != skin_group_preloads.keys():
+                            raise ValueError("Persisted canonical group missing a retained SkinDef preload")
                     if pid != container and set(pointers(raw, metadata["types"][obj["type_id"]], schemas).values()) != graph[pid]:
                         raise ValueError("Persisted canonical pointer graph differs")
             for other in bundle.members:
@@ -1842,6 +1951,7 @@ def repack_canonical_aliases(
             sha256=O.B.sha(target),
             bytes=target.stat().st_size,
             canonical_roots=len(mapping),
+            retained_skin_preloads={str(pid): roots for pid, roots in skin_links.items()},
             preserved_reciprocal_owner_fields=len(ownership),
             changed_fields=len(changes),
             changed_objects=len(replacements) - 1,
@@ -1876,6 +1986,33 @@ def catalog_artifacts(required, final, output):
         return dict(path=str(path), bytes=path.stat().st_size, sha256=O.B.sha(path))
 
     return dict(catalog_profile=pin(profile), catalog_bundle=pin(final["bundle"]))
+
+
+def repack_request(inputs, output, *, cache_directory=None):
+    """Reuse a qualified emission through the pinned canonical repack owner."""
+    from types import SimpleNamespace
+    import json
+
+    inputs = Path(inputs).resolve(strict=True)
+    request = json.loads(inputs.read_bytes())
+    fields = {"source", "required", "aliases", "selected_records", "qualified_types", "canonical_profile", "canonical_bundle"}
+    if request.keys() != fields | {"schema", "codec"} or request["schema"] != "owner-bundle-canonical-inputs-v1":
+        raise ValueError("unsupported canonical repack input contract")
+    pins = module("bundle_endpoints").InputPins(inputs.parent, SimpleNamespace(**globals()))
+    pins.add(inputs)
+    values = {key: pins.read(request[key]) for key in ("required", "aliases", "qualified_types", "canonical_profile")}
+    values["selected_records"] = list(json_rows(pins.pin(request["selected_records"])))
+    values.update({key: pins.pin(request[key]) for key in ("source", "canonical_bundle")})
+    codec = None if request["codec"] is None else pins.pin(request["codec"])
+    result = repack_canonical_aliases(
+        output=output,
+        **values,
+        codec=codec,
+        codec_sha256=None if codec is None else request["codec"]["sha256"],
+        cache_directory=cache_directory,
+    )
+    pins.check()
+    return result
 
 
 def prepare_request(inputs, output):
@@ -2046,6 +2183,7 @@ def main():
 
     parser = argparse.ArgumentParser(description="Emit an explicitly partial, closed native bundle from source-produced records")
     parser.add_argument("--inputs", type=Path, help="explicit checked emission/canonical request; paths relative to this file")
+    parser.add_argument("--repack", type=Path, help="current: canonical repack of an existing qualified emission with pinned inputs")
     parser.add_argument("--prepare", type=Path, help="derive emission inputs from pinned source packs and declarative policy")
     parser.add_argument("--release", type=Path, help="prepare and emit a signed release-graph policy in one private workspace")
     parser.add_argument("--cache", type=Path, help="private incremental emission/preload/repack cache")
@@ -2058,6 +2196,14 @@ def main():
     parser.add_argument("--codec", type=Path, help="pinned LZ4 helper; compresses UnityFS blocks without changing member bytes")
     parser.add_argument("--codec-sha256")
     args = parser.parse_args()
+    if args.repack is not None:
+        if any(
+            value is not None
+            for value in (args.inputs, args.prepare, args.release, args.graph, args.schema, args.bundle, args.member, args.codec, args.codec_sha256)
+        ):
+            parser.error("--repack requires only --output and optional --cache")
+        print(json.dumps(repack_request(args.repack, args.output, cache_directory=args.cache), indent=2))
+        return
     if args.release is not None:
         if any(
             value is not None
