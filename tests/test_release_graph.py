@@ -569,7 +569,7 @@ out.mkdir();(out/'global-metadata.dat').write_bytes(metadata)
             self.assertEqual((root / "global-metadata.dat").read_bytes(), metadata.read_bytes())
             self.assertEqual((root / "libil2cpp.so").read_bytes(), b"independent native output")
 
-    def test_signed_install_builds_native_from_fresh_conversion_and_reuses_unchanged_jobs(self):
+    def test_signed_install_builds_player_and_native_from_fresh_conversion_and_reuses_unchanged_jobs(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory).resolve()
             repo, inputs, runtime, native = [root / name for name in ("repo", "inputs", "runtime", "native")]
@@ -594,10 +594,26 @@ out.mkdir();(out/'global-metadata.dat').write_bytes(metadata)
             authored = repo / "tools/unity/Fixture.cs"
             write(authored, "class Fixture {}")
             write(repo / "recipe/target.json", {"source_files": {"tools/unity/Fixture.cs": G.digest(authored)}})
-            for stem in ("owner-managed-code", "owner-player-code", "owner-native-arm64"):
+            for stem in (
+                "owner-managed-code",
+                "owner-player-code",
+                "owner-native-arm64",
+                "owner-public-tools",
+                "original-assemblies",
+                "build-entry-inputs",
+                "runtime-sources",
+            ):
                 write(repo / f"recipe/{stem}.json", {})
+            write(repo / "recipe/assembly-transforms.json", {"tool_sources": {}})
+            write(repo / "tools/phone-build/package-assemblies/profile.json", {})
             code_request, native_request = "recipe/owner-code-request.json", "recipe/owner-native-request.json"
+            player_profile = "recipe/owner-player-fixture.json"
+            write(repo / player_profile, {"project_assemblies": [], "outputs": {}, "registry": {"file": "registry.assets", "path": "registry.json"}})
+            write(repo / "recipe/registry.json", {})
             sdk_witness, linker = inputs / "acquired/sdk/receipt.json", native / "linker"
+            package_manifest = inputs / "acquired/package-set/input-hashes.json"
+            write(package_manifest, {"packages/Fixture.cs": "fixture identity"})
+            write(package_manifest.parent / "packages/Fixture.cs", "class PackageFixture {}")
             write(sdk_witness, "sdk fixture 1")
             write(linker, "linker fixture 1")
             write(
@@ -606,9 +622,9 @@ out.mkdir();(out/'global-metadata.dat').write_bytes(metadata)
                     "owner_work": "${inputs}/work",
                     "output": "${output}",
                     "sdk_install": "${inputs}/acquired/sdk",
-                    "source_inputs": {"original": "${input:original}"},
+                    "source_inputs": {"original": "${input:original}", "packages": "${inputs}/acquired/package-set/packages"},
                     "target": {"profile": "${repo}/recipe/target.json", "source": "${repo}"},
-                    "cache_witnesses": ["${inputs}/acquired/sdk/receipt.json"],
+                    "cache_witnesses": ["${inputs}/acquired/sdk/receipt.json", "${inputs}/acquired/package-set/input-hashes.json"],
                 },
             )
             native_template = {
@@ -638,9 +654,69 @@ metadata_path.parent.mkdir(parents=True)
 metadata_path.write_bytes(metadata)
 def pin(data):
     return dict(bytes=len(data), sha256=hashlib.sha256(data).hexdigest())
+files = {'cpp/Fixture.cpp': pin(source), 'data/Metadata/global-metadata.dat': pin(metadata)}
+for name in ('System.Data', 'System.Drawing', 'mscorlib'):
+    relative = f'data/Resources/{name}.dll-resources.dat'
+    path = converter / relative
+    path.parent.mkdir(exist_ok=True)
+    path.write_bytes(source)
+    files[relative] = pin(source)
 (converter / 'result.json').write_text(json.dumps(dict(exit_code=0, inputs_unchanged=True, files={
-    'cpp/Fixture.cpp': pin(source), 'data/Metadata/global-metadata.dat': pin(metadata),
+    **files,
 })))
+managed = pathlib.Path(request['output']) / 'managed-production'
+for name in ('gameplay/postprocessed/Assembly-CSharp.dll', 'packages/postprocessed/PackageFixture.dll',
+             'maps/Map.cs', 'support/Support.cs', 'ordinary/RoR2.dll', 'ordinary/AK.Wwise.Unity.API.dll',
+             'ordinary/AK.Wwise.Unity.MonoBehaviour.dll'):
+    path = managed / name
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_bytes(source)
+(managed / 'result.json').write_text('{"success":true,"phase":"managed-produced"}')
+(managed / 'providers.json').write_text(json.dumps({'Assembly-CSharp.dll': {
+    'path': str(managed / 'gameplay/postprocessed/Assembly-CSharp.dll'), 'sha256': pin(source)['sha256'],
+}}))
+(managed / 'gameplay/inputs.json').write_text('{}')
+(managed / 'gameplay/ilpp-references').symlink_to(managed / 'support', target_is_directory=True)
+""",
+            )
+            write(
+                repo / (G.PREFIX + "player_data.py"),
+                """import argparse, hashlib, json, pathlib
+parser = argparse.ArgumentParser()
+for name in ('profile', 'output', 'pc', 'sdk', 'builtin-extra', 'editor-resources', 'converter', 'code-request', 'managed-production'):
+    parser.add_argument('--' + name, type=pathlib.Path, required=True)
+for name in ('profile-sha256', 'converter-receipt-sha256'):
+    parser.add_argument('--' + name, required=True)
+args = parser.parse_args()
+request = json.loads(args.code_request.read_text())
+packages = pathlib.Path(request['source_inputs']['packages'])
+assert (packages.parent / 'input-hashes.json').is_file()
+assert (packages / 'Fixture.cs').read_text() == 'class PackageFixture {}'
+assert pathlib.Path(request['target']['source']) == args.profile.parent.parent
+assert args.sdk.name == 'AndroidPlayer'
+assert args.sdk.parent.parent == packages.parent.parent / 'sdk'
+receipt = (args.converter / 'result.json').read_bytes()
+assert hashlib.sha256(receipt).hexdigest() == args.converter_receipt_sha256
+providers = json.loads((args.managed_production / 'providers.json').read_text())
+provider = providers['Assembly-CSharp.dll']
+managed = pathlib.Path(provider['path']).read_bytes()
+assert hashlib.sha256(managed).hexdigest() == provider['sha256']
+files = {'registry.assets': managed, 'unity default resources': b'sdk defaults'}
+for name in ('System.Data', 'System.Drawing', 'mscorlib'):
+    relative = f'Resources/{name}.dll-resources.dat'
+    data = (args.converter / 'data' / relative).read_bytes()
+    assert hashlib.sha256(data).hexdigest() == json.loads(receipt)['files']['data/' + relative]['sha256']
+    files['Managed/' + relative] = data
+archive = 'apk/assets/bin/Data/'
+for name, data in files.items():
+    path = args.output / (archive + name)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_bytes(data)
+registry = args.output / 'registry-source'
+registry.mkdir()
+for name in ('result.json', 'schemas.json'):
+    (registry / name).write_text('{}')
+(args.output / 'result.json').write_text(json.dumps({'success': True, 'files': {archive + name: {} for name in files}}))
 """,
             )
             shutil.copyfile(ROOT / "tools/phone-build/owner-code/native.py", producer_root / "native_contract.py")
@@ -665,24 +741,26 @@ native.expand(providers['Fixture.cpp'], out / 'source.cpp')
             )
             admission, plan = load("install_inputs"), load("install_flow")
             code, native_job = "recipe/jobs/owner-code-conversion.json", "recipe/jobs/owner-native-code.json"
+            player = "recipe/jobs/owner-player-fixture.json"
             selected = {
                 "schema": 1,
                 "required_inputs": input_manifest,
                 "workspace_bytes": 0,
-                "configuration": {"bindings": {"original": "Data/source.txt"}},
-                "stages": [{"id": name, "title": name, "jobs": {"assembly": [code], "native": [native_job]}.get(name, [])} for name in plan.STAGES],
+                "configuration": {"bindings": {"original": "Data/source.txt", "pc": "."}},
+                "stages": [{"id": name, "title": name, "jobs": {"assembly": [code, player], "native": [native_job]}.get(name, [])} for name in plan.STAGES],
             }
             progress = []
 
             def build():
                 graph = G.Graph(repo, {})
-                index = graph.compile([], code_request=code_request, native_request=native_request)
+                index = graph.compile([player_profile], code_request=code_request, native_request=native_request)
                 for name, job in graph.jobs.items():
                     write(repo / name, job)
                     index["files"][name] = G.digest(repo / name)
                 index["files"][input_manifest] = G.digest(repo / input_manifest)
                 index["install_plan"] = selected
                 self.assertIn("tools/unity/Fixture.cs", graph.jobs[code]["source_files"])
+                self.assertIn("recipe/runtime-sources.json", graph.jobs[player]["source_files"])
                 release = {
                     "version": "synthetic",
                     "version_code": 2,
@@ -696,8 +774,8 @@ native.expand(providers['Fixture.cpp'], out / 'source.cpp')
                 dispatcher = J.Dispatcher(
                     repo, index, release, inputs, runtime, native, config, identity, python=[sys.executable], progress=lambda *args: progress.append(args)
                 )
-                self.assertEqual(plan.validate_plan(selected, index, dispatcher.descriptor), {code: "assembly", native_job: "native"})
-                dispatcher.execute(code)
+                self.assertEqual(plan.validate_plan(selected, index, dispatcher.descriptor), {code: "assembly", player: "assembly", native_job: "native"})
+                dispatcher.execute(player)
                 dispatcher.execute(native_job)
                 result = J.UPDATES.RELEASE.rebuild(
                     release,
@@ -712,7 +790,8 @@ native.expand(providers['Fixture.cpp'], out / 'source.cpp')
                 return result
 
             first = build()
-            self.assertEqual(len(first["rebuilt"]), 2)
+            self.assertEqual(len(first["rebuilt"]), 7)
+            self.assertEqual(Path(first["outputs"]["apk/assets/bin/Data/registry.assets"]).read_bytes(), original.read_bytes())
             self.assertFalse(build()["rebuilt"])
             write(repo / native_request, dict(native_template, compile_timeout_seconds=60))
             self.assertFalse(build()["rebuilt"])
@@ -727,14 +806,19 @@ native.expand(providers['Fixture.cpp'], out / 'source.cpp')
                 progress,
                 [
                     (code, False),
+                    (player, False),
                     (native_job, False),
                     (code, True),
+                    (player, True),
                     (native_job, True),
                     (code, True),
+                    (player, True),
                     (native_job, False),
                     (code, True),
+                    (player, True),
                     (native_job, False),
                     (code, False),
+                    (player, False),
                     (native_job, False),
                 ],
             )
