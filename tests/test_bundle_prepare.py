@@ -357,7 +357,12 @@ class BundlePreparationTests(unittest.TestCase):
     def test_fresh_preparation_emission_repack_and_warm_reuse(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
-            inputs, _, _, _ = self.fixture(root)
+            inputs, request, policy, pin = self.fixture(root)
+            # A local pointer must ignore the same member/path ID in another source file.
+            policy["staged_bindings"] = [dict(source=["other.bundle", "CAB-a", 40], destination=["external", "CAB-external", 10])]
+            (root / "policy.json").write_text(json.dumps(policy))
+            request["policy"] = pin(root / "policy.json")
+            inputs.write_text(json.dumps(request))
             result = P.prepare_request(inputs, root / "prepared")
             self.assertEqual((result["records"], result["endpoints"]), (4, 1))
             rows = list(P.json_rows(root / "prepared/selected-records.jsonl"))
