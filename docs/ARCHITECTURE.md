@@ -2894,14 +2894,21 @@ The public Unity `MemorySnapshotDataTools` CLI can analyze them without an Edito
 package; no parser or third-party implementation is vendored into the lab/player.
 
 `scripts/lab/device_session.py` owns the current shared device lifecycle via
-`./dev device-session --request <private JSON> --dry-run` and `--detach`.
+`./dev device-session --request <private JSON> --device SERIAL --dry-run` and
+`--detach`. Use the serial from the workstream's queue grant for both commands.
+Portable requests can omit `serial` and `adopted_install`. Existing requests
+can embed `serial` and assert adopted-only placement with `adopted_install: true`.
 The dispatcher grants a device first; the child takes the canonical atomic
 lease before ADB, sources the pinned environment and stops Unity's port-5038
 ADB server. Its request selects the canonical checkout, private output,
-workstream, explicit device/package, APK path/hash, adopted-only installation,
-duration and optional targeted-touch JSON. `Device` owns installation and live
-package/runtime placement verification; converted-package receipts are isolated
-under `packages/dev.ror2lab.converted`. A prior peer receipt can be imported only
+workstream, disposable package, APK path/hash, duration and optional targeted-touch
+JSON. The same workload uses the selected device's configured storage profile:
+adopted storage on the main Nova and internal storage on the second Nova.
+`Device` owns installation, and the shared runner checks APK, private data and
+shared payload backing. The internal install estimate must leave at least 15 GiB
+free. Both profiles reserve APK and payload inputs plus 20 GiB before install,
+and verify the 20 GiB reserve after payload sync. Converted-package receipts
+are isolated under `packages/dev.ror2lab.converted`. A prior peer receipt can be imported only
 after matching its device, package, live path and APK hash. Converted launches
 resolve the real launcher activity; a launch observation alone does not prove
 that bootstrap or gameplay succeeded.
@@ -2936,6 +2943,10 @@ selector/pending files and stops its process. It reserves estimated output plus
 20 GiB, gives each cooldown its own deadline, and reuses the batch thermal owner.
 An optional `payload_directory` uses the existing incremental `Device.sync`
 owner after installation, with its size included in the storage reservation.
+After verifying the requested payload, it removes superseded files whose bytes
+still match the previous sync receipt. Failed transfers remove their partial files.
+After stopping the app, the runner copies new or updated lab reports and frame
+traces to the host, verifies their hashes, then removes those device copies.
 Launch mode retains screenshots (default 60 seconds, configurable with
 `capture_interval_seconds`), logs, runtime reports and performance snapshots;
 sustained mode delegates to the existing sustained-session owner, using

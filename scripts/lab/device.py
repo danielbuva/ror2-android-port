@@ -468,7 +468,7 @@ class Device:
             raise RuntimeError("Runtime checkpoint failed; inspect selected-device last-run.json and ./dev crash")
         return result
 
-    def sync(self, payload_directory=None):
+    def sync(self, payload_directory=None, *, replace_previous=False):
         timing = PhaseTiming()
         self.owned()
         runtime = self.read_receipt("runtime.json")
@@ -487,6 +487,7 @@ class Device:
         files = list((Path(payload_directory) if payload_directory is not None else self.work_root / "generated-android-data").glob("*"))
         if payload_directory is not None and not files:
             raise RuntimeError("Payload directory is empty or missing")
+        previous = self.read_receipt("sync.json") if replace_previous and self.receipt("sync.json").exists() else {}
         manifest = []
         for p in sorted(files):
             if not p.is_file() or p.suffix == ".manifest" or p.name == ".prune-keep":
@@ -503,15 +504,33 @@ class Device:
                 volume = storage["internal"] if storage.get("mode") == "internal" else storage["adopted"]
                 if volume["free_bytes"] < p.stat().st_size * 2 + 1024**3:
                     raise RuntimeError("Payload exceeds selected free space")
-                with timing.phase("push"):
-                    self.cmd("push", str(p), remote + ".partial", timeout=300)
-                with timing.phase("transfer_verification"):
-                    got = self.sh("sha256sum", remote + ".partial").split()[0]
-                if got != h:
-                    raise RuntimeError("Transferred payload hash mismatch")
-                self.sh("mv", remote + ".partial", remote)
+                partial = remote + ".partial"
+                try:
+                    with timing.phase("push"):
+                        self.cmd("push", str(p), partial, timeout=300)
+                    with timing.phase("transfer_verification"):
+                        got = self.sh("sha256sum", partial).split()[0]
+                    if got != h:
+                        raise RuntimeError("Transferred payload hash mismatch")
+                    self.sh("mv", partial, remote)
+                except Exception:
+                    self.sh("rm", "-f", "--", partial)
+                    raise
             manifest.append({"name": p.name, "sha256": h, "bytes": p.stat().st_size, "transferred": changed})
         result = {"runtime_path": path, "backing_df": self.sh("df", "-k", path), "files": manifest, "timing": timing.report()}
+        if replace_previous:
+            removed = result["superseded_removed"] = []
+            if manifest and previous.get("runtime_path") == path:
+                current = {row["name"] for row in manifest}
+                for row in previous["files"]:
+                    name = row["name"]
+                    if name in current or not re.fullmatch(r"[A-Za-z0-9_.-]+", name) or name in {".", ".."}:
+                        continue
+                    remote = dest + "/" + name
+                    # Delete only the exact superseded bytes recorded in our own sync receipt.
+                    if self.sh("sha256sum", remote, check=False).split()[:1] == [row["sha256"]]:
+                        self.sh("rm", "--", remote)
+                        removed.append(name)
         self.write_receipt("sync.json", result)
         return result
 
