@@ -26,6 +26,8 @@ import traceback
 PACKAGES = {"dev.ror2lab.arm64", "dev.ror2lab.converted"}
 TRANSIENTS = ("movement-batch-selection.json", "offline-settings-v1/preferences.json.pending")
 GOLEM_ATTACK = re.compile(r"^\s*(\d+\.\d+)\s+(\d+)\s+\d+\s+I Unity\s+:\s+EntityStates\.GolemMonster\.(ClapState|FireLaser):OnEnter\(\)\s*$")
+DEVICE_RESERVE_BYTES = 20 * 1024**3
+INTERNAL_INSTALL_FLOOR_BYTES = 15 * 1024**3
 
 
 def save(path, value):
@@ -36,11 +38,13 @@ def save(path, value):
     temporary.replace(path)
 
 
-def load_request(path):
+def load_request(path, serial=None):
     path = Path(path).resolve(strict=True)
     value = json.loads(path.read_text())
-    required = {"canonical_root", "output", "workstream", "serial", "package", "apk", "apk_sha256", "adopted_install", "duration_seconds"}
+    required = {"canonical_root", "output", "workstream", "package", "apk", "apk_sha256", "duration_seconds"}
     optional = {
+        "serial",
+        "adopted_install",
         "cooldown_seconds",
         "mode",
         "input_script",
@@ -65,10 +69,17 @@ def load_request(path):
     root, output = Path(value["canonical_root"]), Path(value["output"])
     if not (root / "scripts/env.sh").is_file() or not output.is_relative_to(root / "work"):
         raise ValueError("Canonical root and private output under work/ are required")
-    if value["package"] not in PACKAGES or value["adopted_install"] is not True:
-        raise ValueError("Disposable package and adopted-only installation required")
-    if not re.fullmatch(r"[A-Za-z0-9._-]+", value["serial"]) or not re.fullmatch(r"[a-z0-9-]+", value["workstream"]):
+    if value["package"] not in PACKAGES or value.get("adopted_install", True) is not True:
+        raise ValueError("Disposable package required; adopted_install, when set, must be true")
+    from device_context import validate_serial
+
+    value["serial"] = validate_serial(serial if serial is not None else value.get("serial"))
+    if not re.fullmatch(r"[a-z0-9-]+", value["workstream"]):
         raise ValueError("Explicit serial and workstream required")
+    if serial is not None:
+        grant = root / ".local/orchestrator/devqueue" / (serial + ".granted")
+        if not grant.is_file() or grant.read_text().strip() != value["workstream"]:
+            raise ValueError("Selected device queue grant does not name this workstream")
     if not re.fullmatch(r"[0-9a-f]{64}", value["apk_sha256"]):
         raise ValueError("Expected APK SHA-256 required")
     value.setdefault("mode", "launch")
@@ -240,18 +251,31 @@ def reset_idle(device, lease, record):
         device.sh("rm", "-f", "--", remote)
 
 
-def placement(device, reserve):
+def placement(device, reserve, *, adopted_only=False, install_apk=None):
     storage = device.storage()  # UUID is discovered afresh, never supplied.
-    if storage["mode"] != "adopted" or storage["shared"]["total_bytes"] != storage["adopted"]["total_bytes"]:
-        raise RuntimeError("Adopted package and shared storage required")
-    if storage["adopted"]["free_bytes"] < reserve:
-        raise RuntimeError("Insufficient adopted free space for output plus reserve")
+    mode = storage["mode"]
+    if adopted_only and mode != "adopted":
+        raise RuntimeError("This request requires adopted storage")
+    volume = storage[mode]
+    if storage["shared"]["total_bytes"] != volume["total_bytes"]:
+        raise RuntimeError("Shared storage is not backed by the selected " + mode + " volume")
+    if mode == "internal" and install_apk is not None:
+        capacity = device.install_capacity(install_apk, storage)
+        reserve = max(reserve, capacity["estimate_bytes"] + INTERNAL_INSTALL_FLOOR_BYTES)
+    if volume["free_bytes"] < reserve:
+        raise RuntimeError("Insufficient " + mode + " free space for output plus reserve")
     if device.exists():
-        prefix = "/mnt/expand/" + storage["uuid"] + "/"
-        if not device.owned()["package_path"].removeprefix("package:").startswith(prefix):
-            raise RuntimeError("Owned package is not on current adopted volume")
-        if "dataDir=" + prefix not in device.sh("dumpsys", "package", device.package):
-            raise RuntimeError("Owned runtime data is not on current adopted volume")
+        if mode == "internal":
+            apk_prefix = "/data/app/"
+            data_prefixes = ("/data/user/0/", "/data/data/")
+        else:
+            apk_prefix = "/mnt/expand/" + storage["uuid"] + "/"
+            data_prefixes = (apk_prefix + "user/0/",)
+        if not device.owned()["package_path"].startswith("package:" + apk_prefix):
+            raise RuntimeError("Owned package is not on the selected " + mode + " volume")
+        details = device.sh("dumpsys", "package", device.package)
+        if not any(line.strip() in {"dataDir=" + prefix + device.package for prefix in data_prefixes} for line in details.splitlines()):
+            raise RuntimeError("Owned runtime data is not on the selected " + mode + " volume")
     return storage
 
 
@@ -417,6 +441,57 @@ def capture_golem_attacks(device, thermal, pid, output):
 def exception_log_size(device, path):
     # LabDiagnostics appends JSONL across launches. Stat the file while idle.
     return int(device.sh("sh", "-c", 'if [ -e "$1" ]; then stat -c %s -- "$1"; else printf 0; fi', "sh", path))
+
+
+def diagnostic_scratch(device, runtime):
+    """Inventory only the lab's frame and report files so unchanged captures survive."""
+    rows = device.sh(
+        "find",
+        runtime,
+        "-maxdepth",
+        "1",
+        "-type",
+        "f",
+        "(",
+        "-name",
+        "frame-times-*.bin",
+        "-o",
+        "-name",
+        "snapshot.json",
+        "-o",
+        "-name",
+        "movement-batch-*.json",
+        "-o",
+        "-name",
+        "movement-completed-session-*.json",
+        ")",
+        "-exec",
+        "stat",
+        "-c",
+        "%n|%y|%s",
+        "{}",
+        "+",
+    )
+    stamps = {}
+    for row in rows.splitlines():
+        path, stamp = row.split("|", 1)
+        if Path(path).parent != Path(runtime):
+            raise RuntimeError("Diagnostic scratch escaped the owned runtime directory")
+        stamps[path] = stamp
+    return stamps
+
+
+def retain_diagnostic_scratch(device, runtime, initial, output):
+    from common import sha
+
+    for remote, stamp in sorted(diagnostic_scratch(device, runtime).items()):
+        if initial.get(remote) == stamp:
+            continue
+        local = output / Path(remote).name
+        device.cmd("pull", remote, str(local))
+        if device.sh("sha256sum", remote).split()[:1] != [sha(local)]:
+            raise RuntimeError("Retained diagnostic scratch hash differs")
+        device.sh("rm", "--", remote)
 
 
 def wait_for_settings_report(device, thermal, pid, predicate, timeout=100):
@@ -772,8 +847,7 @@ def execute(request):
     result = dict(success=False, lease_released=False, apk_sha256=request["apk_sha256"], package=request["package"], mode=request["mode"])
     lease, device, thermal = Lease(request), None, None
     restore = {}
-    initial_traces = set()
-    trace_inventory_ready = False
+    initial_scratch = None
     exception_log = None
     initial_exception_bytes = None
     active_hash = None
@@ -795,15 +869,17 @@ def execute(request):
             if not device.receipt("installed.json").exists() and "prior_receipt" in request:
                 adopt_receipt(device, request["prior_receipt"])
             active_hash = verify_owned(device)["apk_sha256"]
+        apk = Path(request["apk"])
+        payload = payload_files(request)
+        payload_size = sum(path.stat().st_size for path in payload)
+        reserve = apk.stat().st_size + payload_size + DEVICE_RESERVE_BYTES
+        result["storage_before"] = placement(device, reserve, adopted_only=request.get("adopted_install", False), install_apk=apk)
+        if active_hash:
             ensure_runtime(device)
             result["initial_reset"] = {}
             reset_idle(device, lease, result["initial_reset"])
             save(output / "initial-reset.json", result["initial_reset"])
             result["initial_idle"] = _idle_readback(device, active_hash)
-        apk = Path(request["apk"])
-        payload = payload_files(request)
-        reserve = apk.stat().st_size + sum(path.stat().st_size for path in payload) + 20 * 1024**3
-        result["storage_before"] = placement(device, reserve)
         try:
             try:
                 result["install"] = device.install(apk)
@@ -828,17 +904,17 @@ def execute(request):
             if device.receipt("installed.json").exists():
                 active_hash = verify_owned(device)["apk_sha256"]
         active_hash = request["apk_sha256"]
-        result["storage_after"] = placement(device, 20 * 1024**3)
+        result["storage_after"] = placement(device, payload_size + DEVICE_RESERVE_BYTES)
         runtime = ensure_runtime(device)
         if "payload_directory" in request:
-            result["sync"] = device.sync(Path(request["payload_directory"]))
+            result["sync"] = device.sync(Path(request["payload_directory"]), replace_previous=True)
             if "install_recovery" in result:
                 result["install_recovery"]["payload_resynced"] = True
+            result["storage_after_sync"] = placement(device, DEVICE_RESERVE_BYTES)
         result["installed_idle"] = _idle_readback(device, active_hash)
         exception_log = runtime + "/exceptions.jsonl"
         initial_exception_bytes = exception_log_size(device, exception_log)
-        initial_traces = set(device.sh("find", runtime, "-maxdepth", "1", "-type", "f", "-name", "frame-times-*.bin").splitlines())
-        trace_inventory_ready = True
+        initial_scratch = diagnostic_scratch(device, runtime)
         mapping = checked_mapping(request) if "input_mapping" in request else None
         for name, payload in (
             ("diagnostics.json", request.get("diagnostics")),
@@ -940,19 +1016,13 @@ def execute(request):
                     clean("restore", restore_file)
 
                 def retain_scratch():
-                    if not trace_inventory_ready:
+                    if initial_scratch is None:
                         return
                     verify_owned(device, active_hash)
                     runtime = device.read_receipt("runtime.json")["persistentDataPath"]
-                    current = set(device.sh("find", runtime, "-maxdepth", "1", "-type", "f", "-name", "frame-times-*.bin").splitlines())
-                    for remote in sorted(current - initial_traces):
-                        local = output / Path(remote).name
-                        device.cmd("pull", remote, str(local))
-                        if common.sha(local) != device.sh("sha256sum", remote).split()[0]:
-                            raise RuntimeError("Retained trace hash differs")
-                        device.sh("rm", "--", remote)
+                    retain_diagnostic_scratch(device, runtime, initial_scratch, output)
 
-                clean("trace-retention", retain_scratch)
+                clean("diagnostic-scratch", retain_scratch)
                 clean("idle-reset", lambda: reset_idle(device, lease, result.setdefault("final_reset", {})))
                 clean("lab-idle-reset", lambda: reset_other_lab(request, lease, result.setdefault("final_lab_reset", {})))
 
@@ -967,6 +1037,7 @@ def execute(request):
                             result["terminal_readback"] = dict(installed=False)
                         else:
                             raise RuntimeError("Package appeared without verified ownership after signature recovery")
+                        result["storage_final"] = independent.storage()
                     finally:
                         if not independent.display(False):
                             raise RuntimeError("Independent OLED sleep verification failed")
@@ -1001,11 +1072,12 @@ def execute(request):
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--request", type=Path, required=True)
+    parser.add_argument("--device", metavar="SERIAL", help="Select the serial granted to the request's workstream")
     parser.add_argument("--dry-run", action="store_true", help="Validate request, imports and APK bytes without device access")
     parser.add_argument("--detach", action="store_true", help="Start the same tracked runner in a new session; terminal receipt is always written")
     args = parser.parse_args(argv)
     try:
-        request = load_request(args.request)
+        request = load_request(args.request, args.device)
     except BaseException:
         if args.dry_run or args.detach:
             raise
@@ -1034,9 +1106,12 @@ def main(argv=None):
         output.mkdir(parents=True, exist_ok=True)
         if (output / "job.json").exists() or (output / "terminal.done.json").exists():
             raise RuntimeError("Run already dispatched; consume its terminal receipt")
+        command = [sys.executable, str(Path(__file__).resolve()), "--request", str(args.request.resolve())]
+        if args.device is not None:
+            command.extend(("--device", args.device))
         with (output / "runner.log").open("w") as log:
             job = subprocess.Popen(
-                [sys.executable, str(Path(__file__).resolve()), "--request", str(args.request.resolve())],
+                command,
                 start_new_session=True,
                 stdin=subprocess.DEVNULL,
                 stdout=log,

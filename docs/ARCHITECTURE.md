@@ -856,6 +856,11 @@ require `native_type_hash` for each output. The pack retains that identity and
 `object_produce.py` checks it after its own source type projection, before bundle
 emission. Source readers close per supplier, script caches expire at process exit
 and input pins are rechecked; no new runtime owner is added.
+`recipe/owner-whole-game-native-leaf-records.json` uses the same owner to
+supply 19 PhysicMaterials and eight BillboardAssets from their original
+serialized members. Release graph preparation checks the full type layouts and
+PPtr closure. The verified source bodies have no nonnull references, so the
+profile leaves them intact.
 The same record owner imports named `ControlPlayableAsset` PropertyName mappings
 with `control_exposed_name_default`. An exact-editor authored fixture establishes
 the mapping default; original managed metadata and pinned AssetRipper encoding
@@ -1506,7 +1511,7 @@ readings; the public summary reports per-metric availability, boundary-inclusive
 gaps, sampled PSS maxima and minimum shared-backing free space separately from
 end free space. A drop from the first reading is only a sampled shared-volume
 high-water delta, not app storage size. Observation time is reported explicitly;
-measurement overhead and native-child memory remain unqualified. It emits
+measurement overhead and native-child memory remain unqualified. Retained UI-failure inspection skips only validated periodic telemetry records when pairing foreground evidence; unrelated operations remain grouping boundaries. It emits
 elapsed time, sampled app-process PSS, battery heat and actual backing free bytes. Missing readings remain null; shared-volume
 free-space changes are not exclusive app consumption, and sampled PSS excludes
 unobserved peaks/native child tools. Optional observation/report failure never
@@ -2894,22 +2899,29 @@ The public Unity `MemorySnapshotDataTools` CLI can analyze them without an Edito
 package; no parser or third-party implementation is vendored into the lab/player.
 
 `scripts/lab/device_session.py` owns the current shared device lifecycle via
-`./dev device-session --request <private JSON> --dry-run` and `--detach`.
+`./dev device-session --request <private JSON> --device SERIAL --dry-run` and
+`--detach`. Use the serial from the workstream's queue grant for both commands.
+Portable requests can omit `serial` and `adopted_install`. Existing requests
+can embed `serial` and assert adopted-only placement with `adopted_install: true`.
 The dispatcher grants a device first; the child takes the canonical atomic
 lease before ADB, sources the pinned environment and stops Unity's port-5038
 ADB server. Its request selects the canonical checkout, private output,
-workstream, explicit device/package, APK path/hash, adopted-only installation,
-duration and optional targeted-touch JSON. `Device` owns installation and live
-package/runtime placement verification; converted-package receipts are isolated
-under `packages/dev.ror2lab.converted`. A prior peer receipt can be imported only
+workstream, disposable package, APK path/hash, duration and optional targeted-touch
+JSON. The same workload uses the selected device's configured storage profile:
+adopted storage on the main Nova and internal storage on the second Nova.
+`Device` owns installation, and the shared runner checks APK, private data and
+shared payload backing. The internal install estimate must leave at least 15 GiB
+free. Both profiles reserve APK and payload inputs plus 20 GiB before install,
+and verify the 20 GiB reserve after payload sync. Converted-package receipts
+are isolated under `packages/dev.ror2lab.converted`. A prior peer receipt can be imported only
 after matching its device, package, live path and APK hash. Converted launches
 resolve the real launcher activity; a launch observation alone does not prove
 that bootstrap or gameplay succeeded.
 An Android signature mismatch allows one uninstall/reinstall only for the
 disposable lab package with a live hash-backed ownership receipt and an explicit
-payload source. The uninstall clears its data. The runner revalidates adopted
-placement, recreates the runtime directory, syncs the payload and records the
-recovery in the terminal receipt under the same lease.
+payload source. The uninstall clears its data. The runner revalidates placement
+on the configured volume, recreates the runtime directory, syncs the payload and
+records the recovery in the terminal receipt under the same lease.
 The shared device runner's launch request accepts `start_from_menu` for automatic
 route observations. It waits for the installed attempt/PID-bound native menu,
 requires owned display-zero focus, injects Start and waits for a ready world
@@ -2941,6 +2953,10 @@ selector/pending files and stops its process. It reserves estimated output plus
 20 GiB, gives each cooldown its own deadline, and reuses the batch thermal owner.
 An optional `payload_directory` uses the existing incremental `Device.sync`
 owner after installation, with its size included in the storage reservation.
+After verifying the requested payload, it removes superseded files whose bytes
+still match the previous sync receipt. Failed transfers remove their partial files.
+After stopping the app, the runner copies new or updated lab reports and frame
+traces to the host, verifies their hashes, then removes those device copies.
 Launch mode retains screenshots (default 60 seconds, configurable with
 `capture_interval_seconds`), logs, runtime reports and performance snapshots;
 sustained mode delegates to the existing sustained-session owner, using
