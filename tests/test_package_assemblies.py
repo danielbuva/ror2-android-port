@@ -5,8 +5,10 @@ import json
 import shlex
 from pathlib import Path
 import sys
+import tarfile
 import tempfile
 import unittest
+from unittest.mock import patch
 
 
 PATH = Path(__file__).resolve().parents[1] / "tools/phone-build/package-assemblies/produce.py"
@@ -17,6 +19,49 @@ GUID = "1234567890abcdef1234567890abcdef"
 
 
 class PackageAssembliesTests(unittest.TestCase):
+    def test_prepare_archives_reuses_compiler_selection_and_keeps_original_meta(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary).resolve()
+            source = root / "source/com.unity.ugui@1.0.0"
+            assembly = source / "Runtime"
+            assembly.mkdir(parents=True)
+            files = {
+                "Runtime/UI.asmdef": '{"name":"UnityEngine.UI"}',
+                "Runtime/UI.asmdef.meta": "guid: " + GUID,
+                "Runtime/Selected.cs": "class Selected {}",
+                "Runtime/Selected.cs.meta": "guid: " + GUID,
+                "Runtime/Editor/Other.asmdef": '{"name":"Other"}',
+                "Runtime/Editor/Ignored.cs": "class Ignored {}",
+                "Samples~/Unused.cs": "class Unused {}",
+            }
+            for name, content in files.items():
+                path = source / name
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_text(content)
+            rows = (("com.unity.ugui", "Runtime/UI.asmdef"),)
+            compiler_files = {source.name + "/" + name: PRODUCER.sha(source / name) for name in list(files)[:3]}
+            settings = {
+                "packages": {"com.unity.ugui": "1.0.0"},
+                "groups": {"UnityEngine.UI": {"source_count": 1, "input_count": 3, "aggregate_sha256": PRODUCER.aggregate(compiler_files)}},
+            }
+            archives = root / "archives"
+            archives.mkdir()
+            archive = archives / "com.unity.ugui-1.0.0.tgz"
+            with tarfile.open(archive, "w:gz") as output:
+                output.add(source, arcname="com.unity.ugui")
+            pins = {archive.name: PRODUCER.sha(archive)}
+            prepared = root / "prepared"
+            with patch.object(PRODUCER, "ROWS", rows), patch.object(PRODUCER, "ARCHIVES", pins), patch.object(PRODUCER, "profile", return_value=settings):
+                result = PRODUCER.prepare_inputs(archives, prepared)
+                self.assertTrue(result["success"])
+                packages = prepared / "packages"
+                meta = source.name + "/Runtime/Selected.cs.meta"
+                self.assertEqual(result["files"], {**compiler_files, meta: PRODUCER.sha(source / "Runtime/Selected.cs.meta")})
+                self.assertEqual(PRODUCER.package_group(packages, settings, *rows[0])[3], compiler_files)
+                archive.write_bytes(b"changed archive")
+                with self.assertRaisesRegex(ValueError, "archive drift"):
+                    PRODUCER.prepare_inputs(archives, root / "changed")
+
     def test_partial_source_order_and_same_assembly_reference(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary).resolve()

@@ -18,6 +18,9 @@ from types import SimpleNamespace
 PREFIX = "tools/phone-build/accepted-output/"
 PLAYER_RESOURCE_ASSEMBLIES = ("System.Data", "System.Drawing", "mscorlib")
 ANDROID_COMPONENT = "${inputs}/acquired/unity-android-support.pkg"
+PACKAGE_POLICY = "tools/phone-build/package-assemblies/profile.json"
+PACKAGE_PRODUCER = "tools/phone-build/package-assemblies/produce.py"
+PACKAGE_ARCHIVES = "${inputs}/acquired/unity-packages"
 INSTALLED_BUNDLE_CODEC = dict(
     path="${native}/libbundlelz4.so",
     sha256="${native_sha256:libbundlelz4.so}",
@@ -94,6 +97,7 @@ class Graph:
         self.bundle_release_jobs = set()
         self.conversion = None
         self.android_sdk = None
+        self.package_inputs = None
 
     def sdk_contents(self, acquired="${input:sdk_contents}"):
         if self.conversion:
@@ -789,7 +793,7 @@ class Graph:
             "recipe/original-assemblies.json",
             "recipe/assembly-transforms.json",
             "recipe/owner-public-tools.json",
-            "tools/phone-build/package-assemblies/profile.json",
+            PACKAGE_POLICY,
         ]
         paths.extend((source_root / "recipe" / policy).relative_to(self.repo).as_posix() for policy in ("build-entry-inputs.json", "runtime-sources.json"))
         transforms = json.loads((self.repo / "recipe/assembly-transforms.json").read_text())
@@ -801,12 +805,14 @@ class Graph:
             paths.append(path.relative_to(self.repo).as_posix())
         name = "recipe/jobs/owner-code-conversion.json"
         cache_witnesses = request.pop("cache_witnesses", [])
+        if self.package_inputs:
+            request["source_inputs"]["packages"] = self.artifact_pin(self.package_inputs, "packages")["path"]
         self.jobs[name] = {
             "schema": 1,
             "script": "tools/phone-build/owner-code/produce.py",
             "arguments": ["${request}", "--stop-after-conversion"],
             "request": request,
-            "needs": [],
+            "needs": [self.package_inputs] if self.package_inputs else [],
             "outputs": {},
             "artifacts": {
                 "receipt": "backend/converter/result.json",
@@ -837,10 +843,12 @@ class Graph:
             **{"resource_" + assembly: "backend/converter/data/Resources/" + assembly + ".dll-resources.dat" for assembly in PLAYER_RESOURCE_ASSEMBLIES},
         )
         original_request = conversion["request"]
-        # The backend request contains managed provider paths but drops the
-        # original package source needed for importer metadata and script IDs.
+        # The fixed target also needs its importer-only TestRunner and MCP
+        # sources. Keep its existing registry input even with fresh compiler
+        # packages, which deliberately contain only the compiler groups.
+        registry_packages = json.loads((self.repo / self.profile_files[self.conversion]).read_text())["source_inputs"]["packages"]
         request = {
-            "source_inputs": {"packages": original_request["source_inputs"]["packages"]},
+            "source_inputs": {"packages": registry_packages},
             "target": {"source": original_request["target"]["source"]},
         }
         return [
@@ -853,6 +861,25 @@ class Graph:
             "--managed-production",
             "${job_directory:" + self.conversion + ":managed_receipt}",
         ], request
+
+    def package_preparation(self):
+        name = "recipe/jobs/owner-package-inputs.json"
+        spec = importlib.util.spec_from_file_location("graph_package_producer", self.repo / PACKAGE_PRODUCER)
+        packages = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(packages)
+        self.jobs[name] = {
+            "schema": 1,
+            "script": PACKAGE_PRODUCER,
+            "arguments": ["${request}", "--prepare-inputs"],
+            "request": {"archives": PACKAGE_ARCHIVES, "output": "${output}"},
+            "needs": [],
+            "outputs": {},
+            "artifacts": {"receipt": "result.json", "packages": "packages"},
+            "cache_witnesses": [f"{PACKAGE_ARCHIVES}/{archive}" for archive in sorted(packages.ARCHIVES)],
+        }
+        self.public_files[name] = [PACKAGE_POLICY]
+        self.job_profiles[name] = {}
+        return name
 
     def native_code(self, request_path, conversion=None):
         """Produce native code and its matching metadata from one converter cohort."""
@@ -964,10 +991,14 @@ class Graph:
         native_request=None,
         sdk_request=None,
         sdk_component=False,
+        package_archives=False,
         burst_request=None,
         catalog_request=None,
     ):
         entries = {}
+        if package_archives and not code_request:
+            raise ValueError("package archives require an original-input code request")
+        self.package_inputs = self.package_preparation() if package_archives else None
         self.conversion = self.code_conversion(code_request) if code_request else None
         self.android_sdk = self.sdk_extraction() if sdk_component else None
         selected_jobs = [self.build(digest(self.repo / path)) for path in selected]
@@ -1005,6 +1036,8 @@ class Graph:
                 # The extractor imports only the standard library. A producer
                 # change elsewhere in the release need not unpack the same SDK.
                 job["source_files"] = [name, job["script"]]
+            elif name == self.package_inputs:
+                job["source_files"] = [name, PACKAGE_PRODUCER, PACKAGE_POLICY]
             else:
                 closure = self.entry(name)
                 job["source_files"] = sorted(set(closure["recipe_files"]) | set(closure["producer_files"]))
@@ -1033,6 +1066,7 @@ def main():
     parser.add_argument("--native-request", help="repo-relative native request; emits matching library and metadata from fresh or acquired conversion")
     parser.add_argument("--sdk-request", help="repo-relative SDK request template; emits Android resources, dex and engine libraries")
     parser.add_argument("--sdk-component", action="store_true", help="extract the private owner-supplied Android Support component for player and package jobs")
+    parser.add_argument("--package-archives", action="store_true", help="prepare compile-selected sources from owner Unity package archives before conversion")
     parser.add_argument("--burst-request", help="repo-relative managed/source request template; compiles Burst and retains preservation roots")
     parser.add_argument("--extra-arguments", type=Path, help="JSON producer name -> additional CLI argv, with dispatcher substitutions")
     parser.add_argument("--output", type=Path, required=True, help="new public job staging root; overlay into a release source checkout")
@@ -1046,6 +1080,7 @@ def main():
         native_request=args.native_request,
         sdk_request=args.sdk_request,
         sdk_component=args.sdk_component,
+        package_archives=args.package_archives,
         burst_request=args.burst_request,
     )
     args.output.mkdir(parents=True, exist_ok=False)

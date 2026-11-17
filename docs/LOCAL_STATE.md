@@ -967,6 +967,13 @@ Besides the unchanged compiler sources, retain original adjacent source metas
 and the importer-only TestRunner 1.1.33 and pinned MCP runtime source/asmdef/meta
 sets. SDK archives or the documented public acquisitions supply these inputs;
 no generated project or timestamped discovery root is selected automatically.
+`--package-archives` for signed releases requires privately provisioned Unity
+Burst, Collections and Mathematics tarballs and an archive of compiler uGUI
+from the exact SDK under `acquired/unity-packages/`. The package assembly
+owner verifies and stages the compile-selected files and their original
+metas. Keep the archives separate from the imported originals. The
+[package producer setup](../tools/phone-build/package-assemblies/README.md)
+specifies the archive names and uGUI layout.
 `owner-player-registry.json` supplies the audited source witnesses and authored
 identity configuration. The default-scene shared file also requires the shader
 owner's successful standard object pack. These are explicit local inputs with
