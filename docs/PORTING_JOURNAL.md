@@ -17,6 +17,7 @@ The resumed run took 11,211 s. Maximum reported stage RSS was 2.372 GB against
 the 3 GB target. CPU/GPU peaked at 68.8 C in production, with 0 s above 80 C.
 Remaining: Unity typed load of this bundle, integration with the matching
 catalog and native manifest, and converted APK gameplay.
+
 ## J1477 — Capture stage-transition memory and a bounded passive tail
 
 2026-11-13. Shared launch waits for the owned native menu and ready world before timing.
