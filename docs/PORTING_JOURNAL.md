@@ -6,6 +6,18 @@ under ignored `work/coordination/`, not here. Entries J01–J1177 (2026-09-12 to
 [history/journal-J1-J1177/PORTING_JOURNAL.md](history/journal-J1-J1177/PORTING_JOURNAL.md) with its
 [index](history/journal-J1-J1177/JOURNAL_INDEX.md); numbering continues here.
 
+## J1478 — Emit the strict whole-game content request on Android
+
+2026-11-13. The Android toolhost ran the prepared source-derived request with one
+record worker. All 290,498 required records passed structural validation and
+produced a 571,046,138-byte bundle with SHA-256
+`1117c73fb1ca756d3769af25c066cecaabac620eb9ad8bf9bf13dda517fabc8b`, matching the host output.
+Evidence: `work/coordination/p1-wholegame-1031/phone-chain-audit-1112/thor-shared-bounded-v1/terminal-v4.done.json`.
+The resumed run took 11,211 s. Maximum reported stage RSS was 2.372 GB against
+the 3 GB target. CPU/GPU peaked at 68.8 C in production, with 0 s above 80 C.
+Remaining: Unity typed load of this bundle, integration with the matching
+catalog and native manifest, and converted APK gameplay.
+
 ## J1477 — Capture stage-transition memory and a bounded passive tail
 
 2026-11-13. Shared launch waits for the owned native menu and ready world before timing.
