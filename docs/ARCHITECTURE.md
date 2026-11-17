@@ -1506,7 +1506,7 @@ readings; the public summary reports per-metric availability, boundary-inclusive
 gaps, sampled PSS maxima and minimum shared-backing free space separately from
 end free space. A drop from the first reading is only a sampled shared-volume
 high-water delta, not app storage size. Observation time is reported explicitly;
-measurement overhead and native-child memory remain unqualified. It emits
+measurement overhead and native-child memory remain unqualified. Retained UI-failure inspection skips only validated periodic telemetry records when pairing foreground evidence; unrelated operations remain grouping boundaries. It emits
 elapsed time, sampled app-process PSS, battery heat and actual backing free bytes. Missing readings remain null; shared-volume
 free-space changes are not exclusive app consumption, and sampled PSS excludes
 unobserved peaks/native child tools. Optional observation/report failure never
