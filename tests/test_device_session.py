@@ -100,7 +100,9 @@ class DeviceSessionTests(unittest.TestCase):
         target.sh.return_value = "{}"
         target.cmd.return_value = "fixture log"
         runner.capture(target, self.output, "12")
-        target.collect.assert_has_calls([mock.call("crash", self.output), mock.call("screenshot", self.output), mock.call("perf", self.output)])
+        target.collect.assert_has_calls(
+            [mock.call("crash", self.output), mock.call("screenshot", self.output), mock.call("perf", self.output, include_exceptions=False)]
+        )
 
     def test_settings_failure_mode_uses_shared_launch_and_thermal_owner(self):
         self.request["mode"] = "settings-save-failure"
@@ -339,6 +341,9 @@ class DeviceSessionTests(unittest.TestCase):
         target.sh.return_value = "{}"
         target.read_receipt.return_value = dict(persistentDataPath="/fixture/runtime")
         runner.capture(target, self.output, "7")
+        target.collect.assert_any_call("perf", self.output, include_exceptions=False)
+        self.assertFalse(any(call.args == ("cat", "/fixture/runtime/exceptions.jsonl") for call in target.sh.call_args_list))
+        self.assertFalse((self.output / "exceptions.jsonl").exists())
         for suffix in ("", "-bringup"):
             name = "movement-batch-body-state-spawn-state-auto-nova-spine" + suffix + ".json"
             target.sh.assert_any_call("cat", "/fixture/runtime/" + name, check=False)
@@ -362,6 +367,7 @@ class DeviceSessionTests(unittest.TestCase):
         with mock.patch.object(sustained, "check_session_sustained", side_effect=complete) as check:
             runner.run_workload(target, mock.Mock(), request, self.output, {})
         self.assertEqual(check.call_args.kwargs["observation_interval_seconds"], 30)
+        self.assertIs(check.call_args.kwargs["_include_exceptions"], False)
         del request["capture_interval_seconds"]
         runner.save(self.request_file, request)
         self.assertEqual(runner.load_request(self.request_file)["capture_interval_seconds"], 5)
@@ -441,7 +447,7 @@ class DeviceSessionTests(unittest.TestCase):
         target.sh.assert_any_call("sha256sum", "/owned/files/il2cpp/Metadata/global-metadata.dat", check=False)
         self.assertIn("Unity:D", target.cmd.call_args_list[0].args)
 
-    def run_case(self, *, workload_error=False, terminal_error=False, thermal_error=False, payload=False):
+    def run_case(self, *, workload_error=False, terminal_error=False, thermal_error=False, payload=False, exception_rows=""):
         events = []
         lease_path = runner.Lease(self.request).path
         installed = dict(apk_sha256=self.digest, package_path="package:/fixture/base.apk", package=self.request["package"], serial=self.request["serial"])
@@ -467,6 +473,16 @@ class DeviceSessionTests(unittest.TestCase):
         def shell(*args, **kwargs):
             if args[0] == "sha256sum":
                 return self.digest + "  /fixture/base.apk"
+            if args[:2] == ("sh", "-c") and args[-1] == "/owned/exceptions.jsonl":
+                if "workload" in events:
+                    self.assertEqual(events[-1], "stop")
+                    return str(120_000_000 + len(exception_rows.encode()))
+                return "120000000"
+            if args[0] == "tail":
+                self.assertEqual(events[-1], "stop")
+                self.assertEqual(args, ("tail", "-c", "+120000001", "--", "/owned/exceptions.jsonl"))
+                events.append("exception-tail")
+                return exception_rows.rstrip("\n")
             if args[:2] == ("am", "force-stop"):
                 events.append("stop")
             if args[0] == "rm":
@@ -534,6 +550,7 @@ class DeviceSessionTests(unittest.TestCase):
         removed = [event for event in events if event.startswith("remove:")]
         self.assertTrue(removed)
         self.assertEqual(events.count("stop"), 3)
+        self.assertEqual(events.count("exception-tail"), int(bool(exception_rows)))
         self.assertLess(events.index("workload"), len(events) - 1 - events[::-1].index("stop"))
         for suffix in runner.TRANSIENTS:
             self.assertEqual(removed.count("remove:/owned/" + suffix), 2)
@@ -545,6 +562,15 @@ class DeviceSessionTests(unittest.TestCase):
         self.assertTrue(result["success"])
         self.assertTrue(result["lease_released"])
         self.assertTrue(result["terminal_readback"]["oled_asleep"])
+        self.assertEqual((self.output / "exceptions.jsonl").read_text(), "")
+
+    def test_workload_failure_retains_only_appended_exception_rows_once(self):
+        rows = '{"message":"exception α"}\n{"message":"exception β"}\n'
+        result = self.run_case(workload_error=True, exception_rows=rows)
+        self.assertFalse(result["success"])
+        self.assertTrue(result["lease_released"])
+        self.assertNotIn("exception_capture_error", result)
+        self.assertEqual((self.output / "exceptions.jsonl").read_text(), rows)
 
     def test_payload_synced_before_workload_and_included_in_storage_reserve(self):
         self.assertTrue(self.run_case(payload=True)["success"])
