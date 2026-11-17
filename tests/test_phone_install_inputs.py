@@ -5,6 +5,7 @@ import hashlib
 import importlib.util
 import json
 from pathlib import Path
+import sys
 import tempfile
 import unittest
 from unittest.mock import patch
@@ -54,10 +55,59 @@ class InstallInputTests(unittest.TestCase):
         self.assertEqual(description["import_root"], "import")
         self.assertEqual(description["workspace_bytes"], 1234)
         config = INPUTS.prepare(self.index, self.repo, self.inputs)
-        self.assertEqual(config["bindings"], {"game": "import/files", "data": "import/files/Data"})
+        self.assertEqual(config["bindings"], {"game": "import/files", "data": "import/files/Data", "inventory": "input-hashes.json"})
         self.assertEqual(config["key_directory"], "signing/owner")
         self.assertEqual(json.loads((self.inputs / "input-hashes.json").read_text()), {"import/files/Data/example.txt": self.manifest["files"][0]["sha256"]})
         self.assertFalse((self.inputs / "signing").exists())
+
+    def test_signed_versions_feed_the_native_original_inventory(self):
+        imported = self.import_fixture()
+        game = self.inputs / "import/files"
+        managed = game / "Risk of Rain 2_Data/Managed/RoR2.dll"
+        managed.parent.mkdir(parents=True)
+        managed.write_bytes(b"synthetic managed assembly")
+        (game / "Data.txt").write_bytes(b"synthetic sibling")
+        work = self.inputs / "work"
+        with patch.object(sys, "path", [str(ROOT / "scripts/lab"), *sys.path]):
+            native = INPUTS.module("tested_native_input_state", ROOT / "scripts/lab/owner_assemblies.py")
+
+        def inventory():
+            return [
+                {"path": path.relative_to(game).as_posix(), "bytes": path.stat().st_size, "sha256": INPUTS.UPDATES.RELEASE.digest(path)}
+                for path in sorted(game.rglob("*"))
+                if path.is_file()
+            ]
+
+        v1 = {**self.manifest, "files": inventory()}
+        imported.write_bytes(b"new example")
+        v2 = {**v1, "game_version": "synthetic-v2", "files": inventory()}
+        imported.write_bytes(b"example")
+        manifest_path = self.repo / self.plan["required_inputs"]
+        manifest_path.write_text(json.dumps({"schema": 2, "supported": [v1, v2], "recognized": []}))
+        self.index["files"][self.plan["required_inputs"]] = INPUTS.UPDATES.RELEASE.digest(manifest_path)
+
+        first_config = INPUTS.prepare(self.index, self.repo, self.inputs)
+        first_identity, root, _ = native.input_state(work)
+        self.assertEqual(first_identity, native.digest([(row["path"], row["sha256"]) for row in v1["files"]]))
+        self.assertEqual(root, game)
+        first_update_identity = INPUTS.UPDATES.input_identity(self.inputs, first_config)
+        startup_input = self.inputs / first_config["bindings"]["inventory"]
+        startup_hash = INPUTS.UPDATES.RELEASE.digest(startup_input)
+        imported.touch()
+        retry_config = INPUTS.prepare(self.index, self.repo, self.inputs)
+        self.assertEqual(native.input_state(work)[0], first_identity)
+        self.assertEqual(INPUTS.UPDATES.input_identity(self.inputs, retry_config), first_update_identity)
+        self.assertEqual(INPUTS.UPDATES.RELEASE.digest(startup_input), startup_hash)
+
+        imported.write_bytes(b"new example")
+        next_config = INPUTS.prepare(self.index, self.repo, self.inputs)
+        identity, root, _ = native.input_state(work)
+        self.assertEqual(identity, native.digest([(row["path"], row["sha256"]) for row in v2["files"]]))
+        self.assertNotEqual(identity, first_identity)
+        self.assertNotEqual(INPUTS.UPDATES.input_identity(self.inputs, next_config), first_update_identity)
+        self.assertNotEqual(INPUTS.UPDATES.RELEASE.digest(startup_input), startup_hash)
+        self.assertEqual(json.loads((work / "config/accepted-input.json").read_text())["game_version"], "synthetic-v2")
+        self.assertEqual(imported.read_bytes(), b"new example")
 
     def test_source_drift_and_changed_import_refused_even_with_receipt(self):
         imported = self.import_fixture()
@@ -76,6 +126,7 @@ class InstallInputTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "another selection"):
             INPUTS.prepare(self.index, self.repo, self.inputs)
         self.assertFalse((self.inputs / "input-hashes.json").exists())
+        self.assertFalse((self.inputs / "work").exists())
 
     def test_binding_cannot_select_private_tool_or_key_directory(self):
         self.import_fixture()
