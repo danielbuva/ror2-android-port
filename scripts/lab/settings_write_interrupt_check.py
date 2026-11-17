@@ -11,7 +11,7 @@ import time
 import uuid
 
 from common import ROOT, WORK, now, sha, write
-from device import Device, PACKAGE
+from device import Device, PACKAGE, remove_device_file, retain_device_file
 from nova_bridge import current_errors
 from installed_attempt import attempt_from_installed, bind_installed_apk, validate_expected_apk_sha256
 from session_cleanup_check import SPINE_ID, _read_json, _read_raw, _remote_path_state, matches_run, selection, selector_action
@@ -188,7 +188,7 @@ def new_native_loss(before, after):
     return identity[1], entry["file"]
 
 
-def check_profile_write_interrupt(device, thermal, request, output, launch, start_from_menu):
+def check_profile_write_interrupt(device, thermal, request, output, launch, start_from_menu, device_cleanup=None):
     """Interrupt the native profile commit while retaining its durable result."""
     expected = request["apk_sha256"]
     installed = device.owned()
@@ -293,7 +293,7 @@ def check_profile_write_interrupt(device, thermal, request, output, launch, star
         receipt["run_id"] = run_id
         if _read_raw(device, request_file) != nonce:
             raise RuntimeError("Profile observer request ownership changed")
-        device.sh("rm", "--", request_file)
+        remove_device_file(device, request_file, device_cleanup)
         receipt["first_cooldown"] = thermal.between_sessions()
         recovery_pid, profile = start("first-cold")
         recovered = hashes()
@@ -326,8 +326,10 @@ def check_profile_write_interrupt(device, thermal, request, output, launch, star
             if not receipt["success"]:
                 device.sh("am", "force-stop", PACKAGE)
             if _read_raw(device, request_file) == nonce:
-                device.sh("rm", "--", request_file)
-            device.sh("rm", "-f", "--", *witnesses)
+                remove_device_file(device, request_file, device_cleanup)
+            for remote in witnesses:
+                if _remote_path_state(device, remote) != "absent":
+                    retain_device_file(device, remote, output / remote.rsplit("/", 1)[1], device_cleanup)
         except Exception:
             receipt["success"] = False
             raise

@@ -1,5 +1,6 @@
 import copy
 from datetime import datetime, timedelta, timezone
+import hashlib
 import json
 from pathlib import Path
 import sys
@@ -187,11 +188,23 @@ class SustainedCheckTests(unittest.TestCase):
         device = mock.Mock()
         with tempfile.TemporaryDirectory() as folder:
             out = Path(folder)
+            remote = "/owned/" + name
+            cleanup = dict(bytes_removed=0, files=[])
+
+            def shell(*args):
+                self.assertEqual((out / name).read_bytes(), data)
+                if args[0] == "sha256sum":
+                    return hashlib.sha256(data).hexdigest()
+                if args[0] == "sh" and "stat -c" in args[2]:
+                    return str(len(data))
+                return ""
+
             device.cmd.side_effect = lambda *args: (out / name).write_bytes(data)
-            device.sh.side_effect = lambda *args: self.assertEqual((out / name).read_bytes(), data)
-            trace = sustained.collect_raw_frames(device, "/owned", out, completed, samples)
+            device.sh.side_effect = shell
+            trace = sustained.collect_raw_frames(device, "/owned", out, completed, samples, device_cleanup=cleanup)
             self.assertEqual(trace["retained_frames"], 2)
-            device.sh.assert_called_once_with("rm", "--", "/owned/" + name)
+            device.sh.assert_any_call("rm", "--", remote)
+            self.assertEqual(cleanup, dict(bytes_removed=len(data), files=[dict(path=remote, bytes=len(data))]))
             device.reset_mock()
             for field, value in (("rawFrameTrace", "../foreign"), ("rawFrameTraceClosed", False), ("rawFrameTraceError", "write failed")):
                 invalid = copy.deepcopy(completed)
@@ -200,6 +213,26 @@ class SustainedCheckTests(unittest.TestCase):
                     sustained.collect_raw_frames(device, "/owned", out, invalid, samples)
                 device.cmd.assert_not_called()
                 device.sh.assert_not_called()
+
+    def test_sidecar_hash_mismatch_preserves_remote_and_verified_bad_data_counts(self):
+        name = "frame-times-" + "a" * 32 + ".bin"
+        remote = "/owned/" + name
+        data = b"truncated fixture"
+        completed = dict(framePacing=dict(rawFrameTrace=name, rawFrameTraceClosed=True))
+        device = mock.Mock()
+        with tempfile.TemporaryDirectory() as folder:
+            out = Path(folder)
+            device.cmd.side_effect = lambda *args: (out / name).write_bytes(data)
+            cleanup = dict(bytes_removed=0, files=[])
+            device.sh.return_value = "0" * 64
+            with self.assertRaisesRegex(RuntimeError, "hash differs"):
+                sustained.collect_raw_frames(device, "/owned", out, completed, [], device_cleanup=cleanup)
+            device.sh.assert_called_once_with("sha256sum", "--", remote)
+            self.assertEqual(cleanup["bytes_removed"], 0)
+            device.sh.side_effect = [hashlib.sha256(data).hexdigest(), str(len(data)), "", ""]
+            with self.assertRaisesRegex(ValueError, "Truncated raw frame header"):
+                sustained.collect_raw_frames(device, "/owned", out, completed, [], device_cleanup=cleanup)
+            self.assertEqual(cleanup, dict(bytes_removed=len(data), files=[dict(path=remote, bytes=len(data))]))
 
     def test_shared_reset_clears_stale_process_selector_and_pending_before_admission(self):
         import device_session as runner
@@ -220,6 +253,8 @@ class SustainedCheckTests(unittest.TestCase):
                 running = False
             if args[0] == "rm":
                 paths.remove(args[-1])
+            if args[0] == "sh" and "stat -c" in args[2]:
+                return "19"
             return ""
 
         device.sh.side_effect = shell

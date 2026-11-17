@@ -25,6 +25,35 @@ class InstallSignatureMismatch(RuntimeError):
     pass
 
 
+def remove_device_file(device, remote, cleanup, *, missing_ok=False):
+    """Record reclaimed bytes only after a checked removal and absence readback."""
+    size = device.sh(
+        "sh",
+        "-c",
+        'if [ -f "$1" ] && [ ! -L "$1" ]; then stat -c %s -- "$1"; elif [ "$2" = yes ] && [ ! -e "$1" ] && [ ! -L "$1" ]; then printf absent; else exit 1; fi',
+        "sh",
+        remote,
+        "yes" if missing_ok else "no",
+    )
+    if size == "absent":
+        return
+    size = int(size)
+    device.sh("rm", "--", remote)
+    device.sh("sh", "-c", 'test ! -e "$1" && test ! -L "$1"', "sh", remote)
+    if cleanup is not None:
+        cleanup["bytes_removed"] += size
+        cleanup["files"].append(dict(path=remote, bytes=size))
+
+
+def retain_device_file(device, remote, local, cleanup):
+    device.cmd("pull", remote, str(local))
+    digest = sha(local)
+    if device.sh("sha256sum", "--", remote).split()[:1] != [digest]:
+        raise RuntimeError("Retained device file hash differs: " + remote)
+    remove_device_file(device, remote, cleanup)
+    return digest
+
+
 def require_device_access(*, force=False):
     if common.lane_config():
         raise RuntimeError("Build lanes do not own devices; use canonical device commands with explicit APK/payload paths")
@@ -474,7 +503,7 @@ class Device:
             raise RuntimeError("Runtime checkpoint failed; inspect selected-device last-run.json and ./dev crash")
         return result
 
-    def sync(self, payload_directory=None, *, replace_previous=False):
+    def sync(self, payload_directory=None, *, replace_previous=False, cleanup=None):
         timing = PhaseTiming()
         self.owned()
         runtime = self.read_receipt("runtime.json")
@@ -498,8 +527,10 @@ class Device:
         for p in sorted(files):
             if not p.is_file() or p.suffix == ".manifest" or p.name == ".prune-keep":
                 continue
+            source = p.resolve(strict=True)
             with timing.phase("local_hash"):
-                h = sha(p)
+                h = sha(source)
+            size = source.stat().st_size
             remote = dest + "/" + p.name
             if not re.fullmatch("[A-Za-z0-9_.-]+", p.name):
                 raise RuntimeError("Unsafe payload filename")
@@ -508,21 +539,21 @@ class Device:
             changed = not existing or existing[0] != h
             if changed:
                 volume = storage["internal"] if storage.get("mode") == "internal" else storage["adopted"]
-                if volume["free_bytes"] < p.stat().st_size * 2 + 1024**3:
+                if volume["free_bytes"] < size * 2 + 1024**3:
                     raise RuntimeError("Payload exceeds selected free space")
                 partial = remote + ".partial"
                 try:
                     with timing.phase("push"):
-                        self.cmd("push", str(p), partial, timeout=300)
+                        self.cmd("push", str(source), partial, timeout=300)
                     with timing.phase("transfer_verification"):
                         got = self.sh("sha256sum", partial).split()[0]
                     if got != h:
                         raise RuntimeError("Transferred payload hash mismatch")
                     self.sh("mv", partial, remote)
                 except Exception:
-                    self.sh("rm", "-f", "--", partial)
+                    remove_device_file(self, partial, cleanup, missing_ok=True)
                     raise
-            manifest.append({"name": p.name, "sha256": h, "bytes": p.stat().st_size, "transferred": changed})
+            manifest.append({"name": p.name, "path": str(source), "sha256": h, "bytes": size, "transferred": changed})
         result = {"runtime_path": path, "backing_df": self.sh("df", "-k", path), "files": manifest, "timing": timing.report()}
         if replace_previous:
             removed = result["superseded_removed"] = []
@@ -535,7 +566,7 @@ class Device:
                     remote = dest + "/" + name
                     # Delete only the exact superseded bytes recorded in our own sync receipt.
                     if self.sh("sha256sum", remote, check=False).split()[:1] == [row["sha256"]]:
-                        self.sh("rm", "--", remote)
+                        remove_device_file(self, remote, cleanup)
                         removed.append(name)
         self.write_receipt("sync.json", result)
         return result
