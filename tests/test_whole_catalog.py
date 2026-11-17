@@ -349,9 +349,12 @@ class WholePayloadReuseTests(unittest.TestCase):
         with self.assertRaisesRegex(RuntimeError, "payload identity changed"):
             build.validate_whole_payload_reuse(self.project)
 
-    def test_display_player_source_migrates_receipt_but_unknown_android_content_refuses(self):
+    def test_android_player_sources_migrate_receipt_but_unknown_content_refuses(self):
         receipt = self.work / "whole-catalog-code-base.json"
         frozen = read(receipt)
+        observer = "Assets/Plugins/Android/SettingsWriteObserver.androidlib/src/main/java/dev/ror2lab/diagnostics/"
+        self.assertIn(observer + "LabPendingWriteStop.java", build.WHOLE_APK_ANDROID_CODE)
+        self.assertIn(observer + "LabSettingsWriteObserver.java", build.WHOLE_APK_ANDROID_CODE)
         for source in build.WHOLE_APK_ANDROID_CODE:
             frozen["allowed"].remove(source)
             frozen["files"][source] = "previous authored Java source or importer"
@@ -368,8 +371,9 @@ class WholePayloadReuseTests(unittest.TestCase):
         with self.assertRaisesRegex(RuntimeError, "Content inputs changed"):
             build.validate_whole_payload_reuse(self.project)
 
-    def test_bootstrap_importer_and_game_assemblies_remain_frozen(self):
+    def test_observer_and_bootstrap_importers_and_game_assemblies_remain_frozen(self):
         for relative in (
+            "Assets/Plugins/Android/SettingsWriteObserver.androidlib/src/main/java/dev/ror2lab/diagnostics/LabSettingsWriteObserver.java.meta",
             "Assets/LabLoadingScene/Plugins/GameAudioOriginalBootstrap.dll.meta",
             "Assets/LabLoadingScene/Plugins/RoR2.dll",
             "Assets/LabLoadingScene/Plugins/AK.Wwise.Unity.API.dll",

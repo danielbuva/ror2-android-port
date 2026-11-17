@@ -1,6 +1,6 @@
 package dev.ror2lab.diagnostics;
 
-// Authored debug-UID diagnostic: observe the real settings transaction and
+// Authored debug-UID diagnostic: observe a real local persistence transaction and
 // terminate only its PID/UID-bound writer through normal same-UID signalling.
 import android.os.FileObserver;
 import android.os.Process;
@@ -60,15 +60,24 @@ public final class LabPendingWriteStop {
         String name = ready.getName();
         return name.substring("ror2lab-write-".length(), name.length() - ".ready".length());
     }
+    static String pendingFileName(File directory) {
+        String root = "/Android/data/" + PACKAGE + "/files/";
+        String path = directory.getPath();
+        if (path.endsWith(root + "offline-settings-v1"))
+            return "preferences.json.pending";
+        if (path.endsWith(root + "android-profile-v1"))
+            return "profile.json.pending";
+        throw new IllegalArgumentException("Unexpected persistence directory");
+    }
     public static JSONObject observe(String[] args, java.util.function.BooleanSupplier cancelled) throws Exception {
         if (args.length != 4)
-            throw new IllegalArgumentException("Requires owned debug UID, settings directory, ready path, observed PID and UID");
+            throw new IllegalArgumentException("Requires owned persistence directory, ready path, observed PID and UID");
         final File directory = new File(args[0]).getCanonicalFile();
-        final File pending = new File(directory, "preferences.json.pending");
+        final String pendingName = pendingFileName(directory);
+        final File pending = new File(directory, pendingName);
         final File ready = new File(args[1]);
         final int pid = Integer.parseInt(args[2]), uid = Integer.parseInt(args[3]);
         if (pid <= 0 || uid < 10000 || Process.myUid() != uid || !directory.isDirectory()
-            || !directory.getPath().endsWith("/Android/data/" + PACKAGE + "/files/offline-settings-v1")
             || !ready.getCanonicalFile().getParentFile().equals(directory.getParentFile())
             || !ready.getName().matches("ror2lab-write-[0-9a-f]{32}\\.ready")
             || ready.exists() || pending.exists())
@@ -77,14 +86,17 @@ public final class LabPendingWriteStop {
         final CountDownLatch done = new CountDownLatch(1);
         final AtomicBoolean triggered = new AtomicBoolean();
         final AtomicReference<Throwable> failure = new AtomicReference<>();
-        final JSONObject result = new JSONObject();
+        final JSONObject result = new JSONObject().put("pendingName", pendingName);
         FileObserver observer = new FileObserver(directory, FileObserver.CREATE) {
             @Override public void onEvent(int event, String name) {
-                if (cancelled.getAsBoolean() || (event & FileObserver.CREATE) == 0 || !"preferences.json.pending".equals(name) || !triggered.compareAndSet(false, true)) return;
+                if (cancelled.getAsBoolean() || (event & FileObserver.CREATE) == 0 || !pendingName.equals(name) || !triggered.compareAndSet(false, true)) return;
                 try {
                     bind(pid, uid);
-                    result.put("createObserved", true).put("pendingPresentBeforeStop", pending.isFile())
+                    boolean present = pending.isFile();
+                    result.put("createObserved", true).put("pendingPresentBeforeStop", present)
                         .put("pendingBytesBeforeStop", pending.length());
+                    if (!present)
+                        throw new IllegalStateException("Pending file already committed before writer stop");
                     long started = SystemClock.uptimeMillis();
                     Os.kill(pid, OsConstants.SIGKILL);
                     while (Files.exists(Paths.get("/proc/" + pid)) && SystemClock.uptimeMillis() - started < 1000)
@@ -100,7 +112,7 @@ public final class LabPendingWriteStop {
         try {
             observer.startWatching();
             atomicJson(ready, new JSONObject().put("nonce", observerNonce(ready))
-                .put("pid", pid).put("uid", uid).put("observerPid", Process.myPid()));
+                .put("pid", pid).put("uid", uid).put("observerPid", Process.myPid()).put("pendingName", pendingName));
             long deadline = SystemClock.uptimeMillis() + 30000;
             while (!done.await(100, TimeUnit.MILLISECONDS)) {
                 if (cancelled.getAsBoolean()) throw new InterruptedException("Owner cancelled observer");

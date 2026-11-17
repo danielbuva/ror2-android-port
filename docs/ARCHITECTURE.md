@@ -880,6 +880,11 @@ require `native_type_hash` for each output. The pack retains that identity and
 `object_produce.py` checks it after its own source type projection, before bundle
 emission. Source readers close per supplier, script caches expire at process exit
 and input pins are rechecked; no new runtime owner is added.
+`recipe/owner-whole-game-native-leaf-records.json` uses the same owner to
+supply 19 PhysicMaterials and eight BillboardAssets from their original
+serialized members. Release graph preparation checks the full type layouts and
+PPtr closure. The verified source bodies have no nonnull references, so the
+profile leaves them intact.
 The same record owner imports named `ControlPlayableAsset` PropertyName mappings
 with `control_exposed_name_default`. An exact-editor authored fixture establishes
 the mapping default; original managed metadata and pinned AssetRipper encoding
@@ -2943,7 +2948,7 @@ on the configured volume, recreates the runtime directory, syncs the payload and
 records the recovery in the terminal receipt under the same lease.
 The shared device runner's launch request accepts `start_from_menu` for automatic
 route observations. It waits for the installed attempt/PID-bound native menu,
-requires owned display-zero focus, injects Start and waits for a ready world
+requires owned display-zero focus, taps the reported Start button and waits for a ready world
 before the observation clock begins. Existing periodic captures retain PSS,
 native heap and managed/allocation snapshots across stage transitions. The
 ordinary selector controls the route; sustained combat's stationary first-stage
@@ -2954,6 +2959,10 @@ The shared runner records the cumulative exception log's byte offset before
 launch. After stopping the owned package, it captures only the appended rows
 in the session root's `exceptions.jsonl`, including on workload failure.
 Periodic captures retain their PID-filtered logs and performance evidence.
+Opt-in `capture_golem_attacks` watches the live Unity stream for the owned
+process's native clap and laser entries and captures a bounded screenshot burst
+when display zero is focused. The observer stops with the launch workload and
+retains its event receipt alongside the regular captures.
 
 Launch-mode `input_schedule` adds ordered, relative-time targeted-touch scripts
 within the observation window, allowing ordinary input and End Run in the same
@@ -2997,7 +3006,14 @@ Optional diagnostics/selection/input-mapping settings are read back and restored
 The mapping must match the APK attempt and accepted measured bridge checkpoint.
 Converted runs also reset and independently verify the separately owned lab
 package at admission and cleanup. New raw traces are
-hash-verified on the host before device removal. Independent idle/package-byte
+hash-verified on the host before device removal. The terminal receipt references
+the input APK by source path and SHA-256. Payload sync records each source file
+path and verified SHA-256, and retires hash-matching superseded members from the
+previous receipt. The runner retains changed diagnostic captures and observer
+witnesses before removing them. `device_cleanup` records each removed file's
+size measured before deletion, with totals updated only after absence readback.
+Completed removals remain recorded if capture, parsing or terminal verification
+fails. Independent idle/package-byte
 readback and OLED sleep precede lease release; failed cleanup retains the lease
 for recovery. `terminal.done.json` records success or failure, including a
 dispatched child's failed input validation. Evidence and requests stay ignored.
@@ -3208,6 +3224,16 @@ generated library build file does not enable the legacy `src` root. The host
 checks distinct service/main PIDs, retained original
 primary/pending bytes, cold recovery and native resave. Device survival after the
 writer kill remains a qualification gate.
+
+The shared runner's current `profile-write-interrupt` workload uses the same
+service with the profile pending path. `PortSession` reads the nonce-only
+`profile-write-observer.request` at launch. `IntegratedResultsBoundary` arms
+the service only for an unassisted native result with a prepared profile, then
+persists the native report and ledger before the profile commit. The runner
+binds the separate writer and observer, retains pending evidence by hash, and
+checks two cold world Starts for one reconciliation and unchanged settings.
+Native replay supersedes the pending generation. Cleanup stops the package and
+clears the attempt's request and witness files.
 
 Settings persistence remains owned by `AndroidOfflineSettings`. Its existing
 validated pending/primary/backup transaction is unchanged. `TrySave` converts
@@ -4495,12 +4521,17 @@ The enemy, world, model, teleport-material and barrier steps run through `RunGua
 (`PortSession.cs`), which records the failure and moves on. The reward,
 death-effect, geometry and reclaim steps, and the synchronous cleanup calls outside the
 `CleanupBodyCatalog` `try`, have no wrapper: an exception there stops the remaining
-release steps. `Start` itself has no
-enclosing `finally`, and `PortSession` has no `OnDestroy` or `OnApplicationQuit`:
+release steps. `Start` itself has no enclosing `finally`, and `PortSession` has
+no `OnDestroy` or `OnApplicationQuit`, so
 an error during catalog preparation or the menu, or the app being killed, skips the
 post-run release sequence. Per-boundary teardown inside the session (the 17-step call
 order and each `finally`) is in
 [architecture-file-map.md](architecture-file-map.md#d-playable-spine-runtime-sequence-and-ownership).
+
+`StageGeometrySession` tracks the loaded scene's rock spawners and stops their
+pending coroutines before stage transport clears projectiles or `NovaInputSession`
+retires the run and combat services. Geometry cleanup stops any remaining
+spawner coroutines before unloading the scene.
 
 ## Ownership
 
@@ -4634,6 +4665,8 @@ before their pools instantiate them. It follows typed prefab edges with cycle
 protection, including CharacterBody's separately loaded FireTrail. Original
 source slots and particle trails are restored by integrated-world cleanup before
 the session destroys its material copies; source blend values remain intact.
+The session counts objective projectile materials during catalog setup. The
+integrated-world report includes these counts from its first snapshot.
 | Developer controls | `DebugAccelerationBoundary` ([debug-acceleration.md](debug-acceleration.md)) | nested `DebugAccelerationSession` (`IDisposable`) **own type** holds the body, saved god mode, ownership flag, charge scan/callback set and grant inventory; `debugPanel` stays shared with IntegratedWorld's graphics button; sticky "assisted" flags stay in the coordinator report | `PrepareDebugAcceleration` (calls `DebugAccelerationSession.Prepare`) → `CleanupDebugAcceleration` (calls `Dispose`; owner retained) | `test_debug_acceleration.py` |
 
 `AndroidProfileSession` reserves each original achievement event before its

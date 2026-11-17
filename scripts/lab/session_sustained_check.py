@@ -6,13 +6,12 @@ full-game, sustained performance acceptance or memory bound follows.
 """
 
 from datetime import datetime, timezone
-import hashlib
 import math
 import re
 import time
 
 from common import WORK, now, write
-from device import Device, PACKAGE
+from device import Device, PACKAGE, remove_device_file, retain_device_file
 from installed_attempt import attempt_from_installed, bind_installed_apk, validate_expected_apk_sha256
 from nova_bridge import current_errors
 import session_cleanup_check as cleanup
@@ -178,7 +177,7 @@ def observation_sample(report, snapshot, elapsed, previous=None, utc=None):
     return row
 
 
-def collect_raw_frames(device, runtime, out, completed, samples, *, enabled=True):
+def collect_raw_frames(device, runtime, out, completed, samples, *, enabled=True, device_cleanup=None):
     """Pull only this session's closed trace; remove device scratch after retention."""
     pacing = completed.get("framePacing") or {}
     if not enabled:
@@ -196,13 +195,11 @@ def collect_raw_frames(device, runtime, out, completed, samples, *, enabled=True
     ):
         raise RuntimeError("Missing closed session-bound raw frame capture")
     path = out / name
-    device.cmd("pull", runtime + "/" + name, str(path))
-    data = path.read_bytes()
-    # Evidence is now retained on the host, including malformed/partial output.
-    device.sh("rm", "--", runtime + "/" + name)
+    # Retain and verify even malformed output before removing the closed trace.
+    digest = retain_device_file(device, runtime + "/" + name, path, device_cleanup)
     import perf_report
 
-    trace = perf_report.read_raw_frames(data)
+    trace = perf_report.read_raw_frames(path.read_bytes())
     if (
         trace["first_frame"] != pacing.get("rawFrameTraceFirstFrame")
         or trace["retained_frames"] != pacing.get("rawFrameTraceFrames")
@@ -212,7 +209,7 @@ def collect_raw_frames(device, runtime, out, completed, samples, *, enabled=True
     for first, last in zip(samples, samples[1:]):
         if not perf_report.raw_frame_window(first, last, trace)["complete"]:
             raise RuntimeError("Raw capture overflow or uncovered observation window")
-    return dict(file=name, sha256=hashlib.sha256(data).hexdigest(), **{key: value for key, value in trace.items() if key != "durations_ms"})
+    return dict(file=name, sha256=digest, **{key: value for key, value in trace.items() if key != "durations_ms"})
 
 
 def assisted_teardown_contract(completed, pid, attempt, baseline):
@@ -249,6 +246,7 @@ def check_session_sustained(
     _reset_idle=None,
     _observe=None,
     _include_exceptions=True,
+    _device_cleanup=None,
 ):
     """Observe aggregate counters in either mode; raw capture defaults to enabled."""
     if type(raw_frame_times) is not bool:
@@ -435,7 +433,9 @@ def check_session_sustained(
         write(out / "completed-session.json", completed)
         write(out / "returned-menu.json", report)
         result["all_off_contract_refusals"] = assisted_teardown_contract(completed, pid, attempt, baseline)
-        result["raw_frame_trace"] = collect_raw_frames(device, runtime, out, completed, result["samples"], enabled=raw_frame_times)
+        result["raw_frame_trace"] = collect_raw_frames(
+            device, runtime, out, completed, result["samples"], enabled=raw_frame_times, device_cleanup=_device_cleanup
+        )
         errors("complete-process")
         result.update(native_teardown_complete=True, success=True)
     except BaseException as error:
@@ -451,9 +451,7 @@ def check_session_sustained(
             state = cleanup._remote_path_state(device, selector)
             action = cleanup.selector_action(state, cleanup._read_raw(device, selector) if state == "file" else "", attempt)
             if action == "remove-owned":
-                device.sh("rm", "--", selector)
-                if cleanup._remote_path_state(device, selector) != "absent":
-                    raise RuntimeError("Owned selector remains")
+                remove_device_file(device, selector, _device_cleanup)
             elif action != "none":
                 raise RuntimeError("Selector ownership changed; preserved it")
             result["selector_cleanup"] = action

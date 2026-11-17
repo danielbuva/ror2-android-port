@@ -26,9 +26,13 @@ Scheduled scripts resolve relative to the request and use the same live PID,
 APK hash and 30-second gesture limit. Times start after the startup input script;
 each dispatch and its actual elapsed time are retained in the terminal receipt.
 `start_from_menu: true` (lab launch mode only) waits for the owned native menu,
-injects Start and waits for a ready world before the observation clock begins.
+taps the observed Start button and waits for a ready world before the clock begins.
 Use it with an explicit auto-route selector for stage-transition memory soaks;
 physical and ordinary-play qualification remain separate.
+`capture_golem_attacks: true` (lab launch mode only) saves up to eight
+three-frame bursts under `golem-attacks/` on live Unity Golem clap or laser
+entry logs. Each burst records the triggering line and capture times. Clap
+entry cues the windup, and a missing log yields no burst.
 `pacing_diagnostics: true` retains read-only Unity, Android display, compositor
 and OS frame-rate intervention evidence during sustained observations. The
 settings failure workload owns its attempt-bound selector and injects one

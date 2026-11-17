@@ -44,7 +44,8 @@ public partial class SourceSession
     public readonly Dictionary<Renderer, Material[]> worldLootSourceMaterials = new Dictionary<Renderer, Material[]>();
     public readonly Dictionary<ParticleSystemRenderer, Material> worldLootSourceTrails = new Dictionary<ParticleSystemRenderer, Material>();
     public class Counts { public int nativeEffectSourceMaterials, nativeEffectSourceRenderers; }
-    public class Report { public Counts world = new Counts(); }
+    public class Report { public Counts world; }
+    public int nativeEffectSourceMaterials, nativeEffectSourceRenderers;
     public Report r = new Report();
     public GameObject OriginalProjectileGhost(RoR2.Projectile.ProjectileController controller) => controller.ghostPrefab;
     public void Prepare(GameObject root) => PresentNativeEffectSource(root);
@@ -126,8 +127,13 @@ static class Fixture
         segment.components = new UnityEngine.Object[] { segmentRenderer, new RoR2.DamageTrail { segmentPrefab = root } };
         var session = new SourceSession();
         session.Prepare(root);
+        Check(session.r.world == null, "objective preparation created a world report");
+        Check(session.worldMaterials.Count == 3 && session.nativeEffectSourceMaterials == 3 &&
+            session.nativeEffectSourceRenderers == 2, "early objective sources were not counted");
+        session.r.world = new SourceSession.Counts();
         session.Prepare(root);
-        Check(session.worldMaterials.Count == 3 && session.r.world.nativeEffectSourceRenderers == 2, "referenced native roots skipped or duplicated");
+        Check(session.worldMaterials.Count == 3 && session.r.world.nativeEffectSourceMaterials == 3 &&
+            session.r.world.nativeEffectSourceRenderers == 2, "world report lost or duplicated early source counts");
         Check(segmentRenderer.sharedMaterials[0].shader.name.StartsWith("Recovered/") && ghostRenderer.sharedMaterials[0].shader.name.StartsWith("Recovered/"), "native pool will inherit dummy shader");
         Check(segmentRenderer.sharedMaterials[0].srcBlend == 1 && segmentRenderer.sharedMaterials[0].dstBlend == 1 && segmentRenderer.sharedMaterials[0].zWrite == 0, "additive source state changed");
         Check(ghostRenderer.sharedMaterials[0].srcBlend == 5 && ghostRenderer.sharedMaterials[0].dstBlend == 10 && ghostRenderer.sharedMaterials[0].renderQueue == 3050, "alpha source state changed");
