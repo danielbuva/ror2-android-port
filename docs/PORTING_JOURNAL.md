@@ -17,6 +17,20 @@ The resumed run took 11,211 s. Maximum reported stage RSS was 2.372 GB against
 the 3 GB target. CPU/GPU peaked at 68.8 C in production, with 0 s above 80 C.
 Remaining: Unity typed load of this bundle, integration with the matching
 catalog and native manifest, and converted APK gameplay.
+## J1477 — Capture stage-transition memory and a bounded passive tail
+
+2026-11-13. Shared launch waits for the owned native menu and ready world before timing.
+61 samples every 30 s retain one process for 1,831.747 s and four native transitions.
+APK SHA-256: `48b8a7f5ca26d15d53a6fb86bec9c5264e7419e4e5ab3cfe8a1b6c9b482192c1` (source `f94c0c30`).
+Evidence: `work/coordination/alpha-memory-soak-20261113/nova/terminal.done.json`
+and `work/coordination/alpha-memory-soak-20261113/soak-analysis.json` (all series/window fits).
+Routing ends at 663.070 s; sample 690 onward is post-teardown Lab, including the final 600 s.
+Tail PSS/native-allocated/managed/Unity-allocated medians: 2,037.396/152.475/108.035/526.951 MiB.
+Their slopes: -1.166/-0.001540/-0.135674/+0.006952 MiB/min; native heap size is flat.
+No observed OOM/LMK/native crash; one new `MaulingRockZoneManager.FireRock` null-reference exception remains unattributed.
+CPU/GPU peak 97.1 C, above 80 C 650.324 s; battery peak 36 C, runtime maximum gap 0.529 s; no safety violation.
+Adopted backing, stopped/asleep readback, selector cleanup and lease release pass.
+Remaining: active long-play memory, ordinary physical play and source-rock exception attribution.
 
 ## J1476 — Converted APK reaches the original-catalog survivor menu
 
