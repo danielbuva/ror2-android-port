@@ -75,7 +75,7 @@ def validate(release, installer_version, application_id, installed_version):
                 raise ValueError("SHA-256 dependency hash required")
 
 
-def rebuild(release, *, installer_version, application_id, installed_version, input_sha256, root, produce):
+def rebuild(release, *, installer_version, application_id, installed_version, input_sha256, root, produce, producer_sha256=None):
     """Rebuild changed entries using existing source-only producer callbacks.
 
     produce(name, dependency_hashes, destination) must produce the complete file
@@ -83,6 +83,7 @@ def rebuild(release, *, installer_version, application_id, installed_version, in
     producer after verifying its acquired recipe/tool hashes. A hash covers the
     entire dependency closure, including shared tools/configuration. The input
     hash is the accepted original-file inventory. Cache is private app data.
+    Staged jobs can supply the digest of each already verified producer output.
     """
     validate(release, installer_version, application_id, installed_version)
     root = Path(root).resolve()
@@ -97,7 +98,10 @@ def rebuild(release, *, installer_version, application_id, installed_version, in
         if not output.resolve().is_relative_to(root):
             raise ValueError("output escapes owner cache")
         cached = old.get(name, {})
-        if cached.get("dependencies") != dependencies or not output.is_file() or digest(output) != cached.get("sha256"):
+        expected = producer_sha256(name) if producer_sha256 else cached.get("sha256")
+        reuse = (producer_sha256 is not None or cached.get("dependencies") == dependencies) and output.is_file() and digest(output) == expected
+        actual = expected
+        if not reuse:
             ATOMIC.mkdirs(output.parent)
             stage = output.with_name(output.name + ".building")
             stage.unlink(missing_ok=True)
@@ -105,11 +109,14 @@ def rebuild(release, *, installer_version, application_id, installed_version, in
                 produce(name, dependencies, stage)
                 if stage.is_symlink() or not stage.is_file():
                     raise ValueError("producer did not produce entry: " + name)
+                actual = digest(stage)
+                if producer_sha256 and actual != expected:
+                    raise ValueError("staged producer output changed: " + name)
                 ATOMIC.publish(stage, output)
             finally:
                 ATOMIC.discard(stage)
             changed.append(name)
-        rows[name] = {"dependencies": dict(dependencies), "sha256": digest(output)}
+        rows[name] = {"dependencies": dict(dependencies), "sha256": actual}
         # Keep prior candidates if a later producer fails or is killed. Every
         # entry still passes the dependency and output checks before reuse.
         ATOMIC.write_json(state, {"input_sha256": input_sha256, "entries": rows})
