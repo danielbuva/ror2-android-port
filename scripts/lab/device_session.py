@@ -336,9 +336,14 @@ def capture(device, output, pid):
     device.collect("screenshot", output)
     runtime = device.read_receipt("runtime.json")["persistentDataPath"]
     (output / "il2cpp-metadata-sha256.txt").write_text(device.sh("sha256sum", runtime + "/il2cpp/Metadata/global-metadata.dat", check=False))
-    for name in ("snapshot.json", "movement-batch-" + SPINE_ID + ".json", "movement-batch-" + SPINE_ID.removesuffix("-bringup") + ".json", "exceptions.jsonl"):
+    for name in ("snapshot.json", "movement-batch-" + SPINE_ID + ".json", "movement-batch-" + SPINE_ID.removesuffix("-bringup") + ".json"):
         (output / name).write_text(device.sh("cat", runtime + "/" + name, check=False))
-    device.collect("perf", output)
+    device.collect("perf", output, include_exceptions=False)
+
+
+def exception_log_size(device, path):
+    # LabDiagnostics appends JSONL across launches. Stat the file while idle.
+    return int(device.sh("sh", "-c", 'if [ -e "$1" ]; then stat -c %s -- "$1"; else printf 0; fi', "sh", path))
 
 
 def wait_for_settings_report(device, thermal, pid, predicate, timeout=100, *, report_id=None):
@@ -595,6 +600,7 @@ def run_workload(device, thermal, request, output, result, *, _reset_idle=None):
                 detailed_visual_diagnostics=request.get("selection", {}).get("detailedVisualDiagnostics", False),
                 _reset_idle=_reset_idle,
                 _observe=observe_pacing if request.get("pacing_diagnostics") else None,
+                _include_exceptions=False,
             )
         finally:
             fresh = set(evidence.glob("*/result.json")) - prior
@@ -694,6 +700,8 @@ def execute(request):
     restore = {}
     initial_traces = set()
     trace_inventory_ready = False
+    exception_log = None
+    initial_exception_bytes = None
     active_hash = None
     started = time.monotonic()
     prior_selectors = command_selectors()
@@ -733,6 +741,8 @@ def execute(request):
         if "payload_directory" in request:
             result["sync"] = device.sync(Path(request["payload_directory"]))
         result["installed_idle"] = _idle_readback(device, active_hash)
+        exception_log = runtime + "/exceptions.jsonl"
+        initial_exception_bytes = exception_log_size(device, exception_log)
         initial_traces = set(device.sh("find", runtime, "-maxdepth", "1", "-type", "f", "-name", "frame-times-*.bin").splitlines())
         trace_inventory_ready = True
         mapping = checked_mapping(request) if "input_mapping" in request else None
@@ -806,8 +816,20 @@ def execute(request):
                 def stop():
                     verify_owned(device, active_hash)
                     device.sh("am", "force-stop", device.package)
+                    return True
 
-                clean("stop", stop)
+                if clean("stop", stop) and initial_exception_bytes is not None:
+                    try:
+                        end = exception_log_size(device, exception_log)
+                        if end < initial_exception_bytes:
+                            raise RuntimeError("Cumulative exception log shrank during the session")
+                        rows = ""
+                        if end > initial_exception_bytes:
+                            rows = device.sh("tail", "-c", f"+{initial_exception_bytes + 1}", "--", exception_log)
+                        (output / "exceptions.jsonl").write_text(rows + "\n" if rows else "")
+                    except BaseException:
+                        result["exception_capture_error"] = traceback.format_exc()
+                        result["success"] = False
                 for remote, previous in restore.items():
 
                     def restore_file(remote=remote, previous=previous):

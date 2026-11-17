@@ -2905,6 +2905,11 @@ ordinary selector controls the route; sustained combat's stationary first-stage
 selector is separate. Existing shared cleanup stops the process and removes the
 selector. These measurements do not certify physical or ordinary play.
 
+The shared runner records the cumulative exception log's byte offset before
+launch. After stopping the owned package, it captures only the appended rows
+in the session root's `exceptions.jsonl`, including on workload failure.
+Periodic captures retain their PID-filtered logs and performance evidence.
+
 Launch-mode `input_schedule` adds ordered, relative-time targeted-touch scripts
 within the observation window, allowing ordinary input and End Run in the same
 owned session. The existing touch owner validates each script before dispatch,
