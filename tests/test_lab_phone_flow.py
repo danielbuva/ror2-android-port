@@ -18,6 +18,99 @@ SPEC.loader.exec_module(LAB)
 
 
 class PhoneFlowTests(unittest.TestCase):
+    def test_periodic_sampling_runs_without_pipeline_poll_and_joins_on_failure(self):
+        import threading
+
+        observed = threading.Event()
+        phone = Mock()
+        workers = []
+
+        def sample():
+            if threading.current_thread().name == "installer-stage-metrics":
+                workers.append(threading.current_thread())
+                observed.set()
+            return {"installer": {"pss_bytes": 17}}
+
+        phone.flow_observation.side_effect = sample
+        metrics = LAB.FlowMetrics(phone)
+        with patch.object(metrics, "INTERVAL", 0.01):
+            with self.assertRaisesRegex(LAB.Failure, "original-stage-error"):
+                with metrics.stage("baseline-reconstruction"):
+                    self.assertTrue(observed.wait(2), "periodic observation never ran")
+                    raise LAB.Failure("original-stage-error")
+        self.assertTrue(workers)
+        self.assertTrue(all(not thread.is_alive() for thread in workers))
+        self.assertIsNone(metrics.current)
+        self.assertFalse(metrics.report()["stages"][0]["completed"])
+
+    def test_timeline_missing_process_and_storage_high_water_are_not_final_values(self):
+        clock = [0]
+        phone = Mock()
+        phone.flow_observation.side_effect = [
+            {"installer": {"pss_bytes": 10, "data_free_bytes": 100}},
+            {"installer": {"pss_bytes": 50, "data_free_bytes": 40}},
+            {},  # Process exit / unavailable telemetry must not become zero.
+            {"installer": {"pss_bytes": 20, "data_free_bytes": 90}},
+        ]
+        metrics = LAB.FlowMetrics(phone)
+        with patch.object(LAB.time, "monotonic", side_effect=lambda: clock[0]):
+            with metrics.stage("baseline-reconstruction"):
+                for clock[0] in (10, 20):
+                    metrics.sample()
+                clock[0] = 30
+        row = metrics.report(include_samples=True)["stages"][0]
+        package = row["packages"]["installer"]
+        self.assertEqual(package["sampled_max_pss_bytes"], 50)
+        self.assertEqual(package["storage_end"]["data_free_bytes"], 90)
+        self.assertEqual(package["storage_sampled_min_free_bytes"]["data_free_bytes"], 40)
+        self.assertEqual(package["storage_sampled_max_drop_from_start_bytes"]["data_free_bytes"], 60)
+        self.assertEqual(
+            package["coverage"]["pss_bytes"],
+            {
+                "valid_samples": 3,
+                "missing_samples": 1,
+                "first_offset_seconds": 0,
+                "last_offset_seconds": 30,
+                "largest_unobserved_gap_seconds": 20,
+            },
+        )
+        self.assertEqual([sample["offset_seconds"] for sample in row["timeline"]], [0, 10, 20, 30])
+        self.assertIsNone(row["timeline"][2]["installer"]["pss_bytes"])
+        self.assertNotIn("timeline", metrics.report()["stages"][0])
+
+    def test_sample_bound_and_next_stage_do_not_mix_observations(self):
+        clock = [0]
+        phone = Mock()
+        phone.flow_observation.return_value = {"installer": {"pss_bytes": 7}}
+        metrics = LAB.FlowMetrics(phone)
+        with patch.object(metrics, "MAX_SAMPLES", 2), patch.object(LAB.time, "monotonic", side_effect=lambda: clock[0]):
+            with metrics.stage("baseline-reconstruction"):
+                clock[0] = 10
+                metrics.sample()
+                clock[0] = 20
+                metrics.sample()
+                clock[0] = 30
+            phone.flow_observation.return_value = {"installer": {"pss_bytes": 99}}
+            with metrics.stage("baseline-install"):
+                clock[0] = 35
+        first, second = metrics.report(include_samples=True)["stages"]
+        self.assertTrue(first["sample_limit_reached"])
+        self.assertEqual(first["samples"], 2)
+        self.assertEqual(first["packages"]["installer"]["coverage"]["pss_bytes"]["largest_unobserved_gap_seconds"], 20)
+        self.assertFalse(second["sample_limit_reached"])
+        self.assertEqual(second["packages"]["installer"]["sampled_max_pss_bytes"], 99)
+        self.assertEqual(second["timeline"][0]["offset_seconds"], 0)
+
+    def test_missing_start_storage_does_not_fabricate_consumption(self):
+        phone = Mock()
+        phone.flow_observation.side_effect = [{}, {"installer": {"data_free_bytes": 3}}]
+        metrics = LAB.FlowMetrics(phone)
+        with metrics.stage("fresh-installer"):
+            pass
+        row = metrics.report()["stages"][0]["packages"]["installer"]
+        self.assertEqual(row["storage_sampled_min_free_bytes"]["data_free_bytes"], 3)
+        self.assertIsNone(row["storage_sampled_max_drop_from_start_bytes"]["data_free_bytes"])
+
     def test_pss_is_one_numeric_total_not_a_true_peak(self):
         self.assertEqual(LAB.process_pss(b"TOTAL PSS: 123 TOTAL RSS: 456\n"), 123 * 1024)
         for value in (b"TOTAL PSS: -2", b"TOTAL PSS: unknown", b"TOTAL PSS: 1\nTOTAL PSS: 2", b"x" * 65537, "private-text"):
