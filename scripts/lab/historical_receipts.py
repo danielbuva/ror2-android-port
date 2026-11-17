@@ -10,6 +10,11 @@ from common import ROOT
 
 NAME = "input-migration-optional-guards"
 SCHEMA = "ror2-historical-receipt-v1"
+SCENE_ASSEMBLIES = "scene-runtime-original-assemblies"
+AUDIO_IDENTITIES = "scene-runtime-audio-identities"
+AUDIO_CLOSURE = "scene-runtime-audio-closure"
+TELEPORT_QUERY = "scene-runtime-teleport-query"
+NAMES = (NAME, SCENE_ASSEMBLIES, AUDIO_IDENTITIES, AUDIO_CLOSURE, TELEPORT_QUERY)
 
 
 def _path(root, relative):
@@ -46,14 +51,58 @@ def _guards(data):
     return data
 
 
+def _scene_contract(name, data):
+    if not isinstance(data, dict):
+        raise RuntimeError("Historical scene receipt must be an object")
+    if name == SCENE_ASSEMBLIES:
+        assemblies = data.get("original_assemblies")
+        if not isinstance(assemblies, dict) or not assemblies:
+            raise RuntimeError("Historical scene receipt requires original assemblies")
+        for assembly, digest in assemblies.items():
+            if not isinstance(assembly, str) or not re.fullmatch(r"[A-Za-z0-9_.-]+\.dll", assembly):
+                raise RuntimeError("Historical assembly name must be a plain DLL filename")
+            _hash(digest)
+    elif name == AUDIO_IDENTITIES:
+        rows = data.get("rows")
+        if (
+            not isinstance(rows, list)
+            or len(rows) != 8
+            or any(not isinstance(row, dict) or row.get("resolved") is not True or "error" not in row or row["error"] for row in rows)
+        ):
+            raise RuntimeError("Audio identity gate failed")
+    elif name == AUDIO_CLOSURE:
+        files = data.get("files")
+        if "unresolved" not in data or data["unresolved"] or not isinstance(files, list) or not files:
+            raise RuntimeError("Historical audio closure must be resolved and nonempty")
+        for row in files:
+            path = row.get("path") if isinstance(row, dict) else None
+            if not isinstance(path, str) or not path or Path(path).is_absolute() or ".." in Path(path).parts:
+                raise RuntimeError("Historical audio closure requires relative asset paths")
+            _hash(row.get("sha256"))
+    elif name == TELEPORT_QUERY:
+        locations = data.get("locations")
+        if not isinstance(locations, list) or any(
+            not isinstance(row, dict) or not all(key in row for key in ("internalId", "type", "key")) for row in locations
+        ):
+            raise RuntimeError("Historical teleport query requires location records")
+        selected = [
+            row
+            for row in locations
+            if row.get("internalId") == "Assets/RoR2/Base/Common/TeleportOutController/matTPInOut.mat" and row.get("type") == "UnityEngine.Material"
+        ]
+        if len(selected) != 1 or not isinstance(selected[0].get("key"), str) or not selected[0]["key"]:
+            raise RuntimeError("Teleport material catalog identity differs")
+    return data
+
+
 def _selection(root, name):
-    if name != NAME:
+    if name not in NAMES:
         raise RuntimeError("Unknown historical receipt name: " + name)
     return _path(root, "work/config/historical-receipts/" + name + ".json")
 
 
-def _read_source(root, selection):
-    if not isinstance(selection, dict) or selection.get("schema") != SCHEMA or selection.get("name") != NAME:
+def _read_source(root, name, selection):
+    if not isinstance(selection, dict) or selection.get("schema") != SCHEMA or selection.get("name") != name:
         raise RuntimeError("Historical receipt selection schema/name mismatch")
     source = _path(root, selection.get("path"))
     try:
@@ -62,10 +111,11 @@ def _read_source(root, selection):
         raise RuntimeError("Selected historical receipt is missing; restore the specific retained evidence, never substitute latest") from error
     if hashlib.sha256(raw).hexdigest() != _hash(selection.get("sha256")):
         raise RuntimeError("Historical receipt SHA-256 mismatch")
-    return _guards(json.loads(raw))
+    data = json.loads(raw)
+    return _guards(data) if name == NAME else _scene_contract(name, data)
 
 
-def resolve(name, *, root=ROOT, original_sha256):
+def resolve(name, *, root=ROOT, original_sha256=None):
     """Read the selected bytes once, then check their identity against preserved input."""
     root = Path(root)
     path = _selection(root, name)
@@ -73,8 +123,8 @@ def resolve(name, *, root=ROOT, original_sha256):
         selection = json.loads(path.read_bytes())
     except FileNotFoundError as error:
         raise RuntimeError("Missing named historical receipt " + name + "; explicitly pin retained evidence with scripts/lab/historical_receipts.py") from error
-    data = _read_source(root, selection)
-    if data["input_sha256"] != _hash(original_sha256):
+    data = _read_source(root, name, selection)
+    if name == NAME and data["input_sha256"] != _hash(original_sha256):
         raise RuntimeError("Optional guard receipt does not match preserved original RoR2.dll")
     return data, selection
 
@@ -84,7 +134,7 @@ def pin(name, source, expected_sha256, *, root=ROOT):
     root = Path(root)
     path = _selection(root, name)
     selection = dict(schema=SCHEMA, name=name, path=source, sha256=_hash(expected_sha256))
-    _read_source(root, selection)
+    _read_source(root, name, selection)
     path.parent.mkdir(parents=True, exist_ok=True)
     # Exclusive creation deliberately refuses replacement of an existing selection.
     with path.open("x") as stream:
@@ -94,7 +144,7 @@ def pin(name, source, expected_sha256, *, root=ROOT):
 
 def main():
     parser = argparse.ArgumentParser(description="Historical support only: pin reviewed retained evidence, without accepting game input or changing rollbacks.")
-    parser.add_argument("name", choices=[NAME])
+    parser.add_argument("name", choices=NAMES)
     parser.add_argument("source", help="Repository-relative file under ignored work/")
     parser.add_argument("--sha256", required=True, help="Independently reviewed SHA-256 of the retained receipt")
     args = parser.parse_args()

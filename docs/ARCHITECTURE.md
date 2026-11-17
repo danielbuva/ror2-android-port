@@ -2683,6 +2683,11 @@ resolve an explicitly registered, hash-pinned optional-guard receipt against the
 preserved original assembly before inventory/probe work. This support owner has
 no runtime or build-selection side effects; its registration and local-state
 contract are in [LOCAL_STATE.md](LOCAL_STATE.md#named-historical-optional-guard-evidence).
+The same owner resolves named hash-bound scene-runtime assembly provenance,
+audio identity/closure receipts and teleport catalog queries before their
+historical staging pipelines. Their selections are recorded in preparation
+receipts; source-byte and runtime acceptance checks are unchanged. Registration
+contracts are in [LOCAL_STATE.md](LOCAL_STATE.md#named-historical-scene-runtime-evidence).
 
 `scripts/prune-generated.py` (current) discards rebuildable build outputs under
 `work/` while protecting the APKs pinned by `PORTING_STATE.md`, `docs/BASELINE.md`,
