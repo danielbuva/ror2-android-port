@@ -569,7 +569,7 @@ out.mkdir();(out/'global-metadata.dat').write_bytes(metadata)
             self.assertEqual((root / "global-metadata.dat").read_bytes(), metadata.read_bytes())
             self.assertEqual((root / "libil2cpp.so").read_bytes(), b"independent native output")
 
-    def test_signed_install_builds_player_and_native_from_fresh_conversion_and_reuses_unchanged_jobs(self):
+    def test_signed_install_shares_fresh_conversion_with_player_witness_and_native(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory).resolve()
             repo, inputs, runtime, native = [root / name for name in ("repo", "inputs", "runtime", "native")]
@@ -610,12 +610,45 @@ out.mkdir();(out/'global-metadata.dat').write_bytes(metadata)
             player_profile = "recipe/owner-player-fixture.json"
             write(repo / player_profile, {"project_assemblies": [], "outputs": {}, "registry": {"file": "registry.assets", "path": "registry.json"}})
             write(repo / "recipe/registry.json", {})
+            player = "recipe/jobs/owner-player-fixture.json"
+            witness_profile, witness = "recipe/owner-witness.json", "recipe/jobs/owner-witness.json"
+            write(
+                repo / witness_profile,
+                dict(
+                    schema="owner-bundle-managed-release-v1",
+                    profiles=[player_profile],
+                    request=dict(
+                        registry_receipt=G.Graph.artifact_pin(player, "registry_receipt"),
+                        managed_providers=dict(path="${input:retained_providers}"),
+                        managed_receipt=dict(path="${input:retained_receipt}"),
+                    ),
+                ),
+            )
+            bundle_profile, bundle = "recipe/owner-bundle.json", "recipe/jobs/owner-bundle.json"
+            write(
+                repo / bundle_profile,
+                dict(
+                    schema="owner-bundle-preload-release-v1",
+                    profiles=[player_profile, witness_profile],
+                    request=dict(
+                        policy=dict(bundle="fixture"),
+                        codec=dict(path="${input:retained_codec}"),
+                        managed_inputs=dict(
+                            metadata=G.Graph.artifact_pin(witness, "metadata"),
+                            **{"registry_" + key: G.Graph.artifact_pin(player, "registry_" + key) for key in ("body", "receipt", "schemas")},
+                        ),
+                    ),
+                ),
+            )
+            write(repo / "tools/phone-build/metadata/Program.cs", "// synthetic metadata reader")
             sdk_witness, linker = inputs / "acquired/sdk/receipt.json", native / "linker"
+            codec = native / "libbundlelz4.so"
             package_manifest = inputs / "acquired/package-set/input-hashes.json"
             write(package_manifest, {"packages/Fixture.cs": "fixture identity"})
             write(package_manifest.parent / "packages/Fixture.cs", "class PackageFixture {}")
             write(sdk_witness, "sdk fixture 1")
             write(linker, "linker fixture 1")
+            write(codec, "codec fixture 1")
             write(
                 repo / code_request,
                 {
@@ -714,9 +747,52 @@ for name, data in files.items():
     path.write_bytes(data)
 registry = args.output / 'registry-source'
 registry.mkdir()
-for name in ('result.json', 'schemas.json'):
-    (registry / name).write_text('{}')
+(registry / 'result.json').write_text(json.dumps({'managed_root': str(args.managed_production)}))
+(registry / 'schemas.json').write_text('{}')
 (args.output / 'result.json').write_text(json.dumps({'success': True, 'files': {archive + name: {} for name in files}}))
+""",
+            )
+            write(
+                repo / (G.PREFIX + "bundle_endpoints.py"),
+                """import hashlib, json, pathlib, sys
+_, command, request_path, output_flag, output = sys.argv
+assert (command, output_flag) == ('--managed', '--output')
+request = json.loads(pathlib.Path(request_path).read_text())
+def read(name):
+    pin = request[name]
+    path = pathlib.Path(pin['path'])
+    data = path.read_bytes()
+    assert len(data) == pin['bytes'] and hashlib.sha256(data).hexdigest() == pin['sha256']
+    return path, json.loads(data)
+_, registry = read('registry_receipt')
+providers_path, providers = read('managed_providers')
+receipt_path, receipt = read('managed_receipt')
+assert providers_path.parent == receipt_path.parent == pathlib.Path(registry['managed_root'])
+assert receipt['success'] and receipt['phase'] == 'managed-produced'
+assert pathlib.Path(providers['Assembly-CSharp.dll']['path']).read_bytes() == b'owned fixture'
+pathlib.Path(output).mkdir()
+for name in ('result.json', 'runtime-request.json', 'providers.json', 'metadata.json', 'provider-aliases.json'):
+    (pathlib.Path(output) / name).write_text('{}')
+""",
+            )
+            write(
+                repo / (G.PREFIX + "bundle_preload.py"),
+                """import hashlib, json, pathlib, sys
+_, command, request_path, output_flag, output = sys.argv
+assert (command, output_flag) == ('--release', '--output')
+request = json.loads(pathlib.Path(request_path).read_text())['request']
+for pin in request['managed_inputs'].values():
+    data = pathlib.Path(pin['path']).read_bytes()
+    assert len(data) == pin['bytes'] and hashlib.sha256(data).hexdigest() == pin['sha256']
+pin = request['codec']
+codec = pathlib.Path(pin['path'])
+data = codec.read_bytes()
+assert codec.name == 'libbundlelz4.so' and len(data) == pin['bytes'] and hashlib.sha256(data).hexdigest() == pin['sha256']
+out = pathlib.Path(output)
+(out / 'emitted').mkdir(parents=True)
+(out / 'emitted/fixture.bundle').write_bytes(b'synthetic bundle ' + data)
+for name in ('result.json', 'catalog-profile.json'):
+    (out / name).write_text('{}')
 """,
             )
             shutil.copyfile(ROOT / "tools/phone-build/owner-code/native.py", producer_root / "native_contract.py")
@@ -741,19 +817,21 @@ native.expand(providers['Fixture.cpp'], out / 'source.cpp')
             )
             admission, plan = load("install_inputs"), load("install_flow")
             code, native_job = "recipe/jobs/owner-code-conversion.json", "recipe/jobs/owner-native-code.json"
-            player = "recipe/jobs/owner-player-fixture.json"
             selected = {
                 "schema": 1,
                 "required_inputs": input_manifest,
                 "workspace_bytes": 0,
                 "configuration": {"bindings": {"original": "Data/source.txt", "pc": "."}},
-                "stages": [{"id": name, "title": name, "jobs": {"assembly": [code, player], "native": [native_job]}.get(name, [])} for name in plan.STAGES],
+                "stages": [
+                    {"id": name, "title": name, "jobs": {"assembly": [code, player, witness, bundle], "native": [native_job]}.get(name, [])}
+                    for name in plan.STAGES
+                ],
             }
             progress = []
 
             def build():
                 graph = G.Graph(repo, {})
-                index = graph.compile([player_profile], code_request=code_request, native_request=native_request)
+                index = graph.compile([bundle_profile], code_request=code_request, native_request=native_request)
                 for name, job in graph.jobs.items():
                     write(repo / name, job)
                     index["files"][name] = G.digest(repo / name)
@@ -761,6 +839,7 @@ native.expand(providers['Fixture.cpp'], out / 'source.cpp')
                 index["install_plan"] = selected
                 self.assertIn("tools/unity/Fixture.cs", graph.jobs[code]["source_files"])
                 self.assertIn("recipe/runtime-sources.json", graph.jobs[player]["source_files"])
+                self.assertEqual(graph.jobs[witness]["needs"], [code, player])
                 release = {
                     "version": "synthetic",
                     "version_code": 2,
@@ -774,8 +853,11 @@ native.expand(providers['Fixture.cpp'], out / 'source.cpp')
                 dispatcher = J.Dispatcher(
                     repo, index, release, inputs, runtime, native, config, identity, python=[sys.executable], progress=lambda *args: progress.append(args)
                 )
-                self.assertEqual(plan.validate_plan(selected, index, dispatcher.descriptor), {code: "assembly", player: "assembly", native_job: "native"})
-                dispatcher.execute(player)
+                self.assertEqual(
+                    plan.validate_plan(selected, index, dispatcher.descriptor),
+                    {code: "assembly", player: "assembly", witness: "assembly", bundle: "assembly", native_job: "native"},
+                )
+                dispatcher.execute(bundle)
                 dispatcher.execute(native_job)
                 result = J.UPDATES.RELEASE.rebuild(
                     release,
@@ -790,7 +872,8 @@ native.expand(providers['Fixture.cpp'], out / 'source.cpp')
                 return result
 
             first = build()
-            self.assertEqual(len(first["rebuilt"]), 7)
+            self.assertEqual(len(first["rebuilt"]), 8)
+            self.assertEqual(Path(first["outputs"]["payload/fixture"]).read_text(), "synthetic bundle codec fixture 1")
             self.assertEqual(Path(first["outputs"]["apk/assets/bin/Data/registry.assets"]).read_bytes(), original.read_bytes())
             self.assertFalse(build()["rebuilt"])
             write(repo / native_request, dict(native_template, compile_timeout_seconds=60))
@@ -802,24 +885,41 @@ native.expand(providers['Fixture.cpp'], out / 'source.cpp')
             self.assertEqual(Path(changed["outputs"][archive_lib]).read_bytes(), b"owned fixturelinker fixture 2")
             write(sdk_witness, "sdk fixture 2")
             self.assertEqual(build()["rebuilt"], ["apk/assets/bin/Data/Managed/Metadata/global-metadata.dat"])
+            write(codec, "codec fixture 2")
+            self.assertEqual(build()["rebuilt"], ["payload/fixture"])
             self.assertEqual(
                 progress,
                 [
                     (code, False),
                     (player, False),
+                    (witness, False),
+                    (bundle, False),
                     (native_job, False),
                     (code, True),
                     (player, True),
+                    (witness, True),
+                    (bundle, True),
                     (native_job, True),
                     (code, True),
                     (player, True),
+                    (witness, True),
+                    (bundle, True),
                     (native_job, False),
                     (code, True),
                     (player, True),
+                    (witness, True),
+                    (bundle, True),
                     (native_job, False),
                     (code, False),
                     (player, False),
+                    (witness, False),
+                    (bundle, False),
                     (native_job, False),
+                    (code, True),
+                    (player, True),
+                    (witness, True),
+                    (bundle, False),
+                    (native_job, True),
                 ],
             )
 
