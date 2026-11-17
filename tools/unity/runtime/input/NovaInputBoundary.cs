@@ -1093,6 +1093,7 @@ public sealed partial class PortSession
                         if (cfg.originalDefaultPickup && (bringup || cfg.integratedWorld))
                             coordinator.CleanupOriginalDefaultPickup();
                         coordinator.CleanupOriginalBarrel();
+                        coordinator.StopStageRockCoroutines();
                         coordinator.CleanupRunClock();
                     }
                     if (cfg.enemySpine)

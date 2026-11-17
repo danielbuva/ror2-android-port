@@ -4446,12 +4446,17 @@ The enemy, world, model, teleport-material and barrier steps run through `RunGua
 (`PortSession.cs`), which records the failure and moves on. The reward,
 death-effect, geometry and reclaim steps, and the synchronous cleanup calls outside the
 `CleanupBodyCatalog` `try`, have no wrapper: an exception there stops the remaining
-release steps. `Start` itself has no
-enclosing `finally`, and `PortSession` has no `OnDestroy` or `OnApplicationQuit`:
+release steps. `Start` itself has no enclosing `finally`, and `PortSession` has
+no `OnDestroy` or `OnApplicationQuit`, so
 an error during catalog preparation or the menu, or the app being killed, skips the
 post-run release sequence. Per-boundary teardown inside the session (the 17-step call
 order and each `finally`) is in
 [architecture-file-map.md](architecture-file-map.md#d-playable-spine-runtime-sequence-and-ownership).
+
+`StageGeometrySession` tracks the loaded scene's rock spawners and stops their
+pending coroutines before stage transport clears projectiles or `NovaInputSession`
+retires the run and combat services. Geometry cleanup stops any remaining
+spawner coroutines before unloading the scene.
 
 ## Ownership
 
