@@ -465,15 +465,20 @@ public sealed partial class PortSession
             coordinator.Check(portrait && portrait.name == "texCommandoIcon", "Serialized portrait missing");
             coordinator.r.phase = "original-body-catalog-register";
             coordinator.Save();
-            var bodies =
-                cfg.enemySpine ? new[] { prefab, coordinator.artifactBundle.LoadAsset<GameObject>(cfg.enemyBodyAsset) } : new[] { prefab };
+            IEnumerable<string> selectedBodyPaths = cfg.enemySpine ? new[] { cfg.enemyBodyAsset } : Enumerable.Empty<string>();
             if (cfg.teleporterLoop)
-                bodies = bodies.Concat(cfg.objectiveActors.Select(x => coordinator.artifactBundle.LoadAsset<GameObject>(x.body))).ToArray();
+                selectedBodyPaths = selectedBodyPaths.Concat(cfg.objectiveActors.Select(actor => actor.body));
+            // The first typed load of BeetleBody must follow the original family order for its external skins to resolve.
+            // CategoryFamily completes those loads before evaluating this configured selection.
+            var selectedBodies = new[] { prefab }.Concat(selectedBodyPaths.Select(coordinator.artifactBundle.LoadAsset<GameObject>));
+            GameObject[] bodies;
             if (cfg.integratedWorld && Resources.Load<TextAsset>("WholeCatalogBootstrap"))
             {
-                bodies = WholeCatalogComposed.CategoryFamily(RoR2.ContentManagement.AddressablesLabels.characterBody, bodies.Distinct());
+                bodies = WholeCatalogComposed.CategoryFamily(RoR2.ContentManagement.AddressablesLabels.characterBody, selectedBodies.Distinct());
                 coordinator.r.liveCatalogs = new LiveCatalogReport { bodies = bodies.Length };
             }
+            else
+                bodies = selectedBodies.ToArray();
             coordinator.ownsBodyCatalog = true;
             PortSession.StaticCall(typeof(BodyCatalog), "SetBodyPrefabs", (object)bodies);
             deadline = Time.realtimeSinceStartup + 3;
