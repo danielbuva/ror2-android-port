@@ -113,6 +113,12 @@ def prepare(owner, inputs, output):
         sources.setdefault(source, set()).add(destination)
     for row in policy.get("staged_bindings", []):
         sources.setdefault(tuple(row["source"]), set()).add(tuple(row["destination"]))
+    external_sources, source_files_by_member = {}, {}
+    for (path, source_member, pid), destinations in sources.items():
+        key = source_member, pid
+        existing = external_sources.get(key)
+        external_sources[key] = destinations if existing is None else existing | destinations
+        source_files_by_member.setdefault(source_member, set()).add(path)
     overrides = {}
     for row in policy.get("field_routes", []):
         key = tuple(row["owner"]), tuple(row["field"])
@@ -197,12 +203,7 @@ def prepare(owner, inputs, output):
             target_member = source[1] if not fid else metadata["externals"][fid - 1]["path"]
             if target_member.startswith("archive:/"):
                 target_member = target_member.rsplit("/", 1)[-1]
-            candidates = {
-                destination
-                for identity, destinations in sources.items()
-                if identity[1:] == (target_member, pid) and (fid or identity[0] == source[0])
-                for destination in destinations
-            }
+            candidates = external_sources.get((target_member, pid), ()) if fid else sources.get((source[0], target_member, pid), ())
             if len(candidates) != 1:
                 raise ValueError("source endpoint absent or ambiguous: " + str((source, pointer)))
             return next(iter(candidates))
@@ -298,12 +299,14 @@ def prepare(owner, inputs, output):
                 continue
             value, body, typ = raw_records[target]
             supplier_name = bindings[target]["supplier"]
-            pack = retained.setdefault(supplier_name, dict(blob=bytearray(), rows=[], witnesses=[], types=[]))
+            pack = retained.setdefault(supplier_name, dict(blob=bytearray(), rows=[], record_keys=set(), witnesses=[], types=[]))
             targets = {tuple(edge["field"]): tuple(edge["target"]) for edge in routes[target]}
             revised = owner.relocate_pointer_fields(value, body, typ, targets, externals)
             # ProducerRecords uses the same record key throughout the lineage.
-            if any(tuple(row[key] for key in ("bundle", "member", "path_id")) == tuple(value["record_source"]) for row in pack["rows"]):
+            record_key = tuple(value["record_source"])
+            if record_key in pack["record_keys"]:
                 raise ValueError("one supplier record maps to multiple emitted bodies")
+            pack["record_keys"].add(record_key)
             prior, _ = producer.record(value)
             row = dict(
                 prior,
@@ -375,12 +378,10 @@ def prepare(owner, inputs, output):
             elif script is not None:
                 fid, pid = script
                 script_member = source[1] if not fid else metadata["externals"][fid - 1]["path"].rsplit("/", 1)[-1]
-                script_sources = {identity[:2] for identity in sources if identity[1] == script_member}
-                if not fid:
-                    script_sources = {tuple(source[:2])}
-                if len(script_sources) != 1:
+                script_files = source_files_by_member.get(script_member, ()) if fid else (source[0],)
+                if len(script_files) != 1:
                     raise ValueError("original MonoScript member absent or ambiguous")
-                raw, script_type, _ = original((*next(iter(script_sources)), pid))
+                raw, script_type, _ = original((next(iter(script_files)), script_member, pid))
                 identity_owner = owner.O.module("_prepare_script_identity", Path(__file__).resolve().parents[3] / "scripts/lab/script_identity.py")
                 properties = owner.O.original_script_properties(raw, script_type, original_type, original_type, identity_owner).hex()
                 identity = tuple(owner.O.script_fields(raw)[1][::-1])
