@@ -1475,6 +1475,10 @@ installed-version/ledger and actual importer contracts. Its optional
 consent checks, refusing pregrant; setup and cleanup remain with the installer
 owner. `AlphaPackagingHarness.java` uses generated input only. These checks do
 not qualify SAF/provider UI, legitimate cohorts, power-loss or game profiles.
+The [local packaging request](LAB_RUNNER.md#current-local-packaging-request)
+uses the shared lab runner for a granted device and records the installed version
+and hashes before the fixture is removed. The toolhost request pins the cached
+installer by source commit for subsequent device checks.
 
 `Phone.retain_build_artifact` streams one explicitly selected, cache-receipt-pinned
 result from the currently owned installer to ignored host `work/` before cleanup.

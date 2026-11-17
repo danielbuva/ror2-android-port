@@ -85,6 +85,8 @@ def parse_import_output(output):
 
 
 class Phone(INSTALLER.Phone):
+    storage_reserve = 20 * 1024**3
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.packaging_history = []
@@ -113,6 +115,13 @@ def check_packaging_history(phone, passed):
     require(phone.read("installed-release.json") == history[-1][0], "alpha-receipt-cold-restart-mismatch")
     require(phone.package_hash(INSTALLER.GAME) == history[-1][0]["sha256"], "alpha-package-cold-restart-mismatch")
     passed("issued-ledger-cold-restart")
+    if INSTALLER.DIAGNOSTICS is not None:
+        INSTALLER.DIAGNOSTICS.write(
+            "issued-packages.json",
+            INSTALLER.encoded(
+                [{field: receipt[field] for field in ("version_code", "purpose", "sha256", "payload_sha256", "signer_sha256")} for receipt, _ in history]
+            ),
+        )
 
 
 def compile_import_harness(config, temporary):
@@ -147,6 +156,8 @@ def main(argv=None):
     )
     parser.add_argument("--allow-test-installs", action="store_true")
     parser.add_argument("--allow-test-notifications", action="store_true")
+    parser.add_argument("--package-only", action="store_true", help="Qualify signed packages without running the direct importer harness")
+    parser.add_argument("--dry-run", action="store_true", help="Verify pinned toolhost and compile the acceptance inputs on the host")
     parser.add_argument("--timeout", type=int, default=1200)
     args = parser.parse_args(argv)
     if args.qualify_install_prompts and args.allow_test_installs:
@@ -167,7 +178,7 @@ def main(argv=None):
 
     try:
         serial = os.environ.get("LAB_DEVICE_SERIAL")
-        require(bool(serial), "LAB_DEVICE_SERIAL-required-use-authorized-lab-runner")
+        require(args.dry_run or bool(serial), "LAB_DEVICE_SERIAL-required-use-authorized-lab-runner")
         require(args.timeout > 0, "positive-timeout-required")
         kwargs = {"allow_test_installs": args.allow_test_installs}
         if args.allow_test_notifications:
@@ -175,21 +186,27 @@ def main(argv=None):
             kwargs["allow_test_notifications"] = True
         INSTALLER.DIAGNOSTICS = INSTALLER.PrivateDiagnostics(ROOT / "work/coordination/alpha-packaging-acceptance")
         config = INSTALLER.read_context()
-        phone = Phone(serial, args.timeout, **kwargs)
         with tempfile.TemporaryDirectory(prefix="ror2-synthetic-alpha-", dir="/tmp") as name:
             temporary = Path(name).resolve()
             require(not temporary.is_relative_to(ROOT.resolve()), "throwaway-root-must-be-outside-repository")
-            phase = "compile-importer-harness"
-            INSTALLER.set_phase(phase)
-            dex = compile_import_harness(config, temporary)
+            if not args.package_only:
+                phase = "compile-importer-harness"
+                INSTALLER.set_phase(phase)
+                dex = compile_import_harness(config, temporary)
+            if args.dry_run:
+                INSTALLER.prepare_artifacts(config, temporary)
+                print("PASS alpha-packaging host fixture", flush=True)
+                return 0
+            phone = Phone(serial, args.timeout, **kwargs)
             phase = "installer-acceptance"
             INSTALLER.acceptance(phone, config, temporary, passed, qualify_install_prompts=args.qualify_install_prompts)
             phase = "alpha-receipt-acceptance"
             INSTALLER.set_phase(phase)
             check_packaging_history(phone, passed)
-            phase = "android-importer-acceptance"
-            INSTALLER.set_phase(phase)
-            import_acceptance(phone, dex, passed)
+            if not args.package_only:
+                phase = "android-importer-acceptance"
+                INSTALLER.set_phase(phase)
+                import_acceptance(phone, dex, passed)
     except INSTALLER.Failure as error:
         # Existing installer Failure codes are authored constants, not raw logs.
         print("FAIL alpha-packaging phase=" + phase + " reason=" + str(error), flush=True)

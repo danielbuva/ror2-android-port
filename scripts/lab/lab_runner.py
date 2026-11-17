@@ -165,7 +165,7 @@ class Runner:
             raise CommandError("device battery observation incomplete")
         return int(values["level"]), int(current), int(values["temperature"])
 
-    def take_lease(self, alias, serial):
+    def take_lease(self, alias, serial, *, workstream="lab-runner"):
         lease = self.leases / serial
         try:
             lease.mkdir(parents=True)
@@ -188,10 +188,19 @@ class Runner:
             except FileExistsError:
                 raise CommandError("emission lease already has a resume claimant") from None
             self.reattached = True
-        (lease / "lab-runner.json").write_text(json.dumps({"workstream": "lab-runner", "pid": os.getpid(), "run": self.run_id}))
+        (lease / "lab-runner.json").write_text(json.dumps({"workstream": workstream, "pid": os.getpid(), "run": self.run_id}))
         if self.reattached:
             (lease / "resume-claim").rmdir()
         return lease
+
+    def require_grant(self, serial, workstream):
+        grant = self.leases.parent / "devqueue" / (serial + ".granted")
+        if not grant.is_file() or grant.read_text().strip() != workstream:
+            raise CommandError("local packaging device grant required")
+
+    def stop_unity_adb(self, checkout):
+        if self.run([self.adb, "kill-server"], checkout, timeout=15, extra_env={"ANDROID_ADB_SERVER_PORT": "5038"}):
+            raise CommandError("could not stop Unity ADB server")
 
     def admit_battery(self, serial):
         for sample in range(3):
@@ -246,7 +255,7 @@ class Runner:
                 rows.append(f"{alias}: unreachable ({type(error).__name__})")
         return "\n".join(rows)
 
-    def execute(self, request):
+    def execute(self, request, *, local_checkout=None, workstream=None):
         if request["job"] == "status":
             return 0, self.status()
         serial = None
@@ -254,12 +263,17 @@ class Runner:
             serial = self.devices.get(request["device"])
             if not serial:
                 raise CommandError(f"unknown device alias; configured: {', '.join(sorted(self.devices)) or 'none'}")
-        checkout = self.worktree(request["ref"])
+        checkout = local_checkout or self.worktree(request["ref"])
         toolhosts = self.repo / "work/coordination/lab-runner/toolhost"
         lease = None
         try:
             if serial:
-                lease = self.take_lease(request["device"], serial)
+                if workstream:
+                    self.require_grant(serial, workstream)
+                    lease = self.take_lease(request["device"], serial, workstream=workstream)
+                    self.stop_unity_adb(checkout)
+                else:
+                    lease = self.take_lease(request["device"], serial)
                 refusal = None if self.reattached else self.admit_battery(serial)
                 if refusal:
                     raise CommandError(f"device {request['device']} not admitted: {refusal}")
@@ -300,13 +314,93 @@ class Runner:
                 finally:
                     if not (lease / "retain.json").exists():
                         shutil.rmtree(lease, ignore_errors=True)
-            self.run(["git", "-C", str(self.repo), "worktree", "remove", "--force", str(checkout)], self.repo, timeout=600)
+            if local_checkout is None:
+                self.run(["git", "-C", str(self.repo), "worktree", "remove", "--force", str(checkout)], self.repo, timeout=600)
             self.run([sys.executable, "scripts/prune-generated.py", "--apply"], self.repo, timeout=1800)
 
 
 def toolhost_summary(out):
     result = json.loads((out / "result.json").read_text()) if (out / "result.json").is_file() else {}
     return f"success={result.get('success')} apk_sha256={result.get('apk_sha256') or result.get('tool_apk_sha256')} dir=$LAB_TOOLHOST_ROOT/{out.name}"
+
+
+def local_packaging(path, *, dry_run=False, detach=False):
+    request = json.loads(Path(path).read_bytes())
+    repo = Path(request["repo"]).resolve()
+    checkout = Path(request["checkout"]).resolve()
+    done = Path(request["done_file"])
+    workstream = request["workstream"]
+    if not done.is_absolute() or done != done.resolve() or not done.is_relative_to(repo / "work") or done.exists():
+        raise ValueError("packaging-new-absolute-work-done-file-required")
+    runner = Runner(repo, {})
+    result = {"success": False, "log": str(runner.log)}
+    if not (dry_run or detach):
+
+        def interrupt(number, frame):
+            raise InterruptedError("packaging runner interrupted")
+
+        for sig in (signal.SIGTERM, signal.SIGINT, signal.SIGHUP):
+            signal.signal(sig, interrupt)
+    try:
+        device = request["device"]
+        build_toolhost = request.get("operation") == "toolhost"
+        if not re.fullmatch(r"[a-z0-9-]+", workstream) or device not in runner.devices or (build_toolhost and device != "thor"):
+            raise CommandError("invalid local packaging workstream or configured device")
+        common_dir = subprocess.check_output(["git", "-C", checkout, "rev-parse", "--path-format=absolute", "--git-common-dir"], text=True).strip()
+        if Path(common_dir).resolve() != (repo / ".git").resolve():
+            raise CommandError("packaging checkout must belong to the canonical repository")
+        command = parse_command("/lab script device=" + device + " -- scripts/lab-alpha-packaging.py --package-only --qualify-install-prompts")
+        toolhosts = repo / "work/coordination/lab-runner/toolhost"
+        if dry_run or detach:
+            if build_toolhost:
+                builder = repo / runner.config.get("toolhost_builder", "work/coordination/lab-runner-toolhost/build.py")
+                code = runner.run([sys.executable, str(builder), "--help"], checkout)
+            else:
+                code = runner.run([sys.executable, *command["args"], "--dry-run"], checkout, extra_env={"LAB_TOOLHOST_ROOT": str(toolhosts)})
+            if code:
+                raise CommandError("packaging precheck failed; see private log")
+            if dry_run:
+                print("PASS alpha-packaging host precheck")
+                return 0
+            with runner.log.open("a") as log:
+                subprocess.Popen(
+                    [sys.executable, str(Path(__file__).resolve()), "--packaging-request", str(Path(path).resolve())],
+                    cwd=checkout,
+                    stdin=subprocess.DEVNULL,
+                    stdout=log,
+                    stderr=subprocess.STDOUT,
+                    start_new_session=True,
+                )
+            print("WAITING done-file " + str(done), flush=True)
+            return 0
+        if build_toolhost:
+            runner.require_grant(runner.devices[device], workstream)
+            runner.stop_unity_adb(checkout)
+            code, summary = runner.toolhost(checkout, toolhosts)
+            if code == 0:
+                commit = subprocess.check_output(["git", "-C", checkout, "rev-parse", "HEAD"], text=True).strip()
+                output = toolhosts / commit
+                receipt = json.loads((output / "result.json").read_bytes())
+                if receipt.get("success") is not True or not (output / "signed.apk").is_file():
+                    raise CommandError("toolhost builder did not produce a successful APK receipt")
+                (output / ".prune-keep").touch()
+                result["toolhost"] = summary.splitlines()[0]
+        else:
+            code, _ = runner.execute(command, local_checkout=checkout, workstream=workstream)
+        result.update(success=code == 0, exitcode=code)
+    except (KeyError, OSError, ValueError, subprocess.SubprocessError) as error:
+        result["error"] = str(error)
+        if dry_run or detach:
+            print(str(error) + ". Private log: " + str(runner.log), file=sys.stderr)
+            return 1
+    finally:
+        if not (dry_run or detach):
+            done.parent.mkdir(parents=True, exist_ok=True)
+            temporary = done.with_suffix(done.suffix + ".tmp")
+            temporary.write_text(json.dumps(result, indent=2) + "\n")
+            temporary.replace(done)
+            print("WAITING done-file " + str(done), flush=True)
+    return int(not result["success"])
 
 
 def local_emission(path, *, dry_run=False, resume=False, restage=False):
@@ -400,6 +494,16 @@ def main(env=os.environ):
 
 
 if __name__ == "__main__":
+    if sys.argv[1:2] == ["--packaging-request"]:
+        import argparse
+
+        parser = argparse.ArgumentParser(description="Run the local alpha packaging gate through the shared device runner")
+        parser.add_argument("--packaging-request", required=True)
+        mode = parser.add_mutually_exclusive_group()
+        mode.add_argument("--dry-run", action="store_true")
+        mode.add_argument("--detach", action="store_true")
+        arguments = parser.parse_args()
+        sys.exit(local_packaging(arguments.packaging_request, dry_run=arguments.dry_run, detach=arguments.detach))
     if sys.argv[1:2] == ["--emission-request"]:
         import argparse
 

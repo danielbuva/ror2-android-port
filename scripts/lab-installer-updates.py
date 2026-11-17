@@ -833,6 +833,8 @@ def adb_diagnostic(label, **record):
 
 
 class Phone:
+    storage_reserve = 15 * 1024**3
+
     def __init__(self, serial, timeout, allow_test_installs=False, allow_test_notifications=False):
         self.serial, self.timeout = serial, timeout
         self.allow_test_installs = allow_test_installs
@@ -1015,7 +1017,7 @@ class Phone:
         observed = [(self.available(self.shell("df", "-k", path, label="device-storage-volume-free")), volume) for volume, path in choices]
         if not self.owned_installer:
             available, self.install_volume = max(observed)
-            if available < 15 * 1024**3:
+            if available < self.storage_reserve:
                 raise Failure("device-storage-reserve")
             return
         # Verify both installed code placement and actual app-private backing,
@@ -1026,8 +1028,14 @@ class Phone:
                 raise Failure("device-package-placement-unavailable")
             code = self.available(self.shell("df", "-k", paths[0][8:], label="device-storage-code-free"))
             data = self.available(self.shell("run-as", package, "df", "-k", ".", label="device-storage-data-free"))
-            if min(code, data) < 15 * 1024**3:
+            if min(code, data) < self.storage_reserve:
                 raise Failure("device-storage-reserve")
+
+    def reserve_install_outputs(self, apk, inputs, releases):
+        # Cover the installed/staged installer and APKs plus retained inputs
+        # and release tools, including temporary transaction copies.
+        payload = sum(len(data) for data in inputs.values()) + sum(len(data) for row in releases.values() for data in row.values())
+        self.storage_reserve = type(self).storage_reserve + 3 * (apk.stat().st_size + payload)
 
     def put(self, name, data):
         if not self.owned_installer:
@@ -1796,6 +1804,7 @@ def acceptance(phone, config, temporary, passed, *, qualify_install_prompts=Fals
     phone.storage()
     set_phase("host-fixture-build")
     apk, inputs, key, releases, wrong = prepare_artifacts(config, temporary)
+    phone.reserve_install_outputs(apk, inputs, releases)
     set_phase("pre-install-storage")
     phone.storage()
     set_phase("installer-install")
