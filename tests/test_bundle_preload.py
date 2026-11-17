@@ -366,6 +366,44 @@ class BundlePreloadTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "MonoScript binding"):
                 P.repack_canonical_aliases(output=root / "mismatch", **inputs)
 
+    def test_repack_preloads_donor_skins_with_source_matched_roots(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            inputs, _ = self.canonical_fixture(Path(tmp))
+            inputs["required"]["asset_groups"].append(dict(guid="34" * 16, path="Assets/Separate.asset", roots=[10]))
+            with patch.object(P, "retained_skin_preloads", return_value={40: [30]}):
+                result = P.repack_canonical_aliases(output=Path(tmp) / "repacked", **inputs)
+            self.assertEqual(result["retained_skin_preloads"], {"40": [30]})
+            W, C = P.module("unity_write"), P.module("catalog_complete")
+            with W.B.Bundle(Path(result["bundle"])).member("CAB-authored") as stream:
+                members = C.ProducedMembers()
+                members.add("CAB-authored", stream, "authored")
+                _, _, body = members.record("CAB-authored", (0, 1))
+            groups = {path: (root, set(preloads)) for path, root, preloads in C.containers(body)[0]}
+            self.assertEqual(groups["assets/consumer.asset"][0], (0, 30))
+            self.assertTrue({(0, 40), (0, 50)}.issubset(groups["assets/consumer.asset"][1]))
+            self.assertEqual(groups["assets/separate.asset"], ((0, 10), {(0, 10), (0, 20)}))
+
+    def test_donor_skin_links_require_a_source_matched_advertised_root(self):
+        identity = ("SkinDef", "RoR2", "RoR2.dll")
+        md4 = P.module("catalog_complete").S.md4
+        skin = dict(class_id=114, stripped=0, script_type=-1, hash=b"s" * 16, tree=b"tree", dependencies=[], script_id=md4("".join(identity).encode()))
+        controller = dict(script_id=md4(b"ModelSkinControllerRoR2RoR2.dll"))
+        native = Node(
+            members={
+                "CAB-donor": (None, dict(externals=[dict(path="archive:/CAB-owner/CAB-owner")], types=[controller]), {1: dict(type_id=0)}),
+                "CAB-owner": (None, dict(types=[skin]), {pid: dict(type_id=0) for pid in [10, 11, 20]}),
+            },
+            record=lambda member, pointer: (member, skin, b"body"),
+            managed_identity=lambda member, typ, body: identity,
+        )
+        source = ["original", "CAB-original", 5]
+        rows = [dict(destination=["owner", "CAB-owner", pid], source=source, sha256=digest) for pid, digest in [(10, "same"), (11, "other"), (20, "same")]]
+        groups = [dict(roots=[10]), dict(roots=[11])]
+        with patch.object(P, "pointers", return_value={("skins", "Array", 0): (1, 20), ("other",): (1, 11)}):
+            self.assertEqual(P.retained_skin_preloads(native, "CAB-owner", "CAB-donor", groups, rows, {}), {20: [10]})
+            with self.assertRaisesRegex(ValueError, "no source-matched local asset root"):
+                P.retained_skin_preloads(native, "CAB-owner", "CAB-donor", groups, rows[1:], {})
+
     def test_scriptless_base_requires_pinned_type_and_preserves_owner_pointer(self):
         M = P.module("bundle_manifest")
         nodes = [dict(type="MonoBehaviour", name="Base", size=-1, level=0, meta=0, flags=0, version=1)]

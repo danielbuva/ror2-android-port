@@ -1583,6 +1583,58 @@ def _emit_closed_native(
     return result
 
 
+def retained_skin_preloads(native, member, donor, groups, selected_records, schemas):
+    """Link the SkinDef IDs used by the donor to their local source asset groups."""
+    identity = ("SkinDef", "RoR2", "RoR2.dll")
+    catalog = module("catalog_complete")
+    skin_id = catalog.S.md4("".join(identity).encode())
+    controller_id = catalog.S.md4(b"ModelSkinControllerRoR2RoR2.dll")
+    _, layout, objects = native.members[donor]
+    file_ids = {i for i, row in enumerate(layout["externals"], 1) if row["path"].rsplit("/", 1)[-1] == member}
+    if not file_ids:
+        return {}
+    targets = set()
+    for pid, row in objects.items():
+        typ = layout["types"][row["type_id"]]
+        if typ.get("script_id") != controller_id:
+            continue
+        _, _, body = native.record(donor, (0, pid))
+        for field, (file_id, path_id) in pointers(body, typ, schemas).items():
+            if field[:2] == ("skins", "Array") and file_id in file_ids and path_id:
+                targets.add(path_id)
+
+    roots = {root for group in groups for root in group["roots"]}
+    retained = targets - roots
+    if not retained:
+        return {}
+    _, layout, objects = native.members[member]
+    descriptors = {}
+    source_roots = {}
+    for row in selected_records:
+        _, owner, pid = row["destination"]
+        if owner != member or pid not in objects or (pid not in roots and pid not in retained):
+            continue
+        typ = layout["types"][objects[pid]["type_id"]]
+        if typ.get("script_id") != skin_id or not row.get("source"):
+            continue
+        key = (tuple(row["source"]), row["sha256"], full_type_key(typ))
+        descriptors[pid] = key
+        if pid in roots:
+            source_roots.setdefault(key, set()).add(pid)
+
+    links = {}
+    for pid in sorted(retained):
+        matches = source_roots.get(descriptors.get(pid), ())
+        if not matches:
+            raise ValueError(f"Donor SkinDef {pid} has no source-matched local asset root")
+        for candidate in (pid, *matches):
+            _, typ, body = native.record(member, (0, candidate))
+            if native.managed_identity(member, typ, body) != identity:
+                raise ValueError(f"Donor SkinDef {pid} has a different managed binding")
+        links[pid] = sorted(matches)
+    return links
+
+
 def repack_canonical_aliases(
     source,
     output,
@@ -1614,7 +1666,7 @@ def repack_canonical_aliases(
     import tempfile
     import time
 
-    W = module("unity_write")
+    W, C = module("unity_write"), module("catalog_complete")
     source, output, canonical_bundle = Path(source), Path(output), Path(canonical_bundle)
     aliases, selected_records = list(aliases), list(selected_records)
     name, member = required["name"], required["member"]
@@ -1663,7 +1715,7 @@ def repack_canonical_aliases(
             externals = [row["path"].rsplit("/", 1)[-1] if row["path"].startswith("archive:/") else row["path"] for row in layout["externals"]]
             if externals != required["externals"] or canonical["member"] not in externals:
                 raise ValueError("Canonical repack must preserve the external member table")
-            native = module("catalog_complete").ProducedMembers()
+            native = C.ProducedMembers()
             native.add(member, stream, name)
             native.add(canonical["member"], target_stream, canonical["name"])
             specifications = {row["path_id"]: row for row in canonical_profile["objects"]}
@@ -1782,9 +1834,20 @@ def repack_canonical_aliases(
             # the canonical instance and its script, just like a direct PPtr.
             # Do not walk unrelated external prefab graphs or change containers.
             preload_required = copy.deepcopy(required)
+            skin_links = retained_skin_preloads(native, member, canonical["member"], required["asset_groups"], selected_records, schemas)
+            skins_by_root = {}
+            for skin, roots in skin_links.items():
+                for root in roots:
+                    skins_by_root.setdefault(root, []).append(skin)
+            skin_group_preloads = {}
             for group in preload_required["asset_groups"]:
                 seeds = group.setdefault("preload_roots", [])
                 for root in group["roots"]:
+                    for skin in skins_by_root.get(root, ()):
+                        seed = [name, member, skin]
+                        if seed not in seeds:
+                            seeds.append(seed)
+                        skin_group_preloads.setdefault(group["path"].lower(), set()).add((0, skin))
                     alias = mapping.get((name, member, root))
                     if alias is None or alias["duplicate_class_id"] != 114:
                         continue
@@ -1858,6 +1921,11 @@ def repack_canonical_aliases(
                     expected = hashlib.sha256(replacements[pid]).hexdigest() if pid in replacements else hashes[pid]
                     if hashlib.sha256(raw).hexdigest() != expected:
                         raise ValueError("Persisted canonical body differs")
+                    if pid == container and skin_group_preloads:
+                        groups = C.containers(raw)[0]
+                        checked = {path for path, _, preloads in groups if path in skin_group_preloads and skin_group_preloads[path].issubset(preloads)}
+                        if checked != skin_group_preloads.keys():
+                            raise ValueError("Persisted canonical group missing a retained SkinDef preload")
                     if pid != container and set(pointers(raw, metadata["types"][obj["type_id"]], schemas).values()) != graph[pid]:
                         raise ValueError("Persisted canonical pointer graph differs")
             for other in bundle.members:
@@ -1883,6 +1951,7 @@ def repack_canonical_aliases(
             sha256=O.B.sha(target),
             bytes=target.stat().st_size,
             canonical_roots=len(mapping),
+            retained_skin_preloads={str(pid): roots for pid, roots in skin_links.items()},
             preserved_reciprocal_owner_fields=len(ownership),
             changed_fields=len(changes),
             changed_objects=len(replacements) - 1,

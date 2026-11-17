@@ -201,9 +201,15 @@ Canonical repack also seeds each aliased managed asset group's canonical root
 and its actual MonoScript from the pinned producer bundle. The advertised
 duplicate remains unchanged; loading its address preloads the instance now used
 by consumers. Unrelated external prefab graphs are not traversed.
+For ModelSkinController PPtrs from that producer into the emitted bundle,
+canonical repack also admits retained SkinDefs into their source-matched asset
+groups. It qualifies the native type and actual MonoScript, keeps the advertised
+root, and reads back the retained IDs in those groups' persisted preloads.
 The current `bundle_preload.py --repack` action reuses an existing qualified
 emission through a hash-pinned request; it retains source/type/ownership checks
-and avoids repeating record production for a preload-only repair.
+and avoids repeating record production for a preload-only repair. The request
+includes selected records for canonical aliases and retained SkinDef source
+matches.
 
 [Alpha policy](ALPHA_POLICY.md) owns packaging/acquisition decisions;
 [screen inventory](SCREEN_COVERAGE.md) maps the current Android surfaces and their
