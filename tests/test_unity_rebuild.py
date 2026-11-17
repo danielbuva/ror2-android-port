@@ -526,6 +526,7 @@ class UnityRebuildTests(unittest.TestCase):
         apk = cached.parent / "lab.apk"
         apk.parent.mkdir(parents=True)
         apk.write_bytes(b"cached APK")
+        (cached.parent / "payload").mkdir()
         write(cached, dict(success=True, errors=0, apk=str(apk), apk_sha256=sha(apk), payload={}))
         with (
             patch.object(build, "WORK", self.work),
@@ -581,7 +582,7 @@ class UnityRebuildTests(unittest.TestCase):
                 isolated.assert_called_once_with(str(self.dest), str(self.work))
                 live.assert_not_called()
 
-    def test_real_full_and_code_only_build_receipts_and_payload_paths_are_unchanged(self):
+    def test_full_build_owns_payload_and_code_only_build_restores_from_its_reference(self):
         import shutil
         from io import StringIO
 
@@ -601,6 +602,7 @@ class UnityRebuildTests(unittest.TestCase):
             return "mock dispatch"
 
         completed = []
+        hashes = {"keep": sha(marker.parent / "keep")}
         for code_only in (False, True):
             with (
                 self.subTest(code_only=code_only),
@@ -608,20 +610,19 @@ class UnityRebuildTests(unittest.TestCase):
                 patch.object(build, "preflight_host"),
                 patch.object(build, "validate_staged_runtime_sources"),
                 patch.object(build, "stage_android_assets"),
-                patch.object(build, "validate_whole_payload_reuse") as reuse,
+                patch.object(build, "validate_whole_payload_reuse", return_value={"build_key": "ordinary-key", "payload": hashes}) as reuse,
                 patch.object(build, "build_cache_key", return_value="ordinary-key"),
-                patch.object(build, "editor", side_effect=editor),
+                patch.object(build, "editor", side_effect=editor) as dispatch,
                 patch.object(build, "copy_build_artifact", side_effect=lambda a, b, **kwargs: shutil.copy2(a, b)),
                 patch.object(r9, "execute_build") as isolated,
                 patch("sys.stdout", new_callable=StringIO),
             ):
-                result = build.build("vulkan", force=True, reuse_payload=code_only)
+                result = build.build("vulkan", reuse_payload=code_only)
                 isolated.assert_not_called()
                 self.assertEqual(reuse.call_count, int(code_only))
                 request = read(self.work / "build-request.json")
                 self.assertEqual(request["reusePayload"], code_only)
                 completed.append(result)
-                self.assertTrue(result["key"].startswith("ordinary-key"))
                 self.assertEqual(result["apk"], str(self.work / "build-cache" / result["key"] / "lab-vulkan.apk"))
                 self.assertEqual(result["payload"], {"keep": sha(self.work / "generated-android-data/keep")})
                 self.assertFalse((Path(result["payload_directory"]) / ".prune-keep").exists())
@@ -629,7 +630,22 @@ class UnityRebuildTests(unittest.TestCase):
                 self.assertEqual(read(self.work / "config/current-build.json"), result)
                 self.assertEqual(read(self.work / "build-cache" / result["key"] / "result.json"), result)
                 self.assertEqual((self.work / "device/installed.json").read_bytes(), installed)
+                if code_only:
+                    mutable = marker.parent / "keep"
+                    mutable.write_bytes(b"stale working payload")
+                    dispatch.reset_mock()
+                    self.assertEqual(build.build("vulkan", reuse_payload=True), result)
+                    dispatch.assert_not_called()
+                    self.assertEqual(sha(mutable), hashes["keep"])
+                    snapshot = Path(result["payload_directory"]) / "keep"
+                    self.assertNotEqual(mutable.stat().st_ino, snapshot.stat().st_ino)
+                    snapshot.write_bytes(b"damaged frozen payload")
+                    with self.assertRaisesRegex(RuntimeError, "payload reference is missing or changed"):
+                        build.build("vulkan", reuse_payload=True)
+                    self.assertEqual(sha(mutable), hashes["keep"])
         self.assertNotEqual(completed[0]["apk"], completed[1]["apk"])
+        self.assertEqual(completed[0]["payload_directory"], completed[1]["payload_directory"])
+        self.assertFalse((Path(completed[1]["apk"]).parent / "payload").exists())
         self.assertEqual(sha(completed[0]["apk"]), completed[0]["apk_sha256"])
 
     def test_shared_source_validator_reads_destination_selection_and_keeps_default_work_unchanged(self):

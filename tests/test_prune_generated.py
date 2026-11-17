@@ -77,6 +77,24 @@ class PruneGeneratedTests(unittest.TestCase):
         (self.work / "config/current-build.json").write_text(json.dumps({"apk_sha256": "f" * 64}))
         self.assertEqual(self.plan().items, [])
 
+    def test_retains_frozen_keys_and_payloads_of_live_apks_only(self):
+        pinned = self.cache_entry("pinned", PROTECTED)
+        recent = self.cache_entry("recent", "a" * 64)
+        expired = self.cache_entry("expired", "b" * 64)
+        pinned_payload = self.cache_entry("pinned-payload", "c" * 64)
+        recent_payload = self.cache_entry("recent-payload", "d" * 64)
+        expired_payload = self.cache_entry("expired-payload", "e" * 64)
+        for apk, payload in ((pinned, pinned_payload), (recent, recent_payload), (expired, expired_payload)):
+            receipt = apk / "result.json"
+            result = json.loads(receipt.read_text())
+            receipt.write_text(json.dumps(dict(result, payload_directory=str(payload / "payload"))))
+            if apk != recent:
+                age(apk)
+        for mode, apk_hash in (("code", "1" * 64), ("uncompressed", "2" * 64)):
+            owner = self.cache_entry(mode, apk_hash)
+            (self.work / ("whole-catalog-" + mode + "-base.json")).write_text(json.dumps({"build_key": owner.name}))
+        self.assertEqual({item["path"] for item in self.plan().items}, {expired, expired_payload})
+
     def test_cache_protection_uses_live_references_not_nested_hashes_or_sync_history(self):
         current = self.cache_entry("current", "c" * 64)
         base = self.cache_entry("base", "e" * 64)

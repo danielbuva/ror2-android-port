@@ -14,6 +14,8 @@ Creation takes the canonical mutex only while cloning prepared state with
 APFS `cp -c -R`; no full-copy fallback is allowed. It includes the project and
 Library, generated content, configuration and existing producer inputs. Old
 caches, device receipts, live editor state and retired storage are excluded.
+The current frozen payload directories are seeded independently, without their
+old APKs.
 Each lane owns a detached Git checkout under `.local/build-lanes/NAME/checkout`,
 private writable Gradle/user state, Unity instance, loopback MCP server and
 persistent lock. The caller's committed HEAD is selected under that lock for
@@ -48,10 +50,12 @@ editor action still verifies its exact project before mutation.
 The first normal lane build establishes its own iteration anchor. An inherited
 content mismatch requires a normal full lane build, retaining the existing
 input-drift checks. Subsequent C# changes may use `whole-catalog-fast-build`;
-acceptance builds retain their ordinary settings. Completed APK/payload/symbol
-artifacts are APFS-cloned and verified in canonical `work/build-cache/lane-*`.
+acceptance builds retain their ordinary settings. Completed APKs and symbols are
+APFS-cloned and verified in canonical `work/build-cache/lane-*`. Matching
+payload manifests share one independently cloned canonical snapshot.
 `NAME/latest-build.json` names those persistent outputs without replacing the
-canonical current-build or iteration pointers.
+canonical current-build or iteration pointers. The pruner keeps the payload
+for each retained APK.
 
 Lane commands never access devices. Unset `LAB_LANE`, acquire the ordinary
 global device lease and use explicit published APK/payload paths through the
