@@ -2243,7 +2243,8 @@ public sealed partial class PortSession
                     witness.PrimarySlotState = ObjectiveCombatInputFailureWitness.UnityState(primarySlot);
                     witness.ObservedMask |= 1 << 8;
                 }
-                var primary = primarySlot.skillDef;
+                // Native stance transitions can temporarily clear the primary slot.
+                var primary = primarySlot ? primarySlot.skillDef : null;
                 if (witness != null)
                 {
                     witness.PrimaryDefinitionState = ObjectiveCombatInputFailureWitness.UnityState(primary);
