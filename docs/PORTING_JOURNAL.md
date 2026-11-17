@@ -6,6 +6,20 @@ under ignored `work/coordination/`, not here. Entries J01–J1177 (2026-09-12 to
 [history/journal-J1-J1177/PORTING_JOURNAL.md](history/journal-J1-J1177/PORTING_JOURNAL.md) with its
 [index](history/journal-J1-J1177/JOURNAL_INDEX.md); numbering continues here.
 
+## J1481 — Retire Sky Meadow rock spawners before teardown
+
+2026-11-17. Stage geometry stops pending native rock spawners before retiring
+the projectile and Run services. The assisted J1477 route reaches Sky Meadow
+with 20 native rock projectiles at sample 690 and returns to Lab complete at 720.
+The live Unity log and run-local exception delta contain zero FireRock exceptions.
+APK SHA-256: `3fe278af144ff6b428bd7ed48edd6cdf5a07e60bd531f1f2ba6178b083d146b1` (source `f93b1676`).
+Evidence: `work/coordination/gameplay-fidelity-firerock-20261117/nova-firerock-teardown/terminal.done.json`.
+The matching Sky Meadow screenshot and hierarchy are in `sample-690/`.
+Sky Meadow snapshot: 50.37 FPS, 19.85 ms. CPU/GPU peak 95.5 C in Scorched Acres,
+484.703 s above 80 C, battery peak 33 C and no thermal safety trip.
+Adopted placement, stopped process, asleep OLED and lease release pass.
+Ordinary play and matched Stone Golem attack visuals remain open.
+
 ## J1479 — Qualify Nova-B for shared assisted gameplay
 
 2026-11-17. The shared runner selects the Nova in the queue grant and uses its

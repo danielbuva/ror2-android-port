@@ -1,6 +1,7 @@
 """Interruption evidence must distinguish an uncommitted store from a completed save."""
 
 from contextlib import ExitStack
+import hashlib
 import json
 import sys
 from pathlib import Path
@@ -31,10 +32,21 @@ class InterruptedWriteEvidenceTests(unittest.TestCase):
         recovered_hashes.pop(primary + ".pending")
         device = Mock()
         device.read_receipt.return_value = {"persistentDataPath": root}
-        device.sh.return_value = ""
         thermal = Mock(error=None)
         witness = dict(nonce=nonce, pid=101, uid=10001, observerPid=102, pendingName="profile.json.pending")
         request_file = root + "/profile-write-observer.request"
+        witness_file = root + "/ror2lab-write-" + nonce + ".result"
+        witness_raw = json.dumps(dict(witness, **self.witness)).encode()
+
+        def shell(*args):
+            if args[0] == "sha256sum":
+                return hashlib.sha256(witness_raw).hexdigest()
+            if args[0] == "sh" and "stat -c" in args[2]:
+                return str(len(witness_raw) if args[-2] == witness_file else len(nonce))
+            return ""
+
+        device.sh.side_effect = shell
+        device.cmd.side_effect = lambda op, source, dest: Path(dest).write_bytes(witness_raw) if op == "pull" else None
 
         paths = {primary: "file", settings: "file"}
         ledger_states = iter(["absent", "file"])
@@ -47,7 +59,7 @@ class InterruptedWriteEvidenceTests(unittest.TestCase):
         def start(device, owner, pid, output, *, report_id):
             self.assertEqual(report_id, "body-state-spawn-state-auto-player")
             if pid == "101":
-                paths.update({root + "/ror2lab-write-" + nonce + ".result": "file", primary + ".pending": "file"})
+                paths.update({witness_file: "file", primary + ".pending": "file"})
             else:
                 paths.pop(primary + ".pending", None)
             return dict(profile=dict(ready=True, recovery="validated-primary", reconciledRuns=int(pid == "103")))
@@ -74,11 +86,17 @@ class InterruptedWriteEvidenceTests(unittest.TestCase):
             stack.enter_context(patch.object(check, "persistence_hashes", side_effect=[old_hashes, stopped_hashes, recovered_hashes, recovered_hashes]))
             stack.enter_context(patch.object(check, "stop_after_observed_exit", return_value=dict(writer_absent=True)))
             stack.enter_context(patch.object(thermal, "between_sessions", return_value={}))
-            receipt = check.check_profile_write_interrupt(device, thermal, dict(apk_sha256="a" * 64, duration_seconds=2), Path(temporary), start_device, start)
+            cleanup = dict(bytes_removed=0, files=[])
+            receipt = check.check_profile_write_interrupt(
+                device, thermal, dict(apk_sha256="a" * 64, duration_seconds=2), Path(temporary), start_device, start, cleanup
+            )
+            self.assertEqual((Path(temporary) / Path(witness_file).name).read_bytes(), witness_raw)
         self.assertTrue(receipt["success"])
         self.assertEqual(receipt["run_id"], new_id)
         self.assertEqual(start_device.call_count, 3)
         device.sh.assert_any_call("rm", "--", request_file)
+        device.sh.assert_any_call("rm", "--", witness_file)
+        self.assertEqual(cleanup["bytes_removed"], len(witness_raw) + len(nonce))
         self.assertFalse(any(primary + ".pending" in call.args for call in device.sh.call_args_list if call.args[0] == "rm"))
 
     def test_result_ledger_cannot_substitute_an_assisted_or_reordered_loss(self):

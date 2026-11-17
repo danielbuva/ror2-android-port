@@ -95,6 +95,9 @@ Owner playtest gate (10 minutes, physical controller and touchscreen):
 - [ ] Open Quit with Y, cancel with B, then confirm with A. Repeat with touch;
       cold launch and confirm profile/settings retention. Record actual hardware
       presses separately from injected software input.
+- [ ] During ordinary play, capture a Stone Golem's clap and laser charge and
+      fire. Compare the visible effects with matched PC captures and record
+      any missing effects, opaque squares or incorrect blending.
 
 - [x] Verify injected player-screen routes and software-touch notices on the lab APK:
       native loss → persisted results → menu, loadout row/cycle/close and Quit
