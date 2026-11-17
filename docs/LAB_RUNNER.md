@@ -49,8 +49,10 @@ source scripts/env.sh
 
 Dry-run verifies the cached installer and prepares the synthetic fixtures without
 accessing the device. The detached runner checks the grant before taking the
-lease, then invokes the existing package and signing acceptance. It records the
-installed version and package hashes before disposing of the owned fixtures.
+lease, then invokes the existing package and signing acceptance. The shared
+thermal monitor verifies cool-start admission and records the run's thermal
+trace. The runner retains installed receipts, versions and hashes before
+disposing of the owned fixtures.
 The terminal receipt links the private log after cleanup and pruning.
 To prepare the APK, use a separate request with `"operation": "toolhost"`,
 `"device": "thor"` and a Thor grant. This calls the configured toolhost builder,

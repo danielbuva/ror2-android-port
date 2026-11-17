@@ -1232,14 +1232,14 @@ class Phone:
                     return True
         raise Failure("ui-button-unavailable")
 
-    def start(self):
+    def start(self, *, repeat_notification_denial=False):
         self.shell("input", "keyevent", "KEYCODE_WAKEUP", label="device-display-wake")
         self.shell("wm", "dismiss-keyguard", label="device-keyguard-dismiss")
         self.shell("am", "start", "-W", "-n", ACTIVITY, label="device-installer-launch")
         time.sleep(1)
         # The qualified synthetic flow restarts this same freshly owned app.
         # Reuse the device-proven explicit second-denial policy, never grant.
-        if self.flow_metrics is not None and self.notification_denied:
+        if self.notification_denied and (repeat_notification_denial or self.flow_metrics is not None):
             self.dismiss_notification_permission(repeat_denial=True)
         else:
             self.dismiss_notification_permission()
@@ -1271,8 +1271,8 @@ class Phone:
         buttons = [node for node in nodes if node.get("resource-id") == controller + ":id/permission_" + action + "_button" and node.get("enabled") == "true"]
         if repeat_denial:
             # AOSP's second denial is user-fixed, not an ordinary denial alias.
-            # Only the picker cold-restart flow opts in, after this run denied
-            # the fresh hash-owned disposable app's first notification prompt.
+            # Qualified restart flows opt in after this run denied the fresh
+            # hash-owned disposable app's first notification prompt.
             ordinary = controller + ":id/permission_deny_button"
             fixed = controller + ":id/permission_deny_and_dont_ask_again_button"
             buttons = [node for node in nodes if node.get("resource-id") in (ordinary, fixed)]

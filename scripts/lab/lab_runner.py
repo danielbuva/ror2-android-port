@@ -375,7 +375,6 @@ def local_packaging(path, *, dry_run=False, detach=False):
             return 0
         if build_toolhost:
             runner.require_grant(runner.devices[device], workstream)
-            runner.stop_unity_adb(checkout)
             code, summary = runner.toolhost(checkout, toolhosts)
             if code == 0:
                 commit = subprocess.check_output(["git", "-C", checkout, "rev-parse", "HEAD"], text=True).strip()

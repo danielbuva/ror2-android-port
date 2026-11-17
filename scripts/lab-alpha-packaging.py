@@ -8,6 +8,7 @@ No game input, production key, APK, or private identifier is published.
 """
 
 import argparse
+from contextlib import contextmanager
 import copy
 import importlib.util
 import inspect
@@ -17,6 +18,7 @@ from pathlib import Path
 import re
 import sys
 import tempfile
+import time
 
 ROOT = Path(__file__).resolve().parents[1]
 SPEC = importlib.util.spec_from_file_location("alpha_packaging_installer", ROOT / "scripts/lab-installer-updates.py")
@@ -90,9 +92,73 @@ class Phone(INSTALLER.Phone):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.packaging_history = []
+        self.thermal = None
+
+    def execute(self, *args, **kwargs):
+        if self.thermal is not None and self.thermal.cancelled.is_set():
+            raise INSTALLER.Failure("alpha-packaging-thermal-cancellation")
+        return super().execute(*args, **kwargs)
+
+    @contextmanager
+    def observe_thermal(self):
+        sys.path.insert(0, str(ROOT / "scripts/lab"))
+        from alpha_stability_batch import _GameThermalOwner
+        from device import Device
+
+        phone = self
+
+        class PackagingThermal(_GameThermalOwner):
+            def sample(self, all_zones=False):
+                self.phase = INSTALLER.CURRENT_PHASE
+                return super().sample(all_zones=all_zones)
+
+            def terminate_game(self):
+                if not self.cancelled.is_set():
+                    return  # Normal teardown belongs to the installer owner.
+                # Use the separate observation transport: the acceptance path
+                # refuses further ADB calls once cancellation is latched.
+                for package, digest in ((INSTALLER.PACKAGE, phone.installer_hash if phone.owned_installer else None), (INSTALLER.GAME, phone.alpha_hash)):
+                    if not digest or not self.device.sh("pidof", package, check=False, timeout=0.7):
+                        continue
+                    path = self.device.sh("pm", "path", package, timeout=0.7)
+                    if not re.fullmatch(r"package:/[^\n]+", path):
+                        raise RuntimeError("Thermal stop package placement unverified")
+                    observed = self.device.sh("sha256sum", path[8:], timeout=4).split()
+                    if not observed or observed[0] != digest:
+                        raise RuntimeError("Thermal stop package hash unverified")
+                    self.device.sh("am", "force-stop", package, timeout=2)
+
+        diagnostics = INSTALLER.DIAGNOSTICS
+        thermal = PackagingThermal(Device(self.serial), None, diagnostics.directory / "thermal.jsonl", time.monotonic() + 1800)
+        self.thermal = thermal
+        try:
+            thermal.cool()
+            thermal.start()
+            try:
+                yield
+            finally:
+                thermal.finish()
+        except RuntimeError as error:
+            diagnostics.write("thermal-error.json", INSTALLER.encoded({"error": str(error)}))
+            raise INSTALLER.Failure("alpha-packaging-thermal-evidence-failed") from error
+        finally:
+            self.thermal = None
+            diagnostics.write(
+                "thermal-summary.json",
+                INSTALLER.encoded(
+                    {
+                        "admission_battery": thermal.admission_battery,
+                        "peak_cpu_gpu_celsius": thermal.peak_cpu_gpu_celsius,
+                        "time_above_80_seconds": thermal.time_above_80_seconds,
+                        "error": thermal.error,
+                    }
+                ),
+            )
 
     def installed(self, publisher, previous=None, *, require_pending_prompt=False):
         receipt = super().installed(publisher, previous, require_pending_prompt=require_pending_prompt)
+        if INSTALLER.DIAGNOSTICS is not None:
+            INSTALLER.DIAGNOSTICS.write("installed-alpha-" + str(len(self.packaging_history) + 1) + ".json", INSTALLER.encoded(receipt))
         ledger = self.read("work/releases/issued-versions.json")
         output = self.shell("dumpsys", "package", INSTALLER.GAME, label="alpha-installed-version-readback").decode()
         versions = set(re.findall(r"\bversionCode=(\d+)\b", output))
@@ -110,7 +176,7 @@ def check_packaging_history(phone, passed):
     passed("alpha-identity-issued-binding")
     passed("same-key-forward-update-and-rollback")
     phone.shell("am", "force-stop", INSTALLER.PACKAGE, label="alpha-installer-cold-stop")
-    phone.start()
+    phone.start(repeat_notification_denial=True)
     require(phone.read("work/releases/issued-versions.json") == history[-1][1], "alpha-issued-ledger-cold-restart-mismatch")
     require(phone.read("installed-release.json") == history[-1][0], "alpha-receipt-cold-restart-mismatch")
     require(phone.package_hash(INSTALLER.GAME) == history[-1][0]["sha256"], "alpha-package-cold-restart-mismatch")
@@ -198,15 +264,18 @@ def main(argv=None):
                 print("PASS alpha-packaging host fixture", flush=True)
                 return 0
             phone = Phone(serial, args.timeout, **kwargs)
-            phase = "installer-acceptance"
-            INSTALLER.acceptance(phone, config, temporary, passed, qualify_install_prompts=args.qualify_install_prompts)
-            phase = "alpha-receipt-acceptance"
+            phase = "thermal-admission"
             INSTALLER.set_phase(phase)
-            check_packaging_history(phone, passed)
-            if not args.package_only:
-                phase = "android-importer-acceptance"
+            with phone.observe_thermal():
+                phase = "installer-acceptance"
+                INSTALLER.acceptance(phone, config, temporary, passed, qualify_install_prompts=args.qualify_install_prompts)
+                phase = "alpha-receipt-acceptance"
                 INSTALLER.set_phase(phase)
-                import_acceptance(phone, dex, passed)
+                check_packaging_history(phone, passed)
+                if not args.package_only:
+                    phase = "android-importer-acceptance"
+                    INSTALLER.set_phase(phase)
+                    import_acceptance(phone, dex, passed)
     except INSTALLER.Failure as error:
         # Existing installer Failure codes are authored constants, not raw logs.
         print("FAIL alpha-packaging phase=" + phase + " reason=" + str(error), flush=True)
