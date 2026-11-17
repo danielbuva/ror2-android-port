@@ -6175,8 +6175,10 @@ Still open:
    menu roots, settings visibility and others) still live on `PortSession`. 23 boundary files
    have no private state worth an owner, and the three Moon files were deferred because
    neither standard check reaches them.
-5. **Hard-coded run folders.** `scene_runtime.py:59`, `:515` and `:883`, and
-   `input_migration.py:90` read fixed timestamped evidence folders (all in historical actions).
+5. **Historical evidence registration.** `scene_runtime.py` and `input_migration.py`
+   now resolve explicit named, hash-pinned receipts rather than fixed timestamped
+   folders. Historical replay still requires operator-reviewed retained evidence;
+   this removes implicit path dependencies, not the evidence requirement or runtime gates.
 6. **Experiment drivers outside Git.** Broader gameplay runs still use about 89 untracked
    runner scripts in `work/experiments/whole-catalog/gameplay/`; the standard checks are
    tracked as `./dev check-baseline` and `--stage-exit` ([BASELINE.md](BASELINE.md)).
