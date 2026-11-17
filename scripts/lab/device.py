@@ -21,6 +21,10 @@ PACKAGE = "dev.ror2lab.arm64"
 ADB = "/opt/homebrew/bin/adb"
 
 
+class InstallSignatureMismatch(RuntimeError):
+    pass
+
+
 def require_device_access(*, force=False):
     if common.lane_config():
         raise RuntimeError("Build lanes do not own devices; use canonical device commands with explicit APK/payload paths")
@@ -360,6 +364,8 @@ class Device:
                 "install-attempt.json",
                 {"success": False, "apk_sha256": apk_hash, "transport": mode, "error": str(error), "storage": storage, "timing": timing.report()},
             )
+            if isinstance(error, RuntimeError) and re.search(r"Failure \[INSTALL_FAILED_UPDATE_INCOMPATIBLE(?=[:\]])", str(error)):
+                raise InstallSignatureMismatch(str(error)) from error
             raise
         with timing.phase("placement_query"):
             package_path = self.sh("pm", "path", self.package)
@@ -583,9 +589,11 @@ class Device:
         if not self.exists():
             return {"removed": False, "reason": "package absent"}
         self.owned()
-        result = self.cmd("uninstall", self.package)
-        self.receipt("installed.json").unlink()
-        return {"uninstall": result, "removed": not self.exists()}
+        result = self.sh("pm", "uninstall", self.package)
+        removed = not self.exists()
+        if removed:
+            self.receipt("installed.json").unlink()
+        return {"uninstall": result, "removed": removed}
 
 
 def smoke(apk):

@@ -1506,7 +1506,7 @@ readings; the public summary reports per-metric availability, boundary-inclusive
 gaps, sampled PSS maxima and minimum shared-backing free space separately from
 end free space. A drop from the first reading is only a sampled shared-volume
 high-water delta, not app storage size. Observation time is reported explicitly;
-measurement overhead and native-child memory remain unqualified. It emits
+measurement overhead and native-child memory remain unqualified. Retained UI-failure inspection skips only validated periodic telemetry records when pairing foreground evidence; unrelated operations remain grouping boundaries. It emits
 elapsed time, sampled app-process PSS, battery heat and actual backing free bytes. Missing readings remain null; shared-volume
 free-space changes are not exclusive app consumption, and sampled PSS excludes
 unobserved peaks/native child tools. Optional observation/report failure never
@@ -2912,6 +2912,11 @@ are isolated under `packages/dev.ror2lab.converted`. A prior peer receipt can be
 after matching its device, package, live path and APK hash. Converted launches
 resolve the real launcher activity; a launch observation alone does not prove
 that bootstrap or gameplay succeeded.
+An Android signature mismatch allows one uninstall/reinstall only for the
+disposable lab package with a live hash-backed ownership receipt and an explicit
+payload source. The uninstall clears its data. The runner revalidates placement
+on the configured volume, recreates the runtime directory, syncs the payload and
+records the recovery in the terminal receipt under the same lease.
 The shared device runner's launch request accepts `start_from_menu` for automatic
 route observations. It waits for the installed attempt/PID-bound native menu,
 requires owned display-zero focus, injects Start and waits for a ready world
