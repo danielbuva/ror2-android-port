@@ -3294,8 +3294,11 @@ preserves unchanged ZIP records, aligns and signs using the existing local lab
 key. Failed attempts remain local; unsigned/alignment intermediates are removed
 after packaging. Each normal cache retains its own `iteration-base.json`; the
 active anchor is replaced only by another normal build. Iteration receipts
-reference that normal cache's hash-verified `payload_directory`, without another
-payload copy, and bind its previously verified signing certificate.
+reference a hash-verified `payload_directory` in the normal build cache and bind
+the normal APK's verified signing certificate. Ordinary code-only APKs also
+reference the frozen full-build payload by cache key. A cache hit verifies the
+referenced payload before restoring the writable staging files. The pruner keeps
+the current freeze keys and payloads referenced by retained APKs.
 `whole-catalog-scripts-build` evaluates `BuildScriptsOnly` with the same owner;
 it is not an acceptance build. `apk-member-compare` compares hash-bound builds
 of the same source without hiding build metadata differences. Normal full-build
@@ -6088,8 +6091,11 @@ content; the producer selects the checkout's own generation.
 bindings. Ordinary whole-catalog composition restores those preimages before
 its existing overlay/audio staging. Lane teardown deletes this private state.
 Generated content, game inputs and canonical staging are untouched. Completed
-artifacts are cloned/verified into canonical cache without changing current-build
-pointers. Teardown verifies process identities, stops private Gradle daemons
+APKs and symbols are cloned and verified in canonical cache without changing
+current-build pointers. Lane creation seeds only the frozen payload cache
+directories. Publication stores one independent canonical payload snapshot per
+member-hash set, shared by matching APK receipts and preserved after lane
+teardown. Teardown verifies process identities, stops private Gradle daemons
 through their own registry, retains logs/receipts, removes
 the checkout/work clone and preserves published artifacts. The pruner delegates
 old stopped lane removal to this owner. Lane device access refuses before ADB;

@@ -21,9 +21,9 @@ leaves an adjacent <name>.retired.json marker. Rebuild from the recorded source
 commit if an old candidate is ever needed again.
 
 Defaults to a dry-run plan; --apply deletes and writes a ledger.
-Build-cache protection uses only pinned state/baseline APKs, current build/base
-entries, latest installed APKs, newest worker builds named in current handoffs,
-explicit keeps and the age guard. Stale `.prune-keep` markers, nested content
+Build-cache protection uses pinned state/baseline APKs, current build/base
+entries, latest installed APKs, newest worker and lane builds, their frozen
+payload references, explicit keeps and the age guard. Stale `.prune-keep` markers, nested content
 hashes and historical device sync lists do not pin cache entries. The cache age
 guard defaults to three hours; other generated outputs retain the 24-hour guard.
 """
@@ -125,6 +125,14 @@ def read_receipt(path):
         return {}
 
 
+def payload_cache_key(cache_root, value):
+    if isinstance(value, str):
+        path = Path(value).resolve()
+        if path.name == "payload" and path.parent.parent == cache_root:
+            return path.parent.name
+    return None
+
+
 def cache_protected_state(work, extra):
     """Select live cache references, never nested payload/member hash lists."""
     hashes = {digest: "explicit --keep-sha256" for digest in extra}
@@ -147,6 +155,18 @@ def cache_protected_state(work, extra):
                 keys[key] = keys[key] + "; " + name + " cache entry" if key in keys else name + " cache entry"
         elif receipt.get("key"):
             keys[receipt["key"]] = name + " cache entry"
+        payload_key = payload_cache_key(cache_root, receipt.get("payload_directory"))
+        if payload_key:
+            keys.setdefault(payload_key, name + " payload reference")
+    for name in ("whole-catalog-code-base", "whole-catalog-uncompressed-base"):
+        key = read_receipt(work / (name + ".json")).get("build_key")
+        if isinstance(key, str) and Path(key).name == key and key not in {"", ".", ".."}:
+            keys.setdefault(key, name + " frozen payload")
+    if work == ROOT / "work":
+        for path in (ROOT / ".local/build-lanes").glob("*/latest-build.json"):
+            apk = read_receipt(path).get("apk")
+            if isinstance(apk, str) and Path(apk).parent.parent == cache_root and Path(apk).resolve() == Path(apk):
+                keys.setdefault(Path(apk).parent.name, "latest build for lane " + path.parent.name)
     # installed.json is overwritten by the install owner; attempts and sync
     # receipts are not evidence that an APK remains installed.
     installed = {}
@@ -311,28 +331,36 @@ class Planner:
 
     def build_cache(self):
         root = self.work / "build-cache"
-        if not root.is_dir():
+        if root.is_symlink() or not root.is_dir():
             return
+        cache_root = root.resolve()
+        entries = {}
+        reasons = {}
         for entry in sorted(root.iterdir()):
             if not entry.is_dir() or entry.is_symlink():
                 continue
-            receipt = entry / "result.json"
-            apk_hash = None
-            if receipt.is_file():
-                try:
-                    apk_hash = json.loads(receipt.read_text()).get("apk_sha256")
-                except (OSError, ValueError):
-                    pass
+            receipt = read_receipt(entry / "result.json")
+            entries[entry] = receipt
+            apk_hash = receipt.get("apk_sha256")
             if apk_hash in self.cache_hashes:
-                self.keep(entry, self.cache_hashes[apk_hash] + ": " + apk_hash[:12])
+                reasons[entry.name] = self.cache_hashes[apk_hash] + ": " + apk_hash[:12]
             elif entry.name in self.cache_keys:
-                self.keep(entry, self.cache_keys[entry.name])
+                reasons[entry.name] = self.cache_keys[entry.name]
             elif newest_mtime(entry) >= self.cache_cutoff:
-                self.keep(entry, "recent")
-            elif tree_size(entry) - (receipt.stat().st_size if receipt.is_file() else 0) > 1 << 20:
+                reasons[entry.name] = "recent"
+        for entry, receipt in entries.items():
+            if entry.name in reasons:
+                payload_key = payload_cache_key(cache_root, receipt.get("payload_directory"))
+                if payload_key:
+                    reasons.setdefault(payload_key, "payload referenced by " + entry.name)
+        for entry, receipt in entries.items():
+            receipt_path = entry / "result.json"
+            if entry.name in reasons:
+                self.keep(entry, reasons[entry.name])
+            elif tree_size(entry) - (receipt_path.stat().st_size if receipt_path.is_file() else 0) > 1 << 20:
                 # Cache retention is an explicit bounded set. Oracle/payload
                 # .prune-keep markers outside build-cache keep their semantics.
-                self.items.append({"path": entry, "kind": "build-cache entry", "bytes": tree_size(entry), "apk_sha256": apk_hash})
+                self.items.append({"path": entry, "kind": "build-cache entry", "bytes": tree_size(entry), "apk_sha256": receipt.get("apk_sha256")})
 
     def lab_build(self):
         root = self.work / "lab-build"
