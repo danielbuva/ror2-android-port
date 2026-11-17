@@ -3190,6 +3190,16 @@ checks distinct service/main PIDs, retained original
 primary/pending bytes, cold recovery and native resave. Device survival after the
 writer kill remains a qualification gate.
 
+The shared runner's current `profile-write-interrupt` workload uses the same
+service with the profile pending path. `PortSession` reads the nonce-only
+`profile-write-observer.request` at launch. `IntegratedResultsBoundary` arms
+the service only for an unassisted native result with a prepared profile, then
+persists the native report and ledger before the profile commit. The runner
+binds the separate writer and observer, retains pending evidence by hash, and
+checks two cold world Starts for one reconciliation and unchanged settings.
+Native replay supersedes the pending generation. Cleanup stops the package and
+clears the attempt's request and witness files.
+
 Settings persistence remains owned by `AndroidOfflineSettings`. Its existing
 validated pending/primary/backup transaction is unchanged. `TrySave` converts
 expected storage/validation failures into a bounded message; the settings owner
@@ -4615,6 +4625,8 @@ before their pools instantiate them. It follows typed prefab edges with cycle
 protection, including CharacterBody's separately loaded FireTrail. Original
 source slots and particle trails are restored by integrated-world cleanup before
 the session destroys its material copies; source blend values remain intact.
+The session counts objective projectile materials during catalog setup. The
+integrated-world report includes these counts from its first snapshot.
 | Developer controls | `DebugAccelerationBoundary` ([debug-acceleration.md](debug-acceleration.md)) | nested `DebugAccelerationSession` (`IDisposable`) **own type** holds the body, saved god mode, ownership flag, charge scan/callback set and grant inventory; `debugPanel` stays shared with IntegratedWorld's graphics button; sticky "assisted" flags stay in the coordinator report | `PrepareDebugAcceleration` (calls `DebugAccelerationSession.Prepare`) → `CleanupDebugAcceleration` (calls `Dispose`; owner retained) | `test_debug_acceleration.py` |
 
 `AndroidProfileSession` reserves each original achievement event before its

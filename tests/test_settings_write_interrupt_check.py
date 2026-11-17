@@ -15,6 +15,80 @@ import settings_write_interrupt_check as check  # noqa: E402
 class InterruptedWriteEvidenceTests(unittest.TestCase):
     witness = dict(success=True, createObserved=True, writerExited=True, pendingPresentBeforeStop=True, pendingPresentAfterStop=True)
 
+    def test_profile_interruption_recovers_only_the_new_native_loss(self):
+        root = "/owned-lab"
+        primary = root + "/android-profile-v1/profile.json"
+        settings = root + "/offline-settings-v1/preferences.json"
+        result_root = root + "/offline-run-results-v1/"
+        ledger = result_root + "profile.json"
+        applied, new_id, nonce = "1" * 32, "2" * 32, "3" * 32
+        run_file = "run-" + new_id + ".xml"
+        loss = dict(file=run_file, ending="StandardLoss", win=False, debugAssisted=False)
+        old_generation = dict(version=2, appliedRuns=[applied], baselineRuns=[])
+        old_hashes = {primary: "original", primary + ".backup": "older", settings: "unchanged"}
+        stopped_hashes = dict(old_hashes, **{primary + ".pending": "partial", ledger: "ledger", result_root + run_file: "xml"})
+        recovered_hashes = dict(stopped_hashes, **{primary: "updated", primary + ".backup": "original"})
+        recovered_hashes.pop(primary + ".pending")
+        device = Mock()
+        device.read_receipt.return_value = {"persistentDataPath": root}
+        device.sh.return_value = ""
+        thermal = Mock(error=None)
+        witness = dict(nonce=nonce, pid=101, uid=10001, observerPid=102, pendingName="profile.json.pending")
+        request_file = root + "/profile-write-observer.request"
+
+        paths = {primary: "file", settings: "file"}
+        ledger_states = iter(["absent", "file"])
+
+        def path_state(device, path):
+            if path == ledger:
+                return next(ledger_states)
+            return paths.get(path, "absent")
+
+        def start(device, owner, pid, output, *, report_id):
+            self.assertEqual(report_id, "body-state-spawn-state-auto-player")
+            if pid == "101":
+                paths.update({root + "/ror2lab-write-" + nonce + ".result": "file", primary + ".pending": "file"})
+            else:
+                paths.pop(primary + ".pending", None)
+            return dict(profile=dict(ready=True, recovery="validated-primary", reconciledRuns=int(pid == "103")))
+
+        def read_json(device, path):
+            if path == primary:
+                return next(generations)
+            if path == ledger:
+                return dict(version=1, runs=[loss])
+            if path.endswith(".ready"):
+                return witness
+            return dict(witness, **self.witness)
+
+        generations = iter([old_generation, dict(old_generation, appliedRuns=[applied, new_id])])
+        start_device = Mock(side_effect=[dict(pid=101), dict(pid=103), dict(pid=104)])
+        with tempfile.TemporaryDirectory() as temporary, ExitStack() as stack:
+            stack.enter_context(patch.object(check, "bind_installed_apk"))
+            stack.enter_context(patch.object(check, "attempt_from_installed", return_value="fixture-attempt"))
+            stack.enter_context(patch.object(check, "observer_uid", return_value=10001))
+            stack.enter_context(patch.object(check.uuid, "uuid4", return_value=Mock(hex=nonce)))
+            stack.enter_context(patch.object(check, "_remote_path_state", side_effect=path_state))
+            stack.enter_context(patch.object(check, "_read_json", side_effect=read_json))
+            stack.enter_context(patch.object(check, "_read_raw", side_effect=[nonce, nonce, ""]))
+            stack.enter_context(patch.object(check, "persistence_hashes", side_effect=[old_hashes, stopped_hashes, recovered_hashes, recovered_hashes]))
+            stack.enter_context(patch.object(check, "stop_after_observed_exit", return_value=dict(writer_absent=True)))
+            stack.enter_context(patch.object(thermal, "between_sessions", return_value={}))
+            receipt = check.check_profile_write_interrupt(device, thermal, dict(apk_sha256="a" * 64, duration_seconds=2), Path(temporary), start_device, start)
+        self.assertTrue(receipt["success"])
+        self.assertEqual(receipt["run_id"], new_id)
+        self.assertEqual(start_device.call_count, 3)
+        device.sh.assert_any_call("rm", "--", request_file)
+        self.assertFalse(any(primary + ".pending" in call.args for call in device.sh.call_args_list if call.args[0] == "rm"))
+
+    def test_result_ledger_cannot_substitute_an_assisted_or_reordered_loss(self):
+        old = dict(file="run-" + "1" * 32 + ".xml")
+        new = dict(file="run-" + "2" * 32 + ".xml", ending="StandardLoss", win=False, debugAssisted=False)
+        self.assertEqual(check.new_native_loss([old], [old, new]), ("2" * 32, new["file"]))
+        for changed in ([new], [new, old], [old, dict(new, debugAssisted=True)], [old, dict(new, win=True)]):
+            with self.subTest(changed=changed), self.assertRaises(RuntimeError):
+                check.new_native_loss([old], changed)
+
     def test_injected_failure_checks_retained_generations_visible_retry_and_cold_load(self):
         device = Mock()
         device.read_receipt.return_value = {"persistentDataPath": "/synthetic"}

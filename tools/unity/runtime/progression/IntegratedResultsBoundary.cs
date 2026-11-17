@@ -104,6 +104,9 @@ public sealed partial class PortSession
         GameOverController resultsController;
         Action<Run, GameEndingDef> resultsServerEvent;
         Action<Run, RunReport> resultsClientEvent;
+#if UNITY_ANDROID && !UNITY_EDITOR
+        float profileWriteObserverDeadline;
+#endif
         string resultsDirectory;
         bool ownsResultsContext, ownsResultsStats;
         KeyItemDef[] priorResultsKeyItems;
@@ -575,6 +578,10 @@ public sealed partial class PortSession
             report.stagesCompletedStat = coordinator.resultsStats.currentStats.GetStatValueULong(StatDef.totalStagesCompleted);
             if (!report.serverEnding || !report.clientEnding || report.persisted)
                 return;
+#if UNITY_ANDROID && !UNITY_EDITOR
+            if (!ProfileWriteObserverReady())
+                return;
+#endif
             coordinator.Check(Run.instance.isGameOverServer && !Run.instance.isRunning && resultsController &&
                                   resultsController.netId.Value != 0 && coordinator.resultsRunReport != null &&
                                   coordinator.resultsRunReport.playerInfoCount == 1 &&
@@ -619,6 +626,35 @@ public sealed partial class PortSession
             report.persisted = true;
             coordinator.Save();
         }
+#if UNITY_ANDROID && !UNITY_EDITOR
+        bool ProfileWriteObserverReady()
+        {
+            var nonce = coordinator.profileWriteObserverNonce;
+            if (nonce == null)
+                return true;
+            if (profileWriteObserverDeadline == 0)
+            {
+                coordinator.Check(!coordinator.IsRunAssisted() && coordinator.r.profile != null && coordinator.r.profile.ready,
+                                  "Profile write witness requires a real result with an owned profile");
+                using (var player = new AndroidJavaClass("com.unity3d.player.UnityPlayer"))
+                using (var activity = player.GetStatic<AndroidJavaObject>("currentActivity"))
+                using (var observer = new AndroidJavaClass("dev.ror2lab.diagnostics.LabSettingsWriteObserver"))
+                    observer.CallStatic("startProfile", activity, nonce);
+                // PlayerDefeatBoundary gives native result persistence five seconds.
+                profileWriteObserverDeadline = Time.realtimeSinceStartup + 3;
+                return false;
+            }
+            var ready = Path.Combine(Application.persistentDataPath, "ror2lab-write-" + nonce + ".ready");
+            if (!File.Exists(ready))
+            {
+                coordinator.Check(Time.realtimeSinceStartup < profileWriteObserverDeadline, "Profile write observer did not arm");
+                return false;
+            }
+            coordinator.profileWriteObserverNonce = null;
+            profileWriteObserverDeadline = 0;
+            return true;
+        }
+#endif
         void LoadAndroidRunLedger()
         {
             var path = Path.Combine(resultsDirectory, "profile.json");
