@@ -77,6 +77,7 @@ def production_host(*, unload_mutant=False):
         + manual_load.group()
         + "\n}\npublic sealed partial class TeleporterWorldSession {\n"
         + braced_block(teleporter, "public IEnumerator PreloadObjectiveBundle()")
+        + braced_block(teleporter, "public void ValidatePreloadedWard(SessionConfig cfg)")
         + braced_block(teleporter, "public void ReleaseObjectiveBundlePreload()")
         + "\n}\n}\n"
     )

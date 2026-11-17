@@ -458,6 +458,15 @@ _ENTRIES = (
     Action("whole-catalog-prepare", "whole_catalog", "prepare_integration", {}, "current", "Prepare the whole-catalog integration."),
     Action("whole-catalog-host", "whole_catalog", "host_integration", {}, "current", "Run the whole-catalog editor host fixture."),
     Action(
+        "whole-catalog-skin-host",
+        "whole_catalog",
+        "host_skin_bundles",
+        {},
+        "current",
+        "Typed-load actual body skin slots from the pinned converted catalog request (--target); no device acceptance.",
+        handler=_target,
+    ),
+    Action(
         "survivor-kit-check",
         "survivor_check",
         "check_survivors",

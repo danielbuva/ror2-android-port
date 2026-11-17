@@ -427,9 +427,9 @@ public sealed partial class PortSession
                                   coordinator.objectiveBundlePreload.Result != null &&
                                   coordinator.objectiveBundlePreload.Result.GetAssetBundle(),
                               "Original shared-support bundle container failed before prefab deserialization");
-            // Attribute the current Android-only binding failure before bulk shared-asset deserialization.
-            // MovementBatchProbe is the unchanged resource/file name.
-            var cfg = JsonUtility.FromJson<SessionConfig>(Resources.Load<TextAsset>("MovementBatchProbe").text);
+        }
+        public void ValidatePreloadedWard(SessionConfig cfg)
+        {
             var ward = coordinator.objectiveBundlePreload.Result.GetAssetBundle().LoadAsset<GameObject>(cfg.objectiveSupportAssets[1]);
             var missing = ward ? ward.GetComponentsInChildren<Transform>(true)
                                      .Where(child => child.GetComponents<Component>().Any(component => !component))

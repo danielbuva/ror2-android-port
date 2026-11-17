@@ -563,7 +563,7 @@ class OwnerCodeNativeTests(unittest.TestCase):
                     NATIVE.sdk_files(sdk, profile)
                 path.write_bytes(original)
 
-    def test_provider_change_after_planning_has_failed_terminal_result(self):
+    def test_conversion_plan_uses_pinned_source_membership_and_detects_provider_drift(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary).resolve()
             work, sdk, sources = [root / n for n in ("work", "sdk", "sources")]
@@ -593,7 +593,7 @@ class OwnerCodeNativeTests(unittest.TestCase):
                         "input_id": "fixture",
                         "compiler": "compiler",
                         "arguments": [["SOURCE", "-o", "OBJECT"]],
-                        "jobs": [{"arguments": 0, "generated": "Fixture.cpp"}],
+                        "jobs": [{"arguments": 0, "generated": "Previous.cpp"}],
                         "link": [{"object": 0}, "-o", "LIBRARY"],
                     }
                 )
@@ -620,13 +620,19 @@ class OwnerCodeNativeTests(unittest.TestCase):
                 patch.object(NATIVE, "PROFILE_SHA", NATIVE.sha(profile)),
                 patch.object(NATIVE, "sdk_files", return_value={}),
                 patch.object(NATIVE, "input_state", return_value=("fixture", root / "game", {})),
-                patch.object(NATIVE, "plan", side_effect=mutate_after_plan),
             ):
-                with self.assertRaisesRegex(ValueError, "converter providers changed"):
+                with self.assertRaisesRegex(ValueError, "generated translation-unit membership differs"):
                     NATIVE.run(request, plan_only=True)
+                with self.assertRaisesRegex(ValueError, "converter receipt drift"):
+                    NATIVE.run({**request, "converter_receipt_sha256": "unmatched"}, plan_only=True, from_conversion=True)
+                with patch.object(NATIVE, "plan", side_effect=mutate_after_plan):
+                    with self.assertRaisesRegex(ValueError, "converter providers changed"):
+                        NATIVE.run(request, plan_only=True, from_conversion=True)
             result = json.loads((work / "output/result.json").read_text())
             self.assertFalse(result["success"])
             self.assertEqual(result["compile_tasks"], 0)
+            plan = json.loads((work / "output/native-profile.json").read_text())
+            self.assertEqual(plan["jobs"], [{"arguments": 0, "generated": "Fixture.cpp"}])
 
     def test_profile_pins_exact_compile_link_closure(self):
         self.assertEqual(NATIVE.sha(NATIVE.PROFILE), NATIVE.PROFILE_SHA)

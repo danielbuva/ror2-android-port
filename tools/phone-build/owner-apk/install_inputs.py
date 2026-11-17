@@ -111,15 +111,18 @@ def prepare(index, repo, inputs):
     manifest = importer.select_version(importer.FolderSource(imported_root), description["catalog"])
     hashes = {}
     names = set()
-    for row in manifest["files"]:
+    inventory = []
+    # The native owners use the host inventory's Path ordering for identity.
+    for row in sorted(manifest["files"], key=lambda row: Path(row["path"])):
         name = "import/files/" + row["path"]
         path = UPDATES.within(inputs, name, exists=True)
-        if not path.is_file() or path.stat().st_size != row["bytes"] or UPDATES.RELEASE.digest(path) != row["sha256"]:
+        stats = path.stat()
+        if not path.is_file() or stats.st_size != row["bytes"] or UPDATES.RELEASE.digest(path) != row["sha256"]:
             raise ValueError("imported game version/input differs: " + row["path"])
         hashes[name] = row["sha256"]
         names.add(row["path"])
+        inventory.append({"path": row["path"], "size": row["bytes"], "sha256": row["sha256"], "mtime_ns": stats.st_mtime_ns})
     # Root/directory bindings must not expose leftovers from another game version.
-    imported_root = UPDATES.within(inputs, "import/files", exists=True)
     observed = set()
     for position, path in enumerate(imported_root.rglob("*")):
         if position > 2 * len(names) + 10000:
@@ -136,6 +139,11 @@ def prepare(index, repo, inputs):
             raise ValueError("binding does not select admitted original files: " + name)
         bindings[name] = "import/files" + ("/" + relative if relative != "." else "")
         UPDATES.within(inputs, bindings[name], exists=True)
+    bindings.setdefault("inventory", "input-hashes.json")
+    input_id = hashlib.sha256(UPDATES.RELEASE.signed_bytes([(row["path"], row["sha256"]) for row in inventory])).hexdigest()
+    UPDATES.write_json(UPDATES.within(inputs, "work/config/local.json"), {"game_path": str(imported_root)})
+    UPDATES.write_json(UPDATES.within(inputs, "work/inventory/files.json"), {"schema": 1, "input_id": input_id, "files": inventory})
+    UPDATES.write_json(UPDATES.within(inputs, "work/config/accepted-input.json"), {"input_id": input_id, "game_version": manifest["game_version"]})
     UPDATES.write_json(
         UPDATES.within(inputs, "input-selection.json"),
         {

@@ -694,7 +694,14 @@ def _run(request_file, runtime, native, *, transport=None, debuggable=False):
                 if row["id"] in pipeline.PRODUCTION:
                     flow.perform(row["id"], lambda row=row: [dispatcher.execute(name) for name in row["jobs"]])
             flow.begin("apk")
-        result = RELEASE.rebuild(release, **dict(context, installed_version=0), input_sha256=identity, root=cache, produce=dispatcher.produce)
+        result = RELEASE.rebuild(
+            release,
+            **dict(context, installed_version=0),
+            input_sha256=identity,
+            root=cache,
+            produce=dispatcher.produce,
+            producer_sha256=dispatcher.output_sha256 if flow is not None else None,
+        )
         if input_identity(inputs, config) != identity:
             raise ValueError("owner inputs changed during update")
         work = Path(tempfile.mkdtemp(prefix="build-", dir=cache.parent))

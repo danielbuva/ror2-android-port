@@ -111,7 +111,7 @@ class SessionConfigTests(unittest.TestCase):
         )
         for path, source in self.sources.items():
             parses.extend((path.name, match[1]) for match in pattern.finditer(source))
-        self.assertEqual(len(parses), 11)
+        self.assertEqual(len(parses), 10)
         self.assertEqual({type_name for _, type_name in parses}, {"SessionConfig"})
 
     def test_only_selection_json_is_parsed_as_result(self):

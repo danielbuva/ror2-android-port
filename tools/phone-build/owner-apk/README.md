@@ -571,7 +571,10 @@ and eight ordered `stages` (`id`, `title`, `jobs`). Stage IDs are `admission`,
 `staging`, `assembly`, `textures`, `native`, `apk`, `signing`, `install`.
 Every producer and dependency occurs once in a production stage; dependencies
 cannot follow their consumer's stage. Bindings select only admitted original
-files/directories (`.` selects the imported root). Such releases require minimum
+files/directories (`.` selects the imported root). Without an explicit
+`inventory` binding, startup metadata uses the admitted file hashes. Admission
+also writes the native-code owner's private inventory and local configuration
+from the selected reviewed version. Such releases require minimum
 installer version 3 for the final alpha policy. Maintainers must supply a complete reviewed source recipe;
 this feature does not invent missing game producers or supply private replay
 packets. The assembly receipt is generated locally from verified producer outputs,
@@ -747,6 +750,18 @@ The manager consumes this job's receipt/hash, and its two final startup files
 enter the release automatically. No separately supplied startup receipt is
 required. Environment capture remains an explicit source-produced input.
 
+Optional `--code-request recipe/<request>.json` with `--native-request` runs
+the original-input code owner through conversion and native planning. Its
+request selects `"${output}"` and an explicit target profile and source root
+inside the signed `"${repo}"`. Schedule `owner-code-conversion.json` in
+assembly and `owner-native-code.json` in native. The graph supplies the
+conversion receipt, metadata and compressed source directory to native
+compilation. SDK and package acquisition must supply the request's canonical
+local inputs first. The request templates may include `cache_witnesses`, a list
+of files beneath `"${inputs}"`, `"${installed_runtime}"` or `"${native}"` that
+the job cache hashes. Use acquisition receipts from the tool owner or the
+acquired tool file itself. The graph strips the list from the producer request.
+
 Optional `--burst-request recipe/<request>.json` adds the existing
 `owner-code/produce.py` Burst-only job. The caller's request uses
 `"output": "${output}"` and explicit tool/input bindings, with either `managed`
@@ -779,9 +794,9 @@ to freshly source-produced inputs. Shader jobs use `sdk_contents` and require
 their existing public recovery/compiler tool arguments through
 `--extra-arguments`. `--player-phases` wires the existing optional player
 phase arguments and outputs. Missing inputs fail through the producer contracts;
-this compiler does not generate managed/native runtime inputs. Authored shader
-files, player registry/manifests/bootstrap/config and imported lab Python owners
-are included in the signed dependency closure.
+player still takes the code and managed inputs through its explicit bindings.
+Authored shader files, player registry/manifests/bootstrap/config and imported
+lab Python owners are included in the signed dependency closure.
 
 Overlay generated recipe files into a release source checkout, inspect/audit and
 commit them, then use the existing public publisher. The generated index is an
