@@ -48,6 +48,19 @@ class OwnerSigningTests(unittest.TestCase):
                 OWNER.build(path, root / "output")
             self.assertFalse((root / "output").exists())
 
+    def test_owner_build_and_readiness_refuse_lab_installation_identity(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            request = {key: "unused" for key in ("manifest", "targets", "frontend", "java", "android_jar", "d8_jar", "wire_helper")}
+            request.update(manifest_sha256=OWNER.PROFILE, application_id="dev.ror2lab.arm64")
+            path = root / "request.json"
+            path.write_text(json.dumps(request))
+            with self.assertRaisesRegex(ValueError, "owner APK package must be"):
+                OWNER.check(request)
+            with self.assertRaisesRegex(ValueError, "owner APK package must be"):
+                OWNER.build(path, root / "output")
+            self.assertFalse((root / "output").exists())
+
     def test_unsafe_existing_key_custody_refuses_without_replacement_or_tool_execution(self):
         for state in ("missing-password", "linked-key", "linked-password", "public-directory", "public-key", "public-password", "empty-password"):
             with self.subTest(state=state), tempfile.TemporaryDirectory() as temporary:
@@ -418,7 +431,12 @@ class OwnerAssemblyTests(unittest.TestCase):
             code = {}
             for i, name in enumerate(sorted(entries)):
                 path = produced / str(i)
-                path.write_bytes(dex if name.endswith(".dex") else ("independent produced output " + name).encode())
+                if name == "resources.arsc":
+                    package = struct.pack("<HHII", 0x200, 288, 288, 0x7F)
+                    package += "dev.ror2lab.arm64".encode("utf-16-le").ljust(256, b"\0") + bytes(20)
+                    path.write_bytes(struct.pack("<HHII", 2, 12, 12 + len(package), 1) + package)
+                else:
+                    path.write_bytes(dex if name.endswith(".dex") else ("independent produced output " + name).encode())
                 code[name] = str(path)
             profile = {"targets": []}
             names = {"apk/AndroidManifest.xml", "apk/classes.dex", "apk/assets/authored.txt", "payload/authored.bundle"}
@@ -518,14 +536,20 @@ class OwnerAssemblyTests(unittest.TestCase):
                     return
                 result = OWNER.build(request, output)
             self.assertEqual(manifest_patch.call_args.args[0], original_manifest)
+            self.assertEqual(manifest_patch.call_args.kwargs["application_id"], "dev.ror2lab.converted")
             self.assertTrue(result["success"])
+            self.assertEqual(result["requested_application_id"], "dev.ror2lab.converted")
             self.assertEqual(result["il2cpp_or_original_dex_changed"], bool(code))
             self.assertEqual(result["original_entries_preserved"], (1 if "AndroidManifest.xml" in code else 2) if code else 3)
             self.assertEqual(set(result["code_entries"]), entries)
             with zipfile.ZipFile(output / "owner-unsigned.apk") as archive:
                 self.assertEqual(archive.read("AndroidManifest.xml"), b"independent routed manifest")
                 for name, path in code.items():
-                    if name != "AndroidManifest.xml":
+                    if name == "resources.arsc":
+                        data = archive.read(name)
+                        self.assertEqual(data[24:280].decode("utf-16-le").rstrip("\0"), "dev.ror2lab.converted")
+                        self.assertEqual(data[:24] + data[280:], Path(path).read_bytes()[:24] + Path(path).read_bytes()[280:])
+                    elif name != "AndroidManifest.xml":
                         self.assertEqual(archive.read(name), Path(path).read_bytes())
                 self.assertEqual(archive.read(result["new_dex"]), dex)
                 self.assertEqual(archive.read("assets/authored.txt"), (targets / "apk/assets/authored.txt").read_bytes())

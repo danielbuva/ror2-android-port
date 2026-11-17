@@ -7,11 +7,17 @@ boundary in [ADR-002](ADR-002-public-alpha-distribution.md) remain fixed.
 
 ## Package and updates
 
-Reserve `dev.ror2lab.alpha` for the first owner alpha. Keep the disposable
-`dev.ror2lab.arm64` laboratory package and separate tool fixtures unchanged.
-The final owner installer enforces this identity; the laboratory and private replay
-identities are not migrated. Actual alpha package, storage, execution and update
-evidence is still required before release.
+| Package | Signing key |
+| --- | --- |
+| `dev.ror2lab.arm64` | The lab's existing debug key. Linked worktrees using the same lab project resolve its Android user home from the shared work root. Isolated build lanes use the copied lab key. |
+| `dev.ror2lab.converted` | A dedicated private converted-build key, reused for that package's updates. Standalone owner assemblies default to this package, including private replay assemblies. |
+| `dev.ror2lab.alpha` | The owner's durable on-device alpha key. The final installer requires the alpha identity, an issued version and its bound retention policy. |
+| Installer and tool fixtures | A separate durable tool signing key for each fixture identity. The managed host builder reserves all three game package IDs. |
+
+The APK assembly rewrites both the manifest and resource package to the selected
+owner identity. Existing laboratory data stays with its original package.
+Actual alpha package, storage, execution and update evidence is required before
+release.
 Do not adopt an existing installation without a local ownership receipt and
 matching package/signing identity. Do not remove a conflicting package to make
 an installation succeed. Migration of laboratory data is a separate reviewed

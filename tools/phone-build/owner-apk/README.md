@@ -86,11 +86,13 @@ python3 -I -S tools/phone-build/owner-apk/build_owner_apk.py \
   --request PRIVATE_REQUEST.json --output NEW_PRIVATE_OUTPUT_DIRECTORY
 ```
 
-`version_code` is optional. Omission retains the frozen manifest version. An
-explicit value must be a positive Android integer greater than the frozen
-input version; select a value greater than every previously installed owner
-version for an update. Only that typed manifest attribute changes in addition
-to the launcher routing. Retain the same private signing key across updates.
+`application_id` defaults to `dev.ror2lab.converted`. The assembly sets both
+the manifest and resource package, including when the template comes from the
+lab. The other owner identity is `dev.ror2lab.alpha`, which requires an issued
+version and a bound retention policy. `version_code` is optional for converted
+builds. Omission retains the template version. For an in-place update, choose a
+positive code greater than the installed version and retain the same private
+key. See [package and key policy](../../../docs/ALPHA_POLICY.md#package-and-updates).
 
 For independently produced code, add one `code` dictionary mapping these three
 APK entry names to canonical absolute output files:
@@ -108,8 +110,9 @@ five compiled `res/` files and both generic Android `META-INF` build metadata fi
 `SDK_ENTRIES` membership. The selection accepts exactly three or 18 entries;
 partial SDK cohorts and unknown names refuse. Each value is an explicit
 canonical absolute file path. The produced manifest feeds the existing launcher
-and version patch; produced DEX/resource/native bytes stream unchanged into the
-APK, including independently explained compiler checksum differences.
+and version patch. The resource table keeps its IDs and bodies with the selected
+package name. Produced DEX and native bytes stream unchanged into the APK,
+including independently explained compiler checksum differences.
 Their comparison-target files need not exist.
 The builder records actual hashes/sizes, rechecks every source and verifies ZIP
 readback; every other content/payload path retains its existing target hash.

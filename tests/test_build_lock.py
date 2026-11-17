@@ -131,8 +131,8 @@ class HostBuildLockTests(unittest.TestCase):
         from types import SimpleNamespace
 
         with tempfile.TemporaryDirectory() as temp:
-            root = Path(temp)
-            work = root / "work"
+            root = Path(temp) / "linked-worktree"
+            work = Path(temp) / "primary" / "work"
             (work / "lab-project").mkdir(parents=True)
             with (
                 patch.object(build, "ROOT", root),
@@ -146,7 +146,9 @@ class HostBuildLockTests(unittest.TestCase):
             ):
                 result = json.loads(build.editor("lab", "open"))
                 self.assertTrue(result["started"])
-                self.assertEqual(launch.call_args.kwargs["env"]["ANDROID_ADB_SERVER_PORT"], "5038")
+                env = launch.call_args.kwargs["env"]
+                self.assertEqual(env["ANDROID_ADB_SERVER_PORT"], "5038")
+                self.assertEqual(env["ANDROID_USER_HOME"], str(work.parent / ".local/android-user/.android"))
                 self.assertEqual(os.environ["ANDROID_ADB_SERVER_PORT"], "5037")
 
     def test_presentation_dispatch_requires_coordinator_and_handoff(self):
