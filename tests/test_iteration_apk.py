@@ -275,7 +275,8 @@ class IterationPayloadReceiptTests(unittest.TestCase):
             frozen.mkdir(parents=True)
             (generated / "authored").write_bytes(b"frozen content")
             (frozen / "authored").write_bytes(b"changed content" if changed else b"frozen content")
-            base = frozen.parent / "base.apk"
+            base = work / "build-cache/code-only/base.apk"
+            base.parent.mkdir()
             base.write_bytes(b"authored normal APK")
             anchor = {"apk": str(base), "payload_directory": str(frozen)}
             project = work / "lab-project"
@@ -311,7 +312,7 @@ class IterationPayloadReceiptTests(unittest.TestCase):
                     preflight_host=Mock(),
                     validate_staged_runtime_sources=Mock(),
                     stage_android_assets=Mock(),
-                    validate_whole_payload_reuse=Mock(),
+                    validate_whole_payload_reuse=Mock(return_value={"payload": {"authored": common.sha(generated / "authored")}}),
                     build_cache_key=Mock(return_value="authored"),
                     assert_build_unblocked=Mock(),
                 ),

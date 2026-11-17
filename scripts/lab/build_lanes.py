@@ -5,6 +5,7 @@ device tooling and explicit APK/payload paths after the build.
 """
 
 import argparse
+import errno
 import json
 import os
 from pathlib import Path
@@ -14,10 +15,11 @@ import signal
 import socket
 import subprocess
 import sys
+import tempfile
 import time
 import urllib.request
 
-from common import ROOT, read, write, copy_file_clone, sha, now, toolchain
+from common import ROOT, cached_hashes, digest, read, write, copy_file_clone, sha, now, toolchain
 from build_lock import host_build_lock, active_lock_handoff
 from shared_checkout_build import clean, git
 
@@ -148,6 +150,7 @@ def _create(name, port, root):
         work = checkout / "work"
         clone([p for p in source_work.iterdir() if p.name not in SKIP], work)
         clone_audio_inputs(source_work, work)
+        seed_frozen_payloads(source_work, work)
         project = work / "lab-project"
         clone([p for p in (source_work / "lab-project").iterdir() if p.name not in {"Temp", "Logs"}], project)
         # Current-build source provenance remains useful for owned staging
@@ -232,36 +235,78 @@ def start_server(facts):
     raise RuntimeError("Lane MCP server failed to become ready; inspect its retained log")
 
 
+def seed_frozen_payloads(source_work, work):
+    from build import cache_payload_path, verify_payload
+
+    with cached_hashes():
+        for name in ("whole-catalog-code-base.json", "whole-catalog-uncompressed-base.json"):
+            receipt = source_work / name
+            if not receipt.is_file():
+                continue
+            frozen = read(receipt)
+            if not frozen.get("build_key"):
+                continue
+            relative = Path("build-cache") / frozen["build_key"] / "payload"
+            source = cache_payload_path(source_work, source_work / relative)
+            if source.is_dir():
+                verify_payload(source, frozen["payload"])
+                destination = work / relative
+                if not destination.exists():
+                    clone([source], destination.parent)
+                verify_payload(destination, frozen["payload"])
+
+
 def publish(facts):
     """Keep completed artifacts in canonical cache without moving its pointers."""
+    from build import cache_payload_path, clone_payload, verify_payload
+
     work = Path(facts["checkout"]) / "work"
+    canonical = Path(facts["canonical_work"])
     result = read(work / "config/current-build.json")
     source = Path(result["apk"])
     if not result.get("success") or not source.resolve().is_relative_to(work / "build-cache") or sha(source) != result["apk_sha256"]:
         raise RuntimeError("Lane publication requires its verified successful build artifact")
-    destination = Path(facts["canonical_work"]) / "build-cache" / ("lane-" + facts["name"] + "-" + result["request_id"])
-    if not destination.resolve().is_relative_to(Path(facts["canonical_work"]) / "build-cache"):
+    cache = canonical / "build-cache"
+    destination = cache / ("lane-" + facts["name"] + "-" + result["request_id"])
+    if destination.parent != cache or destination.resolve() != destination:
         raise RuntimeError("Unsafe lane artifact request identity")
-    if not destination.exists():
-        shutil.copytree(source.parent, destination, copy_function=copy_file_clone)
-        payload = Path(result["payload_directory"])
-        if payload != source.parent / "payload":
-            shutil.copytree(payload, destination / "payload", copy_function=copy_file_clone)
-    if sha(destination / source.name) != result["apk_sha256"] or any(
-        sha(destination / "payload" / name) != expected for name, expected in result["payload"].items()
-    ):
-        raise RuntimeError("Published lane artifact copy failed verification")
-    result["apk"] = str(destination / source.name)
-    result["payload_directory"] = str(destination / "payload")
-    for key, basename in (("symbolPackage", "symbols.zip"), ("iteration_anchor", "iteration-base.json")):
-        if result.get(key):
-            result[key] = str(destination / basename)
-    anchor = destination / "iteration-base.json"
-    if anchor.exists():
-        value = read(anchor)
-        value.update(apk=result["apk"], payload_directory=result["payload_directory"])
-        write(anchor, value)
-    write(destination / "result.json", result)
+    hashes = result["payload"]
+    with cached_hashes():
+        local_payload = cache_payload_path(work, result.get("payload_directory", source.parent / "payload"))
+        verify_payload(local_payload, hashes)
+        if destination.exists():
+            if sha(destination / source.name) != result["apk_sha256"]:
+                raise RuntimeError("Published lane artifact copy failed verification")
+            result = read(destination / "result.json")
+            payload = verify_payload(cache_payload_path(canonical, result["payload_directory"]), hashes)
+            os.utime(payload.parent, None)
+        else:
+            payload = cache_payload_path(canonical, cache / ("lane-payload-" + digest(hashes)) / "payload")
+            if not payload.exists():
+                try:
+                    clone_payload(local_payload, payload, hashes)
+                except OSError as error:
+                    # A concurrent lane can publish the same content first.
+                    if error.errno not in (errno.EEXIST, errno.ENOTEMPTY):
+                        raise
+            verify_payload(payload, hashes)
+            os.utime(payload.parent, None)
+            result.update(apk=str(destination / source.name), payload_directory=str(payload))
+            for key, basename in (("symbolPackage", "symbols.zip"), ("iteration_anchor", "iteration-base.json")):
+                if result.get(key):
+                    result[key] = str(destination / basename)
+            with tempfile.TemporaryDirectory(dir=cache) as temporary:
+                staged = Path(temporary) / "build"
+                shutil.copytree(source.parent, staged, ignore=shutil.ignore_patterns("payload", "result.json"), copy_function=copy_file_clone)
+                if sha(staged / source.name) != result["apk_sha256"]:
+                    raise RuntimeError("Published lane artifact copy failed verification")
+                anchor = staged / "iteration-base.json"
+                if anchor.exists():
+                    value = read(anchor)
+                    value.update(apk=result["apk"], payload_directory=result["payload_directory"])
+                    write(anchor, value)
+                write(staged / "result.json", result)
+                staged.rename(destination)
     write(Path(facts["checkout"]).parent / "latest-build.json", result)
     return result
 
