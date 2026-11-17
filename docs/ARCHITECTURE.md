@@ -2699,6 +2699,15 @@ entry referenced by each current-build/iteration-base receipt, the latest instal
 APK per device, explicit keeps and the age guard. Nested content hashes and sync
 inventories do not pin cache entries. `--json` includes `kept_items` with protection
 reasons and cache-specific protection counts. Retired entries retain JSON receipts.
+`--supersede OLD --by NEW` writes an exclusive `.superseded-by` marker for
+physical run/version folders under the existing experiment/coordination/rebuild
+roots. It binds the replacement and latest direct `result.json`/`*.done.json`
+receipt (strict `success: true`) by SHA-256. After a minimum of 24 hours without
+new writes, unchanged markers let existing generated-output candidates ignore
+historical manifest pins. State/baseline/device/coordination-lock pins, explicit
+keeps and `.prune-keep` still win; receipts, logs and authored files stay.
+Marking never deletes; normal dry-run/apply owns pruning and rechecks eligibility
+before the first deletion of each marked run. No symlinked runs are eligible.
 
 `scripts/journal-renumber.py` (support) owns branch-only journal numbering after
 merging fetched `origin/main`. It compares complete entries, preserves main,
