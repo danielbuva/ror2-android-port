@@ -215,6 +215,12 @@ matches.
 [screen inventory](SCREEN_COVERAGE.md) maps the current Android surfaces and their
 remaining interaction gates.
 
+The owner APK assembler selects `dev.ror2lab.converted` by default and binds
+the selected package in the manifest and resources. The signed installer uses
+`dev.ror2lab.alpha` with the issued-version and retention owners. The Unity lab
+editor takes its Android user home from the work root, so linked worktrees use
+the same `dev.ror2lab.arm64` key as the R9 rebuild owner.
+
 Documentation entry points: [project home](../README.md) and
 [player guide](PLAYER_GUIDE.md) explain availability for players.
 [DEVELOPING.md](DEVELOPING.md) owns contributor setup, the repository map and
@@ -1510,6 +1516,10 @@ installed-version/ledger and actual importer contracts. Its optional
 consent checks, refusing pregrant; setup and cleanup remain with the installer
 owner. `AlphaPackagingHarness.java` uses generated input only. These checks do
 not qualify SAF/provider UI, legitimate cohorts, power-loss or game profiles.
+The [local packaging request](LAB_RUNNER.md#current-local-packaging-request)
+uses the shared lab runner for a granted device and records the installed version
+and hashes before the fixture is removed. The toolhost request pins the cached
+installer by source commit for subsequent device checks.
 
 `Phone.retain_build_artifact` streams one explicitly selected, cache-receipt-pinned
 result from the currently owned installer to ignored host `work/` before cleanup.
@@ -2675,6 +2685,7 @@ The remaining `--action` selectors are classified here:
 | editor | `source-camera-graphics-host` | current |
 | editor | `commando-animation-host` | current |
 | editor | `enemy-material-audit` | current |
+| editor | `body-animation-audit` | current |
 | editor | `character-motor-order` | historical |
 | editor | `catalog-addresses` | historical |
 | editor | `reference-identities` | historical |
@@ -7491,6 +7502,15 @@ recovered-resource coverage. It does not initialize native catalogs, mutate
 materials or establish Android shader support or visual parity. Setup requires
 the prepared lab project and generated catalog; completion retains a private
 editor receipt and adds no runtime state.
+
+`WholeCatalogHost.AuditBodyAnimations` owns the current exact-editor
+`./dev editor --target lab --action body-animation-audit` census. It identifies
+survivors through the native provider's typed definitions and reads imported
+body prefabs without activating them. The private receipt lists direct and
+deferred controller, avatar and skin bindings, initial and main state types,
+aim links and controller parameters, and compatible clip-event receivers.
+It requires the prepared project and generated catalog and adds no runtime
+state. Playback and event timing require a device check.
 
 `TeleporterWorldSession.ObserveOwnedSurface` supplies the existing opt-in live
 visual census. A matching lab selector may request `detailedVisualDiagnostics`;

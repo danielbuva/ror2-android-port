@@ -94,7 +94,12 @@ def tool_manifest(source, destination, package=None, game_package=None):
     manifest = tree.getroot()
     original = manifest.attrib["package"]
     package = package or original
-    if not re.fullmatch(r"dev\.ror2lab\.[A-Za-z][A-Za-z0-9_.]*", package) or package in {"dev.ror2lab.arm64", "dev.ror2lab.alpha", game_package}:
+    if not re.fullmatch(r"dev\.ror2lab\.[A-Za-z][A-Za-z0-9_.]*", package) or package in {
+        "dev.ror2lab.arm64",
+        "dev.ror2lab.converted",
+        "dev.ror2lab.alpha",
+        game_package,
+    }:
         raise ValueError("separate lab tool package required")
     android = "{http://schemas.android.com/apk/res/android}"
     if game_package is not None:

@@ -32,6 +32,8 @@ CODE_ENTRIES = {
     "assets/bin/Data/Managed/Metadata/global-metadata.dat",
 }
 APP_GUID = "assets/bin/Data/unity_app_guid"
+CONVERTED_PACKAGE = "dev.ror2lab.converted"
+ALPHA_PACKAGE = "dev.ror2lab.alpha"
 
 
 def runtime_app_guid(original, code):
@@ -314,6 +316,13 @@ def validate_source_payload(names, sizes=None):
         raise ValueError("source payload exceeds Android bootstrap size bounds")
 
 
+def owner_package(request):
+    package = request.get("application_id", CONVERTED_PACKAGE)
+    if package not in (CONVERTED_PACKAGE, ALPHA_PACKAGE):
+        raise ValueError(f"owner APK package must be {CONVERTED_PACKAGE} or {ALPHA_PACKAGE}")
+    return package
+
+
 def assembly_profile(request):
     """Accept legacy qualification profiles or locally hashed source-only output.
 
@@ -321,6 +330,7 @@ def assembly_profile(request):
     owns release provenance; disposable local cohorts instead name their source
     commit and accepted input inventory, without claiming a published release.
     """
+    package = owner_package(request)
     expected = request["manifest_sha256"]
     path = Path(request["manifest"])
     if expected == PROFILE:
@@ -330,7 +340,7 @@ def assembly_profile(request):
     value = json.loads(path.read_text())
     local = isinstance(value, dict) and value.get("schema") == "owner-local-output-v1"
     if local:
-        if set(value) != {"schema", "source_commit", "input_sha256", "targets"} or request.get("application_id") != "dev.ror2lab.converted":
+        if set(value) != {"schema", "source_commit", "input_sha256", "targets"} or package != CONVERTED_PACKAGE:
             raise ValueError("local output profile requires disposable converted package")
         if not isinstance(value["source_commit"], str) or not re.fullmatch(r"[0-9a-f]{40}", value["source_commit"]):
             raise ValueError("local output source commit required")
@@ -675,7 +685,11 @@ def retention_policy(value):
     ):
         raise ValueError("explicit owner retention trust policy required")
     package, certificate = value["installer_package"], value["installer_certificate_sha256"]
-    if not isinstance(package, str) or not re.fullmatch(r"[A-Za-z][A-Za-z0-9_]*(?:\.[A-Za-z][A-Za-z0-9_]*)+", package) or package == "dev.ror2lab.alpha":
+    if (
+        not isinstance(package, str)
+        or not re.fullmatch(r"[A-Za-z][A-Za-z0-9_]*(?:\.[A-Za-z][A-Za-z0-9_]*)+", package)
+        or package in (CONVERTED_PACKAGE, ALPHA_PACKAGE, "dev.ror2lab.arm64")
+    ):
         raise ValueError("separate trusted installer package required")
     if not isinstance(certificate, str) or not re.fullmatch(r"[0-9a-f]{64}", certificate):
         raise ValueError("actual installer public certificate SHA-256 required")
@@ -708,8 +722,9 @@ def build(request_path, output):
         != fields
     ):
         raise ValueError("unsupported owner APK request/profile")
+    package = owner_package(request)
     policy = retention_policy(request["retention_policy"]) if request.get("retention_policy") is not None else None
-    if (request.get("application_id") == "dev.ror2lab.alpha") != (policy is not None):
+    if (package == ALPHA_PACKAGE) != (policy is not None):
         raise ValueError("alpha builds require their bound profile-retention policy")
     if policy is not None and "version_code" not in request:
         raise ValueError("alpha builds require an explicit issued versionCode")
@@ -811,7 +826,7 @@ def build(request_path, output):
             wire,
             version_code=version_code,
             version_name=request.get("version_name"),
-            application_id=request.get("application_id"),
+            application_id=package,
             retention=policy is not None,
             lab_services=True,
         )
@@ -869,7 +884,7 @@ def build(request_path, output):
                     generated = runtime_app_guid(original, code)
                     entry(name, data=generated)
                     result["runtime_app_guid"] = generated.decode()
-                elif name == "resources.arsc" and request.get("application_id"):
+                elif name == "resources.arsc":
                     if name in code:
                         produced = code[name]
                         data = Path(produced["path"]).read_bytes()
@@ -877,7 +892,7 @@ def build(request_path, output):
                             raise ValueError("owner APK source bytes differ")
                     else:
                         data = PACKET.verify(roots["targets"], row).read_bytes()
-                    entry(name, data=resource_package(data, request["application_id"]))
+                    entry(name, data=resource_package(data, package))
                 elif name in code:
                     produced = code[name]
                     entry(name, source=Path(produced["path"]), expected_sha=produced["sha256"], expected_bytes=produced["bytes"])
@@ -914,7 +929,7 @@ def build(request_path, output):
             success=True,
             apk_sha256=sha(unsigned),
             apk_bytes=unsigned.stat().st_size,
-            original_entries_preserved=len(apk_rows) - len(set(code) | {"AndroidManifest.xml"} | ({APP_GUID} if code else set())),
+            original_entries_preserved=len(set(apk_rows) - set(code) - {"AndroidManifest.xml", "resources.arsc"} - ({APP_GUID} if code else set())),
             original_entry_changed="AndroidManifest.xml",
             new_dex=next_dex,
             entries_verified=len(expected),
@@ -926,7 +941,7 @@ def build(request_path, output):
             device_qualified=False,
             requested_version_code=version_code,
             requested_version_name=request.get("version_name"),
-            requested_application_id=request.get("application_id"),
+            requested_application_id=package,
         )
         return result
     except Exception as error:

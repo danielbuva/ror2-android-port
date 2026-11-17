@@ -34,6 +34,30 @@ Jobs run one at a time in comment order. Every job also gets `LAB_TOOLHOST_ROOT`
 `<commit>/signed.apk`, `result.json` and `test-publisher.json` (the local path of the test publisher key the
 build trusts) there, so a later `script` job can install that build and sign synthetic test releases.
 
+## Current local packaging request
+
+Use the installer APK and receipt cached for the checkout's commit. Keep the
+cache pinned with `.prune-keep` until qualification finishes. An ignored JSON
+request names the canonical `repo`, linked `checkout`, configured `device`
+alias, granted `workstream` and new absolute `done_file` under canonical `work/`.
+
+```
+source scripts/env.sh
+.local/lab-venv/bin/python scripts/lab/lab_runner.py --packaging-request <config.json> --dry-run
+.local/lab-venv/bin/python scripts/lab/lab_runner.py --packaging-request <config.json> --detach
+```
+
+Dry-run verifies the cached installer and prepares the synthetic fixtures without
+accessing the device. The detached runner checks the grant before taking the
+lease, then invokes the existing package and signing acceptance. The shared
+thermal monitor verifies cool-start admission and records the run's thermal
+trace. The runner retains installed receipts, versions and hashes before
+disposing of the owned fixtures.
+The terminal receipt links the private log after cleanup and pruning.
+To prepare the APK, use a separate request with `"operation": "toolhost"`,
+`"device": "thor"` and a Thor grant. This calls the configured toolhost builder,
+which owns the build lease, and pins the output recorded by the terminal receipt.
+
 ## Current local emission request
 
 After obtaining the orchestrator's device grant, use the same runner locally:

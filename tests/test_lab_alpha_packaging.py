@@ -8,7 +8,7 @@ import shutil
 import subprocess
 import tempfile
 import unittest
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
 ROOT = Path(__file__).resolve().parents[1]
 SPEC = importlib.util.spec_from_file_location("tested_alpha_packaging", ROOT / "scripts/lab-alpha-packaging.py")
@@ -43,6 +43,17 @@ def bound(version=1, publisher=1, purpose="update", prior=None):
 
 
 class AlphaPackagingTests(unittest.TestCase):
+    def test_thermal_cancellation_refuses_more_acceptance_commands(self):
+        phone = A.Phone("synthetic-test-device", 20)
+        phone.thermal = Mock()
+        with patch.object(A.INSTALLER.Phone, "execute", return_value="available") as execute:
+            phone.thermal.cancelled.is_set.return_value = True
+            with self.assertRaisesRegex(A.INSTALLER.Failure, "alpha-packaging-thermal-cancellation"):
+                phone.execute("example", label="test-command")
+            execute.assert_not_called()
+            phone.thermal = None
+            self.assertEqual(phone.execute("example", label="cleanup-command"), "available")
+
     def test_installed_identity_and_complete_binding(self):
         receipt, ledger = bound()
         A.verify_issue(receipt, ledger, 1)
@@ -168,8 +179,8 @@ class AlphaPackagingTests(unittest.TestCase):
             def shell(self, *args, **kwargs):
                 self.stopped = True
 
-            def start(self):
-                self.started = True
+            def start(self, *, repeat_notification_denial=False):
+                self.started = repeat_notification_denial
 
             def read(self, name):
                 return rolled[1] if name.startswith("work/") else rolled[0]

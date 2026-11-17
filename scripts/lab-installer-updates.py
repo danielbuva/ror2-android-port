@@ -833,6 +833,8 @@ def adb_diagnostic(label, **record):
 
 
 class Phone:
+    storage_reserve = 15 * 1024**3
+
     def __init__(self, serial, timeout, allow_test_installs=False, allow_test_notifications=False):
         self.serial, self.timeout = serial, timeout
         self.allow_test_installs = allow_test_installs
@@ -1017,7 +1019,7 @@ class Phone:
         observed = [(self.available(self.shell("df", "-k", path, label="device-storage-volume-free")), volume) for volume, path in choices]
         if not self.owned_installer:
             available, self.install_volume = max(observed)
-            if available < 15 * 1024**3:
+            if available < self.storage_reserve:
                 raise Failure("device-storage-reserve")
             return
         # Verify both installed code placement and actual app-private backing,
@@ -1028,8 +1030,14 @@ class Phone:
                 raise Failure("device-package-placement-unavailable")
             code = self.available(self.shell("df", "-k", paths[0][8:], label="device-storage-code-free"))
             data = self.available(self.shell("run-as", package, "df", "-k", ".", label="device-storage-data-free"))
-            if min(code, data) < 15 * 1024**3:
+            if min(code, data) < self.storage_reserve:
                 raise Failure("device-storage-reserve")
+
+    def reserve_install_outputs(self, apk, inputs, releases):
+        # Cover the installed/staged installer and APKs plus retained inputs
+        # and release tools, including temporary transaction copies.
+        payload = sum(len(data) for data in inputs.values()) + sum(len(data) for row in releases.values() for data in row.values())
+        self.storage_reserve = type(self).storage_reserve + 3 * (apk.stat().st_size + payload)
 
     def put(self, name, data):
         if not self.owned_installer:
@@ -1226,14 +1234,14 @@ class Phone:
                     return True
         raise Failure("ui-button-unavailable")
 
-    def start(self):
+    def start(self, *, repeat_notification_denial=False):
         self.shell("input", "keyevent", "KEYCODE_WAKEUP", label="device-display-wake")
         self.shell("wm", "dismiss-keyguard", label="device-keyguard-dismiss")
         self.shell("am", "start", "-W", "-n", ACTIVITY, label="device-installer-launch")
         time.sleep(1)
         # The qualified synthetic flow restarts this same freshly owned app.
         # Reuse the device-proven explicit second-denial policy, never grant.
-        if self.flow_metrics is not None and self.notification_denied:
+        if self.notification_denied and (repeat_notification_denial or self.flow_metrics is not None):
             self.dismiss_notification_permission(repeat_denial=True)
         else:
             self.dismiss_notification_permission()
@@ -1265,8 +1273,8 @@ class Phone:
         buttons = [node for node in nodes if node.get("resource-id") == controller + ":id/permission_" + action + "_button" and node.get("enabled") == "true"]
         if repeat_denial:
             # AOSP's second denial is user-fixed, not an ordinary denial alias.
-            # Only the picker cold-restart flow opts in, after this run denied
-            # the fresh hash-owned disposable app's first notification prompt.
+            # Qualified restart flows opt in after this run denied the fresh
+            # hash-owned disposable app's first notification prompt.
             ordinary = controller + ":id/permission_deny_button"
             fixed = controller + ":id/permission_deny_and_dont_ask_again_button"
             buttons = [node for node in nodes if node.get("resource-id") in (ordinary, fixed)]
@@ -1798,6 +1806,7 @@ def acceptance(phone, config, temporary, passed, *, qualify_install_prompts=Fals
     phone.storage()
     set_phase("host-fixture-build")
     apk, inputs, key, releases, wrong = prepare_artifacts(config, temporary)
+    phone.reserve_install_outputs(apk, inputs, releases)
     set_phase("pre-install-storage")
     phone.storage()
     set_phase("installer-install")

@@ -134,7 +134,7 @@ class ManagedHostStageTests(unittest.TestCase):
         self.assertIn("android.permission.UPDATE_PACKAGES_WITHOUT_USER_ACTION", permissions)
         self.assertIn("dev.ror2lab.alpha", {node.attrib[android + "name"] for node in value.findall("queries/package")})
         self.assertNotIn("android.permission.QUERY_ALL_PACKAGES", permissions)
-        for package in ("dev.ror2lab.arm64", "dev.ror2lab.alpha"):
+        for package in ("dev.ror2lab.arm64", "dev.ror2lab.converted", "dev.ror2lab.alpha"):
             with self.assertRaisesRegex(ValueError, "separate lab tool"):
                 stage.tool_manifest(source, self.root / "refused.xml", package)
         self.assertFalse((self.root / "refused.xml").exists())

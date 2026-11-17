@@ -179,11 +179,11 @@ class InstallInputTests(unittest.TestCase):
             manifest.write_text(json.dumps(local))
             request.update(manifest_sha256=OWNER.sha(manifest), application_id="dev.ror2lab.converted")
             self.assertTrue(OWNER.check(request)["assembly_ready"])
-            for package in ("dev.ror2lab.arm64", "dev.ror2lab.alpha"):
-                request["application_id"] = package
-                with self.assertRaisesRegex(ValueError, "disposable converted package"):
-                    OWNER.check(request)
+            request["application_id"] = "dev.ror2lab.alpha"
+            with self.assertRaisesRegex(ValueError, "disposable converted package"):
+                OWNER.check(request)
             request.pop("application_id")
+            self.assertTrue(OWNER.check(request)["assembly_ready"])
             manifest.write_text(published)
             request["manifest_sha256"] = digest
             for option in ("startup_metadata", "stage_contexts"):
