@@ -6,6 +6,7 @@ import importlib.util
 import json
 from pathlib import Path
 import shutil
+import subprocess
 import sys
 import tempfile
 import unittest
@@ -998,7 +999,7 @@ burst=out/('backend/burst' if key=='source_inputs' else 'burst');burst.mkdir(par
                     self.assertEqual((output / xml).read_text(), "<linker/>")
                 self.assertEqual(progress, [False, True, False])
 
-    def test_sdk_job_signs_java_helper_expands_tools_and_reuses_complete_cohort(self):
+    def test_sdk_jobs_share_private_component_and_reuse_complete_cohort(self):
         spec = importlib.util.spec_from_file_location("test_sdk_graph_owner", ROOT / G.PREFIX / "sdk_package.py")
         sdk = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(sdk)
@@ -1011,6 +1012,24 @@ burst=out/('backend/burst' if key=='source_inputs' else 'burst');burst.mkdir(par
             shutil.copyfile(ROOT / template, repo / template)
             producer = repo / G.PREFIX / "sdk_package.py"
             producer.parent.mkdir(parents=True)
+            component = inputs / "acquired/unity-android-support.pkg"
+            component.parent.mkdir()
+            component.write_text("owner archive fixture")
+            (producer.parent / "sdk_inputs.py").write_text(
+                """import argparse, json, pathlib
+parser = argparse.ArgumentParser()
+parser.add_argument('--component', type=pathlib.Path, required=True)
+parser.add_argument('--output', type=pathlib.Path, required=True)
+parser.add_argument('--android-package', action='store_true')
+args = parser.parse_args()
+assert args.android_package
+assert args.component.read_text() == 'owner archive fixture', 'owner archive drift'
+android = args.output / 'PlaybackEngines/AndroidPlayer'
+android.mkdir(parents=True)
+(android / 'defaults').write_text('verified fixture')
+(args.output / 'result.json').write_text(json.dumps({'success': True}))
+"""
+            )
             producer.write_text(
                 "SDK_ENTRIES = "
                 + repr(sdk.SDK_ENTRIES)
@@ -1020,7 +1039,10 @@ burst=out/('backend/burst' if key=='source_inputs' else 'burst');burst.mkdir(par
     assert sys.argv[1]=='--request'
     request=json.loads(pathlib.Path(sys.argv[2]).read_text())
     assert len(request['jars'])==13
-    for name in ('sdk','android_jar','aapt','java','javac'):
+    sdk = pathlib.Path(request['sdk'])
+    assert sdk.name == 'AndroidPlayer'
+    assert (sdk / 'defaults').read_text() == 'verified fixture'
+    for name in ('android_jar','aapt','java','javac'):
         assert pathlib.Path(request[name]).is_file()
     assert all(pathlib.Path(value).is_file() for value in request['jars'].values())
     out=pathlib.Path(request['output']);out.mkdir()
@@ -1033,16 +1055,33 @@ burst=out/('backend/burst' if key=='source_inputs' else 'burst');burst.mkdir(par
             helper = G.PREFIX + "SdkAndroidCode.java"
             (repo / helper).write_text("// authored helper fixture\n")
             request = json.loads((repo / template).read_text())
+            request["cache_witnesses"] = ["${inputs}/sdk_aapt"]
+            (repo / template).write_text(json.dumps(request))
             bindings = {}
-            for token in [request[name] for name in ("sdk", "android_jar", "aapt", "java", "javac")] + list(request["jars"].values()):
+            for token in [request[name] for name in ("android_jar", "aapt", "java", "javac")] + list(request["jars"].values()):
                 key = token.removeprefix("${input:").removesuffix("}")
                 bindings[key] = key
                 (inputs / key).write_text("authored tool input")
+            package = "recipe/jobs/owner-sdk-package.json"
+            extraction = "recipe/jobs/owner-sdk-inputs.json"
+            acquired = G.Graph(repo, {})
+            acquired.compile([], sdk_request=template)
+            self.assertEqual(acquired.jobs[package]["request"]["sdk"], request["sdk"])
+            player_profile = "recipe/owner-player-fixture.json"
+            (repo / player_profile).write_text(json.dumps({"project_assemblies": [], "outputs": ["registry.assets"]}))
+            shutil.copyfile(ROOT / G.PREFIX / "player_data.py", producer.parent / "player_data.py")
+            shared = G.Graph(repo, {})
+            shared.compile([player_profile], sdk_request=template, sdk_component=True)
+            player = shared.jobs["recipe/jobs/owner-player-fixture.json"]
+            self.assertEqual(player["needs"], [extraction])
+            self.assertEqual(player["arguments"][player["arguments"].index("--sdk") + 1], shared.jobs[package]["request"]["sdk"])
             graph = G.Graph(repo, {})
-            index = graph.compile([], sdk_request=template)
+            index = graph.compile([], sdk_request=template, sdk_component=True)
             self.assertEqual(set(index["entries"]), {"apk/" + name for name in sdk.SDK_ENTRIES})
             self.assertIn(helper, index["files"])
             self.assertIn(template, index["files"])
+            self.assertNotIn(str(component), index["files"])
+            self.assertEqual(graph.jobs[extraction]["source_files"], [extraction, G.PREFIX + "sdk_inputs.py"])
             for name, descriptor in graph.jobs.items():
                 path = repo / name
                 path.parent.mkdir(parents=True, exist_ok=True)
@@ -1053,8 +1092,9 @@ burst=out/('backend/burst' if key=='source_inputs' else 'burst');burst.mkdir(par
             runtime.mkdir()
             native.mkdir()
             progress = []
-            for _ in range(2):
-                dispatcher = J.Dispatcher(
+
+            def dispatch():
+                return J.Dispatcher(
                     repo,
                     index,
                     release,
@@ -1064,18 +1104,27 @@ burst=out/('backend/burst' if key=='source_inputs' else 'burst');burst.mkdir(par
                     {"bindings": bindings},
                     "a" * 64,
                     python=[sys.executable],
-                    progress=lambda name, reused: progress.append(reused),
+                    progress=lambda name, reused: progress.append((name, reused)),
                 )
+
+            for _ in range(2):
+                dispatcher = dispatch()
                 for name, dependencies in release["entries"].items():
                     destination = root / "results" / name
                     destination.parent.mkdir(parents=True, exist_ok=True)
                     dispatcher.produce(name, dependencies, destination)
                     self.assertEqual(destination.read_bytes(), ("authored " + name.removeprefix("apk/")).encode())
-            self.assertEqual(progress, [False, True])
+            self.assertEqual(progress, [(extraction, False), (package, False), (extraction, True), (package, True)])
+            (inputs / "sdk_aapt").write_text("updated tool input")
+            dispatch().execute(package)
+            self.assertEqual(progress[-2:], [(extraction, True), (package, False)])
+            component.write_text("changed archive fixture")
+            with self.assertRaises(subprocess.CalledProcessError):
+                dispatch().execute(package)
+            component.write_text("owner archive fixture")
             (repo / helper).write_text("// changed helper\n")
-            dispatcher = J.Dispatcher(repo, index, release, inputs, runtime, native, {"bindings": bindings}, "a" * 64, python=[sys.executable])
             with self.assertRaisesRegex(ValueError, "verified public source changed"):
-                dispatcher.execute("recipe/jobs/owner-sdk-package.json")
+                dispatch().execute(package)
 
     def test_startup_source_job_executes_and_reuses_through_dispatcher(self):
         with tempfile.TemporaryDirectory() as directory:

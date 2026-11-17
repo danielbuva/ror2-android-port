@@ -35,6 +35,7 @@ PRODUCERS = {
             "shader_produce",
             "texture_produce",
             "player_data",
+            "sdk_inputs",
             "sdk_package",
             "payload_shader_records",
             "shader_context",

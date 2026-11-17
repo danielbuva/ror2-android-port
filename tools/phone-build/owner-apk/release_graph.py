@@ -17,6 +17,7 @@ from types import SimpleNamespace
 
 PREFIX = "tools/phone-build/accepted-output/"
 PLAYER_RESOURCE_ASSEMBLIES = ("System.Data", "System.Drawing", "mscorlib")
+ANDROID_COMPONENT = "${inputs}/acquired/unity-android-support.pkg"
 INSTALLED_BUNDLE_CODEC = dict(
     path="${native}/libbundlelz4.so",
     sha256="${native_sha256:libbundlelz4.so}",
@@ -92,6 +93,12 @@ class Graph:
         self.public_files = {}
         self.bundle_release_jobs = set()
         self.conversion = None
+        self.android_sdk = None
+
+    def sdk_contents(self, acquired="${input:sdk_contents}"):
+        if self.conversion:
+            return self.jobs[self.conversion]["request"]["sdk_install"] + "/Unity.app/Contents"
+        return acquired
 
     def startup(self):
         """Share source startup identity between final files and managers."""
@@ -136,7 +143,10 @@ class Graph:
             self.phase_files.update("recipe/" + item["path"] for item in selected.get("texture_profiles", []))
             arguments += ["--" + phase + "-profile", "${repo}/" + row["profile"], row["sha256"]]
         if "ui" in self.phases:
-            arguments += ["--ugui-source", "${input:ugui_source}"]
+            ugui = (
+                self.sdk_contents() + "/Resources/PackageManager/BuiltInPackages/com.unity.ugui/Runtime/UI/Core" if self.conversion else "${input:ugui_source}"
+            )
+            arguments += ["--ugui-source", ugui]
         if "manager" in self.phases:
             selected = json.loads((self.repo / self.phases["manager"]["profile"]).read_text())
             pin = selected["public_inputs"]["shaders"]["sha256"]
@@ -152,7 +162,7 @@ class Graph:
                 "${sha256:" + startup + ":receipt}",
             ]
         if {"manager", "scene"} & self.phases.keys():
-            arguments += ["--sdk-binary", "${input:sdk_binary}"]
+            arguments += ["--sdk-binary", self.sdk_contents() + "/MacOS/Unity" if self.conversion else "${input:sdk_binary}"]
         if "scene" in self.phases:
             for name in ("result", "request", "bundle"):
                 binding = "scene_environment_" + name
@@ -213,20 +223,23 @@ class Graph:
         if producer != "record_remap":
             arguments += ["--pc-root" if producer in {"shader_context", "shader_prefab", "sprite_produce"} else "--pc", "${input:pc}"]
         if producer in {"record_produce", "shader_context", "shader_prefab", "payload_shader_records"}:
-            arguments += ["--sdk", "${input:sdk}"]
+            sdk = self.sdk_contents("${input:sdk}")
+            if self.conversion and producer == "record_produce" and profile.get("sdk", {}).get("path", "").startswith("Contents/"):
+                sdk += "/.."
+            arguments += ["--sdk", sdk]
         if producer == "player_data":
-            # Player defaults belong to AndroidPlayer, not editor Contents.
-            if self.conversion:
-                sdk = self.jobs[self.conversion]["request"]["sdk_install"]
-                sdk_contents = sdk + "/Unity.app/Contents"
-                arguments += ["--sdk", sdk + "/PlaybackEngines/AndroidPlayer"]
+            if self.android_sdk:
+                needs.append(self.android_sdk)
+                android = self.artifact_pin(self.android_sdk, "android_player")["path"]
+            elif self.conversion:
+                android = self.jobs[self.conversion]["request"]["sdk_install"] + "/PlaybackEngines/AndroidPlayer"
             else:
-                sdk_contents = "${input:sdk_contents}"
-                arguments += ["--sdk", sdk_contents + "/../../PlaybackEngines/AndroidPlayer"]
+                android = self.sdk_contents() + "/../../PlaybackEngines/AndroidPlayer"
+            arguments += ["--sdk", android]
         if producer == "object_produce" and "sdk" in profile:
             # Object profiles pin paths relative to Unity.app, while shader
             # tools bind its Contents directory. Preserve the profile root.
-            arguments += ["--sdk", "${input:sdk_contents}/.."]
+            arguments += ["--sdk", self.sdk_contents() + "/.."]
         if producer in {"shader_prefab", "shader_context", "payload_shader_records"} and profile.get("template_inputs"):
             arguments += ["--asset-ripper", "${input:asset_ripper}"]
         if producer == "sprite_produce":
@@ -241,7 +254,7 @@ class Graph:
                 "${input_sha256:" + binding + "}",
             ]
         if producer == "shader_produce":
-            arguments += ["--sdk", "${input:sdk_contents}"]
+            arguments += ["--sdk", self.sdk_contents()]
         if producer == "texture_produce":
             textures = [texture for bundle in profile["bundles"] for member in bundle["members"] for texture in member["textures"]]
             operations = {texture["operation"] for texture in textures}
@@ -270,9 +283,9 @@ class Graph:
         elif producer == "player_data":
             arguments += [
                 "--builtin-extra",
-                sdk_contents + "/Resources/unity_builtin_extra",
+                self.sdk_contents() + "/Resources/unity_builtin_extra",
                 "--editor-resources",
-                sdk_contents + "/Resources/unity editor resources",
+                self.sdk_contents() + "/Resources/unity editor resources",
             ]
             if self.conversion:
                 needs.append(self.conversion)
@@ -878,6 +891,20 @@ class Graph:
         self.job_profiles[name] = {"authored_inputs": {policy: digest(self.repo / policy)}}
         return name
 
+    def sdk_extraction(self):
+        name = "recipe/jobs/owner-sdk-inputs.json"
+        self.jobs[name] = {
+            "schema": 1,
+            "script": PREFIX + "sdk_inputs.py",
+            "arguments": ["--component", ANDROID_COMPONENT, "--output", "${output}", "--android-package"],
+            "needs": [],
+            "outputs": {},
+            "artifacts": {"receipt": "result.json", "android_player": "PlaybackEngines/AndroidPlayer"},
+            "cache_witnesses": [ANDROID_COMPONENT],
+        }
+        self.job_profiles[name] = {}
+        return name
+
     def sdk_package(self, request_path):
         """Keep SDK resources, Java code and native engine libraries in one job."""
         request = json.loads((self.repo / request_path).read_text())
@@ -888,15 +915,20 @@ class Graph:
         sdk = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(sdk)
         name = "recipe/jobs/owner-sdk-package.json"
+        cache_witnesses = request.pop("cache_witnesses", [])
+        if self.android_sdk:
+            request["sdk"] = self.artifact_pin(self.android_sdk, "android_player")["path"]
         self.jobs[name] = {
             "schema": 1,
             "script": script,
             "arguments": ["--request", "${request}"],
             "request": request,
-            "needs": [],
+            "needs": [self.android_sdk] if self.android_sdk else [],
             "outputs": {"apk/" + target: "resources/apk/" + target for target in sorted(sdk.SDK_ENTRIES)},
             "artifacts": {"receipt": "result.json"},
         }
+        if cache_witnesses:
+            self.jobs[name]["cache_witnesses"] = cache_witnesses
         self.profile_files[name] = request_path
         helper = PREFIX + "SdkAndroidCode.java"
         self.job_profiles[name] = {"authored_inputs": {helper: digest(self.repo / helper)}}
@@ -923,9 +955,21 @@ class Graph:
         self.job_profiles[name] = {"authored_inputs": {path: digest(self.repo / path) for path in policies}}
         return name
 
-    def compile(self, selected, *, bundle_manifest=False, code_request=None, native_request=None, sdk_request=None, burst_request=None, catalog_request=None):
+    def compile(
+        self,
+        selected,
+        *,
+        bundle_manifest=False,
+        code_request=None,
+        native_request=None,
+        sdk_request=None,
+        sdk_component=False,
+        burst_request=None,
+        catalog_request=None,
+    ):
         entries = {}
         self.conversion = self.code_conversion(code_request) if code_request else None
+        self.android_sdk = self.sdk_extraction() if sdk_component else None
         selected_jobs = [self.build(digest(self.repo / path)) for path in selected]
         # Referenced donors and staged bundles remain runtime dependencies. Ship
         # their actual containers, while pack-only suppliers remain artifacts.
@@ -946,6 +990,8 @@ class Graph:
             selected_jobs.append(self.sdk_package(sdk_request))
         if burst_request:
             selected_jobs.append(self.burst_code(burst_request))
+        if self.android_sdk and not any(self.android_sdk in job["needs"] for job in self.jobs.values()):
+            raise ValueError("Android SDK component requires a player or SDK package consumer")
         for job in selected_jobs:
             entry = self.entry(job)
             for output in self.jobs[job]["outputs"]:
@@ -955,8 +1001,13 @@ class Graph:
         if not entries:
             raise ValueError("select at least one complete output profile")
         for name, job in self.jobs.items():
-            closure = self.entry(name)
-            job["source_files"] = sorted(set(closure["recipe_files"]) | set(closure["producer_files"]))
+            if name == self.android_sdk:
+                # The extractor imports only the standard library. A producer
+                # change elsewhere in the release need not unpack the same SDK.
+                job["source_files"] = [name, job["script"]]
+            else:
+                closure = self.entry(name)
+                job["source_files"] = sorted(set(closure["recipe_files"]) | set(closure["producer_files"]))
         files = {path for row in entries.values() for key in ("recipe_files", "producer_files") for path in row[key] if path not in self.jobs}
         return {
             "schema": 1,
@@ -981,6 +1032,7 @@ def main():
     )
     parser.add_argument("--native-request", help="repo-relative native request; emits matching library and metadata from fresh or acquired conversion")
     parser.add_argument("--sdk-request", help="repo-relative SDK request template; emits Android resources, dex and engine libraries")
+    parser.add_argument("--sdk-component", action="store_true", help="extract the private owner-supplied Android Support component for player and package jobs")
     parser.add_argument("--burst-request", help="repo-relative managed/source request template; compiles Burst and retains preservation roots")
     parser.add_argument("--extra-arguments", type=Path, help="JSON producer name -> additional CLI argv, with dispatcher substitutions")
     parser.add_argument("--output", type=Path, required=True, help="new public job staging root; overlay into a release source checkout")
@@ -993,6 +1045,7 @@ def main():
         code_request=args.code_request,
         native_request=args.native_request,
         sdk_request=args.sdk_request,
+        sdk_component=args.sdk_component,
         burst_request=args.burst_request,
     )
     args.output.mkdir(parents=True, exist_ok=False)
