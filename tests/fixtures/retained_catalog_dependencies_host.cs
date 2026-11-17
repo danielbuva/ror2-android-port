@@ -49,10 +49,15 @@ namespace UnityEngine
     {
         public static readonly List<AssetBundle> all = new List<AssetBundle>();
         public static int bodyLoads;
+        public static int wardReads;
         public int unloads;
         public readonly List<Object> assets = new List<Object>();
         public AssetBundle(string name) { this.name = name; all.Add(this); }
-        public T LoadAsset<T>(string path) where T : Object { return assets.OfType<T>().First(); }
+        public T LoadAsset<T>(string path) where T : Object
+        {
+            if (path == "ward") wardReads++;
+            return assets.OfType<T>().First();
+        }
         public static IEnumerable<AssetBundle> GetAllLoadedAssetBundles() { return all.Where(bundle => bundle); }
         public static AssetBundle LoadFromFile(string path)
         {
@@ -284,7 +289,11 @@ public static class RetainedCatalogHost
         Run(WholeCatalogComposed.Prepare());
         var session = new PortSession();
         session.AcquireBody();
+        int wardReads = AssetBundle.wardReads;
         Run(session.teleporter.PreloadObjectiveBundle());
+        Check(AssetBundle.wardReads == wardReads, "Dependency preload must leave typed ward loading to the body family");
+        session.teleporter.ValidatePreloadedWard(new SessionConfig());
+        Check(AssetBundle.wardReads == wardReads + 1, "Deferred validation must still read the loaded ward");
         WholeCatalogComposed.ConfigureForHost(manifestPath);
         if (WholeCatalogComposed.survivors == null)
         {

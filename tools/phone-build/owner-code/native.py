@@ -94,14 +94,18 @@ def sdk_files(sdk, profile):
     return files
 
 
-def converter_inputs(receipt, receipt_sha, sources, metadata, profile, compressed):
+def converter_files(receipt, receipt_sha):
     if sha(receipt) != receipt_sha:
         raise ValueError("converter receipt drift")
     value = json.loads(receipt.read_text())
     if value.get("exit_code") != 0 or value.get("inputs_unchanged") is not True:
         raise ValueError("successful converter receipt required")
+    return value["files"]
+
+
+def converter_inputs(receipt, receipt_sha, sources, metadata, profile, compressed):
     expected = {"cpp/" + j["generated"] for j in profile["jobs"] if "generated" in j}
-    files = value["files"]
+    files = converter_files(receipt, receipt_sha)
     actual = {n for n in files if n.startswith("cpp/") and n.endswith((".cpp", ".c"))}
     if actual != expected:
         raise ValueError("generated translation-unit membership differs; review profile")
@@ -514,7 +518,7 @@ def compiled_jobs(folder, current, profile, sdk, inputs, *, resume=False):
     return rows
 
 
-def run(request, *, plan_only=False, profile=None):
+def run(request, *, plan_only=False, profile=None, from_conversion=False):
     required = {"owner_work", "sdk_install", "converter_receipt", "converter_receipt_sha256", "sources", "sources_compressed", "metadata", "output"}
     if set(request) - {
         "android_tools",
@@ -534,6 +538,8 @@ def run(request, *, plan_only=False, profile=None):
     disjoint(output, (sdk, receipt, sources, metadata, game, work / "config", work / "inventory"))
     if sha(PROFILE) != PROFILE_SHA:
         raise ValueError("audited native profile drift")
+    if from_conversion:
+        profile = generated_profile(json.loads(PROFILE.read_text()), converter_files(receipt, request["converter_receipt_sha256"]))
     supplied_profile = profile is not None
     profile = profile if supplied_profile else json.loads(PROFILE.read_text())
     if identity != profile["input_id"]:
@@ -695,8 +701,9 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("request", type=Path)
     parser.add_argument("--plan-only", action="store_true", help="validate all inputs and write the complete plan without compiling")
+    parser.add_argument("--from-conversion", action="store_true", help="derive generated translation units from the pinned converter receipt")
     args = parser.parse_args()
-    print(json.dumps(run(json.loads(args.request.read_text()), plan_only=args.plan_only), indent=2))
+    print(json.dumps(run(json.loads(args.request.read_text()), plan_only=args.plan_only, from_conversion=args.from_conversion), indent=2))
 
 
 if __name__ == "__main__":
