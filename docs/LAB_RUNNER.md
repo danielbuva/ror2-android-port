@@ -58,6 +58,17 @@ To prepare the APK, use a separate request with `"operation": "toolhost"`,
 `"device": "thor"` and a Thor grant. This calls the configured toolhost builder,
 which owns the build lease, and pins the output recorded by the terminal receipt.
 
+For actual SAF qualification, set `operation` to `acquisition` and add
+`current_inventory`, `current_source`, `older_inventory` and `older_source`.
+The inventories are local lab inventory JSON files. Each source path points to
+its complete legitimate game folder. The first test catalog supports the
+current inventory. The second also recognizes the older inventory for refusal.
+An optional `toolhost_source_commit` selects a previously built cache entry.
+The acquisition runner checks its stage/build receipts and requires matching
+installer runtime sources. The dry-run checks the catalogs and source shape.
+The detached run stages a temporary ZIP and the two folders, verifies picker
+cancellation and import outcomes, and removes its owned files and installer.
+
 ## Current local emission request
 
 After obtaining the orchestrator's device grant, use the same runner locally:

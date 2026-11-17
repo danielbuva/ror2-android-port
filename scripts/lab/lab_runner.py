@@ -343,13 +343,20 @@ def local_packaging(path, *, dry_run=False, detach=False):
             signal.signal(sig, interrupt)
     try:
         device = request["device"]
-        build_toolhost = request.get("operation") == "toolhost"
+        operation = request.get("operation", "packaging")
+        if operation not in ("packaging", "acquisition", "toolhost"):
+            raise CommandError("unknown local packaging operation")
+        build_toolhost = operation == "toolhost"
         if not re.fullmatch(r"[a-z0-9-]+", workstream) or device not in runner.devices or (build_toolhost and device != "thor"):
             raise CommandError("invalid local packaging workstream or configured device")
         common_dir = subprocess.check_output(["git", "-C", checkout, "rev-parse", "--path-format=absolute", "--git-common-dir"], text=True).strip()
         if Path(common_dir).resolve() != (repo / ".git").resolve():
             raise CommandError("packaging checkout must belong to the canonical repository")
-        command = parse_command("/lab script device=" + device + " -- scripts/lab-alpha-packaging.py --package-only --qualify-install-prompts")
+        command = parse_command("/lab script device=" + device + " -- scripts/lab-alpha-packaging.py")
+        if operation == "acquisition":
+            command["args"].extend(["--acquisition-request", str(Path(path).resolve())])
+        else:
+            command["args"].extend(["--package-only", "--qualify-install-prompts"])
         toolhosts = repo / "work/coordination/lab-runner/toolhost"
         if dry_run or detach:
             if build_toolhost:

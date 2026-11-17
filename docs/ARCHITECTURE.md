@@ -1478,8 +1478,13 @@ Its runner-provided toolhost and generated binaries/keys never leave the lab.
 installed-version/ledger and actual importer contracts. Its optional
 `--qualify-install-prompts` mode retains the same visible permission and pending
 consent checks, refusing pregrant; setup and cleanup remain with the installer
-owner. `AlphaPackagingHarness.java` uses generated input only. These checks do
-not qualify SAF/provider UI, legitimate cohorts, power-loss or game profiles.
+owner. `AlphaPackagingHarness.java` uses generated input only.
+`scripts/lab/alpha_acquisition.py` drives the real folder and ZIP picker from
+the same entry point. It signs test plans for two local inventories and observes
+the installer's import service through the visible UI and durable receipts.
+It owns only its temporary archive and Downloads subtree. It verifies both
+staged sources and successful private imports by file hash, then removes its
+staging and disposes of the fresh installer through the existing cleanup owner.
 The [local packaging request](LAB_RUNNER.md#current-local-packaging-request)
 uses the shared lab runner for a granted device and records the installed version
 and hashes before the fixture is removed. The toolhost request pins the cached

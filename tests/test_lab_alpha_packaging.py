@@ -9,11 +9,13 @@ import subprocess
 import tempfile
 import unittest
 from unittest.mock import Mock, patch
+import xml.etree.ElementTree as ET
 
 ROOT = Path(__file__).resolve().parents[1]
 SPEC = importlib.util.spec_from_file_location("tested_alpha_packaging", ROOT / "scripts/lab-alpha-packaging.py")
 A = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(A)
+ACQUISITION = A.INSTALLER.module("tested_alpha_acquisition", ROOT / "scripts/lab/alpha_acquisition.py")
 
 
 def bound(version=1, publisher=1, purpose="update", prior=None):
@@ -43,6 +45,27 @@ def bound(version=1, publisher=1, purpose="update", prior=None):
 
 
 class AlphaPackagingTests(unittest.TestCase):
+    def test_acquisition_hash_listing_preserves_manifest_relative_names(self):
+        digest = "a" * 64
+        valid = f"{digest}  ./Dir with spaces/Game Data\n".encode()
+        self.assertEqual(ACQUISITION.hash_listing(valid), {"Dir with spaces/Game Data": digest})
+        for corrupt in (valid * 2, valid.replace(b"./", b"/"), b"warning"):
+            with self.assertRaisesRegex(ValueError, "acquisition-hash-listing-invalid"):
+                ACQUISITION.hash_listing(corrupt)
+
+    def test_acquisition_uses_only_the_enabled_visible_provider_control(self):
+        package = ACQUISITION.DOCUMENTS[0]
+        tree = ET.fromstring(
+            f'<hierarchy><node package="{package}"><node package="other" text="Older" enabled="true" />'
+            f'<node package="{package}" resource-id="{package}:id/title" text="Older" enabled="false" />'
+            f'<node package="{package}" resource-id="{package}:id/title" text="Older" enabled="true" /></node></hierarchy>'
+        )
+        self.assertIs(ACQUISITION.select_node(tree, ("older",), ids=("title",)), list(tree.iter("node"))[-1])
+        self.assertIsNone(ACQUISITION.select_node(tree, ("older",), ids=("title",), clickable=True))
+        list(tree.iter("node"))[-2].set("enabled", "true")
+        with self.assertRaisesRegex(ValueError, "acquisition-ambiguous-visible-control"):
+            ACQUISITION.select_node(tree, ("older",), ids=("title",))
+
     def test_thermal_cancellation_refuses_more_acceptance_commands(self):
         phone = A.Phone("synthetic-test-device", 20)
         phone.thermal = Mock()
