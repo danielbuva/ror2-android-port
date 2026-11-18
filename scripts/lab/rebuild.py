@@ -395,6 +395,48 @@ def _catalog_postprocessing_uber_rows(destination, project, work, expected, prov
     return rows
 
 
+def provenance_drift(destination, project, expected, provenance, extra, limit=100):
+    """Bounded local diagnostics; never accept a baseline or change comparison gates."""
+    counts = {status: 0 for status in ("missing", "changed", "unexpected", "unreadable", "identity_unavailable")}
+    entries = []
+
+    def record(status, **details):
+        counts[status] += 1
+        if len(entries) < limit:
+            entries.append(dict(status=status, **details))
+
+    for path in sorted(expected):
+        baseline = provenance.get(path)
+        # Candidate-only overrides have their own exact receipt gates, not a
+        # provenance-map identity. Do not invent one for these outputs.
+        if baseline is None or "sha256" not in baseline or "size" not in baseline:
+            record("identity_unavailable", path=path)
+            continue
+        for side, root in (("project", project), ("destination", destination)):
+            target = root / path
+            identity = dict(sha256=baseline["sha256"], size=baseline["size"])
+            try:
+                if not target.is_file():
+                    record("missing", path=path, side=side, expected=identity)
+                    continue
+                actual = dict(sha256=sha(target), size=target.stat().st_size)
+            except OSError:
+                record("unreadable", path=path, side=side, expected=identity)
+                continue
+            if actual != identity:
+                record("changed", path=path, side=side, expected=identity, actual=actual)
+    for path in sorted(extra):
+        record("unexpected", path=path, side="destination")
+    return dict(
+        counts=counts,
+        entries=entries,
+        omitted=sum(counts.values()) - len(entries),
+        limit=limit,
+        scope="Selected step paths against retained provenance; destination extras use existing comparison membership rules.",
+        limitations="Diagnostic only: approved candidate overrides may differ from provenance. Existing equality and refusal gates remain authoritative; no baseline is accepted or replay certified.",
+    )
+
+
 def compare(destination, project, expected, provenance, owns, producers=None, work=None):
     result = {status: [] for status in ("identical", "different", "missing", "extra")}
     work = Path(work or WORK)
@@ -508,6 +550,7 @@ def compare(destination, project, expected, provenance, owns, producers=None, wo
                 result["extra"].append(path)
     result["counts"] = {status: len(result[status]) for status in ("identical", "different", "missing", "extra")}
     result["equal"] = not any(result[status] for status in ("different", "missing", "extra"))
+    result["provenance_drift"] = provenance_drift(destination, project, expected, provenance, result["extra"])
     return result
 
 
