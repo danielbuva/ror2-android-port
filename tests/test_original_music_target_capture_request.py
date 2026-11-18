@@ -54,8 +54,9 @@ class AcceptedRequestTargetCaptureTests(unittest.TestCase):
         self._write_inputs()
         self.module.streamed_media_rows = self._fixture_media_rows
 
-    def _fixture_media_rows(self, receipt: dict, *, bank_index_sha256: str) -> list[dict]:
+    def _fixture_media_rows(self, receipt: dict, *, bank_index_sha256: str, init_receipt_sha256: str) -> list[dict]:
         self.assertEqual(self.expected["current_bank_index_sha256"], bank_index_sha256)
+        self.assertEqual(self.expected["init_adaptation_receipt_sha256"], init_receipt_sha256)
         return [
             {
                 "media_id": i + 1,
@@ -123,7 +124,9 @@ class AcceptedRequestTargetCaptureTests(unittest.TestCase):
                 for i in range(153)
             ]
             + [{"filename": "Init.bnk", "sha256": self.expected["adapted_init_sha256"], "size_bytes": 1}],
-            "streamed_media": self._fixture_media_rows({}, bank_index_sha256=self.expected["current_bank_index_sha256"]),
+            "streamed_media": self._fixture_media_rows(
+                {}, bank_index_sha256=self.expected["current_bank_index_sha256"], init_receipt_sha256=self.expected["init_adaptation_receipt_sha256"]
+            ),
         }
         self.stage_path.write_text(json.dumps(stage), encoding="utf-8")
         self.base_request = {
@@ -162,7 +165,7 @@ class AcceptedRequestTargetCaptureTests(unittest.TestCase):
 
     def test_streamed_media_closure_must_have_exact_count(self) -> None:
         self.request_path.write_text(json.dumps(self.base_request), encoding="utf-8")
-        self.module.streamed_media_rows = lambda receipt, *, bank_index_sha256: []
+        self.module.streamed_media_rows = lambda receipt, **pins: []
         with self.assertRaisesRegex(ValueError, "exactly 120"):
             self.module.validate(self.request_path, self.contract_path, self.stage_path)
 

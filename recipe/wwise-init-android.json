@@ -3,6 +3,8 @@
   "name": "wwise-init-android-output-metadata",
   "scope": "isolated Android native fixture metadata only; not approval for retained-game runtime integration or controller-output fidelity",
   "input_relative_path": "Risk of Rain 2_Data/StreamingAssets/Audio/GeneratedSoundBanks/Windows/Init.bnk",
+  "source_sha256": "3182093b59cf48034b2715b224f3f217b34eaecf104d10940528ea20c4baffc6",
+  "owner_receipt_sha256": "7ee44b7a19d1252099847cd67d73d5d167ff6e3a43a1b8d4e53e97f71f130649",
   "bank_size_bytes": 6319,
   "format_version": 150,
   "bank_id": 1355168291,
