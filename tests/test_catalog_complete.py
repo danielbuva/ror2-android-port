@@ -39,6 +39,32 @@ def pin(path):
 
 
 class CatalogCompletionTests(unittest.TestCase):
+    def test_physics_route_follows_asset_and_ordered_siblings_across_new_ids(self):
+        dependencies = {name: module("physics_" + name, name + ".py") for name in ("manager_graph", "manager_settings", "player_ui")}
+        with patch.dict(sys.modules, dependencies):
+            physics = module("physics_routes", "catalog_physics.py")
+        index = physics.PhysicsObjects.__new__(physics.PhysicsObjects)
+
+        def pointer(pid=0):
+            return dict(m_FileID=0, m_PathID=pid)
+
+        def routes(member, base):
+            root, first, second = [(member, base + i) for i in range(3)]
+            index.catalog = SimpleNamespace(endpoint=lambda member, ptr: (member, ptr[1]) if ptr[1] else None)
+            objects = {root: {"m_Name": "Prefab"}, first: {"m_Name": "Collider"}, second: {"m_Name": "Collider"}}
+            transforms = {
+                (member, base + 10): dict(m_GameObject=pointer(base), m_Father=pointer(), m_Children=[pointer(base + 12), pointer(base + 11)]),
+                (member, base + 11): dict(m_GameObject=pointer(first[1]), m_Father=pointer(base + 10)),
+                (member, base + 12): dict(m_GameObject=pointer(second[1]), m_Father=pointer(base + 10)),
+            }
+            indexed = index.game_object_routes(objects, transforms, {root: ["asset.prefab"]})
+            return indexed[root], indexed[first], indexed[second]
+
+        root, first, second = routes("original", 1)
+        self.assertEqual((root, first, second), routes("rebuilt", 100))
+        self.assertEqual(first, root + (("Collider", 2),))
+        self.assertEqual(second, root + (("Collider", 1),))
+
     def test_objective_slot_uses_ordered_indices_and_confirmed_hierarchy(self):
         mesh = module("objective_slot_mesh", "unity_mesh.py")
         records = module("objective_slot_records", "record_produce.py")

@@ -93,7 +93,7 @@ class Catalog(C.ProducedMembers):
                     self.names[member] = name
         with ZipFile(apk) as archive:
             self.player_types = C.il2cpp_type_identities(archive.read("assets/bin/Data/Managed/Metadata/global-metadata.dat"))
-            for name in ("globalgamemanagers.assets", "Resources/unity_builtin_extra", "unity default resources"):
+            for name in ("globalgamemanagers.assets", "Resources/unity_builtin_extra", "unity default resources", "level0"):
                 raw = archive.read("assets/bin/Data/" + name)
                 stream = io.BytesIO(raw)
                 stream.size = len(raw)
@@ -217,7 +217,9 @@ def typed_master_identity(receipt, request, candidate_apk):
     return evidence
 
 
-def compare(inputs, assembly, candidate_apk, candidate_sha, output, emission, only=None, typed_fixture=None):
+def compare(inputs, assembly, candidate_apk, candidate_sha, output, emission, only=None, typed_fixture=None, pc=None):
+    import catalog_physics as physics
+
     request = json.loads(inputs.read_bytes())
     ref = json.loads(assembly.read_bytes())["authored_class_reference"]
     reference_apk = pinned(ref["path"], ref["sha256"])
@@ -287,7 +289,8 @@ def compare(inputs, assembly, candidate_apk, candidate_sha, output, emission, on
                             "preload-set", container=key, candidate_only=sorted(sets[0] - sets[1], key=repr), reference_only=sorted(sets[1] - sets[0], key=repr)
                         )
 
-        for bundle in [only] if only else sorted(paths):
+        bundles = [only] if only else sorted(paths)
+        for bundle in bundles:
             members = set(candidate.bundles[bundle]) | set(reference.bundles[bundle])
             for member in sorted(members):
                 records = {s: c.members[member][2] if member in c.bundles[bundle] else {} for s, c in sides.items()}
@@ -344,12 +347,21 @@ def compare(inputs, assembly, candidate_apk, candidate_sha, output, emission, on
                                     emit(cause, field=field, candidate=a, reference=b)
             table.flush()
             print(bundle, dict(examined), flush=True)
+        bundle, member, pid = "@player", "globalgamemanagers", None
+        managers = physics.compare_managers(candidate_apk, reference_apk, pc, pinned, emit)
+
+        def emit_physics(cause, **details):
+            counts[cause] += 1
+            table.write(json.dumps(dict(cause=cause, **details), separators=(",", ":")) + "\n")
+
+        objects = physics.compare_objects(sides, [*bundles, "@player"], container_table, emit_physics)
     summary = dict(
         examined=examined,
         mismatches=counts,
         candidate_sha256=candidate_sha,
         reference_sha256=ref["sha256"],
-        bundles=[only] if only else sorted(paths),
+        bundles=bundles,
+        physics=dict(managers=managers, **objects),
         reference_payload_outside_stage=sorted(baseline["payload"].keys() - paths.keys()),
     )
     if identity is not None:
@@ -367,5 +379,6 @@ if __name__ == "__main__":
     cli.add_argument("--output", required=True, type=Path)
     cli.add_argument("--bundle", help="inspect only one bundle for a smoke run")
     cli.add_argument("--typed-fixture", type=Path, help="join the candidate's exact-editor body/master identity report")
+    cli.add_argument("--pc", type=Path, help="compare the pinned original game's physics settings and layer table")
     args = cli.parse_args()
-    compare(args.inputs, args.assembly, args.candidate_apk, args.candidate_sha256, args.output, args.emission, args.bundle, args.typed_fixture)
+    compare(args.inputs, args.assembly, args.candidate_apk, args.candidate_sha256, args.output, args.emission, args.bundle, args.typed_fixture, args.pc)

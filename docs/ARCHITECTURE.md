@@ -7806,6 +7806,13 @@ objects, script bindings, fields and container preloads by bundle, member and
 object ID. Reused IDs with different classes carry the available candidate
 source witness. A shared ID alone does not establish object identity.
 
+The physics comparison in `accepted-output/catalog_physics.py` follows named
+prefabs and scene GameObject hierarchies to compare layers, colliders, rigidbodies
+and ProjectileController fields. It reports unmatched routes and references
+without a cross-build identity. It also reads the signed players' PhysicsManager
+and TagManager, the pinned Android project settings and the pinned original
+game managers when the caller supplies `--pc`.
+
 The owner APK builder binds the Android resource table's package name to an
 explicit installation ID alongside the manifest rewrite. This preserves resource
 IDs and bodies while allowing Unity's context-package string lookup to resolve
