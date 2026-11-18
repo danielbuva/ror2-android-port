@@ -227,6 +227,42 @@ def camera_profile(session, completed):
     )
 
 
+def clock_cooling_summary(samples):
+    """Describe retained sensor readings without inferring thermal causation."""
+    times = [row["host_seconds"] for row in samples]
+
+    def summarize(values, unit, cooling=False):
+        values = [value if type(value) is int and (value >= 0 if cooling else value > 0) else None for value in values]
+        observed = [(time, value) for time, value in zip(times, values) if value is not None]
+        return dict(
+            unit=unit,
+            valid_samples=len(observed),
+            missing_samples=len(values) - len(observed),
+            minimum=min((value for _, value in observed), default=None),
+            maximum=max((value for _, value in observed), default=None),
+            first_host_seconds=observed[0][0] if observed else None,
+            last_host_seconds=observed[-1][0] if observed else None,
+            largest_unobserved_gap_seconds=max(b - a for a, b in zip([times[0], *[t for t, _ in observed]], [*[t for t, _ in observed], times[-1]])),
+            adjacent_observed_changes=sum(a is not None and b is not None and a != b for a, b in zip(values, values[1:])),
+        )
+
+    channels = {}
+    for field, unit in (("cpu_frequency_khz", "kHz"), ("cpu_limit_khz", "kHz"), ("cooling_states", "state index")):
+        mappings = [row.get(field) if isinstance(row.get(field), dict) else {} for row in samples]
+        names = sorted({name for mapping in mappings for name in mapping if isinstance(name, str)})
+        channels[field] = {name: summarize([mapping.get(name) for mapping in mappings], unit, field == "cooling_states") for name in names}
+    for field in ("gpu_frequency_hz", "gpu_limit_hz"):
+        channels[field] = summarize([row.get(field) for row in samples], "Hz")
+    return dict(
+        channels=channels,
+        limitations=[
+            "These are sampled sensor observations, not time-weighted clocks or residency. Missing readings are not zero; changes across missing samples are not counted.",
+            "CPU policies and cooling devices are reported separately. Cooling state indices are device-specific, not temperatures or comparable severity levels.",
+            "Clock/limit drops or cooling changes do not establish thermal causation or throttling onset; workload, power policy and external power can confound them.",
+        ],
+    )
+
+
 def energy_summary(samples):
     """Summarize sampled battery-terminal observations, never device energy use."""
 
@@ -360,6 +396,7 @@ def analyze(session, thermal, raw_trace=None, completed=None):
         gpu_frame_ms=distribution([r.get("gpu_frame_ms") for r in samples]),
         camera_profile=camera_profile(session, completed) if completed is not None else None,
         energy=energy_summary(samples),
+        clock_cooling=clock_cooling_summary(samples),
         thermal=dict(
             samples=len(heat),
             max_gap_seconds=max(gaps) if gaps else None,
@@ -465,6 +502,19 @@ def markdown(report):
             f"{name}: {measured['valid_samples']} valid / {measured['missing_samples']} missing samples; largest unobserved gap {fmt(measured['largest_unobserved_gap_seconds'])} s."
         )
     energy_lines.extend(energy["limitations"])
+    sensors = report["clock_cooling"]
+    sensor_lines = ["## Clock and cooling observations (not throttling attribution)"]
+    for field, channels in sensors["channels"].items():
+        rows = {field: channels} if field.startswith("gpu_") else {f"{field}/{name}": value for name, value in channels.items()}
+        if not rows:
+            sensor_lines.append(f"{field}: unavailable (no retained channels).")
+        for name, measured in rows.items():
+            sensor_lines.append(
+                f"{name}: min/max {fmt(measured['minimum'])}/{fmt(measured['maximum'])} {measured['unit']}; "
+                f"{measured['valid_samples']} valid / {measured['missing_samples']} missing; "
+                f"largest gap {fmt(measured['largest_unobserved_gap_seconds'])} s; adjacent changes {measured['adjacent_observed_changes']}."
+            )
+    sensor_lines.extend(sensors["limitations"])
     lines = [
         "# Sustained game performance report",
         "",
@@ -488,6 +538,8 @@ def markdown(report):
         *camera_lines,
         "",
         *energy_lines,
+        "",
+        *sensor_lines,
         "",
         "| Start (min) | Samples | Median FPS | CPU ms | GPU ms | CPU C | GPU C | Battery C | Enemies |",
         "| --- | --- | --- | --- | --- | --- | --- | --- | --- |",
