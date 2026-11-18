@@ -24,6 +24,7 @@ import threading
 import time
 import traceback
 from uuid import uuid4
+from xml.etree import ElementTree
 
 PACKAGES = {"dev.ror2lab.arm64", "dev.ror2lab.converted"}
 PROCESS_TIME = re.compile(r"\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}")
@@ -66,6 +67,7 @@ def load_request(path, serial=None):
         "start_from_menu",
         "capture_golem_attacks",
         "capture_titan_indicator",
+        "dismiss_usb_chooser",
     }
     if not isinstance(value, dict) or not required <= value.keys() or value.keys() - required - optional:
         raise ValueError("Request has missing or unknown fields")
@@ -126,7 +128,7 @@ def load_request(path, serial=None):
             "require_high_refresh",
         }:
             raise ValueError("Owner unplugged workload uses physical play and its dedicated recorder")
-    for name in ("require_high_refresh", "pacing_diagnostics", "start_from_menu", "capture_golem_attacks", "capture_titan_indicator"):
+    for name in ("require_high_refresh", "pacing_diagnostics", "start_from_menu", "capture_golem_attacks", "capture_titan_indicator", "dismiss_usb_chooser"):
         if name in value and type(value[name]) is not bool:
             raise ValueError(name + " must be boolean")
     if value.get("start_from_menu") and value["mode"] != "launch":
@@ -450,6 +452,28 @@ def prepare_launch(device, record):
     if final["showing"] is not False:
         reason = "Secure keyguard requires user credential" if final["secure"] is True else "Keyguard dismissal not verified"
         raise RuntimeError(reason + "; device run aborted before launch")
+
+
+def usb_chooser_visible(device, runtime):
+    # J824 observed this vendor dialog after a USB reconnect. Use the active
+    # accessibility window and keep its temporary dump on the runtime volume.
+    scratch = runtime + "/lab-usb-chooser-" + uuid4().hex + ".xml"
+    try:
+        device.sh("uiautomator", "dump", scratch, timeout=15)
+        hierarchy = ElementTree.fromstring(device.sh("cat", scratch))
+        labels = {node.get("text", "").casefold() for node in hierarchy.iter("node")}
+        return {"use usb for", "no data transfer", "file transfer", "cancel"} <= labels
+    finally:
+        device.sh("rm", "-f", scratch)
+
+
+def dismiss_usb_chooser(device, runtime, record):
+    record["visible"] = usb_chooser_visible(device, runtime)
+    if record["visible"]:
+        device.sh("input", "-d", "0", "keyevent", "KEYCODE_BACK")
+        record["visible_after_back"] = usb_chooser_visible(device, runtime)
+        if record["visible_after_back"]:
+            raise RuntimeError("USB chooser still visible after Back; device run aborted before launch")
 
 
 def launch(device, thermal, *, process_checks):
@@ -1236,7 +1260,10 @@ def execute(request):
         thermal.cool()
         thermal.deadline = time.monotonic() + request["duration_seconds"] + 600
         thermal.phase = request["mode"]
-        prepare_launch(device, result.setdefault("prelaunch", {}))
+        prelaunch = result.setdefault("prelaunch", {})
+        prepare_launch(device, prelaunch)
+        if request.get("dismiss_usb_chooser"):
+            dismiss_usb_chooser(device, runtime, prelaunch.setdefault("usb_chooser", {}))
         if request["mode"] == "owner-unplugged":
             zones = [(kind, path) for name, path in thermal.runtime_zones if (kind := thermal_sensor_kind(name))]
             if not {"cpu", "gpu"} <= {kind for kind, _ in zones}:

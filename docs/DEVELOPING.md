@@ -31,6 +31,9 @@ for a ready world before the clock begins. The lab and converted packages
 use their respective gameplay reports. For a lab stage-transition memory
 soak, pair it with an explicit auto-route selector. Physical input
 qualification remains separate.
+Set `dismiss_usb_chooser: true` after a Nova USB reconnect if the “Use USB
+for” dialog blocks app focus. The runner matches the visible chooser after
+unlock, cancels it with Back, and verifies dismissal before launching.
 For a fresh lab run in a specific staged base scene, supply the scene's
 catalog name as `selection.diagnosticStage` and omit `start_from_menu`.
 The selector uses the stored loadout and existing integrated stage loader.

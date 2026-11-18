@@ -1193,6 +1193,34 @@ class DeviceSessionTests(unittest.TestCase):
                     runner.prepare_launch(target, {})
                 self.assertFalse(any(call.args[:2] == ("am", "start") for call in target.sh.call_args_list))
 
+    def test_usb_chooser_dismissal_only_uses_back_for_the_observed_dialog(self):
+        chooser = '<hierarchy><node text="Use USB for"/><node text="No data transfer"/><node text="File transfer"/><node text="CANCEL"/></hierarchy>'
+        launcher = '<hierarchy><node text="Launcher"/></hierarchy>'
+        for initial, after, expected, failure in (
+            (chooser, launcher, {"visible": True, "visible_after_back": False}, False),
+            (launcher, launcher, {"visible": False}, False),
+            (chooser, chooser, {"visible": True, "visible_after_back": True}, True),
+        ):
+            with self.subTest(expected=expected):
+                snapshots = iter([initial, after])
+                target = mock.Mock()
+                target.sh.side_effect = lambda command, *args, **kwargs: next(snapshots) if command == "cat" else ""
+                record = {}
+                runtime = "/sdcard/Android/data/dev.ror2lab.arm64/files"
+                if failure:
+                    with self.assertRaisesRegex(RuntimeError, "USB chooser still visible"):
+                        runner.dismiss_usb_chooser(target, runtime, record)
+                else:
+                    runner.dismiss_usb_chooser(target, runtime, record)
+                self.assertEqual(record, expected)
+                commands = target.sh.call_args_list
+                back = mock.call("input", "-d", "0", "keyevent", "KEYCODE_BACK")
+                self.assertEqual(commands.count(back), int(expected["visible"]))
+                dumps = [call.args[2] for call in commands if call.args[0] == "uiautomator"]
+                self.assertEqual(len(dumps), len(expected))
+                self.assertTrue(all(path.startswith(runtime + "/lab-usb-chooser-") for path in dumps))
+                self.assertEqual([call.args[2] for call in commands if call.args[0] == "rm"], dumps)
+
     def test_converted_launch_resolves_bootstrap_instead_of_unity_activity(self):
         target = mock.Mock(package="dev.ror2lab.converted")
         target.sh.side_effect = [

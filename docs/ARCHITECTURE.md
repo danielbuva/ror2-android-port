@@ -3304,6 +3304,9 @@ unsecured keyguard (with one swipe fallback) and verifies the window-policy
 lock flags are false. The terminal receipt retains boolean prelaunch readbacks;
 a credential lock or unknown lock state aborts before launch. Cleanup still
 stops the owned packages, sleeps the display and releases the lease.
+On request the same owner checks the active USB chooser after unlock,
+verifies that Back closes it, and removes its temporary accessibility dumps
+from the verified runtime volume. The terminal records chooser visibility.
 After keyguard dismissal a converted session records any resumed lab process.
 If only the separate lab package resumed, the runner retains matching Android
 process-start events and uses its existing receipt-verified idle reset. The
