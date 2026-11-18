@@ -56,9 +56,9 @@ public static void updateInstallCheckpoint(android.content.Context c,String stat
         public Prefs prefs=new Prefs(); public PackageManager getPackageManager(){return manager;}
         public String getPackageName(){return "authored.tool";} public Prefs getSharedPreferences(String s,int m){if(prefsFail)throw new IllegalStateException("synthetic preference failure");return prefs;}
         public void startActivity(Intent i){stateAtStart=prefs.getString("state","");
-        if(startFails)throw new SecurityException("synthetic confirmation launch failure");started=i;} public static class Prefs {java.util.Map<String,String> values=new java.util.HashMap<>();
+        if(startFails)throw new SecurityException("synthetic confirmation launch failure");started=i;} public static class Prefs {java.util.Map<String,String> values=new java.util.HashMap<>(), durable=new java.util.HashMap<>(); public int commits,failCommit; public void recreate(){values=new java.util.HashMap<>(durable);}
         public String getString(String k,String d){return values.containsKey(k)?values.get(k):d;} public Prefs edit(){return this;}
-        public Prefs putString(String k,String v){values.put(k,v);return this;} public boolean commit(){return true;}}
+        public Prefs putString(String k,String v){values.put(k,v);return this;} public boolean commit(){commits++;if(commits==failCommit)return false;durable=new java.util.HashMap<>(values);return true;}}
     }""",
     "android/app/PendingIntent.java": """package android.app; import android.content.*;
         public class PendingIntent {public static final int FLAG_UPDATE_CURRENT=1,FLAG_MUTABLE=2; public static int flags;
@@ -202,6 +202,14 @@ public class Harness {
         Build.VERSION.SDK_INT=30;c=update();OwnerInstaller.install(c,apk,hash);check(c.manager.installer.params.action==0);Build.VERSION.SDK_INT=33;
         c=update();c.manager.next.versionCode=1;refusal(c,apk,hash,"version");check(c.manager.installer.params==null);
         c=update();c.manager.next.signatures=new android.content.pm.Signature[]{new android.content.pm.Signature("lost-key")};refusal(c,apk,hash,"signing key");check(c.manager.installer.params==null);
+        c=new Context();c.prefs.failCommit=1;refusal(c,apk,hash,"retain installation identity");
+        check(c.manager.installer.abandoned&&!c.manager.installer.session.committed);
+        c=new Context();c.prefs.failCommit=2;OwnerInstaller.install(c,apk,hash);
+        c.prefs.recreate();check(!c.manager.installer.session.committed||OwnerInstaller.busy(c));
+        if(c.manager.installer.session.committed){
+            try{OwnerInstaller.install(c,apk,hash);throw new AssertionError();}catch(IOException expected){check(expected.getMessage().contains("already pending"));}
+            check(c.manager.installer.created==1);
+        }
         c=new Context();refusal(c,apk,"wrong","drift");check(c.manager.installer.abandoned);
         c=new Context();c.manager.installer.fail=true;refusal(c,apk,hash,"open failed");check(c.manager.installer.abandoned);
         c=new Context();c.manager.installer.session.writeFail=true;refusal(c,apk,hash,"write failed");check(c.manager.installer.abandoned);
