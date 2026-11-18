@@ -31,21 +31,11 @@ TEXTURE_NATIVE = {
     "jpeg_codec": "libtexture-jpeg.so",
     "etc_codec": "libtexture-etc.so",
 }
-TEXTURE_GUEST = "${inputs}/acquired/texture-sdk/"
+TEXTURE_GUEST = "${installed_runtime}/texture-sdk/"
 TEXTURE_GUEST_LIB = "linux/lib/x86_64-linux-gnu/"
-TEXTURE_GUEST_FILES = {
-    "texture-sdk-codec": "ab2e7439ff7ddf2319cdb06c8a04ad188503915a3b5831504b80e9b6a45beb6a",
-    "linux/lib64/ld-linux-x86-64.so.2": "1c654e88d721c9ac659b48400d20b5310ead8c6d15eeaf695d507d00d59ef490",
-    TEXTURE_GUEST_LIB + "ld-linux-x86-64.so.2": "1c654e88d721c9ac659b48400d20b5310ead8c6d15eeaf695d507d00d59ef490",
-    TEXTURE_GUEST_LIB + "libc.so.6": "091d7280857c4efff84c850d17ef263a0cae66a572304543fe3d550dfc398231",
-    TEXTURE_GUEST_LIB + "libdl.so.2": "df5973c718b4ee540cdd4400e19e90182ab5f3bac2148c0c9f3bb92eb6af3121",
-    TEXTURE_GUEST_LIB + "libgcc_s.so.1": "2d771c2e232fce107c7ec7f9a64b9a804e6d6737063088a2d8096b149a0af8cd",
-    TEXTURE_GUEST_LIB + "libm.so.6": "5461e535328078fb72f25f7ca2bf36bc71c415bbf573ccdfa289a7b796ddfdd3",
-    TEXTURE_GUEST_LIB + "libpthread.so.0": "9807a603f7e37097a442126303e0705a85f38ad4926db8eaf5db4befad118e11",
-}
 
 
-def texture_sdk_request(library):
+def texture_sdk_request(library, guest_files):
     qemu = "libqemu-x86_64.so"
     pixels = "libtexture-pixels.so"
     return {
@@ -64,7 +54,7 @@ def texture_sdk_request(library):
         "pixels": "${native}/" + pixels,
         "inputs": {
             **{"${native}/" + name: "${native_sha256:" + name + "}" for name in (qemu, pixels, "libc++_shared.so")},
-            **{TEXTURE_GUEST + name: pin for name, pin in TEXTURE_GUEST_FILES.items()},
+            **{TEXTURE_GUEST + name: pin for name, pin in guest_files.items()},
             library["path"]: library["sha256"],
         },
     }
@@ -319,8 +309,9 @@ class Graph:
                 elif binding == "sdk_toolchain":
                     extractor = self.sdk_texture_extraction()
                     needs.append(extractor)
-                    request = texture_sdk_request(self.artifact_pin(extractor, "library"))
-                    witnesses.extend(TEXTURE_GUEST + name for name in TEXTURE_GUEST_FILES)
+                    guest_files = json.loads((self.repo / "recipe/owner-app-host-tools.json").read_text())["texture_sdk_guest"]
+                    request = texture_sdk_request(self.artifact_pin(extractor, "library"), guest_files)
+                    witnesses.extend(TEXTURE_GUEST + name for name in guest_files)
                     path_token, pin_token = "${request}", "${request_sha256}"
                 else:
                     installed = TEXTURE_NATIVE[binding]

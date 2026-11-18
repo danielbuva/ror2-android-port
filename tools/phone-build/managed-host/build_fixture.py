@@ -59,6 +59,7 @@ try:
     assets = out / "assets"
     assets.mkdir()
     receipt["inputs"].update(staging.stage_python_wheels(extra, plan["python_wheels"], assets / "python/lib/player-packages"))
+    receipt["inputs"].update(staging.stage_texture_sdk_guest(extra, plan["texture_sdk_guest"], assets / "texture-sdk"))
     binary = out / "libtoolhost.so"
     run(
         "native-build",

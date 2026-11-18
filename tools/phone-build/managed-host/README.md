@@ -156,6 +156,20 @@ files and verifies installed data and native libraries through the existing
 receipts. [dnfile release files](https://pypi.org/project/dnfile/0.18.0/#files)
 [pefile release files](https://pypi.org/project/pefile/2024.8.26/#files)
 
+For signed texture jobs, add the outputs of
+`build_texture_jpeg.py`, `build_texture_etc.py` and `build_texture_sdk.py`
+to `natives` as `libtexture-jpeg.so`, `libtexture-etc.so` and
+`libtexture-pixels.so` respectively. Include `libqemu-x86_64.so`,
+`libc++_shared.so` and the pinned QEMU dependency closure with its actual
+SONAME aliases under `native-links/` in `links`.
+Set `texture_sdk_guest` to a directory containing the built x86-64
+`texture-sdk-codec` and the GNU runtime arranged under `linux/` as listed
+in `recipe/owner-app-host-tools.json`. The builder copies only those pinned
+paths into the private fixture, and the host grants the verified guest wrapper
+mode `0700` after asset extraction for QEMU's executable check. Retain the
+providers' license notices. The owner-acquired Unity codec is extracted by a
+separate signed conversion job.
+
 The muxer keeps CoreLib in the selected framework's verified data directory via
 the public hostfxr runtime-property API. For .NET 10 it uses the public
 [CoreCLR hosting ABI](https://github.com/dotnet/runtime/blob/v10.0.0/src/coreclr/hosts/inc/coreclrhost.h)

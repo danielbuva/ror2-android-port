@@ -2460,6 +2460,11 @@ J1001.
 This profile also pins the two public MIT-licensed wheel archives used by the
 player script registry. The private fixture retains their license notices and
 the recipe contains only archive names and checksums.
+The `texture_sdk_guest` map pins the authored Linux texture pipe executable
+and the public GNU loader/runtime from the qualified QEMU setup. It contains
+relative paths and checksums. The private fixture stages the pinned files with
+the provider licensing requirements in the managed app-host setup. The Unity
+codec comes from the owner-acquired SDK archive at conversion time.
 
 
 The app-host profile source pins were refreshed on 2026-10-24 for the integrated
