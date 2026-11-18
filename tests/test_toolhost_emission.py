@@ -131,6 +131,25 @@ class EmissionTests(unittest.TestCase):
         self.phone.install.assert_called_once()
         self.phone.cleanup.assert_not_called()
 
+    def test_invocation_executes_package_manager_path_with_equals(self):
+        native = self.root / "~~encoded==" / "dev.ror2lab.installertest-encoded==" / "lib/arm64"
+        native.mkdir(parents=True)
+        launcher = native / "libpythonhost.so"
+        launcher.write_text('#!/bin/sh\nprintf "%s\\n" "$LD_LIBRARY_PATH" "$1" "$2" "$ROR2LAB_BUILD_HOSTFXR"\n')
+        launcher.chmod(0o700)
+        self.signed_request()
+        command = EMISSION.invocation(str(self.root), str(native), self.request, "attempt")
+        observed = subprocess.run(command, capture_output=True, text=True, check=True)
+        self.assertEqual(
+            observed.stdout.splitlines(),
+            [
+                f"{native}:{self.root}/runtime/native-links",
+                str(native / "libpython3.14.so"),
+                str(self.root / "runtime/python"),
+                str(native / "libhostfxr10.so"),
+            ],
+        )
+
     def signed_request(self):
         self.request.pop("expected_records")
         self.request.update(operation="signed-code", expected_managed_providers=332)

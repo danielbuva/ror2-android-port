@@ -216,11 +216,12 @@ def invocation(remote, native, request, attempt):
     return [
         "sh",
         "-c",
-        'cd "$1" && shift && exec "$@"',
+        # Android env treats the '=' in PackageManager paths as an assignment.
+        'cd "$1" || exit; shift; while [ "$1" != -- ]; do export "$1" || exit; shift; done; shift; exec "$@"',
         "emission",
         remote,
-        "env",
         *environment,
+        "--",
         *python,
         owner + "accepted-output/phone_runner.py",
         "--profile",
