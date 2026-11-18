@@ -11,6 +11,13 @@ hierarchy and slot count before reporting component and script PPtrs, their
 resolved members and whether Android listed the owning bundles as loaded.
 Ordinary template preparation still enforces its original checks.
 
+`ValidateConvertedSkins` uses the native content-provider family selection to
+check typed bodies and masters. Every non-null `CharacterMaster.bodyPrefab`
+must be the same Unity object as a body in the active family. The exact-editor
+report records the completed catalog and loaded bundle digests.
+`accepted-output/catalog_compare.py` groups raw master body pointer changes
+and can join this report after matching those digests to the candidate APK.
+
 For retained staged prefabs, `accepted-output/staged_projectiles.py` updates the
 projectile components from the current object recipe, original prototype, SDK
 base schema and produced player registry. It checks reciprocal ownership by

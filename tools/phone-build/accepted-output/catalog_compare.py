@@ -13,6 +13,8 @@ from zipfile import ZipFile
 import catalog_complete as C
 import unity_mesh as M
 
+CHARACTER_MASTER = ("CharacterMaster", "RoR2", "RoR2.dll")
+
 
 def pinned(path, digest):
     path = Path(path)
@@ -205,7 +207,17 @@ def candidate_paths(request, candidate_apk):
     return paths
 
 
-def compare(inputs, assembly, candidate_apk, candidate_sha, output, emission, only=None):
+def typed_master_identity(receipt, request, candidate_apk):
+    evidence = json.loads(receipt.read_bytes())["masterBodyIdentity"]
+    with ZipFile(candidate_apk) as archive, archive.open("assets/owner-bootstrap/data/whole-catalog.json") as stream:
+        if hashlib.file_digest(stream, "sha256").hexdigest() != evidence["metadataSha256"]:
+            raise ValueError("typed master identity metadata differs from candidate APK")
+    if not evidence["bundles"] or any(request["bundles"].get(name, {}).get("sha256") != digest for name, digest in evidence["bundles"].items()):
+        raise ValueError("typed master identity bundle pins differ from candidate APK")
+    return evidence
+
+
+def compare(inputs, assembly, candidate_apk, candidate_sha, output, emission, only=None, typed_fixture=None):
     request = json.loads(inputs.read_bytes())
     ref = json.loads(assembly.read_bytes())["authored_class_reference"]
     reference_apk = pinned(ref["path"], ref["sha256"])
@@ -214,6 +226,7 @@ def compare(inputs, assembly, candidate_apk, candidate_sha, output, emission, on
     if baseline["apk_sha256"] != ref["sha256"]:
         raise ValueError("reference build result belongs to another APK")
     paths = candidate_paths(request, candidate_apk)
+    identity = typed_master_identity(typed_fixture, request, candidate_apk) if typed_fixture else None
     references = {name: pinned(Path(baseline["payload_directory"]) / name, baseline["payload"][name]) for name in paths}
     candidate = Catalog(paths, candidate_apk)
     reference = Catalog(references, reference_apk)
@@ -223,6 +236,13 @@ def compare(inputs, assembly, candidate_apk, candidate_sha, output, emission, on
     counts = Counter()
     examined = Counter()
     with (output / "mismatches.jsonl").open("w") as table:
+        if identity is not None:
+            failures = list(identity["failures"])
+            if not identity["complete"] or not identity["bodies"] or not identity["masters"]:
+                failures.append(dict(error="typed master identity inspection incomplete"))
+            for failure in failures:
+                counts["typed-master-body-identity"] += 1
+                table.write(json.dumps(dict(cause="typed-master-body-identity", side="candidate", **failure), separators=(",", ":")) + "\n")
 
         def emit(cause, **details):
             counts[cause] += 1
@@ -317,6 +337,8 @@ def compare(inputs, assembly, candidate_apk, candidate_sha, output, emission, on
                                 b = links["reference"].get(field, "absent")
                                 if a != b:
                                     cause = "component-slot" if cid == 1 and field[0] == "m_Component" else "pointer-target"
+                                    if field == ("bodyPrefab",) and CHARACTER_MASTER in bindings.values():
+                                        cause = "character-master-body-target"
                                     if isinstance(b, tuple) and aliases.get(b, "unknown") == a:
                                         cause = "canonical-pointer-redirection"
                                     emit(cause, field=field, candidate=a, reference=b)
@@ -330,6 +352,8 @@ def compare(inputs, assembly, candidate_apk, candidate_sha, output, emission, on
         bundles=[only] if only else sorted(paths),
         reference_payload_outside_stage=sorted(baseline["payload"].keys() - paths.keys()),
     )
+    if identity is not None:
+        summary["typed_master_body_identity"] = {key: identity[key] for key in ("complete", "bodies", "masters", "metadataSha256", "bundles")}
     (output / "result.json").write_text(json.dumps(summary, indent=2) + "\n")
 
 
@@ -342,5 +366,6 @@ if __name__ == "__main__":
     cli.add_argument("--candidate-sha256", required=True)
     cli.add_argument("--output", required=True, type=Path)
     cli.add_argument("--bundle", help="inspect only one bundle for a smoke run")
+    cli.add_argument("--typed-fixture", type=Path, help="join the candidate's exact-editor body/master identity report")
     args = cli.parse_args()
-    compare(args.inputs, args.assembly, args.candidate_apk, args.candidate_sha256, args.output, args.emission, args.bundle)
+    compare(args.inputs, args.assembly, args.candidate_apk, args.candidate_sha256, args.output, args.emission, args.bundle, args.typed_fixture)

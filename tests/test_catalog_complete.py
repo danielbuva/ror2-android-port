@@ -10,6 +10,7 @@ import tempfile
 from types import SimpleNamespace
 import unittest
 from unittest.mock import patch
+from zipfile import ZipFile
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -102,6 +103,28 @@ class CatalogCompletionTests(unittest.TestCase):
         self.assertEqual(catalog.endpoint("base", (1, 7)), ("CAB", 7))
         self.assertEqual(catalog.endpoint("base", (1, 8)), ("missing-target", "CAB", 8))
         self.assertIsNone(catalog.endpoint("base", (0, 0)))
+
+    def test_differential_joins_identity_only_for_matching_candidate_catalog(self):
+        mesh = module("catalog_identity_mesh", "unity_mesh.py")
+        with patch.dict(sys.modules, catalog_complete=C, unity_mesh=mesh):
+            compare = module("catalog_identity_comparison", "catalog_compare.py")
+
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            metadata = root / "catalog.json"
+            metadata.write_text("{}")
+            apk, receipt = root / "candidate.apk", root / "typed.json"
+            with ZipFile(apk, "w") as archive:
+                archive.write(metadata, "assets/owner-bootstrap/data/whole-catalog.json")
+            evidence = dict(complete=True, bodies=2, masters=1, metadataSha256=pin(metadata)["sha256"], bundles={"fixture": "digest"}, failures=[])
+            receipt.write_text(json.dumps(dict(masterBodyIdentity=evidence)))
+            request = dict(bundles={"fixture": dict(sha256="digest")})
+            self.assertEqual(compare.typed_master_identity(receipt, request, apk), evidence)
+            with self.assertRaisesRegex(ValueError, "bundle pins differ"):
+                compare.typed_master_identity(receipt, dict(bundles={}), apk)
+            receipt.write_text(json.dumps(dict(masterBodyIdentity=dict(evidence, metadataSha256="wrong"))))
+            with self.assertRaisesRegex(ValueError, "metadata differs"):
+                compare.typed_master_identity(receipt, request, apk)
 
     def test_player_binding_uses_image_identity_and_serialized_script_table(self):
         def text(value):
