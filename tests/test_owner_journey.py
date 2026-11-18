@@ -2,6 +2,8 @@
 
 import copy
 import json
+from pathlib import Path
+from types import SimpleNamespace
 import unittest
 from unittest.mock import patch
 from tests.owner_journey_fixture import owner_journey, F, J, U
@@ -106,3 +108,62 @@ class OwnerJourneyTests(unittest.TestCase):
                 self.assertTrue(receipt["installed_readback_verified"])
                 self.assertEqual(original.read_bytes(), b"authored")
                 self.assertEqual(profile.read_bytes(), b"untouched authored profile")
+
+    def test_installed_update_then_forward_version_rollback(self):
+        with owner_journey() as journey:
+            self.assertEqual(journey.run("install-prepare")["state"], "INPUTS_REQUIRED")
+            original = journey.inputs / "import/files/original.txt"
+            original.parent.mkdir(parents=True)
+            original.write_bytes(b"authored")
+            self.assertEqual(journey.run("release-build")["state"], "READY")
+            first = install(journey)
+            first_bytes = Path(first["apk"]).read_bytes()
+            journey.candidate["release"] = copy.deepcopy(journey.release)
+            journey.candidate["release"].update(version="synthetic-2", version_code=3)
+            self.assertEqual(journey.run("release-check", first)["state"], "UPDATE_AVAILABLE")
+            self.assertEqual(journey.run("release-build", first)["state"], "READY")
+            current = install(journey, first)
+            module = U.module
+            reversion_codes = []
+
+            def reversion(source, destination, *, version_code, expected_sha256, **kwargs):
+                # Packaging is the same explicit synthetic boundary as the build
+                # helper: an authored stream, not Android ZIP/manifest evidence.
+                self.assertEqual(F.digest(source), expected_sha256)
+                self.assertEqual(Path(source).read_bytes(), first_bytes)
+                reversion_codes.append(version_code)
+                Path(destination).write_bytes(Path(source).read_bytes())
+
+            def modules(name, path):
+                return SimpleNamespace(reversion=reversion) if name == "rollback_owner_apk" else module(name, path)
+
+            def sign(owner, release, signing, output, **context):
+                self.assertEqual(release, first["release"])
+                self.assertGreater(context["install_version_code"], current["version_code"])
+                output.mkdir()
+                target = output / "signed.apk"
+                target.write_bytes(Path(signing["unsigned"]).read_bytes())
+                return {"apk_sha256": F.digest(target), "apk_bytes": target.stat().st_size, "signer_sha256": first["signer_sha256"]}
+
+            with (
+                patch.object(U, "module", side_effect=modules),
+                patch.object(U, "payload_identity", side_effect=F.digest),
+                patch.object(U.public(), "verify_envelope", return_value=first["release"]),
+                patch.object(U.RELEASE, "sign_release", side_effect=sign),
+            ):
+                state = journey.run("release-rollback", current)
+            self.assertEqual(state["state"], "READY")
+            self.assertTrue(state["rollback"])
+            self.assertEqual(json.loads((journey.inputs / "installed-release.json").read_text()), current)
+            rolled = install(journey, current)
+            self.assertGreater(rolled["version_code"], current["version_code"])
+            self.assertEqual(rolled["release"], first["release"])
+            self.assertEqual(rolled["payload_sha256"], first["payload_sha256"])
+            self.assertEqual(rolled["signer_sha256"], current["signer_sha256"])
+            self.assertEqual(reversion_codes, [rolled["version_code"]])
+            ledger = json.loads((journey.inputs / "work/releases/issued-versions.json").read_text())
+            issue = ledger["issues"][str(rolled["version_code"])]
+            self.assertEqual((issue["purpose"], issue["status"], issue["publisher_version_code"]), ("rollback", "signed", 2))
+            self.assertEqual(Path(first["apk"]).read_bytes(), first_bytes)
+            self.assertEqual(original.read_bytes(), b"authored")
+            self.assertEqual((journey.inputs / "attempt-count.txt").read_text().splitlines(), ["attempt", "attempt"])
