@@ -18,6 +18,19 @@ SPEC.loader.exec_module(BACKEND)
 
 
 class OwnerCodeBackendTests(unittest.TestCase):
+    def test_audio_members_must_match_the_locally_produced_stage(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            managed = Path(temporary)
+            staged = managed / "staged"
+            staged.mkdir()
+            (staged / "stage-receipt.json").write_text(
+                json.dumps({"outputs": [{"filename": "Init.bnk"}, {"filename": "Fixture.bnk"}], "streamed_media": [{"relative_path": "Media/1.wem"}]})
+            )
+            members = ["Fixture.bnk", "Init.bnk", "Media/1.wem"]
+            BACKEND.verify_audio_members(managed, members)
+            with self.assertRaisesRegex(ValueError, "audio membership differs"):
+                BACKEND.verify_audio_members(managed, members[:-1])
+
     def burst_fixture(self, root):
         managed, runtime, ndk = [root / name for name in ("managed", "runtime", "ndk")]
         for folder in (managed, runtime, ndk):

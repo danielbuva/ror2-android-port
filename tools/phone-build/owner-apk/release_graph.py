@@ -877,7 +877,7 @@ class Graph:
             *["tools/wwise-android-abi/" + name + suffix for name in ("CecilAbiTool", "CecilAbiWriter") for suffix in (".cs", ".csproj")],
         ]
 
-    def code_conversion(self, request_path):
+    def code_conversion(self, request_path, audio_stage_receipt=None):
         """Run original-input managed production and preserve its converter cohort."""
         request = json.loads((self.repo / request_path).read_text())
         if request.get("output") != "${output}" or "source_inputs" not in request:
@@ -896,6 +896,31 @@ class Graph:
         paths.extend(transforms["tool_sources"])
         name = "recipe/jobs/owner-code-conversion.json"
         cache_witnesses = request.pop("cache_witnesses", [])
+        outputs = {}
+        if audio_stage_receipt is not None:
+            if "target" in request:
+                raise ValueError("audio packaging requires the current audio-bearing code producer")
+            receipt = json.loads(Path(audio_stage_receipt).read_text())
+            bank_root = "Audio/GeneratedSoundBanks/Android"
+            banks = [row["filename"] for row in receipt["outputs"]]
+            media = [row["relative_path"] for row in receipt["streamed_media"]]
+            if (
+                receipt.get("schema") != "original-game-wwise-bank-cohort-r2"
+                or receipt.get("output_relative_directory") != bank_root
+                or "Init.bnk" not in banks
+                or len(banks) != len(set(banks))
+                or len(media) != len(set(media))
+                or any(not re.fullmatch(r"[A-Za-z0-9_.-]+\.bnk", name) for name in banks)
+                or any(not re.fullmatch(r"Media/[0-9]+\.wem", name) for name in media)
+            ):
+                raise ValueError("canonical Wwise stage membership required")
+            members = sorted([*banks, *media])
+            request["audio_members"] = members
+            outputs = {
+                "apk/assets/stage-receipt.json": "managed-production/staged/stage-receipt.json",
+                "apk/lib/arm64-v8a/libAkSoundEngine.so": "managed-production/supplied-sdk/libAkSoundEngine.so",
+                **{f"apk/assets/{bank_root}/{member}": f"managed-production/staged/{bank_root}/{member}" for member in members},
+            }
         if self.package_inputs:
             request["source_inputs"]["packages"] = self.artifact_pin(self.package_inputs, "packages")["path"]
         self.jobs[name] = {
@@ -904,7 +929,7 @@ class Graph:
             "arguments": ["${request}", "--stop-after-conversion"],
             "request": request,
             "needs": [self.package_inputs] if self.package_inputs else [],
-            "outputs": {},
+            "outputs": outputs,
             "artifacts": {
                 "receipt": "backend/converter/result.json",
                 "metadata": "backend/converter/data/Metadata/global-metadata.dat",
@@ -1102,12 +1127,15 @@ class Graph:
         package_archives=False,
         burst_request=None,
         catalog_request=None,
+        audio_stage_receipt=None,
     ):
         entries = {}
         if package_archives and not code_request:
             raise ValueError("package archives require an original-input code request")
+        if audio_stage_receipt is not None and not (code_request and native_request):
+            raise ValueError("audio packaging requires code conversion and matching native production")
         self.package_inputs = self.package_preparation() if package_archives else None
-        self.conversion = self.code_conversion(code_request) if code_request else None
+        self.conversion = self.code_conversion(code_request, audio_stage_receipt) if code_request else None
         self.android_sdk = self.sdk_extraction() if sdk_component else None
         selected_jobs = [self.build(digest(self.repo / path)) for path in selected]
         # Referenced donors and staged bundles remain runtime dependencies. Ship
@@ -1125,6 +1153,8 @@ class Graph:
             raise ValueError("code conversion requires a player or native request consumer")
         if native_request:
             selected_jobs.append(self.native_code(native_request, self.conversion))
+        if audio_stage_receipt is not None and self.conversion not in selected_jobs:
+            selected_jobs.append(self.conversion)
         if sdk_request:
             selected_jobs.append(self.sdk_package(sdk_request))
         if burst_request:
@@ -1172,6 +1202,7 @@ def main():
         "--code-request", help="repo-relative original-input code request; supplies fresh conversion to player, managed witness and native jobs"
     )
     parser.add_argument("--native-request", help="repo-relative native request; emits matching library and metadata from fresh or acquired conversion")
+    parser.add_argument("--audio-stage-receipt", type=Path, help="private stage receipt used only to declare relative APK audio member names")
     parser.add_argument("--sdk-request", help="repo-relative SDK request template; emits Android resources, dex and engine libraries")
     parser.add_argument("--sdk-component", action="store_true", help="extract the private owner-supplied Android Support component for player and package jobs")
     parser.add_argument("--package-archives", action="store_true", help="prepare compile-selected sources from owner Unity package archives before conversion")
@@ -1190,6 +1221,7 @@ def main():
         sdk_component=args.sdk_component,
         package_archives=args.package_archives,
         burst_request=args.burst_request,
+        audio_stage_receipt=args.audio_stage_receipt,
     )
     args.output.mkdir(parents=True, exist_ok=False)
     for name, job in graph.jobs.items():
