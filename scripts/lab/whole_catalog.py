@@ -2670,6 +2670,11 @@ def _build_integration(
     contract = read(out / "original-catalog-contract.json")
     if contract["input_sha256"] != assembly_hash or manifest["input_id"] != read(WORK / "config/accepted-input.json")["input_id"]:
         raise RuntimeError("Original body visual references belong to another accepted input")
+    if not code_only:
+        from catalog_jpeg_alpha import stage as stage_jpeg_alpha
+
+        alpha = stage_jpeg_alpha(io, manifest, read_catalog(catalog_path(out)))
+        print(json.dumps(dict(catalog_jpeg_alpha=alpha)), flush=True)
     from source_scene_candidate import synchronize_audio
 
     synchronize_audio(io, code_only=code_only)
