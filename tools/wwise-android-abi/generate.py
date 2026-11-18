@@ -652,6 +652,7 @@ def main() -> int:
                     str(plan_path),
                     str(POLICY_PATH),
                     str(candidate),
+                    *(["--owner-work", str(work)] if args.owner_work is not None else []),
                 ],
                 env=tool_env,
                 check=True,

@@ -4,6 +4,7 @@ import gzip
 import hashlib
 import importlib.util
 import json
+import os
 from pathlib import Path
 import shutil
 import subprocess
@@ -26,6 +27,75 @@ G, J = load("release_graph"), load("release_jobs")
 
 
 class ReleaseGraphTests(unittest.TestCase):
+    def test_staged_phone_entry_points_run_without_a_checkout(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            app = Path(temporary).resolve()
+            repo = app / "runtime/repo"
+            cwd = app / "unrelated"
+            native = app / "native"
+            inputs = app / "owner-input"
+            for directory in (cwd, native, inputs / "game", inputs / "sdk", inputs / "work/inventory"):
+                directory.mkdir(parents=True)
+
+            graph = G.Graph(ROOT, {})
+            paths = graph.current_code_sources(signed_audio=True)
+            self.assertFalse({"AGENTS.md", "PORTING_STATE.md"} & set(paths))
+            graph.jobs["recipe/jobs/test-code.json"] = {"script": "tools/phone-build/owner-code/produce.py", "needs": []}
+            graph.job_profiles["recipe/jobs/test-code.json"] = {}
+            graph.public_files["recipe/jobs/test-code.json"] = paths
+            entry = graph.entry("recipe/jobs/test-code.json")
+            for name in set(entry["producer_files"] + entry["recipe_files"]) - set(graph.jobs):
+                target = repo / name
+                target.parent.mkdir(parents=True, exist_ok=True)
+                shutil.copyfile(ROOT / name, target)
+
+            def run(script, *arguments):
+                return subprocess.run(
+                    [sys.executable, "-I", "-B", "-S", str(repo / script), *map(str, arguments)],
+                    cwd=cwd,
+                    env={**os.environ, "PATH": str(cwd)},
+                    text=True,
+                    capture_output=True,
+                    timeout=30,
+                )
+
+            for script in sorted(
+                J.PRODUCERS - {"tools/phone-build/owner-code/run_android.py"}
+                | {
+                    "scripts/lab/original_game_audio_produce.py",
+                    "tools/phone-build/accepted-output/phone_runner.py",
+                    "tools/phone-build/owner-apk/build_owner_apk.py",
+                    "tools/unity/support/audio/managed-producer/produce.py",
+                    "tools/unity/support/audio/generators/stage_original_game_banks.py",
+                    "tools/wwise-android-abi/generate.py",
+                }
+            ):
+                with self.subTest(script=script):
+                    result = run(script, "--help")
+                    self.assertEqual(result.returncode, 0, result.stderr)
+                    self.assertIn("usage:", result.stdout)
+
+            request = inputs / "code.json"
+            request.write_text(json.dumps(dict(source_inputs={}, audio_members=["Init.bnk"], output="conversion")))
+            (inputs / "input-hashes.json").write_text("{}")
+            (inputs / "work/inventory/files.json").write_text('{"files":[]}')
+            # The real toolhost launch must reach owner-input validation after
+            # importing the managed and audio owners from the staged tree.
+            result = run("tools/phone-build/owner-code/run_android.py", request, repo.parent, native)
+            self.assertEqual(result.returncode, 1, result.stderr)
+            self.assertIn(str(inputs / "work/config/accepted-input.json"), result.stderr)
+            self.assertIn("FileNotFoundError", result.stderr)
+
+            result = run("tools/phone-build/managed-host/run_profile.py", repo.parent)
+            self.assertEqual(result.returncode, 1, result.stderr)
+            self.assertIn(str(app / "user-input/input-hashes.json"), result.stderr)
+
+            request.write_text("{}")
+            result = run("tools/phone-build/owner-apk/updates.py", request, repo.parent, native)
+            self.assertEqual(result.returncode, 1, result.stderr)
+            state = json.loads((inputs / "update-state.json").read_text())
+            self.assertEqual(state, {"state": "ERROR", "message": "explicit trusted installer action/context required"})
+
     def test_private_record_pins_resolve_only_unique_source_and_output_pairs(self):
         with tempfile.TemporaryDirectory() as temporary:
             repo = Path(temporary)

@@ -2116,7 +2116,10 @@ retention and teardown. Native products, bank/prefab data, decompiled sources,
 managed artifacts and receipts stay private; no current game build selects them.
 The original audio upper-level admissions and runtime owners are unchanged.
 When a signed conversion declares audio members, its managed, ABI and audio
-stages share the provisioned owner workspace. The ABI stage pins the export
+stages share the provisioned owner workspace. The signed source index includes
+the shared rebuild recipe tables used at startup. Python imports resolve from
+the staged source tree, and the ABI writer receives the canonical app workspace
+for output admission. The ABI stage pins the export
 set from the ARM64 ELF reader. The managed manifest verifies this export set
 alongside the original declarations and native plugin. The bank stage derives
 the decoder-free index and runs `scripts/lab/wwise_init_platform.py` in the same

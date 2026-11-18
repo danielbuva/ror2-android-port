@@ -850,12 +850,13 @@ class Graph:
         audio_manifest = "recipe/original-audio-owner-sources.json"
         audio = self.repo / "tools/unity/support/audio"
         return [
-            "AGENTS.md",
-            "PORTING_STATE.md",
             "environment/toolchain.json",
             "recipe/build-entry-inputs.json",
             runtime,
             "recipe/project-layout.json",
+            # The shared rebuild helpers load these owner tables on import.
+            "recipe/project-inputs.json",
+            "recipe/importer-identities.json",
             audio_manifest,
             "recipe/owner-audio-prefab.json",
             "recipe/wwise-android-abi.json",
