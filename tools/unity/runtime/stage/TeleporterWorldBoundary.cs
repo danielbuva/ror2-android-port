@@ -179,6 +179,7 @@ public sealed partial class PortSession
         public string exitTraceFirstError;
         public bool exitTraceIdle, exitTraceCharging, exitTraceCharged, exitTraceFinished;
         public ObjectiveRendererObservation[] rendererViews, ownedSurfaceViews, presentedSurfaceViews;
+        public ObjectiveRendererObservation titanPreFistView;
         public int lateNativeMaterials, ownedSurfaceCount;
         public int nativeHostCombatSquads, nativeHostDeathListenersBefore, nativeHostDeathListenersAfter, nativeHostSummonListenersBefore,
             nativeHostSummonListenersAfter;
@@ -1753,6 +1754,8 @@ public sealed partial class PortSession
                     Resources.FindObjectsOfTypeAll<Renderer>()
                         .Where(x => x && x.gameObject.scene.IsValid() && x.gameObject.activeInHierarchy && x.enabled && x.isVisible)
                         .ToArray();
+                if (coordinator.r.objective.titanPreFistView == null)
+                    ObserveTitanPreFist(visible);
                 var owned = visible
                                 .Where(x => coordinator.worldPresented.Contains(x.GetInstanceID()) ||
                                             x.sharedMaterials.Any(m => m && ownedMaterials.Contains(m)))
@@ -1942,6 +1945,27 @@ public sealed partial class PortSession
                 return true;
             }
         }
+        void ObserveTitanPreFist(Renderer[] visible)
+        {
+            foreach (var renderer in visible)
+            {
+                if (renderer.name != "Mesh")
+                    continue;
+                var indicator = renderer.GetComponentInParent<TeamAreaIndicator>();
+                if (!indicator || indicator.name != "TeamAreaIndicator, GroundOnly")
+                    continue;
+                var projectile = indicator.GetComponentInParent<RoR2.Projectile.ProjectileController>();
+                if (!projectile || projectile.name != "TitanPreFistProjectile(Clone)")
+                    continue;
+                var view = ObserveOwnedSurface(renderer);
+                if (view.projectedBoundsFraction <= 0)
+                    continue;
+                coordinator.r.objective.titanPreFistView = view;
+                Debug.Log("lab-titan-prefist-visible frame=" + view.unityFrame);
+                return;
+            }
+        }
+
         public ObjectiveRendererObservation ObserveOwnedSurface(Renderer renderer)
         {
             var materials = renderer.sharedMaterials;
