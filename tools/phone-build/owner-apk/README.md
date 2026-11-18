@@ -767,6 +767,15 @@ of files beneath `"${inputs}"`, `"${installed_runtime}"` or `"${native}"` that
 the job cache hashes. Use acquisition receipts from the tool owner or the
 acquired tool file itself. The graph strips the list from the producer request.
 
+With `--package-archives`, add `owner-package-inputs.json` before conversion
+in the assembly stage. Place the four private
+[compiler package archives](../package-assemblies/README.md) in
+`acquired/unity-packages/`. The package job supplies its verified versioned
+source directories to the compiler and tracks each archive in the incremental
+cache. Keep the code request's existing `source_inputs.packages` and flat
+inventory for the fixed-target player registry. That inventory also contains
+TestRunner and MCP importer sources.
+
 Optional `--burst-request recipe/<request>.json` adds the existing
 `owner-code/produce.py` Burst-only job. The caller's request uses
 `"output": "${output}"` and explicit tool/input bindings, with either `managed`
@@ -781,6 +790,18 @@ SDK entries through the existing pinned SDK package owner. Bind `sdk_install`,
 `sdk_jar_<filename>` to acquired inputs. The authored Java helper is signed with
 the producer closure; all entries share one cached job. SDK packaging does not
 qualify gameplay or complete the remaining source bundle suppliers.
+
+Optional `--sdk-component` extracts the verified Unity Android Support archive
+from the private input root at `acquired/unity-android-support.pkg`. Provision
+the [pinned owner component](../accepted-output/README.md#acquire-the-three-sdk-copy-inputs)
+at that location before production. Put the generated SDK extraction job in
+the signed assembly stage when composing an install plan. The AndroidPlayer
+directory supplies the player's default resources and, if selected, the SDK
+package job's Java/resources and engine libraries. The archive hash and
+extracted file readback participate in cache verification. The archive stays
+outside the original-game import. Platform, Java, AAPT2 and jar paths still
+come from the SDK package request, which can list `cache_witnesses` for those
+tool files or their acquisition receipts.
 
 Dispatcher bindings `pc`, `sdk` and `codec` select canonical private input paths.
 Only producers requiring SDK data receive the default SDK argument. Object
@@ -817,9 +838,11 @@ sampled converter workspace grew by 521,201 logical bytes. This is one bundle,
 not APK or gameplay acceptance. The generated two-job synthetic fixture also
 checks receipt identity and reuse on the second run.
 
-The phase declaration additionally binds `ugui_source`, `sdk_binary`,
-`scene_environment_result`, `scene_environment_request`,
-`scene_environment_bundle` and `scene_environment_images`. The environment
-producer runs separately. Manager shaders and startup identity use their
-existing graph jobs. The phase declaration covers 210 player files. Complete
-APK assembly and device loading remain separate acceptance gates.
+The phase declaration additionally binds `scene_environment_result`,
+`scene_environment_request`, `scene_environment_bundle` and
+`scene_environment_images`. The environment producer runs separately. With a
+fresh code request, the separately acquired SDK supplies built-in uGUI
+`Runtime/UI/Core` and the macOS Unity binary read by the manager. Acquired mode
+binds `ugui_source` and `sdk_binary` explicitly. Manager shaders and startup
+identity use their existing graph jobs. The phase declaration covers 210 player
+files. Complete APK assembly and device loading remain separate acceptance gates.

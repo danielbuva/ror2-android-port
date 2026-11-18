@@ -25,6 +25,7 @@ PRODUCERS = {
     "tools/phone-build/owner-code/run_android.py",
     "tools/phone-build/owner-code/produce.py",
     "tools/phone-build/owner-code/native.py",
+    "tools/phone-build/package-assemblies/produce.py",
     *{
         "tools/phone-build/accepted-output/" + name + ".py"
         for name in (
@@ -35,6 +36,7 @@ PRODUCERS = {
             "shader_produce",
             "texture_produce",
             "player_data",
+            "sdk_inputs",
             "sdk_package",
             "payload_shader_records",
             "shader_context",
