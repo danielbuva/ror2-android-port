@@ -59,9 +59,10 @@ def invoke(argv, output, label, *, env=None, separate_stderr=False):
     return output / "logs" / (label + ".log")
 
 
-def bind_paths(values):
-    if set(values) != INPUT_FIELDS:
-        raise ValueError("explicit package, compiler, decompiler, decoder and licensed Wwise inputs required")
+def bind_paths(values, *, signed_audio=False):
+    required = INPUT_FIELDS - {"decoder"} if signed_audio else INPUT_FIELDS
+    if set(values) not in (required, INPUT_FIELDS):
+        raise ValueError("explicit package, compiler, decompiler and licensed Wwise inputs required (decoder for historical staging)")
     paths = {k: native.canonical(v) for k, v in values.items()}
     if any(not paths[k].is_dir() for k in ("packages", "netstandard_ref")) or any(
         not p.is_file() for k, p in paths.items() if k not in {"packages", "netstandard_ref"}
@@ -164,7 +165,39 @@ def maps_and_support(out, inputs, managed, probe, profile, identity, *, work=Non
     return sorted(generated.glob("*.cs")), [selected / n for n in profile["support_sources"]]
 
 
-def audio_assemblies(out, sdk, work, inputs, raw, ordinary, staged, prefab, bank, init, managed_paths, manifest):
+def stage_source_audio(work, game, output, *, decoder=None):
+    bank_dir, prefab_dir, init_dir = [output / name for name in ("bank-index", "prefab", "init")]
+    wwise_bank_index.owner_index(work, bank_dir, decoder is not None, decoder_executable=decoder)
+    owner_audio_prefab.reconstruct(work, prefab_dir)
+    legacy.run(work, init_dir)
+    prefab, bank = prefab_dir / "WwiseGlobal.prefab", bank_dir / "bank-index.json"
+    staged = output / "staged"
+    soundbanks_info = game / "Risk of Rain 2_Data/StreamingAssets/Audio/GeneratedSoundBanks/Windows/SoundbanksInfo.xml"
+    invoke(
+        [
+            sys.executable,
+            audio.TOOLS / "stage_original_game_banks.py",
+            "--prefab",
+            prefab,
+            "--bank-index",
+            bank,
+            "--soundbanks-info",
+            soundbanks_info,
+            "--adapted-init",
+            init_dir / "Init.bnk",
+            "--init-receipt",
+            init_dir / "receipt.json",
+            "--output-dir",
+            staged,
+            *(["--owner-work", work] if decoder is None else []),
+        ],
+        output,
+        "stage-audio",
+    )
+    return staged, prefab, bank, init_dir
+
+
+def audio_assemblies(out, sdk, inputs, ordinary, staged, prefab, bank, init, managed_paths, manifest, *, owner_work=None):
     destination = out / "audio"
     destination.mkdir()
     generated = destination / "generated"
@@ -187,6 +220,7 @@ def audio_assemblies(out, sdk, work, inputs, raw, ordinary, staged, prefab, bank
         True,
         True,
         False,
+        owner_work=owner_work,
     )
     stage_pin = audio.load_module(audio.TOOLS / "generate_runtime_stage_pin.py", "source_owner_stage_pin")
     request_pin = audio.load_module(audio.TOOLS / "generate_accepted_request_pin.py", "source_owner_request_pin")
@@ -196,8 +230,8 @@ def audio_assemblies(out, sdk, work, inputs, raw, ordinary, staged, prefab, bank
     ):
         raise ValueError("existing runtime request/stage generator drift")
     stage_source, request_source = generated / "GameAudioOriginalGeneratedStagePin.cs", generated / "GameAudioOriginalGeneratedRequestPin.cs"
-    stage_pin.generate(staged / "stage-receipt.json", staged, stage_source, prefab, bank, init / "Init.bnk", init / "receipt.json")
-    request_pin.emit(request, contract, staged / "stage-receipt.json", request_source)
+    stage_pin.generate(staged / "stage-receipt.json", staged, stage_source, prefab, bank, init / "Init.bnk", init / "receipt.json", owner_work=owner_work)
+    request_pin.emit(request, contract, staged / "stage-receipt.json", request_source, owner_work=owner_work)
     contents = sdk / "Unity.app/Contents"
     mono, csc = contents / "MonoBleedingEdge/bin/mono", contents / "MonoBleedingEdge/lib/mono/msbuild/Current/bin/Roslyn/csc.exe"
     named = {Path(k).name: p for k, p in managed_paths.items()}
@@ -456,7 +490,7 @@ def target_run(work, sdk, values, target, source_root, output, *, android_tools=
         native.write(output / "result.json", result)
 
 
-def run(work, sdk, values, output):
+def run(work, sdk, values, output, *, signed_audio=False):
     work, sdk = native.canonical(work), native.canonical(sdk)
     output = Path(output)
     if work != (ROOT / "work").resolve():
@@ -467,10 +501,10 @@ def run(work, sdk, values, output):
     profile = json.loads(PROFILE.read_text())
     if state[0] != profile["input_id"]:
         raise ValueError("unsupported legitimate source input")
-    inputs = bind_paths(values)
+    inputs = bind_paths(values, signed_audio=signed_audio)
     if (
         native.sha(inputs["newtonsoft"]) != profile["newtonsoft_sha256"]
-        or native.sha(inputs["decoder"]) != profile["decoder_sha256"]
+        or (not signed_audio and native.sha(inputs["decoder"]) != profile["decoder_sha256"])
         or native.sha(inputs["wwise_native"]) != audio.LINEAGE["native_library_sha256"]
     ):
         raise ValueError("qualified generic package/decoder/licensed native input differs")
@@ -545,32 +579,8 @@ def run(work, sdk, values, output):
         if native.input_state(work) != state:
             raise ValueError("owner source state changed")
         result["phase"] = "source-audio-inputs"
-        bank_dir, prefab_dir, init_dir = [output / n for n in ("bank-index", "prefab", "init")]
-        wwise_bank_index.owner_index(work, bank_dir, True, decoder_executable=inputs["decoder"])
-        owner_audio_prefab.reconstruct(work, prefab_dir)
-        legacy.run(work, init_dir)
-        prefab, bank = prefab_dir / "WwiseGlobal.prefab", bank_dir / "bank-index.json"
-        staged = output / "staged"
-        invoke(
-            [
-                sys.executable,
-                ROOT / "tools/unity/support/audio/generators/stage_original_game_banks.py",
-                "--prefab",
-                prefab,
-                "--bank-index",
-                bank,
-                "--soundbanks-info",
-                state[1] / "Risk of Rain 2_Data/StreamingAssets/Audio/GeneratedSoundBanks/Windows/SoundbanksInfo.xml",
-                "--adapted-init",
-                init_dir / "Init.bnk",
-                "--init-receipt",
-                init_dir / "receipt.json",
-                "--output-dir",
-                staged,
-            ],
-            output,
-            "stage-audio",
-        )
+        owner_work = work if signed_audio else None
+        staged, prefab, bank, init_dir = stage_source_audio(work, state[1], output, decoder=None if signed_audio else inputs["decoder"])
         result["phase"] = "audio-assemblies"
         audio.validate_owner_source_manifest()
         supplied = output / "supplied-sdk"
@@ -580,7 +590,17 @@ def run(work, sdk, values, output):
         if native.sha(native_copy) != audio.LINEAGE["native_library_sha256"]:
             raise ValueError("supplied licensed native copy differs")
         audio_outputs = audio_assemblies(
-            output, sdk, work, inputs | {"wwise_native": native_copy}, raw, ordinary, staged, prefab, bank, init_dir, managed_paths, manifest
+            output,
+            sdk,
+            inputs | {"wwise_native": native_copy},
+            ordinary,
+            staged,
+            prefab,
+            bank,
+            init_dir,
+            managed_paths,
+            manifest,
+            owner_work=owner_work,
         )
         unchanged(bound)
         result["phase"] = "original-sources-and-maps"

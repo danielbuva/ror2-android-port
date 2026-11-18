@@ -284,7 +284,12 @@ def source_run(request, *, stop_after_conversion=False, burst_only=False):
     if target is None and work != (ROOT / "work").resolve():
         raise ValueError("source owner currently requires this checkout's work root")
     state = native.input_state(work)
-    inputs = {k: native.canonical(v) for k, v in request["source_inputs"].items()} if target else managed_owner.bind_paths(request["source_inputs"])
+    signed_audio = "audio_members" in request
+    inputs = (
+        {k: native.canonical(v) for k, v in request["source_inputs"].items()}
+        if target
+        else managed_owner.bind_paths(request["source_inputs"], signed_audio=signed_audio)
+    )
     output = Path(request["output"])
     if not output.is_relative_to(work) or output == work:
         raise ValueError("new source owner output must be inside owner work")
@@ -310,8 +315,8 @@ def source_run(request, *, stop_after_conversion=False, burst_only=False):
                 work, sdk, request["source_inputs"], target, source_root, output / "managed-production", android_tools=request.get("android_tools")
             )
         else:
-            providers = managed_owner.run(work, sdk, request["source_inputs"], output / "managed-production")
-        if "audio_members" in request:
+            providers = managed_owner.run(work, sdk, request["source_inputs"], output / "managed-production", signed_audio=signed_audio)
+        if signed_audio:
             verify_audio_members(output / "managed-production", request["audio_members"])
         backend_request = {"owner_work": str(work), "sdk_install": str(sdk), "managed": providers, "output": str(output / "backend")}
         for name in ("target", "android_tools", "linux_tools", "burst_tools", "compile_timeout_seconds", "pause_clock", "measure_jobs"):
