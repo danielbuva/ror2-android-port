@@ -2798,6 +2798,7 @@ receipt (strict `success: true`) by SHA-256. After a minimum of 24 hours without
 new writes, unchanged markers let existing generated-output candidates ignore
 historical manifest pins. State/baseline/device/coordination-lock pins, explicit
 keeps and `.prune-keep` still win; receipts, logs and authored files stay.
+Planning checks eligibility once per marked run, not per descendant directory.
 Marking never deletes; normal dry-run/apply owns pruning and rechecks eligibility
 before the first deletion of each marked run. No symlinked runs are eligible.
 
