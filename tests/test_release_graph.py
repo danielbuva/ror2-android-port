@@ -27,6 +27,24 @@ G, J = load("release_graph"), load("release_jobs")
 
 
 class ReleaseGraphTests(unittest.TestCase):
+    def test_install_plan_reports_unbound_producer_inputs(self):
+        graph = G.Graph(ROOT, {})
+        producer, dependency = "recipe/jobs/fixture.json", "recipe/jobs/dependency.json"
+        graph.jobs[producer] = {
+            "script": "fixture.py",
+            "needs": [dependency],
+            "arguments": ["${input:pc}", "${input:inventory}", "${input_relative:missing_root}/data"],
+        }
+        graph.jobs[dependency] = {
+            "script": "dependency.py",
+            "needs": [],
+            "request": {"metadata": {"sha256": "${input_sha256:missing_digest}"}},
+        }
+        with self.assertRaisesRegex(ValueError, "install plan lacks admitted input bindings: missing_digest, missing_root$"):
+            graph.attach_install_plan(
+                {"entries": {"payload/fixture": {"job": producer}}}, required_inputs="recipe/input.json", workspace_bytes=0, bindings={"pc": "."}
+            )
+
     def test_staged_phone_entry_points_run_without_a_checkout(self):
         with tempfile.TemporaryDirectory() as temporary:
             app = Path(temporary).resolve()
@@ -521,6 +539,12 @@ class ReleaseGraphTests(unittest.TestCase):
         records = next(dependency for dependency in job["needs"] if dependency != extractor)
         self.assertIn(extractor, job["needs"])
         self.assertEqual(job["arguments"][job["arguments"].index("--record-pack") + 1], "${job_directory:" + records + ":receipt}")
+
+        barrier = graph.build(G.digest(ROOT / "recipe/owner-barrier-shaders.json"))
+        job = graph.jobs[barrier]
+        self.assertEqual(job["arguments"][job["arguments"].index("--legacy-sdk") + 1], G.LEGACY_SHADER_SDK)
+        for member in graph.job_profiles[barrier]["legacy_sdk"]:
+            self.assertIn(G.LEGACY_SHADER_SDK + "/" + member, job["cache_witnesses"])
 
     def test_texture_jobs_bind_required_pinned_tools(self):
         graph = G.Graph(ROOT, {})
