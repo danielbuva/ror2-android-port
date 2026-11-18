@@ -546,13 +546,26 @@ def derive_plan(original: dict, android_rows: list[dict], exports: set[str]) -> 
 
 def atomic_new(path: Path, data: bytes) -> None:
     require(not path.exists() and not path.is_symlink(), "refusing to overwrite output")
+    link = getattr(os, "link", None)
+    if link is None:
+        # Android Python lacks hard links. The build consumes the plan after this producer exits.
+        fd = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+        try:
+            with os.fdopen(fd, "wb") as f:
+                f.write(data)
+                f.flush()
+                os.fsync(f.fileno())
+        except BaseException:
+            path.unlink(missing_ok=True)
+            raise
+        return
     with tempfile.NamedTemporaryFile(mode="wb", dir=path.parent, prefix=".wwise-abi-", delete=False) as f:
         temp = Path(f.name)
         f.write(data)
         f.flush()
         os.fsync(f.fileno())
     try:
-        os.link(temp, path)
+        link(temp, path)
     finally:
         temp.unlink(missing_ok=True)
 
