@@ -1516,6 +1516,11 @@ def expanding_wave_scale(body, root, selected, read_record):
 
 
 def transform_generic(body, class_id, selected, root=None, read_clip=None, source_type=None, material_keywords=None, read_record=None):
+    if class_id == 115:
+        if selected:
+            raise ValueError("source MonoScript record must preserve its original body")
+        O.script_fields(body)
+        return body
     if class_id in (363, 850595691):
         if source_type is None or source_type["class_id"] != class_id:
             raise ValueError("source lighting record requires its native schema")
@@ -1849,6 +1854,7 @@ def produce(profile_path, profile_sha256, pc, output, sdk=None, comparison="exac
                             108,
                             111,
                             114,
+                            115,
                             119,
                             120,
                             124,

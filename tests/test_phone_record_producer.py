@@ -734,6 +734,38 @@ class AnimationProducerTests(unittest.TestCase):
                 with self.assertRaisesRegex(ValueError, "generic object operation"):
                     A.produce(path, A.B.sha(path), pc, root / "operation-drift")
 
+    def test_source_monoscript_pack_retains_identity_and_native_type(self):
+        stream = io.BytesIO()
+        A.O.aligned_string(stream, "Authored script")
+        stream.write(bytes(4) + b"ORIGINAL HASH!!!")
+        for name in ("Definition", "Authored", "Example.dll"):
+            A.O.aligned_string(stream, name)
+        body = stream.getvalue()
+        schema = F.node("Base", children=[F.node("m_Name", -1, kind="string")])
+        native_hash = bytes(range(16))
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            pc = root / "pc"
+            pc.mkdir()
+            source = pc / "authored.bundle"
+            source.write_bytes(F.bundle([("CAB-authored", serialized(body, schema, 115, native_hash), 4)]))
+            digest = hashlib.sha256(body).hexdigest()
+            target = {"bundle": "definitions", "member": "CAB-target", "path_id": 42, "sha256": digest, "bytes": len(body), "transform": {}}
+            selected = {"path_id": 77, "class_id": 115, "sha256": digest, "outputs": [target]}
+            profile = {
+                "input_id": A.M.INPUT_ID,
+                "bundles": [{"path": source.name, "sha256": A.B.sha(source), "members": [{"name": "CAB-authored", "objects": [selected]}]}],
+            }
+            path = root / "profile.json"
+            path.write_text(json.dumps(profile))
+            output = root / "output"
+            self.assertTrue(A.produce(path, A.B.sha(path), pc, output)["success"])
+            self.assertEqual((output / "objects.bin").read_bytes(), body)
+            typ = json.loads((output / "types.json").read_bytes())[0]
+            self.assertEqual((typ["class_id"], typ["hash"]), (115, native_hash.hex()))
+            with self.assertRaisesRegex(ValueError, "preserve its original body"):
+                A.transform_generic(body, 115, {"references": []})
+
     def test_release_lighting_records_preserve_schema_native_identity_and_data(self):
         name = F.text("m_Name")
         fixtures = [
