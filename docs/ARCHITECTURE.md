@@ -55,6 +55,12 @@ enters with fresh Run counters and skips the stage-one selection RNG draw. It
 uses the stored loadout and the existing assisted-run profile exclusions.
 Existing stage and run cleanup own teardown.
 
+`ActiveClientSession` checks each native SkillLocator cache against that
+identity's ordered GenericSkill components and cached NetworkIdentity before
+initial serialization. The minimum skill count applies to the controlled body.
+Native objects with no skills, such as Sky Meadow rock projectiles, still run
+through the same cache and serializer checks.
+
 `WholeCatalogLoader.RegisterLocations` wraps its completed map with an
 `IResourceLocator` request observer. Each lookup logs its original key, key type,
 requested asset type, phase and map result, including unresolved soft references.
