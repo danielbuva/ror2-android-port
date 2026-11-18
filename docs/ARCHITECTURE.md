@@ -6038,6 +6038,13 @@ orchestrator device lease, applies the battery rule, posts a sanitized result an
 prunes. `scripts/lab/lab-runner-guard.sh` is its job-started hook, installed outside
 the repository. Setup and command reference: [LAB_RUNNER](LAB_RUNNER.md).
 
+`scripts/lab/toolhost_build.py` owns the explicit staged installer build in the
+local packaging request. It verifies staged checkout and provider pins, binds
+host providers to generated device paths and invokes the existing managed fixture
+builder under the phone thermal supervisor. The runner owns the lease, terminal
+receipt and commit/input-keyed APK cache. The build verifies the retained signer
+and packaged source and native bytes before it releases its scratch.
+
 The same owner's current local `--emission-request` entry point executes
 `scripts/lab/toolhost_emission.py` through the existing installer driver. This
 operation validates a pinned input manifest and toolhost, streams runtime/inputs,
@@ -6733,6 +6740,20 @@ separately.
 Receipts and raw motion evidence stay ignored. This verifies software delivery;
 it never qualifies physical buttons, a touchscreen digitizer or normal play.
 
+
+## Whole-catalog texture alpha
+
+The current whole-catalog full build calls `catalog_jpeg_alpha.stage` before
+bundle generation. It resolves each staged JPEG Texture2D through the accepted
+catalog and verifies the corresponding original bundle before decoding its
+pixels. Nonopaque images become lossless PNG input under their existing Unity
+paths and GUIDs. The exact-editor texture fixture verifies that the importer
+reads the PNG signature at the existing path. Ordinary textures in this cohort
+use Android RGBA32 and retain input alpha without RGB dilation or block
+compression. Packed normals decode X from source alpha and keep their NormalMap
+importer and Android format selection.
+The generated `.rebuild/catalog-jpeg-alpha.json` records the original channel
+hashes and restored image hashes. Code builds continue to use the frozen payload.
 
 ## Original collision policy
 

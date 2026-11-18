@@ -93,8 +93,35 @@ public static class TextureMipFixture
                 images.Add(new ImageReport {pattern=pattern,mode=mode,format=texture.format.ToString(),input=pattern+".input.rgba",levels=levels.ToArray()});
             }
         }
+        CheckJpegPath(output);
         ImageReport quantized; var mirror=CaptureFloatMirror(output,out quantized); CaptureTransfer(Path.Combine(output,"runtime-transfer.f32"));
         var report=new Report {floatMirror=mirror,floatQuantized=quantized,transfer="runtime-transfer.f32",unity=Application.unityVersion,source_commit=Environment.GetEnvironmentVariable("ROR2_PHONE_BUILD_SOURCE"),images=images.ToArray()};
         File.WriteAllText(Path.Combine(output,"result.json"),JsonUtility.ToJson(report,true));
+    }
+
+    private static void CheckJpegPath(string output)
+    {
+        const string path = "Assets/TextureMipFixture/encoded-alpha.jpg";
+        var source = new Texture2D(4, 4, TextureFormat.RGBA32, false, true);
+        var pixels = new Color32[16];
+        for (int i = 0; i < pixels.Length; i++) pixels[i] = new Color32(191, 47, 103, (byte)(17 * i));
+        source.SetPixels32(pixels);
+        source.Apply(false, false);
+        File.WriteAllBytes(path, source.EncodeToJPG());
+        AssetDatabase.ImportAsset(path, ImportAssetOptions.ForceSynchronousImport);
+        string guid = AssetDatabase.AssetPathToGUID(path);
+        File.WriteAllBytes(path, source.EncodeToPNG());
+        UnityEngine.Object.DestroyImmediate(source);
+        var importer = (TextureImporter)AssetImporter.GetAtPath(path);
+        importer.alphaSource = TextureImporterAlphaSource.FromInput;
+        importer.alphaIsTransparency = false;
+        importer.isReadable = true;
+        importer.SetPlatformTextureSettings(new TextureImporterPlatformSettings { name = "Android", overridden = true, format = TextureImporterFormat.RGBA32 });
+        importer.SaveAndReimport();
+        var restored = AssetDatabase.LoadAssetAtPath<Texture2D>(path);
+        if (string.IsNullOrEmpty(guid) || AssetDatabase.AssetPathToGUID(path) != guid || !restored ||
+            !System.Linq.Enumerable.SequenceEqual(Bytes(restored.GetPixels32()), Bytes(pixels)))
+            throw new Exception("PNG-backed JPEG import failed the pixels or GUID check");
+        File.WriteAllText(Path.Combine(output, "jpeg-path-guid.txt"), guid);
     }
 }
