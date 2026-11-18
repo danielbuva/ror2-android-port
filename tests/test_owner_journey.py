@@ -112,6 +112,12 @@ class OwnerJourneyTests(unittest.TestCase):
                 self.assertEqual(profile.read_bytes(), b"untouched authored profile")
 
     def test_installed_update_then_forward_version_rollback(self):
+        self.forward_rollback(distinct=False)
+
+    def test_distinct_payload_update_then_forward_version_rollback(self):
+        self.forward_rollback(distinct=True)
+
+    def forward_rollback(self, *, distinct):
         with owner_journey() as journey:
             self.assertEqual(journey.run("install-prepare")["state"], "INPUTS_REQUIRED")
             original = journey.inputs / "import/files/original.txt"
@@ -120,17 +126,25 @@ class OwnerJourneyTests(unittest.TestCase):
             self.assertEqual(journey.run("release-build")["state"], "READY")
             first = install(journey)
             first_bytes = Path(first["apk"]).read_bytes()
-            journey.candidate["release"] = copy.deepcopy(journey.release)
-            journey.candidate["release"].update(version="synthetic-2", version_code=3)
+            if distinct:
+                journey.publish(3, "different authored payload")
+            else:
+                journey.candidate["release"] = copy.deepcopy(journey.release)
+                journey.candidate["release"].update(version="synthetic-2", version_code=3)
             self.assertEqual(journey.run("release-check", first)["state"], "UPDATE_AVAILABLE")
             self.assertEqual(journey.run("release-build", first)["state"], "READY")
             current = install(journey, first)
+            if distinct:
+                self.assertNotEqual(Path(current["apk"]).read_bytes(), first_bytes)
+                self.assertNotEqual(current["payload_sha256"], first["payload_sha256"])
+                self.assertEqual((journey.inputs / "attempt-count.txt").read_text().splitlines(), ["attempt"] * 3)
             module = U.module
             reversion_codes = []
 
             def reversion(source, destination, *, version_code, expected_sha256, **kwargs):
                 # Packaging is the same explicit synthetic boundary as the build
                 # helper: an authored stream, not Android ZIP/manifest evidence.
+                self.assertEqual(Path(source), Path(first["apk"]))
                 self.assertEqual(F.digest(source), expected_sha256)
                 self.assertEqual(Path(source).read_bytes(), first_bytes)
                 reversion_codes.append(version_code)
@@ -161,6 +175,7 @@ class OwnerJourneyTests(unittest.TestCase):
             self.assertGreater(rolled["version_code"], current["version_code"])
             self.assertEqual(rolled["release"], first["release"])
             self.assertEqual(rolled["payload_sha256"], first["payload_sha256"])
+            self.assertEqual(Path(rolled["apk"]).read_bytes(), first_bytes)
             self.assertEqual(rolled["signer_sha256"], current["signer_sha256"])
             self.assertEqual(reversion_codes, [rolled["version_code"]])
             ledger = json.loads((journey.inputs / "work/releases/issued-versions.json").read_text())
@@ -168,7 +183,7 @@ class OwnerJourneyTests(unittest.TestCase):
             self.assertEqual((issue["purpose"], issue["status"], issue["publisher_version_code"]), ("rollback", "signed", 2))
             self.assertEqual(Path(first["apk"]).read_bytes(), first_bytes)
             self.assertEqual(original.read_bytes(), b"authored")
-            self.assertEqual((journey.inputs / "attempt-count.txt").read_text().splitlines(), ["attempt", "attempt"])
+            self.assertEqual((journey.inputs / "attempt-count.txt").read_text().splitlines(), ["attempt"] * (3 if distinct else 2))
 
     def test_loopback_acquisition_interruption_retry_and_update(self):
         with owner_journey(acquisition=True) as journey:

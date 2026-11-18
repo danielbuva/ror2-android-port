@@ -44,6 +44,8 @@ def owner_journey(*, acquisition=False):
                 "needs": [jobs[0]],
             },
         }
+        for name, descriptor in descriptors.items():
+            descriptor["source_files"] = [name, script]
         manifest = {
             "schema": 1,
             "game_version": "synthetic-version",
@@ -52,7 +54,7 @@ def owner_journey(*, acquisition=False):
         contents = {name: json.dumps(value).encode() for name, value in descriptors.items()}
         contents["recipe/inputs.json"] = json.dumps(manifest).encode()
         contents[script] = (
-            b"import pathlib,sys\np=pathlib.Path(sys.argv[1]);p.mkdir();(p/'result').write_text('synthetic result');f=pathlib.Path(sys.argv[2]);f.write_text((f.read_text() if f.exists() else '')+'attempt\\n')\n"
+            b"import pathlib,sys\np=pathlib.Path(sys.argv[1]);p.mkdir();(p/'result').write_text(sys.argv[3] if len(sys.argv)>3 else 'synthetic result');f=pathlib.Path(sys.argv[2]);f.write_text((f.read_text() if f.exists() else '')+'attempt\\n')\n"
         )
         for name, value in contents.items():
             path = repo / name
@@ -110,6 +112,7 @@ def owner_journey(*, acquisition=False):
         def modules(name, path):
             return SimpleNamespace(Dispatcher=dispatch) if name == "owner_update_jobs" else module(name, path)
 
+        expected_payload = [b"synthetic result"]
         events = []
         original_write = U.write_json
 
@@ -120,7 +123,7 @@ def owner_journey(*, acquisition=False):
 
         def assemble(release, outputs, *args, flow, issued, binding, **kwargs):
             data = Path(outputs["payload/synthetic.txt"]).read_bytes()
-            assert data == b"synthetic result"
+            assert data == expected_payload[0]
             output = inputs / "work/releases" / ("authored-stream-" + str(issued) + ".bin")
             flow.perform("apk", lambda: output.write_bytes(data))
 
@@ -143,6 +146,19 @@ def owner_journey(*, acquisition=False):
                 return ready
 
             return flow.perform("signing", sign)
+
+        def publish(version, payload):
+            # Change only the leaf recipe. Its unchanged prerequisite remains reusable.
+            expected_payload[0] = payload.encode()
+            descriptors[jobs[1]]["arguments"] = ["${output}", "${inputs}/attempt-count.txt", payload]
+            (repo / jobs[1]).write_text(json.dumps(descriptors[jobs[1]]))
+            index["files"][jobs[1]] = F.digest(repo / jobs[1])
+            candidate["release"] = copy.deepcopy(release)
+            candidate["release"].update(
+                version="synthetic-" + str(version),
+                version_code=version,
+                entries={"payload/synthetic.txt": U.public().entry_dependencies(index, "payload/synthetic.txt")},
+            )
 
         def bundle():
             stream = io.BytesIO()
@@ -191,4 +207,5 @@ def owner_journey(*, acquisition=False):
                 events=events,
                 run=run,
                 bundle=bundle,
+                publish=publish,
             )
