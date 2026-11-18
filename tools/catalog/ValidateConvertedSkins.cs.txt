@@ -27,6 +27,7 @@ var checkedSkins = new System.Collections.Generic.HashSet<RoR2.SkinDef>();
 var projectileConfigPin = request["projectile_config"];
 var checkedProjectileKeys = new System.Collections.Generic.HashSet<string>();
 int checkedSupportPrefabs = 0, checkedEffectPrefabs = 0;
+int checkedObjectiveActors = 0, checkedDirectorPools = 0, checkedDirectorCards = 0;
 
 System.Func<string, UnityEngine.AssetBundle> openBundle = owner =>
 {
@@ -170,9 +171,9 @@ try{
      // Preserve first deserialization order for skins before inspecting Start dependencies.
      var config = Newtonsoft.Json.Linq.JObject.Parse(System.IO.File.ReadAllText(pin(projectileConfigPin)));
      var visited = new System.Collections.Generic.HashSet<UnityEngine.GameObject>();
-     System.Func<string, Newtonsoft.Json.Linq.JToken> gameObjectLocation = key =>
+     System.Func<string, System.Type, Newtonsoft.Json.Linq.JToken> typedLocation = (key, type) =>
          stringKeys.TryGetValue(key, out var candidates) ? candidates.FirstOrDefault(row =>
-             ((string)row["type"])?.Split(',')[0] == typeof(UnityEngine.GameObject).FullName) : null;
+             ((string)row["type"])?.Split(',')[0] == type.FullName) : null;
      System.Action<UnityEngine.GameObject, string, string> checkProjectiles = null;
      checkProjectiles = (root, path, field) =>
      {
@@ -194,7 +195,7 @@ try{
              Newtonsoft.Json.Linq.JToken location = null;
              try
              {
-                 location = gameObjectLocation(key);
+                 location = typedLocation(key, typeof(UnityEngine.GameObject));
                  if (location == null)
                      throw new System.Exception("Typed projectile ghost address absent");
                  var ghost = openBundle((string)location["bundle"])
@@ -261,14 +262,126 @@ try{
      }
      // FireTrail is loaded by CharacterBody through the legacy Prefabs/FireTrail alias.
      const string fireTrailAddress = "RoR2/Base/Common/FireTrail.prefab";
-     var fireTrail = gameObjectLocation(fireTrailAddress);
+     var fireTrail = typedLocation(fireTrailAddress, typeof(UnityEngine.GameObject));
      if (fireTrail == null)
          failures.Add(new { path = "Prefabs/FireTrail", error = "Typed FireTrail catalog location absent" });
      else
          checkPrefab((string)fireTrail["bundle"], (string)fireTrail["path"], "Prefabs/FireTrail");
+
+     var objectivePrefabs = new System.Collections.Generic.HashSet<UnityEngine.GameObject>();
+     System.Action<UnityEngine.GameObject, string, string> checkComponents = (prefab, actor, path) =>
+     {
+         if (!objectivePrefabs.Add(prefab))
+             return;
+         foreach (var child in prefab.GetComponentsInChildren<UnityEngine.Transform>(true))
+         {
+             var components = child.GetComponents<UnityEngine.Component>();
+             for (int index = 0; index < components.Length; index++)
+                 if (!components[index])
+                     failures.Add(new { actor, path, child = describeTransform(child), index,
+                         error = "Objective actor component slot is unbound" });
+         }
+     };
+     System.Action<RoR2.CharacterSpawnCard, string, string> checkSpawnCard = (card, actor, path) =>
+     {
+         var master = card && card.prefab ? card.prefab.GetComponent<RoR2.CharacterMaster>() : null;
+         if (!master || !master.bodyPrefab || !master.bodyPrefab.GetComponent<RoR2.CharacterBody>() || card.directorCreditCost < 0)
+         {
+             failures.Add(new { actor, path, error = "Objective spawn card/master/body reference contract failed" });
+             return;
+         }
+         checkComponents(card.prefab, actor, path);
+         checkComponents(master.bodyPrefab, actor, path);
+     };
+     var objectiveOwner = openBundle("objective-support-lab");
+     foreach (var spec in config["objectiveActors"])
+     {
+         checkedObjectiveActors++;
+         var actor = (string)spec["name"];
+         var bodyPath = (string)spec["body"];
+         var body = owner.LoadAsset<UnityEngine.GameObject>(bodyPath);
+         var locator = body ? body.GetComponent<RoR2.ModelLocator>() : null;
+         if (!locator || !locator.modelTransform || !body.GetComponent<RoR2.CharacterBody>() ||
+             !body.GetComponent<RoR2.SfxLocator>() || !locator.modelTransform.GetComponent<UnityEngine.Animator>())
+             failures.Add(new { actor, path = bodyPath, error = "Objective body/model/Animator/SfxLocator contract failed" });
+         if (body)
+             checkComponents(body, actor, bodyPath);
+
+         var masterPath = (string)spec["master"];
+         var master = owner.LoadAsset<UnityEngine.GameObject>(masterPath);
+         if (!master || !master.GetComponent<RoR2.CharacterMaster>() || !master.GetComponent<RoR2.Inventory>())
+             failures.Add(new { actor, path = masterPath, error = "Objective master/Inventory contract failed" });
+         if (master)
+             checkComponents(master, actor, masterPath);
+
+         var cardPath = (string)spec["card"];
+         var cardOwner = cardPath == (string)config["stageMiniCardAsset"] ? objectiveOwner : owner;
+         checkSpawnCard(cardOwner.LoadAsset<RoR2.CharacterSpawnCard>(cardPath), actor, cardPath);
+         var avatarPath = (string)spec["avatar"];
+         if (!owner.LoadAsset<UnityEngine.Avatar>(avatarPath))
+             failures.Add(new { actor, path = avatarPath, error = "Objective actor Avatar missing" });
+         var controllerPath = (string)spec["controller"];
+         if (!owner.LoadAsset<UnityEngine.RuntimeAnimatorController>(controllerPath))
+             failures.Add(new { actor, path = controllerPath, error = "Objective actor AnimatorController missing" });
+     }
+
+     var directorDecks = new System.Collections.Generic.HashSet<RoR2.DirectorCardCategorySelection>();
+     System.Action<RoR2.DirectorCardCategorySelection, string> checkDeck = (deck, path) =>
+     {
+         if (!deck || deck.categories == null || deck.categories.Length == 0)
+         {
+             failures.Add(new { path, error = "Objective director deck categories missing" });
+             return;
+         }
+         if (!directorDecks.Add(deck))
+             return;
+         foreach (var category in deck.categories)
+         {
+             foreach (var card in category.cards)
+             {
+                 checkedDirectorCards++;
+                 var spawnCard = card.spawnCard as RoR2.CharacterSpawnCard;
+                 var reference = card.spawnCardReference;
+                 if (!spawnCard && reference != null && reference.RuntimeKeyIsValid())
+                 {
+                     var location = typedLocation(reference.RuntimeKey.ToString(), typeof(RoR2.CharacterSpawnCard));
+                     if (location != null)
+                         spawnCard = openBundle((string)location["bundle"])
+                             .LoadAsset<RoR2.CharacterSpawnCard>((string)location["path"]);
+                 }
+                 checkSpawnCard(spawnCard, spawnCard ? spawnCard.name : category.name, path);
+             }
+         }
+     };
+     var deckPaths = config["stageCombatDecks"].Select(row => (string)row["asset"])
+         .Prepend((string)config["enemyDirectorDeckAsset"]).Where(path => !string.IsNullOrEmpty(path)).Distinct();
+     foreach (var path in deckPaths)
+         checkDeck(owner.LoadAsset<RoR2.DirectorCardCategorySelection>(path), path);
+
+     var firstStagePools = new[] { "RoR2/Base/golemplains/dpGolemplainsMonsters.asset", "RoR2/Base/blackbeach/dpBlackBeachMonsters.asset" };
+     foreach (var key in firstStagePools)
+     {
+         checkedDirectorPools++;
+         var location = typedLocation(key, typeof(RoR2.DccsPool));
+         var pool = location == null ? null : openBundle((string)location["bundle"])
+             .LoadAsset<RoR2.DccsPool>((string)location["path"]);
+         if (!pool || pool.poolCategories == null || pool.poolCategories.Length == 0)
+         {
+             failures.Add(new { path = key, error = "First-stage monster pool categories missing" });
+             continue;
+         }
+         foreach (var category in pool.poolCategories)
+         {
+             var entries = (category.alwaysIncluded ?? new RoR2.DccsPool.PoolEntry[0])
+                 .Concat(category.includedIfConditionsMet ?? new RoR2.DccsPool.ConditionalPoolEntry[0])
+                 .Concat(category.includedIfNoConditionsMet ?? new RoR2.DccsPool.PoolEntry[0]);
+             foreach (var entry in entries)
+                 checkDeck(entry.dccs, key);
+         }
+     }
  }
 }catch(System.Exception error){failures.Add(new{error=error.ToString()});}
 finally{foreach(var bundle in bundles.Values.Reverse())bundle.Unload(true);}
-var summary=new{bodies,controllers,slots,checkedSkins=checkedSkins.Count,checkedTransforms,checkedProjectileKeys=checkedProjectileKeys.Count,checkedSupportPrefabs,checkedEffectPrefabs,failed=failures.Count,scope="Exact-editor typed converted bundle references and skin bake hierarchy"};
+var summary=new{bodies,controllers,slots,checkedSkins=checkedSkins.Count,checkedTransforms,checkedProjectileKeys=checkedProjectileKeys.Count,checkedSupportPrefabs,checkedEffectPrefabs,checkedObjectiveActors,checkedDirectorPools,checkedDirectorCards,failed=failures.Count,scope="Exact-editor typed converted bundle references and skin bake hierarchy"};
 var result=new{success=failures.Count==0&&bodies>0,summary,startupOwners,deferredOwners=pins.Properties().Select(row=>row.Name).Except(startupOwners),fixture,rows,failures};
 System.IO.File.WriteAllText(output,Newtonsoft.Json.JsonConvert.SerializeObject(result,Newtonsoft.Json.Formatting.Indented));return summary;
