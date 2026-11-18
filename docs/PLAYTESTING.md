@@ -48,11 +48,37 @@ from step 4. Prior assisted runs used this pair.
    confirm with A. Cold launch, repeat cancel and confirm using touch, then
    reopen and check that the saved loadout and setting persisted. Leave the
    app stopped and the display asleep after testing.
+5. In a separate session using a recorder-capable build, unplug the Nova for
+   30 minutes when asked. Use the physical controls and ordinary Start, and
+   reconnect USB when the app reports completion. If the app closes early,
+   reconnect and report what happened. The runner collects the trace and
+   returns the device to idle. Record the stages and settings you used.
 
 Record each case as passed, failed or pending, with the input used, timing and
 first failure. If the ten-minute window ends before a natural defeat, a stage
 transition or either Golem attack, leave that observation pending. Keep captures,
 receipts and profiles local.
+
+### Arm the 30-minute unplugged session
+
+The retained APK above predates this recorder. Use a newly built matching
+APK/payload pair. Set the intended refresh preference in the app before the
+session, then return it to idle. Prepare a private shared device-session JSON
+with the canonical checkout, output under `work/`, workstream, lab package,
+APK path and hash, and matching `payload_directory`. Set `mode` to
+`owner-unplugged`, `duration_seconds` to `1800` and `adopted_install` to `true`.
+Use the Main Nova USB grant to run `./dev device-session --request <JSON>
+--device <granted serial> --dry-run`, then the same command with `--detach`
+in place of `--dry-run`. Keep USB attached until `unplug-now.json` appears in
+the output and the operator asks you to disconnect. Reconnect when the app
+finishes so the runner can verify and collect `terminal.done.json` and leave
+the display asleep. Keep the trace local.
+
+The recorder needs to read the admitted CPU/GPU sensors from the app UID.
+If the phone denies access, the runner withholds the unplug prompt. The
+retained completed trace measures energy and foreground Unity frame counts
+over the whole window, including time in menus. The owner records gameplay
+and observed stages separately.
 
 ## Current lab expectations
 

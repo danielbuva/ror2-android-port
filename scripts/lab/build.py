@@ -266,7 +266,13 @@ WHOLE_APK_ASSEMBLIES = {"Assets/LabLoadingScene/Plugins/GameAudioOriginalBootstr
 # Authored Android player source; never consumed by external bundle builds.
 WHOLE_APK_ANDROID_CODE = {
     "Assets/Plugins/Android/SettingsWriteObserver.androidlib/src/main/java/dev/ror2lab/diagnostics/" + name
-    for name in ("LabDisplayPreference.java", "LabDisplayPreference.java.meta", "LabPendingWriteStop.java", "LabSettingsWriteObserver.java")
+    for name in (
+        "LabDisplayPreference.java",
+        "LabDisplayPreference.java.meta",
+        "LabPendingWriteStop.java",
+        "LabSettingsWriteObserver.java",
+        "LabUnpluggedSession.java",
+    )
 }
 WHOLE_APK_RECEIPTS = {
     "Assets/StreamingAssets/Lab/" + name + suffix
