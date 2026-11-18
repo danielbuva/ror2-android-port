@@ -5,6 +5,7 @@ Only measured PPtr fields are rewritten; the existing emitter remains responsibl
 for final structural, managed and persisted-object qualification.
 """
 
+from collections import Counter
 from contextlib import ExitStack
 import hashlib
 import json
@@ -478,22 +479,24 @@ def prepare(owner, inputs, output):
             pins.pin(canonical["bundle"])
             donor = canonical_profile["bundle"]
             externals = sorted(set(externals) | {donor["member"]})
-        # Persist one retained pack per supplier; record keys and lineage remain
-        # unchanged even when unrelated sources share the same numeric path ID.
+        # Keep each supplier key unique within a relocation pack. Aliases may
+        # apply different routes to the same body but keep its lineage key.
         retained = {}
+        occurrences = Counter()
         for target in sorted(selected):
             if target[:2] != member:
                 continue
             value, body, typ = raw_records[target]
             supplier_name = bindings[target]["supplier"]
-            pack = retained.setdefault(supplier_name, dict(blob=bytearray(), rows=[], record_keys=set(), witnesses=[], types=[]))
             targets = {tuple(edge["field"]): tuple(edge["target"]) for edge in routes[target]}
             revised = owner.relocate_pointer_fields(value, body, typ, targets, externals)
-            # ProducerRecords uses the same record key throughout the lineage.
             record_key = tuple(value["record_source"])
-            if record_key in pack["record_keys"]:
-                raise ValueError("one supplier record maps to multiple emitted bodies")
-            pack["record_keys"].add(record_key)
+            occurrence_key = supplier_name, record_key
+            pack_key = supplier_name, occurrences[occurrence_key]
+            occurrences[occurrence_key] += 1
+            if pack_key not in retained:
+                retained[pack_key] = (output / f"retained-{len(retained)}", dict(blob=bytearray(), rows=[], witnesses=[], types=[]))
+            directory, pack = retained[pack_key]
             prior, _ = producer.record(value)
             row = dict(
                 prior,
@@ -511,11 +514,10 @@ def prepare(owner, inputs, output):
             selected[target] = descriptor(target, revised, typ, **{key: value[key] for key in ("provider", "record_source", "record", "source")})
             if "resource" in value:
                 selected[target]["resource"] = value["resource"]
-            selected[target]["provider"] = str(output / ("retained-" + str(list(suppliers).index(supplier_name))))
+            selected[target]["provider"] = str(directory)
             fields = owner.pointers(revised, typ, {})
             routes[target] = [dict(edge, pointer=list(fields[tuple(edge["field"])])) for edge in routes[target]]
-        for name, pack in retained.items():
-            directory = output / ("retained-" + str(list(suppliers).index(name)))
+        for (name, _), (directory, pack) in retained.items():
             directory.mkdir()
             (directory / "objects.bin").write_bytes(pack["blob"])
             for filename, rows in (("index.jsonl", pack["rows"]), ("witnesses.jsonl", pack["witnesses"])):
