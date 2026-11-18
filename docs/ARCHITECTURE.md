@@ -4944,6 +4944,10 @@ before their pools instantiate them. Baked effect definitions send the acquired
 prefab through the native reference-discovery callback. The session detaches
 these callbacks before restoring the source materials. It follows typed prefab
 edges with cycle protection, including CharacterBody's separately loaded FireTrail.
+For native team area indicators on these roots, the session prepares the
+intersection materials in `TeamAreaIndicator.teamMaterialPairs` before native
+startup selects a team entry. The original table is restored with the effect
+callbacks before world cleanup destroys the owned copies.
 The original body visual owner submits Mercenary's persistent and consume Expose
 prefabs and Acrid's normal and combo-finisher swings. It reads the configured native
 Slash state and holds the finisher's typed provider lease through the run. Integrated

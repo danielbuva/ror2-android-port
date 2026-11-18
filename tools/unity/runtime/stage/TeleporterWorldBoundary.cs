@@ -388,6 +388,8 @@ public sealed partial class PortSession
         bool ownsObjectiveBundlePreload;
         readonly HashSet<AssetOrDirectReference<GameObject>> nativeEffectReferences =
             new HashSet<AssetOrDirectReference<GameObject>>();
+        readonly Dictionary<TeamAreaIndicator, TeamAreaIndicator.TeamMaterialPair[]> nativeTeamAreaMaterials =
+            new Dictionary<TeamAreaIndicator, TeamAreaIndicator.TeamMaterialPair[]>();
         readonly List<CharacterMaster> pendingObjectiveActors = new List<CharacterMaster>();
         readonly Dictionary<CharacterMaster, int> objectiveAmbientExpected = new Dictionary<CharacterMaster, int>();
         readonly HashSet<CharacterMaster> objectiveDirectorActors = new HashSet<CharacterMaster>();
@@ -514,6 +516,34 @@ public sealed partial class PortSession
             foreach (var reference in nativeEffectReferences)
                 reference.onValidReferenceDiscovered -= PresentNativeEffectSource;
             nativeEffectReferences.Clear();
+            foreach (var pair in nativeTeamAreaMaterials)
+                if (pair.Key)
+                    pair.Key.teamMaterialPairs = pair.Value;
+            nativeTeamAreaMaterials.Clear();
+        }
+        void PrepareNativeTeamAreaMaterials(TeamAreaIndicator indicator)
+        {
+            var originals = indicator.teamMaterialPairs;
+            if (originals == null || originals.Length == 0 || nativeTeamAreaMaterials.ContainsKey(indicator))
+                return;
+            // Native Start selects a team material after the prefab's renderer
+            // slots have been prepared. Keep the native selection and order.
+            var prepared = (TeamAreaIndicator.TeamMaterialPair[])originals.Clone();
+            bool changed = false;
+            for (int i = 0; i < prepared.Length; i++)
+            {
+                var source = originals[i].sharedMaterial;
+                var material = AndroidMaterialPresentation.RecoverTeamAreaMaterial(source, coordinator.worldMaterials);
+                if (material == source)
+                    continue;
+                prepared[i].sharedMaterial = material;
+                changed = true;
+            }
+            if (changed)
+            {
+                nativeTeamAreaMaterials.Add(indicator, originals);
+                indicator.teamMaterialPairs = prepared;
+            }
         }
         public void PresentNativeEffectSource(GameObject source)
         {
@@ -522,6 +552,8 @@ public sealed partial class PortSession
             {
                 if (!root || !visited.Add(root))
                     return;
+                foreach (var indicator in root.GetComponentsInChildren<TeamAreaIndicator>(true))
+                    PrepareNativeTeamAreaMaterials(indicator);
                 foreach (var renderer in root.GetComponentsInChildren<Renderer>(true))
                 {
                     if (coordinator.worldLootSourceMaterials.ContainsKey(renderer))
