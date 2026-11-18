@@ -21,6 +21,7 @@ import subprocess
 
 ROOT = Path(__file__).resolve().parents[2]
 SELECTION = Path("config/original-game-audio/selection.json")
+SELECTION_ENV = "ROR2LAB_BUILD_AUDIO_SELECTION"
 SELECTION_SCHEMA = "original-game-audio-build-selection-r2"
 LEGACY_SELECTION_SCHEMA = "original-game-audio-build-selection-r1"
 REQUESTED_PATHS = (
@@ -349,13 +350,17 @@ def synchronize_sound_emitter(project: Path, work: Path, *, requested: bool, res
     }
 
 
+def build_selection_path() -> Path:
+    return Path(os.environ.get(SELECTION_ENV, str(SELECTION)))
+
+
 def stage_for_build(project: Path, work: Path, *, selection_path: Path | None = None, authored_only: bool = False) -> dict:
     """Compile and stage audio inputs before the enclosing build computes its key."""
     project = project.resolve(strict=True)
     work = work.resolve(strict=True)
     if not project.is_dir() or work != (ROOT / "work").resolve(strict=True):
         raise ValueError("audio build hook requires the current project and canonical ignored work/ root")
-    selection_path = selection_path or (work / SELECTION)
+    selection_path = selection_path or build_selection_path()
     if not selection_path.is_absolute():
         selection_path = work / selection_path
     selection, resolved, variant = read_selection(work, selection_path)

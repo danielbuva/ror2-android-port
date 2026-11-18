@@ -1,5 +1,11 @@
 # Build recipes
 
+2026-11-18 original-audio packaging audit: the audio and camera recipes refresh
+authored source hashes for the full bank roster. The shared stager copies
+only accepted local game inputs, with the existing adapted Init. Provenance,
+privacy, licensing and sensitive-content review found only repository source
+hash changes in these recipes. Bank and media contents stay in ignored work.
+
 The staged Commando and objective-support recipes select the authored
 `SilentProjectileBoundary` from the source-produced player registry. The
 source prefab transformation in `scripts/lab/integrated_objective.py` attaches

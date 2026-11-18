@@ -26,7 +26,7 @@ PREFAB_SHA = "7f074267744a3f7652349572f4aa88f48cd3d43328ba629f686288f08c4be6af"
 BANK_INDEX_SHA = "f1d41954cb78c582a6c8a5fbbca58148057a120b01e4bb09cd47f8f107d66326"
 OWNER_BANK_INDEX_SHA = "063944216e330019b171e8d654b3f0c53ca33289888a2615100abc9e27fa2b76"
 SOUNDBANKS_INFO_SHA = "2b8430716d15c1ac9f78e1cc7625dc2206df6b5081b06b54c8048979d99b6407"
-MEDIA_PLANNER_SHA = "104fca54159b676ce5539e2686539dbe12400d2e136ce6e3344c88de760396d1"
+MEDIA_PLANNER_SHA = "d67c2e222d3315a14ab3f338a3de3fc2eebf4dd3d17288defc84b3a702d44989"
 INIT_SHA = "618d1c5d534af10fc4cc30a1bacd193bf6871dab3e63992ebedd92a92576fb90"
 INIT_SOURCE_SHA = "3182093b59cf48034b2715b224f3f217b34eaecf104d10940528ea20c4baffc6"
 INIT_RECEIPT_SHA = "3b274de411fe2128bffd43de117baf9156e58e75ebcd0f0cb2a5379b1f22260f"
@@ -35,6 +35,7 @@ GLOBAL_SHA = "37756450a0a08a0e3d79ed42926c4de062f67c01dbfef590db1c4af1130485e4"
 GLOBAL_SIZE = 95239411
 BANK_ROOT = Path("Risk of Rain 2_Data/StreamingAssets/Audio/GeneratedSoundBanks/Windows")
 OUTPUT_RELATIVE = Path("Audio/GeneratedSoundBanks/Android")
+STARTUP_BANK_COUNT = 153
 
 
 def sha_bytes(data: bytes) -> str:
@@ -77,9 +78,22 @@ def extract_names(prefab: str) -> list[str]:
         match = re.search(r"(?ms)^  soundbankStrings:\n(.*?)(?=^  decodeBank:)", doc)
         if match:
             names.extend(re.findall(r"^  - (.*)$", match.group(1), re.M))
-    if len(names) != 153 or len(set(names)) != 153 or any(not n or "/" in n or "\\" in n for n in names):
+    if len(names) != STARTUP_BANK_COUNT or len(set(names)) != STARTUP_BANK_COUNT or any(not n or "/" in n or "\\" in n for n in names):
         raise ValueError("current WwiseGlobal must contain exactly 153 unique safe bank names")
     return names
+
+
+def packaged_bank_names(startup_names: list[str], index_rows: list[dict]) -> list[str]:
+    startup = {name.casefold() for name in startup_names}
+    additional = []
+    for row in index_rows:
+        path = row.get("path")
+        if not isinstance(path, str) or Path(path).name != path or Path(path).suffix.lower() != ".bnk":
+            raise ValueError("bank index contains an unsafe/non-leaf bank path")
+        name = Path(path).stem
+        if name.casefold() != "init" and name.casefold() not in startup:
+            additional.append(name)
+    return startup_names + sorted(additional)
 
 
 def soundbanks_rows(path: Path) -> list[dict]:
@@ -150,7 +164,13 @@ def bank_context(prefab_path: Path, bank_index_path: Path, owner_work: Path | No
 
 
 def load_inputs(
-    prefab_path: Path, bank_index_path: Path, init_path: Path, init_receipt_path: Path, *, owner_work: Path | None = None
+    prefab_path: Path,
+    bank_index_path: Path,
+    init_path: Path,
+    init_receipt_path: Path,
+    *,
+    owner_work: Path | None = None,
+    startup_only: bool = False,
 ) -> tuple[Path, dict, list[dict], dict]:
     game_root, inputs = bank_context(prefab_path, bank_index_path, owner_work)
     inventory, bank_index = inputs["inventory"], inputs["bank_index"]
@@ -174,6 +194,8 @@ def load_inputs(
     index_rows = bank_index.get("banks")
     if not isinstance(index_rows, list):
         raise ValueError("bank index has no bank rows")
+    if not startup_only:
+        names = packaged_bank_names(names, index_rows)
     indexed: dict[str, list[dict]] = {}
     for row in index_rows:
         path = row.get("path")
@@ -222,11 +244,12 @@ def load_streamed_media_inputs(
     game_root, inputs = bank_context(prefab_path, bank_index_path, owner_work)
     if owner_work is not None and soundbanks_info_path.resolve(strict=True) != game_root / BANK_ROOT / "SoundbanksInfo.xml":
         raise ValueError("owner SoundbanksInfo must come from the admitted originals")
-    names = extract_names(prefab_path.read_text(encoding="utf-8"))
+    index_rows = inputs["bank_index"]["banks"]
+    names = packaged_bank_names(extract_names(prefab_path.read_text(encoding="utf-8")), index_rows)
     xml_rows = soundbanks_rows(soundbanks_info_path)
     media_plans = external_media_planner()(
         names,
-        inputs["bank_index"].get("banks", []),
+        index_rows,
         xml_rows,
         inputs["inventory"].get("files", []),
         game_root,
@@ -300,7 +323,7 @@ def create_stage(
             "init_adaptation_receipt_sha256": sha_file(init_receipt_path),
             "init_adaptation_candidate_sha256": INIT_SHA,
             "global_accepted_original_sha256": GLOBAL_SHA,
-            "requested_banks": len(plans),
+            "requested_banks": STARTUP_BANK_COUNT,
             "outputs": outputs,
             "streamed_media": [
                 {
@@ -388,7 +411,8 @@ def main() -> int:
         "schema": "original-game-wwise-bank-stage-plan-r2",
         "accepted_input_id": ACCEPTED_ID,
         "soundbanks_info_sha256": SOUNDBANKS_INFO_SHA,
-        "requested_bank_count": len(plans),
+        "requested_bank_count": STARTUP_BANK_COUNT,
+        "packaged_bank_count": len(plans) + 1,
         "exact_filename_matches": sum(not p["case_renamed"] for p in plans),
         "case_renamed_filenames": [p["output_filename"] for p in plans if p["case_renamed"]],
         "total_requested_bank_bytes": sum(p["size_bytes"] for p in plans),

@@ -277,8 +277,9 @@ remain required local state until that separate generator is promoted.
 `tools/unity/support/audio/generators/stage_original_game_banks.py` produces
 the selected stage root/receipt from those explicit inputs and an explicit
 `--soundbanks-info` path to the accepted installation's metadata. The current
-R2 receipt contains 153 original banks, adapted Init and the complete 120-file
-streamed-media closure with original bytes; all stay ignored. The pure
+R2 receipt contains all 247 source banks, including adapted Init, and the
+120-file streamed-media closure. The 153 WwiseGlobal names define startup
+readiness. Existing startup-only R2 receipts remain readable. The pure
 `original_media_plan.py` planner binds metadata and full-inventory hashes,
 rejecting missing files, inconsistent modes, aliases and changed bytes.
 The old bank-only R1 stage remains a historical rollback input, not a complete

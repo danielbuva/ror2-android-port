@@ -69,9 +69,9 @@ META_GUIDS = {
 NATIVE_META_GUID = "a2a09e81876b46f2a202e62f96644331"
 NATIVE_TARGET = "Assets/Plugins/Android/arm64-v8a/libAkSoundEngine.so"
 NATIVE_META = "Assets/Plugins/Android/arm64-v8a/libAkSoundEngine.so.meta"
-OWNER_ANCESTOR_MANIFEST_SHA256 = "ea38d3d1c3e2ce285058920d43745b0e57a1a912f052e37c53ffd130072a14e9"
-STAGE_PIN_TOOL_SHA256 = "11c1f947b44aac65197f0238e5ae9d166804bb7e7a4e3389d26bff3a210a1549"
-REQUEST_PIN_TOOL_SHA256 = "88d9608c2c055b1a22ae4c81ea58705275f8b74e76a5151973c2f94b08287661"
+OWNER_ANCESTOR_MANIFEST_SHA256 = "a4e5b392906641c49019383d8c6de9fb345a5234c728bfdafecfbd26ec654c33"
+STAGE_PIN_TOOL_SHA256 = "4977d2824fca91ab9898944994abdc6c318710599e7dd6e174615468febbad4b"
+REQUEST_PIN_TOOL_SHA256 = "127caff58f015e2b8b418d6e0bc8fda6b2970b9f778b190fc282d5baabda6546"
 MANAGED_PRODUCER_SHA256 = "faeac333b573a181c28de42c8b7d126b722f70c5039beca2736fbfbacaba0569"
 ABI_NATIVE_PLUGIN_SHA256 = "cfec01cb3aab87edbde3db38e3c0bbe6a1d18ffea2a1f831a59cf64a5526daca"
 ABI_GENERATED_SOURCE_SHA256 = "511f5e1ee552a874850a1fab5f613eeb51e7b6bc706a07bb57418c03e75df242"
@@ -96,7 +96,7 @@ OWNER_SOURCE_HASHES = {
     "bootstrap/GameAudioOriginalAndroidNativeBootstrap.cs": "fdce9ba21e249c7c9a8d2eed788c7561907a5327f9e9b8dc28ce23334e71ee70",
     "bootstrap/GameAudioOriginalGeneratedRequestPin.cs": "b70f8914fbc05eb6a88729b25c63ed10aee20256604cc259b3d8a5134705a7cf",
     "bootstrap/GameAudioOriginalGeneratedStagePin.cs": "d54d445d05712432559a5e332457af0b20200c93895bd79374c42b6280bd07a4",
-    "bootstrap/GameAudioOriginalPayloadCopy.cs": "c2623f2608e0de9e186de15b0d0cd8b292e7da5a8d02110e8fd2b69e9f544347",
+    "bootstrap/GameAudioOriginalPayloadCopy.cs": "4fae64adc915fc3a0570b6c496c5843437094e4b591052fa972197e648d3dace",
     "bootstrap/GameAudioOriginalPreparation.cs": "9894781b7ff0b5cde30b4b67ad0fb9f65a037ba0c124a086fe562c181fa41168",
     "bootstrap/GameAudioOriginalRequestBootstrap.cs": "f439474a489aa78face7d679ae9d9ecbebc280ed1dd26eddb8841a8087cb8768",
     "bootstrap/NativeWwiseMonitorLease.cs": "4fa40d608ba54dc33474fa23a01069fa71ae2e62997f56555929800f3d1fbed6",

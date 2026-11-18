@@ -14,7 +14,7 @@ import stat
 ROOT = Path(__file__).resolve().parents[5]
 WORK = (ROOT / "work").resolve()
 STAGER = Path(__file__).resolve().parent / "stage_original_game_banks.py"
-STAGER_SHA256 = "b3c7a69e2b3005babc5deb6126c16ba3d4c3afbe237b5f4a57298aec26fc7b5e"
+STAGER_SHA256 = "11e730f34f019566186c3d8f1c3461752a87f5416ce3b0f0be6d5da001850fe6"
 INPUT_ID = "6af7ed94619fe1b4346974b4486afa03a8d1625a7820e92da0ff74d57208fe88"
 PREFAB_SHA256 = "7f074267744a3f7652349572f4aa88f48cd3d43328ba629f686288f08c4be6af"
 BANK_INDEX_SHA256 = "f1d41954cb78c582a6c8a5fbbca58148057a120b01e4bb09cd47f8f107d66326"
@@ -91,7 +91,9 @@ def checked_staged_file(path: Path, label: str, work: Path) -> Path:
     return resolved
 
 
-def source_plan(prefab: Path, bank_index: Path, adapted_init: Path, init_receipt: Path, *, owner_work: Path | None = None) -> list[dict]:
+def source_plan(
+    prefab: Path, bank_index: Path, adapted_init: Path, init_receipt: Path, *, owner_work: Path | None = None, startup_only: bool
+) -> tuple[list[dict], list[str]]:
     if sha_file(STAGER) != STAGER_SHA256:
         raise ValueError("pinned explicit-input stage producer changed")
     spec = importlib.util.spec_from_file_location("root_bank_stage", STAGER)
@@ -102,8 +104,8 @@ def source_plan(prefab: Path, bank_index: Path, adapted_init: Path, init_receipt
     index_sha = BANK_INDEX_SHA256 if owner_work is None else OWNER_BANK_INDEX_SHA256
     if sha_file(prefab) != PREFAB_SHA256 or sha_file(bank_index) != index_sha:
         raise ValueError("current accepted prefab/bank index pins differ")
-    _, _, plan, _ = module.load_inputs(prefab, bank_index, adapted_init, init_receipt, owner_work=owner_work)
-    return plan
+    _, _, plan, _ = module.load_inputs(prefab, bank_index, adapted_init, init_receipt, owner_work=owner_work, startup_only=startup_only)
+    return plan, module.extract_names(prefab.read_text(encoding="utf-8"))
 
 
 def generate(
@@ -143,7 +145,10 @@ def generate(
         raise ValueError("stage receipt does not match current default-unaccepted contract")
     if receipt.get("accepted_inventory_sha256") != sha_file(work / "inventory/files.json"):
         raise ValueError("stage receipt does not bind current full accepted inventory")
-    plan = source_plan(prefab, bank_index, adapted_init, init_receipt, owner_work=owner_work)
+    outputs = receipt.get("outputs")
+    if not isinstance(outputs, list) or len(outputs) < 154:
+        raise ValueError("stage receipt must contain at least 153 startup banks plus Init")
+    plan, names = source_plan(prefab, bank_index, adapted_init, init_receipt, owner_work=owner_work, startup_only=len(outputs) == 154)
     init_receipt_sha = INIT_RECEIPT_SHA256 if owner_work is None else sha_file(init_receipt)
     index_sha = BANK_INDEX_SHA256 if owner_work is None else OWNER_BANK_INDEX_SHA256
     for key, expected in {
@@ -161,10 +166,6 @@ def generate(
         media_rows = streamed_media_rows(receipt, bank_index_sha256=index_sha, init_receipt_sha256=init_receipt_sha)
     expected = {row["output_filename"]: row for row in plan}
     expected["Init.bnk"] = {"source_sha256": INIT_SHA256, "size_bytes": adapted_init.stat().st_size}
-    outputs = receipt.get("outputs")
-    if not isinstance(outputs, list) or len(outputs) != 154:
-        raise ValueError("stage receipt must contain 153 banks plus Init")
-    names: list[str] = []
     seen: set[str] = set()
     for row in outputs:
         if not isinstance(row, dict):
@@ -180,12 +181,11 @@ def generate(
             requested = row.get("requested_name")
             if requested != expected_row["requested_name"] or name != requested + ".bnk":
                 raise ValueError(f"stage filename/name mapping differs: {name}")
-            names.append(requested)
         output_path = stage_root / receipt["output_relative_directory"] / name
         output_path = checked_staged_file(output_path, f"staged output {name}", work)
         if output_path.stat().st_size != row["size_bytes"] or sha_file(output_path) != row["sha256"]:
             raise ValueError(f"staged output bytes do not match receipt: {name}")
-    if seen != set(expected) or len(names) != 153 or len(set(names)) != 153:
+    if seen != set(expected):
         raise ValueError("stage receipt does not bind the exact current cohort")
     media_dir = stage_root / receipt["output_relative_directory"]
     for row in media_rows:

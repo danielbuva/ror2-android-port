@@ -95,6 +95,8 @@ def plan_external_media(
             inventory_by_path.setdefault(path, []).append(row)
 
     plan_by_id: dict[int, dict[str, Any]] = {}
+    embedded_owners: set[int] = set()
+    cross_bank_media: list[tuple[str, int]] = []
     for bank_name in selected_bank_names:
         index_matches = index_by_name.get(bank_name.casefold(), [])
         xml_matches = xml_by_name.get(bank_name.casefold(), [])
@@ -121,6 +123,7 @@ def plan_external_media(
                 if type(media_id) is not int or media_id < 0 or media_id in destination:
                     raise ValueError(f"duplicate or invalid {key} media ID in {bank_name}")
                 destination[media_id] = media
+        embedded_owners.update(embedded)
 
         # Cross-check every bank-index declaration against SoundbanksInfo.
         # The two inputs may contain extra non-streamed records in either view;
@@ -129,12 +132,16 @@ def plan_external_media(
         for media_id, media in declared.items():
             streaming = media.get("streaming")
             location = media.get("location")
-            if type(streaming) is not bool or location not in {"Memory", "Loose"}:
+            if type(streaming) is not bool or location not in {"Memory", "Loose", "OtherBank"}:
                 raise ValueError(f"unknown bank media mode for {bank_name}:{media_id}")
             xml = xml_media.get(media_id)
             if xml is not None and (xml.get("streaming") is not streaming or xml.get("location") != location):
                 raise ValueError(f"media mode differs between bank index and SoundbanksInfo: {bank_name}:{media_id}")
-            if streaming or location == "Loose":
+            if location == "OtherBank":
+                if streaming or media_id in embedded or xml is None or xml.get("path") is not None:
+                    raise ValueError(f"invalid OtherBank media declaration: {bank_name}:{media_id}")
+                cross_bank_media.append((bank_name, media_id))
+            elif streaming or location == "Loose":
                 external_ids.add(media_id)
                 if xml is None:
                     raise ValueError(f"external media missing from SoundbanksInfo: {bank_name}:{media_id}")
@@ -151,8 +158,10 @@ def plan_external_media(
         for media_id, media in xml_media.items():
             streaming = media.get("streaming")
             location = media.get("location")
-            if type(streaming) is not bool or location not in {"Memory", "Loose"}:
+            if type(streaming) is not bool or location not in {"Memory", "Loose", "OtherBank"}:
                 raise ValueError(f"unknown SoundbanksInfo media mode: {bank_name}:{media_id}")
+            if location == "OtherBank" and media_id not in declared:
+                raise ValueError(f"SoundbanksInfo OtherBank media missing from bank index: {bank_name}:{media_id}")
             if streaming or location == "Loose":
                 index_media = declared.get(media_id)
                 if index_media is None:
@@ -206,4 +215,7 @@ def plan_external_media(
                 plan_by_id[media_id] = proposed
             plan_by_id[media_id]["referenced_by"].append(bank_name)
 
+    for bank_name, media_id in cross_bank_media:
+        if media_id not in embedded_owners:
+            raise ValueError(f"OtherBank media is not embedded in any packaged bank: {bank_name}:{media_id}")
     return [plan_by_id[key] for key in sorted(plan_by_id)]
