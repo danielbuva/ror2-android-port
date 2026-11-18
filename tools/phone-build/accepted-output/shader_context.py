@@ -68,7 +68,7 @@ def checked_original(pc, selected):
     return body, A.SCHEMA.type_tree(io.BytesIO(typ["tree"])), typ
 
 
-def produce(profile_path, profile_pin, pc, sdk, asset_ripper, provider, provider_pin, output, comparison="exact"):
+def produce(profile_path, profile_pin, pc, sdk, asset_ripper, provider, provider_pin, output, comparison="exact", *, compiler_command=None, compiler_data=None):
     if comparison not in ("exact", "diagnostic"):
         raise ValueError("unknown target comparison policy")
     profile_path, pc, sdk, provider = (Path(p).resolve(strict=True) for p in (profile_path, pc, sdk, provider))
@@ -132,7 +132,7 @@ def produce(profile_path, profile_pin, pc, sdk, asset_ripper, provider, provider
     types, type_ids = [], {}
     try:
         with (
-            compiler.compiler([sdk / "Tools/UnityShaderCompiler"], sdk, output / "compiler-metadata", includes=[sdk / "CGIncludes"]) as connection,
+            P.compiler_session(compiler, sdk, output / "compiler-metadata", compiler_command=compiler_command, compiler_data=compiler_data) as connection,
             (output / "objects.bin").open("xb") as data,
             (output / "index.jsonl").open("x") as index,
         ):
@@ -230,6 +230,7 @@ def main():
         default="exact",
         help="Record historical output byte differences while retaining source and structural checks",
     )
+    P.add_compiler_arguments(parser)
     args = parser.parse_args()
     print(
         json.dumps(
@@ -243,6 +244,8 @@ def main():
                 args.receipt_sha256,
                 args.output,
                 comparison=args.comparison,
+                compiler_command=args.compiler_command,
+                compiler_data=args.compiler_data,
             )
         )
     )

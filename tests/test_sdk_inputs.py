@@ -56,6 +56,30 @@ def component(entries, *, old=False, truncate=False):
 
 
 class SDKInputTests(unittest.TestCase):
+    def test_linux_shader_extracts_compiler_and_plugins_in_sdk_layout(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp).resolve()
+            source, output = root / "editor.tar.xz", root / "out"
+            tools = {name: name.encode() for name in SDK.LINUX_SHADER_FILES}
+            with tarfile.open(source, "w:xz") as archive:
+                for name, data in {**tools, "Other/Unity": b"unrelated editor"}.items():
+                    member = tarfile.TarInfo("./Editor/Data/" + name)
+                    member.size = len(data)
+                    if name == "Tools/UnityShaderCompiler":
+                        member.mode = 0o755
+                    archive.addfile(member, io.BytesIO(data))
+            expected = {"Data/" + name: {"bytes": len(data), "sha256": hashlib.sha256(data).hexdigest()} for name, data in tools.items()}
+            with patch.multiple(
+                SDK,
+                LINUX_EDITOR_BYTES=source.stat().st_size,
+                LINUX_EDITOR_SHA256=hashlib.sha256(source.read_bytes()).hexdigest(),
+                LINUX_SHADER_FILES={name: expected["Data/" + name]["sha256"] for name in tools},
+            ):
+                result = SDK.extract_linux_shader(source, output)
+            self.assertEqual(result["files"], expected)
+            self.assertEqual({path.relative_to(output).as_posix() for path in output.rglob("*") if path.is_file()}, {*expected, "result.json"})
+            self.assertEqual((output / "Data/Tools/UnityShaderCompiler").stat().st_mode & 0o777, 0o700)
+
     def test_linux_texture_extracts_only_pinned_regular_member(self):
         for variant in ("codec", "link", "changed", "missing", "archive-drift"):
             with self.subTest(variant=variant), tempfile.TemporaryDirectory() as temp:

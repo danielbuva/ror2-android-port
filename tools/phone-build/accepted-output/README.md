@@ -1400,6 +1400,9 @@ contain `Tools/UnityShaderCompiler`, `Tools/libdxcompiler.so`,
 IPC owner rejects missing DX compiler dependencies before launch. A flattened
 `shader/` directory fails the compiler's relative `Tools/D3DCompiler_47.dll`
 lookup even after IPC initialization. Keep Mac metadata/includes in `--sdk`.
+The signed graph supplies these flags for each shader producer and uses
+`sdk_inputs.py --linux-shader` to extract the four pinned files from the
+owner's Linux Editor archive into a shared private artifact.
 
 The bounded ColorGrade producer ran on Android without the Editor and persisted
 7,784 B, SHA-256

@@ -500,8 +500,20 @@ class ReleaseGraphTests(unittest.TestCase):
                     profile = profile["tmp_dummy"]
                 root = G.ASSET_RIPPER_SOURCE + "/" + profile["exporter_revision"] + "/"
                 prefix = "" if embedded else G.ASSET_RIPPER_TEMPLATES
-                self.assertEqual(job["arguments"][job["arguments"].index(flag) + 1], G.ASSET_RIPPER_SOURCE)
-                self.assertEqual(set(job["cache_witnesses"]), {root + "LICENSE.md", *(root + prefix + name for name in profile["template_inputs"])})
+                argv = job["arguments"]
+                self.assertEqual(argv[argv.index(flag) + 1], G.ASSET_RIPPER_SOURCE)
+                self.assertEqual(
+                    set(job["cache_witnesses"]), {*G.SDK_GNU_WITNESSES, root + "LICENSE.md", *(root + prefix + name for name in profile["template_inputs"])}
+                )
+                extractor = "recipe/jobs/owner-sdk-shader-inputs.json"
+                self.assertIn(extractor, job["needs"])
+                self.assertEqual(graph.jobs[extractor]["cache_witnesses"], [G.LINUX_COMPONENT])
+                data = G.Graph.artifact_pin(extractor, "data")["path"]
+                self.assertEqual(argv[argv.index("--compiler-data") + 1], data)
+                command = json.loads(argv[argv.index("--compiler-command") + 1])
+                self.assertEqual(command[0], "${native}/libqemu-x86_64.so")
+                self.assertEqual(command[-1], data + "/Tools/UnityShaderCompiler")
+                self.assertIn("LD_LIBRARY_PATH=" + data + "/Tools:" + G.SDK_GNU_LIBRARIES, command)
 
     def test_texture_jobs_bind_required_pinned_tools(self):
         graph = G.Graph(ROOT, {})

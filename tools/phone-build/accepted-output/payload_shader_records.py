@@ -121,6 +121,9 @@ def produce_postprocessing(
     output,
     codec,
     codec_sha256,
+    *,
+    compiler_command=None,
+    compiler_data=None,
 ):
     """Emit the source dummy cohort using current original forms and SDK context."""
     pc, sdk, asset_ripper = (Path(path).resolve(strict=True) for path in (pc, sdk, asset_ripper))
@@ -170,12 +173,7 @@ def produce_postprocessing(
         rows = []
         types, type_ids = [], {}
         with (
-            compiler.compiler(
-                [sdk / "Tools/UnityShaderCompiler"],
-                sdk,
-                output / "compiler",
-                includes=[sdk / "CGIncludes"],
-            ) as connection,
+            P.compiler_session(compiler, sdk, output / "compiler", compiler_command=compiler_command, compiler_data=compiler_data) as connection,
             W.codec(codec, codec_sha256) as compress,
             (output / "objects.bin").open("wb") as stream,
         ):
@@ -581,7 +579,7 @@ def legacy_particle_selections(original, sdk_source, materials):
     return P.sdk_scene_selections(sdk_source, set())
 
 
-def produce_standard(profile_path, profile_sha256, pc, sdk, output, codec, codec_sha256):
+def produce_standard(profile_path, profile_sha256, pc, sdk, output, codec, codec_sha256, *, compiler_command=None, compiler_data=None):
     """Produce the bounded Standard source record through the shared SDK owner."""
     import UnityPy
 
@@ -729,12 +727,7 @@ def produce_standard(profile_path, profile_sha256, pc, sdk, output, codec, codec
         native_output = output / "standard"
         native_output.mkdir()
         with (
-            compiler.compiler(
-                [sdk / "Tools/UnityShaderCompiler"],
-                sdk,
-                output / "compiler",
-                includes=[sdk / "CGIncludes"],
-            ) as connection,
+            P.compiler_session(compiler, sdk, output / "compiler", compiler_command=compiler_command, compiler_data=compiler_data) as connection,
             W.codec(codec, codec_sha256) as compress,
         ):
             # The supported shared API must retain SOURCE keyword_rows native
@@ -797,6 +790,9 @@ def produce(
     output,
     codec,
     codec_sha256,
+    *,
+    compiler_command=None,
+    compiler_data=None,
 ):
     """Read current originals/public SDK inputs and emit the existing record pack."""
     profile_path = Path(profile_path).resolve(strict=True)
@@ -806,7 +802,9 @@ def produce(
     if profile["input_id"] != INPUT_ID:
         raise ValueError("payload shaders require the accepted current original input")
     if "materials" in profile:
-        return produce_standard(profile_path, profile_sha256, pc, sdk, output, codec, codec_sha256)
+        return produce_standard(
+            profile_path, profile_sha256, pc, sdk, output, codec, codec_sha256, compiler_command=compiler_command, compiler_data=compiler_data
+        )
     if asset_ripper is None:
         raise ValueError("Barrier and post-processing require the public template source")
     if "shaders" in profile:
@@ -820,6 +818,8 @@ def produce(
             output,
             codec,
             codec_sha256,
+            compiler_command=compiler_command,
+            compiler_data=compiler_data,
         )
     if legacy_sdk is None:
         raise ValueError("Barrier shaders require the acquired legacy SDK metadata")
@@ -903,12 +903,7 @@ def produce(
         vertex_output.mkdir()
         compiler = P.module("_payload_shader_compiler", repo / "tools/phone-build/owner-code/shader.py")
         with (
-            compiler.compiler(
-                [sdk / "Tools/UnityShaderCompiler"],
-                sdk,
-                output / "compiler",
-                includes=[sdk / "CGIncludes"],
-            ) as connection,
+            P.compiler_session(compiler, sdk, output / "compiler", compiler_command=compiler_command, compiler_data=compiler_data) as connection,
             W.codec(codec, codec_sha256) as compress,
         ):
             vertex_body, vertex_tree, _ = SDK.compile_body(
@@ -1029,7 +1024,7 @@ def main():
         "--sdk",
         type=Path,
         required=True,
-        help="Current pinned Unity 2021.3.45f2 Contents; its compiler executes",
+        help="Current pinned Unity 2021.3.45f2 Contents for metadata, includes and the default compiler",
     )
     parser.add_argument(
         "--legacy-sdk",
@@ -1045,6 +1040,7 @@ def main():
     )
     parser.add_argument("--codec", type=Path, required=True)
     parser.add_argument("--codec-sha256", required=True)
+    P.add_compiler_arguments(parser)
     args = parser.parse_args()
     result = produce(
         args.profile,
@@ -1056,6 +1052,8 @@ def main():
         args.output,
         args.codec,
         args.codec_sha256,
+        compiler_command=args.compiler_command,
+        compiler_data=args.compiler_data,
     )
     print(json.dumps(result, indent=2))
 

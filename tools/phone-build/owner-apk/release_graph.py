@@ -24,6 +24,17 @@ PACKAGE_PRODUCER = "tools/phone-build/package-assemblies/produce.py"
 PACKAGE_ARCHIVES = "${inputs}/acquired/unity-packages"
 ASSET_RIPPER_SOURCE = "${inputs}/acquired/asset-ripper"
 ASSET_RIPPER_TEMPLATES = "Source/AssetRipper.Export.UnityProjects/Shaders/Templates/"
+SDK_GNU_ROOT = "${inputs}/acquired/android-sdk/linux"
+SDK_GNU_LIBRARIES = SDK_GNU_ROOT + "/lib/x86_64-linux-gnu"
+SDK_GNU_WITNESSES = [
+    "${native}/libqemu-x86_64.so",
+    "${native}/libc++_shared.so",
+    SDK_GNU_ROOT + "/lib64/ld-linux-x86-64.so.2",
+    *[
+        SDK_GNU_LIBRARIES + "/" + name
+        for name in ("libc.so.6", "libdl.so.2", "libgcc_s.so.1", "libm.so.6", "libpthread.so.0", "librt.so.1", "libstdc++.so.6", "libz.so.1")
+    ],
+]
 INSTALLED_BUNDLE_CODEC = dict(
     path="${native}/libbundlelz4.so",
     sha256="${native_sha256:libbundlelz4.so}",
@@ -312,6 +323,23 @@ class Graph:
                 path_prefix = ASSET_RIPPER_SOURCE + "/" + provider["exporter_revision"] + "/"
                 witnesses.extend(path_prefix + name for name in provider["template_inputs"])
                 witnesses.append(path_prefix + "LICENSE.md")
+        if self.conversion and producer in {"shader_produce", "shader_context", "shader_prefab", "payload_shader_records"}:
+            extractor = self.sdk_shader_extraction()
+            needs.append(extractor)
+            compiler_data = self.artifact_pin(extractor, "data")["path"]
+            tools = compiler_data + "/Tools"
+            command = [
+                "${native}/libqemu-x86_64.so",
+                "-L",
+                SDK_GNU_ROOT,
+                "-E",
+                "LD_LIBRARY_PATH=" + tools + ":" + SDK_GNU_LIBRARIES,
+                "-E",
+                "LC_ALL=C",
+                tools + "/UnityShaderCompiler",
+            ]
+            arguments += ["--compiler-command", json.dumps(command), "--compiler-data", compiler_data]
+            witnesses.extend(SDK_GNU_WITNESSES)
         if producer == "texture_produce":
             textures = [texture for bundle in profile["bundles"] for member in bundle["members"] for texture in member["textures"]]
             operations = {texture["operation"] for texture in textures}
@@ -1102,6 +1130,21 @@ class Graph:
                 "needs": [],
                 "outputs": {},
                 "artifacts": {"receipt": "result.json", "library": "etccompress.so"},
+                "cache_witnesses": [LINUX_COMPONENT],
+            }
+            self.job_profiles[name] = {}
+        return name
+
+    def sdk_shader_extraction(self):
+        name = "recipe/jobs/owner-sdk-shader-inputs.json"
+        if name not in self.jobs:
+            self.jobs[name] = {
+                "schema": 1,
+                "script": PREFIX + "sdk_inputs.py",
+                "arguments": ["--component", LINUX_COMPONENT, "--output", "${output}", "--linux-shader"],
+                "needs": [],
+                "outputs": {},
+                "artifacts": {"receipt": "result.json", "data": "Data"},
                 "cache_witnesses": [LINUX_COMPONENT],
             }
             self.job_profiles[name] = {}

@@ -1089,6 +1089,20 @@ def asset_ripper_templates(source, profile, *, prefix=ASSET_RIPPER_TEMPLATES):
     return templates
 
 
+def compiler_session(compiler, sdk, output, *, compiler_command=None, compiler_data=None, includes=None):
+    return compiler.compiler(
+        compiler_command if compiler_command is not None else [sdk / "Tools/UnityShaderCompiler"],
+        compiler_data if compiler_data is not None else sdk,
+        output,
+        includes=includes if includes is not None else [sdk / "CGIncludes"],
+    )
+
+
+def add_compiler_arguments(parser):
+    parser.add_argument("--compiler-command", type=json.loads, help="explicit compiler argv as a JSON array, including an Android GNU runner when required")
+    parser.add_argument("--compiler-data", type=Path, help="acquired compiler SDK data root; --sdk still supplies the pinned metadata/includes")
+
+
 def includes(directory):
     """Pin names and contents; return native hash's sorted file-content stream."""
     digest, contents = hashlib.sha256(), []
@@ -1523,10 +1537,12 @@ def produce(
             tmp_objects = {obj.path_id: obj for obj in UnityPy.load(str(relative(pc, selected["path"]))).objects if obj.assets_file.name == selected["member"]}
         core = recovery.build_native_hlsl(hlsl_source, output / "native-hlsl-tool") if "native_internal" in profile else None
         with (
-            compiler.compiler(
-                compiler_command if compiler_command is not None else [sdk / "Tools/UnityShaderCompiler"],
-                compiler_data if compiler_data is not None else sdk,
+            compiler_session(
+                compiler,
+                sdk,
                 output / "compiler",
+                compiler_command=compiler_command,
+                compiler_data=compiler_data,
                 includes=include_dirs,
             ) as connection,
             W.codec(codec_path, codec_sha256) as compress,
@@ -1645,8 +1661,7 @@ def main():
     parser.add_argument("--d3dasm-sha256", help="expected SHA-256 of the caller-supplied public tool")
     parser.add_argument("--hlsl-source", type=Path, help="caller-supplied pinned public HLSLDecompiler Git repository; native core builds into new output")
     parser.add_argument("--asset-ripper-source", type=Path, help="pinned public AssetRipper Git repository or staged revision tree")
-    parser.add_argument("--compiler-command", type=json.loads, help="explicit compiler argv as a JSON array, including an Android GNU runner when required")
-    parser.add_argument("--compiler-data", type=Path, help="acquired compiler SDK data root; --sdk still supplies the pinned metadata/includes")
+    add_compiler_arguments(parser)
     parser.add_argument(
         "--authored-file",
         action="append",

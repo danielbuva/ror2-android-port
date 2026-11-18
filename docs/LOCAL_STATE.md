@@ -2062,6 +2062,9 @@ Stage the API-30 platform as `android-30.jar`, recognized Linux AAPT2 as
 under `linux/lib64/` and the runtime libraries named in the request under
 `linux/lib/x86_64-linux-gnu/`. Retain these providers and acquisition receipts under
 ignored local storage; the public repository distributes no provider binaries.
+The signed shader jobs use this same GNU runtime. Their `--linux-shader`
+extractor reads `acquired/unity-linux-editor.tar.xz` and supplies the four
+verified compiler files in a private job artifact.
 [Setup and output lifecycle](../tools/phone-build/accepted-output/README.md#produce-the-generic-android-package-entries)
 explain their use. Host Java 11 and phone Java 21 produce the documented J1109
 class-checksum-only DEX difference; accepted DEX bytes never supply production.
