@@ -91,6 +91,45 @@ class CheckpointTests(unittest.TestCase):
         resumed.fail(ValueError("originals changed"))
         self.assertEqual(resumed.state["first_failure"], {"stage": "admission", "reason": "originals changed"})
 
+    def test_checkpoint_write_failures_report_first_stage_without_running_unadmitted_producer(self):
+        for phase, failing_call in (("begin", 1), ("complete", 2)):
+            for operation in ("write", "fsync", "rename"):
+                with self.subTest(phase=phase, operation=operation):
+                    emitted = []
+                    self.options["emit"] = emitted.append
+                    flow = self.create()
+                    action = Mock(return_value="authored output")
+                    original = F.write_json
+                    failure = OSError("synthetic " + operation + " checkpoint failure")
+                    calls = 0
+
+                    def interrupted(path, value):
+                        nonlocal calls
+                        calls += 1
+                        if calls < failing_call:
+                            return original(path, value)
+                        if operation == "write":
+                            raise failure
+                        name = "fsync" if operation == "fsync" else "replace"
+                        with patch.object(F.ATOMIC.os, name, side_effect=failure):
+                            return original(path, value)
+
+                    with patch.object(F, "write_json", side_effect=interrupted):
+                        with self.assertRaises(OSError) as caught:
+                            flow.perform("native", action)
+                    self.assertIs(caught.exception, failure)
+                    self.assertEqual(action.call_count, 0 if phase == "begin" else 1)
+                    self.assertEqual(emitted[-1]["status"], "failed")
+                    self.assertEqual(emitted[-1]["first_failure"], {"stage": "native", "reason": str(failure)})
+                    self.assertEqual(flow.row("native")["status"], "failed")
+                    # Retry revalidates; failed persistence never certifies completion.
+                    resumed = self.create()
+                    self.assertNotEqual(resumed.row("native")["status"], "complete")
+                    self.assertEqual(resumed.perform("native", lambda: "retry"), "retry")
+                    self.assertIsNone(resumed.state["first_failure"])
+                    # Keep each injected case independent of the previous success.
+                    flow.path.unlink()
+
     def test_artifact_receipt_rehashes_bytes_missing_and_symlink(self):
         flow = self.create()
         artifact = self.root / "synthetic-result.txt"

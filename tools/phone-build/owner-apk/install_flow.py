@@ -186,8 +186,10 @@ class Pipeline:
                 pass
 
     def perform(self, stage, action):
-        self.begin(stage)
         try:
+            # Admission persistence can fail before the producer is invoked.
+            # Report it through the same first-failure/fallback path as execution.
+            self.begin(stage)
             result = action()
             self.complete(stage)
             return result
