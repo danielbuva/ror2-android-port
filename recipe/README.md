@@ -1,5 +1,15 @@
 # Build recipes
 
+The staged Commando and objective-support recipes select the authored
+`SilentProjectileBoundary` from the source-produced player registry. The
+source prefab transformation in `scripts/lab/integrated_objective.py` attaches
+it to GameObjects with a `ProjectileController`. The two profiles use the
+fieldless component schema for those 26 and six attachments. The previous
+EventSystem selection described in the November 4 audit was incorrect.
+Provenance, licensing, privacy and sensitive-content review covered the four
+revised profiles. They contain script identities, source selectors and supplier
+hashes. Serialized bodies and device evidence stay in local storage.
+
 2026-11-05 artifact/holder snapshot audit: refreshed the authored session source
 pin and producer/camera manifest bindings after sharing one synchronous manifest
 read. Only repository source hashes change; provenance, privacy, licensing and
@@ -6942,7 +6952,7 @@ No game-derived bodies or new external inputs are included.
 | --- | --- |
 | `owner-commando-objects.json` | `b7029a2b1dbb5f417c393840ab8545170b4d46f1b2d0708c1159ec04ab08d25c` |
 
-## Current EventSystem supplier identity (2026-11-04)
+## Historical EventSystem supplier identity (2026-11-04)
 
 The objective and Commando remap/object profiles above select EventSystem by
 assembly, namespace and class in the fresh source-produced player registry.

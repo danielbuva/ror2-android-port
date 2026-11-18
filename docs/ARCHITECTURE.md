@@ -1,5 +1,24 @@
 # Architecture
 
+The per-run `diagnosticObjectiveStartup` selector asks `TeleporterWorldSession`
+to inspect typed objective assets before preparing any actor templates. The
+session report retains every observed failure, child names and sibling indices,
+component slot and count, and the loaded bundle names for a serialized-file
+join. On the host, `accepted-output/objective_slots.py` binds the captured
+report to its launch PID, attempt, session and installed APK hash. It follows
+the sibling route from the signed prefab's container entry and checks the
+hierarchy and slot count before reporting component and script PPtrs, their
+resolved members and whether Android listed the owning bundles as loaded.
+Ordinary template preparation still enforces its original checks.
+
+For retained staged prefabs, `accepted-output/staged_projectiles.py` updates the
+projectile components from the current object recipe, original prototype, SDK
+base schema and produced player registry. It checks reciprocal ownership by
+the projectile GameObject and its controller, retains the container preloads,
+and reads back every object, member flag, resource and serialized table before
+publishing the output bundle. Fresh prefab production uses the same fieldless
+component recipe through `object_produce.py`.
+
 `OfflineApplicationSession` owns controller/keyboard menu routes, loadout modal
 visibility, Quit confirmation and persisted-results return. The existing
 `OfflineLoadoutBoundary` edits only unlocked source skill/skin choices and owns
@@ -3181,6 +3200,10 @@ unsecured keyguard (with one swipe fallback) and verifies the window-policy
 lock flags are false. The terminal receipt retains boolean prelaunch readbacks;
 a credential lock or unknown lock state aborts before launch. Cleanup still
 stops the owned packages, sleeps the display and releases the lease.
+After keyguard dismissal a converted session records any resumed lab process.
+If only the separate lab package resumed, the runner retains matching Android
+process-start events and uses its existing receipt-verified idle reset. The
+prelaunch process check still requires both packages idle.
 Under its lease the runner records and removes only the owned package's stale
 selector/pending files and stops its process. It reserves estimated output plus
 20 GiB, gives each cooldown its own deadline, and reuses the batch thermal owner.
@@ -7690,6 +7713,20 @@ resources also supply external preload endpoints; the release graph binds these
 from the selected player outputs. The scoped producer checks native endpoints,
 types and script bindings and retains its receipt on exit. This adds
 no runtime owner. Complete APK and device acceptance remain open.
+
+After assembly, `catalog_complete.py --player-apk` checks prefab and scene
+components against the APK's serialized script tables and IL2CPP images. It
+verifies the catalog input bundles, registry and resources against the APK,
+reads native player members directly, and writes a standalone audit receipt.
+The check covers package and plugin images and reports scriptless components
+separately. Native typed loads still qualify runtime behaviour.
+
+For reference-build comparisons, `accepted-output/catalog_compare.py` reads
+the signed candidate, its catalog request and the accepted build's pinned
+payload. Its private report groups differences in component slots, referenced
+objects, script bindings, fields and container preloads by bundle, member and
+object ID. Reused IDs with different classes carry the available candidate
+source witness. A shared ID alone does not establish object identity.
 
 The owner APK builder binds the Android resource table's package name to an
 explicit installation ID alongside the manifest rewrite. This preserves resource

@@ -14,6 +14,7 @@ from pathlib import Path
 import re
 import struct
 import sys
+from zipfile import ZipFile
 
 HERE = Path(__file__).resolve().parent
 ROOT = HERE.parents[2]
@@ -143,6 +144,82 @@ def script_identity(body):
     return name, namespace, assembly
 
 
+def il2cpp_type_identities(metadata):
+    """Read the image and type definitions of the pinned v31 player format."""
+    if len(metadata) < 176 or struct.unpack_from("<II", metadata) != (0xFAB11BAF, 31):
+        raise ValueError("unsupported Android IL2CPP metadata format")
+
+    def table(header_offset, width):
+        start, size = struct.unpack_from("<II", metadata, header_offset)
+        if start < 176 or start + size > len(metadata) or size % width:
+            raise ValueError("invalid Android IL2CPP metadata table")
+        return start, size
+
+    strings, strings_size = table(24, 1)
+    types, types_size = table(160, 88)
+    images, images_size = table(168, 40)
+
+    def string(index):
+        end = metadata.find(b"\0", strings + index, strings + strings_size)
+        if not 0 <= index < strings_size or end < 0:
+            raise ValueError("invalid Android IL2CPP metadata string")
+        return metadata[strings + index : end].decode("utf-8")
+
+    identities = set()
+    for offset in range(images, images + images_size, 40):
+        name_index, _, first_type, count = struct.unpack_from("<iiii", metadata, offset)
+        image = string(name_index)
+        if count == 0 and first_type == -1:
+            continue
+        if first_type < 0 or count < 0 or (first_type + count) * 88 > types_size:
+            raise ValueError("invalid Android IL2CPP image type range")
+        start = types + first_type * 88
+        for type_offset in range(start, start + count * 88, 88):
+            name, namespace = struct.unpack_from("<ii", metadata, type_offset)
+            identities.add((string(name), string(namespace), image))
+    return identities
+
+
+def prefab_script_bindings(members, player_types):
+    """Check every GameObject-owned MonoBehaviour in the supplied members."""
+    failures, scriptless = [], []
+    checked = 0
+    identities = set()
+    resolved = {}
+    for member, (_, layout, objects) in sorted(members.members.items()):
+        for path_id, row in objects.items():
+            typ = layout["types"][row["type_id"]]
+            if typ["class_id"] != 114:
+                continue
+            _, _, body = members.record(member, (0, path_id), prefix=28)
+            if len(body) < 28:
+                failures.append(dict(member=member, path_id=path_id, error="truncated serialized MonoBehaviour"))
+                continue
+            game_object = struct.unpack_from("<iq", body)
+            if game_object == (0, 0):
+                continue
+            pointer = struct.unpack_from("<iq", body, 16)
+            if pointer == (0, 0):
+                scriptless.append(dict(member=member, path_id=path_id, game_object=game_object))
+                continue
+            checked += 1
+            identity = None
+            try:
+                key = (member, pointer, typ["script_id"])
+                if key not in resolved:
+                    resolved[key] = members.managed_identity(member, typ, body)
+                identity = resolved[key]
+                index = typ["script_type"]
+                if not 0 <= index < len(layout["scripts"]) or layout["scripts"][index] != pointer:
+                    raise ValueError("serialized script table disagrees with m_Script")
+                identities.add(identity)
+                if identity not in player_types:
+                    raise ValueError("type absent from Android player image")
+            except ValueError as exc:
+                failures.append(dict(member=member, path_id=path_id, game_object=game_object, script=pointer, identity=identity, error=str(exc)))
+    return dict(behaviours=checked, scriptless=scriptless, types=len(identities), failures=failures)
+
+
 class ProducedMembers:
     def __init__(self):
         self.members = {}
@@ -169,11 +246,12 @@ class ProducedMembers:
             raise ValueError("missing produced PPtr target: " + member + ":" + str(path_id))
         return member, self.members[member][2][path_id]
 
-    def record(self, member, pointer):
+    def record(self, member, pointer, *, prefix=None):
         member, row = self.resolve(member, pointer)
         stream, layout, _ = self.members[member]
         stream.seek(layout["data_offset"] + row["offset"])
-        return member, layout["types"][row["type_id"]], W.B.exact(stream, row["bytes"])
+        size = row["bytes"] if prefix is None else min(prefix, row["bytes"])
+        return member, layout["types"][row["type_id"]], W.B.exact(stream, size)
 
     def managed_identity(self, member, typ, body):
         if len(body) < 28:
@@ -519,7 +597,37 @@ def include_source_locations(metadata, source, location_ids):
     return dict(metadata, locations=metadata["locations"] + locations, keys=list(keys.values()))
 
 
-def produce(inputs, output):
+def audit_player_bindings(player_apk, members, files, registry, resources, pins):
+    player_apk_sha = W.B.sha(player_apk)
+    with ZipFile(player_apk) as apk:
+        player_metadata = apk.read("assets/bin/Data/Managed/Metadata/global-metadata.dat")
+        entries = {"assets/owner-bootstrap/data/" + name: path for name, path in files.items()}
+        entries["assets/bin/Data/globalgamemanagers.assets"] = registry
+        for name, path in resources.items():
+            prefix = "assets/bin/Data/Resources/" if name == "unity_builtin_extra" else "assets/bin/Data/"
+            entries[prefix + name] = path
+        for name, path in entries.items():
+            with apk.open(name) as stream:
+                if hashlib.file_digest(stream, "sha256").hexdigest() != pins[path]["sha256"]:
+                    raise ValueError("APK script audit input differs: " + name)
+        for entry in apk.infolist():
+            if not re.fullmatch(r"assets/bin/Data/(?:globalgamemanagers|level\d+|sharedassets\d+\.assets|[0-9a-f]{32})", entry.filename):
+                continue
+            stream = io.BytesIO(apk.read(entry))
+            stream.size = entry.file_size
+            members.add(entry.filename.rsplit("/", 1)[-1], stream, "@player-data")
+    bindings = prefab_script_bindings(members, il2cpp_type_identities(player_metadata))
+    if W.B.sha(player_apk) != player_apk_sha:
+        raise ValueError("APK changed during script audit")
+    return dict(
+        member_count=len(members.members),
+        prefab_script_bindings=bindings,
+        player_apk_sha256=player_apk_sha,
+        player_metadata_sha256=hashlib.sha256(player_metadata).hexdigest(),
+    )
+
+
+def produce(inputs, output, player_apk=None):
     inputs = Path(inputs).resolve(strict=True)
     request_bytes = inputs.read_bytes()
     request = json.loads(request_bytes)
@@ -564,7 +672,6 @@ def produce(inputs, output):
     names = {row["assetBundleName"] for row in builds} | {row["bundle"] for row in metadata["locations"]}
     if set(files) != names:
         raise ValueError("produced bundle population differs; missing=" + str(sorted(names - files.keys())) + " extra=" + str(sorted(files.keys() - names)))
-    facts = produced_bundle_metadata(files)
     members = ProducedMembers()
     for name, path in files.items():
         bundle = W.B.Bundle(path)
@@ -578,26 +685,30 @@ def produce(inputs, output):
     stream = io.BytesIO(registry.read_bytes())
     stream.size = len(stream.getbuffer())
     members.add(registry.name, stream, "@runtime-registry")
-    checks = validate_locations(metadata, members, "@runtime-registry")
-    raw = integration_catalog(metadata, facts, bundle_names=names)
+    if player_apk is not None:
+        checks = audit_player_bindings(player_apk, members, files, registry, resources, pins)
+    else:
+        facts = produced_bundle_metadata(files)
+        checks = validate_locations(metadata, members, "@runtime-registry")
+        raw = integration_catalog(metadata, facts, bundle_names=names)
     if inputs.read_bytes() != request_bytes or any(dict(bytes=path.stat().st_size, sha256=W.B.sha(path)) != pin for path, pin in pins.items()):
         raise ValueError("catalog inputs changed during production")
     output = Path(output)
     output.mkdir(exist_ok=False)
-    (output / "whole-catalog.json").write_bytes(raw)
     receipt = dict(
-        success=True,
-        phase="catalog-completed",
         input_sha256=hashlib.sha256(request_bytes).hexdigest(),
         producer_sha256=W.B.sha(Path(__file__)),
         input_id=request["input_id"],
         attempt=request["attempt"],
-        file=dict(bytes=len(raw), sha256=hashlib.sha256(raw).hexdigest()),
-        bundles=facts,
         checks=checks,
         runtime_qualified=False,
         phone_qualified=False,
     )
+    if player_apk is not None:
+        receipt.update(success=not checks["prefab_script_bindings"]["failures"], phase="prefab-scripts-audited")
+    else:
+        (output / "whole-catalog.json").write_bytes(raw)
+        receipt.update(success=True, phase="catalog-completed", file=dict(bytes=len(raw), sha256=hashlib.sha256(raw).hexdigest()), bundles=facts)
     (output / "result.json").write_text(json.dumps(receipt, indent=2) + "\n")
     return receipt
 
@@ -606,9 +717,12 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--inputs", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument("--player-apk", type=Path, help="Audit prefab script bindings against an assembled Android player")
     args = parser.parse_args()
-    print(json.dumps(produce(args.inputs, args.output)))
+    result = produce(args.inputs, args.output, args.player_apk)
+    print(json.dumps(result))
+    return 0 if result["success"] else 1
 
 
 if __name__ == "__main__":
-    main()
+    raise SystemExit(main())

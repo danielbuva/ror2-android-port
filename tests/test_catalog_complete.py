@@ -5,6 +5,7 @@ import io
 import json
 from pathlib import Path
 import struct
+import sys
 import tempfile
 from types import SimpleNamespace
 import unittest
@@ -37,6 +38,104 @@ def pin(path):
 
 
 class CatalogCompletionTests(unittest.TestCase):
+    def test_objective_slot_uses_ordered_indices_and_confirmed_hierarchy(self):
+        mesh = module("objective_slot_mesh", "unity_mesh.py")
+        records = module("objective_slot_records", "record_produce.py")
+        with patch.dict(sys.modules, catalog_complete=C, unity_mesh=mesh):
+            compare = module("objective_slot_catalog", "catalog_compare.py")
+        with patch.dict(sys.modules, catalog_compare=compare, record_produce=records):
+            slots = module("objective_slot_test", "objective_slots.py")
+
+        catalog = compare.Catalog.__new__(compare.Catalog)
+        layout = {"externals": [], "types": [{"class_id": 4}, {"class_id": 114}]}
+        catalog.members = {"prefab": (None, layout, {pid: {"type_id": typ, "path_id": pid} for pid, typ in [(1, 0), (2, 0), (3, 0), (4, 0), (5, 1)]})}
+        catalog.names = {"prefab": "bundle"}
+        prefabs = slots.ObjectivePrefabs.__new__(slots.ObjectivePrefabs)
+        prefabs.catalog = catalog
+        prefabs.assets = {"model.prefab": {("prefab", 1)}}
+        prefabs.bundle_names = {"bundle": "runtime-name"}
+        refs = {
+            1: {("m_Component", "Array", 0, "component"): (0, 2)},
+            2: {("m_Children", "Array", 1): (0, 3)},
+            3: {("#374",): (0, 4)},
+            4: {("m_Component", "Array", 0, "component"): (0, 3), ("m_Component", "Array", 1, "component"): (0, 5)},
+        }
+
+        def field_rows(_, endpoint):
+            pid = endpoint[1]
+            name = b"Root" if pid == 1 else b"Leaf"
+            return 1, struct.pack("<I", 4) + name, None, refs[pid]
+
+        failure = dict(asset="Model.prefab", route="1", hierarchy="Root/Leaf", componentCount=2, slot=1)
+        with (
+            patch.object(slots, "fields", side_effect=field_rows),
+            patch.object(records, "fields", return_value=(None, {("m_Name",): (0, 8)})),
+            patch.object(catalog, "record", return_value=("prefab", {"class_id": 114}, bytes(32))),
+        ):
+            result = prefabs.slot(failure, [])
+            self.assertEqual(result["component"], dict(file_id=0, path_id=5, member="prefab", expected_bundle="runtime-name", bundle_loaded=False))
+            self.assertIsNone(result["script"])
+            with self.assertRaisesRegex(ValueError, "hierarchy or slots differ"):
+                prefabs.slot(dict(failure, componentCount=3), [])
+            with self.assertRaisesRegex(ValueError, "sibling index absent"):
+                prefabs.slot(dict(failure, route="0"), [])
+
+    def test_differential_retains_array_indices_and_resolves_file_ids_per_member(self):
+        mesh = module("catalog_comparison_mesh", "unity_mesh.py")
+        with patch.dict(sys.modules, catalog_complete=C, unity_mesh=mesh):
+            compare = module("catalog_comparison_test", "catalog_compare.py")
+
+        array = mesh.Node(0, 1, "Array", "Array", -1, 0)
+        count = mesh.Node(1, 0, "int", "size", 4, 0)
+        element = mesh.Node(1, 0, "PPtr<Component>", "data", 12, 0)
+        element.children = [mesh.Node(2, 0, "int", "m_FileID", 4, 0), mesh.Node(2, 0, "SInt64", "m_PathID", 8, 0)]
+        array.children = [count, element]
+        with patch.object(mesh, "type_tree", return_value=array):
+            root, _ = compare.schema(b"fixture")
+        body = struct.pack("<Iiqiq", 2, 1, 7, 0, 8)
+        self.assertEqual(compare.pointers(body, root), {(0,): (1, 7), (1,): (0, 8)})
+        with self.assertRaisesRegex(ValueError, "incomplete serialized object"):
+            compare.pointers(body + bytes(4), root)
+
+        catalog = compare.Catalog.__new__(compare.Catalog)
+        catalog.members = {"base": (None, {"externals": [{"path": "archive:/other/CAB"}]}, {8: {}}), "CAB": (None, {}, {7: {}})}
+        self.assertEqual(catalog.endpoint("base", (1, 7)), ("CAB", 7))
+        self.assertEqual(catalog.endpoint("base", (1, 8)), ("missing-target", "CAB", 8))
+        self.assertIsNone(catalog.endpoint("base", (0, 0)))
+
+    def test_player_binding_uses_image_identity_and_serialized_script_table(self):
+        def text(value):
+            raw = struct.pack("<I", len(value)) + value.encode()
+            return raw + bytes(-len(raw) % 4)
+
+        identity = ("Behaviour", "Package", "Plugin.dll")
+        strings = b"Plugin.dll\0Behaviour\0Package\0"
+        metadata = bytearray(176)
+        struct.pack_into("<II", metadata, 0, 0xFAB11BAF, 31)
+        struct.pack_into("<II", metadata, 24, len(metadata), len(strings))
+        metadata.extend(strings)
+        struct.pack_into("<II", metadata, 160, len(metadata), 88)
+        metadata.extend(struct.pack("<ii", 11, 21) + bytes(80))
+        struct.pack_into("<II", metadata, 168, len(metadata), 40)
+        metadata.extend(struct.pack("<iiii", 0, 0, 0, 1) + bytes(24))
+        self.assertEqual(C.il2cpp_type_identities(metadata), {identity})
+        with self.assertRaisesRegex(ValueError, "invalid Android IL2CPP metadata table"):
+            C.il2cpp_type_identities(metadata[:-1])
+
+        members = C.ProducedMembers()
+        component = struct.pack("<iqIiq", 0, 1, 1, 1, 3)
+        script = text(identity[0]) + bytes(20) + b"".join(map(text, identity))
+        typ = dict(class_id=114, script_type=0, script_id=C.S.md4("".join(identity).encode()))
+        layout = dict(data_offset=0, types=[typ], externals=[dict(path="CAB-plugin")], scripts=[(1, 3)])
+        members.members["CAB-prefab"] = (io.BytesIO(component), layout, {2: dict(type_id=0, offset=0, bytes=len(component))})
+        members.members["CAB-plugin"] = (io.BytesIO(script), dict(data_offset=0, types=[dict(class_id=115)]), {3: dict(type_id=0, offset=0, bytes=len(script))})
+        self.assertEqual(C.prefab_script_bindings(members, {identity}), dict(behaviours=1, scriptless=[], types=1, failures=[]))
+        absent = C.prefab_script_bindings(members, {("Behaviour", "Package", "Other.dll")})
+        self.assertEqual([(row["identity"], row["error"]) for row in absent["failures"]], [(identity, "type absent from Android player image")])
+        layout["scripts"] = [(1, 4)]
+        mismatched = C.prefab_script_bindings(members, {identity})
+        self.assertEqual([row["error"] for row in mismatched["failures"]], ["serialized script table disagrees with m_Script"])
+
     def test_model_skin_slots_follow_actual_external_scripts_and_reject_nulls(self):
         def text(value):
             raw = struct.pack("<I", len(value)) + value.encode()
