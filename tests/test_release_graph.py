@@ -1334,24 +1334,34 @@ android.mkdir(parents=True)
             native.mkdir()
             config = {"bindings": {"inventory": "inventory.json"}}
             progress = []
-            for pass_number in range(2):
-                dispatcher = J.Dispatcher(
-                    repo,
-                    index,
-                    release,
-                    inputs,
-                    runtime,
-                    native,
-                    config,
-                    "a" * 64,
-                    python=[sys.executable],
-                    progress=lambda name, reused: progress.append(reused),
-                )
-                for name, dependency in release["entries"].items():
-                    destination = root / (str(pass_number) + "-" + Path(name).name)
-                    dispatcher.produce(name, dependency, destination)
-                    self.assertTrue(destination.is_file())
-            self.assertEqual(progress, [False, True])
+            wait = subprocess.Popen.wait
+            heartbeats = iter(range(3))
+
+            def wait_with_heartbeats(process, timeout=None):
+                if timeout is not None and next(heartbeats, None) is not None:
+                    raise subprocess.TimeoutExpired(process.args, timeout)
+                return wait(process)
+
+            # Exercise the elapsed-time callbacks without depending on host load.
+            with mock.patch.object(subprocess.Popen, "wait", wait_with_heartbeats):
+                for pass_number in range(2):
+                    dispatcher = J.Dispatcher(
+                        repo,
+                        index,
+                        release,
+                        inputs,
+                        runtime,
+                        native,
+                        config,
+                        "a" * 64,
+                        python=[sys.executable],
+                        progress=lambda name, reused: progress.append((name, reused)),
+                    )
+                    for name, dependency in release["entries"].items():
+                        destination = root / (str(pass_number) + "-" + Path(name).name)
+                        dispatcher.produce(name, dependency, destination)
+                        self.assertTrue(destination.is_file())
+            self.assertEqual(progress, [(startup, None)] * 3 + [(startup, False), (startup, True)])
             self.assertEqual((root / "0-boot.config").read_bytes(), (root / "1-boot.config").read_bytes())
             self.assertEqual((root / "0-unity_app_guid").read_bytes(), (root / "1-unity_app_guid").read_bytes())
 
