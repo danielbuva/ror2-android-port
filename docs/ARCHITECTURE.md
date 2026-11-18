@@ -1573,7 +1573,8 @@ profiles fail before staging. Generated JSON is overlaid into the release source
 checkout and audited/committed before the existing tracked-only publisher runs.
 `--install-plan` binds the reviewed original-input manifest and workspace budget
 to that graph. It assigns each job to the earliest eligible production stage,
-after its suppliers, and validates the resulting plan with the installer owners.
+after its suppliers. Authoring reports missing admitted input bindings across
+the closure before validating the resulting plan with the installer owners.
 The graph's optional `--bundle-manifest` fans every selected payload bundle into
 `bundle_manifest.py` through declared path, digest and integer byte-size artifacts.
 The existing native owner reads actual bundle dependencies and rejects missing
@@ -1594,6 +1595,9 @@ plugins into their `Data/Tools` layout. The same shader session owner runs this
 compiler through installed QEMU and the acquired GNU runtime, with the pinned
 Mac SDK supplying metadata and includes. The session stops its compiler child
 and retains diagnostics when the job exits.
+The shader job that uses legacy metadata reads its pinned files from the private
+`acquired/unity-legacy-sdk/Contents` tree. Those files join its cache identity,
+and the producer verifies the separately acquired include set during production.
 Player/shader jobs declare complete serialized outputs; remapping consumes their
 top-level receipts, while player data consumes nested shared-shader and texture
 packs. Their authored shader and player configuration inputs travel in the

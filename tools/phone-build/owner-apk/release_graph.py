@@ -19,6 +19,7 @@ PREFIX = "tools/phone-build/accepted-output/"
 PLAYER_RESOURCE_ASSEMBLIES = ("System.Data", "System.Drawing", "mscorlib")
 ANDROID_COMPONENT = "${inputs}/acquired/unity-android-support.pkg"
 LINUX_COMPONENT = "${inputs}/acquired/unity-linux-editor.tar.xz"
+LEGACY_SHADER_SDK = "${inputs}/acquired/unity-legacy-sdk/Contents"
 PACKAGE_POLICY = "tools/phone-build/package-assemblies/profile.json"
 PACKAGE_PRODUCER = "tools/phone-build/package-assemblies/produce.py"
 PACKAGE_ARCHIVES = "${inputs}/acquired/unity-packages"
@@ -276,7 +277,9 @@ class Graph:
         }:
             arguments += ["--comparison", "diagnostic"]
         if producer == "payload_shader_records" and "legacy_sdk" in profile:
-            arguments += ["--legacy-sdk", "${input:legacy_sdk}"]
+            arguments += ["--legacy-sdk", LEGACY_SHADER_SDK if self.conversion else "${input:legacy_sdk}"]
+            if self.conversion:
+                witnesses.extend(LEGACY_SHADER_SDK + "/" + name for name in sorted(profile["legacy_sdk"]))
         if producer != "record_remap":
             arguments += ["--pc-root" if producer in {"shader_context", "shader_prefab", "sprite_produce"} else "--pc", "${input:pc}"]
         if producer in {"record_produce", "shader_context", "shader_prefab", "payload_shader_records"}:
@@ -1229,6 +1232,10 @@ class Graph:
 
         for row in index["entries"].values():
             assign(row["job"])
+        required_bindings = {binding for name in positions for binding in re.findall(r"\$\{input(?:_relative|_sha256)?:([^}]+)\}", json.dumps(self.jobs[name]))}
+        unbound = sorted(required_bindings - bindings.keys() - {"inventory"})
+        if unbound:
+            raise ValueError("install plan lacks admitted input bindings: " + ", ".join(unbound))
         plan = {
             "schema": 1,
             "required_inputs": required_inputs,
