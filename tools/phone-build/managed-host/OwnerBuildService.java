@@ -89,41 +89,48 @@ public final class OwnerBuildService extends Service {
         }
         // This foreground service is started only by an explicit visible UI action. Never auto-install after boot.
         running = true; destroyed = false; importControl = "continue";
-        getSharedPreferences(PREFERENCES, 0).edit().putString("action", action).putBoolean("interrupted", true).commit();
-        startForeground(NOTIFICATION, notification());
-        wakeLock = ((PowerManager)getSystemService(POWER_SERVICE)).newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, getPackageName() + ":owner-build");
-        wakeLock.acquire(); handler.post(refresh);
-        thread = new Thread(new Runnable() { public void run() {
-            try {
-                if ("import".equals(action) || "release-build".equals(action) || "release-rollback".equals(action)) requireBatteryAdmission();
-                if ("import".equals(action)) importFiles();
-                else if ("install-verify".equals(action)) OwnerInstaller.finishVerification(OwnerBuildService.this);
-                else if ("profile-recover".equals(action)) OwnerInstaller.recoverProfiles(OwnerBuildService.this);
-                else if ("install".equals(action)) {
-                    ToolHostActivity.installPrepared(OwnerBuildService.this);
-                    awaitInstallation();
-                }
-                else {
-                    worker = new ToolHostActivity.Worker(getApplicationContext()); worker.executeUpdate(action);
-                    File status = new File(getFilesDir(), "owner-input/update-state.json");
-                    if (("release-build".equals(action) || "release-rollback".equals(action)) && !destroyed && !"cancel".equals(importControl) && status.isFile()
-                        && "READY".equals(ToolHostActivity.readJson(status).optString("state"))) {
-                        if (Build.VERSION.SDK_INT < 26 || getPackageManager().canRequestPackageInstalls()) {
-                            ToolHostActivity.installPrepared(OwnerBuildService.this);
-                            awaitInstallation();
-                        } else ToolHostActivity.updateStatus(OwnerBuildService.this, "READY", "Reconstruction verified. Tap Install to allow installation in Android, then tap Install again to continue.");
+        try {
+            getSharedPreferences(PREFERENCES, 0).edit().putString("action", action).putBoolean("interrupted", true).commit();
+            startForeground(NOTIFICATION, notification());
+            wakeLock = ((PowerManager)getSystemService(POWER_SERVICE)).newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, getPackageName() + ":owner-build");
+            wakeLock.acquire(); handler.post(refresh);
+            thread = new Thread(new Runnable() { public void run() {
+                try {
+                    if ("import".equals(action) || "release-build".equals(action) || "release-rollback".equals(action)) requireBatteryAdmission();
+                    if ("import".equals(action)) importFiles();
+                    else if ("install-verify".equals(action)) OwnerInstaller.finishVerification(OwnerBuildService.this);
+                    else if ("profile-recover".equals(action)) OwnerInstaller.recoverProfiles(OwnerBuildService.this);
+                    else if ("install".equals(action)) {
+                        ToolHostActivity.installPrepared(OwnerBuildService.this);
+                        awaitInstallation();
                     }
+                    else {
+                        worker = new ToolHostActivity.Worker(getApplicationContext()); worker.executeUpdate(action);
+                        File status = new File(getFilesDir(), "owner-input/update-state.json");
+                        if (("release-build".equals(action) || "release-rollback".equals(action)) && !destroyed && !"cancel".equals(importControl) && status.isFile()
+                            && "READY".equals(ToolHostActivity.readJson(status).optString("state"))) {
+                            if (Build.VERSION.SDK_INT < 26 || getPackageManager().canRequestPackageInstalls()) {
+                                ToolHostActivity.installPrepared(OwnerBuildService.this);
+                                awaitInstallation();
+                            } else ToolHostActivity.updateStatus(OwnerBuildService.this, "READY", "Reconstruction verified. Tap Install to allow installation in Android, then tap Install again to continue.");
+                        }
+                    }
+                } catch (Exception error) {
+                    if ("import".equals(action)) {
+                        try { ToolHostActivity.writeJson(OwnerBuildService.this, new File(getFilesDir(), "owner-input/import-state.json"), new JSONObject().put("state", (error instanceof InterruptedIOException || destroyed || "cancel".equals(importControl)) ? "CANCELLED" : "ERROR").put("message", error.getMessage())); }
+                        catch (Exception ignored) { }
+                    } else ToolHostActivity.updateStatus(OwnerBuildService.this, "ERROR", error.getMessage());
+                } finally {
+                    getSharedPreferences(PREFERENCES, 0).edit().putBoolean("interrupted", destroyed).commit();
+                    handler.post(new Runnable() { public void run() { finishService(); } });
                 }
-            } catch (Exception error) {
-                if ("import".equals(action)) {
-                    try { ToolHostActivity.writeJson(OwnerBuildService.this, new File(getFilesDir(), "owner-input/import-state.json"), new JSONObject().put("state", (error instanceof InterruptedIOException || destroyed || "cancel".equals(importControl)) ? "CANCELLED" : "ERROR").put("message", error.getMessage())); }
-                    catch (Exception ignored) { }
-                } else ToolHostActivity.updateStatus(OwnerBuildService.this, "ERROR", error.getMessage());
-            } finally {
-                getSharedPreferences(PREFERENCES, 0).edit().putBoolean("interrupted", destroyed).commit();
-                handler.post(new Runnable() { public void run() { finishService(); } });
-            }
-        } }, "owner-phone-installer"); thread.start();
+            } }, "owner-phone-installer"); thread.start();
+        } catch (RuntimeException error) {
+            // No worker owns cleanup if foreground/wake-lock/thread startup fails.
+            // Release admission so a later explicit action can retry safely.
+            try { ToolHostActivity.updateStatus(this, "ERROR", "Could not start owner operation: " + error.getMessage()); }
+            finally { finishService(); }
+        }
         return START_NOT_STICKY;
     }
     private void awaitInstallation() throws Exception {

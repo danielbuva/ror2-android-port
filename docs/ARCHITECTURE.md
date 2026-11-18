@@ -1667,7 +1667,11 @@ default, so copying identical inputs again preserves its identity.
 checkpoints and failure/retry state; producer receipts remain the authority for
 reuse. Managed-host `OwnerInputImport` is the Android-free stream counterpart,
 `OwnerInputSource` adapts SAF trees/ZIP streams, and `OwnerBuildService` owns the
-foreground operation independently of `ToolHostActivity`. Explicit resume after
+foreground operation independently of `ToolHostActivity`. Pending/active admission
+coalesces repeated launch actions; foreground/wake-lock/thread startup failure
+releases admission and owned resources for a later explicit retry. The synthetic
+service lifecycle fixture checks cancellation, pending profile recovery and
+process-recreation boundaries without starting a device conversion. Explicit resume after
 restart revalidates completed work. The existing `accepted-output/phone_runner.py`
 combines user pause/cancel with its unchanged thermal/battery safety policy and
 publishes private telemetry. Teardown reaps owned children and retains verified
