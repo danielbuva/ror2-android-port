@@ -113,6 +113,19 @@ public sealed partial class PortSession
         public ObjectiveVisualActivation[] activations;
     }
     [Serializable]
+    public class ObjectiveStartupReport
+    {
+        public int actors;
+        public string[] loadedBundles;
+        public List<ObjectiveStartupFailure> failures = new List<ObjectiveStartupFailure>();
+    }
+    [Serializable]
+    public class ObjectiveStartupFailure
+    {
+        public string actor, asset, hierarchy, route, error;
+        public int slot = -1, componentCount;
+    }
+    [Serializable]
     public class SurfacePropertyObservation
     {
         public string name, type, texture;
@@ -877,8 +890,87 @@ public sealed partial class PortSession
             }
             return objectiveConfigs.ToArray();
         }
+        void InspectObjectivePrefab(ObjectiveStartupReport report, string actor, string asset, GameObject prefab, bool master)
+        {
+            if (!prefab)
+            {
+                report.failures.Add(new ObjectiveStartupFailure { actor = actor, asset = asset, error = "GameObject missing" });
+                return;
+            }
+            if (master)
+            {
+                if (!prefab.GetComponent<CharacterMaster>() || !prefab.GetComponent<Inventory>())
+                    report.failures.Add(new ObjectiveStartupFailure { actor = actor, asset = asset, error = "Master or Inventory missing" });
+            }
+            else
+            {
+                var locator = prefab.GetComponent<ModelLocator>();
+                if (!prefab.GetComponent<CharacterBody>() || !prefab.GetComponent<SfxLocator>() || !locator ||
+                    !locator.modelTransform || !locator.modelTransform.GetComponent<Animator>())
+                    report.failures.Add(new ObjectiveStartupFailure { actor = actor, asset = asset, error = "Body/model/Animator/SfxLocator missing" });
+            }
+            foreach (var child in prefab.GetComponentsInChildren<Transform>(true))
+            {
+                var components = child.GetComponents<Component>();
+                for (int index = 0; index < components.Length; index++)
+                {
+                    if (components[index]) continue;
+                    var names = new Stack<string>();
+                    var route = new Stack<string>();
+                    for (var node = child; node != prefab.transform; node = node.parent)
+                    {
+                        names.Push(node.name);
+                        route.Push(node.GetSiblingIndex().ToString(System.Globalization.CultureInfo.InvariantCulture));
+                    }
+                    names.Push(prefab.name);
+                    report.failures.Add(new ObjectiveStartupFailure { actor = actor, asset = asset, hierarchy = string.Join("/", names),
+                        route = string.Join("/", route), slot = index, componentCount = components.Length, error = "Unbound component" });
+                }
+            }
+        }
+
+        void CollectObjectiveStartup(SessionConfig cfg)
+        {
+            var report = new ObjectiveStartupReport();
+            coordinator.r.objectiveStartup = report;
+            foreach (var spec in cfg.objectiveActors)
+            {
+                report.actors++;
+                foreach (var asset in new[] { spec.body, spec.master, spec.card, spec.avatar, spec.controller })
+                {
+                    try
+                    {
+                        var bundle = coordinator.artifactBundle;
+                        if (asset == spec.body || asset == spec.master)
+                            InspectObjectivePrefab(report, spec.name, asset, bundle.LoadAsset<GameObject>(asset), asset == spec.master);
+                        else if (asset == spec.card)
+                        {
+                            if (asset == cfg.stageMiniCardAsset)
+                                bundle = coordinator.objectiveBundlePreload.Result.GetAssetBundle();
+                            var card = bundle.LoadAsset<CharacterSpawnCard>(asset);
+                            var master = card && card.prefab ? card.prefab.GetComponent<CharacterMaster>() : null;
+                            if (!master || !master.bodyPrefab || !master.bodyPrefab.GetComponent<CharacterBody>() || card.directorCreditCost < 0)
+                                report.failures.Add(new ObjectiveStartupFailure { actor = spec.name, asset = asset, error = "Spawn card/master/body missing" });
+                        }
+                        else if (asset == spec.avatar ? !bundle.LoadAsset<Avatar>(asset) : !bundle.LoadAsset<RuntimeAnimatorController>(asset))
+                            report.failures.Add(new ObjectiveStartupFailure { actor = spec.name, asset = asset, error = "Typed animation asset missing" });
+                    }
+                    catch (Exception error)
+                    {
+                        report.failures.Add(new ObjectiveStartupFailure { actor = spec.name, asset = asset, error = error.Message });
+                    }
+                }
+            }
+            report.loadedBundles = AssetBundle.GetAllLoadedAssetBundles().Select(bundle => bundle.name).OrderBy(name => name).ToArray();
+            foreach (var failure in report.failures)
+                Debug.LogWarning("Objective startup " + JsonUtility.ToJson(failure));
+            coordinator.Save();
+        }
+
         public void PrepareObjectiveActorTemplates(SessionConfig cfg)
         {
+            if (coordinator.r.diagnosticObjectiveStartup)
+                CollectObjectiveStartup(cfg);
             foreach (var spec in cfg.objectiveActors)
             {
                 coordinator.r.phase = "objective-template-" + spec.name;

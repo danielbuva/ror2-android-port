@@ -1,5 +1,11 @@
 # Architecture
 
+The per-run `diagnosticObjectiveStartup` selector asks `TeleporterWorldSession`
+to inspect typed objective assets before preparing any actor templates. The
+session report retains every observed failure, child names and sibling indices,
+component slot and count, and the loaded bundle names for a serialized-file
+join. Ordinary template preparation still enforces its original checks.
+
 `OfflineApplicationSession` owns controller/keyboard menu routes, loadout modal
 visibility, Quit confirmation and persisted-results return. The existing
 `OfflineLoadoutBoundary` edits only unlocked source skill/skin choices and owns

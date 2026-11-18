@@ -204,6 +204,8 @@ public sealed partial class PortSession : MonoBehaviour
         // Durable session-level provenance survives replacement of debugAcceleration reports.
         public bool developerSkillVariantAssisted;
         public bool diagnosticSkillCoverage;
+        public bool diagnosticObjectiveStartup;
+        public ObjectiveStartupReport objectiveStartup;
         // Explicit, one-run MUL-T offhand input sequence; absent JSON remains false.
         public bool diagnosticToolbotOffhand;
         // Default-off, one-run Captain supply-drop input/state/output diagnostic.
@@ -698,6 +700,7 @@ public sealed partial class PortSession : MonoBehaviour
                 yield break;
             // The selector requests observation; only a successful native arm owns
             // these witnesses. Never accept caller-supplied destination evidence.
+            r.objectiveStartup = null;
             r.passivePcmCaptureInDestinationObserved = false;
             r.passivePcmArmStageScene = null;
             r.passivePcmArmStageTransitions = 0;
