@@ -126,10 +126,11 @@ def maps_and_support(out, inputs, managed, probe, profile, identity, *, work=Non
     catalog_path = managed.parent / "StreamingAssets/aa/catalog.json"
     inventory = json.loads(((work or ROOT / "work") / "inventory/files.json").read_text())
     expected = {r["path"]: r["sha256"] for r in inventory["files"]}
-    if native.sha(catalog_path) != expected[catalog_path.relative_to(managed.parent.parent).as_posix()]:
+    catalog_sha = native.sha(catalog_path)
+    if catalog_sha != expected[catalog_path.relative_to(managed.parent.parent).as_posix()]:
         raise ValueError("original catalog differs from accepted inventory")
     catalog = catalog_reader.read_shipped(catalog_path, "/_/owner-original-aa", names)
-    native.write(out / "original-catalog.json", catalog)
+    native.write(out / "original-catalog.json", dict(catalog, input_id=identity, source_catalog_sha256=catalog_sha))
     manifest = {"keys": catalog["keys"]}
     recipes = json.loads((source_root / "recipe/build-entry-inputs.json").read_text())["decompiled"]
     if native.sha(managed / recipes["assembly"]) != recipes["assembly_sha256"]:

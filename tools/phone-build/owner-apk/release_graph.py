@@ -799,15 +799,28 @@ class Graph:
     def catalog_complete(self, selected_jobs, request_path):
         """Bind the source catalog to final containers and the embedded bootstrap."""
         request = json.loads((self.repo / request_path).read_text())
-        if set(request) != {"schema", "metadata", "input_id", "attempt"} or request["schema"] != "owner-catalog-inputs-v1":
+        common = {"schema", "input_id", "attempt"}
+        if set(request) - common not in ({"metadata"}, {"projection"}) or not common <= request.keys() or request["schema"] != "owner-catalog-inputs-v1":
             raise ValueError("unsupported catalog request template")
-        metadata = request["metadata"]
-        if set(metadata) != {"path", "sha256", "bytes"}:
-            raise ValueError("unsupported catalog metadata pin")
-        if not metadata["path"].startswith("${input:") or not metadata["path"].endswith("}"):
-            raise ValueError("catalog metadata must use a private input binding")
         profiles, bundles, needs, registries = [], {}, [], []
         resources = {}
+        if "projection" in request:
+            if not self.conversion:
+                raise ValueError("catalog projection requires original-input code conversion")
+            policy = (self.repo / request["projection"]).resolve(strict=True)
+            relative = policy.relative_to(self.repo).as_posix()
+            self.jobs[self.conversion]["artifacts"]["original_catalog"] = "managed-production/original-catalog.json"
+            request["projection"] = {
+                "source": self.artifact_pin(self.conversion, "original_catalog"),
+                "policy": dict(path="${repo}/" + relative, sha256=digest(policy), bytes=policy.stat().st_size),
+            }
+            needs.append(self.conversion)
+        else:
+            metadata = request["metadata"]
+            if set(metadata) != {"path", "sha256", "bytes"}:
+                raise ValueError("unsupported catalog metadata pin")
+            if not metadata["path"].startswith("${input:") or not metadata["path"].endswith("}"):
+                raise ValueError("catalog metadata must use a private input binding")
         for job in sorted(set(selected_jobs)):
             profile = self.job_profiles[job]
             descriptor = self.jobs[job]
@@ -870,6 +883,8 @@ class Graph:
             "artifacts": {"receipt": "result.json"},
         }
         self.profile_files[name] = request_path
+        if "projection" in request:
+            self.public_files[name] = [relative]
         self.job_profiles[name] = {}
         return name
 

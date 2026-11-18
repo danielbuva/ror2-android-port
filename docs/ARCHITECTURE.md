@@ -3109,6 +3109,13 @@ resolves owned DLLs before omitting exporter DLLs and supplies WholeGame default
 for remaining source identities. Host contracts feed that mapping to
 `integration_metadata`; the J850 metadata projection comparison passes, while final
 catalog production remains open. The later importer-identities stage is excluded.
+Signed catalog requests can select a projection policy and consume the original
+catalog emitted by managed-code production. `catalog_complete` joins that catalog
+to selected bundle profiles by asset path and explicit relocations, retains the
+original typed key ordering, and applies the pinned exclusions, root roles and
+mesh aliases. The source input identity and catalog hash bind that policy. The
+same invocation verifies actual Android containers and MonoScripts before writing
+the runtime catalog. Retained metadata remains available for historical requests.
 `whole-catalog-run` installs, syncs and launches, but it pushes `whole-catalog-selection.json`,
 which makes `PortSession.Start` exit: it checks catalog registration
 (`whole-catalog-result.json`), not gameplay. Ordinary launcher startup selects
