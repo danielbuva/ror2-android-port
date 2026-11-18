@@ -2045,10 +2045,9 @@ the existing dummy policy and checked public texture/Shader endpoint mappings.
 caller-supplied SDK source file on an original empty-name component base. The
 current receipt-bound MonoScript must match its assembly/namespace/class and the
 constructed properties hash. Original owner/script PPtrs remain checked; the new
-first-selection pointer is null as declared by the SDK. Other fieldless components
-retain their existing schema gate. Output hashes are receipt diagnostics because
-these typed components replace invalid historical fieldless placeholders. This is
-host serialization support; native loading and gameplay remain device gates.
+first-selection pointer is null as declared by the SDK. Staged Commando and objective-support projectile components use
+`fieldless_script_record` with the authored `SilentProjectileBoundary` identity
+from the player registry. The producer verifies its fieldless properties hash.
 
 
 ### Partial closed native bundle qualification
