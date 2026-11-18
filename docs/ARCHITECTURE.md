@@ -4934,10 +4934,12 @@ before their pools instantiate them. Baked effect definitions send the acquired
 prefab through the native reference-discovery callback. The session detaches
 these callbacks before restoring the source materials. It follows typed prefab
 edges with cycle protection, including CharacterBody's separately loaded FireTrail.
-The original body visual owner submits Mercenary's persistent and consume Expose prefabs
-after resolving their native fields on CharacterBody and HealthComponent. Original
-source slots and particle trails are restored by integrated-world cleanup before
-the session destroys its material copies; source blend values remain intact.
+The original body visual owner submits Mercenary's persistent and consume Expose
+prefabs and Acrid's normal and combo-finisher swings. It reads the configured native
+Slash state and holds the finisher's typed provider lease through the run. Integrated
+world cleanup restores source slots and particle trails before the visual owner
+releases its leases and the session destroys its material copies. Source blend
+values remain intact.
 The session counts objective projectile materials during catalog setup. The
 integrated-world report includes these counts from its first snapshot.
 

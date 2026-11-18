@@ -1,12 +1,16 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Reflection;
 using UnityEngine;
 using RoR2;
 using RoR2.ContentManagement;
+using UnityEngine.AddressableAssets;
+using UnityEngine.ResourceManagement.AsyncOperations;
 
 namespace UnityEngine
 {
+    public static class Time { public static float realtimeSinceStartup; }
     public class Object
     {
         public bool destroyed;
@@ -35,6 +39,47 @@ namespace UnityEngine
         public Object[] components = new Object[0];
         public T[] GetComponentsInChildren<T>(bool includeInactive) where T : Object
             => Array.ConvertAll(Array.FindAll(components, value => value is T), value => (T)value);
+    }
+}
+namespace UnityEngine.ResourceManagement.AsyncOperations
+{
+    public enum AsyncOperationStatus { None, Succeeded, Failed }
+    public class AsyncOperationHandle<T>
+    {
+        public AsyncOperationStatus Status;
+        public bool IsDone => Status != AsyncOperationStatus.None;
+        public T Result;
+    }
+}
+namespace UnityEngine.AddressableAssets
+{
+    public class AssetReference
+    {
+        public object RuntimeKey;
+        public bool RuntimeKeyIsValid() => RuntimeKey != null;
+    }
+    public static class Addressables
+    {
+        public static object requestedKey, operation;
+        public static AsyncOperationHandle<T> LoadAssetAsync<T>(object key)
+        {
+            requestedKey = key;
+            return (AsyncOperationHandle<T>)operation;
+        }
+    }
+}
+namespace EntityStates.Croco
+{
+    public class Slash
+    {
+        public class SwingReference
+        {
+            public AssetReference addressableReference;
+            public GameObject directReference;
+        }
+        public static GameObject configuredNormal;
+        public static SwingReference comboFinisherSwingEffectPrefab;
+        public GameObject swingEffectPrefab = configuredNormal;
     }
 }
 namespace RoR2
@@ -90,7 +135,9 @@ public static class PortSession
 public partial class SourceSession
 {
     readonly HashSet<AssetOrDirectReference<GameObject>> nativeEffectReferences = new HashSet<AssetOrDirectReference<GameObject>>();
+    public readonly List<AsyncOperationHandle<GameObject>> ownedOriginalVisualHandles = new List<AsyncOperationHandle<GameObject>>();
     public SourceSession coordinator => this;
+    public SourceSession GetTeleporterWorldSession() => this;
     public readonly List<Material> worldMaterials = new List<Material>();
     public readonly Dictionary<Renderer, Material[]> worldLootSourceMaterials = new Dictionary<Renderer, Material[]>();
     public readonly Dictionary<ParticleSystemRenderer, Material> worldLootSourceTrails = new Dictionary<ParticleSystemRenderer, Material>();
@@ -101,6 +148,7 @@ public partial class SourceSession
     public GameObject OriginalProjectileGhost(RoR2.Projectile.ProjectileController controller) => controller.ghostPrefab;
     public void Prepare(GameObject root) => PresentNativeEffectSource(root);
     public void Stop() => StopPresentingNativeEffectReferences();
+    public IEnumerator PrepareSwings(List<string> unavailable) => PrepareCrocoSwingEffects(unavailable);
 }
 public static partial class AndroidNativeDeferredPresentation
 {
@@ -158,6 +206,30 @@ static class Fixture
         Check(lazy.subscribers == 0 && loaded.subscribers == 0 && pending.subscribers == 0 && pendingRenderer.sharedMaterials[0] == original,
             "late acquisition changed material after teardown");
     }
+    static void CheckCrocoSwingAdmission(Material original)
+    {
+        var normal = new Renderer { sharedMaterials = new[] { original } };
+        var finisher = new Renderer { sharedMaterials = new[] { original } };
+        var fallback = new Renderer { sharedMaterials = new[] { original } };
+        EntityStates.Croco.Slash.configuredNormal = new GameObject { components = new[] { normal } };
+        EntityStates.Croco.Slash.comboFinisherSwingEffectPrefab = new EntityStates.Croco.Slash.SwingReference {
+            addressableReference = new AssetReference { RuntimeKey = "native-finisher" },
+            directReference = new GameObject { components = new[] { fallback } }
+        };
+        var operation = new AsyncOperationHandle<GameObject> { Result = new GameObject { components = new[] { finisher } } };
+        Addressables.operation = operation;
+        var session = new SourceSession();
+        var unavailable = new List<string>();
+        var prepare = session.PrepareSwings(unavailable);
+        Check(prepare.MoveNext() && normal.sharedMaterials[0] != original && finisher.sharedMaterials[0] == original,
+              "normal source should be prepared while native finisher loads");
+        operation.Status = AsyncOperationStatus.Succeeded;
+        Check(!prepare.MoveNext() && unavailable.Count == 0 && finisher.sharedMaterials[0] != original,
+              "native finisher source should be prepared after loading");
+        Check((string)Addressables.requestedKey == "native-finisher" && session.ownedOriginalVisualHandles[0] == operation &&
+              fallback.sharedMaterials[0] == original && session.worldLootSourceMaterials.Count == 2,
+              "native address and source ownership must be preserved");
+    }
     static void Main()
     {
         var body = new Material("Hopoo Games/Deferred/Standard", "source tint/textures/queue/keywords");
@@ -196,6 +268,7 @@ static class Fixture
         var alpha = new Material("Hopoo Games/FX/Cloud Remap", "alpha mask") {
             srcBlend = 5, dstBlend = 10, zWrite = 0, renderQueue = 3050 };
         CheckBakedEffectAdmission(alpha);
+        CheckCrocoSwingAdmission(alpha);
         var segmentRenderer = new ParticleSystemRenderer { sharedMaterials = new[] { fire }, trailMaterial = alpha };
         var segment = new GameObject { components = new UnityEngine.Object[] { segmentRenderer } };
         var ghostRenderer = new Renderer { sharedMaterials = new[] { alpha } };

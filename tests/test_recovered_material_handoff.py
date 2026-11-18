@@ -39,6 +39,8 @@ class RecoveredMaterialHandoffTests(unittest.TestCase):
                 "void PresentNativeEffectSource(",
             )
         )
+        visuals = (ROOT / "tools/unity/runtime/catalog/OriginalBodyVisualBoundary.cs").read_text()
+        source += "\n" + source_method(visuals, "IEnumerator PrepareCrocoSwingEffects(")
         source += "\n}\n"
         with tempfile.TemporaryDirectory() as temporary:
             scratch = Path(temporary)
