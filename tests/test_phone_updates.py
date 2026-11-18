@@ -193,6 +193,38 @@ class UpdateTests(unittest.TestCase):
             self.assertEqual(P.load_json((self.inputs / "update-state.json").read_bytes())["state"], "ERROR")
             self.assertFalse((self.inputs / "release-candidate.json").exists())
 
+    def test_failed_fresh_checks_replace_stale_success_and_retry_without_building(self):
+        with FakeGitHub(self.release, self.bundle) as server:
+            for failure in ("network", "parse", "signature"):
+                with self.subTest(failure=failure):
+                    self.assertEqual(self.run_check(server)["state"], "UPDATE_AVAILABLE")
+                    candidate = (self.inputs / "release-candidate.json").read_bytes()
+                    original = server.paths["/release.json"]
+                    if failure == "network":
+                        with patch.object(server.transport, "open", side_effect=OSError("synthetic offline")), self.assertRaises(OSError):
+                            self.run_check(server)
+                    else:
+                        server.paths["/release.json"] = b"not json" if failure == "parse" else encoded(dict(self.release, version="unsigned change"))
+                        with self.assertRaises(ValueError):
+                            self.run_check(server)
+                        server.paths["/release.json"] = original
+                    state = P.load_json((self.inputs / "update-state.json").read_bytes())
+                    self.assertEqual(state["state"], "ERROR")
+                    self.assertNotIn("release", state)
+                    self.assertNotIn("changed_entries", state)
+                    self.assertEqual((self.inputs / "release-candidate.json").read_bytes(), candidate)
+                    self.assertEqual(self.run_check(server)["state"], "UPDATE_AVAILABLE")
+            self.request["installed_release_version"] = self.release["version_code"]
+            U.write_json(self.inputs / "update-request.json", self.request)
+            self.assertEqual(self.run_check(server)["state"], "UP_TO_DATE")
+            with patch.object(server.transport, "open", side_effect=OSError("offline after up to date")), self.assertRaises(OSError):
+                self.run_check(server)
+            self.assertEqual(P.load_json((self.inputs / "update-state.json").read_bytes())["state"], "ERROR")
+            self.assertEqual(self.run_check(server)["state"], "UP_TO_DATE")
+            self.assertNotIn("/public-tools.zip", server.requests)
+            self.assertFalse((self.inputs / "owner-apk-ready.json").exists())
+            self.assertFalse((self.inputs / "installed-release.json").exists())
+
     def test_context_refuses_rollback_package_and_installer_upgrade(self):
         for field, value in (("installed_release_version", 3), ("application_id", "other.package"), ("installer_version", 0)):
             request = dict(self.request, **{field: value})
