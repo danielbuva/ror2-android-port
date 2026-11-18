@@ -157,7 +157,9 @@ artifacts name declared jobs. Referenced donor/staged containers remain payload
 and native-manifest dependencies. Catalog production consumes each actual final
 bundle and its emitted profile, independently of canonical body-identity proof.
 Managed witnesses must name generated artifacts, with registry body, receipt and
-schemas supplied by one final player job. Setup and teardown remain the scoped
+schemas supplied by one final player job. When `--code-request` selects fresh
+conversion, witness production reads the same pinned managed provider manifest
+and receipt as that player job. Setup and teardown remain the scoped
 preparation/emission owners; the dispatcher retains only declared final artifacts
 for reuse. Host synthetic-registry dispatch does not qualify current CLR/SDK
 production, exact-editor load or phone acceptance.
@@ -205,9 +207,15 @@ For ModelSkinController PPtrs from that producer into the emitted bundle,
 canonical repack also admits retained SkinDefs into their source-matched asset
 groups. It qualifies the native type and actual MonoScript, keeps the advertised
 root, and reads back the retained IDs in those groups' persisted preloads.
+Skin bake PPtrs follow the canonical model. Repack pairs uniquely named child
+routes and native component classes below verified body aliases and model roots
+from source-matched SkinDefs. It checks reciprocal parent and component
+ownership on both sides before moving a SkinDef root or a SkinDefParams renderer,
+activation, mesh or light target. Prefab hierarchies and asset addresses stay
+intact.
 The current `bundle_preload.py --repack` action reuses an existing qualified
 emission through a hash-pinned request; it retains source/type/ownership checks
-and avoids repeating record production for a preload-only repair. The request
+and avoids repeating record production for these reference repairs. The request
 includes selected records for canonical aliases and retained SkinDef source
 matches.
 
@@ -410,14 +418,17 @@ input in its startup snapshot. The native catalog initializes only after
 validation passes.
 `whole_catalog.py::host_skin_bundles` exposes
 `./dev prototype --action whole-catalog-skin-host --target REQUEST` through
-`tools/catalog/ValidateConvertedSkins.cs.txt`. It consumes that pinned catalog
-request in the idle exact editor under the shared mutex.
+`tools/catalog/ValidateConvertedSkins.cs.txt`. Its request pins the completed
+catalog as metadata and the same bundle inputs. The fixture runs in the idle
+exact editor under the shared mutex.
 The fixture-only `skin_fixture` specifies `commando_path` and `ward_path`.
 Optional `early_ward` and `early_commando` replay earlier load orders. The fixture
 opens the three startup owners, leaves deferred owners unopened, loads the typed
-bodies in provider order, and checks the same model controller as startup. All
-opened bundles are released in `finally`. Its local receipt records failures
-before the Android gameplay gate.
+bodies in provider order, and checks the same model controller as startup. It
+then resolves the typed SkinDefParams and checks each bake transform with the
+native prefab path function, including base skins. All opened bundles are
+released in `finally`. Its local receipt records failures before the Android
+gameplay gate.
 During startup, `BodyCatalogSession` opens the objective-support bundle through
 `TeleporterWorldSession` before deserializing body prefabs. The original
 CharacterBody family loads in provider order before the explicit Commando read
@@ -1457,6 +1468,9 @@ providers; it never substitutes a historical manifest. Its generated file shares
 the signed supplier closure and private incremental cache with those bundles.
 The dispatcher resolves supplier directories from declared receipt artifacts;
 input-file hash tokens bind acquired tools without embedding host paths.
+Fresh conversion bundle and shader jobs use the installer-packaged LZ4 worker.
+The dispatcher pins its installed file and includes that hash in consumer cache
+identity. The installer verifies its packaged native tool inventory on launch.
 Player/shader jobs declare complete serialized outputs; remapping consumes their
 top-level receipts, while player data consumes nested shared-shader and texture
 packs. Their authored shader and player configuration inputs travel in the
@@ -1464,8 +1478,23 @@ signed closure. With `--code-request`, the player consumes converter resources
 and the managed receipt, provider manifest, CLR outputs and compiled source
 witnesses from the conversion job. The dispatcher expands the original package
 and authored source selections for the player registry in the current release
-checkout. Acquired converter and managed bindings remain available when no code
-request is selected.
+checkout. The fresh code path also resolves editor data, the pinned macOS
+binary read by the manager, and built-in uGUI sources from the separately
+acquired SDK tree. Acquired converter and managed bindings remain available
+when no code request is selected.
+`--package-archives` runs the package assembly owner's `--prepare-inputs`
+stage before code conversion. It verifies the three Unity registry archives,
+stages only the pinned compiler groups and original script metas, and supplies
+their versioned directories to managed production. The dispatcher rechecks
+cached outputs and includes each archive hash in the dependency identity.
+The fixed-target registry retains its explicit package inventory, including
+the TestRunner and MCP importers. Without a fixed target, the graph signs the
+current runtime and audio producer sources and passes the compiler's package
+directory and its `packages/inputs.json` receipt to the player registry. The
+registry pins the selected sources and importer metadata. The current audio
+compiler still needs its macOS SDK tools and checkout work root. The package
+owner removes temporary extraction files and retains the selected inputs and
+terminal receipt.
 The optional `--native-request` adds `owner-code/native.py` as one cached job
 with final `libil2cpp.so` and matching `global-metadata.dat` outputs. With
 `--code-request`, an assembly-stage `produce.py --stop-after-conversion` job
@@ -1491,7 +1520,14 @@ cached job for all 15 SDK APK entries. Its public request binds the acquired
 SDK, platform, AAPT2, Java tools and pinned public jars. The authored Java helper
 travels in the signed closure alongside Python producers. SDK resources, dex
 and engine libraries share production/reuse; temporary helper/tool files stay
-private and are excluded from declared outputs.
+private and are excluded from declared outputs. `--sdk-component` adds one
+signed `sdk_inputs.py --android-package` supplier for both player defaults and
+SDK packaging. It hashes the privately provisioned Unity Android Support
+archive and declares the extracted AndroidPlayer directory and receipt for
+cache readback. This archive stays separate from the original-game inventory
+and the compiler/editor SDK tree. The existing extractor owns verification,
+private output creation and terminal receipts. SDK packaging can pin its
+separately supplied platform and tool files with request cache witnesses.
 Generated jobs retain producer checks and do not establish complete APK or phone
 readiness. Setup uses explicit source checkout/profile/output paths; teardown
 keeps generated descriptors and caller-owned producer results. The managed-host

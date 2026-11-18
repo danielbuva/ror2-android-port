@@ -30,6 +30,7 @@ producer or acquisition reason must be recorded with the request.
 | --- | --- |
 | `pc`, `inventory` | Legitimate installation and reviewed inventory; existing inventory/acceptance tooling produces the inventory, never the original files. |
 | `sdk`, `sdk_contents`, `sdk_install`, `sdk_binary`, `legacy_sdk`, `ugui_source` | Separately acquired exact SDK/package sources; SDK metadata and binaries cannot be generated or distributed by this repository. |
+| `acquired/unity-android-support.pkg` | Private owner-supplied Unity Android Support archive for `--sdk-component`. The existing `sdk_inputs.py` job verifies it and generates the private AndroidPlayer files for player defaults and APK packaging. |
 | `asset_ripper`, `codec`, `jpeg_codec`, `etc_codec`, `sdk_toolchain` | Explicit pinned public sources/tools or generated helper manifests; existing Shader/texture/codec owners document acquisition and helper construction. No retained content output substitutes for a tool. |
 | `converter`, `converter_receipt`, `managed`, `converter_sources`, `converter_metadata` | Existing `owner-code/produce.py`, `managed.py` and converter owners generate the managed cohort, C++/metadata and receipts. Paths must select the matching source-produced cohort. |
 | `code_request` | Explicit caller-authored owner-code request selecting originals/toolchain and output; required local orchestration state unless supplied as a generated prerequisite request. |
@@ -966,6 +967,13 @@ Besides the unchanged compiler sources, retain original adjacent source metas
 and the importer-only TestRunner 1.1.33 and pinned MCP runtime source/asmdef/meta
 sets. SDK archives or the documented public acquisitions supply these inputs;
 no generated project or timestamped discovery root is selected automatically.
+`--package-archives` for signed releases requires privately provisioned Unity
+Burst, Collections and Mathematics tarballs and an archive of compiler uGUI
+from the exact SDK under `acquired/unity-packages/`. The package assembly
+owner verifies and stages the compile-selected files and their original
+metas. Keep the archives separate from the imported originals. The
+[package producer setup](../tools/phone-build/package-assemblies/README.md)
+specifies the archive names and uGUI layout.
 `owner-player-registry.json` supplies the audited source witnesses and authored
 identity configuration. The default-scene shared file also requires the shader
 owner's successful standard object pack. These are explicit local inputs with

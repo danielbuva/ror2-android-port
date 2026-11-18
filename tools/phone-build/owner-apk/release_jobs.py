@@ -25,6 +25,7 @@ PRODUCERS = {
     "tools/phone-build/owner-code/run_android.py",
     "tools/phone-build/owner-code/produce.py",
     "tools/phone-build/owner-code/native.py",
+    "tools/phone-build/package-assemblies/produce.py",
     *{
         "tools/phone-build/accepted-output/" + name + ".py"
         for name in (
@@ -35,6 +36,7 @@ PRODUCERS = {
             "shader_produce",
             "texture_produce",
             "player_data",
+            "sdk_inputs",
             "sdk_package",
             "payload_shader_records",
             "shader_context",
@@ -201,6 +203,12 @@ class Dispatcher:
                         raise ValueError("input hash requires a regular file")
                     return UPDATES.RELEASE.digest(selected)
                 return str(selected.relative_to(self.inputs) if key.startswith("input_relative:") else selected)
+            if key.startswith(("native_sha256:", "native_bytes:")):
+                kind, name = key.split(":", 1)
+                selected = UPDATES.within(self.native, name, exists=True)
+                if not selected.is_file():
+                    raise ValueError("native pin requires a regular installed file")
+                return str(selected.stat().st_size) if kind == "native_bytes" else UPDATES.RELEASE.digest(selected)
             if key.startswith(("job:", "job_relative:", "job_directory:", "sha256:", "bytes:")):
                 parts = key.split(":")
                 if len(parts) != 3 or parts[1] not in job.get("needs", []):
@@ -222,7 +230,7 @@ class Dispatcher:
         result = TOKEN.sub(replace, value)
         if "${" in result:
             raise ValueError("malformed release job substitution")
-        return int(result) if value.startswith("${bytes:") and TOKEN.fullmatch(value) else result
+        return int(result) if value.startswith(("${bytes:", "${native_bytes:")) and TOKEN.fullmatch(value) else result
 
     @staticmethod
     def files_in(output, job):
@@ -262,11 +270,14 @@ class Dispatcher:
                 return
             seen.add(job_name)
             descriptor = self.descriptor(job_name)
-            for binding in re.findall(r"\$\{input_sha256:([^}]+)\}", json.dumps(descriptor)):
+            tokens = TOKEN.findall(json.dumps(descriptor))
+            for binding in {token.removeprefix("input_sha256:") for token in tokens if token.startswith("input_sha256:")}:
                 selected = UPDATES.within(self.inputs, self.config.get("bindings", {}).get(binding), exists=True)
                 if not selected.is_file():
                     raise ValueError("input hash requires a regular file")
                 pins[binding] = UPDATES.RELEASE.digest(selected)
+            for token in {token for token in tokens if token.startswith("native_sha256:")}:
+                pins[token] = self.expand("${" + token + "}", descriptor, self.jobs_root, None)
             for witness in descriptor.get("cache_witnesses", []):
                 root, path = WITNESS.fullmatch(witness).groups()
                 selected = UPDATES.within(roots[root], path, exists=True)

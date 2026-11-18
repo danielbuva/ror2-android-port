@@ -11,6 +11,49 @@ records matching artifact/install receipts, both assisted controls, strict nativ
 restart, a complete software-touch transaction and bounded recovery cases.
 Hardware controls and fresh public-input installation remain unqualified.
 
+## Ten-minute owner playtest
+
+Use the retained Main Nova candidate from the prepared primary checkout.
+Set `PLAYTEST_APK` to
+`work/coordination/gameplay-fidelity-firerock-20261117/owner-signed/lab-vulkan.apk`
+and `PLAYTEST_PAYLOAD` to
+`work/build-cache/9ad711ffdf425367bb4db7846846fb22361670f68b886a462bbc05c2ed5a49f4/payload`.
+The APK SHA-256 is
+`3fe278af144ff6b428bd7ed48edd6cdf5a07e60bd531f1f2ba6178b083d146b1`
+from source `f93b1676`. Follow the
+[matching build install and sync steps](#prepare-and-install-a-matching-build)
+from step 4. Prior assisted runs used this pair.
+[J1481](PORTING_JOURNAL.md#j1481--retire-sky-meadow-rock-spawners-before-teardown) ·
+[J1483](PORTING_JOURNAL.md#j1483--observe-120-hz-battery-discharge-and-clock-limits-on-nova)
+
+1. Open the app from its Android icon with diagnostic assists off. Time icon to
+   usable menu and Start to playable stage. Note a saved setting to recheck
+   after Quit. On the physical controller, use the left stick for survivor
+   and right stick for difficulty. Press X for Loadout,
+   choose an available skill or skin, close with B, then press A to Start.
+   Check that A inside Loadout changes the choice without starting. In stage,
+   move and aim together, use a skill and pause/resume. If you clear a stage,
+   check that the next stage loads and play resumes.
+2. Let enemies defeat the survivor during ordinary play. Inspect the native
+   results and wait for **Original report saved on this Android device**, then
+   press B to return to character select. Using only the touchscreen, select
+   survivor and difficulty, repeat the Loadout flow and tap Start. Move and
+   aim with two fingers, use a skill and check that releasing either finger
+   releases its input. After a natural defeat and the saved message, tap
+   **Return to menu**.
+3. If a Stone Golem appears in either run, record its close-range clap and
+   ranged laser charge and fire. Compare each with a matching PC capture for
+   missing effects, opaque squares or incorrect blending.
+4. In character select, press Y for Quit and B to cancel. Reopen Quit and
+   confirm with A. Cold launch, repeat cancel and confirm using touch, then
+   reopen and check that the saved loadout and setting persisted. Leave the
+   app stopped and the display asleep after testing.
+
+Record each case as passed, failed or pending, with the input used, timing and
+first failure. If the ten-minute window ends before a natural defeat, a stage
+transition or either Golem attack, leave that observation pending. Keep captures,
+receipts and profiles local.
+
 ## Current lab expectations
 
 Commando and Huntress are available. In the lab lobby, use the **left stick to
@@ -24,12 +67,13 @@ The reported menu rate is about 120 FPS on a 120 Hz Nova. A harness-started
 from an ordinary player launch. These are workload-specific observations, not a
 sustained-performance guarantee or a completed release gate.
 
-Known issues: an ordinary launch from the app icon is currently not playable. In the
-2026-11-04 owner playtest it took one to two minutes to reach the menu, another one
-to two minutes after survivor selection, and the first stage ran at about 4 FPS
-without fully loading; always time those phases on the ordinary path. `LightningStake` can produce a NaN error during teardown in some
-long sessions; repeated-session memory observations depend on the APK and workload
-(see Stability below), with ordinary long-play qualification still open.
+The 2026-11-04 owner playtest took one to two minutes from app icon to menu,
+another one to two minutes after survivor selection, and the first stage ran
+at about 4 FPS without fully loading. The retained candidate still needs those
+ordinary-launch timings. `LightningStake` can produce a NaN error during
+teardown in some long sessions. Repeated-session memory observations depend on
+the APK and workload (see Stability below), with ordinary long-play
+qualification still open.
 Roster/UI rendering is approximated. Player audio and Steam profiles
 are unavailable; Android-local profiles are separate. Record these limitations
 and the actual build identity with each playtest; do not claim release readiness.

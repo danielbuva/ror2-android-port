@@ -6,6 +6,7 @@ import importlib.util
 import json
 from pathlib import Path
 import shutil
+import subprocess
 import sys
 import tempfile
 import unittest
@@ -569,7 +570,7 @@ out.mkdir();(out/'global-metadata.dat').write_bytes(metadata)
             self.assertEqual((root / "global-metadata.dat").read_bytes(), metadata.read_bytes())
             self.assertEqual((root / "libil2cpp.so").read_bytes(), b"independent native output")
 
-    def test_signed_install_builds_player_and_native_from_fresh_conversion_and_reuses_unchanged_jobs(self):
+    def test_signed_install_shares_fresh_conversion_with_player_witness_and_native(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory).resolve()
             repo, inputs, runtime, native = [root / name for name in ("repo", "inputs", "runtime", "native")]
@@ -610,12 +611,61 @@ out.mkdir();(out/'global-metadata.dat').write_bytes(metadata)
             player_profile = "recipe/owner-player-fixture.json"
             write(repo / player_profile, {"project_assemblies": [], "outputs": {}, "registry": {"file": "registry.assets", "path": "registry.json"}})
             write(repo / "recipe/registry.json", {})
+            player = "recipe/jobs/owner-player-fixture.json"
+            witness_profile, witness = "recipe/owner-witness.json", "recipe/jobs/owner-witness.json"
+            write(
+                repo / witness_profile,
+                dict(
+                    schema="owner-bundle-managed-release-v1",
+                    profiles=[player_profile],
+                    request=dict(
+                        registry_receipt=G.Graph.artifact_pin(player, "registry_receipt"),
+                        managed_providers=dict(path="${input:retained_providers}"),
+                        managed_receipt=dict(path="${input:retained_receipt}"),
+                    ),
+                ),
+            )
+            bundle_profile, bundle = "recipe/owner-bundle.json", "recipe/jobs/owner-bundle.json"
+            write(
+                repo / bundle_profile,
+                dict(
+                    schema="owner-bundle-preload-release-v1",
+                    profiles=[player_profile, witness_profile],
+                    request=dict(
+                        policy=dict(bundle="fixture"),
+                        codec=dict(path="${input:retained_codec}"),
+                        managed_inputs=dict(
+                            metadata=G.Graph.artifact_pin(witness, "metadata"),
+                            **{"registry_" + key: G.Graph.artifact_pin(player, "registry_" + key) for key in ("body", "receipt", "schemas")},
+                        ),
+                    ),
+                ),
+            )
+            write(repo / "tools/phone-build/metadata/Program.cs", "// synthetic metadata reader")
             sdk_witness, linker = inputs / "acquired/sdk/receipt.json", native / "linker"
+            codec = native / "libbundlelz4.so"
             package_manifest = inputs / "acquired/package-set/input-hashes.json"
             write(package_manifest, {"packages/Fixture.cs": "fixture identity"})
             write(package_manifest.parent / "packages/Fixture.cs", "class PackageFixture {}")
+            package_archive = inputs / "acquired/unity-packages/Fixture.tgz"
+            write(package_archive, "compiler input v1")
+            write(
+                repo / G.PACKAGE_PRODUCER,
+                """import json, pathlib, sys
+ARCHIVES = {'Fixture.tgz': None}
+if __name__ == '__main__':
+    assert sys.argv[2:] == ['--prepare-inputs']
+    request = json.loads(pathlib.Path(sys.argv[1]).read_text())
+    output = pathlib.Path(request['output'])
+    (output / 'packages').mkdir(parents=True)
+    data = (pathlib.Path(request['archives']) / 'Fixture.tgz').read_bytes()
+    (output / 'packages/Selected.cs').write_bytes(data)
+    (output / 'result.json').write_text('{"success":true}')
+""",
+            )
             write(sdk_witness, "sdk fixture 1")
             write(linker, "linker fixture 1")
+            write(codec, "codec fixture 1")
             write(
                 repo / code_request,
                 {
@@ -644,7 +694,9 @@ assert sys.argv[2:] == ['--stop-after-conversion']
 work = pathlib.Path(request['owner_work'])
 assert (work / 'inventory/files.json').is_file()
 source = pathlib.Path(request['source_inputs']['original']).read_bytes()
+packages = pathlib.Path(request['source_inputs']['packages'])
 metadata = struct.pack('<II', 0xFAB11BAF, 31) + (pathlib.Path(request['sdk_install']) / 'receipt.json').read_bytes()
+metadata += (packages / 'Selected.cs').read_bytes()
 frame = pathlib.Path(request['output']) / 'backend/sources/Fixture.cpp.gz'
 frame.parent.mkdir(parents=True)
 frame.write_bytes(gzip.compress(source, mtime=0))
@@ -676,6 +728,7 @@ for name in ('gameplay/postprocessed/Assembly-CSharp.dll', 'packages/postprocess
     'path': str(managed / 'gameplay/postprocessed/Assembly-CSharp.dll'), 'sha256': pin(source)['sha256'],
 }}))
 (managed / 'gameplay/inputs.json').write_text('{}')
+(managed / 'packages/inputs.json').write_text(json.dumps({'package': pin((packages / 'Selected.cs').read_bytes())}))
 (managed / 'gameplay/ilpp-references').symlink_to(managed / 'support', target_is_directory=True)
 """,
             )
@@ -690,11 +743,16 @@ for name in ('profile-sha256', 'converter-receipt-sha256'):
 args = parser.parse_args()
 request = json.loads(args.code_request.read_text())
 packages = pathlib.Path(request['source_inputs']['packages'])
-assert (packages.parent / 'input-hashes.json').is_file()
-assert (packages / 'Fixture.cs').read_text() == 'class PackageFixture {}'
-assert pathlib.Path(request['target']['source']) == args.profile.parent.parent
 assert args.sdk.name == 'AndroidPlayer'
-assert args.sdk.parent.parent == packages.parent.parent / 'sdk'
+if 'target' in request:
+    assert (packages.parent / 'input-hashes.json').is_file()
+    assert (packages / 'Fixture.cs').read_text() == 'class PackageFixture {}'
+    assert pathlib.Path(request['target']['source']) == args.profile.parent.parent
+    assert args.sdk.parent.parent == packages.parent.parent / 'sdk'
+else:
+    data = (packages / 'Selected.cs').read_bytes()
+    compiler = json.loads((args.managed_production / 'packages/inputs.json').read_text())
+    assert hashlib.sha256(data).hexdigest() == compiler['package']['sha256']
 receipt = (args.converter / 'result.json').read_bytes()
 assert hashlib.sha256(receipt).hexdigest() == args.converter_receipt_sha256
 providers = json.loads((args.managed_production / 'providers.json').read_text())
@@ -714,9 +772,52 @@ for name, data in files.items():
     path.write_bytes(data)
 registry = args.output / 'registry-source'
 registry.mkdir()
-for name in ('result.json', 'schemas.json'):
-    (registry / name).write_text('{}')
+(registry / 'result.json').write_text(json.dumps({'managed_root': str(args.managed_production)}))
+(registry / 'schemas.json').write_text('{}')
 (args.output / 'result.json').write_text(json.dumps({'success': True, 'files': {archive + name: {} for name in files}}))
+""",
+            )
+            write(
+                repo / (G.PREFIX + "bundle_endpoints.py"),
+                """import hashlib, json, pathlib, sys
+_, command, request_path, output_flag, output = sys.argv
+assert (command, output_flag) == ('--managed', '--output')
+request = json.loads(pathlib.Path(request_path).read_text())
+def read(name):
+    pin = request[name]
+    path = pathlib.Path(pin['path'])
+    data = path.read_bytes()
+    assert len(data) == pin['bytes'] and hashlib.sha256(data).hexdigest() == pin['sha256']
+    return path, json.loads(data)
+_, registry = read('registry_receipt')
+providers_path, providers = read('managed_providers')
+receipt_path, receipt = read('managed_receipt')
+assert providers_path.parent == receipt_path.parent == pathlib.Path(registry['managed_root'])
+assert receipt['success'] and receipt['phase'] == 'managed-produced'
+assert pathlib.Path(providers['Assembly-CSharp.dll']['path']).read_bytes() == b'owned fixture'
+pathlib.Path(output).mkdir()
+for name in ('result.json', 'runtime-request.json', 'providers.json', 'metadata.json', 'provider-aliases.json'):
+    (pathlib.Path(output) / name).write_text('{}')
+""",
+            )
+            write(
+                repo / (G.PREFIX + "bundle_preload.py"),
+                """import hashlib, json, pathlib, sys
+_, command, request_path, output_flag, output = sys.argv
+assert (command, output_flag) == ('--release', '--output')
+request = json.loads(pathlib.Path(request_path).read_text())['request']
+for pin in request['managed_inputs'].values():
+    data = pathlib.Path(pin['path']).read_bytes()
+    assert len(data) == pin['bytes'] and hashlib.sha256(data).hexdigest() == pin['sha256']
+pin = request['codec']
+codec = pathlib.Path(pin['path'])
+data = codec.read_bytes()
+assert codec.name == 'libbundlelz4.so' and len(data) == pin['bytes'] and hashlib.sha256(data).hexdigest() == pin['sha256']
+out = pathlib.Path(output)
+(out / 'emitted').mkdir(parents=True)
+(out / 'emitted/fixture.bundle').write_bytes(b'synthetic bundle ' + data)
+for name in ('result.json', 'catalog-profile.json'):
+    (out / name).write_text('{}')
 """,
             )
             shutil.copyfile(ROOT / "tools/phone-build/owner-code/native.py", producer_root / "native_contract.py")
@@ -741,26 +842,39 @@ native.expand(providers['Fixture.cpp'], out / 'source.cpp')
             )
             admission, plan = load("install_inputs"), load("install_flow")
             code, native_job = "recipe/jobs/owner-code-conversion.json", "recipe/jobs/owner-native-code.json"
-            player = "recipe/jobs/owner-player-fixture.json"
+            package_job = "recipe/jobs/owner-package-inputs.json"
             selected = {
                 "schema": 1,
                 "required_inputs": input_manifest,
                 "workspace_bytes": 0,
                 "configuration": {"bindings": {"original": "Data/source.txt", "pc": "."}},
-                "stages": [{"id": name, "title": name, "jobs": {"assembly": [code, player], "native": [native_job]}.get(name, [])} for name in plan.STAGES],
+                "stages": [
+                    {"id": name, "title": name, "jobs": {"assembly": [package_job, code, player, witness, bundle], "native": [native_job]}.get(name, [])}
+                    for name in plan.STAGES
+                ],
             }
             progress = []
 
-            def build():
+            def build(*, current=False):
                 graph = G.Graph(repo, {})
-                index = graph.compile([player_profile], code_request=code_request, native_request=native_request)
+                index = graph.compile([bundle_profile], code_request=code_request, native_request=native_request, package_archives=True)
                 for name, job in graph.jobs.items():
                     write(repo / name, job)
                     index["files"][name] = G.digest(repo / name)
                 index["files"][input_manifest] = G.digest(repo / input_manifest)
                 index["install_plan"] = selected
-                self.assertIn("tools/unity/Fixture.cs", graph.jobs[code]["source_files"])
+                if current:
+                    self.assertIn("tools/wwise-android-abi/generate.py", graph.jobs[code]["source_files"])
+                    self.assertIn("recipe/original-audio-owner-sources.json", graph.jobs[code]["source_files"])
+                    self.assertIn("recipe/project-layout.json", graph.jobs[player]["source_files"])
+                    self.assertIn("managed_package_inputs", graph.jobs[code]["artifacts"])
+                    self.assertIn(package_job, graph.jobs[player]["needs"])
+                else:
+                    self.assertIn("tools/unity/Fixture.cs", graph.jobs[code]["source_files"])
+                    self.assertNotIn(package_job, graph.jobs[player]["needs"])
+                self.assertEqual(graph.jobs[code]["needs"], [package_job])
                 self.assertIn("recipe/runtime-sources.json", graph.jobs[player]["source_files"])
+                self.assertEqual(graph.jobs[witness]["needs"], [code, player])
                 release = {
                     "version": "synthetic",
                     "version_code": 2,
@@ -774,8 +888,11 @@ native.expand(providers['Fixture.cpp'], out / 'source.cpp')
                 dispatcher = J.Dispatcher(
                     repo, index, release, inputs, runtime, native, config, identity, python=[sys.executable], progress=lambda *args: progress.append(args)
                 )
-                self.assertEqual(plan.validate_plan(selected, index, dispatcher.descriptor), {code: "assembly", player: "assembly", native_job: "native"})
-                dispatcher.execute(player)
+                self.assertEqual(
+                    plan.validate_plan(selected, index, dispatcher.descriptor),
+                    {package_job: "assembly", code: "assembly", player: "assembly", witness: "assembly", bundle: "assembly", native_job: "native"},
+                )
+                dispatcher.execute(bundle)
                 dispatcher.execute(native_job)
                 result = J.UPDATES.RELEASE.rebuild(
                     release,
@@ -790,7 +907,8 @@ native.expand(providers['Fixture.cpp'], out / 'source.cpp')
                 return result
 
             first = build()
-            self.assertEqual(len(first["rebuilt"]), 7)
+            self.assertEqual(len(first["rebuilt"]), 8)
+            self.assertEqual(Path(first["outputs"]["payload/fixture"]).read_text(), "synthetic bundle codec fixture 1")
             self.assertEqual(Path(first["outputs"]["apk/assets/bin/Data/registry.assets"]).read_bytes(), original.read_bytes())
             self.assertFalse(build()["rebuilt"])
             write(repo / native_request, dict(native_template, compile_timeout_seconds=60))
@@ -802,26 +920,58 @@ native.expand(providers['Fixture.cpp'], out / 'source.cpp')
             self.assertEqual(Path(changed["outputs"][archive_lib]).read_bytes(), b"owned fixturelinker fixture 2")
             write(sdk_witness, "sdk fixture 2")
             self.assertEqual(build()["rebuilt"], ["apk/assets/bin/Data/Managed/Metadata/global-metadata.dat"])
+            write(codec, "codec fixture 2")
+            self.assertEqual(build()["rebuilt"], ["payload/fixture"])
+            write(package_archive, "compiler input v2")
+            self.assertEqual(build()["rebuilt"], ["apk/assets/bin/Data/Managed/Metadata/global-metadata.dat"])
             self.assertEqual(
-                progress,
+                [cached for job, cached in progress if job == package_job],
+                [False, True, True, True, True, True, False],
+            )
+            self.assertEqual(
+                [event for event in progress if event[0] != package_job][:-5],
                 [
                     (code, False),
                     (player, False),
+                    (witness, False),
+                    (bundle, False),
                     (native_job, False),
                     (code, True),
                     (player, True),
+                    (witness, True),
+                    (bundle, True),
                     (native_job, True),
                     (code, True),
                     (player, True),
+                    (witness, True),
+                    (bundle, True),
                     (native_job, False),
                     (code, True),
                     (player, True),
+                    (witness, True),
+                    (bundle, True),
                     (native_job, False),
                     (code, False),
                     (player, False),
+                    (witness, False),
+                    (bundle, False),
                     (native_job, False),
+                    (code, True),
+                    (player, True),
+                    (witness, True),
+                    (bundle, False),
+                    (native_job, True),
                 ],
             )
+            self.assertEqual(progress[-5:], [(code, False), (player, False), (witness, False), (bundle, False), (native_job, False)])
+
+            for path in G.Graph(ROOT, {}).current_code_sources():
+                write(repo / path, (ROOT / path).read_text())
+            request = json.loads((repo / code_request).read_text())
+            del request["target"]
+            write(repo / code_request, request)
+            build(current=True)
+            self.assertFalse(build(current=True)["rebuilt"])
 
     def test_burst_job_dispatches_both_cohorts_and_invalidates_changed_policy(self):
         for source in (False, True):
@@ -898,7 +1048,7 @@ burst=out/('backend/burst' if key=='source_inputs' else 'burst');burst.mkdir(par
                     self.assertEqual((output / xml).read_text(), "<linker/>")
                 self.assertEqual(progress, [False, True, False])
 
-    def test_sdk_job_signs_java_helper_expands_tools_and_reuses_complete_cohort(self):
+    def test_sdk_jobs_share_private_component_and_reuse_complete_cohort(self):
         spec = importlib.util.spec_from_file_location("test_sdk_graph_owner", ROOT / G.PREFIX / "sdk_package.py")
         sdk = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(sdk)
@@ -911,6 +1061,24 @@ burst=out/('backend/burst' if key=='source_inputs' else 'burst');burst.mkdir(par
             shutil.copyfile(ROOT / template, repo / template)
             producer = repo / G.PREFIX / "sdk_package.py"
             producer.parent.mkdir(parents=True)
+            component = inputs / "acquired/unity-android-support.pkg"
+            component.parent.mkdir()
+            component.write_text("owner archive fixture")
+            (producer.parent / "sdk_inputs.py").write_text(
+                """import argparse, json, pathlib
+parser = argparse.ArgumentParser()
+parser.add_argument('--component', type=pathlib.Path, required=True)
+parser.add_argument('--output', type=pathlib.Path, required=True)
+parser.add_argument('--android-package', action='store_true')
+args = parser.parse_args()
+assert args.android_package
+assert args.component.read_text() == 'owner archive fixture', 'owner archive drift'
+android = args.output / 'PlaybackEngines/AndroidPlayer'
+android.mkdir(parents=True)
+(android / 'defaults').write_text('verified fixture')
+(args.output / 'result.json').write_text(json.dumps({'success': True}))
+"""
+            )
             producer.write_text(
                 "SDK_ENTRIES = "
                 + repr(sdk.SDK_ENTRIES)
@@ -920,7 +1088,10 @@ burst=out/('backend/burst' if key=='source_inputs' else 'burst');burst.mkdir(par
     assert sys.argv[1]=='--request'
     request=json.loads(pathlib.Path(sys.argv[2]).read_text())
     assert len(request['jars'])==13
-    for name in ('sdk','android_jar','aapt','java','javac'):
+    sdk = pathlib.Path(request['sdk'])
+    assert sdk.name == 'AndroidPlayer'
+    assert (sdk / 'defaults').read_text() == 'verified fixture'
+    for name in ('android_jar','aapt','java','javac'):
         assert pathlib.Path(request[name]).is_file()
     assert all(pathlib.Path(value).is_file() for value in request['jars'].values())
     out=pathlib.Path(request['output']);out.mkdir()
@@ -933,16 +1104,33 @@ burst=out/('backend/burst' if key=='source_inputs' else 'burst');burst.mkdir(par
             helper = G.PREFIX + "SdkAndroidCode.java"
             (repo / helper).write_text("// authored helper fixture\n")
             request = json.loads((repo / template).read_text())
+            request["cache_witnesses"] = ["${inputs}/sdk_aapt"]
+            (repo / template).write_text(json.dumps(request))
             bindings = {}
-            for token in [request[name] for name in ("sdk", "android_jar", "aapt", "java", "javac")] + list(request["jars"].values()):
+            for token in [request[name] for name in ("android_jar", "aapt", "java", "javac")] + list(request["jars"].values()):
                 key = token.removeprefix("${input:").removesuffix("}")
                 bindings[key] = key
                 (inputs / key).write_text("authored tool input")
+            package = "recipe/jobs/owner-sdk-package.json"
+            extraction = "recipe/jobs/owner-sdk-inputs.json"
+            acquired = G.Graph(repo, {})
+            acquired.compile([], sdk_request=template)
+            self.assertEqual(acquired.jobs[package]["request"]["sdk"], request["sdk"])
+            player_profile = "recipe/owner-player-fixture.json"
+            (repo / player_profile).write_text(json.dumps({"project_assemblies": [], "outputs": ["registry.assets"]}))
+            shutil.copyfile(ROOT / G.PREFIX / "player_data.py", producer.parent / "player_data.py")
+            shared = G.Graph(repo, {})
+            shared.compile([player_profile], sdk_request=template, sdk_component=True)
+            player = shared.jobs["recipe/jobs/owner-player-fixture.json"]
+            self.assertEqual(player["needs"], [extraction])
+            self.assertEqual(player["arguments"][player["arguments"].index("--sdk") + 1], shared.jobs[package]["request"]["sdk"])
             graph = G.Graph(repo, {})
-            index = graph.compile([], sdk_request=template)
+            index = graph.compile([], sdk_request=template, sdk_component=True)
             self.assertEqual(set(index["entries"]), {"apk/" + name for name in sdk.SDK_ENTRIES})
             self.assertIn(helper, index["files"])
             self.assertIn(template, index["files"])
+            self.assertNotIn(str(component), index["files"])
+            self.assertEqual(graph.jobs[extraction]["source_files"], [extraction, G.PREFIX + "sdk_inputs.py"])
             for name, descriptor in graph.jobs.items():
                 path = repo / name
                 path.parent.mkdir(parents=True, exist_ok=True)
@@ -953,8 +1141,9 @@ burst=out/('backend/burst' if key=='source_inputs' else 'burst');burst.mkdir(par
             runtime.mkdir()
             native.mkdir()
             progress = []
-            for _ in range(2):
-                dispatcher = J.Dispatcher(
+
+            def dispatch():
+                return J.Dispatcher(
                     repo,
                     index,
                     release,
@@ -964,18 +1153,27 @@ burst=out/('backend/burst' if key=='source_inputs' else 'burst');burst.mkdir(par
                     {"bindings": bindings},
                     "a" * 64,
                     python=[sys.executable],
-                    progress=lambda name, reused: progress.append(reused),
+                    progress=lambda name, reused: progress.append((name, reused)),
                 )
+
+            for _ in range(2):
+                dispatcher = dispatch()
                 for name, dependencies in release["entries"].items():
                     destination = root / "results" / name
                     destination.parent.mkdir(parents=True, exist_ok=True)
                     dispatcher.produce(name, dependencies, destination)
                     self.assertEqual(destination.read_bytes(), ("authored " + name.removeprefix("apk/")).encode())
-            self.assertEqual(progress, [False, True])
+            self.assertEqual(progress, [(extraction, False), (package, False), (extraction, True), (package, True)])
+            (inputs / "sdk_aapt").write_text("updated tool input")
+            dispatch().execute(package)
+            self.assertEqual(progress[-2:], [(extraction, True), (package, False)])
+            component.write_text("changed archive fixture")
+            with self.assertRaises(subprocess.CalledProcessError):
+                dispatch().execute(package)
+            component.write_text("owner archive fixture")
             (repo / helper).write_text("// changed helper\n")
-            dispatcher = J.Dispatcher(repo, index, release, inputs, runtime, native, {"bindings": bindings}, "a" * 64, python=[sys.executable])
             with self.assertRaisesRegex(ValueError, "verified public source changed"):
-                dispatcher.execute("recipe/jobs/owner-sdk-package.json")
+                dispatch().execute(package)
 
     def test_startup_source_job_executes_and_reuses_through_dispatcher(self):
         with tempfile.TemporaryDirectory() as directory:
