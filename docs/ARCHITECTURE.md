@@ -249,7 +249,12 @@ preloads without adding catalog entries or a runtime owner.
 Canonical repack also seeds each aliased managed asset group's canonical root
 and its actual MonoScript from the pinned producer bundle. The advertised
 duplicate remains unchanged; loading its address preloads the instance now used
-by consumers. Unrelated external prefab graphs are not traversed.
+by consumers. When a group reaches a child GameObject or component in the
+canonical bundle, the repack follows reciprocal Transform links to its
+advertised prefab root. It includes that prefab hierarchy, its components and
+their bound MonoScripts in the consumer preload interval after checking those
+records against the donor interval. The group cache includes this ownership
+map and the qualified dependencies.
 For ModelSkinController PPtrs from that producer into the emitted bundle,
 canonical repack also admits retained SkinDefs into their source-matched asset
 groups. It qualifies the native type and actual MonoScript, keeps the advertised
@@ -1735,10 +1740,21 @@ the native-code owner. Startup metadata uses the admitted content hashes by
 default, so copying identical inputs again preserves its identity.
 `install_inputs.py` also generates the source-output assembly receipt.
 `install_flow.py` owns durable stage
-checkpoints and failure/retry state; producer receipts remain the authority for
+checkpoints and failure/retry state, including stage-admission write failures
+before a producer starts. If persisting the failure also fails, the existing
+in-memory error snapshot remains available; explicit retry revalidates receipts.
+Malformed/incomplete progress checkpoints are hash-named and preserved privately
+before progress is restarted, with a visible repair notice. Producer caches and
+input/signing state stay untouched and undergo existing revalidation. Unsupported
+checkpoint versions or failed preservation refuse instead of discarding evidence.
+Producer receipts remain the authority for
 reuse. Managed-host `OwnerInputImport` is the Android-free stream counterpart,
 `OwnerInputSource` adapts SAF trees/ZIP streams, and `OwnerBuildService` owns the
-foreground operation independently of `ToolHostActivity`. Pending/active admission
+foreground operation independently of `ToolHostActivity`. `OwnerUpdateState` supplies
+Android-free progress presentation: missing/future timestamps never advance the
+live clock, paused/stopped intervals remain frozen, unknown counts stay unavailable,
+and first-failure text explains receipt-revalidating retry without claiming install
+success. Pending/active admission
 coalesces repeated launch actions; foreground/wake-lock/thread startup failure
 releases admission and owned resources for a later explicit retry. The synthetic
 service lifecycle fixture checks cancellation, pending profile recovery and
@@ -2097,11 +2113,24 @@ cover fixed owner-work admission, exclusive outputs, immutable provider checks,
 retention and teardown. Native products, bank/prefab data, decompiled sources,
 managed artifacts and receipts stay private; no current game build selects them.
 The original audio upper-level admissions and runtime owners are unchanged.
-When a signed conversion declares audio members, the managed producer derives
-the decoder-free bank index in its explicit owner workspace. Staging, the
-runtime request pin and the stage pin use that workspace and index together.
+When a signed conversion declares audio members, its managed, ABI and audio
+stages share the provisioned owner workspace. The ABI stage pins the export
+set from the ARM64 ELF reader. The managed manifest verifies this export set
+alongside the original declarations and native plugin. The bank stage derives
+the decoder-free index and runs `scripts/lab/wwise_init_platform.py` in the same
+workspace. The Init producer verifies and transforms one
+inventory-bound bank snapshot and writes a new bank and receipt exclusively.
+Staging and both runtime pins bind the resulting receipt and bank index.
 The converter compares the local roster with the signed names before
 exposing the stage for APK assembly.
+`scripts/lab/phone_sdk_compiler.py` owns direct SDK Roslyn invocation for
+signed Android compilation. It validates the installed compiler and AOT core
+library, writes response files and logs in the managed scratch tree, and uses
+the installed .NET 8 launcher for Roslyn. The raw producer compiles authored
+Cecil transforms for the installed .NET 10 runtime and verifies the existing
+transformed assemblies against their pins. The managed owner reuses the
+transformed providers and compiles audio and gameplay against Android SDK
+references, with the package producer retaining IL postprocessing ownership.
 
 `tools/phone-build/owner-code/legacy_init.py` owns current experimental
 historical Init-receipt compatibility. It requires the full accepted owner
@@ -3191,6 +3220,9 @@ Opt-in `capture_golem_attacks` watches the live Unity stream for the owned
 process's native clap and laser entries and captures a bounded screenshot burst
 when display zero is focused. The observer stops with the launch workload and
 retains its event receipt alongside the regular captures.
+The teleporter world's detailed visual observer retains the first in-view Titan
+pre-fist GroundOnly material observation in the objective report. Its Unity
+frame marker drives the same screenshot observer via `capture_titan_indicator`.
 
 Launch-mode `input_schedule` adds ordered, relative-time targeted-touch scripts
 within the observation window, allowing ordinary input and End Run in the same
@@ -3312,8 +3344,9 @@ The batch stops on the first failure; independent actual APK/idle/OLED readback
 and canonical pruning precede lease release and atomic done-file publication.
 Foreign selectors/pending transactions are preserved, and failed terminal
 verification retains the lease for diagnosis. No installation is performed.
-The batch's independent temperature-zone observer targets 250 ms intervals and
-refuses a measured gap above 1 s. Runtime aborts if one CPU/GPU zone remains
+The batch and shared device runner use an independent temperature-zone observer
+that targets 250 ms intervals. A measured gap over 1 s emits a trace warning and
+a gap over 5 s aborts. Runtime also aborts if one CPU/GPU zone remains
 above 95 C for at least three seconds, with no gap above 1 s. A reading at or
 below 95 C resets that zone's continuity. Battery at or above 43 C aborts immediately.
 Skin and HAL status are metrics. Trace rows and stage receipts record sampled
@@ -3334,8 +3367,9 @@ remain sampled in raw observations and all-zone peaks. The runtime thresholds
 apply to CPU/GPU and battery. Admission discovers zone types and readable paths
 with a separate 10-second ADB timeout while no gameplay runs. Runtime reads those
 physical temperature paths and battery service in one ADB transaction with a
-one-second timeout, reducing client startups. The measured one-second maximum
-sampling gap remains mandatory, including transaction time and sampling waits.
+five-second timeout. A timeout is a sampling failure. The measured gap
+includes transaction time and sampling waits, and gaps over 1 s are excluded
+from sampled time above 80 C.
 Unreadable temperature interfaces are excluded with their type/path recorded; known electrical pseudo-zones remain excluded. Unknown
 numeric sentinels and missing readable CPU coverage still refuse admission. Runtime and unexpected failures retain first-failure authority; a
 bounded stop worker cannot block temperature sampling. The owner records the
@@ -4347,7 +4381,10 @@ belong to its transform, without changing the pinned package implementations.
 support tool with policy in `recipe/wwise-android-abi.json`. It reads the
 exact policy-bound accepted managed API, authorized local Wwise Android
 declarations, the pinned Android OS-string helper source and ARM64 Release
-plugin, and uses Unity-bundled Cecil. The writer applies the reviewed P/Invoke
+plugin, and uses Unity-bundled Cecil. Its read-only ARM64 ELF reader checks the
+pinned defined-export set directly from the plugin's dynamic symbol and string
+tables. Existing callers that supply `--llvm-nm` get a second check with the
+host NDK tool. The writer applies the reviewed P/Invoke
 metadata and one exact-signature OS-string call-operand rewrite, refusing
 body/signature/operand drift and verifying every other method and assembly
 contract after reopen. It publishes only new plans and candidates under ignored
@@ -4929,12 +4966,20 @@ can receive new source slots after its first presentation. The authored
 replacement, toggling and source ownership. Rendering remains a device gate.
 `TeleporterWorldSession.PresentNativeEffectSource` also prepares registered
 effect sources and native projectile ghosts and DamageTrail segment references
-before their pools instantiate them. It follows typed prefab edges with cycle
-protection, including CharacterBody's separately loaded FireTrail. The original
-body visual owner submits Mercenary's persistent and consume Expose prefabs
-after resolving their native fields on CharacterBody and HealthComponent. Original
-source slots and particle trails are restored by integrated-world cleanup before
-the session destroys its material copies; source blend values remain intact.
+before their pools instantiate them. Baked effect definitions send the acquired
+prefab through the native reference-discovery callback. The session detaches
+these callbacks before restoring the source materials. It follows typed prefab
+edges with cycle protection, including CharacterBody's separately loaded FireTrail.
+For native team area indicators on these roots, the session prepares the
+intersection materials in `TeamAreaIndicator.teamMaterialPairs` before native
+startup selects a team entry. The original table is restored with the effect
+callbacks before world cleanup destroys the owned copies.
+The original body visual owner submits Mercenary's persistent and consume Expose
+prefabs and Acrid's normal and combo-finisher swings. It reads the configured native
+Slash state and holds the finisher's typed provider lease through the run. Integrated
+world cleanup restores source slots and particle trails before the visual owner
+releases its leases and the session destroys its material copies. Source blend
+values remain intact.
 The session counts objective projectile materials during catalog setup. The
 integrated-world report includes these counts from its first snapshot.
 
@@ -6037,6 +6082,13 @@ orchestrator device lease, applies the battery rule, posts a sanitized result an
 prunes. `scripts/lab/lab-runner-guard.sh` is its job-started hook, installed outside
 the repository. Setup and command reference: [LAB_RUNNER](LAB_RUNNER.md).
 
+`scripts/lab/toolhost_build.py` owns the explicit staged installer build in the
+local packaging request. It verifies staged checkout and provider pins, binds
+host providers to generated device paths and invokes the existing managed fixture
+builder under the phone thermal supervisor. The runner owns the lease, terminal
+receipt and commit/input-keyed APK cache. The build verifies the retained signer
+and packaged source and native bytes before it releases its scratch.
+
 The same owner's current local `--emission-request` entry point executes
 `scripts/lab/toolhost_emission.py` through the existing installer driver. This
 operation validates a pinned input manifest and toolhost, streams runtime/inputs,
@@ -6060,6 +6112,16 @@ host runner exits. Output and owned app remain for downstream consumers, which
 must dispose of them after use. Runner finalization sleeps the display and prunes
 before publishing the terminal file. Current staging refuses adopted storage;
 host fixtures establish lifecycle contracts, not phone or gameplay acceptance.
+
+For `signed-code` requests the same runner stages the installed toolhost's .NET
+frameworks and Clang resources, then calls `owner-code/run_android.py` with the
+current signed audio roster and fresh private source inputs. The code owner
+stops after converter output validation and native planning. Confirmed jobs
+return converter, resource-use and thermal receipts and remove the owned test
+install. Uncertain jobs retain the exact handle. Signed release conversion
+descriptors bind the installed Android tools and witness them before cache
+reuse. Nested managed producers use the embedded Python host's argument format
+through `scripts/lab/phone_sdk_compiler.py`.
 
 `scripts/lab/adb_transport.py` owns shared explicitly targeted ADB subprocesses
 for the runner and synthetic installer acceptance driver. It retries only
@@ -6732,6 +6794,20 @@ separately.
 Receipts and raw motion evidence stay ignored. This verifies software delivery;
 it never qualifies physical buttons, a touchscreen digitizer or normal play.
 
+
+## Whole-catalog texture alpha
+
+The current whole-catalog full build calls `catalog_jpeg_alpha.stage` before
+bundle generation. It resolves each staged JPEG Texture2D through the accepted
+catalog and verifies the corresponding original bundle before decoding its
+pixels. Nonopaque images become lossless PNG input under their existing Unity
+paths and GUIDs. The exact-editor texture fixture verifies that the importer
+reads the PNG signature at the existing path. Ordinary textures in this cohort
+use Android RGBA32 and retain input alpha without RGB dilation or block
+compression. Packed normals decode X from source alpha and keep their NormalMap
+importer and Android format selection.
+The generated `.rebuild/catalog-jpeg-alpha.json` records the original channel
+hashes and restored image hashes. Code builds continue to use the frozen payload.
 
 ## Original collision policy
 

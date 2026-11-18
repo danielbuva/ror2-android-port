@@ -365,7 +365,7 @@ visual parity is claimed. Manual provenance/privacy review: 2026-10-24.
 | `shader-postprocessing-uber-candidate.json` | Exact source-camera `PostProcessResources.uber` one-pass constant-white placeholder | Accepted-input Main Camera/resource/shader/profile identities, official archive/license/source hashes, pass-0 call contract, 36 original typed program/resource joins, Shader names and compute kernel/thread groups and transitive includes. | Reconstruction metadata only; official shader/includes and generated candidates stay ignored under Unity Companion License. Package 2.3.0 is a compatible reference, not a shipped-version claim. Audited 2026-10-24. | `shader_postprocessing_uber`, whole-catalog preparation and catalog replay comparison; independent default-off activation. |
 
 | `owner-app-host-tools.json` | Private scoped native-host staging plan | Exact open Python/dependency file hashes, relative package paths/link targets and 21 pinned public producer source hashes; source commit is a retrieval hint. | Authored tool metadata only; no binary, SDK/game content, keys, credentials, private paths or device/storage identifiers. License/distribution boundaries are recorded below. Audited 2026-10-23. | `tools/phone-build/managed-host/stage.py` validates the fixed profile; its staged phone builder verifies file hashes and creates a separate private fixture, with no game/default-build consumer. |
-| `wwise-init-android.json` | Private fixture-only Init metadata generator constants (J744) | Minimum source-bank path, format/identity/size and plugin/device/bus relationships; generated bank bodies remain local. | Authored parsing/serialization and metadata only; accepted full inventory plus explicit source hash required, exclusive ignored outputs, no SDK/media/implementation/private identifiers. Audit details below. | `wwise_init_platform.py`, explicitly invoked support tool; no current game-build dependency. |
+| `wwise-init-android.json` | Init metadata generator constants (J744) and signed owner-work receipt pin | Minimum source-bank path, format/identity/size and plugin/device/bus relationships, source and receipt SHA-256; generated bank bodies remain local. | Authored parsing/serialization and metadata only; accepted full inventory plus explicit source hash required, exclusive private outputs, no SDK/media/implementation/private identifiers. Audit details below. | `wwise_init_platform.py`; signed audio roster with stage and request pin validation. |
 | `tools/phone-build/legacy/transform_init.py.txt` | Exact authored historical Init transformer source | Bounded parsing/serialization and minimum format/plugin/device/bus identities, retained byte-exact for truthful historical receipts. | No bank/media bytes, SDK or wwiser implementation, private path, binary, credential or account/device identifier. Audited 2026-10-24. | Formatted owner wrapper checks full accepted inventory and configured bank before materializing/executing exact source; outputs remain ignored. |
 | `owner-audio-prefab.json` | One exported source audio prefab as a local analysis input (J1055) | Four accepted bundle identities, minimum root/script/reference metadata and one explicit generated export-GUID binding; values come from original type trees. | Authored derivation and metadata only; no serialized asset/template bodies, game/SDK source, media, personal/device/account identifiers or secrets. Full audit below. | `owner_audio_prefab.py`, current experimental host support; no automatic game-build consumer. |
 | `wwise-android-abi.json` | Explicit support-mode Wwise managed ABI candidate generator | Exact accepted input ID; retained API hash; official Android declaration and OS-string helper source hashes; ARM64 Release plugin identity/export hashes; minimal import/parameter rewrites, one exact-signature OS-string helper call-operand rewrite and unavailable import names. | Authored transformation policy and metadata identifiers only; authorized local Integration source inspected read-only. No SDK code, binary, managed assembly, private path, account/device data, bank or audio content is copied. The 11 unavailable imports and `enable_production_audio: false` remain explicit. Audited 2026-10-20. | `tools/wwise-android-abi/generate.py` validates the exact local profile and writes new ignored plan/candidate outputs; its strict Cecil writer and synthetic tests verify the declared changes and preservation. Explicit support tool, separate from default builds. |
@@ -2361,6 +2361,11 @@ Manual provenance, privacy, licensing and sensitive-content audit: 2026-10-24.
 
 
 ## Historical authored Init source compatibility
+
+The signed audio job pins the accepted Init source hash and the current
+producer's deterministic receipt. Review on 2026-11-18 found only those two
+new hashes in the recipe. The signed release carries authored code and the
+recipe. The owner-supplied bank and generated receipt stay local.
 
 `tools/phone-build/legacy/transform_init.py.txt` is the exact 18,170-byte authored
 source from the J740/J744 experiment, SHA-256
@@ -7122,3 +7127,12 @@ implementation, private paths or credentials.
 | Recipe | SHA-256 |
 | --- | --- |
 | `owner-whole-game-prefab-component-source-records.json` | `d0fea0b51e8f32ca83e6fd71ca8d501f93814a6d9dd7c0d194877e5906244f80` |
+
+### Signed managed SDK compiler
+
+The direct compiler uses the installed, hash-checked Unity Roslyn and Android
+references to build authored tools and runtime code. It pins the authored
+observer build and verifies the established Wwise and game transform hashes.
+Provenance, privacy, licensing and sensitive-content review found authored
+compiler wiring, reference names and hashes only. SDK files, original game
+and middleware files, compiled outputs and private evidence stay local.

@@ -759,8 +759,9 @@ Optional `--code-request recipe/<request>.json` with a player profile or
 the original-input code owner through conversion and native planning. Its
 request selects `"${output}"`. A fixed `target` selects a profile and authored
 source root inside the signed `"${repo}"`. Omitting it signs the current runtime
-and audio producer sources. The current audio compile still requires macOS SDK
-tools and the checkout's work root. Schedule `owner-code-conversion.json` in assembly
+and audio producer sources. A signed audio conversion uses the provisioned
+owner workspace and the ARM64 ELF export reader. Its managed compiler requires
+the macOS SDK tools. Schedule `owner-code-conversion.json` in assembly
 before its player consumer and `owner-native-code.json` in native when selected.
 The player uses the conversion receipt, the managed payload and the resource
 files from this job. Its registry request carries the original package and source

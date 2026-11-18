@@ -76,7 +76,12 @@ source scripts/env.sh
 This compiles the current Java and manifest, packages the tracked installer
 sources, and verifies every retained runtime asset and Android library.
 The build refuses changed native/runtime inputs and records the base commit
-and hash next to the new APK. The cache is still keyed by the checkout commit.
+and hash next to the new APK. The rebuilt APK is cached by the checkout commit.
+An explicitly staged Android build can also seed this rebuild. Use its
+request-keyed cache directory. For an older receipt without source and signer
+fields, replay its original packaging request against the original checkout with
+a fresh terminal path. A cache hit rechecks the signed APK against the original
+stage and writes those fields without a device lease.
 
 For Android input qualification, set `operation` to `acquisition` and add
 `current_inventory`, `current_source`, `older_inventory` and `older_source`.
@@ -91,6 +96,21 @@ two folders under the fresh installer's external files. A private one-use comman
 invokes the normal buttons in the debuggable installer-test package. The run sends
 Back to the system picker and uses the fixture's Android document grants to qualify
 folder and ZIP imports. It then removes its owned files and installer.
+
+To build a specific managed installer stage, add a `toolhost_inputs` object.
+Set `stage_receipt` to its local `{path, sha256}` pin and `tool_root` to the
+existing Android tool workspace containing `material/`, `archives/` and the
+retained signing key. Set `signer_sha256` to the expected certificate digest.
+Optional `native_sources` maps planned native filenames to local provider files
+when those providers need transfer. Host files must match the existing
+`backend-tools.json` and Python provider pins. This request uses the
+retained signer. Use a commit-keyed toolhost request to back up the signer.
+
+Run `--dry-run` to check the staged files, checkout and host providers. The
+shared lease covers transfer, supervised Android build and scratch cleanup.
+The terminal receipt identifies a verified APK cached by commit and request
+pins. A missing terminal device status retains the lease and the private
+detached handle for reconciliation.
 
 ## Current local emission request
 
@@ -167,6 +187,24 @@ the active producer to cool down. The final done-file is written after runner
 cleanup and pruning, including on failure. Retention is temporary: after downstream
 consumers finish, dispose of the owned toolhost with its exact identity receipt.
 Host tests cover this contract; on-device qualification remains separate.
+
+### Signed source code qualification
+
+For current signed code conversion, add `"operation": "signed-code"` and use
+`expected_managed_providers` in place of `expected_records`. The pinned private
+request selects `source_inputs`, the signed `audio_members` roster and an
+`output` relative to its private `work/` directory. Stage the accepted input
+inventory, `input-hashes.json`, original game and compiler inputs beside that
+request. Include the matching public producer closure under `repo/`.
+
+The same runner stages Python, both .NET frameworks and Clang resources from
+the pinned toolhost APK. Its existing Android code adapter runs fresh managed
+compilation, audio roster verification, UnityLinker, IL2CPP conversion and native
+planning. The terminal receipt records the provider count, converter file
+hashes, wall time, peak memory, storage and thermal sampling. This gate ends at
+the native plan. The runner collects terminal evidence and removes its exact
+owned toolhost and scratch. `--resume-emission` reattaches an uncertain handle.
+After a confirmed result, use a fresh request directory for another attempt.
 
 ## Safety model
 

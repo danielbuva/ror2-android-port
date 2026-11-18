@@ -232,8 +232,9 @@ root. A fresh matched heap pair must inspect
 actual GC/static roots and native bridges; stable native object counts alone do
 not establish a managed-memory bound.
 
-The combined batch supervises temperature zones independently, targeting 250 ms
-samples and refusing gaps above 1 s. Abort when one CPU/GPU zone remains above
+The shared gameplay observer supervises temperature zones independently and
+targets 250 ms samples. The thermal trace warns about gaps over 1 s, and a gap
+over 5 s aborts the run. Abort when one CPU/GPU zone remains above
 95 C for at least three seconds, with no sampling gap above one second.
 A reading at or below 95 C resets that zone's continuity. Abort immediately
 for battery at or above 43 C. Skin temperature and HAL status remain metrics.

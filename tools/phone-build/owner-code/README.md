@@ -238,11 +238,14 @@ maps from the actual original catalog/IL and freshly decompiles the selected 14
 support sources; then compiles/post-processes all 145 gameplay sources. The three
 runtime request/stage/project admissions remain intact. No fake project is used.
 
-The signed audio roster selects explicit-workspace bank staging, then binds
-the same work root and decoder-free index into both generated runtime pins.
+The signed audio roster selects explicit-workspace bank staging. The current
+Init producer reads the original bank from the admitted inventory and writes
+its Android variant and a new receipt into the same workspace. Both runtime
+pins bind that receipt and the decoder-free index.
 The local stage roster must match the signed roster before conversion can
-expose the audio APK entries. This path still uses the host managed compiler
-and the historical Init producer's checkout work layout.
+expose the audio APK entries. Signed managed compilation still requires the
+host toolchain and checkout work layout. Standalone historical staging still
+uses the historical Init receipt.
 
 `recipe/owner-managed-code.json` contains only minimum provider paths/hashes and
 support selection identities. At stage boundaries the owner rechecks original

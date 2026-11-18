@@ -27,6 +27,12 @@ INSTALLED_BUNDLE_CODEC = dict(
     sha256="${native_sha256:libbundlelz4.so}",
     bytes="${native_bytes:libbundlelz4.so}",
 )
+INSTALLED_CODE_TOOLS = {
+    "dotnet": "libdotnetmuxer.so",
+    "clang": "libclang.so",
+    "linker": "lib-ld.lld-.so",
+    "objcopy": "libobjcopy.so",
+}
 TEXTURE_NATIVE = {
     "jpeg_codec": "libtexture-jpeg.so",
     "etc_codec": "libtexture-etc.so",
@@ -838,7 +844,7 @@ class Graph:
             paths.append(path.relative_to(self.repo).as_posix())
         return paths
 
-    def current_code_sources(self):
+    def current_code_sources(self, *, signed_audio=False):
         runtime = "recipe/runtime-sources.json"
         audio_manifest = "recipe/original-audio-owner-sources.json"
         audio = self.repo / "tools/unity/support/audio"
@@ -852,7 +858,7 @@ class Graph:
             audio_manifest,
             "recipe/owner-audio-prefab.json",
             "recipe/wwise-android-abi.json",
-            "tools/phone-build/legacy/transform_init.py.txt",
+            "recipe/wwise-init-android.json" if signed_audio else "tools/phone-build/legacy/transform_init.py.txt",
             "android/Assets/LabDiagnostics.cs",
             *["tools/unity/" + path for path in json.loads((self.repo / runtime).read_text())],
             *[
@@ -882,7 +888,7 @@ class Graph:
         request = json.loads((self.repo / request_path).read_text())
         if request.get("output") != "${output}" or "source_inputs" not in request:
             raise ValueError("code request must select original source inputs and the dispatcher output")
-        paths = self.fixed_code_sources(request["target"]) if "target" in request else self.current_code_sources()
+        paths = self.fixed_code_sources(request["target"]) if "target" in request else self.current_code_sources(signed_audio=audio_stage_receipt is not None)
         paths += [
             "recipe/owner-managed-code.json",
             "recipe/owner-player-code.json",
@@ -916,6 +922,10 @@ class Graph:
                 raise ValueError("canonical Wwise stage membership required")
             members = sorted([*banks, *media])
             request["source_inputs"].pop("decoder", None)
+            request["source_inputs"]["dotnet"] = "${native}/" + INSTALLED_CODE_TOOLS["dotnet"]
+            request["android_tools"] = {name: "${native}/" + path for name, path in INSTALLED_CODE_TOOLS.items()}
+            request["android_tools"]["resource_dir"] = "${installed_runtime}/clang/21"
+            cache_witnesses = sorted(set(cache_witnesses) | {"${native}/" + path for path in (*INSTALLED_CODE_TOOLS.values(), "libhostfxr10.so")})
             request["audio_members"] = members
             outputs = {
                 "apk/assets/stage-receipt.json": "managed-production/staged/stage-receipt.json",

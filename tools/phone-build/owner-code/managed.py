@@ -22,8 +22,10 @@ import common_assets_map  # noqa: E402
 import original_game_audio_produce as audio  # noqa: E402
 import owner_audio_prefab  # noqa: E402
 import phone_unity_compile  # noqa: E402
+from phone_sdk_compiler import SdkCompiler, python_command  # noqa: E402
 import public_transform_tools  # noqa: E402
 import wwise_bank_index  # noqa: E402
+import wwise_init_platform  # noqa: E402
 
 
 def load(path, name):
@@ -98,7 +100,8 @@ def maps_and_support(out, inputs, managed, probe, profile, identity, *, work=Non
     decompiler_env = None
     if android_tools:
         (framework,) = Path(os.environ["ROR2LAB_BUILD_DOTNET_ROOT"]).glob("shared/Microsoft.NETCore.App/10.*")
-        decompiler_env = dict(os.environ, LD_LIBRARY_PATH=str(framework) + ":" + os.environ["LD_LIBRARY_PATH"])
+        libraries = os.pathsep.join(filter(None, (str(framework), os.environ.get("LD_LIBRARY_PATH"))))
+        decompiler_env = dict(os.environ, LD_LIBRARY_PATH=libraries, TMPDIR=str(out / "tmp"))
     version = invoke([dotnet, ilspy, "--disable-updatecheck", "--version"], out, "ilspy-version", env=decompiler_env).read_text()
     if profile["ilspy_version"] not in version:
         raise ValueError("qualified source decompiler version differs")
@@ -109,7 +112,9 @@ def maps_and_support(out, inputs, managed, probe, profile, identity, *, work=Non
             name,
             env=decompiler_env,
         )
-    probe_env = dict(os.environ, ROR2LAB_CECIL_SHA256=probe_provider_sha256) if probe_provider_sha256 else None
+    probe_env = decompiler_env
+    if probe_provider_sha256:
+        probe_env = dict(probe_env or os.environ, ROR2LAB_CECIL_SHA256=probe_provider_sha256)
 
     def query(arguments, label):
         return json.loads(invoke([dotnet, probe, *arguments], out, label, env=probe_env, separate_stderr=bool(probe_env)).read_text())
@@ -169,14 +174,17 @@ def stage_source_audio(work, game, output, *, decoder=None):
     bank_dir, prefab_dir, init_dir = [output / name for name in ("bank-index", "prefab", "init")]
     wwise_bank_index.owner_index(work, bank_dir, decoder is not None, decoder_executable=decoder)
     owner_audio_prefab.reconstruct(work, prefab_dir)
-    legacy.run(work, init_dir)
+    if decoder is None:
+        init_dir.mkdir()
+        wwise_init_platform.produce_owner(work, game, init_dir)
+    else:
+        legacy.run(work, init_dir)
     prefab, bank = prefab_dir / "WwiseGlobal.prefab", bank_dir / "bank-index.json"
     staged = output / "staged"
     soundbanks_info = game / "Risk of Rain 2_Data/StreamingAssets/Audio/GeneratedSoundBanks/Windows/SoundbanksInfo.xml"
     invoke(
         [
-            sys.executable,
-            audio.TOOLS / "stage_original_game_banks.py",
+            *python_command(audio.TOOLS / "stage_original_game_banks.py"),
             "--prefab",
             prefab,
             "--bank-index",
@@ -197,7 +205,7 @@ def stage_source_audio(work, game, output, *, decoder=None):
     return staged, prefab, bank, init_dir
 
 
-def audio_assemblies(out, sdk, inputs, ordinary, staged, prefab, bank, init, managed_paths, manifest, *, owner_work=None):
+def audio_assemblies(out, sdk, inputs, ordinary, staged, prefab, bank, init, managed_paths, manifest, *, owner_work=None, sdk_compiler=None):
     destination = out / "audio"
     destination.mkdir()
     generated = destination / "generated"
@@ -243,18 +251,23 @@ def audio_assemblies(out, sdk, inputs, ordinary, staged, prefab, bank, init, man
     absent = destination / "NO_PROJECT"
     if absent.exists():
         raise ValueError("standalone owner must not admit a project")
-    core_options, core_refs = audio.unity_reference_options(contents, absent, plugin_refs)
     bootstrap_refs = {
         **plugin_refs,
         "AK.Wwise.Unity.API.dll": named["api-instrumented-composed.dll"],
         "RoR2.dll": named["game-original-owner-point-sound-composed.dll"],
     }
-    bootstrap_options, refs = audio.unity_reference_options(contents, absent, bootstrap_refs)
-    bound = source_hashes([*core_refs, *refs, mono, csc, *[audio.SOURCE / k for k in audio.OWNER_SOURCE_HASHES]])
+    if sdk_compiler:
+        sdk_refs = [sdk / path for path in phone_unity_compile.references(sdk)]
+        core_refs, refs = [*sdk_refs, *plugin_refs.values()], [*sdk_refs, *bootstrap_refs.values()]
+        tools = [sdk_compiler.launcher, *sdk_compiler.inputs]
+    else:
+        core_options, core_refs = audio.unity_reference_options(contents, absent, plugin_refs)
+        bootstrap_options, refs = audio.unity_reference_options(contents, absent, bootstrap_refs)
+        tools = [mono, csc]
+    bound = source_hashes([*core_refs, *refs, *tools, *[audio.SOURCE / k for k in audio.OWNER_SOURCE_HASHES]])
     observer, core, bootstrap = [
         destination / (name + ".dll") for name in ("OriginalOwnerProbeObserver", "GameAudioOriginalCore", "GameAudioOriginalBootstrap")
     ]
-    audio.compile_observer(mono, csc, observer, destination / "observer.log")
     point = destination / "GameAudioOriginalPointSoundBuildPin.cs"
     point.write_text(
         "// Requested artifact: the paired RoR2.dll contains the bounded diagnostic callsites.\ninternal static class GameAudioOriginalPointSoundBuildPin { internal const bool DiagnosticCallsitesPresent = true; }\n"
@@ -263,15 +276,31 @@ def audio_assemblies(out, sdk, inputs, ordinary, staged, prefab, bank, init, man
         audio.SOURCE / ("core/" + n + ".cs")
         for n in ("GameAudioOriginalReadiness", "GameAudioOriginalPassivePcmContract", "GameAudioOriginalOwner", "PointSoundDiagnosticObserver")
     ] + [point]
-    audio.compile_library("compile_core", mono, csc, core, core_sources, core_options, [observer], destination)
     bootstrap_sources = [
         p
         for p in sorted((audio.SOURCE / "bootstrap").glob("*.cs"))
         if p.name not in {"GameAudioOriginalGeneratedRequestPin.cs", "GameAudioOriginalGeneratedStagePin.cs"}
     ] + [request_source, stage_source]
-    audio.compile_library(
-        "compile_bootstrap", mono, csc, bootstrap, bootstrap_sources, bootstrap_options, [core, bootstrap_refs["AK.Wwise.Unity.API.dll"], observer], destination
-    )
+    if sdk_compiler:
+        options = ["-target:library", "-langversion:9", "-define:UNITY_ANDROID"]
+        env = dict(os.environ, TMPDIR=str(out / "tmp"))
+        sdk_compiler.compile(observer, [audio.SOURCE / "core/OriginalOwnerProbeObserver.cs"], [sdk_compiler.corelib], options, env=env)
+        sdk_compiler.compile(core, core_sources, [*core_refs, observer], options, env=env)
+        sdk_compiler.compile(bootstrap, bootstrap_sources, [*refs, core, observer], options, env=env)
+        sdk_compiler.verify()
+    else:
+        audio.compile_observer(mono, csc, observer, destination / "observer.log")
+        audio.compile_library("compile_core", mono, csc, core, core_sources, core_options, [observer], destination)
+        audio.compile_library(
+            "compile_bootstrap",
+            mono,
+            csc,
+            bootstrap,
+            bootstrap_sources,
+            bootstrap_options,
+            [core, bootstrap_refs["AK.Wwise.Unity.API.dll"], observer],
+            destination,
+        )
     unchanged(bound)
     return {p.name: p for p in (observer, core, bootstrap)}
 
@@ -292,7 +321,9 @@ def target_source_order(public, support, maps):
     return [public[-1], *sorted(public[:-1] + maps, key=lambda path: path.name.casefold()), *support]
 
 
-def gameplay(out, sdk, inputs, original, ordinary, raw, package_output, audio_outputs, maps, support, *, source_root=None, android_tools=None):
+def gameplay(
+    out, sdk, inputs, original, ordinary, raw, package_output, audio_outputs, maps, support, *, source_root=None, android_tools=None, sdk_compiler=None
+):
     destination = out / "gameplay"
     destination.mkdir()
     if source_root:
@@ -335,22 +366,21 @@ def gameplay(out, sdk, inputs, original, ordinary, raw, package_output, audio_ou
     bound = source_hashes([*sources, *refs.values()])
     native.write(destination / "inputs.json", {"sources": source_hashes(sources), "references": source_hashes(refs.values()), "defines": defines})
     contents = sdk / "Unity.app/Contents"
-    options = (
-        ["-nostdlib", "-noconfig", "-langversion:9", "-unsafe+", "-optimize-", "-debug:portable"]
-        + ["-define:" + v for v in defines]
-        + ["-r:" + str(p) for p in refs.values()]
-    )
+    options = ["-langversion:9", "-unsafe+", "-optimize-", "-debug:portable", *["-define:" + v for v in defines]]
     assembly = destination / "Assembly-CSharp.dll"
-    audio.compile_library(
-        "compile_gameplay",
-        Path(android_tools["dotnet"]) if android_tools else contents / "NetCoreRuntime/dotnet",
-        contents / "DotNetSdkRoslyn/csc.dll",
-        assembly,
-        sources,
-        options,
-        [],
-        destination,
-    )
+    if sdk_compiler:
+        sdk_compiler.compile(assembly, sources, list(refs.values()), ["-target:library", *options], env=dict(os.environ, TMPDIR=str(out / "tmp")))
+    else:
+        audio.compile_library(
+            "compile_gameplay",
+            Path(android_tools["dotnet"]) if android_tools else contents / "NetCoreRuntime/dotnet",
+            contents / "DotNetSdkRoslyn/csc.dll",
+            assembly,
+            sources,
+            ["-nostdlib", "-noconfig", *options, *["-r:" + str(p) for p in refs.values()]],
+            [],
+            destination,
+        )
     post = destination / "postprocessed"
     post.mkdir()
     (destination / "tmp").mkdir()
@@ -490,10 +520,10 @@ def target_run(work, sdk, values, target, source_root, output, *, android_tools=
         native.write(output / "result.json", result)
 
 
-def run(work, sdk, values, output, *, signed_audio=False):
+def run(work, sdk, values, output, *, signed_audio=False, android_tools=None):
     work, sdk = native.canonical(work), native.canonical(sdk)
     output = Path(output)
-    if work != (ROOT / "work").resolve():
+    if not signed_audio and work != (ROOT / "work").resolve():
         raise ValueError("source owner currently requires this checkout's work root")
     state = native.input_state(work)
     if native.sha(PROFILE) != PROFILE_SHA:
@@ -535,22 +565,23 @@ def run(work, sdk, values, output, *, signed_audio=False):
         for name in ("logs", "tmp"):
             (output / name).mkdir()
         native.write(output / "inputs.json", {"explicit": {k: str(p) for k, p in inputs.items()}, "hashes": bound})
+        compiler = SdkCompiler(sdk, inputs["dotnet"], output) if android_tools else None
         raw = output / "raw"
         invoke(
             [
-                sys.executable,
-                "-I",
-                ROOT / "tools/unity/support/audio/managed-producer/produce.py",
+                *python_command(ROOT / "tools/unity/support/audio/managed-producer/produce.py", isolated=True),
                 "--android-source",
                 inputs["wwise_android_source"],
                 "--android-os-string-source",
                 inputs["wwise_os_string_source"],
                 "--native-so",
                 inputs["wwise_abi_native"],
-                "--llvm-nm",
-                sdk / "PlaybackEngines/AndroidPlayer/NDK/toolchains/llvm/prebuilt/darwin-x86_64/bin/llvm-nm",
-                "--unity-editor",
-                sdk / "Unity.app/Contents/MacOS/Unity",
+                *(
+                    ["--owner-work", work]
+                    if signed_audio
+                    else ["--llvm-nm", sdk / "PlaybackEngines/AndroidPlayer/NDK/toolchains/llvm/prebuilt/darwin-x86_64/bin/llvm-nm"]
+                ),
+                *(["--android-sdk-install", sdk] if compiler else ["--unity-editor", sdk / "Unity.app/Contents/MacOS/Unity"]),
                 "--dotnet",
                 inputs["dotnet"],
                 "--netstandard-ref",
@@ -560,21 +591,31 @@ def run(work, sdk, values, output, *, signed_audio=False):
             ],
             output,
             "raw-managed",
+            env=dict(os.environ, TMPDIR=str(output / "tmp")) if compiler else None,
         )
         manifest = json.loads((raw / "manifest.json").read_text())
-        managed_paths = audio.verify_managed_output_manifest(manifest, work)
+        managed_paths = audio.verify_managed_output_manifest(manifest, work, native_abi_reader=signed_audio)
         result["phase"] = "packages-and-transforms"
         package_output = output / "packages"
-        packages_owner.run({"sdk_install": str(sdk), "packages": str(inputs["packages"]), "output": str(package_output)})
-        ordinary_dir = output / "ordinary"
-        ordinary_dir.mkdir()
-        ordinary = assembly_transforms.generate(
-            state[1] / "Risk of Rain 2_Data/Managed",
-            ordinary_dir,
-            assembly_transforms.load_recipe(),
-            dotnet=inputs["dotnet"],
-            unity_editor=sdk / "Unity.app/Contents/MacOS/Unity",
-        )
+        package_request = {"sdk_install": str(sdk), "packages": str(inputs["packages"]), "output": str(package_output)}
+        if android_tools:
+            package_request["android_tools"] = android_tools
+        packages_owner.run(package_request)
+        transform_recipe = assembly_transforms.load_recipe()
+        if compiler:
+            ordinary_dir = raw / "ordinary"
+            by_name = {path.name: path for path in managed_paths.values() if path.parent == ordinary_dir}
+            ordinary = {name: by_name[name] for step in transform_recipe["steps"] for name in step["outputs"]}
+        else:
+            ordinary_dir = output / "ordinary"
+            ordinary_dir.mkdir()
+            ordinary = assembly_transforms.generate(
+                state[1] / "Risk of Rain 2_Data/Managed",
+                ordinary_dir,
+                transform_recipe,
+                dotnet=inputs["dotnet"],
+                unity_editor=sdk / "Unity.app/Contents/MacOS/Unity",
+            )
         unchanged(bound)
         if native.input_state(work) != state:
             raise ValueError("owner source state changed")
@@ -601,12 +642,35 @@ def run(work, sdk, values, output, *, signed_audio=False):
             managed_paths,
             manifest,
             owner_work=owner_work,
+            sdk_compiler=compiler,
         )
         unchanged(bound)
         result["phase"] = "original-sources-and-maps"
-        maps, support = maps_and_support(output, inputs, state[1] / "Risk of Rain 2_Data/Managed", ordinary_dir / "tool/AssemblyProbe.dll", profile, state[0])
+        maps, support = maps_and_support(
+            output,
+            inputs,
+            state[1] / "Risk of Rain 2_Data/Managed",
+            ordinary_dir / "tool/AssemblyProbe.dll",
+            profile,
+            state[0],
+            work=work,
+            android_tools=android_tools,
+        )
         result["phase"] = "gameplay-assembly"
-        game = gameplay(output, sdk, inputs, state[1] / "Risk of Rain 2_Data/Managed", ordinary, raw, package_output, audio_outputs, maps, support)
+        game = gameplay(
+            output,
+            sdk,
+            inputs,
+            state[1] / "Risk of Rain 2_Data/Managed",
+            ordinary,
+            raw,
+            package_output,
+            audio_outputs,
+            maps,
+            support,
+            android_tools=android_tools,
+            sdk_compiler=compiler,
+        )
         produced = {
             "AK.Wwise.Unity.API.dll": raw / "api-instrumented-composed.dll",
             "AK.Wwise.Unity.MonoBehaviour.dll": ordinary["AK.Wwise.Unity.MonoBehaviour.dll"],

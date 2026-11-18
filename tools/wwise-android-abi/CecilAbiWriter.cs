@@ -409,6 +409,10 @@ File.Move(tempOutput, output, false);
 Console.WriteLine(JsonSerializer.Serialize(new { status = "draft_incomplete_android_candidate", input_sha256 = Need(root, "input_assembly_sha256"), output_sha256 = Sha(File.ReadAllBytes(output)), mapped = sourceRows.Length, unavailable = unresolved.GetArrayLength(), managed_call_rewrites = rewriteRows.Length, full_enable_ready = false }));
 return 0;
 
-sealed class DeletePathOnDispose(string path) : IDisposable {
+sealed class DeletePathOnDispose : IDisposable {
+    private readonly string path;
+
+    public DeletePathOnDispose(string path) => this.path = path;
+
     public void Dispose() { try { File.Delete(path); } catch { } }
 }

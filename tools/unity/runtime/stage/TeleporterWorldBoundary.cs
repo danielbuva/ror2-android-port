@@ -179,6 +179,7 @@ public sealed partial class PortSession
         public string exitTraceFirstError;
         public bool exitTraceIdle, exitTraceCharging, exitTraceCharged, exitTraceFinished;
         public ObjectiveRendererObservation[] rendererViews, ownedSurfaceViews, presentedSurfaceViews;
+        public ObjectiveRendererObservation titanPreFistView;
         public int lateNativeMaterials, ownedSurfaceCount;
         public int nativeHostCombatSquads, nativeHostDeathListenersBefore, nativeHostDeathListenersAfter, nativeHostSummonListenersBefore,
             nativeHostSummonListenersAfter;
@@ -386,6 +387,10 @@ public sealed partial class PortSession
         GameObject[] objectiveEffectSources;
         string[] deferredObjectiveEffectPaths;
         bool ownsObjectiveBundlePreload;
+        readonly HashSet<AssetOrDirectReference<GameObject>> nativeEffectReferences =
+            new HashSet<AssetOrDirectReference<GameObject>>();
+        readonly Dictionary<TeamAreaIndicator, TeamAreaIndicator.TeamMaterialPair[]> nativeTeamAreaMaterials =
+            new Dictionary<TeamAreaIndicator, TeamAreaIndicator.TeamMaterialPair[]>();
         readonly List<CharacterMaster> pendingObjectiveActors = new List<CharacterMaster>();
         readonly Dictionary<CharacterMaster, int> objectiveAmbientExpected = new Dictionary<CharacterMaster, int>();
         readonly HashSet<CharacterMaster> objectiveDirectorActors = new HashSet<CharacterMaster>();
@@ -487,11 +492,59 @@ public sealed partial class PortSession
         public void PresentRegisteredNativeEffects()
         {
             var entries = (EffectDef[])PortSession.RewardField(typeof(EffectCatalog), "entries").GetValue(null);
-            foreach (var entry in entries.Where(x => x != null && x.prefabEffectComponent && x.prefab))
-                PresentNativeEffectSource(entry.prefab);
+            var referenceField = typeof(EffectDef).GetField("_prefabAssetOrDirectReference", BindingFlags.Instance | BindingFlags.NonPublic);
+            foreach (var entry in entries)
+            {
+                if (entry == null)
+                    continue;
+                if (entry.prefabEffectComponent)
+                {
+                    PresentNativeEffectSource(entry.prefab);
+                    continue;
+                }
+                // Baked definitions do not populate prefabEffectComponent. Present
+                // the acquired source before native spawning consumes the result.
+                var reference = (AssetOrDirectReference<GameObject>)referenceField.GetValue(entry);
+                if (nativeEffectReferences.Add(reference))
+                    reference.onValidReferenceDiscovered += PresentNativeEffectSource;
+            }
             // CharacterBody loads this native trail outside EffectCatalog. Its segment
             // is a prefab reference, not a child, and must be ready before the first tick.
             PresentNativeEffectSource(LegacyResourcesAPI.Load<GameObject>("Prefabs/FireTrail"));
+        }
+        void StopPresentingNativeEffectReferences()
+        {
+            foreach (var reference in nativeEffectReferences)
+                reference.onValidReferenceDiscovered -= PresentNativeEffectSource;
+            nativeEffectReferences.Clear();
+            foreach (var pair in nativeTeamAreaMaterials)
+                if (pair.Key)
+                    pair.Key.teamMaterialPairs = pair.Value;
+            nativeTeamAreaMaterials.Clear();
+        }
+        void PrepareNativeTeamAreaMaterials(TeamAreaIndicator indicator)
+        {
+            var originals = indicator.teamMaterialPairs;
+            if (originals == null || originals.Length == 0 || nativeTeamAreaMaterials.ContainsKey(indicator))
+                return;
+            // Native Start selects a team material after the prefab's renderer
+            // slots have been prepared. Keep the native selection and order.
+            var prepared = (TeamAreaIndicator.TeamMaterialPair[])originals.Clone();
+            bool changed = false;
+            for (int i = 0; i < prepared.Length; i++)
+            {
+                var source = originals[i].sharedMaterial;
+                var material = AndroidMaterialPresentation.RecoverTeamAreaMaterial(source, coordinator.worldMaterials);
+                if (material == source)
+                    continue;
+                prepared[i].sharedMaterial = material;
+                changed = true;
+            }
+            if (changed)
+            {
+                nativeTeamAreaMaterials.Add(indicator, originals);
+                indicator.teamMaterialPairs = prepared;
+            }
         }
         public void PresentNativeEffectSource(GameObject source)
         {
@@ -500,6 +553,8 @@ public sealed partial class PortSession
             {
                 if (!root || !visited.Add(root))
                     return;
+                foreach (var indicator in root.GetComponentsInChildren<TeamAreaIndicator>(true))
+                    PrepareNativeTeamAreaMaterials(indicator);
                 foreach (var renderer in root.GetComponentsInChildren<Renderer>(true))
                 {
                     if (coordinator.worldLootSourceMaterials.ContainsKey(renderer))
@@ -736,6 +791,7 @@ public sealed partial class PortSession
         }
         public void CleanupObjectiveSupport()
         {
+            StopPresentingNativeEffectReferences();
             coordinator.CleanupWorldLootSupport();
             coordinator.CleanupMoonSupport();
             if (objectiveOrbHost)
@@ -1698,6 +1754,8 @@ public sealed partial class PortSession
                     Resources.FindObjectsOfTypeAll<Renderer>()
                         .Where(x => x && x.gameObject.scene.IsValid() && x.gameObject.activeInHierarchy && x.enabled && x.isVisible)
                         .ToArray();
+                if (coordinator.r.objective.titanPreFistView == null)
+                    ObserveTitanPreFist(visible);
                 var owned = visible
                                 .Where(x => coordinator.worldPresented.Contains(x.GetInstanceID()) ||
                                             x.sharedMaterials.Any(m => m && ownedMaterials.Contains(m)))
@@ -1887,6 +1945,27 @@ public sealed partial class PortSession
                 return true;
             }
         }
+        void ObserveTitanPreFist(Renderer[] visible)
+        {
+            foreach (var renderer in visible)
+            {
+                if (renderer.name != "Mesh")
+                    continue;
+                var indicator = renderer.GetComponentInParent<TeamAreaIndicator>();
+                if (!indicator || indicator.name != "TeamAreaIndicator, GroundOnly")
+                    continue;
+                var projectile = indicator.GetComponentInParent<RoR2.Projectile.ProjectileController>();
+                if (!projectile || projectile.name != "TitanPreFistProjectile(Clone)")
+                    continue;
+                var view = ObserveOwnedSurface(renderer);
+                if (view.projectedBoundsFraction <= 0)
+                    continue;
+                coordinator.r.objective.titanPreFistView = view;
+                Debug.Log("lab-titan-prefist-visible frame=" + view.unityFrame);
+                return;
+            }
+        }
+
         public ObjectiveRendererObservation ObserveOwnedSurface(Renderer renderer)
         {
             var materials = renderer.sharedMaterials;

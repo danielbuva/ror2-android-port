@@ -91,6 +91,99 @@ class CheckpointTests(unittest.TestCase):
         resumed.fail(ValueError("originals changed"))
         self.assertEqual(resumed.state["first_failure"], {"stage": "admission", "reason": "originals changed"})
 
+    def test_checkpoint_write_failures_report_first_stage_without_running_unadmitted_producer(self):
+        for phase, failing_call in (("begin", 1), ("complete", 2)):
+            for operation in ("write", "fsync", "rename"):
+                with self.subTest(phase=phase, operation=operation):
+                    emitted = []
+                    self.options["emit"] = emitted.append
+                    flow = self.create()
+                    action = Mock(return_value="authored output")
+                    original = F.write_json
+                    failure = OSError("synthetic " + operation + " checkpoint failure")
+                    calls = 0
+
+                    def interrupted(path, value):
+                        nonlocal calls
+                        calls += 1
+                        if calls < failing_call:
+                            return original(path, value)
+                        if operation == "write":
+                            raise failure
+                        name = "fsync" if operation == "fsync" else "replace"
+                        with patch.object(F.ATOMIC.os, name, side_effect=failure):
+                            return original(path, value)
+
+                    with patch.object(F, "write_json", side_effect=interrupted):
+                        with self.assertRaises(OSError) as caught:
+                            flow.perform("native", action)
+                    self.assertIs(caught.exception, failure)
+                    self.assertEqual(action.call_count, 0 if phase == "begin" else 1)
+                    self.assertEqual(emitted[-1]["status"], "failed")
+                    self.assertEqual(emitted[-1]["first_failure"], {"stage": "native", "reason": str(failure)})
+                    self.assertEqual(flow.row("native")["status"], "failed")
+                    # Retry revalidates; failed persistence never certifies completion.
+                    resumed = self.create()
+                    self.assertNotEqual(resumed.row("native")["status"], "complete")
+                    self.assertEqual(resumed.perform("native", lambda: "retry"), "retry")
+                    self.assertIsNone(resumed.state["first_failure"])
+                    # Keep each injected case independent of the previous success.
+                    flow.path.unlink()
+
+    def test_damaged_checkpoint_preserves_bytes_and_revalidates_without_deleting_cache(self):
+        original = self.create().snapshot()
+        bad = copy.deepcopy(original)
+        del bad["stages"][2]["total"]
+        damaged = [b'{"schema":', b"[]", json.dumps(bad).encode()]
+        for status in ([], {}):
+            for stage in (False, True):
+                malformed = copy.deepcopy(original)
+                target = malformed["stages"][2] if stage else malformed
+                target["status"] = status
+                damaged.append(json.dumps(malformed).encode())
+        for raw in damaged:
+            with self.subTest(raw=raw[:20]):
+                checkpoint = self.root / "install-checkpoint.json"
+                checkpoint.write_bytes(raw)
+                artifact = self.root / "retained-producer.txt"
+                artifact.write_text("authored cached output")
+                flow = self.create()
+                self.assertEqual(flow.state["status"], "interrupted")
+                self.assertIn("must pass normal identity/hash checks", flow.state["repair_notice"])
+                self.assertTrue(all(row["status"] == "pending" for row in flow.state["stages"]))
+                self.assertFalse(flow.reusable("apk"))
+                self.assertEqual(artifact.read_text(), "authored cached output")
+                self.assertTrue(any(p.read_bytes() == raw for p in self.root.glob("install-checkpoint-damaged-*.json")))
+                flow.perform("admission", lambda: None)
+                self.assertEqual(self.create().row("admission")["status"], "complete")
+
+    def test_android_install_checkpoint_phases_are_not_damaged(self):
+        for status in ("awaiting_consent", "complete"):
+            with self.subTest(status=status):
+                flow = self.create()
+                # Match ToolHostActivity.updateInstallCheckpoint's persisted fields.
+                flow.state.update(status=status, current_stage="install", first_failure=None)
+                flow.row("install").update(status=status, completed=1 if status == "complete" else 0, total=1)
+                flow.persist()
+                resumed = self.create()
+                self.assertEqual(resumed.state["status"], status)
+                self.assertEqual(resumed.row("install")["status"], status)
+                self.assertNotIn("repair_notice", resumed.state)
+                changed = self.create("next-release")
+                self.assertNotIn("repair_notice", changed.state)
+                self.assertFalse(list(self.root.glob("install-checkpoint-damaged-*.json")))
+
+    def test_checkpoint_repair_refuses_unpreserved_damage_and_unknown_schema(self):
+        checkpoint = self.root / "install-checkpoint.json"
+        checkpoint.write_bytes(b"truncated")
+        with patch.object(F.ATOMIC, "writer", side_effect=OSError("cannot retain damaged receipt")), self.assertRaises(OSError):
+            self.create()
+        self.assertEqual(checkpoint.read_bytes(), b"truncated")
+        checkpoint.write_text('{"schema":2}')
+        with self.assertRaisesRegex(ValueError, "Unsupported progress checkpoint version"):
+            self.create()
+        self.assertEqual(checkpoint.read_text(), '{"schema":2}')
+
     def test_artifact_receipt_rehashes_bytes_missing_and_symlink(self):
         flow = self.create()
         artifact = self.root / "synthetic-result.txt"

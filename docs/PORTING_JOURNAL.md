@@ -6,6 +6,31 @@ under ignored `work/coordination/`, not here. Entries J01–J1177 (2026-09-12 to
 [history/journal-J1-J1177/PORTING_JOURNAL.md](history/journal-J1-J1177/PORTING_JOURNAL.md) with its
 [index](history/journal-J1-J1177/JOURNAL_INDEX.md); numbering continues here.
 
+## J1493 — Restore the Stone Titan's pre-fist ground warning
+
+2026-11-18. The native effect owner prepares Android intersection materials in
+the team table before native startup picks the enemy entry, then restores it at teardown.
+Assisted Verdant Falls captured the red ground warning with native player authority.
+The PID-matched frame 8850 report records a supported intersection shader, queue 3000,
+blend 5/10, alpha 1 and the source cloud and enemy ramp textures.
+APK SHA-256: `639efb032eedbbc1afbd1ea5aaf22f70cd4e0a92758335b6d7501313724bec27` (source `d056c0ee`).
+Evidence: `work/coordination/gameplay-fidelity-coverage-20261117/verdant-acrid-titan-indicator-event/`,
+`titan-indicator/`, `terminal-capture/` and `terminal.done.json`.
+CPU/GPU peaked at 88.4 C with 38.235 s above 80 C. Battery peaked at 27 C.
+Scratch cleanup, stopped process, OLED sleep and lease release passed.
+Matched PC pixels and the attack's remaining smoke materials still need attribution.
+
+## J1490 — Build a pinned managed installer stage on Android
+
+2026-11-18. The shared runner verified 1,249 staged inputs and built the
+disposable installer fixture under phone thermal supervision. The host
+verified the APK signature, packaged source and native libraries.
+APK SHA-256: `2f19c4e52b01112f3569461e5bd696039ca302137fe0086d3905b0b83f9cb6cd` (source `dbb7bcda`).
+Evidence: `work/coordination/p1-wholegame-1031/phone-chain-audit-1112/current-shared-toolhost-v5-1118.usyzmlhR/terminal.done.json`.
+The 798,251,717-byte APK took 260.8 s to build. CPU/GPU peak was 58.5 C,
+with no thermal pauses. The runner removed its device scratch and released the
+lease. Installation, owner-file conversion and gameplay remain open.
+
 ## J1481 — Retire Sky Meadow rock spawners before teardown
 
 2026-11-17. Stage geometry stops pending native rock spawners before retiring
@@ -4205,3 +4230,46 @@ Retained runtime `629cf5aa`, SHA-256 `b8d59ed5f6f86ed0876b135e4dc395c12aa8575642
 Evidence: `work/coordination/alpha-packaging-1117/acquisition-private-controls.done.json`.
 Owned scratch and installer were removed. External provider selection, cross-UID
 grant reopen and cancellation after copying begins remain open.
+
+## J1489 — Restore source texture alpha and Bison smoke rings
+
+2026-11-18. The full-catalog build restores 11 ordinary alpha textures
+and 12 packed normals from the accepted source while retaining Unity
+paths and GUIDs. The Android RGBA32 Twotone ramp matches all 1,024 source
+alpha values. Assisted Frozen Wall samples 60 and 70 show live Bison
+SmokeRings with the same material and blend and without the old opaque donuts.
+APK SHA-256 `80ba4f4b7d96c22588a307089951c10863c278fbeb17327110303f9d9fbb157f` (source `b8e69754`).
+Evidence under `work/coordination/gameplay-fidelity-coverage-20261117/`:
+`direct-frozenwall-jpeg-alpha/terminal.done.json`, both sample screenshots
+and Unity logs, and the comparison in `direct-frozenwall-bison-visual/sample-60/`.
+The run held native authority for 91.148 s. Terminal snapshot was 32.75 FPS
+at 30.53 ms. SoC peaked at 94.3 °C, with 54.574 s above 80 °C. Battery peaked
+at 27 °C. Idle cleanup and OLED sleep passed. Black sheets in sample 70
+and visual verification of Acrid's two Twotone emitters remain open.
+
+## J1491 — Recover native materials when baked effects load
+
+2026-11-18. The stage presentation owner prepares a baked effect's native
+prefab at typed reference discovery, before spawning uses its renderers.
+Assisted Verdant Falls sample 105 retains two live Goo and two Ring Mesh
+emitters. Their original materials bind to Android variants 1/6 and 0/36,
+with queues 2450 and 3000 and Ring blends 5/10. Matched baseline used queue 2000 stubs.
+APK SHA-256 `1f381753f61faaf6220cff5ff9e02bc5e19ed96842dbb8f2ebe19312d13046ad` (source `8847e22a`).
+Evidence under `work/coordination/gameplay-fidelity-coverage-20261117/verdant-acrid-baked-effects/`
+includes `terminal.done.json` and the sample 105 screenshot, renderer data and Unity log.
+Native authority held 86.401 s. SoC peaked at 87.2 °C with 13.849 s above 80 °C.
+Battery was 26–27 °C. Cleanup and OLED sleep passed. Matched draw attribution remains open.
+
+## J1492 — Restore Acrid's native normal and finisher swing bindings
+
+2026-11-18. The body visual owner prepares the configured normal swing and
+leases the typed finisher prefab through the run. Assisted Verdant Falls captures
+both original materials on Android variant 0/36, queue 3000 and blends 5/10.
+Their shared Distortion uses variant 7/0, queue 5000. Goo and Ring stay recovered.
+APK SHA-256 `f03c4fd8a704ed455c1e7b7b7cdce9aa6fb24ac5fe9636a254560f387474c516` (source `d3c9e962`).
+Evidence under `work/coordination/gameplay-fidelity-coverage-20261117/verdant-acrid-native-swings/`
+includes `terminal.done.json`, `sample-75/`, `sample-120/` and `terminal-capture/`.
+Native authority held 96.536 s with all four skill callbacks paired. Terminal
+snapshot was 33.79 FPS / 29.60 ms. SoC peaked at 88.4 °C with 19.907 s above
+80 °C. Battery held 26 °C. Scratch removal, OLED sleep and lease release passed.
+Black quads in the terminal screenshot and matched finisher pixels remain open.

@@ -670,6 +670,8 @@ out.mkdir();(out/'global-metadata.dat').write_bytes(metadata)
                 path.parent.mkdir(parents=True, exist_ok=True)
                 path.write_text(json.dumps(value) if isinstance(value, dict) else value)
 
+            for name in (*G.INSTALLED_CODE_TOOLS.values(), "libhostfxr10.so"):
+                write(native / name, "installed tool fixture " + name)
             original = inputs / "import/files/Data/source.txt"
             write(original, "owned fixture")
             input_manifest = "recipe/inputs.json"
@@ -821,6 +823,10 @@ for name in ('gameplay/postprocessed/Assembly-CSharp.dll', 'packages/postprocess
 (managed / 'gameplay/ilpp-references').symlink_to(managed / 'support', target_is_directory=True)
 if 'audio_members' in request:
     assert 'decoder' not in request['source_inputs']
+    tools = request['android_tools']
+    assert tools['dotnet'] == request['source_inputs']['dotnet']
+    assert pathlib.Path(tools['dotnet']).read_text().startswith('installed tool fixture ')
+    assert pathlib.Path(tools['resource_dir']).parts[-2:] == ('clang', '21')
     stage = managed / 'staged'
     bank_root = 'Audio/GeneratedSoundBanks/Android'
     for relative in request['audio_members']:
@@ -984,6 +990,8 @@ native.expand(providers['Fixture.cpp'], out / 'source.cpp')
                 if current:
                     self.assertIn("tools/wwise-android-abi/generate.py", graph.jobs[code]["source_files"])
                     self.assertIn("recipe/original-audio-owner-sources.json", graph.jobs[code]["source_files"])
+                    self.assertIn("recipe/wwise-init-android.json", graph.jobs[code]["source_files"])
+                    self.assertNotIn("tools/phone-build/legacy/transform_init.py.txt", graph.jobs[code]["source_files"])
                     self.assertIn("recipe/project-layout.json", graph.jobs[player]["source_files"])
                     self.assertIn("managed_package_inputs", graph.jobs[code]["artifacts"])
                     self.assertIn(package_job, graph.jobs[player]["needs"])
@@ -1099,7 +1107,7 @@ native.expand(providers['Fixture.cpp'], out / 'source.cpp')
             )
             self.assertEqual(progress[-5:], [(code, False), (player, False), (witness, False), (bundle, False), (native_job, False)])
 
-            for path in G.Graph(ROOT, {}).current_code_sources():
+            for path in G.Graph(ROOT, {}).current_code_sources(signed_audio=True):
                 write(repo / path, (ROOT / path).read_text())
             request = json.loads((repo / code_request).read_text())
             with self.assertRaisesRegex(ValueError, "audio-bearing code"):
@@ -1109,6 +1117,10 @@ native.expand(providers['Fixture.cpp'], out / 'source.cpp')
             write(repo / code_request, request)
             build(current=True)
             self.assertFalse(build(current=True)["rebuilt"])
+            write(native / G.INSTALLED_CODE_TOOLS["dotnet"], "installed tool fixture updated")
+            progress.clear()
+            build(current=True)
+            self.assertIn((code, False), progress)
 
     def test_burst_job_dispatches_both_cohorts_and_invalidates_changed_policy(self):
         for source in (False, True):

@@ -3,6 +3,8 @@
 import importlib.util
 import json
 from pathlib import Path
+import subprocess
+import sys
 import tempfile
 import unittest
 from unittest.mock import patch
@@ -14,6 +16,47 @@ SPEC.loader.exec_module(MANAGED)
 
 
 class OwnerCodeManagedTests(unittest.TestCase):
+    def test_nested_python_uses_the_embedded_android_host_abi(self):
+        native = "/installed/lib/arm64/"
+        runtime = "/private/runtime/python"
+        with patch.multiple(sys, platform="android", executable=native + "libpythonhost.so", prefix=runtime):
+            self.assertEqual(
+                MANAGED.python_command("producer.py", isolated=True),
+                [native + "libpythonhost.so", native + "libpython3.14.so", runtime, "producer.py"],
+            )
+        self.assertEqual(MANAGED.python_command("producer.py", isolated=True), [sys.executable, "-I", "producer.py"])
+
+    def test_signed_sdk_compiler_uses_explicit_android_runtime_and_references(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            sdk = root / "SDK with spaces"
+            relative = "DotNetSdkRoslyn/csc.dll"
+            compiler_path = sdk / "Unity.app/Contents" / relative
+            compiler_path.parent.mkdir(parents=True)
+            compiler_path.write_bytes(b"authored compiler fixture")
+            inputs = {"compiler/csc.dll": (relative, MANAGED.native.sha(compiler_path))}
+            launcher = root / "installed-dotnet"
+            assembly = root / "Fixture.dll"
+            source = root / "Source File.cs"
+            reference = root / "SDK Reference.dll"
+            with patch.object(sys.modules["phone_sdk_compiler"], "INPUTS", inputs):
+                compiler = MANAGED.SdkCompiler(sdk, launcher, root)
+                with patch.object(subprocess, "run", return_value=subprocess.CompletedProcess([], 0)) as run:
+                    compiler.compile(assembly, [source], [reference], ["-target:library"])
+                runtime = json.loads(compiler.runtime_config.read_text())
+                self.assertEqual(runtime["runtimeOptions"]["framework"]["version"], "8.0.32")
+                rsp = assembly.with_suffix(".rsp")
+                self.assertEqual(
+                    run.call_args.args[0],
+                    [str(launcher), "exec", "--runtimeconfig", str(compiler.runtime_config), str(compiler_path), "-noconfig", "-nostdlib+", "@" + str(rsp)],
+                )
+                response = rsp.read_text().splitlines()
+                self.assertIn("-r:" + json.dumps(str(reference)), response)
+                self.assertIn(json.dumps(str(source)), response)
+                compiler_path.write_bytes(b"changed fixture")
+                with self.assertRaisesRegex(ValueError, "Pinned SDK Roslyn"):
+                    compiler.verify()
+
     def test_current_runtime_manifest_reaches_reference_resolution(self):
         # Exercise the real current manifest, which outgrew the old 128-file
         # guard. Stop at SDK resolution; no compiler or game inputs are needed.
@@ -120,18 +163,22 @@ class OwnerCodeManagedTests(unittest.TestCase):
                 MANAGED.bind_paths(values)
 
     def test_signed_stage_binds_index_and_copy_to_the_same_workspace_without_decoder(self):
-        work, game = Path("/owner/work"), Path("/owner/game")
-        output = work / "managed"
         with (
+            tempfile.TemporaryDirectory() as temporary,
             patch.object(MANAGED.wwise_bank_index, "owner_index") as index,
             patch.object(MANAGED.owner_audio_prefab, "reconstruct") as prefab,
-            patch.object(MANAGED.legacy, "run") as init,
+            patch.object(MANAGED.wwise_init_platform, "produce_owner") as init,
+            patch.object(MANAGED.legacy, "run") as legacy,
             patch.object(MANAGED, "invoke") as invoke,
         ):
+            work, game = Path(temporary).resolve(), Path("/owner/game")
+            output = work / "managed"
+            output.mkdir()
             stage, prefab_path, bank_path, init_dir = MANAGED.stage_source_audio(work, game, output)
         index.assert_called_once_with(work, bank_path.parent, False, decoder_executable=None)
         prefab.assert_called_once_with(work, prefab_path.parent)
-        init.assert_called_once_with(work, init_dir)
+        init.assert_called_once_with(work, game, init_dir)
+        legacy.assert_not_called()
         command, destination, label = invoke.call_args.args
         arguments = dict(zip(command[2::2], command[3::2]))
         self.assertEqual(arguments["--owner-work"], work)

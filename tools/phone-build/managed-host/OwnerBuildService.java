@@ -107,7 +107,11 @@ public final class OwnerBuildService extends Service {
                     else {
                         worker = new ToolHostActivity.Worker(getApplicationContext()); worker.executeUpdate(action);
                         File status = new File(getFilesDir(), "owner-input/update-state.json");
-                        if (("release-build".equals(action) || "release-rollback".equals(action)) && !destroyed && !"cancel".equals(importControl) && status.isFile()
+                        if ("cancel".equals(importControl)) {
+                            // A worker can finish publication while cancellation is arriving.
+                            // Retained outputs are not permission to expose Install after cancel.
+                            ToolHostActivity.updateStatus(OwnerBuildService.this, "CANCELLED", "Build cancelled. Retained outputs will be revalidated on explicit retry.");
+                        } else if (("release-build".equals(action) || "release-rollback".equals(action)) && !destroyed && status.isFile()
                             && "READY".equals(ToolHostActivity.readJson(status).optString("state"))) {
                             if (Build.VERSION.SDK_INT < 26 || getPackageManager().canRequestPackageInstalls()) {
                                 ToolHostActivity.installPrepared(OwnerBuildService.this);

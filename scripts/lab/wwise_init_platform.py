@@ -47,14 +47,16 @@ def _reject_symlink_components(path: Path) -> None:
 
 
 def validate_output_paths(
-    source: Path, destination: Path, receipt_path: Path | None = None, *, repository_root: Path | None = None
+    source: Path, destination: Path, receipt_path: Path | None = None, *, repository_root: Path | None = None, owner_work: Path | None = None
 ) -> tuple[Path, Path | None]:
-    """Require new output paths under ignored repository work, before any reads/writes."""
-    repository_root = (repository_root or _repository_root()).resolve(strict=True)
-    work_root = repository_root / "work"
-    if work_root.is_symlink() or not work_root.is_dir():
-        raise Refusal("repository work output root is absent or a symlink")
-    work_root = work_root.resolve(strict=True)
+    """Require new outputs inside the admitted private work root."""
+    if owner_work is None:
+        repository_root = (repository_root or _repository_root()).resolve(strict=True)
+        work_root = repository_root / "work"
+    else:
+        work_root = owner_work
+    if not work_root.is_dir() or work_root != work_root.resolve(strict=True):
+        raise Refusal("work output root must be a canonical directory")
 
     source_real = source.resolve(strict=True)
     outputs = [("destination", destination)]
@@ -76,10 +78,11 @@ def validate_output_paths(
             raise Refusal(f"{name} parent directory must already exist")
         if not _is_within(parent.resolve(strict=True), work_root):
             raise Refusal(f"{name} parent resolves outside repository work")
-        relative = canonical.relative_to(repository_root).as_posix()
-        ignored = subprocess.run(["git", "check-ignore", "--quiet", "--no-index", "--", relative], cwd=repository_root, check=False).returncode == 0
-        if not ignored:
-            raise Refusal(f"{name} is not ignored by Git")
+        if owner_work is None:
+            relative = canonical.relative_to(repository_root).as_posix()
+            ignored = subprocess.run(["git", "check-ignore", "--quiet", "--no-index", "--", relative], cwd=repository_root, check=False).returncode == 0
+            if not ignored:
+                raise Refusal(f"{name} is not ignored by Git")
         resolved[name] = canonical
     if receipt_path is not None and resolved["destination"] == resolved["receipt"]:
         raise Refusal("destination and receipt must be different paths")
@@ -399,8 +402,12 @@ def transform_file(
     accepted: dict,
     inventory: dict,
     input_relative_path: str,
+    *,
+    owner_work: Path | None = None,
 ) -> dict:
-    destination, receipt_path = validate_output_paths(source, destination, receipt_path)
+    destination, receipt_path = validate_output_paths(source, destination, receipt_path, owner_work=owner_work)
+    if owner_work is not None and any(path.is_relative_to(configured_game) for path in (destination, receipt_path)):
+        raise Refusal("Init outputs cannot be in the accepted game installation")
     digest, input_size, data = verify_accepted_source(source, expected_sha256, configured_game, accepted, inventory, contract, input_relative_path)
     output = rewrite_bank(data, contract)
     output_sha = hashlib.sha256(output).hexdigest()
@@ -430,6 +437,23 @@ def transform_file(
             destination.unlink()
             raise
     return receipt
+
+
+def produce_owner(work: Path, configured_game: Path, output: Path) -> dict:
+    recipe = read(DEFAULT_RECIPE)
+    relative = recipe["input_relative_path"]
+    return transform_file(
+        configured_game / relative,
+        output / "Init.bnk",
+        output / "receipt.json",
+        recipe["source_sha256"],
+        load_contract(),
+        configured_game,
+        read(work / "config/accepted-input.json"),
+        read(work / "inventory/files.json"),
+        relative,
+        owner_work=work,
+    )
 
 
 def main() -> int:

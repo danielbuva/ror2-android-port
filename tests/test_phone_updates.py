@@ -193,6 +193,70 @@ class UpdateTests(unittest.TestCase):
             self.assertEqual(P.load_json((self.inputs / "update-state.json").read_bytes())["state"], "ERROR")
             self.assertFalse((self.inputs / "release-candidate.json").exists())
 
+    def test_failed_fresh_checks_replace_stale_success_and_retry_without_building(self):
+        with FakeGitHub(self.release, self.bundle) as server:
+            for failure in ("network", "parse", "signature"):
+                with self.subTest(failure=failure):
+                    self.assertEqual(self.run_check(server)["state"], "UPDATE_AVAILABLE")
+                    candidate = (self.inputs / "release-candidate.json").read_bytes()
+                    original = server.paths["/release.json"]
+                    if failure == "network":
+                        with patch.object(server.transport, "open", side_effect=OSError("synthetic offline")), self.assertRaises(OSError):
+                            self.run_check(server)
+                    else:
+                        server.paths["/release.json"] = b"not json" if failure == "parse" else encoded(dict(self.release, version="unsigned change"))
+                        with self.assertRaises(ValueError):
+                            self.run_check(server)
+                        server.paths["/release.json"] = original
+                    state = P.load_json((self.inputs / "update-state.json").read_bytes())
+                    self.assertEqual(state["state"], "ERROR")
+                    self.assertNotIn("release", state)
+                    self.assertNotIn("changed_entries", state)
+                    self.assertEqual((self.inputs / "release-candidate.json").read_bytes(), candidate)
+                    self.assertEqual(self.run_check(server)["state"], "UPDATE_AVAILABLE")
+            self.request["installed_release_version"] = self.release["version_code"]
+            U.write_json(self.inputs / "update-request.json", self.request)
+            self.assertEqual(self.run_check(server)["state"], "UP_TO_DATE")
+            with patch.object(server.transport, "open", side_effect=OSError("offline after up to date")), self.assertRaises(OSError):
+                self.run_check(server)
+            self.assertEqual(P.load_json((self.inputs / "update-state.json").read_bytes())["state"], "ERROR")
+            self.assertEqual(self.run_check(server)["state"], "UP_TO_DATE")
+            self.assertNotIn("/public-tools.zip", server.requests)
+            self.assertFalse((self.inputs / "owner-apk-ready.json").exists())
+            self.assertFalse((self.inputs / "installed-release.json").exists())
+
+    def test_candidate_publication_failure_and_state_failure_retry_without_build(self):
+        original_write = U.write_json
+        with FakeGitHub(self.release, self.bundle) as server:
+            for boundary in ("candidate", "available"):
+                with self.subTest(boundary=boundary):
+                    self.assertEqual(self.run_check(server)["state"], "UPDATE_AVAILABLE")
+                    candidate_path = self.inputs / "release-candidate.json"
+                    candidate = candidate_path.read_bytes()
+                    observed = []
+
+                    def interrupted(path, value):
+                        if (boundary == "candidate" and path.name == "release-candidate.json") or (
+                            boundary == "available" and path.name == "update-state.json" and value.get("state") == "UPDATE_AVAILABLE"
+                        ):
+                            raise OSError("synthetic publication interruption")
+                        original_write(path, value)
+                        if path.name == "update-state.json":
+                            observed.append(value["state"])
+
+                    with patch.object(U, "write_json", side_effect=interrupted), self.assertRaisesRegex(OSError, "publication interruption"):
+                        self.run_check(server)
+                    state = P.load_json((self.inputs / "update-state.json").read_bytes())
+                    self.assertEqual(state["state"], "ERROR")
+                    self.assertNotIn("release", state)
+                    self.assertNotIn("changed_entries", state)
+                    self.assertEqual(observed, ["CHECKING", "ERROR"])
+                    self.assertEqual(candidate_path.read_bytes(), candidate)
+                    self.assertEqual(self.run_check(server)["state"], "UPDATE_AVAILABLE")
+            self.assertNotIn("/public-tools.zip", server.requests)
+            self.assertFalse((self.inputs / "owner-apk-ready.json").exists())
+            self.assertFalse((self.inputs / "installed-release.json").exists())
+
     def test_context_refuses_rollback_package_and_installer_upgrade(self):
         for field, value in (("installed_release_version", 3), ("application_id", "other.package"), ("installer_version", 0)):
             request = dict(self.request, **{field: value})
@@ -293,6 +357,45 @@ class UpdateTests(unittest.TestCase):
         self.assertEqual(U.RELEASE.rebuild(self.release, **options)["rebuilt"], ["payload/authored"])
         self.assertEqual(Path(first["outputs"]["payload/authored"]).read_text(), "authored output")
         self.assertEqual((dispatcher.runtime / "repo").resolve(), repo)
+
+    def test_incremental_cache_invalidates_identity_dependencies_and_interrupted_receipt(self):
+        release = copy.deepcopy(self.release)
+        dependencies = next(iter(release["entries"].values()))
+        release["entries"] = {"payload/one": dict(dependencies), "payload/two": dict(dependencies)}
+        cache = self.inputs / "cache"
+        context = {key: self.request[key] for key in ("application_id", "installed_version", "installer_version")}
+        calls = []
+        content = {"payload/one": "one", "payload/two": "two"}
+
+        def produce(name, dependencies, output):
+            calls.append(name)
+            output.write_text(content[name])
+
+        options = dict(**context, input_sha256="c" * 64, root=cache, produce=produce)
+        U.RELEASE.rebuild(release, **options)
+        self.assertEqual(U.changed_entries(release, cache, "c" * 64), [])
+        # Changed source dependency must invalidate even when old output hashes match.
+        key = next(iter(release["entries"]["payload/one"]))
+        release["entries"]["payload/one"][key] = "d" * 64
+        content["payload/one"] = "one revised"
+        self.assertEqual(U.changed_entries(release, cache, "c" * 64), ["payload/one"])
+        before = (cache / "release-cache.json").read_bytes()
+        with patch.object(U.RELEASE.ATOMIC, "write_json", side_effect=OSError("synthetic receipt interruption")):
+            with self.assertRaisesRegex(OSError, "receipt interruption"):
+                U.RELEASE.rebuild(release, **options)
+        self.assertEqual((cache / "release-cache.json").read_bytes(), before)
+        self.assertEqual((cache / "payload/one").read_text(), "one revised")
+        calls.clear()
+        resumed = U.RELEASE.rebuild(release, **options)
+        self.assertEqual(calls, ["payload/one"])
+        self.assertEqual(resumed["reused"], ["payload/two"])
+        # Missing output and same-length byte corruption are independently refused.
+        (cache / "payload/one").unlink()
+        (cache / "payload/two").write_text("TWO")
+        self.assertEqual(U.changed_entries(release, cache, "c" * 64), ["payload/one", "payload/two"])
+        self.assertEqual(U.RELEASE.rebuild(release, **options)["rebuilt"], ["payload/one", "payload/two"])
+        self.assertEqual(U.changed_entries(release, cache, "e" * 64), ["payload/one", "payload/two"])
+        self.assertEqual(U.RELEASE.rebuild(release, **dict(options, input_sha256="e" * 64))["reused"], [])
 
     def test_producer_refusal_keeps_existing_output_and_installed_receipt(self):
         archive = self.root / "tools.zip"
